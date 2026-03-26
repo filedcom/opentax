@@ -368,9 +368,6 @@ TestgenAgent
 ```markdown
 # line_15_taxable_income
 
-## IRS Source
-Form 1040 (2025) Line 15 Instructions, p.33
-
 ## Computation
 Taxable income = max(0, AGI - greater of standard or itemized deduction)
 
@@ -381,15 +378,39 @@ Taxable income = max(0, AGI - greater of standard or itemized deduction)
 ## Output
 - `taxable_income` → line_16_tax input
 
+## Sources
+Full provenance of every document that informed this node:
+
+| Ingested | Document | Section / Page | URL / Path | Run ID |
+|----------|----------|----------------|------------|--------|
+| 2026-03-26 | Form 1040 (2025) Instructions | Line 15, p.33 | https://irs.gov/pub/irs-pdf/i1040gi.pdf | run_init |
+| 2026-03-26 | Rev. Proc. 2025-40 | Section 3.10, p.4 | https://irs.gov/pub/irs-drop/rp-25-40.pdf | run_init |
+
 ## Change History
-| Date | Change | Source | Run ID |
-|------|--------|--------|--------|
-| 2026-03-26 | Standard deduction MFJ updated to $30,000 | Rev. Proc. 2025-40 p.4 | run_abc |
+Every mutation to this node, with the source that caused it:
+
+| Date | Change | Source Document | Section | Run ID |
+|------|--------|----------------|---------|--------|
+| 2026-03-26 | Initial node created | Form 1040 (2025) Instructions | Line 15, p.33 | run_init |
+| 2026-03-26 | Standard deduction MFJ updated to $30,000 | Rev. Proc. 2025-40 | Section 3.10, p.4 | run_abc |
 ```
+
+**Rule:** A node's context.md is the single source of truth for why it computes what it computes. Every source read during ingestion — whether it changed the node or just confirmed it — is recorded with date, document name, section, URL/path, and run ID.
 
 ---
 
-## 8. Technology Stack
+## 8. Project Identity
+
+| | |
+|---|---|
+| CLI command | `tax` |
+| Deno package | `@filed/tax` |
+| Repo | `/Users/atul/Projects/filed/tax` |
+| Research doc | `research.md` (this file) |
+
+---
+
+## 9. Technology Stack
 
 | Layer | Technology |
 |---|---|
@@ -581,7 +602,96 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 
 ---
 
-## 15. Open Questions
+## 15. Core TypeScript Interfaces (Reference)
+
+These are the foundational types everything is built on.
+
+```typescript
+// core/types/manifest.ts
+export interface FieldNodeManifest {
+  id: string
+  year: number
+  form: string
+  type: 'field'
+  dataType: 'number' | 'string' | 'boolean' | 'enum' | 'date'
+  enumValues?: string[]
+  irsSource: string
+  lastUpdatedBy: string // ingestion run ID
+}
+
+export interface ConnectorNodeManifest {
+  id: string
+  year: number
+  form: string
+  type: 'connector'
+  variant: 'identity' | 'aggregation' | 'computation'
+  inputs: Record<string, { type: string; source: string }>
+  outputs: Record<string, { type: string }>
+  irsSource: string
+  lastUpdatedBy: string // ingestion run ID
+}
+
+export type NodeManifest = FieldNodeManifest | ConnectorNodeManifest
+```
+
+```typescript
+// core/types/return.ts
+export interface TaxReturn {
+  id: string              // returnId
+  ssn: string             // SSN or EIN
+  year: number            // tax year e.g. 2025
+  status: 'draft' | 'validated' | 'exported'
+  createdAt: string       // ISO date
+  updatedAt: string
+}
+
+export interface ReturnComputed {
+  returnId: string
+  computedAt: string
+  values: Record<string, unknown>  // nodeId → computed value
+  warnings: ValidationMessage[]
+  errors: ValidationMessage[]      // soft issues
+  mefBlocks: ValidationMessage[]   // hard blocks
+}
+
+export interface ValidationMessage {
+  nodeId: string
+  code: string
+  message: string
+  tier: 'mef_block' | 'error' | 'warning'
+}
+```
+
+## 16. context.md Template
+
+Every node gets this exact template on creation:
+
+```markdown
+# {node_id}
+
+## Computation
+{description of what this node computes — plain English}
+
+## Inputs
+{list each input with ← source node}
+
+## Output
+{list each output with → destination node}
+
+## Sources
+| Ingested | Document | Section / Page | URL / Path | Run ID |
+|----------|----------|----------------|------------|--------|
+| {date} | {doc name} | {section} | {url} | {run_id} |
+
+## Change History
+| Date | Change | Source Document | Section | Run ID |
+|------|--------|----------------|---------|--------|
+| {date} | Initial node created | {doc} | {section} | {run_id} |
+```
+
+---
+
+## 17. Open Questions
 
 - [ ] Which PDF library handles IRS AcroForm field filling best in Deno? (pdf-lib is Node-first, needs evaluation)
 - [ ] IRS MeF schema download location for TY2025 — confirm URL pattern
@@ -591,7 +701,7 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 
 ---
 
-## 16. Key References
+## 18. Key References
 
 | Resource | URL | Purpose |
 |---|---|---|
