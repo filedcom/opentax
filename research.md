@@ -1,6 +1,6 @@
 # Tax Engine — Research & Architecture Plan
 
-> Last updated: 2026-03-26
+> Last updated: 2026-03-26 (architecture revised: unified TaxNode + activation model)
 > Team: Atul + Claude
 > Stack: Deno + TypeScript + Vibes SDK
 
@@ -8,7 +8,7 @@
 
 ## 1. Project Overview
 
-A professional-grade, IRS-compliant tax calculation engine starting with Form 1040 (tax year 2025), built as a headless CLI library that other software can integrate with. Designed to be self-updating as new IRS publications are released each year, extensible to 1120, 1120S, 1065, and state returns.
+A professional-grade, IRS-compliant tax calculation engine starting with Form 1040 (tax year 2025). The CLI *is* the tax software — add forms, query inputs by ID, validate, export. Any UI built on top is just a wrapper around CLI commands. Designed to be self-updating as new IRS publications are released each year, extensible to 1120, 1120S, 1065, and state returns.
 
 **North star:** Match the data entry depth of professional tax software like Drake Tax, but as a composable, open engine.
 
@@ -28,6 +28,9 @@ A professional-grade, IRS-compliant tax calculation engine starting with Form 10
 | Persistence | File-based (return directory) | Document-shaped data, no DB daemon needed |
 | Taxpayer identity | SSN/EIN only | Caller owns identity management |
 | Validation | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior |
+| Node model | Single TaxNode type (unified) | Field + connector distinction was unnecessary; all nodes have inputSchema + compute |
+| Execution model | Activation-based (mailbox BFS) | Optional forms don't activate — cleaner than zero-propagation through static DAG |
+| Graph traversal | compute_tax_graph(nodeType, depth) | Static metadata traversal independent of execution, any depth |
 | Self-update | CLI-driven ingestion engine | On-demand, human-in-the-loop before merge |
 | Ingestion intelligence | Hybrid LLM + human review | LLM extracts, human reviews diff, full source traceability |
 | PDF export | Official IRS AcroForm PDF + branding/watermark overlay | Professional standard |
@@ -38,37 +41,61 @@ A professional-grade, IRS-compliant tax calculation engine starting with Form 10
 
 ---
 
-## 3. Core Architecture: Mini-Program Nodes
+## 3. Core Architecture: Unified TaxNode + Activation Model
 
-The entire tax engine is expressed as two primitives:
+The entire tax engine is expressed as **one primitive**: `TaxNode`.
 
-### Field Node
-A typed value container — either raw input data or a calculated output.
+> **Design decision:** Field nodes and connector nodes were unified into a single type. A node is just three things: `id`, `inputSchema` (Zod), `outputNodeTypes`. Everything else (IRS citations, descriptions, change history) lives in `context.md`.
+
+### TaxNode
+
+Abstract base class — every node extends it. TypeScript enforces the contract at compile time.
 
 ```typescript
-// Example: W-2 Box 1 wages input
-export const box1Wages: FieldNode<number> = {
-  id: 'w2_box1_wages',
-  type: 'field',
-  dataType: 'number',
-  value: 0,
+// core/types/tax-node.ts
+abstract class TaxNode<TSchema extends z.ZodTypeAny> {
+  abstract readonly nodeType: string
+  abstract readonly inputSchema: TSchema
+  abstract readonly outputNodeTypes: NodeType[]
+  abstract compute(input: z.infer<TSchema>): NodeResult
+}
+
+// What a node passes to a downstream node
+type NodeOutput = {
+  nodeType: NodeType
+  input: Record<string, unknown>
+}
+
+// What compute() returns — purely where to send results next
+type NodeResult = {
+  outputs: NodeOutput[]
 }
 ```
 
-### Connector Node
-A pure function: `field(s) → field(s)`. Three variants:
-- **Identity** — passes value through (a wire)
-- **Aggregation** — sum/min/max of multiple fields
-- **Computation** — tax table lookup, phase-out calculation, worksheet logic
+### Dispatch (Engine's Job)
+
+`dispatch` is owned by the engine. Nodes never call each other directly — they return `outputs` and the engine dispatches each one.
 
 ```typescript
-// Example: Line 15 taxable income
-export function compute(inputs: Inputs): Outputs {
-  return {
-    taxable_income: Math.max(0, inputs.agi - inputs.deduction_amount)
+// core/runtime/executor.ts
+// Phase 1: build ordered execution plan from inputs.json
+const plan = buildExecutionPlan(inputs)   // expand instances + topo sort
+
+// Phase 2: execute in order
+const pending: Record<string, Record<string, unknown>> = {}
+
+for (const instance of plan) {
+  const node = registry[instance.nodeType]
+  const parsed = node.inputSchema.safeParse(pending[instance.id] ?? {})
+  if (!parsed.success) continue            // optional node — no inputs arrived, skip
+  const result = node.compute(parsed.data)
+  for (const output of result.outputs) {
+    merge(pending, output.nodeType, output.input)  // array fields append, scalars set
   }
 }
 ```
+
+The node declares `inputSchema`. The engine fetches, validates, and forwards — nodes never touch the registry or each other.
 
 ### Each Node is a Self-Contained Mini-Program
 
@@ -76,168 +103,277 @@ export function compute(inputs: Inputs): Outputs {
 forms/
   line_15_taxable_income/
     2025/
-      index.ts          ← pure computation function
-      manifest.ts       ← declares inputs, outputs, IRS source
-      context.md        ← IRS citation, instructions, change history
-      index.test.ts     ← generated test fixtures
+      index.ts          ← TaxNode definition (id + inputSchema + outputNodeTypes + compute)
+      index.test.ts     ← IRS fixture tests
+      context.md        ← IRS citation, change history (ingestion target)
 ```
 
-### Manifest Structure
+Example node:
 
 ```typescript
-// manifest.ts
-export const manifest = {
-  id: 'line_15_taxable_income',
-  year: 2025,
-  form: '1040',
-  type: 'connector',
-  inputs: {
-    agi: { type: 'number', source: 'line_11_agi' },
-    deduction_amount: { type: 'number', source: 'deduction_selector' },
-  },
-  outputs: {
-    taxable_income: { type: 'number' },
-  },
-  irsSource: 'Form 1040 (2025) Line 15 Instructions',
-  lastUpdatedBy: 'ingestion-run/2026-03-26-rev-proc-2025-40',
+// forms/line_15_taxable_income/2025/index.ts
+const inputSchema = z.object({
+  agi: z.number(),
+  deduction_amount: z.number(),
+})
+
+export class Line15TaxableIncome extends TaxNode<typeof inputSchema, number> {
+  readonly nodeType = 'line_15_taxable_income'
+  readonly inputSchema = inputSchema
+  readonly outputNodeTypes = ['line_16_tax']
+
+  compute(input: z.infer<typeof inputSchema>) {
+    const taxable_income = Math.max(0, input.agi - input.deduction_amount)
+    return {
+      outputs: [{ nodeType: 'line_16_tax', input: { taxable_income } }],
+    }
+  }
 }
 ```
 
-### Graph Assembly (Auto, No Config File)
+### Start Node (Entry Point + Dispatcher)
 
-The runtime engine:
-1. Scans filesystem for all `manifest.ts` files
-2. Builds registry: `{ outputId → miniProgram }`
-3. Resolves each mini-program's inputs to their producing mini-programs
-4. Topological sort → execution order
-5. Executes connectors in order, threading field values through
+A special TaxNode whose input is the raw return data. Its `compute` decides which first-wave nodes to activate based on what forms are present. Optional forms are handled by simply not activating them — no zero-propagation through unused nodes.
 
-No hand-written graph config. The graph is emergent from the manifests.
+```typescript
+// forms/start/2025/index.ts
+const inputSchema = z.object({
+  w2s: z.array(W2Schema).optional(),
+  scheduleC: ScheduleCSchema.optional(),
+  interest1099: z.array(Interest1099Schema).optional(),
+  // ...
+})
+
+export class StartNode extends TaxNode<typeof inputSchema, null> {
+  readonly nodeType = 'start'
+  readonly inputSchema = inputSchema
+  readonly outputNodeTypes = ['w2', 'schedule_b', 'schedule_c', 'schedule_d', ...]
+
+  compute(input: z.infer<typeof inputSchema>) {
+    const outputs: NodeOutput[] = []
+    // each W-2 dispatches the w2 node separately
+    input.w2s?.forEach((w2) => outputs.push({ nodeType: 'w2', input: { w2 } }))
+    if (input.scheduleC)     outputs.push({ nodeType: 'schedule_c', input: input.scheduleC })
+    if (input.interest1099)  outputs.push({ nodeType: 'schedule_b', input: { interest: input.interest1099 } })
+    // ...
+    return { value: null, outputs }
+  }
+}
+```
+
+### Executor: Two-Phase, Stateless
+
+The engine is fully stateless. Only `inputs.json` is persisted. Any recompute replays from stored inputs.
+
+**Phase 1 — Build execution plan (from inputs.json)**
+
+Expand instances from inputs, build the instance graph, topological sort:
+
+```
+inputs.json: { w2s: [w2_01, w2_02], int1099s: [int_01, int_02, int_03] }
+
+instance graph:
+  start → w2_01 → line_01z
+  start → w2_02 → line_01z
+  start → int_01 → schedule_b
+  start → int_02 → schedule_b
+  start → int_03 → schedule_b
+  line_01z → line_11_agi
+  schedule_b → line_11_agi
+  ...
+
+topo sort → [ start, w2_01, w2_02, int_01, int_02, int_03, line_01z, schedule_b, line_11_agi, ... ]
+```
+
+**Phase 2 — Execute in order**
+
+```
+pending: Record<instanceId, Record<string, unknown>> = {}
+
+for each instance in topo order:
+  node = registry[instance.nodeType]
+  input = pending[instance.id]              // fully assembled by this point
+  result = node.compute(input)
+  for each output in result.outputs:
+    merge(pending[output.nodeType], output.input)   // array fields append, scalar fields set
+```
+
+Each node fires exactly once. By the time a node fires, all upstream nodes have already deposited into `pending`. No waiting, no readiness checks — topo sort guarantees it.
+
+**Array accumulation example (2 W-2s, 3 1099-INTs):**
+
+```
+step 1  start runs
+        pending = { w2_01: {...}, w2_02: {...}, int_01: {...}, int_02: {...}, int_03: {...} }
+
+step 2  w2_01 runs → pending['line_01z'].wages = [ 85000 ]
+step 3  w2_02 runs → pending['line_01z'].wages = [ 85000, 45000 ]   ← appended
+
+step 4  int_01 runs → pending['schedule_b'].interest = [ 320 ]
+step 5  int_02 runs → pending['schedule_b'].interest = [ 320, 150 ]
+step 6  int_03 runs → pending['schedule_b'].interest = [ 320, 150, 500 ]
+
+step 7  line_01z runs  input: { wages: [85000, 45000] }  → total_wages: 130000
+step 8  schedule_b runs  input: { interest: [320, 150, 500] }  → total_interest: 970
+
+step 9  line_11_agi runs  input: { wages: 130000, interest: 970, ... }  → agi: 130970
+```
+
+### Static Graph Traversal
+
+Independent of execution — uses only `outputNodeIds`. Can be called at any time, any depth.
+
+```typescript
+// core/runtime/graph.ts
+function compute_tax_graph(nodeType: NodeType, maxDepth = Infinity): GraphNode
+
+type GraphNode = {
+  nodeType: NodeType
+  depth: number
+  children: GraphNode[]
+}
+```
+
+Use cases:
+- `compute_tax_graph('start')` → full 1040 DAG (documentation, visualization)
+- `compute_tax_graph('schedule_c', 3)` → Schedule C's 3-level downstream neighborhood
+- Detect unreachable nodes (in registry but not reachable from `start`)
+
+### Edge Cases: Cycles and Near-Cycles
+
+The IRS has resolved every apparent cycle through worksheets and defined computation order. No true cycles exist in 1040 computation. Three near-cycles to be aware of:
+
+**1. QBI Deduction (Section 199A) — apparent cycle, IRS-broken**
+```
+QBI deduction limit → requires taxable income
+taxable income      → includes QBI deduction   ← looks circular
+```
+IRS fix: compute taxable income *before* QBI deduction to determine the limit. Two nodes in sequence, no cycle.
+
+**2. SE Health Insurance + SE Tax — genuine iterative (one node handles it)**
+```
+SE health insurance deduction → net SE income → SE tax → ½ SE tax deduction → health insurance limit
+```
+IRS Publication 535 provides an iterative worksheet. This stays inside one node's `compute()` as an internal loop — not a graph-level cycle.
+
+**3. IRA Deduction Phase-out — apparent cycle, IRS-broken**
+```
+IRA deduction reduces MAGI → MAGI determines allowed IRA deduction   ← looks circular
+```
+IRS fix: compute MAGI *without* IRA deduction first, determine allowed amount, then apply. Two nodes in sequence.
+
+**Other edge cases handled by the model:**
+- NOL / capital loss carryforwards → prior year data, treated as inputs
+- Kiddie tax (Form 8615) → parent return data passed in as input
+- Passive Activity Loss rules → all K-1/Schedule E instances complete before PAL node fires (topo sort)
+- Multiple Schedule C entities → separate instances, each feeds Schedule SE independently
 
 ---
 
 ## 4. Filesystem Structure
 
+Two separate Deno workspace packages — same repo, separate CLIs.
+
 ```
-engine/
-  core/
-    runtime/
-      graph-assembler.ts     ← scans manifests, builds DAG
-      executor.ts            ← topological sort + execution
-      validator.ts           ← two-tier validation engine
-    types/
-      field-node.ts
-      connector-node.ts
-      manifest.ts
-      return.ts
+/tax/
+  deno.json                  ← workspace root: { "workspace": ["engine", "agent"] }
 
-  forms/
-    inputs/                  ← raw data entry nodes
-      w2/2025/
-      w2_g/2025/
-      1099_int/2025/
-      1099_div/2025/
-      1099_b/2025/
-      1099_r/2025/
-      1099_misc/2025/
-      1099_nec/2025/
-      k1/2025/
-      ...
+  engine/                    ← @filed/tax-engine — the tax computation engine
+    deno.json                ← { "name": "@filed/tax-engine", "exports": "./mod.ts" }
+    cli.ts                   ← CLI entry: `tax` command
+    mod.ts                   ← public API for programmatic use
+    core/
+      runtime/
+        planner.ts           ← phase 1: expand instances + topological sort
+        executor.ts          ← phase 2: execute plan in order
+        validator.ts         ← two-tier validation engine
+      types/
+        tax-node.ts          ← TaxNode abstract class, NodeResult, NodeOutput
+      return.ts              ← TaxReturn, ReturnComputed, ValidationMessage
+    registry.ts              ← assembles all nodes into NodeRegistry
 
-    schedules/               ← schedule computation mini-programs
-      schedule_a/2025/       ← itemized deductions
-      schedule_b/2025/       ← interest and dividends
-      schedule_c/2025/       ← self-employment income
-      schedule_d/2025/       ← capital gains
-      schedule_e/2025/       ← rental, S-corps, partnerships
-      schedule_se/2025/      ← self-employment tax
-      schedule_1/2025/       ← additional income/adjustments
-      schedule_2/2025/       ← additional taxes
-      schedule_3/2025/       ← additional credits
-      ...
+    nodes/                   ← all TaxNode implementations
+                             ← each node dir: index.ts + index.test.ts + context.md + node.lock
+      start/2025/
+      inputs/
+        w2/2025/
+        w2_g/2025/
+        1099_int/2025/
+        1099_div/2025/
+        1099_b/2025/
+        1099_r/2025/
+        1099_misc/2025/
+        1099_nec/2025/
+        k1/2025/
+        ...
+      schedules/
+        schedule_a/2025/
+        schedule_b/2025/
+        schedule_c/2025/
+        schedule_d/2025/
+        schedule_e/2025/
+        schedule_se/2025/
+        schedule_1/2025/
+        schedule_2/2025/
+        schedule_3/2025/
+        ...
+      worksheets/
+        qualified_dividends_cgt/2025/
+        social_security_benefits/2025/
+        child_tax_credit/2025/
+        ...
+      credits/
+        8812_ctc/2025/
+        earned_income_credit/2025/
+        education_credits/2025/
+        ...
+      form_1040/
+        line_01z_wages/2025/
+        line_11_agi/2025/
+        line_15_taxable_income/2025/
+        line_16_tax/2025/
+        line_24_total_tax/2025/
+        line_37_refund/2025/
+        line_38_owed/2025/
+        ...
+      constants/
+        2025/
+          tax_brackets.ts
+          standard_deductions.ts
+          phase_out_thresholds.ts
+          amt_exemptions.ts
 
-    worksheets/              ← IRS embedded worksheets
-      qualified_dividends_cgt_worksheet/2025/
-      social_security_benefits_worksheet/2025/
-      child_tax_credit_worksheet/2025/
-      ...
+    export/
+      pdf/
+        acroform-filler.ts
+        watermark.ts
+      mef-xml/
+        schema/2025/
+        builder.ts
+        validator.ts
 
-    credits/                 ← credit calculation nodes
-      8812_ctc/2025/
-      earned_income_credit/2025/
-      education_credits/2025/
-      ...
+    returns/                 ← file-based return storage (outside engine package)
+      {returnId}/
+        meta.json
+        inputs.json          ← only persisted state — full recompute by replaying this
 
-    form_1040/               ← main form lines
-      line_01z_wages/2025/
-      line_02b_interest/2025/
-      line_11_agi/2025/
-      line_15_taxable_income/2025/
-      line_16_tax/2025/
-      line_24_total_tax/2025/
-      line_33_total_payments/2025/
-      line_37_refund/2025/
-      line_38_owed/2025/
-      ...
-
-    constants/               ← IRS-published annual values
-      2025/
-        tax_brackets.ts
-        standard_deductions.ts
-        phase_out_thresholds.ts
-        amt_exemptions.ts
-        contribution_limits.ts
-
-    states/                  ← state returns (future phase)
-      ca/2025/
-      ny/2025/
-      ...
-
-  ingestion/
-    sources.json             ← prebuilt IRS document source list
+  agent/                     ← @filed/tax-agent — AI ingestion agent
+    deno.json                ← { "name": "@filed/tax-agent" }
+    cli.ts                   ← CLI entry: `tax-agent` command
     agents/
-      document-parser.ts     ← Vibes agent: PDF/doc → structured changes
-      node-mapper.ts         ← Vibes agent: changes → affected manifests
+      document-parser.ts     ← Vibes agent: PDF/URL → structured changes
+      node-mapper.ts         ← Vibes agent: changes → affected node IDs
       context-writer.ts      ← Vibes agent: updates context.md + citations
       codegen.ts             ← Vibes agent: context.md → index.ts
       testgen.ts             ← Vibes agent: context.md → index.test.ts
+    sources.json             ← prebuilt IRS document source list
     runs/
       2026-03-26_rev-proc-2025-40/
         input.pdf
         extracted_changes.json
         affected_nodes.json
         diff.patch
-        review.md            ← human review checklist
-
-  cli/
-    commands/
-      create-return.ts
-      add-form.ts
-      get-return.ts
-      validate-return.ts
-      export.ts
-      ingest.ts
-      build-node.ts
-      review-run.ts
-
-  returns/                   ← file-based return storage
-    {returnId}/
-      meta.json              ← ssn/ein, year, status, created
-      inputs/
-        w2_1.json
-        schedule_c.json
-        ...
-      computed.json          ← latest calculated state
-      audit.json             ← all changes with timestamps
-
-  export/
-    pdf/
-      acroform-filler.ts     ← fills official IRS AcroForm PDFs
-      watermark.ts           ← branding overlay layer
-    mef-xml/
-      schema/2025/           ← IRS MeF XML schema files
-      builder.ts             ← assembles MeF XML from computed return
-      validator.ts           ← validates against MeF business rules
+        review.md
 ```
 
 ---
@@ -247,14 +383,14 @@ engine/
 ```bash
 # 1. Create a return
 tax create-return --ssn 123-45-6789 --year 2025
-# → returns: returnId = ret_abc123
+# → creates returns/ret_abc123/meta.json + empty inputs.json
 
-# 2. Add form data one by one (each triggers recompute)
-tax add-form ret_abc123 W2 '{"box1": 85000, "box2": 12000, "box12": [...]}'
-tax add-form ret_abc123 ScheduleC '{"gross_receipts": 45000, "expenses": {...}}'
-tax add-form ret_abc123 1099INT '{"payer": "Chase", "amount": 320}'
+# 2. Add form data — must be a complete, valid node input (no partial fields)
+tax form add --return_id ret_abc123 --node_type w2 '{"box1": 85000, "box2": 12000, "box12": [...]}'
+tax form add --return_id ret_abc123 --node_type schedule_c '{"gross_receipts": 45000, "expenses": {...}}'
+tax form add --return_id ret_abc123 --node_type 1099_int '{"payer": "Chase", "amount": 320}'
 
-# 3. Get current computed state at any time
+# 3. Get current computed state at any time (re-runs engine from inputs.json)
 tax get-return ret_abc123
 # → JSON: all computed lines, AGI, taxable income, tax owed, refund
 
@@ -265,6 +401,32 @@ tax validate ret_abc123
 # 5. Export
 tax export ret_abc123 --format pdf --output ./returns/
 tax export ret_abc123 --format mef-xml --output ./efile/
+```
+
+### Input Management Rules
+
+```
+add-form flow:
+  1. Load inputs.json
+  2. Validate new input against node's inputSchema (must be complete — no partial fields)
+     FAIL → error: "W2 input missing required field: box1"
+  3. Merge into inputs.json:
+     - Array types (W2, 1099-INT, etc.) → append
+     - Singular types (ScheduleC, filing status) → conflict if already exists
+  4. Conflict → error with action options:
+     "ScheduleC already exists. Use --replace to overwrite or remove it first."
+  5. Clean → save inputs.json, re-run engine
+```
+
+**Key rule:** You must submit a fully complete node input in one call. Partial fields are rejected. This keeps `inputs.json` always valid and the engine always replayable.
+
+Each added input gets a stable `id` assigned on insert. Array-type inputs (W-2, 1099s, K-1s) are addressable by ID — retrieve, replace, or delete individually:
+
+```bash
+tax form list --return_id ret_abc123 --node_type w2              # list all W-2s with their ids
+tax form list --return_id ret_abc123 --node_type w2 --node_id w2_01  # retrieve a specific W-2
+tax form remove --return_id ret_abc123 --node_type w2 --node_id w2_01
+tax form replace --return_id ret_abc123 --node_type w2 --node_id w2_01 '{"box1": 90000, ...}'
 ```
 
 ---
@@ -312,57 +474,92 @@ Tier 2 — Data Inconsistency Warnings (SOFT)
 }
 ```
 
-### CLI Commands
+### CLI (`tax-agent`)
 ```bash
 # Ingest a known source
-tax ingest --source rev-proc-inflation --year 2026
+tax-agent ingest --source rev-proc-inflation --year 2026
 
-# Ingest a custom document (new link or file)
-tax ingest --doc ./path/to/new-irs-notice.pdf
-tax ingest --url https://irs.gov/pub/irs-drop/rp-2026-xx.pdf
+# Ingest a custom document
+tax-agent ingest --doc ./path/to/new-irs-notice.pdf
+tax-agent ingest --url https://irs.gov/pub/irs-drop/rp-2026-xx.pdf
 
 # Review what the last ingestion wants to change
-tax review-run --id last
+tax-agent review-run --id last
 
 # Run codegen on affected nodes after reviewing
-tax build-node --run last
-
-# Inspect a specific node
-tax build-node --node forms/form_1040/line_15_taxable_income/2025
+tax-agent build-node --run last
 ```
 
 ### Ingestion Agent Pipeline (Vibes SDK)
+
+Two explicit stages with a human review gate between them.
+
+**Stage 1 — Ingest (`tax-agent ingest`): context.md only, no code**
+
 ```
 DocumentParserAgent
   → reads PDF/URL
-  → extracts structured changes: [{field, old_value, new_value, page_ref}]
+  → extracts structured changes: [{ field, old_value, new_value, page_ref }]
   → output: extracted_changes.json
 
 NodeMapperAgent
   → reads extracted_changes.json
-  → scans all manifest.ts files
-  → maps each change to affected node IDs
+  → determines CRUD operation per affected node:
+      CREATE → scaffold new node directory + context.md
+      UPDATE → update context.md (computation, inputs, outputs, sources, change history)
+      DELETE → flag node for removal (human confirms)
   → output: affected_nodes.json
 
-ContextWriterAgent
-  → for each affected node: updates context.md
-  → appends change record with source citation + date
-  → output: updated context.md files
-
-[HUMAN REVIEWS DIFF HERE]
-
-CodegenAgent
-  → reads context.md for each affected node
-  → generates index.ts (pure function, typed)
-  → output: index.ts
-
-TestgenAgent
-  → reads context.md + index.ts
-  → generates index.test.ts with IRS example fixtures
-  → output: index.test.ts
-
-[HUMAN REVIEWS + MERGES]
+ContextWriterAgent (per affected node, parallelised)
+  → CREATE: writes full context.md from scratch
+  → UPDATE: patches relevant sections, appends to Sources + Change History
+  → no index.ts touched — context.md is the only output
 ```
+
+**[HUMAN REVIEWS context.md DIFFS HERE]**
+
+Human sees plain-English changes to computation descriptions, input/output wiring, and IRS citations — not code. Much easier to review.
+
+**Stage 2 — Codegen (`tax-agent build-node`): parallel coding agents**
+
+```
+For each affected node (in parallel):
+  CodingAgent
+    → reads node's context.md
+    → writes/overwrites index.ts  (TaxNode class: inputSchema + outputNodeIds + compute)
+    → writes/overwrites index.test.ts  (IRS example fixtures from context.md)
+```
+
+**[HUMAN REVIEWS + MERGES CODE]**
+
+**Key rule:** Ingestion never touches code. Codegen never touches context.md. `context.md` is the contract between the two stages and the human review gate.
+
+### node.lock
+
+Every node directory has a `node.lock` file storing MD5 hashes of both files:
+
+```json
+{
+  "context_md": "a3f4b2c1d5e6f7a8b9c0d1e2f3a4b5c6",
+  "index_ts":   "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+}
+```
+
+To check what needs attention, compute current MD5s and diff against lock:
+
+| context.md hash | index.ts hash | State |
+|---|---|---|
+| matches lock | matches lock | in sync ✓ |
+| changed | matches lock | context updated, codegen not run yet |
+| matches lock | changed | manual code edit — drifted from context |
+| both changed | both changed | full update in progress |
+
+```bash
+tax-agent status           # show sync state of all nodes
+tax-agent status --drift   # show only nodes where code has drifted from context
+```
+
+`node.lock` is updated by `tax-agent build-node` after codegen completes — sealing both hashes at the point of a known-good sync.
 
 ### Traceability (context.md structure)
 ```markdown
@@ -401,12 +598,14 @@ Every mutation to this node, with the source that caused it:
 
 ## 8. Project Identity
 
-| | |
-|---|---|
-| CLI command | `tax` |
-| Deno package | `@filed/tax` |
-| Repo | `/Users/atul/Projects/filed/tax` |
-| Research doc | `research.md` (this file) |
+| | Engine | Agent |
+|---|---|---|
+| CLI command | `tax` | `tax-agent` |
+| Deno package | `@filed/tax-engine` | `@filed/tax-agent` |
+| Package path | `engine/` | `agent/` |
+| Repo | `/Users/atul/Projects/filed/tax` | same repo |
+| Workspace root | `deno.json` | — |
+| Research doc | `research.md` (this file) | — |
 
 ---
 
@@ -607,31 +806,49 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 These are the foundational types everything is built on.
 
 ```typescript
-// core/types/manifest.ts
-export interface FieldNodeManifest {
-  id: string
-  year: number
-  form: string
-  type: 'field'
-  dataType: 'number' | 'string' | 'boolean' | 'enum' | 'date'
-  enumValues?: string[]
-  irsSource: string
-  lastUpdatedBy: string // ingestion run ID
+// core/types/tax-node.ts
+import { z } from 'zod'
+
+export type NodeType = string   // refined to keyof NodeRegistry once registry is built
+
+// No NodeMetadata type — outputNodeTypes is inlined on TaxNode directly
+// All human-readable context (description, IRS citations, change history) lives in context.md
+
+export type ActivationCall = {
+  [K in NodeType]: { nodeType: K; input: z.infer<NodeRegistry[K]['inputSchema']> }
+}[NodeType]
+
+export type NodeResult<TValue> = {
+  value: TValue
+  activate: ActivationCall[]
 }
 
-export interface ConnectorNodeManifest {
-  id: string
-  year: number
-  form: string
-  type: 'connector'
-  variant: 'identity' | 'aggregation' | 'computation'
-  inputs: Record<string, { type: string; source: string }>
-  outputs: Record<string, { type: string }>
-  irsSource: string
-  lastUpdatedBy: string // ingestion run ID
+export type NodeOutput = {
+  nodeType: NodeType
+  input: Record<string, unknown>
 }
 
-export type NodeManifest = FieldNodeManifest | ConnectorNodeManifest
+export type NodeResult<TValue> = {
+  value: TValue
+  outputs: NodeOutput[]
+}
+
+export abstract class TaxNode<TSchema extends z.ZodTypeAny, TValue> {
+  abstract readonly nodeType: NodeType
+  abstract readonly inputSchema: TSchema
+  abstract readonly outputNodeTypes: NodeType[]
+  abstract compute(input: z.infer<TSchema>): NodeResult<TValue>
+}
+```
+
+```typescript
+// core/runtime/registry.ts
+export const registry = { /* all nodes */ } as const
+export type NodeRegistry = typeof registry
+export type NodeType = keyof NodeRegistry
+export type NodeInput<K extends NodeType> = z.infer<NodeRegistry[K]['inputSchema']>
+
+export function dispatch<K extends NodeType>(nodeType: K, input: NodeInput<K>): void
 ```
 
 ```typescript
@@ -648,14 +865,14 @@ export interface TaxReturn {
 export interface ReturnComputed {
   returnId: string
   computedAt: string
-  values: Record<string, unknown>  // nodeId → computed value
+  values: Record<NodeType, unknown>  // nodeType → computed value
   warnings: ValidationMessage[]
-  errors: ValidationMessage[]      // soft issues
-  mefBlocks: ValidationMessage[]   // hard blocks
+  errors: ValidationMessage[]
+  mefBlocks: ValidationMessage[]
 }
 
 export interface ValidationMessage {
-  nodeId: string
+  nodeType: NodeType
   code: string
   message: string
   tier: 'mef_block' | 'error' | 'warning'
