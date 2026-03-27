@@ -1,43 +1,49 @@
 # Tax Engine — Research & Architecture Plan
 
-> Last updated: 2026-03-26 (architecture revised: unified TaxNode + activation model)
-> Team: Atul + Claude
-> Stack: Deno + TypeScript + Vibes SDK
+> Last updated: 2026-03-26 (architecture revised: unified TaxNode + activation
+> model) Team: Atul + Claude Stack: Deno + TypeScript + Vibes SDK
 
 ---
 
 ## 1. Project Overview
 
-A professional-grade, IRS-compliant tax calculation engine starting with Form 1040 (tax year 2025). The CLI *is* the tax software — add forms, query inputs by ID, validate, export. Any UI built on top is just a wrapper around CLI commands. Designed to be self-updating as new IRS publications are released each year, extensible to 1120, 1120S, 1065, and state returns.
+A professional-grade, IRS-compliant tax calculation engine starting with Form
+1040 (tax year 2025). The CLI _is_ the tax software — add forms, query inputs by
+ID, validate, export. Any UI built on top is just a wrapper around CLI commands.
+Designed to be self-updating as new IRS publications are released each year,
+extensible to 1120, 1120S, 1065, and state returns.
 
-**North star:** Match the data entry depth of professional tax software like Drake Tax, but as a composable, open engine.
+**North star:** Match the data entry depth of professional tax software like
+Drake Tax, but as a composable, open engine.
 
-**Reference:** [Drake Tax Knowledge Base — Form & EF Availability](https://kb.drakesoftware.com/kb/Drake-Tax/18318.htm)
-**Agent SDK:** [Vibes SDK](https://vibes-sdk.a7ul.com/) — model-agnostic, type-safe, built on Vercel AI SDK
+**Reference:**
+[Drake Tax Knowledge Base — Form & EF Availability](https://kb.drakesoftware.com/kb/Drake-Tax/18318.htm)
+**Agent SDK:** [Vibes SDK](https://vibes-sdk.a7ul.com/) — model-agnostic,
+type-safe, built on Vercel AI SDK
 
 ---
 
 ## 2. Key Decisions (from discovery)
 
-| Decision | Choice | Rationale |
-|---|---|---|
-| Primary users | Tax professionals | Professional-grade depth required |
-| Tax year | 2025 (multi-year architecture) | Current year first, prior years addable |
-| E-filing | Export valid MeF XML (Option B) | Clearinghouse handles transmission, avoids IRS EFIN requirement |
-| Runtime | Headless CLI library | Integrators build UI on top |
-| Persistence | File-based (return directory) | Document-shaped data, no DB daemon needed |
-| Taxpayer identity | SSN/EIN only | Caller owns identity management |
-| Validation | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior |
-| Node model | Single TaxNode type (unified) | Field + connector distinction was unnecessary; all nodes have inputSchema + compute |
-| Execution model | Two-phase topo sort + pending accumulator | Phase 1: expand instances + topo sort; Phase 2: execute in order, nodes deposit into pending dict — optional forms simply never receive inputs and are skipped |
-| Graph traversal | compute_tax_graph(nodeType, depth) | Static metadata traversal independent of execution, any depth |
-| Self-update | CLI-driven ingestion engine | On-demand, human-in-the-loop before merge |
-| Ingestion intelligence | Hybrid LLM + human review | LLM extracts, human reviews diff, full source traceability |
-| PDF export | Official IRS AcroForm PDF + branding/watermark overlay | Professional standard |
-| State returns | First-class architecture, not implemented yet | Future phase |
-| LLM layer | Vibes SDK (model-agnostic) | Type-safe, pluggable across 50+ providers |
-| Testing | IRS examples + spot checks + real returns, extensible | D-level rigor from day one |
-| Timeline | October 2026 (extended deadline) / April 2027 (filing season) | 6-9 months with two-person team |
+| Decision               | Choice                                                                 | Rationale                                                                                                                                                      |
+| ---------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary users          | Tax professionals                                                      | Professional-grade depth required                                                                                                                              |
+| Tax year               | 2025 (multi-year architecture)                                         | Current year first, prior years addable                                                                                                                        |
+| E-filing               | Export valid MeF XML (Option B)                                        | Clearinghouse handles transmission, avoids IRS EFIN requirement                                                                                                |
+| Runtime                | Headless CLI library                                                   | Integrators build UI on top                                                                                                                                    |
+| Persistence            | File-based (return directory)                                          | Document-shaped data, no DB daemon needed                                                                                                                      |
+| Taxpayer identity      | SSN/EIN only                                                           | Caller owns identity management                                                                                                                                |
+| Validation             | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior                                                                                                                               |
+| Node model             | Single TaxNode type (unified)                                          | Field + connector distinction was unnecessary; all nodes have inputSchema + compute                                                                            |
+| Execution model        | Two-phase topo sort + pending accumulator                              | Phase 1: expand instances + topo sort; Phase 2: execute in order, nodes deposit into pending dict — optional forms simply never receive inputs and are skipped |
+| Graph traversal        | compute_tax_graph(nodeType, depth)                                     | Static metadata traversal independent of execution, any depth                                                                                                  |
+| Self-update            | CLI-driven ingestion engine                                            | On-demand, human-in-the-loop before merge                                                                                                                      |
+| Ingestion intelligence | Hybrid LLM + human review                                              | LLM extracts, human reviews diff, full source traceability                                                                                                     |
+| PDF export             | Official IRS AcroForm PDF + branding/watermark overlay                 | Professional standard                                                                                                                                          |
+| State returns          | First-class architecture, not implemented yet                          | Future phase                                                                                                                                                   |
+| LLM layer              | Vibes SDK (model-agnostic)                                             | Type-safe, pluggable across 50+ providers                                                                                                                      |
+| Testing                | IRS examples + spot checks + real returns, extensible                  | D-level rigor from day one                                                                                                                                     |
+| Timeline               | October 2026 (extended deadline) / April 2027 (filing season)          | 6-9 months with two-person team                                                                                                                                |
 
 ---
 
@@ -45,57 +51,63 @@ A professional-grade, IRS-compliant tax calculation engine starting with Form 10
 
 The entire tax engine is expressed as **one primitive**: `TaxNode`.
 
-> **Design decision:** Field nodes and connector nodes were unified into a single type. A node is just three things: `id`, `inputSchema` (Zod), `outputNodeTypes`. Everything else (IRS citations, descriptions, change history) lives in `context.md`.
+> **Design decision:** Field nodes and connector nodes were unified into a
+> single type. A node is just three things: `id`, `inputSchema` (Zod),
+> `outputNodeTypes`. Everything else (IRS citations, descriptions, change
+> history) lives in `context.md`.
 
 ### TaxNode
 
-Abstract base class — every node extends it. TypeScript enforces the contract at compile time.
+Abstract base class — every node extends it. TypeScript enforces the contract at
+compile time.
 
 ```typescript
 // core/types/tax-node.ts
 abstract class TaxNode<TSchema extends z.ZodTypeAny> {
-  abstract readonly nodeType: string
-  abstract readonly inputSchema: TSchema
-  abstract readonly outputNodeTypes: NodeType[]
-  abstract compute(input: z.infer<TSchema>): NodeResult
+  abstract readonly nodeType: string;
+  abstract readonly inputSchema: TSchema;
+  abstract readonly outputNodeTypes: NodeType[];
+  abstract compute(input: z.infer<TSchema>): NodeResult;
 }
 
 // What a node passes to a downstream node
 type NodeOutput = {
-  nodeType: NodeType
-  input: Record<string, unknown>
-}
+  nodeType: NodeType;
+  input: Record<string, unknown>;
+};
 
 // What compute() returns — purely where to send results next
 type NodeResult = {
-  outputs: NodeOutput[]
-}
+  outputs: NodeOutput[];
+};
 ```
 
 ### Dispatch (Engine's Job)
 
-`dispatch` is owned by the engine. Nodes never call each other directly — they return `outputs` and the engine dispatches each one.
+`dispatch` is owned by the engine. Nodes never call each other directly — they
+return `outputs` and the engine dispatches each one.
 
 ```typescript
 // core/runtime/executor.ts
 // Phase 1: build ordered execution plan from inputs.json
-const plan = buildExecutionPlan(inputs)   // expand instances + topo sort
+const plan = buildExecutionPlan(inputs); // expand instances + topo sort
 
 // Phase 2: execute in order
-const pending: Record<string, Record<string, unknown>> = {}
+const pending: Record<string, Record<string, unknown>> = {};
 
 for (const instance of plan) {
-  const node = registry[instance.nodeType]
-  const parsed = node.inputSchema.safeParse(pending[instance.id] ?? {})
-  if (!parsed.success) continue            // optional node — no inputs arrived, skip
-  const result = node.compute(parsed.data)
+  const node = registry[instance.nodeType];
+  const parsed = node.inputSchema.safeParse(pending[instance.id] ?? {});
+  if (!parsed.success) continue; // optional node — no inputs arrived, skip
+  const result = node.compute(parsed.data);
   for (const output of result.outputs) {
-    merge(pending, output.nodeType, output.input)  // array fields append, scalars set
+    merge(pending, output.nodeType, output.input); // array fields append, scalars set
   }
 }
 ```
 
-The node declares `inputSchema`. The engine fetches, validates, and forwards — nodes never touch the registry or each other.
+The node declares `inputSchema`. The engine fetches, validates, and forwards —
+nodes never touch the registry or each other.
 
 ### Each Node is a Self-Contained Mini-Program
 
@@ -116,25 +128,28 @@ Example node:
 const inputSchema = z.object({
   agi: z.number(),
   deduction_amount: z.number(),
-})
+});
 
 export class Line15TaxableIncome extends TaxNode<typeof inputSchema, number> {
-  readonly nodeType = 'line_15_taxable_income'
-  readonly inputSchema = inputSchema
-  readonly outputNodeTypes = ['line_16_tax']
+  readonly nodeType = "line_15_taxable_income";
+  readonly inputSchema = inputSchema;
+  readonly outputNodeTypes = ["line_16_tax"];
 
   compute(input: z.infer<typeof inputSchema>) {
-    const taxable_income = Math.max(0, input.agi - input.deduction_amount)
+    const taxable_income = Math.max(0, input.agi - input.deduction_amount);
     return {
-      outputs: [{ nodeType: 'line_16_tax', input: { taxable_income } }],
-    }
+      outputs: [{ nodeType: "line_16_tax", input: { taxable_income } }],
+    };
   }
 }
 ```
 
 ### Start Node (Entry Point + Dispatcher)
 
-A special TaxNode whose input is the raw return data. Its `compute` decides which first-wave nodes to activate based on what forms are present. Optional forms are handled by simply not activating them — no zero-propagation through unused nodes.
+A special TaxNode whose input is the raw return data. Its `compute` decides
+which first-wave nodes to activate based on what forms are present. Optional
+forms are handled by simply not activating them — no zero-propagation through
+unused nodes.
 
 ```typescript
 // forms/start/2025/index.ts
@@ -164,7 +179,8 @@ export class StartNode extends TaxNode<typeof inputSchema, null> {
 
 ### Executor: Two-Phase, Stateless
 
-The engine is fully stateless. Only `inputs.json` is persisted. Any recompute replays from stored inputs.
+The engine is fully stateless. Only `inputs.json` is persisted. Any recompute
+replays from stored inputs.
 
 **Phase 1 — Build execution plan (from inputs.json)**
 
@@ -199,7 +215,9 @@ for each instance in topo order:
     merge(pending[output.nodeType], output.input)   // array fields append, scalar fields set
 ```
 
-Each node fires exactly once. By the time a node fires, all upstream nodes have already deposited into `pending`. No waiting, no readiness checks — topo sort guarantees it.
+Each node fires exactly once. By the time a node fires, all upstream nodes have
+already deposited into `pending`. No waiting, no readiness checks — topo sort
+guarantees it.
 
 **Array accumulation example (2 W-2s, 3 1099-INTs):**
 
@@ -235,56 +253,76 @@ step 9  line_11_agi reads pending → { wages:130000, interest:970, ... }
                    computes → agi: 130970
 ```
 
-Key: a node only fires when it reaches its position in topo order. By that point every upstream node has already deposited — the input is guaranteed complete. Optional nodes (e.g. `schedule_c` when no business income) never receive any deposits, so their Zod parse fails and they are silently skipped.
+Key: a node only fires when it reaches its position in topo order. By that point
+every upstream node has already deposited — the input is guaranteed complete.
+Optional nodes (e.g. `schedule_c` when no business income) never receive any
+deposits, so their Zod parse fails and they are silently skipped.
 
 ### Static Graph Traversal
 
-Independent of execution — uses only `outputNodeIds`. Can be called at any time, any depth.
+Independent of execution — uses only `outputNodeIds`. Can be called at any time,
+any depth.
 
 ```typescript
 // core/runtime/graph.ts
-function compute_tax_graph(nodeType: NodeType, maxDepth = Infinity): GraphNode
+function compute_tax_graph(nodeType: NodeType, maxDepth = Infinity): GraphNode;
 
 type GraphNode = {
-  nodeType: NodeType
-  depth: number
-  children: GraphNode[]
-}
+  nodeType: NodeType;
+  depth: number;
+  children: GraphNode[];
+};
 ```
 
 Use cases:
+
 - `compute_tax_graph('start')` → full 1040 DAG (documentation, visualization)
-- `compute_tax_graph('schedule_c', 3)` → Schedule C's 3-level downstream neighborhood
+- `compute_tax_graph('schedule_c', 3)` → Schedule C's 3-level downstream
+  neighborhood
 - Detect unreachable nodes (in registry but not reachable from `start`)
 
 ### Edge Cases: Cycles and Near-Cycles
 
-The IRS has resolved every apparent cycle through worksheets and defined computation order. No true cycles exist in 1040 computation. Three near-cycles to be aware of:
+The IRS has resolved every apparent cycle through worksheets and defined
+computation order. No true cycles exist in 1040 computation. Three near-cycles
+to be aware of:
 
 **1. QBI Deduction (Section 199A) — apparent cycle, IRS-broken**
+
 ```
 QBI deduction limit → requires taxable income
 taxable income      → includes QBI deduction   ← looks circular
 ```
-IRS fix: compute taxable income *before* QBI deduction to determine the limit. Two nodes in sequence, no cycle.
+
+IRS fix: compute taxable income _before_ QBI deduction to determine the limit.
+Two nodes in sequence, no cycle.
 
 **2. SE Health Insurance + SE Tax — genuine iterative (one node handles it)**
+
 ```
 SE health insurance deduction → net SE income → SE tax → ½ SE tax deduction → health insurance limit
 ```
-IRS Publication 535 provides an iterative worksheet. This stays inside one node's `compute()` as an internal loop — not a graph-level cycle.
+
+IRS Publication 535 provides an iterative worksheet. This stays inside one
+node's `compute()` as an internal loop — not a graph-level cycle.
 
 **3. IRA Deduction Phase-out — apparent cycle, IRS-broken**
+
 ```
 IRA deduction reduces MAGI → MAGI determines allowed IRA deduction   ← looks circular
 ```
-IRS fix: compute MAGI *without* IRA deduction first, determine allowed amount, then apply. Two nodes in sequence.
+
+IRS fix: compute MAGI _without_ IRA deduction first, determine allowed amount,
+then apply. Two nodes in sequence.
 
 **Other edge cases handled by the model:**
+
 - NOL / capital loss carryforwards → prior year data, treated as inputs
 - Kiddie tax (Form 8615) → parent return data passed in as input
-- Passive Activity Loss rules → all K-1/Schedule E instances complete before PAL node fires (topo sort)
-- Multiple Schedule C entities → separate instances, each feeds Schedule SE independently
+- Passive Activity Loss rules → all K-1/Schedule E instances complete before PAL
+  node fires (topo sort)
+- Multiple Schedule C entities → separate instances, each feeds Schedule SE
+  independently
 
 ---
 
@@ -441,9 +479,12 @@ add-form flow:
   5. Clean → save inputs.json, re-run engine
 ```
 
-**Key rule:** You must submit a fully complete node input in one call. Partial fields are rejected. This keeps `inputs.json` always valid and the engine always replayable.
+**Key rule:** You must submit a fully complete node input in one call. Partial
+fields are rejected. This keeps `inputs.json` always valid and the engine always
+replayable.
 
-Each added input gets a stable `id` assigned on insert. Array-type inputs (W-2, 1099s, K-1s) are addressable by ID — retrieve, replace, or delete individually:
+Each added input gets a stable `id` assigned on insert. Array-type inputs (W-2,
+1099s, K-1s) are addressable by ID — retrieve, replace, or delete individually:
 
 ```bash
 tax form list --returnId ret_abc123 --node_type w2              # list all W-2s with their ids
@@ -477,6 +518,7 @@ Tier 2 — Data Inconsistency Warnings (SOFT)
 ## 7. Ingestion Engine (Self-Updating Pipeline)
 
 ### Sources List (`ingestion/sources.json`)
+
 ```json
 {
   "annual": [
@@ -484,7 +526,10 @@ Tier 2 — Data Inconsistency Warnings (SOFT)
       "id": "rev-proc-inflation",
       "description": "Annual inflation adjustments (brackets, standard deductions)",
       "url": "https://www.irs.gov/pub/irs-drop/rp-{year}.pdf",
-      "affects": ["constants/{year}/tax_brackets", "constants/{year}/standard_deductions"]
+      "affects": [
+        "constants/{year}/tax_brackets",
+        "constants/{year}/standard_deductions"
+      ]
     },
     {
       "id": "mef-schema",
@@ -498,6 +543,7 @@ Tier 2 — Data Inconsistency Warnings (SOFT)
 ```
 
 ### CLI (`tax-agent`)
+
 ```bash
 # Ingest a known source
 tax-agent ingest --source rev-proc-inflation --year 2026
@@ -541,7 +587,8 @@ ContextWriterAgent (per affected node, parallelised)
 
 **[HUMAN REVIEWS context.md DIFFS HERE]**
 
-Human sees plain-English changes to computation descriptions, input/output wiring, and IRS citations — not code. Much easier to review.
+Human sees plain-English changes to computation descriptions, input/output
+wiring, and IRS citations — not code. Much easier to review.
 
 **Stage 2 — Codegen (`tax-agent build-node`): parallel coding agents**
 
@@ -553,11 +600,15 @@ For each affected node (in parallel):
     → writes/overwrites index.ts  (TaxNode class: inputSchema + outputNodeIds + compute) ← SECOND
 ```
 
-**Key rule:** Tests are always written before implementation code. `index.test.ts` is generated from `context.md` first — fixtures derived from IRS examples and expected outputs. `index.ts` is written second, with the tests as the specification. This enforces TDD even in the automated codegen pipeline.
+**Key rule:** Tests are always written before implementation code.
+`index.test.ts` is generated from `context.md` first — fixtures derived from IRS
+examples and expected outputs. `index.ts` is written second, with the tests as
+the specification. This enforces TDD even in the automated codegen pipeline.
 
 **[HUMAN REVIEWS + MERGES CODE]**
 
-**Key rule:** Ingestion never touches code. Codegen never touches context.md. `context.md` is the contract between the two stages and the human review gate.
+**Key rule:** Ingestion never touches code. Codegen never touches context.md.
+`context.md` is the contract between the two stages and the human review gate.
 
 ### node.lock
 
@@ -566,94 +617,105 @@ Every node directory has a `node.lock` file storing MD5 hashes of both files:
 ```json
 {
   "context_md": "a3f4b2c1d5e6f7a8b9c0d1e2f3a4b5c6",
-  "index_ts":   "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
+  "index_ts": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
 }
 ```
 
 To check what needs attention, compute current MD5s and diff against lock:
 
-| context.md hash | index.ts hash | State |
-|---|---|---|
-| matches lock | matches lock | in sync ✓ |
-| changed | matches lock | context updated, codegen not run yet |
-| matches lock | changed | manual code edit — drifted from context |
-| both changed | both changed | full update in progress |
+| context.md hash | index.ts hash | State                                   |
+| --------------- | ------------- | --------------------------------------- |
+| matches lock    | matches lock  | in sync ✓                               |
+| changed         | matches lock  | context updated, codegen not run yet    |
+| matches lock    | changed       | manual code edit — drifted from context |
+| both changed    | both changed  | full update in progress                 |
 
 ```bash
 tax-agent status           # show sync state of all nodes
 tax-agent status --drift   # show only nodes where code has drifted from context
 ```
 
-`node.lock` is updated by `tax-agent build-node` after codegen completes — sealing both hashes at the point of a known-good sync.
+`node.lock` is updated by `tax-agent build-node` after codegen completes —
+sealing both hashes at the point of a known-good sync.
 
 ### Traceability (context.md structure)
+
 ```markdown
 # line_15_taxable_income
 
 ## Computation
+
 Taxable income = max(0, AGI - greater of standard or itemized deduction)
 
 ## Inputs
+
 - `agi` ← line_11_agi output
 - `deduction_amount` ← deduction_selector output
 
 ## Output
+
 - `taxable_income` → line_16_tax input
 
 ## Sources
+
 Full provenance of every document that informed this node:
 
-| Ingested | Document | Section / Page | URL / Path | Run ID |
-|----------|----------|----------------|------------|--------|
-| 2026-03-26 | Form 1040 (2025) Instructions | Line 15, p.33 | https://irs.gov/pub/irs-pdf/i1040gi.pdf | run_init |
-| 2026-03-26 | Rev. Proc. 2025-40 | Section 3.10, p.4 | https://irs.gov/pub/irs-drop/rp-25-40.pdf | run_init |
+| Ingested   | Document                      | Section / Page    | URL / Path                                | Run ID   |
+| ---------- | ----------------------------- | ----------------- | ----------------------------------------- | -------- |
+| 2026-03-26 | Form 1040 (2025) Instructions | Line 15, p.33     | https://irs.gov/pub/irs-pdf/i1040gi.pdf   | run_init |
+| 2026-03-26 | Rev. Proc. 2025-40            | Section 3.10, p.4 | https://irs.gov/pub/irs-drop/rp-25-40.pdf | run_init |
 
 ## Change History
+
 Every mutation to this node, with the source that caused it:
 
-| Date | Change | Source Document | Section | Run ID |
-|------|--------|----------------|---------|--------|
-| 2026-03-26 | Initial node created | Form 1040 (2025) Instructions | Line 15, p.33 | run_init |
-| 2026-03-26 | Standard deduction MFJ updated to $30,000 | Rev. Proc. 2025-40 | Section 3.10, p.4 | run_abc |
+| Date       | Change                                    | Source Document               | Section           | Run ID   |
+| ---------- | ----------------------------------------- | ----------------------------- | ----------------- | -------- |
+| 2026-03-26 | Initial node created                      | Form 1040 (2025) Instructions | Line 15, p.33     | run_init |
+| 2026-03-26 | Standard deduction MFJ updated to $30,000 | Rev. Proc. 2025-40            | Section 3.10, p.4 | run_abc  |
 ```
 
-**Rule:** A node's context.md is the single source of truth for why it computes what it computes. Every source read during ingestion — whether it changed the node or just confirmed it — is recorded with date, document name, section, URL/path, and run ID.
+**Rule:** A node's context.md is the single source of truth for why it computes
+what it computes. Every source read during ingestion — whether it changed the
+node or just confirmed it — is recorded with date, document name, section,
+URL/path, and run ID.
 
 ---
 
 ## 8. Project Identity
 
-| | Engine | Agent |
-|---|---|---|
-| CLI command | `tax` | `tax-agent` |
-| Deno package | `@filed/tax-engine` | `@filed/tax-agent` |
-| Package path | `engine/` | `agent/` |
-| Repo | `/Users/atul/Projects/filed/tax` | same repo |
-| Workspace root | `deno.json` | — |
-| Research doc | `research.md` (this file) | — |
+|                | Engine                           | Agent              |
+| -------------- | -------------------------------- | ------------------ |
+| CLI command    | `tax`                            | `tax-agent`        |
+| Deno package   | `@filed/tax-engine`              | `@filed/tax-agent` |
+| Package path   | `engine/`                        | `agent/`           |
+| Repo           | `/Users/atul/Projects/filed/tax` | same repo          |
+| Workspace root | `deno.json`                      | —                  |
+| Research doc   | `research.md` (this file)        | —                  |
 
 ---
 
 ## 9. Technology Stack
 
-| Layer | Technology |
-|---|---|
-| Runtime | Deno |
-| Language | TypeScript (strict) |
-| Agent framework | Vibes SDK (vibes-sdk.a7ul.com) |
-| LLM | Claude (default, swappable via Vibes) |
-| Validation | Zod |
-| PDF manipulation | pdf-lib (AcroForm filling) + custom watermark layer |
-| MeF XML | Native DOM/XML builder, validated against IRS XSD schemas |
-| Testing | Deno test + Vibes TestModel for agent unit tests |
-| Observability | OpenTelemetry (via Vibes SDK) |
-| Storage | File-based (JSON files per return) |
+| Layer            | Technology                                                |
+| ---------------- | --------------------------------------------------------- |
+| Runtime          | Deno                                                      |
+| Language         | TypeScript (strict)                                       |
+| Agent framework  | Vibes SDK (vibes-sdk.a7ul.com)                            |
+| LLM              | Claude (default, swappable via Vibes)                     |
+| Validation       | Zod                                                       |
+| PDF manipulation | pdf-lib (AcroForm filling) + custom watermark layer       |
+| MeF XML          | Native DOM/XML builder, validated against IRS XSD schemas |
+| Testing          | Deno test + Vibes TestModel for agent unit tests          |
+| Observability    | OpenTelemetry (via Vibes SDK)                             |
+| Storage          | File-based (JSON files per return)                        |
 
 ---
 
 ## 9. 1040 Form Coverage (Tax Year 2025)
 
 ### Input Forms (data entry nodes)
+
 - W-2 (wages, multiple employers)
 - W-2G (gambling winnings)
 - 1099-INT (interest income)
@@ -669,6 +731,7 @@ Every mutation to this node, with the source that caused it:
 - 1098-T (tuition)
 
 ### Schedules
+
 - Schedule A — Itemized deductions
 - Schedule B — Interest and ordinary dividends
 - Schedule C — Profit/loss from business (sole proprietorship)
@@ -680,6 +743,7 @@ Every mutation to this node, with the source that caused it:
 - Schedule 3 — Additional credits and payments
 
 ### Key Forms
+
 - Form 8812 — Child tax credit / additional child tax credit
 - Form 2441 — Child and dependent care expenses
 - Form 8863 — Education credits
@@ -696,11 +760,13 @@ Every mutation to this node, with the source that caused it:
 ## 10. MeF XML Export
 
 The IRS publishes MeF schema packages annually:
+
 - XSD schemas defining valid XML structure
 - Business rules (thousands of validation conditions)
 - Publication 4164 — MeF Guide for Software Developers and Transmitters
 
 **Our approach:**
+
 1. Build MeF XML from computed return state
 2. Validate against IRS XSD schemas locally
 3. Run IRS business rules (Tier 1 validation)
@@ -711,7 +777,8 @@ The IRS publishes MeF schema packages annually:
 
 ## 11. PDF Export
 
-**Approach:** Fill official IRS AcroForm PDF fields, then apply branding overlay.
+**Approach:** Fill official IRS AcroForm PDF fields, then apply branding
+overlay.
 
 ```
 computed_return.json
@@ -725,7 +792,8 @@ computed_return.json
   → output: completed_1040_2025.pdf
 ```
 
-IRS AcroForm field names are stable year-to-year (mostly). The mapping is a mini-program node like everything else, updateable via ingestion.
+IRS AcroForm field names are stable year-to-year (mostly). The mapping is a
+mini-program node like everything else, updateable via ingestion.
 
 ---
 
@@ -744,9 +812,12 @@ constants/
   2026/
 ```
 
-The runtime engine accepts a `year` parameter and resolves all nodes to that year's namespace. A return created with `year: 2025` always uses 2025 nodes, even if 2026 nodes exist.
+The runtime engine accepts a `year` parameter and resolves all nodes to that
+year's namespace. A return created with `year: 2025` always uses 2025 nodes,
+even if 2026 nodes exist.
 
 Adding a new year:
+
 ```bash
 tax ingest --source all --year 2026    # ingest all annual IRS publications for 2026
 tax build-node --run last              # regenerate changed nodes
@@ -759,10 +830,14 @@ tax build-node --run last              # regenerate changed nodes
 ## 13. Testing Strategy
 
 ### Level 1 — IRS Published Examples (baseline, automated)
-IRS embeds worked examples in instructions (Qualified Dividends worksheet, etc.). These become test fixtures in `index.test.ts`.
+
+IRS embeds worked examples in instructions (Qualified Dividends worksheet,
+etc.). These become test fixtures in `index.test.ts`.
 
 ### Level 2 — Spot Check Scenarios (manual → automated)
+
 Known return scenarios verified against Drake Tax / TurboTax output:
+
 - Single filer, $60k W-2, standard deduction
 - MFJ, W-2 + Schedule C, itemized
 - MFJ, capital gains, qualified dividends
@@ -770,16 +845,21 @@ Known return scenarios verified against Drake Tax / TurboTax output:
 - Self-employed with SE tax + QBI deduction
 
 ### Level 3 — Real Returns (gold standard, before launch)
-Anonymized real returns where the correct output is known (filed and IRS-accepted). Added as the test suite grows.
+
+Anonymized real returns where the correct output is known (filed and
+IRS-accepted). Added as the test suite grows.
 
 ### Agent Testing
-Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API calls. CI enforces `setAllowModelRequests(false)`.
+
+Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API
+calls. CI enforces `setAllowModelRequests(false)`.
 
 ---
 
 ## 14. Phasing
 
 ### Phase 1 — Core Engine (Weeks 1-6)
+
 - [ ] Runtime graph assembler + executor
 - [ ] Field node + connector node types
 - [ ] File-based return storage
@@ -790,6 +870,7 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 - [ ] Deno test suite with IRS examples
 
 ### Phase 2 — Input Forms + Schedules (Weeks 7-14)
+
 - [ ] All W-2, 1099 input nodes
 - [ ] Schedule A, B, C, D, E, SE
 - [ ] Key worksheets (Qualified Dividends, SS Benefits)
@@ -798,19 +879,23 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 - [ ] Level 2 spot check test scenarios
 
 ### Phase 3 — Export (Weeks 15-18)
+
 - [ ] PDF export (AcroForm filler + watermark layer)
 - [ ] MeF XML builder
 - [ ] MeF XSD validation
 - [ ] `export` CLI command
 
 ### Phase 4 — Ingestion Engine (Weeks 19-24)
-- [ ] Vibes SDK agent pipeline (DocumentParser, NodeMapper, ContextWriter, Codegen, Testgen)
+
+- [ ] Vibes SDK agent pipeline (DocumentParser, NodeMapper, ContextWriter,
+      Codegen, Testgen)
 - [ ] `sources.json` prebuilt IRS source list
 - [ ] `ingest`, `build-node`, `review-run` CLI commands
 - [ ] Ingestion run audit trail
 - [ ] 2026 year update as first real ingestion run
 
 ### Phase 5 — Hardening & Launch (Weeks 25-30)
+
 - [ ] Level 3 real return test suite
 - [ ] Performance (500 returns/season load)
 - [ ] Full MeF business rules implementation
@@ -818,6 +903,7 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 - [ ] Documentation
 
 ### Future Phases
+
 - State returns (CA, NY, TX priority)
 - Form 1040-X (amended returns)
 - Form 1040-NR (nonresident)
@@ -832,66 +918,71 @@ These are the foundational types everything is built on.
 
 ```typescript
 // core/types/tax-node.ts
-import { z } from 'zod'
+import { z } from "zod";
 
-export type NodeType = string   // refined to keyof NodeRegistry once registry is built
+export type NodeType = string; // refined to keyof NodeRegistry once registry is built
 
 // No NodeMetadata type — outputNodeTypes is inlined on TaxNode directly
 // All human-readable context (description, IRS citations, change history) lives in context.md
 
 export type NodeOutput = {
-  nodeType: NodeType
-  input: Record<string, unknown>
-}
+  nodeType: NodeType;
+  input: Record<string, unknown>;
+};
 
 export type NodeResult<TValue> = {
-  value: TValue
-  outputs: NodeOutput[]
-}
+  value: TValue;
+  outputs: NodeOutput[];
+};
 
 export abstract class TaxNode<TSchema extends z.ZodTypeAny, TValue> {
-  abstract readonly nodeType: NodeType
-  abstract readonly inputSchema: TSchema
-  abstract readonly outputNodeTypes: NodeType[]
-  abstract compute(input: z.infer<TSchema>): NodeResult<TValue>
+  abstract readonly nodeType: NodeType;
+  abstract readonly inputSchema: TSchema;
+  abstract readonly outputNodeTypes: NodeType[];
+  abstract compute(input: z.infer<TSchema>): NodeResult<TValue>;
 }
 ```
 
 ```typescript
 // core/runtime/registry.ts
-export const registry = { /* all nodes */ } as const
-export type NodeRegistry = typeof registry
-export type NodeType = keyof NodeRegistry
-export type NodeInput<K extends NodeType> = z.infer<NodeRegistry[K]['inputSchema']>
+export const registry = {/* all nodes */} as const;
+export type NodeRegistry = typeof registry;
+export type NodeType = keyof NodeRegistry;
+export type NodeInput<K extends NodeType> = z.infer<
+  NodeRegistry[K]["inputSchema"]
+>;
 
-export function dispatch<K extends NodeType>(nodeType: K, input: NodeInput<K>): void
+export function dispatch<K extends NodeType>(
+  nodeType: K,
+  input: NodeInput<K>,
+): void;
 ```
 
 ```typescript
 // core/types/return.ts
 export interface TaxReturn {
-  id: string              // returnId
-  ssn: string             // SSN or EIN
-  year: number            // tax year e.g. 2025
-  status: 'draft' | 'validated' | 'exported'
-  createdAt: string       // ISO date
-  updatedAt: string
+  id: string; // returnId
+  ssn: string; // SSN or EIN
+  year: number; // tax year e.g. 2025
+  status: "draft" | "validated" | "exported";
+  createdAt: string; // ISO date
+  updatedAt: string;
 }
 
 export interface ReturnComputed {
-  returnId: string
-  computedAt: string
-  values: Record<NodeType, unknown>  // nodeType → computed value
-  warnings: ValidationMessage[]
-  errors: ValidationMessage[]
-  mefBlocks: ValidationMessage[]
+  returnId: string;
+  computedAt: string;
+  values: Record<NodeType, unknown>; // nodeType → computed value
+  warnings: ValidationMessage[];
+  errors: ValidationMessage[];
+  mefBlocks: ValidationMessage[];
 }
 
 export interface ValidationMessage {
-  nodeType: NodeType
-  code: string
-  message: string
-  tier: 'mef_block' | 'error' | 'warning'
+  nodeType: NodeType;
+  code: string;
+  message: string;
+  tier: "mef_block" | "error" | "warning";
 }
 ```
 
@@ -903,32 +994,39 @@ Every node gets this exact template on creation:
 # {node_id}
 
 ## Computation
+
 {description of what this node computes — plain English}
 
 ## Inputs
+
 {list each input with ← source node}
 
 ## Output
+
 {list each output with → destination node}
 
 ## Sources
-| Ingested | Document | Section / Page | URL / Path | Run ID |
-|----------|----------|----------------|------------|--------|
-| {date} | {doc name} | {section} | {url} | {run_id} |
+
+| Ingested | Document   | Section / Page | URL / Path | Run ID   |
+| -------- | ---------- | -------------- | ---------- | -------- |
+| {date}   | {doc name} | {section}      | {url}      | {run_id} |
 
 ## Change History
-| Date | Change | Source Document | Section | Run ID |
-|------|--------|----------------|---------|--------|
-| {date} | Initial node created | {doc} | {section} | {run_id} |
+
+| Date   | Change               | Source Document | Section   | Run ID   |
+| ------ | -------------------- | --------------- | --------- | -------- |
+| {date} | Initial node created | {doc}           | {section} | {run_id} |
 ```
 
 ---
 
 ## 17. Open Questions
 
-- [ ] Which PDF library handles IRS AcroForm field filling best in Deno? (pdf-lib is Node-first, needs evaluation)
+- [ ] Which PDF library handles IRS AcroForm field filling best in Deno?
+      (pdf-lib is Node-first, needs evaluation)
 - [ ] IRS MeF schema download location for TY2025 — confirm URL pattern
-- [ ] Clearinghouse partner for MeF XML submission (Thomson Reuters, Drake, or independent)
+- [ ] Clearinghouse partner for MeF XML submission (Thomson Reuters, Drake, or
+      independent)
 - [x] Vibes SDK Deno compatibility — confirmed Deno native
 - [ ] QBI deduction (Section 199A) complexity — may need its own sub-phase
 
@@ -936,11 +1034,11 @@ Every node gets this exact template on creation:
 
 ## 18. Key References
 
-| Resource | URL | Purpose |
-|---|---|---|
-| Drake Tax KB | https://kb.drakesoftware.com/kb/Drake-Tax/18318.htm | Professional field reference |
-| Drake Federal Forms | https://kb.drakesoftware.com/kb/Drake-Tax/20001.htm | Form availability list |
-| Vibes SDK | https://vibes-sdk.a7ul.com/ | Agent framework |
-| IRS MeF Guide | Publication 4164 | E-file XML spec |
-| IRS Form 1040 Instructions | https://www.irs.gov/pub/irs-pdf/i1040gi.pdf | Calculation rules |
-| IRS Rev. Proc. (annual) | https://www.irs.gov/irb/ | Inflation adjustments |
+| Resource                   | URL                                                 | Purpose                      |
+| -------------------------- | --------------------------------------------------- | ---------------------------- |
+| Drake Tax KB               | https://kb.drakesoftware.com/kb/Drake-Tax/18318.htm | Professional field reference |
+| Drake Federal Forms        | https://kb.drakesoftware.com/kb/Drake-Tax/20001.htm | Form availability list       |
+| Vibes SDK                  | https://vibes-sdk.a7ul.com/                         | Agent framework              |
+| IRS MeF Guide              | Publication 4164                                    | E-file XML spec              |
+| IRS Form 1040 Instructions | https://www.irs.gov/pub/irs-pdf/i1040gi.pdf         | Calculation rules            |
+| IRS Rev. Proc. (annual)    | https://www.irs.gov/irb/                            | Inflation adjustments        |

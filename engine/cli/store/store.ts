@@ -1,5 +1,20 @@
 import { ensureDir } from "@std/fs";
+import { join } from "@std/path";
 import type { InputEntry, MetaJson } from "./types.ts";
+
+const RETURN_METADATA_JSON = "meta.json";
+const INPUTS_JSON = "inputs.json";
+
+async function readJsonFile<T>(filePath: string): Promise<T> {
+  try {
+    return JSON.parse(await Deno.readTextFile(filePath)) as T;
+  } catch (err) {
+    if (err instanceof Deno.errors.NotFound) {
+      throw new Error(`File not found: ${filePath}`);
+    }
+    throw err;
+  }
+}
 
 /**
  * Returns a stable ID for a new entry of the given nodeType.
@@ -24,7 +39,7 @@ export async function createReturn(
   baseDir: string,
 ): Promise<{ returnId: string; returnPath: string }> {
   const returnId = crypto.randomUUID();
-  const returnPath = `${baseDir}/${returnId}`;
+  const returnPath = join(baseDir, returnId);
 
   await ensureDir(returnPath);
 
@@ -35,62 +50,39 @@ export async function createReturn(
   };
 
   await Deno.writeTextFile(
-    `${returnPath}/meta.json`,
+    join(returnPath, RETURN_METADATA_JSON),
     JSON.stringify(meta, null, 2),
   );
-
   await Deno.writeTextFile(
-    `${returnPath}/inputs.json`,
+    join(returnPath, INPUTS_JSON),
     JSON.stringify([], null, 2),
   );
 
   return { returnId, returnPath };
 }
 
-/**
- * Reads and returns the MetaJson from returnPath/meta.json.
- * Throws a descriptive error if the file does not exist.
- */
-export async function loadMeta(returnPath: string): Promise<MetaJson> {
-  try {
-    const text = await Deno.readTextFile(`${returnPath}/meta.json`);
-    return JSON.parse(text) as MetaJson;
-  } catch (err) {
-    if (err instanceof Deno.errors.NotFound) {
-      throw new Error(`meta.json not found at ${returnPath}`);
-    }
-    throw err;
-  }
+export function loadMeta(returnPath: string): Promise<MetaJson> {
+  return readJsonFile<MetaJson>(join(returnPath, RETURN_METADATA_JSON));
 }
 
-/**
- * Reads and returns the InputEntry[] from returnPath/inputs.json.
- * Throws a descriptive error if the file does not exist.
- */
-export async function loadInputs(returnPath: string): Promise<InputEntry[]> {
-  try {
-    const text = await Deno.readTextFile(`${returnPath}/inputs.json`);
-    return JSON.parse(text) as InputEntry[];
-  } catch (err) {
-    if (err instanceof Deno.errors.NotFound) {
-      throw new Error(`inputs.json not found at ${returnPath}`);
-    }
-    throw err;
-  }
+export function loadInputs(returnPath: string): Promise<InputEntry[]> {
+  return readJsonFile<InputEntry[]>(join(returnPath, INPUTS_JSON));
 }
 
-/**
- * Appends entry to the inputs.json array at returnPath.
- * Immutable pattern: reads existing array, creates new array, writes back.
- */
+export async function writeInputs(
+  returnPath: string,
+  entries: InputEntry[],
+): Promise<void> {
+  await Deno.writeTextFile(
+    join(returnPath, INPUTS_JSON),
+    JSON.stringify(entries, null, 2),
+  );
+}
+
 export async function appendInput(
   returnPath: string,
   entry: InputEntry,
 ): Promise<void> {
   const existing = await loadInputs(returnPath);
-  const updated = [...existing, entry];
-  await Deno.writeTextFile(
-    `${returnPath}/inputs.json`,
-    JSON.stringify(updated, null, 2),
-  );
+  await writeInputs(returnPath, [...existing, entry]);
 }

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "w2_01",
+    "nodeType": "w2",
+    "data": {
+      "box1": 95000,
+      "box2": 18000,
+      "box3": 95000,
+      "box4": 5890,
+      "box5": 95000,
+      "box6": 1378,
+      "employer": "Acme Corp",
+      "ein": "12-3456789"
+    }
+  },
+  {
+    "id": "w2_02",
+    "nodeType": "w2",
+    "data": {
+      "box1": 42000,
+      "box2": 7500,
+      "box3": 42000,
+      "box4": 2604,
+      "box5": 42000,
+      "box6": 609,
+      "employer": "Side Gig LLC",
+      "ein": "98-7654321"
+    }
+  }
+]

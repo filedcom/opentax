@@ -6,7 +6,9 @@ Deno.test("createReturnCommand creates meta.json with correct fields", async () 
   try {
     const result = await createReturnCommand({ year: 2025, baseDir: tmpDir });
 
-    const metaText = await Deno.readTextFile(`${tmpDir}/${result.returnId}/meta.json`);
+    const metaText = await Deno.readTextFile(
+      `${tmpDir}/${result.returnId}/meta.json`,
+    );
     const meta = JSON.parse(metaText);
 
     assertEquals(meta.returnId, result.returnId);
@@ -22,7 +24,9 @@ Deno.test("createReturnCommand creates empty inputs.json", async () => {
   try {
     const result = await createReturnCommand({ year: 2025, baseDir: tmpDir });
 
-    const inputsText = await Deno.readTextFile(`${tmpDir}/${result.returnId}/inputs.json`);
+    const inputsText = await Deno.readTextFile(
+      `${tmpDir}/${result.returnId}/inputs.json`,
+    );
     const inputs = JSON.parse(inputsText);
 
     assertEquals(inputs, []);

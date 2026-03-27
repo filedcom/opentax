@@ -11,9 +11,7 @@ export class Line01zWagesNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodeTypes = [] as const;
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const wagesArr = Array.isArray(input.wages) ? input.wages : [input.wages];
-    const _total = wagesArr.reduce((sum, w) => sum + w, 0);
+  compute(_input: z.infer<typeof inputSchema>): NodeResult {
     return { outputs: [] };
   }
 }

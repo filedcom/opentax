@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { buildExecutionPlan, execute } from "../../../../mod.ts";
 import { registry } from "../../../../registry.ts";
 import { W2Node } from "./index.ts";

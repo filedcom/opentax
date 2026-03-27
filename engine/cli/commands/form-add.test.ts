@@ -4,7 +4,10 @@ import { formAddCommand } from "./form-add.ts";
 import { loadInputs } from "../store/store.ts";
 
 async function makeReturn(tmpDir: string): Promise<string> {
-  const { returnId } = await createReturnCommand({ year: 2025, baseDir: tmpDir });
+  const { returnId } = await createReturnCommand({
+    year: 2025,
+    baseDir: tmpDir,
+  });
   return returnId;
 }
 

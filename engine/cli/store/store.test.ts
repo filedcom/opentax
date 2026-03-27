@@ -1,5 +1,11 @@
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
-import { createReturn, loadInputs, loadMeta, appendInput, nextId } from "./store.ts";
+import {
+  appendInput,
+  createReturn,
+  loadInputs,
+  loadMeta,
+  nextId,
+} from "./store.ts";
 import type { InputEntry } from "./types.ts";
 
 // ---- nextId (pure, no I/O) ----
@@ -49,7 +55,9 @@ Deno.test("createReturn: creates inputs.json as empty array", async () => {
   const tmpDir = await Deno.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
 
-  const inputs = JSON.parse(await Deno.readTextFile(`${returnPath}/inputs.json`));
+  const inputs = JSON.parse(
+    await Deno.readTextFile(`${returnPath}/inputs.json`),
+  );
   assertEquals(inputs, []);
 });
 
@@ -76,7 +84,7 @@ Deno.test("loadMeta: throws descriptive error for nonexistent path", async () =>
   await assertRejects(
     () => loadMeta("/nonexistent/path/that/does/not/exist"),
     Error,
-    "meta.json not found at /nonexistent/path/that/does/not/exist",
+    "File not found:",
   );
 });
 
@@ -94,7 +102,7 @@ Deno.test("loadInputs: throws descriptive error for nonexistent path", async () 
   await assertRejects(
     () => loadInputs("/nonexistent/path/that/does/not/exist"),
     Error,
-    "inputs.json not found at /nonexistent/path/that/does/not/exist",
+    "File not found:",
   );
 });
 
@@ -103,7 +111,11 @@ Deno.test("loadInputs: throws descriptive error for nonexistent path", async () 
 Deno.test("appendInput: appends entry to inputs.json", async () => {
   const tmpDir = await Deno.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
-  const entry: InputEntry = { id: "w2_01", nodeType: "w2", data: { box1: 85000 } };
+  const entry: InputEntry = {
+    id: "w2_01",
+    nodeType: "w2",
+    data: { box1: 85000 },
+  };
 
   await appendInput(returnPath, entry);
 
@@ -115,8 +127,16 @@ Deno.test("appendInput: appends entry to inputs.json", async () => {
 Deno.test("appendInput: two appends produce array of length 2", async () => {
   const tmpDir = await Deno.makeTempDir();
   const { returnPath } = await createReturn(2025, tmpDir);
-  const entry1: InputEntry = { id: "w2_01", nodeType: "w2", data: { box1: 85000 } };
-  const entry2: InputEntry = { id: "w2_02", nodeType: "w2", data: { box1: 45000 } };
+  const entry1: InputEntry = {
+    id: "w2_01",
+    nodeType: "w2",
+    data: { box1: 85000 },
+  };
+  const entry2: InputEntry = {
+    id: "w2_02",
+    nodeType: "w2",
+    data: { box1: 45000 },
+  };
 
   await appendInput(returnPath, entry1);
   await appendInput(returnPath, entry2);

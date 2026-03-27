@@ -26,10 +26,8 @@ function buildEngineInputs(
 ): Record<string, unknown> {
   const grouped: Record<string, unknown[]> = {};
   for (const entry of entries) {
-    const key = `${entry.nodeType}s`; // w2 -> w2s
-    if (!grouped[key]) {
-      grouped[key] = [];
-    }
+    const key = `${entry.nodeType}s`;
+    if (!grouped[key]) grouped[key] = [];
     grouped[key].push(entry.data);
   }
   return grouped;
@@ -39,18 +37,15 @@ export async function getReturnCommand(
   args: GetReturnArgs,
 ): Promise<GetReturnResult> {
   const returnPath = join(args.baseDir, args.returnId);
-  const meta = await loadMeta(returnPath);
-  const entries = await loadInputs(returnPath);
+  const [meta, entries] = await Promise.all([
+    loadMeta(returnPath),
+    loadInputs(returnPath),
+  ]);
 
-  // Build engine inputs from stored entries
   const engineInputs = buildEngineInputs(entries);
-
-  // Replay the engine
   const plan = buildExecutionPlan(registry, engineInputs);
   const result = execute(plan, registry, engineInputs);
 
-  // Extract line_1a from pending
-  // W2Node deposits wages as [box1] array, so pending["line_01z_wages"]["wages"] is number[]
   const wagesPending = result.pending["line_01z_wages"];
   let line1a = 0;
   if (wagesPending && wagesPending["wages"] !== undefined) {

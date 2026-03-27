@@ -5,7 +5,10 @@ import { appendInput } from "../store/store.ts";
 import type { InputEntry } from "../store/types.ts";
 
 async function makeReturn(tmpDir: string): Promise<string> {
-  const { returnId } = await createReturnCommand({ year: 2025, baseDir: tmpDir });
+  const { returnId } = await createReturnCommand({
+    year: 2025,
+    baseDir: tmpDir,
+  });
   return returnId;
 }
 

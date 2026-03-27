@@ -5,6 +5,16 @@ import { getReturnCommand } from "./commands/get-return.ts";
 
 const RETURNS_DIR = "./returns";
 
+async function runCommand(fn: () => Promise<unknown>): Promise<void> {
+  try {
+    const result = await fn();
+    console.log(JSON.stringify(result, null, 2));
+  } catch (err: unknown) {
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    Deno.exit(1);
+  }
+}
+
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
     string: ["year", "returnId", "node_type"],
@@ -18,8 +28,7 @@ async function main(): Promise<void> {
       console.error("Error: --year is required and must be a number");
       Deno.exit(1);
     }
-    const result = await createReturnCommand({ year, baseDir: RETURNS_DIR });
-    console.log(JSON.stringify(result, null, 2));
+    await runCommand(() => createReturnCommand({ year, baseDir: RETURNS_DIR }));
   } else if (cmd === "form" && sub === "add") {
     const returnId = args.returnId;
     const nodeType = args.node_type;
@@ -30,37 +39,24 @@ async function main(): Promise<void> {
       );
       Deno.exit(1);
     }
-    try {
-      const result = await formAddCommand({
-        returnId,
-        nodeType,
-        dataJson,
-        baseDir: RETURNS_DIR,
-      });
-      console.log(JSON.stringify(result, null, 2));
-    } catch (err: unknown) {
-      console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
-      Deno.exit(1);
-    }
+    await runCommand(() =>
+      formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR })
+    );
   } else if (cmd === "return" && sub === "get") {
     const returnId = args.returnId;
     if (!returnId) {
       console.error("Error: --returnId is required");
       Deno.exit(1);
     }
-    try {
-      const result = await getReturnCommand({ returnId, baseDir: RETURNS_DIR });
-      console.log(JSON.stringify(result, null, 2));
-    } catch (err: unknown) {
-      console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
-      Deno.exit(1);
-    }
+    await runCommand(() =>
+      getReturnCommand({ returnId, baseDir: RETURNS_DIR })
+    );
   } else {
     console.error(
       "Usage:\n" +
-      "  tax return create --year 2025\n" +
-      "  tax form add --returnId <id> --node_type w2 '{...}'\n" +
-      "  tax return get --returnId <id>",
+        "  tax return create --year 2025\n" +
+        "  tax form add --returnId <id> --node_type w2 '{...}'\n" +
+        "  tax return get --returnId <id>",
     );
     Deno.exit(1);
   }

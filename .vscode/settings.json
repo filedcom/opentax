@@ -4,5 +4,6 @@
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.ts": "always"
-  }
+  },
+  "biome.enabled": false
 }
