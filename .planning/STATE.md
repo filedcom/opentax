@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 01
-last_updated: "2026-03-27T16:20:00Z"
+status: Phase 01 Complete
+last_updated: "2026-03-27T16:24:08Z"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -18,13 +18,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Accurate, IRS-compliant computation: given a set of form inputs, produce the correct tax liability.
-**Current focus:** Phase 01 — implement-tax-graph-view-static-node-graph-traversal-cli-command
+**Current focus:** Phase 01 — COMPLETE (2026-03-27)
 
 ## Current Status
 
 - Milestone v1.0 — W-2 + Line 1a MVP: COMPLETE ✅
 - Archived: `.planning/milestones/v1.0-ROADMAP.md`, `v1.0-REQUIREMENTS.md`, `v1.0-MILESTONE-AUDIT.md`
-- Last action: Completed Phase 01 Plan 01 — computeTaxGraph static graph traversal (2026-03-27)
+- Last action: Completed Phase 01 Plan 02 — graph view CLI command (ASCII + JSON output modes) (2026-03-27)
 
 ## v1.0 Summary
 
@@ -55,6 +55,8 @@ All 3 phases complete, 5 plans, 49 tests passing:
 - Per-branch visited Set clone for cycle guard: allows diamond patterns, blocks same-path cycles
 - maxDepth checked at expansion (depth >= maxDepth): root at maxDepth=0 is returned with empty children
 - Unregistered nodes appear in tree with registered:false rather than being silently omitted
+- ASCII path calls graphViewCommand directly (not via runCommand) — tree output is plain text, not JSON envelope
+- formatAsciiTree exported as standalone pure function for isolated unit testing
 
 ## Accumulated Context
 
@@ -62,6 +64,7 @@ All 3 phases complete, 5 plans, 49 tests passing:
 
 - Phase 1 added: Implement tax graph view — static node graph traversal CLI command
 - Phase 01 Plan 01 complete: computeTaxGraph pure function — 8 tests, 2 files created
+- Phase 01 Plan 02 complete: graph view CLI command — 5 tests, 3 files (62 total tests passing)
 
 ## Open Blockers
 
