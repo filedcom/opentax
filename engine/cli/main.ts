@@ -2,6 +2,7 @@ import { parseArgs } from "@std/cli";
 import { createReturnCommand } from "./commands/create-return.ts";
 import { formAddCommand } from "./commands/form-add.ts";
 import { getReturnCommand } from "./commands/get-return.ts";
+import { graphViewCommand } from "./commands/graph-view.ts";
 
 const RETURNS_DIR = "./returns";
 
@@ -17,7 +18,8 @@ async function runCommand(fn: () => Promise<unknown>): Promise<void> {
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type"],
+    string: ["year", "returnId", "node_type", "depth"],
+    boolean: ["json"],
   });
   const cmd = args._[0] as string | undefined;
   const sub = args._[1] as string | undefined;
@@ -51,12 +53,39 @@ async function main(): Promise<void> {
     await runCommand(() =>
       getReturnCommand({ returnId, baseDir: RETURNS_DIR })
     );
+  } else if (cmd === "graph" && sub === "view") {
+    const nodeType = args.node_type;
+    if (!nodeType) {
+      console.error("Error: --node_type is required");
+      Deno.exit(1);
+    }
+    const depth = args.depth !== undefined ? Number(args.depth) : Infinity;
+    if (isNaN(depth) || depth < 0) {
+      console.error("Error: --depth must be a non-negative number");
+      Deno.exit(1);
+    }
+    const json = args.json === true;
+    if (json) {
+      await runCommand(() =>
+        Promise.resolve(graphViewCommand({ nodeType, depth, json: true }))
+      );
+    } else {
+      try {
+        graphViewCommand({ nodeType, depth, json: false });
+      } catch (err: unknown) {
+        console.error(
+          `Error: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        Deno.exit(1);
+      }
+    }
   } else {
     console.error(
       "Usage:\n" +
         "  tax return create --year 2025\n" +
         "  tax form add --returnId <id> --node_type w2 '{...}'\n" +
-        "  tax return get --returnId <id>",
+        "  tax return get --returnId <id>\n" +
+        "  tax graph view --node_type <type> [--depth <n>] [--json]",
     );
     Deno.exit(1);
   }
