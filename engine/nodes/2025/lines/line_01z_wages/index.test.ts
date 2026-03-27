@@ -15,12 +15,12 @@ Deno.test("line_01z_wages: two W-2s (85000+45000) accumulate wages=[85000,45000]
   assertEquals(wages.includes(45000), true);
 });
 
-Deno.test("line_01z_wages: single W-2 produces wages=85000 in pending", () => {
+Deno.test("line_01z_wages: single W-2 produces wages=[85000] in pending", () => {
   const inputs = { w2s: [{ box1: 85000 }] };
   const plan = buildExecutionPlan(registry, inputs);
   const result = execute(plan, registry, inputs);
 
-  assertEquals(result.pending["line_01z_wages"]?.["wages"], 85000);
+  assertEquals(result.pending["line_01z_wages"]?.["wages"], [85000]);
 });
 
 Deno.test("Line01zWagesNode.compute: accepts scalar wages without error", () => {

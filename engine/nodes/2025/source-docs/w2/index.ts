@@ -16,7 +16,7 @@ export class W2Node extends TaxNode<typeof inputSchema> {
       outputs: [
         {
           nodeType: "line_01z_wages" as const,
-          input: { wages: input.w2.box1 },
+          input: { wages: [input.w2.box1] },
         },
       ],
     };
