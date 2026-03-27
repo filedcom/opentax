@@ -1,6 +1,6 @@
-import { computeTaxGraph } from "../../core/runtime/graph.ts";
 import type { GraphNode } from "../../core/runtime/graph.ts";
-import { registry } from "../../registry.ts";
+import { computeTaxGraph } from "../../core/runtime/graph.ts";
+import { registry } from "../../nodes/2025/registry.ts";
 
 export type GraphViewArgs = {
   readonly nodeType: string;

@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
-import { createReturnCommand } from "./create-return.ts";
-import { formAddCommand } from "./form-add.ts";
 import { loadInputs } from "../store/store.ts";
+import { formAddCommand } from "./form.ts";
+import { createReturnCommand } from "./return.ts";
 
 async function makeReturn(tmpDir: string): Promise<string> {
   const { returnId } = await createReturnCommand({

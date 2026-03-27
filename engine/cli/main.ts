@@ -1,8 +1,7 @@
 import { parseArgs } from "@std/cli";
-import { createReturnCommand } from "./commands/create-return.ts";
-import { formAddCommand } from "./commands/form-add.ts";
-import { getReturnCommand } from "./commands/get-return.ts";
-import { graphViewCommand } from "./commands/graph-view.ts";
+import { formAddCommand } from "./commands/form.ts";
+import { graphViewCommand } from "./commands/graph.ts";
+import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 
 const RETURNS_DIR = "./returns";
 

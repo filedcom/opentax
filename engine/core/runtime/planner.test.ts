@@ -1,9 +1,9 @@
 import { assertEquals } from "@std/assert";
-import { buildExecutionPlan } from "./planner.ts";
-import type { NodeRegistry } from "../types/node-registry.ts";
-import { TaxNode } from "../types/tax-node.ts";
 import { z } from "zod";
+import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
+import { TaxNode } from "../types/tax-node.ts";
+import { buildExecutionPlan } from "./planner.ts";
 
 // --- Mock Nodes ---
 

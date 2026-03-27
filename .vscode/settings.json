@@ -3,7 +3,16 @@
   "deno.lint": true,
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.ts": "always"
+    "source.fixAll.deno": "always",
+    "source.organizeImports": "always"
   },
+  "typescript.format.enable": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+
   "biome.enabled": false
 }

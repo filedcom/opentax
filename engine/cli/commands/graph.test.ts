@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { formatAsciiTree, graphViewCommand } from "./graph-view.ts";
 import type { GraphNode } from "../../core/runtime/graph.ts";
+import { formatAsciiTree, graphViewCommand } from "./graph.ts";
 
 // ---------------------------------------------------------------------------
 // Test 1: formatAsciiTree renders a flat tree with correct connectors
@@ -126,7 +126,11 @@ Deno.test("graphViewCommand: json=false prints ASCII tree to stdout via console.
 // Test 5: graphViewCommand with json=true returns GraphNode object
 // ---------------------------------------------------------------------------
 Deno.test("graphViewCommand: json=true returns GraphNode object", () => {
-  const result = graphViewCommand({ nodeType: "start", depth: Infinity, json: true });
+  const result = graphViewCommand({
+    nodeType: "start",
+    depth: Infinity,
+    json: true,
+  });
 
   // Must return a GraphNode (not void)
   assertEquals(result !== undefined, true);

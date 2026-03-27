@@ -1,8 +1,23 @@
-import { loadInputs, loadMeta } from "../store/store.ts";
-import { buildExecutionPlan, execute } from "../../mod.ts";
-import { registry } from "../../registry.ts";
-import type { InputEntry } from "../store/types.ts";
+import { createReturn } from "../store/store.ts";
+
+export type CreateReturnArgs = {
+  readonly year: number;
+  readonly baseDir: string;
+};
+
 import { join } from "@std/path";
+import { buildExecutionPlan, execute } from "../../mod.ts";
+import { f1040_line_1z } from "../../nodes/2025/f1040/f1040_line_01z/index.ts";
+import { registry } from "../../nodes/2025/registry.ts";
+import { loadInputs, loadMeta } from "../store/store.ts";
+import type { InputEntry } from "../store/types.ts";
+
+export async function createReturnCommand(
+  args: CreateReturnArgs,
+): Promise<{ returnId: string }> {
+  const { returnId } = await createReturn(args.year, args.baseDir);
+  return { returnId };
+}
 
 export type GetReturnArgs = {
   readonly returnId: string;
@@ -46,7 +61,7 @@ export async function getReturnCommand(
   const plan = buildExecutionPlan(registry, engineInputs);
   const result = execute(plan, registry, engineInputs);
 
-  const wagesPending = result.pending["line_01z_wages"];
+  const wagesPending = result.pending[f1040_line_1z.nodeType];
   let line1a = 0;
   if (wagesPending && wagesPending["wages"] !== undefined) {
     const wages = wagesPending["wages"];

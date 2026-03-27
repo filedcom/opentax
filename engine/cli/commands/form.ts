@@ -1,7 +1,7 @@
-import { loadInputs, nextId, writeInputs } from "../store/store.ts";
-import { registry } from "../../registry.ts";
-import type { InputEntry } from "../store/types.ts";
 import { join } from "@std/path";
+import { registry } from "../../nodes/2025/registry.ts";
+import { loadInputs, nextId, writeInputs } from "../store/store.ts";
+import type { InputEntry } from "../store/types.ts";
 
 export type FormAddArgs = {
   readonly returnId: string;
@@ -30,9 +30,7 @@ export async function formAddCommand(
     throw new Error(`Unknown node type: ${args.nodeType}`);
   }
 
-  // Each node's inputSchema expects { [nodeType]: <inner data> }
-  const wrappedInput = { [args.nodeType]: data };
-  const parsed = node.inputSchema.safeParse(wrappedInput);
+  const parsed = node.inputSchema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
   }

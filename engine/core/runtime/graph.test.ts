@@ -1,11 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { computeTaxGraph } from "./graph.ts";
-import type { GraphNode } from "./graph.ts";
-import type { NodeRegistry } from "../types/node-registry.ts";
-import { TaxNode } from "../types/tax-node.ts";
 import { z } from "zod";
+import { registry } from "../../nodes/2025/registry.ts";
+import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
-import { registry } from "../../registry.ts";
+import { TaxNode } from "../types/tax-node.ts";
+import type { GraphNode } from "./graph.ts";
+import { computeTaxGraph } from "./graph.ts";
 
 // --- Mock Nodes ---
 
@@ -40,7 +40,7 @@ class MockBNode extends TaxNode<typeof noOpSchema> {
 
 // --- Tests ---
 
-Deno.test("computeTaxGraph: start returns full tree start -> w2 -> line_01z_wages", () => {
+Deno.test("computeTaxGraph: start returns full tree start -> w2 -> f1040_line_1z", () => {
   const result: GraphNode = computeTaxGraph("start", registry);
 
   assertEquals(result.nodeType, "start");
@@ -55,13 +55,13 @@ Deno.test("computeTaxGraph: start returns full tree start -> w2 -> line_01z_wage
   assertEquals(w2Node.children.length, 1);
 
   const lineNode = w2Node.children[0];
-  assertEquals(lineNode.nodeType, "line_01z_wages");
+  assertEquals(lineNode.nodeType, "f1040_line_1z");
   assertEquals(lineNode.depth, 2);
   assertEquals(lineNode.registered, true);
   assertEquals(lineNode.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: w2 returns subtree w2 -> line_01z_wages", () => {
+Deno.test("computeTaxGraph: w2 returns subtree w2 -> f1040_line_1z", () => {
   const result: GraphNode = computeTaxGraph("w2", registry);
 
   assertEquals(result.nodeType, "w2");
@@ -70,16 +70,16 @@ Deno.test("computeTaxGraph: w2 returns subtree w2 -> line_01z_wages", () => {
   assertEquals(result.children.length, 1);
 
   const lineNode = result.children[0];
-  assertEquals(lineNode.nodeType, "line_01z_wages");
+  assertEquals(lineNode.nodeType, "f1040_line_1z");
   assertEquals(lineNode.depth, 1);
   assertEquals(lineNode.registered, true);
   assertEquals(lineNode.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: line_01z_wages returns leaf node with empty children", () => {
-  const result: GraphNode = computeTaxGraph("line_01z_wages", registry);
+Deno.test("computeTaxGraph: f1040_line_1z returns leaf node with empty children", () => {
+  const result: GraphNode = computeTaxGraph("f1040_line_1z", registry);
 
-  assertEquals(result.nodeType, "line_01z_wages");
+  assertEquals(result.nodeType, "f1040_line_1z");
   assertEquals(result.depth, 0);
   assertEquals(result.registered, true);
   assertEquals(result.children.length, 0);
@@ -165,7 +165,7 @@ Deno.test("computeTaxGraph: unknown root nodeType throws error with descriptive 
       assertEquals(err.message.includes("bogus_type"), true);
       assertEquals(err.message.includes("start"), true);
       assertEquals(err.message.includes("w2"), true);
-      assertEquals(err.message.includes("line_01z_wages"), true);
+      assertEquals(err.message.includes("f1040_line_1z"), true);
     }
   }
 });
