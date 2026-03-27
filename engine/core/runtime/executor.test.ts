@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { execute } from "./executor.ts";
 import type { NodeRegistry } from "../types/node-registry.ts";
 import { TaxNode } from "../types/tax-node.ts";

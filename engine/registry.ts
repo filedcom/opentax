@@ -1,7 +1,7 @@
 import type { NodeRegistry } from "./core/types/node-registry.ts";
-import { StartNode } from "./nodes/start/2025/index.ts";
-import { W2Node } from "./nodes/inputs/w2/2025/index.ts";
-import { Line01zWagesNode } from "./nodes/form_1040/line_01z_wages/2025/index.ts";
+import { StartNode } from "./nodes/2025/start/index.ts";
+import { W2Node } from "./nodes/2025/source-docs/w2/index.ts";
+import { Line01zWagesNode } from "./nodes/2025/lines/line_01z_wages/index.ts";
 
 export const registry: NodeRegistry = {
   start: new StartNode(),

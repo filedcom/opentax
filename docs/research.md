@@ -100,18 +100,19 @@ The node declares `inputSchema`. The engine fetches, validates, and forwards —
 ### Each Node is a Self-Contained Mini-Program
 
 ```
-forms/
-  line_15_taxable_income/
-    2025/
-      index.ts          ← TaxNode definition (id + inputSchema + outputNodeTypes + compute)
-      index.test.ts     ← IRS fixture tests
-      context.md        ← IRS citation, change history (ingestion target)
+nodes/
+  2025/
+    lines/
+      line_15_taxable_income/
+        index.ts          ← TaxNode definition (id + inputSchema + outputNodeTypes + compute)
+        index.test.ts     ← IRS fixture tests (written BEFORE index.ts)
+        context.md        ← IRS citation, change history (ingestion target)
 ```
 
 Example node:
 
 ```typescript
-// forms/line_15_taxable_income/2025/index.ts
+// nodes/2025/lines/line_15_taxable_income/index.ts
 const inputSchema = z.object({
   agi: z.number(),
   deduction_amount: z.number(),
@@ -311,50 +312,55 @@ Two separate Deno workspace packages — same repo, separate CLIs.
 
     nodes/                   ← all TaxNode implementations
                              ← each node dir: index.ts + index.test.ts + context.md + node.lock
-      start/2025/
-      inputs/
-        w2/2025/
-        w2_g/2025/
-        1099_int/2025/
-        1099_div/2025/
-        1099_b/2025/
-        1099_r/2025/
-        1099_misc/2025/
-        1099_nec/2025/
-        k1/2025/
-        ...
-      schedules/
-        schedule_a/2025/
-        schedule_b/2025/
-        schedule_c/2025/
-        schedule_d/2025/
-        schedule_e/2025/
-        schedule_se/2025/
-        schedule_1/2025/
-        schedule_2/2025/
-        schedule_3/2025/
-        ...
-      worksheets/
-        qualified_dividends_cgt/2025/
-        social_security_benefits/2025/
-        child_tax_credit/2025/
-        ...
-      credits/
-        8812_ctc/2025/
-        earned_income_credit/2025/
-        education_credits/2025/
-        ...
-      form_1040/
-        line_01z_wages/2025/
-        line_11_agi/2025/
-        line_15_taxable_income/2025/
-        line_16_tax/2025/
-        line_24_total_tax/2025/
-        line_37_refund/2025/
-        line_38_owed/2025/
-        ...
-      constants/
-        2025/
+      2025/                  ← year is top-level; copy entire dir to add a new tax year
+        start/
+        source-docs/         ← taxpayer source documents (W-2, 1099s, K-1s)
+          w2/
+          w2_g/
+          1099_int/
+          1099_div/
+          1099_b/
+          1099_r/
+          1099_misc/
+          1099_nec/
+          k1/
+          ...
+        schedules/           ← lettered schedules (A, B, C, D, E, SE)
+          schedule_a/
+          schedule_b/
+          schedule_c/
+          schedule_d/
+          schedule_e/
+          schedule_se/
+          ...
+        additional/          ← numbered additional schedules (1, 2, 3)
+          schedule_1/
+          schedule_2/
+          schedule_3/
+          ...
+        forms/               ← supplemental forms + credits (8812, 2441, 8863, etc.)
+          8812_ctc/
+          2441_dependent_care/
+          8863_education/
+          8949_capital_assets/
+          4562_depreciation/
+          6251_amt/
+          ...
+        worksheets/          ← computation-only worksheets, not filed (QDCGT, SS benefits, etc.)
+          qualified_dividends_cgt/
+          social_security_benefits/
+          child_tax_credit/
+          ...
+        lines/               ← core 1040 line nodes
+          line_01z_wages/
+          line_11_agi/
+          line_15_taxable_income/
+          line_16_tax/
+          line_24_total_tax/
+          line_37_refund/
+          line_38_owed/
+          ...
+        constants/
           tax_brackets.ts
           standard_deductions.ts
           phase_out_thresholds.ts
@@ -399,25 +405,25 @@ Two separate Deno workspace packages — same repo, separate CLIs.
 
 ```bash
 # 1. Create a return
-tax create-return --ssn 123-45-6789 --year 2025
+tax return create --ssn 123-45-6789 --year 2025
 # → creates returns/ret_abc123/meta.json + empty inputs.json
 
 # 2. Add form data — must be a complete, valid node input (no partial fields)
-tax form add --return_id ret_abc123 --node_type w2 '{"box1": 85000, "box2": 12000, "box12": [...]}'
-tax form add --return_id ret_abc123 --node_type schedule_c '{"gross_receipts": 45000, "expenses": {...}}'
-tax form add --return_id ret_abc123 --node_type 1099_int '{"payer": "Chase", "amount": 320}'
+tax form add --returnId ret_abc123 --node_type w2 '{"box1": 85000, "box2": 12000, "box12": [...]}'
+tax form add --returnId ret_abc123 --node_type schedule_c '{"gross_receipts": 45000, "expenses": {...}}'
+tax form add --returnId ret_abc123 --node_type 1099_int '{"payer": "Chase", "amount": 320}'
 
 # 3. Get current computed state at any time (re-runs engine from inputs.json)
-tax get-return ret_abc123
+tax return get --returnId ret_abc123
 # → JSON: all computed lines, AGI, taxable income, tax owed, refund
 
 # 4. Validate before export
-tax validate ret_abc123
+tax validate --returnId ret_abc123
 # → warnings: [...], errors: [...], mef_blocks: [...]
 
 # 5. Export
-tax export ret_abc123 --format pdf --output ./returns/
-tax export ret_abc123 --format mef-xml --output ./efile/
+tax export --returnId ret_abc123 --format pdf --output ./returns/
+tax export --returnId ret_abc123 --format mef-xml --output ./efile/
 ```
 
 ### Input Management Rules
@@ -440,10 +446,10 @@ add-form flow:
 Each added input gets a stable `id` assigned on insert. Array-type inputs (W-2, 1099s, K-1s) are addressable by ID — retrieve, replace, or delete individually:
 
 ```bash
-tax form list --return_id ret_abc123 --node_type w2              # list all W-2s with their ids
-tax form list --return_id ret_abc123 --node_type w2 --node_id w2_01  # retrieve a specific W-2
-tax form remove --return_id ret_abc123 --node_type w2 --node_id w2_01
-tax form replace --return_id ret_abc123 --node_type w2 --node_id w2_01 '{"box1": 90000, ...}'
+tax form list --returnId ret_abc123 --node_type w2              # list all W-2s with their ids
+tax form list --returnId ret_abc123 --node_type w2 --node_id w2_01  # retrieve a specific W-2
+tax form remove --returnId ret_abc123 --node_type w2 --node_id w2_01
+tax form replace --returnId ret_abc123 --node_type w2 --node_id w2_01 '{"box1": 90000, ...}'
 ```
 
 ---
@@ -543,9 +549,11 @@ Human sees plain-English changes to computation descriptions, input/output wirin
 For each affected node (in parallel):
   CodingAgent
     → reads node's context.md
-    → writes/overwrites index.ts  (TaxNode class: inputSchema + outputNodeIds + compute)
-    → writes/overwrites index.test.ts  (IRS example fixtures from context.md)
+    → writes/overwrites index.test.ts  (IRS example fixtures from context.md) ← FIRST
+    → writes/overwrites index.ts  (TaxNode class: inputSchema + outputNodeIds + compute) ← SECOND
 ```
+
+**Key rule:** Tests are always written before implementation code. `index.test.ts` is generated from `context.md` first — fixtures derived from IRS examples and expected outputs. `index.ts` is written second, with the tests as the specification. This enforces TDD even in the automated codegen pipeline.
 
 **[HUMAN REVIEWS + MERGES CODE]**
 
@@ -775,7 +783,7 @@ Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API 
 - [ ] Runtime graph assembler + executor
 - [ ] Field node + connector node types
 - [ ] File-based return storage
-- [ ] `create-return`, `add-form`, `get-return` CLI commands
+- [ ] `return create`, `return get`, `form add` CLI commands
 - [ ] Core 1040 lines (1040 main form, Schedule 1/2/3)
 - [ ] Constants: 2025 tax brackets, standard deductions
 - [ ] Basic two-tier validator
