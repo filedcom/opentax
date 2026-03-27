@@ -31,7 +31,7 @@ Three phases to go from empty repo to a working CLI that accepts a W-2, computes
 
 Plans:
 - [x] 01-01: Workspace setup — deno.json workspace root, engine/deno.json, engine/mod.ts, core types (TaxNode, NodeOutput, NodeResult, NodeRegistry)
-- [ ] 01-02: Two-phase executor — planner.ts (expand instances + topo sort) + executor.ts (pending dict accumulation) with unit tests
+- [x] 01-02: Two-phase executor — planner.ts (expand instances + topo sort) + executor.ts (pending dict accumulation) with unit tests
 
 ---
 
