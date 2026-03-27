@@ -53,7 +53,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: Three nodes + fixture tests — start/2025/index.ts, inputs/w2/2025/index.ts + index.test.ts, form_1040/line_01z_wages/2025/index.ts + index.test.ts, registry.ts wiring all three
+- [x] 02-01: Three nodes + fixture tests — start/2025/index.ts, inputs/w2/2025/index.ts + index.test.ts, form_1040/line_01z_wages/2025/index.ts + index.test.ts, registry.ts wiring all three
 
 ---
 

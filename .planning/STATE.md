@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in-progress
-last_updated: "2026-03-27T00:36:35.955Z"
+status: Ready to plan
+last_updated: "2026-03-27T00:48:03.466Z"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # Project State
@@ -41,6 +41,8 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 - **01-01:** NodeRegistry is Readonly<Record<string, TaxNode>> — maps nodeType strings to instances
 - [Phase 01-02]: Scalar-to-array promotion: second deposit of same key promotes to array — core W-2 wages accumulation pattern
 - [Phase 01-02]: Planner runs start.compute() with actual inputs to discover instances — not purely static metadata
+- [Phase 02]: StartNode emits pre-suffixed w2_01/w2_02 IDs; planner strips suffix via baseNodeType() for registry lookup
+- [Phase 02]: Line01zWagesNode is a leaf — pending holds accumulated input; Phase 3 CLI calls compute() to extract line_1a total
 
 ## Performance Metrics
 
@@ -48,6 +50,7 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 |-------|------|----------|-------|-------|
 | 01    | 01   | 2min     | 2     | 7     |
 | 01    | 02   | 3min     | 2     | 5     |
+| Phase 02 P01 | 3min | 2 tasks | 7 files |
 
 ## Session
 
