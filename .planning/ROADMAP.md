@@ -8,7 +8,7 @@ Three phases to go from empty repo to a working CLI that accepts a W-2, computes
 
 - [ ] **Phase 1: Core Engine Foundation** — Deno workspace, TaxNode types, two-phase executor
 - [ ] **Phase 2: W-2 + Line 1a Nodes** — start/w2/line_01z_wages nodes with IRS tests
-- [ ] **Phase 3: CLI + Return Storage** — create-return, form add, get-return commands
+- [x] **Phase 3: CLI + Return Storage** — create-return, form add, get-return commands (completed 2026-03-27)
 
 ## Phase Details
 
@@ -76,7 +76,7 @@ Plans:
 
 Plans:
 - [x] 03-01: Return storage — returns/ directory conventions, meta.json schema, inputs.json schema, stable ID assignment, load/save utilities
-- [ ] 03-02: CLI commands — cli.ts entry point, create-return, form add (validate + append), get-return (replay + output JSON)
+- [x] 03-02: CLI commands — cli.ts entry point, create-return, form add (validate + append), get-return (replay + output JSON)
 
 ---
 

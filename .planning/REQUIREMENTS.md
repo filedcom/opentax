@@ -37,11 +37,11 @@ Scope: one W-2 → line 1a of 1040. End-to-end working CLI.
 
 ### CLI
 
-- [ ] **CLI-01**: `tax create-return --year 2025` creates `returns/{id}/meta.json` + empty `inputs.json`
-- [ ] **CLI-02**: `tax form add --return_id {id} --node_type w2 '{...}'` validates against W-2 inputSchema, appends to inputs.json
-- [ ] **CLI-03**: `tax get-return {id}` re-runs engine from inputs.json, outputs computed result as JSON (includes line_1a total)
+- [x] **CLI-01**: `tax create-return --year 2025` creates `returns/{id}/meta.json` + empty `inputs.json`
+- [x] **CLI-02**: `tax form add --return_id {id} --node_type w2 '{...}'` validates against W-2 inputSchema, appends to inputs.json
+- [x] **CLI-03**: `tax get-return {id}` re-runs engine from inputs.json, outputs computed result as JSON (includes line_1a total)
 - [ ] **CLI-04**: Validation error on incomplete W-2 input (missing required fields)
-- [ ] **CLI-05**: Conflict error if duplicate singular form types (not applicable for W-2 which is array-type, but error handling for malformed JSON)
+- [x] **CLI-05**: Conflict error if duplicate singular form types (not applicable for W-2 which is array-type, but error handling for malformed JSON)
 
 ### Return Storage
 
@@ -103,11 +103,11 @@ Scope: one W-2 → line 1a of 1040. End-to-end working CLI.
 | NODE-03 | Phase 2 | Complete |
 | NODE-04 | Phase 2 | Complete |
 | NODE-05 | Phase 2 | Complete |
-| CLI-01 | Phase 3 | Pending |
-| CLI-02 | Phase 3 | Pending |
-| CLI-03 | Phase 3 | Pending |
+| CLI-01 | Phase 3 | Complete |
+| CLI-02 | Phase 3 | Complete |
+| CLI-03 | Phase 3 | Complete |
 | CLI-04 | Phase 3 | Pending |
-| CLI-05 | Phase 3 | Pending |
+| CLI-05 | Phase 3 | Complete |
 | STORE-01 | Phase 3 | Pending |
 | STORE-02 | Phase 3 | Pending |
 | STORE-03 | Phase 3 | Pending |
