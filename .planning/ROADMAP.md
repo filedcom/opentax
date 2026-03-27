@@ -33,9 +33,9 @@ See: `.planning/milestones/v1.0-ROADMAP.md` for full phase details.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — TDD: computeTaxGraph pure function (graph traversal, cycle guard, depth limit)
+- [x] 01-01-PLAN.md — TDD: computeTaxGraph pure function (graph traversal, cycle guard, depth limit) — completed 2026-03-27
 - [ ] 01-02-PLAN.md — CLI graph-view command (ASCII/JSON formatting, main.ts wiring)
 
 ---
 *Roadmap created: 2026-03-27*
-*Last updated: 2026-03-27 — Phase 1 planned*
+*Last updated: 2026-03-27 — Phase 01 Plan 01 complete: computeTaxGraph pure function*

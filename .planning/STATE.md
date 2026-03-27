@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: W-2 + Line 1a MVP
-status: v1.0 milestone complete — archived
-last_updated: "2026-03-27T00:00:00.000Z"
+milestone_name: milestone
+status: Executing Phase 01
+last_updated: "2026-03-27T16:20:00Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -18,17 +18,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Accurate, IRS-compliant computation: given a set of form inputs, produce the correct tax liability.
-**Current focus:** Planning next milestone
+**Current focus:** Phase 01 — implement-tax-graph-view-static-node-graph-traversal-cli-command
 
 ## Current Status
 
 - Milestone v1.0 — W-2 + Line 1a MVP: COMPLETE ✅
 - Archived: `.planning/milestones/v1.0-ROADMAP.md`, `v1.0-REQUIREMENTS.md`, `v1.0-MILESTONE-AUDIT.md`
-- Last action: Completed v1.0 milestone archival (2026-03-27)
+- Last action: Completed Phase 01 Plan 01 — computeTaxGraph static graph traversal (2026-03-27)
 
 ## v1.0 Summary
 
 All 3 phases complete, 5 plans, 49 tests passing:
+
 - [x] Phase 1: Core Engine Foundation — Deno workspace, TaxNode, two-phase executor
 - [x] Phase 2: W-2 + Line 1a Nodes — StartNode, W2Node, Line01zWagesNode, IRS fixture tests
 - [x] Phase 3: CLI + Return Storage — create-return, form add, get-return
@@ -48,6 +49,19 @@ All 3 phases complete, 5 plans, 49 tests passing:
 - `Line01zWagesNode.compute()` discards computed total (`_total` unused, `outputs: []`) — get-return reads raw pending wages directly
 - `buildEngineInputs` key convention (`nodeType + "s"`) fragile for form types with irregular plurals
 - form-add wrapping convention implicit — must match each node's inputSchema top-level key
+
+## Decisions (Phase 01)
+
+- Per-branch visited Set clone for cycle guard: allows diamond patterns, blocks same-path cycles
+- maxDepth checked at expansion (depth >= maxDepth): root at maxDepth=0 is returned with empty children
+- Unregistered nodes appear in tree with registered:false rather than being silently omitted
+
+## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 1 added: Implement tax graph view — static node graph traversal CLI command
+- Phase 01 Plan 01 complete: computeTaxGraph pure function — 8 tests, 2 files created
 
 ## Open Blockers
 
