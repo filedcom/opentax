@@ -75,7 +75,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Return storage — returns/ directory conventions, meta.json schema, inputs.json schema, stable ID assignment, load/save utilities
+- [x] 03-01: Return storage — returns/ directory conventions, meta.json schema, inputs.json schema, stable ID assignment, load/save utilities
 - [ ] 03-02: CLI commands — cli.ts entry point, create-return, form add (validate + append), get-return (replay + output JSON)
 
 ---
