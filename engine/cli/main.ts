@@ -7,11 +7,12 @@ const RETURNS_DIR = "./returns";
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "return_id", "node_type"],
+    string: ["year", "returnId", "node_type"],
   });
-  const subcommand = args._[0] as string | undefined;
+  const cmd = args._[0] as string | undefined;
+  const sub = args._[1] as string | undefined;
 
-  if (subcommand === "create-return") {
+  if (cmd === "return" && sub === "create") {
     const year = Number(args.year);
     if (!year || isNaN(year)) {
       console.error("Error: --year is required and must be a number");
@@ -19,13 +20,13 @@ async function main(): Promise<void> {
     }
     const result = await createReturnCommand({ year, baseDir: RETURNS_DIR });
     console.log(JSON.stringify(result, null, 2));
-  } else if (subcommand === "form" && args._[1] === "add") {
-    const returnId = args.return_id;
+  } else if (cmd === "form" && sub === "add") {
+    const returnId = args.returnId;
     const nodeType = args.node_type;
     const dataJson = args._[2] as string | undefined;
     if (!returnId || !nodeType || !dataJson) {
       console.error(
-        "Error: --return_id, --node_type, and JSON data argument are required",
+        "Error: --returnId, --node_type, and JSON data argument are required",
       );
       Deno.exit(1);
     }
@@ -41,10 +42,10 @@ async function main(): Promise<void> {
       console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
       Deno.exit(1);
     }
-  } else if (subcommand === "get-return") {
-    const returnId = args._[1] as string | undefined;
+  } else if (cmd === "return" && sub === "get") {
+    const returnId = args.returnId;
     if (!returnId) {
-      console.error("Error: return ID argument is required");
+      console.error("Error: --returnId is required");
       Deno.exit(1);
     }
     try {
@@ -55,7 +56,12 @@ async function main(): Promise<void> {
       Deno.exit(1);
     }
   } else {
-    console.error("Usage: tax <create-return|form add|get-return> [options]");
+    console.error(
+      "Usage:\n" +
+      "  tax return create --year 2025\n" +
+      "  tax form add --returnId <id> --node_type w2 '{...}'\n" +
+      "  tax return get --returnId <id>",
+    );
     Deno.exit(1);
   }
 }
