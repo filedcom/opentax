@@ -140,8 +140,14 @@ Deno.test("computeTaxGraph: cycle guard prevents infinite recursion on A->B->A",
   const bNode = result.children[0];
   assertEquals(bNode.nodeType, "mock_b");
   assertEquals(bNode.registered, true);
-  // mock_b wants to go back to mock_a, but that creates a cycle — children should be empty
-  assertEquals(bNode.children.length, 0);
+  // mock_b's outputNodeTypes = ["mock_a"], but mock_a is already on the current path
+  // cycle guard: mock_a appears as a child of mock_b but with empty children (re-expansion blocked)
+  assertEquals(bNode.children.length, 1);
+
+  const cycleNode = bNode.children[0];
+  assertEquals(cycleNode.nodeType, "mock_a");
+  assertEquals(cycleNode.registered, true);
+  assertEquals(cycleNode.children.length, 0);
 });
 
 Deno.test("computeTaxGraph: unknown root nodeType throws error with descriptive message", () => {
