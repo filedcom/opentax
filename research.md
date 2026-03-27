@@ -29,7 +29,7 @@ A professional-grade, IRS-compliant tax calculation engine starting with Form 10
 | Taxpayer identity | SSN/EIN only | Caller owns identity management |
 | Validation | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior |
 | Node model | Single TaxNode type (unified) | Field + connector distinction was unnecessary; all nodes have inputSchema + compute |
-| Execution model | Activation-based (mailbox BFS) | Optional forms don't activate — cleaner than zero-propagation through static DAG |
+| Execution model | Two-phase topo sort + pending accumulator | Phase 1: expand instances + topo sort; Phase 2: execute in order, nodes deposit into pending dict — optional forms simply never receive inputs and are skipped |
 | Graph traversal | compute_tax_graph(nodeType, depth) | Static metadata traversal independent of execution, any depth |
 | Self-update | CLI-driven ingestion engine | On-demand, human-in-the-loop before merge |
 | Ingestion intelligence | Hybrid LLM + human review | LLM extracts, human reviews diff, full source traceability |
@@ -203,21 +203,38 @@ Each node fires exactly once. By the time a node fires, all upstream nodes have 
 **Array accumulation example (2 W-2s, 3 1099-INTs):**
 
 ```
-step 1  start runs
-        pending = { w2_01: {...}, w2_02: {...}, int_01: {...}, int_02: {...}, int_03: {...} }
+TOPO ORDER:  start → w2_01 → w2_02 → int_01 → int_02 → int_03 → line_01z → schedule_b → line_11_agi
 
-step 2  w2_01 runs → pending['line_01z'].wages = [ 85000 ]
-step 3  w2_02 runs → pending['line_01z'].wages = [ 85000, 45000 ]   ← appended
+                        pending dict after each step
+                 ┌─────────────────────────────────────────────────────────────┐
+step 1  start    │ w2_01:{box1:85000}  w2_02:{box1:45000}                      │
+                 │ int_01:{amt:320}    int_02:{amt:150}    int_03:{amt:500}     │
+                 └─────────────────────────────────────────────────────────────┘
+                          │deposits                │deposits
+                          ▼                        ▼
+step 2  w2_01    │ line_01z:{ wages:[85000] }                                  │
+step 3  w2_02    │ line_01z:{ wages:[85000, 45000] }          ← appended       │
 
-step 4  int_01 runs → pending['schedule_b'].interest = [ 320 ]
-step 5  int_02 runs → pending['schedule_b'].interest = [ 320, 150 ]
-step 6  int_03 runs → pending['schedule_b'].interest = [ 320, 150, 500 ]
+step 4  int_01   │ schedule_b:{ interest:[320] }                               │
+step 5  int_02   │ schedule_b:{ interest:[320, 150] }         ← appended       │
+step 6  int_03   │ schedule_b:{ interest:[320, 150, 500] }    ← appended       │
 
-step 7  line_01z runs  input: { wages: [85000, 45000] }  → total_wages: 130000
-step 8  schedule_b runs  input: { interest: [320, 150, 500] }  → total_interest: 970
+                 └─────────────────────────────────────────────────────────────┘
+                   pending fully assembled — now the aggregator nodes fire:
 
-step 9  line_11_agi runs  input: { wages: 130000, interest: 970, ... }  → agi: 130970
+step 7  line_01z   reads pending → { wages:[85000, 45000] }
+                   computes → total_wages: 130000
+                   deposits → line_11_agi:{ wages:130000 }
+
+step 8  schedule_b reads pending → { interest:[320, 150, 500] }
+                   computes → total_interest: 970
+                   deposits → line_11_agi:{ interest:970 }
+
+step 9  line_11_agi reads pending → { wages:130000, interest:970, ... }
+                   computes → agi: 130970
 ```
+
+Key: a node only fires when it reaches its position in topo order. By that point every upstream node has already deposited — the input is guaranteed complete. Optional nodes (e.g. `schedule_c` when no business income) never receive any deposits, so their Zod parse fails and they are silently skipped.
 
 ### Static Graph Traversal
 
@@ -813,15 +830,6 @@ export type NodeType = string   // refined to keyof NodeRegistry once registry i
 
 // No NodeMetadata type — outputNodeTypes is inlined on TaxNode directly
 // All human-readable context (description, IRS citations, change history) lives in context.md
-
-export type ActivationCall = {
-  [K in NodeType]: { nodeType: K; input: z.infer<NodeRegistry[K]['inputSchema']> }
-}[NodeType]
-
-export type NodeResult<TValue> = {
-  value: TValue
-  activate: ActivationCall[]
-}
 
 export type NodeOutput = {
   nodeType: NodeType
