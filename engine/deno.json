@@ -1,0 +1,8 @@
+{
+  "name": "@filed/tax-engine",
+  "version": "0.0.1",
+  "exports": "./mod.ts",
+  "imports": {
+    "zod": "npm:zod@^3.24"
+  }
+}
