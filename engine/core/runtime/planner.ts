@@ -2,8 +2,17 @@ import type { NodeRegistry } from "../types/node-registry.ts";
 
 export type ExecutionStep = {
   readonly id: string;       // instance ID (e.g., "start", "w2_01", "w2_02", "line_01z_wages")
-  readonly nodeType: string; // which TaxNode to use from registry
+  readonly nodeType: string; // which TaxNode to use from registry (base type, no suffix)
 };
+
+/**
+ * Strips numeric instance suffix from a nodeType ID.
+ * e.g. "w2_01" -> "w2", "line_01z_wages_01" -> "line_01z_wages", "start" -> "start"
+ * Used to look up the base registry entry for suffixed instance IDs.
+ */
+function baseNodeType(id: string): string {
+  return id.replace(/_\d+$/, "");
+}
 
 /**
  * Builds an ordered execution plan from the registry and raw inputs.
@@ -38,10 +47,13 @@ export function buildExecutionPlan(
   const startResult = startNode.compute(parsedStart.data);
 
   // Step 2: Expand start outputs into instances.
-  // Count how many times each nodeType appears.
-  const nodeTypeCounts: Record<string, number> = {};
+  // StartNode may emit bare nodeTypes ("w2") or pre-suffixed IDs ("w2_01", "w2_02").
+  // Normalize: use output.nodeType as the instance ID, and baseNodeType() as the registry key.
+  // Count how many times each base nodeType appears to detect singletons vs. multi-instances.
+  const baseTypeCounts: Record<string, number> = {};
   for (const output of startResult.outputs) {
-    nodeTypeCounts[output.nodeType] = (nodeTypeCounts[output.nodeType] ?? 0) + 1;
+    const base = baseNodeType(output.nodeType);
+    baseTypeCounts[base] = (baseTypeCounts[base] ?? 0) + 1;
   }
 
   // Assign IDs to each output.
@@ -49,17 +61,21 @@ export function buildExecutionPlan(
   const startOutputInstances: ExecutionStep[] = [];
 
   for (const output of startResult.outputs) {
-    const count = nodeTypeCounts[output.nodeType];
-    if (count === 1) {
-      // Singleton: use nodeType directly as ID
+    const base = baseNodeType(output.nodeType);
+    const count = baseTypeCounts[base];
+    if (count === 1 && output.nodeType === base) {
+      // Singleton with bare nodeType: use nodeType directly as ID
       startOutputInstances.push({ id: output.nodeType, nodeType: output.nodeType });
+    } else if (output.nodeType !== base) {
+      // StartNode already emitted a suffixed ID (e.g. "w2_01") — use it as-is
+      startOutputInstances.push({ id: output.nodeType, nodeType: base });
     } else {
-      // Multiple: use _01, _02, ... suffix
-      instanceCounters[output.nodeType] = (instanceCounters[output.nodeType] ?? 0) + 1;
-      const suffix = String(instanceCounters[output.nodeType]).padStart(2, "0");
+      // Multiple outputs of same base type but bare nodeType: assign _01, _02 suffixes
+      instanceCounters[base] = (instanceCounters[base] ?? 0) + 1;
+      const suffix = String(instanceCounters[base]).padStart(2, "0");
       startOutputInstances.push({
-        id: `${output.nodeType}_${suffix}`,
-        nodeType: output.nodeType,
+        id: `${base}_${suffix}`,
+        nodeType: base,
       });
     }
   }
@@ -79,7 +95,7 @@ export function buildExecutionPlan(
 
   while (queue.length > 0) {
     const step = queue.shift()!;
-    const node = registry[step.nodeType];
+    const node = registry[step.nodeType] ?? registry[baseNodeType(step.nodeType)];
     if (!node) continue;
 
     for (const downstreamType of node.outputNodeTypes) {
@@ -111,7 +127,7 @@ export function buildExecutionPlan(
   // For each non-start instance, edges to their downstream singletons.
   for (const step of allSteps) {
     if (step.id === "start") continue;
-    const node = registry[step.nodeType];
+    const node = registry[step.nodeType] ?? registry[baseNodeType(step.nodeType)];
     if (!node) continue;
 
     for (const downstreamType of node.outputNodeTypes) {
