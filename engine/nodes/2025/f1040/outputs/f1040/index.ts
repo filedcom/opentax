@@ -3,7 +3,12 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 
 const inputSchema = z.object({
-  line1z: z.number().optional(),
+  line1a_wages: z.number().optional(),
+  line1i_combat_pay: z.number().optional(),
+  line2a_tax_exempt: z.number().optional(),
+  line3a_qualified_dividends: z.number().optional(),
+  line25a_w2_withheld: z.number().optional(),
+  line25b_withheld_1099: z.number().optional(),
 });
 
 class F1040Node extends TaxNode<typeof inputSchema> {

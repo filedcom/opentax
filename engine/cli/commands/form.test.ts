@@ -18,7 +18,7 @@ Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
     const result = await formAddCommand({
       returnId,
       nodeType: "w2",
-      dataJson: '{"box1": 85000}',
+      dataJson: '{"box1_wages": 85000, "box2_fed_withheld": 0}',
       baseDir: tmpDir,
     });
 
@@ -29,7 +29,7 @@ Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
     assertEquals(entries.length, 1);
     assertEquals(entries[0].id, "w2_01");
     assertEquals(entries[0].nodeType, "w2");
-    assertEquals(entries[0].data, { box1: 85000 });
+    assertEquals(entries[0].data, { box1_wages: 85000, box2_fed_withheld: 0 });
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -42,13 +42,13 @@ Deno.test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => 
     await formAddCommand({
       returnId,
       nodeType: "w2",
-      dataJson: '{"box1": 85000}',
+      dataJson: '{"box1_wages": 85000, "box2_fed_withheld": 0}',
       baseDir: tmpDir,
     });
     await formAddCommand({
       returnId,
       nodeType: "w2",
-      dataJson: '{"box1": 45000}',
+      dataJson: '{"box1_wages": 45000, "box2_fed_withheld": 0}',
       baseDir: tmpDir,
     });
 

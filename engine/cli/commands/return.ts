@@ -58,16 +58,16 @@ export async function getReturnCommand(
   const plan = buildExecutionPlan(registry, engineInputs);
   const result = execute(plan, registry, engineInputs);
 
-  const line1z = result.pending["f1040"]?.["line1z"];
-  let line1zList: number[];
-  if (Array.isArray(line1z)) {
-    line1zList = line1z as number[];
-  } else if (typeof line1z === "number") {
-    line1zList = [line1z];
+  const line1aRaw = result.pending["f1040"]?.["line1a_wages"];
+  let line1aList: number[];
+  if (Array.isArray(line1aRaw)) {
+    line1aList = line1aRaw as number[];
+  } else if (typeof line1aRaw === "number") {
+    line1aList = [line1aRaw];
   } else {
-    line1zList = [];
+    line1aList = [];
   }
-  const line1a = line1zList.reduce((a, b) => a + b, 0);
+  const line1a = line1aList.reduce((a, b) => a + b, 0);
 
   return {
     returnId: meta.returnId,

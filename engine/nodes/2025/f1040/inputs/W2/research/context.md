@@ -875,4 +875,5 @@ All URLs verified to resolve (unless noted).
 | IRS Instructions Form 8839 | 2025 | Part III (adoption benefits) | https://www.irs.gov/instructions/i8839 | — |
 | IRS Form 8880 (Saver's Credit) | 2025 | AGI tiers, Line 2 | https://www.irs.gov/pub/irs-pdf/f8880.pdf | — |
 | IRS Pub 3 (Armed Forces Tax Guide) | 2025 | Line 1i combat pay | https://www.irs.gov/publications/p3 | — |
+| Rev. Proc. 2024-40 (TY2025 inflation adjustments) | 2024 | QSEHRA, HSA, Archer MSA limits | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf | rp-24-40.pdf ✓ |
 | IRS Revenue Ruling 2025-4 (PFML tax treatment) | 2025 | Employee contributions deductible | https://www.groom.com/resources/irs-provides-tax-guidance-related-to-state-run-paid-family-and-medical-leave-programs/ | — |

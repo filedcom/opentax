@@ -40,40 +40,38 @@ class MockBNode extends TaxNode<typeof noOpSchema> {
 
 // --- Tests ---
 
-Deno.test("computeTaxGraph: start returns full tree start -> w2 -> f1040", () => {
+Deno.test("computeTaxGraph: start returns full tree start -> [w2, int, div]", () => {
   const result: GraphNode = computeTaxGraph("start", registry);
 
   assertEquals(result.nodeType, "start");
   assertEquals(result.depth, 0);
   assertEquals(result.registered, true);
-  assertEquals(result.children.length, 1);
+  // start now outputs w2, int, div
+  assertEquals(result.children.length, 3);
 
-  const w2Node = result.children[0];
-  assertEquals(w2Node.nodeType, "w2");
-  assertEquals(w2Node.depth, 1);
-  assertEquals(w2Node.registered, true);
-  assertEquals(w2Node.children.length, 1);
-
-  const f1040Node = w2Node.children[0];
-  assertEquals(f1040Node.nodeType, "f1040");
-  assertEquals(f1040Node.depth, 2);
-  assertEquals(f1040Node.registered, true);
-  assertEquals(f1040Node.children.length, 0);
+  const w2Node = result.children.find((c) => c.nodeType === "w2");
+  assertEquals(w2Node !== undefined, true);
+  assertEquals(w2Node!.depth, 1);
+  assertEquals(w2Node!.registered, true);
+  // w2 routes to many downstream nodes — just verify f1040 is among them
+  const f1040Child = w2Node!.children.find((c) => c.nodeType === "f1040");
+  assertEquals(f1040Child !== undefined, true);
+  assertEquals(f1040Child!.registered, true);
 });
 
-Deno.test("computeTaxGraph: w2 returns subtree w2 -> f1040", () => {
+Deno.test("computeTaxGraph: w2 returns subtree with f1040 as a child", () => {
   const result: GraphNode = computeTaxGraph("w2", registry);
 
   assertEquals(result.nodeType, "w2");
   assertEquals(result.depth, 0);
   assertEquals(result.registered, true);
-  assertEquals(result.children.length, 1);
 
-  const f1040Node = result.children[0];
-  assertEquals(f1040Node.nodeType, "f1040");
-  assertEquals(f1040Node.depth, 1);
-  assertEquals(f1040Node.registered, true);
-  assertEquals(f1040Node.children.length, 0);
+  // w2 now routes to many downstream nodes; verify f1040 is present
+  const f1040Node = result.children.find((c) => c.nodeType === "f1040");
+  assertEquals(f1040Node !== undefined, true);
+  assertEquals(f1040Node!.depth, 1);
+  assertEquals(f1040Node!.registered, true);
+  assertEquals(f1040Node!.children.length, 0);
 });
 
 Deno.test("computeTaxGraph: f1040 returns leaf node with empty children", () => {
@@ -85,18 +83,18 @@ Deno.test("computeTaxGraph: f1040 returns leaf node with empty children", () => 
   assertEquals(result.children.length, 0);
 });
 
-Deno.test("computeTaxGraph: maxDepth=1 on start returns start -> [w2] with w2 children truncated", () => {
+Deno.test("computeTaxGraph: maxDepth=1 on start returns start -> [w2, int, div] with children truncated", () => {
   const result: GraphNode = computeTaxGraph("start", registry, 1);
 
   assertEquals(result.nodeType, "start");
   assertEquals(result.depth, 0);
-  assertEquals(result.children.length, 1);
+  assertEquals(result.children.length, 3);
 
-  const w2Node = result.children[0];
-  assertEquals(w2Node.nodeType, "w2");
-  assertEquals(w2Node.depth, 1);
-  // w2 is at maxDepth=1, so its children should be truncated (empty)
-  assertEquals(w2Node.children.length, 0);
+  for (const child of result.children) {
+    assertEquals(child.depth, 1);
+    // Each child is at maxDepth=1, so their children should be truncated (empty)
+    assertEquals(child.children.length, 0);
+  }
 });
 
 Deno.test("computeTaxGraph: maxDepth=0 on start returns just start node with empty children", () => {

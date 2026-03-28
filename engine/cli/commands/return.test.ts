@@ -65,7 +65,7 @@ Deno.test("getReturnCommand single W-2 returns line_1a = 85000", async () => {
     const entry: InputEntry = {
       id: "w2_01",
       nodeType: "w2",
-      data: { box1: 85000 },
+      data: { box1_wages: 85000, box2_fed_withheld: 0 },
     };
     await appendInput(returnPath, entry);
 
@@ -88,12 +88,12 @@ Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
     await appendInput(returnPath, {
       id: "w2_01",
       nodeType: "w2",
-      data: { box1: 85000 },
+      data: { box1_wages: 85000, box2_fed_withheld: 0 },
     });
     await appendInput(returnPath, {
       id: "w2_02",
       nodeType: "w2",
-      data: { box1: 45000 },
+      data: { box1_wages: 45000, box2_fed_withheld: 0 },
     });
 
     const result = await getReturnCommand({ returnId, baseDir: tmpDir });
