@@ -29,6 +29,41 @@ const ACTC_EARNED_INCOME_THRESHOLD = 2500;
 const PHASE_OUT_THRESHOLD_MFJ = 400000;
 const PHASE_OUT_THRESHOLD_OTHER = 200000;
 
+type F8812Item = z.infer<typeof itemSchema>;
+
+function computePhaseOutReduction(agi: number, filingStatus: string): number {
+  const phaseOutThreshold = filingStatus === "mfj"
+    ? PHASE_OUT_THRESHOLD_MFJ
+    : PHASE_OUT_THRESHOLD_OTHER;
+  const excessAgi = Math.max(0, agi - phaseOutThreshold);
+  const phaseOutSteps = Math.ceil(excessAgi / PHASE_OUT_INCREMENT);
+  return phaseOutSteps * PHASE_OUT_STEP;
+}
+
+function computeNonrefundableCTC(
+  ctcAfterPhaseOut: number,
+  incomeTaxLiability: number | undefined,
+): number {
+  return incomeTaxLiability !== undefined
+    ? Math.min(ctcAfterPhaseOut, incomeTaxLiability)
+    : ctcAfterPhaseOut;
+}
+
+function computeACTC(
+  qualifyingChildren: number,
+  earnedIncome: number,
+  ctcAfterPhaseOut: number,
+  nonrefundableCTC: number,
+): number {
+  const earnedIncomeBased = Math.max(
+    0,
+    earnedIncome * ACTC_EARNED_INCOME_RATE - ACTC_EARNED_INCOME_THRESHOLD,
+  );
+  const maxPerChild = qualifyingChildren * ACTC_PER_CHILD;
+  const ctcUnused = Math.max(0, ctcAfterPhaseOut - nonrefundableCTC);
+  return Math.max(0, Math.min(ctcUnused, earnedIncomeBased, maxPerChild));
+}
+
 class F8812Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8812";
   readonly inputSchema = inputSchema;
@@ -44,35 +79,12 @@ class F8812Node extends TaxNode<typeof inputSchema> {
       const agi = item.agi ?? 0;
       const earnedIncome = item.earned_income ?? 0;
 
-      const phaseOutThreshold = filingStatus === "mfj"
-        ? PHASE_OUT_THRESHOLD_MFJ
-        : PHASE_OUT_THRESHOLD_OTHER;
-
       const ctcBeforePhaseOut = qualifyingChildren * CTC_PER_CHILD +
         otherDependents * ODC_PER_DEPENDENT;
-
-      const excessAgi = Math.max(0, agi - phaseOutThreshold);
-      const phaseOutSteps = Math.ceil(excessAgi / PHASE_OUT_INCREMENT);
-      const phaseOutReduction = phaseOutSteps * PHASE_OUT_STEP;
-      const ctcAfterPhaseOut = Math.max(
-        0,
-        ctcBeforePhaseOut - phaseOutReduction,
-      );
-
-      const nonrefundableCTC = item.income_tax_liability !== undefined
-        ? Math.min(ctcAfterPhaseOut, item.income_tax_liability)
-        : ctcAfterPhaseOut;
-
-      const actcEarnedIncomeBased = Math.max(
-        0,
-        earnedIncome * ACTC_EARNED_INCOME_RATE - ACTC_EARNED_INCOME_THRESHOLD,
-      );
-      const actcMaxPerChild = qualifyingChildren * ACTC_PER_CHILD;
-      const ctcUnused = Math.max(0, ctcAfterPhaseOut - nonrefundableCTC);
-      const actc = Math.max(
-        0,
-        Math.min(ctcUnused, actcEarnedIncomeBased, actcMaxPerChild),
-      );
+      const phaseOutReduction = computePhaseOutReduction(agi, filingStatus);
+      const ctcAfterPhaseOut = Math.max(0, ctcBeforePhaseOut - phaseOutReduction);
+      const nonrefundableCTC = computeNonrefundableCTC(ctcAfterPhaseOut, item.income_tax_liability);
+      const actc = computeACTC(qualifyingChildren, earnedIncome, ctcAfterPhaseOut, nonrefundableCTC);
 
       if (nonrefundableCTC > 0) {
         out.add(schedule3, { line6b_child_tax_credit: nonrefundableCTC });

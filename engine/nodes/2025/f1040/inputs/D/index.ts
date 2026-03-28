@@ -42,42 +42,40 @@ export const inputSchema = z.object({
 
 type ScheduleDInput = z.infer<typeof inputSchema>;
 
+function computeShortTermNet(input: ScheduleDInput): number {
+  return (input.line_1a_proceeds ?? 0) -
+    (input.line_1a_cost ?? 0) +
+    (input.line_4_other_st ?? 0) +
+    (input.line_5_k1_st ?? 0) -
+    (input.line_6_carryover ?? 0);
+}
+
+function computeLongTermNet(input: ScheduleDInput): number {
+  return (input.line_8a_proceeds ?? 0) -
+    (input.line_8a_cost ?? 0) +
+    (input.line_11_form2439 ?? 0) +
+    (input.line_12_cap_gain_dist ?? 0) +
+    (input.line_12_k1_lt ?? 0) -
+    (input.line_14_carryover ?? 0);
+}
+
 class ScheduleDNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "d_screen";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule_d]);
 
   compute(input: ScheduleDInput): NodeResult {
-    const outputs: NodeOutput[] = [];
-
-    // Short-term net
-    const stNet = (input.line_1a_proceeds ?? 0) -
-      (input.line_1a_cost ?? 0) +
-      (input.line_4_other_st ?? 0) +
-      (input.line_5_k1_st ?? 0) -
-      (input.line_6_carryover ?? 0);
-
-    // Long-term net
-    const ltNet = (input.line_8a_proceeds ?? 0) -
-      (input.line_8a_cost ?? 0) +
-      (input.line_11_form2439 ?? 0) +
-      (input.line_12_cap_gain_dist ?? 0) +
-      (input.line_12_k1_lt ?? 0) -
-      (input.line_14_carryover ?? 0);
-
-    // Total net capital gain or loss
-    const totalNet = stNet + ltNet;
+    const totalNet = computeShortTermNet(input) + computeLongTermNet(input);
 
     // Apply $3,000 capital loss limitation for f1040
     const capitalGainForReturn = totalNet >= 0
       ? totalNet
       : Math.max(CAPITAL_LOSS_LIMIT, totalNet);
 
-    // Always emit capital gain/loss to f1040 Line 7
-    outputs.push({
+    const outputs: NodeOutput[] = [{
       nodeType: f1040.nodeType,
       input: { line7_capital_gain: capitalGainForReturn },
-    });
+    }];
 
     // If total loss exceeds $3,000, the excess carries forward to next year
     if (totalNet < CAPITAL_LOSS_LIMIT) {

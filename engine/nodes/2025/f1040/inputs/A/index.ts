@@ -36,6 +36,34 @@ export const inputSchema = z.object({
 
 type ScheduleAInput = z.infer<typeof inputSchema>;
 
+function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
+  return Math.max(0, (input.line_1_medical ?? 0) - agi * MEDICAL_AGI_FLOOR_PCT);
+}
+
+function computeSALT(input: ScheduleAInput): number {
+  const saltTotal = (input.line_5a_tax_amount ?? 0) +
+    (input.line_5b_real_estate_tax ?? 0) +
+    (input.line_5c_personal_property_tax ?? 0);
+  return Math.min(saltTotal, SALT_CAP);
+}
+
+function computeInterestTotal(input: ScheduleAInput): number {
+  return (input.line_8a_mortgage_interest_1098 ?? 0) +
+    (input.line_8b_mortgage_interest_no_1098 ?? 0) +
+    (input.line_8c_points_no_1098 ?? 0) +
+    (input.line_9_investment_interest ?? 0);
+}
+
+function computeContributions(input: ScheduleAInput, agi: number): number {
+  const contributionsRaw = (input.line_11_cash_contributions ?? 0) +
+    (input.line_12_noncash_contributions ?? 0) +
+    (input.line_13_contribution_carryover ?? 0);
+  const contributionsAgiCap = agi * CASH_CONTRIBUTION_AGI_PCT;
+  return agi > 0
+    ? Math.min(contributionsRaw, contributionsAgiCap)
+    : contributionsRaw;
+}
+
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
@@ -45,41 +73,13 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const out = this.outputNodes.builder();
     const agi = input.agi ?? 0;
 
-    // Step 1: Medical deduction — apply 7.5% AGI floor
-    const medicalDeduction = Math.max(
-      0,
-      (input.line_1_medical ?? 0) - agi * MEDICAL_AGI_FLOOR_PCT,
-    );
-
-    // Step 2: SALT — sum state/local taxes, apply $40,000 cap
-    const saltTotal = (input.line_5a_tax_amount ?? 0) +
-      (input.line_5b_real_estate_tax ?? 0) +
-      (input.line_5c_personal_property_tax ?? 0);
-    const saltCapped = Math.min(saltTotal, SALT_CAP);
-
-    // Step 3: Total taxes paid (line 7)
+    const saltCapped = computeSALT(input);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
 
-    // Step 4: Interest
-    const interestTotal = (input.line_8a_mortgage_interest_1098 ?? 0) +
-      (input.line_8b_mortgage_interest_no_1098 ?? 0) +
-      (input.line_8c_points_no_1098 ?? 0) +
-      (input.line_9_investment_interest ?? 0);
-
-    // Step 5: Contributions — 60% AGI limit for cash to public charities
-    const contributionsRaw = (input.line_11_cash_contributions ?? 0) +
-      (input.line_12_noncash_contributions ?? 0) +
-      (input.line_13_contribution_carryover ?? 0);
-    const contributionsAgiCap = agi * CASH_CONTRIBUTION_AGI_PCT;
-    const contributions = agi > 0
-      ? Math.min(contributionsRaw, contributionsAgiCap)
-      : contributionsRaw;
-
-    // Step 6: Total itemized deductions (Schedule A Line 17)
-    const totalItemized = medicalDeduction +
+    const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
-      interestTotal +
-      contributions +
+      computeInterestTotal(input) +
+      computeContributions(input, agi) +
       (input.line_15_casualty_theft_loss ?? 0) +
       (input.line_16_other_deductions ?? 0);
 

@@ -33,6 +33,43 @@ export const inputSchema = z.object({
 
 type INTItem = z.infer<typeof itemSchema>;
 
+function validateIntItem(item: INTItem): void {
+  const box8 = item.box8 ?? 0;
+  const box9 = item.box9 ?? 0;
+  const box13 = item.box13 ?? 0;
+  if (box9 > box8) {
+    throw new Error(
+      `INT validation error: box9 (${box9}) cannot exceed box8 (${box8}) — box9 is a subset of box8`,
+    );
+  }
+  if (box13 > box8) {
+    throw new Error(
+      `INT validation error: box13 (${box13}) cannot exceed box8 (${box8}) — bond premium on tax-exempt cannot exceed tax-exempt interest`,
+    );
+  }
+}
+
+function computeTaxableInterestNet(item: INTItem): number {
+  return (item.box1 ?? 0) +
+    (item.box3 ?? 0) +
+    (item.box10 ?? 0) -
+    (item.box11 ?? 0) -
+    (item.box12 ?? 0) -
+    (item.nominee_interest ?? 0) -
+    (item.accrued_interest_paid ?? 0) -
+    (item.non_taxable_oid_adjustment ?? 0);
+}
+
+function interestScheduleBOutput(item: INTItem): z.infer<typeof schedule_b_interest.inputSchema> {
+  const box9 = item.box9 ?? 0;
+  return {
+    payer_name: item.payer_name,
+    taxable_interest_net: computeTaxableInterestNet(item),
+    box3_us_obligations: item.box3,
+    box9_pab: box9 > 0 ? box9 : undefined,
+  };
+}
+
 class INTNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "int";
   readonly inputSchema = inputSchema;
@@ -48,37 +85,13 @@ class INTNode extends TaxNode<typeof inputSchema> {
     const out = this.outputNodes.builder();
 
     for (const item of input.int1099s) {
+      validateIntItem(item);
+
       const box8 = item.box8 ?? 0;
       const box9 = item.box9 ?? 0;
       const box13 = item.box13 ?? 0;
 
-      // Validation
-      if (box9 > box8) {
-        throw new Error(
-          `INT validation error: box9 (${box9}) cannot exceed box8 (${box8}) — box9 is a subset of box8`,
-        );
-      }
-      if (box13 > box8) {
-        throw new Error(
-          `INT validation error: box13 (${box13}) cannot exceed box8 (${box8}) — bond premium on tax-exempt cannot exceed tax-exempt interest`,
-        );
-      }
-
-      const taxableInterestNet = (item.box1 ?? 0) +
-        (item.box3 ?? 0) +
-        (item.box10 ?? 0) -
-        (item.box11 ?? 0) -
-        (item.box12 ?? 0) -
-        (item.nominee_interest ?? 0) -
-        (item.accrued_interest_paid ?? 0) -
-        (item.non_taxable_oid_adjustment ?? 0);
-
-      out.add(schedule_b_interest, {
-        payer_name: item.payer_name,
-        taxable_interest_net: taxableInterestNet,
-        box3_us_obligations: item.box3,
-        box9_pab: box9 > 0 ? box9 : undefined,
-      });
+      out.add(schedule_b_interest, interestScheduleBOutput(item));
 
       if (item.box2 !== undefined && item.box2 > 0) {
         out.add(schedule1, { line18_early_withdrawal: item.box2 });
