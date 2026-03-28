@@ -1,0 +1,20 @@
+{
+  "name": "@filed/tax-agent",
+  "version": "0.1.0",
+  "exports": "./src/service/ingest/mod.ts",
+  "imports": {
+    "@std/assert": "jsr:@std/assert",
+    "@std/path": "jsr:@std/path",
+    "@std/csv": "jsr:@std/csv@^1.0.0",
+    "mammoth": "npm:mammoth@^1.8.0",
+    "turndown": "npm:turndown@^7.2.0",
+    "turndown-plugin-gfm": "npm:turndown-plugin-gfm@^1.0.2",
+    "mupdf": "npm:mupdf@^1.27.0",
+    "sharp": "npm:sharp@^0.34.0",
+    "xlsx": "npm:xlsx@^0.18.5"
+  },
+  "tasks": {
+    "test": "deno test --allow-read --allow-write --allow-run --allow-env --allow-ffi src/",
+    "test:ingest": "deno test --allow-read --allow-write --allow-run --allow-env --allow-ffi src/service/ingest/"
+  }
+}

@@ -1,16 +1,14 @@
-import { createReturn } from "../store/store.ts";
+import { join } from "@std/path";
+import { buildExecutionPlan, execute } from "../../mod.ts";
+import { f1040_line_1z } from "../../nodes/2025/f1040/f1040_line_01z/index.ts";
+import { registry } from "../../nodes/2025/registry.ts";
+import { createReturn, loadInputs, loadMeta } from "../store/store.ts";
+import type { InputEntry } from "../store/types.ts";
 
 export type CreateReturnArgs = {
   readonly year: number;
   readonly baseDir: string;
 };
-
-import { join } from "@std/path";
-import { buildExecutionPlan, execute } from "../../mod.ts";
-import { f1040_line_1z } from "../../nodes/2025/f1040/f1040_line_01z/index.ts";
-import { registry } from "../../nodes/2025/registry.ts";
-import { loadInputs, loadMeta } from "../store/store.ts";
-import type { InputEntry } from "../store/types.ts";
 
 export async function createReturnCommand(
   args: CreateReturnArgs,
@@ -61,16 +59,16 @@ export async function getReturnCommand(
   const plan = buildExecutionPlan(registry, engineInputs);
   const result = execute(plan, registry, engineInputs);
 
-  const wagesPending = result.pending[f1040_line_1z.nodeType];
-  let line1a = 0;
-  if (wagesPending && wagesPending["wages"] !== undefined) {
-    const wages = wagesPending["wages"];
-    if (Array.isArray(wages)) {
-      line1a = (wages as number[]).reduce((a, b) => a + b, 0);
-    } else if (typeof wages === "number") {
-      line1a = wages;
-    }
+  const wages = result.pending[f1040_line_1z.nodeType]?.["wages"];
+  let wagesList: number[];
+  if (Array.isArray(wages)) {
+    wagesList = wages as number[];
+  } else if (typeof wages === "number") {
+    wagesList = [wages];
+  } else {
+    wagesList = [];
   }
+  const line1a = wagesList.reduce((a, b) => a + b, 0);
 
   return {
     returnId: meta.returnId,

@@ -8,7 +8,9 @@ const RETURNS_DIR = "./returns";
 async function runCommand(fn: () => Promise<unknown>): Promise<void> {
   try {
     const result = await fn();
-    console.log(JSON.stringify(result, null, 2));
+    if (result !== undefined) {
+      console.log(JSON.stringify(result, null, 2));
+    }
   } catch (err: unknown) {
     console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
     Deno.exit(1);
@@ -63,21 +65,9 @@ async function main(): Promise<void> {
       console.error("Error: --depth must be a non-negative number");
       Deno.exit(1);
     }
-    const json = args.json === true;
-    if (json) {
-      await runCommand(() =>
-        Promise.resolve(graphViewCommand({ nodeType, depth, json: true }))
-      );
-    } else {
-      try {
-        graphViewCommand({ nodeType, depth, json: false });
-      } catch (err: unknown) {
-        console.error(
-          `Error: ${err instanceof Error ? err.message : String(err)}`,
-        );
-        Deno.exit(1);
-      }
-    }
+    await runCommand(() =>
+      Promise.resolve(graphViewCommand({ nodeType, depth, json: args.json === true }))
+    );
   } else {
     console.error(
       "Usage:\n" +
