@@ -15,6 +15,7 @@ export type NodeResult = {
 
 // Abstract base class - every tax node extends this
 export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
+  readonly implemented: boolean = true as const;
   abstract readonly nodeType: NodeType;
   abstract readonly inputSchema: TSchema;
   abstract readonly outputNodeTypes: readonly NodeType[];
@@ -22,7 +23,7 @@ export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
 }
 
 export class UnimplementedTaxNode extends TaxNode {
-  readonly implemented = false as const;
+  override readonly implemented = false as const;
   readonly inputSchema = z.object({});
   nodeType: NodeType;
   outputNodeTypes: readonly NodeType[];

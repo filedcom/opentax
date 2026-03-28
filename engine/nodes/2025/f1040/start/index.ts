@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../core/types/tax-node.ts";
-import { w2 } from "../source-docs/w2/index.ts";
+import type { NodeResult } from "../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../core/types/tax-node.ts";
+import { w2 } from "../inputs/W2/index.ts";
 
 const inputSchema = z.object({
   w2s: z.array(z.object({ box1: z.number() })).optional(),

@@ -58,7 +58,7 @@ export function execute(
 
   for (const step of plan) {
     const node = registry[step.nodeType];
-    if (!node) continue;
+    if (!node || !node.implemented) continue;
 
     const input = pending[step.id] ?? {};
     const parsed = node.inputSchema.safeParse(input);
