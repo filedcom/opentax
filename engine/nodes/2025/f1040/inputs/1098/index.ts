@@ -34,26 +34,26 @@ function mortgageInterestOutput(netInterest: number, routing: string): NodeOutpu
   return [{ nodeType: schedule_a.nodeType, input: { line8a_mortgage_interest_1098: netInterest } }];
 }
 
-function f1098ItemOutputs(item: F1098Item): NodeOutput[] {
-  const netInterest = (item.box1_mortgage_interest ?? 0) - (item.box4_refund_overpaid ?? 0);
-  const box6 = item.box6_points_paid ?? 0;
-  const box10 = item.box10_other ?? 0;
-  const routing = item.for_routing ?? "schedule_a";
-  // box5 MIP: NOT deductible for TY2025 — collected but not routed
-  return [
-    ...mortgageInterestOutput(netInterest, routing),
-    ...(box6 > 0 && routing === "schedule_a" ? [{ nodeType: schedule_a.nodeType, input: { line8c_points_no_1098: box6 } }] : []),
-    ...(box10 > 0 && routing === "schedule_a" ? [{ nodeType: schedule_a.nodeType, input: { line5b_real_estate_tax: box10 } }] : []),
-  ];
-}
-
 class F1098Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1098";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_a, schedule_e, schedule_c]);
 
+  processItem(item: F1098Item): NodeOutput[] {
+    const netInterest = (item.box1_mortgage_interest ?? 0) - (item.box4_refund_overpaid ?? 0);
+    const box6 = item.box6_points_paid ?? 0;
+    const box10 = item.box10_other ?? 0;
+    const routing = item.for_routing ?? "schedule_a";
+    // box5 MIP: NOT deductible for TY2025 — collected but not routed
+    return [
+      ...mortgageInterestOutput(netInterest, routing),
+      ...(box6 > 0 && routing === "schedule_a" ? [{ nodeType: schedule_a.nodeType, input: { line8c_points_no_1098: box6 } }] : []),
+      ...(box10 > 0 && routing === "schedule_a" ? [{ nodeType: schedule_a.nodeType, input: { line5b_real_estate_tax: box10 } }] : []),
+    ];
+  }
+
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    return { outputs: input.f1098s.flatMap(f1098ItemOutputs) };
+    return { outputs: input.f1098s.flatMap((item) => this.processItem(item)) };
   }
 }
 

@@ -118,19 +118,20 @@ class INTNode extends TaxNode<typeof inputSchema> {
     schedule3,
   ]);
 
+  processItem(item: INTItem): NodeOutput[] {
+    validateIntItem(item);
+    return [
+      scheduleBOutput(item),
+      ...earlyWithdrawalOutput(item),
+      ...withholdingOutput(item),
+      ...taxExemptOutput(item),
+      ...pabOutput(item),
+      ...foreignTaxOutput(item),
+    ];
+  }
+
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const outputs: NodeOutput[] = input.int1099s.flatMap((item) => {
-      validateIntItem(item);
-      return [
-        scheduleBOutput(item),
-        ...earlyWithdrawalOutput(item),
-        ...withholdingOutput(item),
-        ...taxExemptOutput(item),
-        ...pabOutput(item),
-        ...foreignTaxOutput(item),
-      ];
-    });
-    return { outputs };
+    return { outputs: input.int1099s.flatMap((item) => this.processItem(item)) };
   }
 }
 
