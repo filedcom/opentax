@@ -12,7 +12,7 @@ import { f1099k } from "./f1040/inputs/f1099k/index.ts";
 import { f1099m } from "./f1040/inputs/f1099m/index.ts";
 import { scheduleA } from "./f1040/inputs/schedule_a/index.ts";
 import { scheduleC } from "./f1040/inputs/schedule_c/index.ts";
-import { scheduleD } from "./f1040/inputs/d_screen/index.ts";
+import { schedule_d } from "./f1040/intermediate/schedule_d/index.ts";
 import { f1099div } from "./f1040/inputs/f1099div/index.ts";
 import { scheduleE } from "./f1040/inputs/schedule_e/index.ts";
 import { ext } from "./f1040/inputs/ext/index.ts";
@@ -51,7 +51,6 @@ import { schedule2 } from "./f1040/intermediate/schedule2/index.ts";
 import { schedule3 } from "./f1040/intermediate/schedule3/index.ts";
 import { schedule_b } from "./f1040/intermediate/schedule_b/index.ts";
 import { unrecaptured_1250_worksheet } from "./f1040/intermediate/unrecaptured_1250_worksheet/index.ts";
-import { schedule_d } from "./f1040/intermediate/schedule_d/index.ts";
 import { schedule_f } from "./f1040/intermediate/schedule_f/index.ts";
 import { schedule_se } from "./f1040/intermediate/schedule_se/index.ts";
 import { f1040 } from "./f1040/outputs/f1040/index.ts";
@@ -80,7 +79,6 @@ export const registry: NodeRegistry = {
   schedule_c: scheduleC,
   schedule_e: scheduleE,
   // Input nodes with unique nodeTypes
-  d_screen: scheduleD,
   f8949: f8949InputNode,
   ext,
   general,

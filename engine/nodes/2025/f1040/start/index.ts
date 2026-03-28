@@ -26,8 +26,8 @@ import {
 } from "../inputs/schedule_c/index.ts";
 import {
   inputSchema as scheduleDInputSchema,
-  scheduleD,
-} from "../inputs/d_screen/index.ts";
+} from "../intermediate/schedule_d/index.ts";
+import { schedule_d as scheduleD } from "../intermediate/schedule_d/index.ts";
 import { f1099div, itemSchema as f1099divItemSchema } from "../inputs/f1099div/index.ts";
 import {
   itemSchema as scheduleEItemSchema,
