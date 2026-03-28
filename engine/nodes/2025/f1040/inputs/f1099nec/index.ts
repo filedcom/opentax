@@ -8,7 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
-import { schedule_c } from "../../intermediate/schedule_c/index.ts";
+import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/schedule_f/index.ts";
 import { form8919 } from "../../intermediate/form8919/index.ts";
 

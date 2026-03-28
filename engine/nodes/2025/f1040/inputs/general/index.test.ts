@@ -478,3 +478,186 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
   assertEquals(input?.spouse_first_name, "Jane");
   assertEquals(input?.address_city, "Springfield");
 });
+
+// ============================================================
+// 12. New fields — digital_assets
+// ============================================================
+
+Deno.test("digital_assets: true → routes to f1040 with digital_assets: true", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    digital_assets: true,
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.digital_assets, true);
+});
+
+Deno.test("digital_assets: false → routes to f1040 with digital_assets: false", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    digital_assets: false,
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.digital_assets, false);
+});
+
+// ============================================================
+// 13. dependent_on_another_return — excluded from counts
+// ============================================================
+
+Deno.test("dependent_on_another_return: true → excluded from dependent_count", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    dependents: [
+      qualifyingChildDep({ dependent_on_another_return: true }),
+      qualifyingChildDep({ first_name: "Kept" }),
+    ],
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  // Only the one without dependent_on_another_return counts
+  assertEquals(input?.dependent_count, 1);
+  assertEquals(input?.qualifying_child_tax_credit_count, 1);
+});
+
+// ============================================================
+// 14. ATIN disqualifies CTC
+// ============================================================
+
+Deno.test("atin: dependent with atin set → NOT counted as CTC qualifying child", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    dependents: [
+      qualifyingChildDep({ atin: "123456789" }), // has SSN + ATIN → ATIN disqualifies
+    ],
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
+  assertEquals(input?.other_dependent_count, 1);
+});
+
+// ============================================================
+// 15. full_time_student — qualifying child for ODC but NOT CTC
+// ============================================================
+
+Deno.test("full_time_student: age 21 full-time student → qualifying child (ODC), NOT CTC", () => {
+  // Age 21 at Dec 31 2025 → dob 2004
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    dependents: [
+      qualifyingChildDep({
+        dob: "2004-06-15", // age 21 — over 17, so fails CTC age test
+        full_time_student: true,
+      }),
+    ],
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  // Fails CTC (not under 17, not disabled, no qualifying_child_for_ctc override)
+  assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
+  // Counts as ODC — is a qualifying child via full_time_student path
+  assertEquals(input?.other_dependent_count, 1);
+});
+
+// ============================================================
+// 16. mfs_spouse_itemizing routed to f1040
+// ============================================================
+
+Deno.test("mfs: mfs_spouse_itemizing: true → routed to f1040", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    mfs_spouse_itemizing: true,
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.mfs_spouse_itemizing, true);
+});
+
+// ============================================================
+// 17. taxpayer deceased fields routed to f1040
+// ============================================================
+
+Deno.test("deceased: taxpayer_deceased + taxpayer_death_date → routed to f1040", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxpayer_deceased: true,
+    taxpayer_death_date: "2025-06-01",
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.taxpayer_deceased, true);
+  assertEquals(input?.taxpayer_death_date, "2025-06-01");
+});
+
+// ============================================================
+// 18. Dependent IP PIN accepted
+// ============================================================
+
+Deno.test("dependent ip_pin: '123456' → accepted (valid 6-digit IP PIN)", () => {
+  // Should not throw — confirms schema accepts 6-digit ip_pin
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    dependents: [
+      qualifyingChildDep({ ip_pin: "123456" }),
+    ],
+  });
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.qualifying_child_tax_credit_count, 1);
+});
+
+// ============================================================
+// 19. Smoke test — all new major fields populated
+// ============================================================
+
+Deno.test("smoke: all new major fields populated → routes correctly to f1040", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    taxpayer_first_name: "Jane",
+    taxpayer_last_name: "Smith",
+    taxpayer_middle_initial: "A",
+    taxpayer_suffix: "Jr.",
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_occupation: "Engineer",
+    taxpayer_deceased: false,
+    taxpayer_ip_pin: "123456",
+    taxpayer_prior_year_agi: 75000,
+    spouse_first_name: "John",
+    spouse_last_name: "Smith",
+    spouse_occupation: "Teacher",
+    spouse_deceased: false,
+    spouse_ip_pin: "654321",
+    address_line1: "100 Oak St",
+    address_line2: "Apt 2B",
+    address_city: "Springfield",
+    address_state: "IL",
+    address_zip: "62701",
+    digital_assets: false,
+    presidential_campaign_fund_taxpayer: false,
+    presidential_campaign_fund_spouse: false,
+    extension_filed: false,
+    mfs_spouse_itemizing: false,
+    qss_spouse_death_year: 2023,
+    hoh_paid_more_than_half_home_costs: true,
+    dependents: [
+      qualifyingChildDep({ ip_pin: "111222" }),
+      qualifyingChildDep({
+        first_name: "StudentChild",
+        dob: "2002-01-01", // age 23 in 2025
+        full_time_student: true,
+      }),
+    ],
+  });
+
+  assertEquals(result.outputs.length, 1);
+  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  assertEquals(input?.filing_status, FilingStatus.MFJ);
+  // First child (age 15) qualifies for CTC; second (age 23, student) does not
+  assertEquals(input?.qualifying_child_tax_credit_count, 1);
+  assertEquals(input?.other_dependent_count, 1);
+  assertEquals(input?.dependent_count, 2);
+  assertEquals(input?.digital_assets, false);
+  assertEquals(input?.taxpayer_occupation, "Engineer");
+  assertEquals(input?.spouse_occupation, "Teacher");
+  assertEquals(input?.address_line2, "Apt 2B");
+  assertEquals(input?.extension_filed, false);
+  assertEquals(input?.qss_spouse_death_year, 2023);
+  assertEquals(input?.hoh_paid_more_than_half_home_costs, true);
+  assertEquals(input?.taxpayer_ip_pin, "123456");
+  assertEquals(input?.spouse_ip_pin, "654321");
+});

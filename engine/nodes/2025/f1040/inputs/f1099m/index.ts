@@ -8,8 +8,8 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
-import { schedule_c } from "../../intermediate/schedule_c/index.ts";
-import { schedule_e } from "../../intermediate/schedule_e/index.ts";
+import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/schedule_f/index.ts";
 
 // ---------------------------------------------------------------------------

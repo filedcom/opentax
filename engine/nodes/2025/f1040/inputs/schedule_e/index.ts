@@ -5,7 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
-import { schedule_a } from "../../intermediate/schedule_a/index.ts";
+import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { form8582 } from "../../intermediate/form8582/index.ts";
 import { form6198 } from "../../intermediate/form6198/index.ts";
 import { form8960 } from "../../intermediate/form8960/index.ts";

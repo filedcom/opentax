@@ -15,8 +15,8 @@ import { form8959 } from "../../intermediate/form8959/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/ira_deduction_worksheet/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import { schedule_a } from "../../intermediate/schedule_a/index.ts";
-import { schedule_c } from "../../intermediate/schedule_c/index.ts";
+import { scheduleA as schedule_a } from "../schedule_a/index.ts";
+import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
