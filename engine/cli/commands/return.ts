@@ -1,6 +1,5 @@
 import { join } from "@std/path";
 import { buildExecutionPlan, execute } from "../../mod.ts";
-import { f1040_line_1z } from "../../nodes/2025/f1040/f1040_line_01z/index.ts";
 import { registry } from "../../nodes/2025/registry.ts";
 import { createReturn, loadInputs, loadMeta } from "../store/store.ts";
 import type { InputEntry } from "../store/types.ts";
@@ -59,16 +58,16 @@ export async function getReturnCommand(
   const plan = buildExecutionPlan(registry, engineInputs);
   const result = execute(plan, registry, engineInputs);
 
-  const wages = result.pending[f1040_line_1z.nodeType]?.["wages"];
-  let wagesList: number[];
-  if (Array.isArray(wages)) {
-    wagesList = wages as number[];
-  } else if (typeof wages === "number") {
-    wagesList = [wages];
+  const line1z = result.pending["f1040"]?.["line1z"];
+  let line1zList: number[];
+  if (Array.isArray(line1z)) {
+    line1zList = line1z as number[];
+  } else if (typeof line1z === "number") {
+    line1zList = [line1z];
   } else {
-    wagesList = [];
+    line1zList = [];
   }
-  const line1a = wagesList.reduce((a, b) => a + b, 0);
+  const line1a = line1zList.reduce((a, b) => a + b, 0);
 
   return {
     returnId: meta.returnId,

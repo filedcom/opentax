@@ -190,16 +190,15 @@ Expand instances from inputs, build the instance graph, topological sort:
 inputs.json: { w2s: [w2_01, w2_02], int1099s: [int_01, int_02, int_03] }
 
 instance graph:
-  start → w2_01 → line_01z
-  start → w2_02 → line_01z
-  start → int_01 → schedule_b
+  start → w2_01 → f1040
+  start → w2_02 → f1040
+  start → int_01 → schedule_b (intermediate)
   start → int_02 → schedule_b
   start → int_03 → schedule_b
-  line_01z → line_11_agi
-  schedule_b → line_11_agi
+  schedule_b → f1040
   ...
 
-topo sort → [ start, w2_01, w2_02, int_01, int_02, int_03, line_01z, schedule_b, line_11_agi, ... ]
+topo sort → [ start, w2_01, w2_02, int_01, int_02, int_03, schedule_b, f1040, ... ]
 ```
 
 **Phase 2 — Execute in order**
@@ -222,7 +221,7 @@ guarantees it.
 **Array accumulation example (2 W-2s, 3 1099-INTs):**
 
 ```
-TOPO ORDER:  start → w2_01 → w2_02 → int_01 → int_02 → int_03 → line_01z → schedule_b → line_11_agi
+TOPO ORDER:  start → w2_01 → w2_02 → int_01 → int_02 → int_03 → schedule_b → f1040
 
                         pending dict after each step
                  ┌─────────────────────────────────────────────────────────────┐
@@ -231,26 +230,22 @@ step 1  start    │ w2_01:{box1:85000}  w2_02:{box1:45000}                     
                  └─────────────────────────────────────────────────────────────┘
                           │deposits                │deposits
                           ▼                        ▼
-step 2  w2_01    │ line_01z:{ wages:[85000] }                                  │
-step 3  w2_02    │ line_01z:{ wages:[85000, 45000] }          ← appended       │
+step 2  w2_01    │ f1040:{ wages:[85000] }                                      │
+step 3  w2_02    │ f1040:{ wages:[85000, 45000] }             ← appended        │
 
 step 4  int_01   │ schedule_b:{ interest:[320] }                               │
 step 5  int_02   │ schedule_b:{ interest:[320, 150] }         ← appended       │
 step 6  int_03   │ schedule_b:{ interest:[320, 150, 500] }    ← appended       │
 
                  └─────────────────────────────────────────────────────────────┘
-                   pending fully assembled — now the aggregator nodes fire:
+                   pending fully assembled — now intermediate nodes fire:
 
-step 7  line_01z   reads pending → { wages:[85000, 45000] }
-                   computes → total_wages: 130000
-                   deposits → line_11_agi:{ wages:130000 }
-
-step 8  schedule_b reads pending → { interest:[320, 150, 500] }
+step 7  schedule_b reads pending → { interest:[320, 150, 500] }
                    computes → total_interest: 970
-                   deposits → line_11_agi:{ interest:970 }
+                   deposits → f1040:{ interest:970 }
 
-step 9  line_11_agi reads pending → { wages:130000, interest:970, ... }
-                   computes → agi: 130970
+step 8  f1040   reads pending → { wages:[85000, 45000], interest:970, ... }
+                   computes → (unimplemented placeholder, skipped by executor)
 ```
 
 Key: a node only fires when it reaches its position in topo order. By that point
@@ -349,55 +344,27 @@ Two separate Deno workspace packages — same repo, separate CLIs.
     registry.ts              ← assembles all nodes into NodeRegistry
 
     nodes/                   ← all TaxNode implementations
-                             ← each node dir: index.ts + index.test.ts + context.md + node.lock
+                             ← each node dir: index.ts + index.test.ts + research/context.md
       2025/                  ← year is top-level; copy entire dir to add a new tax year
-        start/
-        source-docs/         ← taxpayer source documents (W-2, 1099s, K-1s)
-          w2/
-          w2_g/
-          1099_int/
-          1099_div/
-          1099_b/
-          1099_r/
-          1099_misc/
-          1099_nec/
-          k1/
-          ...
-        schedules/           ← lettered schedules (A, B, C, D, E, SE)
-          schedule_a/
-          schedule_b/
-          schedule_c/
-          schedule_d/
-          schedule_e/
-          schedule_se/
-          ...
-        additional/          ← numbered additional schedules (1, 2, 3)
-          schedule_1/
-          schedule_2/
-          schedule_3/
-          ...
-        forms/               ← supplemental forms + credits (8812, 2441, 8863, etc.)
-          8812_ctc/
-          2441_dependent_care/
-          8863_education/
-          8949_capital_assets/
-          4562_depreciation/
-          6251_amt/
-          ...
-        worksheets/          ← computation-only worksheets, not filed (QDCGT, SS benefits, etc.)
-          qualified_dividends_cgt/
-          social_security_benefits/
-          child_tax_credit/
-          ...
-        lines/               ← core 1040 line nodes
-          line_01z_wages/
-          line_11_agi/
-          line_15_taxable_income/
-          line_16_tax/
-          line_24_total_tax/
-          line_37_refund/
-          line_38_owed/
-          ...
+        f1040/               ← Form 1040 subgraph
+          start/             ← entry point: dispatches raw inputs to first-wave nodes
+          inputs/            ← taxpayer source documents (W-2, 1099s, K-1s, etc.)
+            W2/
+              index.ts
+              index.test.ts
+              research/
+                context.md
+                scratchpad.md
+                docs/        ← IRS PDFs (iw2w3.pdf, p15.pdf, p525.pdf, etc.)
+            INT/             ← 1099-INT (placeholder)
+            DIV/             ← 1099-DIV (placeholder)
+            ...              ← 1099-B, 1099-R, K-1, etc. (future)
+          intermediate/      ← nodes that aggregate inputs before the final form
+                             ← (schedule_b, schedule_c, schedule_d, schedule_se, etc.)
+          outputs/           ← final filed forms
+            f1040/           ← Form 1040 (placeholder)
+            schedule1/       ← Schedule 1 (placeholder)
+            ...              ← Schedule 2, 3, A, etc. (future)
         constants/
           tax_brackets.ts
           standard_deductions.ts
