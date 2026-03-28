@@ -34,6 +34,7 @@ import {
   scheduleE,
 } from "../inputs/schedule_e/index.ts";
 import { ext, inputSchema as extInputSchema } from "../inputs/ext/index.ts";
+import { general, inputSchema as generalInputSchema } from "../inputs/general/index.ts";
 import { f1099int, itemSchema as f1099intItemSchema } from "../inputs/f1099int/index.ts";
 import { itemSchema as f1099necItemSchema, f1099nec } from "../inputs/f1099nec/index.ts";
 import { w2, w2ItemSchema } from "../inputs/w2/index.ts";
@@ -61,6 +62,7 @@ const inputSchema = z.object({
   d_screen: scheduleDInputSchema.optional(),
   schedule_es: z.array(scheduleEItemSchema).optional(),
   ext: extInputSchema.optional(),
+  general: generalInputSchema.optional(),
 });
 
 type StartInput = z.infer<typeof inputSchema>;
@@ -89,6 +91,7 @@ class StartNode extends TaxNode<typeof inputSchema> {
     scheduleD,
     scheduleE,
     ext,
+    general,
   ]);
 
   compute(input: StartInput): NodeResult {
@@ -113,6 +116,7 @@ class StartNode extends TaxNode<typeof inputSchema> {
       ...(input.schedule_a ? [{ nodeType: scheduleA.nodeType, input: input.schedule_a }] : []),
       ...(input.d_screen ? [{ nodeType: scheduleD.nodeType, input: input.d_screen }] : []),
       ...(input.ext ? [{ nodeType: ext.nodeType, input: input.ext }] : []),
+      ...(input.general ? [{ nodeType: general.nodeType, input: input.general }] : []),
     ];
     return { outputs };
   }

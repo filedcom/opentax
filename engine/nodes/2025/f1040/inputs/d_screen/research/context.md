@@ -381,7 +381,7 @@ Line 25: SMALLER of Line 23 or Line 24 → enter on Form 1040 Line 16
 > and IRS 1040 Instructions (Line 16). Agent MUST verify exact 2025 lines from
 > https://www.irs.gov/instructions/i1040gi. The 2025 thresholds are from IRS
 > Topic 409: https://www.irs.gov/taxtopics/tc409. The Schedule D Tax Worksheet
-> in research/docs/i1040sd.pdf confirms $48,350/$96,700/$64,750 and
+> in .research/docs/i1040sd.pdf confirms $48,350/$96,700/$64,750 and
 > $533,400/$300,000/$600,050/$566,700 as the correct TY2025 values.
 
 ### Step 10 — Schedule D Tax Worksheet (Line 20 = "No")
@@ -471,7 +471,7 @@ Line 47: SMALLER of Line 45 or Line 46 → enter on Form 1040 Line 16
   Worksheet footnote in 1040 Instructions before completing
 
 > **Source:** Schedule D Instructions (2025), Schedule D Tax Worksheet —
-> extracted from research/docs/i1040sd.pdf (verified download). URL:
+> extracted from .research/docs/i1040sd.pdf (verified download). URL:
 > https://www.irs.gov/pub/irs-pdf/i1040sd.pdf
 
 ### Step 11 — 28% Rate Gain Worksheet (Complete)
@@ -502,7 +502,7 @@ Line 7: Lines 1 + 2 + 3 + 4 + 5 + 6 (combine all). If zero or less, enter -0-.
 ```
 
 > **Source:** Schedule D Instructions (2025), 28% Rate Gain Worksheet—Line 18 —
-> extracted from research/docs/i1040sd.pdf. URL:
+> extracted from .research/docs/i1040sd.pdf. URL:
 > https://www.irs.gov/pub/irs-pdf/i1040sd.pdf
 
 ### Step 12 — Unrecaptured Section 1250 Gain Worksheet (Complete)
@@ -545,7 +545,7 @@ Line 18: Line 13 − Line 17; if zero or less, enter -0-.
 ```
 
 > **Source:** Schedule D Instructions (2025), Unrecaptured Section 1250 Gain
-> Worksheet—Line 19 — extracted from research/docs/i1040sd.pdf. URL:
+> Worksheet—Line 19 — extracted from .research/docs/i1040sd.pdf. URL:
 > https://www.irs.gov/pub/irs-pdf/i1040sd.pdf
 
 ### Step 13 — Capital Loss Carryover Worksheet
@@ -593,7 +593,7 @@ offset at preferential rates. The $3,000 annual deduction limit is already
 reflected in prior year Line 21 — the carryover is the EXCESS beyond that.
 
 > **Source:** Schedule D Instructions (2025), Capital Loss Carryover
-> Worksheet—Lines 6 and 14 — extracted from research/docs/i1040sd.pdf. URL:
+> Worksheet—Lines 6 and 14 — extracted from .research/docs/i1040sd.pdf. URL:
 > https://www.irs.gov/pub/irs-pdf/i1040sd.pdf
 
 ### Step 14 — Net Investment Income Tax (NIIT) — Form 8960
@@ -1037,7 +1037,7 @@ All URLs verified to resolve (fetched during research).
 | Drake KB — Schedule D Form 8949 Import        | —    | Full article                           | https://kb.drakesoftware.com/kb/Drake-Tax/10139.htm                 | —                 |
 | Drake KB — 8949: Code on Part I or II         | —    | Full article                           | https://kb.drakesoftware.com/kb/Drake-Tax/13157.htm                 | —                 |
 | Instructions for Schedule D (Form 1040)       | 2025 | All                                    | https://www.irs.gov/instructions/i1040sd                            | i1040sd.pdf       |
-| Instructions for Form 8949                    | 2025 | All                                    | https://www.irs.gov/instructions/i8949                              | docs/i8949.pdf    |
+| Instructions for Form 8949                    | 2025 | All                                    | https://www.irs.gov/instructions/i8949                              | .research/docs/i8949.pdf    |
 | IRS Topic 409 — Capital Gains and Losses      | 2025 | Full                                   | https://www.irs.gov/taxtopics/tc409                                 | —                 |
 | IRS About Schedule D page                     | 2025 | Overview                               | https://www.irs.gov/forms-pubs/about-schedule-d-form-1040           | —                 |
 | Instructions for Form 1040 (general)          | 2025 | Line 7, Line 16                        | https://www.irs.gov/instructions/i1040gi                            | i1040gi.pdf       |
@@ -1046,10 +1046,10 @@ All URLs verified to resolve (fetched during research).
 | Instructions for Form 8960                    | 2025 | All                                    | https://www.irs.gov/instructions/i8960                              | —                 |
 | TeachMePersonalFinance — Sch D Instructions   | —    | All lines                              | https://www.teachmepersonalfinance.com/irs-schedule-d-instructions/ | —                 |
 | TaxFormFinder — Schedule D 2025               | 2025 | Form structure                         | https://www.taxformfinder.org/federal/1040-schedule-d               | —                 |
-| Schedule D (Form 1040) PDF                    | 2025 | Full form                              | https://www.irs.gov/pub/irs-pdf/f1040sd.pdf                         | docs/f1040sd.pdf  |
-| Instructions for Schedule D PDF               | 2025 | Full — worksheets extracted            | https://www.irs.gov/pub/irs-pdf/i1040sd.pdf                         | docs/i1040sd.pdf  |
-| Instructions for Form 8949 PDF                | 2025 | Full                                   | https://www.irs.gov/pub/irs-pdf/i8949.pdf                           | docs/i8949.pdf    |
-| Form 8949 PDF                                 | 2025 | Full form                              | https://www.irs.gov/pub/irs-pdf/f8949.pdf                           | docs/f8949.pdf    |
-| Publication 550 — Investment Income           | 2024 | Investment income, capital gains       | https://www.irs.gov/pub/irs-pdf/p550.pdf                            | docs/p550.pdf     |
-| Publication 544 — Sales and Dispositions      | 2024 | Asset dispositions, basis              | https://www.irs.gov/pub/irs-pdf/p544.pdf                            | docs/p544.pdf     |
-| Rev. Proc. 2024-40 (TY2025 adjustments)       | 2024 | LTCG thresholds confirmed in Topic 409 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf                       | docs/rp-24-40.pdf |
+| Schedule D (Form 1040) PDF                    | 2025 | Full form                              | https://www.irs.gov/pub/irs-pdf/f1040sd.pdf                         | .research/docs/f1040sd.pdf  |
+| Instructions for Schedule D PDF               | 2025 | Full — worksheets extracted            | https://www.irs.gov/pub/irs-pdf/i1040sd.pdf                         | .research/docs/i1040sd.pdf  |
+| Instructions for Form 8949 PDF                | 2025 | Full                                   | https://www.irs.gov/pub/irs-pdf/i8949.pdf                           | .research/docs/i8949.pdf    |
+| Form 8949 PDF                                 | 2025 | Full form                              | https://www.irs.gov/pub/irs-pdf/f8949.pdf                           | .research/docs/f8949.pdf    |
+| Publication 550 — Investment Income           | 2024 | Investment income, capital gains       | https://www.irs.gov/pub/irs-pdf/p550.pdf                            | .research/docs/p550.pdf     |
+| Publication 544 — Sales and Dispositions      | 2024 | Asset dispositions, basis              | https://www.irs.gov/pub/irs-pdf/p544.pdf                            | .research/docs/p544.pdf     |
+| Rev. Proc. 2024-40 (TY2025 adjustments)       | 2024 | LTCG thresholds confirmed in Topic 409 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf                       | .research/docs/rp-24-40.pdf |

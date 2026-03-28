@@ -105,10 +105,15 @@ Filing status differences, phaseouts, limitations, carryforwards, special rules.
 For every `[ ]` question: research, find verifiable source, mark `[x]` with citation, update context.md.
 
 ### Step 8 — Download PDFs
+Use `.research/docs/` at the repo root as the shared doc cache. Check before downloading — if the file already exists, skip it.
+
 ```bash
-mkdir -p nodes/2025/f1040/intermediate/{NODE}/research/docs
-curl -sL "{url}" -o "nodes/2025/f1040/intermediate/{NODE}/research/docs/{filename}.pdf" --max-time 60
+mkdir -p .research/docs
+# Check before downloading:
+ls .research/docs/{filename}.pdf 2>/dev/null && echo "already cached" || curl -sL "{url}" -o ".research/docs/{filename}.pdf" --max-time 60
 ```
+
+Reference the file from context.md using the shared path: `.research/docs/{filename}.pdf`
 
 ### Step 9 — Final pass
 Every input field has a row in Input Fields and Calculation Logic. Data flow diagram complete. All URLs verified.

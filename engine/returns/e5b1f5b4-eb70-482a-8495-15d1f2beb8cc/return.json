@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "returnId": "e5b1f5b4-eb70-482a-8495-15d1f2beb8cc",
+    "year": 2025,
+    "createdAt": "2026-03-28T23:06:00.899Z"
+  },
+  "inputs": {
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 85000,
+          "box2_fed_withheld": 12000
+        }
+      }
+    ]
+  }
+}

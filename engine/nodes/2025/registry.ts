@@ -16,6 +16,7 @@ import { scheduleD } from "./f1040/inputs/d_screen/index.ts";
 import { f1099div } from "./f1040/inputs/f1099div/index.ts";
 import { scheduleE } from "./f1040/inputs/schedule_e/index.ts";
 import { ext } from "./f1040/inputs/ext/index.ts";
+import { general } from "./f1040/inputs/general/index.ts";
 import { f1099int } from "./f1040/inputs/f1099int/index.ts";
 import { f1099nec } from "./f1040/inputs/f1099nec/index.ts";
 import { w2 } from "./f1040/inputs/w2/index.ts";
@@ -82,6 +83,7 @@ export const registry: NodeRegistry = {
   d_screen: scheduleD,
   f8949: f8949InputNode,
   ext,
+  general,
   // Intermediate computation nodes
   form2441,
   form4137,

@@ -2,6 +2,7 @@ import { parseArgs } from "@std/cli";
 import { formAddCommand } from "./commands/form.ts";
 import { graphViewCommand } from "./commands/graph.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
+import { exportMefCommand } from "./commands/export.ts";
 
 const RETURNS_DIR = "./returns";
 
@@ -19,7 +20,7 @@ async function runCommand(fn: () => Promise<unknown>): Promise<void> {
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth"],
+    string: ["year", "returnId", "node_type", "depth", "type"],
     boolean: ["json"],
   });
   const cmd = args._[0] as string | undefined;
@@ -54,6 +55,21 @@ async function main(): Promise<void> {
     await runCommand(() =>
       getReturnCommand({ returnId, baseDir: RETURNS_DIR })
     );
+  } else if (cmd === "return" && sub === "export") {
+    const returnId = args.returnId;
+    const type = args.type;
+    if (!returnId) {
+      console.error("Error: --returnId is required");
+      Deno.exit(1);
+    }
+    if (type !== "mef") {
+      console.error("Error: --type must be 'mef'");
+      Deno.exit(1);
+    }
+    await runCommand(async () => {
+      const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR });
+      console.log(xml);
+    });
   } else if (cmd === "graph" && sub === "view") {
     const nodeType = args.node_type;
     if (!nodeType) {
@@ -76,6 +92,7 @@ async function main(): Promise<void> {
         "  tax return create --year 2025\n" +
         "  tax form add --returnId <id> --node_type w2 '{...}'\n" +
         "  tax return get --returnId <id>\n" +
+        "  tax return export --returnId <id> --type mef\n" +
         "  tax graph view --node_type <type> [--depth <n>] [--json]",
     );
     Deno.exit(1);

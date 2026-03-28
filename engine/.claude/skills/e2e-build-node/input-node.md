@@ -72,10 +72,15 @@ Multiple instances, filing status differences, special codes, phase-outs, carryf
 For every unresolved `[ ]` question in scratchpad: research it, find a verifiable IRS source, mark `[x]` with citation, update context.md. Loop until all resolved or `[!] NEEDS SOURCE: reason`.
 
 ### Step 8 — Download PDFs
+Use `.research/docs/` at the repo root as the shared doc cache. Check before downloading — if the file already exists, skip it.
+
 ```bash
-mkdir -p nodes/2025/f1040/inputs/{NODE}/research/docs
-curl -sL "{url}" -o "nodes/2025/f1040/inputs/{NODE}/research/docs/{filename}.pdf" --max-time 60
+mkdir -p .research/docs
+# Check before downloading:
+ls .research/docs/{filename}.pdf 2>/dev/null && echo "already cached" || curl -sL "{url}" -o ".research/docs/{filename}.pdf" --max-time 60
 ```
+
+Reference the file from context.md using the shared path: `.research/docs/{filename}.pdf`
 
 ### Step 9 — Final pass
 Every field in Data Entry Fields has a row in Per-Field Routing. Data flow diagram complete. Every URL verified. Sources table complete.
