@@ -140,6 +140,27 @@ Finite domain values get an enum — not `string`, not a comment. The enum is ex
 
 ---
 
+## Type Safety Is Non-Negotiable
+
+Never reduce type safety to fix a compile error. Forbidden:
+
+- `as any`
+- `Record<string, unknown>` where a typed schema exists
+- Widening a function parameter from a typed schema to a looser type
+
+When tests use string literals for enum fields (e.g. `"7"` for `DistributionCode`), fix the test to import and use the enum value — don't weaken the type of the compute helper.
+
+```ts
+// Wrong
+function compute(items: Record<string, unknown>[]) { ... }
+
+// Right — import the enum, use it in the test
+import { DistributionCode } from "./index.ts";
+minimalItem({ box7_distribution_code: DistributionCode.Code7 });
+```
+
+---
+
 ## No Speculative Abstraction
 
 Don't extract a helper because you *might* reuse it. Don't add a config object because you *might* add options. Three similar lines of code is better than a premature abstraction.

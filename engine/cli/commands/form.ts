@@ -1,6 +1,6 @@
 import { join } from "@std/path";
 import { registry } from "../../nodes/2025/registry.ts";
-import { w2ItemSchema } from "../../nodes/2025/f1040/inputs/W2/index.ts";
+import { w2ItemSchema } from "../../nodes/2025/f1040/inputs/w2/index.ts";
 import { appendInput } from "../store/store.ts";
 import type { ZodTypeAny } from "zod";
 

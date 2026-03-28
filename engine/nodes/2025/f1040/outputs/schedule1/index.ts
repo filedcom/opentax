@@ -12,6 +12,7 @@ const inputSchema = z.object({
   line8z_attorney_proceeds: z.number().optional(),
   line8z_nqdc: z.number().optional(),
   line8z_other: z.number().optional(),
+  line8z_other_income: z.number().optional(),
   line8z_golden_parachute: z.number().optional(),
   line8c_cod_income: z.number().optional(),
   line17_schedule_e: z.number().optional(),

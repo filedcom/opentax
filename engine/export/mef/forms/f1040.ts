@@ -1,6 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { IRS1040Fields, IRS1040Input } from "../types.ts";
 
-const FIELD_MAP: [string, string][] = [
+const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = [
   ["line1a_wages", "WagesAmt"],
   ["line1e_taxable_dep_care", "TaxableDependentCareExpnsesAmt"],
   ["line1i_combat_pay", "CombatPayElectionAmt"],
@@ -18,11 +19,11 @@ const FIELD_MAP: [string, string][] = [
   ["line38_amount_paid_extension", "AmountPaidWithExtensionAmt"],
 ];
 
-export function buildIRS1040(fields: Record<string, unknown>): string {
+export function buildIRS1040(fields: IRS1040Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
-    if (value === undefined || value === null) return "";
-    return element(tag, value as number);
+    if (typeof value !== "number") return "";
+    return element(tag, value);
   });
   return elements("IRS1040", children);
 }

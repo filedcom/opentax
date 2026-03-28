@@ -1,6 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { Schedule1Fields, Schedule1Input } from "../types.ts";
 
-const FIELD_MAP: [string, string][] = [
+const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule1Fields, string]> = [
   ["line1_state_refund", "StateLocalTaxRefundAmt"],
   ["line3_schedule_c", "BusinessIncomeLossAmt"],
   ["line7_unemployment", "UnemploymentCompAmt"],
@@ -18,11 +19,11 @@ const FIELD_MAP: [string, string][] = [
   ["line24f_501c18d", "Sec501c18dContributionAmt"],
 ];
 
-export function buildIRS1040Schedule1(fields: Record<string, unknown>): string {
+export function buildIRS1040Schedule1(fields: Schedule1Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
-    if (value === undefined || value === null) return "";
-    return element(tag, value as number);
+    if (typeof value !== "number") return "";
+    return element(tag, value);
   });
   return elements("IRS1040Schedule1", children);
 }

@@ -25,22 +25,26 @@
   {
     "form": "1099-B",
     "description": "Proceeds from Broker and Barter Exchange Transactions",
-    "screen_code": "99B"
+    "screen_code": "99B",
+    "filed_tax_node_type_code": "f1099b"
   },
   {
     "form": "1099-C",
     "description": "Cancellation of Debt",
-    "screen_code": "99C"
+    "screen_code": "99C",
+    "filed_tax_node_type_code": "f1099c"
   },
   {
     "form": "1099-DIV",
     "description": "Dividends and Distributions",
-    "screen_code": "DIV"
+    "screen_code": "DIV",
+    "filed_tax_node_type_code": "f1099div"
   },
   {
     "form": "1099-G",
     "description": "Certain Government Payments",
-    "screen_code": "99G"
+    "screen_code": "99G",
+    "filed_tax_node_type_code": "f1099g"
   },
   {
     "form": "1099-INT",
@@ -48,22 +52,26 @@
     "screen_code": "INT",
     "alias_screen_codes": [
       "B"
-    ]
+    ],
+    "filed_tax_node_type_code": "f1099int"
   },
   {
     "form": "1099-K",
     "description": "Payment Card and Third Party Network Transactions",
-    "screen_code": "99K"
+    "screen_code": "99K",
+    "filed_tax_node_type_code": "f1099k"
   },
   {
     "form": "1099-MISC",
     "description": "Miscellaneous Information",
-    "screen_code": "99M"
+    "screen_code": "99M",
+    "filed_tax_node_type_code": "f1099m"
   },
   {
     "form": "1099-NEC",
     "description": "Nonemployee Compensation",
-    "screen_code": "NEC"
+    "screen_code": "NEC",
+    "filed_tax_node_type_code": "f1099nec"
   },
   {
     "form": "1099-OID",
@@ -81,7 +89,8 @@
     "screen_code": "1099",
     "alias_screen_codes": [
       "99R > \"Special Tax Treatments\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f1099r"
   },
   {
     "form": "1095-A",
@@ -247,7 +256,8 @@
   {
     "form": "1098",
     "description": "Mortgage Interest Statement",
-    "screen_code": "1098"
+    "screen_code": "1098",
+    "filed_tax_node_type_code": "f1098"
   },
   {
     "form": "1116",
@@ -296,7 +306,8 @@
     "screen_code": "2441",
     "alias_screen_codes": [
       "2441 > \"Worksheet for 2023 Expenses Paid in 2024\""
-    ]
+    ],
+    "filed_tax_node_type_code": "f2441"
   },
   {
     "form": "2555",
@@ -440,7 +451,8 @@
     "screen_code": "EXT",
     "alias_screen_codes": [
       "4868"
-    ]
+    ],
+    "filed_tax_node_type_code": "ext"
   },
   {
     "form": "4952",
@@ -799,7 +811,8 @@
     "screen_code": "8863",
     "alias_screen_codes": [
       "8863 > \"Additional Educ. Inst.\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8863"
   },
   {
     "form": "8864",
@@ -949,7 +962,8 @@
   {
     "form": "8949",
     "description": "Sales and other Dispositions of Capital Assets",
-    "screen_code": "8949"
+    "screen_code": "8949",
+    "filed_tax_node_type_code": "f8949"
   },
   {
     "form": "8958",
@@ -1150,7 +1164,8 @@
   {
     "form": "Schedule 8812 (Form 1040)",
     "description": "Credits for Qualifying Children and Other Dependents",
-    "screen_code": "8812"
+    "screen_code": "8812",
+    "filed_tax_node_type_code": "f8812"
   },
   {
     "form": "Schedule A",
@@ -1164,7 +1179,8 @@
     "alias_screen_codes": [
       "A > \"Charitable Contributions Carried over from prior years\" link",
       "A > \"Charitable Contributions Carried over from prior years\" link > \"Charitable Contributions Carryover for Future\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "schedule_a"
   },
   {
     "form": "Schedule C (Form 1040)",
@@ -1172,7 +1188,8 @@
     "screen_code": "C",
     "alias_screen_codes": [
       "C > \"Prior Year Compare\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "schedule_c"
   },
   {
     "form": "Schedule D",
@@ -1180,7 +1197,8 @@
     "screen_code": "D",
     "alias_screen_codes": [
       "D2"
-    ]
+    ],
+    "filed_tax_node_type_code": "d_screen"
   },
   {
     "form": "Schedule E (Form 1040)",
@@ -1194,7 +1212,8 @@
       "E > \"Prior-Year Compare\" tab",
       "E2> \"QBI Information\" tab",
       "E3 > \"QBI Information\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "schedule_e"
   },
   {
     "form": "Schedule E (Form 5471)",
@@ -1443,7 +1462,8 @@
     "screen_code": "W2",
     "alias_screen_codes": [
       "W2 > Additional Entries"
-    ]
+    ],
+    "filed_tax_node_type_code": "w2"
   },
   {
     "form": "W-2G",
