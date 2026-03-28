@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -21,20 +24,15 @@ export const inputSchema = z.object({
   f8949s: z.array(itemSchema).min(1),
 });
 
-class F8949Node extends TaxNode<typeof inputSchema> {
-  readonly nodeType = "f8949";
-  readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_d, f1040]);
+type F8949Item = z.infer<typeof itemSchema>;
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.f8949s) {
-      const gainLoss = item.proceeds - item.cost_basis +
-        (item.adjustment_amount ?? 0);
-      const isLongTerm = ["D", "E", "F"].includes(item.part);
-
-      out.add(schedule_d, {
+function f8949ItemOutputs(item: F8949Item): NodeOutput[] {
+  const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
+  const isLongTerm = ["D", "E", "F"].includes(item.part);
+  return [
+    {
+      nodeType: schedule_d.nodeType,
+      input: {
         transaction: {
           part: item.part,
           description: item.description,
@@ -47,14 +45,19 @@ class F8949Node extends TaxNode<typeof inputSchema> {
           gain_loss: gainLoss,
           is_long_term: isLongTerm,
         },
-      });
+      },
+    },
+    ...((item.federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.federal_withheld } }] : []),
+  ];
+}
 
-      if (item.federal_withheld !== undefined && item.federal_withheld > 0) {
-        out.add(f1040, { line25b_withheld_1099: item.federal_withheld });
-      }
-    }
+class F8949Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f8949";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([schedule_d, f1040]);
 
-    return out.build();
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    return { outputs: input.f8949s.flatMap(f8949ItemOutputs) };
   }
 }
 

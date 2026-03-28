@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -120,29 +123,25 @@ function computeNetProfit(item: ScheduleCItem): number {
   return item.professional_gambler === true ? Math.max(0, rawProfit) : rawProfit;
 }
 
+function scheduleCItemOutputs(item: ScheduleCItem): NodeOutput[] {
+  const netProfit = computeNetProfit(item);
+  const seExempt = item.statutory_employee === true || item.exempt_notary === true;
+  return [
+    { nodeType: schedule1.nodeType, input: { line3_schedule_c: netProfit } },
+    ...(!seExempt && netProfit >= SE_TAX_THRESHOLD ? [
+      { nodeType: schedule_se.nodeType, input: { net_profit_schedule_c: netProfit } },
+      { nodeType: form8995.nodeType, input: { qbi_from_schedule_c: netProfit } },
+    ] : []),
+  ];
+}
+
 class ScheduleCNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_c";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, schedule_se, form8995]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.schedule_cs) {
-      const netProfit = computeNetProfit(item);
-
-      out.add(schedule1, { line3_schedule_c: netProfit });
-
-      const seExempt = item.statutory_employee === true ||
-        item.exempt_notary === true;
-
-      if (!seExempt && netProfit >= SE_TAX_THRESHOLD) {
-        out.add(schedule_se, { net_profit_schedule_c: netProfit });
-        out.add(form8995, { qbi_from_schedule_c: netProfit });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.schedule_cs.flatMap(scheduleCItemOutputs) };
   }
 }
 

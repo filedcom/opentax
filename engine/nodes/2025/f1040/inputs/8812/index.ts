@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -64,38 +67,29 @@ function computeACTC(
   return Math.max(0, Math.min(ctcUnused, earnedIncomeBased, maxPerChild));
 }
 
+function f8812ItemOutputs(item: F8812Item): NodeOutput[] {
+  const filingStatus = item.filing_status ?? "single";
+  const qualifyingChildren = item.qualifying_children_count ?? 0;
+  const otherDependents = item.other_dependents_count ?? 0;
+  const agi = item.agi ?? 0;
+  const earnedIncome = item.earned_income ?? 0;
+  const ctcBeforePhaseOut = qualifyingChildren * CTC_PER_CHILD + otherDependents * ODC_PER_DEPENDENT;
+  const ctcAfterPhaseOut = Math.max(0, ctcBeforePhaseOut - computePhaseOutReduction(agi, filingStatus));
+  const nonrefundableCTC = computeNonrefundableCTC(ctcAfterPhaseOut, item.income_tax_liability);
+  const actc = computeACTC(qualifyingChildren, earnedIncome, ctcAfterPhaseOut, nonrefundableCTC);
+  return [
+    ...(nonrefundableCTC > 0 ? [{ nodeType: schedule3.nodeType, input: { line6b_child_tax_credit: nonrefundableCTC } }] : []),
+    ...(actc > 0 ? [{ nodeType: f1040.nodeType, input: { line28_actc: actc } }] : []),
+  ];
+}
+
 class F8812Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8812";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.f8812s) {
-      const filingStatus = item.filing_status ?? "single";
-      const qualifyingChildren = item.qualifying_children_count ?? 0;
-      const otherDependents = item.other_dependents_count ?? 0;
-      const agi = item.agi ?? 0;
-      const earnedIncome = item.earned_income ?? 0;
-
-      const ctcBeforePhaseOut = qualifyingChildren * CTC_PER_CHILD +
-        otherDependents * ODC_PER_DEPENDENT;
-      const phaseOutReduction = computePhaseOutReduction(agi, filingStatus);
-      const ctcAfterPhaseOut = Math.max(0, ctcBeforePhaseOut - phaseOutReduction);
-      const nonrefundableCTC = computeNonrefundableCTC(ctcAfterPhaseOut, item.income_tax_liability);
-      const actc = computeACTC(qualifyingChildren, earnedIncome, ctcAfterPhaseOut, nonrefundableCTC);
-
-      if (nonrefundableCTC > 0) {
-        out.add(schedule3, { line6b_child_tax_credit: nonrefundableCTC });
-      }
-
-      if (actc > 0) {
-        out.add(f1040, { line28_actc: actc });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.f8812s.flatMap(f8812ItemOutputs) };
   }
 }
 

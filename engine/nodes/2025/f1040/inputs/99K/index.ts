@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -22,18 +25,10 @@ class K99Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([f1040]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.k99s) {
-      if (
-        item.box4_federal_withheld !== undefined &&
-        item.box4_federal_withheld > 0
-      ) {
-        out.add(f1040, { line25b_withheld_1099: item.box4_federal_withheld });
-      }
-    }
-
-    return out.build();
+    const outputs: NodeOutput[] = input.k99s
+      .filter((item) => (item.box4_federal_withheld ?? 0) > 0)
+      .map((item) => ({ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4_federal_withheld } }));
+    return { outputs };
   }
 }
 

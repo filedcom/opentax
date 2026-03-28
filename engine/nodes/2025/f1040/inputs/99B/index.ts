@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -23,20 +26,15 @@ export const inputSchema = z.object({
   b99s: z.array(itemSchema).min(1),
 });
 
-class B99Node extends TaxNode<typeof inputSchema> {
-  readonly nodeType = "b99";
-  readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([form8949, f1040]);
+type B99Item = z.infer<typeof itemSchema>;
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.b99s) {
-      const adjustmentAmount = item.adjustment_amount ?? 0;
-      const gainLoss = item.proceeds - item.cost_basis + adjustmentAmount;
-      const isLongTerm = LONG_TERM_PARTS.has(item.part);
-
-      out.add(form8949, {
+function b99ItemOutputs(item: B99Item): NodeOutput[] {
+  const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
+  const isLongTerm = LONG_TERM_PARTS.has(item.part);
+  return [
+    {
+      nodeType: form8949.nodeType,
+      input: {
         part: item.part,
         description: item.description,
         date_acquired: item.date_acquired,
@@ -47,14 +45,19 @@ class B99Node extends TaxNode<typeof inputSchema> {
         adjustment_amount: item.adjustment_amount,
         gain_loss: gainLoss,
         is_long_term: isLongTerm,
-      });
+      },
+    },
+    ...((item.federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.federal_withheld } }] : []),
+  ];
+}
 
-      if (item.federal_withheld !== undefined && item.federal_withheld > 0) {
-        out.add(f1040, { line25b_withheld_1099: item.federal_withheld });
-      }
-    }
+class B99Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "b99";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([form8949, f1040]);
 
-    return out.build();
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    return { outputs: input.b99s.flatMap(b99ItemOutputs) };
   }
 }
 

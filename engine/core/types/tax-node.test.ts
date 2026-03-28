@@ -27,7 +27,7 @@ class MockAddNode extends TaxNode<typeof addSchema> {
 
   compute(input: z.infer<typeof addSchema>): NodeResult {
     const sum = input.a + input.b;
-    return this.outputNodes.builder().add(mockOutputNode, { sum }).build();
+    return { outputs: [{ nodeType: mockOutputNode.nodeType, input: { sum } }] };
   }
 }
 

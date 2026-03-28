@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -83,40 +86,29 @@ function computeLLC(
   return llcBase * (1 - phaseOutFraction);
 }
 
+function f8863ItemOutputs(item: z.infer<typeof itemSchema>): NodeOutput[] {
+  const agi = item.agi ?? 0;
+  const isMFJ = item.filing_status === "mfj";
+  if (item.credit_type === "aoc") {
+    const { nonrefundable, refundable } = computeAOC(item.qualified_expenses, agi, isMFJ);
+    return [
+      ...(nonrefundable > 0 ? [{ nodeType: schedule3.nodeType, input: { line3_education_credit: nonrefundable } }] : []),
+      ...(refundable > 0 ? [{ nodeType: f1040.nodeType, input: { line29_refundable_aoc: refundable } }] : []),
+    ];
+  }
+  const llcAllowed = computeLLC(item.qualified_expenses, agi, isMFJ);
+  return llcAllowed > 0
+    ? [{ nodeType: schedule3.nodeType, input: { line3_education_credit: llcAllowed } }]
+    : [];
+}
+
 class F8863Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8863";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.f8863s) {
-      const agi = item.agi ?? 0;
-      const isMFJ = item.filing_status === "mfj";
-
-      if (item.credit_type === "aoc") {
-        const { nonrefundable, refundable } = computeAOC(
-          item.qualified_expenses,
-          agi,
-          isMFJ,
-        );
-
-        if (nonrefundable > 0) {
-          out.add(schedule3, { line3_education_credit: nonrefundable });
-        }
-        if (refundable > 0) {
-          out.add(f1040, { line29_refundable_aoc: refundable });
-        }
-      } else {
-        const llcAllowed = computeLLC(item.qualified_expenses, agi, isMFJ);
-        if (llcAllowed > 0) {
-          out.add(schedule3, { line3_education_credit: llcAllowed });
-        }
-      }
-    }
-
-    return out.build();
+    return { outputs: input.f8863s.flatMap(f8863ItemOutputs) };
   }
 }
 

@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -17,18 +20,10 @@ class EXTNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([f1040]);
 
   compute(input: EXTInput): NodeResult {
-    const out = this.outputNodes.builder();
-
-    if (
-      input.amount_paid_with_extension !== undefined &&
-      input.amount_paid_with_extension > 0
-    ) {
-      out.add(f1040, {
-        line38_amount_paid_extension: input.amount_paid_with_extension,
-      });
-    }
-
-    return out.build();
+    const outputs: NodeOutput[] = (input.amount_paid_with_extension ?? 0) > 0
+      ? [{ nodeType: f1040.nodeType, input: { line38_amount_paid_extension: input.amount_paid_with_extension } }]
+      : [];
+    return { outputs };
   }
 }
 
