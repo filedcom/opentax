@@ -26,38 +26,38 @@ export const inputSchema = z.object({
 
 type F8949Item = z.infer<typeof itemSchema>;
 
-function f8949ItemOutputs(item: F8949Item): NodeOutput[] {
-  const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
-  const isLongTerm = ["D", "E", "F"].includes(item.part);
-  return [
-    {
-      nodeType: schedule_d.nodeType,
-      input: {
-        transaction: {
-          part: item.part,
-          description: item.description,
-          date_acquired: item.date_acquired,
-          date_sold: item.date_sold,
-          proceeds: item.proceeds,
-          cost_basis: item.cost_basis,
-          adjustment_codes: item.adjustment_codes,
-          adjustment_amount: item.adjustment_amount,
-          gain_loss: gainLoss,
-          is_long_term: isLongTerm,
-        },
-      },
-    },
-    ...((item.federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.federal_withheld } }] : []),
-  ];
-}
-
 class F8949Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8949";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, f1040]);
 
+  processItem(item: F8949Item): NodeOutput[] {
+    const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
+    const isLongTerm = ["D", "E", "F"].includes(item.part);
+    return [
+      {
+        nodeType: schedule_d.nodeType,
+        input: {
+          transaction: {
+            part: item.part,
+            description: item.description,
+            date_acquired: item.date_acquired,
+            date_sold: item.date_sold,
+            proceeds: item.proceeds,
+            cost_basis: item.cost_basis,
+            adjustment_codes: item.adjustment_codes,
+            adjustment_amount: item.adjustment_amount,
+            gain_loss: gainLoss,
+            is_long_term: isLongTerm,
+          },
+        },
+      },
+      ...((item.federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.federal_withheld } }] : []),
+    ];
+  }
+
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    return { outputs: input.f8949s.flatMap(f8949ItemOutputs) };
+    return { outputs: input.f8949s.flatMap((item) => this.processItem(item)) };
   }
 }
 

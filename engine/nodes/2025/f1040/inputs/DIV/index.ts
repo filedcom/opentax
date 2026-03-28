@@ -1,13 +1,16 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
+import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { schedule_b_dividends } from "../../intermediate/schedule_b_dividends/index.ts";
+import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string(),
@@ -79,7 +82,10 @@ function dividendScheduleBOutput(item: DIVItem): NodeOutput[] {
 function qualifiedDividendOutputs(item: DIVItem): NodeOutput[] {
   const box1b = item.box1b ?? 0;
   if (box1b <= 0) return [];
-  return [{ nodeType: f1040.nodeType, input: { line3a_qualified_dividends: box1b } }];
+  return [{
+    nodeType: f1040.nodeType,
+    input: { line3a_qualified_dividends: box1b },
+  }];
 }
 
 function capGainDistributionOutputs(item: DIVItem): NodeOutput[] {
@@ -98,17 +104,26 @@ function capGainDistributionOutputs(item: DIVItem): NodeOutput[] {
 
 function withholdingOutputs(item: DIVItem): NodeOutput[] {
   if (item.box4 === undefined || item.box4 <= 0) return [];
-  return [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4 } }];
+  return [{
+    nodeType: f1040.nodeType,
+    input: { line25b_withheld_1099: item.box4 },
+  }];
 }
 
 function sec199aDividendOutputs(item: DIVItem): NodeOutput[] {
   if (item.box5 === undefined || item.box5 <= 0) return [];
-  return [{ nodeType: form8995.nodeType, input: { line6_sec199a_dividends: item.box5 } }];
+  return [{
+    nodeType: form8995.nodeType,
+    input: { line6_sec199a_dividends: item.box5 },
+  }];
 }
 
 function foreignTaxOutputs(item: DIVItem): NodeOutput[] {
   if (item.box7 === undefined || item.box7 <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: item.box7 } }];
+  return [{
+    nodeType: schedule3.nodeType,
+    input: { line1_foreign_tax_1099: item.box7 },
+  }];
 }
 
 function taxExemptDividendOutputs(item: DIVItem): NodeOutput[] {
@@ -117,10 +132,16 @@ function taxExemptDividendOutputs(item: DIVItem): NodeOutput[] {
   const netTaxExempt = box12 - box13;
   const outputs: NodeOutput[] = [];
   if (netTaxExempt > 0) {
-    outputs.push({ nodeType: f1040.nodeType, input: { line2a_tax_exempt: netTaxExempt } });
+    outputs.push({
+      nodeType: f1040.nodeType,
+      input: { line2a_tax_exempt: netTaxExempt },
+    });
   }
   if (box13 > 0) {
-    outputs.push({ nodeType: form6251.nodeType, input: { line2g_pab_interest: box13 } });
+    outputs.push({
+      nodeType: form6251.nodeType,
+      input: { line2g_pab_interest: box13 },
+    });
   }
   return outputs;
 }
@@ -137,20 +158,23 @@ class DIVNode extends TaxNode<typeof inputSchema> {
     form6251,
   ]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const outputs: NodeOutput[] = input.div1099s.flatMap((item) => {
-      validateDivItem(item);
-      return [
-        ...dividendScheduleBOutput(item),
-        ...qualifiedDividendOutputs(item),
-        ...capGainDistributionOutputs(item),
-        ...withholdingOutputs(item),
-        ...sec199aDividendOutputs(item),
-        ...foreignTaxOutputs(item),
-        ...taxExemptDividendOutputs(item),
-      ];
-    });
+  processItem(item: DIVItem): NodeOutput[] {
+    validateDivItem(item);
+    return [
+      ...dividendScheduleBOutput(item),
+      ...qualifiedDividendOutputs(item),
+      ...capGainDistributionOutputs(item),
+      ...withholdingOutputs(item),
+      ...sec199aDividendOutputs(item),
+      ...foreignTaxOutputs(item),
+      ...taxExemptDividendOutputs(item),
+    ];
+  }
 
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const outputs: NodeOutput[] = input.div1099s.flatMap((item) =>
+      this.processItem(item)
+    );
     return { outputs };
   }
 }

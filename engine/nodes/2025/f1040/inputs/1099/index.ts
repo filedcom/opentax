@@ -34,23 +34,23 @@ function distributionOutput(item: R1099Item, taxableAmount: number): NodeOutput 
   return { nodeType: f1040.nodeType, input: { line5a_pension_gross: item.box1_gross_distribution, line5b_pension_taxable: taxableAmount } };
 }
 
-function r1099ItemOutputs(item: R1099Item): NodeOutput[] {
-  const taxableAmount = item.box2a_taxable_amount ?? item.box1_gross_distribution;
-  return [
-    distributionOutput(item, taxableAmount),
-    ...((item.box4_federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4_federal_withheld } }] : []),
-    ...(item.box7_distribution_code === "1" ? [{ nodeType: form5329.nodeType, input: { early_distribution: taxableAmount, distribution_code: "1" } }] : []),
-    ...(item.box7_distribution_code === "5" ? [{ nodeType: form4972.nodeType, input: { lump_sum_amount: item.box1_gross_distribution } }] : []),
-  ];
-}
-
 class R1099Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "r1099";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, form5329, form4972]);
 
+  processItem(item: R1099Item): NodeOutput[] {
+    const taxableAmount = item.box2a_taxable_amount ?? item.box1_gross_distribution;
+    return [
+      distributionOutput(item, taxableAmount),
+      ...((item.box4_federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4_federal_withheld } }] : []),
+      ...(item.box7_distribution_code === "1" ? [{ nodeType: form5329.nodeType, input: { early_distribution: taxableAmount, distribution_code: "1" } }] : []),
+      ...(item.box7_distribution_code === "5" ? [{ nodeType: form4972.nodeType, input: { lump_sum_amount: item.box1_gross_distribution } }] : []),
+    ];
+  }
+
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    return { outputs: input.r1099s.flatMap(r1099ItemOutputs) };
+    return { outputs: input.r1099s.flatMap((item) => this.processItem(item)) };
   }
 }
 

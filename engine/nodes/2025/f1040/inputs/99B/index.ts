@@ -28,36 +28,36 @@ export const inputSchema = z.object({
 
 type B99Item = z.infer<typeof itemSchema>;
 
-function b99ItemOutputs(item: B99Item): NodeOutput[] {
-  const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
-  const isLongTerm = LONG_TERM_PARTS.has(item.part);
-  return [
-    {
-      nodeType: form8949.nodeType,
-      input: {
-        part: item.part,
-        description: item.description,
-        date_acquired: item.date_acquired,
-        date_sold: item.date_sold,
-        proceeds: item.proceeds,
-        cost_basis: item.cost_basis,
-        adjustment_codes: item.adjustment_codes,
-        adjustment_amount: item.adjustment_amount,
-        gain_loss: gainLoss,
-        is_long_term: isLongTerm,
-      },
-    },
-    ...((item.federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.federal_withheld } }] : []),
-  ];
-}
-
 class B99Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "b99";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8949, f1040]);
 
+  processItem(item: B99Item): NodeOutput[] {
+    const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
+    const isLongTerm = LONG_TERM_PARTS.has(item.part);
+    return [
+      {
+        nodeType: form8949.nodeType,
+        input: {
+          part: item.part,
+          description: item.description,
+          date_acquired: item.date_acquired,
+          date_sold: item.date_sold,
+          proceeds: item.proceeds,
+          cost_basis: item.cost_basis,
+          adjustment_codes: item.adjustment_codes,
+          adjustment_amount: item.adjustment_amount,
+          gain_loss: gainLoss,
+          is_long_term: isLongTerm,
+        },
+      },
+      ...((item.federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.federal_withheld } }] : []),
+    ];
+  }
+
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    return { outputs: input.b99s.flatMap(b99ItemOutputs) };
+    return { outputs: input.b99s.flatMap((item) => this.processItem(item)) };
   }
 }
 
