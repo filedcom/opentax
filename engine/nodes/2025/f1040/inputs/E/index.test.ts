@@ -153,7 +153,7 @@ Deno.test("scheduleE.compute: k1_qualified_dividends routes to f1040 line3a", ()
   assertEquals(input.line3a_qualified_dividends, 1200);
 });
 
-Deno.test("scheduleE.compute: k1_interest_income routes to schedule_b_interest", () => {
+Deno.test("scheduleE.compute: k1_interest_income routes to schedule_b", () => {
   const result = scheduleE.compute({
     schedule_es: [{
       property_address: "Investment LP",
@@ -163,7 +163,7 @@ Deno.test("scheduleE.compute: k1_interest_income routes to schedule_b_interest",
   });
 
   const sbOutput = result.outputs.find((o) =>
-    o.nodeType === "schedule_b_interest"
+    o.nodeType === "schedule_b"
   );
   assertEquals(sbOutput !== undefined, true);
   const input = sbOutput!.input as Record<string, unknown>;

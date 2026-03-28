@@ -25,25 +25,25 @@ type-safe, built on Vercel AI SDK
 
 ## 2. Key Decisions (from discovery)
 
-| Decision               | Choice                                                                 | Rationale                                                                                                                                                      |
-| ---------------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary users          | Tax professionals                                                      | Professional-grade depth required                                                                                                                              |
-| Tax year               | 2025 (multi-year architecture)                                         | Current year first, prior years addable                                                                                                                        |
-| E-filing               | Export valid MeF XML (Option B)                                        | Clearinghouse handles transmission, avoids IRS EFIN requirement                                                                                                |
-| Runtime                | Headless CLI library                                                   | Integrators build UI on top                                                                                                                                    |
-| Persistence            | File-based (return directory)                                          | Document-shaped data, no DB daemon needed                                                                                                                      |
-| Taxpayer identity      | SSN/EIN only                                                           | Caller owns identity management                                                                                                                                |
-| Validation             | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior                                                                                                                               |
-| Node model             | Single TaxNode type (unified)                                          | Field + connector distinction was unnecessary; all nodes have inputSchema + compute                                                                            |
+| Decision               | Choice                                                                 | Rationale                                                                                                                                                                                                                                                                   |
+| ---------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Primary users          | Tax professionals                                                      | Professional-grade depth required                                                                                                                                                                                                                                           |
+| Tax year               | 2025 (multi-year architecture)                                         | Current year first, prior years addable                                                                                                                                                                                                                                     |
+| E-filing               | Export valid MeF XML (Option B)                                        | Clearinghouse handles transmission, avoids IRS EFIN requirement                                                                                                                                                                                                             |
+| Runtime                | Headless CLI library                                                   | Integrators build UI on top                                                                                                                                                                                                                                                 |
+| Persistence            | File-based (return directory)                                          | Document-shaped data, no DB daemon needed                                                                                                                                                                                                                                   |
+| Taxpayer identity      | SSN/EIN only                                                           | Caller owns identity management                                                                                                                                                                                                                                             |
+| Validation             | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior                                                                                                                                                                                                                                            |
+| Node model             | Single TaxNode type (unified)                                          | Field + connector distinction was unnecessary; all nodes have inputSchema + compute                                                                                                                                                                                         |
 | Execution model        | Two-phase topo sort + pending accumulator                              | Phase 1: topo sort (no instance expansion — each node type fires once); Phase 2: execute in order, nodes deposit into pending dict — multi-instance inputs (W-2s, 1099s) are arrays passed directly to the node; optional forms simply never receive inputs and are skipped |
-| Graph traversal        | compute_tax_graph(nodeType, depth)                                     | Static metadata traversal independent of execution, any depth                                                                                                  |
-| Self-update            | CLI-driven ingestion engine                                            | On-demand, human-in-the-loop before merge                                                                                                                      |
-| Ingestion intelligence | Hybrid LLM + human review                                              | LLM extracts, human reviews diff, full source traceability                                                                                                     |
-| PDF export             | Official IRS AcroForm PDF + branding/watermark overlay                 | Professional standard                                                                                                                                          |
-| State returns          | First-class architecture, not implemented yet                          | Future phase                                                                                                                                                   |
-| LLM layer              | Vibes SDK (model-agnostic)                                             | Type-safe, pluggable across 50+ providers                                                                                                                      |
-| Testing                | IRS examples + spot checks + real returns, extensible                  | D-level rigor from day one                                                                                                                                     |
-| Timeline               | October 2026 (extended deadline) / April 2027 (filing season)          | 6-9 months with two-person team                                                                                                                                |
+| Graph traversal        | compute_tax_graph(nodeType, depth)                                     | Static metadata traversal independent of execution, any depth                                                                                                                                                                                                               |
+| Self-update            | CLI-driven ingestion engine                                            | On-demand, human-in-the-loop before merge                                                                                                                                                                                                                                   |
+| Ingestion intelligence | Hybrid LLM + human review                                              | LLM extracts, human reviews diff, full source traceability                                                                                                                                                                                                                  |
+| PDF export             | Official IRS AcroForm PDF + branding/watermark overlay                 | Professional standard                                                                                                                                                                                                                                                       |
+| State returns          | First-class architecture, not implemented yet                          | Future phase                                                                                                                                                                                                                                                                |
+| LLM layer              | Vibes SDK (model-agnostic)                                             | Type-safe, pluggable across 50+ providers                                                                                                                                                                                                                                   |
+| Testing                | IRS examples + spot checks + real returns, extensible                  | D-level rigor from day one                                                                                                                                                                                                                                                  |
+| Timeline               | October 2026 (extended deadline) / April 2027 (filing season)          | 6-9 months with two-person team                                                                                                                                                                                                                                             |
 
 ---
 
@@ -190,19 +190,19 @@ Each multi-instance node takes an array in its `inputSchema`:
 // nodes/2025/f1040/inputs/W2/index.ts
 const inputSchema = z.object({
   w2s: z.array(W2Schema).min(1),
-})
+});
 
 export class W2Node extends TaxNode<typeof inputSchema> {
-  readonly nodeType = 'w2'
-  readonly inputSchema = inputSchema
-  readonly outputNodeTypes = ['f1040']
+  readonly nodeType = "w2";
+  readonly inputSchema = inputSchema;
+  readonly outputNodeTypes = ["f1040"];
 
   compute(input: z.infer<typeof inputSchema>) {
-    const totalWages = input.w2s.reduce((sum, w2) => sum + w2.box1, 0)
+    const totalWages = input.w2s.reduce((sum, w2) => sum + w2.box1, 0);
     // aggregate other fields across all W-2s...
     return {
-      outputs: [{ nodeType: 'f1040', input: { wages: totalWages } }],
-    }
+      outputs: [{ nodeType: "f1040", input: { wages: totalWages } }],
+    };
   }
 }
 ```
@@ -479,7 +479,7 @@ All node inputs are stored uniformly — every node type is an array of `{ id, f
   ],
   "w2": [
     { "id": "w2_01", "fields": { "box1": 85000, "box2": 12000, "box12": [] } },
-    { "id": "w2_02", "fields": { "box1": 45000, "box2": 6800,  "box12": [] } }
+    { "id": "w2_02", "fields": { "box1": 45000, "box2": 6800, "box12": [] } }
   ],
   "int1099": [
     { "id": "int_01", "fields": { "payer": "Chase Bank", "amount": 320 } }
@@ -510,8 +510,11 @@ add-form flow:
 
 ```json
 [
-  { "node_type": "w2",      "fields": { "box1": 85000, "box2": 12000, "box12": [] } },
-  { "node_type": "w2",      "fields": { "box1": 45000, "box2": 6800,  "box12": [] } },
+  {
+    "node_type": "w2",
+    "fields": { "box1": 85000, "box2": 12000, "box12": [] }
+  },
+  { "node_type": "w2", "fields": { "box1": 45000, "box2": 6800, "box12": [] } },
   { "node_type": "int1099", "fields": { "payer": "Chase", "amount": 320 } }
 ]
 ```
@@ -844,8 +847,9 @@ mini-program node like everything else, updateable via ingestion.
 Each year is a versioned namespace:
 
 ```
-forms/form_1040/line_15_taxable_income/
+nodes/
   2025/         ← implemented
+     form_1040/
   2026/         ← added by ingestion + codegen
   2027/         ← added by ingestion + codegen
 
@@ -891,6 +895,37 @@ Known return scenarios verified against Drake Tax / TurboTax output:
 Anonymized real returns where the correct output is known (filed and
 IRS-accepted). Added as the test suite grows.
 
+### Writing Tests for Multi-Instance Input Nodes
+
+Input nodes (W-2, 1099-INT, 1099-DIV, etc.) receive **all items in a single
+`compute()` call** — they are never called once per item. This has a direct
+consequence for how tests must be written:
+
+```typescript
+// CORRECT — all items in one call; node aggregates internally
+const result = w2.compute({
+  w2s: [
+    { box1_wages: 85000, box2_fed_withheld: 12000 },
+    { box1_wages: 45000, box2_fed_withheld:  6800 },
+  ],
+});
+// assert: result.outputs has ONE f1040 entry with line1a_wages = 130000
+
+// WRONG — two separate calls, then adding results yourself
+const r1 = w2.compute({ w2s: [{ box1_wages: 85000 }] });
+const r2 = w2.compute({ w2s: [{ box1_wages: 45000 }] });
+// this tests something that never happens in production
+```
+
+Rules for test authors:
+- **Per-routing tests:** single-item array is fine (isolates one box).
+- **Aggregation tests:** multiple items in the SAME `compute()` call; assert the
+  combined scalar output — not two calls summed.
+- The output is always a flat `NodeOutput[]` — one entry per downstream form with
+  aggregated values, not one entry per input item.
+- Never simulate aggregation yourself in test code. If the node is supposed to
+  sum box1 across W-2s, test that it does — don't pre-sum and feed a single item.
+
 ### Agent Testing
 
 Vibes SDK `TestModel` enables testing ingestion/codegen agents without real API
@@ -917,7 +952,7 @@ calls. CI enforces `setAllowModelRequests(false)`.
 - [ ] Schedule A, B, C, D, E, SE
 - [ ] Key worksheets (Qualified Dividends, SS Benefits)
 - [ ] Key credits (8812 CTC, EIC, education credits)
-- [ ] `validate-return` CLI command
+- [ ] `return validate` CLI command
 - [ ] Level 2 spot check test scenarios
 
 ### Phase 3 — Export (Weeks 15-18)
@@ -932,7 +967,7 @@ calls. CI enforces `setAllowModelRequests(false)`.
 - [ ] Vibes SDK agent pipeline (DocumentParser, NodeMapper, ContextWriter,
       Codegen, Testgen)
 - [ ] `sources.json` prebuilt IRS source list
-- [ ] `ingest`, `build-node`, `review-run` CLI commands
+- [ ] `ingest`, `build node`, `review run` CLI commands
 - [ ] Ingestion run audit trail
 - [ ] 2026 year update as first real ingestion run
 
@@ -961,59 +996,141 @@ These are the foundational types everything is built on.
 ```typescript
 // core/types/tax-node.ts
 import { z } from "zod";
+import { OutputNodes } from "./output-nodes.ts";
 
-export type NodeType = string; // refined to keyof NodeRegistry once registry is built
+export type NodeType = string;
 
-// No NodeMetadata type — outputNodeTypes is inlined on TaxNode directly
-// All human-readable context (description, IRS citations, change history) lives in context.md
-
+// What a node passes to a downstream node
 export type NodeOutput = {
-  nodeType: NodeType;
-  input: Record<string, unknown>;
+  readonly nodeType: NodeType;
+  readonly input: Readonly<Record<string, unknown>>;
 };
 
-export type NodeResult<TValue> = {
-  value: TValue;
-  outputs: NodeOutput[];
+// What compute() returns — no value generic; nodes produce outputs, not scalar values
+export type NodeResult = {
+  readonly outputs: readonly NodeOutput[];
 };
 
-export abstract class TaxNode<TSchema extends z.ZodTypeAny, TValue> {
+// Abstract base — every tax node extends this with a single schema generic
+export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
+  readonly implemented: boolean = true as const;
   abstract readonly nodeType: NodeType;
   abstract readonly inputSchema: TSchema;
-  abstract readonly outputNodeTypes: NodeType[];
-  abstract compute(input: z.infer<TSchema>): NodeResult<TValue>;
+  // OutputNodes holds node instances for graph topology + compile-time input shape checking
+  abstract readonly outputNodes: OutputNodes<readonly TaxNode<z.ZodTypeAny>[]>;
+  abstract compute(input: z.infer<TSchema>): NodeResult;
+
+  // Derived from outputNodes — no need to declare separately
+  get outputNodeTypes(): readonly NodeType[] {
+    return this.outputNodes.nodeTypes;
+  }
+}
+
+// Placeholder for nodes not yet implemented — safe to register in the graph
+export class UnimplementedTaxNode extends TaxNode {
+  override readonly implemented = false as const;
+  readonly inputSchema = z.object({});
+  readonly nodeType: NodeType;
+  readonly outputNodes: OutputNodes<[]>;
+
+  constructor(nodeType: NodeType) {
+    super();
+    this.nodeType = nodeType;
+    this.outputNodes = new OutputNodes([]);
+  }
+
+  compute(): NodeResult {
+    throw new Error(`Node '${this.nodeType}' is not yet implemented.`);
+  }
 }
 ```
 
 ```typescript
-// core/runtime/registry.ts
-export const registry = {/* all nodes */} as const;
-export type NodeRegistry = typeof registry;
-export type NodeType = keyof NodeRegistry;
-export type NodeInput<K extends NodeType> = z.infer<
-  NodeRegistry[K]["inputSchema"]
->;
+// core/types/output-nodes.ts
 
-export function dispatch<K extends NodeType>(
-  nodeType: K,
-  input: NodeInput<K>,
-): void;
+// Holds node instances; provides nodeTypes list and compile-time routing safety
+export class OutputNodes<TNodes extends readonly TaxNode<z.ZodTypeAny>[]> {
+  readonly #nodes: TNodes;
+
+  constructor(nodes: TNodes) {
+    this.#nodes = nodes;
+  }
+
+  get nodeTypes(): readonly string[] {
+    return this.#nodes.map((n) => n.nodeType);
+  }
+}
 ```
 
 ```typescript
-// core/types/inputs.ts
+// core/types/node-registry.ts
 
-// Wrapper stored in inputs.json for every node entry
-export type StoredInput<TSchema extends z.ZodTypeAny> = {
-  id: string;                // stable id assigned on insert e.g. "w2_01"
-  fields: z.infer<TSchema>;  // fully validated node input
-};
-
-// inputs.json — uniform array format for all node types
-export type InputsJson = {
-  [K in NodeType]?: StoredInput<NodeRegistry[K]["inputSchema"]>[];
-};
+// Maps nodeType string to its TaxNode instance — used by the executor
+export type NodeRegistry = Readonly<Record<string, TaxNode>>;
 ```
+
+### Node file shape (W2 as canonical example)
+
+Every input node follows this structure:
+
+```typescript
+// nodes/2025/f1040/inputs/W2/index.ts
+
+// 1. Enum for domain codes
+export enum Box12Code { A = "A", W = "W", DD = "DD", /* … */ }
+
+// 2. Per-item schema — one W-2 from one employer
+export const w2ItemSchema = z.object({
+  box1_wages: z.number().nonnegative(),
+  box12_entries: z.array(z.object({
+    code: z.nativeEnum(Box12Code),
+    amount: z.number().nonnegative(),
+  })).optional(),
+  // …
+});
+
+// 3. Node input schema — receives all W-2s as a single array
+export const inputSchema = z.object({
+  w2s: z.array(w2ItemSchema).min(1),
+});
+
+// 4. Local type aliases — inferred, never hand-written
+type F1040Input = z.infer<typeof f1040.inputSchema>;
+type W2Items = z.infer<typeof w2ItemSchema>[];
+
+// 5. Pure helper functions — one concern each, composed in compute()
+function regularItems(w2s: W2Items) { /* filter statutory */ }
+function wageFields(w2s: W2Items): F1040Input { /* aggregate line1a */ }
+function medicareOutputs(w2s: W2Items): NodeOutput[] { /* per-item → form8959 */ }
+// …
+
+// 6. Node class
+class W2Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "w2";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([f1040, schedule1, form8959, /* … */]);
+
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    return {
+      outputs: [
+        ...statutoryOutput(input.w2s),
+        ...medicareOutputs(input.w2s),
+        // …
+        { nodeType: f1040.nodeType, input: { ...wageFields(input.w2s), …} },
+      ],
+    };
+  }
+}
+
+// 7. Singleton export
+export const w2 = new W2Node();
+```
+
+Key patterns:
+- **`itemSchema` + `inputSchema`**: per-item schema for CLI validation; node receives `{ w2s: item[] }`
+- **`OutputNodes`**: declared with actual node instances — compile error if you route to an undeclared node
+- **Pure helpers**: each function takes data and returns data; `compute()` only composes them
+- **Local type aliases**: `type W2Items = z.infer<typeof w2ItemSchema>[]` — infer, never redeclare
 
 ```typescript
 // core/types/return.ts

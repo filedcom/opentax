@@ -5,7 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
-import { schedule_b_interest } from "../../intermediate/schedule_b_interest/index.ts";
+import { schedule_b } from "../../intermediate/schedule_b/index.ts";
 
 export const itemSchema = z.object({
   property_address: z.string(),
@@ -83,7 +83,7 @@ function computeK1Outputs(item: ScheduleEItem): NodeOutput[] {
 
   if (item.k1_interest_income !== undefined && item.k1_interest_income > 0) {
     outputs.push({
-      nodeType: schedule_b_interest.nodeType,
+      nodeType: schedule_b.nodeType,
       input: { payer_name: item.property_address, taxable_interest_net: item.k1_interest_income },
     });
   }
@@ -133,7 +133,7 @@ class ENode extends TaxNode<typeof inputSchema> {
     schedule1,
     schedule_d,
     f1040,
-    schedule_b_interest,
+    schedule_b,
   ]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {

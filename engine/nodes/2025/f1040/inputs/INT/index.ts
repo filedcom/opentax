@@ -8,15 +8,22 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
+import { form_1116 } from "../../intermediate/form_1116/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import { schedule_b_interest } from "../../intermediate/schedule_b_interest/index.ts";
+import { schedule_b } from "../../intermediate/schedule_b/index.ts";
 
 export const itemSchema = z.object({
-  payer_name: z.string(),
+  payer_name: z.string().min(1),
+  payer_tin: z.string().optional(),
+  seller_financed: z.boolean().optional(),
+  payer_ssn: z.string().optional(),
+  payer_address: z.string().optional(),
+  payer_city_state_zip: z.string().optional(),
   box1: z.number().nonnegative().optional(),
   box2: z.number().nonnegative().optional(),
   box3: z.number().nonnegative().optional(),
   box4: z.number().nonnegative().optional(),
+  box5: z.number().nonnegative().optional(),
   box6: z.number().nonnegative().optional(),
   box7: z.string().optional(),
   box8: z.number().nonnegative().optional(),
@@ -25,6 +32,10 @@ export const itemSchema = z.object({
   box11: z.number().nonnegative().optional(),
   box12: z.number().nonnegative().optional(),
   box13: z.number().nonnegative().optional(),
+  box14: z.string().optional(),
+  box15: z.string().optional(),
+  box16: z.string().optional(),
+  box17: z.number().nonnegative().optional(),
   nominee_interest: z.number().nonnegative().optional(),
   accrued_interest_paid: z.number().nonnegative().optional(),
   non_taxable_oid_adjustment: z.number().nonnegative().optional(),
@@ -32,9 +43,14 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   int1099s: z.array(itemSchema).min(1),
+  filing_status: z.string().optional(),
 });
 
 type INTItem = z.infer<typeof itemSchema>;
+type INTInput = z.infer<typeof inputSchema>;
+
+const FOREIGN_TAX_SINGLE_THRESHOLD = 300;
+const FOREIGN_TAX_MFJ_THRESHOLD = 600;
 
 function validateIntItem(item: INTItem): void {
   const box8 = item.box8 ?? 0;
@@ -49,6 +65,18 @@ function validateIntItem(item: INTItem): void {
     throw new Error(
       `INT validation error: box13 (${box13}) cannot exceed box8 (${box8}) — bond premium on tax-exempt cannot exceed tax-exempt interest`,
     );
+  }
+  if (item.seller_financed) {
+    if (!item.payer_ssn || item.payer_ssn.length !== 9) {
+      throw new Error(
+        "INT validation error: payer SSN must be exactly 9 digits for seller-financed mortgages",
+      );
+    }
+    if (!item.payer_address || item.payer_address.length === 0) {
+      throw new Error(
+        "INT validation error: payer address is required for seller-financed mortgages",
+      );
+    }
   }
 }
 
@@ -65,7 +93,7 @@ function computeTaxableInterestNet(item: INTItem): number {
 
 function scheduleBOutput(item: INTItem): NodeOutput {
   return {
-    nodeType: schedule_b_interest.nodeType,
+    nodeType: schedule_b.nodeType,
     input: {
       payer_name: item.payer_name,
       taxable_interest_net: computeTaxableInterestNet(item),
@@ -101,24 +129,38 @@ function pabOutput(item: INTItem): NodeOutput[] {
     : [];
 }
 
-function foreignTaxOutput(item: INTItem): NodeOutput[] {
-  return (item.box6 ?? 0) > 0
-    ? [{ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: item.box6 } }]
-    : [];
+function foreignTaxOutput(
+  item: INTItem,
+  totalBox6: number,
+  filingStatus: string | undefined,
+): NodeOutput[] {
+  if ((item.box6 ?? 0) <= 0) return [];
+  const threshold = filingStatus === "mfj"
+    ? FOREIGN_TAX_MFJ_THRESHOLD
+    : FOREIGN_TAX_SINGLE_THRESHOLD;
+  if (totalBox6 > threshold) {
+    return [{ nodeType: form_1116.nodeType, input: { foreign_tax_paid: item.box6 } }];
+  }
+  return [{ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: item.box6 } }];
 }
 
 class INTNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "int";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
-    schedule_b_interest,
+    schedule_b,
     schedule1,
     f1040,
     form6251,
+    form_1116,
     schedule3,
   ]);
 
-  processItem(item: INTItem): NodeOutput[] {
+  processItem(
+    item: INTItem,
+    totalBox6: number,
+    filingStatus: string | undefined,
+  ): NodeOutput[] {
     validateIntItem(item);
     return [
       scheduleBOutput(item),
@@ -126,12 +168,19 @@ class INTNode extends TaxNode<typeof inputSchema> {
       ...withholdingOutput(item),
       ...taxExemptOutput(item),
       ...pabOutput(item),
-      ...foreignTaxOutput(item),
+      ...foreignTaxOutput(item, totalBox6, filingStatus),
     ];
   }
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
-    return { outputs: input.int1099s.flatMap((item) => this.processItem(item)) };
+  compute(input: INTInput): NodeResult {
+    const parsed = inputSchema.parse(input);
+    const { int1099s, filing_status } = parsed;
+    const totalBox6 = int1099s.reduce((sum, item) => sum + (item.box6 ?? 0), 0);
+    return {
+      outputs: int1099s.flatMap((item) =>
+        this.processItem(item, totalBox6, filing_status)
+      ),
+    };
   }
 }
 

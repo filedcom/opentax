@@ -30,12 +30,17 @@ import { form8889 } from "./f1040/intermediate/form8889/index.ts";
 import { form8919 } from "./f1040/intermediate/form8919/index.ts";
 import { form8949 } from "./f1040/intermediate/form8949/index.ts";
 import { form8959 } from "./f1040/intermediate/form8959/index.ts";
+import { form8880 } from "./f1040/intermediate/form8880/index.ts";
 import { form8995 } from "./f1040/intermediate/form8995/index.ts";
+import { form8995a } from "./f1040/intermediate/form8995a/index.ts";
 import { form982 } from "./f1040/intermediate/form982/index.ts";
+import { form_1116 } from "./f1040/intermediate/form_1116/index.ts";
+import { ira_deduction_worksheet } from "./f1040/intermediate/ira_deduction_worksheet/index.ts";
+import { rate_28_gain_worksheet } from "./f1040/intermediate/rate_28_gain_worksheet/index.ts";
 import { schedule2 } from "./f1040/intermediate/schedule2/index.ts";
 import { schedule3 } from "./f1040/intermediate/schedule3/index.ts";
-import { schedule_b_dividends } from "./f1040/intermediate/schedule_b_dividends/index.ts";
-import { schedule_b_interest } from "./f1040/intermediate/schedule_b_interest/index.ts";
+import { schedule_b } from "./f1040/intermediate/schedule_b/index.ts";
+import { unrecaptured_1250_worksheet } from "./f1040/intermediate/unrecaptured_1250_worksheet/index.ts";
 import { schedule_d } from "./f1040/intermediate/schedule_d/index.ts";
 import { schedule_f } from "./f1040/intermediate/schedule_f/index.ts";
 import { schedule_se } from "./f1040/intermediate/schedule_se/index.ts";
@@ -76,16 +81,21 @@ export const registry: NodeRegistry = {
   form6251,
   form8839,
   form8853,
+  form8880,
   form8889,
   form8919,
   form8949,
   form8959,
   form8995,
+  form8995a,
   form982,
+  form_1116,
+  ira_deduction_worksheet,
+  rate_28_gain_worksheet,
   schedule2,
   schedule3,
-  schedule_b_dividends,
-  schedule_b_interest,
+  schedule_b,
+  unrecaptured_1250_worksheet,
   schedule_d,
   schedule_f,
   schedule_se,
