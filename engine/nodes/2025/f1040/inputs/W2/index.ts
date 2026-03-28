@@ -210,107 +210,109 @@ function statutoryOutput(w2s: W2Items): NodeOutput[] {
   }];
 }
 
-function medicareOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .filter((item) =>
+function medicareOutput(w2s: W2Items): NodeOutput[] {
+  const items = regularItems(w2s).filter(
+    (item) =>
       item.box5_medicare_wages !== undefined ||
-      item.box6_medicare_withheld !== undefined
-    )
-    .map((item) => ({
-      nodeType: form8959.nodeType,
-      input: {
-        medicare_wages: item.box5_medicare_wages,
-        medicare_withheld: item.box6_medicare_withheld,
-      },
-    }));
+      item.box6_medicare_withheld !== undefined,
+  );
+  if (items.length === 0) return [];
+  const totalWages = items.reduce((sum, item) => sum + (item.box5_medicare_wages ?? 0), 0);
+  const totalWithheld = items.reduce((sum, item) => sum + (item.box6_medicare_withheld ?? 0), 0);
+  return [{
+    nodeType: form8959.nodeType,
+    input: {
+      medicare_wages: totalWages > 0 ? totalWages : undefined,
+      medicare_withheld: totalWithheld > 0 ? totalWithheld : undefined,
+    },
+  }];
 }
 
-function allocatedTipsOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .filter((item) => (item.box8_allocated_tips ?? 0) > 0)
-    .map((item) => ({
-      nodeType: form4137.nodeType,
-      input: { allocated_tips: item.box8_allocated_tips },
-    }));
+function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
+  const total = regularItems(w2s).reduce(
+    (sum, item) => sum + (item.box8_allocated_tips ?? 0),
+    0,
+  );
+  return total > 0
+    ? [{ nodeType: form4137.nodeType, input: { allocated_tips: total } }]
+    : [];
 }
 
-function depCareOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .filter((item) => (item.box10_dep_care ?? 0) > 0)
-    .map((item) => ({
-      nodeType: form2441.nodeType,
-      input: { dep_care_benefits: item.box10_dep_care },
-    }));
+function depCareOutput(w2s: W2Items): NodeOutput[] {
+  const total = regularItems(w2s).reduce(
+    (sum, item) => sum + (item.box10_dep_care ?? 0),
+    0,
+  );
+  return total > 0
+    ? [{ nodeType: form2441.nodeType, input: { dep_care_benefits: total } }]
+    : [];
 }
 
-function retirementPlanOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .filter((item) => item.box13_retirement_plan === true)
-    .map(() => ({
-      nodeType: ira_deduction_worksheet.nodeType,
-      input: { covered_by_retirement_plan: true },
-    }));
+function retirementPlanOutput(w2s: W2Items): NodeOutput[] {
+  const any = regularItems(w2s).some((item) => item.box13_retirement_plan === true);
+  return any
+    ? [{ nodeType: ira_deduction_worksheet.nodeType, input: { covered_by_retirement_plan: true } }]
+    : [];
 }
 
-function box14SdiOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
+function scheduleAOutput(w2s: W2Items): NodeOutput[] {
+  const line5a = regularItems(w2s)
     .flatMap((item) => item.box14_entries ?? [])
     .filter((entry) => entry.is_state_sdi_pfml)
-    .map((entry) => ({
-      nodeType: schedule_a.nodeType,
-      input: { line5a_state_taxes: entry.amount },
-    }));
-}
-
-function stateWithholdingOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .filter((item) => (item.box17_state_withheld ?? 0) > 0)
-    .map((item) => ({
-      nodeType: schedule_a.nodeType,
-      input: { line5b_state_income_taxes: item.box17_state_withheld },
-    }));
-}
-
-function localWithholdingOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .filter((item) => (item.box19_local_withheld ?? 0) > 0)
-    .map((item) => ({
-      nodeType: schedule_a.nodeType,
-      input: { line5c_local_income_taxes: item.box19_local_withheld },
-    }));
+    .reduce((sum, entry) => sum + entry.amount, 0);
+  const line5b = regularItems(w2s).reduce(
+    (sum, item) => sum + (item.box17_state_withheld ?? 0),
+    0,
+  );
+  const line5c = regularItems(w2s).reduce(
+    (sum, item) => sum + (item.box19_local_withheld ?? 0),
+    0,
+  );
+  const input: Record<string, number> = {};
+  if (line5a > 0) input.line5a_state_taxes = line5a;
+  if (line5b > 0) input.line5b_state_income_taxes = line5b;
+  if (line5c > 0) input.line5c_local_income_taxes = line5c;
+  return Object.keys(input).length > 0
+    ? [{ nodeType: schedule_a.nodeType, input }]
+    : [];
 }
 
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
-  return regularItems(w2s)
-    .flatMap((item) => item.box12_entries ?? [])
-    .flatMap(({ code, amount }): NodeOutput[] => {
-      switch (code) {
-        case Box12Code.H:
-          return [{ nodeType: schedule1.nodeType, input: { line24f_501c18d: amount } }];
-        case Box12Code.W:
-          return [{ nodeType: form8889.nodeType, input: { employer_hsa_contributions: amount } }];
-        case Box12Code.R:
-          return [{ nodeType: form8853.nodeType, input: { employer_archer_msa: amount } }];
-        case Box12Code.T:
-          return [{ nodeType: form8839.nodeType, input: { adoption_benefits: amount } }];
-        case Box12Code.A:
-        case Box12Code.B:
-          return [{ nodeType: schedule2.nodeType, input: { uncollected_fica: amount } }];
-        case Box12Code.M:
-        case Box12Code.N:
-          return [{ nodeType: schedule2.nodeType, input: { uncollected_fica_gtl: amount } }];
-        case Box12Code.K:
-          return [{ nodeType: schedule2.nodeType, input: { golden_parachute_excise: amount } }];
-        case Box12Code.Z:
-          return [{ nodeType: schedule2.nodeType, input: { section409a_excise: amount } }];
-        case Box12Code.D:
-        case Box12Code.E:
-        case Box12Code.G:
-          return [{ nodeType: form8880.nodeType, input: { elective_deferrals: amount } }];
-        default:
-          return [];
-      }
-    });
+  const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
+  const sum = (...codes: Box12Code[]) =>
+    entries.filter((e) => codes.includes(e.code)).reduce((s, e) => s + e.amount, 0);
+
+  const outputs: NodeOutput[] = [];
+
+  const h = sum(Box12Code.H);
+  if (h > 0) outputs.push({ nodeType: schedule1.nodeType, input: { line24f_501c18d: h } });
+
+  const w = sum(Box12Code.W);
+  if (w > 0) outputs.push({ nodeType: form8889.nodeType, input: { employer_hsa_contributions: w } });
+
+  const r = sum(Box12Code.R);
+  if (r > 0) outputs.push({ nodeType: form8853.nodeType, input: { employer_archer_msa: r } });
+
+  const t = sum(Box12Code.T);
+  if (t > 0) outputs.push({ nodeType: form8839.nodeType, input: { adoption_benefits: t } });
+
+  const deg = sum(Box12Code.D, Box12Code.E, Box12Code.G);
+  if (deg > 0) outputs.push({ nodeType: form8880.nodeType, input: { elective_deferrals: deg } });
+
+  const schedule2Input: Record<string, number> = {};
+  const ab = sum(Box12Code.A, Box12Code.B);
+  if (ab > 0) schedule2Input.uncollected_fica = ab;
+  const mn = sum(Box12Code.M, Box12Code.N);
+  if (mn > 0) schedule2Input.uncollected_fica_gtl = mn;
+  const k = sum(Box12Code.K);
+  if (k > 0) schedule2Input.golden_parachute_excise = k;
+  const z = sum(Box12Code.Z);
+  if (z > 0) schedule2Input.section409a_excise = z;
+  if (Object.keys(schedule2Input).length > 0) {
+    outputs.push({ nodeType: schedule2.nodeType, input: schedule2Input });
+  }
+
+  return outputs;
 }
 
 class W2Node extends TaxNode<typeof inputSchema> {
@@ -347,13 +349,11 @@ class W2Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       ...excessSsOutput(input.w2s),
       ...statutoryOutput(input.w2s),
-      ...medicareOutputs(input.w2s),
-      ...allocatedTipsOutputs(input.w2s),
-      ...depCareOutputs(input.w2s),
-      ...retirementPlanOutputs(input.w2s),
-      ...box14SdiOutputs(input.w2s),
-      ...stateWithholdingOutputs(input.w2s),
-      ...localWithholdingOutputs(input.w2s),
+      ...medicareOutput(input.w2s),
+      ...allocatedTipsOutput(input.w2s),
+      ...depCareOutput(input.w2s),
+      ...retirementPlanOutput(input.w2s),
+      ...scheduleAOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
       { nodeType: f1040.nodeType, input: f1040Fields },
     ];

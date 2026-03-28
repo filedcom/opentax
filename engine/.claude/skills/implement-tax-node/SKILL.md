@@ -176,6 +176,32 @@ if (statutoryWages > 0) {
 - **One output object per nodeType** — if f1040 needs wages AND withholding,
   merge them into one `{ nodeType: "f1040", input: { wages, withheld } }` output
 
+### Multi-field aggregation to the same destination
+
+When several different box values all route to the same downstream form, build
+one output object with all the fields — never emit multiple outputs for the
+same `nodeType`:
+
+```typescript
+// WRONG — three separate schedule_a outputs
+outputs.push({ nodeType: "schedule_a", input: { line5a_state_taxes: sdi } });
+outputs.push({ nodeType: "schedule_a", input: { line5b_state_income_taxes: state } });
+outputs.push({ nodeType: "schedule_a", input: { line5c_local_income_taxes: local } });
+
+// CORRECT — one schedule_a output with all three fields
+const scheduleAInput: Record<string, number> = {};
+if (totalSdi > 0) scheduleAInput.line5a_state_taxes = totalSdi;
+if (totalState > 0) scheduleAInput.line5b_state_income_taxes = totalState;
+if (totalLocal > 0) scheduleAInput.line5c_local_income_taxes = totalLocal;
+if (Object.keys(scheduleAInput).length > 0) {
+  outputs.push({ nodeType: "schedule_a", input: scheduleAInput });
+}
+```
+
+The same pattern applies to schedule2 (which may receive uncollected FICA,
+GTL excise, golden parachute excise, and 409A excise all in one output) and
+any other form where multiple sources contribute different lines.
+
 ---
 
 ## Step 5 — nodeType naming

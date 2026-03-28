@@ -103,46 +103,6 @@ function scheduleBOutput(item: INTItem): NodeOutput {
   };
 }
 
-function earlyWithdrawalOutput(item: INTItem): NodeOutput[] {
-  return (item.box2 ?? 0) > 0
-    ? [{ nodeType: schedule1.nodeType, input: { line18_early_withdrawal: item.box2 } }]
-    : [];
-}
-
-function withholdingOutput(item: INTItem): NodeOutput[] {
-  return (item.box4 ?? 0) > 0
-    ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4 } }]
-    : [];
-}
-
-function taxExemptOutput(item: INTItem): NodeOutput[] {
-  const netTaxExempt = (item.box8 ?? 0) - (item.box13 ?? 0);
-  return netTaxExempt > 0
-    ? [{ nodeType: f1040.nodeType, input: { line2a_tax_exempt: netTaxExempt } }]
-    : [];
-}
-
-function pabOutput(item: INTItem): NodeOutput[] {
-  const box9 = item.box9 ?? 0;
-  return box9 > 0
-    ? [{ nodeType: form6251.nodeType, input: { line2g_pab_interest: box9 } }]
-    : [];
-}
-
-function foreignTaxOutput(
-  item: INTItem,
-  totalBox6: number,
-  filingStatus: string | undefined,
-): NodeOutput[] {
-  if ((item.box6 ?? 0) <= 0) return [];
-  const threshold = filingStatus === "mfj"
-    ? FOREIGN_TAX_MFJ_THRESHOLD
-    : FOREIGN_TAX_SINGLE_THRESHOLD;
-  if (totalBox6 > threshold) {
-    return [{ nodeType: form_1116.nodeType, input: { foreign_tax_paid: item.box6 } }];
-  }
-  return [{ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: item.box6 } }];
-}
 
 class INTNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "int";
@@ -156,31 +116,52 @@ class INTNode extends TaxNode<typeof inputSchema> {
     schedule3,
   ]);
 
-  processItem(
-    item: INTItem,
-    totalBox6: number,
-    filingStatus: string | undefined,
-  ): NodeOutput[] {
-    validateIntItem(item);
-    return [
-      scheduleBOutput(item),
-      ...earlyWithdrawalOutput(item),
-      ...withholdingOutput(item),
-      ...taxExemptOutput(item),
-      ...pabOutput(item),
-      ...foreignTaxOutput(item, totalBox6, filingStatus),
-    ];
-  }
-
   compute(input: INTInput): NodeResult {
     const parsed = inputSchema.parse(input);
     const { int1099s, filing_status } = parsed;
+
+    for (const item of int1099s) {
+      validateIntItem(item);
+    }
+
+    const totalBox2 = int1099s.reduce((sum, item) => sum + (item.box2 ?? 0), 0);
+    const totalBox4 = int1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);
     const totalBox6 = int1099s.reduce((sum, item) => sum + (item.box6 ?? 0), 0);
-    return {
-      outputs: int1099s.flatMap((item) =>
-        this.processItem(item, totalBox6, filing_status)
-      ),
-    };
+    const totalBox9 = int1099s.reduce((sum, item) => sum + (item.box9 ?? 0), 0);
+    const totalTaxExempt = int1099s.reduce(
+      (sum, item) => sum + (item.box8 ?? 0) - (item.box13 ?? 0),
+      0,
+    );
+
+    const outputs: NodeOutput[] = int1099s.map(scheduleBOutput);
+
+    if (totalBox2 > 0) {
+      outputs.push({ nodeType: schedule1.nodeType, input: { line18_early_withdrawal: totalBox2 } });
+    }
+
+    const f1040Fields: Record<string, number> = {};
+    if (totalBox4 > 0) f1040Fields.line25b_withheld_1099 = totalBox4;
+    if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;
+    if (Object.keys(f1040Fields).length > 0) {
+      outputs.push({ nodeType: f1040.nodeType, input: f1040Fields });
+    }
+
+    if (totalBox9 > 0) {
+      outputs.push({ nodeType: form6251.nodeType, input: { line2g_pab_interest: totalBox9 } });
+    }
+
+    if (totalBox6 > 0) {
+      const threshold = filing_status === "mfj"
+        ? FOREIGN_TAX_MFJ_THRESHOLD
+        : FOREIGN_TAX_SINGLE_THRESHOLD;
+      if (totalBox6 > threshold) {
+        outputs.push({ nodeType: form_1116.nodeType, input: { foreign_tax_paid: totalBox6 } });
+      } else {
+        outputs.push({ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: totalBox6 } });
+      }
+    }
+
+    return { outputs };
   }
 }
 
