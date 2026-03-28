@@ -1,8 +1,15 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import { schedule_c } from "../../intermediate/schedule_c/index.ts";
+import { schedule_e } from "../../intermediate/schedule_e/index.ts";
+import { schedule_f } from "../../intermediate/schedule_f/index.ts";
 
-export const inputSchema = z.object({
+export const itemSchema = z.object({
   payer_name: z.string(),
   box1_rents: z.number().nonnegative().optional(),
   box2_royalties: z.number().nonnegative().optional(),
@@ -18,134 +25,88 @@ export const inputSchema = z.object({
   box15_nqdc: z.number().nonnegative().optional(),
 });
 
-type M99Input = z.infer<typeof inputSchema>;
+export const inputSchema = z.object({
+  m99s: z.array(itemSchema).min(1),
+});
 
 class M99Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "m99";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = [
-    "schedule_c",
-    "schedule_e",
-    "schedule_f",
-    "schedule1",
-    "schedule2",
-    "f1040",
-  ] as const;
+  readonly outputNodes = new OutputNodes([
+    schedule_c,
+    schedule_e,
+    schedule_f,
+    schedule1,
+    schedule2,
+    f1040,
+  ]);
 
-  compute(input: M99Input): NodeResult {
-    const outputs: NodeOutput[] = [];
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const out = this.outputNodes.builder();
 
-    // box1_rents → schedule_e rental_income
-    const box1 = input.box1_rents ?? 0;
-    if (box1 > 0) {
-      outputs.push({
-        nodeType: "schedule_e",
-        input: { rental_income: box1 },
-      });
-    }
+    for (const item of input.m99s) {
+      const box1 = item.box1_rents ?? 0;
+      if (box1 > 0) {
+        out.add(schedule_e, { rental_income: box1 });
+      }
 
-    // box2_royalties → schedule_e or schedule_c based on routing
-    const box2 = input.box2_royalties ?? 0;
-    if (box2 > 0) {
-      if ((input.box2_royalties_routing ?? "schedule_e") === "schedule_c") {
-        outputs.push({
-          nodeType: "schedule_c",
-          input: { line1_gross_receipts: box2 },
-        });
-      } else {
-        outputs.push({
-          nodeType: "schedule_e",
-          input: { royalty_income: box2 },
-        });
+      const box2 = item.box2_royalties ?? 0;
+      if (box2 > 0) {
+        if ((item.box2_royalties_routing ?? "schedule_e") === "schedule_c") {
+          out.add(schedule_c, { line1_gross_receipts: box2 });
+        } else {
+          out.add(schedule_e, { royalty_income: box2 });
+        }
+      }
+
+      const box3 = item.box3_other_income ?? 0;
+      if (box3 > 0) {
+        out.add(schedule1, { line8i_prizes_awards: box3 });
+      }
+
+      const box4 = item.box4_federal_withheld ?? 0;
+      if (box4 > 0) {
+        out.add(f1040, { line25b_withheld_1099: box4 });
+      }
+
+      const box5 = item.box5_fishing_boat ?? 0;
+      if (box5 > 0) {
+        out.add(schedule_c, { line1_gross_receipts: box5 });
+      }
+
+      const box6 = item.box6_medical_payments ?? 0;
+      if (box6 > 0) {
+        out.add(schedule_c, { line1_gross_receipts: box6 });
+      }
+
+      const box8 = item.box8_substitute_payments ?? 0;
+      if (box8 > 0) {
+        out.add(schedule1, { line8z_substitute_payments: box8 });
+      }
+
+      const box9 = item.box9_crop_insurance ?? 0;
+      if (box9 > 0) {
+        out.add(schedule_f, { crop_insurance: box9 });
+      }
+
+      const box10 = item.box10_attorney_proceeds ?? 0;
+      if (box10 > 0) {
+        out.add(schedule1, { line8z_attorney_proceeds: box10 });
+      }
+
+      const box11 = item.box11_fish_purchased ?? 0;
+      if (box11 > 0) {
+        out.add(schedule_c, { line1_gross_receipts: box11 });
+      }
+
+      const box15 = item.box15_nqdc ?? 0;
+      if (box15 > 0) {
+        out.add(schedule1, { line8z_nqdc: box15 });
+        out.add(schedule2, { line17h_nqdc_tax: box15 * 0.20 });
       }
     }
 
-    // box3_other_income → schedule1 line8i_prizes_awards
-    const box3 = input.box3_other_income ?? 0;
-    if (box3 > 0) {
-      outputs.push({
-        nodeType: "schedule1",
-        input: { line8i_prizes_awards: box3 },
-      });
-    }
-
-    // box4_federal_withheld → f1040 line25b
-    const box4 = input.box4_federal_withheld ?? 0;
-    if (box4 > 0) {
-      outputs.push({
-        nodeType: "f1040",
-        input: { line25b_withheld_1099: box4 },
-      });
-    }
-
-    // box5_fishing_boat → schedule_c line1
-    const box5 = input.box5_fishing_boat ?? 0;
-    if (box5 > 0) {
-      outputs.push({
-        nodeType: "schedule_c",
-        input: { line1_gross_receipts: box5 },
-      });
-    }
-
-    // box6_medical_payments → schedule_c line1
-    const box6 = input.box6_medical_payments ?? 0;
-    if (box6 > 0) {
-      outputs.push({
-        nodeType: "schedule_c",
-        input: { line1_gross_receipts: box6 },
-      });
-    }
-
-    // box8_substitute_payments → schedule1 line8z
-    const box8 = input.box8_substitute_payments ?? 0;
-    if (box8 > 0) {
-      outputs.push({
-        nodeType: "schedule1",
-        input: { line8z_substitute_payments: box8 },
-      });
-    }
-
-    // box9_crop_insurance → schedule_f crop_insurance
-    const box9 = input.box9_crop_insurance ?? 0;
-    if (box9 > 0) {
-      outputs.push({
-        nodeType: "schedule_f",
-        input: { crop_insurance: box9 },
-      });
-    }
-
-    // box10_attorney_proceeds → schedule1 line8z
-    const box10 = input.box10_attorney_proceeds ?? 0;
-    if (box10 > 0) {
-      outputs.push({
-        nodeType: "schedule1",
-        input: { line8z_attorney_proceeds: box10 },
-      });
-    }
-
-    // box11_fish_purchased → schedule_c line1
-    const box11 = input.box11_fish_purchased ?? 0;
-    if (box11 > 0) {
-      outputs.push({
-        nodeType: "schedule_c",
-        input: { line1_gross_receipts: box11 },
-      });
-    }
-
-    // box15_nqdc → schedule1 line8z AND schedule2 line17h (20% excise)
-    const box15 = input.box15_nqdc ?? 0;
-    if (box15 > 0) {
-      outputs.push({
-        nodeType: "schedule1",
-        input: { line8z_nqdc: box15 },
-      });
-      outputs.push({
-        nodeType: "schedule2",
-        input: { line17h_nqdc_tax: box15 * 0.20 },
-      });
-    }
-
-    return { outputs };
+    return out.build();
   }
 }
 

@@ -66,7 +66,9 @@ async function main(): Promise<void> {
       Deno.exit(1);
     }
     await runCommand(() =>
-      Promise.resolve(graphViewCommand({ nodeType, depth, json: args.json === true }))
+      Promise.resolve(
+        graphViewCommand({ nodeType, depth, json: args.json === true }),
+      )
     );
   } else {
     console.error(

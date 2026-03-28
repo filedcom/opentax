@@ -1,13 +1,18 @@
 import { ensureDir } from "@std/fs";
 import { join } from "@std/path";
-import type { InputEntry, MetaJson } from "./types.ts";
+import type {
+  InputsJson,
+  MetaJson,
+  NodeInputEntry,
+  ReturnJson,
+} from "./types.ts";
 
-const RETURN_METADATA_JSON = "meta.json";
-const INPUTS_JSON = "inputs.json";
+const RETURN_JSON = "return.json";
 
-async function readJsonFile<T>(filePath: string): Promise<T> {
+async function readReturnJson(returnPath: string): Promise<ReturnJson> {
+  const filePath = join(returnPath, RETURN_JSON);
   try {
-    return JSON.parse(await Deno.readTextFile(filePath)) as T;
+    return JSON.parse(await Deno.readTextFile(filePath)) as ReturnJson;
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
       throw new Error(`File not found: ${filePath}`);
@@ -16,23 +21,31 @@ async function readJsonFile<T>(filePath: string): Promise<T> {
   }
 }
 
-/**
- * Returns a stable ID for a new entry of the given nodeType.
- * Counts existing entries with matching nodeType and increments.
- * Pure function — no I/O.
- */
-export function nextId(
-  entries: readonly InputEntry[],
-  nodeType: string,
-): string {
-  const count = entries.filter((e) => e.nodeType === nodeType).length;
-  return `${nodeType}_${String(count + 1).padStart(2, "0")}`;
+async function writeReturnJson(
+  returnPath: string,
+  data: ReturnJson,
+): Promise<void> {
+  await Deno.writeTextFile(
+    join(returnPath, RETURN_JSON),
+    JSON.stringify(data, null, 2),
+  );
 }
 
 /**
- * Creates a new return directory under baseDir with a UUID as the folder name.
- * Writes meta.json (returnId, year, createdAt) and an empty inputs.json.
- * Returns { returnId, returnPath }.
+ * Returns a stable ID for a new entry of the given nodeType.
+ * Takes existing entries for that nodeType's bucket.
+ * Pure function — no I/O.
+ */
+export function nextId(
+  entries: readonly NodeInputEntry[],
+  nodeType: string,
+): string {
+  return `${nodeType}_${String(entries.length + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Creates a new return directory with a single return.json containing
+ * { meta: { returnId, year, createdAt }, inputs: {} }.
  */
 export async function createReturn(
   year: number,
@@ -49,40 +62,35 @@ export async function createReturn(
     createdAt: new Date().toISOString(),
   };
 
-  await Deno.writeTextFile(
-    join(returnPath, RETURN_METADATA_JSON),
-    JSON.stringify(meta, null, 2),
-  );
-  await Deno.writeTextFile(
-    join(returnPath, INPUTS_JSON),
-    JSON.stringify([], null, 2),
-  );
+  await writeReturnJson(returnPath, { meta, inputs: {} });
 
   return { returnId, returnPath };
 }
 
-export function loadMeta(returnPath: string): Promise<MetaJson> {
-  return readJsonFile<MetaJson>(join(returnPath, RETURN_METADATA_JSON));
+export async function loadMeta(returnPath: string): Promise<MetaJson> {
+  return (await readReturnJson(returnPath)).meta;
 }
 
-export function loadInputs(returnPath: string): Promise<InputEntry[]> {
-  return readJsonFile<InputEntry[]>(join(returnPath, INPUTS_JSON));
-}
-
-export async function writeInputs(
-  returnPath: string,
-  entries: InputEntry[],
-): Promise<void> {
-  await Deno.writeTextFile(
-    join(returnPath, INPUTS_JSON),
-    JSON.stringify(entries, null, 2),
-  );
+export async function loadInputs(returnPath: string): Promise<InputsJson> {
+  return (await readReturnJson(returnPath)).inputs;
 }
 
 export async function appendInput(
   returnPath: string,
-  entry: InputEntry,
-): Promise<void> {
-  const existing = await loadInputs(returnPath);
-  await writeInputs(returnPath, [...existing, entry]);
+  nodeType: string,
+  fields: Record<string, unknown>,
+): Promise<{ id: string }> {
+  const returnData = await readReturnJson(returnPath);
+  const existing = returnData.inputs[nodeType] ?? [];
+  const id = nextId(existing, nodeType);
+  const entry: NodeInputEntry = { id, fields };
+  const updatedInputs: InputsJson = {
+    ...returnData.inputs,
+    [nodeType]: [...existing, entry],
+  };
+  await writeReturnJson(returnPath, {
+    meta: returnData.meta,
+    inputs: updatedInputs,
+  });
+  return { id };
 }

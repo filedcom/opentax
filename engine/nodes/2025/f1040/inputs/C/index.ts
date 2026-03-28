@@ -1,6 +1,10 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule_se } from "../../intermediate/schedule_se/index.ts";
+import { form8995 } from "../../intermediate/form8995/index.ts";
 
 // SE tax threshold: net profit >= $400 triggers Schedule SE
 const SE_TAX_THRESHOLD = 400;
@@ -8,7 +12,7 @@ const SE_TAX_THRESHOLD = 400;
 // Business meals are 50% deductible (standard limitation)
 const MEALS_DEDUCTIBLE_PCT = 0.50;
 
-export const inputSchema = z.object({
+export const itemSchema = z.object({
   // Header / identification
   line_a_principal_business: z.string(),
   line_b_business_code: z.string(),
@@ -60,97 +64,77 @@ export const inputSchema = z.object({
   line_30_home_office: z.number().nonnegative().optional(),
 });
 
-type ScheduleCInput = z.infer<typeof inputSchema>;
+export const inputSchema = z.object({
+  schedule_cs: z.array(itemSchema).min(1),
+});
 
 class ScheduleCNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_c";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = ["schedule1", "schedule_se", "form8995"] as const;
+  readonly outputNodes = new OutputNodes([schedule1, schedule_se, form8995]);
 
-  compute(input: ScheduleCInput): NodeResult {
-    const outputs: NodeOutput[] = [];
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const out = this.outputNodes.builder();
 
-    // Part III: Cost of Goods Sold
-    const cogs =
-      (input.line_35_cogs_beginning_inventory ?? 0) +
-      (input.line_36_purchases ?? 0) +
-      (input.line_37_cost_of_labor ?? 0) +
-      (input.line_38_materials_supplies_cogs ?? 0) +
-      (input.line_39_other_cogs ?? 0);
+    for (const item of input.schedule_cs) {
+      const cogs = (item.line_35_cogs_beginning_inventory ?? 0) +
+        (item.line_36_purchases ?? 0) +
+        (item.line_37_cost_of_labor ?? 0) +
+        (item.line_38_materials_supplies_cogs ?? 0) +
+        (item.line_39_other_cogs ?? 0);
 
-    // Line 3 (net receipts) = gross receipts - returns & allowances
-    const netReceipts =
-      input.line_1_gross_receipts - (input.line_2_returns_allowances ?? 0);
+      const netReceipts = item.line_1_gross_receipts -
+        (item.line_2_returns_allowances ?? 0);
+      const grossProfit = netReceipts - cogs;
+      const grossIncome = grossProfit + (item.line_6_other_income ?? 0);
 
-    // Gross profit = net receipts - COGS
-    const grossProfit = netReceipts - cogs;
+      const mealsDeductible = (item.line_24b_meals ?? 0) * MEALS_DEDUCTIBLE_PCT;
 
-    // Gross income = gross profit + other income
-    const grossIncome = grossProfit + (input.line_6_other_income ?? 0);
+      const totalExpenses = (item.line_8_advertising ?? 0) +
+        (item.line_9_car_truck ?? 0) +
+        (item.line_10_commissions ?? 0) +
+        (item.line_11_contract_labor ?? 0) +
+        (item.line_12_depletion ?? 0) +
+        (item.line_13_depreciation ?? 0) +
+        (item.line_14_employee_benefits ?? 0) +
+        (item.line_15_insurance ?? 0) +
+        (item.line_16a_interest_mortgage ?? 0) +
+        (item.line_16b_interest_other ?? 0) +
+        (item.line_17_professional_services ?? 0) +
+        (item.line_18_office_expense ?? 0) +
+        (item.line_19_pension_plans ?? 0) +
+        (item.line_20a_rent_vehicles ?? 0) +
+        (item.line_20b_rent_other ?? 0) +
+        (item.line_21_repairs ?? 0) +
+        (item.line_22_supplies ?? 0) +
+        (item.line_23_taxes_licenses ?? 0) +
+        (item.line_24a_travel ?? 0) +
+        mealsDeductible +
+        (item.line_25_utilities ?? 0) +
+        (item.line_26_wages ?? 0) +
+        (item.line_27a_energy_efficient ?? 0) +
+        (item.line_27b_other_expenses ?? 0) +
+        (item.line_30_home_office ?? 0);
 
-    // Part II: Total expenses — meals subject to 50% limitation
-    const mealsDeductible = (input.line_24b_meals ?? 0) * MEALS_DEDUCTIBLE_PCT;
+      // Professional gamblers cannot report a net loss (IRC §165(d))
+      const rawProfit = grossIncome - totalExpenses;
+      const netProfit = item.professional_gambler === true
+        ? Math.max(0, rawProfit)
+        : rawProfit;
 
-    const totalExpenses =
-      (input.line_8_advertising ?? 0) +
-      (input.line_9_car_truck ?? 0) +
-      (input.line_10_commissions ?? 0) +
-      (input.line_11_contract_labor ?? 0) +
-      (input.line_12_depletion ?? 0) +
-      (input.line_13_depreciation ?? 0) +
-      (input.line_14_employee_benefits ?? 0) +
-      (input.line_15_insurance ?? 0) +
-      (input.line_16a_interest_mortgage ?? 0) +
-      (input.line_16b_interest_other ?? 0) +
-      (input.line_17_professional_services ?? 0) +
-      (input.line_18_office_expense ?? 0) +
-      (input.line_19_pension_plans ?? 0) +
-      (input.line_20a_rent_vehicles ?? 0) +
-      (input.line_20b_rent_other ?? 0) +
-      (input.line_21_repairs ?? 0) +
-      (input.line_22_supplies ?? 0) +
-      (input.line_23_taxes_licenses ?? 0) +
-      (input.line_24a_travel ?? 0) +
-      mealsDeductible +
-      (input.line_25_utilities ?? 0) +
-      (input.line_26_wages ?? 0) +
-      (input.line_27a_energy_efficient ?? 0) +
-      (input.line_27b_other_expenses ?? 0) +
-      (input.line_30_home_office ?? 0);
+      out.add(schedule1, { line3_schedule_c: netProfit });
 
-    // Net profit = gross income - total expenses
-    let netProfit = grossIncome - totalExpenses;
+      const isStatutory = item.statutory_employee === true;
+      const isExemptNotary = item.exempt_notary === true;
+      const seExempt = isStatutory || isExemptNotary;
 
-    // Professional gamblers cannot report a net loss (IRC §165(d))
-    if (input.professional_gambler === true) {
-      netProfit = Math.max(0, netProfit);
+      if (!seExempt && netProfit >= SE_TAX_THRESHOLD) {
+        out.add(schedule_se, { net_profit_schedule_c: netProfit });
+        out.add(form8995, { qbi_from_schedule_c: netProfit });
+      }
     }
 
-    // Always route net profit (or loss) to Schedule 1 Line 3
-    outputs.push({
-      nodeType: "schedule1",
-      input: { line3_schedule_c: netProfit },
-    });
-
-    // SE tax and QBI deduction: triggers when net profit >= $400
-    // and the taxpayer is not a statutory employee or exempt notary
-    const isStatutory = input.statutory_employee === true;
-    const isExemptNotary = input.exempt_notary === true;
-    const seExempt = isStatutory || isExemptNotary;
-
-    if (!seExempt && netProfit >= SE_TAX_THRESHOLD) {
-      outputs.push({
-        nodeType: "schedule_se",
-        input: { net_profit_schedule_c: netProfit },
-      });
-
-      outputs.push({
-        nodeType: "form8995",
-        input: { qbi_from_schedule_c: netProfit },
-      });
-    }
-
-    return { outputs };
+    return out.build();
   }
 }
 

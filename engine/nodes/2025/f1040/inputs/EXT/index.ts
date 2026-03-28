@@ -1,6 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 export const inputSchema = z.object({
   extension_filed: z.boolean().optional(),
@@ -12,22 +14,21 @@ type EXTInput = z.infer<typeof inputSchema>;
 class EXTNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ext";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = ["f1040"] as const;
+  readonly outputNodes = new OutputNodes([f1040]);
 
   compute(input: EXTInput): NodeResult {
-    const outputs: NodeOutput[] = [];
+    const out = this.outputNodes.builder();
 
     if (
       input.amount_paid_with_extension !== undefined &&
       input.amount_paid_with_extension > 0
     ) {
-      outputs.push({
-        nodeType: "f1040",
-        input: { line38_amount_paid_extension: input.amount_paid_with_extension },
+      out.add(f1040, {
+        line38_amount_paid_extension: input.amount_paid_with_extension,
       });
     }
 
-    return { outputs };
+    return out.build();
   }
 }
 

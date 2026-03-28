@@ -1,11 +1,22 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { schedule_b_interest } from "../../intermediate/schedule_b_interest/index.ts";
 
-export const inputSchema = z.object({
+export const itemSchema = z.object({
   property_address: z.string(),
   property_type: z
-    .enum(["rental_real_estate", "royalty", "partnership", "s_corp", "estate_trust"])
+    .enum([
+      "rental_real_estate",
+      "royalty",
+      "partnership",
+      "s_corp",
+      "estate_trust",
+    ])
     .optional(),
 
   // Income
@@ -42,104 +53,90 @@ export const inputSchema = z.object({
   k1_179_expense: z.number().nonnegative().optional(),
 });
 
-type EInput = z.infer<typeof inputSchema>;
+export const inputSchema = z.object({
+  schedule_es: z.array(itemSchema).min(1),
+});
 
 class ENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_e";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = [
-    "schedule1",
-    "schedule_d",
-    "f1040",
-    "schedule_b_interest",
-  ] as const;
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    schedule_d,
+    f1040,
+    schedule_b_interest,
+  ]);
 
-  compute(input: EInput): NodeResult {
-    const outputs: NodeOutput[] = [];
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const out = this.outputNodes.builder();
 
-    const propertyType = input.property_type ?? "rental_real_estate";
-    const isK1Type =
-      propertyType === "partnership" ||
-      propertyType === "s_corp" ||
-      propertyType === "estate_trust";
+    for (const item of input.schedule_es) {
+      const propertyType = item.property_type ?? "rental_real_estate";
+      const isK1Type = propertyType === "partnership" ||
+        propertyType === "s_corp" ||
+        propertyType === "estate_trust";
 
-    if (isK1Type) {
-      // K-1 income path
-      if (input.k1_ordinary_income !== undefined) {
-        outputs.push({
-          nodeType: "schedule1",
-          input: { line17_schedule_e: input.k1_ordinary_income },
-        });
+      if (isK1Type) {
+        if (item.k1_ordinary_income !== undefined) {
+          out.add(schedule1, { line17_schedule_e: item.k1_ordinary_income });
+        }
+
+        if (item.k1_cap_gain_lt !== undefined && item.k1_cap_gain_lt > 0) {
+          out.add(schedule_d, { line12_k1_lt: item.k1_cap_gain_lt });
+        }
+
+        if (
+          item.k1_qualified_dividends !== undefined &&
+          item.k1_qualified_dividends > 0
+        ) {
+          out.add(f1040, {
+            line3a_qualified_dividends: item.k1_qualified_dividends,
+          });
+        }
+
+        if (
+          item.k1_interest_income !== undefined && item.k1_interest_income > 0
+        ) {
+          out.add(schedule_b_interest, {
+            payer_name: item.property_address,
+            taxable_interest_net: item.k1_interest_income,
+          });
+        }
+      } else {
+        const totalExpenses = (item.line_5_advertising ?? 0) +
+          (item.line_6_auto_travel ?? 0) +
+          (item.line_7_cleaning_maintenance ?? 0) +
+          (item.line_8_commissions ?? 0) +
+          (item.line_9_insurance ?? 0) +
+          (item.line_10_legal_professional ?? 0) +
+          (item.line_11_management_fees ?? 0) +
+          (item.line_12_mortgage_interest ?? 0) +
+          (item.line_13_other_interest ?? 0) +
+          (item.line_14_repairs ?? 0) +
+          (item.line_15_supplies ?? 0) +
+          (item.line_16_taxes ?? 0) +
+          (item.line_17_utilities ?? 0) +
+          (item.line_18_depreciation ?? 0) +
+          (item.line_19_other ?? 0);
+
+        const personalUseDays = item.personal_use_days ?? 0;
+        const rentalDays = item.rental_days ?? 0;
+
+        const deductibleExpenses = (personalUseDays > 0 &&
+            rentalDays > 0 &&
+            personalUseDays > Math.max(14, rentalDays * 0.1))
+          ? totalExpenses * (rentalDays / (rentalDays + personalUseDays))
+          : totalExpenses;
+
+        const netIncome = (item.rental_income ?? 0) +
+          (item.royalty_income ?? 0) -
+          deductibleExpenses;
+
+        out.add(schedule1, { line17_schedule_e: netIncome });
       }
-
-      if (input.k1_cap_gain_lt !== undefined && input.k1_cap_gain_lt > 0) {
-        outputs.push({
-          nodeType: "schedule_d",
-          input: { line12_k1_lt: input.k1_cap_gain_lt },
-        });
-      }
-
-      if (input.k1_qualified_dividends !== undefined && input.k1_qualified_dividends > 0) {
-        outputs.push({
-          nodeType: "f1040",
-          input: { line3a_qualified_dividends: input.k1_qualified_dividends },
-        });
-      }
-
-      if (input.k1_interest_income !== undefined && input.k1_interest_income > 0) {
-        outputs.push({
-          nodeType: "schedule_b_interest",
-          input: {
-            payer_name: input.property_address,
-            taxable_interest_net: input.k1_interest_income,
-          },
-        });
-      }
-    } else {
-      // Rental / royalty path
-      const totalExpenses =
-        (input.line_5_advertising ?? 0) +
-        (input.line_6_auto_travel ?? 0) +
-        (input.line_7_cleaning_maintenance ?? 0) +
-        (input.line_8_commissions ?? 0) +
-        (input.line_9_insurance ?? 0) +
-        (input.line_10_legal_professional ?? 0) +
-        (input.line_11_management_fees ?? 0) +
-        (input.line_12_mortgage_interest ?? 0) +
-        (input.line_13_other_interest ?? 0) +
-        (input.line_14_repairs ?? 0) +
-        (input.line_15_supplies ?? 0) +
-        (input.line_16_taxes ?? 0) +
-        (input.line_17_utilities ?? 0) +
-        (input.line_18_depreciation ?? 0) +
-        (input.line_19_other ?? 0);
-
-      const personalUseDays = input.personal_use_days ?? 0;
-      const rentalDays = input.rental_days ?? 0;
-
-      let deductibleExpenses = totalExpenses;
-
-      if (
-        personalUseDays > 0 &&
-        rentalDays > 0 &&
-        personalUseDays > Math.max(14, rentalDays * 0.1)
-      ) {
-        deductibleExpenses =
-          totalExpenses * (rentalDays / (rentalDays + personalUseDays));
-      }
-
-      const netIncome =
-        (input.rental_income ?? 0) +
-        (input.royalty_income ?? 0) -
-        deductibleExpenses;
-
-      outputs.push({
-        nodeType: "schedule1",
-        input: { line17_schedule_e: netIncome },
-      });
     }
 
-    return { outputs };
+    return out.build();
   }
 }
 

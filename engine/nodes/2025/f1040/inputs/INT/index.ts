@@ -1,10 +1,16 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { form6251 } from "../../intermediate/form6251/index.ts";
+import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import { schedule_b_interest } from "../../intermediate/schedule_b_interest/index.ts";
 
-export const inputSchema = z.object({
+export const itemSchema = z.object({
   payer_name: z.string(),
-  box1: z.number().nonnegative().optional().default(0),
+  box1: z.number().nonnegative().optional(),
   box2: z.number().nonnegative().optional(),
   box3: z.number().nonnegative().optional(),
   box4: z.number().nonnegative().optional(),
@@ -21,102 +27,82 @@ export const inputSchema = z.object({
   non_taxable_oid_adjustment: z.number().nonnegative().optional(),
 });
 
-type INTInput = z.infer<typeof inputSchema>;
+export const inputSchema = z.object({
+  int1099s: z.array(itemSchema).min(1),
+});
+
+type INTItem = z.infer<typeof itemSchema>;
 
 class INTNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "int";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = [
-    "schedule_b_interest",
-    "schedule1",
-    "f1040",
-    "form6251",
-    "schedule3",
-  ] as const;
+  readonly outputNodes = new OutputNodes([
+    schedule_b_interest,
+    schedule1,
+    f1040,
+    form6251,
+    schedule3,
+  ]);
 
-  compute(input: INTInput): NodeResult {
-    const outputs: NodeOutput[] = [];
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const out = this.outputNodes.builder();
 
-    const box8 = input.box8 ?? 0;
-    const box9 = input.box9 ?? 0;
-    const box13 = input.box13 ?? 0;
+    for (const item of input.int1099s) {
+      const box8 = item.box8 ?? 0;
+      const box9 = item.box9 ?? 0;
+      const box13 = item.box13 ?? 0;
 
-    // Validation
-    if (box9 > box8) {
-      throw new Error(
-        `INT validation error: box9 (${box9}) cannot exceed box8 (${box8}) — box9 is a subset of box8`,
-      );
-    }
-    if (box13 > box8) {
-      throw new Error(
-        `INT validation error: box13 (${box13}) cannot exceed box8 (${box8}) — bond premium on tax-exempt cannot exceed tax-exempt interest`,
-      );
-    }
+      // Validation
+      if (box9 > box8) {
+        throw new Error(
+          `INT validation error: box9 (${box9}) cannot exceed box8 (${box8}) — box9 is a subset of box8`,
+        );
+      }
+      if (box13 > box8) {
+        throw new Error(
+          `INT validation error: box13 (${box13}) cannot exceed box8 (${box8}) — bond premium on tax-exempt cannot exceed tax-exempt interest`,
+        );
+      }
 
-    // Compute taxable_interest_net
-    const taxableInterestNet =
-      (input.box1 ?? 0) +
-      (input.box3 ?? 0) +
-      (input.box10 ?? 0) -
-      (input.box11 ?? 0) -
-      (input.box12 ?? 0) -
-      (input.nominee_interest ?? 0) -
-      (input.accrued_interest_paid ?? 0) -
-      (input.non_taxable_oid_adjustment ?? 0);
+      const taxableInterestNet = (item.box1 ?? 0) +
+        (item.box3 ?? 0) +
+        (item.box10 ?? 0) -
+        (item.box11 ?? 0) -
+        (item.box12 ?? 0) -
+        (item.nominee_interest ?? 0) -
+        (item.accrued_interest_paid ?? 0) -
+        (item.non_taxable_oid_adjustment ?? 0);
 
-    // Route to schedule_b_interest
-    outputs.push({
-      nodeType: "schedule_b_interest",
-      input: {
-        payer_name: input.payer_name,
+      out.add(schedule_b_interest, {
+        payer_name: item.payer_name,
         taxable_interest_net: taxableInterestNet,
-        box3_us_obligations: input.box3,
+        box3_us_obligations: item.box3,
         box9_pab: box9 > 0 ? box9 : undefined,
-      },
-    });
-
-    // box2 → schedule1 line18
-    if (input.box2 !== undefined && input.box2 > 0) {
-      outputs.push({
-        nodeType: "schedule1",
-        input: { line18_early_withdrawal: input.box2 },
       });
+
+      if (item.box2 !== undefined && item.box2 > 0) {
+        out.add(schedule1, { line18_early_withdrawal: item.box2 });
+      }
+
+      if (item.box4 !== undefined && item.box4 > 0) {
+        out.add(f1040, { line25b_withheld_1099: item.box4 });
+      }
+
+      const netTaxExempt = box8 - box13;
+      if (netTaxExempt > 0) {
+        out.add(f1040, { line2a_tax_exempt: netTaxExempt });
+      }
+
+      if (box9 > 0) {
+        out.add(form6251, { line2g_pab_interest: box9 });
+      }
+
+      if (item.box6 !== undefined && item.box6 > 0) {
+        out.add(schedule3, { line1_foreign_tax_1099: item.box6 });
+      }
     }
 
-    // box4 → f1040 line25b
-    if (input.box4 !== undefined && input.box4 > 0) {
-      outputs.push({
-        nodeType: "f1040",
-        input: { line25b_withheld_1099: input.box4 },
-      });
-    }
-
-    // box8 - box13 → f1040 line2a (if > 0)
-    const netTaxExempt = box8 - box13;
-    if (netTaxExempt > 0) {
-      outputs.push({
-        nodeType: "f1040",
-        input: { line2a_tax_exempt: netTaxExempt },
-      });
-    }
-
-    // box9 → form6251 line2g
-    if (box9 > 0) {
-      outputs.push({
-        nodeType: "form6251",
-        input: { line2g_pab_interest: box9 },
-      });
-    }
-
-    // box6 → schedule3 line1
-    if (input.box6 !== undefined && input.box6 > 0) {
-      outputs.push({
-        nodeType: "schedule3",
-        input: { line1_foreign_tax_1099: input.box6 },
-      });
-    }
-
-    return { outputs };
+    return out.build();
   }
 }
 

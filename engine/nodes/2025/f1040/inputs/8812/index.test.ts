@@ -5,11 +5,15 @@ import { f8812 } from "./index.ts";
 
 Deno.test("f8812.compute: 2 qualifying children below phase-out routes $4000 to schedule3", () => {
   const result = f8812.compute({
-    qualifying_children_count: 2,
-    agi: 100000,
+    f8812s: [{
+      qualifying_children_count: 2,
+      agi: 100000,
+    }],
   });
 
-  const schedule3Output = result.outputs.find((o) => o.nodeType === "schedule3");
+  const schedule3Output = result.outputs.find((o) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Output !== undefined, true);
   const input = schedule3Output!.input as Record<string, unknown>;
   assertEquals(input.line6b_child_tax_credit, 4000);
@@ -17,12 +21,16 @@ Deno.test("f8812.compute: 2 qualifying children below phase-out routes $4000 to 
 
 Deno.test("f8812.compute: other_dependents_count adds $500 ODC per dependent", () => {
   const result = f8812.compute({
-    qualifying_children_count: 0,
-    other_dependents_count: 2,
-    agi: 100000,
+    f8812s: [{
+      qualifying_children_count: 0,
+      other_dependents_count: 2,
+      agi: 100000,
+    }],
   });
 
-  const schedule3Output = result.outputs.find((o) => o.nodeType === "schedule3");
+  const schedule3Output = result.outputs.find((o) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Output !== undefined, true);
   const input = schedule3Output!.input as Record<string, unknown>;
   assertEquals(input.line6b_child_tax_credit, 1000);
@@ -32,12 +40,16 @@ Deno.test("f8812.compute: other_dependents_count adds $500 ODC per dependent", (
 
 Deno.test("f8812.compute: MFJ phase-out threshold is $400,000", () => {
   const result = f8812.compute({
-    qualifying_children_count: 1,
-    agi: 401000,
-    filing_status: "mfj",
+    f8812s: [{
+      qualifying_children_count: 1,
+      agi: 401000,
+      filing_status: "mfj",
+    }],
   });
 
-  const schedule3Output = result.outputs.find((o) => o.nodeType === "schedule3");
+  const schedule3Output = result.outputs.find((o) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Output !== undefined, true);
   const input = schedule3Output!.input as Record<string, unknown>;
   // excess = 1000, steps = 1, reduction = 50, CTC = 2000 - 50 = 1950
@@ -46,12 +58,16 @@ Deno.test("f8812.compute: MFJ phase-out threshold is $400,000", () => {
 
 Deno.test("f8812.compute: single filer phase-out threshold is $200,000", () => {
   const result = f8812.compute({
-    qualifying_children_count: 1,
-    agi: 202000,
-    filing_status: "single",
+    f8812s: [{
+      qualifying_children_count: 1,
+      agi: 202000,
+      filing_status: "single",
+    }],
   });
 
-  const schedule3Output = result.outputs.find((o) => o.nodeType === "schedule3");
+  const schedule3Output = result.outputs.find((o) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Output !== undefined, true);
   const input = schedule3Output!.input as Record<string, unknown>;
   // excess = 2000, steps = 2, reduction = 100, CTC = 2000 - 100 = 1900
@@ -60,12 +76,16 @@ Deno.test("f8812.compute: single filer phase-out threshold is $200,000", () => {
 
 Deno.test("f8812.compute: CTC fully phased out produces no schedule3 output", () => {
   const result = f8812.compute({
-    qualifying_children_count: 1,
-    agi: 250000,
-    filing_status: "single",
+    f8812s: [{
+      qualifying_children_count: 1,
+      agi: 250000,
+      filing_status: "single",
+    }],
   });
 
-  const schedule3Output = result.outputs.find((o) => o.nodeType === "schedule3");
+  const schedule3Output = result.outputs.find((o) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Output, undefined);
 });
 
@@ -73,12 +93,16 @@ Deno.test("f8812.compute: CTC fully phased out produces no schedule3 output", ()
 
 Deno.test("f8812.compute: nonrefundable CTC limited by income_tax_liability", () => {
   const result = f8812.compute({
-    qualifying_children_count: 2,
-    agi: 50000,
-    income_tax_liability: 1500,
+    f8812s: [{
+      qualifying_children_count: 2,
+      agi: 50000,
+      income_tax_liability: 1500,
+    }],
   });
 
-  const schedule3Output = result.outputs.find((o) => o.nodeType === "schedule3");
+  const schedule3Output = result.outputs.find((o) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Output !== undefined, true);
   const input = schedule3Output!.input as Record<string, unknown>;
   // CTC = 4000, but limited to tax liability = 1500
@@ -89,10 +113,12 @@ Deno.test("f8812.compute: nonrefundable CTC limited by income_tax_liability", ()
 
 Deno.test("f8812.compute: ACTC routes to f1040 line28 when tax liability < CTC", () => {
   const result = f8812.compute({
-    qualifying_children_count: 2,
-    agi: 50000,
-    earned_income: 30000,
-    income_tax_liability: 1000,
+    f8812s: [{
+      qualifying_children_count: 2,
+      agi: 50000,
+      earned_income: 30000,
+      income_tax_liability: 1000,
+    }],
   });
 
   const f1040Output = result.outputs.find((o) => o.nodeType === "f1040");
@@ -108,10 +134,12 @@ Deno.test("f8812.compute: ACTC routes to f1040 line28 when tax liability < CTC",
 
 Deno.test("f8812.compute: ACTC capped at $1700 per qualifying child", () => {
   const result = f8812.compute({
-    qualifying_children_count: 1,
-    agi: 50000,
-    earned_income: 50000,
-    income_tax_liability: 0,
+    f8812s: [{
+      qualifying_children_count: 1,
+      agi: 50000,
+      earned_income: 50000,
+      income_tax_liability: 0,
+    }],
   });
 
   const f1040Output = result.outputs.find((o) => o.nodeType === "f1040");
@@ -127,9 +155,11 @@ Deno.test("f8812.compute: ACTC capped at $1700 per qualifying child", () => {
 
 Deno.test("f8812.compute: no children produces no outputs", () => {
   const result = f8812.compute({
-    qualifying_children_count: 0,
-    other_dependents_count: 0,
-    agi: 50000,
+    f8812s: [{
+      qualifying_children_count: 0,
+      other_dependents_count: 0,
+      agi: 50000,
+    }],
   });
 
   assertEquals(result.outputs.length, 0);

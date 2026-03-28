@@ -35,7 +35,7 @@ type-safe, built on Vercel AI SDK
 | Taxpayer identity      | SSN/EIN only                                                           | Caller owns identity management                                                                                                                                |
 | Validation             | Two-tier (hard block for MeF violations, warnings for inconsistencies) | Matches Drake/ProSeries behavior                                                                                                                               |
 | Node model             | Single TaxNode type (unified)                                          | Field + connector distinction was unnecessary; all nodes have inputSchema + compute                                                                            |
-| Execution model        | Two-phase topo sort + pending accumulator                              | Phase 1: expand instances + topo sort; Phase 2: execute in order, nodes deposit into pending dict — optional forms simply never receive inputs and are skipped |
+| Execution model        | Two-phase topo sort + pending accumulator                              | Phase 1: topo sort (no instance expansion — each node type fires once); Phase 2: execute in order, nodes deposit into pending dict — multi-instance inputs (W-2s, 1099s) are arrays passed directly to the node; optional forms simply never receive inputs and are skipped |
 | Graph traversal        | compute_tax_graph(nodeType, depth)                                     | Static metadata traversal independent of execution, any depth                                                                                                  |
 | Self-update            | CLI-driven ingestion engine                                            | On-demand, human-in-the-loop before merge                                                                                                                      |
 | Ingestion intelligence | Hybrid LLM + human review                                              | LLM extracts, human reviews diff, full source traceability                                                                                                     |
@@ -151,12 +151,18 @@ which first-wave nodes to activate based on what forms are present. Optional
 forms are handled by simply not activating them — no zero-propagation through
 unused nodes.
 
+Each input node that can appear multiple times (W-2, 1099-INT, 1099-DIV, etc.)
+receives the **full array** in a single dispatch. The node itself handles
+iteration and aggregation internally — no instance expansion, no accumulation
+in the pending dict.
+
 ```typescript
 // forms/start/2025/index.ts
 const inputSchema = z.object({
   w2s: z.array(W2Schema).optional(),
   scheduleC: ScheduleCSchema.optional(),
-  interest1099: z.array(Interest1099Schema).optional(),
+  int1099s: z.array(Interest1099Schema).optional(),
+  div1099s: z.array(Div1099Schema).optional(),
   // ...
 })
 
@@ -167,12 +173,36 @@ export class StartNode extends TaxNode<typeof inputSchema, null> {
 
   compute(input: z.infer<typeof inputSchema>) {
     const outputs: NodeOutput[] = []
-    // each W-2 dispatches the w2 node separately
-    input.w2s?.forEach((w2) => outputs.push({ nodeType: 'w2', input: { w2 } }))
-    if (input.scheduleC)     outputs.push({ nodeType: 'schedule_c', input: input.scheduleC })
-    if (input.interest1099)  outputs.push({ nodeType: 'schedule_b', input: { interest: input.interest1099 } })
+    // dispatch all W-2s as a single array — w2 node handles multiple internally
+    if (input.w2s?.length)    outputs.push({ nodeType: 'w2',        input: { w2s: input.w2s } })
+    if (input.scheduleC)      outputs.push({ nodeType: 'schedule_c', input: input.scheduleC })
+    if (input.int1099s?.length) outputs.push({ nodeType: 'schedule_b', input: { interest: input.int1099s } })
+    if (input.div1099s?.length) outputs.push({ nodeType: 'schedule_b_div', input: { dividends: input.div1099s } })
     // ...
     return { value: null, outputs }
+  }
+}
+```
+
+Each multi-instance node takes an array in its `inputSchema`:
+
+```typescript
+// nodes/2025/f1040/inputs/W2/index.ts
+const inputSchema = z.object({
+  w2s: z.array(W2Schema).min(1),
+})
+
+export class W2Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = 'w2'
+  readonly inputSchema = inputSchema
+  readonly outputNodeTypes = ['f1040']
+
+  compute(input: z.infer<typeof inputSchema>) {
+    const totalWages = input.w2s.reduce((sum, w2) => sum + w2.box1, 0)
+    // aggregate other fields across all W-2s...
+    return {
+      outputs: [{ nodeType: 'f1040', input: { wages: totalWages } }],
+    }
   }
 }
 ```
@@ -184,74 +214,74 @@ replays from stored inputs.
 
 **Phase 1 — Build execution plan (from inputs.json)**
 
-Expand instances from inputs, build the instance graph, topological sort:
+Build the node type graph (static), topological sort. No instance expansion —
+each node type fires exactly once. Arrays are passed wholesale.
 
 ```
 inputs.json: { w2s: [w2_01, w2_02], int1099s: [int_01, int_02, int_03] }
 
-instance graph:
-  start → w2_01 → f1040
-  start → w2_02 → f1040
-  start → int_01 → schedule_b (intermediate)
-  start → int_02 → schedule_b
-  start → int_03 → schedule_b
-  schedule_b → f1040
+node graph (type-level, not instance-level):
+  start → w2 → f1040
+  start → schedule_b → f1040
   ...
 
-topo sort → [ start, w2_01, w2_02, int_01, int_02, int_03, schedule_b, f1040, ... ]
+topo sort → [ start, w2, schedule_b, f1040, ... ]
 ```
 
 **Phase 2 — Execute in order**
 
 ```
-pending: Record<instanceId, Record<string, unknown>> = {}
+pending: Record<nodeType, Record<string, unknown>> = {}
 
-for each instance in topo order:
-  node = registry[instance.nodeType]
-  input = pending[instance.id]              // fully assembled by this point
+for each nodeType in topo order:
+  node = registry[nodeType]
+  input = pending[nodeType]              // fully assembled by this point
   result = node.compute(input)
   for each output in result.outputs:
-    merge(pending[output.nodeType], output.input)   // array fields append, scalar fields set
+    merge(pending[output.nodeType], output.input)   // scalar fields set
 ```
 
 Each node fires exactly once. By the time a node fires, all upstream nodes have
 already deposited into `pending`. No waiting, no readiness checks — topo sort
 guarantees it.
 
-**Array accumulation example (2 W-2s, 3 1099-INTs):**
+**Execution example (2 W-2s, 3 1099-INTs):**
 
 ```
-TOPO ORDER:  start → w2_01 → w2_02 → int_01 → int_02 → int_03 → schedule_b → f1040
+TOPO ORDER:  start → w2 → schedule_b → f1040
 
                         pending dict after each step
                  ┌─────────────────────────────────────────────────────────────┐
-step 1  start    │ w2_01:{box1:85000}  w2_02:{box1:45000}                      │
-                 │ int_01:{amt:320}    int_02:{amt:150}    int_03:{amt:500}     │
+step 1  start    │ w2:{ w2s:[{box1:85000}, {box1:45000}] }                     │
+                 │ schedule_b:{ interest:[{amt:320}, {amt:150}, {amt:500}] }   │
                  └─────────────────────────────────────────────────────────────┘
-                          │deposits                │deposits
-                          ▼                        ▼
-step 2  w2_01    │ f1040:{ wages:[85000] }                                      │
-step 3  w2_02    │ f1040:{ wages:[85000, 45000] }             ← appended        │
 
-step 4  int_01   │ schedule_b:{ interest:[320] }                               │
-step 5  int_02   │ schedule_b:{ interest:[320, 150] }         ← appended       │
-step 6  int_03   │ schedule_b:{ interest:[320, 150, 500] }    ← appended       │
+step 2  w2       reads pending → { w2s:[{box1:85000}, {box1:45000}] }
+                 aggregates internally → total_wages: 130000
+                 deposits → f1040:{ wages:130000 }
 
-                 └─────────────────────────────────────────────────────────────┘
-                   pending fully assembled — now intermediate nodes fire:
-
-step 7  schedule_b reads pending → { interest:[320, 150, 500] }
-                   computes → total_interest: 970
+step 3  schedule_b reads pending → { interest:[{amt:320}, {amt:150}, {amt:500}] }
+                   aggregates internally → total_interest: 970
                    deposits → f1040:{ interest:970 }
 
-step 8  f1040   reads pending → { wages:[85000, 45000], interest:970, ... }
-                   computes → (unimplemented placeholder, skipped by executor)
+step 4  f1040    reads pending → { wages:130000, interest:970, ... }
+                 computes final return
 ```
+
+Key: aggregation is the **node's responsibility**, not the engine's. The engine
+only merges scalar deposits from upstream nodes into `pending`. Array-type inputs
+are delivered in one shot by `start`; the receiving node iterates internally.
 
 Key: a node only fires when it reaches its position in topo order. By that point
 every upstream node has already deposited — the input is guaranteed complete.
 Optional nodes (e.g. `schedule_c` when no business income) never receive any
 deposits, so their Zod parse fails and they are silently skipped.
+
+> **Design decision (2026-03-28):** Multi-instance inputs (W-2s, 1099s, K-1s)
+> are passed as arrays to a single node invocation. Each input node is
+> responsible for iterating and aggregating its own instances internally.
+> This removes the need for a separate aggregation layer in the engine and
+> eliminates the pending-dict array-accumulation mechanism.
 
 ### Static Graph Traversal
 
@@ -413,12 +443,19 @@ Two separate Deno workspace packages — same repo, separate CLIs.
 tax return create --ssn 123-45-6789 --year 2025
 # → creates returns/ret_abc123/meta.json + empty inputs.json
 
-# 2. Add form data — must be a complete, valid node input (no partial fields)
-tax form add --returnId ret_abc123 --node_type w2 '{"box1": 85000, "box2": 12000, "box12": [...]}'
-tax form add --returnId ret_abc123 --node_type schedule_c '{"gross_receipts": 45000, "expenses": {...}}'
-tax form add --returnId ret_abc123 --node_type 1099_int '{"payer": "Chase", "amount": 320}'
+# 2. Add form data incrementally — each call appends and triggers recompute
+tax form add --returnId ret_abc123 --node_type w2 '{"box1": 85000, "box2": 12000, "box12": []}'
+tax form add --returnId ret_abc123 --node_type w2 '{"box1": 45000, "box2": 6800, "box12": []}'
+tax form add --returnId ret_abc123 --node_type schedule_c '{"gross_receipts": 45000, "expenses": {}}'
+tax form add --returnId ret_abc123 --node_type int1099 '{"payer": "Chase", "amount": 320}'
+tax form add --returnId ret_abc123 --node_type general '{"filing_status": "mfj", "tax_year": 2025}'
+# → each add saves to inputs.json, replays engine, returns updated computed state immediately
 
-# 3. Get current computed state at any time (re-runs engine from inputs.json)
+# Batch add from file
+tax form add --returnId ret_abc123 --file ./forms.json
+
+# 3. Computed state is always returned after every add — no separate get needed
+#    but can also query explicitly:
 tax return get --returnId ret_abc123
 # → JSON: all computed lines, AGI, taxable income, tax owed, refund
 
@@ -431,33 +468,71 @@ tax export --returnId ret_abc123 --format pdf --output ./returns/
 tax export --returnId ret_abc123 --format mef-xml --output ./efile/
 ```
 
+### inputs.json Format
+
+All node inputs are stored uniformly — every node type is an array of `{ id, fields }` entries:
+
+```json
+{
+  "general": [
+    { "id": "gen_01", "fields": { "filing_status": "mfj", "tax_year": 2025 } }
+  ],
+  "w2": [
+    { "id": "w2_01", "fields": { "box1": 85000, "box2": 12000, "box12": [] } },
+    { "id": "w2_02", "fields": { "box1": 45000, "box2": 6800,  "box12": [] } }
+  ],
+  "int1099": [
+    { "id": "int_01", "fields": { "payer": "Chase Bank", "amount": 320 } }
+  ],
+  "schedule_c": [
+    { "id": "sc_01", "fields": { "gross_receipts": 45000, "expenses": {} } }
+  ]
+}
+```
+
+`fields` is typed as `NodeInput<typeof node.inputSchema>` — validated against the node's schema on write. No special handling for singletons at the storage layer; compute nodes that expect only one instance take `entries[0].fields` internally.
+
 ### Input Management Rules
 
 ```
 add-form flow:
   1. Load inputs.json
-  2. Validate new input against node's inputSchema (must be complete — no partial fields)
-     FAIL → error: "W2 input missing required field: box1"
-  3. Merge into inputs.json:
-     - Array types (W2, 1099-INT, etc.) → append
-     - Singular types (ScheduleC, filing status) → conflict if already exists
-  4. Conflict → error with action options:
-     "ScheduleC already exists. Use --replace to overwrite or remove it first."
-  5. Clean → save inputs.json, re-run engine
+  2. Validate new fields against node's inputSchema (must be complete — no partial fields)
+     FAIL → error: "w2 input invalid: missing required field box2"
+  3. Assign stable id: {nodeType}_{sequence} (e.g. w2_01, w2_02, int1099_01)
+  4. Append { id, fields } to inputs.json[nodeType]
+  5. Save inputs.json → replay engine → return updated computed state
 ```
 
-**Key rule:** You must submit a fully complete node input in one call. Partial
-fields are rejected. This keeps `inputs.json` always valid and the engine always
-replayable.
+**Key rule:** Each `add` call must provide complete, valid fields for that node. Partial inputs are rejected at the boundary. `inputs.json` is always valid and always replayable.
 
-Each added input gets a stable `id` assigned on insert. Array-type inputs (W-2,
-1099s, K-1s) are addressable by ID — retrieve, replace, or delete individually:
+### Batch add (`--file`)
+
+```json
+[
+  { "node_type": "w2",      "fields": { "box1": 85000, "box2": 12000, "box12": [] } },
+  { "node_type": "w2",      "fields": { "box1": 45000, "box2": 6800,  "box12": [] } },
+  { "node_type": "int1099", "fields": { "payer": "Chase", "amount": 320 } }
+]
+```
+
+All items validated before any write (atomic). All appended in one save → one recompute.
+
+### Form CLI Operations
 
 ```bash
-tax form list --returnId ret_abc123 --node_type w2              # list all W-2s with their ids
-tax form list --returnId ret_abc123 --node_type w2 --node_id w2_01  # retrieve a specific W-2
-tax form remove --returnId ret_abc123 --node_type w2 --node_id w2_01
-tax form replace --returnId ret_abc123 --node_type w2 --node_id w2_01 '{"box1": 90000, ...}'
+# Add
+tax form add --returnId ret_abc123 --node_type w2 '{...}'
+tax form add --returnId ret_abc123 --file ./forms.json
+
+# Inspect
+tax form list   --returnId ret_abc123
+tax form list   --returnId ret_abc123 --node_type w2
+tax form get    --returnId ret_abc123 --node_type w2 --id w2_01
+
+# Mutate
+tax form replace --returnId ret_abc123 --node_type w2 --id w2_01 '{...}'
+tax form remove  --returnId ret_abc123 --node_type w2 --id w2_01
 ```
 
 ---
@@ -923,6 +998,21 @@ export function dispatch<K extends NodeType>(
   nodeType: K,
   input: NodeInput<K>,
 ): void;
+```
+
+```typescript
+// core/types/inputs.ts
+
+// Wrapper stored in inputs.json for every node entry
+export type StoredInput<TSchema extends z.ZodTypeAny> = {
+  id: string;                // stable id assigned on insert e.g. "w2_01"
+  fields: z.infer<TSchema>;  // fully validated node input
+};
+
+// inputs.json — uniform array format for all node types
+export type InputsJson = {
+  [K in NodeType]?: StoredInput<NodeRegistry[K]["inputSchema"]>[];
+};
 ```
 
 ```typescript

@@ -25,11 +25,10 @@ Deno.test("formAddCommand valid W-2 appends entry with id w2_01", async () => {
     assertEquals(result.id, "w2_01");
     assertEquals(result.nodeType, "w2");
 
-    const entries = await loadInputs(`${tmpDir}/${returnId}`);
-    assertEquals(entries.length, 1);
-    assertEquals(entries[0].id, "w2_01");
-    assertEquals(entries[0].nodeType, "w2");
-    assertEquals(entries[0].data, { box1_wages: 85000, box2_fed_withheld: 0 });
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    assertEquals(inputs["w2"].length, 1);
+    assertEquals(inputs["w2"][0].id, "w2_01");
+    assertEquals(inputs["w2"][0].fields["box1_wages"], 85000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -52,16 +51,16 @@ Deno.test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => 
       baseDir: tmpDir,
     });
 
-    const entries = await loadInputs(`${tmpDir}/${returnId}`);
-    assertEquals(entries.length, 2);
-    assertEquals(entries[0].id, "w2_01");
-    assertEquals(entries[1].id, "w2_02");
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    assertEquals(inputs["w2"].length, 2);
+    assertEquals(inputs["w2"][0].id, "w2_01");
+    assertEquals(inputs["w2"][1].id, "w2_02");
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
 });
 
-Deno.test("formAddCommand invalid data (missing box1) rejects with validation error", async () => {
+Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validation error", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);

@@ -1,8 +1,12 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { form5329 } from "../../intermediate/form5329/index.ts";
+import { form4972 } from "../../intermediate/form4972/index.ts";
 
-export const inputSchema = z.object({
+export const itemSchema = z.object({
   payer_name: z.string(),
   payer_ein: z.string(),
   box1_gross_distribution: z.number().nonnegative(),
@@ -14,65 +18,54 @@ export const inputSchema = z.object({
   box9b_employee_contributions: z.number().nonnegative().optional(),
 });
 
-type R1099Input = z.infer<typeof inputSchema>;
+export const inputSchema = z.object({
+  r1099s: z.array(itemSchema).min(1),
+});
 
 class R1099Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "r1099";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = ["f1040", "form5329", "form4972"] as const;
+  readonly outputNodes = new OutputNodes([f1040, form5329, form4972]);
 
-  compute(input: R1099Input): NodeResult {
-    const outputs: NodeOutput[] = [];
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const out = this.outputNodes.builder();
 
-    const taxableAmount = input.box2a_taxable_amount ?? input.box1_gross_distribution;
+    for (const item of input.r1099s) {
+      const taxableAmount = item.box2a_taxable_amount ??
+        item.box1_gross_distribution;
 
-    // IRA vs pension routing
-    if (input.box7_ira_sep_simple === true) {
-      outputs.push({
-        nodeType: "f1040",
-        input: {
-          line4a_ira_gross: input.box1_gross_distribution,
+      if (item.box7_ira_sep_simple === true) {
+        out.add(f1040, {
+          line4a_ira_gross: item.box1_gross_distribution,
           line4b_ira_taxable: taxableAmount,
-        },
-      });
-    } else {
-      outputs.push({
-        nodeType: "f1040",
-        input: {
-          line5a_pension_gross: input.box1_gross_distribution,
+        });
+      } else {
+        out.add(f1040, {
+          line5a_pension_gross: item.box1_gross_distribution,
           line5b_pension_taxable: taxableAmount,
-        },
-      });
-    }
+        });
+      }
 
-    // Federal withholding → f1040 line25b
-    if (input.box4_federal_withheld !== undefined && input.box4_federal_withheld > 0) {
-      outputs.push({
-        nodeType: "f1040",
-        input: { line25b_withheld_1099: input.box4_federal_withheld },
-      });
-    }
+      if (
+        item.box4_federal_withheld !== undefined &&
+        item.box4_federal_withheld > 0
+      ) {
+        out.add(f1040, { line25b_withheld_1099: item.box4_federal_withheld });
+      }
 
-    // Distribution code 1: early distribution, no exception → form5329
-    if (input.box7_distribution_code === "1") {
-      outputs.push({
-        nodeType: "form5329",
-        input: {
+      if (item.box7_distribution_code === "1") {
+        out.add(form5329, {
           early_distribution: taxableAmount,
           distribution_code: "1",
-        },
-      });
+        });
+      }
+
+      if (item.box7_distribution_code === "5") {
+        out.add(form4972, { lump_sum_amount: item.box1_gross_distribution });
+      }
     }
 
-    // Distribution code 5: profit-sharing lump sum → form4972
-    if (input.box7_distribution_code === "5") {
-      outputs.push({
-        nodeType: "form4972",
-        input: { lump_sum_amount: input.box1_gross_distribution },
-      });
-    }
-
-    return { outputs };
+    return out.build();
   }
 }
 

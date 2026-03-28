@@ -1,8 +1,11 @@
 import { join } from "@std/path";
-import { buildExecutionPlan, execute } from "../../mod.ts";
+import { execute } from "../../core/runtime/executor.ts";
+import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { registry } from "../../nodes/2025/registry.ts";
 import { createReturn, loadInputs, loadMeta } from "../store/store.ts";
-import type { InputEntry } from "../store/types.ts";
+import type { InputsJson } from "../store/types.ts";
+
+const executionPlan = buildExecutionPlan(registry);
 
 export type CreateReturnArgs = {
   readonly year: number;
@@ -30,48 +33,35 @@ export type GetReturnResult = {
 };
 
 /**
- * Groups InputEntry[] by nodeType into the engine's expected input shape.
- * Convention: nodeType "w2" -> key "w2s" (append "s").
+ * Converts InputsJson (grouped by nodeType) into the engine's start node input shape.
+ * Each nodeType bucket becomes an array keyed as `{nodeType}s` (e.g. "w2" → "w2s").
  */
-function buildEngineInputs(
-  entries: readonly InputEntry[],
-): Record<string, unknown> {
-  const grouped: Record<string, unknown[]> = {};
-  for (const entry of entries) {
-    const key = `${entry.nodeType}s`;
-    if (!grouped[key]) grouped[key] = [];
-    grouped[key].push(entry.data);
+function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
+  const result: Record<string, unknown[]> = {};
+  for (const [nodeType, entries] of Object.entries(inputs)) {
+    result[`${nodeType}s`] = entries.map((e) => e.fields);
   }
-  return grouped;
+  return result;
 }
 
 export async function getReturnCommand(
   args: GetReturnArgs,
 ): Promise<GetReturnResult> {
   const returnPath = join(args.baseDir, args.returnId);
-  const [meta, entries] = await Promise.all([
+  const [meta, inputs] = await Promise.all([
     loadMeta(returnPath),
     loadInputs(returnPath),
   ]);
 
-  const engineInputs = buildEngineInputs(entries);
-  const plan = buildExecutionPlan(registry, engineInputs);
-  const result = execute(plan, registry, engineInputs);
+  const engineInputs = buildEngineInputs(inputs);
+  const result = execute(executionPlan, registry, engineInputs);
 
   const line1aRaw = result.pending["f1040"]?.["line1a_wages"];
-  let line1aList: number[];
-  if (Array.isArray(line1aRaw)) {
-    line1aList = line1aRaw as number[];
-  } else if (typeof line1aRaw === "number") {
-    line1aList = [line1aRaw];
-  } else {
-    line1aList = [];
-  }
-  const line1a = line1aList.reduce((a, b) => a + b, 0);
+  const line_1a = typeof line1aRaw === "number" ? line1aRaw : 0;
 
   return {
     returnId: meta.returnId,
     year: meta.year,
-    lines: { line_1a: line1a },
+    lines: { line_1a },
   };
 }
