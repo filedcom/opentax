@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -25,6 +28,33 @@ export const inputSchema = z.object({
   necs: z.array(itemSchema).min(1),
 });
 
+type NECItem = z.infer<typeof itemSchema>;
+
+function necIncomeOutput(item: NECItem): NodeOutput[] {
+  const box1 = item.box1_nec ?? 0;
+  if (box1 <= 0) return [];
+  switch (item.for_routing ?? "schedule_c") {
+    case "schedule_c": return [{ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: box1 } }];
+    case "schedule_f": return [{ nodeType: schedule_f.nodeType, input: { line8_other_income: box1 } }];
+    case "form_8919": return [{ nodeType: form8919.nodeType, input: { wages: box1 } }];
+    case "schedule_1_line_8z": return [{ nodeType: schedule1.nodeType, input: { line8z_other: box1 } }];
+    default: return [];
+  }
+}
+
+function necItemOutputs(item: NECItem): NodeOutput[] {
+  const box3 = item.box3_golden_parachute ?? 0;
+  const box4 = item.box4_federal_withheld ?? 0;
+  return [
+    ...necIncomeOutput(item),
+    ...(box3 > 0 ? [
+      { nodeType: schedule1.nodeType, input: { line8z_golden_parachute: box3 } },
+      { nodeType: schedule2.nodeType, input: { line17k_golden_parachute_excise: box3 * 0.20 } },
+    ] : []),
+    ...(box4 > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: box4 } }] : []),
+  ];
+}
+
 class NECNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "nec";
   readonly inputSchema = inputSchema;
@@ -38,42 +68,7 @@ class NECNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.necs) {
-      const box1 = item.box1_nec ?? 0;
-      const box3 = item.box3_golden_parachute ?? 0;
-      const box4 = item.box4_federal_withheld ?? 0;
-      const routing = item.for_routing ?? "schedule_c";
-
-      if (box1 > 0) {
-        switch (routing) {
-          case "schedule_c":
-            out.add(schedule_c, { line1_gross_receipts: box1 });
-            break;
-          case "schedule_f":
-            out.add(schedule_f, { line8_other_income: box1 });
-            break;
-          case "form_8919":
-            out.add(form8919, { wages: box1 });
-            break;
-          case "schedule_1_line_8z":
-            out.add(schedule1, { line8z_other: box1 });
-            break;
-        }
-      }
-
-      if (box3 > 0) {
-        out.add(schedule1, { line8z_golden_parachute: box3 });
-        out.add(schedule2, { line17k_golden_parachute_excise: box3 * 0.20 });
-      }
-
-      if (box4 > 0) {
-        out.add(f1040, { line25b_withheld_1099: box4 });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.necs.flatMap(necItemOutputs) };
   }
 }
 

@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -70,12 +73,9 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([f1040, form6251]);
 
   compute(input: ScheduleAInput): NodeResult {
-    const out = this.outputNodes.builder();
     const agi = input.agi ?? 0;
-
     const saltCapped = computeSALT(input);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
-
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +
       computeInterestTotal(input) +
@@ -83,14 +83,12 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       (input.line_15_casualty_theft_loss ?? 0) +
       (input.line_16_other_deductions ?? 0);
 
-    out.add(f1040, { line12e_itemized_deductions: totalItemized });
-
-    // AMT addback: taxes paid total (Line 7) flows to Form 6251 Line 2a
-    if (taxesTotal > 0) {
-      out.add(form6251, { line2a_taxes_paid: taxesTotal });
-    }
-
-    return out.build();
+    const outputs: NodeOutput[] = [
+      { nodeType: f1040.nodeType, input: { line12e_itemized_deductions: totalItemized } },
+      // AMT addback: taxes paid total (Line 7) flows to Form 6251 Line 2a
+      ...(taxesTotal > 0 ? [{ nodeType: form6251.nodeType, input: { line2a_taxes_paid: taxesTotal } }] : []),
+    ];
+    return { outputs };
   }
 }
 

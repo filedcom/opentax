@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -41,53 +44,36 @@ function computeCreditRate(agi: number): number {
   return (35 - stepsOver) / 100;
 }
 
+function f2441ItemOutputs(item: z.infer<typeof itemSchema>): NodeOutput[] {
+  const filingStatus = item.filing_status ?? "single";
+  const employerBenefits = item.employer_dep_care_benefits ?? 0;
+  const expensesPaid = item.qualifying_expenses_paid ?? 0;
+  const personCount = item.qualifying_person_count ?? 1;
+  const agi = item.agi ?? 0;
+  const exclusionLimit = filingStatus === "mfs" ? 2500 : 5000;
+  const taxableEmployerBenefits = Math.max(0, employerBenefits - exclusionLimit);
+  const maxQualifyingExpenses = personCount >= 2 ? 6000 : 3000;
+  const excludedBenefits = Math.min(employerBenefits, exclusionLimit);
+  const earnedIncomeTaxpayer = item.earned_income_taxpayer ?? Infinity;
+  const earnedIncomeSpouse = item.earned_income_spouse ?? Infinity;
+  const minEarnedIncome = filingStatus === "mfj"
+    ? Math.min(earnedIncomeTaxpayer, earnedIncomeSpouse)
+    : earnedIncomeTaxpayer;
+  const credit = computeNetQualifyingExpenses(expensesPaid, maxQualifyingExpenses, excludedBenefits, minEarnedIncome) *
+    computeCreditRate(agi);
+  return [
+    ...(taxableEmployerBenefits > 0 ? [{ nodeType: f1040.nodeType, input: { line1e_taxable_dep_care: taxableEmployerBenefits } }] : []),
+    ...(credit > 0 ? [{ nodeType: schedule3.nodeType, input: { line2_childcare_credit: credit } }] : []),
+  ];
+}
+
 class F2441Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f2441";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule3]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.f2441s) {
-      const filingStatus = item.filing_status ?? "single";
-      const employerBenefits = item.employer_dep_care_benefits ?? 0;
-      const expensesPaid = item.qualifying_expenses_paid ?? 0;
-      const personCount = item.qualifying_person_count ?? 1;
-      const agi = item.agi ?? 0;
-
-      const exclusionLimit = filingStatus === "mfs" ? 2500 : 5000;
-      const taxableEmployerBenefits = Math.max(
-        0,
-        employerBenefits - exclusionLimit,
-      );
-      const maxQualifyingExpenses = personCount >= 2 ? 6000 : 3000;
-      const excludedBenefits = Math.min(employerBenefits, exclusionLimit);
-      const earnedIncomeTaxpayer = item.earned_income_taxpayer ?? Infinity;
-      const earnedIncomeSpouse = item.earned_income_spouse ?? Infinity;
-      const minEarnedIncome = filingStatus === "mfj"
-        ? Math.min(earnedIncomeTaxpayer, earnedIncomeSpouse)
-        : earnedIncomeTaxpayer;
-      const netQualifyingExpenses = computeNetQualifyingExpenses(
-        expensesPaid,
-        maxQualifyingExpenses,
-        excludedBenefits,
-        minEarnedIncome,
-      );
-
-      const creditRate = computeCreditRate(agi);
-      const credit = netQualifyingExpenses * creditRate;
-
-      if (taxableEmployerBenefits > 0) {
-        out.add(f1040, { line1e_taxable_dep_care: taxableEmployerBenefits });
-      }
-
-      if (credit > 0) {
-        out.add(schedule3, { line2_childcare_credit: credit });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.f2441s.flatMap(f2441ItemOutputs) };
   }
 }
 

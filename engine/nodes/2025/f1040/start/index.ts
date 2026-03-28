@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
-import type { NodeResult } from "../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../core/types/tax-node.ts";
 import { f1098, itemSchema as f1098ItemSchema } from "../inputs/1098/index.ts";
 import { itemSchema as r1099ItemSchema, r1099 } from "../inputs/1099/index.ts";
@@ -89,34 +92,29 @@ class StartNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(input: StartInput): NodeResult {
-    const out = this.outputNodes.builder();
-
-    if (input.w2s?.length) out.add(w2, { w2s: input.w2s });
-    if (input.int1099s?.length) out.add(int, { int1099s: input.int1099s });
-    if (input.div1099s?.length) out.add(div, { div1099s: input.div1099s });
-    if (input.necs?.length) out.add(nec, { necs: input.necs });
-    if (input.g99s?.length) out.add(g99, { g99s: input.g99s });
-    if (input.m99s?.length) out.add(m99, { m99s: input.m99s });
-    if (input.c99s?.length) out.add(c99, { c99s: input.c99s });
-    if (input.k99s?.length) out.add(k99, { k99s: input.k99s });
-    if (input.b99s?.length) out.add(b99, { b99s: input.b99s });
-    if (input.r1099s?.length) out.add(r1099, { r1099s: input.r1099s });
-    if (input.f1098s?.length) out.add(f1098, { f1098s: input.f1098s });
-    if (input.f2441s?.length) out.add(f2441, { f2441s: input.f2441s });
-    if (input.f8812s?.length) out.add(f8812, { f8812s: input.f8812s });
-    if (input.f8863s?.length) out.add(f8863, { f8863s: input.f8863s });
-    if (input.f8949s?.length) out.add(f8949, { f8949s: input.f8949s });
-    if (input.schedule_cs?.length) {
-      out.add(scheduleC, { schedule_cs: input.schedule_cs });
-    }
-    if (input.schedule_es?.length) {
-      out.add(scheduleE, { schedule_es: input.schedule_es });
-    }
-    if (input.schedule_a) out.add(scheduleA, input.schedule_a);
-    if (input.d_screen) out.add(scheduleD, input.d_screen);
-    if (input.ext) out.add(ext, input.ext);
-
-    return out.build();
+    const outputs: NodeOutput[] = [
+      ...(input.w2s?.length ? [{ nodeType: w2.nodeType, input: { w2s: input.w2s } }] : []),
+      ...(input.int1099s?.length ? [{ nodeType: int.nodeType, input: { int1099s: input.int1099s } }] : []),
+      ...(input.div1099s?.length ? [{ nodeType: div.nodeType, input: { div1099s: input.div1099s } }] : []),
+      ...(input.necs?.length ? [{ nodeType: nec.nodeType, input: { necs: input.necs } }] : []),
+      ...(input.g99s?.length ? [{ nodeType: g99.nodeType, input: { g99s: input.g99s } }] : []),
+      ...(input.m99s?.length ? [{ nodeType: m99.nodeType, input: { m99s: input.m99s } }] : []),
+      ...(input.c99s?.length ? [{ nodeType: c99.nodeType, input: { c99s: input.c99s } }] : []),
+      ...(input.k99s?.length ? [{ nodeType: k99.nodeType, input: { k99s: input.k99s } }] : []),
+      ...(input.b99s?.length ? [{ nodeType: b99.nodeType, input: { b99s: input.b99s } }] : []),
+      ...(input.r1099s?.length ? [{ nodeType: r1099.nodeType, input: { r1099s: input.r1099s } }] : []),
+      ...(input.f1098s?.length ? [{ nodeType: f1098.nodeType, input: { f1098s: input.f1098s } }] : []),
+      ...(input.f2441s?.length ? [{ nodeType: f2441.nodeType, input: { f2441s: input.f2441s } }] : []),
+      ...(input.f8812s?.length ? [{ nodeType: f8812.nodeType, input: { f8812s: input.f8812s } }] : []),
+      ...(input.f8863s?.length ? [{ nodeType: f8863.nodeType, input: { f8863s: input.f8863s } }] : []),
+      ...(input.f8949s?.length ? [{ nodeType: f8949.nodeType, input: { f8949s: input.f8949s } }] : []),
+      ...(input.schedule_cs?.length ? [{ nodeType: scheduleC.nodeType, input: { schedule_cs: input.schedule_cs } }] : []),
+      ...(input.schedule_es?.length ? [{ nodeType: scheduleE.nodeType, input: { schedule_es: input.schedule_es } }] : []),
+      ...(input.schedule_a ? [{ nodeType: scheduleA.nodeType, input: input.schedule_a }] : []),
+      ...(input.d_screen ? [{ nodeType: scheduleD.nodeType, input: input.d_screen }] : []),
+      ...(input.ext ? [{ nodeType: ext.nodeType, input: input.ext }] : []),
+    ];
+    return { outputs };
   }
 }
 

@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -22,50 +25,32 @@ export const inputSchema = z.object({
   r1099s: z.array(itemSchema).min(1),
 });
 
+type R1099Item = z.infer<typeof itemSchema>;
+
+function distributionOutput(item: R1099Item, taxableAmount: number): NodeOutput {
+  if (item.box7_ira_sep_simple === true) {
+    return { nodeType: f1040.nodeType, input: { line4a_ira_gross: item.box1_gross_distribution, line4b_ira_taxable: taxableAmount } };
+  }
+  return { nodeType: f1040.nodeType, input: { line5a_pension_gross: item.box1_gross_distribution, line5b_pension_taxable: taxableAmount } };
+}
+
+function r1099ItemOutputs(item: R1099Item): NodeOutput[] {
+  const taxableAmount = item.box2a_taxable_amount ?? item.box1_gross_distribution;
+  return [
+    distributionOutput(item, taxableAmount),
+    ...((item.box4_federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4_federal_withheld } }] : []),
+    ...(item.box7_distribution_code === "1" ? [{ nodeType: form5329.nodeType, input: { early_distribution: taxableAmount, distribution_code: "1" } }] : []),
+    ...(item.box7_distribution_code === "5" ? [{ nodeType: form4972.nodeType, input: { lump_sum_amount: item.box1_gross_distribution } }] : []),
+  ];
+}
+
 class R1099Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "r1099";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, form5329, form4972]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.r1099s) {
-      const taxableAmount = item.box2a_taxable_amount ??
-        item.box1_gross_distribution;
-
-      if (item.box7_ira_sep_simple === true) {
-        out.add(f1040, {
-          line4a_ira_gross: item.box1_gross_distribution,
-          line4b_ira_taxable: taxableAmount,
-        });
-      } else {
-        out.add(f1040, {
-          line5a_pension_gross: item.box1_gross_distribution,
-          line5b_pension_taxable: taxableAmount,
-        });
-      }
-
-      if (
-        item.box4_federal_withheld !== undefined &&
-        item.box4_federal_withheld > 0
-      ) {
-        out.add(f1040, { line25b_withheld_1099: item.box4_federal_withheld });
-      }
-
-      if (item.box7_distribution_code === "1") {
-        out.add(form5329, {
-          early_distribution: taxableAmount,
-          distribution_code: "1",
-        });
-      }
-
-      if (item.box7_distribution_code === "5") {
-        out.add(form4972, { lump_sum_amount: item.box1_gross_distribution });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.r1099s.flatMap(r1099ItemOutputs) };
   }
 }
 

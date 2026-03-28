@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -60,14 +63,48 @@ function computeTaxableInterestNet(item: INTItem): number {
     (item.non_taxable_oid_adjustment ?? 0);
 }
 
-function interestScheduleBOutput(item: INTItem): z.infer<typeof schedule_b_interest.inputSchema> {
-  const box9 = item.box9 ?? 0;
+function scheduleBOutput(item: INTItem): NodeOutput {
   return {
-    payer_name: item.payer_name,
-    taxable_interest_net: computeTaxableInterestNet(item),
-    box3_us_obligations: item.box3,
-    box9_pab: box9 > 0 ? box9 : undefined,
+    nodeType: schedule_b_interest.nodeType,
+    input: {
+      payer_name: item.payer_name,
+      taxable_interest_net: computeTaxableInterestNet(item),
+      box3_us_obligations: item.box3,
+      box9_pab: (item.box9 ?? 0) > 0 ? item.box9 : undefined,
+    },
   };
+}
+
+function earlyWithdrawalOutput(item: INTItem): NodeOutput[] {
+  return (item.box2 ?? 0) > 0
+    ? [{ nodeType: schedule1.nodeType, input: { line18_early_withdrawal: item.box2 } }]
+    : [];
+}
+
+function withholdingOutput(item: INTItem): NodeOutput[] {
+  return (item.box4 ?? 0) > 0
+    ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4 } }]
+    : [];
+}
+
+function taxExemptOutput(item: INTItem): NodeOutput[] {
+  const netTaxExempt = (item.box8 ?? 0) - (item.box13 ?? 0);
+  return netTaxExempt > 0
+    ? [{ nodeType: f1040.nodeType, input: { line2a_tax_exempt: netTaxExempt } }]
+    : [];
+}
+
+function pabOutput(item: INTItem): NodeOutput[] {
+  const box9 = item.box9 ?? 0;
+  return box9 > 0
+    ? [{ nodeType: form6251.nodeType, input: { line2g_pab_interest: box9 } }]
+    : [];
+}
+
+function foreignTaxOutput(item: INTItem): NodeOutput[] {
+  return (item.box6 ?? 0) > 0
+    ? [{ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: item.box6 } }]
+    : [];
 }
 
 class INTNode extends TaxNode<typeof inputSchema> {
@@ -82,40 +119,18 @@ class INTNode extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.int1099s) {
+    const outputs: NodeOutput[] = input.int1099s.flatMap((item) => {
       validateIntItem(item);
-
-      const box8 = item.box8 ?? 0;
-      const box9 = item.box9 ?? 0;
-      const box13 = item.box13 ?? 0;
-
-      out.add(schedule_b_interest, interestScheduleBOutput(item));
-
-      if (item.box2 !== undefined && item.box2 > 0) {
-        out.add(schedule1, { line18_early_withdrawal: item.box2 });
-      }
-
-      if (item.box4 !== undefined && item.box4 > 0) {
-        out.add(f1040, { line25b_withheld_1099: item.box4 });
-      }
-
-      const netTaxExempt = box8 - box13;
-      if (netTaxExempt > 0) {
-        out.add(f1040, { line2a_tax_exempt: netTaxExempt });
-      }
-
-      if (box9 > 0) {
-        out.add(form6251, { line2g_pab_interest: box9 });
-      }
-
-      if (item.box6 !== undefined && item.box6 > 0) {
-        out.add(schedule3, { line1_foreign_tax_1099: item.box6 });
-      }
-    }
-
-    return out.build();
+      return [
+        scheduleBOutput(item),
+        ...earlyWithdrawalOutput(item),
+        ...withholdingOutput(item),
+        ...taxExemptOutput(item),
+        ...pabOutput(item),
+        ...foreignTaxOutput(item),
+      ];
+    });
+    return { outputs };
   }
 }
 

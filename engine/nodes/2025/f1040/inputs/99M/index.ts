@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -29,6 +32,36 @@ export const inputSchema = z.object({
   m99s: z.array(itemSchema).min(1),
 });
 
+type M99Item = z.infer<typeof itemSchema>;
+
+function royaltyOutput(item: M99Item): NodeOutput[] {
+  const box2 = item.box2_royalties ?? 0;
+  if (box2 <= 0) return [];
+  return (item.box2_royalties_routing ?? "schedule_e") === "schedule_c"
+    ? [{ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: box2 } }]
+    : [{ nodeType: schedule_e.nodeType, input: { royalty_income: box2 } }];
+}
+
+function m99ItemOutputs(item: M99Item): NodeOutput[] {
+  const box15 = item.box15_nqdc ?? 0;
+  return [
+    ...((item.box1_rents ?? 0) > 0 ? [{ nodeType: schedule_e.nodeType, input: { rental_income: item.box1_rents } }] : []),
+    ...royaltyOutput(item),
+    ...((item.box3_other_income ?? 0) > 0 ? [{ nodeType: schedule1.nodeType, input: { line8i_prizes_awards: item.box3_other_income } }] : []),
+    ...((item.box4_federal_withheld ?? 0) > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: item.box4_federal_withheld } }] : []),
+    ...((item.box5_fishing_boat ?? 0) > 0 ? [{ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: item.box5_fishing_boat } }] : []),
+    ...((item.box6_medical_payments ?? 0) > 0 ? [{ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: item.box6_medical_payments } }] : []),
+    ...((item.box8_substitute_payments ?? 0) > 0 ? [{ nodeType: schedule1.nodeType, input: { line8z_substitute_payments: item.box8_substitute_payments } }] : []),
+    ...((item.box9_crop_insurance ?? 0) > 0 ? [{ nodeType: schedule_f.nodeType, input: { crop_insurance: item.box9_crop_insurance } }] : []),
+    ...((item.box10_attorney_proceeds ?? 0) > 0 ? [{ nodeType: schedule1.nodeType, input: { line8z_attorney_proceeds: item.box10_attorney_proceeds } }] : []),
+    ...((item.box11_fish_purchased ?? 0) > 0 ? [{ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: item.box11_fish_purchased } }] : []),
+    ...(box15 > 0 ? [
+      { nodeType: schedule1.nodeType, input: { line8z_nqdc: box15 } },
+      { nodeType: schedule2.nodeType, input: { line17h_nqdc_tax: box15 * 0.20 } },
+    ] : []),
+  ];
+}
+
 class M99Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "m99";
   readonly inputSchema = inputSchema;
@@ -42,71 +75,7 @@ class M99Node extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.m99s) {
-      const box1 = item.box1_rents ?? 0;
-      if (box1 > 0) {
-        out.add(schedule_e, { rental_income: box1 });
-      }
-
-      const box2 = item.box2_royalties ?? 0;
-      if (box2 > 0) {
-        if ((item.box2_royalties_routing ?? "schedule_e") === "schedule_c") {
-          out.add(schedule_c, { line1_gross_receipts: box2 });
-        } else {
-          out.add(schedule_e, { royalty_income: box2 });
-        }
-      }
-
-      const box3 = item.box3_other_income ?? 0;
-      if (box3 > 0) {
-        out.add(schedule1, { line8i_prizes_awards: box3 });
-      }
-
-      const box4 = item.box4_federal_withheld ?? 0;
-      if (box4 > 0) {
-        out.add(f1040, { line25b_withheld_1099: box4 });
-      }
-
-      const box5 = item.box5_fishing_boat ?? 0;
-      if (box5 > 0) {
-        out.add(schedule_c, { line1_gross_receipts: box5 });
-      }
-
-      const box6 = item.box6_medical_payments ?? 0;
-      if (box6 > 0) {
-        out.add(schedule_c, { line1_gross_receipts: box6 });
-      }
-
-      const box8 = item.box8_substitute_payments ?? 0;
-      if (box8 > 0) {
-        out.add(schedule1, { line8z_substitute_payments: box8 });
-      }
-
-      const box9 = item.box9_crop_insurance ?? 0;
-      if (box9 > 0) {
-        out.add(schedule_f, { crop_insurance: box9 });
-      }
-
-      const box10 = item.box10_attorney_proceeds ?? 0;
-      if (box10 > 0) {
-        out.add(schedule1, { line8z_attorney_proceeds: box10 });
-      }
-
-      const box11 = item.box11_fish_purchased ?? 0;
-      if (box11 > 0) {
-        out.add(schedule_c, { line1_gross_receipts: box11 });
-      }
-
-      const box15 = item.box15_nqdc ?? 0;
-      if (box15 > 0) {
-        out.add(schedule1, { line8z_nqdc: box15 });
-        out.add(schedule2, { line17h_nqdc_tax: box15 * 0.20 });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.m99s.flatMap(m99ItemOutputs) };
   }
 }
 

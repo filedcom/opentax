@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -22,31 +25,25 @@ export const inputSchema = z.object({
   c99s: z.array(itemSchema).min(1),
 });
 
+type C99Item = z.infer<typeof itemSchema>;
+
+function c99ItemOutputs(item: C99Item): NodeOutput[] {
+  const fmv = item.box7_fmv_property ?? 0;
+  return [
+    (item.routing ?? "taxable") === "taxable"
+      ? { nodeType: schedule1.nodeType, input: { line8c_cod_income: item.box2_cod_amount } }
+      : { nodeType: form982.nodeType, input: { line2_excluded_cod: item.box2_cod_amount } },
+    ...(fmv > 0 ? [{ nodeType: schedule_d.nodeType, input: { cod_property_fmv: fmv, cod_debt_cancelled: item.box2_cod_amount } }] : []),
+  ];
+}
+
 class C99Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "c99";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, form982, schedule_d]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
-    const out = this.outputNodes.builder();
-
-    for (const item of input.c99s) {
-      if ((item.routing ?? "taxable") === "taxable") {
-        out.add(schedule1, { line8c_cod_income: item.box2_cod_amount });
-      } else {
-        out.add(form982, { line2_excluded_cod: item.box2_cod_amount });
-      }
-
-      const fmv = item.box7_fmv_property ?? 0;
-      if (fmv > 0) {
-        out.add(schedule_d, {
-          cod_property_fmv: fmv,
-          cod_debt_cancelled: item.box2_cod_amount,
-        });
-      }
-    }
-
-    return out.build();
+    return { outputs: input.c99s.flatMap(c99ItemOutputs) };
   }
 }
 
