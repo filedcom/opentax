@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 
 export type NodeType = string;
 
@@ -19,4 +19,21 @@ export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   abstract readonly inputSchema: TSchema;
   abstract readonly outputNodeTypes: readonly NodeType[];
   abstract compute(input: z.infer<TSchema>): NodeResult;
+}
+
+export class UnimplementedTaxNode extends TaxNode {
+  readonly implemented = false as const;
+  readonly inputSchema = z.object({});
+  nodeType: NodeType;
+  outputNodeTypes: readonly NodeType[];
+
+  constructor(nodeType: NodeType, outputNodeTypes: readonly NodeType[]) {
+    super();
+    this.nodeType = nodeType;
+    this.outputNodeTypes = outputNodeTypes;
+  }
+
+  compute(): NodeResult {
+    throw new Error(`Node '${this.nodeType}' is not yet implemented.`);
+  }
 }

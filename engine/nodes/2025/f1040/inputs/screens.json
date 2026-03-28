@@ -1,0 +1,1493 @@
+[
+  {
+    "form": "8915-D",
+    "description": "Qualified 2019 Disaster Retirement Plan Distributions and Repayments",
+    "screen_code": "915D"
+  },
+  {
+    "form": "8915-F",
+    "description": "Qualified Disaster Retirement Plan Distributions and Repayments",
+    "screen_code": "915F",
+    "alias_screen_codes": [
+      "915F > \"Form 8915-F Prior Year Distributions and Repayments\" link"
+    ]
+  },
+  {
+    "form": "8582-CR",
+    "description": "Passive Activity Credit Limitations",
+    "screen_code": "CR"
+  },
+  {
+    "form": "8288-A",
+    "description": "Statement of Withholding on Certain Dispositions by Foreign Persons",
+    "screen_code": "8288"
+  },
+  {
+    "form": "1099-B",
+    "description": "Proceeds from Broker and Barter Exchange Transactions",
+    "screen_code": "99B"
+  },
+  {
+    "form": "1099-C",
+    "description": "Cancellation of Debt",
+    "screen_code": "99C"
+  },
+  {
+    "form": "1099-DIV",
+    "description": "Dividends and Distributions",
+    "screen_code": "DIV"
+  },
+  {
+    "form": "1099-G",
+    "description": "Certain Government Payments",
+    "screen_code": "99G"
+  },
+  {
+    "form": "1099-INT",
+    "description": "Interest Income",
+    "screen_code": "INT",
+    "alias_screen_codes": [
+      "B"
+    ]
+  },
+  {
+    "form": "1099-K",
+    "description": "Payment Card and Third Party Network Transactions",
+    "screen_code": "99K"
+  },
+  {
+    "form": "1099-MISC",
+    "description": "Miscellaneous Information",
+    "screen_code": "99M"
+  },
+  {
+    "form": "1099-NEC",
+    "description": "Nonemployee Compensation",
+    "screen_code": "NEC"
+  },
+  {
+    "form": "1099-OID",
+    "description": "Original Issue Discount",
+    "screen_code": "OID"
+  },
+  {
+    "form": "1099-PATR",
+    "description": "Taxable Distributions Received From Cooperatives",
+    "screen_code": "PATR"
+  },
+  {
+    "form": "1099-R",
+    "description": "Distributions From Pensions, Annuities, Retirement or Profit-Sharing Plans, IRAs, Insurance Contracts, etc.",
+    "screen_code": "1099",
+    "alias_screen_codes": [
+      "99R > \"Special Tax Treatments\" tab"
+    ]
+  },
+  {
+    "form": "1095-A",
+    "description": "Health Insurance Marketplace Statement",
+    "screen_code": "1095, 95A"
+  },
+  {
+    "form": "1040-ES",
+    "description": "Estimated Tax for Individuals",
+    "screen_code": "ES"
+  },
+  {
+    "form": "1040-NR",
+    "description": "U.S. Nonresident Alien Income Tax Return",
+    "screen_code": "NR"
+  },
+  {
+    "form": "1040-X",
+    "description": "Amended U.S. Individual Income Tax Return",
+    "screen_code": "X"
+  },
+  {
+    "form": "965-A",
+    "description": "Individual Report of Net 965 Tax Liability",
+    "screen_code": "965A",
+    "alias_screen_codes": [
+      "A3"
+    ]
+  },
+  {
+    "form": "965-C",
+    "description": "Transfer Agreement Under Section 965(h)(3)",
+    "screen_code": "965C"
+  },
+  {
+    "form": "965-D",
+    "description": "Transfer Agreement Under Section 965(i)(2)",
+    "screen_code": "965D"
+  },
+  {
+    "form": "965-E",
+    "description": "Consent Agreement Under Section 965(i)(4)(D)",
+    "screen_code": "965E"
+  },
+  {
+    "form": "56",
+    "description": "Notice Concerning Fiduciary Relationship",
+    "screen_code": "56"
+  },
+  {
+    "form": "1098E 109",
+    "description": "1098 and 1099 Source Document Guide",
+    "screen_code": "DOCS"
+  },
+  {
+    "form": "461",
+    "description": "Limitation on Business Losses",
+    "screen_code": "461"
+  },
+  {
+    "form": "499R-W",
+    "description": "Withholding Statement (Puerto Rico)",
+    "screen_code": "W2PR"
+  },
+  {
+    "form": "843",
+    "description": "Claim for Refund and Request for Abatement",
+    "screen_code": "843",
+    "alias_screen_codes": [
+      "843 > \"Line 7 Cont.\" tab"
+    ]
+  },
+  {
+    "form": "911",
+    "description": "Request for Taxpayer Advocate Service Assistance",
+    "screen_code": "911",
+    "alias_screen_codes": [
+      "911 > \"Section II\" tab"
+    ]
+  },
+  {
+    "form": "970",
+    "description": "Application to Use LIFO Inventory Method",
+    "screen_code": "970",
+    "alias_screen_codes": [
+      "LIFO"
+    ]
+  },
+  {
+    "form": "982",
+    "description": "Reduction of Tax Attributes Due to Discharge of Indebtedness (and Section 1082 Basis Adjustment)",
+    "screen_code": "982"
+  },
+  {
+    "form": "1040",
+    "description": "Household Employee Wages",
+    "screen_code": "3 > \"Household Employee\" link",
+    "alias_screen_codes": [
+      "HSH"
+    ]
+  },
+  {
+    "form": "1040",
+    "description": "Election Options",
+    "screen_code": "ELEC"
+  },
+  {
+    "form": "1040",
+    "description": "Miscellaneous Codes / Military Information",
+    "screen_code": "MISC"
+  },
+  {
+    "form": "1040",
+    "description": "Print Options",
+    "screen_code": "PRNT"
+  },
+  {
+    "form": "1040",
+    "description": "Name, Address, and General Info. Dependent Information",
+    "screen_code": "1",
+    "alias_screen_codes": [
+      "2"
+    ]
+  },
+  {
+    "form": "1040",
+    "description": "Integrated File and Pay",
+    "screen_code": "IFP"
+  },
+  {
+    "form": "1040",
+    "description": "Foreign Employer Compensation",
+    "screen_code": "FEC"
+  },
+  {
+    "form": "1040",
+    "description": "Qualified Small Employer HRA",
+    "screen_code": "QSE"
+  },
+  {
+    "form": "1040",
+    "description": "Aggregation of Business Operations",
+    "screen_code": "BAN"
+  },
+  {
+    "form": "1040",
+    "description": "Electronic Funds Withdrawal Information",
+    "screen_code": "PMT"
+  },
+  {
+    "form": "1040",
+    "description": "Federal and State EF Selections",
+    "screen_code": "EF"
+  },
+  {
+    "form": "1042",
+    "description": "Annual Withholding Tax Return for U.S. Source Income of Foreign Persons",
+    "screen_code": "1042",
+    "alias_screen_codes": [
+      "1042 > \"Lines 14 - 17\" tab"
+    ]
+  },
+  {
+    "form": "1098",
+    "description": "Mortgage Interest Statement",
+    "screen_code": "1098"
+  },
+  {
+    "form": "1116",
+    "description": "Foreign Tax Credit",
+    "screen_code": "1116",
+    "alias_screen_codes": [
+      "1116 > \"1116 Sch B - Foreign Tax Carryovers\" link > \"4th through 1st preceding year\" tab"
+    ]
+  },
+  {
+    "form": "1310",
+    "description": "Statement of Person Claiming Refund Due a Deceased Taxpayer",
+    "screen_code": "1310"
+  },
+  {
+    "form": "2106",
+    "description": "Employee Business Expenses",
+    "screen_code": "2106"
+  },
+  {
+    "form": "2120",
+    "description": "Multiple Support Declaration",
+    "screen_code": "2120"
+  },
+  {
+    "form": "2210",
+    "description": "Underpayment of Estimated Tax by Individuals, Estates, and Trusts",
+    "screen_code": "2210"
+  },
+  {
+    "form": "2350",
+    "description": "Application for Extension of Time to File U.S. Income Tax Return",
+    "screen_code": "EXT",
+    "alias_screen_codes": [
+      "2350"
+    ]
+  },
+  {
+    "form": "2439",
+    "description": "Notice to Shareholder of Undistributed Long-Term Capital Gains",
+    "screen_code": "2439"
+  },
+  {
+    "form": "2441",
+    "description": "Child and Dependent Care Expenses",
+    "screen_code": "2441",
+    "alias_screen_codes": [
+      "2441 > \"Worksheet for 2023 Expenses Paid in 2024\""
+    ]
+  },
+  {
+    "form": "2555",
+    "description": "Foreign Earned Income",
+    "screen_code": "2555",
+    "alias_screen_codes": [
+      "2555 > 2555 - Part 2 tab",
+      "2555 > 2555 - Part 2 Cont. tab",
+      "2555 > 2555 - Part 3 tab",
+      "2555 > 2555 - Part 4 tab",
+      "EARN"
+    ]
+  },
+  {
+    "form": "2555",
+    "description": "Summary of Earnings for Form 2555 and SE Purposes",
+    "screen_code": "EARN"
+  },
+  {
+    "form": "2848",
+    "description": "Power of Attorney and Declaration of Representative",
+    "screen_code": "2848",
+    "alias_screen_codes": [
+      "POA"
+    ]
+  },
+  {
+    "form": "3115",
+    "description": "Application for Change in Accounting Method",
+    "screen_code": "3115",
+    "alias_screen_codes": [
+      "3115 > \"Part II\" tab",
+      "3115 > \"Parts III, IV\" tab",
+      "3115 > A, B, and C",
+      "3115 > D - Parts I, II",
+      "3115 > \"D - Part III\" tab",
+      "ATT2"
+    ]
+  },
+  {
+    "form": "3468",
+    "description": "Investment Credit",
+    "screen_code": "3468"
+  },
+  {
+    "form": "3800",
+    "description": "General Business Credit",
+    "screen_code": "3800"
+  },
+  {
+    "form": "3903",
+    "description": "Moving Expenses",
+    "screen_code": "3903"
+  },
+  {
+    "form": "4136",
+    "description": "Credit For Federal Tax Paid On Fuels",
+    "screen_code": "4136",
+    "alias_screen_codes": [
+      "4136 > PAGE DOWN"
+    ]
+  },
+  {
+    "form": "4137",
+    "description": "Social Security and Medicare Tax On Unreported Tip Income",
+    "screen_code": "4137"
+  },
+  {
+    "form": "4255",
+    "description": "Recapture of Investment Credit",
+    "screen_code": "4255"
+  },
+  {
+    "form": "4506",
+    "description": "Request for Copy of Tax Return",
+    "screen_code": "4506",
+    "alias_screen_codes": [
+      "4506 > \"4506-T\" link"
+    ]
+  },
+  {
+    "form": "4562",
+    "description": "Depreciation and Amortization (Including Information on Listed Property)",
+    "screen_code": "4562"
+  },
+  {
+    "form": "4562",
+    "description": "Additional Depreciation Elections",
+    "screen_code": "10"
+  },
+  {
+    "form": "4562, Part I",
+    "description": "Depreciation and Amortization, Election To Expense Certain Property Under Section 179",
+    "screen_code": "6"
+  },
+  {
+    "form": "4562, Part II and III",
+    "description": "Depreciation and Amortization, Special Depreciation Allowance and Other Depreciation and MACRS Depreciation",
+    "screen_code": "7"
+  },
+  {
+    "form": "4562, Part IV, V, and VI",
+    "description": "Depreciation and Amortization, Summary, Listed Property, and Amortization",
+    "screen_code": "8"
+  },
+  {
+    "form": "4562, Part V - B and C",
+    "description": "Depreciation and Amortization, Information on Use of Vehicles, and Questions for Employers Who Provide Vehicles for Use by Their Employees",
+    "screen_code": "9"
+  },
+  {
+    "form": "4684",
+    "description": "Casualties and Thefts",
+    "screen_code": "4684",
+    "alias_screen_codes": [
+      "FDDL"
+    ]
+  },
+  {
+    "form": "4797",
+    "description": "Sales of Business Property",
+    "screen_code": "4797"
+  },
+  {
+    "form": "4835",
+    "description": "Farm Rental Income and Expenses",
+    "screen_code": "4835",
+    "alias_screen_codes": [
+      "4835> \"Carryovers/State Info\" tab",
+      "4835 > \"Prior-Year Compare\" tab"
+    ]
+  },
+  {
+    "form": "4852",
+    "description": "Substitute for Form W-2, Wage and Tax Statement, or Form 1099-R, Distributions From Pensions, Annuities, Retirement or Profit-Sharing Plans, IRAs, Insurance Contracts, etc.",
+    "screen_code": "4852"
+  },
+  {
+    "form": "4868",
+    "description": "Application for Automatic Extension of Time to File U.S. Individual Income Tax Return",
+    "screen_code": "EXT",
+    "alias_screen_codes": [
+      "4868"
+    ]
+  },
+  {
+    "form": "4952",
+    "description": "Investment Interest Expense Deduction",
+    "screen_code": "4952"
+  },
+  {
+    "form": "4970",
+    "description": "Tax on Accumulation Distribution of Trusts",
+    "screen_code": "4970"
+  },
+  {
+    "form": "4972",
+    "description": "Tax on Lump-Sum Distributions",
+    "screen_code": "4972"
+  },
+  {
+    "form": "5329",
+    "description": "Additional Taxes on Qualified Plans (including IRAs) and Other Tax-Favored Accounts",
+    "screen_code": "5329"
+  },
+  {
+    "form": "5405",
+    "description": "Repayment of the First-Time Homebuyer Credit/Sale of Residence",
+    "screen_code": "HOME"
+  },
+  {
+    "form": "5471",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations",
+    "screen_code": "5471",
+    "alias_screen_codes": [
+      "5471 > \"Persons on whose behalf this information return is filed\" link",
+      "INFO"
+    ]
+  },
+  {
+    "form": "5471, Schedule A",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Stock of the Foreign Corporation",
+    "screen_code": "SCHA"
+  },
+  {
+    "form": "5471, Schedule B",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Shareholders of Foreign Corporation",
+    "screen_code": "SCHB"
+  },
+  {
+    "form": "5471, Schedule C",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Income Statement",
+    "screen_code": "5471 > \"Sch C\" tab"
+  },
+  {
+    "form": "5471, Schedule F",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Balance Sheet",
+    "screen_code": "5471 > \"Sch F\" tab"
+  },
+  {
+    "form": "5471, Schedule F",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Subsidiary Schedule Balance Sheet",
+    "screen_code": "SCHF"
+  },
+  {
+    "form": "5471, Schedule G",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Other Information",
+    "screen_code": "5471 > \"Sch G\" tab",
+    "alias_screen_codes": [
+      "5471 > \"Sch G cont'd\" tab",
+      "5471 > \"Sch G\" tab > \"G2\" link",
+      "5471 > \"Sch G \" tab \" G-1 link"
+    ]
+  },
+  {
+    "form": "5471, Schedule I",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Summary of Shareholder’s Income From Foreign Corporation",
+    "screen_code": "SCHI",
+    "alias_screen_codes": [
+      "SCHI > SCH I Worksheet A\" tab"
+    ]
+  },
+  {
+    "form": "5471, Schedule O",
+    "description": "Organization or Reorganization of Foreign Corporation, and Acquisitions and Dispositions of its Stock",
+    "screen_code": "O1",
+    "alias_screen_codes": [
+      "O2"
+    ]
+  },
+  {
+    "form": "5695",
+    "description": "Residential Energy Credits",
+    "screen_code": "5695"
+  },
+  {
+    "form": "5884",
+    "description": "Work Opportunity Credit",
+    "screen_code": "5884"
+  },
+  {
+    "form": "6198",
+    "description": "At-Risk Limitations",
+    "screen_code": "6198"
+  },
+  {
+    "form": "6251",
+    "description": "Alternative Minimum Tax for Individuals",
+    "screen_code": "6251"
+  },
+  {
+    "form": "6252",
+    "description": "Installment Sale Income",
+    "screen_code": "6252",
+    "alias_screen_codes": [
+      "6252 > \"Part III\" tab"
+    ]
+  },
+  {
+    "form": "6478",
+    "description": "Biofuel Producer Credit",
+    "screen_code": "6478"
+  },
+  {
+    "form": "6765",
+    "description": "Credit for Increasing Research Activities",
+    "screen_code": "6765"
+  },
+  {
+    "form": "6781",
+    "description": "Gains and Losses From Section 1256 Contracts and Straddles",
+    "screen_code": "6781"
+  },
+  {
+    "form": "7206",
+    "description": "Self-Employed Health Insurance Deduction",
+    "screen_code": "SEHI"
+  },
+  {
+    "form": "7207",
+    "description": "Advanced Manufacturing Production Credit",
+    "screen_code": "7207"
+  },
+  {
+    "form": "7216",
+    "description": "Consent to Disclosure of Tax Return Information to Other Firms",
+    "screen_code": "CONS"
+  },
+  {
+    "form": "8082",
+    "description": "Notice of Inconsistent Treatment or Administrative Adjustment Request",
+    "screen_code": "8082"
+  },
+  {
+    "form": "8275",
+    "description": "Disclosure Statement",
+    "screen_code": "8275"
+  },
+  {
+    "form": "8283",
+    "description": "Noncash Charitable Contributions",
+    "screen_code": "8283"
+  },
+  {
+    "form": "8332",
+    "description": "Release/Revocation of Release of Claim to Exemption for Child by Custodial Parent",
+    "screen_code": "8332"
+  },
+  {
+    "form": "8379",
+    "description": "Injured Spouse Allocation",
+    "screen_code": "8379",
+    "alias_screen_codes": [
+      "8379 > Page down"
+    ]
+  },
+  {
+    "form": "8396",
+    "description": "Mortgage Interest Credit",
+    "screen_code": "8396"
+  },
+  {
+    "form": "8594",
+    "description": "Asset Acquisition Statement Under Section 1060",
+    "screen_code": "8594"
+  },
+  {
+    "form": "8606",
+    "description": "Nondeductible IRAs",
+    "screen_code": "ROTH",
+    "alias_screen_codes": [
+      "8606"
+    ]
+  },
+  {
+    "form": "8606",
+    "description": "Nondeductible IRAs",
+    "screen_code": "8606"
+  },
+  {
+    "form": "8609",
+    "description": "Low-Income Housing Credit Allocation and Certification",
+    "screen_code": "8609"
+  },
+  {
+    "form": "8611",
+    "description": "Recapture of Low-Income Housing Credit",
+    "screen_code": "8611"
+  },
+  {
+    "form": "8615",
+    "description": "Tax for Certain Children Who Have Unearned Income",
+    "screen_code": "8615"
+  },
+  {
+    "form": "8621",
+    "description": "Information Return by a Shareholder of a Passive Foreign Investment Company or Qualified Electing Fund",
+    "screen_code": "8621"
+  },
+  {
+    "form": "8697",
+    "description": "Interest Computation Under the Look-Back Method for Completed Long-Term Contracts",
+    "screen_code": "8697"
+  },
+  {
+    "form": "8801",
+    "description": "Credit for Prior Year Minimum Tax - Individuals, Estates, and Trusts",
+    "screen_code": "8801"
+  },
+  {
+    "form": "8805",
+    "description": "Foreign Partner's Information Statement of Section 1446 Withholding Tax",
+    "screen_code": "8805"
+  },
+  {
+    "form": "8814",
+    "description": "Parent's Election to Report Child's Interest and Dividends",
+    "screen_code": "8814"
+  },
+  {
+    "form": "8815",
+    "description": "Exclusion of Interest From Series EE and I U.S. Savings Bonds Issued After 1989 (For Filers With Qualified Higher Education Expenses)",
+    "screen_code": "8815"
+  },
+  {
+    "form": "8820",
+    "description": "Orphan Drug Credit",
+    "screen_code": "8820, DRUG"
+  },
+  {
+    "form": "8822",
+    "description": "Change of Address",
+    "screen_code": "8822"
+  },
+  {
+    "form": "8824",
+    "description": "Like-Kind Exchanges",
+    "screen_code": "8824"
+  },
+  {
+    "form": "8826",
+    "description": "Disabled Access Credit",
+    "screen_code": "8826"
+  },
+  {
+    "form": "8828",
+    "description": "Recapture of Federal Mortgage Subsidy",
+    "screen_code": "8828"
+  },
+  {
+    "form": "8829",
+    "description": "Expenses for Business Use of Your Home",
+    "screen_code": "8829"
+  },
+  {
+    "form": "8833",
+    "description": "Treaty-Based Return Position Disclosure Under Section 6114 or 7701(b)",
+    "screen_code": "8833",
+    "alias_screen_codes": [
+      "8833 \"Line 6\" tab"
+    ]
+  },
+  {
+    "form": "8834",
+    "description": "Qualified Electric Vehicle Credit",
+    "screen_code": "8834"
+  },
+  {
+    "form": "8835",
+    "description": "Renewable Electricity Production Credit",
+    "screen_code": "8835"
+  },
+  {
+    "form": "8839",
+    "description": "Qualified Adoption Expenses",
+    "screen_code": "8839"
+  },
+  {
+    "form": "8840",
+    "description": "Closer Connection Exception Statement for Aliens",
+    "screen_code": "8840",
+    "alias_screen_codes": [
+      "8840 > \"Part IV\" tab"
+    ]
+  },
+  {
+    "form": "8843",
+    "description": "Statement for Exempt Individuals and Individuals with a Medical Condition",
+    "screen_code": "8843",
+    "alias_screen_codes": [
+      "8843 > \"Parts II, III\" tab",
+      "8843 > \"Parts IV, V\" tab"
+    ]
+  },
+  {
+    "form": "8844",
+    "description": "Empowerment Zone Employment Credit",
+    "screen_code": "8844"
+  },
+  {
+    "form": "8853",
+    "description": "Archer MSAs and Long-Term Care Insurance Contracts",
+    "screen_code": "8853",
+    "alias_screen_codes": [
+      "MSA"
+    ]
+  },
+  {
+    "form": "8854",
+    "description": "Initial and Annual Expatriation Statement",
+    "screen_code": "8854",
+    "alias_screen_codes": [
+      "8854 > \"Part II\" tab",
+      "8854 > \"Part II Sec B\" tab",
+      "8854 > \"Part III\" tab"
+    ]
+  },
+  {
+    "form": "8857",
+    "description": "Request for Innocent Spouse Relief",
+    "screen_code": "8857",
+    "alias_screen_codes": [
+      "8857 > PAGE DOWN",
+      "8857 > Page Down 2x"
+    ]
+  },
+  {
+    "form": "8859",
+    "description": "",
+    "screen_code": "8859"
+  },
+  {
+    "form": "8862",
+    "description": "Information To Claim Certain Credits After Disallowance",
+    "screen_code": "8862"
+  },
+  {
+    "form": "8863",
+    "description": "Education Credits (American Opportunity and Lifetime Learning Credits)",
+    "screen_code": "8863",
+    "alias_screen_codes": [
+      "8863 > \"Additional Educ. Inst.\" tab"
+    ]
+  },
+  {
+    "form": "8864",
+    "description": "Biodiesel and Renewable Diesel, or Sustainable Aviation Fuels Credit",
+    "screen_code": "8864"
+  },
+  {
+    "form": "8864",
+    "description": "Biodiesel and Renewable Diesel, or Sustainable Aviation Fuels Credit",
+    "screen_code": "8864"
+  },
+  {
+    "form": "8866",
+    "description": "Interest Computation Under the Look-Back Method for Property Depreciated Under the Income Forecast Method",
+    "screen_code": "8866",
+    "alias_screen_codes": [
+      "LOOK"
+    ]
+  },
+  {
+    "form": "8867",
+    "description": "Paid Preparer's Due Diligence Checklist",
+    "screen_code": "8867",
+    "alias_screen_codes": [
+      "8867 > \"Due Diligence Assist\" link",
+      "8867 > \"Overrides\" tab",
+      "DD1",
+      "DD1 > Head of household",
+      "DD2"
+    ]
+  },
+  {
+    "form": "8873",
+    "description": "Extraterritorial Income Exclusion",
+    "screen_code": "8873"
+  },
+  {
+    "form": "8874",
+    "description": "New Markets Credit",
+    "screen_code": "8874"
+  },
+  {
+    "form": "8878",
+    "description": "IRS e-file Signature Authorization for Form 4868 or Form 2350",
+    "screen_code": "PIN, 8878"
+  },
+  {
+    "form": "8879",
+    "description": "IRS e-file Signature Authorization",
+    "screen_code": "PIN"
+  },
+  {
+    "form": "8879",
+    "description": "NY Direct Debit Authorization",
+    "screen_code": "PIN > Page down"
+  },
+  {
+    "form": "8880",
+    "description": "Credit for Qualified Retirement Savings Contributions",
+    "screen_code": "8880"
+  },
+  {
+    "form": "8881",
+    "description": "Credit for Small Employer Pension Plan Startup Costs",
+    "screen_code": "8881"
+  },
+  {
+    "form": "8882",
+    "description": "Credit for Employer-Provided Child Care Facilities and Services",
+    "screen_code": "8882"
+  },
+  {
+    "form": "8888",
+    "description": "Allocation of Refund (Including Savings Bond Purchases)",
+    "screen_code": "8888",
+    "alias_screen_codes": [
+      "8888 > Page Down",
+      "DD"
+    ]
+  },
+  {
+    "form": "8889",
+    "description": "Health Savings Accounts",
+    "screen_code": "8889",
+    "alias_screen_codes": [
+      "HSA"
+    ]
+  },
+  {
+    "form": "8896",
+    "description": "Low-Sulfer Diesel Fuel Production Credit",
+    "screen_code": "8896"
+  },
+  {
+    "form": "8903",
+    "description": "Domestic Production Activities Deduction",
+    "screen_code": "8903"
+  },
+  {
+    "form": "8908",
+    "description": "Energy Efficient Home Credit",
+    "screen_code": "8908"
+  },
+  {
+    "form": "8911",
+    "description": "Alternative Fuel Vehicle Refueling Property Credit",
+    "screen_code": "8911"
+  },
+  {
+    "form": "8912",
+    "description": "Credit to Holders of Tax Credit Bonds",
+    "screen_code": "8912"
+  },
+  {
+    "form": "8917",
+    "description": "Tuition and Fees Deduction",
+    "screen_code": "8917"
+  },
+  {
+    "form": "8919",
+    "description": "Uncollected Social Security and Medicare Tax on Wages",
+    "screen_code": "8919"
+  },
+  {
+    "form": "8936",
+    "description": "Clean Vehicle Credit",
+    "screen_code": "8936"
+  },
+  {
+    "form": "8938",
+    "description": "Statement of Specified Foreign Financial Assets",
+    "screen_code": "8938",
+    "alias_screen_codes": [
+      "8938 > Foreign Assets"
+    ]
+  },
+  {
+    "form": "8941",
+    "description": "Credit for Small Employer Health Insurance Premiums",
+    "screen_code": "8941"
+  },
+  {
+    "form": "8948",
+    "description": "Preparer Explanation for Not Filing Electronically",
+    "screen_code": "8948"
+  },
+  {
+    "form": "8949",
+    "description": "Sales and other Dispositions of Capital Assets",
+    "screen_code": "8949"
+  },
+  {
+    "form": "8958",
+    "description": "Allocation of Tax Amounts Between Certain Individuals in Community Property States",
+    "screen_code": "8958"
+  },
+  {
+    "form": "8960",
+    "description": "Net Investment Income Tax, Adjustment from Disposition of Partnership Interest or S Corporation Stock",
+    "screen_code": "8960",
+    "alias_screen_codes": [
+      "8960 > Page Down"
+    ]
+  },
+  {
+    "form": "8962",
+    "description": "Premium Tax Credit (PTC)",
+    "screen_code": "8962"
+  },
+  {
+    "form": "8965",
+    "description": "Health Coverage Exemptions",
+    "screen_code": "HC"
+  },
+  {
+    "form": "8978",
+    "description": "Partner’s Additional Reporting Year Tax",
+    "screen_code": "8978",
+    "alias_screen_codes": [
+      "8978 > \"Schedule A\" link"
+    ]
+  },
+  {
+    "form": "8990",
+    "description": "Limitation on Business Interest Expense Under Section 163(j)",
+    "screen_code": "8990"
+  },
+  {
+    "form": "8994",
+    "description": "Employer Credit for Paid Family and Medical Leave",
+    "screen_code": "8994"
+  },
+  {
+    "form": "8995/ 8995-A",
+    "description": "Qualified Business Income Deduction Simplified Computation",
+    "screen_code": "8995"
+  },
+  {
+    "form": "8997",
+    "description": "Initial and Annual Statement of Qualified Opportunity Fund (QOF) Investments",
+    "screen_code": "8997"
+  },
+  {
+    "form": "9465",
+    "description": "Installment Agreement Request",
+    "screen_code": "9465"
+  },
+  {
+    "form": "14039",
+    "description": "Identity Theft Affidavit",
+    "screen_code": "1403",
+    "alias_screen_codes": [
+      "1403 > \"14039-B\" tab",
+      "1403 > \"Section F\" tab"
+    ]
+  },
+  {
+    "form": "EITC",
+    "description": "Earned Income Tax Credit",
+    "screen_code": "EIC"
+  },
+  {
+    "form": "FAFSA Worksheet",
+    "description": "FAFSA&#160;Worksheet",
+    "screen_code": "FAFS"
+  },
+  {
+    "form": "FinCEN Form 114",
+    "description": "Report of Foreign Bank and Financial Accounts",
+    "screen_code": "114",
+    "alias_screen_codes": [
+      "FRGN"
+    ]
+  },
+  {
+    "form": "Form 1099-B",
+    "description": "Proceeds from Broker and Barter Exchange Transactions",
+    "screen_code": "99B",
+    "alias_screen_codes": [
+      "8949 > \"Additional Info\" tab"
+    ]
+  },
+  {
+    "form": "Form 1045",
+    "description": "Application for Tentative Refund",
+    "screen_code": "NOL",
+    "alias_screen_codes": [
+      "1045"
+    ]
+  },
+  {
+    "form": "Form 1045 AMT",
+    "description": "Unamortized AMT Section 59e Deduction",
+    "screen_code": "59E"
+  },
+  {
+    "form": "Form 3800 Attachment",
+    "description": "General Business Credit Carryforwards and Carrybacks",
+    "screen_code": "GBC"
+  },
+  {
+    "form": "Form 4835",
+    "description": "",
+    "screen_code": "CIDP"
+  },
+  {
+    "form": "Form 7203",
+    "description": "S Corporation Shareholder Stock and Debt Basis Limitations",
+    "screen_code": "K1S > \"Basis (7203)\" tab",
+    "alias_screen_codes": [
+      "K1S > \"Basis (7203) Cont\" tab",
+      "K1S > \"Basis (7203)\" tab > NY and KY link",
+      "K1S > \"Basis (7203) cont\" tab > NY and KY link",
+      "K1S > \"Basis (7203)\" tab > \"Shareholder's Debt Basis Info\" Link"
+    ]
+  },
+  {
+    "form": "Form 8582, Line 7",
+    "description": "Passive Activity Loss Limitations",
+    "screen_code": "8582"
+  },
+  {
+    "form": "IRC 7216",
+    "description": "Consent to Use of Tax Return Information",
+    "screen_code": "USE"
+  },
+  {
+    "form": "IRC Section 6103(c)",
+    "description": "Consent to Disclose Electronic Return Information",
+    "screen_code": "DISC"
+  },
+  {
+    "form": "Letter",
+    "description": "Client Communication Options",
+    "screen_code": "COMM",
+    "alias_screen_codes": [
+      "LTR"
+    ]
+  },
+  {
+    "form": "N/A",
+    "description": "Frequently Asked Questions",
+    "screen_code": "FAQ"
+  },
+  {
+    "form": "N/A",
+    "description": "Paycheck Protection Program (PPP) Loans Received or Accrued",
+    "screen_code": "PPP2"
+  },
+  {
+    "form": "N/A",
+    "description": "Required Identification",
+    "screen_code": "IDS"
+  },
+  {
+    "form": "RRB-1099",
+    "description": "Railroad Retirement Board Payments",
+    "screen_code": "RRP"
+  },
+  {
+    "form": "RRB-1099-R",
+    "description": "Railroad Retirement Benefits",
+    "screen_code": "RRB"
+  },
+  {
+    "form": "RRB-1042S",
+    "description": "Nonresident Alien Railroad Retirement Benefits",
+    "screen_code": "RRB2"
+  },
+  {
+    "form": "Schedule 1",
+    "description": "Additional Income",
+    "screen_code": "3",
+    "alias_screen_codes": [
+      "4"
+    ]
+  },
+  {
+    "form": "Schedule 2",
+    "description": "Form 1040 (Schedule 2), Additional Taxes",
+    "screen_code": "5"
+  },
+  {
+    "form": "Schedule 3",
+    "description": "Form 1040 (Schedule 3), Additional Credits and Payments",
+    "screen_code": "5"
+  },
+  {
+    "form": "Schedule 8812 (Form 1040)",
+    "description": "Credits for Qualifying Children and Other Dependents",
+    "screen_code": "8812"
+  },
+  {
+    "form": "Schedule A",
+    "description": "Long-Term Care Premiums",
+    "screen_code": "LTC"
+  },
+  {
+    "form": "Schedule A",
+    "description": "Itemized Deductions",
+    "screen_code": "A",
+    "alias_screen_codes": [
+      "A > \"Charitable Contributions Carried over from prior years\" link",
+      "A > \"Charitable Contributions Carried over from prior years\" link > \"Charitable Contributions Carryover for Future\" link"
+    ]
+  },
+  {
+    "form": "Schedule C (Form 1040)",
+    "description": "Profit or Loss From Business (Sole Proprietorship) C > \"Carryovers/State Info\" tab",
+    "screen_code": "C",
+    "alias_screen_codes": [
+      "C > \"Prior Year Compare\" tab"
+    ]
+  },
+  {
+    "form": "Schedule D",
+    "description": "Capital Gains and Losses",
+    "screen_code": "D",
+    "alias_screen_codes": [
+      "D2"
+    ]
+  },
+  {
+    "form": "Schedule E (Form 1040)",
+    "description": "Supplemental Income and Loss (From rental real estate, royalties, partnerships, S corporations, estates, trusts, REMICs, etc.)",
+    "screen_code": "E",
+    "alias_screen_codes": [
+      "E2",
+      "E3",
+      "E4",
+      "E > \"Income/Expenses\" tab",
+      "E > \"Prior-Year Compare\" tab",
+      "E2> \"QBI Information\" tab",
+      "E3 > \"QBI Information\" tab"
+    ]
+  },
+  {
+    "form": "Schedule E (Form 5471)",
+    "description": "Income, War Profits, and Excess Profits Taxes Paid or Accrued",
+    "screen_code": "SCHE",
+    "alias_screen_codes": [
+      "EIII",
+      "SE1",
+      "SE1 > \"Prev. Taxed E &P (i) - (iv)\" tab",
+      "SE1 > \"Prev. Taxed E &P (v)\" tab",
+      "SE1 > \"Prev. Taxed E&P (vi) - (viii)\" tab",
+      "SE1 > \"Prev. Taxed E & P (ix - x)\" tab"
+    ]
+  },
+  {
+    "form": "Schedule E, page 2",
+    "description": "Shareholder's Pre-2018 Carryover Losses and Deductions",
+    "screen_code": "K1S> \"Pre-2018 Basis\" tab"
+  },
+  {
+    "form": "Schedule E, page 2",
+    "description": "Partner's Pre-2018 Carryover Losses and Deductions",
+    "screen_code": "K1P> \"Pre-2018 Basis\" tab"
+  },
+  {
+    "form": "Schedule E, page 2",
+    "description": "Shareholder's Pre-2018 At-Risk Limit Worksheet",
+    "screen_code": "K1S> \"Pre-2018 At-Risk\" tab"
+  },
+  {
+    "form": "Schedule E, Page 2",
+    "description": "Partner's Pre-2018 At-Risk Limit Worksheet",
+    "screen_code": "K1P> \"Pre-2018 At-Risk\" tab"
+  },
+  {
+    "form": "Schedule F (Form 1040)",
+    "description": "Profit or Loss From Farming",
+    "screen_code": "F",
+    "alias_screen_codes": [
+      "F > \"Carryovers/State Info\" tab",
+      "F > \"Prior-Year Compare\" tab"
+    ]
+  },
+  {
+    "form": "Schedule H",
+    "description": "Household Employment Taxes",
+    "screen_code": "H"
+  },
+  {
+    "form": "Schedule H (Form 5471)",
+    "description": "Current Earnings and Profits",
+    "screen_code": "SCHH"
+  },
+  {
+    "form": "Schedule I-1 (Form 5471)",
+    "description": "Information for Global Intangible Low-Taxed Income",
+    "screen_code": "I1"
+  },
+  {
+    "form": "Schedule J",
+    "description": "Income Averaging for Farmers and Fishermen",
+    "screen_code": "J"
+  },
+  {
+    "form": "SCHEDULE J (Form 5471)",
+    "description": "Accumulated Earnings & Profits (E&P) of Controlled Foreign Corporation",
+    "screen_code": "SCHJ",
+    "alias_screen_codes": [
+      "SCHJ > \"Prev. Taxed E & P (i)-(iv)\" tab",
+      "SCHJ > \"Prev. Taxed E & P (v)\" tab",
+      "SCHJ > \"Prev. Taxed E & P (vi - xciii)\" tab",
+      "SCHJ > \"Prev. Taxed E & P (ix - x)\" tab"
+    ]
+  },
+  {
+    "form": "Schedule K-1 (1065)",
+    "description": "Partner’s Share of Income, Deductions, Credits, etc.",
+    "screen_code": "K1P",
+    "alias_screen_codes": [
+      "K1P > \"Add'l entries\" tab"
+    ]
+  },
+  {
+    "form": "Schedule K-1 (Form 1120-S)",
+    "description": "Shareholder’s Share of Income, Deductions, Credits, etc.",
+    "screen_code": "K1S",
+    "alias_screen_codes": [
+      "K1S > \"Add'l entries\" tab",
+      "K1S > \"1120S K1 11-17\" tab"
+    ]
+  },
+  {
+    "form": "Schedule K-1 (Form 1120-S) Form 6198",
+    "description": "Shareholder's At-Risk Limitations",
+    "screen_code": "K1S > \"6198 At-Risk\" tab",
+    "alias_screen_codes": [
+      "K1S > \"6198 At-Risk cont.\" tab",
+      "K1S > \"6198 At-Risk\" tab > \"NY and KY returns\" link",
+      "K1S > \"6198 At-Risk cont\" tab > \"NY and KY returns\" link"
+    ]
+  },
+  {
+    "form": "Schedule K-1 (Form 1041)",
+    "description": "Beneficiary's Share of Income, Deductions, Credits, etc.",
+    "screen_code": "K1F"
+  },
+  {
+    "form": "Schedule K-1 (Form 1041)",
+    "description": "Beneficiary’s Share of Income, Deductions, Credits, etc.",
+    "screen_code": "K1F",
+    "alias_screen_codes": [
+      "K1F > \"1041 K1 12-14\" tab"
+    ]
+  },
+  {
+    "form": "Schedule K-1 (Form 1065) Basis Worksheet",
+    "description": "Partner’s Share of Income, Deductions, Credits, etc.",
+    "screen_code": "K1P > \"Basis Wkst\" tab",
+    "alias_screen_codes": [
+      "K1P > \"Basis Wkst cont\" tab",
+      "K1P > \"Basis Wkst\" tab > \"NY and KY returns\" link"
+    ]
+  },
+  {
+    "form": "Schedule K-1 (Form 1065) Form 6198",
+    "description": "Partner's At-Risk Limitations",
+    "screen_code": "K1P > \"6198 At-Risk\" tab",
+    "alias_screen_codes": [
+      "K1P > \"6198 At-Risk cont.\" tab",
+      "K1P > \"6198 At-Risk\" tab > \"NY and KY returns\" link",
+      "K1P > \"6198 At-Risk (cont)\" tab > \"NY and KY returns\" link"
+    ]
+  },
+  {
+    "form": "Schedule K-1 QBI",
+    "description": "Qualified Business Income (QBI) for Schedule K-1",
+    "screen_code": "K199"
+  },
+  {
+    "form": "Schedule M (Form 5471)",
+    "description": "Transactions Between Controlled Foreign Corporation and Shareholders or Other Related Persons",
+    "screen_code": "5471 > \"Sch M\" tab",
+    "alias_screen_codes": [
+      "5471 > \"Sch M cont'd\" tab"
+    ]
+  },
+  {
+    "form": "Schedule NEC (Form 1040-NR)",
+    "description": "Tax on Income Not Effectively Connected With a U.S. Trade or Business",
+    "screen_code": "NR2"
+  },
+  {
+    "form": "Schedule NEC (Form 1040-NR)",
+    "description": "Tax on Income Not Effectively Connected With a U.S. Trade or Business",
+    "screen_code": "NR2"
+  },
+  {
+    "form": "Schedule OI (Form 1040-NR)",
+    "description": "Other Information",
+    "screen_code": "NR3"
+  },
+  {
+    "form": "Schedule P (Form 5471)",
+    "description": "Previously Taxed Earnings and Profits of U.S. Shareholder of Certain Foreign Corporations",
+    "screen_code": "SCHP",
+    "alias_screen_codes": [
+      "SCHP > \"Sch P, Previously Taxed E & P (f)\" tab",
+      "SCHP> \"Sch P Previously Taxed E & P (g) through (j)\" tab"
+    ]
+  },
+  {
+    "form": "Schedule Q (Form 5471)",
+    "description": "CFC Income by CFC Income Groups",
+    "screen_code": "SCHQ",
+    "alias_screen_codes": [
+      "SCHQ > \"Sch Q, Subpart F Income Groups cont'd\" tab",
+      "SCHQ > \"Sch Q, Subpart F, Tested Income, Residual Groups\" tab"
+    ]
+  },
+  {
+    "form": "Schedule R",
+    "description": "Credit for the Elderly or the Disabled",
+    "screen_code": "R"
+  },
+  {
+    "form": "Schedule R (Form 5471)",
+    "description": "Distributions From a Foreign Corporation",
+    "screen_code": "SCHR"
+  },
+  {
+    "form": "Schedule SE",
+    "description": "Self-Employment Tax",
+    "screen_code": "SE"
+  },
+  {
+    "form": "SEP",
+    "description": "Simplified Employee Pension",
+    "screen_code": "SEP"
+  },
+  {
+    "form": "SSA-1099",
+    "description": "Social Security Benefit Statement",
+    "screen_code": "SSA"
+  },
+  {
+    "form": "SSA-1042S",
+    "description": "Nonresident Social Security Benefits",
+    "screen_code": "SSA2"
+  },
+  {
+    "form": "State Return",
+    "description": "State and City Extensions",
+    "screen_code": "STEX",
+    "alias_screen_codes": [
+      "STEX > \"Amount Paid with Extensions\" tab",
+      "STEX > \"Extension Payment Worksheet\" link"
+    ]
+  },
+  {
+    "form": "W-9",
+    "description": "Request for Taxpayer Identification Number and Certification",
+    "screen_code": "W9"
+  },
+  {
+    "form": "W-7",
+    "description": "Application for IRS Individual Taxpayer Identification Number",
+    "screen_code": "W7",
+    "alias_screen_codes": [
+      "W7 > \"Birth/Other Information\" tab",
+      "W7 > \"W-7 COA\" tab"
+    ]
+  },
+  {
+    "form": "W-4",
+    "description": "Employee's Withholding Certificate",
+    "screen_code": "W4"
+  },
+  {
+    "form": "W-4P",
+    "description": "Withholding Certificate for Periodic Pension or Annuity Payments",
+    "screen_code": "W4P"
+  },
+  {
+    "form": "W-2",
+    "description": "Wage and Tax Statement",
+    "screen_code": "W2",
+    "alias_screen_codes": [
+      "W2 > Additional Entries"
+    ]
+  },
+  {
+    "form": "W-2G",
+    "description": "Certain Gambling Winnings",
+    "screen_code": "W2G"
+  },
+  {
+    "form": "W-2PR",
+    "description": "Withholding Statement (Puerto Rico)",
+    "screen_code": "W2PR"
+  },
+  {
+    "form": "W2",
+    "description": "Form W-2 - Locality Information for Ohio",
+    "screen_code": "W2 > OH"
+  },
+  {
+    "form": "Wks Auto",
+    "description": "Auto Expense Worksheet",
+    "screen_code": "AUTO"
+  },
+  {
+    "form": "Wks Clergy",
+    "description": "Ministerial Income Computations",
+    "screen_code": "CLGY"
+  },
+  {
+    "form": "Wks DEPL",
+    "description": "Oil and Gas Depletion Worksheet",
+    "screen_code": "DEPL"
+  },
+  {
+    "form": "Wks SSB-1",
+    "description": "Lump-Sum Social Security Distributions",
+    "screen_code": "LSSA"
+  },
+  {
+    "form": "Wks STAX",
+    "description": "State and Local General Sales Tax Deduction Worksheet",
+    "screen_code": "STAX"
+  },
+  {
+    "form": "Wks_CARRY",
+    "description": "Net Operating Loss (NOL) Carryforward",
+    "screen_code": "LOSS"
+  }
+]

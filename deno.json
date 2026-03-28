@@ -1,3 +1,5 @@
 {
-  "workspace": ["engine"]
+  "workspace": ["engine", "agent"],
+  "nodeModulesDir": "auto",
+  "allow-scripts": "npm:sharp"
 }
