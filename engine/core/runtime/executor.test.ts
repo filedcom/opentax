@@ -3,17 +3,20 @@ import { z } from "zod";
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
 import { TaxNode } from "../types/tax-node.ts";
+import { OutputNodes } from "../types/output-nodes.ts";
 import { execute } from "./executor.ts";
 import type { ExecutionStep } from "./planner.ts";
 
 // --- Mock Nodes ---
+// executor tests hardcode the plan, so outputNodes content is not load-bearing —
+// only the compute() logic and inputSchema matter here.
 
-// Simple A node: deposits a value to B
+// A → B: simple 2-node chain
 const aInputSchema = z.object({ value: z.number() });
 class MockNodeA extends TaxNode<typeof aInputSchema> {
   readonly nodeType = "mock_a";
   readonly inputSchema = aInputSchema;
-  readonly outputNodeTypes = ["mock_b"] as const;
+  readonly outputNodes = new OutputNodes([]);
   compute(input: z.infer<typeof aInputSchema>): NodeResult {
     return {
       outputs: [{ nodeType: "mock_b", input: { received: input.value } }],
@@ -21,12 +24,11 @@ class MockNodeA extends TaxNode<typeof aInputSchema> {
   }
 }
 
-// Simple B node: leaf, receives from A
 const bInputSchema = z.object({ received: z.number() });
 class MockNodeB extends TaxNode<typeof bInputSchema> {
   readonly nodeType = "mock_b";
   readonly inputSchema = bInputSchema;
-  readonly outputNodeTypes = [] as const;
+  readonly outputNodes = new OutputNodes([]);
   compute(input: z.infer<typeof bInputSchema>): NodeResult {
     return {
       outputs: [
@@ -36,68 +38,41 @@ class MockNodeB extends TaxNode<typeof bInputSchema> {
   }
 }
 
-// W2-like node: deposits wages array entry to aggregator
-const w2InputSchema = z.object({ wages: z.number() });
-class _MockW2Node extends TaxNode<typeof w2InputSchema> {
+// W2 node: takes full array, aggregates internally (new model)
+const w2ArrayInputSchema = z.object({
+  w2s: z.array(z.object({ wages: z.number() })).min(1),
+});
+class MockW2ArrayNode extends TaxNode<typeof w2ArrayInputSchema> {
   readonly nodeType = "mock_w2";
-  readonly inputSchema = w2InputSchema;
-  readonly outputNodeTypes = ["mock_aggregator"] as const;
-  compute(input: z.infer<typeof w2InputSchema>): NodeResult {
+  readonly inputSchema = w2ArrayInputSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(input: z.infer<typeof w2ArrayInputSchema>): NodeResult {
+    const totalWages = input.w2s.reduce((sum, w) => sum + w.wages, 0);
     return {
-      outputs: [{ nodeType: "mock_aggregator", input: { wages: input.wages } }],
+      outputs: [{ nodeType: "mock_f1040", input: { wages: totalWages } }],
     };
   }
 }
 
-// Aggregator node: receives wages (becomes array via accumulation)
-const aggregatorInputSchema = z.object({
-  wages: z.union([z.number(), z.array(z.number())]).optional(),
-});
-class MockAggregatorNode extends TaxNode<typeof aggregatorInputSchema> {
-  readonly nodeType = "mock_aggregator";
-  readonly inputSchema = aggregatorInputSchema;
-  readonly outputNodeTypes = [] as const;
-  compute(input: z.infer<typeof aggregatorInputSchema>): NodeResult {
-    const wages = Array.isArray(input.wages)
-      ? input.wages
-      : input.wages !== undefined
-      ? [input.wages]
-      : [];
-    const total = wages.reduce((sum, w) => sum + w, 0);
-    return {
-      outputs: [{ nodeType: "mock_total", input: { total } }],
-    };
-  }
-}
-
-// Optional node: requires strict fields (will fail safeParse if no inputs deposited)
-const optionalInputSchema = z.object({
-  required_field: z.string(),
-});
-class MockOptionalNode extends TaxNode<typeof optionalInputSchema> {
-  readonly nodeType = "mock_optional";
-  readonly inputSchema = optionalInputSchema;
-  readonly outputNodeTypes = [] as const;
+// f1040 node: receives scalar wages from w2 node
+const f1040InputSchema = z.object({ wages: z.number().optional() });
+class MockF1040Node extends TaxNode<typeof f1040InputSchema> {
+  readonly nodeType = "mock_f1040";
+  readonly inputSchema = f1040InputSchema;
+  readonly outputNodes = new OutputNodes([]);
   compute(): NodeResult {
     return { outputs: [] };
   }
 }
 
-// Start node for the full W-2 scenario
-const startInputSchema = z.object({
-  w2s: z.array(z.object({ wages: z.number() })),
-});
-class _MockStartNode extends TaxNode<typeof startInputSchema> {
-  readonly nodeType = "start";
-  readonly inputSchema = startInputSchema;
-  readonly outputNodeTypes = ["mock_w2"] as const;
-  compute(input: z.infer<typeof startInputSchema>): NodeResult {
-    return {
-      outputs: input.w2s.map((w2, i) => ({
-        nodeType: `mock_w2_${String(i + 1).padStart(2, "0")}` as string,
-        input: { wages: w2.wages },
-      })),
-    };
+// Optional node: strict required field — skipped if no inputs deposited
+const optionalInputSchema = z.object({ required_field: z.string() });
+class MockOptionalNode extends TaxNode<typeof optionalInputSchema> {
+  readonly nodeType = "mock_optional";
+  readonly inputSchema = optionalInputSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(): NodeResult {
+    return { outputs: [] };
   }
 }
 
@@ -114,7 +89,7 @@ Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's outpu
   class TestStart extends TaxNode<typeof startSchema> {
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
-    readonly outputNodeTypes = ["mock_a"] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_a", input: { value: input.initial } }],
@@ -130,73 +105,11 @@ Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's outpu
 
   const result = execute(plan, registry, { initial: 42 });
 
-  // A's pending should have value=42
   assertEquals(result.pending["mock_a"]?.["value"], 42);
-  // B should have received=42
   assertEquals(result.pending["mock_b"]?.["received"], 42);
 });
 
-Deno.test("executor: array accumulation — two W-2 instances deposit wages into same array field", () => {
-  // Plan with two w2 instances depositing to aggregator
-  const plan: readonly ExecutionStep[] = [
-    { id: "start", nodeType: "start" },
-    { id: "w2_01", nodeType: "mock_w2" },
-    { id: "w2_02", nodeType: "mock_w2" },
-    { id: "mock_aggregator", nodeType: "mock_aggregator" },
-  ];
-
-  const startSchema = z.object({
-    w2s: z.array(z.object({ wages: z.number() })),
-  });
-  class TestStart extends TaxNode<typeof startSchema> {
-    readonly nodeType = "start";
-    readonly inputSchema = startSchema;
-    readonly outputNodeTypes = ["mock_w2"] as const;
-    compute(input: z.infer<typeof startSchema>): NodeResult {
-      return {
-        outputs: input.w2s.map((w2, i) => ({
-          nodeType: `w2_0${i + 1}` as string,
-          input: { wages: w2.wages },
-        })),
-      };
-    }
-  }
-
-  // W2 that deposits wages to aggregator
-  const w2Schema = z.object({ wages: z.number() });
-  class TestW2 extends TaxNode<typeof w2Schema> {
-    readonly nodeType = "mock_w2";
-    readonly inputSchema = w2Schema;
-    readonly outputNodeTypes = ["mock_aggregator"] as const;
-    compute(input: z.infer<typeof w2Schema>): NodeResult {
-      return {
-        outputs: [
-          { nodeType: "mock_aggregator", input: { wages: input.wages } },
-        ],
-      };
-    }
-  }
-
-  const registry: NodeRegistry = {
-    start: new TestStart(),
-    mock_w2: new TestW2(),
-    mock_aggregator: new MockAggregatorNode(),
-  };
-
-  const result = execute(plan, registry, {
-    w2s: [{ wages: 85000 }, { wages: 45000 }],
-  });
-
-  // After both W-2s deposit, aggregator should have wages as an array
-  const aggPending = result.pending["mock_aggregator"];
-  const wages = aggPending?.["wages"];
-  assertEquals(Array.isArray(wages), true);
-  assertEquals((wages as number[]).length, 2);
-  assertEquals((wages as number[]).includes(85000), true);
-  assertEquals((wages as number[]).includes(45000), true);
-});
-
-Deno.test("executor: scalar field set — single deposit sets scalar value", () => {
+Deno.test("executor: scalar field set — single deposit sets scalar value, not array", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_a", nodeType: "mock_a" },
@@ -206,7 +119,7 @@ Deno.test("executor: scalar field set — single deposit sets scalar value", () 
   class TestStart extends TaxNode<typeof startSchema> {
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
-    readonly outputNodeTypes = ["mock_a"] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_a", input: { value: input.val } }],
@@ -223,8 +136,7 @@ Deno.test("executor: scalar field set — single deposit sets scalar value", () 
   assertEquals(result.pending["mock_a"]?.["value"], 99);
 });
 
-Deno.test("executor: optional node skip — node with no deposited inputs is silently skipped, no error thrown", () => {
-  // Plan includes optional node but nothing deposits into it
+Deno.test("executor: optional node skip — node with no deposited inputs is silently skipped", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_optional", nodeType: "mock_optional" },
@@ -234,9 +146,8 @@ Deno.test("executor: optional node skip — node with no deposited inputs is sil
   class TestStart extends TaxNode<typeof startSchema> {
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
-    readonly outputNodeTypes = [] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(): NodeResult {
-      // Deposits nothing to mock_optional
       return { outputs: [] };
     }
   }
@@ -246,66 +157,89 @@ Deno.test("executor: optional node skip — node with no deposited inputs is sil
     mock_optional: new MockOptionalNode(),
   };
 
-  // Should NOT throw — optional node is silently skipped
   const result = execute(plan, registry, {});
-  // mock_optional should not have any result (skipped)
   assertEquals(result.pending["mock_optional"], undefined);
 });
 
-Deno.test("executor: full W-2 scenario — start dispatches 2 W-2s, aggregator receives [85000, 45000]", () => {
+Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2 node aggregates internally, f1040 receives scalar", () => {
+  // New model: start sends { w2s: [all w2s] } in one output.
+  // W2 node receives the full array and computes the total internally.
+  // f1040 receives a single scalar wages value (not an array).
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
-    { id: "w2_01", nodeType: "mock_w2" },
-    { id: "w2_02", nodeType: "mock_w2" },
-    { id: "mock_aggregator", nodeType: "mock_aggregator" },
+    { id: "mock_w2", nodeType: "mock_w2" },
+    { id: "mock_f1040", nodeType: "mock_f1040" },
   ];
 
   const startSchema = z.object({
     w2s: z.array(z.object({ wages: z.number() })),
   });
-  class FullScenarioStart extends TaxNode<typeof startSchema> {
+  class TestStart extends TaxNode<typeof startSchema> {
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
-    readonly outputNodeTypes = ["mock_w2"] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
+      // Dispatch all w2s as a single array — not one per instance
       return {
-        outputs: input.w2s.map((w2, i) => ({
-          nodeType: `w2_0${i + 1}` as string,
-          input: { wages: w2.wages },
-        })),
-      };
-    }
-  }
-
-  const w2Schema = z.object({ wages: z.number() });
-  class FullW2Node extends TaxNode<typeof w2Schema> {
-    readonly nodeType = "mock_w2";
-    readonly inputSchema = w2Schema;
-    readonly outputNodeTypes = ["mock_aggregator"] as const;
-    compute(input: z.infer<typeof w2Schema>): NodeResult {
-      return {
-        outputs: [
-          { nodeType: "mock_aggregator", input: { wages: input.wages } },
-        ],
+        outputs: [{ nodeType: "mock_w2", input: { w2s: input.w2s } }],
       };
     }
   }
 
   const registry: NodeRegistry = {
-    start: new FullScenarioStart(),
-    mock_w2: new FullW2Node(),
-    mock_aggregator: new MockAggregatorNode(),
+    start: new TestStart(),
+    mock_w2: new MockW2ArrayNode(),
+    mock_f1040: new MockF1040Node(),
   };
 
   const result = execute(plan, registry, {
     w2s: [{ wages: 85000 }, { wages: 45000 }],
   });
 
-  const wages = result.pending["mock_aggregator"]?.["wages"] as number[];
-  assertEquals(Array.isArray(wages), true);
-  assertEquals(wages.length, 2);
-  assertEquals(wages.includes(85000), true);
-  assertEquals(wages.includes(45000), true);
+  // W2 node received the full array and deposited a scalar total
+  const f1040Pending = result.pending["mock_f1040"];
+  assertEquals(typeof f1040Pending?.["wages"], "number");
+  assertEquals(f1040Pending?.["wages"], 130000);
+  // NOT an array
+  assertEquals(Array.isArray(f1040Pending?.["wages"]), false);
+});
+
+Deno.test("executor: no array accumulation in pending dict — scalar deposits only", () => {
+  // Under the new model, the engine never promotes scalars to arrays.
+  // Aggregation is the node's responsibility, not the engine's.
+  const plan: readonly ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "mock_w2", nodeType: "mock_w2" },
+    { id: "mock_f1040", nodeType: "mock_f1040" },
+  ];
+
+  const startSchema = z.object({
+    w2s: z.array(z.object({ wages: z.number() })),
+  });
+  class TestStart extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(input: z.infer<typeof startSchema>): NodeResult {
+      return {
+        outputs: [{ nodeType: "mock_w2", input: { w2s: input.w2s } }],
+      };
+    }
+  }
+
+  const registry: NodeRegistry = {
+    start: new TestStart(),
+    mock_w2: new MockW2ArrayNode(),
+    mock_f1040: new MockF1040Node(),
+  };
+
+  const result = execute(plan, registry, {
+    w2s: [{ wages: 85000 }, { wages: 45000 }, { wages: 20000 }],
+  });
+
+  // f1040 should have a single scalar 150000, not an array
+  assertEquals(result.pending["mock_f1040"]?.["wages"], 150000);
+  assertEquals(Array.isArray(result.pending["mock_f1040"]?.["wages"]), false);
 });
 
 Deno.test("executor: stateless — same inputs produce identical outputs on repeated execution", () => {
@@ -319,7 +253,7 @@ Deno.test("executor: stateless — same inputs produce identical outputs on repe
   class TestStart extends TaxNode<typeof startSchema> {
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
-    readonly outputNodeTypes = ["mock_a"] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_a", input: { value: input.val } }],
@@ -341,4 +275,79 @@ Deno.test("executor: stateless — same inputs produce identical outputs on repe
     JSON.stringify(result1.pending),
     JSON.stringify(result2.pending),
   );
+});
+
+Deno.test("executor: multi-source diamond — two nodes depositing to same target, both deposits arrive as scalars", () => {
+  // B and C both deposit different scalar fields to D.
+  // Engine merges them; D's pending has both fields as scalars.
+  const bInputSchema = z.object({ x: z.number() });
+  const cInputSchema = z.object({ y: z.number() });
+  const dInputSchema = z.object({
+    x: z.number().optional(),
+    y: z.number().optional(),
+  });
+
+  class DiamondD extends TaxNode<typeof dInputSchema> {
+    readonly nodeType = "diamond_d";
+    readonly inputSchema = dInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(): NodeResult {
+      return { outputs: [] };
+    }
+  }
+  class DiamondB extends TaxNode<typeof bInputSchema> {
+    readonly nodeType = "diamond_b";
+    readonly inputSchema = bInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(input: z.infer<typeof bInputSchema>): NodeResult {
+      return {
+        outputs: [{ nodeType: "diamond_d", input: { x: input.x } }],
+      };
+    }
+  }
+  class DiamondC extends TaxNode<typeof cInputSchema> {
+    readonly nodeType = "diamond_c";
+    readonly inputSchema = cInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(input: z.infer<typeof cInputSchema>): NodeResult {
+      return {
+        outputs: [{ nodeType: "diamond_d", input: { y: input.y } }],
+      };
+    }
+  }
+
+  const startSchema = z.object({ val: z.number() });
+  class DiamondStart extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(input: z.infer<typeof startSchema>): NodeResult {
+      return {
+        outputs: [
+          { nodeType: "diamond_b", input: { x: input.val } },
+          { nodeType: "diamond_c", input: { y: input.val * 2 } },
+        ],
+      };
+    }
+  }
+
+  const plan: readonly ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "diamond_b", nodeType: "diamond_b" },
+    { id: "diamond_c", nodeType: "diamond_c" },
+    { id: "diamond_d", nodeType: "diamond_d" },
+  ];
+
+  const registry: NodeRegistry = {
+    start: new DiamondStart(),
+    diamond_b: new DiamondB(),
+    diamond_c: new DiamondC(),
+    diamond_d: new DiamondD(),
+  };
+
+  const result = execute(plan, registry, { val: 10 });
+
+  // D's pending has both x=10 and y=20 as scalars
+  assertEquals(result.pending["diamond_d"]?.["x"], 10);
+  assertEquals(result.pending["diamond_d"]?.["y"], 20);
 });

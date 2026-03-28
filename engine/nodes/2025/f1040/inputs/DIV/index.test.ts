@@ -5,8 +5,10 @@ import { div } from "./index.ts";
 
 Deno.test("div.compute: box1a routes to schedule_b_dividends", () => {
   const result = div.compute({
-    payer_name: "Vanguard",
-    box1a: 1500,
+    div1099s: [{
+      payer_name: "Vanguard",
+      box1a: 1500,
+    }],
   });
 
   const sbOutput = result.outputs.find(
@@ -20,9 +22,11 @@ Deno.test("div.compute: box1a routes to schedule_b_dividends", () => {
 
 Deno.test("div.compute: box1b routes to f1040 line3a", () => {
   const result = div.compute({
-    payer_name: "Fidelity",
-    box1a: 2000,
-    box1b: 1800,
+    div1099s: [{
+      payer_name: "Fidelity",
+      box1a: 2000,
+      box1b: 1800,
+    }],
   });
 
   const f1040Output = result.outputs.find((o) => o.nodeType === "f1040");
@@ -33,12 +37,14 @@ Deno.test("div.compute: box1b routes to f1040 line3a", () => {
 
 Deno.test("div.compute: box2a routes to schedule_d", () => {
   const result = div.compute({
-    payer_name: "Fund",
-    box1a: 1000,
-    box2a: 300,
-    box2b: 50,
-    box2c: 20,
-    box2d: 10,
+    div1099s: [{
+      payer_name: "Fund",
+      box1a: 1000,
+      box2a: 300,
+      box2b: 50,
+      box2c: 20,
+      box2d: 10,
+    }],
   });
 
   const scheduleDOutput = result.outputs.find(
@@ -54,9 +60,11 @@ Deno.test("div.compute: box2a routes to schedule_d", () => {
 
 Deno.test("div.compute: box4 routes to f1040 line25b", () => {
   const result = div.compute({
-    payer_name: "Schwab",
-    box1a: 500,
-    box4: 140,
+    div1099s: [{
+      payer_name: "Schwab",
+      box1a: 500,
+      box4: 140,
+    }],
   });
 
   const f1040Output = result.outputs.find((o) => o.nodeType === "f1040");
@@ -67,9 +75,11 @@ Deno.test("div.compute: box4 routes to f1040 line25b", () => {
 
 Deno.test("div.compute: box5 routes to form8995", () => {
   const result = div.compute({
-    payer_name: "REIT Fund",
-    box1a: 1000,
-    box5: 400,
+    div1099s: [{
+      payer_name: "REIT Fund",
+      box1a: 1000,
+      box5: 400,
+    }],
   });
 
   const form8995Output = result.outputs.find((o) => o.nodeType === "form8995");
@@ -80,9 +90,11 @@ Deno.test("div.compute: box5 routes to form8995", () => {
 
 Deno.test("div.compute: box7 routes to schedule3 line1", () => {
   const result = div.compute({
-    payer_name: "Intl Fund",
-    box1a: 2000,
-    box7: 120,
+    div1099s: [{
+      payer_name: "Intl Fund",
+      box1a: 2000,
+      box7: 120,
+    }],
   });
 
   const schedule3Output = result.outputs.find(
@@ -95,10 +107,12 @@ Deno.test("div.compute: box7 routes to schedule3 line1", () => {
 
 Deno.test("div.compute: box12 - box13 routes to f1040 line2a", () => {
   const result = div.compute({
-    payer_name: "Muni Fund",
-    box1a: 0,
-    box12: 800,
-    box13: 200,
+    div1099s: [{
+      payer_name: "Muni Fund",
+      box1a: 0,
+      box12: 800,
+      box13: 200,
+    }],
   });
 
   const f1040Output = result.outputs.find((o) => o.nodeType === "f1040");
@@ -109,10 +123,12 @@ Deno.test("div.compute: box12 - box13 routes to f1040 line2a", () => {
 
 Deno.test("div.compute: box13 routes to form6251 line2g", () => {
   const result = div.compute({
-    payer_name: "PAB Fund",
-    box1a: 0,
-    box12: 500,
-    box13: 200,
+    div1099s: [{
+      payer_name: "PAB Fund",
+      box1a: 0,
+      box12: 500,
+      box13: 200,
+    }],
   });
 
   const form6251Output = result.outputs.find((o) => o.nodeType === "form6251");
@@ -127,9 +143,11 @@ Deno.test("div.compute: box1b > box1a throws validation error", () => {
   let threw = false;
   try {
     div.compute({
-      payer_name: "Fund",
-      box1a: 100,
-      box1b: 200,
+      div1099s: [{
+        payer_name: "Fund",
+        box1a: 100,
+        box1b: 200,
+      }],
     });
   } catch (e) {
     threw = true;
@@ -146,10 +164,12 @@ Deno.test("div.compute: box13 > box12 throws validation error", () => {
   let threw = false;
   try {
     div.compute({
-      payer_name: "Fund",
-      box1a: 0,
-      box12: 100,
-      box13: 200,
+      div1099s: [{
+        payer_name: "Fund",
+        box1a: 0,
+        box12: 100,
+        box13: 200,
+      }],
     });
   } catch (e) {
     threw = true;

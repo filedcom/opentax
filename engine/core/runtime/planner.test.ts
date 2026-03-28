@@ -3,116 +3,53 @@ import { z } from "zod";
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
 import { TaxNode } from "../types/tax-node.ts";
+import { OutputNodes } from "../types/output-nodes.ts";
 import { buildExecutionPlan } from "./planner.ts";
 
-// --- Mock Nodes ---
+// --- Mock Nodes (defined leaf-first so instances can be passed to OutputNodes) ---
 
-// A leaf node (no outputs)
-const leafInputSchema = z.object({
-  value: z.number().optional(),
-});
+const leafInputSchema = z.object({ value: z.number().optional() });
 class MockLeafNode extends TaxNode<typeof leafInputSchema> {
   readonly nodeType = "mock_leaf";
   readonly inputSchema = leafInputSchema;
-  readonly outputNodeTypes = [] as const;
+  readonly outputNodes = new OutputNodes([]);
   compute(): NodeResult {
     return { outputs: [] };
   }
 }
+const mockLeafNode = new MockLeafNode();
 
-// A W2-like node that deposits to a leaf
+// W2 node takes full array (new model)
 const w2InputSchema = z.object({
-  wages: z.number(),
+  w2s: z.array(z.object({ wages: z.number() })).min(1),
 });
 class MockW2Node extends TaxNode<typeof w2InputSchema> {
   readonly nodeType = "mock_w2";
   readonly inputSchema = w2InputSchema;
-  readonly outputNodeTypes = ["mock_leaf"] as const;
+  readonly outputNodes = new OutputNodes([mockLeafNode]);
   compute(input: z.infer<typeof w2InputSchema>): NodeResult {
+    const total = input.w2s.reduce((s, w) => s + w.wages, 0);
     return {
-      outputs: [{ nodeType: "mock_leaf", input: { value: input.wages } }],
+      outputs: [{ nodeType: "mock_leaf", input: { value: total } }],
     };
   }
 }
+const mockW2Node = new MockW2Node();
 
-// A start node that dispatches to one mock_w2
-const singleW2InputSchema = z.object({
+// Start node dispatches full w2 array as single output (new model)
+const startInputSchema = z.object({
   w2s: z.array(z.object({ wages: z.number() })).optional(),
 });
-class MockSingleStartNode extends TaxNode<typeof singleW2InputSchema> {
+class MockStartNode extends TaxNode<typeof startInputSchema> {
   readonly nodeType = "start";
-  readonly inputSchema = singleW2InputSchema;
-  readonly outputNodeTypes = ["mock_w2"] as const;
-  compute(input: z.infer<typeof singleW2InputSchema>): NodeResult {
-    const outputs = (input.w2s ?? []).map((w2) => ({
-      nodeType: "mock_w2" as const,
-      input: { wages: w2.wages },
-    }));
+  readonly inputSchema = startInputSchema;
+  readonly outputNodes = new OutputNodes([mockW2Node]);
+  compute(input: z.infer<typeof startInputSchema>): NodeResult {
+    const outputs = [];
+    if (input.w2s?.length) {
+      outputs.push({ nodeType: "mock_w2" as const, input: { w2s: input.w2s } });
+    }
     return { outputs };
-  }
-}
-
-// A start node that dispatches multiple W-2 instances
-const multiW2InputSchema = z.object({
-  w2s: z.array(z.object({ wages: z.number() })),
-});
-class _MockMultiStartNode extends TaxNode<typeof multiW2InputSchema> {
-  readonly nodeType = "start";
-  readonly inputSchema = multiW2InputSchema;
-  readonly outputNodeTypes = ["mock_w2"] as const;
-  compute(input: z.infer<typeof multiW2InputSchema>): NodeResult {
-    return {
-      outputs: input.w2s.map((w2) => ({
-        nodeType: "mock_w2" as const,
-        input: { wages: w2.wages },
-      })),
-    };
-  }
-}
-
-// An aggregator node (receives from multiple upstream, outputs to nothing)
-const aggregatorInputSchema = z.object({
-  wages: z.array(z.number()).optional(),
-});
-class MockAggregatorNode extends TaxNode<typeof aggregatorInputSchema> {
-  readonly nodeType = "mock_aggregator";
-  readonly inputSchema = aggregatorInputSchema;
-  readonly outputNodeTypes = [] as const;
-  compute(): NodeResult {
-    return { outputs: [] };
-  }
-}
-
-// A W2 node that deposits to aggregator
-const w2ToAggSchema = z.object({
-  wages: z.number(),
-});
-class MockW2ToAggNode extends TaxNode<typeof w2ToAggSchema> {
-  readonly nodeType = "mock_w2_agg";
-  readonly inputSchema = w2ToAggSchema;
-  readonly outputNodeTypes = ["mock_aggregator"] as const;
-  compute(input: z.infer<typeof w2ToAggSchema>): NodeResult {
-    return {
-      outputs: [{ nodeType: "mock_aggregator", input: { wages: input.wages } }],
-    };
-  }
-}
-
-// Start node for multi-instance + aggregator scenario
-const multiAggInputSchema = z.object({
-  w2s: z.array(z.object({ wages: z.number() })),
-});
-class MockMultiAggStartNode extends TaxNode<typeof multiAggInputSchema> {
-  readonly nodeType = "start";
-  readonly inputSchema = multiAggInputSchema;
-  readonly outputNodeTypes = ["mock_w2_agg"] as const;
-  compute(input: z.infer<typeof multiAggInputSchema>): NodeResult {
-    return {
-      outputs: input.w2s.map((w2) => ({
-        nodeType: "mock_w2_agg" as const,
-        input: { wages: w2.wages },
-      })),
-    };
   }
 }
 
@@ -123,15 +60,13 @@ Deno.test("planner: single node (start only, no outputs) produces [start]", () =
   class EmptyStartNode extends TaxNode<typeof emptyStartSchema> {
     readonly nodeType = "start";
     readonly inputSchema = emptyStartSchema;
-    readonly outputNodeTypes = [] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(): NodeResult {
       return { outputs: [] };
     }
   }
-  const registry: NodeRegistry = {
-    start: new EmptyStartNode(),
-  };
-  const plan = buildExecutionPlan(registry, {});
+  const registry: NodeRegistry = { start: new EmptyStartNode() };
+  const plan = buildExecutionPlan(registry);
   assertEquals(plan.length, 1);
   assertEquals(plan[0].id, "start");
   assertEquals(plan[0].nodeType, "start");
@@ -139,107 +74,94 @@ Deno.test("planner: single node (start only, no outputs) produces [start]", () =
 
 Deno.test("planner: linear chain (start -> mock_w2 -> mock_leaf) produces correct topo order", () => {
   const registry: NodeRegistry = {
-    start: new MockSingleStartNode(),
-    mock_w2: new MockW2Node(),
-    mock_leaf: new MockLeafNode(),
+    start: new MockStartNode(),
+    mock_w2: mockW2Node,
+    mock_leaf: mockLeafNode,
   };
-  const inputs = { w2s: [{ wages: 50000 }] };
-  const plan = buildExecutionPlan(registry, inputs);
+  const plan = buildExecutionPlan(registry);
 
-  // Should be: start, mock_w2, mock_leaf
+  // 3 node types: start, mock_w2, mock_leaf
   assertEquals(plan.length, 3);
   assertEquals(plan[0].id, "start");
   assertEquals(plan[0].nodeType, "start");
 
-  // mock_w2 must come before mock_leaf
+  // mock_w2 before mock_leaf
   const w2Idx = plan.findIndex((s) => s.nodeType === "mock_w2");
   const leafIdx = plan.findIndex((s) => s.nodeType === "mock_leaf");
   assertEquals(w2Idx < leafIdx, true);
 });
 
-Deno.test("planner: multi-instance expansion (start dispatches w2_01, w2_02) creates separate instances", () => {
+Deno.test("planner: each nodeType fires exactly once regardless of input count", () => {
+  // Even with 5 W-2s in inputs, mock_w2 appears exactly once in the plan
   const registry: NodeRegistry = {
-    start: new MockMultiAggStartNode(),
-    mock_w2_agg: new MockW2ToAggNode(),
-    mock_aggregator: new MockAggregatorNode(),
+    start: new MockStartNode(),
+    mock_w2: mockW2Node,
+    mock_leaf: mockLeafNode,
   };
-  const inputs = {
-    w2s: [{ wages: 85000 }, { wages: 45000 }],
-  };
-  const plan = buildExecutionPlan(registry, inputs);
+  const plan = buildExecutionPlan(registry);
 
-  // Should have: start, mock_w2_agg_01, mock_w2_agg_02, mock_aggregator
-  assertEquals(plan.length, 4);
-  assertEquals(plan[0].id, "start");
-
-  // Two w2_agg instances
-  const w2Instances = plan.filter((s) => s.nodeType === "mock_w2_agg");
-  assertEquals(w2Instances.length, 2);
-  assertEquals(w2Instances[0].id, "mock_w2_agg_01");
-  assertEquals(w2Instances[1].id, "mock_w2_agg_02");
-
-  // Both w2 instances before aggregator
-  const aggIdx = plan.findIndex((s) => s.nodeType === "mock_aggregator");
-  const w2Idx1 = plan.findIndex((s) => s.id === "mock_w2_agg_01");
-  const w2Idx2 = plan.findIndex((s) => s.id === "mock_w2_agg_02");
-  assertEquals(w2Idx1 < aggIdx, true);
-  assertEquals(w2Idx2 < aggIdx, true);
+  const w2Steps = plan.filter((s) => s.nodeType === "mock_w2");
+  assertEquals(w2Steps.length, 1);
 });
 
-Deno.test("planner: single instance does NOT get numeric suffix (uses nodeType as ID)", () => {
+Deno.test("planner: step ID equals nodeType (no numeric suffixes)", () => {
   const registry: NodeRegistry = {
-    start: new MockSingleStartNode(),
-    mock_w2: new MockW2Node(),
-    mock_leaf: new MockLeafNode(),
+    start: new MockStartNode(),
+    mock_w2: mockW2Node,
+    mock_leaf: mockLeafNode,
   };
-  const inputs = { w2s: [{ wages: 60000 }] };
-  const plan = buildExecutionPlan(registry, inputs);
+  const plan = buildExecutionPlan(registry);
 
-  // Single w2 dispatch → ID should be "mock_w2", not "mock_w2_01"
-  const w2Step = plan.find((s) => s.nodeType === "mock_w2");
-  assertEquals(w2Step?.id, "mock_w2");
+  for (const step of plan) {
+    assertEquals(step.id, step.nodeType);
+  }
 });
 
-Deno.test("planner: diamond graph (A -> B, A -> C, B -> D, C -> D) produces valid topo order", () => {
-  // We simulate a diamond using a start that dispatches B and C,
-  // and both B and C output to D.
+Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid topo order", () => {
   const bInputSchema = z.object({ x: z.number() });
   const cInputSchema = z.object({ y: z.number() });
   const dInputSchema = z.object({ result: z.number().optional() });
 
+  // Define leaf-first so instances can be referenced in parent outputNodes
   class DiamondD extends TaxNode<typeof dInputSchema> {
     readonly nodeType = "diamond_d";
     readonly inputSchema = dInputSchema;
-    readonly outputNodeTypes = [] as const;
+    readonly outputNodes = new OutputNodes([]);
     compute(): NodeResult {
       return { outputs: [] };
     }
   }
+  const diamondD = new DiamondD();
+
   class DiamondB extends TaxNode<typeof bInputSchema> {
     readonly nodeType = "diamond_b";
     readonly inputSchema = bInputSchema;
-    readonly outputNodeTypes = ["diamond_d"] as const;
+    readonly outputNodes = new OutputNodes([diamondD]);
     compute(input: z.infer<typeof bInputSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "diamond_d", input: { result: input.x } }],
       };
     }
   }
+  const diamondB = new DiamondB();
+
   class DiamondC extends TaxNode<typeof cInputSchema> {
     readonly nodeType = "diamond_c";
     readonly inputSchema = cInputSchema;
-    readonly outputNodeTypes = ["diamond_d"] as const;
+    readonly outputNodes = new OutputNodes([diamondD]);
     compute(input: z.infer<typeof cInputSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "diamond_d", input: { result: input.y } }],
       };
     }
   }
+  const diamondC = new DiamondC();
+
   const diamondStartSchema = z.object({ val: z.number() });
   class DiamondStart extends TaxNode<typeof diamondStartSchema> {
     readonly nodeType = "start";
     readonly inputSchema = diamondStartSchema;
-    readonly outputNodeTypes = ["diamond_b", "diamond_c"] as const;
+    readonly outputNodes = new OutputNodes([diamondB, diamondC]);
     compute(input: z.infer<typeof diamondStartSchema>): NodeResult {
       return {
         outputs: [
@@ -252,11 +174,11 @@ Deno.test("planner: diamond graph (A -> B, A -> C, B -> D, C -> D) produces vali
 
   const registry: NodeRegistry = {
     start: new DiamondStart(),
-    diamond_b: new DiamondB(),
-    diamond_c: new DiamondC(),
-    diamond_d: new DiamondD(),
+    diamond_b: diamondB,
+    diamond_c: diamondC,
+    diamond_d: diamondD,
   };
-  const plan = buildExecutionPlan(registry, { val: 10 });
+  const plan = buildExecutionPlan(registry);
 
   assertEquals(plan.length, 4);
   const startIdx = plan.findIndex((s) => s.id === "start");
@@ -264,10 +186,35 @@ Deno.test("planner: diamond graph (A -> B, A -> C, B -> D, C -> D) produces vali
   const cIdx = plan.findIndex((s) => s.nodeType === "diamond_c");
   const dIdx = plan.findIndex((s) => s.nodeType === "diamond_d");
 
-  // start before B and C
   assertEquals(startIdx < bIdx, true);
   assertEquals(startIdx < cIdx, true);
-  // B and C before D
   assertEquals(bIdx < dIdx, true);
   assertEquals(cIdx < dIdx, true);
+});
+
+Deno.test("planner: all nodes in registry appear in plan (optional nodes included — executor skips them)", () => {
+  // Optional nodes (e.g. schedule_c) are included in the plan even when inputs
+  // contain no schedule_c data. The executor silently skips them via Zod parse fail.
+  const optionalSchema = z.object({ required_field: z.string() });
+  class OptionalNode extends TaxNode<typeof optionalSchema> {
+    readonly nodeType = "optional_node";
+    readonly inputSchema = optionalSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(): NodeResult {
+      return { outputs: [] };
+    }
+  }
+
+  const registry: NodeRegistry = {
+    start: new MockStartNode(),
+    mock_w2: mockW2Node,
+    mock_leaf: mockLeafNode,
+    optional_node: new OptionalNode(),
+  };
+  const plan = buildExecutionPlan(registry);
+
+  assertEquals(plan.length, 4);
+  const optionalStep = plan.find((s) => s.nodeType === "optional_node");
+  assertEquals(optionalStep !== undefined, true);
+  assertEquals(optionalStep!.id, "optional_node");
 });

@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { scheduleC } from "./index.ts";
 
-const BASE_INPUT = {
+const BASE_ITEM = {
   line_a_principal_business: "Software consulting",
   line_b_business_code: "541510",
   line_f_accounting_method: "cash" as const,
@@ -13,9 +13,11 @@ const BASE_INPUT = {
 
 Deno.test("scheduleC.compute: simple profit routes to schedule1 line3", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_8_advertising: 2_000,
-    line_17_professional_services: 3_000,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_8_advertising: 2_000,
+      line_17_professional_services: 3_000,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -26,8 +28,10 @@ Deno.test("scheduleC.compute: simple profit routes to schedule1 line3", () => {
 
 Deno.test("scheduleC.compute: returns and allowances reduce gross receipts", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_2_returns_allowances: 5_000,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_2_returns_allowances: 5_000,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -39,12 +43,14 @@ Deno.test("scheduleC.compute: returns and allowances reduce gross receipts", () 
 
 Deno.test("scheduleC.compute: COGS reduces gross profit correctly", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_35_cogs_beginning_inventory: 10_000,
-    line_36_purchases: 20_000,
-    line_37_cost_of_labor: 5_000,
-    line_38_materials_supplies_cogs: 3_000,
-    line_39_other_cogs: 2_000,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_35_cogs_beginning_inventory: 10_000,
+      line_36_purchases: 20_000,
+      line_37_cost_of_labor: 5_000,
+      line_38_materials_supplies_cogs: 3_000,
+      line_39_other_cogs: 2_000,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -57,8 +63,10 @@ Deno.test("scheduleC.compute: COGS reduces gross profit correctly", () => {
 
 Deno.test("scheduleC.compute: meals expense applies 50% limitation", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_24b_meals: 4_000,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_24b_meals: 4_000,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -70,7 +78,7 @@ Deno.test("scheduleC.compute: meals expense applies 50% limitation", () => {
 // ---- Unit: SE tax routing ----
 
 Deno.test("scheduleC.compute: profit >= $400 triggers schedule_se and form8995", () => {
-  const result = scheduleC.compute({ ...BASE_INPUT });
+  const result = scheduleC.compute({ schedule_cs: [{ ...BASE_ITEM }] });
 
   const se = result.outputs.find((o) => o.nodeType === "schedule_se");
   const qbi = result.outputs.find((o) => o.nodeType === "form8995");
@@ -85,9 +93,11 @@ Deno.test("scheduleC.compute: profit >= $400 triggers schedule_se and form8995",
 
 Deno.test("scheduleC.compute: profit < $400 does NOT trigger schedule_se or form8995", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_1_gross_receipts: 300,
-    line_8_advertising: 0,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_1_gross_receipts: 300,
+      line_8_advertising: 0,
+    }],
   });
 
   const se = result.outputs.find((o) => o.nodeType === "schedule_se");
@@ -100,8 +110,10 @@ Deno.test("scheduleC.compute: profit < $400 does NOT trigger schedule_se or form
 
 Deno.test("scheduleC.compute: statutory_employee suppresses SE and QBI routing", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    statutory_employee: true,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      statutory_employee: true,
+    }],
   });
 
   const se = result.outputs.find((o) => o.nodeType === "schedule_se");
@@ -118,8 +130,10 @@ Deno.test("scheduleC.compute: statutory_employee suppresses SE and QBI routing",
 
 Deno.test("scheduleC.compute: exempt_notary suppresses SE and QBI routing", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    exempt_notary: true,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      exempt_notary: true,
+    }],
   });
 
   const se = result.outputs.find((o) => o.nodeType === "schedule_se");
@@ -130,10 +144,12 @@ Deno.test("scheduleC.compute: exempt_notary suppresses SE and QBI routing", () =
 
 Deno.test("scheduleC.compute: professional_gambler caps net profit at zero (no loss)", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_1_gross_receipts: 5_000,
-    line_8_advertising: 20_000,
-    professional_gambler: true,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_1_gross_receipts: 5_000,
+      line_8_advertising: 20_000,
+      professional_gambler: true,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -144,9 +160,11 @@ Deno.test("scheduleC.compute: professional_gambler caps net profit at zero (no l
 
 Deno.test("scheduleC.compute: non-gambler can report negative net profit (loss)", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_1_gross_receipts: 5_000,
-    line_8_advertising: 20_000,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_1_gross_receipts: 5_000,
+      line_8_advertising: 20_000,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -158,8 +176,10 @@ Deno.test("scheduleC.compute: non-gambler can report negative net profit (loss)"
 
 Deno.test("scheduleC.compute: negative other income reduces gross income", () => {
   const result = scheduleC.compute({
-    ...BASE_INPUT,
-    line_6_other_income: -2_000,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_6_other_income: -2_000,
+    }],
   });
 
   const s1 = result.outputs.find((o) => o.nodeType === "schedule1");
@@ -170,27 +190,31 @@ Deno.test("scheduleC.compute: negative other income reduces gross income", () =>
 // ---- Unit: inputSchema validation ----
 
 Deno.test("scheduleC.inputSchema: missing required fields fails validation", () => {
-  const parsed = scheduleC.inputSchema.safeParse({});
+  const parsed = scheduleC.inputSchema.safeParse({ schedule_cs: [{}] });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("scheduleC.inputSchema: negative gross receipts fails validation", () => {
   const parsed = scheduleC.inputSchema.safeParse({
-    ...BASE_INPUT,
-    line_1_gross_receipts: -1,
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_1_gross_receipts: -1,
+    }],
   });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("scheduleC.inputSchema: invalid accounting method fails validation", () => {
   const parsed = scheduleC.inputSchema.safeParse({
-    ...BASE_INPUT,
-    line_f_accounting_method: "hybrid",
+    schedule_cs: [{
+      ...BASE_ITEM,
+      line_f_accounting_method: "hybrid",
+    }],
   });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("scheduleC.inputSchema: valid minimal input passes", () => {
-  const parsed = scheduleC.inputSchema.safeParse(BASE_INPUT);
+  const parsed = scheduleC.inputSchema.safeParse({ schedule_cs: [BASE_ITEM] });
   assertEquals(parsed.success, true);
 });

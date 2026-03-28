@@ -1,130 +1,122 @@
 import { z } from "zod";
+import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import type { NodeResult } from "../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../core/types/tax-node.ts";
-import { inputSchema as divInputSchema } from "../inputs/DIV/index.ts";
-import { inputSchema as intInputSchema } from "../inputs/INT/index.ts";
-import { inputSchema as necInputSchema } from "../inputs/NEC/index.ts";
-import { inputSchema as g99InputSchema } from "../inputs/99G/index.ts";
-import { inputSchema as m99InputSchema } from "../inputs/99M/index.ts";
-import { inputSchema as c99InputSchema } from "../inputs/99C/index.ts";
-import { inputSchema as k99InputSchema } from "../inputs/99K/index.ts";
-import { inputSchema as b99InputSchema } from "../inputs/99B/index.ts";
-import { inputSchema as r1099InputSchema } from "../inputs/1099/index.ts";
-import { inputSchema as f1098InputSchema } from "../inputs/1098/index.ts";
-import { inputSchema as f2441InputSchema } from "../inputs/2441/index.ts";
-import { inputSchema as f8812InputSchema } from "../inputs/8812/index.ts";
-import { inputSchema as f8863InputSchema } from "../inputs/8863/index.ts";
-import { inputSchema as f8949InputSchema } from "../inputs/8949/index.ts";
-import { inputSchema as scheduleAInputSchema } from "../inputs/A/index.ts";
-import { inputSchema as scheduleCInputSchema } from "../inputs/C/index.ts";
-import { inputSchema as scheduleDInputSchema } from "../inputs/D/index.ts";
-import { inputSchema as scheduleEInputSchema } from "../inputs/E/index.ts";
-import { inputSchema as extInputSchema } from "../inputs/EXT/index.ts";
-import { inputSchema as w2InputSchema } from "../inputs/W2/index.ts";
+import { f1098, itemSchema as f1098ItemSchema } from "../inputs/1098/index.ts";
+import { itemSchema as r1099ItemSchema, r1099 } from "../inputs/1099/index.ts";
+import { f2441, itemSchema as f2441ItemSchema } from "../inputs/2441/index.ts";
+import { f8812, itemSchema as f8812ItemSchema } from "../inputs/8812/index.ts";
+import { f8863, itemSchema as f8863ItemSchema } from "../inputs/8863/index.ts";
+import { f8949, itemSchema as f8949ItemSchema } from "../inputs/8949/index.ts";
+import { b99, itemSchema as b99ItemSchema } from "../inputs/99B/index.ts";
+import { c99, itemSchema as c99ItemSchema } from "../inputs/99C/index.ts";
+import { g99, itemSchema as g99ItemSchema } from "../inputs/99G/index.ts";
+import { itemSchema as k99ItemSchema, k99 } from "../inputs/99K/index.ts";
+import { itemSchema as m99ItemSchema, m99 } from "../inputs/99M/index.ts";
+import {
+  inputSchema as scheduleAInputSchema,
+  scheduleA,
+} from "../inputs/A/index.ts";
+import {
+  itemSchema as scheduleCItemSchema,
+  scheduleC,
+} from "../inputs/C/index.ts";
+import {
+  inputSchema as scheduleDInputSchema,
+  scheduleD,
+} from "../inputs/D/index.ts";
+import { div, itemSchema as divItemSchema } from "../inputs/DIV/index.ts";
+import {
+  itemSchema as scheduleEItemSchema,
+  scheduleE,
+} from "../inputs/E/index.ts";
+import { ext, inputSchema as extInputSchema } from "../inputs/EXT/index.ts";
+import { int, itemSchema as intItemSchema } from "../inputs/INT/index.ts";
+import { itemSchema as necItemSchema, nec } from "../inputs/NEC/index.ts";
+import { w2, w2ItemSchema } from "../inputs/W2/index.ts";
 
 const inputSchema = z.object({
-  // Original inputs
-  w2s: z.array(w2InputSchema).optional(),
-  int1099s: z.array(intInputSchema).optional(),
-  div1099s: z.array(divInputSchema).optional(),
-  // New inputs
-  necs: z.array(necInputSchema).optional(),
-  g99s: z.array(g99InputSchema).optional(),
-  m99s: z.array(m99InputSchema).optional(),
-  c99s: z.array(c99InputSchema).optional(),
-  k99s: z.array(k99InputSchema).optional(),
-  b99s: z.array(b99InputSchema).optional(),
-  r1099s: z.array(r1099InputSchema).optional(),
-  f1098s: z.array(f1098InputSchema).optional(),
-  f2441s: z.array(f2441InputSchema).optional(),
-  f8812s: z.array(f8812InputSchema).optional(),
-  f8863s: z.array(f8863InputSchema).optional(),
-  f8949s: z.array(f8949InputSchema).optional(),
+  // W-2s: dispatched as full array to w2 node (which aggregates internally)
+  w2s: z.array(w2ItemSchema).optional(),
+  // All other array input nodes: each node receives full array and processes internally
+  int1099s: z.array(intItemSchema).optional(),
+  div1099s: z.array(divItemSchema).optional(),
+  necs: z.array(necItemSchema).optional(),
+  g99s: z.array(g99ItemSchema).optional(),
+  m99s: z.array(m99ItemSchema).optional(),
+  c99s: z.array(c99ItemSchema).optional(),
+  k99s: z.array(k99ItemSchema).optional(),
+  b99s: z.array(b99ItemSchema).optional(),
+  r1099s: z.array(r1099ItemSchema).optional(),
+  f1098s: z.array(f1098ItemSchema).optional(),
+  f2441s: z.array(f2441ItemSchema).optional(),
+  f8812s: z.array(f8812ItemSchema).optional(),
+  f8863s: z.array(f8863ItemSchema).optional(),
+  f8949s: z.array(f8949ItemSchema).optional(),
   schedule_a: scheduleAInputSchema.optional(),
-  schedule_cs: z.array(scheduleCInputSchema).optional(),
+  schedule_cs: z.array(scheduleCItemSchema).optional(),
   d_screen: scheduleDInputSchema.optional(),
-  schedule_es: z.array(scheduleEInputSchema).optional(),
+  schedule_es: z.array(scheduleEItemSchema).optional(),
   ext: extInputSchema.optional(),
 });
 
 type StartInput = z.infer<typeof inputSchema>;
 
-function emitArray(
-  outputs: Array<{ nodeType: string; input: Record<string, unknown> }>,
-  items: Array<Record<string, unknown>> | undefined,
-  nodeType: string,
-): void {
-  if (!items || items.length === 0) return;
-  if (items.length === 1) {
-    outputs.push({ nodeType, input: items[0] });
-  } else {
-    for (let i = 0; i < items.length; i++) {
-      const suffix = String(i + 1).padStart(2, "0");
-      outputs.push({ nodeType: `${nodeType}_${suffix}`, input: items[i] });
-    }
-  }
-}
-
 class StartNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "start";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = [
-    "w2",
-    "int",
-    "div",
-    "nec",
-    "g99",
-    "m99",
-    "c99",
-    "k99",
-    "b99",
-    "r1099",
-    "f1098",
-    "f2441",
-    "f8812",
-    "f8863",
-    "f8949",
-    "schedule_a",
-    "schedule_c",
-    "d_screen",
-    "schedule_e",
-    "ext",
-  ] as const;
+  readonly outputNodes = new OutputNodes([
+    w2,
+    int,
+    div,
+    nec,
+    g99,
+    m99,
+    c99,
+    k99,
+    b99,
+    r1099,
+    f1098,
+    f2441,
+    f8812,
+    f8863,
+    f8949,
+    scheduleA,
+    scheduleC,
+    scheduleD,
+    scheduleE,
+    ext,
+  ]);
 
   compute(input: StartInput): NodeResult {
-    const outputs: Array<{ nodeType: string; input: Record<string, unknown> }> =
-      [];
+    const out = this.outputNodes.builder();
 
-    emitArray(outputs, input.w2s as Array<Record<string, unknown>> | undefined, "w2");
-    emitArray(outputs, input.int1099s as Array<Record<string, unknown>> | undefined, "int");
-    emitArray(outputs, input.div1099s as Array<Record<string, unknown>> | undefined, "div");
-    emitArray(outputs, input.necs as Array<Record<string, unknown>> | undefined, "nec");
-    emitArray(outputs, input.g99s as Array<Record<string, unknown>> | undefined, "g99");
-    emitArray(outputs, input.m99s as Array<Record<string, unknown>> | undefined, "m99");
-    emitArray(outputs, input.c99s as Array<Record<string, unknown>> | undefined, "c99");
-    emitArray(outputs, input.k99s as Array<Record<string, unknown>> | undefined, "k99");
-    emitArray(outputs, input.b99s as Array<Record<string, unknown>> | undefined, "b99");
-    emitArray(outputs, input.r1099s as Array<Record<string, unknown>> | undefined, "r1099");
-    emitArray(outputs, input.f1098s as Array<Record<string, unknown>> | undefined, "f1098");
-    emitArray(outputs, input.f2441s as Array<Record<string, unknown>> | undefined, "f2441");
-    emitArray(outputs, input.f8812s as Array<Record<string, unknown>> | undefined, "f8812");
-    emitArray(outputs, input.f8863s as Array<Record<string, unknown>> | undefined, "f8863");
-    emitArray(outputs, input.f8949s as Array<Record<string, unknown>> | undefined, "f8949");
-    emitArray(outputs, input.schedule_cs as Array<Record<string, unknown>> | undefined, "schedule_c");
-    emitArray(outputs, input.schedule_es as Array<Record<string, unknown>> | undefined, "schedule_e");
+    if (input.w2s?.length) out.add(w2, { w2s: input.w2s });
+    if (input.int1099s?.length) out.add(int, { int1099s: input.int1099s });
+    if (input.div1099s?.length) out.add(div, { div1099s: input.div1099s });
+    if (input.necs?.length) out.add(nec, { necs: input.necs });
+    if (input.g99s?.length) out.add(g99, { g99s: input.g99s });
+    if (input.m99s?.length) out.add(m99, { m99s: input.m99s });
+    if (input.c99s?.length) out.add(c99, { c99s: input.c99s });
+    if (input.k99s?.length) out.add(k99, { k99s: input.k99s });
+    if (input.b99s?.length) out.add(b99, { b99s: input.b99s });
+    if (input.r1099s?.length) out.add(r1099, { r1099s: input.r1099s });
+    if (input.f1098s?.length) out.add(f1098, { f1098s: input.f1098s });
+    if (input.f2441s?.length) out.add(f2441, { f2441s: input.f2441s });
+    if (input.f8812s?.length) out.add(f8812, { f8812s: input.f8812s });
+    if (input.f8863s?.length) out.add(f8863, { f8863s: input.f8863s });
+    if (input.f8949s?.length) out.add(f8949, { f8949s: input.f8949s });
+    if (input.schedule_cs?.length) {
+      out.add(scheduleC, { schedule_cs: input.schedule_cs });
+    }
+    if (input.schedule_es?.length) {
+      out.add(scheduleE, { schedule_es: input.schedule_es });
+    }
+    if (input.schedule_a) out.add(scheduleA, input.schedule_a);
+    if (input.d_screen) out.add(scheduleD, input.d_screen);
+    if (input.ext) out.add(ext, input.ext);
 
-    // Singletons (one per return)
-    if (input.schedule_a) {
-      outputs.push({ nodeType: "schedule_a", input: input.schedule_a as Record<string, unknown> });
-    }
-    if (input.d_screen) {
-      outputs.push({ nodeType: "d_screen", input: input.d_screen as Record<string, unknown> });
-    }
-    if (input.ext) {
-      outputs.push({ nodeType: "ext", input: input.ext as Record<string, unknown> });
-    }
-
-    return { outputs };
+    return out.build();
   }
 }
 

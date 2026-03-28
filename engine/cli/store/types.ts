@@ -4,8 +4,14 @@ export type MetaJson = {
   readonly createdAt: string; // ISO 8601
 };
 
-export type InputEntry = {
+export type NodeInputEntry = {
   readonly id: string; // e.g. "w2_01"
-  readonly nodeType: string; // e.g. "w2"
-  readonly data: Readonly<Record<string, unknown>>;
+  readonly fields: Readonly<Record<string, unknown>>;
+};
+
+export type InputsJson = Record<string, NodeInputEntry[]>;
+
+export type ReturnJson = {
+  readonly meta: MetaJson;
+  readonly inputs: InputsJson;
 };

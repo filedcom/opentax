@@ -4,6 +4,7 @@ import { registry } from "../../nodes/2025/registry.ts";
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
 import { TaxNode } from "../types/tax-node.ts";
+import { OutputNodes } from "../types/output-nodes.ts";
 import type { GraphNode } from "./graph.ts";
 import { computeTaxGraph } from "./graph.ts";
 
@@ -11,19 +12,39 @@ import { computeTaxGraph } from "./graph.ts";
 
 const noOpSchema = z.object({});
 
+// A node whose declared output is not in the registry — used to test "unregistered child"
+class UnregisteredChildNode extends TaxNode<typeof noOpSchema> {
+  readonly nodeType = "nonexistent";
+  readonly inputSchema = noOpSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(): NodeResult {
+    return { outputs: [] };
+  }
+}
+const unregisteredChildNode = new UnregisteredChildNode();
+
 class MockParentNode extends TaxNode<typeof noOpSchema> {
   readonly nodeType = "mock_parent";
   readonly inputSchema = noOpSchema;
-  readonly outputNodeTypes = ["nonexistent"] as const;
+  readonly outputNodes = new OutputNodes([unregisteredChildNode]);
   compute(): NodeResult {
     return { outputs: [] };
   }
 }
 
+// Cyclic A → B → A: use getters so each side can reference the other's instance lazily
+// (class fields would need the other instance to already exist at construction time)
+// deno-lint-ignore prefer-const
+let mockANode: MockANode;
+// deno-lint-ignore prefer-const
+let mockBNode: MockBNode;
+
 class MockANode extends TaxNode<typeof noOpSchema> {
   readonly nodeType = "mock_a";
   readonly inputSchema = noOpSchema;
-  readonly outputNodeTypes = ["mock_b"] as const;
+  get outputNodes(): OutputNodes<[MockBNode]> {
+    return new OutputNodes([mockBNode]);
+  }
   compute(): NodeResult {
     return { outputs: [] };
   }
@@ -32,11 +53,16 @@ class MockANode extends TaxNode<typeof noOpSchema> {
 class MockBNode extends TaxNode<typeof noOpSchema> {
   readonly nodeType = "mock_b";
   readonly inputSchema = noOpSchema;
-  readonly outputNodeTypes = ["mock_a"] as const;
+  get outputNodes(): OutputNodes<[MockANode]> {
+    return new OutputNodes([mockANode]);
+  }
   compute(): NodeResult {
     return { outputs: [] };
   }
 }
+
+mockANode = new MockANode();
+mockBNode = new MockBNode();
 
 // --- Tests ---
 
@@ -106,8 +132,10 @@ Deno.test("computeTaxGraph: maxDepth=0 on start returns just start node with emp
 });
 
 Deno.test("computeTaxGraph: unregistered child appears with registered=false and empty children", () => {
+  // mock_parent declares output to "nonexistent" node, which is not in the registry
   const mockRegistry: NodeRegistry = {
     mock_parent: new MockParentNode(),
+    // "nonexistent" is intentionally absent
   };
 
   const result: GraphNode = computeTaxGraph("mock_parent", mockRegistry);
@@ -124,8 +152,8 @@ Deno.test("computeTaxGraph: unregistered child appears with registered=false and
 
 Deno.test("computeTaxGraph: cycle guard prevents infinite recursion on A->B->A", () => {
   const cyclicRegistry: NodeRegistry = {
-    mock_a: new MockANode(),
-    mock_b: new MockBNode(),
+    mock_a: mockANode,
+    mock_b: mockBNode,
   };
 
   // Should not throw or loop forever — cycle guard terminates it

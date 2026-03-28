@@ -1,13 +1,58 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { form2441 } from "../../intermediate/form2441/index.ts";
+import { form4137 } from "../../intermediate/form4137/index.ts";
+import { form8839 } from "../../intermediate/form8839/index.ts";
+import { form8853 } from "../../intermediate/form8853/index.ts";
+import { form8889 } from "../../intermediate/form8889/index.ts";
+import { form8959 } from "../../intermediate/form8959/index.ts";
+import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import { schedule_c } from "../../intermediate/schedule_c/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+
+export enum Box12Code {
+  A = "A",   // Uncollected SS tax on tips
+  B = "B",   // Uncollected Medicare tax on tips
+  C = "C",   // Taxable cost of group-term life insurance >$50k
+  D = "D",   // 401(k) elective deferrals
+  DD = "DD", // Cost of employer-sponsored health coverage
+  E = "E",   // 403(b) elective deferrals
+  EE = "EE", // Designated Roth contributions to 457(b)
+  F = "F",   // 408(k)(6) SEP elective deferrals
+  FF = "FF", // Permitted benefits under qualified small employer HRA
+  G = "G",   // 457(b) deferrals and employer contributions
+  GG = "GG", // Income from qualified equity grants
+  H = "H",   // 501(c)(18)(D) plan elective deferrals
+  HH = "HH", // Aggregate deferrals under §83(i) elections
+  J = "J",   // Non-taxable sick pay
+  K = "K",   // 20% excise tax on excess golden parachute payments
+  L = "L",   // Substantiated employee business expense reimbursements
+  M = "M",   // Uncollected SS tax on group-term life insurance cost
+  N = "N",   // Uncollected Medicare tax on group-term life insurance cost
+  P = "P",   // Excludable moving expense reimbursements
+  Q = "Q",   // Nontaxable combat pay
+  R = "R",   // Employer contributions to Archer MSA
+  S = "S",   // 408(p) SIMPLE salary reduction contributions
+  T = "T",   // Adoption benefits
+  V = "V",   // Income from exercise of nonstatutory stock options
+  W = "W",   // Employer contributions to HSA
+  Y = "Y",   // 409A nonqualified deferred compensation deferrals
+  Z = "Z",   // Income under 409A-failing nonqualified deferred compensation
+}
 
 const box12EntrySchema = z.object({
-  code: z.string(),
+  code: z.nativeEnum(Box12Code),
   amount: z.number().nonnegative(),
 });
 
-export const inputSchema = z.object({
+// Per-entry schema — one W-2 from one employer. Used by the CLI for per-entry validation.
+export const w2ItemSchema = z.object({
   box1_wages: z.number().nonnegative(),
   box2_fed_withheld: z.number().nonnegative(),
   box3_ss_wages: z.number().nonnegative().optional(),
@@ -25,144 +70,152 @@ export const inputSchema = z.object({
   box14b_tipped_code: z.string().optional(),
 });
 
-type W2Input = z.infer<typeof inputSchema>;
+// Node inputSchema — receives all W-2s for this return as a single array.
+export const inputSchema = z.object({
+  w2s: z.array(w2ItemSchema).min(1),
+});
 
-// Box 12 code routing map
-const BOX12_ROUTES: Record<string, (amount: number) => NodeOutput> = {
-  H: (amount) => ({
-    nodeType: "schedule1",
-    input: { line24f_501c18d: amount },
-  }),
-  Q: (amount) => ({
-    nodeType: "f1040",
-    input: { line1i_combat_pay: amount },
-  }),
-  W: (amount) => ({
-    nodeType: "form8889",
-    input: { employer_hsa_contributions: amount },
-  }),
-  R: (amount) => ({
-    nodeType: "form8853",
-    input: { employer_archer_msa: amount },
-  }),
-  T: (amount) => ({
-    nodeType: "form8839",
-    input: { adoption_benefits: amount },
-  }),
-  A: (amount) => ({
-    nodeType: "schedule2",
-    input: { uncollected_fica: amount },
-  }),
-  B: (amount) => ({
-    nodeType: "schedule2",
-    input: { uncollected_fica: amount },
-  }),
-  M: (amount) => ({
-    nodeType: "schedule2",
-    input: { uncollected_fica_gtl: amount },
-  }),
-  N: (amount) => ({
-    nodeType: "schedule2",
-    input: { uncollected_fica_gtl: amount },
-  }),
-  K: (amount) => ({
-    nodeType: "schedule2",
-    input: { golden_parachute_excise: amount },
-  }),
-  Z: (amount) => ({
-    nodeType: "schedule2",
-    input: { section409a_excise: amount },
-  }),
-};
+type F1040Input = z.infer<typeof f1040.inputSchema>;
+type W2Items = z.infer<typeof w2ItemSchema>[];
+
+function regularItems(w2s: W2Items) {
+  return w2s.filter((item) => item.box13_statutory_employee !== true);
+}
+
+function withholdingFields(w2s: W2Items): F1040Input {
+  return {
+    line25a_w2_withheld: w2s.reduce(
+      (sum, item) => sum + item.box2_fed_withheld,
+      0,
+    ),
+  };
+}
+
+function wageFields(w2s: W2Items): F1040Input {
+  const total = regularItems(w2s).reduce(
+    (sum, item) => sum + item.box1_wages,
+    0,
+  );
+  return total > 0 ? { line1a_wages: total } : {};
+}
+
+function combatPayFields(w2s: W2Items): F1040Input {
+  const total = regularItems(w2s)
+    .flatMap((item) => item.box12_entries ?? [])
+    .filter(({ code }) => code === Box12Code.Q)
+    .reduce((sum, { amount }) => sum + amount, 0);
+  return total > 0 ? { line1i_combat_pay: total } : {};
+}
+
+function statutoryOutput(w2s: W2Items): NodeOutput[] {
+  const statutory = w2s.filter((item) =>
+    item.box13_statutory_employee === true
+  );
+  const wages = statutory.reduce((sum, item) => sum + item.box1_wages, 0);
+  if (wages === 0) return [];
+  const withholding = statutory.reduce(
+    (sum, item) => sum + item.box2_fed_withheld,
+    0,
+  );
+  return [{
+    nodeType: schedule_c.nodeType,
+    input: { statutory_wages: wages, withholding },
+  }];
+}
+
+function medicareOutputs(w2s: W2Items): NodeOutput[] {
+  return regularItems(w2s)
+    .filter((item) =>
+      item.box5_medicare_wages !== undefined ||
+      item.box6_medicare_withheld !== undefined
+    )
+    .map((item) => ({
+      nodeType: form8959.nodeType,
+      input: {
+        medicare_wages: item.box5_medicare_wages,
+        medicare_withheld: item.box6_medicare_withheld,
+      },
+    }));
+}
+
+function allocatedTipsOutputs(w2s: W2Items): NodeOutput[] {
+  return regularItems(w2s)
+    .filter((item) => (item.box8_allocated_tips ?? 0) > 0)
+    .map((item) => ({
+      nodeType: form4137.nodeType,
+      input: { allocated_tips: item.box8_allocated_tips },
+    }));
+}
+
+function depCareOutputs(w2s: W2Items): NodeOutput[] {
+  return regularItems(w2s)
+    .filter((item) => (item.box10_dep_care ?? 0) > 0)
+    .map((item) => ({
+      nodeType: form2441.nodeType,
+      input: { dep_care_benefits: item.box10_dep_care },
+    }));
+}
+
+function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
+  return regularItems(w2s)
+    .flatMap((item) => item.box12_entries ?? [])
+    .flatMap(({ code, amount }): NodeOutput[] => {
+      switch (code) {
+        case Box12Code.H:
+          return [{ nodeType: schedule1.nodeType, input: { line24f_501c18d: amount } }];
+        case Box12Code.W:
+          return [{ nodeType: form8889.nodeType, input: { employer_hsa_contributions: amount } }];
+        case Box12Code.R:
+          return [{ nodeType: form8853.nodeType, input: { employer_archer_msa: amount } }];
+        case Box12Code.T:
+          return [{ nodeType: form8839.nodeType, input: { adoption_benefits: amount } }];
+        case Box12Code.A:
+        case Box12Code.B:
+          return [{ nodeType: schedule2.nodeType, input: { uncollected_fica: amount } }];
+        case Box12Code.M:
+        case Box12Code.N:
+          return [{ nodeType: schedule2.nodeType, input: { uncollected_fica_gtl: amount } }];
+        case Box12Code.K:
+          return [{ nodeType: schedule2.nodeType, input: { golden_parachute_excise: amount } }];
+        case Box12Code.Z:
+          return [{ nodeType: schedule2.nodeType, input: { section409a_excise: amount } }];
+        default:
+          return [];
+      }
+    });
+}
 
 class W2Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "w2";
   readonly inputSchema = inputSchema;
-  readonly outputNodeTypes = [
-    "f1040",
-    "schedule1",
-    "schedule2",
-    "schedule_c",
-    "form4137",
-    "form2441",
-    "form8959",
-    "form8889",
-    "form8853",
-    "form8839",
-  ] as const;
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    schedule1,
+    schedule2,
+    schedule_c,
+    form4137,
+    form2441,
+    form8959,
+    form8889,
+    form8853,
+    form8839,
+  ]);
 
-  compute(input: W2Input): NodeResult {
-    const outputs: NodeOutput[] = [];
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const f1040Fields: F1040Input = {
+      ...withholdingFields(input.w2s),
+      ...wageFields(input.w2s),
+      ...combatPayFields(input.w2s),
+    };
 
-    const isStatutory = input.box13_statutory_employee === true;
-
-    // Collect all f1040 fields to emit as a single output
-    const f1040Fields: Record<string, number> = {};
-
-    if (isStatutory) {
-      // Statutory employee: wages go to Schedule C; withholding still credited on f1040
-      outputs.push({
-        nodeType: "schedule_c",
-        input: {
-          statutory_wages: input.box1_wages,
-          withholding: input.box2_fed_withheld,
-        },
-      });
-    } else {
-      f1040Fields.line1a_wages = input.box1_wages;
-    }
-    f1040Fields.line25a_w2_withheld = input.box2_fed_withheld;
-
-    // Medicare wages/withheld → form8959
-    if (
-      input.box5_medicare_wages !== undefined ||
-      input.box6_medicare_withheld !== undefined
-    ) {
-      outputs.push({
-        nodeType: "form8959",
-        input: {
-          medicare_wages: input.box5_medicare_wages,
-          medicare_withheld: input.box6_medicare_withheld,
-        },
-      });
-    }
-
-    // Allocated tips → form4137
-    if (
-      input.box8_allocated_tips !== undefined &&
-      input.box8_allocated_tips > 0
-    ) {
-      outputs.push({
-        nodeType: "form4137",
-        input: { allocated_tips: input.box8_allocated_tips },
-      });
-    }
-
-    // Dependent care benefits → form2441
-    if (input.box10_dep_care !== undefined && input.box10_dep_care > 0) {
-      outputs.push({
-        nodeType: "form2441",
-        input: { dep_care_benefits: input.box10_dep_care },
-      });
-    }
-
-    // Box 12 code routing — collect f1040 fields, emit others separately
-    for (const entry of input.box12_entries ?? []) {
-      const code = entry.code.toUpperCase();
-      const routeFn = BOX12_ROUTES[code];
-      if (routeFn !== undefined) {
-        const routed = routeFn(entry.amount);
-        if (routed.nodeType === "f1040") {
-          // Merge into single f1040 output
-          Object.assign(f1040Fields, routed.input);
-        } else {
-          outputs.push(routed);
-        }
-      }
-    }
-
-    // Emit single consolidated f1040 output
-    outputs.push({ nodeType: "f1040", input: { ...f1040Fields } });
+    const outputs: NodeOutput[] = [
+      ...statutoryOutput(input.w2s),
+      ...medicareOutputs(input.w2s),
+      ...allocatedTipsOutputs(input.w2s),
+      ...depCareOutputs(input.w2s),
+      ...box12NodeOutputs(input.w2s),
+      { nodeType: f1040.nodeType, input: f1040Fields },
+    ];
 
     return { outputs };
   }

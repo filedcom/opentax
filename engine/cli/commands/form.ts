@@ -1,7 +1,14 @@
 import { join } from "@std/path";
 import { registry } from "../../nodes/2025/registry.ts";
-import { loadInputs, nextId, writeInputs } from "../store/store.ts";
-import type { InputEntry } from "../store/types.ts";
+import { w2ItemSchema } from "../../nodes/2025/f1040/inputs/W2/index.ts";
+import { appendInput } from "../store/store.ts";
+import type { ZodTypeAny } from "zod";
+
+// Per-entry validation schemas for nodes whose inputSchema wraps an array.
+// All other nodes are validated directly against node.inputSchema.
+const entrySchemas: Record<string, ZodTypeAny> = {
+  w2: w2ItemSchema,
+};
 
 export type FormAddArgs = {
   readonly returnId: string;
@@ -30,16 +37,14 @@ export async function formAddCommand(
     throw new Error(`Unknown node type: ${args.nodeType}`);
   }
 
-  const parsed = node.inputSchema.safeParse(data);
+  const schema = entrySchemas[args.nodeType] ?? node.inputSchema;
+  const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
 
   const returnPath = join(args.baseDir, args.returnId);
-  const existing = await loadInputs(returnPath);
-  const id = nextId(existing, args.nodeType);
-  const entry: InputEntry = { id, nodeType: args.nodeType, data };
-  await writeInputs(returnPath, [...existing, entry]);
+  const { id } = await appendInput(returnPath, args.nodeType, data);
 
   return { id, nodeType: args.nodeType };
 }

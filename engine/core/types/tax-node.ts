@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { OutputNodes } from "./output-nodes.ts";
 
 export type NodeType = string;
 
@@ -18,20 +19,24 @@ export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   readonly implemented: boolean = true as const;
   abstract readonly nodeType: NodeType;
   abstract readonly inputSchema: TSchema;
-  abstract readonly outputNodeTypes: readonly NodeType[];
+  abstract readonly outputNodes: OutputNodes<readonly TaxNode<z.ZodTypeAny>[]>;
   abstract compute(input: z.infer<TSchema>): NodeResult;
+
+  get outputNodeTypes(): readonly NodeType[] {
+    return this.outputNodes.nodeTypes;
+  }
 }
 
 export class UnimplementedTaxNode extends TaxNode {
   override readonly implemented = false as const;
   readonly inputSchema = z.object({});
-  nodeType: NodeType;
-  outputNodeTypes: readonly NodeType[];
+  readonly nodeType: NodeType;
+  readonly outputNodes: OutputNodes<[]>;
 
-  constructor(nodeType: NodeType, outputNodeTypes: readonly NodeType[]) {
+  constructor(nodeType: NodeType) {
     super();
     this.nodeType = nodeType;
-    this.outputNodeTypes = outputNodeTypes;
+    this.outputNodes = new OutputNodes([]);
   }
 
   compute(): NodeResult {
