@@ -560,3 +560,337 @@ Deno.test("form8960 TaxableInterestAmt value appears in assembled output", () =>
   const xml = buildMefXml({ form8960: { line1_taxable_interest: 1200 } });
   assertStringIncludes(xml, "<TaxableInterestAmt>1200</TaxableInterestAmt>");
 });
+
+// ─── 24. New forms (plans 11-01 through 11-05): routing ───────────────────────
+
+Deno.test("IRS4137 present when form4137 has data", () => {
+  const xml = buildMefXml({ form4137: { allocated_tips: 500 } });
+  assertStringIncludes(xml, "<IRS4137>");
+});
+
+Deno.test("IRS4137 absent when form4137 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS4137>");
+});
+
+Deno.test("IRS8919 present when form8919 has data", () => {
+  const xml = buildMefXml({ form8919: { wages: 45000 } });
+  assertStringIncludes(xml, "<IRS8919>");
+});
+
+Deno.test("IRS8919 absent when form8919 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8919>");
+});
+
+Deno.test("IRS4972 present when form4972 has data", () => {
+  const xml = buildMefXml({ form4972: { lump_sum_amount: 100000 } });
+  assertStringIncludes(xml, "<IRS4972>");
+});
+
+Deno.test("IRS4972 absent when form4972 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS4972>");
+});
+
+Deno.test("IRS1040ScheduleSE present when schedule_se has data", () => {
+  const xml = buildMefXml({ schedule_se: { net_profit_schedule_c: 30000 } });
+  assertStringIncludes(xml, "<IRS1040ScheduleSE>");
+});
+
+Deno.test("IRS1040ScheduleSE absent when schedule_se missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS1040ScheduleSE>");
+});
+
+Deno.test("IRS8606 present when form8606 has data", () => {
+  const xml = buildMefXml({ form8606: { nondeductible_contributions: 6000 } });
+  assertStringIncludes(xml, "<IRS8606>");
+});
+
+Deno.test("IRS8606 absent when form8606 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8606>");
+});
+
+Deno.test("IRS1116 present when form_1116 has data", () => {
+  const xml = buildMefXml({ form_1116: { foreign_tax_paid: 800 } });
+  assertStringIncludes(xml, "<IRS1116>");
+});
+
+Deno.test("IRS1116 absent when form_1116 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS1116>");
+});
+
+Deno.test("IRS8582 present when form8582 has data", () => {
+  const xml = buildMefXml({ form8582: { current_loss: 5000 } });
+  assertStringIncludes(xml, "<IRS8582>");
+});
+
+Deno.test("IRS8582 absent when form8582 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8582>");
+});
+
+Deno.test("IRS1040ScheduleF present when schedule_f has data", () => {
+  const xml = buildMefXml({ schedule_f: { crop_insurance: 2000 } });
+  assertStringIncludes(xml, "<IRS1040ScheduleF>");
+});
+
+Deno.test("IRS1040ScheduleF absent when schedule_f missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS1040ScheduleF>");
+});
+
+Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
+  const xml = buildMefXml({ schedule_b: { taxable_interest_net: 1500 } });
+  assertStringIncludes(xml, "<IRS1040ScheduleB>");
+});
+
+Deno.test("IRS1040ScheduleB absent when schedule_b missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS1040ScheduleB>");
+});
+
+Deno.test("IRS4797 present when form4797 has data", () => {
+  const xml = buildMefXml({ form4797: { section_1231_gain: 12000 } });
+  assertStringIncludes(xml, "<IRS4797>");
+});
+
+Deno.test("IRS4797 absent when form4797 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS4797>");
+});
+
+Deno.test("IRS8880 present when form8880 has data", () => {
+  const xml = buildMefXml({ form8880: { ira_contributions_taxpayer: 3000 } });
+  assertStringIncludes(xml, "<IRS8880>");
+});
+
+Deno.test("IRS8880 absent when form8880 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8880>");
+});
+
+Deno.test("IRS8995 present when form8995 has data", () => {
+  const xml = buildMefXml({ form8995: { qbi: 50000 } });
+  assertStringIncludes(xml, "<IRS8995>");
+});
+
+Deno.test("IRS8995 absent when form8995 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8995>");
+});
+
+Deno.test("IRS4562 present when form4562 has data", () => {
+  const xml = buildMefXml({ form4562: { section_179_deduction: 10000 } });
+  assertStringIncludes(xml, "<IRS4562>");
+});
+
+Deno.test("IRS4562 absent when form4562 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS4562>");
+});
+
+Deno.test("IRS8995A present when form8995a has data", () => {
+  const xml = buildMefXml({ form8995a: { qbi: 75000 } });
+  assertStringIncludes(xml, "<IRS8995A>");
+});
+
+Deno.test("IRS8995A absent when form8995a missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8995A>");
+});
+
+Deno.test("IRS6251 present when form6251 has data", () => {
+  const xml = buildMefXml({ form6251: { regular_tax_income: 80000 } });
+  assertStringIncludes(xml, "<IRS6251>");
+});
+
+Deno.test("IRS6251 absent when form6251 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS6251>");
+});
+
+Deno.test("IRS5329 present when form5329 has data", () => {
+  const xml = buildMefXml({ form5329: { early_distribution: 5000 } });
+  assertStringIncludes(xml, "<IRS5329>");
+});
+
+Deno.test("IRS5329 absent when form5329 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS5329>");
+});
+
+Deno.test("IRS8853 present when form8853 has data", () => {
+  const xml = buildMefXml({ form8853: { employer_archer_msa: 3650 } });
+  assertStringIncludes(xml, "<IRS8853>");
+});
+
+Deno.test("IRS8853 absent when form8853 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8853>");
+});
+
+Deno.test("IRS8829 present when form_8829 has data", () => {
+  const xml = buildMefXml({ form_8829: { mortgage_interest: 12000 } });
+  assertStringIncludes(xml, "<IRS8829>");
+});
+
+Deno.test("IRS8829 absent when form_8829 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8829>");
+});
+
+Deno.test("IRS8839 present when form8839 has data", () => {
+  const xml = buildMefXml({ form8839: { adoption_benefits: 14890 } });
+  assertStringIncludes(xml, "<IRS8839>");
+});
+
+Deno.test("IRS8839 absent when form8839 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS8839>");
+});
+
+// ─── 25. Full 29-form smoke test ──────────────────────────────────────────────
+
+Deno.test("documentCnt=29 when all 29 forms have data", () => {
+  const xml = buildMefXml({
+    f1040: { line1a_wages: 50000 },
+    schedule1: { line7_unemployment: 4800 },
+    schedule2: { line1_amt: 5000 },
+    schedule3: { line2_childcare_credit: 1200 },
+    schedule_d: { line_4_other_st: 1000 },
+    form8889: { taxpayer_hsa_contributions: 3600 },
+    form2441: { dep_care_benefits: 5000 },
+    form8949: [{
+      part: "A",
+      description: "AAPL",
+      date_acquired: "2024-01-15",
+      date_sold: "2025-06-01",
+      proceeds: 5000,
+      cost_basis: 3000,
+      gain_loss: 2000,
+      is_long_term: false,
+    }],
+    form8959: { medicare_wages: 250000 },
+    form8960: { line1_taxable_interest: 1200 },
+    form4137: { allocated_tips: 500 },
+    form8919: { wages: 45000 },
+    form4972: { lump_sum_amount: 100000 },
+    schedule_se: { net_profit_schedule_c: 30000 },
+    form8606: { nondeductible_contributions: 6000 },
+    form_1116: { foreign_tax_paid: 800 },
+    form8582: { current_loss: 5000 },
+    schedule_f: { crop_insurance: 2000 },
+    schedule_b: { taxable_interest_net: 1500 },
+    form4797: { section_1231_gain: 12000 },
+    form8880: { ira_contributions_taxpayer: 3000 },
+    form8995: { qbi: 50000 },
+    form4562: { section_179_deduction: 10000 },
+    form8995a: { qbi: 75000 },
+    form6251: { regular_tax_income: 80000 },
+    form5329: { early_distribution: 5000 },
+    form8853: { employer_archer_msa: 3650 },
+    form_8829: { mortgage_interest: 12000 },
+    form8839: { adoption_benefits: 14890 },
+  });
+  assertStringIncludes(xml, 'documentCnt="29"');
+});
+
+Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
+  const xml = buildMefXml({
+    f1040: { line1a_wages: 50000 },
+    schedule1: { line7_unemployment: 4800 },
+    schedule2: { line1_amt: 5000 },
+    schedule3: { line2_childcare_credit: 1200 },
+    schedule_d: { line_4_other_st: 1000 },
+    form8889: { taxpayer_hsa_contributions: 3600 },
+    form2441: { dep_care_benefits: 5000 },
+    form8949: [{
+      part: "A",
+      description: "AAPL",
+      date_acquired: "2024-01-15",
+      date_sold: "2025-06-01",
+      proceeds: 5000,
+      cost_basis: 3000,
+      gain_loss: 2000,
+      is_long_term: false,
+    }],
+    form8959: { medicare_wages: 250000 },
+    form8960: { line1_taxable_interest: 1200 },
+    form4137: { allocated_tips: 500 },
+    form8919: { wages: 45000 },
+    form4972: { lump_sum_amount: 100000 },
+    schedule_se: { net_profit_schedule_c: 30000 },
+    form8606: { nondeductible_contributions: 6000 },
+    form_1116: { foreign_tax_paid: 800 },
+    form8582: { current_loss: 5000 },
+    schedule_f: { crop_insurance: 2000 },
+    schedule_b: { taxable_interest_net: 1500 },
+    form4797: { section_1231_gain: 12000 },
+    form8880: { ira_contributions_taxpayer: 3000 },
+    form8995: { qbi: 50000 },
+    form4562: { section_179_deduction: 10000 },
+    form8995a: { qbi: 75000 },
+    form6251: { regular_tax_income: 80000 },
+    form5329: { early_distribution: 5000 },
+    form8853: { employer_archer_msa: 3650 },
+    form_8829: { mortgage_interest: 12000 },
+    form8839: { adoption_benefits: 14890 },
+  });
+  assertStringIncludes(xml, "<IRS1040>");
+  assertStringIncludes(xml, "<IRS1040Schedule1>");
+  assertStringIncludes(xml, "<IRS1040Schedule2>");
+  assertStringIncludes(xml, "<IRS1040Schedule3>");
+  assertStringIncludes(xml, "<IRS1040ScheduleD>");
+  assertStringIncludes(xml, "<IRS8889>");
+  assertStringIncludes(xml, "<IRS2441>");
+  assertStringIncludes(xml, "<IRS8949>");
+  assertStringIncludes(xml, "<IRS8959>");
+  assertStringIncludes(xml, "<IRS8960>");
+  assertStringIncludes(xml, "<IRS4137>");
+  assertStringIncludes(xml, "<IRS8919>");
+  assertStringIncludes(xml, "<IRS4972>");
+  assertStringIncludes(xml, "<IRS1040ScheduleSE>");
+  assertStringIncludes(xml, "<IRS8606>");
+  assertStringIncludes(xml, "<IRS1116>");
+  assertStringIncludes(xml, "<IRS8582>");
+  assertStringIncludes(xml, "<IRS1040ScheduleF>");
+  assertStringIncludes(xml, "<IRS1040ScheduleB>");
+  assertStringIncludes(xml, "<IRS4797>");
+  assertStringIncludes(xml, "<IRS8880>");
+  assertStringIncludes(xml, "<IRS8995>");
+  assertStringIncludes(xml, "<IRS4562>");
+  assertStringIncludes(xml, "<IRS8995A>");
+  assertStringIncludes(xml, "<IRS6251>");
+  assertStringIncludes(xml, "<IRS5329>");
+  assertStringIncludes(xml, "<IRS8853>");
+  assertStringIncludes(xml, "<IRS8829>");
+  assertStringIncludes(xml, "<IRS8839>");
+});
+
+Deno.test("empty MefFormsPending: documentCnt=0, no new form tags present", () => {
+  const xml = buildMefXml({});
+  assertStringIncludes(xml, 'documentCnt="0"');
+  assertNotIncludes(xml, "<IRS4137>");
+  assertNotIncludes(xml, "<IRS8919>");
+  assertNotIncludes(xml, "<IRS4972>");
+  assertNotIncludes(xml, "<IRS1040ScheduleSE>");
+  assertNotIncludes(xml, "<IRS8606>");
+  assertNotIncludes(xml, "<IRS1116>");
+  assertNotIncludes(xml, "<IRS8582>");
+  assertNotIncludes(xml, "<IRS1040ScheduleF>");
+  assertNotIncludes(xml, "<IRS1040ScheduleB>");
+  assertNotIncludes(xml, "<IRS4797>");
+  assertNotIncludes(xml, "<IRS8880>");
+  assertNotIncludes(xml, "<IRS8995>");
+  assertNotIncludes(xml, "<IRS4562>");
+  assertNotIncludes(xml, "<IRS8995A>");
+  assertNotIncludes(xml, "<IRS6251>");
+  assertNotIncludes(xml, "<IRS5329>");
+  assertNotIncludes(xml, "<IRS8853>");
+  assertNotIncludes(xml, "<IRS8829>");
+  assertNotIncludes(xml, "<IRS8839>");
+});
