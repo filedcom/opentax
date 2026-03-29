@@ -88,7 +88,7 @@ class Form6198Node extends TaxNode<typeof inputSchema> {
     // (reduces the net loss already posted by the upstream node).
     return {
       outputs: [
-        output(schedule1, { at_risk_disallowed_add_back: disallowed }),
+        this.outputNodes.output(schedule1, { at_risk_disallowed_add_back: disallowed }),
       ],
     };
   }

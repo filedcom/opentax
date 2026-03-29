@@ -244,11 +244,11 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     if (totalDepreciation > 0) {
-      outputs.push(output(schedule1, { line13_depreciation: totalDepreciation }));
+      outputs.push(this.outputNodes.output(schedule1, { line13_depreciation: totalDepreciation }));
     }
 
     if (amtAdjustment > 0) {
-      outputs.push(output(form6251, { depreciation_adjustment: amtAdjustment }));
+      outputs.push(this.outputNodes.output(form6251, { depreciation_adjustment: amtAdjustment }));
     }
 
     return { outputs };

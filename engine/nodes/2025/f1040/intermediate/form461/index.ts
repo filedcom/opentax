@@ -54,7 +54,7 @@ class Form461Node extends TaxNode<typeof inputSchema> {
     // It then becomes an NOL carryforward via Form 172 for subsequent years.
     return {
       outputs: [
-        output(schedule1, { line8p_excess_business_loss: total }),
+        this.outputNodes.output(schedule1, { line8p_excess_business_loss: total }),
       ],
     };
   }

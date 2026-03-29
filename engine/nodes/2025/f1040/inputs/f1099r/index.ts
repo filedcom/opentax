@@ -425,7 +425,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...withholdingFields,
     };
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push(output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
+      outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
 
     // Secondary form outputs

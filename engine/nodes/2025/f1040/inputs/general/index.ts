@@ -312,7 +312,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const f1040Input = buildF1040Input(parsed);
 
     const outputs: NodeOutput[] = [
-      output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
     return { outputs };

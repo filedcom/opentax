@@ -224,7 +224,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // Schedule 1 line 6: aggregate net farm profit/loss (always when there is activity)
-    outputs.push(output(schedule1, { line6_schedule_f: totalNetProfit }));
+    outputs.push(this.outputNodes.output(schedule1, { line6_schedule_f: totalNetProfit }));
 
     // Per-item downstream routing
     for (let i = 0; i < input.schedule_fs.length; i++) {
@@ -236,7 +236,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       const loss = Math.abs(totalNetProfit);
       const threshold = eblThreshold(input.filing_status);
       if (loss > threshold) {
-        outputs.push(output(form461, { excess_business_loss: loss - threshold }));
+        outputs.push(this.outputNodes.output(form461, { excess_business_loss: loss - threshold }));
       }
     }
 

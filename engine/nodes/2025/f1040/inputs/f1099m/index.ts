@@ -205,7 +205,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // f1040 line25b — federal withholding (always aggregated)
     const totalWithheld = totalOf(m99s, "box4_federal_withheld");
     if (totalWithheld > 0) {
-      outputs.push(output(f1040, { line25b_withheld_1099: totalWithheld }));
+      outputs.push(this.outputNodes.output(f1040, { line25b_withheld_1099: totalWithheld }));
     }
 
     // schedule_e — rents (typical) + royalties (investment)
@@ -215,7 +215,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // schedule_c — fishing boat + medical + fish purchased + rents (substantial services) + royalties (trade/business)
     const totalScheduleC = scheduleCGrossReceipts(m99s);
     if (totalScheduleC > 0) {
-      outputs.push(output(schedule_c, { line1_gross_receipts: totalScheduleC }));
+      outputs.push(this.outputNodes.output(schedule_c, { line1_gross_receipts: totalScheduleC }));
     }
 
     // schedule1 — prizes, other income, substitute payments, attorney proceeds, NQDC ordinary income
@@ -225,13 +225,13 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // schedule_f — crop insurance (non-deferred only)
     const totalCropInsurance = cropInsuranceTotal(m99s);
     if (totalCropInsurance > 0) {
-      outputs.push(output(schedule_f, { crop_insurance: totalCropInsurance }));
+      outputs.push(this.outputNodes.output(schedule_f, { crop_insurance: totalCropInsurance }));
     }
 
     // schedule2 — §409A excise tax (20% of NQDC includible amount)
     const totalNqdc = totalOf(m99s, "box15_nqdc");
     if (totalNqdc > 0) {
-      outputs.push(output(schedule2, { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE }));
+      outputs.push(this.outputNodes.output(schedule2, { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE }));
     }
 
     return { outputs };

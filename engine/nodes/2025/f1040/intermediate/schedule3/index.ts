@@ -109,7 +109,7 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     if (payments > 0) f1040Input.line31_additional_payments = payments;
 
     const outputs: NodeOutput[] = [
-      output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
     return { outputs };

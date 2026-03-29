@@ -95,7 +95,7 @@ class Unrecaptured1250WorksheetNode extends TaxNode<typeof inputSchema> {
 
     return {
       outputs: [
-        output(scheduleDRef, { line19_unrecaptured_1250: line19 }),
+        this.outputNodes.output(scheduleDRef, { line19_unrecaptured_1250: line19 }),
       ],
     };
   }

@@ -50,7 +50,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     if (taxable > 0) {
-      outputs.push(output(f1040, { line1e_taxable_dep_care: taxable }));
+      outputs.push(this.outputNodes.output(f1040, { line1e_taxable_dep_care: taxable }));
     }
 
     return { outputs };

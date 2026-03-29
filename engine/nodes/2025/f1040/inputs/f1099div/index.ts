@@ -180,13 +180,13 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const totalBox2a = div1099s.reduce((sum, item) => sum + (item.box2a ?? 0), 0);
     if (totalBox2a > 0 && !anySubAmounts) f1040Fields.line7a_cap_gain_distrib = totalBox2a;
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push(output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
+      outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
 
     // Cap gain distribution → schedule_d when sub-amounts present
     if (totalBox2a > 0 && anySubAmounts) {
       const totalBox2c = div1099s.reduce((sum, item) => sum + (item.box2c ?? 0), 0);
-      outputs.push(output(schedule_d, {
+      outputs.push(this.outputNodes.output(schedule_d, {
           line13_cap_gain_distrib: totalBox2a,
           box2c_qsbs: totalBox2c > 0 ? totalBox2c : undefined,
         }));
@@ -194,12 +194,12 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
 
     const totalBox2b = div1099s.reduce((sum, item) => sum + (item.box2b ?? 0), 0);
     if (totalBox2b > 0) {
-      outputs.push(output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: totalBox2b }));
+      outputs.push(this.outputNodes.output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: totalBox2b }));
     }
 
     const totalBox2d = div1099s.reduce((sum, item) => sum + (item.box2d ?? 0), 0);
     if (totalBox2d > 0) {
-      outputs.push(output(rate_28_gain_worksheet, { collectibles_gain: totalBox2d }));
+      outputs.push(this.outputNodes.output(rate_28_gain_worksheet, { collectibles_gain: totalBox2d }));
     }
 
     // §199A dividends — only items meeting holding period qualify
@@ -219,7 +219,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     // PAB interest from exempt-interest dividends (form6251)
     const totalBox13 = div1099s.reduce((sum, item) => sum + (item.box13 ?? 0), 0);
     if (totalBox13 > 0) {
-      outputs.push(output(form6251, { private_activity_bond_interest: totalBox13 }));
+      outputs.push(this.outputNodes.output(form6251, { private_activity_bond_interest: totalBox13 }));
     }
 
     // Foreign tax — only items meeting holding period; totalBox7 determines routing
@@ -234,9 +234,9 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         ? FOREIGN_TAX_MFJ_THRESHOLD
         : FOREIGN_TAX_SINGLE_THRESHOLD;
       if (totalBox7 > threshold) {
-        outputs.push(output(form_1116, { foreign_tax_paid: eligibleBox7 }));
+        outputs.push(this.outputNodes.output(form_1116, { foreign_tax_paid: eligibleBox7 }));
       } else {
-        outputs.push(output(schedule3, { line1_foreign_tax_1099: eligibleBox7 }));
+        outputs.push(this.outputNodes.output(schedule3, { line1_foreign_tax_1099: eligibleBox7 }));
       }
     }
 

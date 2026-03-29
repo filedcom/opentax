@@ -143,7 +143,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
 
     // Non-refundable portion → Schedule 3 Line 6b (→ Form 1040 Line 19)
     if (nonrefundableCTC > 0) {
-      outputs.push(output(schedule3, { line6b_child_tax_credit: nonrefundableCTC }));
+      outputs.push(this.outputNodes.output(schedule3, { line6b_child_tax_credit: nonrefundableCTC }));
     }
 
     // ACTC (refundable) → Form 1040 Line 28
@@ -168,7 +168,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
         const actc = Math.min(tentativeActc, earnedIncomeBased);
 
         if (actc > 0) {
-          outputs.push(output(f1040, { line28_actc: actc }));
+          outputs.push(this.outputNodes.output(f1040, { line28_actc: actc }));
         }
       }
     }

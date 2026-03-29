@@ -59,7 +59,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
       0,
     );
     if (totalTaxable > 0) {
-      outputs.push(output(schedule1, { line8c_cod_income: totalTaxable }));
+      outputs.push(this.outputNodes.output(schedule1, { line8c_cod_income: totalTaxable }));
     }
 
     // Aggregate excluded COD income → Form 982 line 2
@@ -68,12 +68,12 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
       0,
     );
     if (totalExcluded > 0) {
-      outputs.push(output(form982, { line2_excluded_cod: totalExcluded }));
+      outputs.push(this.outputNodes.output(form982, { line2_excluded_cod: totalExcluded }));
     }
 
     // Per-item property disposition outputs — each property event is distinct
     for (const item of propertyItems(c99s)) {
-      outputs.push(output(schedule_d, {
+      outputs.push(this.outputNodes.output(schedule_d, {
           cod_property_fmv: item.box7_fmv_property,
           cod_debt_cancelled: item.box2_cod_amount,
         }));

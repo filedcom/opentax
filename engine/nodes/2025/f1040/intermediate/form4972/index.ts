@@ -168,7 +168,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      output(schedule2, { lump_sum_tax: totalTax }),
+      this.outputNodes.output(schedule2, { lump_sum_tax: totalTax }),
     ];
 
     return { outputs };

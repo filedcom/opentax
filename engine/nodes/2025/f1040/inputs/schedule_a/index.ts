@@ -84,9 +84,9 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       (input.line_16_other_deductions ?? 0);
 
     const outputs: NodeOutput[] = [
-      output(f1040, { line12e_itemized_deductions: totalItemized }),
+      this.outputNodes.output(f1040, { line12e_itemized_deductions: totalItemized }),
       // AMT addback: taxes paid total (Line 7) flows to Form 6251 Line 2a
-      ...(taxesTotal > 0 ? [output(form6251, { line2a_taxes_paid: taxesTotal })] : []),
+      ...(taxesTotal > 0 ? [this.outputNodes.output(form6251, { line2a_taxes_paid: taxesTotal })] : []),
     ];
     return { outputs };
   }

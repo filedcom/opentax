@@ -83,7 +83,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     if (line6 > 0) f1040Fields.line3b_ordinary_dividends = line6;
 
     const outputs: NodeOutput[] = [
-      output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
     return { outputs };

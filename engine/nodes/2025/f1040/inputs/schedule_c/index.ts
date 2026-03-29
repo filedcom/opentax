@@ -280,7 +280,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
 
     // Aggregate net profits → single schedule1 output
     const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
-    outputs.push(output(schedule1, { line3_schedule_c: totalNetProfit }));
+    outputs.push(this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }));
 
     // Per-item downstream routing (SE, QBI, passive, at-risk, depletion, interest)
     for (let i = 0; i < input.schedule_cs.length; i++) {
@@ -294,7 +294,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         ? EBL_THRESHOLD_MFJ
         : EBL_THRESHOLD_SINGLE;
       if (loss > threshold) {
-        outputs.push(output(form461, { excess_business_loss: loss - threshold }));
+        outputs.push(this.outputNodes.output(form461, { excess_business_loss: loss - threshold }));
       }
     }
 

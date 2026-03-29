@@ -350,7 +350,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
-      output(f1040, f1040Fields as AtLeastOne<F1040Input>),
+      this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 
     return { outputs };

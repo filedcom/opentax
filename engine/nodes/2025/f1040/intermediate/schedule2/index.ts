@@ -115,7 +115,7 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      output(f1040, { line17_additional_taxes: total }),
+      this.outputNodes.output(f1040, { line17_additional_taxes: total }),
     ];
 
     return { outputs };

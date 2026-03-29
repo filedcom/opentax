@@ -156,7 +156,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
     // (reduces the net deduction already posted by upstream node)
     return {
       outputs: [
-        output(schedule1, { biz_interest_disallowed_add_back: disallowed }),
+        this.outputNodes.output(schedule1, { biz_interest_disallowed_add_back: disallowed }),
       ],
     };
   }
