@@ -2,9 +2,9 @@ import { join } from "@std/path";
 import { execute } from "../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { registry } from "../../nodes/2025/registry.ts";
-import { buildMefXml } from "../../export/mef/builder.ts";
+import { buildMefXml } from "../../forms/f1040/mef/builder.ts";
 import { buildEngineInputs, loadInputs } from "../store/store.ts";
-import type { F8949Transaction, MefFormsPending } from "../../export/mef/types.ts";
+import type { F8949Transaction, MefFormsPending } from "../../forms/f1040/mef/types.ts";
 
 const executionPlan = buildExecutionPlan(registry);
 
