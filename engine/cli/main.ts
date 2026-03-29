@@ -1,6 +1,6 @@
 import { parseArgs } from "@std/cli";
-import type { CommandDef, ParsedArgs } from "./help.ts";
-import { printHelp } from "./help.ts";
+import type { CommandDef, ParsedArgs } from "./commands/help.ts";
+import { printHelp } from "./commands/help.ts";
 import { formAddCommand } from "./commands/form.ts";
 import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
@@ -128,10 +128,10 @@ const COMMANDS: readonly CommandDef[] = [
     },
   },
   {
-    cmd: "graph",
-    sub: "view",
+    cmd: "node",
+    sub: "graph",
     description: "View node dependency graph (Mermaid or JSON)",
-    usage: "tax graph view --node_type <type> [--depth <n>] [--json]",
+    usage: "tax node graph --node_type <type> [--depth <n>] [--json]",
     options: [
       { flag: "--node_type", description: "Root node type", required: true },
       { flag: "--depth", description: "Max traversal depth (default: unlimited)" },
