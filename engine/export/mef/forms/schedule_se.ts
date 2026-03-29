@@ -1,14 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface ScheduleSEFields {
-  net_profit_schedule_c?: number | null;
-  net_profit_schedule_f?: number | null;
-  unreported_tips_4137?: number | null;
-  wages_8919?: number | null;
-  w2_ss_wages?: number | null;
-}
-
-export type ScheduleSEInput = Partial<ScheduleSEFields> & { [extra: string]: unknown };
+import type { ScheduleSEFields, ScheduleSEInput } from "../types.ts";
+export type { ScheduleSEInput };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleSEFields, string]> = [
   ["net_profit_schedule_c", "NetProfitOrLossAmt"],

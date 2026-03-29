@@ -1,16 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form8582Fields {
-  passive_schedule_c?: number | null;
-  passive_schedule_f?: number | null;
-  current_income?: number | null;
-  current_loss?: number | null;
-  prior_unallowed?: number | null;
-  modified_agi?: number | null;
-  active_participation?: number | null;
-}
-
-type Form8582Input = Partial<Form8582Fields> & { [extra: string]: unknown };
+import type { Form8582Fields, Form8582Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8582Fields, string]> = [
   ["passive_schedule_c", "PassiveScheduleCIncomeAmt"],

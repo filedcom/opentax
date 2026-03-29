@@ -1,13 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface Form4137Fields {
-  allocated_tips?: number | null;
-  total_tips_received?: number | null;
-  reported_tips?: number | null;
-  ss_wages_from_w2?: number | null;
-}
-
-export type Form4137Input = Partial<Form4137Fields> & { [extra: string]: unknown };
+import type { Form4137Fields, Form4137Input } from "../types.ts";
+export type { Form4137Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4137Fields, string]> = [
   ["allocated_tips", "AllocatedTipsAmt"],

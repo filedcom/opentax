@@ -1,21 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form4562Fields {
-  section_179_deduction?: number | null;
-  section_179_cost?: number | null;
-  section_179_elected?: number | null;
-  section_179_carryover?: number | null;
-  business_income_limit?: number | null;
-  bonus_depreciation_basis?: number | null;
-  bonus_depreciation_basis_post_jan19?: number | null;
-  macrs_gds_basis?: number | null;
-  macrs_gds_recovery_period?: number | null;
-  macrs_gds_year_of_service?: number | null;
-  macrs_prior_depreciation?: number | null;
-  business_use_pct?: number | null;
-}
-
-type Form4562Input = Partial<Form4562Fields> & { [extra: string]: unknown };
+import type { Form4562Fields, Form4562Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4562Fields, string]> = [
   ["section_179_deduction", "Section179DeductionAmt"],

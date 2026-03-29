@@ -1,13 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form1116Fields {
-  foreign_tax_paid?: number | null;
-  foreign_income?: number | null;
-  total_income?: number | null;
-  us_tax_before_credits?: number | null;
-}
-
-type Form1116Input = Partial<Form1116Fields> & { [extra: string]: unknown };
+import type { Form1116Fields, Form1116Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form1116Fields, string]> = [
   ["foreign_tax_paid", "ForeignTaxesPaidOrAccruedAmt"],

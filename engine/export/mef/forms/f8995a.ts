@@ -1,19 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form8995AFields {
-  taxable_income?: number | null;
-  net_capital_gain?: number | null;
-  qbi?: number | null;
-  w2_wages?: number | null;
-  unadjusted_basis?: number | null;
-  sstb_qbi?: number | null;
-  sstb_w2_wages?: number | null;
-  sstb_unadjusted_basis?: number | null;
-  line6_sec199a_dividends?: number | null;
-  qbi_loss_carryforward?: number | null;
-  reit_loss_carryforward?: number | null;
-}
-type Form8995AInput = Partial<Form8995AFields> & { [extra: string]: unknown };
+import type { Form8995AFields, Form8995AInput } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8995AFields, string]> = [
   ["taxable_income", "TaxableIncomeAmt"],

@@ -1,17 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface Form8606Fields {
-  nondeductible_contributions?: number | null;
-  prior_basis?: number | null;
-  year_end_ira_value?: number | null;
-  traditional_distributions?: number | null;
-  roth_conversion?: number | null;
-  roth_distribution?: number | null;
-  roth_basis_contributions?: number | null;
-  roth_basis_conversions?: number | null;
-}
-
-export type Form8606Input = Partial<Form8606Fields> & { [extra: string]: unknown };
+import type { Form8606Fields, Form8606Input } from "../types.ts";
+export type { Form8606Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8606Fields, string]> = [
   ["nondeductible_contributions", "NondeductibleContriAmt"],

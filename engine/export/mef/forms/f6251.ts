@@ -1,18 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form6251Fields {
-  regular_tax_income?: number | null;
-  regular_tax?: number | null;
-  iso_adjustment?: number | null;
-  depreciation_adjustment?: number | null;
-  nol_adjustment?: number | null;
-  private_activity_bond_interest?: number | null;
-  qsbs_adjustment?: number | null;
-  line2a_taxes_paid?: number | null;
-  other_adjustments?: number | null;
-  amtftc?: number | null;
-}
-type Form6251Input = Partial<Form6251Fields> & { [extra: string]: unknown };
+import type { Form6251Fields, Form6251Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form6251Fields, string]> = [
   ["regular_tax_income", "RegularTaxIncomeAmt"],

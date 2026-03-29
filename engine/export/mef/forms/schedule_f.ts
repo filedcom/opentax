@@ -1,11 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface ScheduleFFields {
-  crop_insurance?: number | null;
-  line8_other_income?: number | null;
-}
-
-type ScheduleFInput = Partial<ScheduleFFields> & { [extra: string]: unknown };
+import type { ScheduleFFields, ScheduleFInput } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleFFields, string]> = [
   ["crop_insurance", "CropInsuranceProceedsAmt"],

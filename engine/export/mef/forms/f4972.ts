@@ -1,12 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface Form4972Fields {
-  lump_sum_amount?: number | null;
-  capital_gain_amount?: number | null;
-  death_benefit_exclusion?: number | null;
-}
-
-export type Form4972Input = Partial<Form4972Fields> & { [extra: string]: unknown };
+import type { Form4972Fields, Form4972Input } from "../types.ts";
+export type { Form4972Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4972Fields, string]> = [
   ["lump_sum_amount", "LumpSumDistriAmt"],

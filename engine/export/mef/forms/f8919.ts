@@ -1,11 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface Form8919Fields {
-  wages?: number | null;
-  prior_ss_wages?: number | null;
-}
-
-export type Form8919Input = Partial<Form8919Fields> & { [extra: string]: unknown };
+import type { Form8919Fields, Form8919Input } from "../types.ts";
+export type { Form8919Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8919Fields, string]> = [
   ["wages", "WagesReceivedAmt"],

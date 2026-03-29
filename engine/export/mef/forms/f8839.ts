@@ -1,12 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface Form8839Fields {
-  adoption_benefits?: number | null;
-  magi?: number | null;
-  income_tax_liability?: number | null;
-}
-
-export type Form8839Input = Partial<Form8839Fields> & { [extra: string]: unknown };
+import type { Form8839Fields, Form8839Input } from "../types.ts";
+export type { Form8839Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8839Fields, string]> = [
   ["adoption_benefits", "AdoptionBenefitsAmt"],

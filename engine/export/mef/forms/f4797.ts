@@ -1,14 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form4797Fields {
-  section_1231_gain?: number | null;
-  nonrecaptured_1231_loss?: number | null;
-  ordinary_gain?: number | null;
-  recapture_1245?: number | null;
-  recapture_1250?: number | null;
-}
-
-type Form4797Input = Partial<Form4797Fields> & { [extra: string]: unknown };
+import type { Form4797Fields, Form4797Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4797Fields, string]> = [
   ["section_1231_gain", "Section1231GainLossAmt"],

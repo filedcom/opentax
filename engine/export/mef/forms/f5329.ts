@@ -1,23 +1,5 @@
 import { element, elements } from "../xml.ts";
-
-interface Form5329Fields {
-  early_distribution?: number | null;
-  simple_ira_early_distribution?: number | null;
-  esa_able_distribution?: number | null;
-  excess_traditional_ira?: number | null;
-  traditional_ira_value?: number | null;
-  excess_roth_ira?: number | null;
-  roth_ira_value?: number | null;
-  excess_coverdell_esa?: number | null;
-  coverdell_esa_value?: number | null;
-  excess_archer_msa?: number | null;
-  archer_msa_value?: number | null;
-  excess_hsa?: number | null;
-  hsa_value?: number | null;
-  excess_able?: number | null;
-  able_value?: number | null;
-}
-type Form5329Input = Partial<Form5329Fields> & { [extra: string]: unknown };
+import type { Form5329Fields, Form5329Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form5329Fields, string]> = [
   ["early_distribution", "EarlyDistributionAmt"],

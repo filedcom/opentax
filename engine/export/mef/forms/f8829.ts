@@ -1,21 +1,6 @@
 import { element, elements } from "../xml.ts";
-
-interface Form8829Fields {
-  total_area?: number | null;
-  business_area?: number | null;
-  mortgage_interest?: number | null;
-  insurance?: number | null;
-  rent?: number | null;
-  repairs_maintenance?: number | null;
-  utilities?: number | null;
-  other_expenses?: number | null;
-  gross_income_limit?: number | null;
-  prior_year_operating_carryover?: number | null;
-  home_fmv_or_basis?: number | null;
-  prior_year_depreciation_carryover?: number | null;
-}
-
-export type Form8829Input = Partial<Form8829Fields> & { [extra: string]: unknown };
+import type { Form8829Fields, Form8829Input } from "../types.ts";
+export type { Form8829Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8829Fields, string]> = [
   ["total_area", "TotalAreaOfHomeSqFtCnt"],
