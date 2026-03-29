@@ -1,12 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// Black-box test file generated from header-context.md only.
-// Verify: buildReturnHeader export name, FilerIdentity import path
-// AMBIGUITIES:
-//   - <Filer> tag: tests expect exactly `<Filer>` with no attributes. If the
-//     implementation emits `<Filer ...attrs>`, update the tag-presence checks.
-//   - Element ordering within <ReturnHeader> is not tested (spec provides a
-//     table, not a sequence). Tests check presence only.
-
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildReturnHeader } from "./header.ts";
 import type { FilerIdentity } from "./types.ts";

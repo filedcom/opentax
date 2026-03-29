@@ -1,13 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// Black-box test file generated from builder-context.md only.
-// Verify: buildMefXml export name, FilerIdentity import path
-// AMBIGUITIES:
-//   - Spec says ReturnData is "always present" but edge case table shows
-//     `<ReturnData documentCnt="0"/>` (self-closing) OR "empty ReturnData" —
-//     tests only assert `<ReturnData` is present, not the exact closing form.
-//   - Attribute order (returnVersion before xmlns) is asserted via index comparison.
-//   - "Form order" is asserted via index comparison on the raw XML string.
-
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "./builder.ts";
 import type { FilerIdentity } from "./types.ts";

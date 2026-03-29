@@ -1,10 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// Black-box test file generated from xml-context.md only.
-// Verify: export names match (escapeXml, element, elements)
-// AMBIGUITIES:
-//   - Attr value escaping: spec says callers pass safe values; attr values are NOT escaped by the function.
-//   - Multiple attrs ordering: tests assume JS insertion-order iteration (ES2015+, guaranteed in V8/Deno).
-
 import { assertEquals } from "@std/assert";
 import { element, elements, escapeXml } from "./xml.ts";
 
