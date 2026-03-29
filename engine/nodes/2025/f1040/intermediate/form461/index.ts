@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
+import { normalizeArray } from "../../utils.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -24,10 +25,6 @@ type Form461Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-function normalizeArray<T>(v: T | T[] | undefined): T[] {
-  if (v === undefined) return [];
-  return Array.isArray(v) ? v : [v];
-}
 
 function totalExcessLoss(input: Form461Input): number {
   return normalizeArray(input.excess_business_loss).reduce((sum, n) => sum + n, 0);

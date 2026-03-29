@@ -3,8 +3,7 @@ import { execute } from "../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { registry } from "../../nodes/2025/registry.ts";
 import { buildMefXml } from "../../export/mef/builder.ts";
-import { loadInputs } from "../store/store.ts";
-import type { InputsJson } from "../store/types.ts";
+import { buildEngineInputs, loadInputs } from "../store/store.ts";
 import type { F8949Transaction, MefFormsPending } from "../../export/mef/types.ts";
 
 const executionPlan = buildExecutionPlan(registry);
@@ -13,14 +12,6 @@ export type ExportReturnArgs = {
   readonly returnId: string;
   readonly baseDir: string;
 };
-
-function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
-  const result: Record<string, unknown[]> = {};
-  for (const [nodeType, entries] of Object.entries(inputs)) {
-    result[`${nodeType}s`] = entries.map((e) => e.fields);
-  }
-  return result;
-}
 
 function extractForm8949Transactions(
   raw: Record<string, unknown> | undefined,

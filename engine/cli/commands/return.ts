@@ -2,8 +2,7 @@ import { join } from "@std/path";
 import { execute } from "../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { registry } from "../../nodes/2025/registry.ts";
-import { createReturn, loadInputs, loadMeta } from "../store/store.ts";
-import type { InputsJson } from "../store/types.ts";
+import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
 
 const executionPlan = buildExecutionPlan(registry);
 
@@ -32,26 +31,11 @@ export type GetReturnResult = {
   };
 };
 
-/**
- * Converts InputsJson (grouped by nodeType) into the engine's start node input shape.
- * Each nodeType bucket becomes an array keyed as `{nodeType}s` (e.g. "w2" → "w2s").
- */
-function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
-  const result: Record<string, unknown[]> = {};
-  for (const [nodeType, entries] of Object.entries(inputs)) {
-    result[`${nodeType}s`] = entries.map((e) => e.fields);
-  }
-  return result;
-}
-
 export async function getReturnCommand(
   args: GetReturnArgs,
 ): Promise<GetReturnResult> {
   const returnPath = join(args.baseDir, args.returnId);
-  const [meta, inputs] = await Promise.all([
-    loadMeta(returnPath),
-    loadInputs(returnPath),
-  ]);
+  const { meta, inputs } = await loadReturn(returnPath);
 
   const engineInputs = buildEngineInputs(inputs);
   const result = execute(executionPlan, registry, engineInputs);

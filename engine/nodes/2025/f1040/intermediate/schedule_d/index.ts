@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
+import { normalizeArray } from "../../utils.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { rate_28_gain_worksheet } from "../rate_28_gain_worksheet/index.ts";
 
@@ -105,10 +106,6 @@ type DScreenTransaction = z.infer<typeof dScreenTransactionSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-function normalizeArray<T>(v: T | T[] | undefined): T[] {
-  if (v === undefined) return [];
-  return Array.isArray(v) ? v : [v];
-}
 
 // Returns true if the input has any capital activity worth computing
 function hasCapitalActivity(input: ScheduleDInput): boolean {

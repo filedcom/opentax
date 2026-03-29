@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, UnimplementedTaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { normalizeArray } from "../../utils.ts";
 
 // schedule_d cannot be imported directly — it imports f1099div which imports this node,
 // creating a circular dependency. Use a typed stub to preserve the at-least-one constraint
@@ -53,10 +54,6 @@ type PropertyItem = z.infer<typeof propertySchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-function normalizeArray<T>(v: T | T[] | undefined): T[] {
-  if (v === undefined) return [];
-  return Array.isArray(v) ? v : [v];
-}
 
 // §1250 gain for a single property = min(prior depreciation, realized gain).
 // Cannot exceed actual gain — only gain attributable to depreciation is captured.
