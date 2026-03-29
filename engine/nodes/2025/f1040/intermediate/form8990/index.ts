@@ -158,7 +158,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
       outputs: [
         {
           nodeType: schedule1.nodeType,
-          input: { biz_interest_disallowed_add_back: disallowed },
+          fields: { biz_interest_disallowed_add_back: disallowed },
         },
       ],
     };

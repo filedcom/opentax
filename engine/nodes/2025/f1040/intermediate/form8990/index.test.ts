@@ -89,7 +89,7 @@ Deno.test("form8990 — BIE partially disallowed: routes add-back to schedule1",
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     5_000,
   );
 });
@@ -111,7 +111,7 @@ Deno.test("form8990 — zero ATI, zero BII, zero floor plan: BIE fully disallowe
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     20_000,
   );
 });
@@ -131,7 +131,7 @@ Deno.test("form8990 — prior year carryforward increases total BIE", () => {
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     9_000,
   );
 });
@@ -163,7 +163,7 @@ Deno.test("form8990 — floor plan interest: increases deductible cap, reduces d
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     5_000,
   );
 });
@@ -210,7 +210,7 @@ Deno.test("form8990 — depreciation add-back increases ATI, reduces disallowanc
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     8_000,
   );
 });
@@ -228,7 +228,7 @@ Deno.test("form8990 — negative raw ATI is floored at zero", () => {
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     10_000,
   );
 });
@@ -248,7 +248,7 @@ Deno.test("form8990 — NOL deduction adds back to ATI", () => {
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   assertEquals(
-    (s1!.input as Record<string, unknown>).biz_interest_disallowed_add_back,
+    (s1!.fields as Record<string, unknown>).biz_interest_disallowed_add_back,
     6_000,
   );
 });

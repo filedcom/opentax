@@ -61,7 +61,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     if (totalTaxable > 0) {
       outputs.push({
         nodeType: schedule1.nodeType,
-        input: { line8c_cod_income: totalTaxable },
+        fields: { line8c_cod_income: totalTaxable },
       });
     }
 
@@ -73,7 +73,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     if (totalExcluded > 0) {
       outputs.push({
         nodeType: form982.nodeType,
-        input: { line2_excluded_cod: totalExcluded },
+        fields: { line2_excluded_cod: totalExcluded },
       });
     }
 
@@ -81,7 +81,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     for (const item of propertyItems(c99s)) {
       outputs.push({
         nodeType: schedule_d.nodeType,
-        input: {
+        fields: {
           cod_property_fmv: item.box7_fmv_property,
           cod_debt_cancelled: item.box2_cod_amount,
         },

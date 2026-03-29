@@ -94,7 +94,7 @@ function allowedCredit(input: Form1116Input): number {
 // Only emit when credit > 0
 function schedule3Output(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, input: { line1_foreign_tax_credit: credit } }];
+  return [{ nodeType: schedule3.nodeType, fields: { line1_foreign_tax_credit: credit } }];
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────

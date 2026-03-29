@@ -85,7 +85,7 @@ Deno.test("section_179: basic election within limit routes to schedule1", () => 
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 50_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 50_000);
 });
 
 Deno.test("section_179: election capped at $2,500,000 limit", () => {
@@ -95,7 +95,7 @@ Deno.test("section_179: election capped at $2,500,000 limit", () => {
     business_income_limit: 5_000_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 2_500_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 2_500_000);
 });
 
 Deno.test("section_179: phase-out reduces limit dollar-for-dollar above $4,000,000", () => {
@@ -106,7 +106,7 @@ Deno.test("section_179: phase-out reduces limit dollar-for-dollar above $4,000,0
     business_income_limit: 5_000_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 2_000_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 2_000_000);
 });
 
 Deno.test("section_179: fully phased out when cost >= $6,500,000", () => {
@@ -129,7 +129,7 @@ Deno.test("section_179: business income limitation caps deduction", () => {
     business_income_limit: 60_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 60_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 60_000);
 });
 
 Deno.test("section_179: disallowed amount is tracked as carryover", () => {
@@ -142,7 +142,7 @@ Deno.test("section_179: disallowed amount is tracked as carryover", () => {
   // Carryover does not route downstream — it's informational
   // but the total deduction must be $60,000
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 60_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 60_000);
 });
 
 Deno.test("section_179: carryover from prior year is added to current elected", () => {
@@ -154,7 +154,7 @@ Deno.test("section_179: carryover from prior year is added to current elected", 
     business_income_limit: 200_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 50_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 50_000);
 });
 
 Deno.test("section_179: pre-computed deduction from schedule_e passed through", () => {
@@ -164,7 +164,7 @@ Deno.test("section_179: pre-computed deduction from schedule_e passed through", 
     business_income_limit: 200_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 75_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 75_000);
 });
 
 Deno.test("section_179: zero elected produces no schedule1 output", () => {
@@ -181,7 +181,7 @@ Deno.test("bonus: pre-Jan20 property gets 40% bonus depreciation", () => {
     bonus_depreciation_basis: 100_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 40_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 40_000);
 });
 
 Deno.test("bonus: post-Jan19 property gets 100% bonus depreciation", () => {
@@ -190,7 +190,7 @@ Deno.test("bonus: post-Jan19 property gets 100% bonus depreciation", () => {
     bonus_depreciation_basis_post_jan19: 100_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 100_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 100_000);
 });
 
 Deno.test("bonus: elect_out_bonus suppresses all bonus depreciation", () => {
@@ -208,7 +208,7 @@ Deno.test("bonus: elect_40pct_bonus for post-Jan19 property gives 40% instead of
     elect_40pct_bonus: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 40_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 40_000);
 });
 
 Deno.test("bonus: both pre and post-Jan19 basis combined", () => {
@@ -220,7 +220,7 @@ Deno.test("bonus: both pre and post-Jan19 basis combined", () => {
     bonus_depreciation_basis_post_jan19: 80_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 100_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 100_000);
 });
 
 // ── MACRS depreciation ────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ Deno.test("macrs: 5-year property year-1 GDS (200DB/HY = 20%)", () => {
     macrs_gds_year_of_service: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 10_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 10_000);
 });
 
 Deno.test("macrs: 5-year property year-2 GDS (200DB/HY = 32%)", () => {
@@ -246,7 +246,7 @@ Deno.test("macrs: 5-year property year-2 GDS (200DB/HY = 32%)", () => {
     macrs_gds_year_of_service: 2,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 16_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 16_000);
 });
 
 Deno.test("macrs: 7-year property year-1 GDS (200DB/HY = 14.29%)", () => {
@@ -258,7 +258,7 @@ Deno.test("macrs: 7-year property year-1 GDS (200DB/HY = 14.29%)", () => {
     macrs_gds_year_of_service: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 14_290);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 14_290);
 });
 
 Deno.test("macrs: 3-year property year-1 GDS (200DB/HY = 33.33%)", () => {
@@ -270,7 +270,7 @@ Deno.test("macrs: 3-year property year-1 GDS (200DB/HY = 33.33%)", () => {
     macrs_gds_year_of_service: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 9_999);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 9_999);
 });
 
 Deno.test("macrs: 15-year property year-1 GDS (150DB/HY = 5%)", () => {
@@ -282,13 +282,13 @@ Deno.test("macrs: 15-year property year-1 GDS (150DB/HY = 5%)", () => {
     macrs_gds_year_of_service: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 10_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 10_000);
 });
 
 Deno.test("macrs: prior-year MACRS depreciation passes through to schedule1", () => {
   const result = compute({ macrs_prior_depreciation: 25_000 });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 25_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 25_000);
 });
 
 Deno.test("macrs: business use pct < 100% scales basis proportionally", () => {
@@ -301,7 +301,7 @@ Deno.test("macrs: business use pct < 100% scales basis proportionally", () => {
     business_use_pct: 60,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 12_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 12_000);
 });
 
 // ── Output routing ────────────────────────────────────────────────────────────
@@ -314,7 +314,7 @@ Deno.test("routing: total depreciation routes to schedule1 as line13_depreciatio
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  assertEquals(typeof (s1!.input as Record<string, unknown>).line13_depreciation, "number");
+  assertEquals(typeof (s1!.fields as Record<string, unknown>).line13_depreciation, "number");
 });
 
 Deno.test("routing: 200DB property creates AMT adjustment to form6251", () => {
@@ -328,7 +328,7 @@ Deno.test("routing: 200DB property creates AMT adjustment to form6251", () => {
   });
   const f6251 = findOutput(result, "form6251");
   assertEquals(f6251 !== undefined, true);
-  assertEquals((f6251!.input as Record<string, unknown>).depreciation_adjustment, 5_000);
+  assertEquals((f6251!.fields as Record<string, unknown>).depreciation_adjustment, 5_000);
 });
 
 Deno.test("routing: 15-year property (150DB) produces no AMT adjustment", () => {
@@ -366,7 +366,7 @@ Deno.test("combined: §179 + bonus + MACRS all aggregate to schedule1", () => {
     macrs_gds_year_of_service: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 42_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 42_000);
 });
 
 Deno.test("combined: section_179_deduction from schedule_e + MACRS", () => {
@@ -380,7 +380,7 @@ Deno.test("combined: section_179_deduction from schedule_e + MACRS", () => {
     macrs_gds_year_of_service: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 64_290);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 64_290);
 });
 
 // ── Edge cases ────────────────────────────────────────────────────────────────
@@ -405,7 +405,7 @@ Deno.test("edge: listed property >50% business use qualifies for bonus", () => {
   });
   const s1 = findOutput(result, "schedule1");
   // 40% bonus on $50,000 = $20,000
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 20_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 20_000);
 });
 
 Deno.test("edge: luxury auto year-1 limit caps total depreciation (no bonus, 2025)", () => {
@@ -418,7 +418,7 @@ Deno.test("edge: luxury auto year-1 limit caps total depreciation (no bonus, 202
     luxury_auto_year: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 12_200);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 12_200);
 });
 
 Deno.test("edge: luxury auto year-1 with bonus depreciation limit ($20,200)", () => {
@@ -429,7 +429,7 @@ Deno.test("edge: luxury auto year-1 with bonus depreciation limit ($20,200)", ()
     luxury_auto_year: 1,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 20_200);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 20_200);
 });
 
 Deno.test("edge: luxury auto year-2 limit ($19,600) for pre-Jan20 property", () => {
@@ -443,7 +443,7 @@ Deno.test("edge: luxury auto year-2 limit ($19,600) for pre-Jan20 property", () 
   });
   const s1 = findOutput(result, "schedule1");
   // 5-yr yr-2: 32% of $80,000 = $25,600 → capped at $19,600
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 19_600);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 19_600);
 });
 
 Deno.test("edge: §179 fully phased out at cost ≥ $6,500,000 produces no output", () => {
@@ -472,9 +472,9 @@ Deno.test("smoke: realistic Schedule E rental property with §179 and MACRS", ()
   });
   const s1 = findOutput(result, "schedule1");
   // §179: $25,000 + MACRS: $10,000 * 20% = $2,000 → total $27,000
-  assertEquals((s1!.input as Record<string, unknown>).line13_depreciation, 27_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line13_depreciation, 27_000);
   // AMT: 5-yr (200DB vs 150DB): (20% - 15%) * $10,000 = $500
   const f6251 = findOutput(result, "form6251");
   assertEquals(f6251 !== undefined, true);
-  assertEquals((f6251!.input as Record<string, unknown>).depreciation_adjustment, 500);
+  assertEquals((f6251!.fields as Record<string, unknown>).depreciation_adjustment, 500);
 });

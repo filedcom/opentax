@@ -72,7 +72,7 @@ function hasTransactions(input: Form8949Input): boolean {
 function routeTransaction(tx: Transaction): NodeOutput {
   return {
     nodeType: schedule_d.nodeType,
-    input: { transaction: tx },
+    fields: { transaction: tx },
   };
 }
 

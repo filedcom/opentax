@@ -32,7 +32,7 @@ Deno.test("not active participant: single → full deduction", () => {
     active_participant: false,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 7_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 7_000);
 });
 
 Deno.test("not active participant: MFJ spouse not participant → full deduction", () => {
@@ -44,7 +44,7 @@ Deno.test("not active participant: MFJ spouse not participant → full deduction
     spouse_active_participant: false,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 7_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 7_000);
 });
 
 // ─── Active participant — below phase-out (full deduction) ────────────────────
@@ -57,7 +57,7 @@ Deno.test("active participant: single below phase-out → full deduction", () =>
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 7_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 7_000);
 });
 
 Deno.test("active participant: MFJ below phase-out → full deduction", () => {
@@ -68,7 +68,7 @@ Deno.test("active participant: MFJ below phase-out → full deduction", () => {
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 7_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 7_000);
 });
 
 // ─── Active participant — in phase-out (partial deduction) ───────────────────
@@ -84,7 +84,7 @@ Deno.test("active participant: single in phase-out → partial deduction", () =>
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 3_500);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 3_500);
 });
 
 Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
@@ -97,7 +97,7 @@ Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 3_500);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 3_500);
 });
 
 Deno.test("active participant: HOH in phase-out → partial deduction", () => {
@@ -110,7 +110,7 @@ Deno.test("active participant: HOH in phase-out → partial deduction", () => {
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 3_500);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 3_500);
 });
 
 // ─── Active participant — above phase-out (no deduction) ─────────────────────
@@ -147,7 +147,7 @@ Deno.test("non-covered MFJ spouse: below non-covered range → full deduction", 
     spouse_active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 7_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 7_000);
 });
 
 Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", () => {
@@ -161,7 +161,7 @@ Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", 
     spouse_active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 3_500);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 3_500);
 });
 
 Deno.test("non-covered MFJ spouse: above non-covered range → no deduction", () => {
@@ -186,7 +186,7 @@ Deno.test("age 50+: contribution limit is $8,000", () => {
     age_50_or_older: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 8_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 8_000);
 });
 
 Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
@@ -198,7 +198,7 @@ Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
     age_50_or_older: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 8_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 8_000);
 });
 
 // ─── Contribution cap (under 50) ─────────────────────────────────────────────
@@ -211,7 +211,7 @@ Deno.test("contribution exceeds $7,000 limit → capped at $7,000", () => {
     active_participant: false,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 7_000);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 7_000);
 });
 
 // ─── Phase-out rounding rules ─────────────────────────────────────────────────
@@ -226,7 +226,7 @@ Deno.test("phase-out: reduced amount rounds up to nearest $10", () => {
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 6_300);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 6_300);
 });
 
 Deno.test("phase-out: minimum $200 deduction floor applies", () => {
@@ -241,7 +241,7 @@ Deno.test("phase-out: minimum $200 deduction floor applies", () => {
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 200);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 200);
 });
 
 // ─── MFS active participant ────────────────────────────────────────────────────
@@ -255,7 +255,7 @@ Deno.test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5
     active_participant: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.input as Record<string, unknown>).line20_ira_deduction, 3_500);
+  assertEquals((s1!.fields as Record<string, unknown>).line20_ira_deduction, 3_500);
 });
 
 Deno.test("MFS active participant: above $10,000 MAGI → no deduction", () => {

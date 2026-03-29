@@ -164,7 +164,7 @@ function totalTax(input: Form5329Input): number {
 // Route total Form 5329 tax to Schedule 2 line 8 when > 0
 function schedule2Output(total: number): NodeOutput[] {
   if (total <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, input: { line8_form5329_tax: total } }];
+  return [{ nodeType: schedule2.nodeType, fields: { line8_form5329_tax: total } }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

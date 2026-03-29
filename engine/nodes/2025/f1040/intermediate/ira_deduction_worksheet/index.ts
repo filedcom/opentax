@@ -121,7 +121,7 @@ function deductibleAmount(input: IraDeductionInput): number {
 // Builds schedule1 output, or empty array when nothing to report
 function schedule1Output(deductible: number): NodeOutput[] {
   if (deductible <= 0) return [];
-  return [{ nodeType: schedule1.nodeType, input: { line20_ira_deduction: deductible } }];
+  return [{ nodeType: schedule1.nodeType, fields: { line20_ira_deduction: deductible } }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

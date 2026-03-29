@@ -75,19 +75,19 @@ function totalFicaTax(ss: number, medicare: number): number {
 // Route wages to Form 1040 line 1g when > 0
 function f1040Output(wages: number): NodeOutput[] {
   if (wages <= 0) return [];
-  return [{ nodeType: f1040.nodeType, input: { line1g_wages_8919: wages } }];
+  return [{ nodeType: f1040.nodeType, fields: { line1g_wages_8919: wages } }];
 }
 
 // Route total FICA tax to Schedule 2 line 6 when > 0
 function schedule2Output(line13: number): NodeOutput[] {
   if (line13 <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, input: { line6_uncollected_8919: line13 } }];
+  return [{ nodeType: schedule2.nodeType, fields: { line6_uncollected_8919: line13 } }];
 }
 
 // Route wages to Schedule SE line 8c to offset SS wage base
 function scheduleSEOutput(wages: number): NodeOutput[] {
   if (wages <= 0) return [];
-  return [{ nodeType: schedule_se.nodeType, input: { wages_8919: wages } }];
+  return [{ nodeType: schedule_se.nodeType, fields: { wages_8919: wages } }];
 }
 
 // ─── Node ─────────────────────────────────────────────────────────────────────

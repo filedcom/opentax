@@ -117,7 +117,7 @@ function needsScheduleB(items: DIVItem[]): boolean {
 function dividendScheduleBOutput(item: DIVItem): NodeOutput[] {
   return [{
     nodeType: schedule_b.nodeType,
-    input: {
+    fields: {
       payerName: item.payerName,
       ordinaryDividends: item.box1a,
       isNominee: item.isNominee,
@@ -183,7 +183,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const totalBox2a = div1099s.reduce((sum, item) => sum + (item.box2a ?? 0), 0);
     if (totalBox2a > 0 && !anySubAmounts) f1040Fields.line7a_cap_gain_distrib = totalBox2a;
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push({ nodeType: f1040.nodeType, input: f1040Fields });
+      outputs.push({ nodeType: f1040.nodeType, fields: f1040Fields });
     }
 
     // Cap gain distribution → schedule_d when sub-amounts present
@@ -191,7 +191,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       const totalBox2c = div1099s.reduce((sum, item) => sum + (item.box2c ?? 0), 0);
       outputs.push({
         nodeType: schedule_d.nodeType,
-        input: {
+        fields: {
           line13_cap_gain_distrib: totalBox2a,
           box2c_qsbs: totalBox2c > 0 ? totalBox2c : undefined,
         },
@@ -202,13 +202,13 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     if (totalBox2b > 0) {
       outputs.push({
         nodeType: unrecaptured_1250_worksheet.nodeType,
-        input: { unrecaptured_1250_gain: totalBox2b },
+        fields: { unrecaptured_1250_gain: totalBox2b },
       });
     }
 
     const totalBox2d = div1099s.reduce((sum, item) => sum + (item.box2d ?? 0), 0);
     if (totalBox2d > 0) {
-      outputs.push({ nodeType: rate_28_gain_worksheet.nodeType, input: { collectibles_gain: totalBox2d } });
+      outputs.push({ nodeType: rate_28_gain_worksheet.nodeType, fields: { collectibles_gain: totalBox2d } });
     }
 
     // §199A dividends — only items meeting holding period qualify
@@ -221,14 +221,14 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       const useForm8995a = isAbove199AThreshold(taxableIncome, filingStatus);
       outputs.push({
         nodeType: useForm8995a ? form8995a.nodeType : form8995.nodeType,
-        input: { line6_sec199a_dividends: totalBox5 },
+        fields: { line6_sec199a_dividends: totalBox5 },
       });
     }
 
     // PAB interest from exempt-interest dividends (form6251)
     const totalBox13 = div1099s.reduce((sum, item) => sum + (item.box13 ?? 0), 0);
     if (totalBox13 > 0) {
-      outputs.push({ nodeType: form6251.nodeType, input: { line2g_pab_interest: totalBox13 } });
+      outputs.push({ nodeType: form6251.nodeType, fields: { line2g_pab_interest: totalBox13 } });
     }
 
     // Foreign tax — only items meeting holding period; totalBox7 determines routing
@@ -243,9 +243,9 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         ? FOREIGN_TAX_MFJ_THRESHOLD
         : FOREIGN_TAX_SINGLE_THRESHOLD;
       if (totalBox7 > threshold) {
-        outputs.push({ nodeType: form_1116.nodeType, input: { foreign_tax_paid: eligibleBox7 } });
+        outputs.push({ nodeType: form_1116.nodeType, fields: { foreign_tax_paid: eligibleBox7 } });
       } else {
-        outputs.push({ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: eligibleBox7 } });
+        outputs.push({ nodeType: schedule3.nodeType, fields: { line1_foreign_tax_1099: eligibleBox7 } });
       }
     }
 

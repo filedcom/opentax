@@ -187,7 +187,7 @@ Deno.test("routing: rent_income routes net to schedule1 line5", () => {
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 12_000);
 });
 
@@ -201,7 +201,7 @@ Deno.test("routing: royalties_income routes net to schedule1 line5", () => {
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
@@ -476,7 +476,7 @@ Deno.test("routing: qbi_w2_wages routes to form8995 when qbi_trade_or_business=Y
   ]);
   const f8995 = findOutput(result, "form8995");
   assertEquals(f8995 !== undefined, true);
-  const input = f8995!.input as Record<string, number>;
+  const input = f8995!.fields as Record<string, number>;
   assertEquals(input.w2_wages, 10_000);
 });
 
@@ -490,7 +490,7 @@ Deno.test("routing: qbi_unadjusted_basis routes to form8995 when qbi_trade_or_bu
   ]);
   const f8995 = findOutput(result, "form8995");
   assertEquals(f8995 !== undefined, true);
-  const input = f8995!.input as Record<string, number>;
+  const input = f8995!.fields as Record<string, number>;
   assertEquals(input.unadjusted_basis, 200_000);
 });
 
@@ -504,7 +504,7 @@ Deno.test("routing: qbi_override routes to form8995 using override amount", () =
   ]);
   const f8995 = findOutput(result, "form8995");
   assertEquals(f8995 !== undefined, true);
-  const input = f8995!.input as Record<string, number>;
+  const input = f8995!.fields as Record<string, number>;
   assertEquals(input.qbi, 15_000);
 });
 
@@ -517,7 +517,7 @@ Deno.test("aggregation: rent_income summed across two properties", () => {
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 10_000);
 });
 
@@ -528,7 +528,7 @@ Deno.test("aggregation: royalties summed across two royalty properties", () => {
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
@@ -539,7 +539,7 @@ Deno.test("aggregation: expenses reduce net across properties in single output",
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net = (12000 - 2000) + (8000 - 1000) = 17000
   assertEquals(input.line5_schedule_e, 17_000);
 });
@@ -552,7 +552,7 @@ Deno.test("aggregation: mortgage interest line 23c totalled across all propertie
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   // net = (20000-4000) + (15000-3000) = 28000
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 28_000);
 });
 
@@ -564,7 +564,7 @@ Deno.test("aggregation: depreciation line 23d totalled across all properties", (
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   // net = (20000-5000) + (15000-3000) = 27000
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 27_000);
 });
 
@@ -578,7 +578,7 @@ Deno.test("threshold §280A: fair_rental_days=14 — income fully excluded (< 15
   const s1 = findOutput(result, "schedule1");
   // No rental income reported — either no output or line5 = 0
   if (s1 !== undefined) {
-    const input = s1.input as Record<string, number>;
+    const input = s1.fields as Record<string, number>;
     assertEquals(input.line5_schedule_e ?? 0, 0);
   } else {
     assertEquals(s1, undefined);
@@ -591,7 +591,7 @@ Deno.test("threshold §280A: fair_rental_days=15 — income NOT excluded (≥ 15
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
@@ -622,7 +622,7 @@ Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — 
   const s1 = findOutput(result, "schedule1");
   // Net cannot be negative under vacation home rules (loss disallowed)
   if (s1 !== undefined) {
-    const input = s1.input as Record<string, number>;
+    const input = s1.fields as Record<string, number>;
     assertEquals((input.line5_schedule_e ?? 0) >= 0, true);
   }
   assertEquals(Array.isArray(result.outputs), true);
@@ -640,7 +640,7 @@ Deno.test("threshold §280A: personal_use_days > 10% of fair_rental_days trigger
   ]);
   // Under vacation home: net cannot go below 0
   if (findOutput(result, "schedule1")) {
-    const input = findOutput(result, "schedule1")!.input as Record<string, number>;
+    const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
     assertEquals((input.line5_schedule_e ?? 0) >= 0, true);
   }
   assertEquals(Array.isArray(result.outputs), true);
@@ -657,7 +657,7 @@ Deno.test("threshold §280A: personal_use_days=0 — pure rental, no vacation ho
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 9_000);
 });
 
@@ -700,7 +700,7 @@ Deno.test("threshold ownership_percent=0: all income/expenses allocated as $0 to
   ]);
   const s1 = findOutput(result, "schedule1");
   if (s1 !== undefined) {
-    const input = s1.input as Record<string, number>;
+    const input = s1.fields as Record<string, number>;
     assertEquals(input.line5_schedule_e, 0);
   } else {
     assertEquals(s1, undefined);
@@ -717,7 +717,7 @@ Deno.test("threshold ownership_percent=50: prorates income and expenses by 50%",
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net at 100% = 8000; at 50% = 4000
   assertEquals(input.line5_schedule_e, 4_000);
 });
@@ -924,7 +924,7 @@ Deno.test("edge case vacation home <15 rental days: all income excluded, no sche
   // No rental income on Schedule E — either no schedule1 output or line5=0
   const s1 = findOutput(result, "schedule1");
   if (s1 !== undefined) {
-    const input = s1.input as Record<string, number>;
+    const input = s1.fields as Record<string, number>;
     assertEquals(input.line5_schedule_e ?? 0, 0);
   } else {
     assertEquals(s1, undefined);
@@ -957,7 +957,7 @@ Deno.test("edge case: multiple properties (4) in one call — all processed", ()
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 10_000);
 });
 
@@ -998,8 +998,8 @@ Deno.test("edge case: operating_expenses_carryover re-enters expense pool (reduc
   const withoutCarryover = compute([
     minimalItem({ rent_income: 10_000 }),
   ]);
-  const netWith = (findOutput(withCarryover, "schedule1")!.input as Record<string, number>).line5_schedule_e;
-  const netWithout = (findOutput(withoutCarryover, "schedule1")!.input as Record<string, number>).line5_schedule_e;
+  const netWith = (findOutput(withCarryover, "schedule1")!.fields as Record<string, number>).line5_schedule_e;
+  const netWithout = (findOutput(withoutCarryover, "schedule1")!.fields as Record<string, number>).line5_schedule_e;
   // Carryover should reduce net income
   assertEquals(netWith < netWithout, true);
 });
@@ -1022,7 +1022,7 @@ Deno.test("edge case: expense_other_lines with 6 rows does not throw", () => {
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   // net = 15000 - (500+200+300+400+600+250) = 15000 - 2250 = 12750
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 12_750);
 });
 
@@ -1038,7 +1038,7 @@ Deno.test("edge case: expense_other_lines amounts reduce net income", () => {
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 10_500);
 });
 
@@ -1064,7 +1064,7 @@ Deno.test("edge case: all expense lines combined reduce net correctly", () => {
   ]);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // total expenses = 500+400+600+1500+1200+800+2000+10000+500+3000+300+2500+1000+8000 = 32300
   // net = 50000 - 32300 = 17700
   assertEquals(input.line5_schedule_e, 17_700);
@@ -1110,7 +1110,7 @@ Deno.test("smoke: comprehensive test with all major boxes populated", () => {
   // schedule1 output must exist
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net = 24000 - (600+800+1200+1800+9000+2400+3000+1200+5500+600) = 24000 - 26100 = -2100
   assertEquals(input.line5_schedule_e, -2_100);
 
@@ -1150,6 +1150,6 @@ Deno.test("edge case self-rental (property_type=7): net loss is passive — rout
   assertEquals(f8582 !== undefined, true);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, -3_000);
 });

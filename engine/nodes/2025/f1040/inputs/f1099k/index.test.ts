@@ -132,7 +132,7 @@ Deno.test("box4_federal_withheld > 0 routes to f1040 line25b_withheld_1099", () 
   const result = compute([minimalItem({ box4_federal_withheld: 480 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.input as Record<string, unknown>;
+  const input = f1040Out!.fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 480);
 });
 
@@ -239,7 +239,7 @@ Deno.test("multiple items: box4 aggregated — two items with withholding emit c
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   // Each item with box4 > 0 routes its own amount — combined total must be 1200
   const total = f1040Outputs.reduce(
-    (sum, o) => sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+    (sum, o) => sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(total, 1200);
@@ -253,7 +253,7 @@ Deno.test("multiple items: only items with box4 > 0 contribute to f1040 output",
   ]);
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   const total = f1040Outputs.reduce(
-    (sum, o) => sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+    (sum, o) => sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(total, 500);
@@ -276,7 +276,7 @@ Deno.test("multiple items: three PSEs each with box4 — all withholdings routed
   ]);
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   const total = f1040Outputs.reduce(
-    (sum, o) => sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+    (sum, o) => sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(total, 600);
@@ -325,7 +325,7 @@ Deno.test("box4_federal_withheld matches 24% backup withholding rate on box1a (2
   const result = compute([minimalItem({ box4_federal_withheld: 480 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.input as Record<string, unknown>;
+  const input = f1040Out!.fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 480);
 });
 
@@ -516,7 +516,7 @@ Deno.test("box4 and box8 both present — only f1040 output for box4", () => {
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.input as Record<string, unknown>;
+  const input = f1040Out!.fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 600);
   // State withholding (box8) must NOT appear in f1040 output
   assertEquals("line25b_withheld_state" in input, false);
@@ -529,7 +529,7 @@ Deno.test("second_tin_notice = true with box4 — box4 still routes correctly", 
   ]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.input as Record<string, unknown>;
+  const input = f1040Out!.fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 240);
 });
 
@@ -576,7 +576,7 @@ Deno.test("PSE item with all optional boxes present — only box4 produces feder
   // Only f1040 output for box4
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   assertEquals(f1040Outputs.length, 1);
-  const input = f1040Outputs[0].input as Record<string, unknown>;
+  const input = f1040Outputs[0].fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 840);
 });
 
@@ -627,7 +627,7 @@ Deno.test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (b
   // Only Stripe's box4 should produce a federal output
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   const totalWithheld = f1040Outputs.reduce(
-    (sum, o) => sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+    (sum, o) => sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(totalWithheld, 2880);
@@ -639,7 +639,7 @@ Deno.test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (b
   );
   const totalFromStateFields = allFederalOutputs.reduce(
     (sum, o) => {
-      const inp = o.input as Record<string, unknown>;
+      const inp = o.fields as Record<string, unknown>;
       return sum + ((inp.line1a_wages ?? inp.line8z_other ?? 0) as number);
     },
     0,

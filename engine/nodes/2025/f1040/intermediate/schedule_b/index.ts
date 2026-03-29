@@ -80,7 +80,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     if (line6 > 0) f1040Fields.line3b_ordinary_dividends = line6;
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, input: f1040Fields },
+      { nodeType: f1040.nodeType, fields: f1040Fields },
     ];
 
     return { outputs };

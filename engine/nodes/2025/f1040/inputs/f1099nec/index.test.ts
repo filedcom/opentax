@@ -148,35 +148,35 @@ Deno.test("routing: box1_nec with schedule_c → schedule_c node", () => {
   const result = compute([minimalItem({ box1_nec: 5000, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 5000);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 5000);
 });
 
 Deno.test("routing: box1_nec with schedule_f → schedule_f node", () => {
   const result = compute([minimalItem({ box1_nec: 8000, for_routing: "schedule_f" })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line8_other_income, 8000);
+  assertEquals((out!.fields as Record<string, unknown>).line8_other_income, 8000);
 });
 
 Deno.test("routing: box1_nec with form_8919 → form8919 node", () => {
   const result = compute([minimalItem({ box1_nec: 30000, for_routing: "form_8919" })]);
   const out = findOutput(result, "form8919");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).wages, 30000);
+  assertEquals((out!.fields as Record<string, unknown>).wages, 30000);
 });
 
 Deno.test("routing: box1_nec with schedule_1_line_8z → schedule1 node line8z_other", () => {
   const result = compute([minimalItem({ box1_nec: 1200, for_routing: "schedule_1_line_8z" })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line8z_other, 1200);
+  assertEquals((out!.fields as Record<string, unknown>).line8z_other, 1200);
 });
 
 Deno.test("routing: omitting for_routing defaults to schedule_c", () => {
   const result = compute([minimalItem({ box1_nec: 3000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 3000);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 3000);
 });
 
 Deno.test("routing: box1_nec = 0 with schedule_c produces no schedule_c output", () => {
@@ -195,14 +195,14 @@ Deno.test("routing: box3_golden_parachute > 0 → schedule1 line8z_golden_parach
   const result = compute([minimalItem({ box3_golden_parachute: 100000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line8z_golden_parachute, 100000);
+  assertEquals((out!.fields as Record<string, unknown>).line8z_golden_parachute, 100000);
 });
 
 Deno.test("routing: box3_golden_parachute > 0 → schedule2 line17k_golden_parachute_excise", () => {
   const result = compute([minimalItem({ box3_golden_parachute: 100000 })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line17k_golden_parachute_excise, 20000);
+  assertEquals((out!.fields as Record<string, unknown>).line17k_golden_parachute_excise, 20000);
 });
 
 Deno.test("routing: box3_golden_parachute = 0 produces no schedule2 output", () => {
@@ -214,7 +214,7 @@ Deno.test("routing: box4_federal_withheld > 0 → f1040 line25b_withheld_1099", 
   const result = compute([minimalItem({ box4_federal_withheld: 750 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line25b_withheld_1099, 750);
+  assertEquals((out!.fields as Record<string, unknown>).line25b_withheld_1099, 750);
 });
 
 Deno.test("routing: box4_federal_withheld = 0 produces no f1040 output", () => {
@@ -255,7 +255,7 @@ Deno.test("aggregation: multiple schedule_c items sum box1_nec per item as separ
   // Expect two separate schedule_c outputs (one per item)
   assertEquals(schedCOutputs.length, 2);
   const amounts = schedCOutputs.map(
-    (o) => (o.input as Record<string, unknown>).line1_gross_receipts as number,
+    (o) => (o.fields as Record<string, unknown>).line1_gross_receipts as number,
   );
   assertEquals(amounts.includes(5000), true);
   assertEquals(amounts.includes(3000), true);
@@ -278,7 +278,7 @@ Deno.test("aggregation: multiple box4_federal_withheld items produce separate f1
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   assertEquals(f1040Outputs.length, 2);
   const total = f1040Outputs.reduce(
-    (sum, o) => sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+    (sum, o) => sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(total, 750);
@@ -293,7 +293,7 @@ Deno.test("aggregation: multiple box3_golden_parachute items produce separate ou
   assertEquals(sch2Outputs.length, 2);
   const exciseTotal = sch2Outputs.reduce(
     (sum, o) =>
-      sum + ((o.input as Record<string, unknown>).line17k_golden_parachute_excise as number),
+      sum + ((o.fields as Record<string, unknown>).line17k_golden_parachute_excise as number),
     0,
   );
   assertEquals(exciseTotal, 16000); // (50000 + 30000) × 0.20
@@ -322,14 +322,14 @@ Deno.test("threshold: box1_nec = 599 (below $600 payer threshold) — engine sti
   // Engine processes whatever value is entered; $600 threshold is payer's filing obligation
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 599);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 599);
 });
 
 Deno.test("threshold: box1_nec = 600 (at $600 payer threshold) — engine routes", () => {
   const result = compute([minimalItem({ box1_nec: 600, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 600);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 600);
 });
 
 Deno.test("threshold: box1_nec = 601 (above $600) — engine routes", () => {
@@ -345,7 +345,7 @@ Deno.test("threshold: box4_federal_withheld at 24% of box1_nec — engine accept
   const result = compute([minimalItem({ box1_nec: box1, for_routing: "schedule_c", box4_federal_withheld: box4 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line25b_withheld_1099, 2400);
+  assertEquals((out!.fields as Record<string, unknown>).line25b_withheld_1099, 2400);
 });
 
 // Box 3 excise: 20% of golden parachute amount
@@ -353,14 +353,14 @@ Deno.test("threshold: box3 excise = box3 × 0.20 — exact calculation", () => {
   const result = compute([minimalItem({ box3_golden_parachute: 50000 })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line17k_golden_parachute_excise, 10000);
+  assertEquals((out!.fields as Record<string, unknown>).line17k_golden_parachute_excise, 10000);
 });
 
 Deno.test("threshold: box3 = 1 (minimum non-zero) — excise = 0.20", () => {
   const result = compute([minimalItem({ box3_golden_parachute: 1 })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line17k_golden_parachute_excise, 0.20);
+  assertEquals((out!.fields as Record<string, unknown>).line17k_golden_parachute_excise, 0.20);
 });
 
 // ---------------------------------------------------------------------------
@@ -564,14 +564,14 @@ Deno.test("edge: very large box1_nec (above SS wage base $176,100) — engine ro
   const result = compute([minimalItem({ box1_nec: 300000, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 300000);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 300000);
 });
 
 Deno.test("edge: box1_nec exactly at SS wage base $176,100", () => {
   const result = compute([minimalItem({ box1_nec: 176100, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 176100);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 176100);
 });
 
 Deno.test("edge: box1_nec below SE filing threshold $400 — still routes to schedule_c", () => {
@@ -579,14 +579,14 @@ Deno.test("edge: box1_nec below SE filing threshold $400 — still routes to sch
   const result = compute([minimalItem({ box1_nec: 399, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 399);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 399);
 });
 
 Deno.test("edge: box1_nec = 400 (at SE threshold) — routes to schedule_c", () => {
   const result = compute([minimalItem({ box1_nec: 400, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line1_gross_receipts, 400);
+  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 400);
 });
 
 Deno.test("edge: single item with only payer info and no amounts produces empty outputs", () => {
@@ -645,7 +645,7 @@ Deno.test("smoke: freelancer with two clients, backup withholding, and golden pa
   const schedule2Outputs = result.outputs.filter((o) => o.nodeType === "schedule2");
   assertEquals(schedule2Outputs.length, 1);
   assertEquals(
-    (schedule2Outputs[0].input as Record<string, unknown>).line17k_golden_parachute_excise,
+    (schedule2Outputs[0].fields as Record<string, unknown>).line17k_golden_parachute_excise,
     60000,
   );
 
@@ -653,7 +653,7 @@ Deno.test("smoke: freelancer with two clients, backup withholding, and golden pa
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   assertEquals(f1040Outputs.length, 1);
   assertEquals(
-    (f1040Outputs[0].input as Record<string, unknown>).line25b_withheld_1099,
+    (f1040Outputs[0].fields as Record<string, unknown>).line25b_withheld_1099,
     2880,
   );
 });

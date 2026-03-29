@@ -94,7 +94,7 @@ function computeTaxableInterestNet(item: INTItem): number {
 function scheduleBOutput(item: INTItem): NodeOutput {
   return {
     nodeType: schedule_b.nodeType,
-    input: {
+    fields: {
       payer_name: item.payer_name,
       taxable_interest_net: computeTaxableInterestNet(item),
       box3_us_obligations: item.box3,
@@ -136,18 +136,18 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = int1099s.map(scheduleBOutput);
 
     if (totalBox2 > 0) {
-      outputs.push({ nodeType: schedule1.nodeType, input: { line18_early_withdrawal: totalBox2 } });
+      outputs.push({ nodeType: schedule1.nodeType, fields: { line18_early_withdrawal: totalBox2 } });
     }
 
     const f1040Fields: Record<string, number> = {};
     if (totalBox4 > 0) f1040Fields.line25b_withheld_1099 = totalBox4;
     if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push({ nodeType: f1040.nodeType, input: f1040Fields });
+      outputs.push({ nodeType: f1040.nodeType, fields: f1040Fields });
     }
 
     if (totalBox9 > 0) {
-      outputs.push({ nodeType: form6251.nodeType, input: { line2g_pab_interest: totalBox9 } });
+      outputs.push({ nodeType: form6251.nodeType, fields: { line2g_pab_interest: totalBox9 } });
     }
 
     if (totalBox6 > 0) {
@@ -155,9 +155,9 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
         ? FOREIGN_TAX_MFJ_THRESHOLD
         : FOREIGN_TAX_SINGLE_THRESHOLD;
       if (totalBox6 > threshold) {
-        outputs.push({ nodeType: form_1116.nodeType, input: { foreign_tax_paid: totalBox6 } });
+        outputs.push({ nodeType: form_1116.nodeType, fields: { foreign_tax_paid: totalBox6 } });
       } else {
-        outputs.push({ nodeType: schedule3.nodeType, input: { line1_foreign_tax_1099: totalBox6 } });
+        outputs.push({ nodeType: schedule3.nodeType, fields: { line1_foreign_tax_1099: totalBox6 } });
       }
     }
 

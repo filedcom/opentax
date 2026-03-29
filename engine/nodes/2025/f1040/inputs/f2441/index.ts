@@ -98,14 +98,14 @@ function itemOutputs(item: F2441Item): NodeOutput[] {
   if (taxableBenefits > 0) {
     outputs.push({
       nodeType: f1040.nodeType,
-      input: { line1e_taxable_dep_care: taxableBenefits },
+      fields: { line1e_taxable_dep_care: taxableBenefits },
     });
   }
 
   if (credit > 0) {
     outputs.push({
       nodeType: schedule3.nodeType,
-      input: { line2_childcare_credit: credit },
+      fields: { line2_childcare_credit: credit },
     });
   }
 

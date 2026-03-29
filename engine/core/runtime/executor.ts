@@ -6,7 +6,7 @@ export type ExecuteResult = {
 };
 
 /**
- * Merges output.input fields into pending[targetId].
+ * Merges output.fields into pending[targetId].
  *
  * Rules:
  * - If the target field already holds an array, append incoming scalar or concat incoming array.
@@ -71,7 +71,7 @@ export function execute(
     const result = node.compute(parsed.data);
 
     for (const output of result.outputs) {
-      mergePending(pending, output.nodeType, output.input);
+      mergePending(pending, output.nodeType, output.fields);
     }
   }
 

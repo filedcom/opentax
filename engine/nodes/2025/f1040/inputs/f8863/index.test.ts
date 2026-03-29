@@ -127,7 +127,7 @@ Deno.test("aoc_routes_refundable_to_f1040: AOC with expenses routes refundable p
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
-    (f1040Out!.input as Record<string, number>).line29_refundable_aoc > 0,
+    (f1040Out!.fields as Record<string, number>).line29_refundable_aoc > 0,
     true,
   );
 });
@@ -139,7 +139,7 @@ Deno.test("aoc_routes_nonrefundable_to_schedule3: AOC with expenses routes nonre
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(sch3Out !== undefined, true);
   assertEquals(
-    (sch3Out!.input as Record<string, number>).line3_education_credit > 0,
+    (sch3Out!.fields as Record<string, number>).line3_education_credit > 0,
     true,
   );
 });
@@ -153,9 +153,9 @@ Deno.test("aoc_max_credit_2500: full $4,000 expenses produce $2,500 tentative cr
   const f1040Out = findOutput(result, "f1040");
   const sch3Out = findOutput(result, "schedule3");
   const refundable =
-    (f1040Out!.input as Record<string, number>).line29_refundable_aoc;
+    (f1040Out!.fields as Record<string, number>).line29_refundable_aoc;
   const nonrefundable =
-    (sch3Out!.input as Record<string, number>).line3_education_credit;
+    (sch3Out!.fields as Record<string, number>).line3_education_credit;
   assertEquals(Math.round(refundable), 1000);
   assertEquals(Math.round(nonrefundable), 1500);
 });
@@ -168,9 +168,9 @@ Deno.test("aoc_partial_credit_first_tier_only: $1,500 expenses produce $1,500 to
   const f1040Out = findOutput(result, "f1040");
   const sch3Out = findOutput(result, "schedule3");
   const refundable =
-    (f1040Out!.input as Record<string, number>).line29_refundable_aoc;
+    (f1040Out!.fields as Record<string, number>).line29_refundable_aoc;
   const nonrefundable =
-    (sch3Out!.input as Record<string, number>).line3_education_credit;
+    (sch3Out!.fields as Record<string, number>).line3_education_credit;
   // Refundable = 40% × $1,500 = $600
   assertEquals(Math.round(refundable * 100) / 100, 600);
   // Nonrefundable = 60% × $1,500 = $900
@@ -186,9 +186,9 @@ Deno.test("aoc_partial_credit_both_tiers: $2,500 expenses produce $2,125 total c
   const f1040Out = findOutput(result, "f1040");
   const sch3Out = findOutput(result, "schedule3");
   const refundable =
-    (f1040Out!.input as Record<string, number>).line29_refundable_aoc;
+    (f1040Out!.fields as Record<string, number>).line29_refundable_aoc;
   const nonrefundable =
-    (sch3Out!.input as Record<string, number>).line3_education_credit;
+    (sch3Out!.fields as Record<string, number>).line3_education_credit;
   assertEquals(Math.round(refundable * 100) / 100, 850);
   assertEquals(Math.round(nonrefundable * 100) / 100, 1275);
 });
@@ -201,10 +201,10 @@ Deno.test("aoc_expense_cap_at_4000: $5,000 expenses produce same result as $4,00
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
   ]);
   const refund5k =
-    (findOutput(result5k, "f1040")!.input as Record<string, number>)
+    (findOutput(result5k, "f1040")!.fields as Record<string, number>)
       .line29_refundable_aoc;
   const refund4k =
-    (findOutput(result4k, "f1040")!.input as Record<string, number>)
+    (findOutput(result4k, "f1040")!.fields as Record<string, number>)
       .line29_refundable_aoc;
   assertEquals(refund5k, refund4k);
 });
@@ -225,7 +225,7 @@ Deno.test("llc_routes_to_schedule3: LLC with expenses routes to schedule3 line3_
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(sch3Out !== undefined, true);
   assertEquals(
-    (sch3Out!.input as Record<string, number>).line3_education_credit > 0,
+    (sch3Out!.fields as Record<string, number>).line3_education_credit > 0,
     true,
   );
 });
@@ -245,7 +245,7 @@ Deno.test("llc_max_credit_2000: $10k expenses produce $2,000 credit (20% × $10k
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     2000,
   );
@@ -258,7 +258,7 @@ Deno.test("llc_5k_expenses_credit_1000: $5,000 expenses produce $1,000 credit (2
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     1000,
   );
@@ -287,7 +287,7 @@ Deno.test("aoc_aggregates_across_students: two AOC students sum their credits", 
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     2000,
   );
@@ -309,7 +309,7 @@ Deno.test("llc_aggregates_across_students_below_cap: two students × $4k = $8k �
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     1600,
   );
@@ -331,7 +331,7 @@ Deno.test("llc_aggregate_capped_at_10k_expenses: two students × $8k → capped 
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     2000,
   );
@@ -368,7 +368,7 @@ Deno.test("aoc_magi_zero_full_credit: MAGI $0 single yields full $1,000 refundab
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
@@ -386,7 +386,7 @@ Deno.test("aoc_magi_at_lower_bound_single_80k: MAGI exactly $80k single yields f
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
@@ -406,7 +406,7 @@ Deno.test("aoc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% credit 
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     500,
   );
@@ -446,7 +446,7 @@ Deno.test("aoc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full 
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
@@ -465,7 +465,7 @@ Deno.test("aoc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields 50% credit ($50
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     500,
   );
@@ -493,7 +493,7 @@ Deno.test("llc_magi_zero_full_credit: MAGI $0 single yields full $2,000 LLC cred
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     2000,
   );
@@ -510,7 +510,7 @@ Deno.test("llc_magi_at_lower_bound_single_80k: MAGI $80k single yields full $2,0
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     2000,
   );
@@ -528,7 +528,7 @@ Deno.test("llc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% LLC cre
   const sch3Out = findOutput(result, "schedule3");
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     1000,
   );
@@ -580,7 +580,7 @@ Deno.test("llc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full 
   const sch3 = findOutput(result, "schedule3");
   assertEquals(sch3 !== undefined, true);
   assertEquals(
-    (sch3!.input as Record<string, number>).line3_education_credit,
+    (sch3!.fields as Record<string, number>).line3_education_credit,
     2000,
   );
 });
@@ -597,7 +597,7 @@ Deno.test("llc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields $1,000 LLC cred
   const sch3 = findOutput(result, "schedule3");
   assertEquals(sch3 !== undefined, true);
   assertEquals(
-    (sch3!.input as Record<string, number>).line3_education_credit,
+    (sch3!.fields as Record<string, number>).line3_education_credit,
     1000,
   );
 });
@@ -700,7 +700,7 @@ Deno.test("kiddie_rule_true_aoc_fully_nonrefundable: entire AOC goes to schedule
   assertEquals(sch3Out !== undefined, true);
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     2500,
   );
@@ -718,7 +718,7 @@ Deno.test("kiddie_rule_false_allows_refundable: taxpayer_under_24_no_refundable_
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
@@ -760,7 +760,7 @@ Deno.test("llc_expense_cap_single_student_15k: $15k expenses capped at $10k → 
   ]);
   assertEquals(
     Math.round(
-      (findOutput(result, "schedule3")!.input as Record<string, number>)
+      (findOutput(result, "schedule3")!.fields as Record<string, number>)
         .line3_education_credit,
     ),
     2000,
@@ -773,7 +773,7 @@ Deno.test("llc_expense_exactly_at_cap_10k: $10k produces max $2,000 credit", () 
   ]);
   assertEquals(
     Math.round(
-      (findOutput(result, "schedule3")!.input as Record<string, number>)
+      (findOutput(result, "schedule3")!.fields as Record<string, number>)
         .line3_education_credit,
     ),
     2000,
@@ -786,7 +786,7 @@ Deno.test("llc_expense_below_cap_5k: $5k produces $1,000 credit (no cap triggere
   ]);
   assertEquals(
     Math.round(
-      (findOutput(result, "schedule3")!.input as Record<string, number>)
+      (findOutput(result, "schedule3")!.fields as Record<string, number>)
         .line3_education_credit,
     ),
     1000,
@@ -893,14 +893,14 @@ Deno.test("edge_multiple_aoc_students_summed_per_student_rule: two $4k students 
   ]);
   assertEquals(
     Math.round(
-      (findOutput(result, "f1040")!.input as Record<string, number>)
+      (findOutput(result, "f1040")!.fields as Record<string, number>)
         .line29_refundable_aoc,
     ),
     2000,
   );
   assertEquals(
     Math.round(
-      (findOutput(result, "schedule3")!.input as Record<string, number>)
+      (findOutput(result, "schedule3")!.fields as Record<string, number>)
         .line3_education_credit,
     ),
     3000,
@@ -955,7 +955,7 @@ Deno.test("edge_kiddie_rule_with_phase_out: kiddie rule + partial phase-out both
   // $1,250 entirely nonrefundable
   assertEquals(
     Math.round(
-      (sch3Out!.input as Record<string, number>).line3_education_credit,
+      (sch3Out!.fields as Record<string, number>).line3_education_credit,
     ),
     1250,
   );
@@ -1007,7 +1007,7 @@ Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.input as Record<string, number>).line29_refundable_aoc,
+      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     500,
   );
@@ -1015,7 +1015,7 @@ Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI
   // Nonrefundable on schedule3 must be positive (may be merged AOC + LLC or separate)
   assertEquals(sch3Out !== undefined, true);
   assertEquals(
-    (sch3Out!.input as Record<string, number>).line3_education_credit > 0,
+    (sch3Out!.fields as Record<string, number>).line3_education_credit > 0,
     true,
   );
 });

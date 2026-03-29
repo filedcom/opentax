@@ -139,7 +139,7 @@ class Form8829Node extends TaxNode<typeof inputSchema> {
     if (deduction <= 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule_c.nodeType, input: { line_30_home_office: deduction } },
+      { nodeType: schedule_c.nodeType, fields: { line_30_home_office: deduction } },
     ];
 
     return { outputs };

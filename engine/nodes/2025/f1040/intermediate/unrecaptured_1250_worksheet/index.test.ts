@@ -39,7 +39,7 @@ Deno.test("property: depreciation < gain → limited by depreciation", () => {
     property: { prior_depreciation_allowed: 30_000, gain_on_sale: 80_000 },
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 30_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 30_000 });
 });
 
 Deno.test("property: gain < depreciation → limited by gain", () => {
@@ -48,7 +48,7 @@ Deno.test("property: gain < depreciation → limited by gain", () => {
     property: { prior_depreciation_allowed: 50_000, gain_on_sale: 20_000 },
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 20_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 20_000 });
 });
 
 Deno.test("property: depreciation equals gain → exactly the gain", () => {
@@ -56,7 +56,7 @@ Deno.test("property: depreciation equals gain → exactly the gain", () => {
     property: { prior_depreciation_allowed: 25_000, gain_on_sale: 25_000 },
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 25_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 25_000 });
 });
 
 // ─── Distribution from f1099div (box 2b) ──────────────────────────────────────
@@ -64,7 +64,7 @@ Deno.test("property: depreciation equals gain → exactly the gain", () => {
 Deno.test("distribution only: routes full amount to schedule_d", () => {
   const result = compute({ unrecaptured_1250_gain: 5_000 });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 5_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 5_000 });
 });
 
 Deno.test("distribution only: zero amount returns no outputs", () => {
@@ -86,7 +86,7 @@ Deno.test("multiple properties: sums contributions", () => {
     ],
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 30_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 30_000 });
 });
 
 // ─── Combined sources ─────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ Deno.test("property sale + distribution: sums both", () => {
     unrecaptured_1250_gain: 5_000,
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 35_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 35_000 });
 });
 
 Deno.test("multiple properties + distribution: aggregates all sources", () => {
@@ -116,7 +116,7 @@ Deno.test("multiple properties + distribution: aggregates all sources", () => {
   // Distribution: 2000
   // Total = 17000
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 17_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 17_000 });
 });
 
 // ─── Output routing ───────────────────────────────────────────────────────────
@@ -163,5 +163,5 @@ Deno.test("smoke: typical rental property sale with distribution", () => {
   });
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input, { line19_unrecaptured_1250: 53_000 });
+  assertEquals(out?.fields, { line19_unrecaptured_1250: 53_000 });
 });

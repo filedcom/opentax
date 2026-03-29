@@ -34,10 +34,10 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
   const box1 = item.box1_nec ?? 0;
   if (box1 <= 0) return [];
   switch (item.for_routing ?? "schedule_c") {
-    case "schedule_c": return [{ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: box1 } }];
-    case "schedule_f": return [{ nodeType: schedule_f.nodeType, input: { line8_other_income: box1 } }];
-    case "form_8919": return [{ nodeType: form8919.nodeType, input: { wages: box1 } }];
-    case "schedule_1_line_8z": return [{ nodeType: schedule1.nodeType, input: { line8z_other: box1 } }];
+    case "schedule_c": return [{ nodeType: schedule_c.nodeType, fields: { line1_gross_receipts: box1 } }];
+    case "schedule_f": return [{ nodeType: schedule_f.nodeType, fields: { line8_other_income: box1 } }];
+    case "form_8919": return [{ nodeType: form8919.nodeType, fields: { wages: box1 } }];
+    case "schedule_1_line_8z": return [{ nodeType: schedule1.nodeType, fields: { line8z_other: box1 } }];
     default: return [];
   }
 }
@@ -60,10 +60,10 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
     return [
       ...necIncomeOutput(item),
       ...(box3 > 0 ? [
-        { nodeType: schedule1.nodeType, input: { line8z_golden_parachute: box3 } },
-        { nodeType: schedule2.nodeType, input: { line17k_golden_parachute_excise: box3 * 0.20 } },
+        { nodeType: schedule1.nodeType, fields: { line8z_golden_parachute: box3 } },
+        { nodeType: schedule2.nodeType, fields: { line17k_golden_parachute_excise: box3 * 0.20 } },
       ] : []),
-      ...(box4 > 0 ? [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: box4 } }] : []),
+      ...(box4 > 0 ? [{ nodeType: f1040.nodeType, fields: { line25b_withheld_1099: box4 } }] : []),
     ];
   }
 

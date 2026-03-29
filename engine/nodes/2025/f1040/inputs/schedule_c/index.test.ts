@@ -164,28 +164,28 @@ Deno.test("routing_gross_receipts_to_schedule1: income-only item routes to sched
 Deno.test("routing_returns_allowances_reduce_net_sales: line_1=10000, line_2=2000 → net_sales=8000", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_2_returns_allowances: 2000 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 8000);
 });
 
 Deno.test("routing_line_6_other_income_adds_to_gross: line_1=5000, line_6=500 → gross_income=5500", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 5000, line_6_other_income: 500 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 5500);
 });
 
 Deno.test("routing_advertising_reduces_net_profit: advertising=1000 on 10000 receipts → profit=9000", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: 1000 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 9000);
 });
 
 Deno.test("routing_meals_50pct_default: meals=1000, no special flag → deductible=500", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net = 10000 - 500 = 9500
   assertEquals(input.line3_schedule_c, 9500);
 });
@@ -194,7 +194,7 @@ Deno.test("routing_meals_80pct_dot_worker: meals=1000, dot_worker → deductible
   // AMBIGUITY: field name for DOT worker flag — verify against implementation
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000, meals_dot_worker: true })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net = 10000 - 800 = 9200
   assertEquals(input.line3_schedule_c, 9200);
 });
@@ -203,7 +203,7 @@ Deno.test("routing_meals_100pct_as_wages: meals=1000, meals_as_wages → deducti
   // AMBIGUITY: field name for meals-as-wages flag — verify against implementation
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000, meals_as_wages: true })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net = 10000 - 1000 = 9000
   assertEquals(input.line3_schedule_c, 9000);
 });
@@ -211,14 +211,14 @@ Deno.test("routing_meals_100pct_as_wages: meals=1000, meals_as_wages → deducti
 Deno.test("routing_meals_zero_no_impact: meals=0 → deductible contribution=0", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 0 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 10000);
 });
 
 Deno.test("routing_home_office_reduces_net_profit: home_office=500 on 10000 receipts → profit=9500", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_30_home_office: 500 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 9500);
 });
 
@@ -312,14 +312,14 @@ Deno.test("routing_gambler_loss_capped_at_zero: professional_gambler with loss �
     professional_gambler: true,
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 0);
 });
 
 Deno.test("routing_gambler_with_profit_routes_normally: professional_gambler, profit=1000 → schedule1 shows 1000", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 1000, professional_gambler: true })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 1000);
 });
 
@@ -352,7 +352,7 @@ Deno.test("agg_multiple_instances_to_schedule1: two businesses → schedule1 sho
   ]);
   // Each instance routes separately; aggregate on schedule1 = 100000
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 100000);
 });
 
@@ -369,7 +369,7 @@ Deno.test("agg_cogs_reduces_gross_profit: COGS=800, line_1=5000 → net_profit=4
     line_41_cogs_ending_inventory: 0,
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 4200);
 });
 
@@ -383,7 +383,7 @@ Deno.test("agg_all_expense_lines_sum: multiple expense lines each 1000 → corre
     line_18_office_expense: 1000,
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 15000);
 });
 
@@ -396,7 +396,7 @@ Deno.test("agg_part_v_other_expenses_flows_to_line27b: two items [500,300] → r
     ],
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 9200);
 });
 
@@ -445,7 +445,7 @@ Deno.test("threshold_home_office_max_300sqft: 350sqft × $5 capped at $1500", ()
     home_office_method: "simplified",
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // 350 sq_ft capped at 300 × $5 = $1500
   assertEquals(input.line3_schedule_c, 48500);
 });
@@ -457,7 +457,7 @@ Deno.test("threshold_home_office_below_max: 200sqft × $5 = $1000", () => {
     home_office_method: "simplified",
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 49000);
 });
 
@@ -465,7 +465,7 @@ Deno.test("threshold_home_office_gross_income_cap: home_office > tentative_profi
   // line_1=3000, home_office=5000 → tentative_profit=3000, deduction capped at 3000
   const result = compute([minimalItem({ line_1_gross_receipts: 3000, line_30_home_office: 5000 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // net profit after capped home office = 3000 - 3000 = 0
   assertEquals(input.line3_schedule_c, 0);
 });
@@ -658,7 +658,7 @@ Deno.test("edge_multiple_instances_one_profit_one_loss: combined net flows to sc
     minimalItem({ line_1_gross_receipts: 1000, line_8_advertising: 3000 }),
   ]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   // business1 profit=5000, business2 loss=-2000 → net=3000
   assertEquals(input.line3_schedule_c, 3000);
 });
@@ -685,7 +685,7 @@ Deno.test("edge_home_office_capped_at_tentative_profit: home_office > profit →
   // line_1=2000, home_office=5000 → deduction capped at 2000, net = 0
   const result = compute([minimalItem({ line_1_gross_receipts: 2000, line_30_home_office: 5000 })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 0);
   assertEquals(Array.isArray(result.outputs), true);
 });
@@ -713,7 +713,7 @@ Deno.test("edge_cogs_large_enough_for_net_loss: inventory > receipts → schedul
     line_41_cogs_ending_inventory: 0,
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c < 0, true);
 });
 
@@ -723,7 +723,7 @@ Deno.test("edge_non_gambler_negative_net_profit: loss flows through uncapped", (
     line_8_advertising: 20000,
   })]);
   const s1 = findOutput(result, "schedule1");
-  const input = s1!.input as Record<string, number>;
+  const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, -15000);
 });
 
@@ -767,7 +767,7 @@ Deno.test("smoke_comprehensive_all_major_boxes: full Schedule C computes correct
   // Net profit routes to schedule1
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const s1Input = s1!.input as Record<string, number>;
+  const s1Input = s1!.fields as Record<string, number>;
   assertEquals(s1Input.line3_schedule_c, 74000);
 
   // Net profit >= $400 → schedule_se

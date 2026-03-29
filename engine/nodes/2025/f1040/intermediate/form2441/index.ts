@@ -49,7 +49,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
     if (taxable > 0) {
       outputs.push({
         nodeType: f1040.nodeType,
-        input: { line1e_taxable_dep_care: taxable },
+        fields: { line1e_taxable_dep_care: taxable },
       });
     }
 

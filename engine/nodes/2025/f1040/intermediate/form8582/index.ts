@@ -136,7 +136,7 @@ function schedule1Output(allowedLoss: number): NodeOutput[] {
   if (allowedLoss <= 0) return [];
   return [{
     nodeType: schedule1.nodeType,
-    input: { line17_schedule_e: -allowedLoss },
+    fields: { line17_schedule_e: -allowedLoss },
   }];
 }
 

@@ -193,7 +193,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     if (amt === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule2.nodeType, input: { line1_amt: amt } },
+      { nodeType: schedule2.nodeType, fields: { line1_amt: amt } },
     ];
 
     return { outputs };

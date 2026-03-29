@@ -165,7 +165,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule2.nodeType, input: { lump_sum_tax: totalTax } },
+      { nodeType: schedule2.nodeType, fields: { lump_sum_tax: totalTax } },
     ];
 
     return { outputs };

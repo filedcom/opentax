@@ -247,7 +247,7 @@ Deno.test("routing: part A routes to schedule_d with is_long_term=false", () => 
   const result = compute([minimalItem({ part: "A" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
   assertEquals(tx.part, "A");
@@ -257,7 +257,7 @@ Deno.test("routing: part B routes to schedule_d with is_long_term=false", () => 
   const result = compute([minimalItem({ part: "B" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
   assertEquals(tx.part, "B");
@@ -267,7 +267,7 @@ Deno.test("routing: part C routes to schedule_d with is_long_term=false", () => 
   const result = compute([minimalItem({ part: "C" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
   assertEquals(tx.part, "C");
@@ -283,7 +283,7 @@ Deno.test("routing: part D routes to schedule_d with is_long_term=true", () => {
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.part, "D");
@@ -295,7 +295,7 @@ Deno.test("routing: part E routes to schedule_d with is_long_term=true", () => {
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.part, "E");
@@ -307,7 +307,7 @@ Deno.test("routing: part F routes to schedule_d with is_long_term=true", () => {
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.part, "F");
@@ -319,7 +319,7 @@ Deno.test("routing: part G (digital asset, basis reported, short-term) routes to
   const result = compute([minimalItem({ part: "G" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
 });
@@ -328,7 +328,7 @@ Deno.test("routing: part H (digital asset, basis not reported, short-term) route
   const result = compute([minimalItem({ part: "H" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
 });
@@ -337,7 +337,7 @@ Deno.test("routing: part I (no 1099-DA, short-term digital asset) routes to sche
   const result = compute([minimalItem({ part: "I" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, false);
 });
@@ -349,7 +349,7 @@ Deno.test("routing: part J (digital asset, basis reported, long-term) routes to 
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
 });
@@ -360,7 +360,7 @@ Deno.test("routing: part K (digital asset, basis not reported, long-term) routes
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
 });
@@ -371,7 +371,7 @@ Deno.test("routing: part L (no 1099-DA, long-term digital asset) routes to sched
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
 });
@@ -383,7 +383,7 @@ Deno.test("routing: zero gain (proceeds = cost_basis, no adjustment) still route
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.gain_loss, 0);
 });
@@ -396,7 +396,7 @@ Deno.test("gain_loss: simple gain (no adjustment)", () => {
   const result = compute([
     minimalItem({ proceeds: 5000, cost_basis: 3000 }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -407,7 +407,7 @@ Deno.test("gain_loss: simple loss (no adjustment)", () => {
   const result = compute([
     minimalItem({ proceeds: 3000, cost_basis: 5000 }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -425,7 +425,7 @@ Deno.test("gain_loss: positive adjustment_amount increases col_h (wash sale W co
       adjustment_amount: 200,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -444,7 +444,7 @@ Deno.test("gain_loss: negative adjustment_amount decreases col_h (home exclusion
       adjustment_amount: -250000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -459,7 +459,7 @@ Deno.test("gain_loss: zero adjustment_amount has no effect", () => {
       adjustment_amount: 0,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -470,7 +470,7 @@ Deno.test("gain_loss: no adjustment_amount field defaults to zero", () => {
   const result = compute([
     minimalItem({ proceeds: 7000, cost_basis: 4000 }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -506,9 +506,9 @@ Deno.test("aggregation: short-term item has is_long_term=false, long-term has is
     }),
   ]);
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
-  const txA = (sdOutputs[0].input as Record<string, unknown>)
+  const txA = (sdOutputs[0].fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
-  const txD = (sdOutputs[1].input as Record<string, unknown>)
+  const txD = (sdOutputs[1].fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(txA.is_long_term, false);
   assertEquals(txD.is_long_term, true);
@@ -524,7 +524,7 @@ Deno.test("aggregation: three items each produce independent schedule_d outputs 
   assertEquals(sdOutputs.length, 3);
   const gains = sdOutputs.map(
     (o) =>
-      ((o.input as Record<string, unknown>).transaction as Record<
+      ((o.fields as Record<string, unknown>).transaction as Record<
         string,
         unknown
       >).gain_loss,
@@ -543,7 +543,7 @@ Deno.test("aggregation: federal_withheld sums correctly across multiple items", 
   // Each item with federal_withheld > 0 emits its own f1040 output
   // (or they're combined — both are valid; test total)
   const totalWithheld = f1040Outputs.reduce((sum, o) => {
-    const inp = o.input as Record<string, unknown>;
+    const inp = o.fields as Record<string, unknown>;
     return sum + (inp.line25b_withheld_1099 as number);
   }, 0);
   assertEquals(totalWithheld, 800);
@@ -559,7 +559,7 @@ Deno.test("federal_withheld: positive value routes to f1040 line25b_withheld_109
   ]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const inp = f1040Out!.input as Record<string, unknown>;
+  const inp = f1040Out!.fields as Record<string, unknown>;
   assertEquals(inp.line25b_withheld_1099, 400);
 });
 
@@ -596,7 +596,7 @@ Deno.test("forwarding: all core transaction fields forwarded to schedule_d", () 
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.part, "C");
   assertEquals(tx.description, "0.5 Bitcoin");
@@ -624,7 +624,7 @@ Deno.test("adjustment_codes: wash sale code W — positive adjustment reduces lo
       adjustment_amount: 300,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -642,7 +642,7 @@ Deno.test("adjustment_codes: code H (home exclusion) — negative adjustment red
       adjustment_amount: -250000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -659,7 +659,7 @@ Deno.test("adjustment_codes: code L (loss not allowed) — positive adjustment z
       adjustment_amount: 1000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -676,7 +676,7 @@ Deno.test("adjustment_codes: code E (selling expenses) — negative adjustment r
       adjustment_amount: -200,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -695,7 +695,7 @@ Deno.test("adjustment_codes: code Z (QOF deferral) — negative adjustment defer
       adjustment_amount: -10000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -718,7 +718,7 @@ Deno.test("inherited: INHERITED date_acquired with Part II part is_long_term=tru
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.is_long_term, true);
   assertEquals(tx.date_acquired, "INHERITED");
@@ -734,7 +734,7 @@ Deno.test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
     }),
   ]);
   const out = findOutput(result, "schedule_d");
-  const tx = (out!.input as Record<string, unknown>)
+  const tx = (out!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.date_acquired, "VARIOUS");
 });
@@ -794,7 +794,7 @@ Deno.test("worthless: proceeds=0, gain_loss = negative cost_basis", () => {
       cost_basis: 5000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -816,7 +816,7 @@ Deno.test("nonbusiness bad debt: Part C, proceeds=0, short-term loss", () => {
       cost_basis: 10000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -838,7 +838,7 @@ Deno.test("edge: proceeds = cost_basis and no adjustment — gain_loss = 0", () 
   const result = compute([
     minimalItem({ proceeds: 3000, cost_basis: 3000 }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -854,7 +854,7 @@ Deno.test("edge: large numbers — no overflow or truncation", () => {
       cost_basis: 100_000,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -871,7 +871,7 @@ Deno.test("edge: multiple adjustment codes in adjustment_codes string are forwar
       adjustment_amount: 100,
     }),
   ]);
-  const tx = ((findOutput(result, "schedule_d")!.input) as Record<
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
     string,
     unknown
   >).transaction as Record<string, unknown>;
@@ -918,7 +918,7 @@ Deno.test("smoke: comprehensive transaction with adjustment, withholding, long-t
   // schedule_d output present
   const sdOut = findOutput(result, "schedule_d");
   assertEquals(sdOut !== undefined, true);
-  const tx = (sdOut!.input as Record<string, unknown>)
+  const tx = (sdOut!.fields as Record<string, unknown>)
     .transaction as Record<string, unknown>;
   assertEquals(tx.part, "D");
   assertEquals(tx.description, "500 sh TECH Corp");
@@ -934,7 +934,7 @@ Deno.test("smoke: comprehensive transaction with adjustment, withholding, long-t
   // f1040 output present with withholding
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const f1040Inp = f1040Out!.input as Record<string, unknown>;
+  const f1040Inp = f1040Out!.fields as Record<string, unknown>;
   assertEquals(f1040Inp.line25b_withheld_1099, 2000);
 
   // Total output count: 1 schedule_d + 1 f1040
@@ -965,7 +965,7 @@ Deno.test("smoke: mixed short-term and long-term transactions in one call", () =
 
   const gains = sdOutputs.map(
     (o) =>
-      ((o.input as Record<string, unknown>).transaction as Record<
+      ((o.fields as Record<string, unknown>).transaction as Record<
         string,
         unknown
       >).gain_loss,

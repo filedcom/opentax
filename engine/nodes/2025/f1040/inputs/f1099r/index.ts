@@ -361,7 +361,7 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
     const taxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return {
       nodeType: form5329.nodeType,
-      input: {
+      fields: {
         early_distribution: taxable,
         distribution_code: item.box7_distribution_code,
       },
@@ -377,7 +377,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   );
   return lumpItems.map((item) => ({
     nodeType: form4972.nodeType,
-    input: { lump_sum_amount: item.box1_gross_distribution },
+    fields: { lump_sum_amount: item.box1_gross_distribution },
   }));
 }
 
@@ -388,7 +388,7 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
     if (item.exclude_8606_roth === true) {
       outputs.push({
         nodeType: form8606.nodeType,
-        input: {
+        fields: {
           roth_distribution: item.box1_gross_distribution,
           distribution_code: item.box7_distribution_code,
         },
@@ -396,7 +396,7 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
     } else if (item.rollover_code === "C") {
       outputs.push({
         nodeType: form8606.nodeType,
-        input: {
+        fields: {
           roth_conversion: item.box2a_taxable_amount ?? item.box1_gross_distribution,
         },
       });
@@ -438,7 +438,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...withholdingFields,
     };
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push({ nodeType: f1040.nodeType, input: f1040Fields });
+      outputs.push({ nodeType: f1040.nodeType, fields: f1040Fields });
     }
 
     // Secondary form outputs

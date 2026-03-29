@@ -90,7 +90,7 @@ class Form6198Node extends TaxNode<typeof inputSchema> {
       outputs: [
         {
           nodeType: schedule1.nodeType,
-          input: { at_risk_disallowed_add_back: disallowed },
+          fields: { at_risk_disallowed_add_back: disallowed },
         },
       ],
     };

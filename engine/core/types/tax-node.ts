@@ -6,7 +6,7 @@ export type NodeType = string;
 // What a node passes to a downstream node
 export type NodeOutput = {
   readonly nodeType: NodeType;
-  readonly input: Readonly<Record<string, unknown>>;
+  readonly fields: Readonly<Record<string, unknown>>;
 };
 
 // What compute() returns

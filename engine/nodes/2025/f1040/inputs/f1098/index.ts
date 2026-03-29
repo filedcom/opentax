@@ -147,32 +147,32 @@ function scheduleAOutput(items: F1098Items): NodeOutput[] {
   if (points > 0) inp.line8c_points_no_1098 = points;
 
   return Object.keys(inp).length > 0
-    ? [{ nodeType: schedule_a.nodeType, input: inp }]
+    ? [{ nodeType: schedule_a.nodeType, fields: inp }]
     : [];
 }
 
 function scheduleEOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleEInterest(items);
   if (interest <= 0) return [];
-  return [{ nodeType: schedule_e.nodeType, input: { mortgage_interest: interest } }];
+  return [{ nodeType: schedule_e.nodeType, fields: { mortgage_interest: interest } }];
 }
 
 function scheduleCOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleCInterest(items);
   if (interest <= 0) return [];
-  return [{ nodeType: schedule_c.nodeType, input: { line16a_interest_mortgage: interest } }];
+  return [{ nodeType: schedule_c.nodeType, fields: { line16a_interest_mortgage: interest } }];
 }
 
 function form8829Output(items: F1098Items): NodeOutput[] {
   const interest = aggregateForm8829Interest(items);
   if (interest <= 0) return [];
-  return [{ nodeType: form_8829.nodeType, input: { mortgage_interest: interest } }];
+  return [{ nodeType: form_8829.nodeType, fields: { mortgage_interest: interest } }];
 }
 
 function schedule1Output(items: F1098Items): NodeOutput[] {
   const income = aggregatePriorYearRefundIncome(items);
   if (income <= 0) return [];
-  return [{ nodeType: schedule1.nodeType, input: { line8z_other_income: income } }];
+  return [{ nodeType: schedule1.nodeType, fields: { line8z_other_income: income } }];
 }
 
 class F1098Node extends TaxNode<typeof inputSchema> {

@@ -243,14 +243,14 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
     if (totalDepreciation > 0) {
       outputs.push({
         nodeType: schedule1.nodeType,
-        input: { line13_depreciation: totalDepreciation },
+        fields: { line13_depreciation: totalDepreciation },
       });
     }
 
     if (amtAdjustment > 0) {
       outputs.push({
         nodeType: form6251.nodeType,
-        input: { depreciation_adjustment: amtAdjustment },
+        fields: { depreciation_adjustment: amtAdjustment },
       });
     }
 

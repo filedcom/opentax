@@ -34,7 +34,7 @@ function processItem(item: B99Item): NodeOutput[] {
   const outputs: NodeOutput[] = [
     {
       nodeType: form8949.nodeType,
-      input: {
+      fields: {
         part: item.part,
         description: item.description,
         date_acquired: item.date_acquired,
@@ -51,7 +51,7 @@ function processItem(item: B99Item): NodeOutput[] {
   if ((item.federal_withheld ?? 0) > 0) {
     outputs.push({
       nodeType: f1040.nodeType,
-      input: { line25b_withheld_1099: item.federal_withheld },
+      fields: { line25b_withheld_1099: item.federal_withheld },
     });
   }
   return outputs;

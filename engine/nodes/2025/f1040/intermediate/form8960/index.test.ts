@@ -43,7 +43,7 @@ Deno.test("NII < MAGI excess → NIIT = NII × 3.8%", () => {
     line1_taxable_interest: 10_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 // ─── MAGI excess is the smaller factor ────────────────────────────────────────
@@ -58,7 +58,7 @@ Deno.test("MAGI excess < NII → NIIT = MAGI excess × 3.8%", () => {
     line1_taxable_interest: 50_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 // ─── Filing status thresholds ──────────────────────────────────────────────────
@@ -80,7 +80,7 @@ Deno.test("MFJ threshold $250,000 → NIIT above threshold", () => {
     line1_taxable_interest: 50_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 Deno.test("MFS threshold $125,000 → NIIT above threshold", () => {
@@ -91,7 +91,7 @@ Deno.test("MFS threshold $125,000 → NIIT above threshold", () => {
     line1_taxable_interest: 50_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 Deno.test("HOH threshold $200,000 → NIIT above threshold", () => {
@@ -101,7 +101,7 @@ Deno.test("HOH threshold $200,000 → NIIT above threshold", () => {
     line1_taxable_interest: 50_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 Deno.test("QSS threshold $250,000 → no output below", () => {
@@ -127,7 +127,7 @@ Deno.test("NII components: interest + dividends + capital gains + passive rental
     line5a_net_gain: 5_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 760);
+  assertEquals(sch2?.fields.line12_niit, 760);
 });
 
 Deno.test("NII annuities included (line3)", () => {
@@ -138,7 +138,7 @@ Deno.test("NII annuities included (line3)", () => {
     line3_annuities: 10_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 Deno.test("line4a passive income included", () => {
@@ -149,7 +149,7 @@ Deno.test("line4a passive income included", () => {
     line4a_passive_income: 10_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 380);
+  assertEquals(sch2?.fields.line12_niit, 380);
 });
 
 Deno.test("line5b adjustment reduces NII (excludes non-NIIT gains)", () => {
@@ -162,7 +162,7 @@ Deno.test("line5b adjustment reduces NII (excludes non-NIIT gains)", () => {
     line5b_net_gain_adjustment: -20_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 1_140);
+  assertEquals(sch2?.fields.line12_niit, 1_140);
 });
 
 Deno.test("line7 other modifications can reduce NII (NOL)", () => {
@@ -175,7 +175,7 @@ Deno.test("line7 other modifications can reduce NII (NOL)", () => {
     line7_other_modifications: -5_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 570);
+  assertEquals(sch2?.fields.line12_niit, 570);
 });
 
 // ─── Deductions offset NII ─────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ Deno.test("investment interest expense (line9a) reduces NII", () => {
     line9a_investment_interest_expense: 5_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 570);
+  assertEquals(sch2?.fields.line12_niit, 570);
 });
 
 Deno.test("state/local tax (line9b) reduces NII", () => {
@@ -202,7 +202,7 @@ Deno.test("state/local tax (line9b) reduces NII", () => {
     line9b_state_local_tax: 5_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 570);
+  assertEquals(sch2?.fields.line12_niit, 570);
 });
 
 Deno.test("line10 additional modifications reduces NII", () => {
@@ -214,7 +214,7 @@ Deno.test("line10 additional modifications reduces NII", () => {
     line10_additional_modifications: 5_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 570);
+  assertEquals(sch2?.fields.line12_niit, 570);
 });
 
 Deno.test("deductions exceeding NII gross → NII = 0, no output", () => {
@@ -260,7 +260,7 @@ Deno.test("NIIT rounds to cents", () => {
     line1_taxable_interest: 1_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 38);
+  assertEquals(sch2?.fields.line12_niit, 38);
 });
 
 Deno.test("NIIT fractional cents rounded correctly", () => {
@@ -271,7 +271,7 @@ Deno.test("NIIT fractional cents rounded correctly", () => {
     line1_taxable_interest: 1_001,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 38.04);
+  assertEquals(sch2?.fields.line12_niit, 38.04);
 });
 
 // ─── Schema validation ─────────────────────────────────────────────────────────
@@ -338,5 +338,5 @@ Deno.test("smoke: MFJ with all NII components and deductions", () => {
     line10_additional_modifications: 1_000,
   });
   const sch2 = findOutput(result, "schedule2");
-  assertEquals(sch2?.input.line12_niit, 1_482);
+  assertEquals(sch2?.fields.line12_niit, 1_482);
 });

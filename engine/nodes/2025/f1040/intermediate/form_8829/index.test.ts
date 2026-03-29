@@ -41,7 +41,7 @@ Deno.test("business percentage 20%: utilities $5000 → deduction $1000", () => 
     gross_income_limit: 50000,
   });
   const out = findOutput(result, "schedule_c");
-  assertEquals(out?.input.line_30_home_office, 1000);
+  assertEquals(out?.fields.line_30_home_office, 1000);
 });
 
 Deno.test("business percentage capped at 100% when business_area >= total_area", () => {
@@ -53,7 +53,7 @@ Deno.test("business percentage capped at 100% when business_area >= total_area",
   });
   const out = findOutput(result, "schedule_c");
   // capped at 100% → deduction = 2000
-  assertEquals(out?.input.line_30_home_office, 2000);
+  assertEquals(out?.fields.line_30_home_office, 2000);
 });
 
 Deno.test("business percentage 50%: multiple indirect expenses", () => {
@@ -67,7 +67,7 @@ Deno.test("business percentage 50%: multiple indirect expenses", () => {
   });
   const out = findOutput(result, "schedule_c");
   // 50% of (2000 + 4000 + 1000) = 50% of 7000 = 3500
-  assertEquals(out?.input.line_30_home_office, 3500);
+  assertEquals(out?.fields.line_30_home_office, 3500);
 });
 
 // ─── Mortgage interest routing ────────────────────────────────────────────────
@@ -81,7 +81,7 @@ Deno.test("mortgage_interest used directly without applying business_pct", () =>
   });
   const out = findOutput(result, "schedule_c");
   // mortgage_interest = 3000 (not multiplied by 20%)
-  assertEquals(out?.input.line_30_home_office, 3000);
+  assertEquals(out?.fields.line_30_home_office, 3000);
 });
 
 Deno.test("mortgage_interest plus indirect expenses combined", () => {
@@ -94,7 +94,7 @@ Deno.test("mortgage_interest plus indirect expenses combined", () => {
   });
   const out = findOutput(result, "schedule_c");
   // 1000 + 1000 = 2000
-  assertEquals(out?.input.line_30_home_office, 2000);
+  assertEquals(out?.fields.line_30_home_office, 2000);
 });
 
 // ─── Depreciation ─────────────────────────────────────────────────────────────
@@ -109,7 +109,7 @@ Deno.test("depreciation for January first use: 2.461%", () => {
   });
   const out = findOutput(result, "schedule_c");
   // 200000 × 100% × 2.461% = 4922
-  assertEquals(out?.input.line_30_home_office, 4922);
+  assertEquals(out?.fields.line_30_home_office, 4922);
 });
 
 Deno.test("depreciation for July first use: 1.177%", () => {
@@ -122,7 +122,7 @@ Deno.test("depreciation for July first use: 1.177%", () => {
   });
   const out = findOutput(result, "schedule_c");
   // 200000 × 1.177% = 2354
-  assertEquals(out?.input.line_30_home_office, 2354);
+  assertEquals(out?.fields.line_30_home_office, 2354);
 });
 
 Deno.test("depreciation for December first use: 0.107%", () => {
@@ -135,7 +135,7 @@ Deno.test("depreciation for December first use: 0.107%", () => {
   });
   const out = findOutput(result, "schedule_c");
   // 200000 × 0.107% = 214
-  assertEquals(out?.input.line_30_home_office, 214);
+  assertEquals(out?.fields.line_30_home_office, 214);
 });
 
 Deno.test("depreciation for prior year use (month=0): 2.564%", () => {
@@ -149,7 +149,7 @@ Deno.test("depreciation for prior year use (month=0): 2.564%", () => {
   });
   const out = findOutput(result, "schedule_c");
   // 200000 × 2.564% = 5128
-  assertEquals(out?.input.line_30_home_office, 5128);
+  assertEquals(out?.fields.line_30_home_office, 5128);
 });
 
 Deno.test("no depreciation when home_fmv_or_basis absent", () => {
@@ -172,7 +172,7 @@ Deno.test("depreciation scales with business_pct", () => {
   });
   const out = findOutput(result, "schedule_c");
   // business_basis = 200000 × 50% = 100000; depreciation = 100000 × 2.461% = 2461
-  assertEquals(out?.input.line_30_home_office, 2461);
+  assertEquals(out?.fields.line_30_home_office, 2461);
 });
 
 // ─── Gross income limitation ──────────────────────────────────────────────────
@@ -195,7 +195,7 @@ Deno.test("expenses exactly equal gross_income_limit → full deduction", () => 
     gross_income_limit: 3000,
   });
   const out = findOutput(result, "schedule_c");
-  assertEquals(out?.input.line_30_home_office, 3000);
+  assertEquals(out?.fields.line_30_home_office, 3000);
 });
 
 Deno.test("expenses exceed gross_income_limit → clipped to limit", () => {
@@ -206,7 +206,7 @@ Deno.test("expenses exceed gross_income_limit → clipped to limit", () => {
     gross_income_limit: 2000,
   });
   const out = findOutput(result, "schedule_c");
-  assertEquals(out?.input.line_30_home_office, 2000);
+  assertEquals(out?.fields.line_30_home_office, 2000);
 });
 
 Deno.test("depreciation clipped by remaining income limit after operating expenses", () => {
@@ -223,7 +223,7 @@ Deno.test("depreciation clipped by remaining income limit after operating expens
     // total = 5000
   });
   const out = findOutput(result, "schedule_c");
-  assertEquals(out?.input.line_30_home_office, 5000);
+  assertEquals(out?.fields.line_30_home_office, 5000);
 });
 
 // ─── Prior year carryovers ────────────────────────────────────────────────────
@@ -238,7 +238,7 @@ Deno.test("prior year operating carryover increases deduction pool", () => {
   });
   const out = findOutput(result, "schedule_c");
   // operating pool = 1000 + 500 = 1500; income limit 2000 → 1500 allowed
-  assertEquals(out?.input.line_30_home_office, 1500);
+  assertEquals(out?.fields.line_30_home_office, 1500);
 });
 
 Deno.test("prior year depreciation carryover increases depreciation pool", () => {
@@ -252,7 +252,7 @@ Deno.test("prior year depreciation carryover increases depreciation pool", () =>
   });
   const out = findOutput(result, "schedule_c");
   // operating = 0; remaining limit = 3000; depreciation pool = 2000; allowed = 2000
-  assertEquals(out?.input.line_30_home_office, 2000);
+  assertEquals(out?.fields.line_30_home_office, 2000);
 });
 
 Deno.test("prior year operating carryover clipped by income limit", () => {
@@ -265,7 +265,7 @@ Deno.test("prior year operating carryover clipped by income limit", () => {
   });
   const out = findOutput(result, "schedule_c");
   // pool = 6000; capped at income limit 2000
-  assertEquals(out?.input.line_30_home_office, 2000);
+  assertEquals(out?.fields.line_30_home_office, 2000);
 });
 
 // ─── Output routing ───────────────────────────────────────────────────────────
@@ -279,7 +279,7 @@ Deno.test("routes to schedule_c when deduction > 0", () => {
   });
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(typeof out?.input.line_30_home_office, "number");
+  assertEquals(typeof out?.fields.line_30_home_office, "number");
 });
 
 Deno.test("no output when computed deduction is zero", () => {
@@ -322,7 +322,7 @@ Deno.test("depreciation rate table covers all 12 months correctly", () => {
     const out = findOutput(result, "schedule_c");
     const expected = Math.round(basis * RATES[month - 1] / 100);
     assertEquals(
-      out?.input.line_30_home_office,
+      out?.fields.line_30_home_office,
       expected,
       `Month ${month}: expected ${expected}`,
     );
@@ -362,6 +362,6 @@ Deno.test("smoke: comprehensive scenario with all major fields", () => {
 
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line_30_home_office, 3235);
+  assertEquals(out?.fields.line_30_home_office, 3235);
   assertEquals(result.outputs.length, 1);
 });

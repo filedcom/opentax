@@ -83,7 +83,7 @@ Deno.test("routing=taxable routes box2 to schedule1 line8c", () => {
   const result = compute([minimalItem({ box2_cod_amount: 5000, routing: "taxable" })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 5000);
 });
 
@@ -97,7 +97,7 @@ Deno.test("routing=excluded routes box2 to form982 line2", () => {
   const result = compute([minimalItem({ box2_cod_amount: 25000, routing: "excluded" })]);
   const out = findOutput(result, "form982");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2_excluded_cod, 25000);
 });
 
@@ -117,7 +117,7 @@ Deno.test("box7_fmv_property > 0 routes to schedule_d", () => {
   const result = compute([minimalItem({ box2_cod_amount: 10000, box7_fmv_property: 180000, routing: "taxable" })]);
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd !== undefined, true);
-  const input = sd!.input as Record<string, unknown>;
+  const input = sd!.fields as Record<string, unknown>;
   assertEquals(input.cod_property_fmv, 180000);
   assertEquals(input.cod_debt_cancelled, 10000);
 });
@@ -153,7 +153,7 @@ Deno.test("aggregation: multiple taxable items sum box2 on schedule1 line8c", ()
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 7000);
 });
 
@@ -164,7 +164,7 @@ Deno.test("aggregation: multiple excluded items sum box2 on form982 line2", () =
   ]);
   const out = findOutput(result, "form982");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2_excluded_cod, 25000);
 });
 
@@ -177,8 +177,8 @@ Deno.test("aggregation: mixed taxable and excluded items route separately", () =
   const form982 = findOutput(result, "form982");
   assertEquals(s1 !== undefined, true);
   assertEquals(form982 !== undefined, true);
-  const s1Input = s1!.input as Record<string, unknown>;
-  const f982Input = form982!.input as Record<string, unknown>;
+  const s1Input = s1!.fields as Record<string, unknown>;
+  const f982Input = form982!.fields as Record<string, unknown>;
   assertEquals(s1Input.line8c_cod_income, 5000);
   assertEquals(f982Input.line2_excluded_cod, 8000);
 });
@@ -191,7 +191,7 @@ Deno.test("aggregation: three taxable items — total is sum of all three", () =
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 6000);
 });
 
@@ -204,7 +204,7 @@ Deno.test("threshold: box2 below $600 ($599) still routes when entered", () => {
   const result = compute([minimalItem({ box2_cod_amount: 599, routing: "taxable" })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 599);
 });
 
@@ -212,7 +212,7 @@ Deno.test("threshold: box2 at exactly $600 routes to schedule1", () => {
   const result = compute([minimalItem({ box2_cod_amount: 600, routing: "taxable" })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 600);
 });
 
@@ -220,7 +220,7 @@ Deno.test("threshold: box2 above $600 routes to schedule1", () => {
   const result = compute([minimalItem({ box2_cod_amount: 601, routing: "taxable" })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 601);
 });
 
@@ -228,7 +228,7 @@ Deno.test("threshold: large box2 ($1,000,000) routes full amount to form982 when
   const result = compute([minimalItem({ box2_cod_amount: 1_000_000, routing: "excluded" })]);
   const out = findOutput(result, "form982");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2_excluded_cod, 1_000_000);
 });
 
@@ -317,7 +317,7 @@ Deno.test("edge: multiple items where one has box2=0 — only non-zero items con
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line8c_cod_income, 5000);
 });
 
@@ -334,7 +334,7 @@ Deno.test("edge: excluded routing preserves exact decimal amounts", () => {
   const result = compute([minimalItem({ box2_cod_amount: 12345.67, routing: "excluded" })]);
   const out = findOutput(result, "form982");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2_excluded_cod, 12345.67);
 });
 
@@ -343,7 +343,7 @@ Deno.test("edge: large excluded amount ($750,000 QPRI cap scenario) routes full 
   const result = compute([minimalItem({ box2_cod_amount: 750_000, routing: "excluded" })]);
   const out = findOutput(result, "form982");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2_excluded_cod, 750_000);
 });
 
@@ -353,8 +353,8 @@ Deno.test("edge: box7 with excluded routing — schedule_d receives property fmv
   const form982 = findOutput(result, "form982");
   assertEquals(sd !== undefined, true);
   assertEquals(form982 !== undefined, true);
-  const sdInput = sd!.input as Record<string, unknown>;
-  const f982Input = form982!.input as Record<string, unknown>;
+  const sdInput = sd!.fields as Record<string, unknown>;
+  const f982Input = form982!.fields as Record<string, unknown>;
   assertEquals(sdInput.cod_property_fmv, 250000);
   assertEquals(sdInput.cod_debt_cancelled, 30000);
   assertEquals(f982Input.line2_excluded_cod, 30000);
@@ -391,7 +391,7 @@ Deno.test("smoke: comprehensive — nonbusiness taxable personal debt with all o
   // Must route to schedule1 with full box2 amount
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const s1Input = s1!.input as Record<string, unknown>;
+  const s1Input = s1!.fields as Record<string, unknown>;
   assertEquals(s1Input.line8c_cod_income, 15000);
 
   // Must NOT route to form982 (not excluded)
@@ -419,13 +419,13 @@ Deno.test("smoke: comprehensive — excluded QPRI debt with property disposition
   // Must route excluded amount to form982 line2
   const form982 = findOutput(result, "form982");
   assertEquals(form982 !== undefined, true);
-  const f982Input = form982!.input as Record<string, unknown>;
+  const f982Input = form982!.fields as Record<string, unknown>;
   assertEquals(f982Input.line2_excluded_cod, 50000);
 
   // Must route property to schedule_d
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd !== undefined, true);
-  const sdInput = sd!.input as Record<string, unknown>;
+  const sdInput = sd!.fields as Record<string, unknown>;
   assertEquals(sdInput.cod_property_fmv, 220000);
   assertEquals(sdInput.cod_debt_cancelled, 50000);
 
@@ -445,12 +445,12 @@ Deno.test("smoke: comprehensive — multiple 1099-Cs in same year, mixed routing
 
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const s1Input = s1!.input as Record<string, unknown>;
+  const s1Input = s1!.fields as Record<string, unknown>;
   assertEquals(s1Input.line8c_cod_income, 8000);
 
   const form982 = findOutput(result, "form982");
   assertEquals(form982 !== undefined, true);
-  const f982Input = form982!.input as Record<string, unknown>;
+  const f982Input = form982!.fields as Record<string, unknown>;
   assertEquals(f982Input.line2_excluded_cod, 20000);
 });
 

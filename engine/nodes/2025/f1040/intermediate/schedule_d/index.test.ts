@@ -177,13 +177,13 @@ Deno.test("no inputs: capital_loss_carryover alone emits nothing", () => {
 Deno.test("ST: single ST gain routes line7_capital_gain to f1040", () => {
   const result = compute({ transaction: mkTx({ gain_loss: 500, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 500);
 });
 
 Deno.test("ST: single ST loss within limit passes through unchanged", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -1000, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -1000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -1000);
 });
 
 Deno.test("ST: two ST transactions summed correctly", () => {
@@ -194,7 +194,7 @@ Deno.test("ST: two ST transactions summed correctly", () => {
     ],
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 500);
 });
 
 Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
@@ -205,7 +205,7 @@ Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
     ],
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 500);
 });
 
 // ---------------------------------------------------------------------------
@@ -215,25 +215,25 @@ Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
 Deno.test("LT: single LT transaction gain", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 1000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 1000);
 });
 
 Deno.test("LT: cap gain distribution alone routes correctly", () => {
   const result = compute({ line13_cap_gain_distrib: 400 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 400);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 400);
 });
 
 Deno.test("LT: cap gain distrib absent contributes 0", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 600 }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 600);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 600);
 });
 
 Deno.test("LT: COD property gain: fmv=5000, debt=3000 → LT gain=2000", () => {
   const result = compute({ cod_property_fmv: 5000, cod_debt_cancelled: 3000 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 2000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 2000);
 });
 
 Deno.test("LT: COD property break-even (fmv=debt) → gain=0, emits nothing", () => {
@@ -250,14 +250,14 @@ Deno.test("LT: all LT sources combined: tx + distrib + COD", () => {
   });
   const out = findOutput(result, "f1040");
   // line15 = 500 + 300 + 1500 = 2300; line7 = 0; total = 2300
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 2300);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 2300);
 });
 
 Deno.test("LT: box2c_qsbs is NOT additive — only line13 amount counts", () => {
   const result = compute({ line13_cap_gain_distrib: 500, box2c_qsbs: 200 });
   const out = findOutput(result, "f1040");
   // line15 = 500 (not 700); box2c is a subset of line13
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 500);
 });
 
 // ---------------------------------------------------------------------------
@@ -272,7 +272,7 @@ Deno.test("total: ST gain + LT gain", () => {
     ],
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 1000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 1000);
 });
 
 Deno.test("total: ST gain offsets LT loss — net positive", () => {
@@ -283,7 +283,7 @@ Deno.test("total: ST gain offsets LT loss — net positive", () => {
     ],
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 1000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 1000);
 });
 
 Deno.test("total: net zero emits line7_capital_gain = 0", () => {
@@ -294,7 +294,7 @@ Deno.test("total: net zero emits line7_capital_gain = 0", () => {
     ],
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 0);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 0);
 });
 
 // ---------------------------------------------------------------------------
@@ -304,25 +304,25 @@ Deno.test("total: net zero emits line7_capital_gain = 0", () => {
 Deno.test("loss: below standard limit passes through ($2000 loss)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -2000, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -2000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -2000);
 });
 
 Deno.test("loss: exactly at standard limit ($3000 loss)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -3000, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -3000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -3000);
 });
 
 Deno.test("loss: exceeds standard limit — capped at $3000", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -5000, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -3000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -3000);
 });
 
 Deno.test("loss: large loss — capped at $3000 (non-MFS)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -10000, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -3000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -3000);
 });
 
 Deno.test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
@@ -331,7 +331,7 @@ Deno.test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
     filing_status: FilingStatus.MFS,
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -1000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -1000);
 });
 
 Deno.test("loss: MFS at $1500 limit exactly", () => {
@@ -340,7 +340,7 @@ Deno.test("loss: MFS at $1500 limit exactly", () => {
     filing_status: FilingStatus.MFS,
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -1500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -1500);
 });
 
 Deno.test("loss: MFS exceeds $1500 — capped at $1500", () => {
@@ -349,7 +349,7 @@ Deno.test("loss: MFS exceeds $1500 — capped at $1500", () => {
     filing_status: FilingStatus.MFS,
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, -1500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, -1500);
 });
 
 // ---------------------------------------------------------------------------
@@ -362,7 +362,7 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C pr
   });
   const out = findOutput(result, "rate_28_gain_worksheet");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).collectibles_gain_from_8949, 1000);
+  assertEquals((out!.fields as Record<string, unknown>).collectibles_gain_from_8949, 1000);
 });
 
 Deno.test("28pct: routes to rate_28_gain_worksheet when code Q (QOF) present", () => {
@@ -371,7 +371,7 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when code Q (QOF) present", (
   });
   const out = findOutput(result, "rate_28_gain_worksheet");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).collectibles_gain_from_8949, 800);
+  assertEquals((out!.fields as Record<string, unknown>).collectibles_gain_from_8949, 800);
 });
 
 Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
@@ -461,13 +461,13 @@ Deno.test("output count: pure loss → exactly 1 output (f1040, capped)", () => 
 Deno.test("accumulation: single transaction object (not array) normalized correctly", () => {
   const result = compute({ transaction: mkTx({ gain_loss: 750, is_long_term: false }) });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 750);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 750);
 });
 
 Deno.test("accumulation: COD scalar fmv/debt normalized to single-item array", () => {
   const result = compute({ cod_property_fmv: 4000, cod_debt_cancelled: 1500 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 2500);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 2500);
 });
 
 Deno.test("accumulation: COD parallel arrays — two items summed", () => {
@@ -477,7 +477,7 @@ Deno.test("accumulation: COD parallel arrays — two items summed", () => {
   });
   const out = findOutput(result, "f1040");
   // (5000-2000) + (3000-1000) = 3000 + 2000 = 5000
-  assertEquals((out!.input as Record<string, unknown>).line7_capital_gain, 5000);
+  assertEquals((out!.fields as Record<string, unknown>).line7_capital_gain, 5000);
 });
 
 // ---------------------------------------------------------------------------
@@ -506,11 +506,11 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
   // capitalGainForReturn = 6800 (positive → no cap)
 
   const f1040Out = findOutput(result, "f1040");
-  assertEquals((f1040Out!.input as Record<string, unknown>).line7_capital_gain, 6800);
+  assertEquals((f1040Out!.fields as Record<string, unknown>).line7_capital_gain, 6800);
 
   const worksheetOut = findOutput(result, "rate_28_gain_worksheet");
   assertEquals(worksheetOut !== undefined, true);
-  assertEquals((worksheetOut!.input as Record<string, unknown>).collectibles_gain_from_8949, 600);
+  assertEquals((worksheetOut!.fields as Record<string, unknown>).collectibles_gain_from_8949, 600);
 
   assertEquals(result.outputs.length, 2);
 });
@@ -576,35 +576,35 @@ Deno.test("compute: line_1a net gain (ST) routes to f1040 line7_capital_gain", (
   const result = computeD2({ line_1a_proceeds: 20_000, line_1a_cost: 15_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 5_000);
 });
 
 Deno.test("compute: line_1a proceeds == cost → line7_capital_gain is 0", () => {
   const result = computeD2({ line_1a_proceeds: 10_000, line_1a_cost: 10_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
 Deno.test("compute: line_8a net gain (LT) routes to f1040 line7_capital_gain", () => {
   const result = computeD2({ line_8a_proceeds: 50_000, line_8a_cost: 30_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 20_000);
 });
 
 Deno.test("compute: line_8a proceeds == cost → line7_capital_gain is 0", () => {
   const result = computeD2({ line_8a_proceeds: 5_000, line_8a_cost: 5_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
 Deno.test("compute: line_12_cap_gain_dist (always LT) included in net gain", () => {
   const result = computeD2({ line_12_cap_gain_dist: 4_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 4_000);
 });
 
@@ -617,28 +617,28 @@ Deno.test("compute: line_12_cap_gain_dist = 0 → no capital activity, emits no 
 Deno.test("compute: line_11_form2439 (LT undistributed gains) included in LT net", () => {
   const result = computeD2({ line_11_form2439: 6_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 6_000);
 });
 
 Deno.test("compute: line_4_other_st (ST from other forms) included in ST net", () => {
   const result = computeD2({ line_4_other_st: 3_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
 Deno.test("compute: line_5_k1_st (ST K-1) included in ST net", () => {
   const result = computeD2({ line_5_k1_st: 2_500 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_500);
 });
 
 Deno.test("compute: line_12_k1_lt (LT K-1) included in LT net", () => {
   const result = computeD2({ line_12_k1_lt: 3_500 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_500);
 });
 
@@ -661,7 +661,7 @@ Deno.test("compute: ST and LT gains sum to combined net on line7", () => {
     line_8a_cost: 3_000, // LT +2000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 12_000);
 });
 
@@ -673,7 +673,7 @@ Deno.test("compute: ST gain offset by LT loss → net positive", () => {
     line_8a_cost: 8_000, // LT -3000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 7_000);
 });
 
@@ -690,7 +690,7 @@ Deno.test("compute: all D2 income sources sum correctly (ST + LT + K-1 + distrib
     line_12_k1_lt: 400, // +400
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 9_400);
 });
 
@@ -701,7 +701,7 @@ Deno.test("compute: short-term loss carryover reduces ST net", () => {
     line_6_carryover: 8_000, // ST -8000 → ST net = -3000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
@@ -712,7 +712,7 @@ Deno.test("compute: long-term loss carryover reduces LT net", () => {
     line_14_carryover: 8_000, // LT -8000 → LT net = -3000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
@@ -727,7 +727,7 @@ Deno.test("compute: both carryovers reduce their respective nets independently",
     // total = 3000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
@@ -741,7 +741,7 @@ Deno.test("threshold: loss exactly -$2,500 (< $3,000) — fully deductible, no c
     line_1a_cost: 9_500, // net = -2500
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -2_500);
   const carryover = findOutput(result, "schedule_d");
   assertEquals(carryover, undefined);
@@ -753,7 +753,7 @@ Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward
     line_1a_cost: 10_000, // net = -3000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
   const carryover = findOutput(result, "schedule_d");
   assertEquals(carryover, undefined);
@@ -771,7 +771,7 @@ Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, n
     filing_status: FilingStatus.MFS,
   } as any);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -1_500);
   const carryover = findOutput(result, "schedule_d");
   assertEquals(carryover, undefined);
@@ -787,7 +787,7 @@ Deno.test("threshold: LTCG 0% rate upper bound (Single) — $48,350", () => {
     line_8a_cost: 0,
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 48_350);
 });
 
@@ -797,7 +797,7 @@ Deno.test("threshold: LTCG 15% rate upper bound (Single) — $533,400", () => {
     line_8a_cost: 0,
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 533_400);
 });
 
@@ -807,7 +807,7 @@ Deno.test("threshold: NIIT kicks in above $200,000 (Single) — gain still flows
     line_8a_cost: 0,
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 200_001);
 });
 
@@ -862,7 +862,7 @@ Deno.test("8949 part=A (ST basis reported): gain routes to f1040 as ST gain", ()
   ]);
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 500);
 });
 
@@ -872,7 +872,7 @@ Deno.test("8949 part=B (ST basis not reported): gain routes to f1040 as ST gain"
     makeTransaction({ part: "B", proceeds: 3_000, cost_basis: 2_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 1_000);
 });
 
@@ -882,7 +882,7 @@ Deno.test("8949 part=C (ST no 1099-B): gain routes to f1040 as ST gain", () => {
     makeTransaction({ part: "C", proceeds: 4_000, cost_basis: 3_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 1_000);
 });
 
@@ -892,7 +892,7 @@ Deno.test("8949 part=D (LT basis reported): gain routes to f1040 as LT gain", ()
     makeTransaction({ part: "D", proceeds: 10_000, cost_basis: 6_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 4_000);
 });
 
@@ -902,7 +902,7 @@ Deno.test("8949 part=E (LT basis not reported): gain routes to f1040 as LT gain"
     makeTransaction({ part: "E", proceeds: 8_000, cost_basis: 5_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
@@ -912,7 +912,7 @@ Deno.test("8949 part=F (LT no 1099-B): gain routes to f1040 as LT gain", () => {
     makeTransaction({ part: "F", proceeds: 12_000, cost_basis: 9_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
@@ -922,7 +922,7 @@ Deno.test("8949 part=G (ST digital asset, basis reported): routes same as Part A
     makeTransaction({ part: "G", proceeds: 5_000, cost_basis: 3_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
@@ -932,7 +932,7 @@ Deno.test("8949 part=H (ST digital asset, basis not reported): routes same as Pa
     makeTransaction({ part: "H", proceeds: 6_000, cost_basis: 4_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
@@ -942,7 +942,7 @@ Deno.test("8949 part=I (ST digital asset, no 1099-DA): routes same as Part C", (
     makeTransaction({ part: "I", proceeds: 7_000, cost_basis: 5_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
@@ -952,7 +952,7 @@ Deno.test("8949 part=J (LT digital asset, basis reported): routes same as Part D
     makeTransaction({ part: "J", proceeds: 15_000, cost_basis: 10_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 5_000);
 });
 
@@ -962,7 +962,7 @@ Deno.test("8949 part=K (LT digital asset, basis not reported): routes same as Pa
     makeTransaction({ part: "K", proceeds: 20_000, cost_basis: 14_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 6_000);
 });
 
@@ -972,7 +972,7 @@ Deno.test("8949 part=L (LT digital asset, no 1099-DA): routes same as Part F", (
     makeTransaction({ part: "L", proceeds: 25_000, cost_basis: 18_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 7_000);
 });
 
@@ -982,7 +982,7 @@ Deno.test("8949: zero gain transaction (proceeds == cost) → capital gain is 0"
     makeTransaction({ part: "A", proceeds: 5_000, cost_basis: 5_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
@@ -996,7 +996,7 @@ Deno.test("8949 aggregation: two Part A transactions sum their gains", () => {
     makeTransaction({ part: "A", proceeds: 5_000, cost_basis: 2_000 }), // +3000
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 6_000);
 });
 
@@ -1006,7 +1006,7 @@ Deno.test("8949 aggregation: mixed parts A and D aggregate to combined net", () 
     makeTransaction({ part: "D", proceeds: 20_000, cost_basis: 15_000 }), // LT +5000
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 7_000);
 });
 
@@ -1016,7 +1016,7 @@ Deno.test("8949 aggregation: ST gain + LT loss from transactions → net on f104
     makeTransaction({ part: "D", proceeds: 3_000, cost_basis: 6_000 }), // LT -3000
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
@@ -1033,7 +1033,7 @@ Deno.test("8949 aggregation: adjustment_amount (col g) is included in col h comp
     }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 1_500);
 });
 
@@ -1046,7 +1046,7 @@ Deno.test("8949 aggregation: D2 fields and 8949 transactions combine into one to
     { line_1a_proceeds: 10_000, line_1a_cost: 7_000 },
   );
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 8_000);
 });
 
@@ -1069,7 +1069,7 @@ Deno.test("adjustment code W (wash sale): disallowed loss positive in col(g) red
     }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
@@ -1088,7 +1088,7 @@ Deno.test("adjustment code H (home exclusion): excluded gain reduces col(h)", ()
     }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 50_000);
 });
 
@@ -1106,7 +1106,7 @@ Deno.test("adjustment code H (home exclusion): full gain excluded → col(h) = 0
     }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
@@ -1126,7 +1126,7 @@ Deno.test("adjustment code C (collectible, LT part E): triggers 28% rate gain wo
   // At minimum, the gain must be on f1040
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 10_000);
   // The 28% worksheet trigger must be indicated somehow in outputs
   // schedule_d routes to rate_28_gain_worksheet; schedule_d_tax_worksheet and line18_28pct_gain are legacy d_screen fields
@@ -1147,7 +1147,7 @@ Deno.test("adjustment code Q (QSB exclusion): triggers 28% rate gain worksheet o
   ]);
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   // col(h) = 50000 - 10000 + (-20000) = 20000
   assertEquals(input.line7_capital_gain, 20_000);
 });
@@ -1163,7 +1163,7 @@ Deno.test("line 17 gate: both LT > 0 AND combined > 0 → qualifies for preferen
     line_8a_cost: 10_000, // LT net = 10000, combined = 10000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   // Must route to f1040 with positive gain for preferential rate processing
   assertEquals(input.line7_capital_gain, 10_000);
 });
@@ -1175,7 +1175,7 @@ Deno.test("line 17 gate: LT net is loss (< 0) → no preferential LTCG rates (or
     line_8a_cost: 10_000, // LT net = -5000, total = -5000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
@@ -1187,7 +1187,7 @@ Deno.test("line 17 gate: combined net is zero → skip to line 22 (no preferenti
     line_8a_cost: 5_000, // LT = 0
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
@@ -1206,7 +1206,7 @@ Deno.test("line 20 = Yes: no 28% gain, no 1250 gain → qualified dividends work
   // Either qualified_dividends_worksheet output exists or downstream
   // handles it; at minimum the gain must be on f1040
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 10_000);
   // Verify preferred worksheet selection indicator if applicable
   assertEquals(
@@ -1223,7 +1223,7 @@ Deno.test("cap gain distributions always treated as LT — no ST treatment", () 
   // Even though cap gain dist from funds might not have been held long, treated as LT
   const result = computeD2({ line_12_cap_gain_dist: 5_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   // Capital gain distributions must flow through to f1040 as a gain
   assertEquals(input.line7_capital_gain, 5_000);
 });
@@ -1233,7 +1233,7 @@ Deno.test("cap gain distributions do NOT require Form 8949 — direct to Schedul
   const result = computeD2({ line_12_cap_gain_dist: 8_000 });
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 8_000);
 });
 
@@ -1248,8 +1248,8 @@ Deno.test("description field in 8949 transaction does not affect computed gain",
   const result2 = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 5_000, cost_basis: 3_000, description: "200 sh XYZ" }),
   ]);
-  const input1 = (findOutput(result1, "f1040")!.input as Record<string, number>);
-  const input2 = (findOutput(result2, "f1040")!.input as Record<string, number>);
+  const input1 = (findOutput(result1, "f1040")!.fields as Record<string, number>);
+  const input2 = (findOutput(result2, "f1040")!.fields as Record<string, number>);
   assertEquals(input1.line7_capital_gain, input2.line7_capital_gain);
 });
 
@@ -1260,8 +1260,8 @@ Deno.test("date_acquired and date_sold fields do not directly change computed ga
   const result2 = computeWithTransactions([
     makeTransaction({ part: "D", proceeds: 10_000, cost_basis: 6_000, date_acquired: "06/01/2024", date_sold: "06/02/2025" }),
   ]);
-  const input1 = (findOutput(result1, "f1040")!.input as Record<string, number>);
-  const input2 = (findOutput(result2, "f1040")!.input as Record<string, number>);
+  const input1 = (findOutput(result1, "f1040")!.fields as Record<string, number>);
+  const input2 = (findOutput(result2, "f1040")!.fields as Record<string, number>);
   assertEquals(input1.line7_capital_gain, input2.line7_capital_gain);
 });
 
@@ -1273,7 +1273,7 @@ Deno.test("date_acquired and date_sold fields do not directly change computed ga
 Deno.test("edge case: line_1a entries only when no adjustments needed (valid aggregate input)", () => {
   const result = computeD2({ line_1a_proceeds: 100_000, line_1a_cost: 80_000 });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 20_000);
 });
 
@@ -1284,7 +1284,7 @@ Deno.test("edge case: date_acquired = VARIOUS accepted without throwing", () => 
   ]);
   assertEquals(Array.isArray(result.outputs), true);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
@@ -1296,7 +1296,7 @@ Deno.test("edge case: date_acquired = INHERITED treated as LT gain always", () =
   ]);
   assertEquals(Array.isArray(result.outputs), true);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 20_000);
 });
 
@@ -1315,7 +1315,7 @@ Deno.test("edge case: wash sale (code W) — partial disallowance reduces loss",
     }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -1_500);
 });
 
@@ -1325,7 +1325,7 @@ Deno.test("edge case: $0 proceeds (security became worthless)", () => {
     makeTransaction({ part: "A", proceeds: 0, cost_basis: 10_000 }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000); // capped at loss limit
 });
 
@@ -1337,7 +1337,7 @@ Deno.test("edge case: ST carryover preserves ST character — enters as line 6 (
     line_6_carryover: 3_000, // ST carryover -3000 → ST net = +2000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
@@ -1348,7 +1348,7 @@ Deno.test("edge case: LT carryover preserves LT character — enters as line 14 
     line_14_carryover: 5_000, // LT carryover -5000 → LT net = +3000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 3_000);
 });
 
@@ -1364,7 +1364,7 @@ Deno.test("edge case: 10 Part A transactions each with $1,000 gain → total $10
   );
   const result = computeWithTransactions(transactions);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 10_000);
 });
 
@@ -1378,7 +1378,7 @@ Deno.test("edge case: ST net loss + LT net gain → positive combined, full LT g
     line_8a_cost: 10_000, // LT +8000
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 6_000);
 });
 
@@ -1397,7 +1397,7 @@ Deno.test("edge case: home exclusion (code H) for MFJ up to $500,000", () => {
     }),
   ]);
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 0);
 });
 
@@ -1414,7 +1414,7 @@ Deno.test("edge case: adjustment code Y (QOF deferred gain recognized) — posit
   ]);
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 10_000);
 });
 
@@ -1432,7 +1432,7 @@ Deno.test("edge case: adjustment code Z (QOF deferral) — negative adjustment r
   ]);
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 2_000);
 });
 
@@ -1445,7 +1445,7 @@ Deno.test("edge case: line_1a negative net does not cause invalid e-file (procee
   });
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
 });
 
@@ -1457,7 +1457,7 @@ Deno.test("edge case: negative line_11_form2439 (LT loss from other forms) reduc
     line_11_form2439: -7_000, // LT loss from forms
   });
   const f1040 = findOutput(result, "f1040");
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   // LT net = 5000 - 7000 = -2000, combined = -2000 (deductible in full < $3000)
   assertEquals(input.line7_capital_gain, -2_000);
 });
@@ -1516,7 +1516,7 @@ Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → corr
 
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  const input = f1040!.input as Record<string, number>;
+  const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, 23_800);
 
   // Net gain is positive — no carryforward
@@ -1533,7 +1533,7 @@ Deno.test("smoke: large net loss with MFJ filing — $3,000 limit applies", () =
     // total net: -22000
   });
   const f1040 = findOutput(result, "f1040");
-  const fInput = f1040!.input as Record<string, number>;
+  const fInput = f1040!.fields as Record<string, number>;
   assertEquals(fInput.line7_capital_gain, -3_000);
   // Note: carryforward routing to schedule_d is removed; excess loss is not tracked here
 });

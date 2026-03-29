@@ -155,7 +155,7 @@ function buildF1040Output(
 
   return {
     nodeType: f1040.nodeType,
-    input: { line4b_ira_taxable: totalTaxable },
+    fields: { line4b_ira_taxable: totalTaxable },
   };
 }
 

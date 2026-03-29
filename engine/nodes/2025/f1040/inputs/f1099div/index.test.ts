@@ -271,10 +271,10 @@ Deno.test("box1b routes to Form 1040 Line 3a", () => {
   const out = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      o.input.line3a_qualified_dividends !== undefined,
+      o.fields.line3a_qualified_dividends !== undefined,
   );
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line3a_qualified_dividends as number, 500);
+  assertEquals(out?.fields.line3a_qualified_dividends as number, 500);
 });
 
 Deno.test("box1b zero — does not produce qualified dividend output", () => {
@@ -282,7 +282,7 @@ Deno.test("box1b zero — does not produce qualified dividend output", () => {
   const f1040Out = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      o.input.line3a_qualified_dividends !== undefined,
+      o.fields.line3a_qualified_dividends !== undefined,
   );
   assertEquals(f1040Out.length, 0);
 });
@@ -294,7 +294,7 @@ Deno.test("box2a routes to Schedule D Line 13 (standard path)", () => {
   ]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line13_cap_gain_distrib as number, 1000);
+  assertEquals(out?.fields.line13_cap_gain_distrib as number, 1000);
 });
 
 Deno.test("box2a routes to Form 1040 Line 7a (simplified path)", () => {
@@ -305,7 +305,7 @@ Deno.test("box2a routes to Form 1040 Line 7a (simplified path)", () => {
   ]);
   const f1040Out = result.outputs.filter(
     (o) =>
-      o.nodeType === "f1040" && o.input.line7a_cap_gain_distrib !== undefined,
+      o.nodeType === "f1040" && o.fields.line7a_cap_gain_distrib !== undefined,
   );
   assertEquals(f1040Out.length > 0, true);
   // must NOT also route to schedule_d for the same distribution
@@ -321,7 +321,7 @@ Deno.test("box2b routes to Unrecaptured §1250 Gain Worksheet Line 11", () => {
   const result = compute([minimalItem({ box1a: 500, box2a: 500, box2b: 200 })]);
   const out = findOutput(result, "unrecaptured_1250_worksheet");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.unrecaptured_1250_gain as number, 200);
+  assertEquals(out?.fields.unrecaptured_1250_gain as number, 200);
 });
 
 Deno.test("box2b zero — no unrecaptured §1250 output", () => {
@@ -334,14 +334,14 @@ Deno.test("box2c routes to Schedule D (Section 1202 QSBS)", () => {
   const result = compute([minimalItem({ box1a: 500, box2a: 500, box2c: 300 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.box2c_qsbs as number, 300);
+  assertEquals(out?.fields.box2c_qsbs as number, 300);
 });
 
 Deno.test("box2c zero — no Section 1202 output", () => {
   const result = compute([minimalItem({ box1a: 500, box2a: 500, box2c: 0 })]);
   const schedDOut = findOutput(result, "schedule_d");
   if (schedDOut !== undefined) {
-    assertEquals((schedDOut.input.box2c_qsbs as number | undefined) ?? 0, 0);
+    assertEquals((schedDOut.fields.box2c_qsbs as number | undefined) ?? 0, 0);
   }
 });
 
@@ -349,7 +349,7 @@ Deno.test("box2d routes to 28% Rate Gain Worksheet", () => {
   const result = compute([minimalItem({ box1a: 500, box2a: 500, box2d: 150 })]);
   const out = findOutput(result, "rate_28_gain_worksheet");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.collectibles_gain as number, 150);
+  assertEquals(out?.fields.collectibles_gain as number, 150);
 });
 
 Deno.test("box2d zero — no collectibles gain output", () => {
@@ -382,17 +382,17 @@ Deno.test("box4 routes to Form 1040 Line 25b", () => {
   const result = compute([minimalItem({ box4: 75 })]);
   const out = result.outputs.find(
     (o) =>
-      o.nodeType === "f1040" && o.input.line25b_withheld_1099 !== undefined,
+      o.nodeType === "f1040" && o.fields.line25b_withheld_1099 !== undefined,
   );
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line25b_withheld_1099 as number, 75);
+  assertEquals(out?.fields.line25b_withheld_1099 as number, 75);
 });
 
 Deno.test("box4 zero — no withholding output", () => {
   const result = compute([minimalItem({ box4: 0 })]);
   const out = result.outputs.find(
     (o) =>
-      o.nodeType === "f1040" && o.input.line25b_withheld_1099 !== undefined,
+      o.nodeType === "f1040" && o.fields.line25b_withheld_1099 !== undefined,
   );
   assertEquals(out, undefined);
 });
@@ -404,7 +404,7 @@ Deno.test("box5 routes to Form 8995 Line 6 (holding period met)", () => {
   );
   const out = findOutput(result, "form8995");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line6_sec199a_dividends as number, 300);
+  assertEquals(out?.fields.line6_sec199a_dividends as number, 300);
 });
 
 Deno.test("box5 zero — no §199A output", () => {
@@ -421,7 +421,7 @@ Deno.test("box7 routes to Schedule 3 Line 1 (simplified path)", () => {
   );
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line1_foreign_tax_1099 as number, 200);
+  assertEquals(out?.fields.line1_foreign_tax_1099 as number, 200);
 });
 
 Deno.test("box7 routes to Form 1116 Part II (full path)", () => {
@@ -432,7 +432,7 @@ Deno.test("box7 routes to Form 1116 Part II (full path)", () => {
   );
   const out = findOutput(result, "form_1116");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.foreign_tax_paid as number, 400);
+  assertEquals(out?.fields.foreign_tax_paid as number, 400);
   // simplified path must NOT also be used
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
@@ -456,16 +456,16 @@ Deno.test("box10 routes to basis tracker (not Schedule B)", () => {
 Deno.test("box12 routes to Form 1040 Line 2a", () => {
   const result = compute([minimalItem({ box12: 600 })]);
   const out = result.outputs.find(
-    (o) => o.nodeType === "f1040" && o.input.line2a_tax_exempt !== undefined,
+    (o) => o.nodeType === "f1040" && o.fields.line2a_tax_exempt !== undefined,
   );
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line2a_tax_exempt as number, 600);
+  assertEquals(out?.fields.line2a_tax_exempt as number, 600);
 });
 
 Deno.test("box12 zero — no exempt interest output", () => {
   const result = compute([minimalItem({ box12: 0 })]);
   const out = result.outputs.find(
-    (o) => o.nodeType === "f1040" && o.input.line2a_tax_exempt !== undefined,
+    (o) => o.nodeType === "f1040" && o.fields.line2a_tax_exempt !== undefined,
   );
   assertEquals(out, undefined);
 });
@@ -474,7 +474,7 @@ Deno.test("box13 routes to Form 6251 Line 2g", () => {
   const result = compute([minimalItem({ box12: 200, box13: 100 })]);
   const out = findOutput(result, "form6251");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line2g_pab_interest as number, 100);
+  assertEquals(out?.fields.line2g_pab_interest as number, 100);
 });
 
 Deno.test("box13 zero — no AMT preference output", () => {
@@ -505,7 +505,7 @@ Deno.test("box1a sums across multiple payers for Schedule B", () => {
   );
   assertEquals(schedBOutputs.length, 3);
   const total = schedBOutputs.reduce(
-    (sum, o) => sum + ((o.input.ordinaryDividends as number | undefined) ?? 0),
+    (sum, o) => sum + ((o.fields.ordinaryDividends as number | undefined) ?? 0),
     0,
   );
   assertEquals(total, 1700);
@@ -519,7 +519,7 @@ Deno.test("box1a Schedule B total flows to Form 1040 Line 3b", () => {
   ]);
   const schedBInputs = result.outputs
     .filter((o) => o.nodeType === "schedule_b")
-    .map((o) => o.input.ordinaryDividends as number);
+    .map((o) => o.fields.ordinaryDividends as number);
   const total = schedBInputs.reduce((s, v) => s + v, 0);
   assertEquals(total, 1700);
 });
@@ -533,10 +533,10 @@ Deno.test("box1b sums across multiple payers for Form 1040 Line 3a", () => {
     .filter(
       (o) =>
         o.nodeType === "f1040" &&
-        o.input.line3a_qualified_dividends !== undefined,
+        o.fields.line3a_qualified_dividends !== undefined,
     )
     .reduce(
-      (sum, o) => sum + (o.input.line3a_qualified_dividends as number),
+      (sum, o) => sum + (o.fields.line3a_qualified_dividends as number),
       0,
     );
   assertEquals(total, 550);
@@ -552,9 +552,9 @@ Deno.test("box2a sums across multiple payers for Schedule D Line 13", () => {
     .filter(
       (o) =>
         o.nodeType === "schedule_d" &&
-        o.input.line13_cap_gain_distrib !== undefined,
+        o.fields.line13_cap_gain_distrib !== undefined,
     )
-    .reduce((sum, o) => sum + (o.input.line13_cap_gain_distrib as number), 0);
+    .reduce((sum, o) => sum + (o.fields.line13_cap_gain_distrib as number), 0);
   assertEquals(total, 800);
 });
 
@@ -565,7 +565,7 @@ Deno.test("box2b sums across multiple payers for §1250 Worksheet", () => {
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "unrecaptured_1250_worksheet")
-    .reduce((sum, o) => sum + (o.input.unrecaptured_1250_gain as number), 0);
+    .reduce((sum, o) => sum + (o.fields.unrecaptured_1250_gain as number), 0);
   assertEquals(total, 250);
 });
 
@@ -576,9 +576,9 @@ Deno.test("box2c sums across multiple payers for Schedule D", () => {
   ]);
   const total = result.outputs
     .filter(
-      (o) => o.nodeType === "schedule_d" && o.input.box2c_qsbs !== undefined,
+      (o) => o.nodeType === "schedule_d" && o.fields.box2c_qsbs !== undefined,
     )
-    .reduce((sum, o) => sum + (o.input.box2c_qsbs as number), 0);
+    .reduce((sum, o) => sum + (o.fields.box2c_qsbs as number), 0);
   assertEquals(total, 500);
 });
 
@@ -589,7 +589,7 @@ Deno.test("box2d sums across multiple payers for 28% Rate Worksheet", () => {
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "rate_28_gain_worksheet")
-    .reduce((sum, o) => sum + (o.input.collectibles_gain as number), 0);
+    .reduce((sum, o) => sum + (o.fields.collectibles_gain as number), 0);
   assertEquals(total, 500);
 });
 
@@ -602,9 +602,9 @@ Deno.test("box4 sums across multiple payers for Line 25b", () => {
   const total = result.outputs
     .filter(
       (o) =>
-        o.nodeType === "f1040" && o.input.line25b_withheld_1099 !== undefined,
+        o.nodeType === "f1040" && o.fields.line25b_withheld_1099 !== undefined,
     )
-    .reduce((sum, o) => sum + (o.input.line25b_withheld_1099 as number), 0);
+    .reduce((sum, o) => sum + (o.fields.line25b_withheld_1099 as number), 0);
   assertEquals(total, 150);
 });
 
@@ -616,7 +616,7 @@ Deno.test("box5 sums across multiple payers for Form 8995 Line 6", () => {
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "form8995")
-    .reduce((sum, o) => sum + (o.input.line6_sec199a_dividends as number), 0);
+    .reduce((sum, o) => sum + (o.fields.line6_sec199a_dividends as number), 0);
   assertEquals(total, 1000);
 });
 
@@ -631,7 +631,7 @@ Deno.test("box7 sums across multiple payers (passive basket)", () => {
   );
   const total = result.outputs
     .filter((o) => o.nodeType === "schedule3")
-    .reduce((sum, o) => sum + (o.input.line1_foreign_tax_1099 as number), 0);
+    .reduce((sum, o) => sum + (o.fields.line1_foreign_tax_1099 as number), 0);
   assertEquals(total, 250);
 });
 
@@ -642,9 +642,9 @@ Deno.test("box12 sums across multiple payers for Form 1040 Line 2a", () => {
   ]);
   const total = result.outputs
     .filter(
-      (o) => o.nodeType === "f1040" && o.input.line2a_tax_exempt !== undefined,
+      (o) => o.nodeType === "f1040" && o.fields.line2a_tax_exempt !== undefined,
     )
-    .reduce((sum, o) => sum + (o.input.line2a_tax_exempt as number), 0);
+    .reduce((sum, o) => sum + (o.fields.line2a_tax_exempt as number), 0);
   assertEquals(total, 750);
 });
 
@@ -655,7 +655,7 @@ Deno.test("box13 sums across multiple payers for Form 6251 Line 2g", () => {
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "form6251")
-    .reduce((sum, o) => sum + (o.input.line2g_pab_interest as number), 0);
+    .reduce((sum, o) => sum + (o.fields.line2g_pab_interest as number), 0);
   assertEquals(total, 200);
 });
 
@@ -1135,7 +1135,7 @@ Deno.test("box9 does not route to Schedule B or ordinary income", () => {
   const result = compute([minimalItem({ box9: 2000 })]);
   assertEquals(findOutput(result, "schedule_b"), undefined);
   const ordinaryOutputs = result.outputs.filter(
-    (o) => o.nodeType === "f1040" && o.input.ordinary_dividends !== undefined,
+    (o) => o.nodeType === "f1040" && o.fields.ordinary_dividends !== undefined,
   );
   assertEquals(ordinaryOutputs.length, 0);
 });
@@ -1145,7 +1145,7 @@ Deno.test("box10 does not route to Schedule B or ordinary income", () => {
   const result = compute([minimalItem({ box10: 1500 })]);
   assertEquals(findOutput(result, "schedule_b"), undefined);
   const ordinaryOutputs = result.outputs.filter(
-    (o) => o.nodeType === "f1040" && o.input.ordinary_dividends !== undefined,
+    (o) => o.nodeType === "f1040" && o.fields.ordinary_dividends !== undefined,
   );
   assertEquals(ordinaryOutputs.length, 0);
 });
@@ -1162,7 +1162,7 @@ Deno.test("box1b = 0 on all records — no qualified dividend output", () => {
   const qualDivOutputs = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      o.input.line3a_qualified_dividends !== undefined,
+      o.fields.line3a_qualified_dividends !== undefined,
   );
   assertEquals(qualDivOutputs.length, 0);
 });
@@ -1175,7 +1175,7 @@ Deno.test("box2a with no sub-amounts and no other Schedule D — simplified path
   const f1040Out = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      o.input.line7a_cap_gain_distrib !== undefined,
+      o.fields.line7a_cap_gain_distrib !== undefined,
   );
   assertEquals(f1040Out.length > 0, true);
   assertEquals(findOutput(result, "schedule_d"), undefined);
@@ -1190,7 +1190,7 @@ Deno.test("box2a with any sub-amount > 0 — simplified path not available", () 
   const simplifiedOut = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      o.input.line7a_cap_gain_distrib !== undefined,
+      o.fields.line7a_cap_gain_distrib !== undefined,
   );
   assertEquals(simplifiedOut.length, 0);
 });
@@ -1290,7 +1290,7 @@ Deno.test("isNominee = true — nominee subtraction appears on Schedule B", () =
   ]);
   const schedBOut = findOutput(result, "schedule_b");
   assertEquals(schedBOut !== undefined, true);
-  assertEquals(schedBOut?.input.isNominee as boolean, true);
+  assertEquals(schedBOut?.fields.isNominee as boolean, true);
 });
 
 Deno.test("box6 > 0 — no Schedule A deduction produced (OBBBA permanent suspension)", () => {
@@ -1404,10 +1404,10 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
     .filter(
       (o) =>
         o.nodeType === "f1040" &&
-        o.input.line3a_qualified_dividends !== undefined,
+        o.fields.line3a_qualified_dividends !== undefined,
     )
     .reduce(
-      (s, o) => s + (o.input.line3a_qualified_dividends as number),
+      (s, o) => s + (o.fields.line3a_qualified_dividends as number),
       0,
     );
   assertEquals(qualDivTotal, 1100, "qualified dividends total");
@@ -1416,7 +1416,7 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
   const schedDOuts = result.outputs.filter(
     (o) =>
       o.nodeType === "schedule_d" &&
-      o.input.line13_cap_gain_distrib !== undefined,
+      o.fields.line13_cap_gain_distrib !== undefined,
   );
   assertEquals(
     schedDOuts.length > 0,
@@ -1425,7 +1425,7 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
   );
   const capGainTotal = schedDOuts
     .reduce(
-      (s, o) => s + (o.input.line13_cap_gain_distrib as number),
+      (s, o) => s + (o.fields.line13_cap_gain_distrib as number),
       0,
     );
   assertEquals(capGainTotal, 800, "cap gain distributions total");
@@ -1435,10 +1435,10 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
     .filter(
       (o) =>
         o.nodeType === "f1040" &&
-        o.input.line25b_withheld_1099 !== undefined,
+        o.fields.line25b_withheld_1099 !== undefined,
     )
     .reduce(
-      (s, o) => s + (o.input.line25b_withheld_1099 as number),
+      (s, o) => s + (o.fields.line25b_withheld_1099 as number),
       0,
     );
   assertEquals(withholdingTotal, 110, "withholding total");
@@ -1457,7 +1457,7 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
   const sec199aTotal = result.outputs
     .filter((o) => o.nodeType === "form8995")
     .reduce(
-      (s, o) => s + (o.input.line6_sec199a_dividends as number),
+      (s, o) => s + (o.fields.line6_sec199a_dividends as number),
       0,
     );
   assertEquals(sec199aTotal, 500, "§199A dividends total (300 + 200)");
@@ -1478,11 +1478,11 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
   const taxExemptOut = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      o.input.line2a_tax_exempt !== undefined,
+      o.fields.line2a_tax_exempt !== undefined,
   );
   assertEquals(taxExemptOut !== undefined, true, "tax-exempt interest present");
   assertEquals(
-    taxExemptOut?.input.line2a_tax_exempt as number,
+    taxExemptOut?.fields.line2a_tax_exempt as number,
     400,
     "tax-exempt interest (full box12, box13 not subtracted)",
   );
@@ -1495,13 +1495,13 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
     "Form 6251 AMT preference present",
   );
   assertEquals(
-    form6251Out?.input.line2g_pab_interest as number,
+    form6251Out?.fields.line2g_pab_interest as number,
     100,
     "AMT PAB preference",
   );
 
   // box9/box10 must NOT inflate Schedule B
   const schedBTotal = schedBOutputs
-    .reduce((s, o) => s + (o.input.ordinaryDividends as number), 0);
+    .reduce((s, o) => s + (o.fields.ordinaryDividends as number), 0);
   assertEquals(schedBTotal, 1700, "Schedule B total equals box1a sum only");
 });

@@ -45,7 +45,7 @@ function processItem(item: F8949Item): NodeOutput[] {
   const outputs: NodeOutput[] = [
     {
       nodeType: schedule_d.nodeType,
-      input: {
+      fields: {
         transaction: {
           part: item.part,
           description: item.description,
@@ -65,7 +65,7 @@ function processItem(item: F8949Item): NodeOutput[] {
   if ((item.federal_withheld ?? 0) > 0) {
     outputs.push({
       nodeType: f1040.nodeType,
-      input: { line25b_withheld_1099: item.federal_withheld },
+      fields: { line25b_withheld_1099: item.federal_withheld },
     });
   }
 

@@ -37,8 +37,8 @@ Deno.test("credit: full credit when MAGI below phase-out threshold", () => {
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 10000);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 10000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 Deno.test("credit: expenses above max are capped at $17,280 per child", () => {
@@ -54,8 +54,8 @@ Deno.test("credit: expenses above max are capped at $17,280 per child", () => {
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 12280);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 12280);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 // ─── Partial credit — MAGI in phase-out range ─────────────────────────────────
@@ -76,8 +76,8 @@ Deno.test("credit: partial credit when MAGI is in phase-out range", () => {
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 3640);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 3640);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 Deno.test("credit: partial phase-out — fraction rounded to 3 decimal places", () => {
@@ -95,8 +95,8 @@ Deno.test("credit: partial phase-out — fraction rounded to 3 decimal places", 
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 4000);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 4000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 // ─── No credit — MAGI above phase-out ────────────────────────────────────────
@@ -138,8 +138,8 @@ Deno.test("special needs: full credit $17,280 even with zero qualified expenses"
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 12280);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 12280);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 Deno.test("special needs: full credit with prior year credit already claimed", () => {
@@ -158,8 +158,8 @@ Deno.test("special needs: full credit with prior year credit already claimed", (
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 9280);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 9280);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 // ─── Employer benefit exclusion (Part III) ────────────────────────────────────
@@ -177,8 +177,8 @@ Deno.test("exclusion: adoption_benefits below max are fully excluded", () => {
 
   const f1040 = findOutput(result, "f1040");
   // No taxable benefits, no refundable credit
-  assertEquals(f1040?.input.line1f_taxable_adoption_benefits, undefined);
-  assertEquals(f1040?.input.line30_refundable_adoption, undefined);
+  assertEquals(f1040?.fields.line1f_taxable_adoption_benefits, undefined);
+  assertEquals(f1040?.fields.line30_refundable_adoption, undefined);
 });
 
 Deno.test("exclusion: adoption_benefits above max produce taxable income on f1040 line1f", () => {
@@ -192,7 +192,7 @@ Deno.test("exclusion: adoption_benefits above max produce taxable income on f104
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input.line1f_taxable_adoption_benefits, 2720);
+  assertEquals(f1040?.fields.line1f_taxable_adoption_benefits, 2720);
 });
 
 Deno.test("exclusion: phase-out reduces both exclusion and taxable amount", () => {
@@ -207,7 +207,7 @@ Deno.test("exclusion: phase-out reduces both exclusion and taxable amount", () =
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input.line1f_taxable_adoption_benefits, 8640);
+  assertEquals(f1040?.fields.line1f_taxable_adoption_benefits, 8640);
 });
 
 // ─── Combined credit + exclusion ─────────────────────────────────────────────
@@ -230,9 +230,9 @@ Deno.test("combined: credit and exclusion together — employer paid part, taxpa
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 5000);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
-  assertEquals(f1040?.input.line1f_taxable_adoption_benefits, undefined);
+  assertEquals(s3?.fields.line6c_adoption_credit, 5000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
+  assertEquals(f1040?.fields.line1f_taxable_adoption_benefits, undefined);
 });
 
 // ─── Multi-child ─────────────────────────────────────────────────────────────
@@ -256,8 +256,8 @@ Deno.test("multi-child: two children, credits aggregated", () => {
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 4000);
-  assertEquals(f1040?.input.line30_refundable_adoption, 10000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 4000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 10000);
 });
 
 // ─── Credit limit by tax liability ───────────────────────────────────────────
@@ -274,8 +274,8 @@ Deno.test("credit limit: nonrefundable credit capped by income tax liability", (
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
 
-  assertEquals(s3?.input.line6c_adoption_credit, 3000);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 3000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 Deno.test("credit limit: zero tax liability means no nonrefundable credit", () => {
@@ -290,7 +290,7 @@ Deno.test("credit limit: zero tax liability means no nonrefundable credit", () =
   const f1040 = findOutput(result, "f1040");
 
   assertEquals(s3, undefined);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5000);
 });
 
 // ─── MFS restriction ─────────────────────────────────────────────────────────
@@ -370,8 +370,8 @@ Deno.test("credit: prior_year_credit reduces per-child baseline", () => {
 
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
-  assertEquals(s3?.input.line6c_adoption_credit, 2_280);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5_000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 2_280);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5_000);
 });
 
 Deno.test("credit: prior_year_credit equal to max leaves zero remaining — no output", () => {
@@ -401,6 +401,6 @@ Deno.test("credit: MAGI exactly at phase-out start ($259,190) — full credit, n
 
   const s3 = findOutput(result, "schedule3");
   const f1040 = findOutput(result, "f1040");
-  assertEquals(s3?.input.line6c_adoption_credit, 5_000);
-  assertEquals(f1040?.input.line30_refundable_adoption, 5_000);
+  assertEquals(s3?.fields.line6c_adoption_credit, 5_000);
+  assertEquals(f1040?.fields.line30_refundable_adoption, 5_000);
 });

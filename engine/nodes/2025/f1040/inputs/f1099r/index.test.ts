@@ -69,7 +69,7 @@ function findF1040(result: ReturnType<typeof compute>) {
 }
 
 function f1040Input(result: ReturnType<typeof compute>) {
-  return (findF1040(result)?.input ?? {}) as Record<string, unknown>;
+  return (findF1040(result)?.fields ?? {}) as Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
@@ -211,11 +211,11 @@ Deno.test("f1099r.compute: box4_federal_withheld > 0 routes to f1040 line25b", (
   const withholding = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line25b_withheld_1099 !== undefined,
+      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
   );
   assertEquals(withholding !== undefined, true);
   assertEquals(
-    (withholding!.input as Record<string, unknown>).line25b_withheld_1099,
+    (withholding!.fields as Record<string, unknown>).line25b_withheld_1099,
     2000,
   );
 });
@@ -225,7 +225,7 @@ Deno.test("f1099r.compute: no box4 does not emit line25b", () => {
   const withholding = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line25b_withheld_1099 !== undefined,
+      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
   );
   assertEquals(withholding, undefined);
 });
@@ -238,7 +238,7 @@ Deno.test("f1099r.compute: distribution code 1 routes to form5329", () => {
   })]);
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
   assertEquals(form5329 !== undefined, true);
-  const input = form5329!.input as Record<string, unknown>;
+  const input = form5329!.fields as Record<string, unknown>;
   assertEquals(input.early_distribution, 15000);
   assertEquals(input.distribution_code, "1");
 });
@@ -262,7 +262,7 @@ Deno.test("f1099r.compute: distribution code 5 routes to form4972", () => {
   })]);
   const form4972 = result.outputs.find((o) => o.nodeType === "form4972");
   assertEquals(form4972 !== undefined, true);
-  const input = form4972!.input as Record<string, unknown>;
+  const input = form4972!.fields as Record<string, unknown>;
   assertEquals(input.lump_sum_amount, 100000);
 });
 
@@ -299,7 +299,7 @@ Deno.test("f1099r.compute: disability_flag + disability_as_wages routes to f1040
   const wagesOutput = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line1a_wages !== undefined,
+      (o.fields as Record<string, unknown>).line1a_wages !== undefined,
   );
   assertEquals(wagesOutput !== undefined, true);
 });
@@ -314,8 +314,8 @@ Deno.test("f1099r.compute: no_distribution_received suppresses all income output
   const incomeOutput = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      ((o.input as Record<string, unknown>).line4a_ira_gross !== undefined ||
-        (o.input as Record<string, unknown>).line4b_ira_taxable !== undefined),
+      ((o.fields as Record<string, unknown>).line4a_ira_gross !== undefined ||
+        (o.fields as Record<string, unknown>).line4b_ira_taxable !== undefined),
   );
   assertEquals(incomeOutput, undefined);
 });
@@ -385,11 +385,11 @@ Deno.test("f1099r.compute: multiple items aggregate box4_federal_withheld to sin
   const withholdingOutputs = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line25b_withheld_1099 !== undefined,
+      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
   );
   const total = withholdingOutputs.reduce(
     (sum, o) =>
-      sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+      sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(total, 2500);
@@ -669,7 +669,7 @@ Deno.test("f1099r.compute: distribution code 1 uses gross when box2a absent for 
     box7_distribution_code: DistributionCode.Code1,
   })]);
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
-  const input = form5329!.input as Record<string, unknown>;
+  const input = form5329!.fields as Record<string, unknown>;
   assertEquals(input.early_distribution, 7000);
 });
 
@@ -900,8 +900,8 @@ Deno.test("f1099r.compute: no_distribution_received true retains no income even 
   const incomeOutput = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
-      ((o.input as Record<string, unknown>).line5a_pension_gross !== undefined ||
-        (o.input as Record<string, unknown>).line25b_withheld_1099 !== undefined),
+      ((o.fields as Record<string, unknown>).line5a_pension_gross !== undefined ||
+        (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined),
   );
   assertEquals(incomeOutput, undefined);
 });
@@ -944,7 +944,7 @@ Deno.test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PS
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
   assertEquals(form5329 !== undefined, true);
 
-  const input = f1040!.input as Record<string, unknown>;
+  const input = f1040!.fields as Record<string, unknown>;
 
   // IRA gross = 50000 + 15000 = 65000
   assertEquals(input.line4a_ira_gross, 65000);
@@ -960,16 +960,16 @@ Deno.test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PS
   const withholdingOutputs = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line25b_withheld_1099 !== undefined,
+      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
   );
   const totalWithholding = withholdingOutputs.reduce(
     (sum, o) =>
-      sum + ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+      sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(totalWithholding, 14600);
 
   // form5329 early distribution = 15000
-  const f5329Input = form5329!.input as Record<string, unknown>;
+  const f5329Input = form5329!.fields as Record<string, unknown>;
   assertEquals(f5329Input.early_distribution, 15000);
 });

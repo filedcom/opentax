@@ -136,7 +136,7 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       {
         nodeType: schedule3.nodeType,
-        input: { line4_retirement_savings_credit: credit },
+        fields: { line4_retirement_savings_credit: credit },
       },
     ];
 

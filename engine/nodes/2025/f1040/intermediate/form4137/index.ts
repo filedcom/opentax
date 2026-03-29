@@ -87,13 +87,13 @@ function totalFicaTax(line11: number, line12: number): number {
 // Route unreported tip income to Form 1040 line 1c when > 0.
 function f1040Output(line4: number): NodeOutput[] {
   if (line4 <= 0) return [];
-  return [{ nodeType: f1040.nodeType, input: { line1c_unreported_tips: line4 } }];
+  return [{ nodeType: f1040.nodeType, fields: { line1c_unreported_tips: line4 } }];
 }
 
 // Route total FICA tax to Schedule 2 line 5 when > 0.
 function schedule2Output(line13: number): NodeOutput[] {
   if (line13 <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, input: { line5_unreported_tip_tax: line13 } }];
+  return [{ nodeType: schedule2.nodeType, fields: { line5_unreported_tip_tax: line13 } }];
 }
 
 // ─── Node ─────────────────────────────────────────────────────────────────────

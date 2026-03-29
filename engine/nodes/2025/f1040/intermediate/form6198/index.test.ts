@@ -63,7 +63,7 @@ Deno.test("form6198 — loss exceeds at-risk: disallowed add-back routed to sche
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   // Disallowed add-back is positive (reverses part of the upstream-posted loss)
-  assertEquals((s1!.input as Record<string, unknown>).at_risk_disallowed_add_back, 2_000);
+  assertEquals((s1!.fields as Record<string, unknown>).at_risk_disallowed_add_back, 2_000);
 });
 
 // ─── Zero at-risk: full disallowance ─────────────────────────────────────────
@@ -75,7 +75,7 @@ Deno.test("form6198 — zero at-risk amount: entire loss disallowed", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  assertEquals((s1!.input as Record<string, unknown>).at_risk_disallowed_add_back, 4_000);
+  assertEquals((s1!.fields as Record<string, unknown>).at_risk_disallowed_add_back, 4_000);
 });
 
 // ─── Prior unallowed suspended losses ────────────────────────────────────────
@@ -90,7 +90,7 @@ Deno.test("form6198 — prior unallowed losses added to current year loss", () =
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  assertEquals((s1!.input as Record<string, unknown>).at_risk_disallowed_add_back, 1_500);
+  assertEquals((s1!.fields as Record<string, unknown>).at_risk_disallowed_add_back, 1_500);
 });
 
 Deno.test("form6198 — prior unallowed only (no current year loss), within at-risk", () => {
@@ -110,7 +110,7 @@ Deno.test("form6198 — prior unallowed only (no current year loss), exceeds at-
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  assertEquals((s1!.input as Record<string, unknown>).at_risk_disallowed_add_back, 500);
+  assertEquals((s1!.fields as Record<string, unknown>).at_risk_disallowed_add_back, 500);
 });
 
 // ─── Current year income reduces total loss ───────────────────────────────────
@@ -124,7 +124,7 @@ Deno.test("form6198 — income offsets loss before applying at-risk limit", () =
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  assertEquals((s1!.input as Record<string, unknown>).at_risk_disallowed_add_back, 1_000);
+  assertEquals((s1!.fields as Record<string, unknown>).at_risk_disallowed_add_back, 1_000);
 });
 
 Deno.test("form6198 — income fully offsets loss: no limitation applies", () => {

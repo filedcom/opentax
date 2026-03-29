@@ -62,7 +62,7 @@ Deno.test("below threshold: 20% × QBI, no wage limit (single < $197,300)", () =
     w2_wages: 5_000, // very low wages — would limit if applicable
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 10_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
 Deno.test("below threshold MFJ: no wage limit (MFJ < $394,600)", () => {
@@ -74,7 +74,7 @@ Deno.test("below threshold MFJ: no wage limit (MFJ < $394,600)", () => {
   });
   const out = findOutput(result, "f1040");
   // 20% × 80,000 = 16,000; income cap = 20% × 200,000 = 40,000 → 16,000
-  assertEquals(out?.input.line13_qbi_deduction, 16_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 16_000);
 });
 
 // ── W-2 wages limitation ─────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ Deno.test("W-2 limit: 50% of wages applies (above threshold, 50% wages < 20% QBI
     unadjusted_basis: 0,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 15_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 15_000);
 });
 
 Deno.test("W-2 limit: UBIA alternative applies (25% wages + 2.5% UBIA > 50% wages)", () => {
@@ -109,7 +109,7 @@ Deno.test("W-2 limit: UBIA alternative applies (25% wages + 2.5% UBIA > 50% wage
     unadjusted_basis: 1_000_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 30_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 30_000);
 });
 
 Deno.test("W-2 limit: zero wages, zero UBIA → deduction is zero above threshold", () => {
@@ -142,7 +142,7 @@ Deno.test("phase-in: 50% through range — partial wage limitation applied", () 
     unadjusted_basis: 0,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 27_500);
+  assertEquals(out?.fields.line13_qbi_deduction, 27_500);
 });
 
 Deno.test("phase-in: exactly at threshold — no limitation, full 20%", () => {
@@ -155,7 +155,7 @@ Deno.test("phase-in: exactly at threshold — no limitation, full 20%", () => {
     w2_wages: 5_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 20_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 20_000);
 });
 
 Deno.test("phase-in: MFJ 50% through range ($444,600) — partial limitation", () => {
@@ -172,7 +172,7 @@ Deno.test("phase-in: MFJ 50% through range ($444,600) — partial limitation", (
     unadjusted_basis: 0,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 40_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 40_000);
 });
 
 // ── SSTB phase-out ────────────────────────────────────────────────────────────
@@ -207,7 +207,7 @@ Deno.test("SSTB: partially phased out in range (single at $247,300 — 50% throu
     sstb_unadjusted_basis: 0,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 8_750);
+  assertEquals(out?.fields.line13_qbi_deduction, 8_750);
 });
 
 Deno.test("SSTB: below threshold — not phased out, treated like regular QBI", () => {
@@ -220,7 +220,7 @@ Deno.test("SSTB: below threshold — not phased out, treated like regular QBI", 
     sstb_w2_wages: 500,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 10_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
 // ── Non-SSTB not affected by SSTB rules ──────────────────────────────────────
@@ -239,7 +239,7 @@ Deno.test("non-SSTB unaffected: SSTB fully phased out but non-SSTB QBI remains",
     sstb_w2_wages: 80_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 20_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 20_000);
 });
 
 // ── QBI loss carryforward ─────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ Deno.test("carryforward: qbi_loss_carryforward reduces net QBI", () => {
     qbi_loss_carryforward: -20_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 16_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 16_000);
 });
 
 Deno.test("carryforward: loss exceeds current QBI — no deduction", () => {
@@ -286,7 +286,7 @@ Deno.test("income cap: 20% × (TI - cap_gain) limits deduction", () => {
     w2_wages: 100_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 10_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
 // ── REIT dividends ────────────────────────────────────────────────────────────
@@ -300,7 +300,7 @@ Deno.test("REIT: section 199A dividends — 20% applied, not subject to wage lim
     line6_sec199a_dividends: 50_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out?.input.line13_qbi_deduction, 10_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
 Deno.test("REIT: reit_loss_carryforward reduces dividends", () => {
@@ -312,7 +312,7 @@ Deno.test("REIT: reit_loss_carryforward reduces dividends", () => {
   });
   const out = findOutput(result, "f1040");
   // net REIT = 20,000 → 20% = 4,000
-  assertEquals(out?.input.line13_qbi_deduction, 4_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 4_000);
 });
 
 // ── Output routing ────────────────────────────────────────────────────────────
@@ -325,7 +325,7 @@ Deno.test("routing: positive deduction → routes to f1040 with line13_qbi_deduc
   });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals(typeof out?.input.line13_qbi_deduction, "number");
+  assertEquals(typeof out?.fields.line13_qbi_deduction, "number");
 });
 
 Deno.test("routing: no QBI activity — no outputs", () => {
@@ -375,6 +375,6 @@ Deno.test("smoke: mixed QBI + SSTB + REIT, above threshold, partial phase-in MFJ
   });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.input.line13_qbi_deduction, 25_000);
+  assertEquals(out?.fields.line13_qbi_deduction, 25_000);
   assertEquals(result.outputs.length, 1);
 });

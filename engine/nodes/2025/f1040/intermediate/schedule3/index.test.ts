@@ -36,43 +36,43 @@ Deno.test("validation: all-zero fields produce no output", () => {
 Deno.test("calc: line1_foreign_tax_credit alone → f1040 line20", () => {
   const result = compute({ line1_foreign_tax_credit: 400 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 400);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 400);
 });
 
 Deno.test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {
   const result = compute({ line1_foreign_tax_1099: 250 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 250);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 250);
 });
 
 Deno.test("calc: line2_childcare_credit alone → f1040 line20", () => {
   const result = compute({ line2_childcare_credit: 600 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 600);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 600);
 });
 
 Deno.test("calc: line3_education_credit alone → f1040 line20", () => {
   const result = compute({ line3_education_credit: 1500 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 1500);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 1500);
 });
 
 Deno.test("calc: line4_retirement_savings_credit alone → f1040 line20", () => {
   const result = compute({ line4_retirement_savings_credit: 200 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 200);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 200);
 });
 
 Deno.test("calc: line6b_child_tax_credit alone → f1040 line20", () => {
   const result = compute({ line6b_child_tax_credit: 2000 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 2000);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 2000);
 });
 
 Deno.test("calc: line6c_adoption_credit alone → f1040 line20", () => {
   const result = compute({ line6c_adoption_credit: 5000 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 5000);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 5000);
 });
 
 // ── Part II — per-field routing ──────────────────────────────────────────────
@@ -80,13 +80,13 @@ Deno.test("calc: line6c_adoption_credit alone → f1040 line20", () => {
 Deno.test("calc: line10_amount_paid_extension alone → f1040 line31", () => {
   const result = compute({ line10_amount_paid_extension: 1200 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 1200);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 1200);
 });
 
 Deno.test("calc: line11_excess_ss alone → f1040 line31", () => {
   const result = compute({ line11_excess_ss: 340 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 340);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 340);
 });
 
 // ── Part I aggregation ───────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ Deno.test("calc: line11_excess_ss alone → f1040 line31", () => {
 Deno.test("agg: line1 = line1_foreign_tax_credit + line1_foreign_tax_1099", () => {
   const result = compute({ line1_foreign_tax_credit: 300, line1_foreign_tax_1099: 100 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 400);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 400);
 });
 
 Deno.test("agg: partITotal sums all Part I credits", () => {
@@ -109,7 +109,7 @@ Deno.test("agg: partITotal sums all Part I credits", () => {
     // total = 300 + 600 + 1500 + 200 + 2000 + 5000 = 9600
   });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 9600);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 9600);
 });
 
 // ── Part II aggregation ──────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ Deno.test("agg: partITotal sums all Part I credits", () => {
 Deno.test("agg: partIITotal = line10 + line11", () => {
   const result = compute({ line10_amount_paid_extension: 1000, line11_excess_ss: 500 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 1500);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 1500);
 });
 
 // ── Routing separation ───────────────────────────────────────────────────────
@@ -129,22 +129,22 @@ Deno.test("routing: Part I → line20, Part II → line31, both present in same 
   });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 400);
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 600);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 400);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 600);
   assertEquals(result.outputs.length, 1);
 });
 
 Deno.test("routing: only line20 emitted when Part II is zero", () => {
   const result = compute({ line2_childcare_credit: 300 });
   const out = findOutput(result, "f1040");
-  const keys = Object.keys(out!.input as Record<string, unknown>);
+  const keys = Object.keys(out!.fields as Record<string, unknown>);
   assertEquals(keys, ["line20_nonrefundable_credits"]);
 });
 
 Deno.test("routing: only line31 emitted when Part I is zero", () => {
   const result = compute({ line11_excess_ss: 200 });
   const out = findOutput(result, "f1040");
-  const keys = Object.keys(out!.input as Record<string, unknown>);
+  const keys = Object.keys(out!.fields as Record<string, unknown>);
   assertEquals(keys, ["line31_additional_payments"]);
 });
 
@@ -164,15 +164,15 @@ Deno.test("routing: exactly one f1040 output regardless of how many fields are s
 Deno.test("edge: only partial fields provided", () => {
   const result = compute({ line3_education_credit: 1000, line11_excess_ss: 150 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 1000);
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 150);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 1000);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 150);
 });
 
 Deno.test("edge: large values route correctly", () => {
   const result = compute({ line6b_child_tax_credit: 10_000, line10_amount_paid_extension: 50_000 });
   const out = findOutput(result, "f1040");
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 10_000);
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 50_000);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 10_000);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 50_000);
 });
 
 // ── Smoke test ───────────────────────────────────────────────────────────────
@@ -203,7 +203,7 @@ Deno.test("smoke: all fields populated — correct totals emitted to f1040", () 
   });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.input as Record<string, unknown>).line20_nonrefundable_credits, 9650);
-  assertEquals((out!.input as Record<string, unknown>).line31_additional_payments, 1540);
+  assertEquals((out!.fields as Record<string, unknown>).line20_nonrefundable_credits, 9650);
+  assertEquals((out!.fields as Record<string, unknown>).line31_additional_payments, 1540);
   assertEquals(result.outputs.length, 1);
 });

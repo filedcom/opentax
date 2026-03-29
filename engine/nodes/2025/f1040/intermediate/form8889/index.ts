@@ -111,19 +111,19 @@ function schedule1Output(deductible: number, taxable: number): NodeOutput[] {
   if (deductible > 0) input.line13_hsa_deduction = deductible;
   if (taxable > 0) input.line8z_other = taxable;
   if (Object.keys(input).length === 0) return [];
-  return [{ nodeType: schedule1.nodeType, input }];
+  return [{ nodeType: schedule1.nodeType, fields: input }];
 }
 
 // Excess contribution output → Form 5329 Part VII
 function excessOutput(excess: number): NodeOutput[] {
   if (excess <= 0) return [];
-  return [{ nodeType: form5329.nodeType, input: { excess_hsa: excess } }];
+  return [{ nodeType: form5329.nodeType, fields: { excess_hsa: excess } }];
 }
 
 // 20% penalty output → Schedule 2 line 17b
 function penaltyOutput(penalty: number): NodeOutput[] {
   if (penalty <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, input: { line17b_hsa_penalty: penalty } }];
+  return [{ nodeType: schedule2.nodeType, fields: { line17b_hsa_penalty: penalty } }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

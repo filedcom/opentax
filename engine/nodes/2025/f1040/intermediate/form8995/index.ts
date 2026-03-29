@@ -111,7 +111,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, input: { line13_qbi_deduction: deduction } },
+      { nodeType: f1040.nodeType, fields: { line13_qbi_deduction: deduction } },
     ];
 
     return { outputs };

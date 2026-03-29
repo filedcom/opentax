@@ -218,7 +218,7 @@ function isPassive(item: EItem): boolean {
 
 function schedule1Output(items: EItems): NodeOutput[] {
   const totalNet = items.reduce((sum, item) => sum + computePropertyNet(item), 0);
-  return [{ nodeType: schedule1.nodeType, input: { line5_schedule_e: totalNet } }];
+  return [{ nodeType: schedule1.nodeType, fields: { line5_schedule_e: totalNet } }];
 }
 
 function form8582Outputs(items: EItems): NodeOutput[] {
@@ -264,7 +264,7 @@ function form8582Outputs(items: EItems): NodeOutput[] {
   if (hasTypeA) f8582Input.has_active_rental = true;
   if (hasTypeB) f8582Input.has_other_passive = true;
 
-  return [{ nodeType: form8582.nodeType, input: f8582Input }];
+  return [{ nodeType: form8582.nodeType, fields: f8582Input }];
 }
 
 function form6198Outputs(items: EItems): NodeOutput[] {
@@ -282,7 +282,7 @@ function form6198Outputs(items: EItems): NodeOutput[] {
   );
   if (totalPriorAtRisk > 0) f6198Input.prior_unallowed = totalPriorAtRisk;
 
-  return [{ nodeType: form6198.nodeType, input: f6198Input }];
+  return [{ nodeType: form6198.nodeType, fields: f6198Input }];
 }
 
 function form8960Outputs(items: EItems): NodeOutput[] {
@@ -290,7 +290,7 @@ function form8960Outputs(items: EItems): NodeOutput[] {
   if (niitItems.length === 0) return [];
 
   const totalNet = niitItems.reduce((sum, item) => sum + computePropertyNet(item), 0);
-  return [{ nodeType: form8960.nodeType, input: { line4b_rental_net: totalNet } }];
+  return [{ nodeType: form8960.nodeType, fields: { line4b_rental_net: totalNet } }];
 }
 
 function scheduleAOutputs(items: EItems): NodeOutput[] {
@@ -312,7 +312,7 @@ function scheduleAOutputs(items: EItems): NodeOutput[] {
   if (totalPersonalInterest > 0) input.mortgage_interest = totalPersonalInterest;
   if (totalPersonalTaxes > 0) input.real_estate_taxes = totalPersonalTaxes;
 
-  return [{ nodeType: schedule_a.nodeType, input }];
+  return [{ nodeType: schedule_a.nodeType, fields: input }];
 }
 
 function form8995Outputs(items: EItems): NodeOutput[] {
@@ -340,14 +340,14 @@ function form8995Outputs(items: EItems): NodeOutput[] {
   const safeHarborItem = qbiItems.find((item) => item.qbi_safe_harbor !== undefined);
   if (safeHarborItem?.qbi_safe_harbor) f8995Input.safe_harbor = safeHarborItem.qbi_safe_harbor;
 
-  return [{ nodeType: form8995.nodeType, input: f8995Input }];
+  return [{ nodeType: form8995.nodeType, fields: f8995Input }];
 }
 
 function form4797Outputs(items: EItems): NodeOutput[] {
   const disposedItems = items.filter((item) => item.disposed_of === true);
   if (disposedItems.length === 0) return [];
 
-  return [{ nodeType: form4797.nodeType, input: { disposed_properties: disposedItems.length } }];
+  return [{ nodeType: form4797.nodeType, fields: { disposed_properties: disposedItems.length } }];
 }
 
 function form6251Outputs(items: EItems): NodeOutput[] {
@@ -357,7 +357,7 @@ function form6251Outputs(items: EItems): NodeOutput[] {
   );
   if (totalAmtAdj === 0) return [];
 
-  return [{ nodeType: form6251.nodeType, input: { line2l_rental_depreciation_adj: totalAmtAdj } }];
+  return [{ nodeType: form6251.nodeType, fields: { line2l_rental_depreciation_adj: totalAmtAdj } }];
 }
 
 function form4562Outputs(items: EItems): NodeOutput[] {
@@ -368,7 +368,7 @@ function form4562Outputs(items: EItems): NodeOutput[] {
   if (s179Items.length === 0) return [];
 
   const totalS179 = s179Items.reduce((sum, item) => sum + (item.section_179 ?? 0), 0);
-  return [{ nodeType: form4562.nodeType, input: { section_179_deduction: totalS179 } }];
+  return [{ nodeType: form4562.nodeType, fields: { section_179_deduction: totalS179 } }];
 }
 
 function form8990Outputs(items: EItems): NodeOutput[] {
@@ -386,7 +386,7 @@ function form8990Outputs(items: EItems): NodeOutput[] {
   if (totalMortgage > 0) input.disallowed_mortgage_interest_carryforward = totalMortgage;
   if (totalOther > 0) input.disallowed_other_interest_carryforward = totalOther;
 
-  return [{ nodeType: form8990.nodeType, input }];
+  return [{ nodeType: form8990.nodeType, fields: input }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

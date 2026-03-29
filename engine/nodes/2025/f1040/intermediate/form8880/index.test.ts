@@ -53,14 +53,14 @@ Deno.test("form8880: single AGI=$20,000 (≤$23,000) → 50% credit rate", () =>
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 20000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
 Deno.test("form8880: single AGI=$23,000 (exactly at 50% ceiling) → 50% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 23000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -72,14 +72,14 @@ Deno.test("form8880: single AGI=$23,001 (20% bracket) → 20% credit rate", () =
   // $2,000 × 20% = $400
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 23001, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
 Deno.test("form8880: single AGI=$25,000 (at 20% ceiling) → 20% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 25000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
@@ -91,14 +91,14 @@ Deno.test("form8880: single AGI=$25,001 (10% bracket) → 10% credit rate", () =
   // $2,000 × 10% = $200
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 25001, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
 Deno.test("form8880: single AGI=$38,250 (at 10% ceiling) → 10% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 38250, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
@@ -123,21 +123,21 @@ Deno.test("form8880: single AGI=$50,000 (well above limit) → no output", () =>
 Deno.test("form8880: HOH AGI=$34,500 (≤$34,500) → 50% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 34500, filing_status: "hoh" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
 Deno.test("form8880: HOH AGI=$36,000 (20% bracket) → 20% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 36000, filing_status: "hoh" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
 Deno.test("form8880: HOH AGI=$50,000 (10% bracket) → 10% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 50000, filing_status: "hoh" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
@@ -154,21 +154,21 @@ Deno.test("form8880: MFJ AGI=$46,000 (≤$46,000) → 50% credit rate", () => {
   // Only taxpayer contributes $2,000 → $2,000 × 50% = $1,000
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 46000, filing_status: "mfj" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
 Deno.test("form8880: MFJ AGI=$48,000 (20% bracket) → 20% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 48000, filing_status: "mfj" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 400);
 });
 
 Deno.test("form8880: MFJ AGI=$60,000 (10% bracket) → 10% credit rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 60000, filing_status: "mfj" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 200);
 });
 
@@ -185,21 +185,21 @@ Deno.test("form8880: contributions above $2,000 are capped at $2,000", () => {
   // $5,000 contribution capped to $2,000; at 50% → $1,000
   const result = compute({ ira_contributions_taxpayer: 5000, agi: 20000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
 Deno.test("form8880: exactly $2,000 contribution at 50% → $1,000 credit", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 20000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
 Deno.test("form8880: $1,000 contribution at 50% → $500 credit", () => {
   const result = compute({ ira_contributions_taxpayer: 1000, agi: 20000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 500);
 });
 
@@ -216,7 +216,7 @@ Deno.test("form8880: MFJ both spouses $2,000 each at 50% → $2,000 credit", () 
     filing_status: "mfj",
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 2000);
 });
 
@@ -229,7 +229,7 @@ Deno.test("form8880: MFJ both spouses, contributions capped individually at $2,0
     filing_status: "mfj",
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 2000);
 });
 
@@ -240,7 +240,7 @@ Deno.test("form8880: MFJ spouse only contributes, taxpayer does not", () => {
     filing_status: "mfj",
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -252,7 +252,7 @@ Deno.test("form8880: elective_deferrals treated as taxpayer contribution", () =>
   // $2,000 deferrals at 50% = $1,000
   const result = compute({ elective_deferrals: 2000, agi: 20000, filing_status: "single" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -265,7 +265,7 @@ Deno.test("form8880: elective_deferrals_taxpayer and ira_contributions_taxpayer 
     filing_status: "single",
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -282,7 +282,7 @@ Deno.test("form8880: distributions offset contributions — partial reduction", 
     filing_status: "single",
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 750);
 });
 
@@ -319,7 +319,7 @@ Deno.test("form8880: credit limited by income_tax_liability", () => {
     income_tax_liability: 600,
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 600);
 });
 
@@ -341,7 +341,7 @@ Deno.test("form8880: income_tax_liability >= credit → full credit passes throu
     income_tax_liability: 5000,
   });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -358,7 +358,7 @@ Deno.test("form8880: output nodeType is 'schedule3'", () => {
 Deno.test("form8880: output field is line4_retirement_savings_credit", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 20000, filing_status: "single" });
   const out = findOutput(result, "schedule3")!;
-  const keys = Object.keys(out.input as Record<string, unknown>);
+  const keys = Object.keys(out.fields as Record<string, unknown>);
   assertEquals(keys, ["line4_retirement_savings_credit"]);
 });
 
@@ -374,7 +374,7 @@ Deno.test("form8880: no f1040 output is emitted", () => {
 Deno.test("form8880: MFS AGI=$22,000 (≤$23,000) → 50% rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 22000, filing_status: "mfs" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -385,7 +385,7 @@ Deno.test("form8880: MFS AGI=$22,000 (≤$23,000) → 50% rate", () => {
 Deno.test("form8880: QSS AGI=$20,000 → 50% rate", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 20000, filing_status: "qss" });
   const out = findOutput(result, "schedule3");
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
 
@@ -411,7 +411,7 @@ Deno.test("form8880 smoke test: MFJ both contributing, 50% rate → $2,000 credi
 
   const s3Out = findOutput(result, "schedule3");
   assertEquals(s3Out !== undefined, true);
-  const input = s3Out!.input as Record<string, unknown>;
+  const input = s3Out!.fields as Record<string, unknown>;
   assertEquals(input.line4_retirement_savings_credit, 1750);
 
   assertEquals(findOutput(result, "f1040"), undefined);

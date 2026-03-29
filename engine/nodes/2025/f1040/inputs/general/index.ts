@@ -308,7 +308,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const f1040Input = buildF1040Input(parsed);
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, input: f1040Input },
+      { nodeType: f1040.nodeType, fields: f1040Input },
     ];
 
     return { outputs };

@@ -56,7 +56,7 @@ class Form461Node extends TaxNode<typeof inputSchema> {
       outputs: [
         {
           nodeType: schedule1.nodeType,
-          input: { line8p_excess_business_loss: total },
+          fields: { line8p_excess_business_loss: total },
         },
       ],
     };

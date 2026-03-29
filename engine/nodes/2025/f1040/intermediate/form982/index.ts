@@ -89,7 +89,7 @@ function computeTaxableExcess(cod: number, excluded: number): number {
 function buildSchedule1Output(taxableExcess: number): NodeOutput {
   return {
     nodeType: schedule1.nodeType,
-    input: { line8c_cod_income: taxableExcess },
+    fields: { line8c_cod_income: taxableExcess },
   };
 }
 

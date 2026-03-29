@@ -214,23 +214,23 @@ function seThreshold(item: ScheduleCItem): number {
 function deductionOutputs(item: ScheduleCItem, netProfit: number): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (item.line_12_depletion && item.line_12_depletion > 0) {
-    outputs.push({ nodeType: form6251.nodeType, input: { depletion_preference: item.line_12_depletion } });
+    outputs.push({ nodeType: form6251.nodeType, fields: { depletion_preference: item.line_12_depletion } });
   }
   if (!isSeExempt(item) && netProfit >= seThreshold(item)) {
-    outputs.push({ nodeType: schedule_se.nodeType, input: { net_profit_schedule_c: netProfit } });
-    outputs.push({ nodeType: form8995.nodeType, input: { qbi_from_schedule_c: netProfit } });
+    outputs.push({ nodeType: schedule_se.nodeType, fields: { net_profit_schedule_c: netProfit } });
+    outputs.push({ nodeType: form8995.nodeType, fields: { qbi_from_schedule_c: netProfit } });
   }
   if (item.line_g_material_participation === false) {
-    outputs.push({ nodeType: form8582.nodeType, input: { passive_schedule_c: netProfit } });
+    outputs.push({ nodeType: form8582.nodeType, fields: { passive_schedule_c: netProfit } });
   }
   if (netProfit < 0 && item.line_32_at_risk === "b") {
-    outputs.push({ nodeType: form6198.nodeType, input: { schedule_c_loss: netProfit } });
+    outputs.push({ nodeType: form6198.nodeType, fields: { schedule_c_loss: netProfit } });
   }
   if (item.subject_to_163j === true &&
     ((item.line_16a_interest_mortgage ?? 0) + (item.line_16b_interest_other ?? 0)) > 0) {
     outputs.push({
       nodeType: form8990.nodeType,
-      input: {
+      fields: {
         business_interest_schedule_c:
           (item.line_16a_interest_mortgage ?? 0) + (item.line_16b_interest_other ?? 0),
       },
@@ -270,7 +270,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
 
     // Aggregate net profits → single schedule1 output
     const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
-    outputs.push({ nodeType: schedule1.nodeType, input: { line3_schedule_c: totalNetProfit } });
+    outputs.push({ nodeType: schedule1.nodeType, fields: { line3_schedule_c: totalNetProfit } });
 
     // Per-item downstream routing (SE, QBI, passive, at-risk, depletion, interest)
     for (let i = 0; i < input.schedule_cs.length; i++) {
@@ -284,7 +284,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         ? EBL_THRESHOLD_MFJ
         : EBL_THRESHOLD_SINGLE;
       if (loss > threshold) {
-        outputs.push({ nodeType: form461.nodeType, input: { excess_business_loss: loss - threshold } });
+        outputs.push({ nodeType: form461.nodeType, fields: { excess_business_loss: loss - threshold } });
       }
     }
 

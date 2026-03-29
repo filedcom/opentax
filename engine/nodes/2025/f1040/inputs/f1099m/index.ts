@@ -158,7 +158,7 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
   if (rental > 0) schedEInput.rental_income = rental;
   if (royalty > 0) schedEInput.royalty_income = royalty;
   if (Object.keys(schedEInput).length === 0) return null;
-  return { nodeType: schedule_e.nodeType, input: schedEInput };
+  return { nodeType: schedule_e.nodeType, fields: schedEInput };
 }
 
 function schedule1Output(items: M99Item[]): NodeOutput | null {
@@ -175,7 +175,7 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
   if (attorney > 0) s1Input.line8z_attorney_proceeds = attorney;
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
-  return { nodeType: schedule1.nodeType, input: s1Input };
+  return { nodeType: schedule1.nodeType, fields: s1Input };
 }
 
 // ---------------------------------------------------------------------------
@@ -203,7 +203,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // f1040 line25b — federal withholding (always aggregated)
     const totalWithheld = totalOf(m99s, "box4_federal_withheld");
     if (totalWithheld > 0) {
-      outputs.push({ nodeType: f1040.nodeType, input: { line25b_withheld_1099: totalWithheld } });
+      outputs.push({ nodeType: f1040.nodeType, fields: { line25b_withheld_1099: totalWithheld } });
     }
 
     // schedule_e — rents (typical) + royalties (investment)
@@ -213,7 +213,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // schedule_c — fishing boat + medical + fish purchased + rents (substantial services) + royalties (trade/business)
     const totalScheduleC = scheduleCGrossReceipts(m99s);
     if (totalScheduleC > 0) {
-      outputs.push({ nodeType: schedule_c.nodeType, input: { line1_gross_receipts: totalScheduleC } });
+      outputs.push({ nodeType: schedule_c.nodeType, fields: { line1_gross_receipts: totalScheduleC } });
     }
 
     // schedule1 — prizes, other income, substitute payments, attorney proceeds, NQDC ordinary income
@@ -223,7 +223,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // schedule_f — crop insurance (non-deferred only)
     const totalCropInsurance = cropInsuranceTotal(m99s);
     if (totalCropInsurance > 0) {
-      outputs.push({ nodeType: schedule_f.nodeType, input: { crop_insurance: totalCropInsurance } });
+      outputs.push({ nodeType: schedule_f.nodeType, fields: { crop_insurance: totalCropInsurance } });
     }
 
     // schedule2 — §409A excise tax (20% of NQDC includible amount)
@@ -231,7 +231,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     if (totalNqdc > 0) {
       outputs.push({
         nodeType: schedule2.nodeType,
-        input: { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE },
+        fields: { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE },
       });
     }
 

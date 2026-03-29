@@ -27,7 +27,7 @@ class MockAddNode extends TaxNode<typeof addSchema> {
 
   compute(input: z.infer<typeof addSchema>): NodeResult {
     const sum = input.a + input.b;
-    return { outputs: [{ nodeType: mockOutputNode.nodeType, input: { sum } }] };
+    return { outputs: [{ nodeType: mockOutputNode.nodeType, fields: { sum } }] };
   }
 }
 
@@ -42,7 +42,7 @@ Deno.test("MockAddNode: compute() returns a valid NodeResult with outputs array"
   const result = node.compute({ a: 3, b: 4 });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "mock_output");
-  assertEquals((result.outputs[0].input as { sum: number }).sum, 7);
+  assertEquals((result.outputs[0].fields as { sum: number }).sum, 7);
 });
 
 Deno.test("MockAddNode: inputSchema validates valid input via safeParse", () => {

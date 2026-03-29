@@ -150,7 +150,7 @@ function niitTax(base: number): number {
 // Route NIIT to schedule2 line 12 when > 0
 function schedule2Output(niit: number): NodeOutput[] {
   if (niit <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, input: { line12_niit: niit } }];
+  return [{ nodeType: schedule2.nodeType, fields: { line12_niit: niit } }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

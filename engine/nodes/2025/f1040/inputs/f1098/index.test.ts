@@ -135,7 +135,7 @@ Deno.test("routing_box1_for_A_routes_to_schedule_a — box1 with for_routing=A r
   const result = compute([minimalItem({ box1_mortgage_interest: 12000, for_routing: "A" })]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 12000);
 });
 
@@ -143,7 +143,7 @@ Deno.test("routing_box1_for_E_routes_to_schedule_e — box1 with for_routing=E r
   const result = compute([minimalItem({ box1_mortgage_interest: 8000, for_routing: "E" })]);
   const out = findOutput(result, "schedule_e");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   // AMBIGUITY B: field name may be mortgage_interest or line12_mortgage_interest
   const fieldValue = inp.mortgage_interest ?? inp.line12_mortgage_interest;
   assertEquals(fieldValue, 8000);
@@ -153,7 +153,7 @@ Deno.test("routing_box1_for_C_routes_to_schedule_c — box1 with for_routing=C r
   const result = compute([minimalItem({ box1_mortgage_interest: 6000, for_routing: "C" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   // AMBIGUITY C: per context.md Schedule C line 16a
   const fieldValue = inp.line16a_interest_mortgage ?? inp.mortgage_interest;
   assertEquals(fieldValue, 6000);
@@ -163,7 +163,7 @@ Deno.test("routing_box1_for_8829_routes_to_form8829 — box1 with for_routing=88
   const result = compute([minimalItem({ box1_mortgage_interest: 4000, for_routing: "8829" })]);
   const out = findOutput(result, "form_8829");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   // AMBIGUITY D: form_8829 line 10 or line 16 depending on deduction method
   const hasField = inp.mortgage_interest !== undefined ||
     inp.line10_mortgage_interest !== undefined ||
@@ -176,7 +176,7 @@ Deno.test("routing_box1_zero_does_not_route — box1=0 produces no interest outp
   const out = result.outputs.find(
     (o) =>
       o.nodeType === "schedule_a" &&
-      (o.input as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined,
+      (o.fields as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined,
   );
   assertEquals(out, undefined);
 });
@@ -187,7 +187,7 @@ Deno.test("routing_box4_reduces_schedule_a_interest — box4 reduces net interes
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 8500);
 });
 
@@ -198,7 +198,7 @@ Deno.test("routing_box4_equals_box1_zero_net — box4=box1 means zero net, no in
   const out = result.outputs.find(
     (o) =>
       o.nodeType === "schedule_a" &&
-      (o.input as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined,
+      (o.fields as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined,
   );
   assertEquals(out, undefined);
 });
@@ -217,10 +217,10 @@ Deno.test("routing_box4_prior_year_routes_to_schedule1 — box4 with prior_year 
   const incomeOut = result.outputs.find(
     (o) =>
       o.nodeType === "schedule1" &&
-      (o.input as Record<string, unknown>).line8z_other_income !== undefined,
+      (o.fields as Record<string, unknown>).line8z_other_income !== undefined,
   );
   assertEquals(incomeOut !== undefined, true);
-  const inp = incomeOut!.input as Record<string, unknown>;
+  const inp = incomeOut!.fields as Record<string, unknown>;
   assertEquals(inp.line8z_other_income, 2000);
 });
 
@@ -236,7 +236,7 @@ Deno.test("routing_box4_prior_year_does_not_reduce_box1 — prior-year box4 does
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   // box1 should be unaffected: 10000 (not 8000)
   assertEquals(inp.line8a_mortgage_interest_1098, 10000);
 });
@@ -247,7 +247,7 @@ Deno.test("routing_box5_mip_not_routed_ty2025 — box5_mip collected but not ded
   ]);
   // No output should reference any MIP field
   const mipOut = result.outputs.find(
-    (o) => JSON.stringify(o.input).toLowerCase().includes("mip"),
+    (o) => JSON.stringify(o.fields).toLowerCase().includes("mip"),
   );
   assertEquals(mipOut, undefined);
   // Interest should still route normally
@@ -260,7 +260,7 @@ Deno.test("routing_box5_zero_no_mip_output — box5_mip=0 produces no MIP output
     minimalItem({ box1_mortgage_interest: 5000, box5_mip: 0, for_routing: "A" }),
   ]);
   const mipOut = result.outputs.find(
-    (o) => JSON.stringify(o.input).toLowerCase().includes("mip"),
+    (o) => JSON.stringify(o.fields).toLowerCase().includes("mip"),
   );
   assertEquals(mipOut, undefined);
 });
@@ -274,9 +274,9 @@ Deno.test("routing_box6_for_A_routes_to_schedule_a — box6 points with for_rout
     (o) =>
       o.nodeType === "schedule_a" &&
       (
-        (o.input as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined ||
-        (o.input as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
-        (o.input as Record<string, unknown>).line8a_points !== undefined
+        (o.fields as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined ||
+        (o.fields as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
+        (o.fields as Record<string, unknown>).line8a_points !== undefined
       ),
   );
   assertEquals(pointsOut !== undefined, true);
@@ -290,8 +290,8 @@ Deno.test("routing_box6_for_E_not_routed_to_schedule_a — box6 with for_routing
     (o) =>
       o.nodeType === "schedule_a" &&
       (
-        (o.input as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
-        (o.input as Record<string, unknown>).line8a_points !== undefined
+        (o.fields as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
+        (o.fields as Record<string, unknown>).line8a_points !== undefined
       ),
   );
   assertEquals(pointsOnSchedA, undefined);
@@ -303,8 +303,8 @@ Deno.test("routing_box6_zero_no_points_output — box6=0 produces no points outp
   ]);
   const pointsOut = result.outputs.find(
     (o) =>
-      (o.input as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
-      (o.input as Record<string, unknown>).line8a_points !== undefined,
+      (o.fields as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
+      (o.fields as Record<string, unknown>).line8a_points !== undefined,
   );
   assertEquals(pointsOut, undefined);
 });
@@ -373,7 +373,7 @@ Deno.test("informational_box10_not_auto_routed — box10_other (lender free-text
   ]);
   const taxOut = result.outputs.find(
     (o) =>
-      (o.input as Record<string, unknown>).line5b_real_estate_tax !== undefined,
+      (o.fields as Record<string, unknown>).line5b_real_estate_tax !== undefined,
   );
   assertEquals(taxOut, undefined);
 });
@@ -399,7 +399,7 @@ Deno.test("informational_qualified_premiums_checkbox_no_effect_ty2025 — qualif
   assertEquals(outputCount(withFlag), outputCount(without));
   // And still no MIP routing
   const mipOut = withFlag.outputs.find(
-    (o) => JSON.stringify(o.input).toLowerCase().includes("mip"),
+    (o) => JSON.stringify(o.fields).toLowerCase().includes("mip"),
   );
   assertEquals(mipOut, undefined);
 });
@@ -415,7 +415,7 @@ Deno.test("aggregation_multiple_for_a_box1_summed — two for_routing=A items; b
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 14000);
 });
 
@@ -426,7 +426,7 @@ Deno.test("aggregation_multiple_for_e_box1_summed — two for_routing=E items; b
   ]);
   const out = findOutput(result, "schedule_e");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   const fieldValue = inp.mortgage_interest ?? inp.line12_mortgage_interest;
   assertEquals(fieldValue, 7000);
 });
@@ -440,9 +440,9 @@ Deno.test("aggregation_mixed_routing_no_cross_contamination — for_routing=A an
   const schedE = findOutput(result, "schedule_e");
   assertEquals(schedA !== undefined, true);
   assertEquals(schedE !== undefined, true);
-  assertEquals((schedA!.input as Record<string, unknown>).line8a_mortgage_interest_1098, 6000);
-  const eField = (schedE!.input as Record<string, unknown>).mortgage_interest ??
-    (schedE!.input as Record<string, unknown>).line12_mortgage_interest;
+  assertEquals((schedA!.fields as Record<string, unknown>).line8a_mortgage_interest_1098, 6000);
+  const eField = (schedE!.fields as Record<string, unknown>).mortgage_interest ??
+    (schedE!.fields as Record<string, unknown>).line12_mortgage_interest;
   assertEquals(eField, 4000);
 });
 
@@ -453,7 +453,7 @@ Deno.test("aggregation_box4_reduces_total_for_multiple_items — two for_routing
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   // net = (10000 - 500) + (8000 - 200) = 9500 + 7800 = 17300
   assertEquals(inp.line8a_mortgage_interest_1098, 17300);
 });
@@ -468,13 +468,13 @@ Deno.test("aggregation_multiple_box6_for_a_points_summed — two for_routing=A w
     (o) =>
       o.nodeType === "schedule_a" &&
       (
-        (o.input as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
-        (o.input as Record<string, unknown>).line8a_points !== undefined ||
-        (o.input as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined
+        (o.fields as Record<string, unknown>).line8c_points_no_1098 !== undefined ||
+        (o.fields as Record<string, unknown>).line8a_points !== undefined ||
+        (o.fields as Record<string, unknown>).line8a_mortgage_interest_1098 !== undefined
       ),
   );
   assertEquals(pointsOut !== undefined, true);
-  const inp = pointsOut!.input as Record<string, unknown>;
+  const inp = pointsOut!.fields as Record<string, unknown>;
   const pointsValue = inp.line8c_points_no_1098 ?? inp.line8a_points;
   if (pointsValue !== undefined) {
     assertEquals(pointsValue, 2500);
@@ -499,7 +499,7 @@ Deno.test("threshold_box2_below_post2017_limit_no_flag — box2=749999 with post
   // Should still route box1 to schedule_a normally (no limitation)
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 15000);
 });
 
@@ -514,7 +514,7 @@ Deno.test("threshold_box2_at_post2017_limit_no_flag — box2=750000 with post-20
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 15000);
 });
 
@@ -547,7 +547,7 @@ Deno.test("threshold_box2_below_pre2017_limit_no_flag — box2=999999 with pre-2
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 20000);
 });
 
@@ -562,7 +562,7 @@ Deno.test("threshold_box2_at_pre2017_limit_no_flag — box2=1000000 with pre-201
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.input as Record<string, unknown>;
+  const inp = out!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 20000);
 });
 
@@ -660,7 +660,7 @@ Deno.test("edge_dedm_override_ignores_box1 — when DEDM override flag is set, b
   const out = result.outputs.find(
     (o) =>
       o.nodeType === "schedule_a" &&
-      (o.input as Record<string, unknown>).line8a_mortgage_interest_1098 === 15000,
+      (o.fields as Record<string, unknown>).line8a_mortgage_interest_1098 === 15000,
   );
   // box1 from 1098 screen should NOT appear when DEDM overrides
   assertEquals(out, undefined);
@@ -673,9 +673,9 @@ Deno.test("edge_split_interest_two_entries — same property split across for_ro
   ]);
   const schedA = findOutput(result, "schedule_a");
   const schedE = findOutput(result, "schedule_e");
-  assertEquals((schedA!.input as Record<string, unknown>).line8a_mortgage_interest_1098, 7000);
-  const eField = (schedE!.input as Record<string, unknown>).mortgage_interest ??
-    (schedE!.input as Record<string, unknown>).line12_mortgage_interest;
+  assertEquals((schedA!.fields as Record<string, unknown>).line8a_mortgage_interest_1098, 7000);
+  const eField = (schedE!.fields as Record<string, unknown>).mortgage_interest ??
+    (schedE!.fields as Record<string, unknown>).line12_mortgage_interest;
   assertEquals(eField, 3000);
 });
 
@@ -689,7 +689,7 @@ Deno.test("edge_three_entries_for_a_accepted — three for_routing=A entries all
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
   // All three summed
-  assertEquals((out!.input as Record<string, unknown>).line8a_mortgage_interest_1098, 12000);
+  assertEquals((out!.fields as Record<string, unknown>).line8a_mortgage_interest_1098, 12000);
 });
 
 Deno.test("edge_box4_prior_year_multiple_entries_income_summed — multiple prior-year box4 refunds sum on schedule_1 line 8z", () => {
@@ -711,10 +711,10 @@ Deno.test("edge_box4_prior_year_multiple_entries_income_summed — multiple prio
   const incomeOut = result.outputs.find(
     (o) =>
       o.nodeType === "schedule1" &&
-      (o.input as Record<string, unknown>).line8z_other_income !== undefined,
+      (o.fields as Record<string, unknown>).line8z_other_income !== undefined,
   );
   assertEquals(incomeOut !== undefined, true);
-  const inp = incomeOut!.input as Record<string, unknown>;
+  const inp = incomeOut!.fields as Record<string, unknown>;
   assertEquals(inp.line8z_other_income, 1500);
 });
 
@@ -776,18 +776,18 @@ Deno.test("smoke_all_major_boxes_populated — comprehensive item with all boxes
   // 1. Net mortgage interest = 18000 - 500 = 17500 → schedule_a
   const schedA = findOutput(result, "schedule_a");
   assertEquals(schedA !== undefined, true);
-  const inp = schedA!.input as Record<string, unknown>;
+  const inp = schedA!.fields as Record<string, unknown>;
   assertEquals(inp.line8a_mortgage_interest_1098, 17500);
 
   // 2. Box 5 MIP must NOT be routed anywhere for TY2025
   const mipOut = result.outputs.find(
-    (o) => JSON.stringify(o.input).toLowerCase().includes("mip"),
+    (o) => JSON.stringify(o.fields).toLowerCase().includes("mip"),
   );
   assertEquals(mipOut, undefined);
 
   // 3. Box 10 must NOT produce a real-estate-tax line
   const reTaxOut = result.outputs.find(
-    (o) => (o.input as Record<string, unknown>).line5b_real_estate_tax !== undefined,
+    (o) => (o.fields as Record<string, unknown>).line5b_real_estate_tax !== undefined,
   );
   assertEquals(reTaxOut, undefined);
 

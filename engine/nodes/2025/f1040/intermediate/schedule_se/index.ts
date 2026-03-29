@@ -111,8 +111,8 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     const line13 = line12 * SE_DEDUCTION_RATE;
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule2.nodeType, input: { line4_se_tax: line12 } },
-      { nodeType: schedule1.nodeType, input: { line15_se_deduction: line13 } },
+      { nodeType: schedule2.nodeType, fields: { line4_se_tax: line12 } },
+      { nodeType: schedule1.nodeType, fields: { line15_se_deduction: line13 } },
     ];
 
     return { outputs };

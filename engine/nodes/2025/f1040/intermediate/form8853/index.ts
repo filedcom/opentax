@@ -196,7 +196,7 @@ function schedule1Output(input: Form8853Input): NodeOutput[] {
   if (totalTaxableIncome > 0) s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   if (deduction > 0) s1Input.line23_archer_msa_deduction = deduction;
 
-  return [{ nodeType: schedule1.nodeType, input: s1Input }];
+  return [{ nodeType: schedule1.nodeType, fields: s1Input }];
 }
 
 // Schedule 2 output: line 17e (20% Archer MSA tax) and line 17f (50% Medicare Advantage MSA tax)
@@ -210,7 +210,7 @@ function schedule2Output(input: Form8853Input): NodeOutput[] {
   if (archerTax > 0) s2Input.line17e_archer_msa_tax = archerTax;
   if (medicareTax > 0) s2Input.line17f_medicare_advantage_msa_tax = medicareTax;
 
-  return [{ nodeType: schedule2.nodeType, input: s2Input }];
+  return [{ nodeType: schedule2.nodeType, fields: s2Input }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

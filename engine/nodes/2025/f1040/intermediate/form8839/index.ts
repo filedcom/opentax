@@ -161,14 +161,14 @@ function creditOutputs(input: Form8839Input, fraction: number): NodeOutput[] {
   if (refundable > 0) {
     outputs.push({
       nodeType: f1040.nodeType,
-      input: { line30_refundable_adoption: refundable },
+      fields: { line30_refundable_adoption: refundable },
     });
   }
 
   if (nonrefundable > 0) {
     outputs.push({
       nodeType: schedule3.nodeType,
-      input: { line6c_adoption_credit: nonrefundable },
+      fields: { line6c_adoption_credit: nonrefundable },
     });
   }
 
@@ -187,7 +187,7 @@ function exclusionOutputs(input: Form8839Input, fraction: number): NodeOutput[] 
 
   return [{
     nodeType: f1040.nodeType,
-    input: { line1f_taxable_adoption_benefits: Math.round(taxable * 100) / 100 },
+    fields: { line1f_taxable_adoption_benefits: Math.round(taxable * 100) / 100 },
   }];
 }
 
@@ -199,11 +199,11 @@ function mergeF1040Outputs(outputs: NodeOutput[]): NodeOutput[] {
   if (f1040Outputs.length === 0) return otherOutputs;
 
   const merged = f1040Outputs.reduce(
-    (acc, o) => ({ ...acc, ...o.input }),
+    (acc, o) => ({ ...acc, ...o.fields }),
     {} as Record<string, unknown>,
   );
 
-  return [...otherOutputs, { nodeType: f1040.nodeType, input: merged }];
+  return [...otherOutputs, { nodeType: f1040.nodeType, fields: merged }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

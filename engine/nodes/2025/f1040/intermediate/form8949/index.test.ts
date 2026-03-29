@@ -59,7 +59,7 @@ Deno.test("zero transactions: no transaction field returns empty outputs", () =>
 Deno.test("short-term gain: part A routes to schedule_d with is_long_term=false", () => {
   const result = compute({ transaction: minimalTransaction({ part: "A", proceeds: 1000, cost_basis: 800, gain_loss: 200, is_long_term: false }) });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input.transaction, {
+  assertEquals(out?.fields.transaction, {
     part: "A",
     description: "100 sh XYZ",
     date_acquired: "01012024",
@@ -74,13 +74,13 @@ Deno.test("short-term gain: part A routes to schedule_d with is_long_term=false"
 Deno.test("short-term gain: part B routes to schedule_d as short-term", () => {
   const result = compute({ transaction: minimalTransaction({ part: "B", is_long_term: false }) });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.is_long_term, false);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.is_long_term, false);
 });
 
 Deno.test("short-term gain: part C routes to schedule_d as short-term", () => {
   const result = compute({ transaction: minimalTransaction({ part: "C", is_long_term: false }) });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.is_long_term, false);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.is_long_term, false);
 });
 
 // ─── 4. Short-term loss routing ──────────────────────────────────────────────
@@ -90,7 +90,7 @@ Deno.test("short-term loss: negative gain_loss routes to schedule_d", () => {
     transaction: minimalTransaction({ proceeds: 500, cost_basis: 800, gain_loss: -300, is_long_term: false }),
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.gain_loss, -300);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.gain_loss, -300);
 });
 
 // ─── 5. Long-term gain routing ───────────────────────────────────────────────
@@ -100,20 +100,20 @@ Deno.test("long-term gain: part D routes to schedule_d with is_long_term=true", 
     transaction: minimalTransaction({ part: "D", proceeds: 5000, cost_basis: 3000, gain_loss: 2000, is_long_term: true }),
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.is_long_term, true);
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.gain_loss, 2000);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.is_long_term, true);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.gain_loss, 2000);
 });
 
 Deno.test("long-term gain: part E routes to schedule_d as long-term", () => {
   const result = compute({ transaction: minimalTransaction({ part: "E", is_long_term: true }) });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.is_long_term, true);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.is_long_term, true);
 });
 
 Deno.test("long-term gain: part F routes to schedule_d as long-term", () => {
   const result = compute({ transaction: minimalTransaction({ part: "F", is_long_term: true }) });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.is_long_term, true);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.is_long_term, true);
 });
 
 // ─── 6. Long-term loss routing ───────────────────────────────────────────────
@@ -123,8 +123,8 @@ Deno.test("long-term loss: negative gain_loss routes to schedule_d as long-term 
     transaction: minimalTransaction({ part: "D", proceeds: 2000, cost_basis: 5000, gain_loss: -3000, is_long_term: true }),
   });
   const out = findOutput(result, "schedule_d");
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.gain_loss, -3000);
-  assertEquals((out?.input.transaction as Record<string, unknown>)?.is_long_term, true);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.gain_loss, -3000);
+  assertEquals((out?.fields.transaction as Record<string, unknown>)?.is_long_term, true);
 });
 
 // ─── 7. Wash sale adjustment code W ──────────────────────────────────────────
@@ -141,7 +141,7 @@ Deno.test("wash sale: adjustment_codes W passes through to schedule_d", () => {
     }),
   });
   const out = findOutput(result, "schedule_d");
-  const tx = out?.input.transaction as Record<string, unknown>;
+  const tx = out?.fields.transaction as Record<string, unknown>;
   assertEquals(tx?.adjustment_codes, "W");
   assertEquals(tx?.adjustment_amount, 300);
   assertEquals(tx?.gain_loss, 0);
@@ -161,7 +161,7 @@ Deno.test("basis adjustment: adjustment_codes B passes through with corrected ga
     }),
   });
   const out = findOutput(result, "schedule_d");
-  const tx = out?.input.transaction as Record<string, unknown>;
+  const tx = out?.fields.transaction as Record<string, unknown>;
   assertEquals(tx?.adjustment_codes, "B");
   assertEquals(tx?.gain_loss, 300);
 });
@@ -177,8 +177,8 @@ Deno.test("mixed: array of transactions routes each to schedule_d", () => {
   });
   const outs = findAllOutputs(result, "schedule_d");
   assertEquals(outs.length, 2);
-  const stTx = (outs[0].input.transaction as Record<string, unknown>);
-  const ltTx = (outs[1].input.transaction as Record<string, unknown>);
+  const stTx = (outs[0].fields.transaction as Record<string, unknown>);
+  const ltTx = (outs[1].fields.transaction as Record<string, unknown>);
   assertEquals(stTx.is_long_term, false);
   assertEquals(ltTx.is_long_term, true);
 });
@@ -192,7 +192,7 @@ Deno.test("mixed: short-term loss and long-term gain both route correctly", () =
   });
   const outs = findAllOutputs(result, "schedule_d");
   assertEquals(outs.length, 2);
-  const txs = outs.map((o) => o.input.transaction as Record<string, unknown>);
+  const txs = outs.map((o) => o.fields.transaction as Record<string, unknown>);
   const stTx = txs.find((t) => t.is_long_term === false)!;
   const ltTx = txs.find((t) => t.is_long_term === true)!;
   assertEquals(stTx.gain_loss, -200);
@@ -228,5 +228,5 @@ Deno.test("smoke test: single transaction preserves all fields in schedule_d out
   };
   const result = compute({ transaction: tx });
   const out = findOutput(result, "schedule_d");
-  assertEquals(out?.input.transaction, tx);
+  assertEquals(out?.fields.transaction, tx);
 });

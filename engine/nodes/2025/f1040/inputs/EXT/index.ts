@@ -40,7 +40,7 @@ function extensionPaymentOutput(amountPaying: number): NodeOutput[] {
   if (amountPaying <= 0) return [];
   return [{
     nodeType: schedule3.nodeType,
-    input: { line10_amount_paid_extension: amountPaying },
+    fields: { line10_amount_paid_extension: amountPaying },
   }];
 }
 

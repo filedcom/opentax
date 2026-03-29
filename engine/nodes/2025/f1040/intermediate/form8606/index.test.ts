@@ -49,7 +49,7 @@ Deno.test("form8606: all deductible IRA — full distribution taxable (Part I)",
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 10_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 10_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -71,7 +71,7 @@ Deno.test("form8606: nondeductible basis with distribution — pro-rata exclusio
   });
 
   const f1040 = findOutput(result, "f1040");
-  const taxable = f1040?.input?.line4b_ira_taxable as number;
+  const taxable = f1040?.fields?.line4b_ira_taxable as number;
   // Allow for floating-point: should be approximately 8888.89
   assertEquals(Math.round(taxable * 100) / 100, Math.round((10_000 - 6_000 / 54_000 * 10_000) * 100) / 100);
 });
@@ -94,7 +94,7 @@ Deno.test("form8606: full basis recovery — zero taxable distributions", () => 
 
   const f1040 = findOutput(result, "f1040");
   // Either no f1040 output or line4b_ira_taxable = 0
-  const taxable = (f1040?.input?.line4b_ira_taxable as number) ?? 0;
+  const taxable = (f1040?.fields?.line4b_ira_taxable as number) ?? 0;
   assertEquals(taxable, 0);
 });
 
@@ -117,7 +117,7 @@ Deno.test("form8606: Roth conversion with basis — taxable portion computed", (
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 9_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 9_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -133,7 +133,7 @@ Deno.test("form8606: Roth conversion, no basis — fully taxable", () => {
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 15_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 15_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -152,7 +152,7 @@ Deno.test("form8606: Roth distribution within contribution basis — zero taxabl
   });
 
   const f1040 = findOutput(result, "f1040");
-  const taxable = (f1040?.input?.line4b_ira_taxable as number) ?? 0;
+  const taxable = (f1040?.fields?.line4b_ira_taxable as number) ?? 0;
   assertEquals(taxable, 0);
 });
 
@@ -172,7 +172,7 @@ Deno.test("form8606: Roth distribution exceeds basis — earnings taxable", () =
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 3_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 3_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -215,7 +215,7 @@ Deno.test("form8606: traditional distribution + Roth conversion combined taxable
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 3_200);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 3_200);
 });
 
 // ---------------------------------------------------------------------------
@@ -254,7 +254,7 @@ Deno.test("form8606: new nondeductible contributions increase total basis for ra
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 4_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 4_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -274,7 +274,7 @@ Deno.test("form8606: roth_basis_conversions reduces taxable Roth distribution", 
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 4_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 4_000);
 });
 
 Deno.test("form8606: roth_basis_conversions alone covers full Roth distribution — no taxable amount", () => {
@@ -299,7 +299,7 @@ Deno.test("form8606: roth_distribution with no basis is fully taxable (Part III)
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 8_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 8_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -318,7 +318,7 @@ Deno.test("form8606: combined traditional distribution and Roth distribution bot
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 5_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 5_000);
 });
 
 Deno.test("form8606: zero-denominator with positive basis and Roth distribution — no divide-by-zero", () => {
@@ -334,5 +334,5 @@ Deno.test("form8606: zero-denominator with positive basis and Roth distribution 
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input?.line4b_ira_taxable, 2_000);
+  assertEquals(f1040?.fields?.line4b_ira_taxable, 2_000);
 });

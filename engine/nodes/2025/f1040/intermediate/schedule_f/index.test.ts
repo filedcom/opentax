@@ -49,7 +49,7 @@ Deno.test("schedule_f: net profit routes to schedule1 line6", () => {
     ],
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line6_schedule_f, 40_000);
+  assertEquals(s1?.fields.line6_schedule_f, 40_000);
 });
 
 Deno.test("schedule_f: net profit >= $400 routes to schedule_se", () => {
@@ -62,7 +62,7 @@ Deno.test("schedule_f: net profit >= $400 routes to schedule_se", () => {
     ],
   });
   const se = findOutput(result, "schedule_se");
-  assertEquals(se?.input.net_profit_schedule_f, 40_000);
+  assertEquals(se?.fields.net_profit_schedule_f, 40_000);
 });
 
 // ── Net profit routes to form8995 (QBI) ──────────────────────────────────────
@@ -77,7 +77,7 @@ Deno.test("schedule_f: net profit > 0 routes to form8995 as QBI", () => {
     ],
   });
   const qbi = findOutput(result, "form8995");
-  assertEquals(qbi?.input.qbi_from_schedule_f, 25_000);
+  assertEquals(qbi?.fields.qbi_from_schedule_f, 25_000);
 });
 
 // ── Net loss routes to schedule1 but not schedule_se ─────────────────────────
@@ -93,7 +93,7 @@ Deno.test("schedule_f: net loss routes to schedule1 (negative line6) but not sch
   });
   const s1 = findOutput(result, "schedule1");
   const se = findOutput(result, "schedule_se");
-  assertEquals(s1?.input.line6_schedule_f, -15_000);
+  assertEquals(s1?.fields.line6_schedule_f, -15_000);
   assertEquals(se, undefined);
 });
 
@@ -125,7 +125,7 @@ Deno.test("schedule_f: non-material participation routes to form8582", () => {
     ],
   });
   const passive = findOutput(result, "form8582");
-  assertEquals(passive?.input.passive_schedule_f, -10_000);
+  assertEquals(passive?.fields.passive_schedule_f, -10_000);
 });
 
 // ── At-risk box 36b + loss → form6198 ────────────────────────────────────────
@@ -141,7 +141,7 @@ Deno.test("schedule_f: at-risk box 'b' with loss routes to form6198", () => {
     ],
   });
   const atrisk = findOutput(result, "form6198");
-  assertEquals(atrisk?.input.schedule_f_loss, -10_000);
+  assertEquals(atrisk?.fields.schedule_f_loss, -10_000);
 });
 
 Deno.test("schedule_f: at-risk box 'a' with loss does NOT route to form6198", () => {
@@ -168,7 +168,7 @@ Deno.test("schedule_f: aggregates net profit across multiple farms to single sch
     ],
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line6_schedule_f, 45_000);
+  assertEquals(s1?.fields.line6_schedule_f, 45_000);
 });
 
 // ── Conservation expense limit (25% of gross) ────────────────────────────────
@@ -185,7 +185,7 @@ Deno.test("schedule_f: conservation expense is limited to 25% of gross farm inco
     ],
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line6_schedule_f, 15_000);
+  assertEquals(s1?.fields.line6_schedule_f, 15_000);
 });
 
 // ── CCC loan / cooperative distribution income ────────────────────────────────
@@ -202,7 +202,7 @@ Deno.test("schedule_f: cooperative distributions and CCC loans are included in g
   });
   // gross = 0 + 5000 + 3000 + 2000 = 10,000; no expenses → net = 10,000
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line6_schedule_f, 10_000);
+  assertEquals(s1?.fields.line6_schedule_f, 10_000);
 });
 
 // ── Livestock resale — net (line 1 − line 2) ─────────────────────────────────
@@ -218,7 +218,7 @@ Deno.test("schedule_f: cost basis of livestock resale is subtracted from sales (
   });
   // gross from resale = 50k - 30k = 20k; net = 20k
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line6_schedule_f, 20_000);
+  assertEquals(s1?.fields.line6_schedule_f, 20_000);
 });
 
 // ── Excess business loss (Form 461) ──────────────────────────────────────────
@@ -235,7 +235,7 @@ Deno.test("schedule_f: large loss exceeding EBL threshold single routes to form4
     filing_status: "single",
   });
   const ebl = findOutput(result, "form461");
-  assertEquals(ebl?.input.excess_business_loss, 87_000);
+  assertEquals(ebl?.fields.excess_business_loss, 87_000);
 });
 
 Deno.test("schedule_f: loss below EBL threshold — no form461 output", () => {

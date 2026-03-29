@@ -30,7 +30,7 @@ class MockW2Node extends TaxNode<typeof w2InputSchema> {
   compute(input: z.infer<typeof w2InputSchema>): NodeResult {
     const total = input.w2s.reduce((s, w) => s + w.wages, 0);
     return {
-      outputs: [{ nodeType: "mock_leaf", input: { value: total } }],
+      outputs: [{ nodeType: "mock_leaf", fields: { value: total } }],
     };
   }
 }
@@ -47,7 +47,7 @@ class MockStartNode extends TaxNode<typeof startInputSchema> {
   compute(input: z.infer<typeof startInputSchema>): NodeResult {
     const outputs = [];
     if (input.w2s?.length) {
-      outputs.push({ nodeType: "mock_w2" as const, input: { w2s: input.w2s } });
+      outputs.push({ nodeType: "mock_w2" as const, fields: { w2s: input.w2s } });
     }
     return { outputs };
   }
@@ -139,7 +139,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     readonly outputNodes = new OutputNodes([diamondD]);
     compute(input: z.infer<typeof bInputSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "diamond_d", input: { result: input.x } }],
+        outputs: [{ nodeType: "diamond_d", fields: { result: input.x } }],
       };
     }
   }
@@ -151,7 +151,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     readonly outputNodes = new OutputNodes([diamondD]);
     compute(input: z.infer<typeof cInputSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "diamond_d", input: { result: input.y } }],
+        outputs: [{ nodeType: "diamond_d", fields: { result: input.y } }],
       };
     }
   }
@@ -165,8 +165,8 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     compute(input: z.infer<typeof diamondStartSchema>): NodeResult {
       return {
         outputs: [
-          { nodeType: "diamond_b", input: { x: input.val } },
-          { nodeType: "diamond_c", input: { y: input.val } },
+          { nodeType: "diamond_b", fields: { x: input.val } },
+          { nodeType: "diamond_c", fields: { y: input.val } },
         ],
       };
     }

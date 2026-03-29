@@ -288,7 +288,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     const capitalGainForReturn = line16 >= 0 ? line16 : Math.max(limit, line16);
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, input: { line7_capital_gain: capitalGainForReturn } },
+      { nodeType: f1040.nodeType, fields: { line7_capital_gain: capitalGainForReturn } },
     ];
 
     // Line 18: 28% Rate Gain Worksheet — only when line 17 = Yes
@@ -297,7 +297,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       if (gain28Pct > 0) {
         outputs.push({
           nodeType: rate_28_gain_worksheet.nodeType,
-          input: { collectibles_gain_from_8949: gain28Pct },
+          fields: { collectibles_gain_from_8949: gain28Pct },
         });
       }
     }

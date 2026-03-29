@@ -123,7 +123,7 @@ function federalWithholdingOutputs(k99s: K99Items): NodeOutput[] {
     .filter((item) => (item.box4_federal_withheld ?? 0) > 0)
     .map((item) => ({
       nodeType: f1040.nodeType,
-      input: { line25b_withheld_1099: item.box4_federal_withheld },
+      fields: { line25b_withheld_1099: item.box4_federal_withheld },
     }));
 }
 

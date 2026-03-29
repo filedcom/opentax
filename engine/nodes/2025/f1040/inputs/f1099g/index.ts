@@ -104,13 +104,13 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
 
   if (Object.keys(fields).length === 0) return [];
-  return [{ nodeType: schedule1.nodeType, input: fields }];
+  return [{ nodeType: schedule1.nodeType, fields: fields }];
 }
 
 function f1040Output(g99s: G99Items): NodeOutput[] {
   const withheld = totalFederalWithheld(g99s);
   if (withheld === 0) return [];
-  return [{ nodeType: f1040.nodeType, input: { line25b_withheld_1099: withheld } }];
+  return [{ nodeType: f1040.nodeType, fields: { line25b_withheld_1099: withheld } }];
 }
 
 function scheduleFOutput(g99s: G99Items): NodeOutput[] {
@@ -122,7 +122,7 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
   if (marketGain > 0) fields.line5_ccc_gain = marketGain;
 
   if (Object.keys(fields).length === 0) return [];
-  return [{ nodeType: schedule_f.nodeType, input: fields }];
+  return [{ nodeType: schedule_f.nodeType, fields: fields }];
 }
 
 class F1099gNode extends TaxNode<typeof inputSchema> {

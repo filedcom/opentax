@@ -44,7 +44,7 @@ Deno.test("routing: positive excess routes to schedule1 line8p", () => {
   const excess = 50_000;
   const result = compute({ excess_business_loss: excess });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, excess);
+  assertEquals(s1?.fields.line8p_excess_business_loss, excess);
 });
 
 Deno.test("routing: exactly 1 output when excess > 0", () => {
@@ -58,7 +58,7 @@ Deno.test("routing: exactly 1 output when excess > 0", () => {
 Deno.test("accumulation: array of excess_business_loss values are summed", () => {
   const result = compute({ excess_business_loss: [30_000, 20_000] });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 50_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 50_000);
 });
 
 Deno.test("accumulation: array with zero entries sums correctly", () => {
@@ -70,8 +70,8 @@ Deno.test("accumulation: single-element array treated same as scalar", () => {
   const scalar = compute({ excess_business_loss: 25_000 });
   const arr = compute({ excess_business_loss: [25_000] });
   assertEquals(
-    findOutput(scalar, "schedule1")?.input.line8p_excess_business_loss,
-    findOutput(arr, "schedule1")?.input.line8p_excess_business_loss,
+    findOutput(scalar, "schedule1")?.fields.line8p_excess_business_loss,
+    findOutput(arr, "schedule1")?.fields.line8p_excess_business_loss,
   );
 });
 
@@ -80,25 +80,25 @@ Deno.test("accumulation: single-element array treated same as scalar", () => {
 Deno.test("filing_status_single: excess passes through correctly", () => {
   const result = compute({ excess_business_loss: 100_000, filing_status: "single" });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 100_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 100_000);
 });
 
 Deno.test("filing_status_mfj: excess passes through correctly", () => {
   const result = compute({ excess_business_loss: 200_000, filing_status: "mfj" });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 200_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 200_000);
 });
 
 Deno.test("filing_status_mfs: excess passes through correctly", () => {
   const result = compute({ excess_business_loss: 50_000, filing_status: "mfs" });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 50_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 50_000);
 });
 
 Deno.test("filing_status_hoh: excess passes through correctly", () => {
   const result = compute({ excess_business_loss: 75_000, filing_status: "hoh" });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 75_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 75_000);
 });
 
 // ─── NOL Carryforward (informational — no current-year deduction) ────────────
@@ -108,7 +108,7 @@ Deno.test("nol_carryforward: excess business loss treated as positive income on 
   // The value must be positive (increases taxable income in current year as add-back)
   const result = compute({ excess_business_loss: 313_001 });
   const s1 = findOutput(result, "schedule1");
-  const amount = s1?.input.line8p_excess_business_loss as number;
+  const amount = s1?.fields.line8p_excess_business_loss as number;
   assertEquals(amount > 0, true);
   assertEquals(amount, 313_001);
 });
@@ -120,7 +120,7 @@ Deno.test("edge_case: large excess business loss (single near threshold)", () =>
   const excess = 187_000;
   const result = compute({ excess_business_loss: excess, filing_status: "single" });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, excess);
+  assertEquals(s1?.fields.line8p_excess_business_loss, excess);
 });
 
 Deno.test("edge_case: large excess business loss (MFJ)", () => {
@@ -128,13 +128,13 @@ Deno.test("edge_case: large excess business loss (MFJ)", () => {
   const excess = 374_000;
   const result = compute({ excess_business_loss: excess, filing_status: "mfj" });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, excess);
+  assertEquals(s1?.fields.line8p_excess_business_loss, excess);
 });
 
 Deno.test("edge_case: fractional dollar amounts", () => {
   const result = compute({ excess_business_loss: 1_234.56 });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 1_234.56);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 1_234.56);
 });
 
 // ─── Smoke Test ───────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ Deno.test("smoke: typical single filer with $187k excess business loss", () => {
   assertEquals(result.outputs.length, 1);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.nodeType, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 187_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 187_000);
 });
 
 Deno.test("smoke: MFJ with multiple upstream sources (schedule_c + schedule_e)", () => {
@@ -159,5 +159,5 @@ Deno.test("smoke: MFJ with multiple upstream sources (schedule_c + schedule_e)",
   });
   assertEquals(result.outputs.length, 1);
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.input.line8p_excess_business_loss, 250_000);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 250_000);
 });

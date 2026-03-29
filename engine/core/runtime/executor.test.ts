@@ -19,7 +19,7 @@ class MockNodeA extends TaxNode<typeof aInputSchema> {
   readonly outputNodes = new OutputNodes([]);
   compute(input: z.infer<typeof aInputSchema>): NodeResult {
     return {
-      outputs: [{ nodeType: "mock_b", input: { received: input.value } }],
+      outputs: [{ nodeType: "mock_b", fields: { received: input.value } }],
     };
   }
 }
@@ -32,7 +32,7 @@ class MockNodeB extends TaxNode<typeof bInputSchema> {
   compute(input: z.infer<typeof bInputSchema>): NodeResult {
     return {
       outputs: [
-        { nodeType: "mock_b_result", input: { doubled: input.received * 2 } },
+        { nodeType: "mock_b_result", fields: { doubled: input.received * 2 } },
       ],
     };
   }
@@ -49,7 +49,7 @@ class MockW2ArrayNode extends TaxNode<typeof w2ArrayInputSchema> {
   compute(input: z.infer<typeof w2ArrayInputSchema>): NodeResult {
     const totalWages = input.w2s.reduce((sum, w) => sum + w.wages, 0);
     return {
-      outputs: [{ nodeType: "mock_f1040", input: { wages: totalWages } }],
+      outputs: [{ nodeType: "mock_f1040", fields: { wages: totalWages } }],
     };
   }
 }
@@ -92,7 +92,7 @@ Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's outpu
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "mock_a", input: { value: input.initial } }],
+        outputs: [{ nodeType: "mock_a", fields: { value: input.initial } }],
       };
     }
   }
@@ -122,7 +122,7 @@ Deno.test("executor: scalar field set — single deposit sets scalar value, not 
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "mock_a", input: { value: input.val } }],
+        outputs: [{ nodeType: "mock_a", fields: { value: input.val } }],
       };
     }
   }
@@ -181,7 +181,7 @@ Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2
     compute(input: z.infer<typeof startSchema>): NodeResult {
       // Dispatch all w2s as a single array — not one per instance
       return {
-        outputs: [{ nodeType: "mock_w2", input: { w2s: input.w2s } }],
+        outputs: [{ nodeType: "mock_w2", fields: { w2s: input.w2s } }],
       };
     }
   }
@@ -222,7 +222,7 @@ Deno.test("executor: no array accumulation in pending dict — scalar deposits o
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "mock_w2", input: { w2s: input.w2s } }],
+        outputs: [{ nodeType: "mock_w2", fields: { w2s: input.w2s } }],
       };
     }
   }
@@ -256,7 +256,7 @@ Deno.test("executor: stateless — same inputs produce identical outputs on repe
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "mock_a", input: { value: input.val } }],
+        outputs: [{ nodeType: "mock_a", fields: { value: input.val } }],
       };
     }
   }
@@ -301,7 +301,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof bInputSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "diamond_d", input: { x: input.x } }],
+        outputs: [{ nodeType: "diamond_d", fields: { x: input.x } }],
       };
     }
   }
@@ -311,7 +311,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof cInputSchema>): NodeResult {
       return {
-        outputs: [{ nodeType: "diamond_d", input: { y: input.y } }],
+        outputs: [{ nodeType: "diamond_d", fields: { y: input.y } }],
       };
     }
   }
@@ -324,8 +324,8 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     compute(input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [
-          { nodeType: "diamond_b", input: { x: input.val } },
-          { nodeType: "diamond_c", input: { y: input.val * 2 } },
+          { nodeType: "diamond_b", fields: { x: input.val } },
+          { nodeType: "diamond_c", fields: { y: input.val * 2 } },
         ],
       };
     }

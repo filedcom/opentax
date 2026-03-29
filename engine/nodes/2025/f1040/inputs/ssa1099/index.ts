@@ -69,7 +69,7 @@ function f1040Output(items: SsaItem[]): NodeOutput[] {
   if (Object.keys(fields).length === 0) {
     return [];
   }
-  return [{ nodeType: f1040.nodeType, input: fields }];
+  return [{ nodeType: f1040.nodeType, fields: fields }];
 }
 
 class Ssa1099Node extends TaxNode<typeof inputSchema> {

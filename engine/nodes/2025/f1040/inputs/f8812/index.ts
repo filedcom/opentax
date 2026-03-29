@@ -145,7 +145,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     if (nonrefundableCTC > 0) {
       outputs.push({
         nodeType: schedule3.nodeType,
-        input: { line6b_child_tax_credit: nonrefundableCTC },
+        fields: { line6b_child_tax_credit: nonrefundableCTC },
       });
     }
 
@@ -173,7 +173,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
         if (actc > 0) {
           outputs.push({
             nodeType: f1040.nodeType,
-            input: { line28_actc: actc },
+            fields: { line28_actc: actc },
           });
         }
       }

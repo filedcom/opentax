@@ -19,7 +19,7 @@ Deno.test("empty input returns no outputs", () => {
 Deno.test("single interest entry routes taxable_interest_net to f1040 line2b", () => {
   const result = compute({ payer_name: "Big Bank", taxable_interest_net: 500 });
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input, { line2b_taxable_interest: 500 });
+  assertEquals(f1040?.fields, { line2b_taxable_interest: 500 });
 });
 
 Deno.test("multiple interest entries (array) aggregate to line2b", () => {
@@ -28,7 +28,7 @@ Deno.test("multiple interest entries (array) aggregate to line2b", () => {
     taxable_interest_net: [300, 700],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.input as Record<string, number>).line2b_taxable_interest, 1000);
+  assertEquals((f1040?.fields as Record<string, number>).line2b_taxable_interest, 1000);
 });
 
 Deno.test("zero taxable_interest_net produces no interest in f1040 output", () => {
@@ -47,7 +47,7 @@ Deno.test("single dividend entry routes ordinaryDividends to f1040 line3b", () =
     isNominee: false,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.input, { line3b_ordinary_dividends: 800 });
+  assertEquals(f1040?.fields, { line3b_ordinary_dividends: 800 });
 });
 
 Deno.test("multiple dividend entries (array) aggregate to line3b", () => {
@@ -57,7 +57,7 @@ Deno.test("multiple dividend entries (array) aggregate to line3b", () => {
     isNominee: [false, false],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.input as Record<string, number>).line3b_ordinary_dividends, 1000);
+  assertEquals((f1040?.fields as Record<string, number>).line3b_ordinary_dividends, 1000);
 });
 
 Deno.test("zero ordinaryDividends produces no dividend output", () => {
@@ -74,7 +74,7 @@ Deno.test("zero ordinaryDividends produces no dividend output", () => {
 Deno.test("interest only: f1040 output has line2b but no line3b", () => {
   const result = compute({ payer_name: "Bank", taxable_interest_net: 200 });
   const f1040 = findOutput(result, "f1040");
-  const inp = f1040?.input as Record<string, number>;
+  const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 200);
   assertEquals(inp.line3b_ordinary_dividends, undefined);
 });
@@ -86,7 +86,7 @@ Deno.test("dividends only: f1040 output has line3b but no line2b", () => {
     isNominee: false,
   });
   const f1040 = findOutput(result, "f1040");
-  const inp = f1040?.input as Record<string, number>;
+  const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line3b_ordinary_dividends, 1200);
   assertEquals(inp.line2b_taxable_interest, undefined);
 });
@@ -101,7 +101,7 @@ Deno.test("both interest and dividends produce a single f1040 output with both f
   });
   assertEquals(result.outputs.length, 1);
   const f1040 = findOutput(result, "f1040");
-  const inp = f1040?.input as Record<string, number>;
+  const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 400);
   assertEquals(inp.line3b_ordinary_dividends, 600);
 });
@@ -115,7 +115,7 @@ Deno.test("ee_bond_exclusion reduces taxable interest (line 4 = line 2 - line 3)
     ee_bond_exclusion: 500,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.input as Record<string, number>).line2b_taxable_interest, 1500);
+  assertEquals((f1040?.fields as Record<string, number>).line2b_taxable_interest, 1500);
 });
 
 Deno.test("ee_bond_exclusion equal to total interest → no line2b output", () => {
@@ -144,7 +144,7 @@ Deno.test("mixed scalar and array interest entries normalize correctly", () => {
     taxable_interest_net: [100, 200, 300],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.input as Record<string, number>).line2b_taxable_interest, 600);
+  assertEquals((f1040?.fields as Record<string, number>).line2b_taxable_interest, 600);
 });
 
 Deno.test("all zeros produce empty outputs", () => {
@@ -175,7 +175,7 @@ Deno.test("smoke: multiple interest + dividend payers with EE bond exclusion", (
 
   assertEquals(result.outputs.length, 1);
   const f1040 = findOutput(result, "f1040");
-  const inp = f1040?.input as Record<string, number>;
+  const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 3500);
   assertEquals(inp.line3b_ordinary_dividends, 3200);
 });
@@ -196,5 +196,5 @@ Deno.test("box3_us_obligations: field is accepted by schema and does not affect 
 
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040 !== undefined, true);
-  assertEquals((f1040!.input as Record<string, number>).line2b_taxable_interest, 1_000);
+  assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_000);
 });

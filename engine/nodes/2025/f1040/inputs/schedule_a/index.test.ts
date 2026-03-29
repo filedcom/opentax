@@ -31,7 +31,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 }
 
 function f1040Input(result: ReturnType<typeof compute>): Record<string, number> {
-  return findOutput(result, "f1040")!.input as Record<string, number>;
+  return findOutput(result, "f1040")!.fields as Record<string, number>;
 }
 
 // =============================================================================
@@ -179,7 +179,7 @@ Deno.test("scheduleA.compute: line_6_other_taxes routes to f1040 line12e AND for
   assertEquals(f1040Input(result).line12e_itemized_deductions, 5_000);
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.input as Record<string, number>).line2a_taxes_paid, 5_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 5_000);
 });
 
 Deno.test("scheduleA.compute: line_6_other_taxes zero does not produce form6251 output", () => {
@@ -320,7 +320,7 @@ Deno.test("scheduleA.compute: form6251 line2a_taxes_paid = SALT-capped amount + 
   });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.input as Record<string, number>).line2a_taxes_paid, 16_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 16_000);
 });
 
 // =============================================================================
@@ -383,7 +383,7 @@ Deno.test("scheduleA.compute: SALT exactly at $40,000 still routes to form6251 l
   const result = compute({ line_5a_tax_amount: 40_000 });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.input as Record<string, number>).line2a_taxes_paid, 40_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 40_000);
 });
 
 // Charitable contributions — 60% AGI cap
@@ -514,7 +514,7 @@ Deno.test("scheduleA.compute: line_6_other_taxes alone (no SALT) produces form62
   const result = compute({ line_6_other_taxes: 8_000 });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.input as Record<string, number>).line2a_taxes_paid, 8_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 8_000);
 });
 
 Deno.test("scheduleA.compute: SALT alone (no line_6) still produces form6251 addback", () => {
@@ -522,7 +522,7 @@ Deno.test("scheduleA.compute: SALT alone (no line_6) still produces form6251 add
   const result = compute({ line_5a_tax_amount: 15_000 });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.input as Record<string, number>).line2a_taxes_paid, 15_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 15_000);
 });
 
 Deno.test("scheduleA.compute: SALT capped amount (not raw) flows to form6251 line2a", () => {
@@ -530,7 +530,7 @@ Deno.test("scheduleA.compute: SALT capped amount (not raw) flows to form6251 lin
   const result = compute({ line_5a_tax_amount: 50_000 });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.input as Record<string, number>).line2a_taxes_paid, 40_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 40_000);
 });
 
 Deno.test("scheduleA.compute: casualty loss enters total directly without re-applying floors", () => {
@@ -594,12 +594,12 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
   // f1040 output exists and total is correct
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  assertEquals((f1040Out!.input as Record<string, number>).line12e_itemized_deductions, 85_250);
+  assertEquals((f1040Out!.fields as Record<string, number>).line12e_itemized_deductions, 85_250);
 
   // form6251 output exists with taxes addback = 35500
   const form6251Out = findOutput(result, "form6251");
   assertEquals(form6251Out !== undefined, true);
-  assertEquals((form6251Out!.input as Record<string, number>).line2a_taxes_paid, 35_500);
+  assertEquals((form6251Out!.fields as Record<string, number>).line2a_taxes_paid, 35_500);
 
   // exactly two outputs
   assertEquals(result.outputs.length, 2);

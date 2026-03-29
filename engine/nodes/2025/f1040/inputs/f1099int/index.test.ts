@@ -218,7 +218,7 @@ Deno.test("test_box1_routes_to_schedule_b_line1 — box1 = $100 routes to schedu
   const result = compute([minimalItem({ box1: 100 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals((input.taxable_interest_net as number) > 0, true);
 });
 
@@ -227,7 +227,7 @@ Deno.test("test_box1_zero_does_not_route — box1 = $0, schedule_b taxable_inter
   const out = findOutput(result, "schedule_b");
   // Node always emits schedule_b; verify net is 0 when all boxes are 0.
   if (out !== undefined) {
-    const input = out.input as Record<string, unknown>;
+    const input = out.fields as Record<string, unknown>;
     assertEquals(input.taxable_interest_net, 0);
   }
 });
@@ -236,7 +236,7 @@ Deno.test("test_box2_routes_to_schedule1_line18 — box2 = $50 routes to schedul
   const result = compute([minimalItem({ box2: 50 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line18_early_withdrawal, 50);
 });
 
@@ -250,7 +250,7 @@ Deno.test("test_box3_routes_to_schedule_b_line1 — box3 = $75 routes to schedul
   const result = compute([minimalItem({ box3: 75 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals((input.taxable_interest_net as number) >= 75, true);
 });
 
@@ -258,10 +258,10 @@ Deno.test("test_box3_zero_does_not_route — box3 = $0, schedule_b net unchanged
   const baseResult = compute([minimalItem({ box1: 100, box3: 0 })]);
   const withBox3Result = compute([minimalItem({ box1: 100, box3: 0 })]);
   const baseNet =
-    (findOutput(baseResult, "schedule_b")!.input as Record<string, unknown>)
+    (findOutput(baseResult, "schedule_b")!.fields as Record<string, unknown>)
       .taxable_interest_net;
   const withNet =
-    (findOutput(withBox3Result, "schedule_b")!.input as Record<string, unknown>)
+    (findOutput(withBox3Result, "schedule_b")!.fields as Record<string, unknown>)
       .taxable_interest_net;
   assertEquals(baseNet, withNet);
 });
@@ -270,7 +270,7 @@ Deno.test("test_box4_routes_to_form1040_line25b — box4 = $25 routes to f1040 l
   const result = compute([minimalItem({ box4: 25 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 25);
 });
 
@@ -279,7 +279,7 @@ Deno.test("test_box4_zero_does_not_route — box4 = $0 does not emit f1040 withh
   // f1040 may be emitted for other fields; ensure line25b is absent/zero
   const out = findOutput(result, "f1040");
   if (out !== undefined) {
-    const input = out.input as Record<string, unknown>;
+    const input = out.fields as Record<string, unknown>;
     assertEquals(
       input.line25b_withheld_1099 === undefined ||
         input.line25b_withheld_1099 === 0,
@@ -302,7 +302,7 @@ Deno.test("test_box6_routes_to_schedule3_line1_simple_method — box6 = $200, si
   const result = compute([minimalItem({ box1: 500, box6: 200 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line1_foreign_tax_1099, 200);
 });
 
@@ -325,7 +325,7 @@ Deno.test("test_box8_routes_to_form1040_line2a — box8 = $300 routes to f1040 l
   const result = compute([minimalItem({ box8: 300 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2a_tax_exempt, 300);
 });
 
@@ -333,7 +333,7 @@ Deno.test("test_box8_zero_does_not_route — box8 = $0 does not emit f1040 line2
   const result = compute([minimalItem({ box8: 0 })]);
   const out = findOutput(result, "f1040");
   if (out !== undefined) {
-    const input = out.input as Record<string, unknown>;
+    const input = out.fields as Record<string, unknown>;
     assertEquals(
       input.line2a_tax_exempt === undefined || input.line2a_tax_exempt === 0,
       true,
@@ -345,7 +345,7 @@ Deno.test("test_box9_routes_to_form6251_line2g — box9 = $100 with box8 >= $100
   const result = compute([minimalItem({ box8: 100, box9: 100 })]);
   const out = findOutput(result, "form6251");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2g_pab_interest, 100);
 });
 
@@ -359,10 +359,10 @@ Deno.test("test_box10_market_discount_routes_to_schedule_b — box10 = $50 incre
   const withBox10 = compute([minimalItem({ box1: 100, box10: 50 })]);
   const withoutBox10 = compute([minimalItem({ box1: 100 })]);
   const netWith =
-    (findOutput(withBox10, "schedule_b")!.input as Record<string, unknown>)
+    (findOutput(withBox10, "schedule_b")!.fields as Record<string, unknown>)
       .taxable_interest_net as number;
   const netWithout = (
-    findOutput(withoutBox10, "schedule_b")!.input as Record<string, unknown>
+    findOutput(withoutBox10, "schedule_b")!.fields as Record<string, unknown>
   ).taxable_interest_net as number;
   assertEquals(netWith, netWithout + 50);
 });
@@ -371,10 +371,10 @@ Deno.test("test_box10_zero_does_not_route — box10 = $0 does not change schedul
   const withBox10 = compute([minimalItem({ box1: 100, box10: 0 })]);
   const withoutBox10 = compute([minimalItem({ box1: 100 })]);
   const netWith =
-    (findOutput(withBox10, "schedule_b")!.input as Record<string, unknown>)
+    (findOutput(withBox10, "schedule_b")!.fields as Record<string, unknown>)
       .taxable_interest_net as number;
   const netWithout = (
-    findOutput(withoutBox10, "schedule_b")!.input as Record<string, unknown>
+    findOutput(withoutBox10, "schedule_b")!.fields as Record<string, unknown>
   ).taxable_interest_net as number;
   assertEquals(netWith, netWithout);
 });
@@ -383,7 +383,7 @@ Deno.test("test_box11_abp_reduces_schedule_b_line1 — box11 = $30, box1 = $100,
   const result = compute([minimalItem({ box1: 100, box11: 30 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.taxable_interest_net, 70);
 });
 
@@ -391,7 +391,7 @@ Deno.test("test_box12_abp_treasury_reduces_schedule_b — box12 = $20, box3 = $1
   const result = compute([minimalItem({ box3: 100, box12: 20 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.taxable_interest_net, 80);
 });
 
@@ -399,7 +399,7 @@ Deno.test("test_box13_abp_taxexempt_reduces_form1040_line2a — box13 = $15, box
   const result = compute([minimalItem({ box8: 100, box13: 15 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2a_tax_exempt, 85);
 });
 
@@ -416,7 +416,7 @@ Deno.test("test_aggregate_box1_multiple_payers — two payers box1 $100 + $150, 
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).taxable_interest_net as number),
+      ((o.fields as Record<string, unknown>).taxable_interest_net as number),
     0,
   );
   assertEquals(total, 250);
@@ -431,7 +431,7 @@ Deno.test("test_aggregate_box2_multiple_payers — two payers box2 $25 + $50, sc
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).line18_early_withdrawal as number),
+      ((o.fields as Record<string, unknown>).line18_early_withdrawal as number),
     0,
   );
   assertEquals(total, 75);
@@ -446,7 +446,7 @@ Deno.test("test_aggregate_box3_multiple_payers — two payers box3 $60 + $80, sc
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).taxable_interest_net as number),
+      ((o.fields as Record<string, unknown>).taxable_interest_net as number),
     0,
   );
   assertEquals(total, 140);
@@ -461,7 +461,7 @@ Deno.test("test_aggregate_box4_multiple_payers — two payers box4 $10 + $20, f1
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      (((o.input as Record<string, unknown>).line25b_withheld_1099 as number) ??
+      (((o.fields as Record<string, unknown>).line25b_withheld_1099 as number) ??
         0),
     0,
   );
@@ -477,7 +477,7 @@ Deno.test("test_aggregate_box6_multiple_payers — two payers box6 $150 + $100, 
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).line1_foreign_tax_1099 as number),
+      ((o.fields as Record<string, unknown>).line1_foreign_tax_1099 as number),
     0,
   );
   assertEquals(total, 250);
@@ -492,7 +492,7 @@ Deno.test("test_aggregate_box8_multiple_payers — two payers box8 $200 + $300, 
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      (((o.input as Record<string, unknown>).line2a_tax_exempt as number) ?? 0),
+      (((o.fields as Record<string, unknown>).line2a_tax_exempt as number) ?? 0),
     0,
   );
   assertEquals(total, 500);
@@ -507,7 +507,7 @@ Deno.test("test_aggregate_box9_multiple_payers — two payers box9 $50 + $75, fo
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).line2g_pab_interest as number),
+      ((o.fields as Record<string, unknown>).line2g_pab_interest as number),
     0,
   );
   assertEquals(total, 125);
@@ -527,7 +527,7 @@ Deno.test("test_aggregate_nominee_multiple_payers — two payers nominee $25 + $
     .reduce(
       (sum, o) =>
         sum +
-        ((o.input as Record<string, unknown>).taxable_interest_net as number),
+        ((o.fields as Record<string, unknown>).taxable_interest_net as number),
       0,
     );
   const netWithout = withoutNominee.outputs
@@ -535,7 +535,7 @@ Deno.test("test_aggregate_nominee_multiple_payers — two payers nominee $25 + $
     .reduce(
       (sum, o) =>
         sum +
-        ((o.input as Record<string, unknown>).taxable_interest_net as number),
+        ((o.fields as Record<string, unknown>).taxable_interest_net as number),
       0,
     );
   assertEquals(netWithout - netWith, 65);
@@ -555,7 +555,7 @@ Deno.test("test_aggregate_accrued_interest_multiple_payers — two payers accrue
     .reduce(
       (sum, o) =>
         sum +
-        ((o.input as Record<string, unknown>).taxable_interest_net as number),
+        ((o.fields as Record<string, unknown>).taxable_interest_net as number),
       0,
     );
   const netWithout = withoutAccrued.outputs
@@ -563,7 +563,7 @@ Deno.test("test_aggregate_accrued_interest_multiple_payers — two payers accrue
     .reduce(
       (sum, o) =>
         sum +
-        ((o.input as Record<string, unknown>).taxable_interest_net as number),
+        ((o.fields as Record<string, unknown>).taxable_interest_net as number),
       0,
     );
   assertEquals(netWithout - netWith, 25);
@@ -591,7 +591,7 @@ Deno.test("test_aggregate_oid_adjustment_multiple_payers — two payers OID adj 
     .reduce(
       (sum, o) =>
         sum +
-        ((o.input as Record<string, unknown>).taxable_interest_net as number),
+        ((o.fields as Record<string, unknown>).taxable_interest_net as number),
       0,
     );
   const netWithout = withoutOid.outputs
@@ -599,7 +599,7 @@ Deno.test("test_aggregate_oid_adjustment_multiple_payers — two payers OID adj 
     .reduce(
       (sum, o) =>
         sum +
-        ((o.input as Record<string, unknown>).taxable_interest_net as number),
+        ((o.fields as Record<string, unknown>).taxable_interest_net as number),
       0,
     );
   assertEquals(netWithout - netWith, 13);
@@ -614,7 +614,7 @@ Deno.test("test_aggregate_box13_multiple_payers_reduces_line2a — two payers bo
   const total = outputs.reduce(
     (sum, o) =>
       sum +
-      (((o.input as Record<string, unknown>).line2a_tax_exempt as number) ?? 0),
+      (((o.fields as Record<string, unknown>).line2a_tax_exempt as number) ?? 0),
     0,
   );
   assertEquals(total, 175);
@@ -867,7 +867,7 @@ Deno.test("test_form1040_line2a_box13_cannot_exceed_box8 — box8 = $100, box13 
   const result = compute([minimalItem({ box8: 100, box13: 100 })]);
   const out = findOutput(result, "f1040");
   if (out !== undefined) {
-    const input = out.input as Record<string, unknown>;
+    const input = out.fields as Record<string, unknown>;
     assertEquals(
       input.line2a_tax_exempt === undefined ||
         input.line2a_tax_exempt === 0,
@@ -1126,7 +1126,7 @@ Deno.test("test_box8_included_in_magi_calculation — box8 = $300 routes to f104
   const result = compute([minimalItem({ box8: 300 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2a_tax_exempt, 300);
 });
 
@@ -1183,7 +1183,7 @@ Deno.test("test_box4_backup_withholding_no_income — box4 = $50 with zero incom
   const result = compute([minimalItem({ box1: 0, box4: 50 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line25b_withheld_1099, 50);
 });
 
@@ -1198,10 +1198,10 @@ Deno.test("test_market_discount_no_section_1278b_election — box10 blank, no ro
   const without = compute([minimalItem({ box1: 100 })]);
   const withBox10Zero = compute([minimalItem({ box1: 100, box10: 0 })]);
   const netWithout =
-    (findOutput(without, "schedule_b")!.input as Record<string, unknown>)
+    (findOutput(without, "schedule_b")!.fields as Record<string, unknown>)
       .taxable_interest_net as number;
   const netWithZero = (
-    findOutput(withBox10Zero, "schedule_b")!.input as Record<string, unknown>
+    findOutput(withBox10Zero, "schedule_b")!.fields as Record<string, unknown>
   ).taxable_interest_net as number;
   assertEquals(netWithout, netWithZero);
 });
@@ -1211,7 +1211,7 @@ Deno.test("test_savings_bond_interest_deferred — EE/I bond cash method, no 109
   const result = compute([minimalItem({ box1: 0, box3: 0 })]);
   const out = findOutput(result, "schedule_b");
   if (out !== undefined) {
-    const input = out.input as Record<string, unknown>;
+    const input = out.fields as Record<string, unknown>;
     assertEquals(input.taxable_interest_net, 0);
   }
 });
@@ -1220,7 +1220,7 @@ Deno.test("test_nominee_taxpayer_receives_full_amount — nominee $40 of $100 bo
   const result = compute([minimalItem({ box1: 100, nominee_interest: 40 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.taxable_interest_net, 60);
 });
 
@@ -1228,7 +1228,7 @@ Deno.test("test_box8_tax_exempt_included_in_magi — box8 = $300 is a MAGI compo
   const result = compute([minimalItem({ box8: 300 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.input as Record<string, unknown>;
+  const input = out!.fields as Record<string, unknown>;
   assertEquals(input.line2a_tax_exempt, 300);
 });
 
@@ -1238,8 +1238,8 @@ Deno.test("test_box8_tax_exempt_exceeds_taxable_interest — box8 = $500, box1 =
   const f1040Out = findOutput(result, "f1040");
   assertEquals(sbOut !== undefined, true);
   assertEquals(f1040Out !== undefined, true);
-  const sbInput = sbOut!.input as Record<string, unknown>;
-  const f1040Input = f1040Out!.input as Record<string, unknown>;
+  const sbInput = sbOut!.fields as Record<string, unknown>;
+  const f1040Input = f1040Out!.fields as Record<string, unknown>;
   assertEquals(sbInput.taxable_interest_net, 100);
   assertEquals(f1040Input.line2a_tax_exempt, 500);
 });
@@ -1292,19 +1292,19 @@ Deno.test("test_smoke_comprehensive_multi_payer_int — two payers, multiple box
   // schedule1: Payer B box2 = $25
   const s1Output = findOutput(result, "schedule1");
   assertEquals(s1Output !== undefined, true);
-  const s1Input = s1Output!.input as Record<string, unknown>;
+  const s1Input = s1Output!.fields as Record<string, unknown>;
   assertEquals(s1Input.line18_early_withdrawal, 25);
 
   // f1040 withheld: box4 $75 + $50 = $125 total (two separate outputs)
   const withheldOutputs = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line25b_withheld_1099 !== undefined,
+      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
   );
   const withheldTotal = withheldOutputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).line25b_withheld_1099 as number),
+      ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
     0,
   );
   assertEquals(withheldTotal, 125);
@@ -1314,7 +1314,7 @@ Deno.test("test_smoke_comprehensive_multi_payer_int — two payers, multiple box
   const ftcTotal = s3Outputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).line1_foreign_tax_1099 as number),
+      ((o.fields as Record<string, unknown>).line1_foreign_tax_1099 as number),
     0,
   );
   assertEquals(ftcTotal, 250);
@@ -1322,19 +1322,19 @@ Deno.test("test_smoke_comprehensive_multi_payer_int — two payers, multiple box
   // form6251: Payer B box9 = $100
   const form6251Output = findOutput(result, "form6251");
   assertEquals(form6251Output !== undefined, true);
-  const f6251Input = form6251Output!.input as Record<string, unknown>;
+  const f6251Input = form6251Output!.fields as Record<string, unknown>;
   assertEquals(f6251Input.line2g_pab_interest, 100);
 
   // f1040 line2a: Payer A net = 300, Payer B net = 100 - 50 = 50, total = 350
   const line2aOutputs = result.outputs.filter(
     (o) =>
       o.nodeType === "f1040" &&
-      (o.input as Record<string, unknown>).line2a_tax_exempt !== undefined,
+      (o.fields as Record<string, unknown>).line2a_tax_exempt !== undefined,
   );
   const line2aTotal = line2aOutputs.reduce(
     (sum, o) =>
       sum +
-      ((o.input as Record<string, unknown>).line2a_tax_exempt as number),
+      ((o.fields as Record<string, unknown>).line2a_tax_exempt as number),
     0,
   );
   assertEquals(line2aTotal, 350);

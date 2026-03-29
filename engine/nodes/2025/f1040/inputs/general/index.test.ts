@@ -113,31 +113,31 @@ Deno.test("schema: months_in_home negative throws", () => {
 Deno.test("routing: Single filing_status routes to f1040", () => {
   const result = compute({ filing_status: FilingStatus.Single });
   const out = findOutput(result, "f1040");
-  assertEquals((out?.input as Record<string, unknown>)?.filing_status, FilingStatus.Single);
+  assertEquals((out?.fields as Record<string, unknown>)?.filing_status, FilingStatus.Single);
 });
 
 Deno.test("routing: MFJ filing_status routes to f1040", () => {
   const result = compute({ filing_status: FilingStatus.MFJ });
   const out = findOutput(result, "f1040");
-  assertEquals((out?.input as Record<string, unknown>)?.filing_status, FilingStatus.MFJ);
+  assertEquals((out?.fields as Record<string, unknown>)?.filing_status, FilingStatus.MFJ);
 });
 
 Deno.test("routing: MFS filing_status routes to f1040", () => {
   const result = compute({ filing_status: FilingStatus.MFS });
   const out = findOutput(result, "f1040");
-  assertEquals((out?.input as Record<string, unknown>)?.filing_status, FilingStatus.MFS);
+  assertEquals((out?.fields as Record<string, unknown>)?.filing_status, FilingStatus.MFS);
 });
 
 Deno.test("routing: HOH filing_status routes to f1040", () => {
   const result = compute({ filing_status: FilingStatus.HOH });
   const out = findOutput(result, "f1040");
-  assertEquals((out?.input as Record<string, unknown>)?.filing_status, FilingStatus.HOH);
+  assertEquals((out?.fields as Record<string, unknown>)?.filing_status, FilingStatus.HOH);
 });
 
 Deno.test("routing: QSS filing_status routes to f1040", () => {
   const result = compute({ filing_status: FilingStatus.QSS });
   const out = findOutput(result, "f1040");
-  assertEquals((out?.input as Record<string, unknown>)?.filing_status, FilingStatus.QSS);
+  assertEquals((out?.fields as Record<string, unknown>)?.filing_status, FilingStatus.QSS);
 });
 
 // ============================================================
@@ -147,21 +147,21 @@ Deno.test("routing: QSS filing_status routes to f1040", () => {
 Deno.test("dependents: empty array → qualifying_child_tax_credit_count is 0", () => {
   const result = compute({ filing_status: FilingStatus.Single, dependents: [] });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
 });
 
 Deno.test("dependents: absent dependents field → other_dependent_count is 0", () => {
   const result = compute({ filing_status: FilingStatus.Single });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.other_dependent_count ?? 0, 0);
 });
 
 Deno.test("dependents: absent dependents field → dependent_count is 0", () => {
   const result = compute({ filing_status: FilingStatus.Single });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.dependent_count ?? 0, 0);
 });
 
@@ -175,7 +175,7 @@ Deno.test("ctc: child with SSN, under 17, >6 months → qualifying_child_tax_cre
     dependents: [qualifyingChildDep()],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
   assertEquals(input?.other_dependent_count ?? 0, 0);
 });
@@ -187,7 +187,7 @@ Deno.test("ctc: child exactly age 16 at Dec 31 2025 qualifies (under 17)", () =>
     dependents: [qualifyingChildDep({ dob: "2009-01-01" })],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
@@ -198,7 +198,7 @@ Deno.test("ctc: child who turns 17 on Dec 31 2025 does NOT qualify (not under 17
     dependents: [qualifyingChildDep({ dob: "2008-12-31" })],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -209,7 +209,7 @@ Deno.test("ctc: child with ITIN (no SSN) does not qualify for CTC → other_depe
     dependents: [qualifyingChildDep({ ssn: undefined, itin: "900-70-1234" })],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -220,7 +220,7 @@ Deno.test("ctc: child with months_in_home = 6 does NOT qualify (must be > 6)", (
     dependents: [qualifyingChildDep({ months_in_home: 6 })],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -231,7 +231,7 @@ Deno.test("ctc: child with months_in_home = 7 qualifies (> 6)", () => {
     dependents: [qualifyingChildDep({ months_in_home: 7 })],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
@@ -249,7 +249,7 @@ Deno.test("odc: adult child (age 20) with SSN → other_dependent_count = 1, ctc
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -269,7 +269,7 @@ Deno.test("odc: parent as dependent → other_dependent_count = 1, ctc = 0", () 
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -288,7 +288,7 @@ Deno.test("multiple: 2 qualifying children + 1 other → ctc=2, odc=1, total=3",
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 2);
   assertEquals(input?.other_dependent_count, 1);
   assertEquals(input?.dependent_count, 3);
@@ -304,7 +304,7 @@ Deno.test("multiple: 3 qualifying children → ctc=3, odc=0, total=3", () => {
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 3);
   assertEquals(input?.other_dependent_count ?? 0, 0);
   assertEquals(input?.dependent_count, 3);
@@ -325,8 +325,8 @@ Deno.test("informational: taxpayer name fields do not change ctc count", () => {
     filing_status: FilingStatus.Single,
     dependents: [qualifyingChildDep()],
   });
-  const outWith = findOutput(withName, "f1040")?.input as Record<string, unknown>;
-  const outWithout = findOutput(withoutName, "f1040")?.input as Record<string, unknown>;
+  const outWith = findOutput(withName, "f1040")?.fields as Record<string, unknown>;
+  const outWithout = findOutput(withoutName, "f1040")?.fields as Record<string, unknown>;
   assertEquals(outWith?.qualifying_child_tax_credit_count, 1);
   assertEquals(outWithout?.qualifying_child_tax_credit_count, 1);
 });
@@ -340,7 +340,7 @@ Deno.test("informational: address fields do not change ctc count", () => {
     address_zip: "90210",
     dependents: [qualifyingChildDep()],
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
@@ -351,7 +351,7 @@ Deno.test("informational: address fields do not change ctc count", () => {
 Deno.test("hoh: HOH with no dependents is still valid (node does not block)", () => {
   const result = compute({ filing_status: FilingStatus.HOH });
   const out = findOutput(result, "f1040");
-  assertEquals((out?.input as Record<string, unknown>)?.filing_status, FilingStatus.HOH);
+  assertEquals((out?.fields as Record<string, unknown>)?.filing_status, FilingStatus.HOH);
 });
 
 // ============================================================
@@ -369,7 +369,7 @@ Deno.test("disabled: disabled=true waives age test → adult disabled child qual
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
@@ -389,7 +389,7 @@ Deno.test("override: qualifying_child_for_ctc=true forces CTC even if residency 
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
@@ -403,7 +403,7 @@ Deno.test("override: qualifying_child_for_ctc=false forces ODC even if child wou
     ],
   });
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -463,7 +463,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
   assertEquals(result.outputs.length, 1, "exactly one output (to f1040)");
 
   const out = findOutput(result, "f1040");
-  const input = out?.input as Record<string, unknown>;
+  const input = out?.fields as Record<string, unknown>;
 
   // Filing status passes through
   assertEquals(input?.filing_status, FilingStatus.MFJ);
@@ -488,7 +488,7 @@ Deno.test("digital_assets: true → routes to f1040 with digital_assets: true", 
     filing_status: FilingStatus.Single,
     digital_assets: true,
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.digital_assets, true);
 });
 
@@ -497,7 +497,7 @@ Deno.test("digital_assets: false → routes to f1040 with digital_assets: false"
     filing_status: FilingStatus.Single,
     digital_assets: false,
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.digital_assets, false);
 });
 
@@ -513,7 +513,7 @@ Deno.test("dependent_on_another_return: true → excluded from dependent_count",
       qualifyingChildDep({ first_name: "Kept" }),
     ],
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   // Only the one without dependent_on_another_return counts
   assertEquals(input?.dependent_count, 1);
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
@@ -530,7 +530,7 @@ Deno.test("atin: dependent with atin set → NOT counted as CTC qualifying child
       qualifyingChildDep({ atin: "123456789" }), // has SSN + ATIN → ATIN disqualifies
     ],
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   assertEquals(input?.other_dependent_count, 1);
 });
@@ -550,7 +550,7 @@ Deno.test("full_time_student: age 21 full-time student → qualifying child (ODC
       }),
     ],
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   // Fails CTC (not under 17, not disabled, no qualifying_child_for_ctc override)
   assertEquals(input?.qualifying_child_tax_credit_count ?? 0, 0);
   // Counts as ODC — is a qualifying child via full_time_student path
@@ -566,7 +566,7 @@ Deno.test("mfs: mfs_spouse_itemizing: true → routed to f1040", () => {
     filing_status: FilingStatus.MFS,
     mfs_spouse_itemizing: true,
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.mfs_spouse_itemizing, true);
 });
 
@@ -580,7 +580,7 @@ Deno.test("deceased: taxpayer_deceased + taxpayer_death_date → routed to f1040
     taxpayer_deceased: true,
     taxpayer_death_date: "2025-06-01",
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.taxpayer_deceased, true);
   assertEquals(input?.taxpayer_death_date, "2025-06-01");
 });
@@ -597,7 +597,7 @@ Deno.test("dependent ip_pin: '123456' → accepted (valid 6-digit IP PIN)", () =
       qualifyingChildDep({ ip_pin: "123456" }),
     ],
   });
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.qualifying_child_tax_credit_count, 1);
 });
 
@@ -645,7 +645,7 @@ Deno.test("smoke: all new major fields populated → routes correctly to f1040",
   });
 
   assertEquals(result.outputs.length, 1);
-  const input = findOutput(result, "f1040")?.input as Record<string, unknown>;
+  const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.filing_status, FilingStatus.MFJ);
   // First child (age 15) qualifies for CTC; second (age 23, student) does not
   assertEquals(input?.qualifying_child_tax_credit_count, 1);

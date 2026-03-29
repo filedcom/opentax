@@ -106,7 +106,7 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     if (payments > 0) f1040Input.line31_additional_payments = payments;
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, input: f1040Input },
+      { nodeType: f1040.nodeType, fields: f1040Input },
     ];
 
     return { outputs };
