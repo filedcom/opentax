@@ -1,5 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8919, inputSchema, ReasonCode } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule2 } from "../schedule2/index.ts";
+import { schedule_se } from "../schedule_se/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8919.compute(inputSchema.parse(input));
@@ -29,7 +33,7 @@ Deno.test("routing: wages flow to f1040 line1g_wages_8919", () => {
   const result = compute({ wages: 40_000, reason_code: ReasonCode.D });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1g_wages_8919, 40_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1g_wages_8919, 40_000);
 });
 
 // ─── SS tax below wage base ───────────────────────────────────────────────────
@@ -39,7 +43,7 @@ Deno.test("ss tax: wages below wage base → 6.2% of wages", () => {
   const result = compute({ wages: 50_000, reason_code: ReasonCode.A });
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   // SS = 50000 × 0.062 = 3100; Medicare = 50000 × 0.0145 = 725; total = 3825
   assertEquals(input.line6_uncollected_8919, 3825);
 });
@@ -50,7 +54,7 @@ Deno.test("ss tax: wages equal SS_WAGE_BASE → full base taxed", () => {
   // $176,100 × 6.2% + $176,100 × 1.45%
   const result = compute({ wages: 176_100, reason_code: ReasonCode.G });
   const out = findOutput(result, "schedule2");
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 176_100 * 0.062;
   const expectedMed = 176_100 * 0.0145;
   assertEquals(input.line6_uncollected_8919, expectedSS + expectedMed);
@@ -62,7 +66,7 @@ Deno.test("ss tax: wages above SS_WAGE_BASE → SS capped at wage base", () => {
   // Wages $200,000: SS capped at 176,100; Medicare on all 200,000
   const result = compute({ wages: 200_000, reason_code: ReasonCode.H });
   const out = findOutput(result, "schedule2");
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 176_100 * 0.062;
   const expectedMed = 200_000 * 0.0145;
   assertEquals(input.line6_uncollected_8919, expectedSS + expectedMed);
@@ -75,7 +79,7 @@ Deno.test("ss tax: prior_ss_wages offsets SS wage base", () => {
   // wages = 50,000 → SS on min(50000, 26100) = 26,100
   const result = compute({ wages: 50_000, reason_code: ReasonCode.B, prior_ss_wages: 150_000 });
   const out = findOutput(result, "schedule2");
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 26_100 * 0.062;
   const expectedMed = 50_000 * 0.0145;
   assertEquals(input.line6_uncollected_8919, expectedSS + expectedMed);
@@ -88,7 +92,7 @@ Deno.test("medicare tax: no cap, applies to all wages", () => {
   const wages = 500_000;
   const result = compute({ wages, reason_code: ReasonCode.C });
   const out = findOutput(result, "schedule2");
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   const expectedMed = wages * 0.0145;
   // SS capped at 176,100
   const expectedSS = 176_100 * 0.062;
@@ -101,7 +105,7 @@ Deno.test("routing: wages flow to schedule_se wages_8919", () => {
   const result = compute({ wages: 75_000, reason_code: ReasonCode.E });
   const out = findOutput(result, "schedule_se");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).wages_8919, 75_000);
+  assertEquals(fieldsOf(result.outputs, schedule_se)!.wages_8919, 75_000);
 });
 
 // ─── Reason code validation ───────────────────────────────────────────────────
@@ -133,7 +137,7 @@ Deno.test("ss tax: prior_ss_wages >= wage base → no SS tax", () => {
   // prior wages already at or above cap → SS subject wages = 0
   const result = compute({ wages: 50_000, reason_code: ReasonCode.F, prior_ss_wages: 176_100 });
   const out = findOutput(result, "schedule2");
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   // SS = 0; Medicare = 50000 × 0.0145 = 725
   assertEquals(input.line6_uncollected_8919, 50_000 * 0.0145);
 });

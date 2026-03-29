@@ -1,5 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8889, inputSchema, CoverageType } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { form5329 } from "../form5329/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8889.compute(inputSchema.parse(input));
@@ -24,7 +28,7 @@ Deno.test("part1: self_only personal contribution → schedule1 line13_hsa_deduc
     taxpayer_hsa_contributions: 3000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 3000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
 });
 
 Deno.test("part1: family personal contribution → schedule1 line13_hsa_deduction", () => {
@@ -33,7 +37,7 @@ Deno.test("part1: family personal contribution → schedule1 line13_hsa_deductio
     taxpayer_hsa_contributions: 5000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 5000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5000);
 });
 
 Deno.test("part1: employer contributions reduce deductible personal amount (self_only limit 4300)", () => {
@@ -45,7 +49,7 @@ Deno.test("part1: employer contributions reduce deductible personal amount (self
     employer_hsa_contributions: 2000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 2300);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 2300);
 });
 
 Deno.test("part1: employer covers entire limit → no personal deduction", () => {
@@ -67,7 +71,7 @@ Deno.test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
     age_55_or_older: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 5300);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5300);
 });
 
 Deno.test("part1: age 55+ catch-up adds $1000 to family limit", () => {
@@ -78,7 +82,7 @@ Deno.test("part1: age 55+ catch-up adds $1000 to family limit", () => {
     age_55_or_older: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 9550);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 9550);
 });
 
 Deno.test("part1: contribution at exact limit → fully deductible, no excess", () => {
@@ -87,7 +91,7 @@ Deno.test("part1: contribution at exact limit → fully deductible, no excess", 
     taxpayer_hsa_contributions: 4300,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 4300);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 4300);
   const f5329 = findOutput(result, "form5329");
   assertEquals(f5329, undefined);
 });
@@ -101,7 +105,7 @@ Deno.test("part1: excess contributions route to form5329 excess_hsa", () => {
     taxpayer_hsa_contributions: 5000,
   });
   const f5329 = findOutput(result, "form5329");
-  assertEquals((f5329!.fields as Record<string, unknown>).excess_hsa, 700);
+  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 700);
 });
 
 Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
@@ -112,7 +116,7 @@ Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
     employer_hsa_contributions: 4000,
   });
   const f5329 = findOutput(result, "form5329");
-  assertEquals((f5329!.fields as Record<string, unknown>).excess_hsa, 450);
+  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 450);
 });
 
 // ─── Part II: Distributions ───────────────────────────────────────────────────
@@ -137,7 +141,7 @@ Deno.test("part2: non-qualified distribution → schedule1 line8z_other income",
     qualified_medical_expenses: 1000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line8z_other, 2000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 2000);
 });
 
 Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17b_hsa_penalty", () => {
@@ -148,7 +152,7 @@ Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17
     qualified_medical_expenses: 1000,
   });
   const s2 = findOutput(result, "schedule2");
-  assertEquals((s2!.fields as Record<string, unknown>).line17b_hsa_penalty, 400);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 400);
 });
 
 Deno.test("part2: fully non-qualified distribution → income + 20% penalty", () => {
@@ -158,9 +162,9 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
     hsa_distributions: 1000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line8z_other, 1000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1000);
   const s2 = findOutput(result, "schedule2");
-  assertEquals((s2!.fields as Record<string, unknown>).line17b_hsa_penalty, 200);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 200);
 });
 
 Deno.test("part2: distribution_exception → income still taxable but no 20% penalty", () => {
@@ -172,7 +176,7 @@ Deno.test("part2: distribution_exception → income still taxable but no 20% pen
     distribution_exception: true,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line8z_other, 1500);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1500);
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2, undefined); // no penalty
 });
@@ -187,10 +191,10 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
     hsa_distributions: 1000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals((s1!.fields as Record<string, unknown>).line13_hsa_deduction, 3000);
-  assertEquals((s1!.fields as Record<string, unknown>).line8z_other, 1000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1000);
   const s2 = findOutput(result, "schedule2");
-  assertEquals((s2!.fields as Record<string, unknown>).line17b_hsa_penalty, 200);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 200);
 });
 
 // ─── Input validation ─────────────────────────────────────────────────────────

@@ -9,6 +9,8 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { ssa1099 } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -83,7 +85,7 @@ Deno.test("ssa.compute: box3_gross_benefits routes net to f1040 line6a_ss_gross"
   const result = compute([minimalItem({ box3_gross_benefits: 15000 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 15000);
 });
 
@@ -99,7 +101,7 @@ Deno.test("ssa.compute: box4_repaid reduces line6a_ss_gross", () => {
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 8000);
 });
 
@@ -109,7 +111,7 @@ Deno.test("ssa.compute: box6_federal_withheld routes to f1040 line25b_withheld_1
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 1200);
 });
 
@@ -119,10 +121,8 @@ Deno.test("ssa.compute: box6_federal_withheld=0 does not add line25b to output",
   ]);
   const out = findOutput(result, "f1040");
   // Output may exist for line6a but line25b should be absent or undefined
-  if (out !== undefined) {
-    const input = out.fields as Record<string, unknown>;
-    assertEquals(input.line25b_withheld_1099 === undefined || input.line25b_withheld_1099 === 0, true);
-  }
+  const f1040Fields = fieldsOf(result.outputs, f1040);
+  assertEquals(f1040Fields?.line25b_withheld_1099 === undefined || f1040Fields?.line25b_withheld_1099 === 0, true);
 });
 
 Deno.test("ssa.compute: box3 and box6 on same item emit single f1040 output with both fields", () => {
@@ -131,7 +131,7 @@ Deno.test("ssa.compute: box3 and box6 on same item emit single f1040 output with
   ]);
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   assertEquals(f1040Outputs.length, 1);
-  const input = f1040Outputs[0].fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 18000);
   assertEquals(input.line25b_withheld_1099, 1800);
 });
@@ -147,7 +147,7 @@ Deno.test("ssa.compute: two items — line6a_ss_gross sums both nets", () => {
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 15000);
 });
 
@@ -158,7 +158,7 @@ Deno.test("ssa.compute: two items — line25b_withheld_1099 sums both box6 amoun
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 1200);
 });
 
@@ -169,7 +169,7 @@ Deno.test("ssa.compute: repayment exceeds gross on one item — that item contri
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 5000);
 });
 
@@ -242,8 +242,8 @@ Deno.test("ssa.compute: is_rrb flag does not change output compared to SSA-1099"
     minimalItem({ box3_gross_benefits: 12000, is_rrb: true }),
   ]);
   assertEquals(resultSsa.outputs.length, resultRrb.outputs.length);
-  const ssaInput = findOutput(resultSsa, "f1040")!.fields as Record<string, unknown>;
-  const rrbInput = findOutput(resultRrb, "f1040")!.fields as Record<string, unknown>;
+  const ssaInput = fieldsOf(resultSsa.outputs, f1040)!;
+  const rrbInput = fieldsOf(resultRrb.outputs, f1040)!;
   assertEquals(ssaInput.line6a_ss_gross, rrbInput.line6a_ss_gross);
 });
 
@@ -271,10 +271,8 @@ Deno.test("ssa.compute: single item where box4 > box3 — net clamped to 0, no l
   ]);
   const out = findOutput(result, "f1040");
   // No line6a output since net = 0
-  if (out !== undefined) {
-    const input = out.fields as Record<string, unknown>;
-    assertEquals(input.line6a_ss_gross === undefined || input.line6a_ss_gross === 0, true);
-  }
+  const f1040Fields2 = fieldsOf(result.outputs, f1040);
+  assertEquals(f1040Fields2?.line6a_ss_gross === undefined || f1040Fields2?.line6a_ss_gross === 0, true);
 });
 
 Deno.test("ssa.compute: repayment on one item does not affect other item's net", () => {
@@ -284,7 +282,7 @@ Deno.test("ssa.compute: repayment on one item does not affect other item's net",
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 8000);
 });
 
@@ -304,7 +302,7 @@ Deno.test("ssa.compute: RRB-1099 treated same as SSA-1099 for routing", () => {
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 20000);
 });
 
@@ -335,7 +333,7 @@ Deno.test("ssa.compute: smoke test — taxpayer and spouse SSA-1099s with withho
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   assertEquals(f1040Outputs.length, 1);
 
-  const input = f1040Outputs[0].fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
 
   // line6a = (18000 - 500) + 12000 = 29500
   assertEquals(input.line6a_ss_gross, 29500);

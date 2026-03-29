@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus, IncomeCategory, form1116, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { schedule3 } from "../schedule3/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form1116.compute(inputSchema.parse(input));
@@ -40,7 +42,7 @@ Deno.test("de minimis: taxes = 350 (above $300 single) → limitation applies", 
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 60);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 60);
 });
 
 Deno.test("de minimis: taxes = 700 (above $600 MFJ) → limitation applies", () => {
@@ -55,7 +57,7 @@ Deno.test("de minimis: taxes = 700 (above $600 MFJ) → limitation applies", () 
     filing_status: FilingStatus.MFJ,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 200);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 200);
 });
 
 // ─── FTC < limitation → full credit allowed ───────────────────────────────────
@@ -72,7 +74,7 @@ Deno.test("ftc below limit: foreign taxes < ftc_limit → full credit allowed", 
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 400);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 400);
 });
 
 // ─── FTC > limitation → limited ──────────────────────────────────────────────
@@ -89,7 +91,7 @@ Deno.test("ftc above limit: foreign taxes > ftc_limit → credit is capped at li
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 100);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 100);
 });
 
 // ─── Zero US tax → no credit ──────────────────────────────────────────────────
@@ -120,7 +122,7 @@ Deno.test("passive category: standard 1099 dividend/interest foreign tax path", 
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 150);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 150);
 });
 
 // ─── General category income ──────────────────────────────────────────────────
@@ -137,7 +139,7 @@ Deno.test("general category: wages from foreign employer", () => {
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 3500);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 3500);
 });
 
 // ─── Limitation fraction capped at 1.0 ───────────────────────────────────────
@@ -155,7 +157,7 @@ Deno.test("fraction cap: foreign_income >= total_income → fraction = 1.0, cred
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 4000);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 4000);
 });
 
 // ─── Output routing to schedule3 ─────────────────────────────────────────────
@@ -171,7 +173,7 @@ Deno.test("routing: credit routes to schedule3 line1_foreign_tax_credit", () => 
   });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "schedule3");
-  const input = result.outputs[0].fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(typeof input.line1_foreign_tax_credit, "number");
 });
 
@@ -188,7 +190,7 @@ Deno.test("validation: foreign_income > total_income is allowed (capped fraction
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 100);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 100);
 });
 
 Deno.test("validation: negative foreign_tax_paid throws", () => {
@@ -216,5 +218,5 @@ Deno.test("validation: zero total_income with foreign_income > 0 → fraction = 
     filing_status: FilingStatus.Single,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals((s3!.fields as Record<string, unknown>).line1_foreign_tax_credit, 200);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 200);
 });

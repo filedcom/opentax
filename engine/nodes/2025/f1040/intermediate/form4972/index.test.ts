@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4972, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4972.compute(inputSchema.parse(input));
@@ -50,7 +52,7 @@ Deno.test("form4972.compute: Part II only — 20% on capital gain amount", () =>
   });
   const schedule2Out = findOutput(result, "schedule2");
   assertEquals(schedule2Out !== undefined, true);
-  const input = schedule2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   // 30,000 × 20% = 6,000
   assertEquals(input.lump_sum_tax, 6_000);
 });
@@ -102,7 +104,7 @@ Deno.test("form4972.compute: Part III only — 10-year averaging on small distri
   });
   const schedule2Out = findOutput(result, "schedule2");
   assertEquals(schedule2Out !== undefined, true);
-  const input = schedule2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 550);
 });
 
@@ -125,7 +127,7 @@ Deno.test("form4972.compute: Part III — large distribution, MDA phases out", (
   });
   const schedule2Out = findOutput(result, "schedule2");
   assertEquals(schedule2Out !== undefined, true);
-  const input = schedule2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 13_600);
 });
 
@@ -153,7 +155,7 @@ Deno.test("form4972.compute: Part III — death benefit exclusion reduces ordina
   });
   const schedule2Out = findOutput(result, "schedule2");
   assertEquals(schedule2Out !== undefined, true);
-  const input = schedule2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 830);
 });
 
@@ -184,7 +186,7 @@ Deno.test("form4972.compute: Part II + Part III combined", () => {
   });
   const schedule2Out = findOutput(result, "schedule2");
   assertEquals(schedule2Out !== undefined, true);
-  const input = schedule2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 14_000);
 });
 
@@ -232,7 +234,7 @@ Deno.test("form4972.compute: smoke test — minimal eligible input produces sche
   });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "schedule2");
-  const input = result.outputs[0].fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(typeof input.lump_sum_tax, "number");
   assertEquals((input.lump_sum_tax as number) > 0, true);
 });

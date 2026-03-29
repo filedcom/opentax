@@ -1,5 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1098, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { scheduleA } from "../schedule_a/index.ts";
+import { scheduleC } from "../schedule_c/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -95,7 +98,7 @@ Deno.test("routing_box1_for_A_routes_to_schedule_a — box1 with for_routing=A r
   const result = compute([minimalItem({ box1_mortgage_interest: 12000, for_routing: "A" })]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 12000);
 });
 
@@ -147,7 +150,7 @@ Deno.test("routing_box4_reduces_schedule_a_interest — box4 reduces net interes
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 8500);
 });
 
@@ -196,7 +199,7 @@ Deno.test("routing_box4_prior_year_does_not_reduce_box1 — prior-year box4 does
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   // box1 should be unaffected: 10000 (not 8000)
   assertEquals(inp.line_8a_mortgage_interest_1098, 10000);
 });
@@ -375,7 +378,7 @@ Deno.test("aggregation_multiple_for_a_box1_summed — two for_routing=A items; b
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 14000);
 });
 
@@ -400,7 +403,7 @@ Deno.test("aggregation_mixed_routing_no_cross_contamination — for_routing=A an
   const schedE = findOutput(result, "schedule_e");
   assertEquals(schedA !== undefined, true);
   assertEquals(schedE !== undefined, true);
-  assertEquals((schedA!.fields as Record<string, unknown>).line_8a_mortgage_interest_1098, 6000);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098, 6000);
   const eField = (schedE!.fields as Record<string, unknown>).mortgage_interest ??
     (schedE!.fields as Record<string, unknown>).line12_mortgage_interest;
   assertEquals(eField, 4000);
@@ -413,7 +416,7 @@ Deno.test("aggregation_box4_reduces_total_for_multiple_items — two for_routing
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   // net = (10000 - 500) + (8000 - 200) = 9500 + 7800 = 17300
   assertEquals(inp.line_8a_mortgage_interest_1098, 17300);
 });
@@ -459,7 +462,7 @@ Deno.test("threshold_box2_below_post2017_limit_no_flag — box2=749999 with post
   // Should still route box1 to schedule_a normally (no limitation)
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 15000);
 });
 
@@ -474,7 +477,7 @@ Deno.test("threshold_box2_at_post2017_limit_no_flag — box2=750000 with post-20
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 15000);
 });
 
@@ -507,7 +510,7 @@ Deno.test("threshold_box2_below_pre2017_limit_no_flag — box2=999999 with pre-2
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 20000);
 });
 
@@ -522,7 +525,7 @@ Deno.test("threshold_box2_at_pre2017_limit_no_flag — box2=1000000 with pre-201
   ]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const inp = out!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 20000);
 });
 
@@ -633,7 +636,7 @@ Deno.test("edge_split_interest_two_entries — same property split across for_ro
   ]);
   const schedA = findOutput(result, "schedule_a");
   const schedE = findOutput(result, "schedule_e");
-  assertEquals((schedA!.fields as Record<string, unknown>).line_8a_mortgage_interest_1098, 7000);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098, 7000);
   const eField = (schedE!.fields as Record<string, unknown>).mortgage_interest ??
     (schedE!.fields as Record<string, unknown>).line12_mortgage_interest;
   assertEquals(eField, 3000);
@@ -649,7 +652,7 @@ Deno.test("edge_three_entries_for_a_accepted — three for_routing=A entries all
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
   // All three summed
-  assertEquals((out!.fields as Record<string, unknown>).line_8a_mortgage_interest_1098, 12000);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098, 12000);
 });
 
 Deno.test("edge_box4_prior_year_multiple_entries_income_summed — multiple prior-year box4 refunds sum on schedule_1 line 8z", () => {
@@ -736,7 +739,7 @@ Deno.test("smoke_all_major_boxes_populated — comprehensive item with all boxes
   // 1. Net mortgage interest = 18000 - 500 = 17500 → schedule_a
   const schedA = findOutput(result, "schedule_a");
   assertEquals(schedA !== undefined, true);
-  const inp = schedA!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(inp.line_8a_mortgage_interest_1098, 17500);
 
   // 2. Box 5 MIP must NOT be routed anywhere for TY2025

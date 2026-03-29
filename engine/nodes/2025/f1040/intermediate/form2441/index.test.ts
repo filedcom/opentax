@@ -10,6 +10,8 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { form2441 } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form2441.compute(input);
@@ -57,7 +59,7 @@ Deno.test("form2441: benefits of $1 above $5000 route $1 taxable to f1040 line1e
   const result = compute({ dep_care_benefits: 5001 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 1);
 });
 
@@ -65,7 +67,7 @@ Deno.test("form2441: benefits of $6000 route $1000 taxable to f1040 line1e", () 
   const result = compute({ dep_care_benefits: 6000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 1000);
 });
 
@@ -73,7 +75,7 @@ Deno.test("form2441: benefits of $10000 route $5000 taxable to f1040 line1e", ()
   const result = compute({ dep_care_benefits: 10000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 5000);
 });
 
@@ -95,7 +97,7 @@ Deno.test("form2441: benefits of $5001 (just above limit) route $1 to f1040", ()
   const result = compute({ dep_care_benefits: 5001 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 1);
 });
 
@@ -112,9 +114,9 @@ Deno.test("form2441: output nodeType is 'f1040' when taxable excess exists", () 
 Deno.test("form2441: output field is line1e_taxable_dep_care (not another field)", () => {
   const result = compute({ dep_care_benefits: 7500 });
   const out = findOutput(result, "f1040")!;
-  const keys = Object.keys(out.fields as Record<string, unknown>);
+  const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
   assertEquals(keys, ["line1e_taxable_dep_care"]);
-  assertEquals((out.fields as Record<string, unknown>).line1e_taxable_dep_care, 2500);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1e_taxable_dep_care, 2500);
 });
 
 Deno.test("form2441: no schedule3 output is emitted (credit not computed here)", () => {
@@ -131,7 +133,7 @@ Deno.test("form2441: very large benefits route correct taxable excess", () => {
   const result = compute({ dep_care_benefits: 100000 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 95000);
 });
 
@@ -144,7 +146,7 @@ Deno.test("form2441: fractional benefits above limit route correct decimal exces
   const result = compute({ dep_care_benefits: 5000.01 });
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   // 5000.01 - 5000 = 0.01 (approximately)
   assertEquals(Math.round((input.line1e_taxable_dep_care as number) * 100), 1);
 });
@@ -163,7 +165,7 @@ Deno.test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f10
 
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 2500);
 
   // No schedule3 output (credit not computed by this node)

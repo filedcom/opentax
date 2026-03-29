@@ -1,5 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099g } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule_f } from "../../intermediate/schedule_f/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -101,7 +105,7 @@ Deno.test("f1099g.compute: box_1_unemployment routes to schedule1 line7_unemploy
   const result = compute([minimalItem({ box_1_unemployment: 8000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 8000);
 });
 
@@ -121,7 +125,7 @@ Deno.test("f1099g.compute: box_1_repaid reduces unemployment on schedule1 line7"
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 6000);
 });
 
@@ -131,7 +135,7 @@ Deno.test("f1099g.compute: box_2_state_refund taxable when prior year itemized r
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 300);
 });
 
@@ -163,7 +167,7 @@ Deno.test("f1099g.compute: box_4_federal_withheld routes to f1040 line25b_withhe
   const result = compute([minimalItem({ box_4_federal_withheld: 400 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 400);
 });
 
@@ -181,7 +185,7 @@ Deno.test("f1099g.compute: box_5_rtaa routes to schedule1 line8z_rtaa", () => {
   const result = compute([minimalItem({ box_5_rtaa: 1500 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 1500);
 });
 
@@ -199,7 +203,7 @@ Deno.test("f1099g.compute: box_6_taxable_grants (personal) routes to schedule1 l
   const result = compute([minimalItem({ box_6_taxable_grants: 2000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_taxable_grants, 2000);
 });
 
@@ -217,8 +221,7 @@ Deno.test("f1099g.compute: box_7_agriculture routes to schedule_f line4a_gov_pay
   const result = compute([minimalItem({ box_7_agriculture: 3500 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
-  assertEquals(input.line4a_gov_payments, 3500);
+  assertEquals((out!.fields as Record<string, unknown>).line4a_gov_payments, 3500);
 });
 
 Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () => {
@@ -235,8 +238,7 @@ Deno.test("f1099g.compute: box_9_market_gain routes to schedule_f line5_ccc_gain
   const result = compute([minimalItem({ box_9_market_gain: 600 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
-  assertEquals(input.line5_ccc_gain, 600);
+  assertEquals((out!.fields as Record<string, unknown>).line5_ccc_gain, 600);
 });
 
 Deno.test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output", () => {
@@ -265,7 +267,7 @@ Deno.test("f1099g.compute: multiple items — box_1_unemployment summed across a
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 8000);
 });
 
@@ -276,7 +278,7 @@ Deno.test("f1099g.compute: multiple items — box_1_repaid subtracted from total
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 8500); // 10000 - 1500
 });
 
@@ -287,7 +289,7 @@ Deno.test("f1099g.compute: multiple items — box_4_federal_withheld summed to f
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 500);
 });
 
@@ -298,7 +300,7 @@ Deno.test("f1099g.compute: multiple items — box_5_rtaa summed on schedule1 lin
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 3000);
 });
 
@@ -309,7 +311,7 @@ Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when bot
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 300);
 });
 
@@ -320,8 +322,7 @@ Deno.test("f1099g.compute: multiple items — box_7_agriculture summed on schedu
   ]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
-  assertEquals(input.line4a_gov_payments, 3500);
+  assertEquals((out!.fields as Record<string, unknown>).line4a_gov_payments, 3500);
 });
 
 // =============================================================================
@@ -343,7 +344,7 @@ Deno.test("f1099g.compute: box_1_unemployment $10 (at threshold) — routes to s
   const result = compute([minimalItem({ box_1_unemployment: 10 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 10);
 });
 
@@ -351,7 +352,7 @@ Deno.test("f1099g.compute: box_1_unemployment $11 (above threshold) — routes t
   const result = compute([minimalItem({ box_1_unemployment: 11 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 11);
 });
 
@@ -374,7 +375,7 @@ Deno.test("f1099g.compute: box_2_state_refund $10 (at threshold) with itemized �
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line1_state_refund, 10);
 });
 
@@ -393,7 +394,7 @@ Deno.test("f1099g.compute: box_5_rtaa $600 (at threshold) — routes to schedule
   const result = compute([minimalItem({ box_5_rtaa: 600 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 600);
 });
 
@@ -401,7 +402,7 @@ Deno.test("f1099g.compute: box_5_rtaa $601 (above threshold) — routes to sched
   const result = compute([minimalItem({ box_5_rtaa: 601 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_rtaa, 601);
 });
 
@@ -420,7 +421,7 @@ Deno.test("f1099g.compute: box_6_taxable_grants $600 (at threshold) — routes t
   const result = compute([minimalItem({ box_6_taxable_grants: 600 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8z_taxable_grants, 600);
 });
 
@@ -432,7 +433,7 @@ Deno.test("f1099g.compute: box_1_repaid $3000 (at threshold) — routes net unem
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 7000);
 });
 
@@ -443,7 +444,7 @@ Deno.test("f1099g.compute: box_1_repaid $3001 (above threshold) — same-year ne
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 6999);
 });
 
@@ -535,7 +536,7 @@ Deno.test("f1099g.compute: box_1_railroad=true does not throw and routes unemplo
   assertEquals(Array.isArray(result.outputs), true);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 5000);
 });
 
@@ -646,7 +647,7 @@ Deno.test("f1099g.compute: multiple forms with separate box_1 amounts — summed
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 10000);
 });
 
@@ -658,7 +659,7 @@ Deno.test("f1099g.compute: mixed items — unemployment and state refund both ro
   ]);
   const schedOut = findOutput(result, "schedule1");
   assertEquals(schedOut !== undefined, true);
-  const input = schedOut!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line7_unemployment, 6000);
   assertEquals(input.line1_state_refund, 400);
 });
@@ -668,8 +669,7 @@ Deno.test("f1099g.compute: box_7_agriculture routes to schedule_f with line4a_go
   const result = compute([minimalItem({ box_7_agriculture: 5000 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
-  assertEquals(input.line4a_gov_payments, 5000);
+  assertEquals((out!.fields as Record<string, unknown>).line4a_gov_payments, 5000);
 });
 
 // Box 9 market gain when taxpayer did NOT elect CCC proceeds — routes to schedule_f
@@ -677,8 +677,7 @@ Deno.test("f1099g.compute: box_9_market_gain without CCC election — routes to 
   const result = compute([minimalItem({ box_9_market_gain: 800 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
-  assertEquals(input.line5_ccc_gain, 800);
+  assertEquals((out!.fields as Record<string, unknown>).line5_ccc_gain, 800);
 });
 
 // Empty array — no outputs
@@ -716,9 +715,9 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
   ]);
 
   // Schedule 1: unemployment net (12000 - 1000 = 11000)
-  const schedule1 = findOutput(result, "schedule1");
-  assertEquals(schedule1 !== undefined, true);
-  const s1 = schedule1!.fields as Record<string, unknown>;
+  const schedule1Out = findOutput(result, "schedule1");
+  assertEquals(schedule1Out !== undefined, true);
+  const s1 = fieldsOf(result.outputs, schedule1)!;
   assertEquals(s1.line7_unemployment, 11000);
 
   // Schedule 1: state refund taxable (itemized)
@@ -731,19 +730,18 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
   assertEquals(s1.line8z_taxable_grants, 750);
 
   // Form 1040: federal withholding
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const f = f1040!.fields as Record<string, unknown>;
+  const f1040Out = findOutput(result, "f1040");
+  assertEquals(f1040Out !== undefined, true);
+  const f = fieldsOf(result.outputs, f1040)!;
   assertEquals(f.line25b_withheld_1099, 800);
 
   // Schedule F: agriculture payments
   const schedF = findOutput(result, "schedule_f");
   assertEquals(schedF !== undefined, true);
-  const sf = schedF!.fields as Record<string, unknown>;
-  assertEquals(sf.line4a_gov_payments, 4000);
+  assertEquals((schedF!.fields as Record<string, unknown>).line4a_gov_payments, 4000);
 
   // Schedule F: CCC market gain
-  assertEquals(sf.line5_ccc_gain, 300);
+  assertEquals((schedF!.fields as Record<string, unknown>).line5_ccc_gain, 300);
 });
 
 // Total test count: 68
