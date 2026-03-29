@@ -233,3 +233,139 @@ Deno.test("schedule1 BusinessIncomeLossAmt negative value appears in output", ()
   const xml = buildMefXml({ schedule1: { line3_schedule_c: -5000 } });
   assertStringIncludes(xml, "<BusinessIncomeLossAmt>-5000</BusinessIncomeLossAmt>");
 });
+
+// ─── 16. schedule2 routing ───────────────────────────────────────────────────
+
+Deno.test("IRS1040Schedule2 present when schedule2 has data", () => {
+  const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
+  assertStringIncludes(xml, "<IRS1040Schedule2>");
+});
+
+Deno.test("IRS1040Schedule2 absent when schedule2 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS1040Schedule2>");
+});
+
+Deno.test("IRS1040Schedule2 absent when schedule2 has only unknown keys", () => {
+  const xml = buildMefXml({ schedule2: { junk: 999 } });
+  assertNotIncludes(xml, "<IRS1040Schedule2>");
+});
+
+// ─── 17. schedule3 routing ───────────────────────────────────────────────────
+
+Deno.test("IRS1040Schedule3 present when schedule3 has data", () => {
+  const xml = buildMefXml({ schedule3: { line2_childcare_credit: 1200 } });
+  assertStringIncludes(xml, "<IRS1040Schedule3>");
+});
+
+Deno.test("IRS1040Schedule3 absent when schedule3 missing from pending", () => {
+  const xml = buildMefXml({});
+  assertNotIncludes(xml, "<IRS1040Schedule3>");
+});
+
+Deno.test("IRS1040Schedule3 absent when schedule3 has only unknown keys", () => {
+  const xml = buildMefXml({ schedule3: { junk: 999 } });
+  assertNotIncludes(xml, "<IRS1040Schedule3>");
+});
+
+// ─── 18. documentCnt with new forms ──────────────────────────────────────────
+
+Deno.test("documentCnt=1 when only schedule2 has data", () => {
+  const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
+  assertStringIncludes(xml, 'documentCnt="1"');
+});
+
+Deno.test("documentCnt=1 when only schedule3 has data", () => {
+  const xml = buildMefXml({ schedule3: { line2_childcare_credit: 1200 } });
+  assertStringIncludes(xml, 'documentCnt="1"');
+});
+
+Deno.test("documentCnt=2 when f1040 + schedule2 have data", () => {
+  const xml = buildMefXml({
+    f1040: { line1a_wages: 50000 },
+    schedule2: { line1_amt: 5000 },
+  });
+  assertStringIncludes(xml, 'documentCnt="2"');
+});
+
+Deno.test("documentCnt=3 when f1040 + schedule1 + schedule2 have data", () => {
+  const xml = buildMefXml({
+    f1040: { line1a_wages: 50000 },
+    schedule1: { line7_unemployment: 4800 },
+    schedule2: { line1_amt: 5000 },
+  });
+  assertStringIncludes(xml, 'documentCnt="3"');
+});
+
+Deno.test("documentCnt=4 when all four forms have data", () => {
+  const xml = buildMefXml({
+    f1040: { line1a_wages: 50000 },
+    schedule1: { line7_unemployment: 4800 },
+    schedule2: { line1_amt: 5000 },
+    schedule3: { line2_childcare_credit: 1200 },
+  });
+  assertStringIncludes(xml, 'documentCnt="4"');
+});
+
+// ─── 19. Form order ───────────────────────────────────────────────────────────
+
+Deno.test("IRS1040 appears before IRS1040Schedule2 when both present", () => {
+  const xml = buildMefXml({
+    f1040: { line1a_wages: 50000 },
+    schedule2: { line1_amt: 5000 },
+  });
+  const f1040Idx = xml.indexOf("<IRS1040>");
+  const sched2Idx = xml.indexOf("<IRS1040Schedule2>");
+  assertEquals(
+    f1040Idx < sched2Idx,
+    true,
+    "IRS1040 must appear before IRS1040Schedule2",
+  );
+});
+
+Deno.test("IRS1040Schedule1 appears before IRS1040Schedule2 when both present", () => {
+  const xml = buildMefXml({
+    schedule1: { line7_unemployment: 4800 },
+    schedule2: { line1_amt: 5000 },
+  });
+  const sched1Idx = xml.indexOf("<IRS1040Schedule1>");
+  const sched2Idx = xml.indexOf("<IRS1040Schedule2>");
+  assertEquals(
+    sched1Idx < sched2Idx,
+    true,
+    "IRS1040Schedule1 must appear before IRS1040Schedule2",
+  );
+});
+
+Deno.test("IRS1040Schedule2 appears before IRS1040Schedule3 when both present", () => {
+  const xml = buildMefXml({
+    schedule2: { line1_amt: 5000 },
+    schedule3: { line2_childcare_credit: 1200 },
+  });
+  const sched2Idx = xml.indexOf("<IRS1040Schedule2>");
+  const sched3Idx = xml.indexOf("<IRS1040Schedule3>");
+  assertEquals(
+    sched2Idx < sched3Idx,
+    true,
+    "IRS1040Schedule2 must appear before IRS1040Schedule3",
+  );
+});
+
+// ─── 20. Field pass-through ───────────────────────────────────────────────────
+
+Deno.test("schedule2 AlternativeMinimumTaxAmt value appears in assembled output", () => {
+  const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
+  assertStringIncludes(xml, "<AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt>");
+});
+
+Deno.test("schedule3 CreditForChildAndDepdCareAmt value appears in assembled output", () => {
+  const xml = buildMefXml({ schedule3: { line2_childcare_credit: 1200 } });
+  assertStringIncludes(xml, "<CreditForChildAndDepdCareAmt>1200</CreditForChildAndDepdCareAmt>");
+});
+
+Deno.test("schedule2 aggregated UncollSSMedcrRRTAGrpInsTxAmt appears in assembled output", () => {
+  const xml = buildMefXml({
+    schedule2: { uncollected_fica: 3000, uncollected_fica_gtl: 500 },
+  });
+  assertStringIncludes(xml, "<UncollSSMedcrRRTAGrpInsTxAmt>3500</UncollSSMedcrRRTAGrpInsTxAmt>");
+});
