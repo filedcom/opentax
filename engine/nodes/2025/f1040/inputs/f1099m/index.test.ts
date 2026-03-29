@@ -1,39 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton (e.g. `m99`)
-//   2. The input wrapper key (e.g. `m99s`) matches compute()'s parameter
-//   3. The nodeType strings match the actual node routing strings:
-//      - "schedule_e", "schedule_c", "schedule_f", "schedule1", "schedule2", "f1040"
-//   4. Input field names for routing outputs:
-//      - schedule_e: rental_income, royalty_income
-//      - schedule_c: line1_gross_receipts
-//      - schedule_f: crop_insurance
-//      - schedule1: line8i_prizes_awards, line8z_substitute_payments,
-//                   line8z_attorney_proceeds, line8z_nqdc
-//      - schedule2: line17h_nqdc_tax
-//      - f1040: line25b_withheld_1099
-//   5. Routing discriminator field names:
-//      - box1_rents_routing: "schedule_e" | "schedule_c"
-//      - box2_royalties_routing: "schedule_e" | "schedule_c"
-//      - box3_other_income_routing: "prizes_awards" | "other_income"
-//      - box9_crop_insurance_deferred: boolean
-//      - box10_attorney_taxable: boolean (or similar)
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   - box1_rents_routing: context.md does not specify the exact discriminator
-//     field name (may be a separate routing flag or inferred from for_dropdown)
-//   - box2_royalties_routing: same ambiguity — may be "schedule_e" | "schedule_c"
-//   - box3_other_income_routing: prizes vs. other income requires a discriminator
-//   - box9 deferral: context.md mentions deferral election flag but exact field
-//     name is unspecified — may be box9_crop_insurance_deferred: true
-//   - box10 taxability: context.md says physical injury is excluded; exact
-//     discriminator field name unspecified — may be box10_attorney_taxable: false
-//   - For routing nodes that route via for_dropdown enum — verify enum values
-//     match those used in the implementation
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099m, itemSchema } from "./index.ts";
 import { z } from "zod";

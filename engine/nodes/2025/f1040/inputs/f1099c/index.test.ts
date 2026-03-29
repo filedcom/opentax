@@ -1,24 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton: `c99`
-//   2. The input wrapper key: `c99s`
-//   3. nodeType strings: "schedule1", "form982", "schedule_d"
-//   4. Output field names: line8c_cod_income, line2_excluded_cod, cod_property_fmv, cod_debt_cancelled
-//   5. The `routing` enum values: "taxable" | "excluded"
-//   6. The `box6_event_code` field name and enum values (A–H)
-//   7. Whether box_1_date (QPRI date gate) is validated in this node
-//
-// AMBIGUITIES:
-//   - Whether QPRI MFJ/MFS cap ($750k/$375k) is enforced in this node or deferred to Form 982 node
-//   - Whether box_3_interest > box_2_cod_amount is a validation error (throw) or silently accepted
-//   - Whether QPRI date gate (post-12/31/2025 discharge) causes a throw or just routes to taxable
-//   - Whether box6_event_code is a required schema field or optional
-//   - Whether nonrecourse (box5_personal_liability=false) split calculation is done here or downstream
-//   - The exact field name for the "For" routing selector (confirmed as `routing` from existing tests)
-//
-// These tests define IRS-correct behaviour — if a test fails, fix the implementation, not the test.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099c } from "./index.ts";
 
