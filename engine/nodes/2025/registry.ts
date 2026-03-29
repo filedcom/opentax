@@ -1,70 +1,70 @@
 import type { NodeRegistry } from "../../core/types/node-registry.ts";
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-import { start } from "./f1040/start/index.ts";
+import { start } from "../../forms/f1040/nodes/start/index.ts";
 
 // ── Inputs ────────────────────────────────────────────────────────────────────
-import { ext } from "./f1040/inputs/ext/index.ts";
-import { f1098 } from "./f1040/inputs/f1098/index.ts";
-import { f1099b } from "./f1040/inputs/f1099b/index.ts";
-import { f1099c } from "./f1040/inputs/f1099c/index.ts";
-import { f1099div } from "./f1040/inputs/f1099div/index.ts";
-import { f1099g } from "./f1040/inputs/f1099g/index.ts";
-import { f1099int } from "./f1040/inputs/f1099int/index.ts";
-import { f1099k } from "./f1040/inputs/f1099k/index.ts";
-import { f1099m } from "./f1040/inputs/f1099m/index.ts";
-import { f1099nec } from "./f1040/inputs/f1099nec/index.ts";
-import { f1099r } from "./f1040/inputs/f1099r/index.ts";
-import { f2441 } from "./f1040/inputs/f2441/index.ts";
-import { f8812 } from "./f1040/inputs/f8812/index.ts";
-import { f8863 } from "./f1040/inputs/f8863/index.ts";
-import { f8949 as f8949InputNode } from "./f1040/inputs/f8949/index.ts";
-import { general } from "./f1040/inputs/general/index.ts";
-import { scheduleA } from "./f1040/inputs/schedule_a/index.ts";
-import { scheduleC } from "./f1040/inputs/schedule_c/index.ts";
-import { scheduleE } from "./f1040/inputs/schedule_e/index.ts";
-import { ssa1099 } from "./f1040/inputs/ssa1099/index.ts";
-import { w2 } from "./f1040/inputs/w2/index.ts";
+import { ext } from "../../forms/f1040/nodes/inputs/ext/index.ts";
+import { f1098 } from "../../forms/f1040/nodes/inputs/f1098/index.ts";
+import { f1099b } from "../../forms/f1040/nodes/inputs/f1099b/index.ts";
+import { f1099c } from "../../forms/f1040/nodes/inputs/f1099c/index.ts";
+import { f1099div } from "../../forms/f1040/nodes/inputs/f1099div/index.ts";
+import { f1099g } from "../../forms/f1040/nodes/inputs/f1099g/index.ts";
+import { f1099int } from "../../forms/f1040/nodes/inputs/f1099int/index.ts";
+import { f1099k } from "../../forms/f1040/nodes/inputs/f1099k/index.ts";
+import { f1099m } from "../../forms/f1040/nodes/inputs/f1099m/index.ts";
+import { f1099nec } from "../../forms/f1040/nodes/inputs/f1099nec/index.ts";
+import { f1099r } from "../../forms/f1040/nodes/inputs/f1099r/index.ts";
+import { f2441 } from "../../forms/f1040/nodes/inputs/f2441/index.ts";
+import { f8812 } from "../../forms/f1040/nodes/inputs/f8812/index.ts";
+import { f8863 } from "../../forms/f1040/nodes/inputs/f8863/index.ts";
+import { f8949 as f8949InputNode } from "../../forms/f1040/nodes/inputs/f8949/index.ts";
+import { general } from "../../forms/f1040/nodes/inputs/general/index.ts";
+import { scheduleA } from "../../forms/f1040/nodes/inputs/schedule_a/index.ts";
+import { scheduleC } from "../../forms/f1040/nodes/inputs/schedule_c/index.ts";
+import { scheduleE } from "../../forms/f1040/nodes/inputs/schedule_e/index.ts";
+import { ssa1099 } from "../../forms/f1040/nodes/inputs/ssa1099/index.ts";
+import { w2 } from "../../forms/f1040/nodes/inputs/w2/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
-import { form2441 } from "./f1040/intermediate/form2441/index.ts";
-import { form4137 } from "./f1040/intermediate/form4137/index.ts";
-import { form4562 } from "./f1040/intermediate/form4562/index.ts";
-import { form461 } from "./f1040/intermediate/form461/index.ts";
-import { form4797 } from "./f1040/intermediate/form4797/index.ts";
-import { form4972 } from "./f1040/intermediate/form4972/index.ts";
-import { form5329 } from "./f1040/intermediate/form5329/index.ts";
-import { form6198 } from "./f1040/intermediate/form6198/index.ts";
-import { form6251 } from "./f1040/intermediate/form6251/index.ts";
-import { form8582 } from "./f1040/intermediate/form8582/index.ts";
-import { form8606 } from "./f1040/intermediate/form8606/index.ts";
-import { form8839 } from "./f1040/intermediate/form8839/index.ts";
-import { form8853 } from "./f1040/intermediate/form8853/index.ts";
-import { form8880 } from "./f1040/intermediate/form8880/index.ts";
-import { form8889 } from "./f1040/intermediate/form8889/index.ts";
-import { form8919 } from "./f1040/intermediate/form8919/index.ts";
-import { form8949 } from "./f1040/intermediate/form8949/index.ts";
-import { form8959 } from "./f1040/intermediate/form8959/index.ts";
-import { form8960 } from "./f1040/intermediate/form8960/index.ts";
-import { form8990 } from "./f1040/intermediate/form8990/index.ts";
-import { form8995 } from "./f1040/intermediate/form8995/index.ts";
-import { form8995a } from "./f1040/intermediate/form8995a/index.ts";
-import { form982 } from "./f1040/intermediate/form982/index.ts";
-import { form_1116 } from "./f1040/intermediate/form_1116/index.ts";
-import { form_8829 } from "./f1040/intermediate/form_8829/index.ts";
-import { ira_deduction_worksheet } from "./f1040/intermediate/ira_deduction_worksheet/index.ts";
-import { rate_28_gain_worksheet } from "./f1040/intermediate/rate_28_gain_worksheet/index.ts";
-import { schedule2 } from "./f1040/intermediate/schedule2/index.ts";
-import { schedule3 } from "./f1040/intermediate/schedule3/index.ts";
-import { schedule_b } from "./f1040/intermediate/schedule_b/index.ts";
-import { schedule_d } from "./f1040/intermediate/schedule_d/index.ts";
-import { schedule_f } from "./f1040/intermediate/schedule_f/index.ts";
-import { schedule_se } from "./f1040/intermediate/schedule_se/index.ts";
-import { unrecaptured_1250_worksheet } from "./f1040/intermediate/unrecaptured_1250_worksheet/index.ts";
+import { form2441 } from "../../forms/f1040/nodes/intermediate/form2441/index.ts";
+import { form4137 } from "../../forms/f1040/nodes/intermediate/form4137/index.ts";
+import { form4562 } from "../../forms/f1040/nodes/intermediate/form4562/index.ts";
+import { form461 } from "../../forms/f1040/nodes/intermediate/form461/index.ts";
+import { form4797 } from "../../forms/f1040/nodes/intermediate/form4797/index.ts";
+import { form4972 } from "../../forms/f1040/nodes/intermediate/form4972/index.ts";
+import { form5329 } from "../../forms/f1040/nodes/intermediate/form5329/index.ts";
+import { form6198 } from "../../forms/f1040/nodes/intermediate/form6198/index.ts";
+import { form6251 } from "../../forms/f1040/nodes/intermediate/form6251/index.ts";
+import { form8582 } from "../../forms/f1040/nodes/intermediate/form8582/index.ts";
+import { form8606 } from "../../forms/f1040/nodes/intermediate/form8606/index.ts";
+import { form8839 } from "../../forms/f1040/nodes/intermediate/form8839/index.ts";
+import { form8853 } from "../../forms/f1040/nodes/intermediate/form8853/index.ts";
+import { form8880 } from "../../forms/f1040/nodes/intermediate/form8880/index.ts";
+import { form8889 } from "../../forms/f1040/nodes/intermediate/form8889/index.ts";
+import { form8919 } from "../../forms/f1040/nodes/intermediate/form8919/index.ts";
+import { form8949 } from "../../forms/f1040/nodes/intermediate/form8949/index.ts";
+import { form8959 } from "../../forms/f1040/nodes/intermediate/form8959/index.ts";
+import { form8960 } from "../../forms/f1040/nodes/intermediate/form8960/index.ts";
+import { form8990 } from "../../forms/f1040/nodes/intermediate/form8990/index.ts";
+import { form8995 } from "../../forms/f1040/nodes/intermediate/form8995/index.ts";
+import { form8995a } from "../../forms/f1040/nodes/intermediate/form8995a/index.ts";
+import { form982 } from "../../forms/f1040/nodes/intermediate/form982/index.ts";
+import { form_1116 } from "../../forms/f1040/nodes/intermediate/form_1116/index.ts";
+import { form_8829 } from "../../forms/f1040/nodes/intermediate/form_8829/index.ts";
+import { ira_deduction_worksheet } from "../../forms/f1040/nodes/intermediate/ira_deduction_worksheet/index.ts";
+import { rate_28_gain_worksheet } from "../../forms/f1040/nodes/intermediate/rate_28_gain_worksheet/index.ts";
+import { schedule2 } from "../../forms/f1040/nodes/intermediate/schedule2/index.ts";
+import { schedule3 } from "../../forms/f1040/nodes/intermediate/schedule3/index.ts";
+import { schedule_b } from "../../forms/f1040/nodes/intermediate/schedule_b/index.ts";
+import { schedule_d } from "../../forms/f1040/nodes/intermediate/schedule_d/index.ts";
+import { schedule_f } from "../../forms/f1040/nodes/intermediate/schedule_f/index.ts";
+import { schedule_se } from "../../forms/f1040/nodes/intermediate/schedule_se/index.ts";
+import { unrecaptured_1250_worksheet } from "../../forms/f1040/nodes/intermediate/unrecaptured_1250_worksheet/index.ts";
 
 // ── Outputs ───────────────────────────────────────────────────────────────────
-import { f1040 } from "./f1040/outputs/f1040/index.ts";
-import { schedule1 } from "./f1040/outputs/schedule1/index.ts";
+import { f1040 } from "../../forms/f1040/nodes/outputs/f1040/index.ts";
+import { schedule1 } from "../../forms/f1040/nodes/outputs/schedule1/index.ts";
 
 export const registry: NodeRegistry = {
   // ── Start ──────────────────────────────────────────────────────────────────
