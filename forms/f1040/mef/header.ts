@@ -1,5 +1,25 @@
 import { element, elements } from "./xml.ts";
-import type { FilerIdentity } from "./types.ts";
+
+export enum FilingStatus {
+  Single = 1,
+  MarriedFilingJointly = 2,
+  MarriedFilingSeparately = 3,
+  HeadOfHousehold = 4,
+  QualifyingSurvivingSpouse = 5,
+}
+
+export interface FilerIdentity {
+  primarySSN: string;
+  nameLine1: string;
+  nameControl: string;
+  address: {
+    line1: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
+  filingStatus: FilingStatus;
+}
 
 export function buildReturnHeader(
   filer?: FilerIdentity,

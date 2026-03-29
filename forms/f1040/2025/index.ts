@@ -1,10 +1,10 @@
 import type { FormDefinition } from "../../../core/types/form-definition.ts";
-import type { FilerIdentity, MefFormsPending } from "../mef/types.ts";
+import type { FilerIdentity, MefFormsPending } from "./mef/types.ts";
 import { F1040_2025_CONFIG } from "./config.ts";
 import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
-import { buildMefXml } from "../mef/builder.ts";
-import { buildPending } from "../mef/pending.ts";
+import { buildMefXml } from "./mef/builder.ts";
+import { buildPending } from "./mef/pending.ts";
 
 export const f1040_2025: FormDefinition = {
   ...F1040_2025_CONFIG,
