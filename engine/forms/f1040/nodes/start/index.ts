@@ -74,28 +74,26 @@ import {
 } from "../intermediate/schedule_d/index.ts";
 
 const inputSchema = z.object({
-  // W-2s: dispatched as full array to w2 node (which aggregates internally)
-  w2s: z.array(w2ItemSchema).optional(),
-  // All other array input nodes: each node receives full array and processes internally
-  f1099ints: z.array(f1099intItemSchema).optional(),
-  f1099divs: z.array(f1099divItemSchema).optional(),
-  f1099necs: z.array(f1099necItemSchema).optional(),
-  f1099gs: z.array(f1099gItemSchema).optional(),
-  f1099ms: z.array(f1099mItemSchema).optional(),
-  f1099cs: z.array(f1099cItemSchema).optional(),
-  f1099ks: z.array(f1099kItemSchema).optional(),
-  f1099bs: z.array(f1099bItemSchema).optional(),
-  f1099rs: z.array(f1099rItemSchema).optional(),
-  f1098s: z.array(f1098ItemSchema).optional(),
-  f2441s: z.array(f2441ItemSchema).optional(),
-  f8812s: z.array(f8812ItemSchema).optional(),
-  f8863s: z.array(f8863ItemSchema).optional(),
-  f8949s: z.array(f8949ItemSchema).optional(),
+  w2: z.array(w2ItemSchema).optional(),
+  f1099int: z.array(f1099intItemSchema).optional(),
+  f1099div: z.array(f1099divItemSchema).optional(),
+  f1099nec: z.array(f1099necItemSchema).optional(),
+  f1099g: z.array(f1099gItemSchema).optional(),
+  f1099m: z.array(f1099mItemSchema).optional(),
+  f1099c: z.array(f1099cItemSchema).optional(),
+  f1099k: z.array(f1099kItemSchema).optional(),
+  f1099b: z.array(f1099bItemSchema).optional(),
+  f1099r: z.array(f1099rItemSchema).optional(),
+  f1098: z.array(f1098ItemSchema).optional(),
+  f2441: z.array(f2441ItemSchema).optional(),
+  f8812: z.array(f8812ItemSchema).optional(),
+  f8863: z.array(f8863ItemSchema).optional(),
+  f8949: z.array(f8949ItemSchema).optional(),
   schedule_a: scheduleAInputSchema.optional(),
-  schedule_cs: z.array(scheduleCItemSchema).optional(),
+  schedule_c: z.array(scheduleCItemSchema).optional(),
   schedule_d: scheduleDInputSchema.optional(),
-  schedule_es: z.array(scheduleEItemSchema).optional(),
-  ssas: z.array(ssaItemSchema).optional(),
+  schedule_e: z.array(scheduleEItemSchema).optional(),
+  ssa1099: z.array(ssaItemSchema).optional(),
   ext: extInputSchema.optional(),
   general: generalInputSchema.optional(),
 });
@@ -132,67 +130,67 @@ class StartNode extends TaxNode<typeof inputSchema> {
 
   compute(input: StartInput): NodeResult {
     const outputs: NodeOutput[] = [
-      ...(input.w2s?.length
-        ? [this.outputNodes.output(w2, { w2s: input.w2s })]
+      ...(input.w2?.length
+        ? [this.outputNodes.output(w2, { w2s: input.w2 })]
         : []),
-      ...(input.f1099ints?.length
-        ? [this.outputNodes.output(f1099int, { f1099ints: input.f1099ints })]
+      ...(input.f1099int?.length
+        ? [this.outputNodes.output(f1099int, { f1099ints: input.f1099int })]
         : []),
-      ...(input.f1099divs?.length
-        ? [this.outputNodes.output(f1099div, { f1099divs: input.f1099divs })]
+      ...(input.f1099div?.length
+        ? [this.outputNodes.output(f1099div, { f1099divs: input.f1099div })]
         : []),
-      ...(input.f1099necs?.length
-        ? [this.outputNodes.output(f1099nec, { f1099necs: input.f1099necs })]
+      ...(input.f1099nec?.length
+        ? [this.outputNodes.output(f1099nec, { f1099necs: input.f1099nec })]
         : []),
-      ...(input.f1099gs?.length
-        ? [this.outputNodes.output(f1099g, { f1099gs: input.f1099gs })]
+      ...(input.f1099g?.length
+        ? [this.outputNodes.output(f1099g, { f1099gs: input.f1099g })]
         : []),
-      ...(input.f1099ms?.length
-        ? [this.outputNodes.output(f1099m, { f1099ms: input.f1099ms })]
+      ...(input.f1099m?.length
+        ? [this.outputNodes.output(f1099m, { f1099ms: input.f1099m })]
         : []),
-      ...(input.f1099cs?.length
-        ? [this.outputNodes.output(f1099c, { f1099cs: input.f1099cs })]
+      ...(input.f1099c?.length
+        ? [this.outputNodes.output(f1099c, { f1099cs: input.f1099c })]
         : []),
-      ...(input.f1099ks?.length
-        ? [this.outputNodes.output(f1099k, { f1099ks: input.f1099ks })]
+      ...(input.f1099k?.length
+        ? [this.outputNodes.output(f1099k, { f1099ks: input.f1099k })]
         : []),
-      ...(input.f1099bs?.length
-        ? [this.outputNodes.output(f1099b, { f1099bs: input.f1099bs })]
+      ...(input.f1099b?.length
+        ? [this.outputNodes.output(f1099b, { f1099bs: input.f1099b })]
         : []),
-      ...(input.f1099rs?.length
-        ? [this.outputNodes.output(f1099r, { f1099rs: input.f1099rs })]
+      ...(input.f1099r?.length
+        ? [this.outputNodes.output(f1099r, { f1099rs: input.f1099r })]
         : []),
-      ...(input.f1098s?.length
-        ? [this.outputNodes.output(f1098, { f1098s: input.f1098s })]
+      ...(input.f1098?.length
+        ? [this.outputNodes.output(f1098, { f1098s: input.f1098 })]
         : []),
-      ...(input.f2441s?.length
-        ? [this.outputNodes.output(f2441, { f2441s: input.f2441s })]
+      ...(input.f2441?.length
+        ? [this.outputNodes.output(f2441, { f2441s: input.f2441 })]
         : []),
-      ...(input.f8812s?.length
-        ? [this.outputNodes.output(f8812, { f8812s: input.f8812s })]
+      ...(input.f8812?.length
+        ? [this.outputNodes.output(f8812, { f8812s: input.f8812 })]
         : []),
-      ...(input.f8863s?.length
-        ? [this.outputNodes.output(f8863, { f8863s: input.f8863s })]
+      ...(input.f8863?.length
+        ? [this.outputNodes.output(f8863, { f8863s: input.f8863 })]
         : []),
-      ...(input.f8949s?.length
-        ? [this.outputNodes.output(f8949, { f8949s: input.f8949s })]
+      ...(input.f8949?.length
+        ? [this.outputNodes.output(f8949, { f8949s: input.f8949 })]
         : []),
-      ...(input.schedule_cs?.length
+      ...(input.schedule_c?.length
         ? [
           this.outputNodes.output(scheduleC, {
-            schedule_cs: input.schedule_cs,
+            schedule_cs: input.schedule_c,
           }),
         ]
         : []),
-      ...(input.schedule_es?.length
+      ...(input.schedule_e?.length
         ? [
           this.outputNodes.output(scheduleE, {
-            schedule_es: input.schedule_es,
+            schedule_es: input.schedule_e,
           }),
         ]
         : []),
-      ...(input.ssas?.length
-        ? [this.outputNodes.output(ssa1099, { ssas: input.ssas })]
+      ...(input.ssa1099?.length
+        ? [this.outputNodes.output(ssa1099, { ssas: input.ssa1099 })]
         : []),
       ...(input.schedule_a
         ? [

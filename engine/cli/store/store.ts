@@ -10,7 +10,7 @@ import type {
 export function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
   const result: Record<string, unknown[]> = {};
   for (const [nodeType, entries] of Object.entries(inputs)) {
-    result[`${nodeType}s`] = entries.map((e) => e.fields);
+    result[nodeType] = entries.map((e) => e.fields);
   }
   return result;
 }
