@@ -25,7 +25,7 @@ Deno.test("root element tag", () => {
 
 Deno.test("root returnVersion attribute", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, 'returnVersion="2025v5.2"');
+  assertStringIncludes(xml, 'returnVersion="2025v3.0"');
 });
 
 Deno.test("root xmlns attribute", () => {
