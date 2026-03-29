@@ -1,54 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton → `f8949`
-//   2. The input wrapper key → `f8949s`
-//   3. The nodeType strings match the actual node routing strings
-//   4. Any AMBIGUITIES flagged below must be resolved against the implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   FLAG A — Digital asset parts G, H, I, J, K, L: context.md defines these
-//     checkboxes for 1099-DA transactions. Current itemSchema only includes A-F.
-//     Tests for digital asset parts will fail until the schema and logic are extended.
-//
-//   FLAG B — INHERITED date_acquired: context.md requires that "INHERITED" in
-//     date_acquired forces is_long_term=true regardless of part selection. Current
-//     implementation derives is_long_term from part only. Tests covering INHERITED
-//     will fail until that logic is added.
-//
-//   FLAG C — amt_cost_basis field: context.md states when amt_cost_basis differs
-//     from regular cost_basis, route to form6251 Line 2k. This field is not in the
-//     current schema. Tests will fail until the field and routing are added.
-//
-//   FLAG D — collectibles field: context.md states the collectibles checkbox
-//     triggers 28% rate gain worksheet routing. Not in current schema. Tests will
-//     fail until added.
-//
-//   FLAG E — qsbs_code / qsbs_amount fields: context.md defines Q1/Q2/Q3 codes
-//     for Section 1202 QSBS exclusions. Not in current schema. Tests will fail
-//     until added.
-//
-//   FLAG F — wash_sale_loss field: context.md says this auto-creates code W
-//     adjustment. Not currently in schema as a dedicated field. Tests will fail
-//     until added (tests using adjustment_amount for wash sales do pass).
-//
-//   FLAG G — loss_not_allowed boolean: context.md describes this creates code L.
-//     Not currently in schema. Tests will fail until added.
-//
-//   FLAG H — state_tax_withheld field: routes to state return (not tested here
-//     as it is state-only routing).
-//
-//   FLAG I — nodeType for 28% rate gain worksheet and form6251: verify exact
-//     nodeType strings against the implementation when those forms are added.
-//
-// ASSUMED nodeType STRINGS:
-//   schedule_d → "schedule_d"   (confirmed from imports)
-//   f1040      → "f1040"        (confirmed from imports)
-//   form6251   → "form6251"     (unverified — FLAG C/E)
-//   rate_28_gain_worksheet → "rate_28_gain_worksheet" (unverified — FLAG D/E)
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { QsbsCode, f8949, inputSchema } from "./index.ts";
 
@@ -313,9 +262,8 @@ Deno.test("routing: part F routes to schedule_d with is_long_term=true", () => {
   assertEquals(tx.part, "F");
 });
 
-// Digital asset short-term parts G, H, I — FLAG A
-Deno.test("routing: part G (digital asset, basis reported, short-term) routes to schedule_d with is_long_term=false [FLAG A]", () => {
-  // NOTE: This test will fail until digital asset parts G/H/I/J/K/L are added to the schema.
+// Digital asset short-term parts G, H, I
+Deno.test("routing: part G (digital asset, basis reported, short-term) routes to schedule_d with is_long_term=false", () => {
   const result = compute([minimalItem({ part: "G" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
@@ -324,7 +272,7 @@ Deno.test("routing: part G (digital asset, basis reported, short-term) routes to
   assertEquals(tx.is_long_term, false);
 });
 
-Deno.test("routing: part H (digital asset, basis not reported, short-term) routes to schedule_d with is_long_term=false [FLAG A]", () => {
+Deno.test("routing: part H (digital asset, basis not reported, short-term) routes to schedule_d with is_long_term=false", () => {
   const result = compute([minimalItem({ part: "H" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
@@ -333,7 +281,7 @@ Deno.test("routing: part H (digital asset, basis not reported, short-term) route
   assertEquals(tx.is_long_term, false);
 });
 
-Deno.test("routing: part I (no 1099-DA, short-term digital asset) routes to schedule_d with is_long_term=false [FLAG A]", () => {
+Deno.test("routing: part I (no 1099-DA, short-term digital asset) routes to schedule_d with is_long_term=false", () => {
   const result = compute([minimalItem({ part: "I" })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
@@ -342,8 +290,8 @@ Deno.test("routing: part I (no 1099-DA, short-term digital asset) routes to sche
   assertEquals(tx.is_long_term, false);
 });
 
-// Digital asset long-term parts J, K, L — FLAG A
-Deno.test("routing: part J (digital asset, basis reported, long-term) routes to schedule_d with is_long_term=true [FLAG A]", () => {
+// Digital asset long-term parts J, K, L
+Deno.test("routing: part J (digital asset, basis reported, long-term) routes to schedule_d with is_long_term=true", () => {
   const result = compute([
     minimalItem({ part: "J", date_acquired: "2022-01-01" }),
   ]);
@@ -354,7 +302,7 @@ Deno.test("routing: part J (digital asset, basis reported, long-term) routes to 
   assertEquals(tx.is_long_term, true);
 });
 
-Deno.test("routing: part K (digital asset, basis not reported, long-term) routes to schedule_d with is_long_term=true [FLAG A]", () => {
+Deno.test("routing: part K (digital asset, basis not reported, long-term) routes to schedule_d with is_long_term=true", () => {
   const result = compute([
     minimalItem({ part: "K", date_acquired: "2022-03-01" }),
   ]);
@@ -365,7 +313,7 @@ Deno.test("routing: part K (digital asset, basis not reported, long-term) routes
   assertEquals(tx.is_long_term, true);
 });
 
-Deno.test("routing: part L (no 1099-DA, long-term digital asset) routes to schedule_d with is_long_term=true [FLAG A]", () => {
+Deno.test("routing: part L (no 1099-DA, long-term digital asset) routes to schedule_d with is_long_term=true", () => {
   const result = compute([
     minimalItem({ part: "L", date_acquired: "2022-06-01" }),
   ]);
@@ -703,10 +651,10 @@ Deno.test("adjustment_codes: code Z (QOF deferral) — negative adjustment defer
 });
 
 // ---------------------------------------------------------------------------
-// 8. Special Cases — INHERITED date_acquired (FLAG B)
+// 8. Special Cases — INHERITED date_acquired
 // ---------------------------------------------------------------------------
 
-Deno.test("inherited: INHERITED date_acquired with Part II part is_long_term=true [FLAG B]", () => {
+Deno.test("inherited: INHERITED date_acquired with Part II part is_long_term=true", () => {
   // INHERITED always forces Part II (long-term)
   const result = compute([
     minimalItem({
@@ -740,11 +688,11 @@ Deno.test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 9. Collectibles (FLAG D) — collectibles checkbox routes to 28% rate worksheet
+// 9. Collectibles — collectibles checkbox routes to 28% rate worksheet (pending)
 // ---------------------------------------------------------------------------
 
-Deno.test("collectibles: collectibles=true does NOT change schedule_d routing [FLAG D]", () => {
-  // When collectibles flag is added to schema, it should trigger 28% worksheet
+Deno.test("collectibles: collectibles=true does NOT change schedule_d routing", () => {
+  // When collectibles field is added to schema, it should trigger 28% worksheet
   // For now, verify schedule_d output still present
   const result = compute([
     minimalItem({
@@ -759,7 +707,7 @@ Deno.test("collectibles: collectibles=true does NOT change schedule_d routing [F
 });
 
 // ---------------------------------------------------------------------------
-// 10. AMT Cost Basis (FLAG C) — amt_cost_basis routes to form6251 Line 2k
+// 10. AMT Cost Basis — amt_cost_basis routes to form6251 other_adjustments
 // ---------------------------------------------------------------------------
 
 Deno.test("amt_cost_basis: differs from cost_basis routes to form6251 with other_adjustments", () => {
