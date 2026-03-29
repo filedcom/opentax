@@ -1,13 +1,17 @@
 import { element, elements } from "./xml.ts";
 import type { FilerIdentity } from "./types.ts";
 
-export function buildReturnHeader(filer?: FilerIdentity): string {
-  const returnType = element("ReturnType", "1040");
-  const beginDate = element("TaxPeriodBeginDate", "2025-01-01");
-  const endDate = element("TaxPeriodEndDate", "2025-12-31");
+export function buildReturnHeader(
+  filer?: FilerIdentity,
+  year = 2025,
+  returnType = "1040",
+): string {
+  const returnTypeEl = element("ReturnType", returnType);
+  const beginDate = element("TaxPeriodBeginDate", `${year}-01-01`);
+  const endDate = element("TaxPeriodEndDate", `${year}-12-31`);
 
   if (filer === undefined) {
-    return elements("ReturnHeader", [returnType, beginDate, endDate]);
+    return elements("ReturnHeader", [returnTypeEl, beginDate, endDate]);
   }
 
   const usAddress = elements("USAddress", [
@@ -27,7 +31,7 @@ export function buildReturnHeader(filer?: FilerIdentity): string {
   const filingStatus = element("FilingStatusCd", String(filer.filingStatus));
 
   return elements("ReturnHeader", [
-    returnType,
+    returnTypeEl,
     beginDate,
     endDate,
     filerBlock,
