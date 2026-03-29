@@ -9,14 +9,8 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { form5329 } from "../../intermediate/form5329/index.ts";
 
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+// ─── Constants — mathematical/statutory rates, unchanged across years ─────────
 
-// IRC §223(b)(2)(A) — self-only HDHP annual contribution limit
-const SELF_ONLY_LIMIT = 4300;
-// IRC §223(b)(2)(B) — family HDHP annual contribution limit
-const FAMILY_LIMIT = 8550;
-// IRC §223(b)(3) — catch-up contribution for taxpayers age 55+
-const CATCHUP_LIMIT = 1000;
 // IRC §223(f)(4)(A) — additional tax rate on non-qualified HSA distributions
 const NON_QUALIFIED_PENALTY_RATE = 0.20;
 
@@ -61,19 +55,30 @@ type Form8889Input = z.infer<typeof inputSchema>;
 
 // Annual contribution limit based on coverage type and age
 // IRC §223(b)(2)–(3)
-function annualLimit(input: Form8889Input): number {
-  const base = input.coverage_type === CoverageType.Family ? FAMILY_LIMIT : SELF_ONLY_LIMIT;
-  return input.age_55_or_older === true ? base + CATCHUP_LIMIT : base;
+function annualLimit(
+  input: Form8889Input,
+  selfOnlyLimit: number,
+  familyLimit: number,
+  catchupLimit: number,
+): number {
+  const base = input.coverage_type === CoverageType.Family ? familyLimit : selfOnlyLimit;
+  return input.age_55_or_older === true ? base + catchupLimit : base;
 }
 
 // Part I, Line 13: Deductible amount of taxpayer HSA contributions
 // = min(taxpayer_contributions, limit - employer_contributions)
 // IRC §223(a)
-function deductibleContributions(input: Form8889Input): number {
+function deductibleContributions(
+  input: Form8889Input,
+  selfOnlyLimit: number,
+  familyLimit: number,
+  catchupLimit: number,
+): number {
   const taxpayer = input.taxpayer_hsa_contributions ?? 0;
   if (taxpayer <= 0) return 0;
   const employer = input.employer_hsa_contributions ?? 0;
-  const remainingLimit = Math.max(0, annualLimit(input) - employer);
+  const limit = annualLimit(input, selfOnlyLimit, familyLimit, catchupLimit);
+  const remainingLimit = Math.max(0, limit - employer);
   return Math.min(taxpayer, remainingLimit);
 }
 
@@ -84,8 +89,16 @@ function totalContributions(input: Form8889Input): number {
 
 // Part I: Excess contributions = max(0, total - limit)
 // IRC §4973(a)(2)
-function excessContributions(input: Form8889Input): number {
-  return Math.max(0, totalContributions(input) - annualLimit(input));
+function excessContributions(
+  input: Form8889Input,
+  selfOnlyLimit: number,
+  familyLimit: number,
+  catchupLimit: number,
+): number {
+  return Math.max(
+    0,
+    totalContributions(input) - annualLimit(input, selfOnlyLimit, familyLimit, catchupLimit),
+  );
 }
 
 // Part II: Taxable (non-qualified) distributions
@@ -136,11 +149,28 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, schedule2, form5329]);
 
+  // IRC §223(b)(2)(A) — self-only HDHP annual contribution limit (TY2025)
+  protected readonly selfOnlyLimit = 4300;
+  // IRC §223(b)(2)(B) — family HDHP annual contribution limit (TY2025)
+  protected readonly familyLimit = 8550;
+  // IRC §223(b)(3) — catch-up contribution for taxpayers age 55+ (TY2025)
+  protected readonly catchupLimit = 1000;
+
   compute(rawInput: Form8889Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const deductible = deductibleContributions(input);
-    const excess = excessContributions(input);
+    const deductible = deductibleContributions(
+      input,
+      this.selfOnlyLimit,
+      this.familyLimit,
+      this.catchupLimit,
+    );
+    const excess = excessContributions(
+      input,
+      this.selfOnlyLimit,
+      this.familyLimit,
+      this.catchupLimit,
+    );
     const taxable = taxableDistributions(input);
     const penalty = nonQualifiedPenalty(input, taxable);
 

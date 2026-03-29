@@ -8,27 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { FilingStatus } from "../../types.ts";
 
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
-// IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19
-const CONTRIBUTION_LIMIT = 7_000;
-const CONTRIBUTION_LIMIT_AGE_50 = 8_000;
-
-// Active participant phase-out: Single / HOH / QSS
-// Rev Proc 2024-40
-const PHASE_OUT_SINGLE_LOWER = 79_000;
-const PHASE_OUT_SINGLE_UPPER = 89_000;
-
-// Active participant phase-out: MFJ (covered taxpayer)
-const PHASE_OUT_MFJ_LOWER = 126_000;
-const PHASE_OUT_MFJ_UPPER = 146_000;
-
-// Non-covered MFJ spouse phase-out: taxpayer not active, but spouse is
-const PHASE_OUT_NON_COVERED_LOWER = 236_000;
-const PHASE_OUT_NON_COVERED_UPPER = 246_000;
-
-// MFS active participant phase-out (very narrow — Pub 590-A)
-const PHASE_OUT_MFS_LOWER = 0;
-const PHASE_OUT_MFS_UPPER = 10_000;
+// ─── Constants — IRS procedure constants, unchanged across years ──────────────
 
 // Rounding increment and minimum deduction (Pub 590-A Worksheet 1-2)
 const PHASE_OUT_ROUND = 10;
@@ -57,32 +37,46 @@ type IraDeductionInput = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Maximum contribution limit based on age
-function contributionLimit(input: IraDeductionInput): number {
-  return input.age_50_or_older === true ? CONTRIBUTION_LIMIT_AGE_50 : CONTRIBUTION_LIMIT;
+function contributionLimit(
+  input: IraDeductionInput,
+  limit: number,
+  limitAge50: number,
+): number {
+  return input.age_50_or_older === true ? limitAge50 : limit;
 }
 
 // Phase-out lower and upper bounds for this filer, or null if no phase-out applies.
 // Returns null when fully deductible (no employer plan coverage applies).
-function phaseOutRange(input: IraDeductionInput): [number, number] | null {
+function phaseOutRange(
+  input: IraDeductionInput,
+  phaseOutSingleLower: number,
+  phaseOutSingleUpper: number,
+  phaseOutMfjLower: number,
+  phaseOutMfjUpper: number,
+  phaseOutNonCoveredLower: number,
+  phaseOutNonCoveredUpper: number,
+  phaseOutMfsLower: number,
+  phaseOutMfsUpper: number,
+): [number, number] | null {
   const { filing_status, active_participant, spouse_active_participant } = input;
 
   if (filing_status === FilingStatus.MFS) {
-    // MFS: narrow $0–$10,000 range if active participant; otherwise fully deductible
+    // MFS: narrow range if active participant; otherwise fully deductible
     // (non-covered MFS spouse rule doesn't apply — Pub 590-A)
-    if (active_participant) return [PHASE_OUT_MFS_LOWER, PHASE_OUT_MFS_UPPER];
+    if (active_participant) return [phaseOutMfsLower, phaseOutMfsUpper];
     return null;
   }
 
   if (filing_status === FilingStatus.MFJ) {
-    if (active_participant) return [PHASE_OUT_MFJ_LOWER, PHASE_OUT_MFJ_UPPER];
+    if (active_participant) return [phaseOutMfjLower, phaseOutMfjUpper];
     if (spouse_active_participant === true) {
-      return [PHASE_OUT_NON_COVERED_LOWER, PHASE_OUT_NON_COVERED_UPPER];
+      return [phaseOutNonCoveredLower, phaseOutNonCoveredUpper];
     }
     return null;
   }
 
   // Single / HOH / QSS
-  if (active_participant) return [PHASE_OUT_SINGLE_LOWER, PHASE_OUT_SINGLE_UPPER];
+  if (active_participant) return [phaseOutSingleLower, phaseOutSingleUpper];
   return null;
 }
 
@@ -107,22 +101,6 @@ function reducedLimit(limit: number, magi: number, lower: number, upper: number)
   return rounded;
 }
 
-// Computes the deductible IRA amount (zero if no output needed)
-function deductibleAmount(input: IraDeductionInput): number {
-  if (input.ira_contribution <= 0) return 0;
-
-  const limit = contributionLimit(input);
-  const capped = Math.min(input.ira_contribution, limit);
-  const range = phaseOutRange(input);
-
-  if (range === null) return capped; // fully deductible
-
-  const [lower, upper] = range;
-  const allowed = reducedLimit(limit, input.magi, lower, upper);
-
-  return Math.min(capped, allowed);
-}
-
 // Builds schedule1 output, or empty array when nothing to report
 function schedule1Output(deductible: number): NodeOutput[] {
   if (deductible <= 0) return [];
@@ -136,9 +114,54 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
+  // IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19 — TY2025
+  protected readonly contributionLimit = 7_000;
+  protected readonly contributionLimitAge50 = 8_000;
+
+  // Active participant phase-out: Single / HOH / QSS — Rev Proc 2024-40
+  protected readonly phaseOutSingleLower = 79_000;
+  protected readonly phaseOutSingleUpper = 89_000;
+
+  // Active participant phase-out: MFJ (covered taxpayer)
+  protected readonly phaseOutMfjLower = 126_000;
+  protected readonly phaseOutMfjUpper = 146_000;
+
+  // Non-covered MFJ spouse phase-out: taxpayer not active, but spouse is
+  protected readonly phaseOutNonCoveredLower = 236_000;
+  protected readonly phaseOutNonCoveredUpper = 246_000;
+
+  // MFS active participant phase-out (very narrow — Pub 590-A)
+  protected readonly phaseOutMfsLower = 0;
+  protected readonly phaseOutMfsUpper = 10_000;
+
   compute(rawInput: IraDeductionInput): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const deductible = deductibleAmount(input);
+
+    if (input.ira_contribution <= 0) return { outputs: schedule1Output(0) };
+
+    const limit = contributionLimit(input, this.contributionLimit, this.contributionLimitAge50);
+    const capped = Math.min(input.ira_contribution, limit);
+    const range = phaseOutRange(
+      input,
+      this.phaseOutSingleLower,
+      this.phaseOutSingleUpper,
+      this.phaseOutMfjLower,
+      this.phaseOutMfjUpper,
+      this.phaseOutNonCoveredLower,
+      this.phaseOutNonCoveredUpper,
+      this.phaseOutMfsLower,
+      this.phaseOutMfsUpper,
+    );
+
+    let deductible: number;
+    if (range === null) {
+      deductible = capped; // fully deductible
+    } else {
+      const [lower, upper] = range;
+      const allowed = reducedLimit(limit, input.magi, lower, upper);
+      deductible = Math.min(capped, allowed);
+    }
+
     return { outputs: schedule1Output(deductible) };
   }
 }
