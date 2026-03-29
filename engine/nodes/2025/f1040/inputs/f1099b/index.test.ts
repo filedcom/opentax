@@ -1,25 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton: `b99`
-//   2. The input wrapper key `b99s` matches compute()'s parameter
-//   3. The nodeType strings: "form8949" and "f1040"
-//   4. The field name for federal withholding on f1040: "line25b_withheld_1099"
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   - context.md does not specify exact nodeType strings; "form8949" and "f1040"
-//     assumed based on routing description ("Form 8949", "Form 1040 Line 25b")
-//   - context.md describes per-item routing — node may emit one output per item
-//     (not aggregated). Tests reflect per-item outputs.
-//   - "adjustment_codes" field in context.md is described as up to 3 separate
-//     code+amount pairs (adj_code_1/adj_code_2/adj_code_3), but existing stub
-//     uses a single adjustment_codes/adjustment_amount. Tests use single field form.
-//   - gain_loss field name assumed (col h = col d − col e + col g)
-//   - is_long_term boolean assumed for Part I (A/B/C=false) vs Part II (D/E/F=true)
-//   - The "part" field name is used in place of "form_8949_checkbox" from context.md
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099b } from "./index.ts";
 
