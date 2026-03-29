@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -150,7 +153,7 @@ function niitTax(base: number): number {
 // Route NIIT to schedule2 line 12 when > 0
 function schedule2Output(niit: number): NodeOutput[] {
   if (niit <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line12_niit: niit } }];
+  return [output(schedule2, { line12_niit: niit })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -104,13 +104,13 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
 
   if (Object.keys(fields).length === 0) return [];
-  return [{ nodeType: schedule1.nodeType, fields: fields }];
+  return [output(schedule1, fields)];
 }
 
 function f1040Output(g99s: G99Items): NodeOutput[] {
   const withheld = totalFederalWithheld(g99s);
   if (withheld === 0) return [];
-  return [{ nodeType: f1040.nodeType, fields: { line25b_withheld_1099: withheld } }];
+  return [output(f1040, { line25b_withheld_1099: withheld })];
 }
 
 function scheduleFOutput(g99s: G99Items): NodeOutput[] {
@@ -122,7 +122,7 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
   if (marketGain > 0) fields.line5_ccc_gain = marketGain;
 
   if (Object.keys(fields).length === 0) return [];
-  return [{ nodeType: schedule_f.nodeType, fields: fields }];
+  return [output(schedule_f, fields)];
 }
 
 class F1099gNode extends TaxNode<typeof inputSchema> {

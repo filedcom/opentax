@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
@@ -75,19 +78,19 @@ function totalFicaTax(ss: number, medicare: number): number {
 // Route wages to Form 1040 line 1g when > 0
 function f1040Output(wages: number): NodeOutput[] {
   if (wages <= 0) return [];
-  return [{ nodeType: f1040.nodeType, fields: { line1g_wages_8919: wages } }];
+  return [output(f1040, { line1g_wages_8919: wages })];
 }
 
 // Route total FICA tax to Schedule 2 line 6 when > 0
 function schedule2Output(line13: number): NodeOutput[] {
   if (line13 <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line6_uncollected_8919: line13 } }];
+  return [output(schedule2, { line6_uncollected_8919: line13 })];
 }
 
 // Route wages to Schedule SE line 8c to offset SS wage base
 function scheduleSEOutput(wages: number): NodeOutput[] {
   if (wages <= 0) return [];
-  return [{ nodeType: schedule_se.nodeType, fields: { wages_8919: wages } }];
+  return [output(schedule_se, { wages_8919: wages })];
 }
 
 // ─── Node ─────────────────────────────────────────────────────────────────────

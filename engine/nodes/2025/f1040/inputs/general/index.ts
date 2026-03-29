@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -308,7 +311,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const f1040Input = buildF1040Input(parsed);
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, fields: f1040Input },
+      output(f1040, f1040Input),
     ];
 
     return { outputs };

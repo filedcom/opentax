@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
@@ -143,10 +143,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
 
     // Non-refundable portion → Schedule 3 Line 6b (→ Form 1040 Line 19)
     if (nonrefundableCTC > 0) {
-      outputs.push({
-        nodeType: schedule3.nodeType,
-        fields: { line6b_child_tax_credit: nonrefundableCTC },
-      });
+      outputs.push(output(schedule3, { line6b_child_tax_credit: nonrefundableCTC }));
     }
 
     // ACTC (refundable) → Form 1040 Line 28
@@ -171,10 +168,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
         const actc = Math.min(tentativeActc, earnedIncomeBased);
 
         if (actc > 0) {
-          outputs.push({
-            nodeType: f1040.nodeType,
-            fields: { line28_actc: actc },
-          });
+          outputs.push(output(f1040, { line28_actc: actc }));
         }
       }
     }

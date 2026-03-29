@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import { f1098, itemSchema as f1098ItemSchema } from "../inputs/f1098/index.ts";
 import { itemSchema as f1099rItemSchema, f1099r } from "../inputs/f1099r/index.ts";
 import { f2441, itemSchema as f2441ItemSchema } from "../inputs/f2441/index.ts";
@@ -99,28 +99,28 @@ class StartNode extends TaxNode<typeof inputSchema> {
 
   compute(input: StartInput): NodeResult {
     const outputs: NodeOutput[] = [
-      ...(input.w2s?.length ? [{ nodeType: w2.nodeType, fields: { w2s: input.w2s } }] : []),
-      ...(input.f1099ints?.length ? [{ nodeType: f1099int.nodeType, fields: { f1099ints: input.f1099ints } }] : []),
-      ...(input.f1099divs?.length ? [{ nodeType: f1099div.nodeType, fields: { f1099divs: input.f1099divs } }] : []),
-      ...(input.f1099necs?.length ? [{ nodeType: f1099nec.nodeType, fields: { f1099necs: input.f1099necs } }] : []),
-      ...(input.f1099gs?.length ? [{ nodeType: f1099g.nodeType, fields: { f1099gs: input.f1099gs } }] : []),
-      ...(input.f1099ms?.length ? [{ nodeType: f1099m.nodeType, fields: { f1099ms: input.f1099ms } }] : []),
-      ...(input.f1099cs?.length ? [{ nodeType: f1099c.nodeType, fields: { f1099cs: input.f1099cs } }] : []),
-      ...(input.f1099ks?.length ? [{ nodeType: f1099k.nodeType, fields: { f1099ks: input.f1099ks } }] : []),
-      ...(input.f1099bs?.length ? [{ nodeType: f1099b.nodeType, fields: { f1099bs: input.f1099bs } }] : []),
-      ...(input.f1099rs?.length ? [{ nodeType: f1099r.nodeType, fields: { f1099rs: input.f1099rs } }] : []),
-      ...(input.f1098s?.length ? [{ nodeType: f1098.nodeType, fields: { f1098s: input.f1098s } }] : []),
-      ...(input.f2441s?.length ? [{ nodeType: f2441.nodeType, fields: { f2441s: input.f2441s } }] : []),
-      ...(input.f8812s?.length ? [{ nodeType: f8812.nodeType, fields: { f8812s: input.f8812s } }] : []),
-      ...(input.f8863s?.length ? [{ nodeType: f8863.nodeType, fields: { f8863s: input.f8863s } }] : []),
-      ...(input.f8949s?.length ? [{ nodeType: f8949.nodeType, fields: { f8949s: input.f8949s } }] : []),
-      ...(input.schedule_cs?.length ? [{ nodeType: scheduleC.nodeType, fields: { schedule_cs: input.schedule_cs } }] : []),
-      ...(input.schedule_es?.length ? [{ nodeType: scheduleE.nodeType, fields: { schedule_es: input.schedule_es } }] : []),
-      ...(input.ssas?.length ? [{ nodeType: ssa1099.nodeType, fields: { ssas: input.ssas } }] : []),
-      ...(input.schedule_a ? [{ nodeType: scheduleA.nodeType, fields: input.schedule_a }] : []),
-      ...(input.d_screen ? [{ nodeType: scheduleD.nodeType, fields: input.d_screen }] : []),
-      ...(input.ext ? [{ nodeType: ext.nodeType, fields: input.ext }] : []),
-      ...(input.general ? [{ nodeType: general.nodeType, fields: input.general }] : []),
+      ...(input.w2s?.length ? [output(w2, { w2s: input.w2s })] : []),
+      ...(input.f1099ints?.length ? [output(f1099int, { f1099ints: input.f1099ints })] : []),
+      ...(input.f1099divs?.length ? [output(f1099div, { f1099divs: input.f1099divs })] : []),
+      ...(input.f1099necs?.length ? [output(f1099nec, { f1099necs: input.f1099necs })] : []),
+      ...(input.f1099gs?.length ? [output(f1099g, { f1099gs: input.f1099gs })] : []),
+      ...(input.f1099ms?.length ? [output(f1099m, { f1099ms: input.f1099ms })] : []),
+      ...(input.f1099cs?.length ? [output(f1099c, { f1099cs: input.f1099cs })] : []),
+      ...(input.f1099ks?.length ? [output(f1099k, { f1099ks: input.f1099ks })] : []),
+      ...(input.f1099bs?.length ? [output(f1099b, { f1099bs: input.f1099bs })] : []),
+      ...(input.f1099rs?.length ? [output(f1099r, { f1099rs: input.f1099rs })] : []),
+      ...(input.f1098s?.length ? [output(f1098, { f1098s: input.f1098s })] : []),
+      ...(input.f2441s?.length ? [output(f2441, { f2441s: input.f2441s })] : []),
+      ...(input.f8812s?.length ? [output(f8812, { f8812s: input.f8812s })] : []),
+      ...(input.f8863s?.length ? [output(f8863, { f8863s: input.f8863s })] : []),
+      ...(input.f8949s?.length ? [output(f8949, { f8949s: input.f8949s })] : []),
+      ...(input.schedule_cs?.length ? [output(scheduleC, { schedule_cs: input.schedule_cs })] : []),
+      ...(input.schedule_es?.length ? [output(scheduleE, { schedule_es: input.schedule_es })] : []),
+      ...(input.ssas?.length ? [output(ssa1099, { ssas: input.ssas })] : []),
+      ...(input.schedule_a ? [output(scheduleA, input.schedule_a)] : []),
+      ...(input.d_screen ? [output(scheduleD, input.d_screen)] : []),
+      ...(input.ext ? [output(ext, input.ext)] : []),
+      ...(input.general ? [output(general, input.general)] : []),
     ];
     return { outputs };
   }

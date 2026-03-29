@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
@@ -96,17 +96,11 @@ function itemOutputs(item: F2441Item): NodeOutput[] {
   const outputs: NodeOutput[] = [];
 
   if (taxableBenefits > 0) {
-    outputs.push({
-      nodeType: f1040.nodeType,
-      fields: { line1e_taxable_dep_care: taxableBenefits },
-    });
+    outputs.push(output(f1040, { line1e_taxable_dep_care: taxableBenefits }));
   }
 
   if (credit > 0) {
-    outputs.push({
-      nodeType: schedule3.nodeType,
-      fields: { line2_childcare_credit: credit },
-    });
+    outputs.push(output(schedule3, { line2_childcare_credit: credit }));
   }
 
   return outputs;

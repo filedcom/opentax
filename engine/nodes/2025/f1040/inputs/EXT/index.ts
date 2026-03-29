@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 
@@ -38,10 +38,7 @@ function balanceDue(line4: number, line5: number): number {
 // Route the extension payment to Schedule 3 Line 10 — this is the only tax output
 function extensionPaymentOutput(amountPaying: number): NodeOutput[] {
   if (amountPaying <= 0) return [];
-  return [{
-    nodeType: schedule3.nodeType,
-    fields: { line10_amount_paid_extension: amountPaying },
-  }];
+  return [output(schedule3, { line10_amount_paid_extension: amountPaying })];
 }
 
 class EXTNode extends TaxNode<typeof inputSchema> {

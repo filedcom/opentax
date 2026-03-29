@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
@@ -159,17 +162,11 @@ function creditOutputs(input: Form8839Input, fraction: number): NodeOutput[] {
   const outputs: NodeOutput[] = [];
 
   if (refundable > 0) {
-    outputs.push({
-      nodeType: f1040.nodeType,
-      fields: { line30_refundable_adoption: refundable },
-    });
+    outputs.push(output(f1040, { line30_refundable_adoption: refundable }));
   }
 
   if (nonrefundable > 0) {
-    outputs.push({
-      nodeType: schedule3.nodeType,
-      fields: { line6c_adoption_credit: nonrefundable },
-    });
+    outputs.push(output(schedule3, { line6c_adoption_credit: nonrefundable }));
   }
 
   return outputs;
@@ -185,10 +182,7 @@ function exclusionOutputs(input: Form8839Input, fraction: number): NodeOutput[] 
 
   if (taxable <= 0) return [];
 
-  return [{
-    nodeType: f1040.nodeType,
-    fields: { line1f_taxable_adoption_benefits: Math.round(taxable * 100) / 100 },
-  }];
+  return [output(f1040, { line1f_taxable_adoption_benefits: Math.round(taxable * 100) / 100 })];
 }
 
 // Merge multiple f1040 outputs into one (avoid duplicate nodeType entries).
@@ -203,7 +197,7 @@ function mergeF1040Outputs(outputs: NodeOutput[]): NodeOutput[] {
     {} as Record<string, unknown>,
   );
 
-  return [...otherOutputs, { nodeType: f1040.nodeType, fields: merged }];
+  return [...otherOutputs, output(f1040, merged)];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

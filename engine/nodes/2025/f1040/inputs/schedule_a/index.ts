@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
@@ -84,9 +84,9 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       (input.line_16_other_deductions ?? 0);
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, fields: { line12e_itemized_deductions: totalItemized } },
+      output(f1040, { line12e_itemized_deductions: totalItemized }),
       // AMT addback: taxes paid total (Line 7) flows to Form 6251 Line 2a
-      ...(taxesTotal > 0 ? [{ nodeType: form6251.nodeType, fields: { line2a_taxes_paid: taxesTotal } }] : []),
+      ...(taxesTotal > 0 ? [output(form6251, { line2a_taxes_paid: taxesTotal })] : []),
     ];
     return { outputs };
   }

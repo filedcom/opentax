@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { schedule2 } from "../schedule2/index.ts";
@@ -77,10 +80,17 @@ export const inputSchema = z.object({
   // Must be included in AMTI even though excluded for regular tax.
   // IRC §57(a)(5); Form 6251 Line 2g
   private_activity_bond_interest: z.number().nonnegative().optional(),
+  // Line 2g — Private activity bond interest (alias used by f1099int and f1099div)
+  line2g_pab_interest: z.number().nonnegative().optional(),
 
   // Line 2h — 7% of qualified small business stock gain excluded under §1202.
   // IRC §57(a)(7); Form 6251 Line 2h
   qsbs_adjustment: z.number().nonnegative().optional(),
+
+  // Line 2a — Taxes from Schedule A (state/local taxes deducted for regular tax)
+  // AMT addback: taxes deducted on Schedule A are added back to AMTI.
+  // IRC §56(b)(1)(A)(ii); Form 6251 Line 2a
+  line2a_taxes_paid: z.number().nonnegative().optional(),
 
   // Lines 2a–2e, 2j–2t, 3 — net of all other AMT adjustments and preference items.
   // Positive increases AMTI; negative decreases AMTI.
@@ -103,10 +113,12 @@ type Form6251Input = z.infer<typeof inputSchema>;
 function computeAmti(input: Form6251Input): number {
   return (
     input.regular_tax_income +
+    (input.line2a_taxes_paid ?? 0) +
     (input.iso_adjustment ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
     (input.private_activity_bond_interest ?? 0) +
+    (input.line2g_pab_interest ?? 0) +
     (input.qsbs_adjustment ?? 0) +
     (input.other_adjustments ?? 0)
   );
@@ -193,7 +205,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     if (amt === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule2.nodeType, fields: { line1_amt: amt } },
+      output(schedule2, { line1_amt: amt }),
     ];
 
     return { outputs };

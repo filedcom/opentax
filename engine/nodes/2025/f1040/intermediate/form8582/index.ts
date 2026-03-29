@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -134,10 +137,7 @@ function specialAllowance(input: Form8582Input, rentalNetLoss: number): number {
 
 function schedule1Output(allowedLoss: number): NodeOutput[] {
   if (allowedLoss <= 0) return [];
-  return [{
-    nodeType: schedule1.nodeType,
-    fields: { line17_schedule_e: -allowedLoss },
-  }];
+  return [output(schedule1, { line17_schedule_e: -allowedLoss })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

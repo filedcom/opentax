@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 
@@ -19,6 +22,8 @@ const ESA_ABLE_RATE = 0.10;
 
 export const inputSchema = z.object({
   // ── Part I: Early Distributions (line 1–4) ──────────────────────────────
+  // Distribution code from 1099-R Box 7 (informational, passed through from f1099r)
+  distribution_code: z.string().optional(),
   // Line 1: Early distributions includible in income (from f1099r, code 1)
   early_distribution: z.number().nonnegative().optional(),
   // Line 2: Exception amount (portion not subject to tax)
@@ -164,7 +169,7 @@ function totalTax(input: Form5329Input): number {
 // Route total Form 5329 tax to Schedule 2 line 8 when > 0
 function schedule2Output(total: number): NodeOutput[] {
   if (total <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line8_form5329_tax: total } }];
+  return [output(schedule2, { line8_form5329_tax: total })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

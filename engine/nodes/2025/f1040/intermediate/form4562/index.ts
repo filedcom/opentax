@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
@@ -241,17 +244,11 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     if (totalDepreciation > 0) {
-      outputs.push({
-        nodeType: schedule1.nodeType,
-        fields: { line13_depreciation: totalDepreciation },
-      });
+      outputs.push(output(schedule1, { line13_depreciation: totalDepreciation }));
     }
 
     if (amtAdjustment > 0) {
-      outputs.push({
-        nodeType: form6251.nodeType,
-        fields: { depreciation_adjustment: amtAdjustment },
-      });
+      outputs.push(output(form6251, { depreciation_adjustment: amtAdjustment }));
     }
 
     return { outputs };

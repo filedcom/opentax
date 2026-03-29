@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, UnimplementedTaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, UnimplementedTaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 
 // schedule_d cannot be imported directly — it imports f1099div which imports this node,
@@ -86,10 +86,7 @@ class Unrecaptured1250WorksheetNode extends TaxNode<typeof inputSchema> {
 
     return {
       outputs: [
-        {
-          nodeType: scheduleDRef.nodeType,
-          fields: { line19_unrecaptured_1250: line19 },
-        },
+        output(scheduleDRef, { line19_unrecaptured_1250: line19 }),
       ],
     };
   }

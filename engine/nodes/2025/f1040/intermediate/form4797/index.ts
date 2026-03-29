@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -76,11 +79,11 @@ function netSection1231GainForScheduleD(grossGain: number, priorLoss: number): n
 function scheduleDOutput(grossGain: number, priorLoss: number): NodeOutput | null {
   if (grossGain < 0) {
     // Net §1231 loss — report on Schedule D line 11 as a negative LT amount
-    return { nodeType: schedule_d.nodeType, fields: { line_11_form2439: grossGain } };
+    return output(schedule_d, { line_11_form2439: grossGain });
   }
   const ltGain = netSection1231GainForScheduleD(grossGain, priorLoss);
   if (ltGain === 0) return null;
-  return { nodeType: schedule_d.nodeType, fields: { line_11_form2439: ltGain } };
+  return output(schedule_d, { line_11_form2439: ltGain });
 }
 
 // Build Schedule 1 output for ordinary gain/loss.
@@ -95,7 +98,7 @@ function schedule1Output(
   const recaptured = recapturedAsOrdinary(grossGain, priorLoss);
   const total = recaptured + ordinaryGain;
   if (total === 0) return null;
-  return { nodeType: schedule1.nodeType, fields: { line4_other_gains: total } };
+  return output(schedule1, { line4_other_gains: total });
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

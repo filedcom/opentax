@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
@@ -111,19 +114,19 @@ function schedule1Output(deductible: number, taxable: number): NodeOutput[] {
   if (deductible > 0) input.line13_hsa_deduction = deductible;
   if (taxable > 0) input.line8z_other = taxable;
   if (Object.keys(input).length === 0) return [];
-  return [{ nodeType: schedule1.nodeType, fields: input }];
+  return [output(schedule1, input)];
 }
 
 // Excess contribution output → Form 5329 Part VII
 function excessOutput(excess: number): NodeOutput[] {
   if (excess <= 0) return [];
-  return [{ nodeType: form5329.nodeType, fields: { excess_hsa: excess } }];
+  return [output(form5329, { excess_hsa: excess })];
 }
 
 // 20% penalty output → Schedule 2 line 17b
 function penaltyOutput(penalty: number): NodeOutput[] {
   if (penalty <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line17b_hsa_penalty: penalty } }];
+  return [output(schedule2, { line17b_hsa_penalty: penalty })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

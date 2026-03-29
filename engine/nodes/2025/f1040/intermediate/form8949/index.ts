@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 
@@ -50,6 +53,17 @@ const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
 export const inputSchema = z.object({
   // Individual transactions deposited by upstream nodes (f1099b, etc.)
   transaction: accumulable(transactionSchema).optional(),
+  // Flat transaction fields (alternative to nested transaction object)
+  part: z.nativeEnum(Form8949Part).optional(),
+  description: z.string().optional(),
+  date_acquired: z.string().optional(),
+  date_sold: z.string().optional(),
+  proceeds: z.number().nonnegative().optional(),
+  cost_basis: z.number().nonnegative().optional(),
+  adjustment_codes: z.string().optional(),
+  adjustment_amount: z.number().optional(),
+  gain_loss: z.number().optional(),
+  is_long_term: z.boolean().optional(),
 });
 
 type Form8949Input = z.infer<typeof inputSchema>;
@@ -64,16 +78,41 @@ function normalizeTransactions(
   return Array.isArray(transaction) ? transaction : [transaction];
 }
 
+function flatFieldsToTransaction(input: Form8949Input): Transaction[] {
+  if (
+    input.part !== undefined &&
+    input.description !== undefined &&
+    input.date_acquired !== undefined &&
+    input.date_sold !== undefined &&
+    input.proceeds !== undefined &&
+    input.cost_basis !== undefined &&
+    input.gain_loss !== undefined &&
+    input.is_long_term !== undefined
+  ) {
+    return [{
+      part: input.part,
+      description: input.description,
+      date_acquired: input.date_acquired,
+      date_sold: input.date_sold,
+      proceeds: input.proceeds,
+      cost_basis: input.cost_basis,
+      adjustment_codes: input.adjustment_codes,
+      adjustment_amount: input.adjustment_amount,
+      gain_loss: input.gain_loss,
+      is_long_term: input.is_long_term,
+    }];
+  }
+  return [];
+}
+
 function hasTransactions(input: Form8949Input): boolean {
-  return normalizeTransactions(input.transaction).length > 0;
+  return normalizeTransactions(input.transaction).length > 0 ||
+    flatFieldsToTransaction(input).length > 0;
 }
 
 // Routes a single transaction to schedule_d via the `transaction` accumulation key.
 function routeTransaction(tx: Transaction): NodeOutput {
-  return {
-    nodeType: schedule_d.nodeType,
-    fields: { transaction: tx },
-  };
+  return output(schedule_d, { transaction: tx });
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -90,7 +129,10 @@ class Form8949IntermediateNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const transactions = normalizeTransactions(input.transaction);
+    const transactions = [
+      ...normalizeTransactions(input.transaction),
+      ...flatFieldsToTransaction(input),
+    ];
     return { outputs: transactions.map(routeTransaction) };
   }
 }

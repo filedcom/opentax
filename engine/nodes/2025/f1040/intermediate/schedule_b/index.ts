@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -80,7 +83,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     if (line6 > 0) f1040Fields.line3b_ordinary_dividends = line6;
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, fields: f1040Fields },
+      output(f1040, f1040Fields),
     ];
 
     return { outputs };

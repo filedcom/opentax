@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -83,6 +86,11 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({
   schedule_fs: z.array(itemSchema),
   filing_status: filingStatusSchema.optional(),
+  // Passthrough fields from upstream nodes routing to Schedule F
+  // Crop insurance proceeds from 1099-MISC Box 9 (IRC §451(d))
+  crop_insurance: z.number().nonnegative().optional(),
+  // Other farm income from 1099-NEC Box 1 routed to Schedule F
+  line8_other_income: z.number().nonnegative().optional(),
 });
 
 type ScheduleFItem = z.infer<typeof itemSchema>;
@@ -155,22 +163,22 @@ function perItemOutputs(item: ScheduleFItem, netProfit: number): NodeOutput[] {
 
   // Schedule SE (line 1a): only when net profit >= $400
   if (netProfit >= SE_TAX_THRESHOLD) {
-    outputs.push({ nodeType: schedule_se.nodeType, fields: { net_profit_schedule_f: netProfit } });
+    outputs.push(output(schedule_se, { net_profit_schedule_f: netProfit }));
   }
 
   // Form 8995 (QBI): only when net profit > 0
   if (netProfit > 0) {
-    outputs.push({ nodeType: form8995.nodeType, fields: { qbi_from_schedule_f: netProfit } });
+    outputs.push(output(form8995, { qbi_from_schedule_f: netProfit }));
   }
 
   // Form 8582 (passive): only when material participation = false
   if (item.line_e_material_participation === false) {
-    outputs.push({ nodeType: form8582.nodeType, fields: { passive_schedule_f: netProfit } });
+    outputs.push(output(form8582, { passive_schedule_f: netProfit }));
   }
 
   // Form 6198 (at-risk): only when net loss and "some investment not at risk" (box 36b)
   if (netProfit < 0 && item.line36_at_risk === "b") {
-    outputs.push({ nodeType: form6198.nodeType, fields: { schedule_f_loss: netProfit } });
+    outputs.push(output(form6198, { schedule_f_loss: netProfit }));
   }
 
   return outputs;
@@ -216,7 +224,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // Schedule 1 line 6: aggregate net farm profit/loss (always when there is activity)
-    outputs.push({ nodeType: schedule1.nodeType, fields: { line6_schedule_f: totalNetProfit } });
+    outputs.push(output(schedule1, { line6_schedule_f: totalNetProfit }));
 
     // Per-item downstream routing
     for (let i = 0; i < input.schedule_fs.length; i++) {
@@ -228,10 +236,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
       const loss = Math.abs(totalNetProfit);
       const threshold = eblThreshold(input.filing_status);
       if (loss > threshold) {
-        outputs.push({
-          nodeType: form461.nodeType,
-          fields: { excess_business_loss: loss - threshold },
-        });
+        outputs.push(output(form461, { excess_business_loss: loss - threshold }));
       }
     }
 

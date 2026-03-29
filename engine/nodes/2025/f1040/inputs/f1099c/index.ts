@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form982 } from "../../intermediate/form982/index.ts";
@@ -59,10 +59,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
       0,
     );
     if (totalTaxable > 0) {
-      outputs.push({
-        nodeType: schedule1.nodeType,
-        fields: { line8c_cod_income: totalTaxable },
-      });
+      outputs.push(output(schedule1, { line8c_cod_income: totalTaxable }));
     }
 
     // Aggregate excluded COD income → Form 982 line 2
@@ -71,21 +68,15 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
       0,
     );
     if (totalExcluded > 0) {
-      outputs.push({
-        nodeType: form982.nodeType,
-        fields: { line2_excluded_cod: totalExcluded },
-      });
+      outputs.push(output(form982, { line2_excluded_cod: totalExcluded }));
     }
 
     // Per-item property disposition outputs — each property event is distinct
     for (const item of propertyItems(c99s)) {
-      outputs.push({
-        nodeType: schedule_d.nodeType,
-        fields: {
+      outputs.push(output(schedule_d, {
           cod_property_fmv: item.box7_fmv_property,
           cod_debt_cancelled: item.box2_cod_amount,
-        },
-      });
+        }));
     }
 
     return { outputs };

@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -134,10 +137,7 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      {
-        nodeType: schedule3.nodeType,
-        fields: { line4_retirement_savings_credit: credit },
-      },
+      output(schedule3, { line4_retirement_savings_credit: credit }),
     ];
 
     return { outputs };
