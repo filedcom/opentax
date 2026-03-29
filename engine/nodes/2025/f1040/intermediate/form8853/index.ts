@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
@@ -195,11 +195,11 @@ function schedule1Output(input: Form8853Input): NodeOutput[] {
 
   if (deduction <= 0 && totalTaxableIncome <= 0) return [];
 
-  const s1Input: Record<string, number> = {};
+  const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (totalTaxableIncome > 0) s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   if (deduction > 0) s1Input.line23_archer_msa_deduction = deduction;
 
-  return [output(schedule1, s1Input)];
+  return [output(schedule1, s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
 }
 
 // Schedule 2 output: line 17e (20% Archer MSA tax) and line 17f (50% Medicare Advantage MSA tax)
@@ -209,11 +209,11 @@ function schedule2Output(input: Form8853Input): NodeOutput[] {
 
   if (archerTax <= 0 && medicareTax <= 0) return [];
 
-  const s2Input: Record<string, number> = {};
+  const s2Input: Partial<z.infer<typeof schedule2["inputSchema"]>> = {};
   if (archerTax > 0) s2Input.line17e_archer_msa_tax = archerTax;
   if (medicareTax > 0) s2Input.line17f_medicare_advantage_msa_tax = medicareTax;
 
-  return [output(schedule2, s2Input)];
+  return [output(schedule2, s2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>)];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

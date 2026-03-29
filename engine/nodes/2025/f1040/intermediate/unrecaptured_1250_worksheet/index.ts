@@ -4,8 +4,17 @@ import { TaxNode, UnimplementedTaxNode, output } from "../../../../../core/types
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 
 // schedule_d cannot be imported directly — it imports f1099div which imports this node,
-// creating a circular dependency. Use a nodeType-only stub for graph topology declarations.
-const scheduleDRef = new UnimplementedTaxNode("schedule_d");
+// creating a circular dependency. Use a typed stub to preserve the at-least-one constraint
+// while avoiding the circular import.
+const scheduleDStubSchema = z.object({
+  line19_unrecaptured_1250: z.number().nonnegative().optional(),
+});
+
+class ScheduleDStubNode extends UnimplementedTaxNode {
+  override readonly inputSchema = scheduleDStubSchema;
+}
+
+const scheduleDRef = new ScheduleDStubNode("schedule_d");
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 

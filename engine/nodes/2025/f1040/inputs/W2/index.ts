@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form2441 } from "../../intermediate/form2441/index.ts";
 import { form4137 } from "../../intermediate/form4137/index.ts";
@@ -216,10 +216,11 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   if (items.length === 0) return [];
   const totalWages = items.reduce((sum, item) => sum + (item.box5_medicare_wages ?? 0), 0);
   const totalWithheld = items.reduce((sum, item) => sum + (item.box6_medicare_withheld ?? 0), 0);
-  return [output(form8959, {
-      medicare_wages: totalWages > 0 ? totalWages : undefined,
-      medicare_withheld: totalWithheld > 0 ? totalWithheld : undefined,
-    })];
+  const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
+  if (totalWages > 0) fields.medicare_wages = totalWages;
+  if (totalWithheld > 0) fields.medicare_withheld = totalWithheld;
+  if (Object.keys(fields).length === 0) return [];
+  return [output(form8959, fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>)];
 }
 
 function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
@@ -262,13 +263,13 @@ function scheduleAOutput(w2s: W2Items): NodeOutput[] {
     (sum, item) => sum + (item.box19_local_withheld ?? 0),
     0,
   );
-  const input: Record<string, number> = {};
-  if (line5a > 0) input.line5a_state_taxes = line5a;
-  if (line5b > 0) input.line5b_state_income_taxes = line5b;
-  if (line5c > 0) input.line5c_local_income_taxes = line5c;
-  return Object.keys(input).length > 0
-    ? [output(schedule_a, input)]
-    : [];
+  // line5a = SDI/PFML (state income tax variant)
+  // line5b = state income taxes withheld (box 17)
+  // line5c = local income taxes withheld (box 19)
+  // All three contribute to Schedule A line 5a (state and local income taxes)
+  const stateTaxTotal = line5a + line5b + line5c;
+  if (stateTaxTotal === 0) return [];
+  return [output(schedule_a, { line_5a_tax_amount: stateTaxTotal })];
 }
 
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
@@ -293,17 +294,17 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const deg = sum(Box12Code.D, Box12Code.E, Box12Code.G);
   if (deg > 0) outputs.push(output(form8880, { elective_deferrals: deg }));
 
-  const schedule2Input: Record<string, number> = {};
+  const schedule2Input: Partial<z.infer<typeof schedule2["inputSchema"]>> = {};
   const ab = sum(Box12Code.A, Box12Code.B);
   if (ab > 0) schedule2Input.uncollected_fica = ab;
   const mn = sum(Box12Code.M, Box12Code.N);
   if (mn > 0) schedule2Input.uncollected_fica_gtl = mn;
   const k = sum(Box12Code.K);
   if (k > 0) schedule2Input.golden_parachute_excise = k;
-  const z = sum(Box12Code.Z);
-  if (z > 0) schedule2Input.section409a_excise = z;
+  const zCode = sum(Box12Code.Z);
+  if (zCode > 0) schedule2Input.section409a_excise = zCode;
   if (Object.keys(schedule2Input).length > 0) {
-    outputs.push(output(schedule2, schedule2Input));
+    outputs.push(output(schedule2, schedule2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>));
   }
 
   return outputs;
@@ -349,7 +350,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
-      output(f1040, f1040Fields),
+      output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 
     return { outputs };

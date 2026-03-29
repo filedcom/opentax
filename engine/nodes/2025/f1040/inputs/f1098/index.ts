@@ -142,13 +142,16 @@ function scheduleAOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleAInterest(items);
   const points = aggregateScheduleAPoints(items);
 
-  const inp: Record<string, number> = {};
-  if (interest > 0) inp.line8a_mortgage_interest_1098 = interest;
-  if (points > 0) inp.line8c_points_no_1098 = points;
-
-  return Object.keys(inp).length > 0
-    ? [output(schedule_a, inp)]
-    : [];
+  if (interest > 0 && points > 0) {
+    return [output(schedule_a, { line_8a_mortgage_interest_1098: interest, line_8c_points_no_1098: points })];
+  }
+  if (interest > 0) {
+    return [output(schedule_a, { line_8a_mortgage_interest_1098: interest })];
+  }
+  if (points > 0) {
+    return [output(schedule_a, { line_8c_points_no_1098: points })];
+  }
+  return [];
 }
 
 function scheduleEOutput(items: F1098Items): NodeOutput[] {

@@ -14,10 +14,15 @@ export type NodeResult = {
   readonly outputs: readonly NodeOutput[];
 };
 
+// Requires at least one key from T to be present
+export type AtLeastOne<T> = {
+  [K in keyof T]: Pick<Required<T>, K> & Partial<Omit<T, K>>;
+}[keyof T];
+
 // Standalone factory — type-safe fields, usable in pure helper functions
 export function output<T extends TaxNode<z.ZodTypeAny>>(
   node: T,
-  fields: Partial<z.infer<T["inputSchema"]>>,
+  fields: AtLeastOne<z.infer<T["inputSchema"]>>,
 ): NodeOutput {
   return { nodeType: node.nodeType, fields };
 }

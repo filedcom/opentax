@@ -400,7 +400,7 @@ Deno.test("box_14_state_sdi_pfml_routes_to_schedule_a_line5a: Box 14 with is_sta
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
   assertEquals(
-    typeof (out!.fields as Record<string, unknown>).line5a_state_taxes,
+    typeof (out!.fields as Record<string, unknown>).line_5a_tax_amount,
     "number",
   );
 });
@@ -2089,7 +2089,7 @@ Deno.test("box_14_state_sdi_pfml_flows_to_schedule_a: Box 14 is_state_sdi_pfml =
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
   const stateInput = (out!.fields as Record<string, unknown>)
-    .line5a_state_taxes as number;
+    .line_5a_tax_amount as number;
   assertEquals(stateInput >= 600, true);
 });
 

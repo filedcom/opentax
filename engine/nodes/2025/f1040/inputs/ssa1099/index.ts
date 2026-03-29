@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -58,7 +58,7 @@ function f1040Output(items: SsaItem[]): NodeOutput[] {
   const netTotal = totalNetBenefits(items);
   const withheldTotal = totalWithheld(items);
 
-  const fields: Record<string, number> = {};
+  const fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
   if (netTotal > 0) {
     fields.line6a_ss_gross = netTotal;
   }
@@ -69,7 +69,7 @@ function f1040Output(items: SsaItem[]): NodeOutput[] {
   if (Object.keys(fields).length === 0) {
     return [];
   }
-  return [output(f1040, fields)];
+  return [output(f1040, fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>)];
 }
 
 class Ssa1099Node extends TaxNode<typeof inputSchema> {

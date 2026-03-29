@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { NodeOutput, TaxNode } from "./tax-node.ts";
+import type { AtLeastOne, NodeOutput, TaxNode } from "./tax-node.ts";
 import { output } from "./tax-node.ts";
 
 // Class-level declaration — holds node instances for graph topology + type-checking
@@ -20,7 +20,7 @@ export class OutputNodes<TNodes extends readonly TaxNode<z.ZodTypeAny>[]> {
    */
   output<T extends TNodes[number]>(
     node: T,
-    fields: Partial<z.infer<T["inputSchema"]>>,
+    fields: AtLeastOne<z.infer<T["inputSchema"]>>,
   ): NodeOutput {
     return output(node, fields);
   }

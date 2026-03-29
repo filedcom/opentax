@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -135,11 +135,11 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
       outputs.push(output(schedule1, { line18_early_withdrawal: totalBox2 }));
     }
 
-    const f1040Fields: Record<string, number> = {};
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (totalBox4 > 0) f1040Fields.line25b_withheld_1099 = totalBox4;
     if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push(output(f1040, f1040Fields));
+      outputs.push(output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
 
     if (totalBox9 > 0) {

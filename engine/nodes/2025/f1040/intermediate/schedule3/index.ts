@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -104,12 +104,12 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
 
     if (credits === 0 && payments === 0) return { outputs: [] };
 
-    const f1040Input: Record<string, number> = {};
+    const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
 
     const outputs: NodeOutput[] = [
-      output(f1040, f1040Input),
+      output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
     return { outputs };
