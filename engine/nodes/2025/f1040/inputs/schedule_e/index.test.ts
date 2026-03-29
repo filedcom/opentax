@@ -1,23 +1,8 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton (e.g. `scheduleE`)
-//   2. The input wrapper key (e.g. `schedule_es`) matches compute()'s parameter
-//   3. The nodeType strings match the actual node routing strings:
-//      - schedule1, form8582, form6198, form8960, form8995, form4797, form6251, schedule_a, form8990, form4562
-//   4. Any AMBIGUITIES flagged below must be resolved against the implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   - Exact nodeType strings confirmed: form8582, form6198, form8960, form8995, form4797, form6251, schedule_a, form8990, form4562
-//   - schedule1 output field name for Schedule E net (likely `line5_schedule_e` per Schedule 1 Line 5)
-//   - Whether section_179 with activity_type A/B throws or is silently zeroed
-//   - Whether section_179 $2,500,000 maximum is Zod-enforced (throws) or capped silently
-//   - Whether >6 expense_other_lines items throws or is truncated
-//   - MAGI thresholds ($100K/$150K) are computed on Form 8582, not this node — not tested here
-//   - "days_owned_in_year required when tax_court_method=true and not full year" —
-//     unclear if "not full year" is inferred or requires explicit flag
+// UNRESOLVED ITEMS:
+//   - section_179 $2,500,000 maximum: schema uses z.number().nonnegative() with no .max() —
+//     values above $2.5M are accepted without error; not Zod-enforced and not capped silently
+//   - days_owned_in_year required when tax_court_method=true: no validation in validateItem()
+//     enforcing this; the field is optional and accepted even when tax_court_method=true
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, scheduleE } from "./index.ts";

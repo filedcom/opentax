@@ -1,25 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton (e.g. `scheduleC`)
-//   2. The input wrapper key (e.g. `schedule_cs`) matches compute()'s parameter
-//   3. The nodeType strings used below — verify against actual node routing strings:
-//      - Schedule 1 output: likely "schedule1" — verify
-//      - Schedule SE output: likely "schedule_se" — verify
-//      - Form 8995 / QBI output: likely "form8995" — verify
-//      - Form 8582 (passive): likely "form8582" — verify
-//      - Form 6198 (at-risk): likely "form6198" — verify
-//      - Form 6251 (AMT/depletion): likely "form6251" — verify
-//      - Form 8990 (business interest): likely "form8990" — verify
-//      - Form 461 (excess business loss): likely "form461" — verify
-//   4. AMBIGUITIES (must resolve against implementation before running):
-//      a. meals_dot_worker / meals_as_wages field names — context does not specify exact names
-//      b. large_business flag for §163(j) — may be computed from gross receipts or a boolean
-//      c. clergy_schedule_c SE threshold ($108.28) — verify how clergy flag affects SE routing
-//      d. line_30_home_office — verify whether node accepts dollar amount directly or sq_ft input
-//      e. line_32_at_risk behavior when there is NO net loss — may be ignored or may throw
-// These tests define the IRS-correct behaviour — if a test fails, fix the implementation, not the test.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { scheduleC, itemSchema } from "./index.ts";
 import { z } from "zod";
