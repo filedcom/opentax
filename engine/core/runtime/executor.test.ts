@@ -161,10 +161,10 @@ Deno.test("executor: optional node skip — node with no deposited inputs is sil
   assertEquals(result.pending["mock_optional"], undefined);
 });
 
-Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2 node aggregates internally, f1040 receives scalar", () => {
-  // New model: start sends { w2s: [all w2s] } in one output.
+Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2 node aggregates internally, f1040 receives scalar (not array)", () => {
+  // Start sends { w2s: [all w2s] } in one output — not one per item.
   // W2 node receives the full array and computes the total internally.
-  // f1040 receives a single scalar wages value (not an array).
+  // The engine never promotes scalars to arrays; aggregation is the node's responsibility.
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },
     { id: "mock_w2", nodeType: "mock_w2" },
@@ -179,7 +179,6 @@ Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
     compute(input: z.infer<typeof startSchema>): NodeResult {
-      // Dispatch all w2s as a single array — not one per instance
       return {
         outputs: [{ nodeType: "mock_w2", fields: { w2s: input.w2s } }],
       };
@@ -196,50 +195,10 @@ Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2
     w2s: [{ wages: 85000 }, { wages: 45000 }],
   });
 
-  // W2 node received the full array and deposited a scalar total
   const f1040Pending = result.pending["mock_f1040"];
   assertEquals(typeof f1040Pending?.["wages"], "number");
   assertEquals(f1040Pending?.["wages"], 130000);
-  // NOT an array
   assertEquals(Array.isArray(f1040Pending?.["wages"]), false);
-});
-
-Deno.test("executor: no array accumulation in pending dict — scalar deposits only", () => {
-  // Under the new model, the engine never promotes scalars to arrays.
-  // Aggregation is the node's responsibility, not the engine's.
-  const plan: readonly ExecutionStep[] = [
-    { id: "start", nodeType: "start" },
-    { id: "mock_w2", nodeType: "mock_w2" },
-    { id: "mock_f1040", nodeType: "mock_f1040" },
-  ];
-
-  const startSchema = z.object({
-    w2s: z.array(z.object({ wages: z.number() })),
-  });
-  class TestStart extends TaxNode<typeof startSchema> {
-    readonly nodeType = "start";
-    readonly inputSchema = startSchema;
-    readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof startSchema>): NodeResult {
-      return {
-        outputs: [{ nodeType: "mock_w2", fields: { w2s: input.w2s } }],
-      };
-    }
-  }
-
-  const registry: NodeRegistry = {
-    start: new TestStart(),
-    mock_w2: new MockW2ArrayNode(),
-    mock_f1040: new MockF1040Node(),
-  };
-
-  const result = execute(plan, registry, {
-    w2s: [{ wages: 85000 }, { wages: 45000 }, { wages: 20000 }],
-  });
-
-  // f1040 should have a single scalar 150000, not an array
-  assertEquals(result.pending["mock_f1040"]?.["wages"], 150000);
-  assertEquals(Array.isArray(result.pending["mock_f1040"]?.["wages"]), false);
 });
 
 Deno.test("executor: stateless — same inputs produce identical outputs on repeated execution", () => {
