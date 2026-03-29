@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -41,6 +44,8 @@ export const inputSchema = z.object({
   ira_contribution: z.number().nonnegative(),
   // Whether the taxpayer is covered by an employer retirement plan (W-2 Box 13)
   active_participant: z.boolean(),
+  // Alias for active_participant (from W-2 Box 13 routing)
+  covered_by_retirement_plan: z.boolean().optional(),
   // Age 50 or older — enables $1,000 catch-up contribution
   age_50_or_older: z.boolean().optional(),
   // Whether the spouse is covered by an employer plan (MFJ only)
@@ -121,7 +126,7 @@ function deductibleAmount(input: IraDeductionInput): number {
 // Builds schedule1 output, or empty array when nothing to report
 function schedule1Output(deductible: number): NodeOutput[] {
   if (deductible <= 0) return [];
-  return [{ nodeType: schedule1.nodeType, fields: { line20_ira_deduction: deductible } }];
+  return [output(schedule1, { line20_ira_deduction: deductible })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

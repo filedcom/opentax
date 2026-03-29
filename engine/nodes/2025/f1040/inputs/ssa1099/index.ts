@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -69,7 +69,7 @@ function f1040Output(items: SsaItem[]): NodeOutput[] {
   if (Object.keys(fields).length === 0) {
     return [];
   }
-  return [{ nodeType: f1040.nodeType, fields: fields }];
+  return [output(f1040, fields)];
 }
 
 class Ssa1099Node extends TaxNode<typeof inputSchema> {

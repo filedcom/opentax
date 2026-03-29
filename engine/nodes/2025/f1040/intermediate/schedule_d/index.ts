@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -288,17 +291,14 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     const capitalGainForReturn = line16 >= 0 ? line16 : Math.max(limit, line16);
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, fields: { line7_capital_gain: capitalGainForReturn } },
+      output(f1040, { line7_capital_gain: capitalGainForReturn }),
     ];
 
     // Line 18: 28% Rate Gain Worksheet — only when line 17 = Yes
     if (line17Yes) {
       const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs);
       if (gain28Pct > 0) {
-        outputs.push({
-          nodeType: rate_28_gain_worksheet.nodeType,
-          fields: { collectibles_gain_from_8949: gain28Pct },
-        });
+        outputs.push(output(rate_28_gain_worksheet, { collectibles_gain_from_8949: gain28Pct }));
       }
     }
 

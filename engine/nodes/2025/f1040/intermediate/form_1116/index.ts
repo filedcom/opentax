@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 
@@ -94,7 +97,7 @@ function allowedCredit(input: Form1116Input): number {
 // Only emit when credit > 0
 function schedule3Output(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line1_foreign_tax_credit: credit } }];
+  return [output(schedule3, { line1_foreign_tax_credit: credit })];
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────

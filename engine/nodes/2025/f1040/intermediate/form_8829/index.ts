@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleC as schedule_c } from "../../inputs/schedule_c/index.ts";
 
@@ -139,7 +142,7 @@ class Form8829Node extends TaxNode<typeof inputSchema> {
     if (deduction <= 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule_c.nodeType, fields: { line_30_home_office: deduction } },
+      output(schedule_c, { line_30_home_office: deduction }),
     ];
 
     return { outputs };

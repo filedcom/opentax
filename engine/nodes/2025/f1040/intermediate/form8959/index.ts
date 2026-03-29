@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -140,13 +143,13 @@ function totalWithheld(input: Form8959Input): number {
 // Route total AMT to schedule2 line 11 when > 0
 function schedule2Output(amtTotal: number): NodeOutput[] {
   if (amtTotal <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line11_additional_medicare: amtTotal } }];
+  return [output(schedule2, { line11_additional_medicare: amtTotal })];
 }
 
 // Route total withholding to f1040 line 25c when > 0
 function f1040Output(withheld: number): NodeOutput[] {
   if (withheld <= 0) return [];
-  return [{ nodeType: f1040.nodeType, fields: { line25c_additional_medicare_withheld: withheld } }];
+  return [output(f1040, { line25c_additional_medicare_withheld: withheld })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

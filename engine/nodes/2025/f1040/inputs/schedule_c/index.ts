@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_se } from "../../intermediate/schedule_se/index.ts";
@@ -122,6 +122,19 @@ export const itemSchema = z.object({
 export const inputSchema = z.object({
   schedule_cs: z.array(itemSchema),
   filing_status: z.string().optional(),
+  // Line 30 — Home office deduction (from Form 8829 line 35)
+  // IRC §280A; Form 8829 line 35 → Schedule C line 30
+  line_30_home_office: z.number().nonnegative().optional(),
+  // Line 1 — Gross receipts or sales (from 1099-MISC, 1099-NEC, etc.)
+  // Passthrough from upstream nodes routing to Schedule C
+  line1_gross_receipts: z.number().nonnegative().optional(),
+  // Statutory employee wages (from W-2 Box 13)
+  // IRC §3121(d)(3); W-2 box 13 statutory employee checkbox
+  statutory_wages: z.number().nonnegative().optional(),
+  // Federal withholding from statutory employee W-2 Box 2
+  withholding: z.number().nonnegative().optional(),
+  // Mortgage interest from 1098 Box 1 routed to Schedule C (business use)
+  line16a_interest_mortgage: z.number().nonnegative().optional(),
 });
 
 type ScheduleCItem = z.infer<typeof itemSchema>;
@@ -214,27 +227,24 @@ function seThreshold(item: ScheduleCItem): number {
 function deductionOutputs(item: ScheduleCItem, netProfit: number): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (item.line_12_depletion && item.line_12_depletion > 0) {
-    outputs.push({ nodeType: form6251.nodeType, fields: { depletion_preference: item.line_12_depletion } });
+    outputs.push(output(form6251, { other_adjustments: item.line_12_depletion }));
   }
   if (!isSeExempt(item) && netProfit >= seThreshold(item)) {
-    outputs.push({ nodeType: schedule_se.nodeType, fields: { net_profit_schedule_c: netProfit } });
-    outputs.push({ nodeType: form8995.nodeType, fields: { qbi_from_schedule_c: netProfit } });
+    outputs.push(output(schedule_se, { net_profit_schedule_c: netProfit }));
+    outputs.push(output(form8995, { qbi_from_schedule_c: netProfit }));
   }
   if (item.line_g_material_participation === false) {
-    outputs.push({ nodeType: form8582.nodeType, fields: { passive_schedule_c: netProfit } });
+    outputs.push(output(form8582, { passive_schedule_c: netProfit }));
   }
   if (netProfit < 0 && item.line_32_at_risk === "b") {
-    outputs.push({ nodeType: form6198.nodeType, fields: { schedule_c_loss: netProfit } });
+    outputs.push(output(form6198, { schedule_c_loss: netProfit }));
   }
   if (item.subject_to_163j === true &&
     ((item.line_16a_interest_mortgage ?? 0) + (item.line_16b_interest_other ?? 0)) > 0) {
-    outputs.push({
-      nodeType: form8990.nodeType,
-      fields: {
-        business_interest_schedule_c:
+    outputs.push(output(form8990, {
+        business_interest_expense:
           (item.line_16a_interest_mortgage ?? 0) + (item.line_16b_interest_other ?? 0),
-      },
-    });
+      }));
   }
   return outputs;
 }
@@ -270,7 +280,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
 
     // Aggregate net profits → single schedule1 output
     const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
-    outputs.push({ nodeType: schedule1.nodeType, fields: { line3_schedule_c: totalNetProfit } });
+    outputs.push(output(schedule1, { line3_schedule_c: totalNetProfit }));
 
     // Per-item downstream routing (SE, QBI, passive, at-risk, depletion, interest)
     for (let i = 0; i < input.schedule_cs.length; i++) {
@@ -284,7 +294,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         ? EBL_THRESHOLD_MFJ
         : EBL_THRESHOLD_SINGLE;
       if (loss > threshold) {
-        outputs.push({ nodeType: form461.nodeType, fields: { excess_business_loss: loss - threshold } });
+        outputs.push(output(form461, { excess_business_loss: loss - threshold }));
       }
     }
 

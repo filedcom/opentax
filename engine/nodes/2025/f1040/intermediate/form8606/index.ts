@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -153,10 +156,7 @@ function buildF1040Output(
   const totalTaxable = taxableTraditionalDist + taxableConversionAmt + taxableRoth;
   if (totalTaxable <= 0) return null;
 
-  return {
-    nodeType: f1040.nodeType,
-    fields: { line4b_ira_taxable: totalTaxable },
-  };
+  return output(f1040, { line4b_ira_taxable: totalTaxable });
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────

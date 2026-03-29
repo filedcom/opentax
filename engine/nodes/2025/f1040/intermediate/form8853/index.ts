@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
@@ -196,7 +199,7 @@ function schedule1Output(input: Form8853Input): NodeOutput[] {
   if (totalTaxableIncome > 0) s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   if (deduction > 0) s1Input.line23_archer_msa_deduction = deduction;
 
-  return [{ nodeType: schedule1.nodeType, fields: s1Input }];
+  return [output(schedule1, s1Input)];
 }
 
 // Schedule 2 output: line 17e (20% Archer MSA tax) and line 17f (50% Medicare Advantage MSA tax)
@@ -210,7 +213,7 @@ function schedule2Output(input: Form8853Input): NodeOutput[] {
   if (archerTax > 0) s2Input.line17e_archer_msa_tax = archerTax;
   if (medicareTax > 0) s2Input.line17f_medicare_advantage_msa_tax = medicareTax;
 
-  return [{ nodeType: schedule2.nodeType, fields: s2Input }];
+  return [output(schedule2, s2Input)];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

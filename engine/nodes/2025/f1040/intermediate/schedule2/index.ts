@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -45,6 +48,15 @@ export const inputSchema = z.object({
   // Line 12 — Net Investment Income Tax (from Form 8960 line 17)
   // IRC §1411; Form 8960 line 17 → Schedule 2 line 12
   line12_niit: z.number().nonnegative().optional(),
+  // Line 4 — Self-employment tax (from Schedule SE line 12)
+  // IRC §1401; Schedule SE line 12 → Schedule 2 line 4
+  line4_se_tax: z.number().nonnegative().optional(),
+  // Line 5 — Unreported social security and Medicare tax from Form 4137
+  // IRC §3101; Form 4137 line 13 → Schedule 2 line 5
+  line5_unreported_tip_tax: z.number().nonnegative().optional(),
+  // Line 17c — Tax on lump-sum distributions (from Form 4972)
+  // IRC §402(e)(1); Form 4972 → Schedule 2 line 17c
+  lump_sum_tax: z.number().nonnegative().optional(),
 });
 
 type Schedule2Input = z.infer<typeof inputSchema>;
@@ -86,11 +98,14 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
 
     const total =
+      (input.line4_se_tax ?? 0) +
+      (input.line5_unreported_tip_tax ?? 0) +
       line8(input) +
       (input.line1_amt ?? 0) +
       line13(input) +
       line17h(input) +
       line17k(input) +
+      (input.lump_sum_tax ?? 0) +
       (input.line17e_archer_msa_tax ?? 0) +
       (input.line17f_medicare_advantage_msa_tax ?? 0) +
       (input.line6_uncollected_8919 ?? 0) +
@@ -100,7 +115,7 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, fields: { line17_additional_taxes: total } },
+      output(f1040, { line17_additional_taxes: total }),
     ];
 
     return { outputs };

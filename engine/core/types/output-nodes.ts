@@ -1,5 +1,6 @@
 import type { z } from "zod";
-import type { TaxNode, NodeOutput } from "./tax-node.ts";
+import type { NodeOutput, TaxNode } from "./tax-node.ts";
+import { output } from "./tax-node.ts";
 
 // Class-level declaration — holds node instances for graph topology + type-checking
 export class OutputNodes<TNodes extends readonly TaxNode<z.ZodTypeAny>[]> {
@@ -14,13 +15,13 @@ export class OutputNodes<TNodes extends readonly TaxNode<z.ZodTypeAny>[]> {
   }
 
   /**
-   * Type-safe factory: fields must be a partial of the target node's input schema.
-   * Use this instead of constructing { nodeType, fields } literals directly.
+   * Type-safe factory with declared-node check — node must be in outputNodes.
+   * Delegates to the standalone output() for construction.
    */
   output<T extends TNodes[number]>(
     node: T,
     fields: Partial<z.infer<T["inputSchema"]>>,
   ): NodeOutput {
-    return { nodeType: node.nodeType, fields };
+    return output(node, fields);
   }
 }

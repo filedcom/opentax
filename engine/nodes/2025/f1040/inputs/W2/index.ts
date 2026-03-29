@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form2441 } from "../../intermediate/form2441/index.ts";
 import { form4137 } from "../../intermediate/form4137/index.ts";
 import { form8839 } from "../../intermediate/form8839/index.ts";
@@ -193,7 +193,7 @@ function excessSsOutput(w2s: W2Items): NodeOutput[] {
   const totalSsWithheld = w2s.reduce((sum, item) => sum + (item.box4_ss_withheld ?? 0), 0);
   const excess = totalSsWithheld - SS_MAX_TAX;
   if (w2s.length < 2 || excess <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line11_excess_ss: excess } }];
+  return [output(schedule3, { line11_excess_ss: excess })];
 }
 
 function statutoryOutput(w2s: W2Items): NodeOutput[] {
@@ -204,10 +204,7 @@ function statutoryOutput(w2s: W2Items): NodeOutput[] {
     (sum, item) => sum + item.box2_fed_withheld,
     0,
   );
-  return [{
-    nodeType: schedule_c.nodeType,
-    fields: { statutory_wages: wages, withholding },
-  }];
+  return [output(schedule_c, { statutory_wages: wages, withholding })];
 }
 
 function medicareOutput(w2s: W2Items): NodeOutput[] {
@@ -219,13 +216,10 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   if (items.length === 0) return [];
   const totalWages = items.reduce((sum, item) => sum + (item.box5_medicare_wages ?? 0), 0);
   const totalWithheld = items.reduce((sum, item) => sum + (item.box6_medicare_withheld ?? 0), 0);
-  return [{
-    nodeType: form8959.nodeType,
-    fields: {
+  return [output(form8959, {
       medicare_wages: totalWages > 0 ? totalWages : undefined,
       medicare_withheld: totalWithheld > 0 ? totalWithheld : undefined,
-    },
-  }];
+    })];
 }
 
 function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
@@ -234,7 +228,7 @@ function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
     0,
   );
   return total > 0
-    ? [{ nodeType: form4137.nodeType, fields: { allocated_tips: total } }]
+    ? [output(form4137, { allocated_tips: total })]
     : [];
 }
 
@@ -244,14 +238,14 @@ function depCareOutput(w2s: W2Items): NodeOutput[] {
     0,
   );
   return total > 0
-    ? [{ nodeType: form2441.nodeType, fields: { dep_care_benefits: total } }]
+    ? [output(form2441, { dep_care_benefits: total })]
     : [];
 }
 
 function retirementPlanOutput(w2s: W2Items): NodeOutput[] {
   const any = regularItems(w2s).some((item) => item.box13_retirement_plan === true);
   return any
-    ? [{ nodeType: ira_deduction_worksheet.nodeType, fields: { covered_by_retirement_plan: true } }]
+    ? [output(ira_deduction_worksheet, { covered_by_retirement_plan: true })]
     : [];
 }
 
@@ -273,7 +267,7 @@ function scheduleAOutput(w2s: W2Items): NodeOutput[] {
   if (line5b > 0) input.line5b_state_income_taxes = line5b;
   if (line5c > 0) input.line5c_local_income_taxes = line5c;
   return Object.keys(input).length > 0
-    ? [{ nodeType: schedule_a.nodeType, fields: input }]
+    ? [output(schedule_a, input)]
     : [];
 }
 
@@ -285,19 +279,19 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const outputs: NodeOutput[] = [];
 
   const h = sum(Box12Code.H);
-  if (h > 0) outputs.push({ nodeType: schedule1.nodeType, fields: { line24f_501c18d: h } });
+  if (h > 0) outputs.push(output(schedule1, { line24f_501c18d: h }));
 
   const w = sum(Box12Code.W);
-  if (w > 0) outputs.push({ nodeType: form8889.nodeType, fields: { employer_hsa_contributions: w } });
+  if (w > 0) outputs.push(output(form8889, { employer_hsa_contributions: w }));
 
   const r = sum(Box12Code.R);
-  if (r > 0) outputs.push({ nodeType: form8853.nodeType, fields: { employer_archer_msa: r } });
+  if (r > 0) outputs.push(output(form8853, { employer_archer_msa: r }));
 
   const t = sum(Box12Code.T);
-  if (t > 0) outputs.push({ nodeType: form8839.nodeType, fields: { adoption_benefits: t } });
+  if (t > 0) outputs.push(output(form8839, { adoption_benefits: t }));
 
   const deg = sum(Box12Code.D, Box12Code.E, Box12Code.G);
-  if (deg > 0) outputs.push({ nodeType: form8880.nodeType, fields: { elective_deferrals: deg } });
+  if (deg > 0) outputs.push(output(form8880, { elective_deferrals: deg }));
 
   const schedule2Input: Record<string, number> = {};
   const ab = sum(Box12Code.A, Box12Code.B);
@@ -309,7 +303,7 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const z = sum(Box12Code.Z);
   if (z > 0) schedule2Input.section409a_excise = z;
   if (Object.keys(schedule2Input).length > 0) {
-    outputs.push({ nodeType: schedule2.nodeType, fields: schedule2Input });
+    outputs.push(output(schedule2, schedule2Input));
   }
 
   return outputs;
@@ -355,7 +349,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
-      { nodeType: f1040.nodeType, fields: f1040Fields },
+      output(f1040, f1040Fields),
     ];
 
     return { outputs };

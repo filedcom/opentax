@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -47,10 +50,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     if (taxable > 0) {
-      outputs.push({
-        nodeType: f1040.nodeType,
-        fields: { line1e_taxable_dep_care: taxable },
-      });
+      outputs.push(output(f1040, { line1e_taxable_dep_care: taxable }));
     }
 
     return { outputs };

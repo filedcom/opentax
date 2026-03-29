@@ -14,6 +14,14 @@ export type NodeResult = {
   readonly outputs: readonly NodeOutput[];
 };
 
+// Standalone factory — type-safe fields, usable in pure helper functions
+export function output<T extends TaxNode<z.ZodTypeAny>>(
+  node: T,
+  fields: Partial<z.infer<T["inputSchema"]>>,
+): NodeOutput {
+  return { nodeType: node.nodeType, fields };
+}
+
 // Abstract base class - every tax node extends this
 export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   readonly implemented: boolean = true as const;

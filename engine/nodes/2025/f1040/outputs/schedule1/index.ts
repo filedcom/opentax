@@ -18,6 +18,7 @@ const inputSchema = z.object({
   line8z_golden_parachute: z.number().optional(),
   line8p_excess_business_loss: z.number().nonnegative().optional(),
   line8c_cod_income: z.number().optional(),
+  line5_schedule_e: z.number().optional(),
   line17_schedule_e: z.number().optional(),
   line18_early_withdrawal: z.number().optional(),
   line24f_501c18d: z.number().optional(),
@@ -41,6 +42,9 @@ const inputSchema = z.object({
   // Line 20 — IRA Deduction (IRA Deduction Worksheet → Schedule 1 line 20)
   // IRC §219; Pub 590-A
   line20_ira_deduction: z.number().nonnegative().optional(),
+  // Line 15 — Deductible part of self-employment tax (from Schedule SE line 13)
+  // IRC §164(f); Schedule SE line 13 → Schedule 1 line 15
+  line15_se_deduction: z.number().nonnegative().optional(),
 });
 
 class Schedule1Node extends UnimplementedTaxNode {

@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form5329 } from "../../intermediate/form5329/index.ts";
@@ -359,13 +359,10 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
   );
   return earlyItems.map((item) => {
     const taxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
-    return {
-      nodeType: form5329.nodeType,
-      fields: {
+    return output(form5329, {
         early_distribution: taxable,
-        distribution_code: item.box7_distribution_code,
-      },
-    };
+        distribution_code: item.box7_distribution_code as string,
+      });
   });
 }
 
@@ -375,10 +372,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
     (item) => LUMP_SUM_CODES.has(item.box7_distribution_code) || item.exclude_4972 === true,
   );
-  return lumpItems.map((item) => ({
-    nodeType: form4972.nodeType,
-    fields: { lump_sum_amount: item.box1_gross_distribution },
-  }));
+  return lumpItems.map((item) => (output(form4972, { lump_sum_amount: item.box1_gross_distribution })));
 }
 
 // Form 8606 outputs: triggered by exclude_8606_roth or rollover_code = C
@@ -386,20 +380,13 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   for (const item of activeItems(items)) {
     if (item.exclude_8606_roth === true) {
-      outputs.push({
-        nodeType: form8606.nodeType,
-        fields: {
+      outputs.push(output(form8606, {
           roth_distribution: item.box1_gross_distribution,
-          distribution_code: item.box7_distribution_code,
-        },
-      });
+        }));
     } else if (item.rollover_code === "C") {
-      outputs.push({
-        nodeType: form8606.nodeType,
-        fields: {
+      outputs.push(output(form8606, {
           roth_conversion: item.box2a_taxable_amount ?? item.box1_gross_distribution,
-        },
-      });
+        }));
     }
   }
   return outputs;
@@ -438,7 +425,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...withholdingFields,
     };
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push({ nodeType: f1040.nodeType, fields: f1040Fields });
+      outputs.push(output(f1040, f1040Fields));
     }
 
     // Secondary form outputs

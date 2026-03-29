@@ -3,10 +3,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949 } from "../../intermediate/form8949/index.ts";
+import { form8949, Form8949Part } from "../../intermediate/form8949/index.ts";
 
 const LONG_TERM_PARTS = new Set(["D", "E", "F"]);
 
@@ -32,27 +32,21 @@ function processItem(item: B99Item): NodeOutput[] {
   const gainLoss = item.proceeds - item.cost_basis + (item.adjustment_amount ?? 0);
   const isLongTerm = LONG_TERM_PARTS.has(item.part);
   const outputs: NodeOutput[] = [
-    {
-      nodeType: form8949.nodeType,
-      fields: {
-        part: item.part,
-        description: item.description,
-        date_acquired: item.date_acquired,
-        date_sold: item.date_sold,
-        proceeds: item.proceeds,
-        cost_basis: item.cost_basis,
-        adjustment_codes: item.adjustment_codes,
-        adjustment_amount: item.adjustment_amount,
-        gain_loss: gainLoss,
-        is_long_term: isLongTerm,
-      },
-    },
+    output(form8949, {
+      part: item.part as Form8949Part,
+      description: item.description,
+      date_acquired: item.date_acquired,
+      date_sold: item.date_sold,
+      proceeds: item.proceeds,
+      cost_basis: item.cost_basis,
+      adjustment_codes: item.adjustment_codes,
+      adjustment_amount: item.adjustment_amount,
+      gain_loss: gainLoss,
+      is_long_term: isLongTerm,
+    }),
   ];
   if ((item.federal_withheld ?? 0) > 0) {
-    outputs.push({
-      nodeType: f1040.nodeType,
-      fields: { line25b_withheld_1099: item.federal_withheld },
-    });
+    outputs.push(output(f1040, { line25b_withheld_1099: item.federal_withheld }));
   }
   return outputs;
 }

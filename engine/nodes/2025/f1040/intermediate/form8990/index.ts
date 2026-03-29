@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
@@ -156,10 +156,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
     // (reduces the net deduction already posted by upstream node)
     return {
       outputs: [
-        {
-          nodeType: schedule1.nodeType,
-          fields: { biz_interest_disallowed_add_back: disallowed },
-        },
+        output(schedule1, { biz_interest_disallowed_add_back: disallowed }),
       ],
     };
   }

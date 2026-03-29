@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
@@ -135,15 +135,15 @@ function aocOutputs(items: F8863Items): NodeOutput[] {
 
   if (kiddieApplies) {
     // Entire credit is nonrefundable (skip Line 8, put Line 7 on Line 9).
-    outputs.push({ nodeType: schedule3.nodeType, fields: { line3_education_credit: allowed } });
+    outputs.push(output(schedule3, { line3_education_credit: allowed }));
   } else {
     const refundable = allowed * AOC_REFUNDABLE_RATE; // Line 8
     const nonrefundable = allowed * AOC_NONREFUNDABLE_RATE; // Line 9
     if (refundable > 0) {
-      outputs.push({ nodeType: f1040.nodeType, fields: { line29_refundable_aoc: refundable } });
+      outputs.push(output(f1040, { line29_refundable_aoc: refundable }));
     }
     if (nonrefundable > 0) {
-      outputs.push({ nodeType: schedule3.nodeType, fields: { line3_education_credit: nonrefundable } });
+      outputs.push(output(schedule3, { line3_education_credit: nonrefundable }));
     }
   }
 
@@ -185,7 +185,7 @@ function llcOutputs(items: F8863Items): NodeOutput[] {
 
   if (llcAllowed <= 0) return [];
 
-  return [{ nodeType: schedule3.nodeType, fields: { line3_education_credit: llcAllowed } }];
+  return [output(schedule3, { line3_education_credit: llcAllowed })];
 }
 
 class F8863Node extends TaxNode<typeof inputSchema> {

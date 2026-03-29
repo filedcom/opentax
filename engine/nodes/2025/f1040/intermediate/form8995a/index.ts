@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
@@ -195,7 +198,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      { nodeType: f1040.nodeType, fields: { line13_qbi_deduction: deduction } },
+      output(f1040, { line13_qbi_deduction: deduction }),
     ];
 
     return { outputs };

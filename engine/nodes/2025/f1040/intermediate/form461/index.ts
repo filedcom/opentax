@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -54,10 +54,7 @@ class Form461Node extends TaxNode<typeof inputSchema> {
     // It then becomes an NOL carryforward via Form 172 for subsequent years.
     return {
       outputs: [
-        {
-          nodeType: schedule1.nodeType,
-          fields: { line8p_excess_business_loss: total },
-        },
+        output(schedule1, { line8p_excess_business_loss: total }),
       ],
     };
   }

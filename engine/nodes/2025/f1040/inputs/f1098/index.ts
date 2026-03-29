@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form_8829 } from "../../intermediate/form_8829/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
@@ -147,38 +147,38 @@ function scheduleAOutput(items: F1098Items): NodeOutput[] {
   if (points > 0) inp.line8c_points_no_1098 = points;
 
   return Object.keys(inp).length > 0
-    ? [{ nodeType: schedule_a.nodeType, fields: inp }]
+    ? [output(schedule_a, inp)]
     : [];
 }
 
 function scheduleEOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleEInterest(items);
   if (interest <= 0) return [];
-  return [{ nodeType: schedule_e.nodeType, fields: { mortgage_interest: interest } }];
+  return [output(schedule_e, { mortgage_interest: interest })];
 }
 
 function scheduleCOutput(items: F1098Items): NodeOutput[] {
   const interest = aggregateScheduleCInterest(items);
   if (interest <= 0) return [];
-  return [{ nodeType: schedule_c.nodeType, fields: { line16a_interest_mortgage: interest } }];
+  return [output(schedule_c, { line16a_interest_mortgage: interest })];
 }
 
 function form8829Output(items: F1098Items): NodeOutput[] {
   const interest = aggregateForm8829Interest(items);
   if (interest <= 0) return [];
-  return [{ nodeType: form_8829.nodeType, fields: { mortgage_interest: interest } }];
+  return [output(form_8829, { mortgage_interest: interest })];
 }
 
 function schedule1Output(items: F1098Items): NodeOutput[] {
   const income = aggregatePriorYearRefundIncome(items);
   if (income <= 0) return [];
-  return [{ nodeType: schedule1.nodeType, fields: { line8z_other_income: income } }];
+  return [output(schedule1, { line8z_other_income: income })];
 }
 
 class F1098Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1098";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_a, schedule_e, schedule_c, form_8829, schedule1]);
+  readonly outputNodes = new OutputNodes([schedule_a, schedule_c, schedule_e, form_8829, schedule1]);
 
   compute(input: z.infer<typeof inputSchema>): NodeResult {
     const { f1098s } = input;

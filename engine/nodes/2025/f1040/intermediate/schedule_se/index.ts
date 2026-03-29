@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -111,8 +114,8 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     const line13 = line12 * SE_DEDUCTION_RATE;
 
     const outputs: NodeOutput[] = [
-      { nodeType: schedule2.nodeType, fields: { line4_se_tax: line12 } },
-      { nodeType: schedule1.nodeType, fields: { line15_se_deduction: line13 } },
+      output(schedule2, { line4_se_tax: line12 }),
+      output(schedule1, { line15_se_deduction: line13 }),
     ];
 
     return { outputs };
