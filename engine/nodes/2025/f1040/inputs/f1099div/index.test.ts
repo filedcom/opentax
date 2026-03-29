@@ -1,76 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from the agreed coverage checklist.
-// Before running, verify:
-//   1. The import name matches the exported singleton → `div` ✓
-//   2. The input wrapper key → `div1099s` ✓
-//   3. The nodeType strings match the actual node routing strings (see below)
-//   4. Any AMBIGUITIES flagged below must be resolved against the implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES (from checklist + implementation review):
-//
-// FLAG A — box2e / box2f: These fields are NOT present in the current itemSchema.
-//   Tests that pass box2e/box2f in overrides will either be ignored by Zod (strip)
-//   or throw if schema is set to strict(). Tests are written assuming the fields
-//   will be added as nonnegative optional numbers. If the schema uses .strip() they
-//   are silently dropped (which satisfies "does not route" assertions). The
-//   "rejects negative box2e/box2f" tests will fail until the fields are added.
-//
-// FLAG B — box16: Not present in the current itemSchema. Same treatment as FLAG A.
-//
-// FLAG C — isNominee / box11 optional vs. required: Current schema has both as
-//   `.optional()`. The "rejects missing" tests below are written to throw per the
-//   checklist (IRS-correct: both are required fields on the real form). The tests
-//   will fail until the schema is changed from `.optional()` to `.required()`.
-//
-// FLAG D — Schedule B $1,500 threshold: Current implementation always routes to
-//   Schedule B. Tests expect threshold-gated routing. Fix implementation.
-//
-// FLAG E — Simplified path for box2a (Form 1040 Line 7a vs. Schedule D Line 13):
-//   Current implementation always routes box2a > 0 to schedule_d. Tests for the
-//   simplified path will fail until the path-selection logic is added.
-//
-// FLAG F — Form 1116 vs. Schedule 3 for box7: Current implementation always routes
-//   to schedule3 regardless of amount. Tests for Form 1116 routing (> $300/$600)
-//   will fail until the threshold logic is added.
-//
-// FLAG G — Form 8995-A vs. Form 8995 threshold: Current implementation always routes
-//   to form8995. Tests requiring form8995a routing will fail until the threshold
-//   logic is added. form8995a nodeType must be confirmed.
-//
-// FLAG H — V2 validation: Current implementation checks box2b+box2c+box2d vs box2a
-//   but does NOT include box2f in the sum. Tests V5 and V6 (box2f constraints) will
-//   fail until box2f is added to the schema and the sum check.
-//
-// FLAG I — V8 (box5 > box1a): Not currently validated. Test will fail until added.
-//
-// FLAG J — Holding period warnings (V9, V10): The current implementation has no
-//   holding-period input. Tests pass a `holdingPeriodDays` field; the node must
-//   accept and act on it. Until then, those tests will fail.
-//
-// FLAG K — box2c Section 1202: Currently bundled into a single schedule_d output.
-//   Tests that assert a separate QSBS output or field will need the implementation
-//   to expose box2c separately.
-//
-// FLAG L — Taxable income / filing status inputs: Tests for §199A thresholds and
-//   foreign tax thresholds pass `taxableIncome` and `filingStatus` at the top-level
-//   input. The current inputSchema does not include these fields. They must be added.
-//
-// ASSUMED nodeType STRINGS (verify against implementation):
-//   schedule_b         → "schedule_b"      ✓ (confirmed from imports)
-//   f1040              → "f1040"           ✓
-//   schedule_d         → "schedule_d"      ✓
-//   form8995           → "form8995"        ✓
-//   form8995a          → "form8995a"       (unverified — FLAG G)
-//   schedule3          → "schedule3"       ✓
-//   form6251           → "form6251"        ✓
-//   form_1116          → "form_1116"       (unverified — FLAG F)
-//   unrecaptured_1250_worksheet → "unrecaptured_1250_worksheet" (unverified)
-//   rate_28_gain_worksheet      → "rate_28_gain_worksheet"      (unverified)
-//   form_8949          → "form_8949"       (unverified)
-//   schedule_a         → "schedule_a"      (unverified)
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099div, inputSchema } from "./index.ts";
 
@@ -129,7 +56,6 @@ Deno.test("rejects missing payerName", () => {
 });
 
 Deno.test("rejects missing isNominee", () => {
-  // FLAG C: expects throw; will pass once isNominee is made required in schema
   assertThrows(() => {
     const { isNominee: _, ...withoutIsNominee } = minimalItem();
     compute([withoutIsNominee]);
@@ -137,7 +63,6 @@ Deno.test("rejects missing isNominee", () => {
 });
 
 Deno.test("rejects missing box11", () => {
-  // FLAG C: expects throw; will pass once box11 is made required in schema
   assertThrows(() => {
     const { box11: _, ...withoutBox11 } = minimalItem();
     compute([withoutBox11]);
@@ -169,12 +94,10 @@ Deno.test("rejects negative box2d", () => {
 });
 
 Deno.test("rejects negative box2e", () => {
-  // FLAG A: requires box2e to be added to itemSchema
   assertThrows(() => compute([minimalItem({ box2e: -1 })]), Error);
 });
 
 Deno.test("rejects negative box2f", () => {
-  // FLAG A: requires box2f to be added to itemSchema
   assertThrows(() => compute([minimalItem({ box2f: -1 })]), Error);
 });
 
@@ -215,13 +138,10 @@ Deno.test("rejects negative box13", () => {
 });
 
 Deno.test("rejects negative box16", () => {
-  // FLAG B: requires box16 to be added to itemSchema
   assertThrows(() => compute([minimalItem({ box16: -1 })]), Error);
 });
 
 Deno.test("accepts empty items array", () => {
-  // FLAG: inputSchema currently uses min(1). This test expects no throw on empty
-  // array; the schema must be updated to allow empty arrays.
   assertEquals(Array.isArray(compute([]).outputs), true);
 });
 
@@ -252,15 +172,12 @@ Deno.test("accepts box14/15/16 as optional", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("box1a routes to Schedule B Part II", () => {
-  // FLAG D: threshold $1,500 must be implemented; total = 2000 > $1,500
   const result = compute([minimalItem({ box1a: 2000 })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out !== undefined, true);
 });
 
 Deno.test("box1a zero — does not route to Schedule B when under threshold", () => {
-  // FLAG D: with threshold logic, zero box1a (isNominee=false) must not produce
-  // a schedule_b output. Currently always routes; test will fail until fixed.
   const result = compute([minimalItem({ box1a: 0, isNominee: false })]);
   const out = findOutput(result, "schedule_b");
   assertEquals(out, undefined);
@@ -298,8 +215,6 @@ Deno.test("box2a routes to Schedule D Line 13 (standard path)", () => {
 });
 
 Deno.test("box2a routes to Form 1040 Line 7a (simplified path)", () => {
-  // FLAG E: simplified path not yet implemented; test will fail until added.
-  // Conditions: box2b=box2c=box2d=0, no other Schedule D triggers
   const result = compute([
     minimalItem({ box1a: 1000, box2a: 1000, box2b: 0, box2c: 0, box2d: 0 }),
   ]);
@@ -330,7 +245,6 @@ Deno.test("box2b zero — no unrecaptured §1250 output", () => {
 });
 
 Deno.test("box2c routes to Schedule D (Section 1202 QSBS)", () => {
-  // FLAG K: box2c currently bundled in schedule_d; separate QSBS field expected
   const result = compute([minimalItem({ box1a: 500, box2a: 500, box2c: 300 })]);
   const out = findOutput(result, "schedule_d");
   assertEquals(out !== undefined, true);
@@ -358,14 +272,12 @@ Deno.test("box2d zero — no collectibles gain output", () => {
 });
 
 Deno.test("box2e does not produce tax output (informational only)", () => {
-  // FLAG A: box2e is purely informational — no dedicated output node
   const baseline = compute([minimalItem({ box1a: 500 })]);
   const withBox2e = compute([minimalItem({ box1a: 500, box2e: 400 })]);
   assertEquals(withBox2e.outputs.length, baseline.outputs.length);
 });
 
 Deno.test("box2f does not produce tax output (informational only)", () => {
-  // FLAG A: box2f = Section 897 capital gain — informational only
   const baseline = compute([minimalItem({ box1a: 500, box2a: 500 })]);
   const withBox2f = compute([
     minimalItem({ box1a: 500, box2a: 500, box2f: 200 }),
@@ -398,7 +310,6 @@ Deno.test("box4 zero — no withholding output", () => {
 });
 
 Deno.test("box5 routes to Form 8995 Line 6 (holding period met)", () => {
-  // FLAG J: holdingPeriodDays must be accepted; 60 days in 91-day window >= 45 days
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
   );
@@ -414,7 +325,6 @@ Deno.test("box5 zero — no §199A output", () => {
 });
 
 Deno.test("box7 routes to Schedule 3 Line 1 (simplified path)", () => {
-  // FLAG F: $200 < $300 single limit; all conditions met; single filer
   const result = compute(
     [minimalItem({ box7: 200, holdingPeriodDays: 20 })],
     { filingStatus: "single" },
@@ -425,7 +335,6 @@ Deno.test("box7 routes to Schedule 3 Line 1 (simplified path)", () => {
 });
 
 Deno.test("box7 routes to Form 1116 Part II (full path)", () => {
-  // FLAG F: $400 > $300 single limit; must use Form 1116
   const result = compute(
     [minimalItem({ box7: 400, holdingPeriodDays: 20 })],
     { filingStatus: "single" },
@@ -494,7 +403,6 @@ Deno.test("box11 true — no tax calculation output", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("box1a sums across multiple payers for Schedule B", () => {
-  // FLAG D: total 1700 > $1,500 triggers Schedule B; each payer listed separately
   const result = compute([
     minimalItem({ payerName: "Payer A", box1a: 600 }),
     minimalItem({ payerName: "Payer B", box1a: 700 }),
@@ -512,7 +420,6 @@ Deno.test("box1a sums across multiple payers for Schedule B", () => {
 });
 
 Deno.test("box1a Schedule B total flows to Form 1040 Line 3b", () => {
-  // FLAG D: total 1700 > $1,500; per-payer schedule_b inputs must sum to 1700
   const result = compute([
     minimalItem({ payerName: "Payer A", box1a: 800 }),
     minimalItem({ payerName: "Payer B", box1a: 900 }),
@@ -609,7 +516,6 @@ Deno.test("box4 sums across multiple payers for Line 25b", () => {
 });
 
 Deno.test("box5 sums across multiple payers for Form 8995 Line 6", () => {
-  // FLAG J: both holding periods met (60 days >= 45 days)
   const result = compute([
     minimalItem({ box1a: 500, box5: 400, holdingPeriodDays: 60 }),
     minimalItem({ box1a: 500, box5: 600, holdingPeriodDays: 60 }),
@@ -664,7 +570,6 @@ Deno.test("box13 sums across multiple payers for Form 6251 Line 2g", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("Schedule B not triggered when total box1a below $1,500", () => {
-  // FLAG D: $1,499 < $1,500; isNominee=false → no Schedule B
   const result = compute([minimalItem({ box1a: 1499, isNominee: false })]);
   assertEquals(findOutput(result, "schedule_b"), undefined);
 });
@@ -680,13 +585,11 @@ Deno.test("Schedule B triggered when total box1a equals $1,500", () => {
 });
 
 Deno.test("Schedule B triggered when total box1a above $1,500", () => {
-  // FLAG D: $1,501 > $1,500 → Schedule B required
   const result = compute([minimalItem({ box1a: 1501, isNominee: false })]);
   assertEquals(findOutput(result, "schedule_b") !== undefined, true);
 });
 
 Deno.test("Form 8995 used when taxable income below §199A Single threshold ($197,300)", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 197299, filingStatus: "single" },
@@ -696,7 +599,6 @@ Deno.test("Form 8995 used when taxable income below §199A Single threshold ($19
 });
 
 Deno.test("Form 8995 used when taxable income equals §199A Single threshold ($197,300)", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 197300, filingStatus: "single" },
@@ -706,7 +608,6 @@ Deno.test("Form 8995 used when taxable income equals §199A Single threshold ($1
 });
 
 Deno.test("Form 8995-A used when taxable income above §199A Single threshold ($197,300)", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 197301, filingStatus: "single" },
@@ -716,7 +617,6 @@ Deno.test("Form 8995-A used when taxable income above §199A Single threshold ($
 });
 
 Deno.test("Form 8995 used when taxable income below §199A MFJ threshold ($394,600)", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 394599, filingStatus: "mfj" },
@@ -726,7 +626,6 @@ Deno.test("Form 8995 used when taxable income below §199A MFJ threshold ($394,6
 });
 
 Deno.test("Form 8995 used when taxable income equals §199A MFJ threshold ($394,600)", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 394600, filingStatus: "mfj" },
@@ -736,7 +635,6 @@ Deno.test("Form 8995 used when taxable income equals §199A MFJ threshold ($394,
 });
 
 Deno.test("Form 8995-A used when taxable income above §199A MFJ threshold ($394,600)", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 394601, filingStatus: "mfj" },
@@ -746,7 +644,6 @@ Deno.test("Form 8995-A used when taxable income above §199A MFJ threshold ($394
 });
 
 Deno.test("Simplified foreign tax election allowed when box7 below $300 (Single)", () => {
-  // FLAG F: $299 < $300 → Schedule 3, no Form 1116
   const result = compute(
     [minimalItem({ box7: 299, holdingPeriodDays: 20 })],
     { filingStatus: "single" },
@@ -756,7 +653,6 @@ Deno.test("Simplified foreign tax election allowed when box7 below $300 (Single)
 });
 
 Deno.test("Simplified foreign tax election allowed when box7 equals $300 (Single)", () => {
-  // FLAG F: $300 = $300 boundary → still simplified
   const result = compute(
     [minimalItem({ box7: 300, holdingPeriodDays: 20 })],
     { filingStatus: "single" },
@@ -766,7 +662,6 @@ Deno.test("Simplified foreign tax election allowed when box7 equals $300 (Single
 });
 
 Deno.test("Form 1116 required when box7 exceeds $300 (Single)", () => {
-  // FLAG F: $301 > $300 → Form 1116
   const result = compute(
     [minimalItem({ box7: 301, holdingPeriodDays: 20 })],
     { filingStatus: "single" },
@@ -776,7 +671,6 @@ Deno.test("Form 1116 required when box7 exceeds $300 (Single)", () => {
 });
 
 Deno.test("Simplified foreign tax election allowed when box7 below $600 (MFJ)", () => {
-  // FLAG F: $599 < $600 MFJ → Schedule 3
   const result = compute(
     [minimalItem({ box7: 599, holdingPeriodDays: 20 })],
     { filingStatus: "mfj" },
@@ -786,7 +680,6 @@ Deno.test("Simplified foreign tax election allowed when box7 below $600 (MFJ)", 
 });
 
 Deno.test("Simplified foreign tax election allowed when box7 equals $600 (MFJ)", () => {
-  // FLAG F: $600 = $600 MFJ boundary → still simplified
   const result = compute(
     [minimalItem({ box7: 600, holdingPeriodDays: 20 })],
     { filingStatus: "mfj" },
@@ -796,7 +689,6 @@ Deno.test("Simplified foreign tax election allowed when box7 equals $600 (MFJ)",
 });
 
 Deno.test("Form 1116 required when box7 exceeds $600 (MFJ)", () => {
-  // FLAG F: $601 > $600 MFJ → Form 1116
   const result = compute(
     [minimalItem({ box7: 601, holdingPeriodDays: 20 })],
     { filingStatus: "mfj" },
@@ -806,7 +698,6 @@ Deno.test("Form 1116 required when box7 exceeds $600 (MFJ)", () => {
 });
 
 Deno.test("§199A phase-out begins at $197,300 Single — Form 8995-A engaged", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 197301, filingStatus: "single" },
@@ -815,7 +706,6 @@ Deno.test("§199A phase-out begins at $197,300 Single — Form 8995-A engaged", 
 });
 
 Deno.test("§199A phase-out ends at $247,300 Single", () => {
-  // FLAG G / FLAG L: even at top of phase-out range, Form 8995-A still required
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 247300, filingStatus: "single" },
@@ -824,7 +714,6 @@ Deno.test("§199A phase-out ends at $247,300 Single", () => {
 });
 
 Deno.test("§199A phase-out ends at $494,600 MFJ", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 })],
     { taxableIncome: 494600, filingStatus: "mfj" },
@@ -901,7 +790,6 @@ Deno.test("V4 passes at boundary when box2d equals box2a", () => {
 });
 
 Deno.test("V5 throws when box2f exceeds box2a", () => {
-  // FLAG H: box2f must be added to schema and validation
   assertThrows(
     () => compute([minimalItem({ box2a: 200, box2f: 300 })]),
     Error,
@@ -909,7 +797,6 @@ Deno.test("V5 throws when box2f exceeds box2a", () => {
 });
 
 Deno.test("V5 passes at boundary when box2f equals box2a", () => {
-  // FLAG H
   assertEquals(
     Array.isArray(
       compute([minimalItem({ box2a: 200, box2f: 200 })]).outputs,
@@ -919,7 +806,6 @@ Deno.test("V5 passes at boundary when box2f equals box2a", () => {
 });
 
 Deno.test("V6 throws when sum of box2b+2c+2d+2f exceeds box2a", () => {
-  // FLAG H: box2f included in sum check; 100+100+100+100=400 > box2a=300
   assertThrows(
     () =>
       compute([
@@ -936,7 +822,6 @@ Deno.test("V6 throws when sum of box2b+2c+2d+2f exceeds box2a", () => {
 });
 
 Deno.test("V6 passes when sum of box2b+2c+2d+2f equals box2a", () => {
-  // FLAG H: 100+100+100+100=400 = box2a=400 → valid
   assertEquals(
     Array.isArray(
       compute([
@@ -970,7 +855,6 @@ Deno.test("V7 passes at boundary when box13 equals box12", () => {
 });
 
 Deno.test("V8 throws when box5 exceeds box1a", () => {
-  // FLAG I: box5 > box1a validation not yet in implementation
   assertThrows(
     () => compute([minimalItem({ box1a: 500, box5: 600 })]),
     Error,
@@ -987,7 +871,6 @@ Deno.test("V8 passes at boundary when box5 equals box1a", () => {
 });
 
 Deno.test("throws when box2e exceeds box1a", () => {
-  // FLAG A: box2e must be added to schema with validation rule
   assertThrows(
     () => compute([minimalItem({ box1a: 500, box2e: 600 })]),
     Error,
@@ -995,7 +878,6 @@ Deno.test("throws when box2e exceeds box1a", () => {
 });
 
 Deno.test("passes at boundary when box2e equals box1a", () => {
-  // FLAG A
   assertEquals(
     Array.isArray(
       compute([minimalItem({ box1a: 500, box2e: 500 })]).outputs,
@@ -1009,7 +891,6 @@ Deno.test("passes at boundary when box2e equals box1a", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("V9 does not throw when §199A holding period not met", () => {
-  // FLAG J: holding period 30 days in 91-day window < 45 days → warning, not error
   assertEquals(
     Array.isArray(
       compute([
@@ -1021,7 +902,6 @@ Deno.test("V9 does not throw when §199A holding period not met", () => {
 });
 
 Deno.test("V9 box5 not routed to Form 8995 when holding period not met", () => {
-  // FLAG J: 30 days < 45 days → no Form 8995 routing
   const result = compute([
     minimalItem({ box1a: 500, box5: 400, holdingPeriodDays: 30 }),
   ]);
@@ -1030,7 +910,6 @@ Deno.test("V9 box5 not routed to Form 8995 when holding period not met", () => {
 });
 
 Deno.test("V10 does not throw when foreign tax holding period not met", () => {
-  // FLAG J: 10 days in 31-day window < 16 days → warning, not error
   assertEquals(
     Array.isArray(
       compute([
@@ -1042,7 +921,6 @@ Deno.test("V10 does not throw when foreign tax holding period not met", () => {
 });
 
 Deno.test("V10 box7 not routed to Schedule 3 via simplified election when holding period not met", () => {
-  // FLAG J: holding period 10 days < 16 days → no simplified election
   const result = compute([
     minimalItem({ box7: 200, holdingPeriodDays: 10 }),
   ]);
@@ -1050,7 +928,6 @@ Deno.test("V10 box7 not routed to Schedule 3 via simplified election when holdin
 });
 
 Deno.test("V10 box7 not routed to Form 1116 when holding period not met", () => {
-  // FLAG J: holding period 10 days < 16 days → not creditable at all
   const result = compute([
     minimalItem({ box7: 200, holdingPeriodDays: 10 }),
   ]);
@@ -1062,14 +939,12 @@ Deno.test("V10 box7 not routed to Form 1116 when holding period not met", () => 
 // ---------------------------------------------------------------------------
 
 Deno.test("box2e produces no tax form output", () => {
-  // FLAG A: Section 897 ordinary dividends — informational only
   const baseline = compute([minimalItem({ box1a: 500 })]);
   const withBox2e = compute([minimalItem({ box1a: 500, box2e: 500 })]);
   assertEquals(withBox2e.outputs.length, baseline.outputs.length);
 });
 
 Deno.test("box2f produces no tax form output", () => {
-  // FLAG A: Section 897 capital gain — informational only
   const baseline = compute([minimalItem({ box1a: 500, box2a: 500 })]);
   const withBox2f = compute([
     minimalItem({ box1a: 500, box2a: 500, box2f: 300 }),
@@ -1124,7 +999,6 @@ Deno.test("box15 produces no federal tax output", () => {
 });
 
 Deno.test("box16 produces no federal tax output", () => {
-  // FLAG B: state income tax withheld — state only, no federal form
   const baseline = compute([minimalItem()]);
   const withBox16 = compute([minimalItem({ box16: 500 })]);
   assertEquals(withBox16.outputs.length, baseline.outputs.length);
@@ -1168,7 +1042,6 @@ Deno.test("box1b = 0 on all records — no qualified dividend output", () => {
 });
 
 Deno.test("box2a with no sub-amounts and no other Schedule D — simplified path used", () => {
-  // FLAG E: box2b=box2c=box2d=0 → Form 1040 Line 7a, NOT Schedule D
   const result = compute([
     minimalItem({ box1a: 1000, box2a: 1000, box2b: 0, box2c: 0, box2d: 0 }),
   ]);
@@ -1205,7 +1078,6 @@ Deno.test("box1a = 0, box2a > 0 — valid pure cap gain fund", () => {
 });
 
 Deno.test("total box1a ≤ $1,500 with no nominee — Schedule B not required", () => {
-  // FLAG D: three payers totalling $1,499; no nominee
   const result = compute([
     minimalItem({ payerName: "P1", box1a: 500, isNominee: false }),
     minimalItem({ payerName: "P2", box1a: 499, isNominee: false }),
@@ -1215,7 +1087,6 @@ Deno.test("total box1a ≤ $1,500 with no nominee — Schedule B not required", 
 });
 
 Deno.test("box7 > $600 MFJ — Form 1116 required, simplified election unavailable", () => {
-  // FLAG F
   const result = compute(
     [minimalItem({ box7: 601, holdingPeriodDays: 20 })],
     { filingStatus: "mfj" },
@@ -1225,7 +1096,6 @@ Deno.test("box7 > $600 MFJ — Form 1116 required, simplified election unavailab
 });
 
 Deno.test("box5 > 0 and taxable income > $394,600 MFJ — Form 8995-A required", () => {
-  // FLAG G / FLAG L
   const result = compute(
     [minimalItem({ box1a: 500, box5: 500, holdingPeriodDays: 60 })],
     { taxableIncome: 400000, filingStatus: "mfj" },
@@ -1249,7 +1119,6 @@ Deno.test("box10 > 0 — noncash liquidating distribution must not appear on Sch
 });
 
 Deno.test("box2e and box2f > 0 — no separate calculation triggered", () => {
-  // FLAG A: both fields informational; output count unchanged vs. baseline
   const baseline = compute([minimalItem({ box1a: 500, box2a: 500 })]);
   const withBoth = compute([
     minimalItem({ box1a: 500, box2a: 500, box2e: 300, box2f: 200 }),
@@ -1264,7 +1133,6 @@ Deno.test("box11 = true — no tax calculation impact", () => {
 });
 
 Deno.test("multiple payers — each listed separately on Schedule B Line 5", () => {
-  // FLAG D: total 2100 > $1,500 → Schedule B; 3 separate payer entries
   const result = compute([
     minimalItem({ payerName: "Alpha Fund", box1a: 700 }),
     minimalItem({ payerName: "Beta Fund", box1a: 800 }),
@@ -1331,7 +1199,6 @@ Deno.test("box9 final liquidating distribution below basis — capital loss rout
 });
 
 Deno.test("§199A holding period not met — box5 excluded from Form 8995", () => {
-  // FLAG J: 30 days < 45 days in 91-day window
   const result = compute([
     minimalItem({ box1a: 500, box5: 400, holdingPeriodDays: 30 }),
   ]);
@@ -1340,7 +1207,6 @@ Deno.test("§199A holding period not met — box5 excluded from Form 8995", () =
 });
 
 Deno.test("Foreign holding period < 16 days — box7 not creditable, not routed to Form 1116 or Schedule 3", () => {
-  // FLAG J: 10 days < 16 days in 31-day window
   const result = compute([
     minimalItem({ box7: 150, holdingPeriodDays: 10 }),
   ]);
