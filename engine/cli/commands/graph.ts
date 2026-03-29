@@ -56,7 +56,7 @@ export function formatMermaid(root: GraphNode): string {
 }
 
 /**
- * CLI command handler for `tax graph view`.
+ * CLI command handler for `tax node graph`.
  *
  * - json=false: prints a Mermaid diagram to stdout via console.log, returns void
  * - json=true: returns GraphNode (caller JSON.stringifies via runCommand)

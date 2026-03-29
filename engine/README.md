@@ -32,18 +32,46 @@ deno task tax return get --returnId abc-123
 deno task tax return export --returnId abc-123 --type mef > return.xml
 
 # Visualize the dependency graph
-deno task tax graph view --node_type w2 --depth 3
+deno task tax node graph --node_type w2 --depth 3
 ```
 
 ## CLI Commands
 
+Run `deno task tax --help` for the full reference, or `deno task tax <command> --help` for a specific group.
+
+### Returns
+
 | Command | Description |
 |---|---|
 | `return create --year N` | Create a new return, returns UUID |
-| `form add --returnId ID --node_type TYPE 'JSON'` | Add an input (W-2, 1099, schedule, etc.) |
 | `return get --returnId ID` | Execute the plan and print computed values |
 | `return export --returnId ID --type mef` | Generate IRS MeF XML to stdout |
-| `graph view --node_type TYPE [--depth N] [--json]` | ASCII or JSON dependency tree |
+
+### Forms
+
+| Command | Description |
+|---|---|
+| `form add --returnId ID --node_type TYPE 'JSON'` | Add an input (W-2, 1099, schedule, etc.) |
+
+### Introspection
+
+| Command | Description |
+|---|---|
+| `node list` | List all 58 registered nodes |
+| `node inspect --node_type TYPE` | Show a node's input schema and output nodes |
+| `node inspect --node_type TYPE --json` | Same, as structured JSON |
+| `node graph --node_type TYPE [--depth N] [--json]` | Mermaid or JSON dependency graph |
+
+```bash
+# What fields does the W-2 node expect?
+deno task tax node inspect --node_type w2
+
+# What does the full graph look like from start?
+deno task tax node graph --node_type start
+
+# List every registered node
+deno task tax node list
+```
 
 ## Supported Input Nodes (2025)
 
@@ -67,7 +95,7 @@ deno task tax graph view --node_type w2 --depth 3
 | `schedule_a` | Schedule A Itemized Deductions |
 | `schedule_c` | Schedule C Business Income |
 | `schedule_e` | Schedule E Rental/Royalty |
-| `d_screen` | Capital Gains Worksheet |
+| `f8949` (input) | Form 8949 Sales & Dispositions |
 | `general` | Taxpayer identity & dependents |
 
 ## Export
@@ -86,6 +114,25 @@ deno task test
 
 # Run CLI tests only
 deno task test:cli
+```
+
+### CLI structure
+
+```
+cli/
+├── main.ts              # Entry point + command registry
+├── commands/            # Command handlers + CLI framework types
+│   ├── help.ts          # CommandDef types, printHelp
+│   ├── form.ts          # form add
+│   ├── graph.ts         # graph view
+│   ├── node.ts          # node list, node inspect
+│   ├── return.ts        # return create/get
+│   └── export.ts        # return export
+├── store/               # Persistence (return.json read/write)
+│   ├── store.ts
+│   └── types.ts
+└── utils/               # Generic utilities
+    └── zod-doc.ts       # Zod schema → human-readable text
 ```
 
 ### Adding a node
