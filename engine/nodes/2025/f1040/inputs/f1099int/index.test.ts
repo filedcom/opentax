@@ -1,23 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// RESOLVED AMBIGUITIES:
-//   2. Payer SSN format — resolved: exactly 9 digits, no hyphens. Validated in validateIntItem.
-//   4. Nominee interest subtraction — resolved: INT node subtracts from taxable_interest_net; no separate adjustment node.
-//   6. Seller-financed fields — resolved: payer_ssn, payer_address, seller_financed are in itemSchema; validation enforced.
-//   7. Box 5 investment expenses — resolved: TCJA-suspended. In schema but not routed (informational only).
-//   9. Foreign tax routing — resolved: total box6 > $300 (single)/$600 (MFJ) → form_1116; else → schedule3. filing_status in inputSchema.
-//   12. Filing status — resolved: added to inputSchema as filing_status; used for foreign tax threshold.
-//
-// DEFERRED:
-//   1. OID duplicate entry rule — warning only (no throw). UI layer responsibility.
-//   3. Passive vs. non-passive — not detectable from 1099-INT alone; all box6 treated as passive for threshold routing.
-//   5. Form 8815 MAGI — requires MAGI not available on INT node. Deferred to separate pipeline step.
-//   8. Schedule B $1,500 threshold — INT always routes to schedule_b for payer-level detail; threshold gating is schedule_b's responsibility.
-//   10. Form 8815 eligibility — same as #5.
-//   11. Box 10 (market discount) §1278(b) election — deferred; currently flows into taxable_interest_net.
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, f1099int } from "./index.ts";

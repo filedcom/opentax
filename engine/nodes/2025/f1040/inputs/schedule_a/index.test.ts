@@ -1,21 +1,11 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton: `scheduleA`
-//   2. The compute() input is a flat object (not an array wrapper) matching the inputSchema
-//   3. The nodeType strings: f1040 = "f1040", form6251 = "form6251"
-//   4. Any AMBIGUITIES flagged below must be resolved against the implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   - line_5a_election ("income_tax" | "sales_tax") is in context.md but may not be in schema
-//   - line_18_itemize_checkbox is in context.md but may not be in schema
-//   - magi field for SALT phase-out (OBBB Act) is in context.md but may not be in schema
-//   - line_8b_lender_name/address/ssn_ein conditional fields may not be in schema
-//   - line_16_other_description conditional field may not be in schema
-//   - MFS SALT cap ($20,000) requires filing_status field not present in schema
-//   - SALT cap phase-out (30% × excess MAGI over $500,000) requires magi field
+// UNRESOLVED ITEMS:
+//   - line_5a_election ("income_tax" | "sales_tax"): not in schema; only line_5a_tax_amount exists
+//   - line_18_itemize_checkbox: not in schema
+//   - magi field for SALT phase-out (OBBB Act): not in schema
+//   - line_8b_lender_name/address/ssn_ein conditional fields: not in schema
+//   - line_16_other_description conditional field: not in schema
+//   - MFS SALT cap ($20,000): filing_status not in schema; only single SALT_CAP ($40,000) is used
+//   - SALT cap phase-out (30% × excess MAGI over $500,000): magi field not in schema
 
 import { assertEquals } from "@std/assert";
 import { scheduleA } from "./index.ts";

@@ -1,24 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton: `nec`
-//   2. The input wrapper key matches compute()'s parameter: `necs`
-//   3. The nodeType strings match the actual node routing strings:
-//      - schedule_c, schedule_f, form8919, schedule1, schedule2, f1040
-//   4. Input field names on downstream nodes (line1_gross_receipts, line8_other_income,
-//      wages, line8z_other, line8z_golden_parachute, line17k_golden_parachute_excise,
-//      line25b_withheld_1099) must match implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   - `nec` node may default for_routing to "schedule_c" when omitted — test
-//     verifies this behaviour
-//   - `recipient_tin` is listed as required in context.md but Drake may allow
-//     omission in some flows; tests use it as optional per observed schema
-//   - `box3_golden_parachute` ordinarily co-occurs with box1_nec (total in box1,
-//     excess in box3); tests treat each independently per IRS routing logic
-//   - `multi_form_code` field may not exist in current schema; tests skip it
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099nec } from "./index.ts";
