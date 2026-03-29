@@ -1,12 +1,10 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, UnimplementedTaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 
-// schedule_d cannot be imported directly — it imports this node, creating a
-// circular dependency. Use a nodeType-only stub for graph topology declarations.
-// The actual output still routes by the string "schedule_d".
-const scheduleDRef = new UnimplementedTaxNode("schedule_d");
+// line18_28pct_gain feeds the Schedule D Tax Worksheet (QDCGTW), not Schedule D
+// itself. No downstream node is wired for this yet — output list intentionally empty.
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -48,7 +46,7 @@ function hasAnyGain(input: Rate28GainInput): boolean {
 class Rate28GainWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "rate_28_gain_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([scheduleDRef]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(rawInput: Rate28GainInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -57,16 +55,10 @@ class Rate28GainWorksheetNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const line18 = netGain(input);
+    // line18 will route to the Schedule D Tax Worksheet once that node exists
+    void netGain(input);
 
-    return {
-      outputs: [
-        {
-          nodeType: scheduleDRef.nodeType,
-          input: { line18_28pct_gain: line18 },
-        },
-      ],
-    };
+    return { outputs: [] };
   }
 }
 
