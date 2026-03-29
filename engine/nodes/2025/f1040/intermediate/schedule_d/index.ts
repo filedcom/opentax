@@ -92,9 +92,8 @@ export const inputSchema = z.object({
   // d_screen-style individual transactions (proceeds/cost/adjustment; gain_loss computed here)
   transactions: z.array(dScreenTransactionSchema).optional(),
   // Unrecaptured §1250 Gain Worksheet line 19 — from unrecaptured_1250_worksheet node
+  // (informational; consumed by the Schedule D Tax Worksheet, not by Schedule D itself)
   line19_unrecaptured_1250: z.number().nonnegative().optional(),
-  // 28% Rate Gain Worksheet line 18 — from rate_28_gain_worksheet node
-  line18_28pct_gain: z.number().nonnegative().optional(),
 });
 
 type ScheduleDInput = z.infer<typeof inputSchema>;
