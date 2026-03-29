@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
-import { registry } from "../../nodes/2025/registry.ts";
+import { registry } from "../../forms/f1040/2025/registry.ts";
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
 import { TaxNode } from "../types/tax-node.ts";
