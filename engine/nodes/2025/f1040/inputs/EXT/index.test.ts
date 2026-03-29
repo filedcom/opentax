@@ -1,27 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton (`ext`)
-//   2. The input wrapper key matches compute()'s parameter (single object, not array)
-//   3. The nodeType strings match the actual node routing strings
-//   4. Any AMBIGUITIES flagged below must be resolved against the implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   A. The exact nodeType string for downstream routing is unspecified in context.md.
-//      Context shows line_7_amount_paying flows to "Schedule 3 Line 10". Assumed
-//      nodeType is "schedule3" and field is "line10_amount_paid_extension".
-//      Verify against actual outputNodes declaration.
-//   B. Whether produce_4868 is required at the schema level or merely a "master switch"
-//      in compute() logic. Context says "yes (when filing 4868)" — treated as optional
-//      boolean with default false/absent = no outputs.
-//   C. Whether line_6_balance_due is exposed in outputs (context says "display-only
-//      computed field"). Tests assume it is NOT in tax outputs; it may be in a metadata
-//      or display section.
-//   D. Whether the 90% safe-harbor check emits a warning output or is purely advisory.
-//      Context marks it WARNING-only. Tests verify it does NOT throw.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { ext, inputSchema } from "./index.ts";
 
