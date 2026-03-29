@@ -142,7 +142,7 @@ See `.claude/skills/e2e-build-node/` for the guided workflow, or `.claude/skills
 All nodes follow the same shape:
 
 ```
-nodes/2025/f1040/inputs/<name>/
+forms/f1040/nodes/inputs/<name>/
   index.ts        # Node class + singleton export
   index.test.ts   # Tests
 ```
