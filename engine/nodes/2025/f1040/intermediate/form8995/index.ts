@@ -13,6 +13,8 @@ const QBI_RATE = 0.20; // IRC §199A(a) — 20% of net QBI
 export const inputSchema = z.object({
   // QBI from sole proprietorships (Schedule C)
   qbi_from_schedule_c: z.number().nonnegative().optional(),
+  // QBI from farming (Schedule F)
+  qbi_from_schedule_f: z.number().nonnegative().optional(),
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: z.number().optional(),
   // W-2 wages from pass-through (informational; not used in simplified form)
@@ -36,7 +38,7 @@ type Form8995Input = z.infer<typeof inputSchema>;
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
 function totalQbi(input: Form8995Input): number {
-  return (input.qbi_from_schedule_c ?? 0) + (input.qbi ?? 0);
+  return (input.qbi_from_schedule_c ?? 0) + (input.qbi_from_schedule_f ?? 0) + (input.qbi ?? 0);
 }
 
 function netQbi(input: Form8995Input): number {

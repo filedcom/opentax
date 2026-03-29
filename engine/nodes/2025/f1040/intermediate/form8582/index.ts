@@ -25,6 +25,12 @@ const MFS_MAGI_UPPER = 75_000;
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  // Per-activity passthrough fields (merged by executor; stored for traceability)
+  // schedule_c passive net profit/loss
+  passive_schedule_c: z.number().optional(),
+  // schedule_f passive net profit/loss
+  passive_schedule_f: z.number().optional(),
+
   // Current-year net passive income (sum of activities with net > 0)
   current_income: z.number().nonnegative().optional(),
 

@@ -17,6 +17,8 @@ const inputSchema = z.object({
   // Current-year net loss from the at-risk activity (negative number or zero).
   // Includes only the loss portion; income is separate (current_year_income).
   schedule_c_loss: z.number().nonpositive().optional(),
+  // Net loss from Schedule F farming activity (negative number; at-risk box 36b)
+  schedule_f_loss: z.number().nonpositive().optional(),
 
   // Prior-year at-risk losses that were suspended and carried forward.
   prior_unallowed: z.number().nonnegative().optional(),

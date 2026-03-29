@@ -21,13 +21,20 @@ const inputSchema = z.object({
   line17_additional_taxes: z.number().nonnegative().optional(),
   line25a_w2_withheld: z.number().optional(),
   line25b_withheld_1099: z.number().optional(),
+  // Line 25c — Additional Medicare Tax withheld (Form 8959 line 24)
+  line25c_additional_medicare_withheld: z.number().nonnegative().optional(),
   line12e_itemized_deductions: z.number().optional(),
   line13_qbi_deduction: z.number().nonnegative().optional(),
   line28_actc: z.number().optional(),
   line29_refundable_aoc: z.number().optional(),
   line30_refundable_adoption: z.number().nonnegative().optional(),
   line1f_taxable_adoption_benefits: z.number().nonnegative().optional(),
+  line1g_wages_8919: z.number().nonnegative().optional(),
   line38_amount_paid_extension: z.number().optional(),
+  // Line 20 — Total nonrefundable credits (from Schedule 3 Part I line 8)
+  line20_nonrefundable_credits: z.number().nonnegative().optional(),
+  // Line 31 — Additional payments and credits (from Schedule 3 Part II line 15)
+  line31_additional_payments: z.number().nonnegative().optional(),
 });
 
 class F1040Node extends UnimplementedTaxNode {

@@ -27,6 +27,24 @@ export const inputSchema = z.object({
   golden_parachute_excise: z.number().nonnegative().optional(),
   // Line 17k — 20% excise on excess golden parachute payments (1099-NEC box3 × 20%)
   line17k_golden_parachute_excise: z.number().nonnegative().optional(),
+  // Line 17e — 20% additional tax on taxable Archer MSA distributions (Form 8853 line 9b)
+  // IRC §220(f)(4); Form 8853 Part II line 9b → Schedule 2 line 17e
+  line17e_archer_msa_tax: z.number().nonnegative().optional(),
+  // Line 17f — 50% additional tax on taxable Medicare Advantage MSA distributions (Form 8853 line 13b)
+  // IRC §138(c)(2); Form 8853 Section B line 13b → Schedule 2 line 17f
+  line17f_medicare_advantage_msa_tax: z.number().nonnegative().optional(),
+  // Line 6 — Uncollected SS and Medicare tax on wages (Form 8919 line 13)
+  // IRC §3101; Form 8919 line 13 → Schedule 2 line 6
+  line6_uncollected_8919: z.number().nonnegative().optional(),
+  // Line 17b — 20% additional tax on non-qualified HSA distributions (Form 8889 line 20)
+  // IRC §223(f)(4)(A); Form 8889 Part II line 20 → Schedule 2 line 17b
+  line17b_hsa_penalty: z.number().nonnegative().optional(),
+  // Line 11 — Additional Medicare Tax (from Form 8959 line 18)
+  // IRC §3101(b)(2); Form 8959 line 18 → Schedule 2 line 11
+  line11_additional_medicare: z.number().nonnegative().optional(),
+  // Line 12 — Net Investment Income Tax (from Form 8960 line 17)
+  // IRC §1411; Form 8960 line 17 → Schedule 2 line 12
+  line12_niit: z.number().nonnegative().optional(),
 });
 
 type Schedule2Input = z.infer<typeof inputSchema>;
@@ -67,7 +85,18 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
   compute(rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const total = line8(input) + (input.line1_amt ?? 0) + line13(input) + line17h(input) + line17k(input);
+    const total =
+      line8(input) +
+      (input.line1_amt ?? 0) +
+      line13(input) +
+      line17h(input) +
+      line17k(input) +
+      (input.line17e_archer_msa_tax ?? 0) +
+      (input.line17f_medicare_advantage_msa_tax ?? 0) +
+      (input.line6_uncollected_8919 ?? 0) +
+      (input.line17b_hsa_penalty ?? 0) +
+      (input.line11_additional_medicare ?? 0) +
+      (input.line12_niit ?? 0);
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
