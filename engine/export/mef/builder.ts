@@ -30,6 +30,8 @@ import { buildIRS8829 } from "./forms/f8829.ts";
 import { buildIRS8839 } from "./forms/f8839.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 
+const MEF_RETURN_VERSION = "2025v3.0";
+
 export function buildMefXml(
   pending: MefFormsPending,
   filer?: FilerIdentity,
@@ -102,5 +104,5 @@ export function buildMefXml(
 
   const returnHeader = buildReturnHeader(filer);
 
-  return `<Return returnVersion="2025v3.0" xmlns="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
+  return `<Return returnVersion="${MEF_RETURN_VERSION}" xmlns="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
 }

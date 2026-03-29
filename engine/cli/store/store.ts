@@ -7,6 +7,14 @@ import type {
   ReturnJson,
 } from "./types.ts";
 
+export function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
+  const result: Record<string, unknown[]> = {};
+  for (const [nodeType, entries] of Object.entries(inputs)) {
+    result[`${nodeType}s`] = entries.map((e) => e.fields);
+  }
+  return result;
+}
+
 const RETURN_JSON = "return.json";
 
 async function readReturnJson(returnPath: string): Promise<ReturnJson> {
@@ -65,6 +73,13 @@ export async function createReturn(
   await writeReturnJson(returnPath, { meta, inputs: {} });
 
   return { returnId, returnPath };
+}
+
+export async function loadReturn(
+  returnPath: string,
+): Promise<{ meta: MetaJson; inputs: InputsJson }> {
+  const { meta, inputs } = await readReturnJson(returnPath);
+  return { meta, inputs };
 }
 
 export async function loadMeta(returnPath: string): Promise<MetaJson> {

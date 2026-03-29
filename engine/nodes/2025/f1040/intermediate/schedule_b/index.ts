@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { normalizeArray } from "../../utils.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -37,10 +38,6 @@ type ScheduleBInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-function normalizeArray<T>(v: T | T[] | undefined): T[] {
-  if (v === undefined) return [];
-  return Array.isArray(v) ? v : [v];
-}
 
 // Part I — Line 2: sum all per-payer taxable interest amounts
 function totalTaxableInterest(input: ScheduleBInput): number {
