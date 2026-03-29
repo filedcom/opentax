@@ -1,30 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton (e.g. `f8812`)
-//   2. The input wrapper key matches compute()'s parameter (e.g. `f8812s`)
-//   3. The nodeType strings match actual routing strings ("schedule3", "f1040")
-//   4. Field names: `qualifying_children_count`, `other_dependents_count`, `agi`,
-//      `filing_status`, `earned_income`, `income_tax_liability`, `do_not_claim_actc`,
-//      `has_form_2555`, `bona_fide_pr_resident`, `puerto_rico_excluded_income`,
-//      `form_2555_amounts`, `form_4563_amount`, `nontaxable_combat_pay`
-//   5. schedule3 output field for non-refundable CTC+ODC: `line6b_child_tax_credit`
-//   6. f1040 output field for ACTC: `line28_actc`
-//   7. TY2025 CTC = $2,200 per qualifying child (One Big Beautiful Bill Act, PL 119-21)
-//      ACTC max = $1,700 per qualifying child
-//
-// AMBIGUITIES:
-//   - Exact nodeType strings ("schedule3" vs "f1040") — verify against implementation
-//   - Field name for non-refundable CTC on schedule3 (using `line6b_child_tax_credit`)
-//   - Field name for ACTC on f1040 (using `line28_actc`)
-//   - Whether `has_form_2555` or `form_2555_amounts > 0` signals FEIE filing
-//   - Whether `bona_fide_pr_resident` is a boolean flag on the item
-//   - Whether Part II-B (payroll tax method) requires additional input fields
-//     (ss_tax_withheld, medicare_tax_withheld, se_tax_deduction, eic_amount)
-//
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8812 } from "./index.ts";
 

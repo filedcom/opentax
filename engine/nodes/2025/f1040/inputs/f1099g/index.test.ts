@@ -1,29 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton (e.g. `g99`)
-//   2. The input wrapper key (e.g. `g99s`) matches compute()'s parameter
-//   3. The nodeType strings match the actual node routing strings:
-//      - schedule1, f1040, schedule_f
-//   4. Field names must be confirmed against implementation:
-//      - schedule1: line7_unemployment, line1_state_refund, line8z_rtaa,
-//        line8z_taxable_grants, line8z_state_employee_payments
-//      - f1040: line25b_withheld_1099
-//      - schedule_f: line4a_gov_payments, line4b_taxable_payments, line5_ccc_gain
-//   5. The box_2_prior_year_itemized field name must match compute()'s parameter
-//
-// AMBIGUITIES:
-//   - box_9_market_gain routing: context.md says "Schedule F line 4b" when taxpayer
-//     did NOT elect to report CCC proceeds as income; the field name on schedule_f
-//     may be line4b_taxable_payments or line5_ccc_gain — verify against impl.
-//   - box_6 farm-related vs. personal routing: context.md requires a routing flag
-//     (e.g., box_6_is_farm); the field name is uncertain — verify against impl.
-//   - The "prior year itemized" signal for box_2 may be a separate field
-//     `box_2_prior_year_itemized` on the item or a top-level input — verify.
-//
-// These tests define IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099g } from "./index.ts";
 

@@ -1,33 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton — `r1099`
-//   2. The input wrapper key — `r1099s` — matches compute()'s parameter
-//   3. The nodeType strings: "f1040", "form5329", "form4972", "form8606"
-//   4. f1040 input field names used here are derived from existing passing tests:
-//      line4a_ira_gross, line4b_ira_taxable, line5a_pension_gross,
-//      line5b_pension_taxable, line25b_withheld_1099, line1a_wages
-//   5. form5329 input field names: early_distribution, distribution_code
-//   6. form4972 input field name: lump_sum_amount
-//   7. form8606 input field name — AMBIGUOUS (not confirmed in context.md)
-//   8. QCD exclusion field names on f1040 — AMBIGUOUS
-//   9. PSO premium exclusion field on f1040 line5b — AMBIGUOUS
-//  10. disability_as_wages routing field on f1040 line1a — AMBIGUOUS
-//  11. rollover_code handling behaviour — AMBIGUOUS (exact field names not confirmed)
-//  12. simplified_method_flag output reduction field — AMBIGUOUS
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   A. form8606 input field names (for rollover_code=C and exclude_8606_roth) are
-//      not specified in context.md
-//   B. QCD exclusion line4b reduction: whether the node emits a separate output or
-//      reduces the combined f1040 line4b value directly
-//   C. PSO premium cap enforcement field name on line5b output
-//   D. disability line1a field name on f1040
-//   E. Simplified Method exclusion output field / reduced line5b field name
-//   F. rollover_code = S / G zero-taxable behaviour: whether line4b/5b emits 0 or omits
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { z } from "zod";
 import { DistributionCode, RolloverCode, f1099r, itemSchema } from "./index.ts";
