@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form5329 } from "../../intermediate/form5329/index.ts";
@@ -418,14 +418,14 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     const withholdingFields = withholdingF1040Fields(r1099s);
 
     // Merge all f1040 fields into one output
-    const f1040Fields: Record<string, unknown> = {
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
       ...iraFields,
       ...pensionFields,
       ...disWagesFields,
       ...withholdingFields,
     };
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push(output(f1040, f1040Fields));
+      outputs.push(output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
 
     // Secondary form outputs

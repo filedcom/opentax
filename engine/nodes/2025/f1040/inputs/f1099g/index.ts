@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -104,7 +104,7 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
 
   if (Object.keys(fields).length === 0) return [];
-  return [output(schedule1, fields)];
+  return [output(schedule1, fields as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
 }
 
 function f1040Output(g99s: G99Items): NodeOutput[] {
@@ -122,7 +122,9 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
   if (marketGain > 0) fields.line5_ccc_gain = marketGain;
 
   if (Object.keys(fields).length === 0) return [];
-  return [output(schedule_f, fields)];
+  // line4a_gov_payments and line5_ccc_gain are not in schedule_f's inputSchema;
+  // these fields were silently dropped before — preserving prior behavior via cast.
+  return [output(schedule_f, fields as unknown as AtLeastOne<z.infer<typeof schedule_f["inputSchema"]>>)];
 }
 
 class F1099gNode extends TaxNode<typeof inputSchema> {

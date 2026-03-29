@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
@@ -194,10 +194,10 @@ function mergeF1040Outputs(outputs: NodeOutput[]): NodeOutput[] {
 
   const merged = f1040Outputs.reduce(
     (acc, o) => ({ ...acc, ...o.fields }),
-    {} as Record<string, unknown>,
+    {} as Partial<z.infer<typeof f1040["inputSchema"]>>,
   );
 
-  return [...otherOutputs, output(f1040, merged)];
+  return [...otherOutputs, output(f1040, merged as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>)];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

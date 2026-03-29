@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -240,6 +240,7 @@ function addIfDefined(
 }
 
 // Build the f1040 input object with only defined (non-undefined) fields.
+// Always includes at least filing_status.
 function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   const deps = input.dependents ?? [];
   const counts = dependentCounts(deps);
@@ -311,7 +312,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const f1040Input = buildF1040Input(parsed);
 
     const outputs: NodeOutput[] = [
-      output(f1040, f1040Input),
+      output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
     return { outputs };

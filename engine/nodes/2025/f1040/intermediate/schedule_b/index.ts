@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -78,12 +78,12 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const f1040Fields: Record<string, number> = {};
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (line4 > 0) f1040Fields.line2b_taxable_interest = line4;
     if (line6 > 0) f1040Fields.line3b_ordinary_dividends = line6;
 
     const outputs: NodeOutput[] = [
-      output(f1040, f1040Fields),
+      output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
     return { outputs };

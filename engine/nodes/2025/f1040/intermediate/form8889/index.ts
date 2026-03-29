@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
@@ -110,11 +110,11 @@ function nonQualifiedPenalty(input: Form8889Input, taxable: number): number {
 // Merged Schedule 1 output — deduction (line 13) and taxable distribution income (line 8z)
 // are emitted as a single output to avoid duplicate nodeType entries
 function schedule1Output(deductible: number, taxable: number): NodeOutput[] {
-  const input: Record<string, number> = {};
+  const input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (deductible > 0) input.line13_hsa_deduction = deductible;
   if (taxable > 0) input.line8z_other = taxable;
   if (Object.keys(input).length === 0) return [];
-  return [output(schedule1, input)];
+  return [output(schedule1, input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
 }
 
 // Excess contribution output → Form 5329 Part VII

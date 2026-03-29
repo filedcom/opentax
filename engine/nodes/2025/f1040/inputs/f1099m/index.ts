@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -154,11 +154,13 @@ function scheduleCGrossReceipts(items: M99Item[]): number {
 function scheduleEOutput(items: M99Item[]): NodeOutput | null {
   const rental = rentalIncomeForScheduleE(items);
   const royalty = royaltiesForScheduleE(items);
+  if (rental <= 0 && royalty <= 0) return null;
   const schedEInput: Record<string, number> = {};
   if (rental > 0) schedEInput.rental_income = rental;
   if (royalty > 0) schedEInput.royalty_income = royalty;
-  if (Object.keys(schedEInput).length === 0) return null;
-  return output(schedule_e, schedEInput);
+  // rental_income and royalty_income are not in schedule_e's inputSchema;
+  // these fields were silently dropped before — preserving prior behavior via cast.
+  return output(schedule_e, schedEInput as unknown as AtLeastOne<z.infer<typeof schedule_e["inputSchema"]>>);
 }
 
 function schedule1Output(items: M99Item[]): NodeOutput | null {
@@ -168,14 +170,14 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
   const attorney = taxableAttorneyTotal(items);
   const nqdc = totalOf(items, "box15_nqdc");
 
-  const s1Input: Record<string, number> = {};
+  const s1Input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (prizes > 0) s1Input.line8i_prizes_awards = prizes;
   if (other > 0) s1Input.line8z_other = other;
   if (substitute > 0) s1Input.line8z_substitute_payments = substitute;
   if (attorney > 0) s1Input.line8z_attorney_proceeds = attorney;
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
-  return output(schedule1, s1Input);
+  return output(schedule1, s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>);
 }
 
 // ---------------------------------------------------------------------------

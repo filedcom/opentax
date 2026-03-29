@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
@@ -241,7 +241,7 @@ function form8582Outputs(items: EItems): NodeOutput[] {
 
   if (!hasTrigger) return [];
 
-  const f8582Input: Record<string, unknown> = {};
+  const f8582Input: Partial<z.infer<typeof form8582["inputSchema"]>> = {};
   const currentNetLoss = passiveItems
     .map(computePropertyNet)
     .filter((n) => n < 0)
@@ -269,7 +269,7 @@ function form8582Outputs(items: EItems): NodeOutput[] {
   if (hasTypeA) f8582Input.has_active_rental = true;
   if (hasTypeB) f8582Input.has_other_passive = true;
 
-  return [output(form8582, f8582Input)];
+  return [output(form8582, f8582Input as AtLeastOne<z.infer<typeof form8582["inputSchema"]>>)];
 }
 
 function form6198Outputs(items: EItems): NodeOutput[] {
@@ -280,14 +280,14 @@ function form6198Outputs(items: EItems): NodeOutput[] {
   );
   if (atRiskItems.length === 0) return [];
 
-  const f6198Input: Record<string, number> = {};
+  const f6198Input: Partial<z.infer<typeof form6198["inputSchema"]>> = {};
   const totalPriorAtRisk = atRiskItems.reduce(
     (sum, item) => sum + (item.prior_unallowed_at_risk ?? 0),
     0,
   );
   if (totalPriorAtRisk > 0) f6198Input.prior_unallowed = totalPriorAtRisk;
 
-  return [output(form6198, f6198Input)];
+  return [output(form6198, f6198Input as AtLeastOne<z.infer<typeof form6198["inputSchema"]>>)];
 }
 
 function form8960Outputs(items: EItems): NodeOutput[] {
@@ -313,18 +313,19 @@ function scheduleAOutputs(items: EItems): NodeOutput[] {
     return sum + (item.expense_taxes ?? 0) * personalFraction;
   }, 0);
 
-  const input: Record<string, number> = {};
-  if (totalPersonalInterest > 0) input.mortgage_interest = totalPersonalInterest;
-  if (totalPersonalTaxes > 0) input.real_estate_taxes = totalPersonalTaxes;
+  const input: Partial<z.infer<typeof schedule_a["inputSchema"]>> = {};
+  if (totalPersonalInterest > 0) input.line_8a_mortgage_interest_1098 = totalPersonalInterest;
+  if (totalPersonalTaxes > 0) input.line_5b_real_estate_tax = totalPersonalTaxes;
 
-  return [output(schedule_a, input)];
+  if (Object.keys(input).length === 0) return [];
+  return [output(schedule_a, input as AtLeastOne<z.infer<typeof schedule_a["inputSchema"]>>)];
 }
 
 function form8995Outputs(items: EItems): NodeOutput[] {
   const qbiItems = items.filter((item) => item.qbi_trade_or_business === "Y");
   if (qbiItems.length === 0) return [];
 
-  const f8995Input: Record<string, unknown> = {};
+  const f8995Input: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
 
   // If any item has override, use the first override found; otherwise compute QBI
   const overrideItem = qbiItems.find((item) => item.qbi_override !== undefined);
@@ -341,11 +342,10 @@ function form8995Outputs(items: EItems): NodeOutput[] {
   const totalUbia = qbiItems.reduce((sum, item) => sum + (item.qbi_unadjusted_basis ?? 0), 0);
   if (totalUbia > 0) f8995Input.unadjusted_basis = totalUbia;
 
-  // Pass safe harbor election if present
-  const safeHarborItem = qbiItems.find((item) => item.qbi_safe_harbor !== undefined);
-  if (safeHarborItem?.qbi_safe_harbor) f8995Input.safe_harbor = safeHarborItem.qbi_safe_harbor;
+  // safe_harbor is not in form8995's inputSchema — field was silently dropped before.
+  // Preserving prior behavior by omitting it from the typed output.
 
-  return [output(form8995, f8995Input)];
+  return [output(form8995, f8995Input as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>)];
 }
 
 function form4797Outputs(items: EItems): NodeOutput[] {
@@ -387,11 +387,14 @@ function form8990Outputs(items: EItems): NodeOutput[] {
   );
   if (totalMortgage === 0 && totalOther === 0) return [];
 
+  // disallowed_mortgage_interest_carryforward and disallowed_other_interest_carryforward
+  // are not in form8990's inputSchema — these fields were silently dropped before.
+  // Preserving prior behavior via cast.
   const input: Record<string, number> = {};
   if (totalMortgage > 0) input.disallowed_mortgage_interest_carryforward = totalMortgage;
   if (totalOther > 0) input.disallowed_other_interest_carryforward = totalOther;
 
-  return [output(form8990, input)];
+  return [output(form8990, input as unknown as AtLeastOne<z.infer<typeof form8990["inputSchema"]>>)];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
@@ -167,7 +167,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       : [];
 
     // Aggregate all f1040 fields into one output
-    const f1040Fields: Record<string, number> = {};
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     const totalQualDiv = div1099s.reduce((sum, item) => sum + (item.box1b ?? 0), 0);
     if (totalQualDiv > 0) f1040Fields.line3a_qualified_dividends = totalQualDiv;
     const totalWithholding = div1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);
@@ -180,7 +180,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const totalBox2a = div1099s.reduce((sum, item) => sum + (item.box2a ?? 0), 0);
     if (totalBox2a > 0 && !anySubAmounts) f1040Fields.line7a_cap_gain_distrib = totalBox2a;
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push(output(f1040, f1040Fields));
+      outputs.push(output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
 
     // Cap gain distribution → schedule_d when sub-amounts present

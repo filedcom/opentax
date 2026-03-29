@@ -121,7 +121,7 @@ function validateItem(item: K99Item): void {
 function federalWithholdingOutputs(k99s: K99Items): NodeOutput[] {
   return k99s
     .filter((item) => (item.box4_federal_withheld ?? 0) > 0)
-    .map((item) => (output(f1040, { line25b_withheld_1099: item.box4_federal_withheld })));
+    .map((item) => (output(f1040, { line25b_withheld_1099: item.box4_federal_withheld! })));
 }
 
 // Exported for reference (TY2025 thresholds)

@@ -103,7 +103,7 @@ function processItem(item: F8949Item): NodeOutput[] {
   ];
 
   if ((item.federal_withheld ?? 0) > 0) {
-    outputs.push(output(f1040, { line25b_withheld_1099: item.federal_withheld }));
+    outputs.push(output(f1040, { line25b_withheld_1099: item.federal_withheld! }));
   }
 
   if (item.amt_cost_basis !== undefined && item.amt_cost_basis !== item.cost_basis) {

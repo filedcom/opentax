@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../core/types/output-nodes.ts";
 import { f1098, itemSchema as f1098ItemSchema } from "../inputs/f1098/index.ts";
 import { itemSchema as f1099rItemSchema, f1099r } from "../inputs/f1099r/index.ts";
@@ -117,9 +117,9 @@ class StartNode extends TaxNode<typeof inputSchema> {
       ...(input.schedule_cs?.length ? [output(scheduleC, { schedule_cs: input.schedule_cs })] : []),
       ...(input.schedule_es?.length ? [output(scheduleE, { schedule_es: input.schedule_es })] : []),
       ...(input.ssas?.length ? [output(ssa1099, { ssas: input.ssas })] : []),
-      ...(input.schedule_a ? [output(scheduleA, input.schedule_a)] : []),
-      ...(input.d_screen ? [output(scheduleD, input.d_screen)] : []),
-      ...(input.ext ? [output(ext, input.ext)] : []),
+      ...(input.schedule_a ? [output(scheduleA, input.schedule_a as AtLeastOne<z.infer<typeof scheduleAInputSchema>>)] : []),
+      ...(input.d_screen ? [output(scheduleD, input.d_screen as AtLeastOne<z.infer<typeof scheduleDInputSchema>>)] : []),
+      ...(input.ext ? [output(ext, input.ext as AtLeastOne<z.infer<typeof extInputSchema>>)] : []),
       ...(input.general ? [output(general, input.general)] : []),
     ];
     return { outputs };
