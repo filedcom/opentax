@@ -30,11 +30,12 @@ import { buildIRS8829 } from "./forms/f8829.ts";
 import { buildIRS8839 } from "./forms/f8839.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 
-const MEF_RETURN_VERSION = "2025v3.0";
-
 export function buildMefXml(
   pending: MefFormsPending,
   filer?: FilerIdentity,
+  schemaVersion = "2025v3.0",
+  year = 2025,
+  returnType = "1040",
 ): string {
   const f1040Xml = buildIRS1040(pending.f1040 ?? {});
   const schedule1Xml = buildIRS1040Schedule1(pending.schedule1 ?? {});
@@ -102,7 +103,7 @@ export function buildMefXml(
   const innerForms = forms.join("");
   const returnData = `<ReturnData documentCnt="${documentCnt}">${innerForms}</ReturnData>`;
 
-  const returnHeader = buildReturnHeader(filer);
+  const returnHeader = buildReturnHeader(filer, year, returnType);
 
-  return `<Return returnVersion="${MEF_RETURN_VERSION}" xmlns="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
+  return `<Return returnVersion="${schemaVersion}" xmlns="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
 }
