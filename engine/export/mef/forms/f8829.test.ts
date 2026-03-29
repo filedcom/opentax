@@ -31,7 +31,10 @@ Deno.test("all unknown keys returns empty string", () => {
 
 Deno.test("total_area at zero is emitted", () => {
   const result = buildIRS8829({ total_area: 0 });
-  assertStringIncludes(result, "<TotalAreaOfHomeSqFtCnt>0</TotalAreaOfHomeSqFtCnt>");
+  assertStringIncludes(
+    result,
+    "<TotalAreaOfHomeSqFtCnt>0</TotalAreaOfHomeSqFtCnt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -40,7 +43,10 @@ Deno.test("total_area at zero is emitted", () => {
 
 Deno.test("total_area maps to TotalAreaOfHomeSqFtCnt", () => {
   const result = buildIRS8829({ total_area: 2000 });
-  assertStringIncludes(result, "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>");
+  assertStringIncludes(
+    result,
+    "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
+  );
 });
 
 Deno.test("business_area maps to BusinessAreaOfHomeSqFtCnt", () => {
@@ -53,7 +59,10 @@ Deno.test("business_area maps to BusinessAreaOfHomeSqFtCnt", () => {
 
 Deno.test("mortgage_interest maps to MortgageInterestAmt", () => {
   const result = buildIRS8829({ mortgage_interest: 12000 });
-  assertStringIncludes(result, "<MortgageInterestAmt>12000</MortgageInterestAmt>");
+  assertStringIncludes(
+    result,
+    "<MortgageInterestAmt>12000</MortgageInterestAmt>",
+  );
 });
 
 Deno.test("insurance maps to InsuranceAmt", () => {
@@ -86,7 +95,10 @@ Deno.test("other_expenses maps to OtherExpensesAmt", () => {
 
 Deno.test("gross_income_limit maps to GrossIncomeLimitAmt", () => {
   const result = buildIRS8829({ gross_income_limit: 80000 });
-  assertStringIncludes(result, "<GrossIncomeLimitAmt>80000</GrossIncomeLimitAmt>");
+  assertStringIncludes(
+    result,
+    "<GrossIncomeLimitAmt>80000</GrossIncomeLimitAmt>",
+  );
 });
 
 Deno.test("prior_year_operating_carryover maps to PYOperatingExpensesCyovAmt", () => {
@@ -99,12 +111,18 @@ Deno.test("prior_year_operating_carryover maps to PYOperatingExpensesCyovAmt", (
 
 Deno.test("home_fmv_or_basis maps to HomeFMVOrAdjBasisAmt", () => {
   const result = buildIRS8829({ home_fmv_or_basis: 350000 });
-  assertStringIncludes(result, "<HomeFMVOrAdjBasisAmt>350000</HomeFMVOrAdjBasisAmt>");
+  assertStringIncludes(
+    result,
+    "<HomeFMVOrAdjBasisAmt>350000</HomeFMVOrAdjBasisAmt>",
+  );
 });
 
 Deno.test("prior_year_depreciation_carryover maps to PYDepreciationCyovAmt", () => {
   const result = buildIRS8829({ prior_year_depreciation_carryover: 300 });
-  assertStringIncludes(result, "<PYDepreciationCyovAmt>300</PYDepreciationCyovAmt>");
+  assertStringIncludes(
+    result,
+    "<PYDepreciationCyovAmt>300</PYDepreciationCyovAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -113,7 +131,10 @@ Deno.test("prior_year_depreciation_carryover maps to PYDepreciationCyovAmt", () 
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
   const result = buildIRS8829({ total_area: 2000 });
-  assertStringIncludes(result, "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>");
+  assertStringIncludes(
+    result,
+    "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
+  );
   assertNotIncludes(result, "<BusinessAreaOfHomeSqFtCnt>");
   assertNotIncludes(result, "<MortgageInterestAmt>");
   assertNotIncludes(result, "<RentAmt>");
@@ -121,8 +142,14 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 
 Deno.test("two fields present: only those two elements emitted", () => {
   const result = buildIRS8829({ total_area: 2000, mortgage_interest: 12000 });
-  assertStringIncludes(result, "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>");
-  assertStringIncludes(result, "<MortgageInterestAmt>12000</MortgageInterestAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
+  );
+  assertStringIncludes(
+    result,
+    "<MortgageInterestAmt>12000</MortgageInterestAmt>",
+  );
   assertNotIncludes(result, "<BusinessAreaOfHomeSqFtCnt>");
   assertNotIncludes(result, "<InsuranceAmt>");
 });
@@ -154,12 +181,18 @@ Deno.test("all 12 fields present: output wrapped in IRS8829 tag", () => {
 
 Deno.test("all 12 fields present: all elements emitted", () => {
   const result = buildIRS8829(allFields);
-  assertStringIncludes(result, "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>");
+  assertStringIncludes(
+    result,
+    "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
+  );
   assertStringIncludes(
     result,
     "<BusinessAreaOfHomeSqFtCnt>400</BusinessAreaOfHomeSqFtCnt>",
   );
-  assertStringIncludes(result, "<MortgageInterestAmt>12000</MortgageInterestAmt>");
+  assertStringIncludes(
+    result,
+    "<MortgageInterestAmt>12000</MortgageInterestAmt>",
+  );
   assertStringIncludes(result, "<InsuranceAmt>1500</InsuranceAmt>");
   assertStringIncludes(result, "<RentAmt>18000</RentAmt>");
   assertStringIncludes(
@@ -168,13 +201,22 @@ Deno.test("all 12 fields present: all elements emitted", () => {
   );
   assertStringIncludes(result, "<UtilitiesAmt>3000</UtilitiesAmt>");
   assertStringIncludes(result, "<OtherExpensesAmt>600</OtherExpensesAmt>");
-  assertStringIncludes(result, "<GrossIncomeLimitAmt>80000</GrossIncomeLimitAmt>");
+  assertStringIncludes(
+    result,
+    "<GrossIncomeLimitAmt>80000</GrossIncomeLimitAmt>",
+  );
   assertStringIncludes(
     result,
     "<PYOperatingExpensesCyovAmt>200</PYOperatingExpensesCyovAmt>",
   );
-  assertStringIncludes(result, "<HomeFMVOrAdjBasisAmt>350000</HomeFMVOrAdjBasisAmt>");
-  assertStringIncludes(result, "<PYDepreciationCyovAmt>300</PYDepreciationCyovAmt>");
+  assertStringIncludes(
+    result,
+    "<HomeFMVOrAdjBasisAmt>350000</HomeFMVOrAdjBasisAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<PYDepreciationCyovAmt>300</PYDepreciationCyovAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -183,7 +225,10 @@ Deno.test("all 12 fields present: all elements emitted", () => {
 
 Deno.test("string field is silently ignored", () => {
   const result = buildIRS8829({ method: "simplified", total_area: 2000 });
-  assertStringIncludes(result, "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>");
+  assertStringIncludes(
+    result,
+    "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
+  );
   assertNotIncludes(result, "method");
   assertNotIncludes(result, "simplified");
 });

@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { ScheduleDFields, ScheduleDInput } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 export type { ScheduleDInput };
 
@@ -35,13 +35,17 @@ function buildBasisRptNoAdjGroup(
   if (!hasProceeds && !hasCost) return "";
 
   const children: string[] = [
-    hasProceeds ? element("TotalProceedsSalesPriceAmt", proceeds as number) : "",
+    hasProceeds
+      ? element("TotalProceedsSalesPriceAmt", proceeds as number)
+      : "",
     hasCost ? element("TotalCostOrOtherBasisAmt", cost as number) : "",
   ];
 
   // TotalGainOrLossAmt is only emitted when both values are present
   if (hasProceeds && hasCost) {
-    children.push(element("TotalGainOrLossAmt", (proceeds as number) - (cost as number)));
+    children.push(
+      element("TotalGainOrLossAmt", (proceeds as number) - (cost as number)),
+    );
   }
 
   return elements(groupTag, children);
@@ -53,10 +57,18 @@ export function buildIRS1040ScheduleD(fields: ScheduleDInput): string {
 
   // Nested groups first (XSD order: line 1a before line 8a)
   children.push(
-    buildBasisRptNoAdjGroup("TotalSTCGL1099BBssRptNoAdjGrp", f.line_1a_proceeds, f.line_1a_cost),
+    buildBasisRptNoAdjGroup(
+      "TotalSTCGL1099BBssRptNoAdjGrp",
+      f.line_1a_proceeds,
+      f.line_1a_cost,
+    ),
   );
   children.push(
-    buildBasisRptNoAdjGroup("TotalLTCGL1099BBssRptNoAdjGrp", f.line_8a_proceeds, f.line_8a_cost),
+    buildBasisRptNoAdjGroup(
+      "TotalLTCGL1099BBssRptNoAdjGrp",
+      f.line_8a_proceeds,
+      f.line_8a_cost,
+    ),
   );
 
   // Scalar FIELD_MAP

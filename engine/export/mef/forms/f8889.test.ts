@@ -81,7 +81,10 @@ Deno.test(
   "single known field emits only that element, absent fields omitted",
   () => {
     const result = buildIRS8889({ taxpayer_hsa_contributions: 3000 });
-    assertStringIncludes(result, "<HSAContributionAmt>3000</HSAContributionAmt>");
+    assertStringIncludes(
+      result,
+      "<HSAContributionAmt>3000</HSAContributionAmt>",
+    );
     assertNotIncludes(result, "<HSAEmployerContributionAmt>");
     assertNotIncludes(result, "<TotalHSADistributionAmt>");
     assertNotIncludes(result, "<UnreimbQualMedAndDentalExpAmt>");
@@ -133,7 +136,10 @@ Deno.test(
       coverage_type: "self_only",
       taxpayer_hsa_contributions: 3000,
     });
-    assertStringIncludes(result, "<HSAContributionAmt>3000</HSAContributionAmt>");
+    assertStringIncludes(
+      result,
+      "<HSAContributionAmt>3000</HSAContributionAmt>",
+    );
     assertNotIncludes(result, "coverage_type");
     assertNotIncludes(result, "self_only");
   },
@@ -146,7 +152,10 @@ Deno.test(
       age_55_or_older: true,
       taxpayer_hsa_contributions: 500,
     });
-    assertStringIncludes(result, "<HSAContributionAmt>500</HSAContributionAmt>");
+    assertStringIncludes(
+      result,
+      "<HSAContributionAmt>500</HSAContributionAmt>",
+    );
     assertNotIncludes(result, "age_55_or_older");
   },
 );

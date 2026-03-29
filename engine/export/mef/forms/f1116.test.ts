@@ -22,7 +22,10 @@ Deno.test("f1116: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f1116: all unknown keys returns empty string", () => {
-  assertEquals(buildIRS1116({ junk: 999, foo: "bar", income_category: "GEN" }), "");
+  assertEquals(
+    buildIRS1116({ junk: 999, foo: "bar", income_category: "GEN" }),
+    "",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -130,7 +133,10 @@ Deno.test("f1116: all 4 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f1116: income_category enum field is silently ignored", () => {
-  const result = buildIRS1116({ income_category: "GEN", foreign_tax_paid: 1500 });
+  const result = buildIRS1116({
+    income_category: "GEN",
+    foreign_tax_paid: 1500,
+  });
   assertStringIncludes(
     result,
     "<ForeignTaxesPaidOrAccruedAmt>1500</ForeignTaxesPaidOrAccruedAmt>",

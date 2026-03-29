@@ -134,13 +134,28 @@ Deno.test("f8582: all 7 fields present: output wrapped in IRS8582 tag", () => {
 
 Deno.test("f8582: all 7 fields present: all elements emitted", () => {
   const result = buildIRS8582(allFields);
-  assertStringIncludes(result, "<PassiveScheduleCIncomeAmt>5000</PassiveScheduleCIncomeAmt>");
-  assertStringIncludes(result, "<PassiveScheduleFIncomeAmt>3000</PassiveScheduleFIncomeAmt>");
-  assertStringIncludes(result, "<CurrentYearIncomeAmt>12000</CurrentYearIncomeAmt>");
+  assertStringIncludes(
+    result,
+    "<PassiveScheduleCIncomeAmt>5000</PassiveScheduleCIncomeAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<PassiveScheduleFIncomeAmt>3000</PassiveScheduleFIncomeAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<CurrentYearIncomeAmt>12000</CurrentYearIncomeAmt>",
+  );
   assertStringIncludes(result, "<CurrentYearLossAmt>8000</CurrentYearLossAmt>");
-  assertStringIncludes(result, "<PriorYearUnallowedLossAmt>2000</PriorYearUnallowedLossAmt>");
+  assertStringIncludes(
+    result,
+    "<PriorYearUnallowedLossAmt>2000</PriorYearUnallowedLossAmt>",
+  );
   assertStringIncludes(result, "<ModifiedAGIAmt>95000</ModifiedAGIAmt>");
-  assertStringIncludes(result, "<ActiveParticipationAmt>15000</ActiveParticipationAmt>");
+  assertStringIncludes(
+    result,
+    "<ActiveParticipationAmt>15000</ActiveParticipationAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------

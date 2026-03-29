@@ -87,5 +87,5 @@ Deno.test("f8919: reason_code string field is silently ignored", () => {
   const result = buildIRS8919({ reason_code: "G", wages: 10000 });
   assertStringIncludes(result, "<WagesReceivedAmt>10000</WagesReceivedAmt>");
   assertNotIncludes(result, "reason_code");
-  assertNotIncludes(result, "\"G\"");
+  assertNotIncludes(result, '"G"');
 });

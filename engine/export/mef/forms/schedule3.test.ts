@@ -55,7 +55,9 @@ Deno.test("line3_education_credit maps to EducationCreditAmt", () => {
 });
 
 Deno.test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt", () => {
-  const result = buildIRS1040Schedule3({ line4_retirement_savings_credit: 400 });
+  const result = buildIRS1040Schedule3({
+    line4_retirement_savings_credit: 400,
+  });
   assertStringIncludes(
     result,
     "<RtrSavingsContributionsCrAmt>400</RtrSavingsContributionsCrAmt>",

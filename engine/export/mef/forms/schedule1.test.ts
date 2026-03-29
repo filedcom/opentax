@@ -410,12 +410,36 @@ Deno.test(
     const idxNqdc = result.indexOf("<NQDCDistributionAmt>");
     const idxOther = result.indexOf("<OtherIncomeAmt>");
     const idxParachute = result.indexOf("<ExcessGoldenParachuteAmt>");
-    assertEquals(idxRtaa < idxGrants, true, "RTAAPaymentsAmt before TaxableGrantsAmt");
-    assertEquals(idxGrants < idxSubs, true, "TaxableGrantsAmt before SubstitutePaymentsAmt");
-    assertEquals(idxSubs < idxAttorney, true, "SubstitutePaymentsAmt before GrossProeedsToAttorneyAmt");
-    assertEquals(idxAttorney < idxNqdc, true, "GrossProeedsToAttorneyAmt before NQDCDistributionAmt");
-    assertEquals(idxNqdc < idxOther, true, "NQDCDistributionAmt before OtherIncomeAmt");
-    assertEquals(idxOther < idxParachute, true, "OtherIncomeAmt before ExcessGoldenParachuteAmt");
+    assertEquals(
+      idxRtaa < idxGrants,
+      true,
+      "RTAAPaymentsAmt before TaxableGrantsAmt",
+    );
+    assertEquals(
+      idxGrants < idxSubs,
+      true,
+      "TaxableGrantsAmt before SubstitutePaymentsAmt",
+    );
+    assertEquals(
+      idxSubs < idxAttorney,
+      true,
+      "SubstitutePaymentsAmt before GrossProeedsToAttorneyAmt",
+    );
+    assertEquals(
+      idxAttorney < idxNqdc,
+      true,
+      "GrossProeedsToAttorneyAmt before NQDCDistributionAmt",
+    );
+    assertEquals(
+      idxNqdc < idxOther,
+      true,
+      "NQDCDistributionAmt before OtherIncomeAmt",
+    );
+    assertEquals(
+      idxOther < idxParachute,
+      true,
+      "OtherIncomeAmt before ExcessGoldenParachuteAmt",
+    );
   },
 );
 
@@ -448,11 +472,17 @@ Deno.test("line4_other_gains absent not emitted", () => {
 
 Deno.test("line6_schedule_f maps to NetFarmProfitLossAmt", () => {
   const result = buildIRS1040Schedule1({ line6_schedule_f: 15000 });
-  assertStringIncludes(result, "<NetFarmProfitLossAmt>15000</NetFarmProfitLossAmt>");
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>15000</NetFarmProfitLossAmt>",
+  );
 });
 Deno.test("line6_schedule_f negative emits with minus sign", () => {
   const result = buildIRS1040Schedule1({ line6_schedule_f: -3000 });
-  assertStringIncludes(result, "<NetFarmProfitLossAmt>-3000</NetFarmProfitLossAmt>");
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>-3000</NetFarmProfitLossAmt>",
+  );
 });
 Deno.test("line6_schedule_f absent not emitted", () => {
   const result = buildIRS1040Schedule1({ line7_unemployment: 100 });
@@ -461,7 +491,10 @@ Deno.test("line6_schedule_f absent not emitted", () => {
 
 Deno.test("line8e_archer_msa_dist maps to TotArcherMSAMedcrLTCAmt", () => {
   const result = buildIRS1040Schedule1({ line8e_archer_msa_dist: 6000 });
-  assertStringIncludes(result, "<TotArcherMSAMedcrLTCAmt>6000</TotArcherMSAMedcrLTCAmt>");
+  assertStringIncludes(
+    result,
+    "<TotArcherMSAMedcrLTCAmt>6000</TotArcherMSAMedcrLTCAmt>",
+  );
 });
 Deno.test("line8e_archer_msa_dist absent not emitted", () => {
   const result = buildIRS1040Schedule1({ line7_unemployment: 100 });
@@ -470,7 +503,10 @@ Deno.test("line8e_archer_msa_dist absent not emitted", () => {
 
 Deno.test("line8p_excess_business_loss maps to ExcessBusinessLossAmt", () => {
   const result = buildIRS1040Schedule1({ line8p_excess_business_loss: 12000 });
-  assertStringIncludes(result, "<ExcessBusinessLossAmt>12000</ExcessBusinessLossAmt>");
+  assertStringIncludes(
+    result,
+    "<ExcessBusinessLossAmt>12000</ExcessBusinessLossAmt>",
+  );
 });
 Deno.test("line8p_excess_business_loss absent not emitted", () => {
   const result = buildIRS1040Schedule1({ line7_unemployment: 100 });
@@ -479,7 +515,10 @@ Deno.test("line8p_excess_business_loss absent not emitted", () => {
 
 Deno.test("line13_hsa_deduction maps to HealthSavingsAccountDedAmt", () => {
   const result = buildIRS1040Schedule1({ line13_hsa_deduction: 3850 });
-  assertStringIncludes(result, "<HealthSavingsAccountDedAmt>3850</HealthSavingsAccountDedAmt>");
+  assertStringIncludes(
+    result,
+    "<HealthSavingsAccountDedAmt>3850</HealthSavingsAccountDedAmt>",
+  );
 });
 Deno.test("line13_hsa_deduction absent not emitted", () => {
   const result = buildIRS1040Schedule1({ line7_unemployment: 100 });
@@ -488,7 +527,10 @@ Deno.test("line13_hsa_deduction absent not emitted", () => {
 
 Deno.test("line15_se_deduction maps to DeductibleSelfEmploymentTaxAmt", () => {
   const result = buildIRS1040Schedule1({ line15_se_deduction: 7065 });
-  assertStringIncludes(result, "<DeductibleSelfEmploymentTaxAmt>7065</DeductibleSelfEmploymentTaxAmt>");
+  assertStringIncludes(
+    result,
+    "<DeductibleSelfEmploymentTaxAmt>7065</DeductibleSelfEmploymentTaxAmt>",
+  );
 });
 Deno.test("line15_se_deduction absent not emitted", () => {
   const result = buildIRS1040Schedule1({ line7_unemployment: 100 });
@@ -506,7 +548,10 @@ Deno.test("line20_ira_deduction absent not emitted", () => {
 
 Deno.test("line23_archer_msa_deduction maps to ArcherMSADeductionAmt", () => {
   const result = buildIRS1040Schedule1({ line23_archer_msa_deduction: 2400 });
-  assertStringIncludes(result, "<ArcherMSADeductionAmt>2400</ArcherMSADeductionAmt>");
+  assertStringIncludes(
+    result,
+    "<ArcherMSADeductionAmt>2400</ArcherMSADeductionAmt>",
+  );
 });
 Deno.test("line23_archer_msa_deduction absent not emitted", () => {
   const result = buildIRS1040Schedule1({ line7_unemployment: 100 });
@@ -546,27 +591,78 @@ Deno.test("all 23 fields present: all elements emitted and wrapped", () => {
 
   assertStringIncludes(result, "<IRS1040Schedule1>");
   assertStringIncludes(result, "</IRS1040Schedule1>");
-  assertStringIncludes(result, "<StateLocalTaxRefundAmt>100</StateLocalTaxRefundAmt>");
-  assertStringIncludes(result, "<BusinessIncomeLossAmt>200</BusinessIncomeLossAmt>");
+  assertStringIncludes(
+    result,
+    "<StateLocalTaxRefundAmt>100</StateLocalTaxRefundAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<BusinessIncomeLossAmt>200</BusinessIncomeLossAmt>",
+  );
   assertStringIncludes(result, "<OtherGainLossAmt>300</OtherGainLossAmt>");
-  assertStringIncludes(result, "<NetFarmProfitLossAmt>400</NetFarmProfitLossAmt>");
-  assertStringIncludes(result, "<UnemploymentCompAmt>500</UnemploymentCompAmt>");
-  assertStringIncludes(result, "<CancellationOfDebtAmt>600</CancellationOfDebtAmt>");
-  assertStringIncludes(result, "<TotArcherMSAMedcrLTCAmt>700</TotArcherMSAMedcrLTCAmt>");
+  assertStringIncludes(
+    result,
+    "<NetFarmProfitLossAmt>400</NetFarmProfitLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<UnemploymentCompAmt>500</UnemploymentCompAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<CancellationOfDebtAmt>600</CancellationOfDebtAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotArcherMSAMedcrLTCAmt>700</TotArcherMSAMedcrLTCAmt>",
+  );
   assertStringIncludes(result, "<PrizeAwardAmt>800</PrizeAwardAmt>");
-  assertStringIncludes(result, "<ExcessBusinessLossAmt>900</ExcessBusinessLossAmt>");
+  assertStringIncludes(
+    result,
+    "<ExcessBusinessLossAmt>900</ExcessBusinessLossAmt>",
+  );
   assertStringIncludes(result, "<RTAAPaymentsAmt>1000</RTAAPaymentsAmt>");
   assertStringIncludes(result, "<TaxableGrantsAmt>1100</TaxableGrantsAmt>");
-  assertStringIncludes(result, "<SubstitutePaymentsAmt>1200</SubstitutePaymentsAmt>");
-  assertStringIncludes(result, "<GrossProeedsToAttorneyAmt>1300</GrossProeedsToAttorneyAmt>");
-  assertStringIncludes(result, "<NQDCDistributionAmt>1400</NQDCDistributionAmt>");
+  assertStringIncludes(
+    result,
+    "<SubstitutePaymentsAmt>1200</SubstitutePaymentsAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<GrossProeedsToAttorneyAmt>1300</GrossProeedsToAttorneyAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<NQDCDistributionAmt>1400</NQDCDistributionAmt>",
+  );
   assertStringIncludes(result, "<OtherIncomeAmt>1500</OtherIncomeAmt>");
-  assertStringIncludes(result, "<ExcessGoldenParachuteAmt>1600</ExcessGoldenParachuteAmt>");
-  assertStringIncludes(result, "<HealthSavingsAccountDedAmt>1700</HealthSavingsAccountDedAmt>");
-  assertStringIncludes(result, "<DeductibleSelfEmploymentTaxAmt>1800</DeductibleSelfEmploymentTaxAmt>");
-  assertStringIncludes(result, "<RentalRealEstateIncomeLossAmt>1900</RentalRealEstateIncomeLossAmt>");
-  assertStringIncludes(result, "<EarlyWithdrawalPenaltyAmt>2000</EarlyWithdrawalPenaltyAmt>");
+  assertStringIncludes(
+    result,
+    "<ExcessGoldenParachuteAmt>1600</ExcessGoldenParachuteAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<HealthSavingsAccountDedAmt>1700</HealthSavingsAccountDedAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<DeductibleSelfEmploymentTaxAmt>1800</DeductibleSelfEmploymentTaxAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<RentalRealEstateIncomeLossAmt>1900</RentalRealEstateIncomeLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<EarlyWithdrawalPenaltyAmt>2000</EarlyWithdrawalPenaltyAmt>",
+  );
   assertStringIncludes(result, "<IRADeductionAmt>2100</IRADeductionAmt>");
-  assertStringIncludes(result, "<ArcherMSADeductionAmt>2200</ArcherMSADeductionAmt>");
-  assertStringIncludes(result, "<Sec501c18dContributionAmt>2300</Sec501c18dContributionAmt>");
+  assertStringIncludes(
+    result,
+    "<ArcherMSADeductionAmt>2200</ArcherMSADeductionAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<Sec501c18dContributionAmt>2300</Sec501c18dContributionAmt>",
+  );
 });

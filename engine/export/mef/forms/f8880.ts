@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form8880Fields, Form8880Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8880Fields, string]> = [
   ["ira_contributions_taxpayer", "TxpyrRetirePlanContriAmt"],

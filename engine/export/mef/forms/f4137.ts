@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form4137Fields, Form4137Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 export type { Form4137Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4137Fields, string]> = [

@@ -40,7 +40,10 @@ Deno.test("adoption_benefits at zero is emitted", () => {
 
 Deno.test("adoption_benefits maps to AdoptionBenefitsAmt", () => {
   const result = buildIRS8839({ adoption_benefits: 5000 });
-  assertStringIncludes(result, "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>");
+  assertStringIncludes(
+    result,
+    "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
+  );
 });
 
 Deno.test("magi maps to ModifiedAGIAmt", () => {
@@ -62,14 +65,20 @@ Deno.test("income_tax_liability maps to IncomeTaxLiabilityAmt", () => {
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
   const result = buildIRS8839({ adoption_benefits: 5000 });
-  assertStringIncludes(result, "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>");
+  assertStringIncludes(
+    result,
+    "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
+  );
   assertNotIncludes(result, "<ModifiedAGIAmt>");
   assertNotIncludes(result, "<IncomeTaxLiabilityAmt>");
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
   const result = buildIRS8839({ adoption_benefits: 5000, magi: 120000 });
-  assertStringIncludes(result, "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>");
+  assertStringIncludes(
+    result,
+    "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
+  );
   assertStringIncludes(result, "<ModifiedAGIAmt>120000</ModifiedAGIAmt>");
   assertNotIncludes(result, "<IncomeTaxLiabilityAmt>");
 });
@@ -92,7 +101,10 @@ Deno.test("all 3 fields present: output wrapped in IRS8839 tag", () => {
 
 Deno.test("all 3 fields present: all elements emitted", () => {
   const result = buildIRS8839(allFields);
-  assertStringIncludes(result, "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>");
+  assertStringIncludes(
+    result,
+    "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
+  );
   assertStringIncludes(result, "<ModifiedAGIAmt>120000</ModifiedAGIAmt>");
   assertStringIncludes(
     result,
@@ -109,7 +121,10 @@ Deno.test("children array field is silently ignored", () => {
     children: [{ name: "child1" }],
     adoption_benefits: 5000,
   });
-  assertStringIncludes(result, "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>");
+  assertStringIncludes(
+    result,
+    "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
+  );
   assertNotIncludes(result, "children");
   assertNotIncludes(result, "child1");
 });

@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { ScheduleSEFields, ScheduleSEInput } from "../types.ts";
+import { element, elements } from "../xml.ts";
 export type { ScheduleSEInput };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleSEFields, string]> = [

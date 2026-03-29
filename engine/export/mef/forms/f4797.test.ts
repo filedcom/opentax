@@ -117,11 +117,26 @@ Deno.test("f4797: all 5 fields present: output wrapped in IRS4797 tag", () => {
 
 Deno.test("f4797: all 5 fields present: all elements emitted", () => {
   const result = buildIRS4797(allFields);
-  assertStringIncludes(result, "<Section1231GainLossAmt>20000</Section1231GainLossAmt>");
-  assertStringIncludes(result, "<Nonrecaptured1231LossAmt>5000</Nonrecaptured1231LossAmt>");
-  assertStringIncludes(result, "<OrdinaryGainLossAmt>8000</OrdinaryGainLossAmt>");
-  assertStringIncludes(result, "<Section1245DepreciationAmt>3000</Section1245DepreciationAmt>");
-  assertStringIncludes(result, "<Section1250DepreciationAmt>1500</Section1250DepreciationAmt>");
+  assertStringIncludes(
+    result,
+    "<Section1231GainLossAmt>20000</Section1231GainLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<Nonrecaptured1231LossAmt>5000</Nonrecaptured1231LossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<OrdinaryGainLossAmt>8000</OrdinaryGainLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<Section1245DepreciationAmt>3000</Section1245DepreciationAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<Section1250DepreciationAmt>1500</Section1250DepreciationAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -129,7 +144,10 @@ Deno.test("f4797: all 5 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4797: array sales field is silently ignored", () => {
-  const result = buildIRS4797({ sales: [{ amount: 1000 }], section_1231_gain: 20000 });
+  const result = buildIRS4797({
+    sales: [{ amount: 1000 }],
+    section_1231_gain: 20000,
+  });
   assertStringIncludes(
     result,
     "<Section1231GainLossAmt>20000</Section1231GainLossAmt>",

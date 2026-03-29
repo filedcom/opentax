@@ -47,7 +47,10 @@ Deno.test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbo
     gain_loss: 2000,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>");
+  assertStringIncludes(
+    result,
+    "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
+  );
 });
 
 Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all fields", () => {
@@ -64,9 +67,18 @@ Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all f
   assertStringIncludes(result, "<CapitalGainAndLossAssetGrp>");
   assertStringIncludes(result, "<PropertyDesc>100 sh XYZ Corp</PropertyDesc>");
   assertStringIncludes(result, "<AcquiredDt>2025-01-15</AcquiredDt>");
-  assertStringIncludes(result, "<SoldOrDisposedDt>2025-06-20</SoldOrDisposedDt>");
-  assertStringIncludes(result, "<ProceedsSalesPriceAmt>5000</ProceedsSalesPriceAmt>");
-  assertStringIncludes(result, "<CostOrOtherBasisAmt>3000</CostOrOtherBasisAmt>");
+  assertStringIncludes(
+    result,
+    "<SoldOrDisposedDt>2025-06-20</SoldOrDisposedDt>",
+  );
+  assertStringIncludes(
+    result,
+    "<ProceedsSalesPriceAmt>5000</ProceedsSalesPriceAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<CostOrOtherBasisAmt>3000</CostOrOtherBasisAmt>",
+  );
   assertStringIncludes(result, "<GainOrLossAmt>2000</GainOrLossAmt>");
 });
 
@@ -81,8 +93,14 @@ Deno.test("single Box A transaction: emits totals", () => {
     gain_loss: 2000,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<TotalProceedsSalesPriceAmt>5000</TotalProceedsSalesPriceAmt>");
-  assertStringIncludes(result, "<TotalCostOrOtherBasisAmt>3000</TotalCostOrOtherBasisAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalProceedsSalesPriceAmt>5000</TotalProceedsSalesPriceAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalCostOrOtherBasisAmt>3000</TotalCostOrOtherBasisAmt>",
+  );
   assertStringIncludes(result, "<TotalGainOrLossAmt>2000</TotalGainOrLossAmt>");
 });
 
@@ -132,7 +150,10 @@ Deno.test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbo
     gain_loss: 2000,
     is_long_term: true,
   }]);
-  assertStringIncludes(result, "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>");
+  assertStringIncludes(
+    result,
+    "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -150,7 +171,10 @@ Deno.test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", ()
     gain_loss: 1000,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<TransRptOn1099BNotShowBasisInd>X</TransRptOn1099BNotShowBasisInd>");
+  assertStringIncludes(
+    result,
+    "<TransRptOn1099BNotShowBasisInd>X</TransRptOn1099BNotShowBasisInd>",
+  );
   assertNotIncludes(result, "<TransRptOn1099BThatShowBssInd>");
   assertNotIncludes(result, "<TransactionsNotRptedOn1099BInd>");
 });
@@ -184,7 +208,10 @@ Deno.test("Box C transaction: emits TransactionsNotRptedOn1099BInd checkbox", ()
     gain_loss: 400,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<TransactionsNotRptedOn1099BInd>X</TransactionsNotRptedOn1099BInd>");
+  assertStringIncludes(
+    result,
+    "<TransactionsNotRptedOn1099BInd>X</TransactionsNotRptedOn1099BInd>",
+  );
   assertNotIncludes(result, "<TransRptOn1099BThatShowBssInd>");
   assertNotIncludes(result, "<TransRptOn1099BNotShowBasisInd>");
 });
@@ -206,7 +233,10 @@ Deno.test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", (
     gain_loss: -200,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<AdjustmentsToGainOrLossCd>W</AdjustmentsToGainOrLossCd>");
+  assertStringIncludes(
+    result,
+    "<AdjustmentsToGainOrLossCd>W</AdjustmentsToGainOrLossCd>",
+  );
 });
 
 Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt", () => {
@@ -222,7 +252,10 @@ Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt",
     gain_loss: -200,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<AdjustmentsToGainOrLossAmt>100</AdjustmentsToGainOrLossAmt>");
+  assertStringIncludes(
+    result,
+    "<AdjustmentsToGainOrLossAmt>100</AdjustmentsToGainOrLossAmt>",
+  );
 });
 
 Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted in totals", () => {
@@ -238,7 +271,10 @@ Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted i
     gain_loss: -200,
     is_long_term: false,
   }]);
-  assertStringIncludes(result, "<TotAdjustmentsToGainOrLossAmt>100</TotAdjustmentsToGainOrLossAmt>");
+  assertStringIncludes(
+    result,
+    "<TotAdjustmentsToGainOrLossAmt>100</TotAdjustmentsToGainOrLossAmt>",
+  );
 });
 
 Deno.test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted", () => {
@@ -285,7 +321,8 @@ Deno.test("two Box A transactions: both appear in same ShortTermCapitalGainAndLo
     },
   ]);
   // Only one group tag
-  const openCount = (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
+  const openCount =
+    (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
   assertEquals(openCount, 1);
   // Both descriptions appear
   assertStringIncludes(result, "<PropertyDesc>Stock 1</PropertyDesc>");
@@ -315,8 +352,14 @@ Deno.test("two Box A transactions: totals are summed", () => {
       is_long_term: false,
     },
   ]);
-  assertStringIncludes(result, "<TotalProceedsSalesPriceAmt>7000</TotalProceedsSalesPriceAmt>");
-  assertStringIncludes(result, "<TotalCostOrOtherBasisAmt>4500</TotalCostOrOtherBasisAmt>");
+  assertStringIncludes(
+    result,
+    "<TotalProceedsSalesPriceAmt>7000</TotalProceedsSalesPriceAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalCostOrOtherBasisAmt>4500</TotalCostOrOtherBasisAmt>",
+  );
   assertStringIncludes(result, "<TotalGainOrLossAmt>2500</TotalGainOrLossAmt>");
 });
 
@@ -367,7 +410,10 @@ Deno.test("Part G transaction: grouped in ShortTermCapitalGainAndLossGrp with Tr
     is_long_term: false,
   }]);
   assertStringIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
-  assertStringIncludes(result, "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>");
+  assertStringIncludes(
+    result,
+    "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
+  );
   assertNotIncludes(result, "<LongTermCapitalGainAndLossGrp>");
 });
 
@@ -395,7 +441,8 @@ Deno.test("Part G and Part A transactions grouped together in same group", () =>
     },
   ]);
   // Both in same group (one opening tag)
-  const openCount = (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
+  const openCount =
+    (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
   assertEquals(openCount, 1);
   assertStringIncludes(result, "<PropertyDesc>Regular A</PropertyDesc>");
   assertStringIncludes(result, "<PropertyDesc>Digital G</PropertyDesc>");
@@ -413,7 +460,10 @@ Deno.test("Part J transaction: grouped in LongTermCapitalGainAndLossGrp with Tra
     is_long_term: true,
   }]);
   assertStringIncludes(result, "<LongTermCapitalGainAndLossGrp>");
-  assertStringIncludes(result, "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>");
+  assertStringIncludes(
+    result,
+    "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
+  );
   assertNotIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
 });
 
@@ -423,45 +473,176 @@ Deno.test("Part J transaction: grouped in LongTermCapitalGainAndLossGrp with Tra
 
 Deno.test("all 6 categories produce 6 groups (3 short, 3 long)", () => {
   const transactions = [
-    { part: "A", description: "ST-reported", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1000, cost_basis: 800, gain_loss: 200, is_long_term: false },
-    { part: "B", description: "ST-not-reported", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1100, cost_basis: 900, gain_loss: 200, is_long_term: false },
-    { part: "C", description: "ST-no-1099b", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1200, cost_basis: 1000, gain_loss: 200, is_long_term: false },
-    { part: "D", description: "LT-reported", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2000, cost_basis: 1600, gain_loss: 400, is_long_term: true },
-    { part: "E", description: "LT-not-reported", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2100, cost_basis: 1700, gain_loss: 400, is_long_term: true },
-    { part: "F", description: "LT-no-1099b", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2200, cost_basis: 1800, gain_loss: 400, is_long_term: true },
+    {
+      part: "A",
+      description: "ST-reported",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1000,
+      cost_basis: 800,
+      gain_loss: 200,
+      is_long_term: false,
+    },
+    {
+      part: "B",
+      description: "ST-not-reported",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1100,
+      cost_basis: 900,
+      gain_loss: 200,
+      is_long_term: false,
+    },
+    {
+      part: "C",
+      description: "ST-no-1099b",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1200,
+      cost_basis: 1000,
+      gain_loss: 200,
+      is_long_term: false,
+    },
+    {
+      part: "D",
+      description: "LT-reported",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2000,
+      cost_basis: 1600,
+      gain_loss: 400,
+      is_long_term: true,
+    },
+    {
+      part: "E",
+      description: "LT-not-reported",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2100,
+      cost_basis: 1700,
+      gain_loss: 400,
+      is_long_term: true,
+    },
+    {
+      part: "F",
+      description: "LT-no-1099b",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2200,
+      cost_basis: 1800,
+      gain_loss: 400,
+      is_long_term: true,
+    },
   ];
   const result = buildIRS8949(transactions);
-  const stGroups = (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
-  const ltGroups = (result.match(/<LongTermCapitalGainAndLossGrp>/g) || []).length;
+  const stGroups =
+    (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
+  const ltGroups =
+    (result.match(/<LongTermCapitalGainAndLossGrp>/g) || []).length;
   assertEquals(stGroups, 3);
   assertEquals(ltGroups, 3);
 });
 
 Deno.test("all 6 categories: each category has its correct checkbox indicator", () => {
   const transactions = [
-    { part: "A", description: "ST-reported", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1000, cost_basis: 800, gain_loss: 200, is_long_term: false },
-    { part: "B", description: "ST-not-reported", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1100, cost_basis: 900, gain_loss: 200, is_long_term: false },
-    { part: "C", description: "ST-no-1099b", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1200, cost_basis: 1000, gain_loss: 200, is_long_term: false },
-    { part: "D", description: "LT-reported", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2000, cost_basis: 1600, gain_loss: 400, is_long_term: true },
-    { part: "E", description: "LT-not-reported", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2100, cost_basis: 1700, gain_loss: 400, is_long_term: true },
-    { part: "F", description: "LT-no-1099b", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2200, cost_basis: 1800, gain_loss: 400, is_long_term: true },
+    {
+      part: "A",
+      description: "ST-reported",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1000,
+      cost_basis: 800,
+      gain_loss: 200,
+      is_long_term: false,
+    },
+    {
+      part: "B",
+      description: "ST-not-reported",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1100,
+      cost_basis: 900,
+      gain_loss: 200,
+      is_long_term: false,
+    },
+    {
+      part: "C",
+      description: "ST-no-1099b",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1200,
+      cost_basis: 1000,
+      gain_loss: 200,
+      is_long_term: false,
+    },
+    {
+      part: "D",
+      description: "LT-reported",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2000,
+      cost_basis: 1600,
+      gain_loss: 400,
+      is_long_term: true,
+    },
+    {
+      part: "E",
+      description: "LT-not-reported",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2100,
+      cost_basis: 1700,
+      gain_loss: 400,
+      is_long_term: true,
+    },
+    {
+      part: "F",
+      description: "LT-no-1099b",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2200,
+      cost_basis: 1800,
+      gain_loss: 400,
+      is_long_term: true,
+    },
   ];
   const result = buildIRS8949(transactions);
   // 2 reported groups (A short + D long) = 2 TransRptOn1099BThatShowBssInd
-  const reported = (result.match(/<TransRptOn1099BThatShowBssInd>/g) || []).length;
+  const reported =
+    (result.match(/<TransRptOn1099BThatShowBssInd>/g) || []).length;
   assertEquals(reported, 2);
   // 2 not-reported groups (B short + E long)
-  const notReported = (result.match(/<TransRptOn1099BNotShowBasisInd>/g) || []).length;
+  const notReported =
+    (result.match(/<TransRptOn1099BNotShowBasisInd>/g) || []).length;
   assertEquals(notReported, 2);
   // 2 no-1099b groups (C short + F long)
-  const no1099b = (result.match(/<TransactionsNotRptedOn1099BInd>/g) || []).length;
+  const no1099b =
+    (result.match(/<TransactionsNotRptedOn1099BInd>/g) || []).length;
   assertEquals(no1099b, 2);
 });
 
 Deno.test("short-term groups emitted before long-term groups in XSD order", () => {
   const transactions = [
-    { part: "D", description: "LT first", date_acquired: "2024-01-01", date_sold: "2025-06-01", proceeds: 2000, cost_basis: 1600, gain_loss: 400, is_long_term: true },
-    { part: "A", description: "ST second", date_acquired: "2025-01-01", date_sold: "2025-06-01", proceeds: 1000, cost_basis: 800, gain_loss: 200, is_long_term: false },
+    {
+      part: "D",
+      description: "LT first",
+      date_acquired: "2024-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 2000,
+      cost_basis: 1600,
+      gain_loss: 400,
+      is_long_term: true,
+    },
+    {
+      part: "A",
+      description: "ST second",
+      date_acquired: "2025-01-01",
+      date_sold: "2025-06-01",
+      proceeds: 1000,
+      cost_basis: 800,
+      gain_loss: 200,
+      is_long_term: false,
+    },
   ];
   const result = buildIRS8949(transactions);
   const stIdx = result.indexOf("<ShortTermCapitalGainAndLossGrp>");

@@ -40,7 +40,10 @@ Deno.test("schedule_se: net_profit_schedule_c at zero is emitted", () => {
 
 Deno.test("schedule_se: net_profit_schedule_c maps to NetProfitOrLossAmt", () => {
   const result = buildIRS1040ScheduleSE({ net_profit_schedule_c: 30000 });
-  assertStringIncludes(result, "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>");
+  assertStringIncludes(
+    result,
+    "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
+  );
 });
 
 Deno.test("schedule_se: net_profit_schedule_f maps to NetFarmProfitOrLossAmt", () => {
@@ -61,7 +64,10 @@ Deno.test("schedule_se: unreported_tips_4137 maps to Form4137UnreportedTipsAmt",
 
 Deno.test("schedule_se: wages_8919 maps to WagesSubjectToSSTAmt", () => {
   const result = buildIRS1040ScheduleSE({ wages_8919: 8000 });
-  assertStringIncludes(result, "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>");
+  assertStringIncludes(
+    result,
+    "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
+  );
 });
 
 Deno.test("schedule_se: w2_ss_wages maps to SocSecWagesAmt", () => {
@@ -75,7 +81,10 @@ Deno.test("schedule_se: w2_ss_wages maps to SocSecWagesAmt", () => {
 
 Deno.test("schedule_se: single known field emits only that element, absent fields omitted", () => {
   const result = buildIRS1040ScheduleSE({ net_profit_schedule_c: 30000 });
-  assertStringIncludes(result, "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>");
+  assertStringIncludes(
+    result,
+    "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
+  );
   assertNotIncludes(result, "<NetFarmProfitOrLossAmt>");
   assertNotIncludes(result, "<Form4137UnreportedTipsAmt>");
   assertNotIncludes(result, "<WagesSubjectToSSTAmt>");
@@ -87,8 +96,14 @@ Deno.test("schedule_se: two fields present: only those two elements emitted", ()
     net_profit_schedule_c: 30000,
     wages_8919: 8000,
   });
-  assertStringIncludes(result, "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>");
-  assertStringIncludes(result, "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>");
+  assertStringIncludes(
+    result,
+    "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
+  );
   assertNotIncludes(result, "<NetFarmProfitOrLossAmt>");
   assertNotIncludes(result, "<SocSecWagesAmt>");
 });
@@ -113,7 +128,10 @@ Deno.test("schedule_se: all 5 fields present: output wrapped in IRS1040ScheduleS
 
 Deno.test("schedule_se: all 5 fields present: all elements emitted", () => {
   const result = buildIRS1040ScheduleSE(allFields);
-  assertStringIncludes(result, "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>");
+  assertStringIncludes(
+    result,
+    "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
+  );
   assertStringIncludes(
     result,
     "<NetFarmProfitOrLossAmt>15000</NetFarmProfitOrLossAmt>",
@@ -122,7 +140,10 @@ Deno.test("schedule_se: all 5 fields present: all elements emitted", () => {
     result,
     "<Form4137UnreportedTipsAmt>2000</Form4137UnreportedTipsAmt>",
   );
-  assertStringIncludes(result, "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>");
+  assertStringIncludes(
+    result,
+    "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
+  );
   assertStringIncludes(result, "<SocSecWagesAmt>100000</SocSecWagesAmt>");
 });
 
@@ -135,7 +156,10 @@ Deno.test("schedule_se: string field is silently ignored", () => {
     filing_status: "MFJ",
     net_profit_schedule_c: 30000,
   });
-  assertStringIncludes(result, "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>");
+  assertStringIncludes(
+    result,
+    "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
+  );
   assertNotIncludes(result, "filing_status");
   assertNotIncludes(result, "MFJ");
 });

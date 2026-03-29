@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form8582Fields, Form8582Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8582Fields, string]> = [
   ["passive_schedule_c", "PassiveScheduleCIncomeAmt"],

@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Schedule3Fields, Schedule3Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name, in XSD line order)
 // Note: line6b_child_tax_credit is excluded — the 2025v3.0 XSD line 6b element
@@ -16,7 +16,9 @@ const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule3Fields, string]> = [
 
 // Aggregated: multiple inputSchema keys -> single XSD element
 // ForeignTaxCreditAmt (line 1) is processed before FIELD_MAP to maintain XSD order
-const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Schedule3Fields)[]]> = [
+const AGGREGATED: ReadonlyArray<
+  readonly [string, ...(keyof Schedule3Fields)[]]
+> = [
   ["ForeignTaxCreditAmt", "line1_foreign_tax_credit", "line1_foreign_tax_1099"],
 ];
 

@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form8960Fields, Form8960Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 export type { Form8960Input };
 

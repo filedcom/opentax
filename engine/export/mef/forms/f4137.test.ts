@@ -126,5 +126,5 @@ Deno.test("f4137: string field is silently ignored", () => {
   const result = buildIRS4137({ reason_code: "G", allocated_tips: 500 });
   assertStringIncludes(result, "<AllocatedTipsAmt>500</AllocatedTipsAmt>");
   assertNotIncludes(result, "reason_code");
-  assertNotIncludes(result, "\"G\"");
+  assertNotIncludes(result, '"G"');
 });

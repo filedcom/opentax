@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form4797Fields, Form4797Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4797Fields, string]> = [
   ["section_1231_gain", "Section1231GainLossAmt"],

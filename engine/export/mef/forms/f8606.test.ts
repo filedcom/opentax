@@ -199,5 +199,5 @@ Deno.test("f8606: string field is silently ignored", () => {
     "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
   );
   assertNotIncludes(result, "filing_status");
-  assertNotIncludes(result, "\"S\"");
+  assertNotIncludes(result, '"S"');
 });

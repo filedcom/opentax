@@ -22,7 +22,10 @@ Deno.test("schedule_b: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: all unknown keys returns empty string", () => {
-  assertEquals(buildIRS1040ScheduleB({ junk: 999, foo: "bar", payer_name: "Bank" }), "");
+  assertEquals(
+    buildIRS1040ScheduleB({ junk: 999, foo: "bar", payer_name: "Bank" }),
+    "",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -116,7 +119,10 @@ Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: payer_name string field is silently ignored", () => {
-  const result = buildIRS1040ScheduleB({ payer_name: "Bank of America", taxable_interest_net: 3000 });
+  const result = buildIRS1040ScheduleB({
+    payer_name: "Bank of America",
+    taxable_interest_net: 3000,
+  });
   assertStringIncludes(
     result,
     "<TotalInterestAmt>3000</TotalInterestAmt>",

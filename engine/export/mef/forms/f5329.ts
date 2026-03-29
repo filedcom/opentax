@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form5329Fields, Form5329Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form5329Fields, string]> = [
   ["early_distribution", "EarlyDistributionAmt"],

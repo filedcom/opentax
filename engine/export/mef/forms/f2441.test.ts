@@ -92,5 +92,8 @@ Deno.test("non-number field alongside numeric field: only numeric emitted", () =
 });
 
 Deno.test("only non-number fields provided returns empty string", () => {
-  assertEquals(buildIRS2441({ filing_status: "MFS", has_dependents: true }), "");
+  assertEquals(
+    buildIRS2441({ filing_status: "MFS", has_dependents: true }),
+    "",
+  );
 });

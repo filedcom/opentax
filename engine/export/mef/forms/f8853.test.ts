@@ -80,7 +80,10 @@ Deno.test("archer_msa_distributions maps to ArcherMSADistributionAmt", () => {
 
 Deno.test("archer_msa_rollover maps to ArcherMSARolloverAmt", () => {
   const result = buildIRS8853({ archer_msa_rollover: 500 });
-  assertStringIncludes(result, "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>");
+  assertStringIncludes(
+    result,
+    "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>",
+  );
 });
 
 Deno.test("archer_msa_qualified_expenses maps to ArcherMSAQualifiedExpnsAmt", () => {
@@ -109,7 +112,10 @@ Deno.test("medicare_advantage_qualified_expenses maps to MedcrAdvntageMSAQlfyExp
 
 Deno.test("ltc_gross_payments maps to LTCGrossPaymentsAmt", () => {
   const result = buildIRS8853({ ltc_gross_payments: 4000 });
-  assertStringIncludes(result, "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>");
+  assertStringIncludes(
+    result,
+    "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
+  );
 });
 
 Deno.test("ltc_qualified_contract_amount maps to LTCQualifiedContractAmt", () => {
@@ -140,7 +146,10 @@ Deno.test("ltc_actual_costs maps to LTCActualCostsAmt", () => {
 
 Deno.test("ltc_reimbursements maps to LTCReimbursementsAmt", () => {
   const result = buildIRS8853({ ltc_reimbursements: 1800 });
-  assertStringIncludes(result, "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>");
+  assertStringIncludes(
+    result,
+    "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -222,7 +231,10 @@ Deno.test("all 15 fields present: all elements emitted", () => {
     result,
     "<ArcherMSADistributionAmt>1500</ArcherMSADistributionAmt>",
   );
-  assertStringIncludes(result, "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>");
+  assertStringIncludes(
+    result,
+    "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>",
+  );
   assertStringIncludes(
     result,
     "<ArcherMSAQualifiedExpnsAmt>800</ArcherMSAQualifiedExpnsAmt>",
@@ -235,7 +247,10 @@ Deno.test("all 15 fields present: all elements emitted", () => {
     result,
     "<MedcrAdvntageMSAQlfyExpnsAmt>900</MedcrAdvntageMSAQlfyExpnsAmt>",
   );
-  assertStringIncludes(result, "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>");
+  assertStringIncludes(
+    result,
+    "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
+  );
   assertStringIncludes(
     result,
     "<LTCQualifiedContractAmt>5000</LTCQualifiedContractAmt>",
@@ -246,7 +261,10 @@ Deno.test("all 15 fields present: all elements emitted", () => {
   );
   assertStringIncludes(result, "<LTCPeriodDaysCnt>30</LTCPeriodDaysCnt>");
   assertStringIncludes(result, "<LTCActualCostsAmt>2500</LTCActualCostsAmt>");
-  assertStringIncludes(result, "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>");
+  assertStringIncludes(
+    result,
+    "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -271,6 +289,9 @@ Deno.test("medicare_advantage_exception boolean field is silently ignored", () =
     medicare_advantage_exception: false,
     ltc_gross_payments: 4000,
   });
-  assertStringIncludes(result, "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>");
+  assertStringIncludes(
+    result,
+    "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
+  );
   assertNotIncludes(result, "medicare_advantage_exception");
 });

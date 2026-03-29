@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Schedule1Fields, Schedule1Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule1Fields, string]> = [
   ["line1_state_refund", "StateLocalTaxRefundAmt"],

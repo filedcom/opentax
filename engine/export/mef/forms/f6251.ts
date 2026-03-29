@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form6251Fields, Form6251Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form6251Fields, string]> = [
   ["regular_tax_income", "RegularTaxIncomeAmt"],

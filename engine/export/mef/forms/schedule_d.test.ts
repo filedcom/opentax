@@ -341,7 +341,16 @@ Deno.test(
 
 Deno.test("transaction array is silently ignored", () => {
   const result = buildIRS1040ScheduleD({
-    transaction: { part: "A", description: "test", date_acquired: "01/01/2025", date_sold: "12/31/2025", proceeds: 10000, cost_basis: 8000, gain_loss: 2000, is_long_term: false },
+    transaction: {
+      part: "A",
+      description: "test",
+      date_acquired: "01/01/2025",
+      date_sold: "12/31/2025",
+      proceeds: 10000,
+      cost_basis: 8000,
+      gain_loss: 2000,
+      is_long_term: false,
+    },
     line_4_other_st: 500,
   });
   assertStringIncludes(

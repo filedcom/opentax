@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form8995Fields, Form8995Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8995Fields, string]> = [
   ["qbi_from_schedule_c", "QBIFromScheduleCAmt"],

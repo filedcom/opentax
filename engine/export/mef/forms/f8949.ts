@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { F8949Transaction } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 export type { F8949Transaction };
 

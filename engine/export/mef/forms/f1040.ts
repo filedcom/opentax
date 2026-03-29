@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { IRS1040Fields, IRS1040Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = [
   ["line1a_wages", "WagesAmt"],

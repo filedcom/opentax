@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Form8853Fields, Form8853Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 export type { Form8853Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8853Fields, string]> = [

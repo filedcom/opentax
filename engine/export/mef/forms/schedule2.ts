@@ -1,5 +1,5 @@
-import { element, elements } from "../xml.ts";
 import type { Schedule2Fields, Schedule2Input } from "../types.ts";
+import { element, elements } from "../xml.ts";
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name)
 const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule2Fields, string]> = [
@@ -18,10 +18,16 @@ const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule2Fields, string]> = [
 
 // Aggregated mappings: multiple inputSchema fields -> single XSD element
 // Each tuple: [XSD element name, ...inputSchema keys to sum]
-const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Schedule2Fields)[]]> = [
+const AGGREGATED: ReadonlyArray<
+  readonly [string, ...(keyof Schedule2Fields)[]]
+> = [
   ["UncollSSMedcrRRTAGrpInsTxAmt", "uncollected_fica", "uncollected_fica_gtl"],
   ["IncmNonqlfyDefrdCompPlanAmt", "section409a_excise", "line17h_nqdc_tax"],
-  ["ExcessParachutePaymentAmt", "golden_parachute_excise", "line17k_golden_parachute_excise"],
+  [
+    "ExcessParachutePaymentAmt",
+    "golden_parachute_excise",
+    "line17k_golden_parachute_excise",
+  ],
 ];
 
 export function buildIRS1040Schedule2(fields: Schedule2Input): string {
@@ -36,7 +42,9 @@ export function buildIRS1040Schedule2(fields: Schedule2Input): string {
 
   // Aggregated mappings
   for (const [tag, ...keys] of AGGREGATED) {
-    const values = keys.map((k) => fields[k]).filter((v): v is number => typeof v === "number");
+    const values = keys.map((k) => fields[k]).filter((v): v is number =>
+      typeof v === "number"
+    );
     if (values.length === 0) continue;
     const sum = values.reduce((a, b) => a + b, 0);
     children.push(element(tag, sum));
