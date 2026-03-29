@@ -1,6 +1,7 @@
 export type MetaJson = {
   readonly returnId: string;
   readonly year: number;
+  readonly formType?: string; // optional for backward-compat with old return files
   readonly createdAt: string; // ISO 8601
 };
 

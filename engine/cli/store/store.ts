@@ -20,7 +20,14 @@ const RETURN_JSON = "return.json";
 async function readReturnJson(returnPath: string): Promise<ReturnJson> {
   const filePath = join(returnPath, RETURN_JSON);
   try {
-    return JSON.parse(await Deno.readTextFile(filePath)) as ReturnJson;
+    const raw = JSON.parse(await Deno.readTextFile(filePath)) as ReturnJson;
+    return {
+      ...raw,
+      meta: {
+        ...raw.meta,
+        formType: raw.meta.formType ?? "f1040",
+      },
+    };
   } catch (err) {
     if (err instanceof Deno.errors.NotFound) {
       throw new Error(`File not found: ${filePath}`);
@@ -58,6 +65,7 @@ export function nextId(
 export async function createReturn(
   year: number,
   baseDir: string,
+  formType = "f1040",
 ): Promise<{ returnId: string; returnPath: string }> {
   const returnId = crypto.randomUUID();
   const returnPath = join(baseDir, returnId);
@@ -67,6 +75,7 @@ export async function createReturn(
   const meta: MetaJson = {
     returnId,
     year,
+    formType,
     createdAt: new Date().toISOString(),
   };
 
