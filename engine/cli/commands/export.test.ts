@@ -15,7 +15,7 @@ Deno.test("exportMefCommand returns valid MeF XML wrapper", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
-    const xml = await exportMefCommand({ returnId, baseDir: tmpDir, type: "mef" });
+    const xml = await exportMefCommand({ returnId, baseDir: tmpDir });
     assertStringIncludes(xml, "<Return ");
     assertStringIncludes(xml, 'returnVersion="2025v3.0"');
     assertStringIncludes(xml, "</Return>");
@@ -35,7 +35,7 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML", async () => {
       box2_fed_withheld: 10000,
     });
 
-    const xml = await exportMefCommand({ returnId, baseDir: tmpDir, type: "mef" });
+    const xml = await exportMefCommand({ returnId, baseDir: tmpDir });
     assertStringIncludes(xml, "<IRS1040");
     assertMatch(xml, /85000/);
   } finally {
@@ -47,7 +47,7 @@ Deno.test("exportMefCommand empty return still produces valid XML", async () => 
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
-    const xml = await exportMefCommand({ returnId, baseDir: tmpDir, type: "mef" });
+    const xml = await exportMefCommand({ returnId, baseDir: tmpDir });
     assertStringIncludes(xml, "<Return ");
     assertStringIncludes(xml, "</Return>");
   } finally {
@@ -59,7 +59,7 @@ Deno.test("exportMefCommand nonexistent returnId throws", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     await assertRejects(
-      () => exportMefCommand({ returnId: "nonexistent-id", baseDir: tmpDir, type: "mef" }),
+      () => exportMefCommand({ returnId: "nonexistent-id", baseDir: tmpDir }),
       Error,
     );
   } finally {
