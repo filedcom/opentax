@@ -1,11 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// Black-box test file generated from schedule1-context.md only.
-// IMPORTANT AMBIGUITIES: MeF element names are best-guess from IRS naming conventions.
-// Verify ALL element names against official IRS MeF XSD before shipping.
-// Note: GrossProeedsToAttorneyAmt — "Proe" is the documented IRS typo, verify this.
-// Note: RTAAPaymentsAmt — RTAA = Reemployment Trade Adjustment Assistance. Verify against XSD.
-// Note: NQDCDistributionAmt — NQDC = Non-Qualified Deferred Compensation. Verify against XSD.
-
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildIRS1040Schedule1 } from "./schedule1.ts";
 
