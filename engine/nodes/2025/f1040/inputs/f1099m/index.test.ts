@@ -1,6 +1,12 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099m, itemSchema } from "./index.ts";
 import { z } from "zod";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import { scheduleC } from "../schedule_c/index.ts";
+import { schedule_f } from "../../intermediate/schedule_f/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -170,7 +176,7 @@ Deno.test("f1099m.compute: box1_rents with schedule_c routing routes to schedule
   ]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 30000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 30000);
 });
 
 // Box 1 — zero value produces no Schedule E output
@@ -196,7 +202,7 @@ Deno.test("f1099m.compute: box2_royalties with schedule_c routing routes to sche
   ]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 8000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 8000);
 });
 
 // Box 2 — zero value produces no Schedule E output
@@ -212,7 +218,7 @@ Deno.test("f1099m.compute: box3_other_income routes to schedule1 line8i_prizes_a
   const result = compute([minimalItem({ box3_other_income: 500 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8i_prizes_awards, 500);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8i_prizes_awards, 500);
 });
 
 // Box 3 — Other Income → Schedule 1 Line 8z (non-prize other income)
@@ -222,7 +228,7 @@ Deno.test("f1099m.compute: box3_other_income with other_income routing routes to
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8z_other !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other !== undefined, true);
 });
 
 // Box 3 — zero value produces no schedule1 output
@@ -238,7 +244,7 @@ Deno.test("f1099m.compute: box4_federal_withheld routes to f1040 line25b_withhel
   const result = compute([minimalItem({ box4_federal_withheld: 1000 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line25b_withheld_1099, 1000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 1000);
 });
 
 // Box 4 — zero value produces no f1040 output
@@ -254,7 +260,7 @@ Deno.test("f1099m.compute: box5_fishing_boat routes to schedule_c line1_gross_re
   const result = compute([minimalItem({ box5_fishing_boat: 8000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 8000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 8000);
 });
 
 // Box 5 — zero value produces no Schedule C output
@@ -270,7 +276,7 @@ Deno.test("f1099m.compute: box6_medical_payments routes to schedule_c line1_gros
   const result = compute([minimalItem({ box6_medical_payments: 25000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 25000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 25000);
 });
 
 // Box 6 — zero value produces no Schedule C output
@@ -286,7 +292,7 @@ Deno.test("f1099m.compute: box8_substitute_payments routes to schedule1 line8z_s
   const result = compute([minimalItem({ box8_substitute_payments: 300 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8z_substitute_payments, 300);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_substitute_payments, 300);
 });
 
 // Box 8 — zero value produces no schedule1 substitute_payments output
@@ -302,7 +308,7 @@ Deno.test("f1099m.compute: box9_crop_insurance routes to schedule_f crop_insuran
   const result = compute([minimalItem({ box9_crop_insurance: 7500 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).crop_insurance, 7500);
+  assertEquals(fieldsOf(result.outputs, schedule_f)!.crop_insurance, 7500);
 });
 
 // Box 9 — zero value produces no Schedule F output
@@ -318,7 +324,7 @@ Deno.test("f1099m.compute: box10_attorney_proceeds routes to schedule1 line8z_at
   const result = compute([minimalItem({ box10_attorney_proceeds: 15000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8z_attorney_proceeds, 15000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_attorney_proceeds, 15000);
 });
 
 // Box 10 — zero value produces no schedule1 output
@@ -334,7 +340,7 @@ Deno.test("f1099m.compute: box11_fish_purchased routes to schedule_c line1_gross
   const result = compute([minimalItem({ box11_fish_purchased: 4000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 4000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 4000);
 });
 
 // Box 11 — zero value produces no Schedule C output
@@ -350,14 +356,14 @@ Deno.test("f1099m.compute: box15_nqdc routes to schedule1 line8z_nqdc (ordinary 
   const result = compute([minimalItem({ box15_nqdc: 50000 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8z_nqdc, 50000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 50000);
 });
 
 Deno.test("f1099m.compute: box15_nqdc routes to schedule2 line17h_nqdc_tax (20% excise)", () => {
   const result = compute([minimalItem({ box15_nqdc: 50000 })]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line17h_nqdc_tax, 10000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10000);
 });
 
 // Box 15 — zero value produces no outputs
@@ -395,7 +401,7 @@ Deno.test("f1099m.compute: box4_federal_withheld summed across multiple items", 
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line25b_withheld_1099, 2500);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 2500);
 });
 
 Deno.test("f1099m.compute: box1_rents summed across multiple schedule_e items", () => {
@@ -416,7 +422,7 @@ Deno.test("f1099m.compute: box15_nqdc 20% excise computed correctly for aggregat
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   // 20% of 50,000 = 10,000
-  assertEquals((out!.fields as Record<string, unknown>).line17h_nqdc_tax, 10000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 10000);
 });
 
 Deno.test("f1099m.compute: box3_other_income summed across multiple items to prizes line", () => {
@@ -426,7 +432,7 @@ Deno.test("f1099m.compute: box3_other_income summed across multiple items to pri
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8i_prizes_awards, 3000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8i_prizes_awards, 3000);
 });
 
 // ---------------------------------------------------------------------------
@@ -460,21 +466,21 @@ Deno.test("f1099m.compute: box8_substitute_payments at $10 threshold routes to s
   const result = compute([minimalItem({ box8_substitute_payments: 10 })]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line8z_substitute_payments, 10);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_substitute_payments, 10);
 });
 
 Deno.test("f1099m.compute: box5_fishing_boat at $600 threshold routes to schedule_c", () => {
   const result = compute([minimalItem({ box5_fishing_boat: 600 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1_gross_receipts, 600);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 600);
 });
 
 Deno.test("f1099m.compute: box9_crop_insurance at $600 threshold routes to schedule_f", () => {
   const result = compute([minimalItem({ box9_crop_insurance: 600 })]);
   const out = findOutput(result, "schedule_f");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).crop_insurance, 600);
+  assertEquals(fieldsOf(result.outputs, schedule_f)!.crop_insurance, 600);
 });
 
 Deno.test("f1099m.compute: box15_nqdc 20% excise equals exactly 20% of amount", () => {
@@ -482,7 +488,7 @@ Deno.test("f1099m.compute: box15_nqdc 20% excise equals exactly 20% of amount", 
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   // 20% of 10,000 = 2,000 (§409A excise rate)
-  assertEquals((out!.fields as Record<string, unknown>).line17h_nqdc_tax, 2000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 2000);
 });
 
 // ---------------------------------------------------------------------------
@@ -612,8 +618,8 @@ Deno.test("f1099m.compute: box15_nqdc produces both schedule1 and schedule2 outp
   const s2 = findOutput(result, "schedule2");
   assertEquals(s1 !== undefined, true);
   assertEquals(s2 !== undefined, true);
-  assertEquals((s1!.fields as Record<string, unknown>).line8z_nqdc, 40000);
-  assertEquals((s2!.fields as Record<string, unknown>).line17h_nqdc_tax, 8000); // 20% of 40,000
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 40000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 8000); // 20% of 40,000
 });
 
 // Multiple 1099-MISC instances: box4 always aggregated regardless of MFC
@@ -625,7 +631,7 @@ Deno.test("f1099m.compute: box4_federal_withheld aggregated across all instances
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line25b_withheld_1099, 4200);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 4200);
 });
 
 // Box 1 rents: omitting routing defaults to schedule_e (typical rental)
@@ -706,35 +712,35 @@ Deno.test("f1099m.compute: smoke test — all major income boxes populate correc
   // box3_other_income → schedule1 line8i (default: prizes)
   const sched1 = findOutput(result, "schedule1");
   assertEquals(sched1 !== undefined, true);
-  assertEquals((sched1!.fields as Record<string, unknown>).line8i_prizes_awards, 750);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8i_prizes_awards, 750);
 
   // box4_federal_withheld → f1040 line25b
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  assertEquals((f1040!.fields as Record<string, unknown>).line25b_withheld_1099, 2400);
+  const f1040Out = findOutput(result, "f1040");
+  assertEquals(f1040Out !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 2400);
 
   // box5_fishing_boat + box6_medical_payments + box11_fish_purchased → schedule_c
   const schedC = findOutput(result, "schedule_c");
   assertEquals(schedC !== undefined, true);
   // All three flow to schedule_c line1_gross_receipts (sum: 5000+12000+4500 = 21500)
-  assertEquals((schedC!.fields as Record<string, unknown>).line1_gross_receipts, 21500);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 21500);
 
   // box8_substitute_payments → schedule1 line8z_substitute_payments
-  assertEquals((sched1!.fields as Record<string, unknown>).line8z_substitute_payments, 250);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_substitute_payments, 250);
 
   // box9_crop_insurance → schedule_f
   const schedF = findOutput(result, "schedule_f");
   assertEquals(schedF !== undefined, true);
-  assertEquals((schedF!.fields as Record<string, unknown>).crop_insurance, 8000);
+  assertEquals(fieldsOf(result.outputs, schedule_f)!.crop_insurance, 8000);
 
   // box10_attorney_proceeds → schedule1 line8z_attorney_proceeds
-  assertEquals((sched1!.fields as Record<string, unknown>).line8z_attorney_proceeds, 6000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_attorney_proceeds, 6000);
 
   // box15_nqdc → schedule1 line8z_nqdc + schedule2 line17h_nqdc_tax
-  assertEquals((sched1!.fields as Record<string, unknown>).line8z_nqdc, 25000);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_nqdc, 25000);
   const sched2 = findOutput(result, "schedule2");
   assertEquals(sched2 !== undefined, true);
-  assertEquals((sched2!.fields as Record<string, unknown>).line17h_nqdc_tax, 5000); // 20% of 25,000
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17h_nqdc_tax, 5000); // 20% of 25,000
 
   // box12, box13, box7 produce no additional outputs (informational)
   // box16/18 produce no federal outputs (state-only)

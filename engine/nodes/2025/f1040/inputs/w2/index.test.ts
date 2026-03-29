@@ -1,5 +1,20 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { w2 } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { form8839 } from "../../intermediate/form8839/index.ts";
+import { form2441 } from "../../intermediate/form2441/index.ts";
+import { form4137 } from "../../intermediate/form4137/index.ts";
+import { form8853 } from "../../intermediate/form8853/index.ts";
+import { form8880 } from "../../intermediate/form8880/index.ts";
+import { form8889 } from "../../intermediate/form8889/index.ts";
+import { form8959 } from "../../intermediate/form8959/index.ts";
+import { ira_deduction_worksheet } from "../../intermediate/ira_deduction_worksheet/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
+import { scheduleC } from "../schedule_c/index.ts";
 
 // ============================================================
 // Helpers
@@ -137,7 +152,7 @@ Deno.test("box_1_wages_routes_to_1040_line1a: Box 1 = $50,000 routes to f1040 li
   const result = compute([minimalItem({ box1_wages: 50000 })]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1a_wages, 50000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 50000);
 });
 
 Deno.test("box_1_zero_value: Box 1 = $0 still produces f1040 output", () => {
@@ -155,7 +170,7 @@ Deno.test("box_2_withholding_routes_to_1040_line25a: Box 2 = $5,000 routes to f1
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).line25a_w2_withheld,
+    fieldsOf(result.outputs, f1040)!.line25a_w2_withheld,
     5000,
   );
 });
@@ -166,7 +181,7 @@ Deno.test("box_8_allocated_tips_routes_to_form4137: Box 8 = $2,000 routes to for
   ]);
   const out = findOutput(result, "form4137");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).allocated_tips, 2000);
+  assertEquals(fieldsOf(result.outputs, form4137)!.allocated_tips, 2000);
 });
 
 Deno.test("box_10_dependent_care_routes_to_form2441: Box 10 = $3,000 routes to form2441", () => {
@@ -175,7 +190,7 @@ Deno.test("box_10_dependent_care_routes_to_form2441: Box 10 = $3,000 routes to f
   ]);
   const out = findOutput(result, "form2441");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).dep_care_benefits, 3000);
+  assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 3000);
 });
 
 Deno.test("box_13_retirement_plan_triggers_ira_worksheet: Box 13 retirement checked routes to ira_deduction_worksheet", () => {
@@ -185,7 +200,7 @@ Deno.test("box_13_retirement_plan_triggers_ira_worksheet: Box 13 retirement chec
   const out = findOutput(result, "ira_deduction_worksheet");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).covered_by_retirement_plan,
+    fieldsOf(result.outputs, ira_deduction_worksheet)!.covered_by_retirement_plan,
     true,
   );
 });
@@ -196,7 +211,7 @@ Deno.test("box_13_statutory_employee_routes_to_schedule_c: Box 13 statutory = tr
   ]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).statutory_wages, 50000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
 });
 
 Deno.test("box12_code_a_routes_to_schedule2_line13: Code A = $500 routes to schedule2 uncollected_fica", () => {
@@ -274,7 +289,7 @@ Deno.test("box12_code_h_routes_to_schedule1_line24f: Code H = $1,500 routes to s
   ]);
   const out = findOutput(result, "schedule1");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line24f_501c18d, 1500);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line24f_501c18d, 1500);
 });
 
 Deno.test("box12_code_k_routes_to_schedule2_line17k: Code K = $1,000 routes to schedule2 golden_parachute_excise", () => {
@@ -287,7 +302,7 @@ Deno.test("box12_code_k_routes_to_schedule2_line17k: Code K = $1,000 routes to s
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).golden_parachute_excise,
+    fieldsOf(result.outputs, schedule2)!.golden_parachute_excise,
     1000,
   );
 });
@@ -317,7 +332,7 @@ Deno.test("box12_code_q_routes_to_1040_line1i: Code Q = $3,000 routes to f1040 l
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1i_combat_pay, 3000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1i_combat_pay, 3000);
 });
 
 Deno.test("box12_code_r_routes_to_form8853_part1_line1: Code R = $1,500 routes to form8853 employer_archer_msa", () => {
@@ -330,7 +345,7 @@ Deno.test("box12_code_r_routes_to_form8853_part1_line1: Code R = $1,500 routes t
   const out = findOutput(result, "form8853");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).employer_archer_msa,
+    fieldsOf(result.outputs, form8853)!.employer_archer_msa,
     1500,
   );
 });
@@ -355,7 +370,7 @@ Deno.test("box12_code_t_routes_to_form8839_part3: Code T = $5,000 routes to form
   ]);
   const out = findOutput(result, "form8839");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).adoption_benefits, 5000);
+  assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 5000);
 });
 
 Deno.test("box12_code_w_routes_to_form8889_part2: Code W = $2,000 routes to form8889 employer_hsa_contributions", () => {
@@ -368,7 +383,7 @@ Deno.test("box12_code_w_routes_to_form8889_part2: Code W = $2,000 routes to form
   const out = findOutput(result, "form8889");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).employer_hsa_contributions,
+    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
     2000,
   );
 });
@@ -383,7 +398,7 @@ Deno.test("box12_code_z_routes_to_1040_line1a_and_schedule2_line17h: Code Z = $2
   const schedule2Out = findOutput(result, "schedule2");
   assertEquals(schedule2Out !== undefined, true);
   assertEquals(
-    (schedule2Out!.fields as Record<string, unknown>).section409a_excise,
+    fieldsOf(result.outputs, schedule2)!.section409a_excise,
     2000,
   );
 });
@@ -400,7 +415,7 @@ Deno.test("box_14_state_sdi_pfml_routes_to_schedule_a_line5a: Box 14 with is_sta
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
   assertEquals(
-    typeof (out!.fields as Record<string, unknown>).line_5a_tax_amount,
+    typeof fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount,
     "number",
   );
 });
@@ -436,7 +451,7 @@ Deno.test("box_14b_tipped_occupation_code_no_direct_route: Box 14b tipped code d
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
-    (f1040Out!.fields as Record<string, unknown>).line1a_wages,
+    fieldsOf(result.outputs, f1040)!.line1a_wages,
     40000,
   );
 });
@@ -471,7 +486,7 @@ Deno.test("sum_box1_across_multiple_w2s: 2 W-2s with Box 1 = $30k each → f1040
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line1a_wages, 60000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 60000);
 });
 
 Deno.test("sum_box2_across_multiple_w2s: 2 W-2s with Box 2 = $3k each → f1040 line25a = $6,000", () => {
@@ -482,7 +497,7 @@ Deno.test("sum_box2_across_multiple_w2s: 2 W-2s with Box 2 = $3k each → f1040 
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).line25a_w2_withheld,
+    fieldsOf(result.outputs, f1040)!.line25a_w2_withheld,
     6000,
   );
 });
@@ -522,7 +537,7 @@ Deno.test("sum_box4_ss_withheld_across_multiple_w2s: 2 W-2s with Box 4 = $3.1k e
   const schedule3Out = findOutput(result, "schedule3");
   assertEquals(schedule3Out !== undefined, true);
   assertEquals(
-    typeof (schedule3Out!.fields as Record<string, unknown>).line11_excess_ss,
+    typeof fieldsOf(result.outputs, schedule3)!.line11_excess_ss,
     "number",
   );
 });
@@ -1688,8 +1703,8 @@ Deno.test("employer_state_code_no_direct_routing: employer_state_code does not a
   const f1040With = findOutput(withState, "f1040");
   const f1040Without = findOutput(without, "f1040");
   assertEquals(
-    (f1040With!.fields as Record<string, unknown>).line1a_wages,
-    (f1040Without!.fields as Record<string, unknown>).line1a_wages,
+    fieldsOf(withState.outputs, f1040)!.line1a_wages,
+    fieldsOf(without.outputs, f1040)!.line1a_wages,
   );
 });
 
@@ -1700,10 +1715,8 @@ Deno.test("employer_zip_code_no_direct_routing: employer_zip does not alter fede
   const without = compute([minimalItem({ box1_wages: 80000 })]);
   assertEquals(findOutput(withZip, "f1040") !== undefined, true);
   assertEquals(
-    (findOutput(withZip, "f1040")!.fields as Record<string, unknown>)
-      .line1a_wages,
-    (findOutput(without, "f1040")!.fields as Record<string, unknown>)
-      .line1a_wages,
+    fieldsOf(withZip.outputs, f1040)!.line1a_wages,
+    fieldsOf(without.outputs, f1040)!.line1a_wages,
   );
 });
 
@@ -1926,7 +1939,7 @@ Deno.test("multiple_employers_excess_ss_withholding: 2 W-2s each with Box 4 at m
   ]);
   const schedule3Out = findOutput(result, "schedule3");
   assertEquals(schedule3Out !== undefined, true);
-  const excess = (schedule3Out!.fields as Record<string, unknown>)
+  const excess = fieldsOf(result.outputs, schedule3)!
     .line11_excess_ss as number;
   assertEquals(excess > 0, true);
 });
@@ -1943,7 +1956,7 @@ Deno.test("single_employer_over_withholding_no_credit: 1 W-2 over-withheld by si
   const schedule3Out = findOutput(result, "schedule3");
   if (schedule3Out !== undefined) {
     const excess =
-      (schedule3Out!.fields as Record<string, unknown>).line11_excess_ss;
+      fieldsOf(result.outputs, schedule3)!.line11_excess_ss;
     assertEquals(!excess || excess === 0, true);
   } else {
     assertEquals(schedule3Out, undefined);
@@ -1983,7 +1996,7 @@ Deno.test("statutory_employee_to_schedule_c: Box 13 statutory = true, Box 1 = $4
   ]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).statutory_wages, 40000);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 40000);
 });
 
 Deno.test("allocated_tips_form_4137_required: Box 8 = $2,000 routes to form4137", () => {
@@ -1992,7 +2005,7 @@ Deno.test("allocated_tips_form_4137_required: Box 8 = $2,000 routes to form4137"
   ]);
   const out = findOutput(result, "form4137");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).allocated_tips, 2000);
+  assertEquals(fieldsOf(result.outputs, form4137)!.allocated_tips, 2000);
 });
 
 Deno.test("multiple_w2_states_proportional_allocation: 2 W-2 records — combined Box 1 is the sum of both", () => {
@@ -2011,7 +2024,7 @@ Deno.test("multiple_w2_states_proportional_allocation: 2 W-2 records — combine
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
-    (f1040Out!.fields as Record<string, unknown>).line1a_wages,
+    fieldsOf(result.outputs, f1040)!.line1a_wages,
     100000,
   );
 });
@@ -2038,7 +2051,7 @@ Deno.test("hsa_form_8889_interaction: Code W = $2,000 routes to form8889", () =>
   const out = findOutput(result, "form8889");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).employer_hsa_contributions,
+    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
     2000,
   );
 });
@@ -2049,7 +2062,7 @@ Deno.test("dependent_care_exceeding_limit_double_counted: Box 10 = $5,500 still 
   ]);
   const out = findOutput(result, "form2441");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).dep_care_benefits, 5500);
+  assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 5500);
 });
 
 Deno.test("box_14b_tipped_occupation_code: Box 14b = '3010' is accepted and does not throw", () => {
@@ -2088,7 +2101,7 @@ Deno.test("box_14_state_sdi_pfml_flows_to_schedule_a: Box 14 is_state_sdi_pfml =
   })]);
   const out = findOutput(result, "schedule_a");
   assertEquals(out !== undefined, true);
-  const stateInput = (out!.fields as Record<string, unknown>)
+  const stateInput = fieldsOf(result.outputs, scheduleA)!
     .line_5a_tax_amount as number;
   assertEquals(stateInput >= 600, true);
 });
@@ -2117,7 +2130,7 @@ Deno.test("archer_msa_form_8853_part_i: Code R = $1,500 routes to form8853", () 
   const out = findOutput(result, "form8853");
   assertEquals(out !== undefined, true);
   assertEquals(
-    (out!.fields as Record<string, unknown>).employer_archer_msa,
+    fieldsOf(result.outputs, form8853)!.employer_archer_msa,
     1500,
   );
 });
@@ -2158,11 +2171,11 @@ Deno.test("comprehensive_w2_full_workflow: Complete W-2 with all major boxes pop
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
   assertEquals(
-    (f1040Out!.fields as Record<string, unknown>).line1a_wages,
+    fieldsOf(result.outputs, f1040)!.line1a_wages,
     75000,
   );
   assertEquals(
-    (f1040Out!.fields as Record<string, unknown>).line25a_w2_withheld,
+    fieldsOf(result.outputs, f1040)!.line25a_w2_withheld,
     8000,
   );
 

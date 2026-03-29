@@ -18,6 +18,8 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { form982, ExclusionType, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form982.compute(inputSchema.parse(input));
@@ -150,7 +152,7 @@ Deno.test("insolvency: COD exceeds insolvency amount — excess is taxable", () 
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 5000);
 });
 
@@ -162,7 +164,7 @@ Deno.test("insolvency: insolvency_amount = 0 — full COD is taxable", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 20000);
 });
 
@@ -174,7 +176,7 @@ Deno.test("insolvency: missing insolvency_amount — full COD is taxable (no cap
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 8000);
 });
 
@@ -187,7 +189,7 @@ Deno.test("insolvency: partial exclusion — excess routes to schedule1 with exa
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 17500);
 });
 
@@ -221,7 +223,7 @@ Deno.test("qpri: COD exceeds $750,000 — excess is taxable", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 150000);
 });
 
@@ -234,7 +236,7 @@ Deno.test("qpri: MFS flag lowers cap to $375,000", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 125000);
 });
 
@@ -334,7 +336,7 @@ Deno.test("output routing: schedule1 emitted with exact excess amount", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 8000);
 });
 
@@ -373,7 +375,7 @@ Deno.test("smoke: insolvency — $20,000 cancelled debt, $12,000 insolvent, $8,0
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 8000);
 });
 
@@ -397,6 +399,6 @@ Deno.test("smoke: QPRI MFS — $450,000 discharged, MFS filer, $75,000 taxable e
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 75000);
 });

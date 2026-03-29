@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form6251, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form6251.compute(inputSchema.parse(input));
@@ -47,7 +49,7 @@ Deno.test("form6251: AMT owed routes to schedule2 line1_amt", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 14_094);
 });
 
@@ -64,7 +66,7 @@ Deno.test("form6251: AMT owed with ISO adjustment", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 17_094);
 });
 
@@ -81,7 +83,7 @@ Deno.test("form6251: AMT owed with depreciation adjustment", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 12_094);
 });
 
@@ -103,7 +105,7 @@ Deno.test("form6251: exemption phases out for high-AMTI single filer", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 71_705);
 });
 
@@ -119,7 +121,7 @@ Deno.test("form6251: exemption is zero when AMTI exceeds complete phase-out thre
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 125_218);
 });
 
@@ -136,7 +138,7 @@ Deno.test("form6251: 26% rate applies when taxable excess is at or below $239,10
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 15_094);
 });
 
@@ -152,7 +154,7 @@ Deno.test("form6251: 28% rate applies when taxable excess exceeds $239,100 (sing
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   // TMT: $311,900 × 0.28 = $87,332; $87,332 − $4,782 = $82,550
   assertEquals(inp.line1_amt, 22_550);
 });
@@ -170,7 +172,7 @@ Deno.test("form6251: MFJ exemption is larger than single", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 12_380);
 });
 
@@ -185,7 +187,7 @@ Deno.test("form6251: MFS has halved rate bracket threshold", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 22_429);
 });
 
@@ -200,7 +202,7 @@ Deno.test("form6251: HOH uses single exemption amounts", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 14_094);
 });
 
@@ -215,7 +217,7 @@ Deno.test("form6251: QSS uses MFJ exemption amounts", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 12_380);
 });
 
@@ -234,7 +236,7 @@ Deno.test("form6251: AMTFTC reduces tentative minimum tax", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 14_094);
 });
 
@@ -264,7 +266,7 @@ Deno.test("form6251: private activity bond interest increases AMTI", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 19_294);
 });
 
@@ -281,7 +283,7 @@ Deno.test("form6251: NOL adjustment (negative) reduces AMTI", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 22_094);
 });
 
@@ -298,7 +300,7 @@ Deno.test("form6251: other_adjustments field is included in AMTI", () => {
   });
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2 !== undefined, true);
-  const inp = s2!.fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(inp.line1_amt, 16_894);
 });
 
@@ -344,7 +346,7 @@ Deno.test("form6251: smoke test — produces schedule2 output with positive amt"
   });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "schedule2");
-  const inp = result.outputs[0].fields as Record<string, unknown>;
+  const inp = fieldsOf(result.outputs, schedule2)!;
   assertEquals(typeof inp.line1_amt, "number");
   assertEquals((inp.line1_amt as number) > 0, true);
 });

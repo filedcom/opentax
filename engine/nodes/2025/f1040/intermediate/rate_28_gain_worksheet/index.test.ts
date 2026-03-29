@@ -1,5 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, rate_28_gain_worksheet } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { qdcgtw } from "../qdcgtw/index.ts";
+import { schedule_d } from "../schedule_d/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return rate_28_gain_worksheet.compute(inputSchema.parse(input));
@@ -32,7 +35,7 @@ Deno.test("collectibles_gain_from_8949 only: routes to qdcgtw", () => {
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 5_000);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,5_000);
 });
 
 Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
@@ -50,7 +53,7 @@ Deno.test("collectibles_gain only: routes to qdcgtw", () => {
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 1_200);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,1_200);
 });
 
 Deno.test("collectibles_gain only: no schedule_d output", () => {
@@ -68,7 +71,7 @@ Deno.test("combined gains: routes to qdcgtw with summed line18", () => {
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 5_500);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,5_500);
 });
 
 Deno.test("combined gains: no schedule_d output", () => {
@@ -111,7 +114,7 @@ Deno.test("fractional cents: routes to qdcgtw with correct value", () => {
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 1313.46);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,1313.46);
 });
 
 // ---------------------------------------------------------------------------
@@ -123,5 +126,5 @@ Deno.test("smoke: large collectibles gain routes to qdcgtw", () => {
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 125_000);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,125_000);
 });

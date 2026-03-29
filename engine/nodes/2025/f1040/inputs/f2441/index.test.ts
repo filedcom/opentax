@@ -1,6 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f2441 } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule3 } from "../../intermediate/schedule3/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -77,7 +80,7 @@ Deno.test("f2441: qualifying expenses with agi >$43000 route credit to schedule3
   }]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line2_childcare_credit !== undefined, true);
 });
 
@@ -97,7 +100,7 @@ Deno.test("f2441: employer benefits exceeding exclusion route taxable excess to 
   }]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(typeof input.line1e_taxable_dep_care, "number");
   assertEquals((input.line1e_taxable_dep_care as number) > 0, true);
 });
@@ -164,7 +167,7 @@ Deno.test("f2441: expenses below $3000 cap (1 person) — credit uses actual exp
     qualifying_person_count: 1,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 2000 * 0.20 = 400
   assertEquals(input.line2_childcare_credit, 400);
 });
@@ -175,7 +178,7 @@ Deno.test("f2441: expenses exactly at $3000 cap (1 person) — credit uses $3000
     qualifying_person_count: 1,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 3000 * 0.20 = 600
   assertEquals(input.line2_childcare_credit, 600);
 });
@@ -186,7 +189,7 @@ Deno.test("f2441: expenses above $3000 cap (1 person) — credit capped at $3000
     qualifying_person_count: 1,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // capped at 3000, 3000 * 0.20 = 600
   assertEquals(input.line2_childcare_credit, 600);
 });
@@ -199,7 +202,7 @@ Deno.test("f2441: expenses exactly at $6000 cap (2 persons) — credit uses $600
     qualifying_person_count: 2,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 6000 * 0.20 = 1200
   assertEquals(input.line2_childcare_credit, 1200);
 });
@@ -210,7 +213,7 @@ Deno.test("f2441: expenses above $6000 cap (2 persons) — credit capped at $600
     qualifying_person_count: 2,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // capped at 6000, 6000 * 0.20 = 1200
   assertEquals(input.line2_childcare_credit, 1200);
 });
@@ -224,7 +227,7 @@ Deno.test("f2441: employer benefits exactly at $5000 limit — no taxable income
 
 Deno.test("f2441: employer benefits of $1 above $5000 — taxable = $1", () => {
   const result = compute([{ employer_dep_care_benefits: 5001 }]);
-  const input = findOutput(result, "f1040")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 1);
 });
 
@@ -243,7 +246,7 @@ Deno.test("f2441: MFS employer benefits above $2500 — taxable = excess over $2
     employer_dep_care_benefits: 3000,
     filing_status: FilingStatus.MFS,
   }]);
-  const input = findOutput(result, "f1040")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   // 3000 - 2500 = 500
   assertEquals(input.line1e_taxable_dep_care, 500);
 });
@@ -256,7 +259,7 @@ Deno.test("f2441: credit rate is 35% for AGI = $0", () => {
     qualifying_person_count: 1,
     agi: 0,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 1000 * 0.35 = 350
   assertEquals(input.line2_childcare_credit, 350);
 });
@@ -267,7 +270,7 @@ Deno.test("f2441: credit rate is 35% for AGI = $15000 (top of first bracket)", (
     qualifying_person_count: 1,
     agi: 15000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 1000 * 0.35 = 350
   assertEquals(input.line2_childcare_credit, 350);
 });
@@ -278,7 +281,7 @@ Deno.test("f2441: credit rate is 34% for AGI = $15001 (just above first bracket)
     qualifying_person_count: 1,
     agi: 15001,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 1000 * 0.34 = 340
   assertEquals(input.line2_childcare_credit, 340);
 });
@@ -289,7 +292,7 @@ Deno.test("f2441: credit rate is 21% for AGI = $43000 (top of $41001-$43000 brac
     qualifying_person_count: 1,
     agi: 43000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // $41,001–$43,000 bracket → 21%; 1000 * 0.21 = 210
   assertEquals(input.line2_childcare_credit, 210);
 });
@@ -300,7 +303,7 @@ Deno.test("f2441: credit rate is 20% for AGI = $43001 (above all brackets — fl
     qualifying_person_count: 1,
     agi: 43001,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // floor rate: 1000 * 0.20 = 200
   assertEquals(input.line2_childcare_credit, 200);
 });
@@ -311,7 +314,7 @@ Deno.test("f2441: credit rate is 20% for very high AGI (floor never goes below 2
     qualifying_person_count: 1,
     agi: 500000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line2_childcare_credit, 200);
 });
 
@@ -323,7 +326,7 @@ Deno.test("f2441: credit rate is 33% for AGI = $17001 (third bracket)", () => {
     qualifying_person_count: 1,
     agi: 17001,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 1000 * 0.33 = 330
   assertEquals(input.line2_childcare_credit, 330);
 });
@@ -334,7 +337,7 @@ Deno.test("f2441: credit rate is 21% for AGI = $41001 (second-to-last bracket)",
     qualifying_person_count: 1,
     agi: 41001,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 1000 * 0.21 = 210
   assertEquals(input.line2_childcare_credit, 210);
 });
@@ -350,7 +353,7 @@ Deno.test("f2441: single filer — credit limited by taxpayer earned income when
     agi: 50000,
     earned_income_taxpayer: 1000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // min(3000, 1000) = 1000; credit = 1000 * 0.20 = 200
   assertEquals(input.line2_childcare_credit, 200);
 });
@@ -364,7 +367,7 @@ Deno.test("f2441: MFJ — credit limited by lower spouse earned income", () => {
     earned_income_taxpayer: 3000,
     earned_income_spouse: 800,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // min(3000, min(3000, 800)) = 800; credit = 800 * 0.20 = 160
   assertEquals(input.line2_childcare_credit, 160);
 });
@@ -428,7 +431,7 @@ Deno.test("f2441: FSA of $5000 with 2 persons leaves $1000 residual for credit",
   }]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // residual = 1000; credit = 1000 * 0.20 = 200
   assertEquals(input.line2_childcare_credit, 200);
 });
@@ -442,7 +445,7 @@ Deno.test("f2441: partial FSA reduces qualifying expenses proportionally (1 pers
     qualifying_person_count: 1,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // net qualifying = 1000; credit = 1000 * 0.20 = 200
   assertEquals(input.line2_childcare_credit, 200);
 });
@@ -472,7 +475,7 @@ Deno.test("f2441: MFS filing status produces taxable amount on $2501 employer be
     employer_dep_care_benefits: 2501,
     filing_status: FilingStatus.MFS,
   }]);
-  const input = findOutput(result, "f1040")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 1);
 });
 
@@ -489,7 +492,7 @@ Deno.test("f2441: very large FSA (above both exclusion and expense cap) only pro
     qualifying_person_count: 1,
     agi: 50000,
   }]);
-  const f1040Out = findOutput(result, "f1040")!.fields as Record<string, unknown>;
+  const f1040Out = fieldsOf(result.outputs, f1040)!;
   assertEquals(f1040Out.line1e_taxable_dep_care, 5000);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
@@ -524,7 +527,7 @@ Deno.test("f2441: AGI exactly at $17000 uses 34% rate (top of second bracket)", 
     qualifying_person_count: 1,
     agi: 17000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // 1000 * 0.34 = 340
   assertEquals(input.line2_childcare_credit, 340);
 });
@@ -538,7 +541,7 @@ Deno.test("f2441: MFJ with equal spouse incomes uses that income as limit", () =
     earned_income_taxpayer: 2000,
     earned_income_spouse: 2000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // min(3000, 2000, 2000) = 2000; credit = 2000 * 0.20 = 400
   assertEquals(input.line2_childcare_credit, 400);
 });
@@ -549,7 +552,7 @@ Deno.test("f2441: 3 qualifying persons uses the $6000 cap (same as 2+)", () => {
     qualifying_person_count: 3,
     agi: 50000,
   }]);
-  const input = findOutput(result, "schedule3")!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // capped at 6000; 6000 * 0.20 = 1200
   assertEquals(input.line2_childcare_credit, 1200);
 });
@@ -587,6 +590,6 @@ Deno.test("f2441 smoke test: MFJ, 2 qualifying persons, partial FSA, earned inco
   // Credit should be $600
   const schedule3Out = findOutput(result, "schedule3");
   assertEquals(schedule3Out !== undefined, true);
-  const input = schedule3Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line2_childcare_credit, 600);
 });

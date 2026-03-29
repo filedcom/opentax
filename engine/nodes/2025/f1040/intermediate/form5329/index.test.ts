@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form5329, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form5329.compute(inputSchema.parse(input));
@@ -76,7 +78,7 @@ Deno.test("part1: 10% penalty on full early distribution (no exception)", () => 
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 1_000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_000);
 });
 
 Deno.test("part1: 10% penalty reduced by exception", () => {
@@ -88,7 +90,7 @@ Deno.test("part1: 10% penalty reduced by exception", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 1_500);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_500);
 });
 
 Deno.test("part1: exception cannot exceed distribution (clamped to zero)", () => {
@@ -110,7 +112,7 @@ Deno.test("part1_simple: 25% penalty on SIMPLE IRA early distribution within 2 y
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 2_000);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 2_000);
 });
 
 Deno.test("part1_simple: SIMPLE IRA and regular early dist combine", () => {
@@ -124,7 +126,7 @@ Deno.test("part1_simple: SIMPLE IRA and regular early dist combine", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 2_250);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 2_250);
 });
 
 // ---------------------------------------------------------------------------
@@ -137,7 +139,7 @@ Deno.test("part2: 10% penalty on ESA/ABLE distribution (no exception)", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 300);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 300);
 });
 
 Deno.test("part2: exception reduces ESA/ABLE penalty", () => {
@@ -149,7 +151,7 @@ Deno.test("part2: exception reduces ESA/ABLE penalty", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 300);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 300);
 });
 
 Deno.test("part2: fully excepted ESA/ABLE → no output", () => {
@@ -173,7 +175,7 @@ Deno.test("part3: 6% penalty on excess traditional IRA contributions", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 120);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 120);
 });
 
 Deno.test("part3: 6% capped at IRA FMV when excess > FMV", () => {
@@ -185,7 +187,7 @@ Deno.test("part3: 6% capped at IRA FMV when excess > FMV", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 30);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 30);
 });
 
 Deno.test("part3: excess traditional IRA with no FMV provided uses excess as base", () => {
@@ -195,7 +197,7 @@ Deno.test("part3: excess traditional IRA with no FMV provided uses excess as bas
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 180);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 180);
 });
 
 // ---------------------------------------------------------------------------
@@ -211,7 +213,7 @@ Deno.test("part4: 6% penalty on excess Roth IRA contributions", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 90);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 90);
 });
 
 Deno.test("part4: 6% Roth capped at account FMV", () => {
@@ -223,7 +225,7 @@ Deno.test("part4: 6% Roth capped at account FMV", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 18);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 18);
 });
 
 // ---------------------------------------------------------------------------
@@ -239,7 +241,7 @@ Deno.test("part5: 6% penalty on excess Coverdell ESA contributions", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 30);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 30);
 });
 
 // ---------------------------------------------------------------------------
@@ -255,7 +257,7 @@ Deno.test("part6: 6% penalty on excess Archer MSA contributions", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 60);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 60);
 });
 
 // ---------------------------------------------------------------------------
@@ -271,7 +273,7 @@ Deno.test("part7: 6% penalty on excess HSA contributions", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 120);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 120);
 });
 
 Deno.test("part7: HSA excess capped at account value", () => {
@@ -283,7 +285,7 @@ Deno.test("part7: HSA excess capped at account value", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 12);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 12);
 });
 
 // ---------------------------------------------------------------------------
@@ -299,7 +301,7 @@ Deno.test("part8: 6% penalty on excess ABLE contributions", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 60);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 60);
 });
 
 // ---------------------------------------------------------------------------
@@ -321,7 +323,7 @@ Deno.test("routing: all penalties aggregate to single schedule2 output", () => {
 
   const sch2Outputs = result.outputs.filter((o) => o.nodeType === "schedule2");
   assertEquals(sch2Outputs.length, 1);
-  assertEquals((sch2Outputs[0].fields as Record<string, unknown>).line8_form5329_tax, 1_150);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_150);
 });
 
 Deno.test("routing: output nodeType is schedule2", () => {
@@ -357,5 +359,5 @@ Deno.test("smoke: multiple penalties across several parts", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line8_form5329_tax, 2_910);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 2_910);
 });

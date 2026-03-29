@@ -1,5 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4137, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule2 } from "../schedule2/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -75,11 +78,11 @@ Deno.test("smoke: allocated_tips only → produces f1040 income + schedule2 tax"
 
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  assertEquals((f1040Out!.fields as Record<string, unknown>).line1c_unreported_tips, 1000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 1000);
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line5_unreported_tip_tax, 76.50);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line5_unreported_tip_tax, 76.50);
 });
 
 // ---------------------------------------------------------------------------
@@ -103,7 +106,7 @@ Deno.test("ss_tax: basic calculation — tips subject to SS", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.line5_unreported_tip_tax, 306);
 });
 
@@ -122,7 +125,7 @@ Deno.test("ss_tax: at zero when SS wage base already hit", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.line5_unreported_tip_tax, 29);
 });
 
@@ -142,7 +145,7 @@ Deno.test("ss_tax: partial SS room — tips partially capped at wage base", () =
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.line5_unreported_tip_tax, 105.50);
 });
 
@@ -166,7 +169,7 @@ Deno.test("medicare_tax: applies to all unreported tips above $20/month threshol
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.line5_unreported_tip_tax, 137.70);
 });
 
@@ -188,7 +191,7 @@ Deno.test("sub_20: tips below $20/month threshold excluded from SS and Medicare"
   // Income still reported on f1040 (line 4)
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  assertEquals((f1040Out!.fields as Record<string, unknown>).line1c_unreported_tips, 50);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 50);
 
   // But no tax owed
   const sch2Out = findOutput(result, "schedule2");
@@ -211,7 +214,7 @@ Deno.test("sub_20: partial exclusion — some tips taxable, some not", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.line5_unreported_tip_tax, 30.60);
 });
 
@@ -247,10 +250,10 @@ Deno.test("tips: reported_tips reduces unreported amount", () => {
   });
 
   const f1040Out = findOutput(result, "f1040");
-  assertEquals((f1040Out!.fields as Record<string, unknown>).line1c_unreported_tips, 1000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 1000);
 
   const sch2Out = findOutput(result, "schedule2");
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line5_unreported_tip_tax, 76.50);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line5_unreported_tip_tax, 76.50);
 });
 
 // ---------------------------------------------------------------------------
@@ -265,7 +268,7 @@ Deno.test("ss_wage_base: exactly at wage base → no SS tax", () => {
   });
 
   const sch2Out = findOutput(result, "schedule2");
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   // Only Medicare tax: 1000 * 0.0145 = 14.50
   assertEquals(input.line5_unreported_tip_tax, 14.50);
 });
@@ -282,7 +285,7 @@ Deno.test("ss_wage_base: one dollar below → small SS tax applies", () => {
   });
 
   const sch2Out = findOutput(result, "schedule2");
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   const tax = input.line5_unreported_tip_tax as number;
   // SS tax = 0.062, Medicare = 14.50, total = 14.562
   assertEquals(Math.abs(tax - 14.562) < 0.001, true);
@@ -296,7 +299,7 @@ Deno.test("ss_wage_base: zero ss_wages → full SS tax applies", () => {
   });
 
   const sch2Out = findOutput(result, "schedule2");
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   // ss_tax = 2000 * 0.062 = 124
   // medicare_tax = 2000 * 0.0145 = 29
   // total = 153
@@ -317,7 +320,7 @@ Deno.test("routing: f1040 line1c receives unreported tip income", () => {
 
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  assertEquals((f1040Out!.fields as Record<string, unknown>).line1c_unreported_tips, 600);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 600);
 });
 
 Deno.test("routing: schedule2 line5 receives total FICA tax on tips", () => {
@@ -328,7 +331,7 @@ Deno.test("routing: schedule2 line5 receives total FICA tax on tips", () => {
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
-  assertEquals("line5_unreported_tip_tax" in (sch2Out!.fields as Record<string, unknown>), true);
+  assertEquals("line5_unreported_tip_tax" in fieldsOf(result.outputs, schedule2)!, true);
 });
 
 Deno.test("routing: no outputs when all tips were reported", () => {
@@ -362,7 +365,7 @@ Deno.test("edge: large tips below SS wage base — both taxes apply", () => {
   });
 
   const sch2Out = findOutput(result, "schedule2");
-  assertEquals((sch2Out!.fields as Record<string, unknown>).line5_unreported_tip_tax, 7650);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line5_unreported_tip_tax, 7650);
 });
 
 Deno.test("edge: tips exceed SS wage base — SS capped, Medicare on all", () => {
@@ -377,7 +380,7 @@ Deno.test("edge: tips exceed SS wage base — SS capped, Medicare on all", () =>
   });
 
   const sch2Out = findOutput(result, "schedule2");
-  const input = sch2Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule2)!;
   const tax = input.line5_unreported_tip_tax as number;
   assertEquals(Math.abs(tax - 13818.20) < 0.01, true);
 });
@@ -395,7 +398,7 @@ Deno.test("edge: sub_$20 exceeds unreported tips is clamped to unreported amount
 
   const f1040Out = findOutput(result, "f1040");
   // Income still reported even if no tax
-  assertEquals((f1040Out!.fields as Record<string, unknown>).line1c_unreported_tips, 500);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 500);
 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out, undefined);
@@ -408,5 +411,5 @@ Deno.test("edge: allocated_tips used as total when total_tips_received not provi
   const result = compute({ allocated_tips: 750 });
 
   const f1040Out = findOutput(result, "f1040");
-  assertEquals((f1040Out!.fields as Record<string, unknown>).line1c_unreported_tips, 750);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 750);
 });

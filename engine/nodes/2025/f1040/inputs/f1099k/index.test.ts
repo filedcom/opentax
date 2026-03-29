@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, f1099k } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -100,7 +102,7 @@ Deno.test("box4_federal_withheld > 0 routes to f1040 line25b_withheld_1099", () 
   const result = compute([minimalItem({ box4_federal_withheld: 480 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 480);
 });
 
@@ -293,7 +295,7 @@ Deno.test("box4_federal_withheld matches 24% backup withholding rate on box1a (2
   const result = compute([minimalItem({ box4_federal_withheld: 480 })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 480);
 });
 
@@ -484,7 +486,7 @@ Deno.test("box4 and box8 both present — only f1040 output for box4", () => {
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 600);
   // State withholding (box8) must NOT appear in f1040 output
   assertEquals("line25b_withheld_state" in input, false);
@@ -497,7 +499,7 @@ Deno.test("second_tin_notice = true with box4 — box4 still routes correctly", 
   ]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 240);
 });
 

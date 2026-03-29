@@ -1,5 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f8812 } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule3 } from "../../intermediate/schedule3/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -62,7 +65,7 @@ Deno.test("routing: 1 qualifying child routes CTC to schedule3", () => {
   const result = compute([minimalItem({ qualifying_children_count: 1 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
@@ -70,7 +73,7 @@ Deno.test("routing: 2 qualifying children routes $4400 CTC to schedule3", () => 
   const result = compute([minimalItem({ qualifying_children_count: 2 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 4400);
 });
 
@@ -85,7 +88,7 @@ Deno.test("routing: 1 other dependent routes $500 ODC to schedule3", () => {
   const result = compute([minimalItem({ other_dependents_count: 1 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 500);
 });
 
@@ -93,7 +96,7 @@ Deno.test("routing: 3 other dependents routes $1500 ODC to schedule3", () => {
   const result = compute([minimalItem({ other_dependents_count: 3 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1500);
 });
 
@@ -109,7 +112,7 @@ Deno.test("routing: CTC and ODC combined route total to schedule3", () => {
   const result = compute([minimalItem({ qualifying_children_count: 1, other_dependents_count: 2 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 3200);
 });
 
@@ -125,7 +128,7 @@ Deno.test("aggregation: multiple f8812 items are aggregated (children sum)", () 
   ]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 4400);
 });
 
@@ -137,7 +140,7 @@ Deno.test("aggregation: multiple f8812 items with dependents aggregate ODC", () 
   ]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 5900);
 });
 
@@ -151,7 +154,7 @@ Deno.test("threshold: TY2025 CTC is $2200 per qualifying child (not $2000)", () 
   const result = compute([minimalItem({ qualifying_children_count: 1 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
@@ -165,7 +168,7 @@ Deno.test("threshold: TY2025 ACTC cap is $1700 per qualifying child (not $2000)"
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 1700);
 });
 
@@ -173,7 +176,7 @@ Deno.test("threshold: ODC is $500 per other dependent", () => {
   const result = compute([minimalItem({ other_dependents_count: 1 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 500);
 });
 
@@ -187,7 +190,7 @@ Deno.test("threshold: MFJ phase-out starts at $400,000 — at threshold no reduc
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 0, reduction = 0, CTC = 2200
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
@@ -200,7 +203,7 @@ Deno.test("threshold: MFJ AGI just above $400,000 triggers phase-out", () => {
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
 });
@@ -213,7 +216,7 @@ Deno.test("threshold: MFJ AGI $401,000 above threshold gives $50 reduction", () 
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1000 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
 });
@@ -228,7 +231,7 @@ Deno.test("threshold: single filer phase-out starts at $200,000 — at threshold
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 0, reduction = 0, CTC = 2200
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
@@ -241,7 +244,7 @@ Deno.test("threshold: single filer AGI just above $200,000 triggers phase-out", 
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
 });
@@ -255,7 +258,7 @@ Deno.test("threshold: MFS filer uses $200,000 phase-out threshold (not $400,000)
   })]);
   const mfsOut = findOutput(mfsResult, "schedule3");
   assertEquals(mfsOut !== undefined, true);
-  const mfsInput = mfsOut!.fields as Record<string, unknown>;
+  const mfsInput = fieldsOf(mfsResult.outputs, schedule3)!;
   // excess = 1000, reduction = 50, CTC = 2200 - 50 = 2150
   assertEquals(mfsInput.line6b_child_tax_credit, 2150);
 });
@@ -268,7 +271,7 @@ Deno.test("threshold: HOH filer uses $200,000 phase-out threshold", () => {
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1000, reduction = 50, CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
 });
@@ -283,7 +286,7 @@ Deno.test("threshold: phase-out uses ceiling rounding (excess $425 → $1000 →
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 425 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
 });
@@ -296,7 +299,7 @@ Deno.test("threshold: phase-out ceiling — excess $1001 → $2000 → $100 redu
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1001 → ceil to $2000 → reduction = $100 → CTC = 2200 - 100 = 2100
   assertEquals(input.line6b_child_tax_credit, 2100);
 });
@@ -309,7 +312,7 @@ Deno.test("threshold: phase-out exact multiple — excess $1000 → $1000 → $5
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1000 → already a multiple → $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
 });
@@ -326,12 +329,7 @@ Deno.test("threshold: ACTC zero when earned income at $2500 floor", () => {
   })]);
   const f1040Out = findOutput(result, "f1040");
   // No ACTC when earned income does not exceed $2500
-  if (f1040Out !== undefined) {
-    const input = f1040Out.fields as Record<string, unknown>;
-    assertEquals(input.line28_actc ?? 0, 0);
-  } else {
-    assertEquals(f1040Out, undefined);
-  }
+  assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
 
 Deno.test("threshold: ACTC computed when earned income exceeds $2500 floor", () => {
@@ -347,7 +345,7 @@ Deno.test("threshold: ACTC computed when earned income exceeds $2500 floor", () 
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 1125);
 });
 
@@ -364,7 +362,7 @@ Deno.test("threshold: ACTC is 15% of earned income above $2500", () => {
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 2625);
 });
 
@@ -382,7 +380,7 @@ Deno.test("threshold: 3 qualifying children (Line 16b = $5100) enables Part II-B
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   // (30000-2500)*0.15 = 4125, cap = 3*1700 = 5100, ctcUnused = 6600
   // actc = min(6600, 4125, 5100) = 4125
   assertEquals(input.line28_actc, 4125);
@@ -398,7 +396,7 @@ Deno.test("threshold: 2 qualifying children (Line 16b = $3400) skips Part II-B f
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   // (30000-2500)*0.15 = 4125, cap = 2*1700 = 3400, ctcUnused = 4400
   // actc = min(4400, 4125, 3400) = 3400
   assertEquals(input.line28_actc, 3400);
@@ -520,7 +518,7 @@ Deno.test("informational: ACTC refund delay flag — no impact on computed amoun
   })]);
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   // (20000-2500)*0.15 = 2625, cap=1700, ctcUnused=2200 → actc = 1700
   assertEquals(input.line28_actc, 1700);
 });
@@ -550,7 +548,7 @@ Deno.test("edge: ITIN child (ssn_not_valid_for_work) eligible for ODC but not CT
   const result = compute([minimalItem({ qualifying_children_count: 0, other_dependents_count: 1 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 500); // ODC = $500
 });
 
@@ -564,12 +562,7 @@ Deno.test("edge: has_form_2555=true suppresses ACTC (line28 = 0 or absent)", () 
     has_form_2555: true,
   })]);
   const f1040Out = findOutput(result, "f1040");
-  if (f1040Out !== undefined) {
-    const input = f1040Out.fields as Record<string, unknown>;
-    assertEquals(input.line28_actc ?? 0, 0);
-  } else {
-    assertEquals(f1040Out, undefined);
-  }
+  assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
 
 Deno.test("edge: has_form_2555=true still allows non-refundable CTC on schedule3", () => {
@@ -582,7 +575,7 @@ Deno.test("edge: has_form_2555=true still allows non-refundable CTC on schedule3
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200); // non-refundable CTC unaffected
 });
 
@@ -595,7 +588,7 @@ Deno.test("edge: phase-out rounding — $1 excess becomes $1000 (ceiling), not $
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // NOT 2200 (that would mean no phase-out rounding)
   // NOT undefined (that would mean full phase-out)
   assertEquals(input.line6b_child_tax_credit, 2150); // $50 reduction
@@ -610,7 +603,7 @@ Deno.test("edge: form_8332_override=true allows CTC for noncustodial parent", ()
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
@@ -624,12 +617,7 @@ Deno.test("edge: do_not_claim_actc=true suppresses ACTC (line28 = 0 or absent)",
     do_not_claim_actc: true,
   })]);
   const f1040Out = findOutput(result, "f1040");
-  if (f1040Out !== undefined) {
-    const input = f1040Out.fields as Record<string, unknown>;
-    assertEquals(input.line28_actc ?? 0, 0);
-  } else {
-    assertEquals(f1040Out, undefined);
-  }
+  assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
 
 Deno.test("edge: do_not_claim_actc=true does not affect non-refundable CTC on schedule3", () => {
@@ -641,7 +629,7 @@ Deno.test("edge: do_not_claim_actc=true does not affect non-refundable CTC on sc
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 4400);
 });
 
@@ -672,7 +660,7 @@ Deno.test("edge: puerto_rico_excluded_income added to AGI for phase-out calculat
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1950);
 });
 
@@ -687,7 +675,7 @@ Deno.test("edge: form_2555_amounts added to AGI for modified AGI phase-out", () 
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1950);
 });
 
@@ -702,7 +690,7 @@ Deno.test("edge: form_4563_amount added to AGI for modified AGI phase-out", () =
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1950);
 });
 
@@ -715,7 +703,7 @@ Deno.test("edge: nonrefundable CTC limited to income_tax_liability", () => {
   })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
-  const input = out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   // CTC = 4400, limited to tax liability = 1500
   assertEquals(input.line6b_child_tax_credit, 1500);
 });
@@ -728,12 +716,7 @@ Deno.test("edge: zero income_tax_liability means nonrefundable CTC is zero on sc
   })]);
   const out = findOutput(result, "schedule3");
   // Either no output or line6b = 0
-  if (out !== undefined) {
-    const input = out.fields as Record<string, unknown>;
-    assertEquals(input.line6b_child_tax_credit ?? 0, 0);
-  } else {
-    assertEquals(out, undefined);
-  }
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6b_child_tax_credit ?? 0, 0);
 });
 
 // Edge Case 10: nontaxable combat pay increases earned income for ACTC
@@ -760,8 +743,8 @@ Deno.test("edge: nontaxable_combat_pay increases earned income for ACTC calculat
   assertEquals(f1040WithoutOut !== undefined, true);
   assertEquals(f1040WithOut !== undefined, true);
 
-  const withoutActc = (f1040WithoutOut!.fields as Record<string, unknown>).line28_actc as number;
-  const withActc = (f1040WithOut!.fields as Record<string, unknown>).line28_actc as number;
+  const withoutActc = fieldsOf(withoutCombat.outputs, f1040)!.line28_actc as number;
+  const withActc = fieldsOf(withCombat.outputs, f1040)!.line28_actc as number;
 
   assertEquals(withoutActc, 375);
   assertEquals(withActc, 1125); // combat pay boosts ACTC
@@ -794,12 +777,12 @@ Deno.test("smoke: 2 qualifying children + 1 other dependent, moderate income, pa
 
   const schedule3Out = findOutput(result, "schedule3");
   assertEquals(schedule3Out !== undefined, true);
-  const s3Input = schedule3Out!.fields as Record<string, unknown>;
+  const s3Input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(s3Input.line6b_child_tax_credit, 3000); // limited by tax liability
 
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const f1040Input = f1040Out!.fields as Record<string, unknown>;
+  const f1040Input = fieldsOf(result.outputs, f1040)!;
   assertEquals(f1040Input.line28_actc, 1800);
 });
 
@@ -821,6 +804,6 @@ Deno.test("smoke: MFJ 3 children, high earned income, below phase-out — maximu
 
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);
-  const input = f1040Out!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 5100);
 });

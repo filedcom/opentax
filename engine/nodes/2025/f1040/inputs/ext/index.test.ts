@@ -1,5 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { ext, inputSchema } from "./index.ts";
+import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { schedule3 } from "../../intermediate/schedule3/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -103,7 +105,7 @@ Deno.test("test_line_7_positive_routes_to_schedule3 — amount_paying > 0 routes
   // AMBIGUITY A: nodeType assumed "schedule3", field assumed "line10_amount_paid_extension"
   const sch3 = findOutput(result, "schedule3");
   assertEquals(sch3 !== undefined, true);
-  const input = sch3!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line10_amount_paid_extension, 1500);
 });
 
@@ -166,7 +168,7 @@ Deno.test("test_line_6_positive_when_line4_exceeds_line5 — balance due compute
   // Extension payment of exactly the balance routes correctly
   const sch3 = findOutput(result, "schedule3");
   assertEquals(sch3 !== undefined, true);
-  const input = sch3!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line10_amount_paid_extension, 3000);
 });
 
@@ -190,7 +192,7 @@ Deno.test("test_line_7_can_exceed_line_6 — overpayment is valid and no cap enf
   });
   const sch3 = findOutput(result, "schedule3");
   assertEquals(sch3 !== undefined, true);
-  const input = sch3!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line10_amount_paid_extension, 8000);
 });
 
@@ -304,7 +306,7 @@ Deno.test("test_amount_on_1040v_does_not_affect_schedule3 — override field is 
 
   const sch3 = findOutput(withOverride, "schedule3");
   assertEquals(sch3 !== undefined, true);
-  const input = sch3!.fields as Record<string, unknown>;
+  const input = fieldsOf(withOverride.outputs, schedule3)!;
   // schedule3 must use line_7_amount_paying (500), not amount_on_1040v (999)
   assertEquals(input.line10_amount_paid_extension, 500);
 });
@@ -369,7 +371,7 @@ Deno.test("test_large_extension_payment_routes_correctly — no upper cap on lin
 
   const sch3 = findOutput(result, "schedule3");
   assertEquals(sch3 !== undefined, true);
-  const input = sch3!.fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line10_amount_paid_extension, 100000);
 });
 
@@ -431,7 +433,7 @@ Deno.test("test_smoke_all_major_fields — comprehensive test with all boxes pop
   assertEquals(sch3Outputs.length, 1);
 
   // schedule3 line10 must equal line_7_amount_paying
-  const input = sch3Outputs[0].fields as Record<string, unknown>;
+  const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line10_amount_paid_extension, 5000);
 
   // No spurious extra outputs from informational fields
