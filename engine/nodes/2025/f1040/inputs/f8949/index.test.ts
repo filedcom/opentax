@@ -50,7 +50,7 @@
 //   rate_28_gain_worksheet → "rate_28_gain_worksheet" (unverified — FLAG D/E)
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8949, inputSchema } from "./index.ts";
+import { QsbsCode, f8949, inputSchema } from "./index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -762,10 +762,37 @@ Deno.test("collectibles: collectibles=true does NOT change schedule_d routing [F
 // 10. AMT Cost Basis (FLAG C) — amt_cost_basis routes to form6251 Line 2k
 // ---------------------------------------------------------------------------
 
-Deno.test("amt_cost_basis: when provided and differs from regular basis, should route to form6251 [FLAG C]", () => {
-  // This tests IRS-correct behavior — will fail until amt_cost_basis is added
-  // to the schema and routing logic is implemented.
-  // For now, verify no error on a regular transaction.
+Deno.test("amt_cost_basis: differs from cost_basis routes to form6251 with other_adjustments", () => {
+  const result = compute([
+    minimalItem({
+      part: "D",
+      date_acquired: "2022-01-01",
+      proceeds: 10000,
+      cost_basis: 5000,
+      amt_cost_basis: 7000,
+    }),
+  ]);
+  const form6251Out = findOutput(result, "form6251");
+  assertEquals(form6251Out !== undefined, true);
+  const fields = form6251Out!.fields as Record<string, unknown>;
+  assertEquals(fields.other_adjustments, 2000); // 7000 - 5000
+});
+
+Deno.test("amt_cost_basis: equals cost_basis produces no form6251 output", () => {
+  const result = compute([
+    minimalItem({
+      part: "D",
+      date_acquired: "2022-01-01",
+      proceeds: 10000,
+      cost_basis: 5000,
+      amt_cost_basis: 5000,
+    }),
+  ]);
+  const form6251Out = findOutput(result, "form6251");
+  assertEquals(form6251Out, undefined);
+});
+
+Deno.test("amt_cost_basis: absent produces no form6251 output", () => {
   const result = compute([
     minimalItem({
       part: "D",
@@ -774,9 +801,91 @@ Deno.test("amt_cost_basis: when provided and differs from regular basis, should 
       cost_basis: 5000,
     }),
   ]);
-  // Without amt_cost_basis field, no form6251 output expected
   const form6251Out = findOutput(result, "form6251");
   assertEquals(form6251Out, undefined);
+});
+
+Deno.test("wash_sale_loss: auto-creates W code and sets adjustment_amount", () => {
+  const result = compute([
+    minimalItem({
+      proceeds: 4000,
+      cost_basis: 5000,
+      wash_sale_loss: 800,
+    }),
+  ]);
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
+    string,
+    unknown
+  >).transaction as Record<string, unknown>;
+  assertEquals((tx.adjustment_codes as string).includes("W"), true);
+  assertEquals(tx.adjustment_amount, 800);
+  assertEquals(tx.gain_loss, -200); // 4000 - 5000 + 800
+});
+
+Deno.test("wash_sale_loss: appends W to existing adjustment_codes", () => {
+  const result = compute([
+    minimalItem({
+      proceeds: 4000,
+      cost_basis: 5000,
+      adjustment_codes: "B",
+      wash_sale_loss: 500,
+    }),
+  ]);
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
+    string,
+    unknown
+  >).transaction as Record<string, unknown>;
+  assertEquals(tx.adjustment_codes, "BW");
+});
+
+Deno.test("loss_not_allowed: auto-creates L code and zeroes the loss", () => {
+  const result = compute([
+    minimalItem({
+      proceeds: 2000,
+      cost_basis: 3000,
+      loss_not_allowed: true,
+    }),
+  ]);
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
+    string,
+    unknown
+  >).transaction as Record<string, unknown>;
+  assertEquals((tx.adjustment_codes as string).includes("L"), true);
+  assertEquals(tx.gain_loss, 0);
+});
+
+Deno.test("qsbs_code: Q1 with qsbs_amount forwarded in schedule_d transaction", () => {
+  const result = compute([
+    minimalItem({
+      part: "D",
+      date_acquired: "2015-01-01",
+      proceeds: 10000,
+      cost_basis: 1000,
+      qsbs_code: QsbsCode.Q1,
+      qsbs_amount: 9000,
+    }),
+  ]);
+  const tx = ((findOutput(result, "schedule_d")!.fields) as Record<
+    string,
+    unknown
+  >).transaction as Record<string, unknown>;
+  assertEquals(tx.qsbs_code, QsbsCode.Q1);
+  assertEquals(tx.qsbs_amount, 9000);
+});
+
+Deno.test("state_tax_withheld: accepted by schema, produces no f1040 output", () => {
+  const result = compute([
+    minimalItem({
+      proceeds: 5000,
+      cost_basis: 3000,
+      state_tax_withheld: 200,
+    }),
+  ]);
+  const f1040Out = findOutput(result, "f1040");
+  assertEquals(f1040Out, undefined);
+  // schedule_d output should still be present
+  const sdOut = findOutput(result, "schedule_d");
+  assertEquals(sdOut !== undefined, true);
 });
 
 // ---------------------------------------------------------------------------
