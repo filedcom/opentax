@@ -1,8 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import type { GraphNode } from "../../core/runtime/graph.ts";
-import { registry } from "../../nodes/2025/registry.ts";
+import { catalog } from "../../catalog.ts";
 import { formatMermaid, graphViewCommand } from "./graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./node.ts";
+
+const registry = catalog["f1040:2025"].registry;
 
 function captureLog(fn: () => void): string {
   const lines: string[] = [];

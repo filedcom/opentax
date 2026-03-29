@@ -1,5 +1,7 @@
-import { registry } from "../../nodes/2025/registry.ts";
+import { catalog } from "../../catalog.ts";
 import { zodToLines } from "../utils/zod-doc.ts";
+
+const defaultDef = catalog["f1040:2025"];
 
 export type NodeInspectArgs = {
   readonly nodeType: string;
@@ -10,7 +12,7 @@ export type NodeInspectArgs = {
  * Prints all registered node types in sorted columns.
  */
 export function nodeListCommand(): void {
-  const types = Object.keys(registry).sort();
+  const types = Object.keys(defaultDef.registry).sort();
   console.log(`Registered Nodes (${types.length})\n`);
 
   const COL_WIDTH = 28;
@@ -28,7 +30,7 @@ export function nodeListCommand(): void {
  * With --json, prints structured JSON instead.
  */
 export function nodeInspectCommand(args: NodeInspectArgs): void {
-  const node = registry[args.nodeType];
+  const node = defaultDef.registry[args.nodeType];
   if (!node) throw new Error(`Unknown node type: ${args.nodeType}`);
 
   if (args.json) {

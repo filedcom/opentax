@@ -1,10 +1,15 @@
 import { join } from "@std/path";
 import { execute } from "../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../core/runtime/planner.ts";
-import { registry } from "../../nodes/2025/registry.ts";
+import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, createReturn, loadReturn } from "../store/store.ts";
 
-const executionPlan = buildExecutionPlan(registry);
+function getCatalogEntry(formType: string, year: number) {
+  const key = `${formType}:${year}`;
+  const def = catalog[key];
+  if (!def) throw new Error(`Unsupported form: ${key}`);
+  return def;
+}
 
 export type CreateReturnArgs = {
   readonly year: number;
@@ -38,8 +43,10 @@ export async function getReturnCommand(
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
 
+  const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
+  const executionPlan = buildExecutionPlan(def.registry);
   const engineInputs = buildEngineInputs(inputs);
-  const result = execute(executionPlan, registry, engineInputs);
+  const result = execute(executionPlan, def.registry, engineInputs);
 
   const line1aRaw = result.pending["f1040"]?.["line1a_wages"];
   const line_1a = typeof line1aRaw === "number" ? line1aRaw : 0;

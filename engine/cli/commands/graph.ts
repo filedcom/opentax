@@ -1,6 +1,8 @@
 import type { GraphNode } from "../../core/runtime/graph.ts";
 import { computeTaxGraph } from "../../core/runtime/graph.ts";
-import { registry } from "../../nodes/2025/registry.ts";
+import { catalog } from "../../catalog.ts";
+
+const defaultDef = catalog["f1040:2025"];
 
 export type GraphViewArgs = {
   readonly nodeType: string;
@@ -66,7 +68,7 @@ export function formatMermaid(root: GraphNode): string {
 export function graphViewCommand(
   args: GraphViewArgs,
 ): GraphNode | void {
-  const result = computeTaxGraph(args.nodeType, registry, args.depth);
+  const result = computeTaxGraph(args.nodeType, defaultDef.registry, args.depth);
 
   if (args.json) {
     return result;
