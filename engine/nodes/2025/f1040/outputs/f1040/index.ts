@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { UnimplementedTaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, type NodeResult } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 
 const inputSchema = z.object({
   line1a_wages: z.number().optional(),
@@ -37,8 +38,13 @@ const inputSchema = z.object({
   line31_additional_payments: z.number().nonnegative().optional(),
 });
 
-class F1040Node extends UnimplementedTaxNode {
-  override readonly inputSchema = inputSchema;
+class F1040Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "f1040";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(): NodeResult {
+    return { outputs: [] };
+  }
 }
 
-export const f1040 = new F1040Node("f1040");
+export const f1040 = new F1040Node();

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { UnimplementedTaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, type NodeResult } from "../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 
 const inputSchema = z.object({
   line1_state_refund: z.number().optional(),
@@ -47,8 +48,13 @@ const inputSchema = z.object({
   line15_se_deduction: z.number().nonnegative().optional(),
 });
 
-class Schedule1Node extends UnimplementedTaxNode {
-  override readonly inputSchema = inputSchema;
+class Schedule1Node extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "schedule1";
+  readonly inputSchema = inputSchema;
+  readonly outputNodes = new OutputNodes([]);
+  compute(): NodeResult {
+    return { outputs: [] };
+  }
 }
 
-export const schedule1 = new Schedule1Node("schedule1");
+export const schedule1 = new Schedule1Node();
