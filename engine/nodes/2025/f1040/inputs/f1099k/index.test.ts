@@ -1,35 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton: `k99`
-//   2. The input wrapper key: `k99s`
-//   3. The nodeType strings: "f1040" for federal withholding output
-//   4. AMBIGUITIES (see below) must be resolved against the implementation
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   A1. box4_federal_withheld on the 99K screen: context.md states the 99K
-//       screen is "exclusively for state e-file purposes" and box4 does NOT
-//       automatically carry to the federal return (must be re-entered on Screen
-//       5). However, the engine may choose to route box4 directly to f1040 as a
-//       convenience (consistent with NEC, INT, DIV nodes). Tests below assert
-//       box4 DOES route to f1040 — adjust if implementation intentionally omits
-//       federal routing.
-//   A2. box8_state_withheld: context.md says it flows to "state return — state
-//       withholding credit". The engine may not have a state node yet. Tests
-//       assert box8 produces NO federal outputs (not zero outputs — if a state
-//       node exists, it could produce state outputs).
-//   A3. Monthly consistency warning (boxes 5a–5l): context.md describes a
-//       WARNING (not ERROR) when all 12 months are provided and their sum ≠
-//       box_1a. Tests assert does_not_throw — the implementation may surface
-//       this differently (e.g., a warnings array in the result).
-//   A4. pse_name is used as the required identifier in the current
-//       implementation's itemSchema. If the schema changes, adjust minimalItem().
-//   A5. Multiple 99K items: box4 is aggregated or emitted per-item. Tests
-//       assert per-item emission (one f1040 output per item with box4 > 0),
-//       consistent with the current implementation.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, f1099k } from "./index.ts";
 
