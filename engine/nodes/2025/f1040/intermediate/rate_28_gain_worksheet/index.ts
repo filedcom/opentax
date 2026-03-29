@@ -2,9 +2,9 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { qdcgtw } from "../qdcgtw/index.ts";
 
-// line18_28pct_gain feeds the Schedule D Tax Worksheet (QDCGTW), not Schedule D
-// itself. No downstream node is wired for this yet — output list intentionally empty.
+// line18_28pct_gain routes to the QDCGTW node.
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ function hasAnyGain(input: Rate28GainInput): boolean {
 class Rate28GainWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "rate_28_gain_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([qdcgtw]);
 
   compute(rawInput: Rate28GainInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -55,10 +55,14 @@ class Rate28GainWorksheetNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    // line18 will route to the Schedule D Tax Worksheet once that node exists
-    void netGain(input);
-
-    return { outputs: [] };
+    return {
+      outputs: [
+        {
+          nodeType: qdcgtw.nodeType,
+          fields: { line18_28pct_gain: netGain(input) },
+        },
+      ],
+    };
   }
 }
 

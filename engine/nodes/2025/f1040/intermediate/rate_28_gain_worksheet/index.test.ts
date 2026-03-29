@@ -24,15 +24,15 @@ Deno.test("explicit zeros: no outputs", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 2. Collectibles gain from Form 8949 (schedule_d)
-// NOTE: line18_28pct_gain feeds the Schedule D Tax Worksheet (QDCGTW), not
-// Schedule D itself. The node computes the value but does not yet route it
-// downstream (no QDCGTW node exists yet). All active-gain cases produce 0 outputs.
+// 2. Collectibles gain from Form 8949 (schedule_d) routes to qdcgtw
 // ---------------------------------------------------------------------------
 
-Deno.test("collectibles_gain_from_8949 only: produces no outputs (pending QDCGTW)", () => {
+Deno.test("collectibles_gain_from_8949 only: routes to qdcgtw", () => {
   const result = compute({ collectibles_gain_from_8949: 5_000 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  const out = findOutput(result, "qdcgtw");
+  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 5_000);
 });
 
 Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
@@ -42,12 +42,15 @@ Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 3. Collectibles gain from 1099-DIV (f1099div box 2d)
+// 3. Collectibles gain from 1099-DIV (f1099div box 2d) routes to qdcgtw
 // ---------------------------------------------------------------------------
 
-Deno.test("collectibles_gain only: produces no outputs (pending QDCGTW)", () => {
+Deno.test("collectibles_gain only: routes to qdcgtw", () => {
   const result = compute({ collectibles_gain: 1_200 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  const out = findOutput(result, "qdcgtw");
+  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 1_200);
 });
 
 Deno.test("collectibles_gain only: no schedule_d output", () => {
@@ -57,12 +60,15 @@ Deno.test("collectibles_gain only: no schedule_d output", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 4. Combined collectibles + 1202 (both sources)
+// 4. Combined collectibles + 1202 (both sources) routes to qdcgtw
 // ---------------------------------------------------------------------------
 
-Deno.test("combined gains: produces no outputs (pending QDCGTW)", () => {
+Deno.test("combined gains: routes to qdcgtw with summed line18", () => {
   const result = compute({ collectibles_gain_from_8949: 4_000, collectibles_gain: 1_500 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  const out = findOutput(result, "qdcgtw");
+  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 5_500);
 });
 
 Deno.test("combined gains: no schedule_d output", () => {
@@ -100,18 +106,22 @@ Deno.test("non-numeric input: throws", () => {
 // 7. Output field precision
 // ---------------------------------------------------------------------------
 
-Deno.test("fractional cents: node processes without error", () => {
+Deno.test("fractional cents: routes to qdcgtw with correct value", () => {
   const result = compute({ collectibles_gain_from_8949: 1234.56, collectibles_gain: 78.90 });
-  // Value is computed internally (1313.46) but not yet routed downstream
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  const out = findOutput(result, "qdcgtw");
+  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 1313.46);
 });
 
 // ---------------------------------------------------------------------------
 // 8. Smoke test — large gain
 // ---------------------------------------------------------------------------
 
-Deno.test("smoke: large collectibles gain processes without error", () => {
+Deno.test("smoke: large collectibles gain routes to qdcgtw", () => {
   const result = compute({ collectibles_gain_from_8949: 100_000, collectibles_gain: 25_000 });
-  // Computes line18=125_000 internally; no downstream routing yet
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  const out = findOutput(result, "qdcgtw");
+  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line18_28pct_gain, 125_000);
 });
