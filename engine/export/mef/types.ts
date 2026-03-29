@@ -13,19 +13,33 @@ export interface FilerIdentity {
 
 export interface IRS1040Fields {
   line1a_wages?: number | null;
+  line1c_unreported_tips?: number | null;
   line1e_taxable_dep_care?: number | null;
+  line1f_taxable_adoption_benefits?: number | null;
+  line1g_wages_8919?: number | null;
   line1i_combat_pay?: number | null;
   line2a_tax_exempt?: number | null;
+  line2b_taxable_interest?: number | null;
   line3a_qualified_dividends?: number | null;
+  line3b_ordinary_dividends?: number | null;
   line4a_ira_gross?: number | null;
   line4b_ira_taxable?: number | null;
   line5a_pension_gross?: number | null;
   line5b_pension_taxable?: number | null;
+  line6a_ss_gross?: number | null;
+  line6b_ss_taxable?: number | null;
+  line7_capital_gain?: number | null;
+  line12e_itemized_deductions?: number | null;
+  line13_qbi_deduction?: number | null;
+  line17_additional_taxes?: number | null;
+  line20_nonrefundable_credits?: number | null;
   line25a_w2_withheld?: number | null;
   line25b_withheld_1099?: number | null;
-  line12e_itemized_deductions?: number | null;
+  line25c_additional_medicare_withheld?: number | null;
   line28_actc?: number | null;
   line29_refundable_aoc?: number | null;
+  line30_refundable_adoption?: number | null;
+  line31_additional_payments?: number | null;
   line38_amount_paid_extension?: number | null;
 }
 
