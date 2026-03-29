@@ -1,3 +1,6 @@
 .planning
 node_modules/
-engine/nodes/**/research/docs/
+forms/**/research/docs/
+.research/docs/
+returns/
+engine/
