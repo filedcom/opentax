@@ -1,8 +1,0 @@
-# Downloaded IRS PDFs and research docs — cached locally, not committed
-.research/docs/
-# Also ignore any stale per-node doc dirs (migrated to .research/docs/)
-nodes/**/research/docs/
-
-# Local CLI return data
-returns/
-.planning/
