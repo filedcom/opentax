@@ -1,14 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// Black-box test file generated from f1040-context.md only.
-// IMPORTANT AMBIGUITIES: MeF element names are derived from the spec and IRS naming conventions.
-// Verify ALL element names against the official IRS MeF XSD before shipping.
-//
-// Specific ambiguities to verify:
-//   1. `TaxableDependentCareExpnsesAmt` — "Expnses" may be a typo; confirm XSD spelling.
-//   2. `TotalItemizedOrStandardDedAmt` — "Ded" abbreviation; confirm against XSD.
-//   3. `RefundableAOCreditAmt` — "AOC" abbreviation; confirm against XSD.
-//   4. `null` field handling — spec states null is treated as absent (same as undefined); verify implementation handles both.
-
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildIRS1040 } from "./f1040.ts";
 
