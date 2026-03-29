@@ -383,7 +383,7 @@ Deno.test("box13 routes to Form 6251 Line 2g", () => {
   const result = compute([minimalItem({ box12: 200, box13: 100 })]);
   const out = findOutput(result, "form6251");
   assertEquals(out !== undefined, true);
-  assertEquals(out?.fields.line2g_pab_interest as number, 100);
+  assertEquals(out?.fields.private_activity_bond_interest as number, 100);
 });
 
 Deno.test("box13 zero — no AMT preference output", () => {
@@ -561,7 +561,7 @@ Deno.test("box13 sums across multiple payers for Form 6251 Line 2g", () => {
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "form6251")
-    .reduce((sum, o) => sum + (o.fields.line2g_pab_interest as number), 0);
+    .reduce((sum, o) => sum + (o.fields.private_activity_bond_interest as number), 0);
   assertEquals(total, 200);
 });
 
@@ -1361,7 +1361,7 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
     "Form 6251 AMT preference present",
   );
   assertEquals(
-    form6251Out?.fields.line2g_pab_interest as number,
+    form6251Out?.fields.private_activity_bond_interest as number,
     100,
     "AMT PAB preference",
   );
