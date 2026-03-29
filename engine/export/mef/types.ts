@@ -29,6 +29,7 @@ export interface IRS1040Fields {
   line6a_ss_gross?: number | null;
   line6b_ss_taxable?: number | null;
   line7_capital_gain?: number | null;
+  line7a_cap_gain_distrib?: number | null;
   line12e_itemized_deductions?: number | null;
   line13_qbi_deduction?: number | null;
   line17_additional_taxes?: number | null;

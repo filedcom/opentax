@@ -10,7 +10,7 @@
     "@std/path": "jsr:@std/path"
   },
   "tasks": {
-    "tax": "deno run --allow-read --allow-write cli/main.ts",
+    "tax": "deno run --allow-read --allow-write --allow-run=xsltproc cli/main.ts",
     "test": "deno test --allow-read --allow-write",
     "test:engine": "deno test engine/",
     "test:cli": "deno test --allow-read --allow-write engine/cli/"

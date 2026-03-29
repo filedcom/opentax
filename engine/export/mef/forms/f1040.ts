@@ -19,6 +19,7 @@ const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = [
   ["line6a_ss_gross", "SocSecBnftAmt"],
   ["line6b_ss_taxable", "TaxableSocSecAmt"],
   ["line7_capital_gain", "CapitalGainLossAmt"],
+  ["line7a_cap_gain_distrib", "CapitalGainLossAmt"],
   ["line12e_itemized_deductions", "TotalItemizedOrStandardDedAmt"],
   ["line13_qbi_deduction", "QualifiedBusinessIncomeDedAmt"],
   ["line17_additional_taxes", "OtherTaxAmt"],
