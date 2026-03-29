@@ -1,12 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { Form2441Fields, Form2441Input } from "../types.ts";
 
-// ─── Local Types ──────────────────────────────────────────────────────────────
-
-interface Form2441Fields {
-  dep_care_benefits?: number | null;
-}
-
-export type Form2441Input = Partial<Form2441Fields> & { [extra: string]: unknown };
+export type { Form2441Input };
 
 // ─── Field Map ────────────────────────────────────────────────────────────────
 

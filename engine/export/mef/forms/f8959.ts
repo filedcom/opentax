@@ -1,16 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { Form8959Fields, Form8959Input } from "../types.ts";
 
-interface Form8959Fields {
-  medicare_wages?: number | null;
-  unreported_tips?: number | null;
-  wages_8919?: number | null;
-  se_income?: number | null;
-  rrta_wages?: number | null;
-  medicare_withheld?: number | null;
-  rrta_medicare_withheld?: number | null;
-}
-
-type Form8959Input = Record<string, unknown>;
+export type { Form8959Input };
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form8959Fields, string]> = [
   ["medicare_wages", "TotalW2MedicareWagesAndTipsAmt"],

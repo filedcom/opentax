@@ -1,19 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { F8949Transaction } from "../types.ts";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface F8949Transaction {
-  part: string;
-  description: string;
-  date_acquired: string;
-  date_sold: string;
-  proceeds: number;
-  cost_basis: number;
-  adjustment_codes?: string;
-  adjustment_amount?: number;
-  gain_loss: number;
-  is_long_term: boolean;
-}
+export type { F8949Transaction };
 
 type Term = "short" | "long";
 type Basis = "reported" | "not_reported" | "no_1099b";

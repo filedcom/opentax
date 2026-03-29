@@ -1,22 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { ScheduleDFields, ScheduleDInput } from "../types.ts";
 
-// Local interface for Schedule D fields relevant to MEF export.
-// Excludes transaction arrays, filing_status, box2c_qsbs, capital_loss_carryover.
-interface ScheduleDFields {
-  line_1a_proceeds?: number | null;
-  line_1a_cost?: number | null;
-  line_4_other_st?: number | null;
-  line_5_k1_st?: number | null;
-  line_6_carryover?: number | null;
-  line_8a_proceeds?: number | null;
-  line_8a_cost?: number | null;
-  line_11_form2439?: number | null;
-  line_12_k1_lt?: number | null;
-  line13_cap_gain_distrib?: number | null;
-  line_12_cap_gain_dist?: number | null;
-  line_14_carryover?: number | null;
-  line19_unrecaptured_1250?: number | null;
-}
+export type { ScheduleDInput };
 
 // Direct 1:1 scalar field mappings (inputSchema key -> XSD element name)
 const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleDFields, string]> = [
@@ -62,7 +47,7 @@ function buildBasisRptNoAdjGroup(
   return elements(groupTag, children);
 }
 
-export function buildIRS1040ScheduleD(fields: Record<string, unknown>): string {
+export function buildIRS1040ScheduleD(fields: ScheduleDInput): string {
   const f = fields as ScheduleDFields;
   const children: string[] = [];
 

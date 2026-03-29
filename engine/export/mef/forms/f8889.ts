@@ -1,15 +1,7 @@
 import { element, elements } from "../xml.ts";
+import type { Form8889Fields, Form8889Input } from "../types.ts";
 
-// ─── Local Types ──────────────────────────────────────────────────────────────
-
-interface Form8889Fields {
-  taxpayer_hsa_contributions?: number | null;
-  employer_hsa_contributions?: number | null;
-  hsa_distributions?: number | null;
-  qualified_medical_expenses?: number | null;
-}
-
-export type Form8889Input = Partial<Form8889Fields> & { [extra: string]: unknown };
+export type { Form8889Input };
 
 // ─── Field Map ────────────────────────────────────────────────────────────────
 
