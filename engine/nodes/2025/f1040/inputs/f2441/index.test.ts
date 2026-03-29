@@ -1,27 +1,3 @@
-// NOTE FOR IMPLEMENTORS:
-// This is a black-box test file generated from context.md only.
-// Before running, verify:
-//   1. The import name matches the exported singleton: `f2441`
-//   2. The input wrapper key matches compute()'s parameter: `f2441s`
-//   3. The nodeType strings: "f2441", "f1040", "schedule3"
-//   4. Field names: line1e_taxable_dep_care, line2_childcare_credit
-// These tests define the IRS-correct behaviour — if a test fails, fix the
-// implementation, not the test.
-//
-// AMBIGUITIES:
-//   - The node receives a flat "one item per filing unit" shape (not one item
-//     per provider/qualifying-person). Fields like qualifying_person_count,
-//     qualifying_expenses_paid, employer_dep_care_benefits, agi are aggregated
-//     before passing to compute(). Provider-level and qualifying-person-level
-//     detail is resolved upstream.
-//   - Earned income for Part II vs Part III (Lines 4/5 vs 18/19) is treated as
-//     a single earned_income_taxpayer / earned_income_spouse field per item.
-//   - The credit nonrefundability limit (Form 1040 Line 18) is NOT modelled
-//     here; the node emits the computed credit and the downstream f1040/schedule3
-//     nodes apply the cap.
-//   - schedule3 nodeType string assumed to be "schedule3" — verify against
-//     schedule3.nodeType in the implementation.
-
 import { assertEquals, assertThrows } from "@std/assert";
 import { f2441 } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
