@@ -1,7 +1,5 @@
 import type { NodeRegistry } from "../../../core/types/node-registry.ts";
-
-// ── Start ─────────────────────────────────────────────────────────────────────
-import { start } from "../nodes/start/index.ts";
+import { buildStartNode, inputNodes } from "./start.ts";
 
 // ── Inputs ────────────────────────────────────────────────────────────────────
 import { ext } from "../nodes/inputs/ext/index.ts";
@@ -65,6 +63,8 @@ import { unrecaptured_1250_worksheet } from "../nodes/intermediate/unrecaptured_
 // ── Outputs ───────────────────────────────────────────────────────────────────
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
+
+const start = buildStartNode(inputNodes);
 
 export const registry: NodeRegistry = {
   // ── Start ──────────────────────────────────────────────────────────────────
