@@ -5,3 +5,4 @@ nodes/**/research/docs/
 
 # Local CLI return data
 returns/
+.planning/
