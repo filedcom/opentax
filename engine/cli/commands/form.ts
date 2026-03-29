@@ -1,13 +1,48 @@
 import { join } from "@std/path";
 import { registry } from "../../nodes/2025/registry.ts";
 import { w2ItemSchema } from "../../nodes/2025/f1040/inputs/w2/index.ts";
+import { itemSchema as f1098ItemSchema } from "../../nodes/2025/f1040/inputs/f1098/index.ts";
+import { itemSchema as f1099bItemSchema } from "../../nodes/2025/f1040/inputs/f1099b/index.ts";
+import { itemSchema as f1099cItemSchema } from "../../nodes/2025/f1040/inputs/f1099c/index.ts";
+import { itemSchema as f1099divItemSchema } from "../../nodes/2025/f1040/inputs/f1099div/index.ts";
+import { itemSchema as f1099gItemSchema } from "../../nodes/2025/f1040/inputs/f1099g/index.ts";
+import { itemSchema as f1099intItemSchema } from "../../nodes/2025/f1040/inputs/f1099int/index.ts";
+import { itemSchema as f1099kItemSchema } from "../../nodes/2025/f1040/inputs/f1099k/index.ts";
+import { itemSchema as f1099mItemSchema } from "../../nodes/2025/f1040/inputs/f1099m/index.ts";
+import { itemSchema as f1099necItemSchema } from "../../nodes/2025/f1040/inputs/f1099nec/index.ts";
+import { itemSchema as f1099rItemSchema } from "../../nodes/2025/f1040/inputs/f1099r/index.ts";
+import { itemSchema as f2441ItemSchema } from "../../nodes/2025/f1040/inputs/f2441/index.ts";
+import { itemSchema as f8812ItemSchema } from "../../nodes/2025/f1040/inputs/f8812/index.ts";
+import { itemSchema as f8863ItemSchema } from "../../nodes/2025/f1040/inputs/f8863/index.ts";
+import { itemSchema as f8949ItemSchema } from "../../nodes/2025/f1040/inputs/f8949/index.ts";
+import { itemSchema as scheduleCItemSchema } from "../../nodes/2025/f1040/inputs/schedule_c/index.ts";
+import { itemSchema as scheduleEItemSchema } from "../../nodes/2025/f1040/inputs/schedule_e/index.ts";
+import { itemSchema as ssaItemSchema } from "../../nodes/2025/f1040/inputs/ssa1099/index.ts";
 import { appendInput } from "../store/store.ts";
 import type { ZodTypeAny } from "zod";
 
 // Per-entry validation schemas for nodes whose inputSchema wraps an array.
-// All other nodes are validated directly against node.inputSchema.
+// Each entry is validated as a single item; the store accumulates them into an array.
+// All other nodes (general, schedule_a, ext, schedule_d) are validated directly against node.inputSchema.
 const entrySchemas: Record<string, ZodTypeAny> = {
   w2: w2ItemSchema,
+  f1098: f1098ItemSchema,
+  f1099b: f1099bItemSchema,
+  f1099c: f1099cItemSchema,
+  f1099div: f1099divItemSchema,
+  f1099g: f1099gItemSchema,
+  f1099int: f1099intItemSchema,
+  f1099k: f1099kItemSchema,
+  f1099m: f1099mItemSchema,
+  f1099nec: f1099necItemSchema,
+  f1099r: f1099rItemSchema,
+  f2441: f2441ItemSchema,
+  f8812: f8812ItemSchema,
+  f8863: f8863ItemSchema,
+  f8949: f8949ItemSchema,
+  schedule_c: scheduleCItemSchema,
+  schedule_e: scheduleEItemSchema,
+  ssa1099: ssaItemSchema,
 };
 
 export type FormAddArgs = {
