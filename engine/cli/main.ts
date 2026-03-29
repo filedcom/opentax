@@ -1,12 +1,15 @@
 import { parseArgs } from "@std/cli";
+import type { CommandDef, ParsedArgs } from "./help.ts";
+import { printHelp } from "./help.ts";
 import { formAddCommand } from "./commands/form.ts";
 import { graphViewCommand } from "./commands/graph.ts";
+import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import { exportMefCommand } from "./commands/export.ts";
 
 const RETURNS_DIR = "./returns";
 
-async function runCommand(fn: () => Promise<unknown>): Promise<void> {
+async function run(fn: () => Promise<unknown>): Promise<void> {
   try {
     const result = await fn();
     if (result !== undefined) {
@@ -18,85 +21,164 @@ async function runCommand(fn: () => Promise<unknown>): Promise<void> {
   }
 }
 
+function requireArg(
+  name: string,
+  value: string | undefined,
+): string {
+  if (!value) {
+    console.error(`Error: --${name} is required`);
+    Deno.exit(1);
+  }
+  return value;
+}
+
+const COMMANDS: readonly CommandDef[] = [
+  {
+    cmd: "node",
+    sub: "list",
+    description: "List all registered nodes",
+    usage: "tax node list",
+    handler: async (_args) => {
+      await run(() => Promise.resolve(nodeListCommand()));
+    },
+  },
+  {
+    cmd: "node",
+    sub: "inspect",
+    description: "Inspect a node's input schema and output nodes",
+    usage: "tax node inspect --node_type <type>",
+    options: [
+      { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
+      { flag: "--json", description: "Output as JSON" },
+    ],
+    handler: async (args) => {
+      const nodeType = requireArg("node_type", args.node_type);
+      await run(() => Promise.resolve(nodeInspectCommand({ nodeType, json: args.json === true })));
+    },
+  },
+  {
+    cmd: "return",
+    sub: "create",
+    description: "Create a new tax return",
+    usage: "tax return create --year <year>",
+    options: [
+      { flag: "--year", description: "Tax year (e.g. 2025)", required: true },
+    ],
+    handler: async (args) => {
+      const year = Number(args.year);
+      if (!args.year || isNaN(year)) {
+        console.error("Error: --year is required and must be a number");
+        Deno.exit(1);
+      }
+      await run(() => createReturnCommand({ year, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
+    cmd: "return",
+    sub: "get",
+    description: "Get a return's computed line items",
+    usage: "tax return get --returnId <id>",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      await run(() => getReturnCommand({ returnId, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
+    cmd: "return",
+    sub: "export",
+    description: "Export a return as MEF XML",
+    usage: "tax return export --returnId <id> --type mef",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--type", description: "Export format (mef)", required: true },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      if (args.type !== "mef") {
+        console.error("Error: --type must be 'mef'");
+        Deno.exit(1);
+      }
+      await run(async () => {
+        const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR });
+        console.log(xml);
+      });
+    },
+  },
+  {
+    cmd: "form",
+    sub: "add",
+    description: "Add a form entry to a return",
+    usage: "tax form add --returnId <id> --node_type <type> '{...}'",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const nodeType = requireArg("node_type", args.node_type);
+      const dataJson = args._[2] as string | undefined;
+      if (!dataJson) {
+        console.error("Error: JSON data argument is required");
+        Deno.exit(1);
+      }
+      await run(() => formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
+    cmd: "graph",
+    sub: "view",
+    description: "View node dependency graph (Mermaid or JSON)",
+    usage: "tax graph view --node_type <type> [--depth <n>] [--json]",
+    options: [
+      { flag: "--node_type", description: "Root node type", required: true },
+      { flag: "--depth", description: "Max traversal depth (default: unlimited)" },
+      { flag: "--json", description: "Output as JSON instead of Mermaid" },
+    ],
+    handler: async (args) => {
+      const nodeType = requireArg("node_type", args.node_type);
+      const depth = args.depth !== undefined ? Number(args.depth) : Infinity;
+      if (isNaN(depth) || depth < 0) {
+        console.error("Error: --depth must be a non-negative number");
+        Deno.exit(1);
+      }
+      await run(() =>
+        Promise.resolve(graphViewCommand({ nodeType, depth, json: args.json === true }))
+      );
+    },
+  },
+];
+
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
     string: ["year", "returnId", "node_type", "depth", "type"],
-    boolean: ["json"],
-  });
+    boolean: ["json", "help"],
+    alias: { h: "help" },
+  }) as unknown as ParsedArgs;
+
   const cmd = args._[0] as string | undefined;
   const sub = args._[1] as string | undefined;
 
-  if (cmd === "return" && sub === "create") {
-    const year = Number(args.year);
-    if (!year || isNaN(year)) {
-      console.error("Error: --year is required and must be a number");
-      Deno.exit(1);
-    }
-    await runCommand(() => createReturnCommand({ year, baseDir: RETURNS_DIR }));
-  } else if (cmd === "form" && sub === "add") {
-    const returnId = args.returnId;
-    const nodeType = args.node_type;
-    const dataJson = args._[2] as string | undefined;
-    if (!returnId || !nodeType || !dataJson) {
-      console.error(
-        "Error: --returnId, --node_type, and JSON data argument are required",
-      );
-      Deno.exit(1);
-    }
-    await runCommand(() =>
-      formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR })
-    );
-  } else if (cmd === "return" && sub === "get") {
-    const returnId = args.returnId;
-    if (!returnId) {
-      console.error("Error: --returnId is required");
-      Deno.exit(1);
-    }
-    await runCommand(() =>
-      getReturnCommand({ returnId, baseDir: RETURNS_DIR })
-    );
-  } else if (cmd === "return" && sub === "export") {
-    const returnId = args.returnId;
-    const type = args.type;
-    if (!returnId) {
-      console.error("Error: --returnId is required");
-      Deno.exit(1);
-    }
-    if (type !== "mef") {
-      console.error("Error: --type must be 'mef'");
-      Deno.exit(1);
-    }
-    await runCommand(async () => {
-      const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR });
-      console.log(xml);
-    });
-  } else if (cmd === "graph" && sub === "view") {
-    const nodeType = args.node_type;
-    if (!nodeType) {
-      console.error("Error: --node_type is required");
-      Deno.exit(1);
-    }
-    const depth = args.depth !== undefined ? Number(args.depth) : Infinity;
-    if (isNaN(depth) || depth < 0) {
-      console.error("Error: --depth must be a non-negative number");
-      Deno.exit(1);
-    }
-    await runCommand(() =>
-      Promise.resolve(
-        graphViewCommand({ nodeType, depth, json: args.json === true }),
-      )
-    );
-  } else {
-    console.error(
-      "Usage:\n" +
-        "  tax return create --year 2025\n" +
-        "  tax form add --returnId <id> --node_type w2 '{...}'\n" +
-        "  tax return get --returnId <id>\n" +
-        "  tax return export --returnId <id> --type mef\n" +
-        "  tax graph view --node_type <type> [--depth <n>] [--json]",
-    );
+  if (!cmd || args.help) {
+    printHelp(COMMANDS, cmd);
+    Deno.exit(args.help ? 0 : 1);
+  }
+
+  if (!sub) {
+    printHelp(COMMANDS, cmd);
     Deno.exit(1);
   }
+
+  const def = COMMANDS.find((c) => c.cmd === cmd && c.sub === sub);
+  if (!def) {
+    console.error(`Unknown command: tax ${cmd} ${sub}\n`);
+    printHelp(COMMANDS);
+    Deno.exit(1);
+  }
+
+  await def.handler(args);
 }
 
 main();
