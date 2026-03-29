@@ -1,6 +1,6 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { buildReturnHeader } from "./header.ts";
-import type { FilerIdentity } from "./types.ts";
+import { buildReturnHeader, FilingStatus } from "./header.ts";
+import type { FilerIdentity } from "./header.ts";
 
 function sampleFiler(): FilerIdentity {
   return {
@@ -13,7 +13,7 @@ function sampleFiler(): FilerIdentity {
       state: "IL",
       zip: "62701",
     },
-    filingStatus: 1,
+    filingStatus: FilingStatus.Single,
   };
 }
 
@@ -152,32 +152,32 @@ Deno.test("filer ZIPCd is emitted for 9-digit zip with dash", () => {
 // Section 6: Filer present — FilingStatusCd (all 5 values)
 // ---------------------------------------------------------------------------
 
-Deno.test("filingStatus 1 emits FilingStatusCd 1", () => {
-  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: 1 };
+Deno.test("FilingStatus.Single emits FilingStatusCd 1", () => {
+  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.Single };
   const result = buildReturnHeader(filer);
   assertStringIncludes(result, "<FilingStatusCd>1</FilingStatusCd>");
 });
 
-Deno.test("filingStatus 2 emits FilingStatusCd 2", () => {
-  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: 2 };
+Deno.test("FilingStatus.MarriedFilingJointly emits FilingStatusCd 2", () => {
+  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.MarriedFilingJointly };
   const result = buildReturnHeader(filer);
   assertStringIncludes(result, "<FilingStatusCd>2</FilingStatusCd>");
 });
 
-Deno.test("filingStatus 3 emits FilingStatusCd 3", () => {
-  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: 3 };
+Deno.test("FilingStatus.MarriedFilingSeparately emits FilingStatusCd 3", () => {
+  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.MarriedFilingSeparately };
   const result = buildReturnHeader(filer);
   assertStringIncludes(result, "<FilingStatusCd>3</FilingStatusCd>");
 });
 
-Deno.test("filingStatus 4 emits FilingStatusCd 4", () => {
-  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: 4 };
+Deno.test("FilingStatus.HeadOfHousehold emits FilingStatusCd 4", () => {
+  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.HeadOfHousehold };
   const result = buildReturnHeader(filer);
   assertStringIncludes(result, "<FilingStatusCd>4</FilingStatusCd>");
 });
 
-Deno.test("filingStatus 5 emits FilingStatusCd 5", () => {
-  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: 5 };
+Deno.test("FilingStatus.QualifyingSurvivingSpouse emits FilingStatusCd 5", () => {
+  const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.QualifyingSurvivingSpouse };
   const result = buildReturnHeader(filer);
   assertStringIncludes(result, "<FilingStatusCd>5</FilingStatusCd>");
 });
@@ -195,7 +195,6 @@ Deno.test("name with ampersand is XML-escaped in NameLine1Txt", () => {
 Deno.test("name with ampersand: raw unescaped value is not present", () => {
   const filer: FilerIdentity = { ...sampleFiler(), nameLine1: "JONES & SON" };
   const result = buildReturnHeader(filer);
-  // The raw & must not appear — only &amp; should be present
   assertEquals(result.includes("JONES & SON"), false);
 });
 
@@ -214,7 +213,6 @@ Deno.test("address line with less-than: raw unescaped tag is not present as text
     address: { ...sampleFiler().address, line1: "123 <MAIN> ST" },
   };
   const result = buildReturnHeader(filer);
-  // The literal string <MAIN> must not appear unescaped as a value
   assertEquals(result.includes(">123 <MAIN> ST<"), false);
 });
 
