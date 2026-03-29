@@ -9,10 +9,8 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { schedule_se } from "../../intermediate/schedule_se/index.ts";
 
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+// ─── Constants — mathematical rates, unchanged across years ──────────────────
 
-// Rev Proc 2024-40 §3.28; Form 8919 line 9 — SS wage base
-const SS_WAGE_BASE = 176_100;
 // IRC §3101(a); Form 8919 line 11 — employee SS rate
 const SS_RATE = 0.062;
 // IRC §3101(b); Form 8919 line 12 — employee Medicare rate
@@ -51,8 +49,8 @@ type Form8919Input = z.infer<typeof inputSchema>;
 // ─── Pure Helper Functions ────────────────────────────────────────────────────
 
 // Form 8919 line 9: remaining SS wage base after prior wages
-function remainingSsWageBase(priorSsWages: number): number {
-  return Math.max(0, SS_WAGE_BASE - priorSsWages);
+function remainingSsWageBase(ssWageBase: number, priorSsWages: number): number {
+  return Math.max(0, ssWageBase - priorSsWages);
 }
 
 // Form 8919 line 10: wages subject to SS tax (capped at remaining wage base)
@@ -100,6 +98,9 @@ class Form8919Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule2, schedule_se]);
 
+  // Rev Proc 2024-40 §3.28; Form 8919 line 9 — SS wage base (TY2025)
+  protected readonly ssWageBase = 176_100;
+
   compute(rawInput: Form8919Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const { wages } = input;
@@ -107,7 +108,7 @@ class Form8919Node extends TaxNode<typeof inputSchema> {
     if (wages <= 0) return { outputs: [] };
 
     const priorSsWages = input.prior_ss_wages ?? 0;
-    const line9 = remainingSsWageBase(priorSsWages);
+    const line9 = remainingSsWageBase(this.ssWageBase, priorSsWages);
     const line10 = ssSubjectWages(wages, line9);
     const line11 = ssTax(line10);
     const line12 = medicareTax(wages);
