@@ -38,6 +38,7 @@ import { general, inputSchema as generalInputSchema } from "../inputs/general/in
 import { f1099int, itemSchema as f1099intItemSchema } from "../inputs/f1099int/index.ts";
 import { itemSchema as f1099necItemSchema, f1099nec } from "../inputs/f1099nec/index.ts";
 import { w2, w2ItemSchema } from "../inputs/w2/index.ts";
+import { ssa1099, itemSchema as ssaItemSchema } from "../inputs/ssa1099/index.ts";
 
 const inputSchema = z.object({
   // W-2s: dispatched as full array to w2 node (which aggregates internally)
@@ -61,6 +62,7 @@ const inputSchema = z.object({
   schedule_cs: z.array(scheduleCItemSchema).optional(),
   d_screen: scheduleDInputSchema.optional(),
   schedule_es: z.array(scheduleEItemSchema).optional(),
+  ssas: z.array(ssaItemSchema).optional(),
   ext: extInputSchema.optional(),
   general: generalInputSchema.optional(),
 });
@@ -90,6 +92,7 @@ class StartNode extends TaxNode<typeof inputSchema> {
     scheduleC,
     scheduleD,
     scheduleE,
+    ssa1099,
     ext,
     general,
   ]);
@@ -113,6 +116,7 @@ class StartNode extends TaxNode<typeof inputSchema> {
       ...(input.f8949s?.length ? [{ nodeType: f8949.nodeType, input: { f8949s: input.f8949s } }] : []),
       ...(input.schedule_cs?.length ? [{ nodeType: scheduleC.nodeType, input: { schedule_cs: input.schedule_cs } }] : []),
       ...(input.schedule_es?.length ? [{ nodeType: scheduleE.nodeType, input: { schedule_es: input.schedule_es } }] : []),
+      ...(input.ssas?.length ? [{ nodeType: ssa1099.nodeType, input: { ssas: input.ssas } }] : []),
       ...(input.schedule_a ? [{ nodeType: scheduleA.nodeType, input: input.schedule_a }] : []),
       ...(input.d_screen ? [{ nodeType: scheduleD.nodeType, input: input.d_screen }] : []),
       ...(input.ext ? [{ nodeType: ext.nodeType, input: input.ext }] : []),

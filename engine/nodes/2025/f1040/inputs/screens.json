@@ -182,7 +182,8 @@
   {
     "form": "982",
     "description": "Reduction of Tax Attributes Due to Discharge of Indebtedness (and Section 1082 Basis Adjustment)",
-    "screen_code": "982"
+    "screen_code": "982",
+    "filed_tax_node_type_code": "form982"
   },
   {
     "form": "1040",
@@ -265,7 +266,8 @@
     "screen_code": "1116",
     "alias_screen_codes": [
       "1116 > \"1116 Sch B - Foreign Tax Carryovers\" link > \"4th through 1st preceding year\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "form_1116"
   },
   {
     "form": "1310",
@@ -373,7 +375,8 @@
   {
     "form": "4137",
     "description": "Social Security and Medicare Tax On Unreported Tip Income",
-    "screen_code": "4137"
+    "screen_code": "4137",
+    "filed_tax_node_type_code": "form4137"
   },
   {
     "form": "4255",
@@ -391,7 +394,8 @@
   {
     "form": "4562",
     "description": "Depreciation and Amortization (Including Information on Listed Property)",
-    "screen_code": "4562"
+    "screen_code": "4562",
+    "filed_tax_node_type_code": "form4562"
   },
   {
     "form": "4562",
@@ -429,7 +433,8 @@
   {
     "form": "4797",
     "description": "Sales of Business Property",
-    "screen_code": "4797"
+    "screen_code": "4797",
+    "filed_tax_node_type_code": "form4797"
   },
   {
     "form": "4835",
@@ -467,12 +472,14 @@
   {
     "form": "4972",
     "description": "Tax on Lump-Sum Distributions",
-    "screen_code": "4972"
+    "screen_code": "4972",
+    "filed_tax_node_type_code": "form4972"
   },
   {
     "form": "5329",
     "description": "Additional Taxes on Qualified Plans (including IRAs) and Other Tax-Favored Accounts",
-    "screen_code": "5329"
+    "screen_code": "5329",
+    "filed_tax_node_type_code": "form5329"
   },
   {
     "form": "5405",
@@ -525,7 +532,7 @@
   },
   {
     "form": "5471, Schedule I",
-    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Summary of Shareholder’s Income From Foreign Corporation",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Summary of Shareholder\u2019s Income From Foreign Corporation",
     "screen_code": "SCHI",
     "alias_screen_codes": [
       "SCHI > SCH I Worksheet A\" tab"
@@ -552,12 +559,14 @@
   {
     "form": "6198",
     "description": "At-Risk Limitations",
-    "screen_code": "6198"
+    "screen_code": "6198",
+    "filed_tax_node_type_code": "form6198"
   },
   {
     "form": "6251",
     "description": "Alternative Minimum Tax for Individuals",
-    "screen_code": "6251"
+    "screen_code": "6251",
+    "filed_tax_node_type_code": "form6251"
   },
   {
     "form": "6252",
@@ -639,6 +648,7 @@
     "form": "8606",
     "description": "Nondeductible IRAs",
     "screen_code": "ROTH",
+    "filed_tax_node_type_code": "form8606",
     "alias_screen_codes": [
       "8606"
     ]
@@ -721,7 +731,8 @@
   {
     "form": "8829",
     "description": "Expenses for Business Use of Your Home",
-    "screen_code": "8829"
+    "screen_code": "8829",
+    "filed_tax_node_type_code": "form_8829"
   },
   {
     "form": "8833",
@@ -744,7 +755,8 @@
   {
     "form": "8839",
     "description": "Qualified Adoption Expenses",
-    "screen_code": "8839"
+    "screen_code": "8839",
+    "filed_tax_node_type_code": "form8839"
   },
   {
     "form": "8840",
@@ -772,6 +784,7 @@
     "form": "8853",
     "description": "Archer MSAs and Long-Term Care Insurance Contracts",
     "screen_code": "8853",
+    "filed_tax_node_type_code": "form8853",
     "alias_screen_codes": [
       "MSA"
     ]
@@ -872,7 +885,8 @@
   {
     "form": "8880",
     "description": "Credit for Qualified Retirement Savings Contributions",
-    "screen_code": "8880"
+    "screen_code": "8880",
+    "filed_tax_node_type_code": "form8880"
   },
   {
     "form": "8881",
@@ -897,6 +911,7 @@
     "form": "8889",
     "description": "Health Savings Accounts",
     "screen_code": "8889",
+    "filed_tax_node_type_code": "form8889",
     "alias_screen_codes": [
       "HSA"
     ]
@@ -934,7 +949,8 @@
   {
     "form": "8919",
     "description": "Uncollected Social Security and Medicare Tax on Wages",
-    "screen_code": "8919"
+    "screen_code": "8919",
+    "filed_tax_node_type_code": "form8919"
   },
   {
     "form": "8936",
@@ -976,7 +992,8 @@
     "screen_code": "8960",
     "alias_screen_codes": [
       "8960 > Page Down"
-    ]
+    ],
+    "filed_tax_node_type_code": "form8960"
   },
   {
     "form": "8962",
@@ -990,7 +1007,7 @@
   },
   {
     "form": "8978",
-    "description": "Partner’s Additional Reporting Year Tax",
+    "description": "Partner\u2019s Additional Reporting Year Tax",
     "screen_code": "8978",
     "alias_screen_codes": [
       "8978 > \"Schedule A\" link"
@@ -999,7 +1016,8 @@
   {
     "form": "8990",
     "description": "Limitation on Business Interest Expense Under Section 163(j)",
-    "screen_code": "8990"
+    "screen_code": "8990",
+    "filed_tax_node_type_code": "form8990"
   },
   {
     "form": "8994",
@@ -1009,7 +1027,8 @@
   {
     "form": "8995/ 8995-A",
     "description": "Qualified Business Income Deduction Simplified Computation",
-    "screen_code": "8995"
+    "screen_code": "8995",
+    "filed_tax_node_type_code": "form8995"
   },
   {
     "form": "8997",
@@ -1093,7 +1112,8 @@
   {
     "form": "Form 8582, Line 7",
     "description": "Passive Activity Loss Limitations",
-    "screen_code": "8582"
+    "screen_code": "8582",
+    "filed_tax_node_type_code": "form8582"
   },
   {
     "form": "IRC 7216",
@@ -1154,12 +1174,14 @@
   {
     "form": "Schedule 2",
     "description": "Form 1040 (Schedule 2), Additional Taxes",
-    "screen_code": "5"
+    "screen_code": "5",
+    "filed_tax_node_type_code": "schedule2"
   },
   {
     "form": "Schedule 3",
     "description": "Form 1040 (Schedule 3), Additional Credits and Payments",
-    "screen_code": "5"
+    "screen_code": "5",
+    "filed_tax_node_type_code": "schedule3"
   },
   {
     "form": "Schedule 8812 (Form 1040)",
@@ -1198,7 +1220,7 @@
     "alias_screen_codes": [
       "D2"
     ],
-    "filed_tax_node_type_code": "d_screen"
+    "filed_tax_node_type_code": "schedule_d"
   },
   {
     "form": "Schedule E (Form 1040)",
@@ -1255,7 +1277,8 @@
     "alias_screen_codes": [
       "F > \"Carryovers/State Info\" tab",
       "F > \"Prior-Year Compare\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "schedule_f"
   },
   {
     "form": "Schedule H",
@@ -1290,7 +1313,7 @@
   },
   {
     "form": "Schedule K-1 (1065)",
-    "description": "Partner’s Share of Income, Deductions, Credits, etc.",
+    "description": "Partner\u2019s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1P",
     "alias_screen_codes": [
       "K1P > \"Add'l entries\" tab"
@@ -1298,7 +1321,7 @@
   },
   {
     "form": "Schedule K-1 (Form 1120-S)",
-    "description": "Shareholder’s Share of Income, Deductions, Credits, etc.",
+    "description": "Shareholder\u2019s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1S",
     "alias_screen_codes": [
       "K1S > \"Add'l entries\" tab",
@@ -1322,7 +1345,7 @@
   },
   {
     "form": "Schedule K-1 (Form 1041)",
-    "description": "Beneficiary’s Share of Income, Deductions, Credits, etc.",
+    "description": "Beneficiary\u2019s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1F",
     "alias_screen_codes": [
       "K1F > \"1041 K1 12-14\" tab"
@@ -1330,7 +1353,7 @@
   },
   {
     "form": "Schedule K-1 (Form 1065) Basis Worksheet",
-    "description": "Partner’s Share of Income, Deductions, Credits, etc.",
+    "description": "Partner\u2019s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1P > \"Basis Wkst\" tab",
     "alias_screen_codes": [
       "K1P > \"Basis Wkst cont\" tab",
@@ -1406,7 +1429,8 @@
   {
     "form": "Schedule SE",
     "description": "Self-Employment Tax",
-    "screen_code": "SE"
+    "screen_code": "SE",
+    "filed_tax_node_type_code": "schedule_se"
   },
   {
     "form": "SEP",
@@ -1416,7 +1440,8 @@
   {
     "form": "SSA-1099",
     "description": "Social Security Benefit Statement",
-    "screen_code": "SSA"
+    "screen_code": "SSA",
+    "filed_tax_node_type_code": "ssa1099"
   },
   {
     "form": "SSA-1042S",
