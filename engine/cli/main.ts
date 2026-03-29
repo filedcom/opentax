@@ -63,6 +63,7 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "tax return create --year <year>",
     options: [
       { flag: "--year", description: "Tax year (e.g. 2025)", required: true },
+      { flag: "--form", description: "Form type (default: f1040)" },
     ],
     handler: async (args) => {
       const year = Number(args.year);
@@ -70,7 +71,8 @@ const COMMANDS: readonly CommandDef[] = [
         console.error("Error: --year is required and must be a number");
         Deno.exit(1);
       }
-      await run(() => createReturnCommand({ year, baseDir: RETURNS_DIR }));
+      const formType = args.form ?? "f1040";
+      await run(() => createReturnCommand({ year, formType, baseDir: RETURNS_DIR }));
     },
   },
   {
@@ -153,7 +155,7 @@ const COMMANDS: readonly CommandDef[] = [
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth", "type"],
+    string: ["year", "returnId", "node_type", "depth", "type", "form"],
     boolean: ["json", "help"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;

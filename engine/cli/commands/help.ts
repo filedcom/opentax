@@ -11,6 +11,7 @@ export type ParsedArgs = {
   readonly node_type?: string;
   readonly depth?: string;
   readonly type?: string;
+  readonly form?: string;
   readonly json?: boolean;
   readonly help?: boolean;
 };

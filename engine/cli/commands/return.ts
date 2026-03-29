@@ -8,13 +8,14 @@ const executionPlan = buildExecutionPlan(registry);
 
 export type CreateReturnArgs = {
   readonly year: number;
+  readonly formType?: string;
   readonly baseDir: string;
 };
 
 export async function createReturnCommand(
   args: CreateReturnArgs,
 ): Promise<{ returnId: string }> {
-  const { returnId } = await createReturn(args.year, args.baseDir);
+  const { returnId } = await createReturn(args.year, args.baseDir, args.formType);
   return { returnId };
 }
 
