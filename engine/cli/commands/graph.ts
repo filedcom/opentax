@@ -9,49 +9,56 @@ export type GraphViewArgs = {
 };
 
 /**
- * Recursively formats a GraphNode tree as an ASCII tree string.
+ * Formats a GraphNode tree as a Mermaid `graph TD` diagram.
  *
- * @param node - The current node to render
- * @param prefix - The prefix accumulated from ancestor indentation
- * @param isLast - Whether this node is the last child of its parent
- * @param isRoot - Whether this is the root node (no connector prefix)
- * @returns Multi-line string representation of the tree
+ * Unregistered nodes are pre-declared with a descriptive label and highlighted
+ * in red so they stand out visually in the rendered diagram.
+ *
+ * @param root - The root GraphNode to render
+ * @returns Mermaid diagram string starting with `graph TD`
  */
-export function formatAsciiTree(
-  node: GraphNode,
-  prefix: string = "",
-  isLast: boolean = true,
-  isRoot: boolean = true,
-): string {
-  const label = node.registered
-    ? node.nodeType
-    : `${node.nodeType} (unregistered)`;
+export function formatMermaid(root: GraphNode): string {
+  const unregistered = new Set<string>();
+  const edgeSet = new Set<string>();
 
-  let line: string;
-  if (isRoot) {
-    line = label;
+  function visit(node: GraphNode): void {
+    if (!node.registered) {
+      unregistered.add(node.nodeType);
+    }
+    for (const child of node.children) {
+      edgeSet.add(`  ${node.nodeType} --> ${child.nodeType}`);
+      visit(child);
+    }
+  }
+
+  visit(root);
+
+  const lines: string[] = ["graph TD"];
+
+  // Pre-declare unregistered nodes with a descriptive label
+  for (const nodeType of unregistered) {
+    lines.push(`  ${nodeType}["${nodeType} (unregistered)"]`);
+  }
+
+  // Emit edges (registered nodes are implicitly declared by their ID)
+  if (edgeSet.size === 0) {
+    lines.push(`  ${root.nodeType}`);
   } else {
-    const connector = isLast ? "└── " : "├── ";
-    line = prefix + connector + label;
+    lines.push(...Array.from(edgeSet));
   }
 
-  if (node.children.length === 0) {
-    return line;
+  // Style unregistered nodes in red
+  for (const nodeType of unregistered) {
+    lines.push(`  style ${nodeType} fill:#faa,stroke:#c00`);
   }
 
-  const childPrefix = isRoot ? "" : prefix + (isLast ? "    " : "│   ");
-  const childLines = node.children.map((child, index) => {
-    const childIsLast = index === node.children.length - 1;
-    return formatAsciiTree(child, childPrefix, childIsLast, false);
-  });
-
-  return [line, ...childLines].join("\n");
+  return lines.join("\n");
 }
 
 /**
  * CLI command handler for `tax graph view`.
  *
- * - json=false: prints ASCII tree to stdout via console.log, returns void
+ * - json=false: prints a Mermaid diagram to stdout via console.log, returns void
  * - json=true: returns GraphNode (caller JSON.stringifies via runCommand)
  *
  * @throws Error if nodeType is not found in registry
@@ -65,5 +72,5 @@ export function graphViewCommand(
     return result;
   }
 
-  console.log(formatAsciiTree(result));
+  console.log(formatMermaid(result));
 }
