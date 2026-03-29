@@ -9,14 +9,6 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-// TY2025 — IRS Instructions for Form 8839 (Dec 8 2025) / Rev Proc 2024-40
-const MAX_CREDIT_PER_CHILD = 17280;
-const MAX_REFUNDABLE_PER_CHILD = 5000;
-const PHASE_OUT_START = 259190;
-const PHASE_OUT_RANGE = 40000; // $259,190 to $299,190
-
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
 // Per-child schema — one entry per eligible child on Part I / Part II
@@ -54,11 +46,11 @@ type Form8839Input = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Phase-out fraction for both Part II credit and Part III exclusion.
-// Fraction = (MAGI - 259190) / 40000, clamped to [0, 1], rounded to 3 decimal places.
+// Fraction = (MAGI - phaseOutStart) / phaseOutRange, clamped to [0, 1], rounded to 3 decimal places.
 // IRC §23(b)(2); IRC §137(b)(2)
-function phaseOutFraction(magi: number): number {
-  if (magi <= PHASE_OUT_START) return 0;
-  const raw = (magi - PHASE_OUT_START) / PHASE_OUT_RANGE;
+function phaseOutFraction(magi: number, phaseOutStart: number, phaseOutRange: number): number {
+  if (magi <= phaseOutStart) return 0;
+  const raw = (magi - phaseOutStart) / phaseOutRange;
   return Math.round(Math.min(1, raw) * 1000) / 1000;
 }
 
@@ -70,11 +62,11 @@ function isBlockedByMfs(input: Form8839Input): boolean {
 }
 
 // Per-child credit before phase-out (Part II Lines 2-6).
-// Special needs: full $17,280 minus prior year credit, regardless of expenses.
+// Special needs: full maxCreditPerChild minus prior year credit, regardless of expenses.
 // Domestic/foreign: capped at min(MAX - prior, expenses).
-function perChildBaseline(child: ChildItem): number {
+function perChildBaseline(child: ChildItem, maxCreditPerChild: number): number {
   const prior = child.prior_year_credit ?? 0;
-  const remaining = Math.max(0, MAX_CREDIT_PER_CHILD - prior);
+  const remaining = Math.max(0, maxCreditPerChild - prior);
 
   if (child.special_needs) {
     // Special needs: entitled to full remaining max even with $0 expenses
@@ -90,27 +82,39 @@ function perChildBaseline(child: ChildItem): number {
 }
 
 // Per-child credit after phase-out (Part II Line 11a).
-function perChildAllowed(child: ChildItem, fraction: number): number {
-  const baseline = perChildBaseline(child);
+function perChildAllowed(child: ChildItem, fraction: number, maxCreditPerChild: number): number {
+  const baseline = perChildBaseline(child, maxCreditPerChild);
   return Math.round(baseline * (1 - fraction) * 100) / 100;
 }
 
-// Per-child refundable amount (Part II Line 11b): capped at $5,000 per child.
-function perChildRefundable(allowed: number): number {
-  return Math.min(allowed, MAX_REFUNDABLE_PER_CHILD);
+// Per-child refundable amount (Part II Line 11b): capped at maxRefundablePerChild per child.
+function perChildRefundable(allowed: number, maxRefundablePerChild: number): number {
+  return Math.min(allowed, maxRefundablePerChild);
 }
 
 // Total refundable credit across all children (Part II Line 13 → Form 1040 Line 30).
-function totalRefundable(children: ChildItem[], fraction: number): number {
+function totalRefundable(
+  children: ChildItem[],
+  fraction: number,
+  maxCreditPerChild: number,
+  maxRefundablePerChild: number,
+): number {
   return children.reduce((sum, child) => {
-    const allowed = perChildAllowed(child, fraction);
-    return sum + perChildRefundable(allowed);
+    const allowed = perChildAllowed(child, fraction, maxCreditPerChild);
+    return sum + perChildRefundable(allowed, maxRefundablePerChild);
   }, 0);
 }
 
 // Total credit across all children (Part II Line 12 = sum of Line 11a).
-function totalCredit(children: ChildItem[], fraction: number): number {
-  return children.reduce((sum, child) => sum + perChildAllowed(child, fraction), 0);
+function totalCredit(
+  children: ChildItem[],
+  fraction: number,
+  maxCreditPerChild: number,
+): number {
+  return children.reduce(
+    (sum, child) => sum + perChildAllowed(child, fraction, maxCreditPerChild),
+    0,
+  );
 }
 
 // Nonrefundable credit = total credit minus refundable portion, then limited by tax liability.
@@ -128,18 +132,19 @@ function nonrefundableCredit(
 }
 
 // Employer-provided adoption benefits excluded from income (Part III).
-// Max exclusion $17,280 per child, subject to the same phase-out as the credit.
+// Max exclusion maxCreditPerChild per child, subject to the same phase-out as the credit.
 // Returns { excluded, taxable } pair.
 function exclusionAmounts(
   adoptionBenefits: number,
   childCount: number,
   fraction: number,
+  maxCreditPerChild: number,
 ): { excluded: number; taxable: number } {
   if (adoptionBenefits <= 0 || childCount <= 0) {
     return { excluded: 0, taxable: 0 };
   }
 
-  const maxExclusion = MAX_CREDIT_PER_CHILD * childCount;
+  const maxExclusion = maxCreditPerChild * childCount;
   const cappedBenefits = Math.min(adoptionBenefits, maxExclusion);
 
   // Phase-out applies to the excluded amount
@@ -151,12 +156,17 @@ function exclusionAmounts(
 }
 
 // Build credit outputs (Part II).
-function creditOutputs(input: Form8839Input, fraction: number): NodeOutput[] {
+function creditOutputs(
+  input: Form8839Input,
+  fraction: number,
+  maxCreditPerChild: number,
+  maxRefundablePerChild: number,
+): NodeOutput[] {
   const children = input.children ?? [];
   if (children.length === 0) return [];
 
-  const refundable = totalRefundable(children, fraction);
-  const total = totalCredit(children, fraction);
+  const refundable = totalRefundable(children, fraction, maxCreditPerChild, maxRefundablePerChild);
+  const total = totalCredit(children, fraction, maxCreditPerChild);
   const nonrefundable = nonrefundableCredit(total, refundable, input.income_tax_liability);
 
   const outputs: NodeOutput[] = [];
@@ -173,12 +183,16 @@ function creditOutputs(input: Form8839Input, fraction: number): NodeOutput[] {
 }
 
 // Build exclusion output (Part III) — taxable employer benefits on f1040 line 1f.
-function exclusionOutputs(input: Form8839Input, fraction: number): NodeOutput[] {
+function exclusionOutputs(
+  input: Form8839Input,
+  fraction: number,
+  maxCreditPerChild: number,
+): NodeOutput[] {
   const benefits = input.adoption_benefits ?? 0;
   if (benefits <= 0) return [];
 
   const childCount = (input.children ?? []).length;
-  const { taxable } = exclusionAmounts(benefits, childCount, fraction);
+  const { taxable } = exclusionAmounts(benefits, childCount, fraction, maxCreditPerChild);
 
   if (taxable <= 0) return [];
 
@@ -207,6 +221,12 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
+  // TY2025 — IRS Instructions for Form 8839 (Dec 8 2025) / Rev Proc 2024-40
+  protected readonly maxCreditPerChild = 17280;
+  protected readonly maxRefundablePerChild = 5000;
+  protected readonly phaseOutStart = 259190;
+  protected readonly phaseOutRange = 40000; // $259,190 to $299,190
+
   compute(rawInput: Form8839Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
@@ -218,7 +238,7 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const fraction = phaseOutFraction(magi);
+    const fraction = phaseOutFraction(magi, this.phaseOutStart, this.phaseOutRange);
 
     // If fully phased out, no credit or exclusion benefit
     if (fraction >= 1) {
@@ -228,8 +248,8 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
     const normalized: Form8839Input = { ...input, children, magi };
 
     const outputs = mergeF1040Outputs([
-      ...creditOutputs(normalized, fraction),
-      ...exclusionOutputs(normalized, fraction),
+      ...creditOutputs(normalized, fraction, this.maxCreditPerChild, this.maxRefundablePerChild),
+      ...exclusionOutputs(normalized, fraction, this.maxCreditPerChild),
     ]);
 
     return { outputs };

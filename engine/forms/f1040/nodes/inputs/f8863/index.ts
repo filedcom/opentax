@@ -48,7 +48,7 @@ export const inputSchema = z.object({
 type F8863Item = z.infer<typeof itemSchema>;
 type F8863Items = F8863Item[];
 
-// TY2025 constants (IRC §25A(d) — not inflation-adjusted)
+// TY2025 constants — statutory rates/caps (IRC §25A(d), not inflation-adjusted)
 const AOC_FIRST_TIER = 2000;
 const AOC_SECOND_TIER_RATE = 0.25;
 const AOC_EXPENSE_CAP = 4000;
@@ -57,11 +57,6 @@ const AOC_NONREFUNDABLE_RATE = 0.60;
 
 const LLC_RATE = 0.20;
 const LLC_EXPENSE_CAP = 10000;
-
-const PHASE_OUT_MFJ_START = 160000;
-const PHASE_OUT_MFJ_END = 180000;
-const PHASE_OUT_OTHER_START = 80000;
-const PHASE_OUT_OTHER_END = 90000;
 
 // Returns true if the student is AOC-eligible (all four gates pass).
 function isAocEligible(item: F8863Item): boolean {
@@ -81,9 +76,16 @@ function aocTentativeCredit(expenses: number): number {
 }
 
 // Phase-out fraction (0–1, rounded to 3 decimal places per IRS instructions).
-function phaseOutFraction(magi: number, isMfj: boolean): number {
-  const start = isMfj ? PHASE_OUT_MFJ_START : PHASE_OUT_OTHER_START;
-  const end = isMfj ? PHASE_OUT_MFJ_END : PHASE_OUT_OTHER_END;
+function phaseOutFraction(
+  magi: number,
+  isMfj: boolean,
+  phaseOutMfjStart: number,
+  phaseOutMfjEnd: number,
+  phaseOutOtherStart: number,
+  phaseOutOtherEnd: number,
+): number {
+  const start = isMfj ? phaseOutMfjStart : phaseOutOtherStart;
+  const end = isMfj ? phaseOutMfjEnd : phaseOutOtherEnd;
   const raw = (magi - start) / (end - start);
   return Math.round(Math.min(1, Math.max(0, raw)) * 1000) / 1000;
 }
@@ -104,7 +106,13 @@ function returnContext(items: F8863Items): { magi: number; isMfj: boolean } {
 
 // Aggregate all per-student AOC tentative credits (Line 1), apply phase-out (Lines 2–7),
 // then split into refundable (Line 8 → f1040) and nonrefundable (Line 9 → schedule3).
-function aocOutputs(items: F8863Items): NodeOutput[] {
+function aocOutputs(
+  items: F8863Items,
+  phaseOutMfjStart: number,
+  phaseOutMfjEnd: number,
+  phaseOutOtherStart: number,
+  phaseOutOtherEnd: number,
+): NodeOutput[] {
   // Filter to AOC-eligible students on credit_type "aoc" with non-zero expenses.
   const eligible = items.filter(
     (item) =>
@@ -123,7 +131,14 @@ function aocOutputs(items: F8863Items): NodeOutput[] {
   if (totalTentative === 0) return [];
 
   const { magi, isMfj } = returnContext(eligible);
-  const fraction = phaseOutFraction(magi, isMfj);
+  const fraction = phaseOutFraction(
+    magi,
+    isMfj,
+    phaseOutMfjStart,
+    phaseOutMfjEnd,
+    phaseOutOtherStart,
+    phaseOutOtherEnd,
+  );
   const allowed = totalTentative * (1 - fraction); // Line 7
 
   if (allowed <= 0) return [];
@@ -152,7 +167,13 @@ function aocOutputs(items: F8863Items): NodeOutput[] {
 
 // Aggregate all LLC expenses (Line 10), apply $10k cap (Line 11), apply 20% rate (Line 12),
 // apply phase-out (Lines 13–18), emit to schedule3 (Line 18 → Credit Limit Worksheet → Line 19).
-function llcOutputs(items: F8863Items): NodeOutput[] {
+function llcOutputs(
+  items: F8863Items,
+  phaseOutMfjStart: number,
+  phaseOutMfjEnd: number,
+  phaseOutOtherStart: number,
+  phaseOutOtherEnd: number,
+): NodeOutput[] {
   // LLC items: any student where credit_type="llc" OR where AOC gates failed but llc_adjusted_expenses exist.
   const llcStudents = items.filter(
     (item) =>
@@ -180,7 +201,14 @@ function llcOutputs(items: F8863Items): NodeOutput[] {
   if (llcBase === 0) return [];
 
   const { magi, isMfj } = returnContext(llcStudents);
-  const fraction = phaseOutFraction(magi, isMfj);
+  const fraction = phaseOutFraction(
+    magi,
+    isMfj,
+    phaseOutMfjStart,
+    phaseOutMfjEnd,
+    phaseOutOtherStart,
+    phaseOutOtherEnd,
+  );
   const llcAllowed = llcBase * (1 - fraction); // Line 18
 
   if (llcAllowed <= 0) return [];
@@ -193,13 +221,31 @@ class F8863Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
+  // IRC §25A(d) — MAGI phase-out thresholds (TY2025, not inflation-adjusted)
+  protected readonly phaseOutMfjStart = 160000;
+  protected readonly phaseOutMfjEnd = 180000;
+  protected readonly phaseOutOtherStart = 80000;
+  protected readonly phaseOutOtherEnd = 90000;
+
   compute(input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const items = parsed.f8863s;
     return {
       outputs: [
-        ...aocOutputs(items),
-        ...llcOutputs(items),
+        ...aocOutputs(
+          items,
+          this.phaseOutMfjStart,
+          this.phaseOutMfjEnd,
+          this.phaseOutOtherStart,
+          this.phaseOutOtherEnd,
+        ),
+        ...llcOutputs(
+          items,
+          this.phaseOutMfjStart,
+          this.phaseOutMfjEnd,
+          this.phaseOutOtherStart,
+          this.phaseOutOtherEnd,
+        ),
       ],
     };
   }
