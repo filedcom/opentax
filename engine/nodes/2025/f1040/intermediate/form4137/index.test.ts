@@ -1,13 +1,12 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form4137 } from "./index.ts";
+import { form4137, inputSchema } from "./index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function compute(input: Record<string, unknown>) {
-  // deno-lint-ignore no-explicit-any
-  return form4137.compute(input as any);
+  return form4137.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

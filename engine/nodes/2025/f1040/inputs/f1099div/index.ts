@@ -176,7 +176,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     const totalWithholding = div1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);
     if (totalWithholding > 0) f1040Fields.line25b_withheld_1099 = totalWithholding;
     const totalTaxExempt = div1099s.reduce(
-      (sum, item) => sum + (item.box12 ?? 0) - (item.box13 ?? 0),
+      (sum, item) => sum + (item.box12 ?? 0),
       0,
     );
     if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;

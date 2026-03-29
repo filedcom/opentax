@@ -1,9 +1,8 @@
 import { assertEquals } from "@std/assert";
-import { schedule_se } from "./index.ts";
+import { schedule_se, inputSchema } from "./index.ts";
 
-// deno-lint-ignore no-explicit-any
 function compute(input: Record<string, unknown>) {
-  return schedule_se.compute(input as any);
+  return schedule_se.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

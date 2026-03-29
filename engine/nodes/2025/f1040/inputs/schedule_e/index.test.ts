@@ -20,7 +20,7 @@
 //     unclear if "not full year" is inferred or requires explicit flag
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleE } from "./index.ts";
+import { inputSchema, scheduleE } from "./index.ts";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -38,10 +38,8 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-// deno-lint-ignore no-explicit-any
 function compute(items: Record<string, unknown>[]) {
-  // Zod validates all fields at runtime; cast avoids TS string-vs-literal complaints
-  return scheduleE.compute({ schedule_es: items } as any);
+  return scheduleE.compute(inputSchema.parse({ schedule_es: items }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -1135,4 +1133,23 @@ Deno.test("smoke: comprehensive test with all major boxes populated", () => {
   // scheduleA must NOT be present: main_home_or_second_home=false
   const schA = findOutput(result, "schedule_a");
   assertEquals(schA, undefined);
+});
+
+Deno.test("edge case self-rental (property_type=7): net loss is passive — routes to form8582", () => {
+  // Treas. Reg. §1.469-2(f)(6): net rental LOSS on self-rental is passive (unlike income)
+  const result = compute([
+    minimalItem({
+      property_type: 7,
+      activity_type: "A",
+      rent_income: 5_000,
+      expense_repairs: 8_000, // net = -3,000
+    }),
+  ]);
+  // Net loss → passive → must route to form8582
+  const f8582 = findOutput(result, "form8582");
+  assertEquals(f8582 !== undefined, true);
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(s1 !== undefined, true);
+  const input = s1!.input as Record<string, number>;
+  assertEquals(input.line5_schedule_e, -3_000);
 });

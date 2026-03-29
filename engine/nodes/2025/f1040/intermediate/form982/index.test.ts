@@ -17,11 +17,10 @@
 //   9. Smoke tests
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { form982, ExclusionType } from "./index.ts";
+import { form982, ExclusionType, inputSchema } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  // deno-lint-ignore no-explicit-any
-  return form982.compute(input as any);
+  return form982.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

@@ -1,10 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { ira_deduction_worksheet } from "./index.ts";
+import { ira_deduction_worksheet, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  // deno-lint-ignore no-explicit-any
-  return ira_deduction_worksheet.compute(input as any);
+  return ira_deduction_worksheet.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

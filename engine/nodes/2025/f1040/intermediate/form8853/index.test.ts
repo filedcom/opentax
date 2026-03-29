@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form8853 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -269,4 +269,38 @@ Deno.test("smoke_empty_input: no outputs for completely empty input", () => {
 
 Deno.test("smoke_nodeType: form8853 has correct nodeType", () => {
   assertEquals(form8853.nodeType, "form8853");
+});
+
+// ─── Input Validation ─────────────────────────────────────────────────────────
+
+Deno.test("validation: negative employer_archer_msa throws", () => {
+  assertThrows(() => compute({ employer_archer_msa: -1 }));
+});
+
+Deno.test("validation: negative taxpayer_archer_msa_contributions throws", () => {
+  assertThrows(() => compute({ taxpayer_archer_msa_contributions: -100 }));
+});
+
+Deno.test("validation: negative line3_limitation_amount throws", () => {
+  assertThrows(() => compute({ line3_limitation_amount: -500 }));
+});
+
+Deno.test("validation: negative archer_msa_distributions throws", () => {
+  assertThrows(() => compute({ archer_msa_distributions: -1_000 }));
+});
+
+Deno.test("validation: negative archer_msa_qualified_expenses throws", () => {
+  assertThrows(() => compute({ archer_msa_qualified_expenses: -200 }));
+});
+
+Deno.test("validation: negative medicare_advantage_distributions throws", () => {
+  assertThrows(() => compute({ medicare_advantage_distributions: -500 }));
+});
+
+Deno.test("validation: negative ltc_gross_payments throws", () => {
+  assertThrows(() => compute({ ltc_gross_payments: -1_000 }));
+});
+
+Deno.test("validation: negative ltc_period_days throws", () => {
+  assertThrows(() => compute({ ltc_period_days: -1 }));
 });

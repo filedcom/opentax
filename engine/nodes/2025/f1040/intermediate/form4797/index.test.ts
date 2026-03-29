@@ -1,8 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form4797 } from "./index.ts";
+import { form4797, inputSchema } from "./index.ts";
 
-// deno-lint-ignore no-explicit-any
-function compute(input: Record<string, unknown>) { return form4797.compute(input as any); }
+function compute(input: Record<string, unknown>) { return form4797.compute(inputSchema.parse(input)); }
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) { return result.outputs.find((o) => o.nodeType === nodeType); }
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

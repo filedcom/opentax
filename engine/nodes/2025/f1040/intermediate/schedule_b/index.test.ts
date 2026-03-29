@@ -1,9 +1,8 @@
 import { assertEquals } from "@std/assert";
-import { schedule_b } from "./index.ts";
+import { schedule_b, inputSchema } from "./index.ts";
 
-// deno-lint-ignore no-explicit-any
 function compute(input: Record<string, unknown>) {
-  return schedule_b.compute(input as any);
+  return schedule_b.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -179,4 +178,23 @@ Deno.test("smoke: multiple interest + dividend payers with EE bond exclusion", (
   const inp = f1040?.input as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 3500);
   assertEquals(inp.line3b_ordinary_dividends, 3200);
+});
+
+// ─── box3_us_obligations passthrough ─────────────────────────────────────────
+
+Deno.test("box3_us_obligations: field is accepted by schema and does not affect line2b calculation", () => {
+  // box3_us_obligations is informational — used for Form 8815 exclusion context,
+  // not subtracted from taxable_interest_net (that net is already computed upstream)
+  const result = compute({
+    payer_name: "Treasury Direct",
+    taxable_interest_net: 1_000,
+    box3_us_obligations: 800,
+    payerName: undefined,
+    ordinaryDividends: undefined,
+    isNominee: undefined,
+  });
+
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(f1040 !== undefined, true);
+  assertEquals((f1040!.input as Record<string, number>).line2b_taxable_interest, 1_000);
 });

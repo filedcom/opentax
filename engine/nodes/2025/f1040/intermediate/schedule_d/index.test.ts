@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { schedule_d } from "./index.ts";
+import { inputSchema, schedule_d } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 // ---------------------------------------------------------------------------
@@ -24,9 +24,8 @@ function mkLtTx(overrides: Record<string, unknown> = {}) {
   return mkTx({ part: "D", is_long_term: true, ...overrides });
 }
 
-// deno-lint-ignore no-explicit-any
 function compute(input: Record<string, unknown>) {
-  return schedule_d.compute(input as any);
+  return schedule_d.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -61,17 +60,17 @@ function makeTransaction(overrides: Partial<TransactionInput> = {}): Transaction
 }
 
 function computeD2(fields: Record<string, unknown> = {}) {
-  return schedule_d.compute(fields as any);
+  return schedule_d.compute(inputSchema.parse(fields));
 }
 
 function computeWithTransactions(
   transactions: TransactionInput[],
   d2Fields: Record<string, unknown> = {},
 ) {
-  return schedule_d.compute({
+  return schedule_d.compute(inputSchema.parse({
     ...d2Fields,
     transactions,
-  } as any);
+  }));
 }
 
 // ===========================================================================

@@ -50,7 +50,7 @@
 //   rate_28_gain_worksheet → "rate_28_gain_worksheet" (unverified — FLAG D/E)
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8949 } from "./index.ts";
+import { f8949, inputSchema } from "./index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -69,8 +69,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: Record<string, unknown>[]) {
-  // deno-lint-ignore no-explicit-any
-  return f8949.compute({ f8949s: items as any[] });
+  return f8949.compute(inputSchema.parse({ f8949s: items }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

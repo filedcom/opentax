@@ -184,3 +184,69 @@ Deno.test("smoke: all input fields populated — correct total emitted to f1040"
   // Only one output
   assertEquals(result.outputs.length, 1);
 });
+
+// ── Previously untested fields ───────────────────────────────────────────────
+
+Deno.test("calc: line1_amt alone routes to f1040 line17", () => {
+  const result = compute({ line1_amt: 5_000 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 5_000);
+});
+
+Deno.test("calc: line8_form5329_tax alone routes to f1040 line17", () => {
+  const result = compute({ line8_form5329_tax: 300 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 300);
+});
+
+Deno.test("calc: line17e_archer_msa_tax alone routes to f1040 line17", () => {
+  const result = compute({ line17e_archer_msa_tax: 400 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 400);
+});
+
+Deno.test("calc: line17f_medicare_advantage_msa_tax alone routes to f1040 line17", () => {
+  const result = compute({ line17f_medicare_advantage_msa_tax: 500 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 500);
+});
+
+Deno.test("calc: line6_uncollected_8919 alone routes to f1040 line17", () => {
+  const result = compute({ line6_uncollected_8919: 600 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 600);
+});
+
+Deno.test("calc: line17b_hsa_penalty alone routes to f1040 line17", () => {
+  const result = compute({ line17b_hsa_penalty: 700 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 700);
+});
+
+Deno.test("calc: line11_additional_medicare alone routes to f1040 line17", () => {
+  const result = compute({ line11_additional_medicare: 800 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 800);
+});
+
+Deno.test("calc: line12_niit alone routes to f1040 line17", () => {
+  const result = compute({ line12_niit: 900 });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 900);
+});
+
+Deno.test("calc: all 8 previously untested fields sum correctly into line17", () => {
+  // 5000 + 300 + 400 + 500 + 600 + 700 + 800 + 900 = 9200
+  const result = compute({
+    line1_amt: 5_000,
+    line8_form5329_tax: 300,
+    line17e_archer_msa_tax: 400,
+    line17f_medicare_advantage_msa_tax: 500,
+    line6_uncollected_8919: 600,
+    line17b_hsa_penalty: 700,
+    line11_additional_medicare: 800,
+    line12_niit: 900,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals((out!.input as Record<string, unknown>).line17_additional_taxes, 9_200);
+});

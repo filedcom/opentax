@@ -567,6 +567,41 @@ Deno.test("llc_magi_mfj_at_ceiling_180k: MAGI $180k MFJ yields zero LLC credit",
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("llc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full $2,000 LLC credit", () => {
+  // $160k = phase-out start for MFJ → fraction = 0 → full credit
+  // $10,000 expenses → LLC credit = min($10,000, $10,000) × 20% = $2,000
+  const result = compute([
+    minimalLlcItem({
+      llc_adjusted_expenses: 10000,
+      filer_magi: 160000,
+      filing_status: FilingStatus.MFJ,
+    }),
+  ]);
+  const sch3 = findOutput(result, "schedule3");
+  assertEquals(sch3 !== undefined, true);
+  assertEquals(
+    (sch3!.input as Record<string, number>).line3_education_credit,
+    2000,
+  );
+});
+
+Deno.test("llc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields $1,000 LLC credit (50% phase-out)", () => {
+  // fraction = (170000 − 160000) / 20000 = 0.500 → allowed = $2,000 × (1 − 0.500) = $1,000
+  const result = compute([
+    minimalLlcItem({
+      llc_adjusted_expenses: 10000,
+      filer_magi: 170000,
+      filing_status: FilingStatus.MFJ,
+    }),
+  ]);
+  const sch3 = findOutput(result, "schedule3");
+  assertEquals(sch3 !== undefined, true);
+  assertEquals(
+    (sch3!.input as Record<string, number>).line3_education_credit,
+    1000,
+  );
+});
+
 // ============================================================
 // 7. AOC Eligibility Gates (Lines 23–26)
 // ============================================================

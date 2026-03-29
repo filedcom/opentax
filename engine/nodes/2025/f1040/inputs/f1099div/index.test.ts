@@ -1474,7 +1474,7 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
     "Form 1116 absent on simplified path",
   );
 
-  // Form 1040 Line 2a: box12=400, box13=100 → net tax-exempt = 300
+  // Form 1040 Line 2a: box12=400, box13=100 → line2a = 400 (box13 is not subtracted)
   const taxExemptOut = result.outputs.find(
     (o) =>
       o.nodeType === "f1040" &&
@@ -1483,8 +1483,8 @@ Deno.test("full 1099-DIV with all major boxes populated routes correctly", () =>
   assertEquals(taxExemptOut !== undefined, true, "tax-exempt interest present");
   assertEquals(
     taxExemptOut?.input.line2a_tax_exempt as number,
-    300,
-    "net tax-exempt interest",
+    400,
+    "tax-exempt interest (full box12, box13 not subtracted)",
   );
 
   // Form 6251: box13 = 100

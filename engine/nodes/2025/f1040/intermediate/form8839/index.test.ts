@@ -354,3 +354,53 @@ Deno.test("routing: outputs are directed only to schedule3 and f1040 node types"
     );
   }
 });
+
+// ─── prior_year_credit reduces available credit ───────────────────────────────
+
+Deno.test("credit: prior_year_credit reduces per-child baseline", () => {
+  // Max $17,280; prior credit $10,000 → remaining baseline = $7,280
+  // Expenses $12,000 > remaining → capped at $7,280
+  // Refundable: min($7,280, $5,000) = $5,000
+  // Nonrefundable: $7,280 - $5,000 = $2,280 (tax liability $10,000 → not limited)
+  const result = compute({
+    children: [{ qualified_expenses: 12_000, special_needs: false, prior_year_credit: 10_000 }],
+    magi: 100_000,
+    income_tax_liability: 10_000,
+  });
+
+  const s3 = findOutput(result, "schedule3");
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(s3?.input.line6c_adoption_credit, 2_280);
+  assertEquals(f1040?.input.line30_refundable_adoption, 5_000);
+});
+
+Deno.test("credit: prior_year_credit equal to max leaves zero remaining — no output", () => {
+  // Prior credit = $17,280 = max → remaining = 0 → no credit
+  const result = compute({
+    children: [{ qualified_expenses: 15_000, special_needs: false, prior_year_credit: 17_280 }],
+    magi: 100_000,
+    income_tax_liability: 10_000,
+  });
+
+  const s3 = findOutput(result, "schedule3");
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(s3, undefined);
+  assertEquals(f1040, undefined);
+});
+
+// ─── Phase-out boundary at $259,190 ──────────────────────────────────────────
+
+Deno.test("credit: MAGI exactly at phase-out start ($259,190) — full credit, no reduction", () => {
+  // MAGI = $259,190: fraction = (259190 - 259190) / 40000 = 0 → no reduction
+  // Expenses $10,000; refundable = min($10,000, $5,000) = $5,000; nonrefundable = $5,000
+  const result = compute({
+    children: [{ qualified_expenses: 10_000, special_needs: false }],
+    magi: 259_190,
+    income_tax_liability: 10_000,
+  });
+
+  const s3 = findOutput(result, "schedule3");
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(s3?.input.line6c_adoption_credit, 5_000);
+  assertEquals(f1040?.input.line30_refundable_adoption, 5_000);
+});

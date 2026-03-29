@@ -23,15 +23,14 @@
 //      Context marks it WARNING-only. Tests verify it does NOT throw.
 
 import { assertEquals, assertThrows } from "@std/assert";
-import { ext } from "./index.ts";
+import { ext, inputSchema } from "./index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 function compute(input: Record<string, unknown>) {
-  // deno-lint-ignore no-explicit-any
-  return ext.compute(input as any);
+  return ext.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

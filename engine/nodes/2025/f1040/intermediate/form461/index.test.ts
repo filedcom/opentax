@@ -1,9 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form461 } from "./index.ts";
+import { form461, inputSchema } from "./index.ts";
 
-// deno-lint-ignore no-explicit-any
 function compute(input: Record<string, unknown>) {
-  return form461.compute(input as any);
+  return form461.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

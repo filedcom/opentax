@@ -1,10 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8995a } from "./index.ts";
+import { form8995a, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  // deno-lint-ignore no-explicit-any
-  return form8995a.compute(input as any);
+  return form8995a.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

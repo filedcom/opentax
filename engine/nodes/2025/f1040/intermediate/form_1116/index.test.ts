@@ -1,9 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { FilingStatus, IncomeCategory, form1116 } from "./index.ts";
+import { FilingStatus, IncomeCategory, form1116, inputSchema } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  // deno-lint-ignore no-explicit-any
-  return form1116.compute(input as any);
+  return form1116.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

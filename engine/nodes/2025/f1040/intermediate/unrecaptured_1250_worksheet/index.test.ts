@@ -1,9 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { unrecaptured_1250_worksheet } from "./index.ts";
+import { inputSchema, unrecaptured_1250_worksheet } from "./index.ts";
 
-// deno-lint-ignore no-explicit-any
 function compute(input: Record<string, unknown>) {
-  return unrecaptured_1250_worksheet.compute(input as any);
+  return unrecaptured_1250_worksheet.compute(inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

@@ -260,6 +260,29 @@ Spawn a **Builder agent** with the FINAL checklist:
 
 **Gate:** `index.test.ts` must exist with at least one `Deno.test(`.
 
+### Step 4 — Reviewer agent: audit the written file
+
+Run this step whether the file was just written OR already existed.
+
+Spawn a **Reviewer agent**, passing both files:
+
+> Read `nodes/2025/f1040/intermediate/{NODE}/research/context.md` and `nodes/2025/f1040/intermediate/{NODE}/index.test.ts`.
+>
+> Audit the test file against context.md. Report:
+> 1. [GAP] — anything in context.md (input fields, calc steps, thresholds, output routing, edge cases) with no test
+> 2. [REDUNDANT] test_name — tests that are exact duplicates in scenario and assertion
+> 3. [WRONG] test_name — assertions where the math in comments doesn't match what the code would produce
+> 4. [BOUNDARY] threshold — constants tested on only one side
+> 5. [QUALITY] line — `as any`, unguarded `?.` used as assertion target, tests with no assertion
+>
+> Output ONLY the findings list. No prose, no code.
+
+If the Reviewer reports any [WRONG] or [GAP] items covering a constant/threshold from context.md: fix the test file to address them, then re-run:
+```bash
+deno test nodes/2025/f1040/intermediate/{NODE}/ --allow-read
+```
+All tests must pass after fixes.
+
 ---
 
 ## Phase 3 — Implementation

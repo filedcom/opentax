@@ -256,3 +256,83 @@ Deno.test("form8606: new nondeductible contributions increase total basis for ra
   const f1040 = findOutput(result, "f1040");
   assertEquals(f1040?.input?.line4b_ira_taxable, 4_000);
 });
+
+// ---------------------------------------------------------------------------
+// 13. Part III — Roth IRA distribution with conversion basis
+// ---------------------------------------------------------------------------
+
+Deno.test("form8606: roth_basis_conversions reduces taxable Roth distribution", () => {
+  // Roth distribution $10,000; basis_conversions $4,000; basis_contributions $2,000
+  // total Roth basis = 4,000 + 2,000 = 6,000
+  // taxable = max(0, 10,000 - 6,000) = 4,000
+  const result = compute({
+    nondeductible_contributions: 0,
+    year_end_ira_value: 0,
+    roth_distribution: 10_000,
+    roth_basis_contributions: 2_000,
+    roth_basis_conversions: 4_000,
+  });
+
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(f1040?.input?.line4b_ira_taxable, 4_000);
+});
+
+Deno.test("form8606: roth_basis_conversions alone covers full Roth distribution — no taxable amount", () => {
+  // Roth distribution $5,000; basis_conversions $6,000 → taxable = max(0, 5,000-6,000) = 0
+  const result = compute({
+    nondeductible_contributions: 0,
+    year_end_ira_value: 0,
+    roth_distribution: 5_000,
+    roth_basis_conversions: 6_000,
+  });
+
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(f1040, undefined);
+});
+
+Deno.test("form8606: roth_distribution with no basis is fully taxable (Part III)", () => {
+  // Distribution $8,000; no contributions basis, no conversions basis → fully taxable
+  const result = compute({
+    nondeductible_contributions: 0,
+    year_end_ira_value: 0,
+    roth_distribution: 8_000,
+  });
+
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(f1040?.input?.line4b_ira_taxable, 8_000);
+});
+
+// ---------------------------------------------------------------------------
+// 14. Combined Part I (traditional) + Part III (Roth) in same year
+// ---------------------------------------------------------------------------
+
+Deno.test("form8606: combined traditional distribution and Roth distribution both taxable", () => {
+  // Part I: prior_basis=0, no contributions, year_end=0, traditional_dist=3,000 → taxable 3,000
+  // Part III: roth_distribution=2,000, no basis → taxable 2,000
+  // Total line4b = 5,000
+  const result = compute({
+    nondeductible_contributions: 0,
+    year_end_ira_value: 0,
+    traditional_distributions: 3_000,
+    roth_distribution: 2_000,
+  });
+
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(f1040?.input?.line4b_ira_taxable, 5_000);
+});
+
+Deno.test("form8606: zero-denominator with positive basis and Roth distribution — no divide-by-zero", () => {
+  // year_end_ira_value=0, traditional_distributions=0, roth_conversion=0
+  // denominator = 0 → nontaxable = 0 (guarded), traditional portion = 0
+  // roth_distribution = 3,000, basis_contributions = 1,000 → taxable = 2,000
+  const result = compute({
+    nondeductible_contributions: 0,
+    prior_basis: 5_000,
+    year_end_ira_value: 0,
+    roth_distribution: 3_000,
+    roth_basis_contributions: 1_000,
+  });
+
+  const f1040 = findOutput(result, "f1040");
+  assertEquals(f1040?.input?.line4b_ira_taxable, 2_000);
+});

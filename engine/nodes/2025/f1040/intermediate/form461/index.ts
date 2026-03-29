@@ -13,7 +13,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
   z.union([schema, z.array(schema)]);
 
-const inputSchema = z.object({
+export const inputSchema = z.object({
   // Pre-computed excess business loss from each upstream source (IRC §461(l))
   excess_business_loss: accumulable(z.number().nonnegative()).optional(),
   // Filing status — informational; threshold check is done upstream
