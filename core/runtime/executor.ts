@@ -1,5 +1,6 @@
 import type { NodeRegistry } from "../types/node-registry.ts";
 import type { ExecutionStep } from "./planner.ts";
+import type { NodeContext } from "../types/node-context.ts";
 
 export type ExecuteResult = {
   readonly pending: Readonly<Record<string, Record<string, unknown>>>;
@@ -52,6 +53,7 @@ export function execute(
   plan: readonly ExecutionStep[],
   registry: NodeRegistry,
   inputs: Record<string, unknown>,
+  ctx: NodeContext,
 ): ExecuteResult {
   const pending: Record<string, Record<string, unknown>> = {};
   pending["start"] = { ...inputs };
@@ -68,7 +70,7 @@ export function execute(
       continue;
     }
 
-    const result = node.compute(parsed.data);
+    const result = node.compute(ctx, parsed.data);
 
     for (const output of result.outputs) {
       mergePending(pending, output.nodeType, output.fields);

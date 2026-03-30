@@ -6,6 +6,7 @@ import { TaxNode } from "../types/tax-node.ts";
 import { OutputNodes } from "../types/output-nodes.ts";
 import { execute } from "./executor.ts";
 import type { ExecutionStep } from "./planner.ts";
+import type { NodeContext } from "../types/node-context.ts";
 
 // --- Mock Nodes ---
 // executor tests hardcode the plan, so outputNodes content is not load-bearing —
@@ -17,7 +18,7 @@ class MockNodeA extends TaxNode<typeof aInputSchema> {
   readonly nodeType = "mock_a";
   readonly inputSchema = aInputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(input: z.infer<typeof aInputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof aInputSchema>): NodeResult {
     return {
       outputs: [{ nodeType: "mock_b", fields: { received: input.value } }],
     };
@@ -29,7 +30,7 @@ class MockNodeB extends TaxNode<typeof bInputSchema> {
   readonly nodeType = "mock_b";
   readonly inputSchema = bInputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(input: z.infer<typeof bInputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof bInputSchema>): NodeResult {
     return {
       outputs: [
         { nodeType: "mock_b_result", fields: { doubled: input.received * 2 } },
@@ -46,7 +47,7 @@ class MockW2ArrayNode extends TaxNode<typeof w2ArrayInputSchema> {
   readonly nodeType = "mock_w2";
   readonly inputSchema = w2ArrayInputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(input: z.infer<typeof w2ArrayInputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof w2ArrayInputSchema>): NodeResult {
     const totalWages = input.w2s.reduce((sum, w) => sum + w.wages, 0);
     return {
       outputs: [{ nodeType: "mock_f1040", fields: { wages: totalWages } }],
@@ -60,7 +61,7 @@ class MockF1040Node extends TaxNode<typeof f1040InputSchema> {
   readonly nodeType = "mock_f1040";
   readonly inputSchema = f1040InputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(): NodeResult {
+  compute(_ctx: NodeContext, _input: z.infer<typeof f1040InputSchema>): NodeResult {
     return { outputs: [] };
   }
 }
@@ -71,7 +72,7 @@ class MockOptionalNode extends TaxNode<typeof optionalInputSchema> {
   readonly nodeType = "mock_optional";
   readonly inputSchema = optionalInputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(): NodeResult {
+  compute(_ctx: NodeContext, _input: z.infer<typeof optionalInputSchema>): NodeResult {
     return { outputs: [] };
   }
 }
@@ -90,7 +91,7 @@ Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's outpu
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof startSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_a", fields: { value: input.initial } }],
       };
@@ -103,7 +104,7 @@ Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's outpu
     mock_b: new MockNodeB(),
   };
 
-  const result = execute(plan, registry, { initial: 42 });
+  const result = execute(plan, registry, { initial: 42 }, { taxYear: 2025 });
 
   assertEquals(result.pending["mock_a"]?.["value"], 42);
   assertEquals(result.pending["mock_b"]?.["received"], 42);
@@ -120,7 +121,7 @@ Deno.test("executor: scalar field set — single deposit sets scalar value, not 
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof startSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_a", fields: { value: input.val } }],
       };
@@ -132,7 +133,7 @@ Deno.test("executor: scalar field set — single deposit sets scalar value, not 
     mock_a: new MockNodeA(),
   };
 
-  const result = execute(plan, registry, { val: 99 });
+  const result = execute(plan, registry, { val: 99 }, { taxYear: 2025 });
   assertEquals(result.pending["mock_a"]?.["value"], 99);
 });
 
@@ -147,7 +148,7 @@ Deno.test("executor: optional node skip — node with no deposited inputs is sil
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(): NodeResult {
+    compute(_ctx: NodeContext, _input: z.infer<typeof startSchema>): NodeResult {
       return { outputs: [] };
     }
   }
@@ -157,7 +158,7 @@ Deno.test("executor: optional node skip — node with no deposited inputs is sil
     mock_optional: new MockOptionalNode(),
   };
 
-  const result = execute(plan, registry, {});
+  const result = execute(plan, registry, {}, { taxYear: 2025 });
   assertEquals(result.pending["mock_optional"], undefined);
 });
 
@@ -178,7 +179,7 @@ Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof startSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_w2", fields: { w2s: input.w2s } }],
       };
@@ -193,7 +194,7 @@ Deno.test("executor: array-dispatch model — start dispatches full w2 array, w2
 
   const result = execute(plan, registry, {
     w2s: [{ wages: 85000 }, { wages: 45000 }],
-  });
+  }, { taxYear: 2025 });
 
   const f1040Pending = result.pending["mock_f1040"];
   assertEquals(typeof f1040Pending?.["wages"], "number");
@@ -213,7 +214,7 @@ Deno.test("executor: stateless — same inputs produce identical outputs on repe
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof startSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "mock_a", fields: { value: input.val } }],
       };
@@ -227,8 +228,8 @@ Deno.test("executor: stateless — same inputs produce identical outputs on repe
   };
 
   const inputs = { val: 42 };
-  const result1 = execute(plan, registry, inputs);
-  const result2 = execute(plan, registry, inputs);
+  const result1 = execute(plan, registry, inputs, { taxYear: 2025 });
+  const result2 = execute(plan, registry, inputs, { taxYear: 2025 });
 
   assertEquals(
     JSON.stringify(result1.pending),
@@ -250,7 +251,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     readonly nodeType = "diamond_d";
     readonly inputSchema = dInputSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(): NodeResult {
+    compute(_ctx: NodeContext, _input: z.infer<typeof dInputSchema>): NodeResult {
       return { outputs: [] };
     }
   }
@@ -258,7 +259,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     readonly nodeType = "diamond_b";
     readonly inputSchema = bInputSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof bInputSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof bInputSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "diamond_d", fields: { x: input.x } }],
       };
@@ -268,7 +269,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     readonly nodeType = "diamond_c";
     readonly inputSchema = cInputSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof cInputSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof cInputSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "diamond_d", fields: { y: input.y } }],
       };
@@ -280,7 +281,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     readonly nodeType = "start";
     readonly inputSchema = startSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(input: z.infer<typeof startSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
       return {
         outputs: [
           { nodeType: "diamond_b", fields: { x: input.val } },
@@ -304,7 +305,7 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
     diamond_d: new DiamondD(),
   };
 
-  const result = execute(plan, registry, { val: 10 });
+  const result = execute(plan, registry, { val: 10 }, { taxYear: 2025 });
 
   // D's pending has both x=10 and y=20 as scalars
   assertEquals(result.pending["diamond_d"]?.["x"], 10);
