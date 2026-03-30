@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { f8814 } from "./index.ts";
 
-function compute(items: Parameters<typeof f8814.compute>[0]["f8814s"]) {
+function compute(items: Parameters<typeof f8814.compute>[1]["f8814s"]) {
   return f8814.compute({ taxYear: 2025 }, { f8814s: items });
 }
 

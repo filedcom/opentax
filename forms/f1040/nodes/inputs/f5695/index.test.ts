@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { f5695 } from "./index.ts";
 
-function compute(input: Parameters<typeof f5695.compute>[0]) {
+function compute(input: Parameters<typeof f5695.compute>[1]) {
   return f5695.compute({ taxYear: 2025 }, input);
 }
 

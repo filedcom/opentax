@@ -1,7 +1,7 @@
 import { assertEquals, assertAlmostEquals } from "@std/assert";
 import { f3468 } from "./index.ts";
 
-function compute(input: Parameters<typeof f3468.compute>[0]) {
+function compute(input: Parameters<typeof f3468.compute>[1]) {
   return f3468.compute({ taxYear: 2025 }, input);
 }
 

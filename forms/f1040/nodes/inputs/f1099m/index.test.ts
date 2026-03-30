@@ -504,7 +504,7 @@ Deno.test("f1099m.inputSchema or compute: box14 reserved field with non-zero val
   // Either schema rejects it, or it passes but should not route anywhere
   // If schema accepts it, verify compute does not route it
   if (parsed.success) {
-    const result = f1099m.compute({ taxYear: 2025 }, parsed.data as Parameters<typeof f1099m.compute>[0]);
+    const result = f1099m.compute({ taxYear: 2025 }, parsed.data as Parameters<typeof f1099m.compute>[1]);
     // box14_reserved must not produce any tax output
     const hasBox14Output = result.outputs.some(
       (o) => JSON.stringify(o.fields).includes("box14") || JSON.stringify(o.fields).includes("golden_parachute"),

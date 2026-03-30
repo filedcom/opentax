@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f4255, RecaptureReason } from "./index.ts";
 
 // Array harness — one entry per property
-function compute(items: Parameters<typeof f4255.compute>[0]["properties"]) {
+function compute(items: Parameters<typeof f4255.compute>[1]["properties"]) {
   return f4255.compute({ taxYear: 2025 }, { properties: items });
 }
 

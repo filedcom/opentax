@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f8801.compute({ taxYear: 2025 }, input as Parameters<typeof f8801.compute>[0]);
+  return f8801.compute({ taxYear: 2025 }, input as Parameters<typeof f8801.compute>[1]);
 }
 
 // =============================================================================

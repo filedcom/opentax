@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f9465 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f9465.compute({ taxYear: 2025 }, input as Parameters<typeof f9465.compute>[0]);
+  return f9465.compute({ taxYear: 2025 }, input as Parameters<typeof f9465.compute>[1]);
 }
 
 // =============================================================================

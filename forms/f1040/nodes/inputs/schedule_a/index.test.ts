@@ -10,7 +10,7 @@
 import { assertEquals } from "@std/assert";
 import { scheduleA } from "./index.ts";
 
-type ScheduleAInput = Parameters<typeof scheduleA.compute>[0];
+type ScheduleAInput = Parameters<typeof scheduleA.compute>[1];
 
 function compute(input: ScheduleAInput) {
   return scheduleA.compute({ taxYear: 2025 }, input);

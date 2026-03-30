@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { ClaimantType, f1310 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f1310.compute({ taxYear: 2025 }, input as Parameters<typeof f1310.compute>[0]);
+  return f1310.compute({ taxYear: 2025 }, input as Parameters<typeof f1310.compute>[1]);
 }
 
 // =============================================================================

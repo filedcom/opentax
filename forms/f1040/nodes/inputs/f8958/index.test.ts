@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { CommunityPropertyState, f8958 } from "./index.ts";
 
-function compute(input: Parameters<typeof f8958.compute>[0]) {
+function compute(input: Parameters<typeof f8958.compute>[1]) {
   return f8958.compute({ taxYear: 2025 }, input);
 }
 
