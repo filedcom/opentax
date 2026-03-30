@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import { z } from "zod";
 import { type NodeResult, TaxNode } from "./tax-node.ts";
 import { OutputNodes } from "./output-nodes.ts";
+import type { NodeContext } from "./node-context.ts";
 
 // A concrete subclass for testing
 const addSchema = z.object({
@@ -14,7 +15,7 @@ class MockOutputNode extends TaxNode<typeof outputSchema> {
   readonly nodeType = "mock_output";
   readonly inputSchema = outputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(): NodeResult {
+  compute(_ctx: NodeContext, _input: z.infer<typeof outputSchema>): NodeResult {
     return { outputs: [] };
   }
 }
@@ -25,7 +26,7 @@ class MockAddNode extends TaxNode<typeof addSchema> {
   readonly inputSchema = addSchema;
   readonly outputNodes = new OutputNodes([mockOutputNode]);
 
-  compute(input: z.infer<typeof addSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof addSchema>): NodeResult {
     const sum = input.a + input.b;
     return { outputs: [{ nodeType: mockOutputNode.nodeType, fields: { sum } }] };
   }
@@ -39,7 +40,7 @@ Deno.test("MockAddNode: can be instantiated", () => {
 
 Deno.test("MockAddNode: compute() returns a valid NodeResult with outputs array", () => {
   const node = new MockAddNode();
-  const result = node.compute({ a: 3, b: 4 });
+  const result = node.compute({ taxYear: 2025 }, { a: 3, b: 4 });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "mock_output");
   assertEquals((result.outputs[0].fields as { sum: number }).sum, 7);
