@@ -24,7 +24,7 @@ export async function exportMefCommand(
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
   const executionPlan = buildExecutionPlan(def.registry);
   const engineInputs = buildEngineInputs(inputs);
-  const result = execute(executionPlan, def.registry, engineInputs);
+  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
   const pending = def.buildPending(result.pending);
   return def.buildMefXml(pending);
 }

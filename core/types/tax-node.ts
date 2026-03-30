@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OutputNodes } from "./output-nodes.ts";
+import type { NodeContext } from "./node-context.ts";
 
 export type NodeType = string;
 
@@ -33,7 +34,7 @@ export abstract class TaxNode<TSchema extends z.ZodTypeAny = z.ZodTypeAny> {
   abstract readonly nodeType: NodeType;
   abstract readonly inputSchema: TSchema;
   abstract readonly outputNodes: OutputNodes<readonly TaxNode<z.ZodTypeAny>[]>;
-  abstract compute(input: z.infer<TSchema>): NodeResult;
+  abstract compute(ctx: NodeContext, input: z.infer<TSchema>): NodeResult;
 
   get outputNodeTypes(): readonly NodeType[] {
     return this.outputNodes.nodeTypes;
@@ -52,7 +53,7 @@ export class UnimplementedTaxNode extends TaxNode {
     this.outputNodes = new OutputNodes([]);
   }
 
-  compute(): NodeResult {
+  compute(_ctx: NodeContext, _input: unknown): NodeResult {
     throw new Error(`Node '${this.nodeType}' is not yet implemented.`);
   }
 }

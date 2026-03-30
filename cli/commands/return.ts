@@ -46,7 +46,7 @@ export async function getReturnCommand(
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
   const executionPlan = buildExecutionPlan(def.registry);
   const engineInputs = buildEngineInputs(inputs);
-  const result = execute(executionPlan, def.registry, engineInputs);
+  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
 
   const line1aRaw = result.pending["f1040"]?.["line1a_wages"];
   const line_1a = typeof line1aRaw === "number" ? line1aRaw : 0;
