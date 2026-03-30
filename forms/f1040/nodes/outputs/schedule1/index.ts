@@ -43,6 +43,9 @@ const inputSchema = z.object({
   // Line 20 — IRA Deduction (IRA Deduction Worksheet → Schedule 1 line 20)
   // IRC §219; Pub 590-A
   line20_ira_deduction: z.number().nonnegative().optional(),
+  // Line 14 — Moving expense deduction (from Form 3903 line 5)
+  // IRC §217; Form 3903 line 5 → Schedule 1 line 14 (active duty military only, TY2025)
+  line14_moving_expenses: z.number().nonnegative().optional(),
   // Line 15 — Deductible part of self-employment tax (from Schedule SE line 13)
   // IRC §164(f); Schedule SE line 13 → Schedule 1 line 15
   line15_se_deduction: z.number().nonnegative().optional(),

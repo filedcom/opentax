@@ -63,6 +63,10 @@ export const inputSchema = z.object({
   // IRC §30D; Form 8936 Part IV line 15 → Schedule 3 line 6d
   line6d_clean_vehicle_credit: z.number().nonnegative().optional(),
 
+  // Line 6d — Credit for the elderly or disabled (from Schedule R line 22)
+  // IRC §22; Schedule R line 22 → Schedule 3 line 6d
+  line6d_elderly_disabled_credit: z.number().nonnegative().optional(),
+
   // Line 6f — Mortgage interest credit (Form 8396 line 11)
   // IRC §25; Form 8396 line 11 → Schedule 3 line 6f
   line6f_mortgage_interest_credit: z.number().nonnegative().optional(),
@@ -70,6 +74,19 @@ export const inputSchema = z.object({
   // Line 9 — Net premium tax credit (Form 8962 line 26)
   // IRC §36B; Form 8962 line 26 → Schedule 3 line 9 (Part II refundable credit)
   line9_premium_tax_credit: z.number().nonnegative().optional(),
+
+  // Line 6z — General business credit (from Form 3800)
+  // IRC §38; Form 3800 line 38 → Schedule 3 line 6z
+  line6z_general_business_credit: z.number().nonnegative().optional(),
+
+  // Line 6e — Credit for prior year minimum tax (from Form 8801 line 25)
+  // IRC §53; Form 8801 line 25 → Schedule 3 line 6e
+  line6e_prior_year_min_tax_credit: z.number().nonnegative().optional(),
+
+  // Low-income housing credit (from Form 8609 / Form 8586 / IRC §42)
+  // Flows via Form 3800 → Schedule 3 line 7 (GBC) in IRS forms.
+  // Tracked separately in the engine for audit traceability.
+  line6b_low_income_housing_credit: z.number().nonnegative().optional(),
 });
 
 type Schedule3Input = z.infer<typeof inputSchema>;
@@ -94,7 +111,11 @@ function partITotal(input: Schedule3Input): number {
     (input.line6b_child_tax_credit ?? 0) +
     (input.line6c_adoption_credit ?? 0) +
     (input.line6d_clean_vehicle_credit ?? 0) +
-    (input.line6f_mortgage_interest_credit ?? 0)
+    (input.line6d_elderly_disabled_credit ?? 0) +
+    (input.line6e_prior_year_min_tax_credit ?? 0) +
+    (input.line6f_mortgage_interest_credit ?? 0) +
+    (input.line6z_general_business_credit ?? 0) +
+    (input.line6b_low_income_housing_credit ?? 0)
   );
 }
 
