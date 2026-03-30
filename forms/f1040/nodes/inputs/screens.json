@@ -151,7 +151,8 @@
   {
     "form": "461",
     "description": "Limitation on Business Losses",
-    "screen_code": "461"
+    "screen_code": "461",
+    "filed_tax_node_type_code": "form461"
   },
   {
     "form": "499R-W",
@@ -327,12 +328,14 @@
       "2555 > 2555 - Part 3 tab",
       "2555 > 2555 - Part 4 tab",
       "EARN"
-    ]
+    ],
+    "filed_tax_node_type_code": "form2555"
   },
   {
     "form": "2555",
     "description": "Summary of Earnings for Form 2555 and SE Purposes",
-    "screen_code": "EARN"
+    "screen_code": "EARN",
+    "filed_tax_node_type_code": "form2555"
   },
   {
     "form": "2848",
@@ -410,27 +413,32 @@
   {
     "form": "4562",
     "description": "Additional Depreciation Elections",
-    "screen_code": "10"
+    "screen_code": "10",
+    "filed_tax_node_type_code": "form4562"
   },
   {
     "form": "4562, Part I",
     "description": "Depreciation and Amortization, Election To Expense Certain Property Under Section 179",
-    "screen_code": "6"
+    "screen_code": "6",
+    "filed_tax_node_type_code": "form4562"
   },
   {
     "form": "4562, Part II and III",
     "description": "Depreciation and Amortization, Special Depreciation Allowance and Other Depreciation and MACRS Depreciation",
-    "screen_code": "7"
+    "screen_code": "7",
+    "filed_tax_node_type_code": "form4562"
   },
   {
     "form": "4562, Part IV, V, and VI",
     "description": "Depreciation and Amortization, Summary, Listed Property, and Amortization",
-    "screen_code": "8"
+    "screen_code": "8",
+    "filed_tax_node_type_code": "form4562"
   },
   {
     "form": "4562, Part V - B and C",
     "description": "Depreciation and Amortization, Information on Use of Vehicles, and Questions for Employers Who Provide Vehicles for Use by Their Employees",
-    "screen_code": "9"
+    "screen_code": "9",
+    "filed_tax_node_type_code": "form4562"
   },
   {
     "form": "4684",
@@ -475,7 +483,8 @@
   {
     "form": "4952",
     "description": "Investment Interest Expense Deduction",
-    "screen_code": "4952"
+    "screen_code": "4952",
+    "filed_tax_node_type_code": "form4952"
   },
   {
     "form": "4970",
@@ -589,7 +598,8 @@
     "screen_code": "6252",
     "alias_screen_codes": [
       "6252 > \"Part III\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "form6252"
   },
   {
     "form": "6478",
@@ -606,7 +616,8 @@
   {
     "form": "6781",
     "description": "Gains and Losses From Section 1256 Contracts and Straddles",
-    "screen_code": "6781"
+    "screen_code": "6781",
+    "filed_tax_node_type_code": "form6781"
   },
   {
     "form": "7206",
@@ -659,7 +670,8 @@
   {
     "form": "8396",
     "description": "Mortgage Interest Credit",
-    "screen_code": "8396"
+    "screen_code": "8396",
+    "filed_tax_node_type_code": "form8396"
   },
   {
     "form": "8594",
@@ -678,7 +690,8 @@
   {
     "form": "8606",
     "description": "Nondeductible IRAs",
-    "screen_code": "8606"
+    "screen_code": "8606",
+    "filed_tax_node_type_code": "form8606"
   },
   {
     "form": "8609",
@@ -694,7 +707,8 @@
   {
     "form": "8615",
     "description": "Tax for Certain Children Who Have Unearned Income",
-    "screen_code": "8615"
+    "screen_code": "8615",
+    "filed_tax_node_type_code": "form8615"
   },
   {
     "form": "8621",
@@ -726,7 +740,8 @@
   {
     "form": "8815",
     "description": "Exclusion of Interest From Series EE and I U.S. Savings Bonds Issued After 1989 (For Filers With Qualified Higher Education Expenses)",
-    "screen_code": "8815"
+    "screen_code": "8815",
+    "filed_tax_node_type_code": "form8815"
   },
   {
     "form": "8820",
@@ -1386,7 +1401,8 @@
       "K1S > \"6198 At-Risk cont.\" tab",
       "K1S > \"6198 At-Risk\" tab > \"NY and KY returns\" link",
       "K1S > \"6198 At-Risk cont\" tab > \"NY and KY returns\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "form6198"
   },
   {
     "form": "Schedule K-1 (Form 1041)",
@@ -1419,7 +1435,8 @@
       "K1P > \"6198 At-Risk cont.\" tab",
       "K1P > \"6198 At-Risk\" tab > \"NY and KY returns\" link",
       "K1P > \"6198 At-Risk (cont)\" tab > \"NY and KY returns\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "form6198"
   },
   {
     "form": "Schedule K-1 QBI",
