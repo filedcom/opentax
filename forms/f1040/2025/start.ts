@@ -3,6 +3,7 @@ import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import type { NodeOutput, NodeResult } from "../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../core/types/node-context.ts";
 import { inputNodes } from "./inputs.ts";
 
 export { inputNodes };
@@ -48,7 +49,7 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
     readonly inputSchema = generatedSchema;
     readonly outputNodes = new OutputNodes(entries.map((e) => e.node) as TaxNode[]);
 
-    compute(input: StartInput): NodeResult {
+    compute(_ctx: NodeContext, input: StartInput): NodeResult {
       const outputs: NodeOutput[] = [];
       for (const entry of entries) {
         const key = entry.node.nodeType;
