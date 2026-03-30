@@ -15,6 +15,7 @@ import { schedule_b } from "../../intermediate/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/unrecaptured_1250_worksheet/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
   payerName: z.string(),
@@ -149,7 +150,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     rate_28_gain_worksheet,
   ]);
 
-  compute(input: DIVInput): NodeResult {
+  compute(_ctx: NodeContext, input: DIVInput): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099divs: div1099s, taxableIncome, filingStatus } = parsed;
 

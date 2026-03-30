@@ -6,6 +6,7 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleC as schedule_c } from "../../inputs/schedule_c/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Depreciation Rate Table (MACRS 39-year, mid-month convention) ─────
 // Source: IRS Instructions for Form 8829, Part III Line 41
@@ -135,7 +136,7 @@ class Form8829Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_c]);
 
-  compute(rawInput: Form8829Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8829Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const deduction = computeAllowableDeduction(input);
 

@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §3101(b)(2); Form 8959 line 7 — Additional Medicare Tax rate
@@ -159,7 +160,7 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2, f1040]);
 
-  compute(rawInput: Form8959Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8959Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const limit = threshold(input.filing_status);

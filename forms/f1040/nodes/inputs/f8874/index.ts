@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8874 — New Markets Credit (IRC §45D)
 // 7-year credit period: 5% for years 1–3, 6% for years 4–7 (total 39%).
@@ -56,7 +57,7 @@ class F8874Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: F8874Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8874Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = totalCredit(input);
     return { outputs: buildOutputs(credit) };

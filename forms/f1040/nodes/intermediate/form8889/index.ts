@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { form5329 } from "../../intermediate/form5329/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — mathematical/statutory rates, unchanged across years ─────────
 
@@ -156,7 +157,7 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
   // IRC §223(b)(3) — catch-up contribution for taxpayers age 55+ (TY2025)
   protected readonly catchupLimit = 1000;
 
-  compute(rawInput: Form8889Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8889Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const deductible = deductibleContributions(

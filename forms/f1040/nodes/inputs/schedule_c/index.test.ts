@@ -18,7 +18,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: z.infer<typeof itemSchema>[]) {
-  return scheduleC.compute({ schedule_cs: items });
+  return scheduleC.compute({ taxYear: 2025 }, { schedule_cs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -118,7 +118,7 @@ Deno.test("schema_invalid_accounting_method: 'FIFO' fails validation", () => {
 });
 
 Deno.test("schema_empty_array: empty schedule_cs array does not throw", () => {
-  const result = scheduleC.compute({ schedule_cs: [] });
+  const result = scheduleC.compute({ taxYear: 2025 }, { schedule_cs: [] });
   assertEquals(Array.isArray(result.outputs), true);
 });
 

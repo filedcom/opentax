@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Moving expense deduction (IRC §217) is suspended for most taxpayers
 // under TCJA (P.L. 115-97, §11049). Available ONLY for active duty military
@@ -63,7 +64,7 @@ class F3903Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f3903s } = parsed;
 

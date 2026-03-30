@@ -7,6 +7,7 @@ import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -223,7 +224,7 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, schedule2]);
 
-  compute(rawInput: Form8853Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     return {
       outputs: [

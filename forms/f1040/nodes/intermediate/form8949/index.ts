@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,7 @@ class Form8949IntermediateNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d]);
 
-  compute(rawInput: Form8949Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8949Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     if (!hasTransactions(input)) {

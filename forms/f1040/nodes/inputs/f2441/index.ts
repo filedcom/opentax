@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 constants — IRC §21(c), IRC §129(a)(2)
 const EXPENSE_CAP_ONE_PERSON = 3000;
@@ -111,7 +112,7 @@ class F2441Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule3]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     return { outputs: parsed.f2441s.flatMap(itemOutputs) };
   }

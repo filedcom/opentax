@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
 import { schedule_b } from "../schedule_b/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -114,7 +115,7 @@ class Form8815Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_b]);
 
-  compute(rawInput: Form8815Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8815Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const interest = input.ee_bond_interest ?? 0;

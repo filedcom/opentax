@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
   qualifying_children_count: z.number().int().nonnegative().optional(),
@@ -87,7 +88,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
-  compute(rawInput: F8812Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8812Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.f8812s.length === 0) return { outputs: [] };
 

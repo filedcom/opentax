@@ -6,6 +6,7 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 constant — IRC §129(a)(2)
 // Maximum employer-provided dependent care benefit excludable from gross income.
@@ -37,7 +38,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(input: Form2441Input): NodeResult {
+  compute(_ctx: NodeContext, input: Form2441Input): NodeResult {
     const parsed = inputSchema.parse(input);
     const benefits = parsed.dep_care_benefits ?? 0;
 

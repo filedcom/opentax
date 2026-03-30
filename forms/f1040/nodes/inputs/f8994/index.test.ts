@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f8994 } from "./index.ts";
 
 function compute(input: Parameters<typeof f8994.compute>[0]) {
-  return f8994.compute(input);
+  return f8994.compute({ taxYear: 2025 }, input);
 }
 
 function schedule3Credit(result: ReturnType<typeof compute>): number | undefined {

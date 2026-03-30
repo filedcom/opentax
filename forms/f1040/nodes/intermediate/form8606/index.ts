@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
 
@@ -166,7 +167,7 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(rawInput: Form8606Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const { taxableTraditionalDist, taxableConversionAmt } = computePartI(input);

@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -227,7 +228,7 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
   protected readonly phaseOutStart = 259190;
   protected readonly phaseOutRange = 40000; // $259,190 to $299,190
 
-  compute(rawInput: Form8839Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8839Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const children = input.children ?? [];

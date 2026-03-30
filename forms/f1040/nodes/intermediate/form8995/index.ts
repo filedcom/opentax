@@ -6,6 +6,7 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -101,7 +102,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(rawInput: Form8995Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8995Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     if (!hasQbiActivity(input)) {

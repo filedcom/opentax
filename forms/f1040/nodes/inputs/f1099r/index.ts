@@ -10,6 +10,7 @@ import { form5329 } from "../../intermediate/form5329/index.ts";
 import { form4972 } from "../../intermediate/form4972/index.ts";
 import { form8606 } from "../../intermediate/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Distribution codes that produce zero taxable income (pure rollovers/non-taxable exchanges)
 const ZERO_TAXABLE_CODES = new Set(["G", "N", "R", "Q", "T", "6", "W"]);
@@ -397,7 +398,7 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, form5329, form4972, form8606]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099rs: r1099s } = parsed;
 

@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f8379 } from "./index.ts";
 
 function compute(input: Parameters<typeof f8379.compute>[0]) {
-  return f8379.compute(input);
+  return f8379.compute({ taxYear: 2025 }, input);
 }
 
 // =============================================================================

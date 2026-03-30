@@ -6,6 +6,7 @@ import type {
 import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -135,7 +136,7 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(rawInput: Schedule3Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Schedule3Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const credits = partITotal(input);

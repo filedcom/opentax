@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8949, type Form8949Part } from "../../intermediate/form8949/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 const LONG_TERM_PARTS = new Set(["D", "E", "F"]);
 
@@ -56,7 +57,7 @@ class F1099bNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8949, f1040]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     return { outputs: parsed.f1099bs.flatMap(processItem) };
   }

@@ -6,7 +6,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8889.compute(inputSchema.parse(input));
+  return form8889.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

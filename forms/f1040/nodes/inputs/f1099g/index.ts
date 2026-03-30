@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_f } from "../../intermediate/schedule_f/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 thresholds from IRS Form 1099-G instructions
 const UNEMPLOYMENT_MIN_THRESHOLD = 10;
@@ -132,7 +133,7 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, f1040, schedule_f]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099gs: g99s } = parsed;
 

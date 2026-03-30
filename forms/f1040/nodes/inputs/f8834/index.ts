@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8834 — Qualified Electric Vehicle Credit (IRC §30)
 // Old §30 credit for 2-/3-wheel and low-speed vehicles (NOT new §30D).
@@ -74,7 +75,7 @@ class F8834Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = totalCredit(input.f8834s);
     return { outputs: buildOutputs(credit) };

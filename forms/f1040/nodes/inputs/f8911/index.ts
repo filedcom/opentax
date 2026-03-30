@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8911 — Alternative Fuel Vehicle Refueling Property Credit (IRC §30C)
 // TY2025: 30% of cost of qualifying refueling property.
@@ -77,7 +78,7 @@ class F8911Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: F8911Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8911Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.cost <= 0) return { outputs: [] };
     const busCredit = businessCredit(input);

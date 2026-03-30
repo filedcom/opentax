@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-item schema — one SSA-1099 or RRB-1099
 export const itemSchema = z.object({
@@ -77,7 +78,7 @@ class Ssa1099Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { ssas } = inputSchema.parse(input);
     const outputs: NodeOutput[] = f1040Output(ssas);
     return { outputs };

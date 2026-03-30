@@ -13,7 +13,7 @@ import { scheduleA } from "./index.ts";
 type ScheduleAInput = Parameters<typeof scheduleA.compute>[0];
 
 function compute(input: ScheduleAInput) {
-  return scheduleA.compute(input);
+  return scheduleA.compute({ taxYear: 2025 }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

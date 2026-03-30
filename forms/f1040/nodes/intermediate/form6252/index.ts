@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 import { form4797 } from "../form4797/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ class Form6252Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, form4797]);
 
-  compute(rawInput: Form6252Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form6252Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const outputs: NodeOutput[] = [];

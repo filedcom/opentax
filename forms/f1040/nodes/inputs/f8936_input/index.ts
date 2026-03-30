@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form8936 } from "../../intermediate/form8936/index.ts";
 import { filingStatusSchema } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Array input node — one entry per qualifying clean vehicle.
 // Passes each vehicle's data to the intermediate form8936 node for credit
@@ -61,7 +62,7 @@ class F8936InputNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8936]);
 
-  compute(rawInput: F8936InputNodeInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8936InputNodeInput): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.f8936_inputs.length === 0) return { outputs: [] };
     return { outputs: input.f8936_inputs.map(vehicleOutput) };

@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const inputSchema = z.object({
   // Master switch — "X" = generate Form 4868; any other value or absent = do not generate
@@ -46,7 +47,7 @@ class EXTNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(input: EXTInput): NodeResult {
+  compute(_ctx: NodeContext, input: EXTInput): NodeResult {
     const parsed = inputSchema.parse(input);
 
     // Master switch: without produce_4868 = "X", nothing is generated

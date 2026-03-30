@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule_b } from "../../intermediate/schedule_b/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-item schema — one 1099-OID from one payer
 // IRS Form 1099-OID TY2025: Original Issue Discount
@@ -105,7 +106,7 @@ class F1099oidNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_b, f1040, form6251]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1099oids } = inputSchema.parse(input);
 
     const outputs: NodeOutput[] = [

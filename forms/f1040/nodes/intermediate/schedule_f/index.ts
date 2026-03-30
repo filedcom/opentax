@@ -12,6 +12,7 @@ import { form8995 } from "../form8995/index.ts";
 import { form8582 } from "../form8582/index.ts";
 import { form6198 } from "../form6198/index.ts";
 import { form461 } from "../form461/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ── TY2025 Constants ──────────────────────────────────────────────────────────
 
@@ -203,7 +204,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     form461,
   ]);
 
-  compute(rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     if (input.schedule_fs.length === 0) {

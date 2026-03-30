@@ -10,6 +10,7 @@ import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // FOR dropdown: destination schedule/form
 // A = Schedule A, C = Schedule C, E = Schedule E, 8829 = Form 8829
@@ -163,7 +164,7 @@ class F1098Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_a, schedule_c, schedule_e, form_8829, schedule1]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1098s } = input;
 
     const outputs: NodeOutput[] = [

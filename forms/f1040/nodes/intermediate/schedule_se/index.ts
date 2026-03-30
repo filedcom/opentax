@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // Rev Proc 2024-40 §3.28; Schedule SE (Form 1040) 2025, Part I Line 7
@@ -81,7 +82,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2, schedule1]);
 
-  compute(rawInput: ScheduleSEInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // Line 3: combined farm + nonfarm net profit

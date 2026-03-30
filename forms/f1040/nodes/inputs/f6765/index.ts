@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (IRC §41) ───────────────────────────────────────────────
 
@@ -98,7 +99,7 @@ class F6765Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: F6765Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F6765Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const fullCredit = computeCredit(input);
 

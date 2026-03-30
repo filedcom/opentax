@@ -6,7 +6,9 @@ import type {
 import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { income_tax_calculation } from "../../intermediate/income_tax_calculation/index.ts";
 import { FilingStatus } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -293,14 +295,15 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation]);
 
-  compute(input: GeneralInput): NodeResult {
+  compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
     const f1040Input = buildF1040Input(parsed);
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(income_tax_calculation, { filing_status: parsed.filing_status }),
     ];
 
     return { outputs };

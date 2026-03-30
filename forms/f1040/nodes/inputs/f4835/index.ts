@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6198 } from "../../intermediate/form6198/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 4835 — Farm Rental Income and Expenses
 //
@@ -144,7 +145,7 @@ class F4835Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, f1040, form6198]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f4835s } = inputSchema.parse(input);
 
     const outputs: NodeOutput[] = [

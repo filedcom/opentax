@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 3468 — Investment Credit (IRC §§47, 48, 48C, 48E)
 // All credit components aggregate to Schedule 3, Line 6z (General Business Credit).
@@ -147,7 +148,7 @@ class F3468Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule3]);
   readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f3468.pdf";
 
-  compute(rawInput: F3468Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F3468Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = totalCredit(input);
     return { outputs: buildOutputs(credit) };

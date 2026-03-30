@@ -11,7 +11,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099k.compute({ f1099ks: items });
+  return f1099k.compute({ taxYear: 2025 }, { f1099ks: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -308,14 +308,14 @@ Deno.test("box4_federal_withheld matches 24% backup withholding rate on box1a (2
 
 Deno.test("compute throws if k99s is empty (hard schema rule)", () => {
   assertThrows(
-    () => f1099k.compute({ f1099ks: [] }),
+    () => f1099k.compute({ taxYear: 2025 }, { f1099ks: [] }),
     Error,
   );
 });
 
 Deno.test("compute throws if pse_name is missing (required field)", () => {
   assertThrows(
-    () => f1099k.compute({ f1099ks: [{ box1a_gross_payments: 5000 } as never] }),
+    () => f1099k.compute({ taxYear: 2025 }, { f1099ks: [{ box1a_gross_payments: 5000 } as never] }),
     Error,
   );
 });
@@ -555,7 +555,7 @@ Deno.test("PSE item with all optional boxes present — only box4 produces feder
 // ============================================================
 
 Deno.test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (backup withheld) — only Stripe emits f1040 output", () => {
-  const result = f1099k.compute({
+  const result = f1099k.compute({ taxYear: 2025 }, {
     f1099ks: [
       {
         pse_name: "PayPal",

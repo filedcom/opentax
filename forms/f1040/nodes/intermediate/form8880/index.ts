@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { FilingStatus } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 constants — IRC §25B; Rev Proc 2024-40
 const CONTRIBUTION_CAP = 2000;
@@ -101,7 +102,7 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(input: Form8880Input): NodeResult {
+  compute(_ctx: NodeContext, input: Form8880Input): NodeResult {
     const parsed = inputSchema.parse(input);
 
     const agi = parsed.agi ?? 0;

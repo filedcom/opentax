@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { eitc } from "../../intermediate/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { f8863 } from "../f8863/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8862 — Information to Claim Certain Credits After Disallowance
 //
@@ -56,7 +57,7 @@ class F8862Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([eitc, f8812, f8863]);
 
-  compute(rawInput: F8862Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8862Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const outputs: NodeOutput[] = [
       ...eitcOutput(input),

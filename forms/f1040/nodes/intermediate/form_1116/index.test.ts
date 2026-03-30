@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../schedule3/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form1116.compute(inputSchema.parse(input));
+  return form1116.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

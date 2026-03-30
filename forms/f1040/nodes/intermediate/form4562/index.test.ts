@@ -27,7 +27,7 @@ import { form6251 } from "../form6251/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form4562.compute(input);
+  return form4562.compute({ taxYear: 2025 }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

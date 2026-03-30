@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ class F8997Node extends TaxNode<typeof inputSchema> {
   // Only Part III (inclusion events) produces downstream tax outputs.
   readonly outputNodes = new OutputNodes([schedule_d]);
 
-  compute(rawInput: F8997Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8997Input): NodeResult {
     const parsed = inputSchema.parse(rawInput);
 
     // Parts I, II, IV are purely tracking — no tax computation outputs.

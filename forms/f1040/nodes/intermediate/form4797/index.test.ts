@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4797, inputSchema } from "./index.ts";
 
-function compute(input: Record<string, unknown>) { return form4797.compute(inputSchema.parse(input)); }
+function compute(input: Record<string, unknown>) { return form4797.compute({ taxYear: 2025 }, inputSchema.parse(input)); }
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) { return result.outputs.find((o) => o.nodeType === nodeType); }
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

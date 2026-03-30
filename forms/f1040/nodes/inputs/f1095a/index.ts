@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form8962 } from "../../intermediate/form8962/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 1095-A — Health Insurance Marketplace Statement
 // IRS Form 1095-A, Parts I–III
@@ -76,7 +77,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form8962]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1095as } = inputSchema.parse(input);
 
     // Aggregate annual totals across all policies

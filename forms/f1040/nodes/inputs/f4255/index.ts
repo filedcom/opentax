@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 4255 — Recapture of Investment Credit (IRC §50(a))
 // Filed when property on which an investment credit was claimed is disposed of
@@ -81,7 +82,7 @@ class F4255Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule2]);
   readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f4255.pdf";
 
-  compute(rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);
     const total = totalRecapture(input.properties);
     return { outputs: buildOutputs(total) };

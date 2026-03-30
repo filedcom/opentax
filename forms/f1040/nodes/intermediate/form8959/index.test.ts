@@ -6,7 +6,7 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8959.compute(inputSchema.parse(input));
+  return form8959.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

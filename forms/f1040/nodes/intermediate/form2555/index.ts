@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -85,7 +86,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  compute(rawInput: Form2555Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form2555Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // No foreign income or qualification test not met → no outputs

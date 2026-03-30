@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8379 — Injured Spouse Allocation
 //
@@ -56,7 +57,7 @@ class F8379Node extends TaxNode<typeof inputSchema> {
   // Form 8379 is allocation/disclosure only — no tax-computation outputs.
   readonly outputNodes = new OutputNodes([]);
 
-  compute(rawInput: F8379Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8379Input): NodeResult {
     inputSchema.parse(rawInput);
     return { outputs: [] };
   }

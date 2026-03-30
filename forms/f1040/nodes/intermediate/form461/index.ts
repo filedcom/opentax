@@ -5,12 +5,13 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { normalizeArray } from "../../utils.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 // Accumulation pattern: multiple upstream nodes (schedule_c, schedule_e, schedule_f)
 // may each contribute an excess_business_loss. The executor merges them into a scalar
-// or array before calling compute().
+// or array before calling compute(_ctx: NodeContext, ).
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
   z.union([schema, z.array(schema)]);
 
@@ -37,7 +38,7 @@ class Form461Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  compute(rawInput: Form461Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form461Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const total = totalExcessLoss(input);
 

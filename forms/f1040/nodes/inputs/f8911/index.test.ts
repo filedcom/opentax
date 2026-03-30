@@ -2,7 +2,7 @@ import { assertEquals, assertAlmostEquals } from "@std/assert";
 import { f8911, FuelType } from "./index.ts";
 
 function compute(input: Parameters<typeof f8911.compute>[0]) {
-  return f8911.compute(input);
+  return f8911.compute({ taxYear: 2025 }, input);
 }
 
 function findSchedule3All(result: ReturnType<typeof compute>) {

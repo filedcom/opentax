@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f8936Input } from "./index.ts";
 
 function compute(items: Parameters<typeof f8936Input.compute>[0]["f8936_inputs"]) {
-  return f8936Input.compute({ f8936_inputs: items });
+  return f8936Input.compute({ taxYear: 2025 }, { f8936_inputs: items });
 }
 
 // =============================================================================

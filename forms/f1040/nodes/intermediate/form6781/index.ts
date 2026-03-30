@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ class Form6781Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d]);
 
-  compute(rawInput: Form6781Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form6781Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const net = netAmount(input);

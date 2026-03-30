@@ -14,7 +14,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form2441.compute(input);
+  return form2441.compute({ taxYear: 2025 }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

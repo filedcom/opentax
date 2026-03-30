@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, qdcgtw } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return qdcgtw.compute(inputSchema.parse(input));
+  return qdcgtw.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 // ---------------------------------------------------------------------------

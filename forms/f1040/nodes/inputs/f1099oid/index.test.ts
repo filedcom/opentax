@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f1099oid } from "./index.ts";
 
 function compute(items: Parameters<typeof f1099oid.compute>[0]["f1099oids"]) {
-  return f1099oid.compute({ f1099oids: items });
+  return f1099oid.compute({ taxYear: 2025 }, { f1099oids: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

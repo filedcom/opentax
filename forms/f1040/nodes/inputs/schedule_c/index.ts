@@ -13,6 +13,7 @@ import { form6198 } from "../../intermediate/form6198/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
 import { form8990 } from "../../intermediate/form8990/index.ts";
 import { form461 } from "../../intermediate/form461/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ── TY2025 Constants ────────────────────────────────────────────────────────
 
@@ -265,7 +266,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     form461,
   ]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
 

@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ class Form982Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  compute(rawInput: Form982Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form982Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // Nothing to process if no excluded COD was passed from upstream

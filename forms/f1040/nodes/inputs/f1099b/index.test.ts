@@ -19,7 +19,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099b.compute(inputSchema.parse({ f1099bs: items }));
+  return f1099b.compute({ taxYear: 2025 }, inputSchema.parse({ f1099bs: items }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -33,37 +33,37 @@ function findAllOutputs(result: ReturnType<typeof compute>, nodeType: string) {
 // ─── 1. Input schema validation ────────────────────────────────────────────
 
 Deno.test("schema: empty b99s array is rejected", () => {
-  assertThrows(() => f1099b.compute({ f1099bs: [] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [] }), Error);
 });
 
 Deno.test("schema: missing part field is rejected", () => {
   const item = { description: "100 sh XYZ", date_acquired: "01012024", date_sold: "06012024", proceeds: 1000, cost_basis: 800 };
-  assertThrows(() => f1099b.compute({ f1099bs: [item as never] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [item as never] }), Error);
 });
 
 Deno.test("schema: missing description is rejected", () => {
   const item = { part: "A", date_acquired: "01012024", date_sold: "06012024", proceeds: 1000, cost_basis: 800 };
-  assertThrows(() => f1099b.compute({ f1099bs: [item as never] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [item as never] }), Error);
 });
 
 Deno.test("schema: missing date_acquired is rejected", () => {
   const item = { part: "A", description: "100 sh XYZ", date_sold: "06012024", proceeds: 1000, cost_basis: 800 };
-  assertThrows(() => f1099b.compute({ f1099bs: [item as never] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [item as never] }), Error);
 });
 
 Deno.test("schema: missing date_sold is rejected", () => {
   const item = { part: "A", description: "100 sh XYZ", date_acquired: "01012024", proceeds: 1000, cost_basis: 800 };
-  assertThrows(() => f1099b.compute({ f1099bs: [item as never] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [item as never] }), Error);
 });
 
 Deno.test("schema: missing proceeds is rejected", () => {
   const item = { part: "A", description: "100 sh XYZ", date_acquired: "01012024", date_sold: "06012024", cost_basis: 800 };
-  assertThrows(() => f1099b.compute({ f1099bs: [item as never] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [item as never] }), Error);
 });
 
 Deno.test("schema: missing cost_basis is rejected", () => {
   const item = { part: "A", description: "100 sh XYZ", date_acquired: "01012024", date_sold: "06012024", proceeds: 1000 };
-  assertThrows(() => f1099b.compute({ f1099bs: [item as never] }), Error);
+  assertThrows(() => f1099b.compute({ taxYear: 2025 }, { f1099bs: [item as never] }), Error);
 });
 
 Deno.test("schema: negative proceeds is rejected", () => {

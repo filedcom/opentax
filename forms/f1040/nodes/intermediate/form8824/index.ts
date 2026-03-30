@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 import { form4797 } from "../form4797/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Form 8824 — Like-Kind Exchanges (IRC §1031) ──────────────────────────────
 //
@@ -119,7 +120,7 @@ class Form8824Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, form4797]);
 
-  compute(rawInput: Form8824Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8824Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // No exchange data → no output

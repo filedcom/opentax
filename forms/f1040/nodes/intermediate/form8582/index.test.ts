@@ -3,7 +3,7 @@ import { form8582, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8582.compute(inputSchema.parse(input));
+  return form8582.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

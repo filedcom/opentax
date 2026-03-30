@@ -18,7 +18,7 @@ function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
 }
 
 function compute(items: unknown[]) {
-  return f1098.compute(inputSchema.parse({ f1098s: items }));
+  return f1098.compute({ taxYear: 2025 }, inputSchema.parse({ f1098s: items }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

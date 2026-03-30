@@ -8,7 +8,7 @@ import { schedule3 } from "../../intermediate/schedule3/index.ts";
 // ---------------------------------------------------------------------------
 
 function compute(input: Record<string, unknown>) {
-  return ext.compute(inputSchema.parse(input));
+  return ext.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
