@@ -8,10 +8,6 @@ function compute(input: Record<string, unknown>) {
   return ira_deduction_worksheet.compute(inputSchema.parse(input));
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
 Deno.test("smoke: zero contribution → no outputs", () => {
@@ -33,7 +29,6 @@ Deno.test("not active participant: single → full deduction", () => {
     ira_contribution: 7_000,
     active_participant: false,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
 });
 
@@ -45,7 +40,6 @@ Deno.test("not active participant: MFJ spouse not participant → full deduction
     active_participant: false,
     spouse_active_participant: false,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
 });
 
@@ -58,7 +52,6 @@ Deno.test("active participant: single below phase-out → full deduction", () =>
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
 });
 
@@ -69,7 +62,6 @@ Deno.test("active participant: MFJ below phase-out → full deduction", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
 });
 
@@ -85,7 +77,6 @@ Deno.test("active participant: single in phase-out → partial deduction", () =>
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 
@@ -98,7 +89,6 @@ Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 
@@ -111,7 +101,6 @@ Deno.test("active participant: HOH in phase-out → partial deduction", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 
@@ -148,7 +137,6 @@ Deno.test("non-covered MFJ spouse: below non-covered range → full deduction", 
     active_participant: false,
     spouse_active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
 });
 
@@ -162,7 +150,6 @@ Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", 
     active_participant: false,
     spouse_active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 
@@ -187,7 +174,6 @@ Deno.test("age 50+: contribution limit is $8,000", () => {
     active_participant: false,
     age_50_or_older: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 8_000);
 });
 
@@ -199,7 +185,6 @@ Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
     active_participant: false,
     age_50_or_older: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 8_000);
 });
 
@@ -212,7 +197,6 @@ Deno.test("contribution exceeds $7,000 limit → capped at $7,000", () => {
     ira_contribution: 9_000,
     active_participant: false,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
 });
 
@@ -227,7 +211,6 @@ Deno.test("phase-out: reduced amount rounds up to nearest $10", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 6_300);
 });
 
@@ -242,7 +225,6 @@ Deno.test("phase-out: minimum $200 deduction floor applies", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 200);
 });
 
@@ -256,7 +238,6 @@ Deno.test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5
     ira_contribution: 7_000,
     active_participant: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 

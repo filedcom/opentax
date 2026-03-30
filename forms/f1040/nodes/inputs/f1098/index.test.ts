@@ -2,7 +2,6 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f1098, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
-import { scheduleC } from "../schedule_c/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -634,8 +633,6 @@ Deno.test("edge_split_interest_two_entries — same property split across for_ro
     minimalItem({ box1_mortgage_interest: 7000, for_routing: "A" }),
     minimalItem({ box1_mortgage_interest: 3000, for_routing: "E" }),
   ]);
-  const schedA = findOutput(result, "schedule_a");
-  const schedE = findOutput(result, "schedule_e");
   assertEquals(fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098, 7000);
   const eField = (schedE!.fields as Record<string, unknown>).mortgage_interest ??
     (schedE!.fields as Record<string, unknown>).line12_mortgage_interest;

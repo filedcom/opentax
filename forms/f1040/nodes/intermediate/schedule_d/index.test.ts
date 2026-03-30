@@ -179,13 +179,11 @@ Deno.test("no inputs: capital_loss_carryover alone emits nothing", () => {
 
 Deno.test("ST: single ST gain routes line7_capital_gain to f1040", () => {
   const result = compute({ transaction: mkTx({ gain_loss: 500, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
 
 Deno.test("ST: single ST loss within limit passes through unchanged", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -1000, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1000);
 });
 
@@ -196,7 +194,6 @@ Deno.test("ST: two ST transactions summed correctly", () => {
       mkTx({ gain_loss: 200, is_long_term: false, part: "B" }),
     ],
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
 
@@ -207,7 +204,6 @@ Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
       mkTx({ gain_loss: -200, is_long_term: false, part: "B" }),
     ],
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
 
@@ -217,25 +213,21 @@ Deno.test("ST: mixed ST gain + ST loss nets correctly", () => {
 
 Deno.test("LT: single LT transaction gain", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 1000);
 });
 
 Deno.test("LT: cap gain distribution alone routes correctly", () => {
   const result = compute({ line13_cap_gain_distrib: 400 });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 400);
 });
 
 Deno.test("LT: cap gain distrib absent contributes 0", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 600 }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 600);
 });
 
 Deno.test("LT: COD property gain: fmv=5000, debt=3000 → LT gain=2000", () => {
   const result = compute({ cod_property_fmv: 5000, cod_debt_cancelled: 3000 });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2000);
 });
 
@@ -251,14 +243,12 @@ Deno.test("LT: all LT sources combined: tx + distrib + COD", () => {
     cod_property_fmv: 2000,
     cod_debt_cancelled: 500,
   });
-  const out = findOutput(result, "f1040");
   // line15 = 500 + 300 + 1500 = 2300; line7 = 0; total = 2300
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2300);
 });
 
 Deno.test("LT: box2c_qsbs is NOT additive — only line13 amount counts", () => {
   const result = compute({ line13_cap_gain_distrib: 500, box2c_qsbs: 200 });
-  const out = findOutput(result, "f1040");
   // line15 = 500 (not 700); box2c is a subset of line13
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
@@ -274,7 +264,6 @@ Deno.test("total: ST gain + LT gain", () => {
       mkLtTx({ gain_loss: 800 }),
     ],
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 1000);
 });
 
@@ -285,7 +274,6 @@ Deno.test("total: ST gain offsets LT loss — net positive", () => {
       mkLtTx({ gain_loss: -500 }),
     ],
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 1000);
 });
 
@@ -296,7 +284,6 @@ Deno.test("total: net zero emits line7_capital_gain = 0", () => {
       mkLtTx({ gain_loss: -1000 }),
     ],
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 0);
 });
 
@@ -306,25 +293,21 @@ Deno.test("total: net zero emits line7_capital_gain = 0", () => {
 
 Deno.test("loss: below standard limit passes through ($2000 loss)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -2000, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -2000);
 });
 
 Deno.test("loss: exactly at standard limit ($3000 loss)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -3000, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
 Deno.test("loss: exceeds standard limit — capped at $3000", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -5000, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
 Deno.test("loss: large loss — capped at $3000 (non-MFS)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -10000, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3000);
 });
 
@@ -333,7 +316,6 @@ Deno.test("loss: MFS below $1500 limit passes through ($1000 loss)", () => {
     transaction: mkTx({ gain_loss: -1000, is_long_term: false }),
     filing_status: FilingStatus.MFS,
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1000);
 });
 
@@ -342,7 +324,6 @@ Deno.test("loss: MFS at $1500 limit exactly", () => {
     transaction: mkTx({ gain_loss: -1500, is_long_term: false }),
     filing_status: FilingStatus.MFS,
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1500);
 });
 
@@ -351,7 +332,6 @@ Deno.test("loss: MFS exceeds $1500 — capped at $1500", () => {
     transaction: mkTx({ gain_loss: -2000, is_long_term: false }),
     filing_status: FilingStatus.MFS,
   });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -1500);
 });
 
@@ -463,13 +443,11 @@ Deno.test("output count: pure loss → exactly 1 output (f1040, capped)", () => 
 
 Deno.test("accumulation: single transaction object (not array) normalized correctly", () => {
   const result = compute({ transaction: mkTx({ gain_loss: 750, is_long_term: false }) });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 750);
 });
 
 Deno.test("accumulation: COD scalar fmv/debt normalized to single-item array", () => {
   const result = compute({ cod_property_fmv: 4000, cod_debt_cancelled: 1500 });
-  const out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2500);
 });
 
@@ -478,7 +456,6 @@ Deno.test("accumulation: COD parallel arrays — two items summed", () => {
     cod_property_fmv: [5000, 3000],
     cod_debt_cancelled: [2000, 1000],
   });
-  const out = findOutput(result, "f1040");
   // (5000-2000) + (3000-1000) = 3000 + 2000 = 5000
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 5000);
 });
@@ -508,7 +485,6 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
   // gain28Pct = 600 (only the "C" tx)
   // capitalGainForReturn = 6800 (positive → no cap)
 
-  const f1040Out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 6800);
 
   const worksheetOut = findOutput(result, "rate_28_gain_worksheet");
@@ -768,11 +744,11 @@ Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward
 
 // MFS filing status: $1,500 limit
 Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, no carryforward", () => {
-  const result = schedule_d.compute({
+  const result = schedule_d.compute(inputSchema.parse({
     line_1a_proceeds: 8_500,
     line_1a_cost: 10_000, // net = -1500
     filing_status: FilingStatus.MFS,
-  } as any);
+  }));
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -1_500);

@@ -685,7 +685,6 @@ Deno.test("inherited: VARIOUS date_acquired is forwarded correctly", () => {
       cost_basis: 8000,
     }),
   ]);
-  const out = findOutput(result, "schedule_d");
   const tx = fieldsOf(result.outputs, schedule_d)!
     .transaction as Record<string, unknown>;
   assertEquals(tx.date_acquired, "VARIOUS");

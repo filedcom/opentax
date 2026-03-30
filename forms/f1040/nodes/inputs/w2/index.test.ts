@@ -6,9 +6,7 @@ import { form8839 } from "../../intermediate/form8839/index.ts";
 import { form2441 } from "../../intermediate/form2441/index.ts";
 import { form4137 } from "../../intermediate/form4137/index.ts";
 import { form8853 } from "../../intermediate/form8853/index.ts";
-import { form8880 } from "../../intermediate/form8880/index.ts";
 import { form8889 } from "../../intermediate/form8889/index.ts";
-import { form8959 } from "../../intermediate/form8959/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/ira_deduction_worksheet/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
@@ -1610,8 +1608,6 @@ Deno.test("employer_state_code_no_direct_routing: employer_state_code does not a
     minimalItem({ box1_wages: 80000, box15_state: "CA" }),
   ]);
   const without = compute([minimalItem({ box1_wages: 80000 })]);
-  const f1040With = findOutput(withState, "f1040");
-  const f1040Without = findOutput(without, "f1040");
   assertEquals(
     fieldsOf(withState.outputs, f1040)!.line1a_wages,
     fieldsOf(without.outputs, f1040)!.line1a_wages,

@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -54,6 +54,22 @@ export const inputSchema = z.object({
   // Line 11 — Excess social security tax withheld
   // IRC §31(b); excess SS over wage base across multiple employers → Schedule 3 line 11
   line11_excess_ss: z.number().nonnegative().optional(),
+
+  // Line 5 — Residential clean energy + energy efficient home improvement credits (Form 5695)
+  // IRC §25C, §25D; Form 5695 line 15 + line 30 → Schedule 3 line 5
+  line5_residential_energy: z.number().nonnegative().optional(),
+
+  // Line 6d — Clean vehicle credit (Form 8936 line 15 — nonrefundable portion)
+  // IRC §30D; Form 8936 Part IV line 15 → Schedule 3 line 6d
+  line6d_clean_vehicle_credit: z.number().nonnegative().optional(),
+
+  // Line 6f — Mortgage interest credit (Form 8396 line 11)
+  // IRC §25; Form 8396 line 11 → Schedule 3 line 6f
+  line6f_mortgage_interest_credit: z.number().nonnegative().optional(),
+
+  // Line 9 — Net premium tax credit (Form 8962 line 26)
+  // IRC §36B; Form 8962 line 26 → Schedule 3 line 9 (Part II refundable credit)
+  line9_premium_tax_credit: z.number().nonnegative().optional(),
 });
 
 type Schedule3Input = z.infer<typeof inputSchema>;
@@ -68,22 +84,24 @@ function line1(input: Schedule3Input): number {
 }
 
 // Part I, Line 8 — total nonrefundable credits.
-// Sum of lines 1–7 (lines 5, 6a, 6d–6z, and 7 are not yet modeled).
 function partITotal(input: Schedule3Input): number {
   return (
     line1(input) +
     (input.line2_childcare_credit ?? 0) +
     (input.line3_education_credit ?? 0) +
     (input.line4_retirement_savings_credit ?? 0) +
+    (input.line5_residential_energy ?? 0) +
     (input.line6b_child_tax_credit ?? 0) +
-    (input.line6c_adoption_credit ?? 0)
+    (input.line6c_adoption_credit ?? 0) +
+    (input.line6d_clean_vehicle_credit ?? 0) +
+    (input.line6f_mortgage_interest_credit ?? 0)
   );
 }
 
 // Part II, Line 15 — total additional payments and credits.
-// Sum of lines 9–14 (lines 9, 12–14 are not yet modeled).
 function partIITotal(input: Schedule3Input): number {
   return (
+    (input.line9_premium_tax_credit ?? 0) +
     (input.line10_amount_paid_extension ?? 0) +
     (input.line11_excess_ss ?? 0)
   );

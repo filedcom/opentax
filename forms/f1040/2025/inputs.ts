@@ -7,14 +7,21 @@ import { f1099div, itemSchema as f1099divItemSchema } from "../nodes/inputs/f109
 import { f1099g, itemSchema as f1099gItemSchema } from "../nodes/inputs/f1099g/index.ts";
 import { f1099int, itemSchema as f1099intItemSchema } from "../nodes/inputs/f1099int/index.ts";
 import { f1099k, itemSchema as f1099kItemSchema } from "../nodes/inputs/f1099k/index.ts";
+import { f1099oid, itemSchema as f1099oidItemSchema } from "../nodes/inputs/f1099oid/index.ts";
 import { f1099m, itemSchema as f1099mItemSchema } from "../nodes/inputs/f1099m/index.ts";
 import { f1099nec, itemSchema as f1099necItemSchema } from "../nodes/inputs/f1099nec/index.ts";
 import { f1099r, itemSchema as f1099rItemSchema } from "../nodes/inputs/f1099r/index.ts";
+import { rrb1099r, itemSchema as rrb1099rItemSchema } from "../nodes/inputs/rrb1099r/index.ts";
+import { f1095a, itemSchema as f1095aItemSchema } from "../nodes/inputs/f1095a/index.ts";
+import { f4835, itemSchema as f4835ItemSchema } from "../nodes/inputs/f4835/index.ts";
 import { f2441, itemSchema as f2441ItemSchema } from "../nodes/inputs/f2441/index.ts";
 import { f8812, itemSchema as f8812ItemSchema } from "../nodes/inputs/f8812/index.ts";
 import { f8863, itemSchema as f8863ItemSchema } from "../nodes/inputs/f8863/index.ts";
 import { f8949, itemSchema as f8949ItemSchema } from "../nodes/inputs/f8949/index.ts";
 import { general, inputSchema as generalInputSchema } from "../nodes/inputs/general/index.ts";
+import { k1_trust, itemSchema as k1TrustItemSchema } from "../nodes/inputs/k1_trust/index.ts";
+import { k1SCorpNode, itemSchema as k1SCorpItemSchema } from "../nodes/inputs/k1_s_corp/index.ts";
+import { k1Partnership, itemSchema as k1PartnershipItemSchema } from "../nodes/inputs/k1_partnership/index.ts";
 import { inputSchema as scheduleAInputSchema, scheduleA } from "../nodes/inputs/schedule_a/index.ts";
 import { itemSchema as scheduleCItemSchema, scheduleC } from "../nodes/inputs/schedule_c/index.ts";
 import { itemSchema as scheduleEItemSchema, scheduleE } from "../nodes/inputs/schedule_e/index.ts";
@@ -26,6 +33,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
   { node: w2, itemSchema: w2ItemSchema, isArray: true },
   { node: f1099int, itemSchema: f1099intItemSchema, isArray: true },
+  { node: f1099oid, itemSchema: f1099oidItemSchema, isArray: true },
   { node: f1099div, itemSchema: f1099divItemSchema, isArray: true },
   { node: f1099nec, itemSchema: f1099necItemSchema, isArray: true },
   { node: f1099g, itemSchema: f1099gItemSchema, isArray: true },
@@ -35,13 +43,19 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099b, itemSchema: f1099bItemSchema, isArray: true },
   { node: f1099r, itemSchema: f1099rItemSchema, isArray: true },
   { node: f1098, itemSchema: f1098ItemSchema, isArray: true },
+  { node: f4835, itemSchema: f4835ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },
   { node: f8863, itemSchema: f8863ItemSchema, isArray: true },
   { node: f8949, itemSchema: f8949ItemSchema, isArray: true },
   { node: scheduleC, itemSchema: scheduleCItemSchema, isArray: true },
   { node: scheduleE, itemSchema: scheduleEItemSchema, isArray: true },
+  { node: rrb1099r, itemSchema: rrb1099rItemSchema, isArray: true },
   { node: ssa1099, itemSchema: ssaItemSchema, isArray: true },
+  { node: f1095a, itemSchema: f1095aItemSchema, isArray: true },
+  { node: k1_trust, itemSchema: k1TrustItemSchema, isArray: true },
+  { node: k1SCorpNode, itemSchema: k1SCorpItemSchema, isArray: true },
+  { node: k1Partnership, itemSchema: k1PartnershipItemSchema, isArray: true },
   // Singleton inputs (4): entire form as a single object
   { node: scheduleA, inputSchema: scheduleAInputSchema, isArray: false },
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },

@@ -327,7 +327,6 @@ Deno.test("threshold: ACTC zero when earned income at $2500 floor", () => {
     earned_income: 2500,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
   // No ACTC when earned income does not exceed $2500
   assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
@@ -561,7 +560,6 @@ Deno.test("edge: has_form_2555=true suppresses ACTC (line28 = 0 or absent)", () 
     income_tax_liability: 0,
     has_form_2555: true,
   })]);
-  const f1040Out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
 
@@ -616,7 +614,6 @@ Deno.test("edge: do_not_claim_actc=true suppresses ACTC (line28 = 0 or absent)",
     income_tax_liability: 1000,
     do_not_claim_actc: true,
   })]);
-  const f1040Out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
 
@@ -714,8 +711,6 @@ Deno.test("edge: zero income_tax_liability means nonrefundable CTC is zero on sc
     agi: 50000,
     income_tax_liability: 0,
   })]);
-  const out = findOutput(result, "schedule3");
-  // Either no output or line6b = 0
   assertEquals(fieldsOf(result.outputs, schedule3)?.line6b_child_tax_credit ?? 0, 0);
 });
 

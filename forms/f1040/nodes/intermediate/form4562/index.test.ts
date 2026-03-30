@@ -97,7 +97,6 @@ Deno.test("section_179: election capped at $2,500,000 limit", () => {
     section_179_elected: 3_000_000,
     business_income_limit: 5_000_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 2_500_000);
 });
 
@@ -108,7 +107,6 @@ Deno.test("section_179: phase-out reduces limit dollar-for-dollar above $4,000,0
     section_179_elected: 4_500_000,
     business_income_limit: 5_000_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 2_000_000);
 });
 
@@ -131,7 +129,6 @@ Deno.test("section_179: business income limitation caps deduction", () => {
     section_179_elected: 100_000,
     business_income_limit: 60_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 60_000);
 });
 
@@ -144,7 +141,6 @@ Deno.test("section_179: disallowed amount is tracked as carryover", () => {
   });
   // Carryover does not route downstream — it's informational
   // but the total deduction must be $60,000
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 60_000);
 });
 
@@ -156,7 +152,6 @@ Deno.test("section_179: carryover from prior year is added to current elected", 
     section_179_carryover: 20_000,
     business_income_limit: 200_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 50_000);
 });
 
@@ -166,7 +161,6 @@ Deno.test("section_179: pre-computed deduction from schedule_e passed through", 
     section_179_deduction: 75_000,
     business_income_limit: 200_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 75_000);
 });
 
@@ -183,7 +177,6 @@ Deno.test("bonus: pre-Jan20 property gets 40% bonus depreciation", () => {
   const result = compute({
     bonus_depreciation_basis: 100_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 40_000);
 });
 
@@ -192,7 +185,6 @@ Deno.test("bonus: post-Jan19 property gets 100% bonus depreciation", () => {
   const result = compute({
     bonus_depreciation_basis_post_jan19: 100_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 100_000);
 });
 
@@ -210,7 +202,6 @@ Deno.test("bonus: elect_40pct_bonus for post-Jan19 property gives 40% instead of
     bonus_depreciation_basis_post_jan19: 100_000,
     elect_40pct_bonus: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 40_000);
 });
 
@@ -222,7 +213,6 @@ Deno.test("bonus: both pre and post-Jan19 basis combined", () => {
     bonus_depreciation_basis: 50_000,
     bonus_depreciation_basis_post_jan19: 80_000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 100_000);
 });
 
@@ -236,7 +226,6 @@ Deno.test("macrs: 5-year property year-1 GDS (200DB/HY = 20%)", () => {
     macrs_gds_recovery_period: 5,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 10_000);
 });
 
@@ -248,7 +237,6 @@ Deno.test("macrs: 5-year property year-2 GDS (200DB/HY = 32%)", () => {
     macrs_gds_recovery_period: 5,
     macrs_gds_year_of_service: 2,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 16_000);
 });
 
@@ -260,7 +248,6 @@ Deno.test("macrs: 7-year property year-1 GDS (200DB/HY = 14.29%)", () => {
     macrs_gds_recovery_period: 7,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 14_290);
 });
 
@@ -272,7 +259,6 @@ Deno.test("macrs: 3-year property year-1 GDS (200DB/HY = 33.33%)", () => {
     macrs_gds_recovery_period: 3,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 9_999);
 });
 
@@ -284,13 +270,11 @@ Deno.test("macrs: 15-year property year-1 GDS (150DB/HY = 5%)", () => {
     macrs_gds_recovery_period: 15,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 10_000);
 });
 
 Deno.test("macrs: prior-year MACRS depreciation passes through to schedule1", () => {
   const result = compute({ macrs_prior_depreciation: 25_000 });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 25_000);
 });
 
@@ -303,7 +287,6 @@ Deno.test("macrs: business use pct < 100% scales basis proportionally", () => {
     macrs_gds_year_of_service: 1,
     business_use_pct: 60,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 12_000);
 });
 
@@ -368,7 +351,6 @@ Deno.test("combined: §179 + bonus + MACRS all aggregate to schedule1", () => {
     macrs_gds_recovery_period: 5,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 42_000);
 });
 
@@ -382,7 +364,6 @@ Deno.test("combined: section_179_deduction from schedule_e + MACRS", () => {
     macrs_gds_recovery_period: 7,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 64_290);
 });
 
@@ -406,7 +387,6 @@ Deno.test("edge: listed property >50% business use qualifies for bonus", () => {
     is_listed_property: true,
     business_use_pct: 60,
   });
-  const s1 = findOutput(result, "schedule1");
   // 40% bonus on $50,000 = $20,000
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 20_000);
 });
@@ -420,7 +400,6 @@ Deno.test("edge: luxury auto year-1 limit caps total depreciation (no bonus, 202
     is_luxury_auto: true,
     luxury_auto_year: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 12_200);
 });
 
@@ -431,7 +410,6 @@ Deno.test("edge: luxury auto year-1 with bonus depreciation limit ($20,200)", ()
     is_luxury_auto: true,
     luxury_auto_year: 1,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 20_200);
 });
 
@@ -444,7 +422,6 @@ Deno.test("edge: luxury auto year-2 limit ($19,600) for pre-Jan20 property", () 
     is_luxury_auto: true,
     luxury_auto_year: 2,
   });
-  const s1 = findOutput(result, "schedule1");
   // 5-yr yr-2: 32% of $80,000 = $25,600 → capped at $19,600
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 19_600);
 });
@@ -473,7 +450,6 @@ Deno.test("smoke: realistic Schedule E rental property with §179 and MACRS", ()
     macrs_gds_year_of_service: 1,
     business_income_limit: 150_000,
   });
-  const s1 = findOutput(result, "schedule1");
   // §179: $25,000 + MACRS: $10,000 * 20% = $2,000 → total $27,000
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 27_000);
   // AMT: 5-yr (200DB vs 150DB): (20% - 15%) * $10,000 = $500

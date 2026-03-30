@@ -1,6 +1,6 @@
-import { assertEquals, assertThrows } from "@std/assert";
-import { f1099m, itemSchema } from "./index.ts";
-import { z } from "zod";
+import { assertEquals } from "@std/assert";
+import { f1099m, type itemSchema } from "./index.ts";
+import type { z } from "zod";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";

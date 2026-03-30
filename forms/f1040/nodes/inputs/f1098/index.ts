@@ -20,11 +20,6 @@ export enum ForRouting {
   F8829 = "8829",
 }
 
-// Post-12/15/2017 (TCJA) home acquisition debt limit
-const LIMIT_POST_2017 = 750_000;
-// Pre-12/16/2017 (grandfathered) home acquisition debt limit
-const LIMIT_PRE_2017 = 1_000_000;
-
 export const itemSchema = z.object({
   // Required per context.md
   box1_mortgage_interest: z.number().nonnegative(),
@@ -62,21 +57,6 @@ export const inputSchema = z.object({
 
 type F1098Item = z.infer<typeof itemSchema>;
 type F1098Items = F1098Item[];
-
-// Determine applicable loan limit from origination date and binding contract exception
-function debtLimit(item: F1098Item): number {
-  if (item.binding_contract_exception) return LIMIT_PRE_2017;
-  const date = item.box3_origination_date;
-  if (!date) return LIMIT_POST_2017; // conservative default per context.md
-  const parsed = new Date(date);
-  if (isNaN(parsed.getTime())) return LIMIT_POST_2017;
-  // Pre-12/16/2017 → grandfathered $1M limit
-  const cutoff = new Date("1987-10-14");
-  const pre2017Cutoff = new Date("2017-12-15");
-  if (parsed <= cutoff) return Infinity; // grandfathered debt — no dollar limit
-  if (parsed <= pre2017Cutoff) return LIMIT_PRE_2017;
-  return LIMIT_POST_2017;
-}
 
 // Net interest for a single item (Scenario A: same-year refund reduces box1)
 function netInterestForItem(item: F1098Item): number {

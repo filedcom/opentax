@@ -33,7 +33,6 @@ Deno.test("multiple interest entries (array) aggregate to line2b", () => {
 
 Deno.test("zero taxable_interest_net produces no interest in f1040 output", () => {
   const result = compute({ payer_name: "Bank A", taxable_interest_net: 0 });
-  const f1040 = findOutput(result, "f1040");
   // If no dividends either, no output at all
   assertEquals(result.outputs.length, 0);
 });

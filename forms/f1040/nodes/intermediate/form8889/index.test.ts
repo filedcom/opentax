@@ -27,7 +27,6 @@ Deno.test("part1: self_only personal contribution → schedule1 line13_hsa_deduc
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 3000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
 });
 
@@ -36,7 +35,6 @@ Deno.test("part1: family personal contribution → schedule1 line13_hsa_deductio
     coverage_type: CoverageType.Family,
     taxpayer_hsa_contributions: 5000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5000);
 });
 
@@ -48,7 +46,6 @@ Deno.test("part1: employer contributions reduce deductible personal amount (self
     taxpayer_hsa_contributions: 2500,
     employer_hsa_contributions: 2000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 2300);
 });
 
@@ -70,7 +67,6 @@ Deno.test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
     taxpayer_hsa_contributions: 5300,
     age_55_or_older: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5300);
 });
 
@@ -81,7 +77,6 @@ Deno.test("part1: age 55+ catch-up adds $1000 to family limit", () => {
     taxpayer_hsa_contributions: 9550,
     age_55_or_older: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 9550);
 });
 
@@ -90,7 +85,6 @@ Deno.test("part1: contribution at exact limit → fully deductible, no excess", 
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 4300,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 4300);
   const f5329 = findOutput(result, "form5329");
   assertEquals(f5329, undefined);
@@ -104,7 +98,6 @@ Deno.test("part1: excess contributions route to form5329 excess_hsa", () => {
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 5000,
   });
-  const f5329 = findOutput(result, "form5329");
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 700);
 });
 
@@ -115,7 +108,6 @@ Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
     taxpayer_hsa_contributions: 5000,
     employer_hsa_contributions: 4000,
   });
-  const f5329 = findOutput(result, "form5329");
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 450);
 });
 
@@ -140,7 +132,6 @@ Deno.test("part2: non-qualified distribution → schedule1 line8z_other income",
     hsa_distributions: 3000,
     qualified_medical_expenses: 1000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 2000);
 });
 
@@ -151,7 +142,6 @@ Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17
     hsa_distributions: 3000,
     qualified_medical_expenses: 1000,
   });
-  const s2 = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 400);
 });
 
@@ -161,9 +151,7 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
     coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 1000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1000);
-  const s2 = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 200);
 });
 
@@ -175,7 +163,6 @@ Deno.test("part2: distribution_exception → income still taxable but no 20% pen
     qualified_medical_expenses: 500,
     distribution_exception: true,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1500);
   const s2 = findOutput(result, "schedule2");
   assertEquals(s2, undefined); // no penalty
@@ -190,10 +177,8 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
     taxpayer_hsa_contributions: 3000,
     hsa_distributions: 1000,
   });
-  const s1 = findOutput(result, "schedule1");
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1000);
-  const s2 = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 200);
 });
 

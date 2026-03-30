@@ -7,10 +7,6 @@ function compute(input: Record<string, unknown>) {
   return form1116.compute(inputSchema.parse(input));
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
 Deno.test("smoke: no foreign income → no outputs", () => {
@@ -41,7 +37,6 @@ Deno.test("de minimis: taxes = 350 (above $300 single) → limitation applies", 
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 60);
 });
 
@@ -56,7 +51,6 @@ Deno.test("de minimis: taxes = 700 (above $600 MFJ) → limitation applies", () 
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.MFJ,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 200);
 });
 
@@ -73,7 +67,6 @@ Deno.test("ftc below limit: foreign taxes < ftc_limit → full credit allowed", 
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 400);
 });
 
@@ -90,7 +83,6 @@ Deno.test("ftc above limit: foreign taxes > ftc_limit → credit is capped at li
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 100);
 });
 
@@ -121,7 +113,6 @@ Deno.test("passive category: standard 1099 dividend/interest foreign tax path", 
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 150);
 });
 
@@ -138,7 +129,6 @@ Deno.test("general category: wages from foreign employer", () => {
     income_category: IncomeCategory.General,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 3500);
 });
 
@@ -156,7 +146,6 @@ Deno.test("fraction cap: foreign_income >= total_income → fraction = 1.0, cred
     income_category: IncomeCategory.General,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 4000);
 });
 
@@ -189,7 +178,6 @@ Deno.test("validation: foreign_income > total_income is allowed (capped fraction
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 100);
 });
 
@@ -217,6 +205,5 @@ Deno.test("validation: zero total_income with foreign_income > 0 → fraction = 
     income_category: IncomeCategory.Passive,
     filing_status: FilingStatus.Single,
   });
-  const s3 = findOutput(result, "schedule3");
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 200);
 });

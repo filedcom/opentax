@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -57,6 +57,15 @@ export const inputSchema = z.object({
   // Line 17c — Tax on lump-sum distributions (from Form 4972)
   // IRC §402(e)(1); Form 4972 → Schedule 2 line 17c
   lump_sum_tax: z.number().nonnegative().optional(),
+  // Line 2 — Excess advance premium tax credit repayment (Form 8962 line 29)
+  // IRC §36B(f); Form 8962 line 29 → Schedule 2 line 2
+  line2_excess_advance_premium: z.number().nonnegative().optional(),
+  // Line 7a — Household employment taxes (Schedule H line 26)
+  // IRC §3510; Schedule H line 26 → Schedule 2 line 7a
+  line7a_household_employment: z.number().nonnegative().optional(),
+  // Line 17d — Section 965 net tax liability (Form 8615 — Kiddie Tax)
+  // IRC §1(g); Form 8615 line 18 → Schedule 2 line 17d
+  line17d_kiddie_tax: z.number().nonnegative().optional(),
 });
 
 type Schedule2Input = z.infer<typeof inputSchema>;
@@ -111,7 +120,10 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
       (input.line6_uncollected_8919 ?? 0) +
       (input.line17b_hsa_penalty ?? 0) +
       (input.line11_additional_medicare ?? 0) +
-      (input.line12_niit ?? 0);
+      (input.line12_niit ?? 0) +
+      (input.line2_excess_advance_premium ?? 0) +
+      (input.line7a_household_employment ?? 0) +
+      (input.line17d_kiddie_tax ?? 0);
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [

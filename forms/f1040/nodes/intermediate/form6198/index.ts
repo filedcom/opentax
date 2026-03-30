@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
@@ -44,11 +44,6 @@ function netLossAmount(input: Form6198Input): number {
   const priorCarryforward = input.prior_unallowed ?? 0;
   const income = input.current_year_income ?? 0;
   return Math.max(0, currentLoss + priorCarryforward - income);
-}
-
-// Amount deductible: min(net_loss, amount_at_risk).
-function allowedLoss(totalLoss: number, atRisk: number): number {
-  return Math.min(totalLoss, atRisk);
 }
 
 // Amount disallowed (suspended to next year).

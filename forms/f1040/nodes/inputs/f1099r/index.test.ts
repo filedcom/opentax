@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { z } from "zod";
-import { DistributionCode, RolloverCode, f1099r, itemSchema } from "./index.ts";
+import type { z } from "zod";
+import { DistributionCode, RolloverCode, f1099r, type itemSchema } from "./index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
