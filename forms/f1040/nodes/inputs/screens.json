@@ -1007,7 +1007,7 @@
     "form": "8936",
     "description": "Clean Vehicle Credit",
     "screen_code": "8936",
-    "filed_tax_node_type_code": "f8936_input"
+    "filed_tax_node_type_code": "f8936"
   },
   {
     "form": "8938",

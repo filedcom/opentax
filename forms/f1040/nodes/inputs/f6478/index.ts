@@ -47,7 +47,7 @@ type F6478Input = z.infer<typeof inputSchema>;
 
 function entryCredit(entry: FuelEntry): number {
   const rate = entry.credit_rate_override ?? CREDIT_RATES[entry.fuel_type];
-  return entry.gallons * rate;
+  return Math.round(entry.gallons * rate * 100) / 100;
 }
 
 function totalCredit(entries: FuelEntry[]): number {

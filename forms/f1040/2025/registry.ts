@@ -39,7 +39,7 @@ import { schedule_r } from "../nodes/inputs/schedule_r/index.ts";
 import { f2210 } from "../nodes/inputs/f2210/index.ts";
 import { f3903 } from "../nodes/inputs/f3903/index.ts";
 import { f5695 } from "../nodes/inputs/f5695/index.ts";
-import { f8936Input } from "../nodes/inputs/f8936_input/index.ts";
+import { f8936 } from "../nodes/inputs/f8936/index.ts";
 import { f8862 } from "../nodes/inputs/f8862/index.ts";
 import { f8958 } from "../nodes/inputs/f8958/index.ts";
 import { f8994 } from "../nodes/inputs/f8994/index.ts";
@@ -96,7 +96,6 @@ import { form8606 } from "../nodes/intermediate/form8606/index.ts";
 import { form8396 } from "../nodes/intermediate/form8396/index.ts";
 import { form8815 } from "../nodes/intermediate/form8815/index.ts";
 import { form8839 } from "../nodes/intermediate/form8839/index.ts";
-import { form8936 } from "../nodes/intermediate/form8936/index.ts";
 import { form8853 } from "../nodes/intermediate/form8853/index.ts";
 import { form8880 } from "../nodes/intermediate/form8880/index.ts";
 import { form7206 } from "../nodes/intermediate/form7206/index.ts";
@@ -121,6 +120,7 @@ import { schedule_f } from "../nodes/intermediate/schedule_f/index.ts";
 import { schedule_h } from "../nodes/intermediate/schedule_h/index.ts";
 import { schedule_se } from "../nodes/intermediate/schedule_se/index.ts";
 import { unrecaptured_1250_worksheet } from "../nodes/intermediate/unrecaptured_1250_worksheet/index.ts";
+import { income_tax_calculation } from "../nodes/intermediate/income_tax_calculation/index.ts";
 
 // ── Outputs ───────────────────────────────────────────────────────────────────
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
@@ -170,7 +170,7 @@ export const registry: NodeRegistry = {
   f2210,
   f3903,
   f5695,
-  f8936_input: f8936Input,
+  f8936,
   f8862,
   f8958,
   f8994,
@@ -227,7 +227,6 @@ export const registry: NodeRegistry = {
   form8396,
   form8815,
   form8839,
-  form8936,
   form8853,
   form8880,
   form7206,
@@ -252,6 +251,7 @@ export const registry: NodeRegistry = {
   schedule_h,
   schedule_se,
   unrecaptured_1250_worksheet,
+  income_tax_calculation,
 
   // ── Outputs ─────────────────────────────────────────────────────────────────
   f1040,

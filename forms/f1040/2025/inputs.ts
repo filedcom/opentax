@@ -36,7 +36,7 @@ import { schedule_r, inputSchema as scheduleRInputSchema } from "../nodes/inputs
 import { f2210, inputSchema as f2210InputSchema } from "../nodes/inputs/f2210/index.ts";
 import { f3903, itemSchema as f3903ItemSchema } from "../nodes/inputs/f3903/index.ts";
 import { f5695, inputSchema as f5695InputSchema } from "../nodes/inputs/f5695/index.ts";
-import { f8936Input, itemSchema as f8936InputItemSchema } from "../nodes/inputs/f8936_input/index.ts";
+import { f8936, itemSchema as f8936ItemSchema } from "../nodes/inputs/f8936/index.ts";
 import { f8862, inputSchema as f8862InputSchema } from "../nodes/inputs/f8862/index.ts";
 import { f8958, inputSchema as f8958InputSchema } from "../nodes/inputs/f8958/index.ts";
 import { f8994, inputSchema as f8994InputSchema } from "../nodes/inputs/f8994/index.ts";
@@ -99,7 +99,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: w2g, itemSchema: w2gItemSchema, isArray: true },
   { node: f1099patr, itemSchema: f1099patrItemSchema, isArray: true },
   { node: f3903, itemSchema: f3903ItemSchema, isArray: true },
-  { node: f8936Input, itemSchema: f8936InputItemSchema, isArray: true },
+  { node: f8936, itemSchema: f8936ItemSchema, isArray: true },
   { node: f8814, itemSchema: f8814ItemSchema, isArray: true },
   { node: f5884, itemSchema: f5884ItemSchema, isArray: true },
   { node: f8908, itemSchema: f8908ItemSchema, isArray: true },
