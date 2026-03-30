@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { schedule2 } from "../schedule2/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -181,7 +182,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(rawInput: Form6251Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form6251Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // Part I — AMTI (Line 4)

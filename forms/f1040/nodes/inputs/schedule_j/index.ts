@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ class ScheduleJNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(input: ScheduleJInput): NodeResult {
+  compute(_ctx: NodeContext, input: ScheduleJInput): NodeResult {
     const parsed = inputSchema.parse(input);
 
     if (!hasElectedFarmIncome(parsed)) {

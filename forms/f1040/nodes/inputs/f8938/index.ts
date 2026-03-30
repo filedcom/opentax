@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Filing Thresholds (IRC §6038D) ────────────────────────────────────
 
@@ -72,7 +73,7 @@ class F8938Node extends TaxNode<typeof inputSchema> {
   // Form 8938 is disclosure only — no downstream tax-computation outputs.
   readonly outputNodes = new OutputNodes([]);
 
-  compute(rawInput: F8938Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8938Input): NodeResult {
     inputSchema.parse(rawInput);
     return { outputs: [] };
   }

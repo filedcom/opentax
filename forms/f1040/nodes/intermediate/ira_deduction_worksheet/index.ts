@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { FilingStatus } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — IRS procedure constants, unchanged across years ──────────────
 
@@ -134,7 +135,7 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   protected readonly phaseOutMfsLower = 0;
   protected readonly phaseOutMfsUpper = 10_000;
 
-  compute(rawInput: IraDeductionInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: IraDeductionInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     if (input.ira_contribution <= 0) return { outputs: schedule1Output(0) };

@@ -22,7 +22,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099nec.compute({ f1099necs: items });
+  return f1099nec.compute({ taxYear: 2025 }, { f1099necs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -355,7 +355,7 @@ Deno.test("threshold: box3 = 1 (minimum non-zero) — excise = 0.20", () => {
 
 Deno.test("validation: compute() throws on empty necs array", () => {
   assertThrows(
-    () => f1099nec.compute({ f1099necs: [] }),
+    () => f1099nec.compute({ taxYear: 2025 }, { f1099necs: [] }),
     Error,
   );
 });
@@ -363,7 +363,7 @@ Deno.test("validation: compute() throws on empty necs array", () => {
 Deno.test("validation: compute() throws on missing payer_name in item", () => {
   assertThrows(
     () =>
-      f1099nec.compute({
+      f1099nec.compute({ taxYear: 2025 }, {
         f1099necs: [{ payer_tin: "12-3456789", box1_nec: 1000 } as never],
       }),
     Error,
@@ -373,7 +373,7 @@ Deno.test("validation: compute() throws on missing payer_name in item", () => {
 Deno.test("validation: compute() throws on missing payer_tin in item", () => {
   assertThrows(
     () =>
-      f1099nec.compute({
+      f1099nec.compute({ taxYear: 2025 }, {
         f1099necs: [{ payer_name: "Acme", box1_nec: 1000 } as never],
       }),
     Error,
@@ -383,7 +383,7 @@ Deno.test("validation: compute() throws on missing payer_tin in item", () => {
 Deno.test("validation: compute() throws on negative box1_nec", () => {
   assertThrows(
     () =>
-      f1099nec.compute({
+      f1099nec.compute({ taxYear: 2025 }, {
         f1099necs: [{ payer_name: "Acme", payer_tin: "12-3456789", box1_nec: -1 } as never],
       }),
     Error,
@@ -391,14 +391,14 @@ Deno.test("validation: compute() throws on negative box1_nec", () => {
 });
 
 Deno.test("validation: boundary pass — box1_nec = 0 does not throw", () => {
-  const result = f1099nec.compute({
+  const result = f1099nec.compute({ taxYear: 2025 }, {
     f1099necs: [{ payer_name: "Acme", payer_tin: "12-3456789", box1_nec: 0 }],
   });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
 Deno.test("validation: boundary pass — all optional boxes absent does not throw", () => {
-  const result = f1099nec.compute({
+  const result = f1099nec.compute({ taxYear: 2025 }, {
     f1099necs: [{ payer_name: "Acme", payer_tin: "12-3456789" }],
   });
   assertEquals(Array.isArray(result.outputs), true);
@@ -410,7 +410,7 @@ Deno.test("validation: boundary pass — all optional boxes absent does not thro
 
 Deno.test("warning: box4 > 24% of box1 — plausibility warning, does not throw", () => {
   // Engine should accept user-entered box4 even if it exceeds 24% of box1
-  const result = f1099nec.compute({
+  const result = f1099nec.compute({ taxYear: 2025 }, {
     f1099necs: [{
       payer_name: "Acme",
       payer_tin: "12-3456789",
@@ -422,7 +422,7 @@ Deno.test("warning: box4 > 24% of box1 — plausibility warning, does not throw"
 });
 
 Deno.test("warning: second_tin_notice = true — informational, does not throw", () => {
-  const result = f1099nec.compute({
+  const result = f1099nec.compute({ taxYear: 2025 }, {
     f1099necs: [{
       payer_name: "Acme",
       payer_tin: "12-3456789",
@@ -434,7 +434,7 @@ Deno.test("warning: second_tin_notice = true — informational, does not throw",
 
 Deno.test("warning: box3_golden_parachute with no box1_nec — does not throw", () => {
   // Box 3 can exist without box1 in edge scenarios (unusual but not invalid)
-  const result = f1099nec.compute({
+  const result = f1099nec.compute({ taxYear: 2025 }, {
     f1099necs: [{ payer_name: "BigCo", payer_tin: "11-2233445", box3_golden_parachute: 50000 }],
   });
   assertEquals(Array.isArray(result.outputs), true);

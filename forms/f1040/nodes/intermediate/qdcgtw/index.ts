@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Qualified Dividends and Capital Gain Tax Worksheet (QDCGTW)
 // Stub node — accepts line18_28pct_gain from rate_28_gain_worksheet.
@@ -23,7 +24,7 @@ class QdcgtwNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(rawInput: QdcgtwInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: QdcgtwInput): NodeResult {
     inputSchema.parse(rawInput);
     return { outputs: [] };
   }

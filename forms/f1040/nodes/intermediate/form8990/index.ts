@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -126,7 +127,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
   // reversing the upstream-posted deduction to the extent it exceeds the §163(j) cap.
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  compute(rawInput: Form8990Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8990Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // §163(j)(3): small business taxpayers are fully exempt — no limitation

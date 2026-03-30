@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { output } from "../../../../../core/types/tax-node.ts";
 import { form5695 } from "../../intermediate/form5695/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Input node that collects raw cost data from the taxpayer and passes it
 // to the intermediate form5695 node for credit computation.
@@ -35,7 +36,7 @@ class F5695InputNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([form5695]);
 
-  compute(rawInput: F5695Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F5695Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // Build a fields object with only the defined keys so TypeScript is satisfied.

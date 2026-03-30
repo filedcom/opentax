@@ -19,6 +19,7 @@ import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export enum Box12Code {
   A = "A",     // Uncollected SS tax on tips
@@ -330,7 +331,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     ira_deduction_worksheet,
   ]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     for (const item of input.w2s) {
       validateItem(item);
     }

@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form6251.compute(inputSchema.parse(input));
+  return form6251.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

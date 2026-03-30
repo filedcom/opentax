@@ -19,7 +19,7 @@ function minimalItem(
 }
 
 function compute(items: Record<string, unknown>[]) {
-  return f2439.compute(inputSchema.parse({ f2439s: items }));
+  return f2439.compute({ taxYear: 2025 }, inputSchema.parse({ f2439s: items }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string): NodeOutput | undefined {

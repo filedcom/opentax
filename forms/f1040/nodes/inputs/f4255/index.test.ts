@@ -3,7 +3,7 @@ import { f4255, RecaptureReason } from "./index.ts";
 
 // Array harness — one entry per property
 function compute(items: Parameters<typeof f4255.compute>[0]["properties"]) {
-  return f4255.compute({ properties: items });
+  return f4255.compute({ taxYear: 2025 }, { properties: items });
 }
 
 function findSchedule2(result: ReturnType<typeof compute>) {

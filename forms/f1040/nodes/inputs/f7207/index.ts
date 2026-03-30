@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (IRC §45X — Advanced Manufacturing Production Credit) ───
 
@@ -84,7 +85,7 @@ class F7207Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: F7207Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F7207Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const entries = input.components ?? [];
     const credit = totalCredit(entries);

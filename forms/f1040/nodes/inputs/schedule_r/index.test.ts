@@ -5,7 +5,7 @@ import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_r.compute(input as Parameters<typeof schedule_r.compute>[0]);
+  return schedule_r.compute({ taxYear: 2025 }, input as Parameters<typeof schedule_r.compute>[0]);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

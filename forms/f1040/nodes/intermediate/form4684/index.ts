@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleA } from "../../inputs/schedule_a/index.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 import { form4797 } from "../form4797/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants ─────────────────────────────────────────────────────────
 // IRC §165(h)(1): $100 per-event floor (personal casualty losses)
@@ -134,7 +135,7 @@ class Form4684Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([scheduleA, schedule_d, form4797]);
 
-  compute(rawInput: Form4684Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form4684Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const personalOutputs = buildPersonalOutput(input);

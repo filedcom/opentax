@@ -13,7 +13,7 @@ function minimalItem(overrides: Partial<F8609Item> = {}): F8609Item {
 }
 
 function compute(items: F8609Item[]) {
-  return f8609.compute({ f8609s: items });
+  return f8609.compute({ taxYear: 2025 }, { f8609s: items });
 }
 
 function findSchedule3(result: ReturnType<typeof compute>) {
@@ -23,7 +23,7 @@ function findSchedule3(result: ReturnType<typeof compute>) {
 // ── Schema Validation ────────────────────────────────────────────────────────
 
 Deno.test("schema_rejects_empty_array", () => {
-  assertThrows(() => f8609.compute({ f8609s: [] }), Error);
+  assertThrows(() => f8609.compute({ taxYear: 2025 }, { f8609s: [] }), Error);
 });
 
 Deno.test("schema_rejects_negative_annual_credit_amount", () => {

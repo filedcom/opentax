@@ -7,6 +7,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
 import { form_1116 } from "../../intermediate/form_1116/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1041) — Beneficiary's Share of Income, Deductions, Credits
 //
@@ -163,7 +164,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_b, f1040, schedule_d, schedule1, form_1116]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_trusts } = inputSchema.parse(input);
 
     const outputs: NodeOutput[] = [

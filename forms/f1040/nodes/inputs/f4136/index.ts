@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 4136 — Credit for Federal Tax Paid on Fuels
 // IRC §§ 6421, 6427 — TY2025 rates from IRS Publication 510 / Notice 2025
@@ -80,7 +81,7 @@ class F4136Node extends TaxNode<typeof inputSchema> {
   readonly pdfUrl =
     "https://www.irs.gov/pub/irs-pdf/f4136.pdf";
 
-  compute(rawInput: F4136Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F4136Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const nonRefundable = nonrefundableCredit(input);
     const refundable = refundableCredit(input);

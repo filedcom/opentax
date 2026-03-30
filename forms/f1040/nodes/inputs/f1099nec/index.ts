@@ -11,6 +11,7 @@ import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { schedule_f } from "../../intermediate/schedule_f/index.ts";
 import { form8919 } from "../../intermediate/form8919/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string(),
@@ -67,7 +68,7 @@ class F1099necNode extends TaxNode<typeof inputSchema> {
     ];
   }
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     return { outputs: parsed.f1099necs.flatMap((item) => this.processItem(item)) };
   }

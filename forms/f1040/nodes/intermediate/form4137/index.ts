@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -106,7 +107,7 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule2]);
 
-  compute(input: Form4137Input): NodeResult {
+  compute(_ctx: NodeContext, input: Form4137Input): NodeResult {
     const line4 = unreportedTips(input);
     const sub20 = input.sub_$20_tips ?? 0;
     const line6 = medicareSubjectTips(line4, sub20);

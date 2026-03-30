@@ -9,6 +9,7 @@ import { schedule_d } from "../../intermediate/schedule_d/index.ts";
 import { schedule_se } from "../../intermediate/schedule_se/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
 import { form_1116 } from "../../intermediate/form_1116/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
 //
@@ -206,7 +207,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form_1116,
   ]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_partnerships } = inputSchema.parse(input);
 
     const outputs: NodeOutput[] = [

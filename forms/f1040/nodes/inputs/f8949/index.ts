@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Part I short-term: A (1099-B basis reported), B (1099-B no basis), C (no 1099-B)
 // Part I short-term digital: G (1099-DA basis reported), H (1099-DA no basis), I (no 1099-DA)
@@ -114,7 +115,7 @@ class F8949Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, f1040, form6251]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     return { outputs: parsed.f8949s.flatMap((item) => processItem(item)) };
   }

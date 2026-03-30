@@ -22,7 +22,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form982.compute(inputSchema.parse(input));
+  return form982.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

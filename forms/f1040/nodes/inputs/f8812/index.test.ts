@@ -14,7 +14,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8812.compute({ f8812s: items });
+  return f8812.compute({ taxYear: 2025 }, { f8812s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -26,7 +26,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ============================================================
 
 Deno.test("schema: empty array produces no outputs", () => {
-  const result = f8812.compute({ f8812s: [] });
+  const result = f8812.compute({ taxYear: 2025 }, { f8812s: [] });
   assertEquals(result.outputs.length, 0);
 });
 

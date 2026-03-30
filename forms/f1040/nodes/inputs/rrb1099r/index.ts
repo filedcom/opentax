@@ -7,6 +7,7 @@ import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // RRB-1099-R — Railroad Retirement Board Pension, Annuity, and Retirement Benefits
 //
@@ -146,7 +147,7 @@ class Rrb1099rNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule1]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { rrb1099rs } = inputSchema.parse(input);
 
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {

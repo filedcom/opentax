@@ -4,6 +4,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 9465 — Installment Agreement Request
 // Administrative form only — does not generate tax amounts.
@@ -33,7 +34,7 @@ class F9465Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     inputSchema.parse(input);
     // Administrative form — no tax computations or outputs
     return { outputs: [] };

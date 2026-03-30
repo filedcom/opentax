@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { FilingStatus } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Schedule R base amounts (IRC §22(c)(2)(A))
 // Rev. Proc. 2024-40 (these are not inflation-adjusted — fixed by statute)
@@ -130,7 +131,7 @@ class ScheduleRNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const credit = computeCredit(parsed);
 

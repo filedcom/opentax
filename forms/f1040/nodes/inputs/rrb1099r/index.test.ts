@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { rrb1099r } from "./index.ts";
 
 function compute(items: Parameters<typeof rrb1099r.compute>[0]["rrb1099rs"]) {
-  return rrb1099r.compute({ rrb1099rs: items });
+  return rrb1099r.compute({ taxYear: 2025 }, { rrb1099rs: items });
 }
 
 function f1040Fields(result: ReturnType<typeof compute>) {

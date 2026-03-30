@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (Rev Proc 2024-40; IRS Publication 926) ────────────────
 
@@ -138,7 +139,7 @@ class ScheduleHNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(rawInput: ScheduleHInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: ScheduleHInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     // If no wages or tax data provided, no output

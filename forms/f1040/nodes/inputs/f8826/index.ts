@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8826 — Disabled Access Credit (IRC §44)
 // Eligibility: small business (gross receipts ≤$1M OR ≤30 FTEs).
@@ -54,7 +55,7 @@ class F8826Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: F8826Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8826Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = computeCredit(input);
     return { outputs: buildOutputs(credit) };

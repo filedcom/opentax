@@ -13,7 +13,7 @@ function minimalItem(overrides: Partial<F8908Item> = {}): F8908Item {
 }
 
 function compute(items: F8908Item[]) {
-  return f8908.compute({ f8908s: items });
+  return f8908.compute({ taxYear: 2025 }, { f8908s: items });
 }
 
 function findSchedule3(result: ReturnType<typeof compute>) {
@@ -23,7 +23,7 @@ function findSchedule3(result: ReturnType<typeof compute>) {
 // ── Schema Validation ────────────────────────────────────────────────────────
 
 Deno.test("schema_rejects_empty_array", () => {
-  assertThrows(() => f8908.compute({ f8908s: [] }), Error);
+  assertThrows(() => f8908.compute({ taxYear: 2025 }, { f8908s: [] }), Error);
 });
 
 Deno.test("schema_accepts_valid_item", () => {

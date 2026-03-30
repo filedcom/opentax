@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1Partnership.compute({ k1_partnerships: items });
+  return k1Partnership.compute({ taxYear: 2025 }, { k1_partnerships: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -19,12 +19,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => k1Partnership.compute({ k1_partnerships: [] }), Error);
+  assertThrows(() => k1Partnership.compute({ taxYear: 2025 }, { k1_partnerships: [] }), Error);
 });
 
 Deno.test("missing partnership_name throws", () => {
   assertThrows(
-    () => k1Partnership.compute({ k1_partnerships: [{ box1_ordinary_business: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () => k1Partnership.compute({ taxYear: 2025 }, { k1_partnerships: [{ box1_ordinary_business: 100 } as unknown as ReturnType<typeof minimalItem>] }),
     Error,
   );
 });

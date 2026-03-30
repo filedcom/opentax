@@ -16,6 +16,7 @@ import { form4797 } from "../../intermediate/form4797/index.ts";
 import { form4562 } from "../../intermediate/form4562/index.ts";
 import { form8990 } from "../../intermediate/form8990/index.ts";
 import { TSJ, tsjSchema } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export { TSJ };
 
@@ -415,7 +416,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
     form4562,
   ]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { schedule_es } = parsed;
 

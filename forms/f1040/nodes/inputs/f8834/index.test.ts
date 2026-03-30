@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f8834, VehicleType } from "./index.ts";
 
 function compute(input: Parameters<typeof f8834.compute>[0]) {
-  return f8834.compute(input);
+  return f8834.compute({ taxYear: 2025 }, input);
 }
 
 function findSchedule3(result: ReturnType<typeof compute>) {

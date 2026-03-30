@@ -15,7 +15,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099c.compute({ f1099cs: items });
+  return f1099c.compute({ taxYear: 2025 }, { f1099cs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -49,7 +49,7 @@ Deno.test("schema: valid minimal item does not throw", () => {
 });
 
 Deno.test("schema: empty array produces empty outputs", () => {
-  const result = f1099c.compute({ f1099cs: [] });
+  const result = f1099c.compute({ taxYear: 2025 }, { f1099cs: [] });
   assertEquals(result.outputs.length, 0);
 });
 

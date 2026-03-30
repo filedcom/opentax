@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -108,7 +109,7 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, schedule1]);
 
-  compute(rawInput: Form4797Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     if (!hasSaleData(input)) {

@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 SALT cap per OBBBA — $40,000 single/MFJ, $20,000 MFS
 const SALT_CAP = 40_000;
@@ -72,7 +73,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, form6251]);
 
-  compute(input: ScheduleAInput): NodeResult {
+  compute(_ctx: NodeContext, input: ScheduleAInput): NodeResult {
     const agi = input.agi ?? 0;
     const saltCapped = computeSALT(input);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);

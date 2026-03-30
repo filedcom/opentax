@@ -9,6 +9,7 @@ import { FilingStatus } from "../../types.ts";
 import { normalizeArray } from "../../utils.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { rate_28_gain_worksheet } from "../rate_28_gain_worksheet/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -247,7 +248,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, rate_28_gain_worksheet]);
 
-  compute(rawInput: ScheduleDInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     if (!hasCapitalActivity(input)) {

@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { schedule_h } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_h.compute(input);
+  return schedule_h.compute({ taxYear: 2025 }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

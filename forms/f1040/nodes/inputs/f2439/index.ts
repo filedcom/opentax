@@ -8,6 +8,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Per-item schema ──────────────────────────────────────────────────────────
 // One Form 2439 issued by a single RIC or REIT. All boxes are optional because
@@ -87,7 +88,7 @@ class F2439Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_d, f1040]);
 
-  compute(rawInput: F2439Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F2439Input): NodeResult {
     const { f2439s } = inputSchema.parse(rawInput);
 
     if (f2439s.length === 0) return { outputs: [] };

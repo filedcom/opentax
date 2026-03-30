@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, unrecaptured_1250_worksheet } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return unrecaptured_1250_worksheet.compute(inputSchema.parse(input));
+  return unrecaptured_1250_worksheet.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

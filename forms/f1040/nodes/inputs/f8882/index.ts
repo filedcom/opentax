@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (IRC §45F — Employer-Provided Child Care Credit) ────────
 
@@ -40,7 +41,7 @@ class F8882Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: F8882Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8882Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = computeCredit(input);
     return { outputs: buildOutputs(credit) };

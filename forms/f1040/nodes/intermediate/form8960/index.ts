@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { FilingStatus } from "../../types.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §1411(a)(1); Form 8960 line 17 — Net Investment Income Tax rate
@@ -163,7 +164,7 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(rawInput: Form8960Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form8960Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const limit = threshold(input.filing_status);

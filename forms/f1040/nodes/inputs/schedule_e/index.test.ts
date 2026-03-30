@@ -24,7 +24,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: Record<string, unknown>[]) {
-  return scheduleE.compute(inputSchema.parse({ schedule_es: items }));
+  return scheduleE.compute({ taxYear: 2025 }, inputSchema.parse({ schedule_es: items }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

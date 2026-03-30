@@ -31,7 +31,7 @@ function minimalPensionItem(overrides: Partial<Item> = {}): Item {
 }
 
 function compute(items: Item[]) {
-  return f1099r.compute({ f1099rs: items });
+  return f1099r.compute({ taxYear: 2025 }, { f1099rs: items });
 }
 
 function findF1040(result: ReturnType<typeof compute>) {

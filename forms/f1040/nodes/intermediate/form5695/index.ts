@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../schedule3/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (IRC §25C, §25D) ───────────────────────────────────────
 
@@ -151,7 +152,7 @@ class Form5695Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(rawInput: Form5695Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: Form5695Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const partI = partICredit(input);

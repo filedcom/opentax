@@ -20,7 +20,7 @@ type Item = {
 };
 
 function compute(items: Item[]) {
-  return f2441.compute({ f2441s: items });
+  return f2441.compute({ taxYear: 2025 }, { f2441s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

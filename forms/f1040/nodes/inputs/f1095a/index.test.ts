@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1095a.compute({ f1095as: items });
+  return f1095a.compute({ taxYear: 2025 }, { f1095as: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -19,12 +19,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => f1095a.compute({ f1095as: [] }), Error);
+  assertThrows(() => f1095a.compute({ taxYear: 2025 }, { f1095as: [] }), Error);
 });
 
 Deno.test("missing issuer_name throws", () => {
   assertThrows(
-    () => f1095a.compute({ f1095as: [{ annual_premium: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () => f1095a.compute({ taxYear: 2025 }, { f1095as: [{ annual_premium: 100 } as unknown as ReturnType<typeof minimalItem>] }),
     Error,
   );
 });

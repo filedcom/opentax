@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form982 } from "../../intermediate/form982/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
   creditor_name: z.string(),
@@ -43,7 +44,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, form982, schedule_d]);
 
-  compute(input: C99Input): NodeResult {
+  compute(_ctx: NodeContext, input: C99Input): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099cs: c99s } = parsed;
 

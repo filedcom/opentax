@@ -5,7 +5,7 @@ import type { z } from "zod";
 type Form8606Input = z.infer<typeof inputSchema>;
 
 function compute(input: Partial<Form8606Input> & Record<string, unknown>) {
-  return form8606.compute(input as Form8606Input);
+  return form8606.compute({ taxYear: 2025 }, input as Form8606Input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

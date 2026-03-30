@@ -37,7 +37,7 @@ function compute(
   items: Record<string, unknown>[],
   context: Record<string, unknown> = {},
 ) {
-  return f1099div.compute(inputSchema.parse({ f1099divs: items, ...context }));
+  return f1099div.compute({ taxYear: 2025 }, inputSchema.parse({ f1099divs: items, ...context }));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

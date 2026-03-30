@@ -11,6 +11,7 @@ import { form6251 } from "../../intermediate/form6251/index.ts";
 import { form_1116 } from "../../intermediate/form_1116/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { schedule_b } from "../../intermediate/schedule_b/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
   payer_name: z.string().min(1),
@@ -112,7 +113,7 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     schedule3,
   ]);
 
-  compute(input: INTInput): NodeResult {
+  compute(_ctx: NodeContext, input: INTInput): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099ints: int1099s, filing_status } = parsed;
 

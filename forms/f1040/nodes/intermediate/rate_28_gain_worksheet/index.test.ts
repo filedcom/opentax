@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { qdcgtw } from "../qdcgtw/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return rate_28_gain_worksheet.compute(inputSchema.parse(input));
+  return rate_28_gain_worksheet.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Community property states: AZ, CA, ID, LA, NM, NV, TX, WA, WI
 export enum CommunityPropertyState {
@@ -61,7 +62,7 @@ class F8958Node extends TaxNode<typeof inputSchema> {
   // Form 8958 is disclosure-only — no downstream tax computation nodes.
   readonly outputNodes = new OutputNodes([]);
 
-  compute(rawInput: F8958Input): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8958Input): NodeResult {
     inputSchema.parse(rawInput);
     // No tax computations produced — this form is informational only.
     return { outputs: [] };

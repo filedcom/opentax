@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 EITC Tables (Rev Proc 2024-40) ───────────────────────────────────
 // Maximum credit amounts by number of qualifying children
@@ -158,7 +159,7 @@ class EitcNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(rawInput: EitcInput): NodeResult {
+  compute(_ctx: NodeContext, rawInput: EitcInput): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = computeEitc(input);
     return { outputs: buildOutput(credit) };

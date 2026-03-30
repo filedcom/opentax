@@ -8,6 +8,7 @@ import { schedule_b } from "../../intermediate/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
 import { form_1116 } from "../../intermediate/form_1116/index.ts";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits
 //
@@ -167,7 +168,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116]);
 
-  compute(input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
 
     const outputs: NodeOutput[] = [

@@ -12,7 +12,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099g.compute({ f1099gs: items });
+  return f1099g.compute({ taxYear: 2025 }, { f1099gs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -681,7 +681,7 @@ Deno.test("f1099g.compute: box_9_market_gain without CCC election — routes to 
 
 // Empty array — no outputs
 Deno.test("f1099g.compute: empty g99s array produces no outputs", () => {
-  const result = f1099g.compute({ f1099gs: [] });
+  const result = f1099g.compute({ taxYear: 2025 }, { f1099gs: [] });
   assertEquals(result.outputs.length, 0);
 });
 
