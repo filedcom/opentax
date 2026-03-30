@@ -20,7 +20,6 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { general } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 import { DependentRelationship } from "./index.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return general.compute(general.inputSchema.parse(input));

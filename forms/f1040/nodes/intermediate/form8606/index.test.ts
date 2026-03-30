@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8606, inputSchema } from "./index.ts";
-import { z } from "zod";
+import { form8606, type inputSchema } from "./index.ts";
+import type { z } from "zod";
 
 type Form8606Input = z.infer<typeof inputSchema>;
 

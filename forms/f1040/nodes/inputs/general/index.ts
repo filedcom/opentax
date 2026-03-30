@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../types.ts";
@@ -191,18 +191,6 @@ function isQualifyingChildForCTC(dep: DependentItem): boolean {
     passesResidencyTest(dep) &&
     passesRelationshipTest(dep)
   );
-}
-
-// Determine whether a dependent is a qualifying child (for ODC / dependent status).
-// Pub 501: relationship + residency + age (under 19, or under 24 if full-time student, or disabled).
-function isQualifyingChild(dep: DependentItem): boolean {
-  if (!passesRelationshipTest(dep)) return false;
-  if (!passesResidencyTest(dep)) return false;
-  if (dep.disabled === true) return true;
-  const age = ageAtYearEnd(dep.dob);
-  if (age < 19) return true;
-  if (dep.full_time_student === true && age < 24) return true;
-  return false;
 }
 
 // Count dependents in each category, excluding those claimed on another return.

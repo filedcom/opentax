@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleC, itemSchema } from "./index.ts";
-import { z } from "zod";
+import { scheduleC, type itemSchema } from "./index.ts";
+import type { z } from "zod";
 
 // ============================================================
 // Helpers

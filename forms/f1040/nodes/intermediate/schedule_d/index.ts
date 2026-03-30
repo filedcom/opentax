@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { normalizeArray } from "../../utils.ts";
@@ -20,8 +20,6 @@ const CAPITAL_LOSS_LIMIT_MFS = -1_500;
 // C = collectibles gain (IRC §1(h)(5)); Q = QOF gain (IRC §1400Z-2)
 const RATE_28_CODES = new Set(["C", "Q"]);
 
-// Short-term parts: A/G aggregate to Sch D Line 1b, B/H → Line 2, C/I → Line 3
-const SHORT_TERM_PARTS = new Set(["A", "B", "C", "G", "H", "I"]);
 // Long-term parts: D/J aggregate to Sch D Line 8b, E/K → Line 9, F/L → Line 10
 const LONG_TERM_PARTS = new Set(["D", "E", "F", "J", "K", "L"]);
 

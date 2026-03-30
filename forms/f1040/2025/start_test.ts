@@ -1,12 +1,12 @@
-import { assertEquals } from "jsr:@std/assert";
+import { assertEquals } from "@std/assert";
 import { buildStartNode, inputNodes } from "./start.ts";
 
-Deno.test("inputNodes has 22 entries (18 array + 4 singleton)", () => {
+Deno.test("inputNodes has 29 entries (25 array + 4 singleton)", () => {
   const arrayEntries = inputNodes.filter((e) => e.isArray === true);
   const singletonEntries = inputNodes.filter((e) => e.isArray === false);
-  assertEquals(arrayEntries.length, 18);
+  assertEquals(arrayEntries.length, 25);
   assertEquals(singletonEntries.length, 4);
-  assertEquals(inputNodes.length, 22);
+  assertEquals(inputNodes.length, 29);
 });
 
 Deno.test("buildStartNode returns a node with nodeType 'start'", () => {

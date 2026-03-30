@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import { form4137, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -249,10 +249,8 @@ Deno.test("tips: reported_tips reduces unreported amount", () => {
     ss_wages_from_w2: 0,
   });
 
-  const f1040Out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 1000);
 
-  const sch2Out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line5_unreported_tip_tax, 76.50);
 });
 
@@ -267,7 +265,6 @@ Deno.test("ss_wage_base: exactly at wage base → no SS tax", () => {
     ss_wages_from_w2: 176100,
   });
 
-  const sch2Out = findOutput(result, "schedule2");
   const input = fieldsOf(result.outputs, schedule2)!;
   // Only Medicare tax: 1000 * 0.0145 = 14.50
   assertEquals(input.line5_unreported_tip_tax, 14.50);
@@ -284,7 +281,6 @@ Deno.test("ss_wage_base: one dollar below → small SS tax applies", () => {
     ss_wages_from_w2: 176099,
   });
 
-  const sch2Out = findOutput(result, "schedule2");
   const input = fieldsOf(result.outputs, schedule2)!;
   const tax = input.line5_unreported_tip_tax as number;
   // SS tax = 0.062, Medicare = 14.50, total = 14.562
@@ -298,7 +294,6 @@ Deno.test("ss_wage_base: zero ss_wages → full SS tax applies", () => {
     ss_wages_from_w2: 0,
   });
 
-  const sch2Out = findOutput(result, "schedule2");
   const input = fieldsOf(result.outputs, schedule2)!;
   // ss_tax = 2000 * 0.062 = 124
   // medicare_tax = 2000 * 0.0145 = 29
@@ -364,7 +359,6 @@ Deno.test("edge: large tips below SS wage base — both taxes apply", () => {
     ss_wages_from_w2: 0,
   });
 
-  const sch2Out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line5_unreported_tip_tax, 7650);
 });
 
@@ -379,7 +373,6 @@ Deno.test("edge: tips exceed SS wage base — SS capped, Medicare on all", () =>
     ss_wages_from_w2: 0,
   });
 
-  const sch2Out = findOutput(result, "schedule2");
   const input = fieldsOf(result.outputs, schedule2)!;
   const tax = input.line5_unreported_tip_tax as number;
   assertEquals(Math.abs(tax - 13818.20) < 0.01, true);
@@ -396,7 +389,6 @@ Deno.test("edge: sub_$20 exceeds unreported tips is clamped to unreported amount
     ss_wages_from_w2: 0,
   });
 
-  const f1040Out = findOutput(result, "f1040");
   // Income still reported even if no tax
   assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 500);
 
@@ -410,6 +402,5 @@ Deno.test("edge: allocated_tips used as total when total_tips_received not provi
   // unless taxpayer has records showing less)
   const result = compute({ allocated_tips: 750 });
 
-  const f1040Out = findOutput(result, "f1040");
   assertEquals(fieldsOf(result.outputs, f1040)!.line1c_unreported_tips, 750);
 });

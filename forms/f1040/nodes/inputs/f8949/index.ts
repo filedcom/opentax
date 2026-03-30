@@ -75,10 +75,6 @@ function resolvedAdjustmentAmount(item: F8949Item): number | undefined {
   return item.adjustment_amount;
 }
 
-function computeGainLoss(item: F8949Item): number {
-  return item.proceeds - item.cost_basis + (resolvedAdjustmentAmount(item) ?? 0);
-}
-
 function processItem(item: F8949Item): NodeOutput[] {
   const adjustmentCodes = resolvedAdjustmentCodes(item);
   const adjustmentAmount = resolvedAdjustmentAmount(item);

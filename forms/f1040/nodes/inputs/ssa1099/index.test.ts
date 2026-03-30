@@ -119,7 +119,6 @@ Deno.test("ssa.compute: box6_federal_withheld=0 does not add line25b to output",
   const result = compute([
     minimalItem({ box3_gross_benefits: 12000, box6_federal_withheld: 0 }),
   ]);
-  const out = findOutput(result, "f1040");
   // Output may exist for line6a but line25b should be absent or undefined
   const f1040Fields = fieldsOf(result.outputs, f1040);
   assertEquals(f1040Fields?.line25b_withheld_1099 === undefined || f1040Fields?.line25b_withheld_1099 === 0, true);
@@ -269,7 +268,6 @@ Deno.test("ssa.compute: single item where box4 > box3 — net clamped to 0, no l
   const result = compute([
     minimalItem({ box3_gross_benefits: 1000, box4_repaid: 5000 }),
   ]);
-  const out = findOutput(result, "f1040");
   // No line6a output since net = 0
   const f1040Fields2 = fieldsOf(result.outputs, f1040);
   assertEquals(f1040Fields2?.line6a_ss_gross === undefined || f1040Fields2?.line6a_ss_gross === 0, true);

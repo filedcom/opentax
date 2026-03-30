@@ -52,8 +52,7 @@ Deno.test("ss tax: wages below wage base → 6.2% of wages", () => {
 
 Deno.test("ss tax: wages equal SS_WAGE_BASE → full base taxed", () => {
   // $176,100 × 6.2% + $176,100 × 1.45%
-  const result = compute({ wages: 176_100, reason_code: ReasonCode.G });
-  const out = findOutput(result, "schedule2");
+  const result = compute({ wages: 176_100, reason_code: ReasonCode.A });
   const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 176_100 * 0.062;
   const expectedMed = 176_100 * 0.0145;
@@ -64,8 +63,7 @@ Deno.test("ss tax: wages equal SS_WAGE_BASE → full base taxed", () => {
 
 Deno.test("ss tax: wages above SS_WAGE_BASE → SS capped at wage base", () => {
   // Wages $200,000: SS capped at 176,100; Medicare on all 200,000
-  const result = compute({ wages: 200_000, reason_code: ReasonCode.H });
-  const out = findOutput(result, "schedule2");
+  const result = compute({ wages: 200_000, reason_code: ReasonCode.A });
   const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 176_100 * 0.062;
   const expectedMed = 200_000 * 0.0145;
@@ -77,8 +75,7 @@ Deno.test("ss tax: wages above SS_WAGE_BASE → SS capped at wage base", () => {
 Deno.test("ss tax: prior_ss_wages offsets SS wage base", () => {
   // prior_ss_wages = 150,000 → remaining base = 26,100
   // wages = 50,000 → SS on min(50000, 26100) = 26,100
-  const result = compute({ wages: 50_000, reason_code: ReasonCode.B, prior_ss_wages: 150_000 });
-  const out = findOutput(result, "schedule2");
+  const result = compute({ wages: 50_000, reason_code: ReasonCode.A, prior_ss_wages: 150_000 });
   const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 26_100 * 0.062;
   const expectedMed = 50_000 * 0.0145;
@@ -89,13 +86,11 @@ Deno.test("ss tax: prior_ss_wages offsets SS wage base", () => {
 
 Deno.test("medicare tax: no cap, applies to all wages", () => {
   // Wages well above SS wage base — Medicare still applies to full amount
-  const wages = 500_000;
-  const result = compute({ wages, reason_code: ReasonCode.C });
-  const out = findOutput(result, "schedule2");
-  const input = fieldsOf(result.outputs, schedule2)!;
-  const expectedMed = wages * 0.0145;
   // SS capped at 176,100
+  const result = compute({ wages: 250_000, reason_code: ReasonCode.A });
+  const input = fieldsOf(result.outputs, schedule2)!;
   const expectedSS = 176_100 * 0.062;
+  const expectedMed = 250_000 * 0.0145;
   assertEquals(input.line6_uncollected_8919, expectedSS + expectedMed);
 });
 
@@ -135,9 +130,8 @@ Deno.test("validation: all reason codes A–H are accepted", () => {
 
 Deno.test("ss tax: prior_ss_wages >= wage base → no SS tax", () => {
   // prior wages already at or above cap → SS subject wages = 0
-  const result = compute({ wages: 50_000, reason_code: ReasonCode.F, prior_ss_wages: 176_100 });
-  const out = findOutput(result, "schedule2");
-  const input = fieldsOf(result.outputs, schedule2)!;
   // SS = 0; Medicare = 50000 × 0.0145 = 725
+  const result = compute({ wages: 50_000, reason_code: ReasonCode.A, prior_ss_wages: 176_100 });
+  const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.line6_uncollected_8919, 50_000 * 0.0145);
 });

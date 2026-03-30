@@ -46,6 +46,21 @@ const inputSchema = z.object({
   // Line 15 — Deductible part of self-employment tax (from Schedule SE line 13)
   // IRC §164(f); Schedule SE line 13 → Schedule 1 line 15
   line15_se_deduction: z.number().nonnegative().optional(),
+  // Line 8d — Foreign earned income exclusion (Form 2555 line 45)
+  // IRC §911; Form 2555 line 45 → Schedule 1 line 8d (reported as negative adjustment)
+  line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
+  // Line 8d — Foreign housing deduction (Form 2555 line 50)
+  // IRC §911(c); Form 2555 line 50 → Schedule 1 line 8d (housing)
+  line8d_foreign_housing_deduction: z.number().nonnegative().optional(),
+  // Line 24b — Self-employed health insurance deduction (Form 7206 line 17)
+  // IRC §162(l); Form 7206 line 17 → Schedule 1 line 17 (reported on line 17)
+  line17_se_health_insurance: z.number().nonnegative().optional(),
+  // Line 8b — Savings bond interest exclusion (Form 8815 line 14)
+  // IRC §135; Form 8815 line 14 → Schedule 1 line 8b
+  line8b_savings_bond_exclusion: z.number().nonnegative().optional(),
+  // Line 8g — Income from Form 8814 (parent's election for child's interest/dividends)
+  // IRC §1(g)(7); Form 8814 line 15 → Schedule 1 line 8g
+  line8g_child_interest_dividends: z.number().nonnegative().optional(),
 });
 
 class Schedule1Node extends TaxNode<typeof inputSchema> {

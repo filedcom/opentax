@@ -34,6 +34,9 @@ const inputSchema = z.object({
   line38_amount_paid_extension: z.number().optional(),
   // Line 20 — Total nonrefundable credits (from Schedule 3 Part I line 8)
   line20_nonrefundable_credits: z.number().nonnegative().optional(),
+  // Line 27 — Earned Income Credit (EITC)
+  // IRC §32; EITC worksheet → Form 1040 line 27
+  line27_eitc: z.number().nonnegative().optional(),
   // Line 31 — Additional payments and credits (from Schedule 3 Part II line 15)
   line31_additional_payments: z.number().nonnegative().optional(),
 });

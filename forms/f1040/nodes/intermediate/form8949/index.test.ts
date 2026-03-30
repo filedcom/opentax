@@ -1,6 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8949 } from "./index.ts";
-import { schedule_d } from "../schedule_d/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8949.compute(input);

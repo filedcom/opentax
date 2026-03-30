@@ -113,8 +113,6 @@ Deno.test("form2441: output nodeType is 'f1040' when taxable excess exists", () 
 
 Deno.test("form2441: output field is line1e_taxable_dep_care (not another field)", () => {
   const result = compute({ dep_care_benefits: 7500 });
-  const out = findOutput(result, "f1040")!;
-  const keys = Object.keys(fieldsOf(result.outputs, f1040)!);
   assertEquals(keys, ["line1e_taxable_dep_care"]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1e_taxable_dep_care, 2500);
 });

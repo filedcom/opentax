@@ -58,7 +58,6 @@ Deno.test("part1_single_above: Single $220k wages → 0.9% on $20k = $180", () =
     filing_status: FilingStatus.Single,
     medicare_wages: 220_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
 });
 
@@ -67,7 +66,6 @@ Deno.test("part1_mfj_above: MFJ $325k wages → 0.9% on $75k = $675", () => {
     filing_status: FilingStatus.MFJ,
     medicare_wages: 325_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 675);
 });
 
@@ -76,7 +74,6 @@ Deno.test("part1_mfs_above: MFS $200k wages → 0.9% on $75k = $675", () => {
     filing_status: FilingStatus.MFS,
     medicare_wages: 200_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 675);
 });
 
@@ -85,7 +82,6 @@ Deno.test("part1_hoh_above: HOH $210k wages → 0.9% on $10k = $90", () => {
     filing_status: FilingStatus.HOH,
     medicare_wages: 210_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 90);
 });
 
@@ -94,7 +90,6 @@ Deno.test("part1_qss_above: QSS $205k wages → 0.9% on $5k = $45", () => {
     filing_status: FilingStatus.QSS,
     medicare_wages: 205_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 45);
 });
 
@@ -116,7 +111,6 @@ Deno.test("part2_se_above_threshold: SE $220k single, no wages → $180 AMT", ()
     filing_status: FilingStatus.Single,
     se_income: 220_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
 });
 
@@ -130,7 +124,6 @@ Deno.test("part2_wages_reduce_se_threshold: SE $145k + wages $130k single → $6
     medicare_wages: 130_000,
     se_income: 145_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 675);
 });
 
@@ -144,7 +137,6 @@ Deno.test("part2_wages_exceed_threshold: wages $250k + SE $50k single → wages 
     medicare_wages: 250_000,
     se_income: 50_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 900);
 });
 
@@ -155,7 +147,6 @@ Deno.test("part2_negative_se_ignored: negative SE income → no Part II AMT", ()
     medicare_wages: 210_000,
     se_income: -50_000,
   });
-  const out = findOutput(result, "schedule2");
   // Only Part I: ($210k - $200k) × 0.009 = $90
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 90);
 });
@@ -181,7 +172,6 @@ Deno.test("part3_rrta_above_single: RRTA $220k single → 0.9% on $20k = $180", 
     filing_status: FilingStatus.Single,
     rrta_wages: 220_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
 });
 
@@ -195,7 +185,6 @@ Deno.test("part3_rrta_threshold_not_reduced: wages $150k + RRTA $220k single →
     medicare_wages: 150_000,
     rrta_wages: 220_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
 });
 
@@ -213,7 +202,6 @@ Deno.test("combined_all_parts: wages + SE + RRTA all contributing AMT", () => {
     se_income: 30_000,
     rrta_wages: 250_000,
   });
-  const out = findOutput(result, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 810);
 });
 
@@ -224,7 +212,6 @@ Deno.test("withholding_routes_to_f1040: medicare_withheld → f1040 line25c", ()
     filing_status: FilingStatus.Single,
     medicare_withheld: 2_900,
   });
-  const out = findOutput(result, "f1040");
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
     2_900,
@@ -246,7 +233,6 @@ Deno.test("withholding_rrta_combined: medicare_withheld + rrta_medicare_withheld
     medicare_withheld: 1_000,
     rrta_medicare_withheld: 500,
   });
-  const out = findOutput(result, "f1040");
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
     1_500,
