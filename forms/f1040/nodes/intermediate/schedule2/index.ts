@@ -66,6 +66,9 @@ export const inputSchema = z.object({
   // Line 17d — Section 965 net tax liability (Form 8615 — Kiddie Tax)
   // IRC §1(g); Form 8615 line 18 → Schedule 2 line 17d
   line17d_kiddie_tax: z.number().nonnegative().optional(),
+  // Line 17a — Recapture of investment credit (Form 4255)
+  // IRC §50(a); Form 4255 → Schedule 2 line 17a
+  line17a_investment_credit_recapture: z.number().nonnegative().optional(),
 });
 
 type Schedule2Input = z.infer<typeof inputSchema>;
@@ -123,7 +126,8 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
       (input.line12_niit ?? 0) +
       (input.line2_excess_advance_premium ?? 0) +
       (input.line7a_household_employment ?? 0) +
-      (input.line17d_kiddie_tax ?? 0);
+      (input.line17d_kiddie_tax ?? 0) +
+      (input.line17a_investment_credit_recapture ?? 0);
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [

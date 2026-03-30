@@ -76,12 +76,14 @@
   {
     "form": "1099-OID",
     "description": "Original Issue Discount",
-    "screen_code": "OID"
+    "screen_code": "OID",
+    "filed_tax_node_type_code": "f1099oid"
   },
   {
     "form": "1099-PATR",
     "description": "Taxable Distributions Received From Cooperatives",
-    "screen_code": "PATR"
+    "screen_code": "PATR",
+    "filed_tax_node_type_code": "f1099patr"
   },
   {
     "form": "1099-R",
@@ -95,7 +97,8 @@
   {
     "form": "1095-A",
     "description": "Health Insurance Marketplace Statement",
-    "screen_code": "1095, 95A"
+    "screen_code": "1095, 95A",
+    "filed_tax_node_type_code": "f1095a"
   },
   {
     "form": "1040-ES",
@@ -272,7 +275,8 @@
   {
     "form": "1310",
     "description": "Statement of Person Claiming Refund Due a Deceased Taxpayer",
-    "screen_code": "1310"
+    "screen_code": "1310",
+    "filed_tax_node_type_code": "f1310"
   },
   {
     "form": "2106",
@@ -287,7 +291,8 @@
   {
     "form": "2210",
     "description": "Underpayment of Estimated Tax by Individuals, Estates, and Trusts",
-    "screen_code": "2210"
+    "screen_code": "2210",
+    "filed_tax_node_type_code": "f2210"
   },
   {
     "form": "2350",
@@ -300,7 +305,8 @@
   {
     "form": "2439",
     "description": "Notice to Shareholder of Undistributed Long-Term Capital Gains",
-    "screen_code": "2439"
+    "screen_code": "2439",
+    "filed_tax_node_type_code": "f2439"
   },
   {
     "form": "2441",
@@ -352,7 +358,8 @@
   {
     "form": "3468",
     "description": "Investment Credit",
-    "screen_code": "3468"
+    "screen_code": "3468",
+    "filed_tax_node_type_code": "f3468"
   },
   {
     "form": "3800",
@@ -362,7 +369,8 @@
   {
     "form": "3903",
     "description": "Moving Expenses",
-    "screen_code": "3903"
+    "screen_code": "3903",
+    "filed_tax_node_type_code": "f3903"
   },
   {
     "form": "4136",
@@ -370,7 +378,8 @@
     "screen_code": "4136",
     "alias_screen_codes": [
       "4136 > PAGE DOWN"
-    ]
+    ],
+    "filed_tax_node_type_code": "f4136"
   },
   {
     "form": "4137",
@@ -381,7 +390,8 @@
   {
     "form": "4255",
     "description": "Recapture of Investment Credit",
-    "screen_code": "4255"
+    "screen_code": "4255",
+    "filed_tax_node_type_code": "f4255"
   },
   {
     "form": "4506",
@@ -428,7 +438,8 @@
     "screen_code": "4684",
     "alias_screen_codes": [
       "FDDL"
-    ]
+    ],
+    "filed_tax_node_type_code": "form4684"
   },
   {
     "form": "4797",
@@ -443,12 +454,14 @@
     "alias_screen_codes": [
       "4835> \"Carryovers/State Info\" tab",
       "4835 > \"Prior-Year Compare\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f4835"
   },
   {
     "form": "4852",
     "description": "Substitute for Form W-2, Wage and Tax Statement, or Form 1099-R, Distributions From Pensions, Annuities, Retirement or Profit-Sharing Plans, IRAs, Insurance Contracts, etc.",
-    "screen_code": "4852"
+    "screen_code": "4852",
+    "filed_tax_node_type_code": "f4852"
   },
   {
     "form": "4868",
@@ -549,12 +562,14 @@
   {
     "form": "5695",
     "description": "Residential Energy Credits",
-    "screen_code": "5695"
+    "screen_code": "5695",
+    "filed_tax_node_type_code": "f5695"
   },
   {
     "form": "5884",
     "description": "Work Opportunity Credit",
-    "screen_code": "5884"
+    "screen_code": "5884",
+    "filed_tax_node_type_code": "f5884"
   },
   {
     "form": "6198",
@@ -579,12 +594,14 @@
   {
     "form": "6478",
     "description": "Biofuel Producer Credit",
-    "screen_code": "6478"
+    "screen_code": "6478",
+    "filed_tax_node_type_code": "f6478"
   },
   {
     "form": "6765",
     "description": "Credit for Increasing Research Activities",
-    "screen_code": "6765"
+    "screen_code": "6765",
+    "filed_tax_node_type_code": "f6765"
   },
   {
     "form": "6781",
@@ -594,12 +611,14 @@
   {
     "form": "7206",
     "description": "Self-Employed Health Insurance Deduction",
-    "screen_code": "SEHI"
+    "screen_code": "SEHI",
+    "filed_tax_node_type_code": "form7206"
   },
   {
     "form": "7207",
     "description": "Advanced Manufacturing Production Credit",
-    "screen_code": "7207"
+    "screen_code": "7207",
+    "filed_tax_node_type_code": "f7207"
   },
   {
     "form": "7216",
@@ -619,12 +638,14 @@
   {
     "form": "8283",
     "description": "Noncash Charitable Contributions",
-    "screen_code": "8283"
+    "screen_code": "8283",
+    "filed_tax_node_type_code": "f8283"
   },
   {
     "form": "8332",
     "description": "Release/Revocation of Release of Claim to Exemption for Child by Custodial Parent",
-    "screen_code": "8332"
+    "screen_code": "8332",
+    "filed_tax_node_type_code": "f8332"
   },
   {
     "form": "8379",
@@ -632,7 +653,8 @@
     "screen_code": "8379",
     "alias_screen_codes": [
       "8379 > Page down"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8379"
   },
   {
     "form": "8396",
@@ -661,7 +683,8 @@
   {
     "form": "8609",
     "description": "Low-Income Housing Credit Allocation and Certification",
-    "screen_code": "8609"
+    "screen_code": "8609",
+    "filed_tax_node_type_code": "f8609"
   },
   {
     "form": "8611",
@@ -686,7 +709,8 @@
   {
     "form": "8801",
     "description": "Credit for Prior Year Minimum Tax - Individuals, Estates, and Trusts",
-    "screen_code": "8801"
+    "screen_code": "8801",
+    "filed_tax_node_type_code": "f8801"
   },
   {
     "form": "8805",
@@ -696,7 +720,8 @@
   {
     "form": "8814",
     "description": "Parent's Election to Report Child's Interest and Dividends",
-    "screen_code": "8814"
+    "screen_code": "8814",
+    "filed_tax_node_type_code": "f8814"
   },
   {
     "form": "8815",
@@ -711,17 +736,20 @@
   {
     "form": "8822",
     "description": "Change of Address",
-    "screen_code": "8822"
+    "screen_code": "8822",
+    "filed_tax_node_type_code": "f8822"
   },
   {
     "form": "8824",
     "description": "Like-Kind Exchanges",
-    "screen_code": "8824"
+    "screen_code": "8824",
+    "filed_tax_node_type_code": "form8824"
   },
   {
     "form": "8826",
     "description": "Disabled Access Credit",
-    "screen_code": "8826"
+    "screen_code": "8826",
+    "filed_tax_node_type_code": "f8826"
   },
   {
     "form": "8828",
@@ -745,7 +773,8 @@
   {
     "form": "8834",
     "description": "Qualified Electric Vehicle Credit",
-    "screen_code": "8834"
+    "screen_code": "8834",
+    "filed_tax_node_type_code": "f8834"
   },
   {
     "form": "8835",
@@ -816,7 +845,8 @@
   {
     "form": "8862",
     "description": "Information To Claim Certain Credits After Disallowance",
-    "screen_code": "8862"
+    "screen_code": "8862",
+    "filed_tax_node_type_code": "f8862"
   },
   {
     "form": "8863",
@@ -865,7 +895,8 @@
   {
     "form": "8874",
     "description": "New Markets Credit",
-    "screen_code": "8874"
+    "screen_code": "8874",
+    "filed_tax_node_type_code": "f8874"
   },
   {
     "form": "8878",
@@ -891,12 +922,14 @@
   {
     "form": "8881",
     "description": "Credit for Small Employer Pension Plan Startup Costs",
-    "screen_code": "8881"
+    "screen_code": "8881",
+    "filed_tax_node_type_code": "f8881"
   },
   {
     "form": "8882",
     "description": "Credit for Employer-Provided Child Care Facilities and Services",
-    "screen_code": "8882"
+    "screen_code": "8882",
+    "filed_tax_node_type_code": "f8882"
   },
   {
     "form": "8888",
@@ -905,7 +938,8 @@
     "alias_screen_codes": [
       "8888 > Page Down",
       "DD"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8888"
   },
   {
     "form": "8889",
@@ -929,12 +963,14 @@
   {
     "form": "8908",
     "description": "Energy Efficient Home Credit",
-    "screen_code": "8908"
+    "screen_code": "8908",
+    "filed_tax_node_type_code": "f8908"
   },
   {
     "form": "8911",
     "description": "Alternative Fuel Vehicle Refueling Property Credit",
-    "screen_code": "8911"
+    "screen_code": "8911",
+    "filed_tax_node_type_code": "f8911"
   },
   {
     "form": "8912",
@@ -955,7 +991,8 @@
   {
     "form": "8936",
     "description": "Clean Vehicle Credit",
-    "screen_code": "8936"
+    "screen_code": "8936",
+    "filed_tax_node_type_code": "f8936_input"
   },
   {
     "form": "8938",
@@ -963,12 +1000,14 @@
     "screen_code": "8938",
     "alias_screen_codes": [
       "8938 > Foreign Assets"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8938"
   },
   {
     "form": "8941",
     "description": "Credit for Small Employer Health Insurance Premiums",
-    "screen_code": "8941"
+    "screen_code": "8941",
+    "filed_tax_node_type_code": "f8941"
   },
   {
     "form": "8948",
@@ -984,7 +1023,8 @@
   {
     "form": "8958",
     "description": "Allocation of Tax Amounts Between Certain Individuals in Community Property States",
-    "screen_code": "8958"
+    "screen_code": "8958",
+    "filed_tax_node_type_code": "f8958"
   },
   {
     "form": "8960",
@@ -998,7 +1038,8 @@
   {
     "form": "8962",
     "description": "Premium Tax Credit (PTC)",
-    "screen_code": "8962"
+    "screen_code": "8962",
+    "filed_tax_node_type_code": "form8962"
   },
   {
     "form": "8965",
@@ -1022,7 +1063,8 @@
   {
     "form": "8994",
     "description": "Employer Credit for Paid Family and Medical Leave",
-    "screen_code": "8994"
+    "screen_code": "8994",
+    "filed_tax_node_type_code": "f8994"
   },
   {
     "form": "8995/ 8995-A",
@@ -1033,12 +1075,14 @@
   {
     "form": "8997",
     "description": "Initial and Annual Statement of Qualified Opportunity Fund (QOF) Investments",
-    "screen_code": "8997"
+    "screen_code": "8997",
+    "filed_tax_node_type_code": "f8997"
   },
   {
     "form": "9465",
     "description": "Installment Agreement Request",
-    "screen_code": "9465"
+    "screen_code": "9465",
+    "filed_tax_node_type_code": "f9465"
   },
   {
     "form": "14039",
@@ -1052,7 +1096,8 @@
   {
     "form": "EITC",
     "description": "Earned Income Tax Credit",
-    "screen_code": "EIC"
+    "screen_code": "EIC",
+    "filed_tax_node_type_code": "eitc"
   },
   {
     "form": "FAFSA Worksheet",
@@ -1156,7 +1201,8 @@
   {
     "form": "RRB-1099-R",
     "description": "Railroad Retirement Benefits",
-    "screen_code": "RRB"
+    "screen_code": "RRB",
+    "filed_tax_node_type_code": "rrb1099r"
   },
   {
     "form": "RRB-1042S",
@@ -1283,7 +1329,8 @@
   {
     "form": "Schedule H",
     "description": "Household Employment Taxes",
-    "screen_code": "H"
+    "screen_code": "H",
+    "filed_tax_node_type_code": "schedule_h"
   },
   {
     "form": "Schedule H (Form 5471)",
@@ -1298,7 +1345,8 @@
   {
     "form": "Schedule J",
     "description": "Income Averaging for Farmers and Fishermen",
-    "screen_code": "J"
+    "screen_code": "J",
+    "filed_tax_node_type_code": "schedule_j"
   },
   {
     "form": "SCHEDULE J (Form 5471)",
@@ -1317,7 +1365,8 @@
     "screen_code": "K1P",
     "alias_screen_codes": [
       "K1P > \"Add'l entries\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "k1_partnership"
   },
   {
     "form": "Schedule K-1 (Form 1120-S)",
@@ -1326,7 +1375,8 @@
     "alias_screen_codes": [
       "K1S > \"Add'l entries\" tab",
       "K1S > \"1120S K1 11-17\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "k1_s_corp"
   },
   {
     "form": "Schedule K-1 (Form 1120-S) Form 6198",
@@ -1341,7 +1391,8 @@
   {
     "form": "Schedule K-1 (Form 1041)",
     "description": "Beneficiary's Share of Income, Deductions, Credits, etc.",
-    "screen_code": "K1F"
+    "screen_code": "K1F",
+    "filed_tax_node_type_code": "k1_trust"
   },
   {
     "form": "Schedule K-1 (Form 1041)",
@@ -1419,7 +1470,8 @@
   {
     "form": "Schedule R",
     "description": "Credit for the Elderly or the Disabled",
-    "screen_code": "R"
+    "screen_code": "R",
+    "filed_tax_node_type_code": "schedule_r"
   },
   {
     "form": "Schedule R (Form 5471)",
@@ -1493,7 +1545,8 @@
   {
     "form": "W-2G",
     "description": "Certain Gambling Winnings",
-    "screen_code": "W2G"
+    "screen_code": "W2G",
+    "filed_tax_node_type_code": "w2g"
   },
   {
     "form": "W-2PR",

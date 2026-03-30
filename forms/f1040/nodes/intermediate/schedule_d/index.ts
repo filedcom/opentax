@@ -96,6 +96,9 @@ export const inputSchema = z.object({
   // Unrecaptured §1250 Gain Worksheet line 19 — from unrecaptured_1250_worksheet node
   // (informational; consumed by the Schedule D Tax Worksheet, not by Schedule D itself)
   line19_unrecaptured_1250: z.number().nonnegative().optional(),
+  // Collectibles gain from Form 2439 — flows to 28% Rate Gain Worksheet line 4
+  // IRC §1(h)(5); max 28% tax rate applies
+  collectibles_gain_form2439: z.number().nonnegative().optional(),
 });
 
 type ScheduleDInput = z.infer<typeof inputSchema>;

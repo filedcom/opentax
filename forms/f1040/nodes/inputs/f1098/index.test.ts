@@ -634,6 +634,7 @@ Deno.test("edge_split_interest_two_entries — same property split across for_ro
     minimalItem({ box1_mortgage_interest: 3000, for_routing: "E" }),
   ]);
   assertEquals(fieldsOf(result.outputs, scheduleA)!.line_8a_mortgage_interest_1098, 7000);
+  const schedE = findOutput(result, "schedule_e");
   const eField = (schedE!.fields as Record<string, unknown>).mortgage_interest ??
     (schedE!.fields as Record<string, unknown>).line12_mortgage_interest;
   assertEquals(eField, 3000);

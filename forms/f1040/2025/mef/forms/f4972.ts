@@ -1,5 +1,5 @@
-import type { Form4972Fields, Form4972Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { Form4972Fields, Form4972Input } from "../types.ts";
 
 const FIELD_MAP: ReadonlyArray<readonly [keyof Form4972Fields, string]> = [
   ["lump_sum_amount", "LumpSumDistriAmt"],

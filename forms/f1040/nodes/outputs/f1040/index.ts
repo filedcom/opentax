@@ -32,6 +32,9 @@ const inputSchema = z.object({
   line1f_taxable_adoption_benefits: z.number().nonnegative().optional(),
   line1g_wages_8919: z.number().nonnegative().optional(),
   line38_amount_paid_extension: z.number().optional(),
+  // Line 38 — Penalty for underpayment of estimated tax (from Form 2210 line 19)
+  // IRC §6654; Form 2210 line 19 → Form 1040 line 38
+  line38_underpayment_penalty: z.number().nonnegative().optional(),
   // Line 20 — Total nonrefundable credits (from Schedule 3 Part I line 8)
   line20_nonrefundable_credits: z.number().nonnegative().optional(),
   // Line 27 — Earned Income Credit (EITC)
@@ -39,6 +42,12 @@ const inputSchema = z.object({
   line27_eitc: z.number().nonnegative().optional(),
   // Line 31 — Additional payments and credits (from Schedule 3 Part II line 15)
   line31_additional_payments: z.number().nonnegative().optional(),
+  // Line 35 — Credit for federal tax on fuels (Form 4136)
+  // IRC §§ 6421, 6427; refundable portion (farming use)
+  line35_fuel_tax_credit: z.number().nonnegative().optional(),
+  // Line 16 — Income tax (from tax tables, worksheets, or Schedule J line 23)
+  // IRC §§ 1, 55; Schedule J replaces regular tax computation when income averaging elected
+  line16_income_tax: z.number().nonnegative().optional(),
 });
 
 class F1040Node extends TaxNode<typeof inputSchema> {

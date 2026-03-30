@@ -30,6 +30,46 @@ import { scheduleE } from "../nodes/inputs/schedule_e/index.ts";
 import { rrb1099r } from "../nodes/inputs/rrb1099r/index.ts";
 import { ssa1099 } from "../nodes/inputs/ssa1099/index.ts";
 import { w2 } from "../nodes/inputs/w2/index.ts";
+import { w2g } from "../nodes/inputs/w2g/index.ts";
+import { f1099patr } from "../nodes/inputs/f1099patr/index.ts";
+import { f8283 } from "../nodes/inputs/f8283/index.ts";
+import { f9465 } from "../nodes/inputs/f9465/index.ts";
+import { f8888 } from "../nodes/inputs/f8888/index.ts";
+import { schedule_r } from "../nodes/inputs/schedule_r/index.ts";
+import { f2210 } from "../nodes/inputs/f2210/index.ts";
+import { f3903 } from "../nodes/inputs/f3903/index.ts";
+import { f5695 } from "../nodes/inputs/f5695/index.ts";
+import { f8936Input } from "../nodes/inputs/f8936_input/index.ts";
+import { f8862 } from "../nodes/inputs/f8862/index.ts";
+import { f8958 } from "../nodes/inputs/f8958/index.ts";
+import { f8994 } from "../nodes/inputs/f8994/index.ts";
+import { f8814 } from "../nodes/inputs/f8814/index.ts";
+import { f8379 } from "../nodes/inputs/f8379/index.ts";
+import { f8938 } from "../nodes/inputs/f8938/index.ts";
+import { f5884 } from "../nodes/inputs/f5884/index.ts";
+import { f6478 } from "../nodes/inputs/f6478/index.ts";
+import { f6765 } from "../nodes/inputs/f6765/index.ts";
+import { f7207 } from "../nodes/inputs/f7207/index.ts";
+import { f8881 } from "../nodes/inputs/f8881/index.ts";
+import { f8882 } from "../nodes/inputs/f8882/index.ts";
+import { f8908 } from "../nodes/inputs/f8908/index.ts";
+import { f8941 } from "../nodes/inputs/f8941/index.ts";
+import { f8834 } from "../nodes/inputs/f8834/index.ts";
+import { f8874 } from "../nodes/inputs/f8874/index.ts";
+import { f8911 } from "../nodes/inputs/f8911/index.ts";
+import { f8826 } from "../nodes/inputs/f8826/index.ts";
+import { f4136 } from "../nodes/inputs/f4136/index.ts";
+import { f3468 } from "../nodes/inputs/f3468/index.ts";
+import { f4255 } from "../nodes/inputs/f4255/index.ts";
+import { f8801 } from "../nodes/inputs/f8801/index.ts";
+import { f8332 } from "../nodes/inputs/f8332/index.ts";
+import { f8822 } from "../nodes/inputs/f8822/index.ts";
+import { f1310 } from "../nodes/inputs/f1310/index.ts";
+import { f2439 } from "../nodes/inputs/f2439/index.ts";
+import { f8997 } from "../nodes/inputs/f8997/index.ts";
+import { schedule_j } from "../nodes/inputs/schedule_j/index.ts";
+import { f8609 } from "../nodes/inputs/f8609/index.ts";
+import { f4852 } from "../nodes/inputs/f4852/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
 import { eitc } from "../nodes/intermediate/eitc/index.ts";
@@ -121,6 +161,46 @@ export const registry: NodeRegistry = {
   rrb1099r,
   ssa1099,
   w2,
+  w2g,
+  f1099patr,
+  f8283,
+  f9465,
+  f8888,
+  schedule_r,
+  f2210,
+  f3903,
+  f5695,
+  f8936_input: f8936Input,
+  f8862,
+  f8958,
+  f8994,
+  f8814,
+  f8379,
+  f8938,
+  f5884,
+  f6478,
+  f6765,
+  f7207,
+  f8881,
+  f8882,
+  f8908,
+  f8941,
+  f8834,
+  f8874,
+  f8911,
+  f8826,
+  f4136,
+  f3468,
+  f4255,
+  f8801,
+  f8332,
+  f8822,
+  f1310,
+  f2439,
+  f8997,
+  schedule_j,
+  f8609,
+  f4852,
 
   // ── Intermediates ───────────────────────────────────────────────────────────
   eitc,
