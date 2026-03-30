@@ -4,6 +4,7 @@ import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
 import { TaxNode } from "../types/tax-node.ts";
 import { OutputNodes } from "../types/output-nodes.ts";
+import type { NodeContext } from "../types/node-context.ts";
 import { buildExecutionPlan } from "./planner.ts";
 
 // --- Mock Nodes (defined leaf-first so instances can be passed to OutputNodes) ---
@@ -13,7 +14,7 @@ class MockLeafNode extends TaxNode<typeof leafInputSchema> {
   readonly nodeType = "mock_leaf";
   readonly inputSchema = leafInputSchema;
   readonly outputNodes = new OutputNodes([]);
-  compute(): NodeResult {
+  compute(_ctx: NodeContext, _input: z.infer<typeof leafInputSchema>): NodeResult {
     return { outputs: [] };
   }
 }
@@ -27,7 +28,7 @@ class MockW2Node extends TaxNode<typeof w2InputSchema> {
   readonly nodeType = "mock_w2";
   readonly inputSchema = w2InputSchema;
   readonly outputNodes = new OutputNodes([mockLeafNode]);
-  compute(input: z.infer<typeof w2InputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof w2InputSchema>): NodeResult {
     const total = input.w2s.reduce((s, w) => s + w.wages, 0);
     return {
       outputs: [{ nodeType: "mock_leaf", fields: { value: total } }],
@@ -44,7 +45,7 @@ class MockStartNode extends TaxNode<typeof startInputSchema> {
   readonly nodeType = "start";
   readonly inputSchema = startInputSchema;
   readonly outputNodes = new OutputNodes([mockW2Node]);
-  compute(input: z.infer<typeof startInputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: z.infer<typeof startInputSchema>): NodeResult {
     const outputs = [];
     if (input.w2s?.length) {
       outputs.push({ nodeType: "mock_w2" as const, fields: { w2s: input.w2s } });
@@ -61,7 +62,7 @@ Deno.test("planner: single node (start only, no outputs) produces [start]", () =
     readonly nodeType = "start";
     readonly inputSchema = emptyStartSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(): NodeResult {
+    compute(_ctx: NodeContext, _input: z.infer<typeof emptyStartSchema>): NodeResult {
       return { outputs: [] };
     }
   }
@@ -127,7 +128,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     readonly nodeType = "diamond_d";
     readonly inputSchema = dInputSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(): NodeResult {
+    compute(_ctx: NodeContext, _input: z.infer<typeof dInputSchema>): NodeResult {
       return { outputs: [] };
     }
   }
@@ -137,7 +138,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     readonly nodeType = "diamond_b";
     readonly inputSchema = bInputSchema;
     readonly outputNodes = new OutputNodes([diamondD]);
-    compute(input: z.infer<typeof bInputSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof bInputSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "diamond_d", fields: { result: input.x } }],
       };
@@ -149,7 +150,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     readonly nodeType = "diamond_c";
     readonly inputSchema = cInputSchema;
     readonly outputNodes = new OutputNodes([diamondD]);
-    compute(input: z.infer<typeof cInputSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof cInputSchema>): NodeResult {
       return {
         outputs: [{ nodeType: "diamond_d", fields: { result: input.y } }],
       };
@@ -162,7 +163,7 @@ Deno.test("planner: diamond graph (start -> B, start -> C, B -> D, C -> D) valid
     readonly nodeType = "start";
     readonly inputSchema = diamondStartSchema;
     readonly outputNodes = new OutputNodes([diamondB, diamondC]);
-    compute(input: z.infer<typeof diamondStartSchema>): NodeResult {
+    compute(_ctx: NodeContext, input: z.infer<typeof diamondStartSchema>): NodeResult {
       return {
         outputs: [
           { nodeType: "diamond_b", fields: { x: input.val } },
@@ -200,7 +201,7 @@ Deno.test("planner: all nodes in registry appear in plan (optional nodes include
     readonly nodeType = "optional_node";
     readonly inputSchema = optionalSchema;
     readonly outputNodes = new OutputNodes([]);
-    compute(): NodeResult {
+    compute(_ctx: NodeContext, _input: z.infer<typeof optionalSchema>): NodeResult {
       return { outputs: [] };
     }
   }
