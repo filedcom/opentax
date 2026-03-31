@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, alwaysFail, hasValue, hasNonZero, noValue, validSSN, eqStr, eqField, formPresent, formAbsent, ifThen, ifThenUnless, any, all, not, gt, notGtNum, charAfterIsAlpha, charCountAtMost, contains, dateYearEq, validRTN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, alwaysFail, hasValue, hasNonZero, noValue, validSSN, eqStr, eqField, formPresent, formAbsent, ifThen, ifThenUnless, any, all, not, gt, notGtNum, charAfterIsAlpha, charCountAtMost, contains, dateMonthDayEq, dateYearEq, validRTN, } from "../../../../core/validation/mod.ts";
 
 export const R0000_RULES: readonly RuleDef[] = [
   rule(
@@ -194,14 +194,14 @@ export const R0000_RULES: readonly RuleDef[] = [
     "R0000-114",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("TaxPeriodBeginDt"), dateMonthDayEq("TaxPeriodBeginDt", 1, 1)),
     "The Submission Manifest's 'TaxPeriodBeginDt' value for month and day should be January 1.",
   ),
   rule(
     "R0000-115",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("TaxPeriodEndDt"), dateMonthDayEq("TaxPeriodEndDt", 12, 31)),
     "The Submission Manifest's 'TaxPeriodEndDt' value for month and day should be December 31.",
   ),
   rule(

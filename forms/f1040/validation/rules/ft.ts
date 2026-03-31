@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, dateGteField, dateLteField, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const FT_RULES: readonly RuleDef[] = [
   rule(
@@ -26,14 +26,14 @@ export const FT_RULES: readonly RuleDef[] = [
     "FT-003-07",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("AcquiredDt"), all(dateGteField("AcquiredDt", "TaxPeriodBeginDt"), dateLteField("AcquiredDt", "TaxPeriodEndDt"))),
     "If Form T, Part I, Line 3b 'AcquiredDt' has a value, it must be on or after 'TaxPeriodBeginDt' and on or before 'TaxPeriodEndDt' in the Return Header.",
   ),
   rule(
     "FT-004-07",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("SaleDt"), all(dateGteField("SaleDt", "TaxPeriodBeginDt"), dateLteField("SaleDt", "TaxPeriodEndDt"))),
     "If Form T, Part III, Line 3b 'SaleDt' has a value, it must be on or after 'TaxPeriodBeginDt' and on or before 'TaxPeriodEndDt' in the Return Header.",
   ),
 ];

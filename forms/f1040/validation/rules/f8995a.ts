@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqStr, filingStatusIs, filingStatusNot, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqField, eqStr, filingStatusIs, filingStatusNot, hasNonZero, hasValue, ifThen, notLtSum, } from "../../../../core/validation/mod.ts";
 
 export const F8995A_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F8995A_RULES: readonly RuleDef[] = [
     "F8995A-002",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("DPADSect199AgAllocAgricHortAmt"), notLtSum("TaxableIncomeBeforeQBIDedAmt", "DPADSect199AgAllocAgricHortAmt", "QBIDedBeforeDPADSect199AgAmt")),
     "If Form 8995-A, 'DPADSect199AgAllocAgricHortAmt' has a non-zero value, then it must not be greater than 'TaxableIncomeBeforeQBIDedAmt' minus (-) 'QBIDedBeforeDPADSect199AgAmt'.",
   ),
   rule(

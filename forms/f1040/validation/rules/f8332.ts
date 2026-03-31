@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, any, eqField, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const F8332_RULES: readonly RuleDef[] = [
   rule(
     "F8332-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("CurrentTaxYr"), eqField("CurrentTaxYr", "TaxYr")),
     "Form 8332, [ 'CurrentTaxYr' in 'RelClmExemptionCYAndFutYrsGrp' ] must be the same as 'TaxYr' in the Return Header.",
   ),
   rule(

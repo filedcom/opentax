@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqMin, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, noValue, not, notGtField, notGtNum, notLtSum, any, all, formPresent, filingStatusIs, filingStatusNot, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, dateGteField, dateLteField, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, } from "../../../../core/validation/mod.ts";
 
 export const SA_RULES: readonly RuleDef[] = [
   rule(
@@ -117,7 +117,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("VehiclePlacedInServiceDt"), all(dateGteField("VehiclePlacedInServiceDt", "TaxPeriodBeginDt"), dateLteField("VehiclePlacedInServiceDt", "TaxPeriodEndDt"))),
     "Schedule A (Form 8936), 'VehiclePlacedInServiceDt' must be between [ 'TaxPeriodBeginDt' and 'TaxPeriodEndDt' ] in the Return Header.",
   ),
   rule(
@@ -215,7 +215,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-023-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(gt("PrevOwnedCleanVehCreditAmt", 0), eqMinNum("PrevOwnedCleanVehCreditAmt", "SalePriceBySpecifiedPctAmt", 4000)),
     "In 'PrevOwnCleanVehicleGrp' on Schedule A (Form 8936), if 'PrevOwnedCleanVehCreditAmt' has a value greater than zero, then it must be equal to the lesser of [ 'SalePriceBySpecifiedPctAmt' and 4000 ].",
   ),
   rule(
@@ -250,14 +250,14 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-028-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("MaxQlfyCmrclCleanVehCrAmt"), any(all(lt("GrossVehicleWeightRatingNum", 14000), eqNum("MaxQlfyCmrclCleanVehCrAmt", 7500)), all(gte("GrossVehicleWeightRatingNum", 14000), eqNum("MaxQlfyCmrclCleanVehCrAmt", 40000)))),
     "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if 'MaxQlfyCmrclCleanVehCrAmt' has a value, then it must be [7500, if 'GrossVehicleWeightRatingNum' is less than 14000] or [40000, if 'GrossVehicleWeightRatingNum' is greater than or equal to 14000].",
   ),
   rule(
     "SA-F8936-029",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("VIN"), strLenEq("VIN", 17)),
     "Schedule A (Form 8936), 'VIN' must be exactly 17 characters in length.",
   ),
   rule(

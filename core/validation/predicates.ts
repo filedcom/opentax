@@ -210,7 +210,35 @@ export const notLtSum = (a: string, ...addends: string[]): RuleCheck =>
     return ctx.num(a) >= sum - 0.01;
   };
 
+/** Field a is strictly less than field b. */
+export const ltField = (a: string, b: string): RuleCheck =>
+  (ctx) => ctx.num(a) < ctx.num(b);
+
+/** Sum of two fields is greater than n. */
+export const sumGtNum = (a: string, b: string, n: number): RuleCheck =>
+  (ctx) => ctx.num(a) + ctx.num(b) > n;
+
+/** Target = min(field, n) (penny tolerance). */
+export const eqMinNum = (target: string, field: string, n: number): RuleCheck =>
+  (ctx) => Math.abs(ctx.num(target) - Math.min(ctx.num(field), n)) < 0.01;
+
+/** String field has exactly the given length. */
+export const strLenEq = (xml: string, len: number): RuleCheck =>
+  (ctx) => {
+    const v = ctx.field(xml);
+    return typeof v === "string" && v.length === len;
+  };
+
 // ─── Date / Year Checks ────────────────────────────────
+
+/** Parse a date string (YYYY-MM-DD or MM/DD/YYYY) to ms since epoch, or null if unparseable. */
+function parseDateMs(v: string): number | null {
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return Date.UTC(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+  const us = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (us) return Date.UTC(Number(us[3]), Number(us[1]) - 1, Number(us[2]));
+  return null;
+}
 
 /** Extract 4-digit year from a date string (YYYY-MM-DD, MM/DD/YYYY, or just YYYY). */
 function extractYear(v: string): number {
@@ -242,6 +270,41 @@ export const dateYearEqOrNext = (dateXml: string, yearXml: string): RuleCheck =>
     const yr = extractYear(d);
     const taxYr = ctx.num(yearXml);
     return yr === taxYr || yr === taxYr + 1;
+  };
+
+/** Date field must be >= reference date field (both YYYY-MM-DD or MM/DD/YYYY). */
+export const dateGteField = (dateXml: string, refXml: string): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(dateXml) ?? "");
+    const r = String(ctx.field(refXml) ?? "");
+    if (!d || !r) return true;
+    const dm = parseDateMs(d);
+    const rm = parseDateMs(r);
+    if (dm === null || rm === null) return true;
+    return dm >= rm;
+  };
+
+/** Date field must be <= reference date field (both YYYY-MM-DD or MM/DD/YYYY). */
+export const dateLteField = (dateXml: string, refXml: string): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(dateXml) ?? "");
+    const r = String(ctx.field(refXml) ?? "");
+    if (!d || !r) return true;
+    const dm = parseDateMs(d);
+    const rm = parseDateMs(r);
+    if (dm === null || rm === null) return true;
+    return dm <= rm;
+  };
+
+/** Date field must have the given month and day (1-indexed). */
+export const dateMonthDayEq = (dateXml: string, month: number, day: number): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(dateXml) ?? "");
+    if (!d) return true;
+    const ms = parseDateMs(d);
+    if (ms === null) return true;
+    const dt = new Date(ms);
+    return dt.getUTCMonth() + 1 === month && dt.getUTCDate() === day;
   };
 
 // ─── Combinators ────────────────────────────────────────
