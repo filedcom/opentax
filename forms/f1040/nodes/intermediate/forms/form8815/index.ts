@@ -8,17 +8,23 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule_b } from "../../aggregation/schedule_b/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  SAVINGS_BOND_PHASEOUT_START_MFJ_2025,
+  SAVINGS_BOND_PHASEOUT_END_MFJ_2025,
+  SAVINGS_BOND_PHASEOUT_START_SINGLE_2025,
+  SAVINGS_BOND_PHASEOUT_END_SINGLE_2025,
+} from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
 // IRC §135(b)(2)(A); Rev. Proc. 2024-40 — TY2025 phaseout thresholds
 // MFJ / QSS phaseout range
-const PHASEOUT_START_MFJ = 145_200;
-const PHASEOUT_END_MFJ = 175_200;
+const PHASEOUT_START_MFJ = SAVINGS_BOND_PHASEOUT_START_MFJ_2025;
+const PHASEOUT_END_MFJ = SAVINGS_BOND_PHASEOUT_END_MFJ_2025;
 
 // Single / HOH phaseout range
-const PHASEOUT_START_SINGLE = 96_800;
-const PHASEOUT_END_SINGLE = 111_800;
+const PHASEOUT_START_SINGLE = SAVINGS_BOND_PHASEOUT_START_SINGLE_2025;
+const PHASEOUT_END_SINGLE = SAVINGS_BOND_PHASEOUT_END_SINGLE_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
