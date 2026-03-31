@@ -12,7 +12,7 @@ The core computation engine is solid:
 - **122 nodes** registered in the 2025 registry (73 input, 36 intermediate, 2 output, 6 worksheets, + aggregators)
 - **Topological executor** — two-phase (plan + execute) with pending dict accumulation
 - **Type-safe DAG** — OutputNodes enforces compile-time routing; Zod schemas validate all inputs
-- **31 MeF XML builders** — IRS1040, Schedules 1/2/3/B/D/F/SE, and 22 supporting forms
+- **48 MeF XML builders** — IRS1040, Schedules 1/2/3/A/B/D/F/H/SE, and 39 supporting forms
 - **CLI pipeline** — `return create` → `form add` → `return get` → `return export --type mef` works end-to-end for simple returns
 - **E2E tests** — wage earner, self-employed, and capital gains scenarios verified
 
@@ -54,35 +54,32 @@ The IRS MeF schema (Publication 4164) requires these header elements that are co
 
 ---
 
-## Gap 2: Missing MeF XML Builders for Intermediate Forms
+## ~~Gap 2: Missing MeF XML Builders for Intermediate Forms~~ ✓ RESOLVED
 
-**Severity: HIGH**
-**Location:** `forms/f1040/2025/mef/forms/`
+**Status: COMPLETE** (2026-03-31)
 
-The engine computes results for these forms but **cannot serialize them to MeF XML** because no builder exists:
+All 16 missing MeF XML builders have been implemented following the FIELD_MAP + MefNode pattern:
 
-| Intermediate Node | MeF Builder? | IRS XML Element |
+| Intermediate Node | MeF Builder | IRS XML Element |
 |---|---|---|
-| `eitc` (Earned Income Credit) | No | `IRS_EITC` |
-| `form2555` (Foreign Earned Income) | No | `IRS2555` |
-| `form461` (Excess Business Loss) | No | `IRS461` |
-| `form4684` (Casualties/Thefts) | No | `IRS4684` |
-| `form4952` (Investment Interest) | No | `IRS4952` |
-| `form5695` (Energy Credits) | No | `IRS5695` |
-| `form6198` (At-Risk) | No | `IRS6198` |
-| `form6252` (Installment Sale) | No | `IRS6252` |
-| `form6781` (§1256 Contracts) | No | `IRS6781` |
-| `form7206` (SE Health Insurance) | No | `IRS7206` |
-| `form8396` (Mortgage Interest Credit) | No | `IRS8396` |
-| `form8615` (Kiddie Tax) | No | `IRS8615` |
-| `form8815` (EE Bond Exclusion) | No | `IRS8815` |
-| `form8990` (Interest Limitation) | No | `IRS8990` |
-| `form982` (Debt Reduction) | No | `IRS982` |
-| `schedule_h` (Household Employment) | No | `IRS_SCH_H` |
+| `eitc` (Earned Income Credit) | ✓ `eitc.ts` | `IRSEITC` |
+| `form2555` (Foreign Earned Income) | ✓ `f2555.ts` | `IRS2555` |
+| `form461` (Excess Business Loss) | ✓ `f461.ts` | `IRS461` |
+| `form4684` (Casualties/Thefts) | ✓ `f4684.ts` | `IRS4684` |
+| `form4952` (Investment Interest) | ✓ `f4952.ts` | `IRS4952` |
+| `form5695` (Energy Credits) | ✓ `f5695.ts` | `IRS5695` |
+| `form6198` (At-Risk) | ✓ `f6198.ts` | `IRS6198` |
+| `form6252` (Installment Sale) | ✓ `f6252.ts` | `IRS6252` |
+| `form6781` (§1256 Contracts) | ✓ `f6781.ts` | `IRS6781` |
+| `form7206` (SE Health Insurance) | ✓ `f7206.ts` | `IRS7206` |
+| `form8396` (Mortgage Interest Credit) | ✓ `f8396.ts` | `IRS8396` |
+| `form8615` (Kiddie Tax) | ✓ `f8615.ts` | `IRS8615` |
+| `form8815` (EE Bond Exclusion) | ✓ `f8815.ts` | `IRS8815` |
+| `form8990` (Interest Limitation) | ✓ `f8990.ts` | `IRS8990` |
+| `form982` (Debt Reduction) | ✓ `f982.ts` | `IRS982` |
+| `schedule_h` (Household Employment) | ✓ `schedule_h.ts` | `IRS1040ScheduleH` |
 
-**Impact:** Any return that triggers these forms will compute correct numbers but produce MeF XML that silently **omits** the form — the IRS will reject it.
-
-**What to do:** Build MeF nodes following the existing pattern (FIELD_MAP + MefNode subclass). Each is ~30-50 lines. The EITC builder is the highest priority (most common credit).
+All builders registered in `builder.ts`, types added to `types.ts`, extractions wired in `pending.ts`.
 
 ---
 
@@ -166,29 +163,31 @@ The product.md describes AcroForm PDF filling with branding overlay. None of it 
 
 ---
 
-## Gap 7: Return Get Shows Minimal Data
+## ~~Gap 7: Return Get Shows Minimal Data~~ ✓ RESOLVED
 
-**Severity: LOW**
-**File:** `cli/commands/return.ts`
+**Status: COMPLETE** (2026-03-31)
 
-`return get` only returns `{ returnId, year, lines: { line_1a } }`. Should return the full pending dict or a summary of all computed lines, tax owed/refund, and form list.
-
----
-
-## Gap 8: No Schedule A (Itemized Deductions) MeF Builder
-
-**Severity: HIGH**
-
-Schedule A is one of the most common forms. The input node exists, the computation flows through to f1040 line 12, but there's no MeF XML builder for Schedule A itself. Itemizers will have incomplete MeF output.
+`return get` now returns a comprehensive result:
+- **`summary`** — key 1040 lines: total wages, total income, AGI, taxable income, total tax, total payments, refund/amount owed
+- **`forms`** — list of all computed form types in the return
+- **`lines`** — full f1040 pending dict with all computed line items
+- **`warnings`** — soft validation warnings (Tier 2 consistency checks)
 
 ---
 
-## Gap 9: UnimplementedTaxNode — 1 Remaining
+## ~~Gap 8: No Schedule A (Itemized Deductions) MeF Builder~~ ✓ RESOLVED
 
-**Severity: LOW**
-**File:** `forms/f1040/nodes/intermediate/worksheets/unrecaptured_1250_worksheet/index.ts`
+**Status: COMPLETE** (2026-03-31)
 
-The unrecaptured §1250 gain worksheet is the only node still using `UnimplementedTaxNode`. Only affects returns with depreciation recapture on real estate sales.
+Schedule A MeF builder implemented in `schedule_a.ts` with 15 field mappings covering all itemized deduction lines. Registered in `builder.ts` and wired through `types.ts`/`pending.ts`.
+
+---
+
+## ~~Gap 9: UnimplementedTaxNode — 1 Remaining~~ ✓ RESOLVED
+
+**Status: ALREADY COMPLETE** (verified 2026-03-31)
+
+The unrecaptured §1250 gain worksheet is fully implemented with comprehensive test coverage. It uses `UnimplementedTaxNode` only for a `ScheduleDStubNode` to avoid circular imports — the worksheet itself is a full `TaxNode` implementation. No remaining `UnimplementedTaxNode` instances exist as primary nodes.
 
 ---
 
@@ -203,24 +202,24 @@ The unrecaptured §1250 gain worksheet is the only node still using `Unimplement
 5. **XSD schema validation** — Download TY2025 schemas, validate before export
 6. **Add `tax validate` command** — Surface Tier 1 blocks before export
 
-### High Priority (Common Returns)
+### ~~High Priority (Common Returns)~~ ✓ RESOLVED
 
-7. **EITC MeF builder** — Most claimed credit in the US
-8. **Schedule A MeF builder** — Required for itemizers
-9. **Missing MeF builders** — 14 more forms (form5695, form6251 already done, etc.)
-10. **Form CRUD** — replace, remove, list, get commands
+7. ~~**EITC MeF builder**~~ ✓
+8. ~~**Schedule A MeF builder**~~ ✓
+9. ~~**Missing MeF builders**~~ ✓ All 16 forms implemented
+10. **Form CRUD** — replace, remove, list, get commands (moved to Medium)
 
 ### Medium Priority (Professional Use)
 
 11. **PDF export** — AcroForm filling for paper/review copies
 12. **Preparer/ERO info** — PTIN, firm details for professional returns
-13. **Return get improvements** — Full computed summary output
+13. ~~**Return get improvements**~~ ✓ Full summary, form list, all lines, and warnings
 
-### Lower Priority
+### ~~Lower Priority~~ ✓ RESOLVED
 
-14. **Soft validation warnings** — Tier 2 data consistency checks
-15. **Unrecaptured §1250 worksheet** — Implement the one remaining stub node
-16. **Schedule H MeF builder** — Household employment (uncommon)
+14. ~~**Soft validation warnings**~~ ✓ Tier 2 checks integrated into `return get` (8 rules: Schedule C/SE pairing, EITC consistency, itemized deduction ratio, charitable contribution limits, Schedule D/8949 pairing, refund ratio, HSA distribution checks, medical expense floor)
+15. ~~**Unrecaptured §1250 worksheet**~~ ✓ Already implemented (was incorrectly listed as stub)
+16. ~~**Schedule H MeF builder**~~ ✓ Built in Gap 2 resolution
 
 ---
 
