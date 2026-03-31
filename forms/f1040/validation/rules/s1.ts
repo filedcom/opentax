@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, notGtField, any, all, formPresent, filingStatusIs, filingStatusNot, validSSN, ssnNotEqual, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, notGtField, any, all, formPresent, filingStatusIs, filingStatusNot, sumGtNum, validSSN, ssnNotEqual, } from "../../../../core/validation/mod.ts";
 
 export const S1_RULES: readonly RuleDef[] = [
   rule(
@@ -54,7 +54,7 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-060-01",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("TotalOtherAdjustmentsAmt", "JuryDutyPayDeductionAmt", "RntlIncmPrsnlPropExpnssDedAmt", "OlympcPrlympcMedalUSOCDedAmt", "RforAmortzExpnssDedAmt", "RepaymentSuppUnemplBnftDedAmt", "Sect501c18DContriDedAmt", "Section403bContriDedAmt", "AttyFeesCrtCostsDedAmt", "AttyFeesCrtCostsPdDedAmt", "HousingDeductionAmt", "Section67eExcessDeductionAmt", "OtherAdjustmentsTotalAmt"),
     "Schedule 1 (Form 1040), 'TotalOtherAdjustmentsAmt' must be equal to the sum of 'JuryDutyPayDeductionAmt' and 'RntlIncmPrsnlPropExpnssDedAmt' and 'OlympcPrlympcMedalUSOCDedAmt' and 'RforAmortzExpnssDedAmt' and 'RepaymentSuppUnemplBnftDedAmt' and 'Sect501c18DContriDedAmt' and 'Section403bContriDedAmt' and 'AttyFeesCrtCostsDedAmt' and 'AttyFeesCrtCostsPdDedAmt' and 'HousingDeductionAmt' and 'Section67eExcessDeductionAmt' and the sum of all 'OtherAdjustmentsAmt' in [OtherAdjustmentsStatement].",
   ),
   rule(
@@ -173,14 +173,14 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-396-04",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(all(filingStatusIs(2), sumGtNum("AdjustedGrossIncomeAmt", "StudentLoanInterestDedAmt", 200000)), isZero("StudentLoanInterestDedAmt")),
     "If the filing status of the return is married filing jointly and Form 1040, 'AdjustedGrossIncomeAmt' plus (+) Schedule 1 (Form 1040), 'StudentLoanInterestDedAmt' is greater than 200000, then 'StudentLoanInterestDedAmt' must be zero if an amount is entered.",
   ),
   rule(
     "S1-F1040-399-03",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(all(filingStatusNot(2, 3), sumGtNum("AdjustedGrossIncomeAmt", "StudentLoanInterestDedAmt", 100000)), isZero("StudentLoanInterestDedAmt")),
     "If the filing status of the return is single or head of household or Qualifying Surviving Spouse and Form 1040, 'AdjustedGrossIncomeAmt' plus (+) Schedule 1 (Form 1040), 'StudentLoanInterestDedAmt' is greater than 100000, then 'StudentLoanInterestDedAmt' must be zero if an amount is entered.",
   ),
   rule(

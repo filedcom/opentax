@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqStr, gt, hasNonZero, hasValue, ifThen, not, notGtField, notLtSum, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqField, eqStr, gt, hasNonZero, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notLtSum, noValue, } from "../../../../core/validation/mod.ts";
 
 export const F9465_RULES: readonly RuleDef[] = [
   rule(
@@ -19,14 +19,14 @@ export const F9465_RULES: readonly RuleDef[] = [
     "F9465-014",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    matchesHeaderSSN("PrimarySSN"),
     "Form 9465, Line 1 'PrimarySSN' must be equal to either the 'PrimarySSN' or 'SpouseSSN' in the Return Header.",
   ),
   rule(
     "F9465-015",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("SpouseSSN"), matchesHeaderSSN("SpouseSSN")),
     "If Form 9465, Line 1 'SpouseSSN' has a value, then it must be equal to either the 'PrimarySSN' or 'SpouseSSN' in the Return Header.",
   ),
   rule(

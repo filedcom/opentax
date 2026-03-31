@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqField, gt, hasNonZero, hasValue, ifThen, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, eqField, gt, hasNonZero, hasValue, ifThen, ltField, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
 
 export const FW2G_RULES: readonly RuleDef[] = [
   rule(
     "FW2G-001-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires comparison: if FederalIncomeTaxWithheldAmt > 0, it must be < GamblingReportableWinningAmt
+    ifThen(gt("FederalIncomeTaxWithheldAmt", 0), ltField("FederalIncomeTaxWithheldAmt", "GamblingReportableWinningAmt")),
     "If Form W-2G, 'FederalIncomeTaxWithheldAmt' has a value greater than zero, then it must be less than 'GamblingReportableWinningAmt'.",
   ),
   rule(

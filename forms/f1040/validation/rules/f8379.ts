@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqStr, filingStatusIs, formAbsent, formPresent, hasNonZero, hasValue, ifThen, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, eqStr, eqSum, filingStatusIs, formAbsent, formPresent, hasNonZero, hasValue, ifThen, noValue, not, } from "../../../../core/validation/mod.ts";
 
 export const F8379_RULES: readonly RuleDef[] = [
   rule(
@@ -33,21 +33,21 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-004",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/TotalOtherIncomeAmt", "InjuredSpouseAllocatedAmtGrp/TotalOtherIncomeAmt", "OtherSpouseAllocatedAmtGrp/TotalOtherIncomeAmt"),
     "Form 8379, [ 'TotalOtherIncomeAmt' in 'JointReturnAmtGrp' ] must be equal to [ 'TotalOtherIncomeAmt' in 'InjuredSpouseAllocatedAmtGrp' ] plus (+) [ 'TotalOtherIncomeAmt' in 'OtherSpouseAllocatedAmtGrp' ].",
   ),
   rule(
     "F8379-005",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/StandardOrItemizedDeductionAmt", "InjuredSpouseAllocatedAmtGrp/StandardOrItemizedDeductionAmt", "OtherSpouseAllocatedAmtGrp/StandardOrItemizedDeductionAmt"),
     "Form 8379, [ 'StandardOrItemizedDeductionAmt' in 'JointReturnAmtGrp' ] must be equal to [ 'StandardOrItemizedDeductionAmt' in 'InjuredSpouseAllocatedAmtGrp' ] plus (+) [ 'StandardOrItemizedDeductionAmt' in 'OtherSpouseAllocatedAmtGrp' ].",
   ),
   rule(
     "F8379-009",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/EstimatedTaxPaymentAmt", "InjuredSpouseAllocatedAmtGrp/EstimatedTaxPaymentAmt", "OtherSpouseAllocatedAmtGrp/EstimatedTaxPaymentAmt"),
     "Form 8379, [ 'EstimatedTaxPaymentAmt' in 'JointReturnAmtGrp' ] must be equal to [ 'EstimatedTaxPaymentAmt' in 'InjuredSpouseAllocatedAmtGrp' ] plus (+) [ 'EstimatedTaxPaymentAmt' in 'OtherSpouseAllocatedAmtGrp' ].",
   ),
   rule(
@@ -61,7 +61,7 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-012-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(formPresent("form8379"), all(not(eqStr("StateAbbreviationCd", "PR")), not(eqStr("StateAbbreviationCd", "VI")))),
     "If Form 8379 is present in the return, then the 'StateAbbreviationCd' of Filer address in the Return Header must not have the value \"PR\" or \"VI\".",
   ),
   rule(
@@ -75,28 +75,28 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-015",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/WagesAmt", "InjuredSpouseAllocatedAmtGrp/WagesAmt", "OtherSpouseAllocatedAmtGrp/WagesAmt"),
     "Form 8379, Line 13a(a) Joint Return 'WagesAmt' must be equal to the sum of Line 13a(b) Injured Spouse 'WagesAmt' and Line 13a(c) Other Spouse 'WagesAmt'.",
   ),
   rule(
     "F8379-016",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/IncomeAdjustmentAmt", "InjuredSpouseAllocatedAmtGrp/IncomeAdjustmentAmt", "OtherSpouseAllocatedAmtGrp/IncomeAdjustmentAmt"),
     "Form 8379, Line 14a Joint Return 'IncomeAdjustmentAmt' must be equal to the sum of Line 14b Injured Spouse 'IncomeAdjustmentAmt' and Line 14c Other Spouse 'IncomeAdjustmentAmt'.",
   ),
   rule(
     "F8379-017",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/OtherTaxesAmt", "InjuredSpouseAllocatedAmtGrp/OtherTaxesAmt", "OtherSpouseAllocatedAmtGrp/OtherTaxesAmt"),
     "Form 8379, Line 18a Joint Return 'OtherTaxesAmt' must be equal to the sum of Line 18b Injured Spouse 'OtherTaxesAmt' and Line 18c Other Spouse 'OtherTaxesAmt'.",
   ),
   rule(
     "F8379-018",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/FederalIncomeTaxWithheldAmt", "InjuredSpouseAllocatedAmtGrp/FederalIncomeTaxWithheldAmt", "OtherSpouseAllocatedAmtGrp/FederalIncomeTaxWithheldAmt"),
     "Form 8379, Line 19a Joint Return 'FederalIncomeTaxWithheldAmt' must be equal to the sum of Line 19b Injured Spouse 'FederalIncomeTaxWithheldAmt' and Line 19c Other Spouse 'FederalIncomeTaxWithheldAmt'.",
   ),
   rule(
@@ -117,14 +117,14 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-023",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/RefundableCreditsAmt", "InjuredSpouseAllocatedAmtGrp/RefundableCreditsAmt", "OtherSpouseAllocatedAmtGrp/RefundableCreditsAmt"),
     "Form 8379, 'RefundableCreditsAmt' in 'JointReturnAmtGrp' must be equal to [ 'RefundableCreditsAmt' in 'InjuredSpouseAllocatedAmtGrp' plus (+) 'RefundableCreditsAmt' in 'OtherSpouseAllocatedAmtGrp'. ]",
   ),
   rule(
     "F8379-024",
     "reject",
     "math_error",
-    alwaysPass,
+    eqSum("JointReturnAmtGrp/NonrefundableCreditsAmt", "InjuredSpouseAllocatedAmtGrp/NonrefundableCreditsAmt", "OtherSpouseAllocatedAmtGrp/NonrefundableCreditsAmt"),
     "Form 8379, 'NonrefundableCreditsAmt' in 'JointReturnAmtGrp' must be equal to [ 'NonrefundableCreditsAmt' in 'InjuredSpouseAllocatedAmtGrp' plus (+) 'NonrefundableCreditsAmt' in 'OtherSpouseAllocatedAmtGrp'. ]",
   ),
 ];

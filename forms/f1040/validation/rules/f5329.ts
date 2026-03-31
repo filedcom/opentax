@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqStr, eqSum, gt, hasNonZero, hasValue, ifThen, ssnNotEqual, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqStr, eqSum, gt, hasNonZero, hasValue, ifThen, isZero, matchesHeaderSSN, not, notLtSum, ssnNotEqual, } from "../../../../core/validation/mod.ts";
 
 export const F5329_RULES: readonly RuleDef[] = [
   rule(
     "F5329-001",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-form check: SSN must equal PrimarySSN or SpouseSSN in Return Header
+    matchesHeaderSSN("SSN"),
     "Form 5329, 'SSN' must be equal to the 'PrimarySSN' or 'SpouseSSN' in the Return Header.",
   ),
   rule(
@@ -40,14 +40,14 @@ export const F5329_RULES: readonly RuleDef[] = [
     "F5329-008",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires arithmetic: if (MinRqrDistriAmt - (ActualDistriAmt + waiveStmtAmt)) < 0, then ExcessAccumAmt must be 0
+    ifThen(not(notLtSum("AllOthQlfyPlanMinRqrDistriAmt", "AllOthQlfyPlanActualDistriAmt", "AllOthQlfyPlanExcessAccumAmt/waiveTaxOnExAccumQRPStmtAmt")), isZero("AllOthQlfyPlanExcessAccumAmt")),
     "If the value of Form 5329, 'AllOthQlfyPlanMinRqrDistriAmt' minus (-) [ 'AllOthQlfyPlanActualDistriAmt' plus (+) 'waiveTaxOnExAccumQRPStmtAmt' on 'AllOthQlfyPlanExcessAccumAmt' ] is less than zero, then 'AllOthQlfyPlanExcessAccumAmt' must be equal to zero if an amount is entered.",
   ),
   rule(
     "F5329-009",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires arithmetic: if (MinRqrDistriAmt - (ActualDistriAmt + waiveStmtAmt)) < 0, then ExcessAccumAmt must be 0
+    ifThen(not(notLtSum("QlfyRetirePlanMinRqrDistriAmt", "QlfyRetirePlanActualDistriAmt", "QlfyRetirePlanExcessAccumAmt/waiveTaxOnExAccumQRPStmtAmt")), isZero("QlfyRetirePlanExcessAccumAmt")),
     "If the value of Form 5329, 'QlfyRetirePlanMinRqrDistriAmt' minus (-) [ 'QlfyRetirePlanActualDistriAmt' plus (+) 'waiveTaxOnExAccumQRPStmtAmt' on 'QlfyRetirePlanExcessAccumAmt' ] is less than zero, then 'QlfyRetirePlanExcessAccumAmt' must be equal to zero if an amount is entered.",
   ),
   rule(

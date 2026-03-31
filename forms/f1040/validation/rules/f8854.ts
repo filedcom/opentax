@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqField, eqStr, gt, hasNonZero, hasValue, ifThen, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, eqField, eqStr, gt, hasNonZero, hasValue, ifThen, isZero, noValue, } from "../../../../core/validation/mod.ts";
 
 export const F8854_RULES: readonly RuleDef[] = [
   rule(
@@ -54,7 +54,7 @@ export const F8854_RULES: readonly RuleDef[] = [
     "F8854-022",
     "reject",
     "missing_data",
-    alwaysPass,
+    ifThen(hasNonZero("MarkToMarketPropertySaleGrp/DeferredTaxAmt"), hasNonZero("ExptrtTaxDeferralGrp/TaxEligibleForDeferralAmt")),
     "If Form 8854, 'DeferredTaxAmt' in 'MarkToMarketPropertySaleGrp' has a non-zero value, then 'TaxEligibleForDeferralAmt' in 'ExptrtTaxDeferralGrp' must have a non-zero value.",
   ),
   rule(
@@ -110,7 +110,7 @@ export const F8854_RULES: readonly RuleDef[] = [
     "F8854-030",
     "reject",
     "incorrect_data",
-    ifThen(eqStr("TaxDeferSect877AbElectionInd", "No"), alwaysPass),
+    ifThen(eqStr("TaxDeferSect877AbElectionInd", "No"), isZero("ExptrtTaxDeferralGrp/TaxEligibleForDeferralAmt")),
     "If Form 8854, 'TaxDeferSect877AbElectionInd' has a choice of \"No\" indicated, then 'TaxEligibleForDeferralAmt' in 'ExptrtTaxDeferralGrp' must be equal to zero if an amount is entered.",
   ),
   rule(
