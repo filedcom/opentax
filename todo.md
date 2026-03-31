@@ -13,14 +13,15 @@
 - [x] **form8995 QBI deduction** — researched and implemented
 - [x] **eitc** — researched and implemented
 - [x] **Reorganize `intermediate/` nodes into subcategories** — split into `worksheets/`, `aggregation/`, `forms/`; research context.md added to all nodes
-- [x] **f1040 output node** — full Form 1040 assembly sink node implemented (lines 1a–37, taxable income, total tax, refund/owed)
-- [x] **schedule1 output node** — full Schedule 1 assembly sink node implemented (Part I additional income, Part II adjustments)
+- [x] **f1040 output node** — full Form 1040 assembly sink node implemented and fixed to emit assembled result into pending (lines 1a–37, taxable income, total tax, refund/owed)
+- [x] **schedule1 output node** — full Schedule 1 assembly sink node implemented and fixed to emit assembled result into pending (Part I additional income, Part II adjustments)
+- [x] **E2E integration test** — forms/f1040/e2e/return.test.ts: two full returns through executor (W-2 single filer → $2,886 refund; self-employed Schedule C → amount owed), exact line values verified
+- [x] **AGI aggregator research/context.md** — IRC §62 authority, all income/exclusion/deduction components documented
+- [x] **Standard deduction research/context.md** — IRC §63(c), TY2025 amounts, age/blindness logic, MFS constraint
 
 ---
 
-## Blocking (can't produce a correct 1040 without these)
-
-- [ ] **E2E integration test** — no test runs a full return through planner → executor → MEF builder; all existing tests are unit-level
+## Blocking
 
 ## Architectural Limitations
 
