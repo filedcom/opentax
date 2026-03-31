@@ -55,7 +55,10 @@ Deno.test("getReturnCommand single W-2 returns line_1a = 85000", async () => {
 
     assertEquals(result.returnId, returnId);
     assertEquals(result.year, 2025);
-    assertEquals(result.lines.line_1a, 85000);
+    assertEquals(result.summary.line1z_total_wages, 85000);
+    assertEquals(result.summary.line9_total_income, 85000);
+    assertEquals(Array.isArray(result.forms), true);
+    assertEquals(Array.isArray(result.warnings), true);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -77,7 +80,8 @@ Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
     });
 
     const result = await getReturnCommand({ returnId, baseDir: tmpDir });
-    assertEquals(result.lines.line_1a, 130000);
+    assertEquals(result.summary.line1z_total_wages, 130000);
+    assertEquals(result.summary.line9_total_income, 130000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -92,7 +96,11 @@ Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
 
     assertEquals(result.returnId, returnId);
     assertEquals(result.year, 2025);
-    assertEquals(result.lines.line_1a, 0);
+    assertEquals(result.summary.line1z_total_wages, 0);
+    assertEquals(result.summary.line9_total_income, 0);
+    assertEquals(result.summary.line24_total_tax, 0);
+    assertEquals(result.forms.length >= 0, true);
+    assertEquals(result.warnings.length >= 0, true);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
