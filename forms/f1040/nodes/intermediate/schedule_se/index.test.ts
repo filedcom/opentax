@@ -233,9 +233,9 @@ Deno.test("routing_schedule1: SE deduction routes to schedule1 with field line15
   assertEquals(typeof s1!.fields.line15_se_deduction, "number");
 });
 
-Deno.test("routing_exactly_two_outputs: exactly schedule2 and schedule1 for standard case", () => {
+Deno.test("routing_exactly_two_outputs: exactly schedule2, schedule1, and agi_aggregator for standard case", () => {
   const result = compute({ net_profit_schedule_c: 10_000 });
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 3);
 });
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
@@ -306,5 +306,5 @@ Deno.test("smoke_all_fields: full scenario with C+F profit, partial W-2 offset, 
   assertEquals(s1 !== undefined, true);
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(expectedSeTax));
   assertEquals(round2(s1!.fields.line15_se_deduction as number), round2(expectedDeduction));
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 3);
 });

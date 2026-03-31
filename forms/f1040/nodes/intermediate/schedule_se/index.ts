@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -80,7 +81,7 @@ function medicareTax(line6: number): number {
 class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_se";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2, schedule1]);
+  readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -117,6 +118,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
+      this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),
     ];
 
     return { outputs };

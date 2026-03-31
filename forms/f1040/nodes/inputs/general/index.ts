@@ -6,7 +6,7 @@ import type {
 import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { income_tax_calculation } from "../../intermediate/income_tax_calculation/index.ts";
+import { standard_deduction } from "../../intermediate/standard_deduction/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -295,15 +295,24 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction]);
 
   compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
     const f1040Input = buildF1040Input(parsed);
 
+    const sdInput: Record<string, unknown> = {
+      filing_status: parsed.filing_status,
+    };
+    if (parsed.taxpayer_age_65_or_older !== undefined) sdInput["taxpayer_age_65_or_older"] = parsed.taxpayer_age_65_or_older;
+    if (parsed.taxpayer_blind !== undefined) sdInput["taxpayer_blind"] = parsed.taxpayer_blind;
+    if (parsed.spouse_age_65_or_older !== undefined) sdInput["spouse_age_65_or_older"] = parsed.spouse_age_65_or_older;
+    if (parsed.spouse_blind !== undefined) sdInput["spouse_blind"] = parsed.spouse_blind;
+    if (parsed.mfs_spouse_itemizing !== undefined) sdInput["mfs_spouse_itemizing"] = parsed.mfs_spouse_itemizing;
+
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
-      this.outputNodes.output(income_tax_calculation, { filing_status: parsed.filing_status }),
+      this.outputNodes.output(standard_deduction, sdInput as AtLeastOne<z.infer<typeof standard_deduction["inputSchema"]>>),
     ];
 
     return { outputs };

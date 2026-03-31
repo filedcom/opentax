@@ -274,7 +274,7 @@ Deno.test("form8990 — disallowed BIE routes to schedule1 only", () => {
     avg_gross_receipts: 50_000_000,
   });
   // ATI = 100k, 30% = 30k → disallowed = 70k
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "schedule1");
 });
 

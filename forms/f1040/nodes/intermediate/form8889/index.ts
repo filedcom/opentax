@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { form5329 } from "../../intermediate/form5329/index.ts";
@@ -148,7 +149,7 @@ function penaltyOutput(penalty: number): NodeOutput[] {
 class Form8889Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8889";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule2, form5329]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2, form5329]);
 
   // IRC §223(b)(2)(A) — self-only HDHP annual contribution limit (TY2025)
   protected readonly selfOnlyLimit = 4300;
@@ -180,6 +181,17 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       ...excessOutput(excess),
       ...penaltyOutput(penalty),
     ];
+
+    // Route HSA deduction and taxable distribution to AGI aggregator
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    if (deductible > 0) agiFields.line13_hsa_deduction = deductible;
+    if (taxable > 0) agiFields.line8z_other = taxable;
+    if (Object.keys(agiFields).length > 0) {
+      outputs.push(this.outputNodes.output(
+        agi_aggregator,
+        agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+      ));
+    }
 
     return { outputs };
   }

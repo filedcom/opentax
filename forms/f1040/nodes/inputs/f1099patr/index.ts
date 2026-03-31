@@ -60,13 +60,19 @@ function totalFederalWithheld(items: PATRItems): number {
   return items.reduce((sum, item) => sum + (item.box4_federal_withheld ?? 0), 0);
 }
 
+function totalRedeemedNonqualified(items: PATRItems): number {
+  return items.reduce((sum, item) => sum + (item.box5_redeemed_nonqualified ?? 0), 0);
+}
+
 function schedule1Output(items: PATRItems): NodeOutput[] {
-  // Non-business patronage dividends + nonpatronage + per-unit retain → other income
+  // Non-business patronage dividends + nonpatronage + per-unit retain + redeemed nonqualified → other income
+  // IRC §1385(a): all four amounts are gross income to the recipient
   const nonBiz = nonBusinessItems(items);
   const patronage = totalPatronageDividends(nonBiz);
   const nonpatronage = totalNonpatronage(nonBiz);
   const perUnit = totalPerUnitRetain(nonBiz);
-  const total = patronage + nonpatronage + perUnit;
+  const redeemed = totalRedeemedNonqualified(nonBiz);
+  const total = patronage + nonpatronage + perUnit + redeemed;
   if (total === 0) return [];
   return [output(schedule1, { line8z_other_income: total })];
 }

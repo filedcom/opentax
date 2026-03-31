@@ -1,13 +1,13 @@
 import { z } from "zod";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { schedule2 } from "../schedule2/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -148,7 +148,10 @@ function computeTaxableExcess(amti: number, exemption: number): number {
 // For line6 ≤ threshold:   TMT = line6 × 26%
 // For line6 > threshold:   TMT = line6 × 28% − adjustment
 // Source: IRS Instructions for Form 6251 (2025), "Line 7" / "What's New"
-function computeTentativeMinimumTax(taxableExcess: number, status: FilingStatus): number {
+function computeTentativeMinimumTax(
+  taxableExcess: number,
+  status: FilingStatus,
+): number {
   if (taxableExcess === 0) return 0;
   const threshold = status === FilingStatus.MFS
     ? BRACKET_26_THRESHOLD_MFS

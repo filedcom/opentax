@@ -591,6 +591,6 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
   assertEquals(form6251Out !== undefined, true);
   assertEquals((form6251Out!.fields as Record<string, number>).line2a_taxes_paid, 35_500);
 
-  // exactly two outputs
-  assertEquals(result.outputs.length, 2);
+  // three outputs: f1040, standard_deduction, form6251
+  assertEquals(result.outputs.length, 3);
 });

@@ -1,13 +1,17 @@
 import { z } from "zod";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { normalizeArray } from "../../utils.ts";
+import {
+  type AtLeastOne,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
+import { normalizeArray } from "../../utils.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -39,7 +43,6 @@ type ScheduleBInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-
 // Part I — Line 2: sum all per-payer taxable interest amounts
 function totalTaxableInterest(input: ScheduleBInput): number {
   return normalizeArray(input.taxable_interest_net)
@@ -64,7 +67,7 @@ function line6OrdinaryDividends(input: ScheduleBInput): number {
 class ScheduleBNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_b";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleBInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -81,8 +84,21 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     if (line6 > 0) f1040Fields.line3b_ordinary_dividends = line6;
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(
+        f1040,
+        f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+      ),
     ];
+
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    if (line4 > 0) agiFields.line2b_taxable_interest = line4;
+    if (line6 > 0) agiFields.line3b_ordinary_dividends = line6;
+    if (Object.keys(agiFields).length > 0) {
+      outputs.push(this.outputNodes.output(
+        agi_aggregator,
+        agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+      ));
+    }
 
     return { outputs };
   }

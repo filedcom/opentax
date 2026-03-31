@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_se } from "../../intermediate/schedule_se/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
@@ -257,6 +258,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
+    agi_aggregator,
     schedule_se,
     form8995,
     form8582,
@@ -279,9 +281,10 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     // Per-item: compute net profit and collect per-item routing outputs
     const netProfits = input.schedule_cs.map(computeNetProfit);
 
-    // Aggregate net profits → single schedule1 output
+    // Aggregate net profits → single schedule1 output and AGI aggregator
     const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
     outputs.push(this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }));
+    outputs.push(this.outputNodes.output(agi_aggregator, { line3_schedule_c: totalNetProfit }));
 
     // Per-item downstream routing (SE, QBI, passive, at-risk, depletion, interest)
     for (let i = 0; i < input.schedule_cs.length; i++) {

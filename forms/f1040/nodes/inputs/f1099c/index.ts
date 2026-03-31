@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form982 } from "../../intermediate/form982/index.ts";
 import { schedule_d } from "../../intermediate/schedule_d/index.ts";
@@ -42,7 +43,7 @@ function propertyItems(items: z.infer<typeof itemSchema>[]) {
 class F1099cNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099c";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, form982, schedule_d]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form982, schedule_d]);
 
   compute(_ctx: NodeContext, input: C99Input): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -61,6 +62,7 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     );
     if (totalTaxable > 0) {
       outputs.push(this.outputNodes.output(schedule1, { line8c_cod_income: totalTaxable }));
+      outputs.push(this.outputNodes.output(agi_aggregator, { line8c_cod_income: totalTaxable }));
     }
 
     // Aggregate excluded COD income → Form 982 line 2

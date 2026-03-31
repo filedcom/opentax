@@ -8,6 +8,8 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus } from "../../types.ts";
 import { normalizeArray } from "../../utils.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
+import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 import { rate_28_gain_worksheet } from "../rate_28_gain_worksheet/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -246,7 +248,7 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, rate_28_gain_worksheet]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -291,10 +293,17 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line7_capital_gain: capitalGainForReturn }),
+      this.outputNodes.output(agi_aggregator, { line7_capital_gain: capitalGainForReturn }),
     ];
 
-    // Line 18: 28% Rate Gain Worksheet — only when line 17 = Yes
+    // Line 17 = Yes: both line 15 and line 16 are gains.
+    // Route net_capital_gain (= min(line15, line16)) to income_tax_calculation
+    // for the QDCGT worksheet (IRC §1(h)).
     if (line17Yes) {
+      const netCapGain = Math.min(line15, line16);
+      outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: netCapGain }));
+
+      // Line 18: 28% Rate Gain Worksheet
       const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs);
       if (gain28Pct > 0) {
         outputs.push(this.outputNodes.output(rate_28_gain_worksheet, { collectibles_gain_from_8949: gain28Pct }));

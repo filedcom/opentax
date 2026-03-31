@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -84,7 +85,7 @@ function housingAmount(input: Form2555Input): number {
 class Form2555Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form2555";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: Form2555Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -108,6 +109,9 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
       outputs.push(
         output(schedule1, { line8d_foreign_earned_income_exclusion: exclusion }),
       );
+      outputs.push(
+        output(agi_aggregator, { line8d_foreign_earned_income_exclusion: exclusion }),
+      );
     }
 
     // Housing deduction — routes to Schedule 1 line 8d housing field.
@@ -116,6 +120,9 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     if (housing > 0) {
       outputs.push(
         output(schedule1, { line8d_foreign_housing_deduction: housing }),
+      );
+      outputs.push(
+        output(agi_aggregator, { line8d_foreign_housing_deduction: housing }),
       );
     }
 

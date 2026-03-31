@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -125,7 +126,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   // Disallowed BIE routes to Schedule 1 as a positive add-back,
   // reversing the upstream-posted deduction to the extent it exceeds the §163(j) cap.
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: Form8990Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -158,6 +159,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
     return {
       outputs: [
         this.outputNodes.output(schedule1, { biz_interest_disallowed_add_back: disallowed }),
+        this.outputNodes.output(agi_aggregator, { biz_interest_disallowed_add_back: disallowed }),
       ],
     };
   }

@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
 import { form5329 } from "../../intermediate/form5329/index.ts";
 import { form4972 } from "../../intermediate/form4972/index.ts";
 import { form8606 } from "../../intermediate/form8606/index.ts";
@@ -396,7 +397,7 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
 class F1099rNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099r";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form5329, form4972, form8606]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form5329, form4972, form8606]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -427,6 +428,14 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     };
     if (Object.keys(f1040Fields).length > 0) {
       outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
+    }
+
+    // Route IRA/pension taxable amounts to AGI aggregator
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    if (iraFields.line4b_ira_taxable !== undefined) agiFields.line4b_ira_taxable = iraFields.line4b_ira_taxable;
+    if (pensionFields.line5b_pension_taxable !== undefined) agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
+    if (Object.keys(agiFields).length > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>));
     }
 
     // Secondary form outputs

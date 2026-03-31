@@ -1,14 +1,14 @@
 import { z } from "zod";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule_b } from "../../intermediate/schedule_b/index.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { schedule_b } from "../../intermediate/schedule_b/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 // Per-item schema — one 1099-OID from one payer
 // IRS Form 1099-OID TY2025: Original Issue Discount
@@ -82,21 +82,28 @@ function scheduleBOutputs(items: OIDItems): NodeOutput[] {
   return items.map((item) =>
     output(schedule_b, {
       payer_name: item.payer_name,
-      taxable_interest_net: netTaxableOid(item) + (item.box2_other_interest ?? 0),
+      taxable_interest_net: netTaxableOid(item) +
+        (item.box2_other_interest ?? 0),
     })
   );
 }
 
 // Form 6251 AMT: tax-exempt OID from private activity bonds (box11)
 function form6251Output(items: OIDItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box11_tax_exempt_oid ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box11_tax_exempt_oid ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(form6251, { line2g_pab_interest: total })];
 }
 
 // f1040 line25b: federal withholding from box4
 function withholdingOutput(items: OIDItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box4_federal_withheld ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box4_federal_withheld ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(f1040, { line25b_withheld_1099: total })];
 }

@@ -55,13 +55,19 @@ Deno.test("f5695: all Part I fields route to form5695", () => {
     solar_electric_cost: 10_000,
     solar_water_heater_cost: 5_000,
     fuel_cell_cost: 3_000,
+    fuel_cell_kw_capacity: 2,
     small_wind_cost: 2_000,
     geothermal_cost: 8_000,
     battery_storage_cost: 4_000,
+    battery_storage_kwh_capacity: 5,
+    prior_year_carryforward: 1_000,
   });
   const fields = findOutput(result, "form5695")!.fields as Record<string, number>;
   assertEquals(fields.solar_electric_cost, 10_000);
   assertEquals(fields.battery_storage_cost, 4_000);
+  assertEquals(fields.fuel_cell_kw_capacity, 2);
+  assertEquals(fields.battery_storage_kwh_capacity, 5);
+  assertEquals(fields.prior_year_carryforward, 1_000);
 });
 
 Deno.test("f5695: all Part II fields route to form5695", () => {
@@ -70,14 +76,24 @@ Deno.test("f5695: all Part II fields route to form5695", () => {
     exterior_doors_cost: 1_000,
     exterior_doors_count: 2,
     insulation_cost: 500,
-    hvac_cost: 3_000,
-    water_heater_cost: 1_500,
+    central_ac_cost: 3_000,
+    gas_water_heater_cost: 1_500,
+    furnace_boiler_cost: 2_000,
+    panelboard_cost: 1_200,
+    heat_pump_cost: 5_000,
+    heat_pump_water_heater_cost: 2_500,
     biomass_cost: 4_000,
     energy_audit_cost: 600,
   });
   const fields = findOutput(result, "form5695")!.fields as Record<string, number>;
   assertEquals(fields.windows_cost, 2_000);
   assertEquals(fields.exterior_doors_count, 2);
+  assertEquals(fields.central_ac_cost, 3_000);
+  assertEquals(fields.gas_water_heater_cost, 1_500);
+  assertEquals(fields.furnace_boiler_cost, 2_000);
+  assertEquals(fields.panelboard_cost, 1_200);
+  assertEquals(fields.heat_pump_cost, 5_000);
+  assertEquals(fields.heat_pump_water_heater_cost, 2_500);
   assertEquals(fields.biomass_cost, 4_000);
 });
 

@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule_d } from "../schedule_d/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -107,7 +108,7 @@ function schedule1Output(
 class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4797";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_d, schedule1]);
+  readonly outputNodes = new OutputNodes([schedule_d, schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -126,7 +127,13 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     if (sdOut !== null) outputs.push(sdOut);
 
     const s1Out = schedule1Output(grossGain, priorLoss, ordinaryGain);
-    if (s1Out !== null) outputs.push(s1Out);
+    if (s1Out !== null) {
+      outputs.push(s1Out);
+      const total = recapturedAsOrdinary(grossGain, priorLoss) + ordinaryGain;
+      if (total !== 0) {
+        outputs.push(output(agi_aggregator, { line4_other_gains: total }));
+      }
+    }
 
     return { outputs };
   }

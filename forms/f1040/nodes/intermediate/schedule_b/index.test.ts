@@ -98,7 +98,7 @@ Deno.test("both interest and dividends produce a single f1040 output with both f
     ordinaryDividends: 600,
     isNominee: false,
   });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const f1040 = findOutput(result, "f1040");
   const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 400);
@@ -172,7 +172,7 @@ Deno.test("smoke: multiple interest + dividend payers with EE bond exclusion", (
     isNominee: [false, false],
   });
 
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const f1040 = findOutput(result, "f1040");
   const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 3500);
