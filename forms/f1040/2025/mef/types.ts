@@ -501,6 +501,214 @@ export type Form8824Input = Partial<Form8824Fields> & {
   [extra: string]: unknown;
 };
 
+export interface EitcFields {
+  earned_income?: number | null;
+  agi?: number | null;
+  qualifying_children?: number | null;
+  investment_income?: number | null;
+}
+
+export interface Form2555Fields {
+  foreign_wages?: number | null;
+  foreign_self_employment_income?: number | null;
+  days_in_foreign_country?: number | null;
+  foreign_housing_expenses?: number | null;
+  employer_housing_exclusion?: number | null;
+}
+
+export interface Form461Fields {
+  excess_business_loss?: number | null;
+}
+
+export interface Form4684Fields {
+  personal_fmv_before?: number | null;
+  personal_fmv_after?: number | null;
+  personal_basis?: number | null;
+  personal_insurance?: number | null;
+  agi?: number | null;
+  business_fmv_before?: number | null;
+  business_fmv_after?: number | null;
+  business_basis?: number | null;
+  business_insurance?: number | null;
+}
+
+export interface Form4952Fields {
+  investment_interest_expense?: number | null;
+  net_investment_income?: number | null;
+  prior_year_carryforward?: number | null;
+}
+
+export interface Form5695Fields {
+  solar_electric_cost?: number | null;
+  solar_water_heater_cost?: number | null;
+  fuel_cell_cost?: number | null;
+  fuel_cell_kw_capacity?: number | null;
+  small_wind_cost?: number | null;
+  geothermal_cost?: number | null;
+  battery_storage_cost?: number | null;
+  battery_storage_kwh_capacity?: number | null;
+  prior_year_carryforward?: number | null;
+  windows_cost?: number | null;
+  exterior_doors_cost?: number | null;
+  exterior_doors_count?: number | null;
+  insulation_cost?: number | null;
+  central_ac_cost?: number | null;
+  gas_water_heater_cost?: number | null;
+  furnace_boiler_cost?: number | null;
+  panelboard_cost?: number | null;
+  heat_pump_cost?: number | null;
+  heat_pump_water_heater_cost?: number | null;
+  biomass_cost?: number | null;
+  energy_audit_cost?: number | null;
+}
+
+export type EitcInput = Partial<EitcFields> & {
+  [extra: string]: unknown;
+};
+export type Form2555Input = Partial<Form2555Fields> & {
+  [extra: string]: unknown;
+};
+export type Form461Input = Partial<Form461Fields> & {
+  [extra: string]: unknown;
+};
+export type Form4684Input = Partial<Form4684Fields> & {
+  [extra: string]: unknown;
+};
+export type Form4952Input = Partial<Form4952Fields> & {
+  [extra: string]: unknown;
+};
+export type Form5695Input = Partial<Form5695Fields> & {
+  [extra: string]: unknown;
+};
+
+export interface Form6198Fields {
+  schedule_c_loss?: number | null;
+  schedule_f_loss?: number | null;
+  prior_unallowed?: number | null;
+  current_year_income?: number | null;
+  amount_at_risk?: number | null;
+}
+
+export interface Form6252Fields {
+  selling_price?: number | null;
+  gross_profit?: number | null;
+  contract_price?: number | null;
+  payments_received?: number | null;
+  depreciation_recapture?: number | null;
+}
+
+export interface Form6781Fields {
+  net_section_1256_gain?: number | null;
+  prior_year_loss_carryover?: number | null;
+}
+
+export interface Form7206Fields {
+  se_net_profit?: number | null;
+  health_insurance_premiums?: number | null;
+  ltc_premiums?: number | null;
+  taxpayer_age?: number | null;
+  ltc_premiums_spouse?: number | null;
+  spouse_age?: number | null;
+  premium_tax_credit?: number | null;
+}
+
+export interface Form8396Fields {
+  mortgage_interest_paid?: number | null;
+  mcc_rate?: number | null;
+  prior_year_credit_carryforward?: number | null;
+}
+
+export interface Form8615Fields {
+  net_unearned_income?: number | null;
+  parent_taxable_income?: number | null;
+  parent_tax?: number | null;
+}
+
+export interface Form8815Fields {
+  ee_bond_interest?: number | null;
+  bond_proceeds?: number | null;
+  qualified_expenses?: number | null;
+  modified_agi?: number | null;
+}
+
+export interface Form8990Fields {
+  business_interest_expense?: number | null;
+  prior_disallowed_carryforward?: number | null;
+  floor_plan_interest?: number | null;
+  tentative_taxable_income?: number | null;
+  depreciation_amortization?: number | null;
+  business_interest_income?: number | null;
+  avg_gross_receipts?: number | null;
+}
+
+export interface Form982Fields {
+  line2_excluded_cod?: number | null;
+  insolvency_amount?: number | null;
+}
+
+export interface ScheduleHFields {
+  total_cash_wages?: number | null;
+  ss_wages?: number | null;
+  medicare_wages?: number | null;
+  federal_income_tax_withheld?: number | null;
+  employee_ss_withheld?: number | null;
+  employee_medicare_withheld?: number | null;
+  futa_wages?: number | null;
+  futa_tax?: number | null;
+}
+
+export interface ScheduleAMefFields {
+  line_1_medical?: number | null;
+  agi?: number | null;
+  line_5a_tax_amount?: number | null;
+  line_5b_real_estate_tax?: number | null;
+  line_5c_personal_property_tax?: number | null;
+  line_6_other_taxes?: number | null;
+  line_8a_mortgage_interest_1098?: number | null;
+  line_8b_mortgage_interest_no_1098?: number | null;
+  line_8c_points_no_1098?: number | null;
+  line_9_investment_interest?: number | null;
+  line_11_cash_contributions?: number | null;
+  line_12_noncash_contributions?: number | null;
+  line_13_contribution_carryover?: number | null;
+  line_15_casualty_theft_loss?: number | null;
+  line_16_other_deductions?: number | null;
+}
+
+export type Form6198Input = Partial<Form6198Fields> & {
+  [extra: string]: unknown;
+};
+export type Form6252Input = Partial<Form6252Fields> & {
+  [extra: string]: unknown;
+};
+export type Form6781Input = Partial<Form6781Fields> & {
+  [extra: string]: unknown;
+};
+export type Form7206Input = Partial<Form7206Fields> & {
+  [extra: string]: unknown;
+};
+export type Form8396Input = Partial<Form8396Fields> & {
+  [extra: string]: unknown;
+};
+export type Form8615Input = Partial<Form8615Fields> & {
+  [extra: string]: unknown;
+};
+export type Form8815Input = Partial<Form8815Fields> & {
+  [extra: string]: unknown;
+};
+export type Form8990Input = Partial<Form8990Fields> & {
+  [extra: string]: unknown;
+};
+export type Form982Input = Partial<Form982Fields> & {
+  [extra: string]: unknown;
+};
+export type ScheduleHInput = Partial<ScheduleHFields> & {
+  [extra: string]: unknown;
+};
+export type ScheduleAMefInput = Partial<ScheduleAMefFields> & {
+  [extra: string]: unknown;
+};
+
 export interface MefFormsPending {
   f1040?: IRS1040Input;
   schedule1?: Schedule1Input;
@@ -533,4 +741,21 @@ export interface MefFormsPending {
   form8839?: Form8839Input;
   form8962?: Form8962Input;
   form8824?: Form8824Input;
+  eitc?: EitcInput;
+  form2555?: Form2555Input;
+  form461?: Form461Input;
+  form4684?: Form4684Input;
+  form4952?: Form4952Input;
+  form5695?: Form5695Input;
+  form6198?: Form6198Input;
+  form6252?: Form6252Input;
+  form6781?: Form6781Input;
+  form7206?: Form7206Input;
+  form8396?: Form8396Input;
+  form8615?: Form8615Input;
+  form8815?: Form8815Input;
+  form8990?: Form8990Input;
+  form982?: Form982Input;
+  schedule_h?: ScheduleHInput;
+  schedule_a?: ScheduleAMefInput;
 }

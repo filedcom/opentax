@@ -31,6 +31,23 @@ import { scheduleB } from "./forms/schedule_b.ts";
 import { scheduleD } from "./forms/schedule_d.ts";
 import { scheduleF } from "./forms/schedule_f.ts";
 import { scheduleSE } from "./forms/schedule_se.ts";
+import { eitc } from "./forms/eitc.ts";
+import { form2555 } from "./forms/f2555.ts";
+import { form461 } from "./forms/f461.ts";
+import { form4684 } from "./forms/f4684.ts";
+import { form4952 } from "./forms/f4952.ts";
+import { form5695 } from "./forms/f5695.ts";
+import { form6198 } from "./forms/f6198.ts";
+import { form6252 } from "./forms/f6252.ts";
+import { form6781 } from "./forms/f6781.ts";
+import { form7206 } from "./forms/f7206.ts";
+import { form8396 } from "./forms/f8396.ts";
+import { form8615 } from "./forms/f8615.ts";
+import { form8815 } from "./forms/f8815.ts";
+import { form8990 } from "./forms/f8990.ts";
+import { form982 } from "./forms/f982.ts";
+import { scheduleH } from "./forms/schedule_h.ts";
+import { scheduleA } from "./forms/schedule_a.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
 
 const ALL_NODES: MefNode[] = [
@@ -65,6 +82,23 @@ const ALL_NODES: MefNode[] = [
   form8839,
   form8962,
   form8824,
+  eitc,
+  form2555,
+  form461,
+  form4684,
+  form4952,
+  form5695,
+  form6198,
+  form6252,
+  form6781,
+  form7206,
+  form8396,
+  form8615,
+  form8815,
+  form8990,
+  form982,
+  scheduleH,
+  scheduleA,
 ];
 
 export function buildMefXml(
