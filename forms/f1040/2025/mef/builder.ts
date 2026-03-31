@@ -12,7 +12,9 @@ import { form6251 } from "./forms/f6251.ts";
 import { form8582 } from "./forms/f8582.ts";
 import { form8606 } from "./forms/f8606.ts";
 import { form8829 } from "./forms/f8829.ts";
+import { form8824 } from "./forms/f8824.ts";
 import { form8839 } from "./forms/f8839.ts";
+import { form8962 } from "./forms/f8962.ts";
 import { form8853 } from "./forms/f8853.ts";
 import { form8880 } from "./forms/f8880.ts";
 import { form8889 } from "./forms/f8889.ts";
@@ -61,6 +63,8 @@ const ALL_NODES: MefNode[] = [
   form8853,
   form8829,
   form8839,
+  form8962,
+  form8824,
 ];
 
 export function buildMefXml(

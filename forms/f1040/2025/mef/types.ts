@@ -360,6 +360,55 @@ export interface Form8839Fields {
   income_tax_liability?: number | null;
 }
 
+export interface Form8962Fields {
+  // Line 1: Household size
+  household_size?: number | null;
+  // Line 2a: Modified AGI (household income)
+  household_income?: number | null;
+  // Line 2b: Federal poverty line amount
+  federal_poverty_line?: number | null;
+  // Line 2c: Household income as percentage of FPL (e.g. 250 = 250%)
+  federal_poverty_pct?: number | null;
+  // Line 11a: Total annual premium
+  annual_premium?: number | null;
+  // Line 11b: Annual applicable SLCSP premium
+  annual_slcsp?: number | null;
+  // Line 11c: Annual applicable contribution amount
+  annual_applicable_contribution?: number | null;
+  // Line 11d: Annual maximum premium tax credit
+  annual_max_ptc?: number | null;
+  // Line 11e: Annual advance payment of PTC received
+  annual_aptc?: number | null;
+  // Line 26: Net premium tax credit (refundable credit, if positive)
+  net_premium_tax_credit?: number | null;
+  // Line 29: Excess advance premium tax credit repayment (if APTC exceeded)
+  excess_advance_premium?: number | null;
+}
+
+export interface Form8824Fields {
+  // Part III — Realized gain/loss (§1031 like-kind exchange)
+  // Line 12: FMV of like-kind property received
+  received_fmv?: number | null;
+  // Line 13: Adjusted basis of relinquished property
+  relinquished_basis?: number | null;
+  // Line 15: Cash and liabilities received (boot)
+  cash_received?: number | null;
+  // Line 16: FMV of other (non-like-kind) property received
+  other_property_fmv?: number | null;
+  // Line 17: Liabilities assumed by other party
+  liabilities_assumed_by_buyer?: number | null;
+  // Line 18: Liabilities taxpayer assumed on received property
+  liabilities_taxpayer_assumed?: number | null;
+  // Line 19: Gain or loss realized
+  gain_realized?: number | null;
+  // Line 20: Gain recognized (lesser of gain realized or boot)
+  gain_recognized?: number | null;
+  // Line 21: Deferred gain or loss
+  deferred_gain?: number | null;
+  // Lines 22–25: Adjusted basis of replacement property received
+  basis_replacement?: number | null;
+}
+
 export interface F8949Transaction {
   part: string;
   description: string;
@@ -445,6 +494,12 @@ export type Form8829Input = Partial<Form8829Fields> & {
 export type Form8839Input = Partial<Form8839Fields> & {
   [extra: string]: unknown;
 };
+export type Form8962Input = Partial<Form8962Fields> & {
+  [extra: string]: unknown;
+};
+export type Form8824Input = Partial<Form8824Fields> & {
+  [extra: string]: unknown;
+};
 
 export interface MefFormsPending {
   f1040?: IRS1040Input;
@@ -476,4 +531,6 @@ export interface MefFormsPending {
   form8853?: Form8853Input;
   form_8829?: Form8829Input;
   form8839?: Form8839Input;
+  form8962?: Form8962Input;
+  form8824?: Form8824Input;
 }
