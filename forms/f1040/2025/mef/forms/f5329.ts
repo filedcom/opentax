@@ -1,7 +1,7 @@
 import type { Form5329Fields, Form5329Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form5329Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form5329Fields, string]> = [
   ["early_distribution", "EarlyDistributionAmt"],
   ["simple_ira_early_distribution", "SimpleIRAEarlyDistriAmt"],
   ["esa_able_distribution", "ESAABLEDistributionAmt"],

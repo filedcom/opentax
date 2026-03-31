@@ -12,6 +12,7 @@ import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import { exportMefCommand } from "./commands/export.ts";
+import { validateReturnCommand } from "./commands/validate.ts";
 
 const RETURNS_DIR = "./returns";
 
@@ -201,6 +202,32 @@ const COMMANDS: readonly CommandDef[] = [
     },
   },
   {
+    cmd: "return",
+    sub: "validate",
+    description: "Validate a return against MeF business rules",
+    usage: "tax return validate --returnId <id> [--format text|json]",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--format", description: "Output format: text or json (default: json)" },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const format = (args.format === "text" ? "text" : "json") as "text" | "json";
+      await run(async () => {
+        const { report, formatted } = await validateReturnCommand({
+          returnId,
+          baseDir: RETURNS_DIR,
+          format,
+        });
+        if (format === "text") {
+          console.log(formatted);
+          return undefined;
+        }
+        return report;
+      });
+    },
+  },
+  {
     cmd: "node",
     sub: "graph",
     description: "View node dependency graph (Mermaid or JSON)",
@@ -226,7 +253,7 @@ const COMMANDS: readonly CommandDef[] = [
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId"],
+    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format"],
     boolean: ["json", "help"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;

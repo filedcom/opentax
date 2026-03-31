@@ -3,7 +3,7 @@ import { element, elements } from "../../../mef/xml.ts";
 
 
 // Direct 1:1 scalar field mappings (inputSchema key -> XSD element name)
-const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleDFields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleDFields, string]> = [
   ["line_4_other_st", "STGainOrLossFromFormsAmt"],
   ["line_5_k1_st", "NetSTGainOrLossFromSchK1Amt"],
   ["line_6_carryover", "STCapitalLossCarryoverAmt"],

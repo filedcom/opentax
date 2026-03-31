@@ -5,7 +5,7 @@ import { element, elements } from "../../../mef/xml.ts";
 // Note: line6b_child_tax_credit is excluded — the 2025v3.0 XSD line 6b element
 // (MinAMTCrAmt) is the Minimum AMT Credit from Form 8801, not the child tax credit.
 // The engine's line6b_child_tax_credit has no corresponding XSD element in Schedule 3.
-const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule3Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule3Fields, string]> = [
   ["line2_childcare_credit", "CreditForChildAndDepdCareAmt"],
   ["line3_education_credit", "EducationCreditAmt"],
   ["line4_retirement_savings_credit", "RtrSavingsContributionsCrAmt"],

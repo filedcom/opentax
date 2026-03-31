@@ -1,0 +1,193 @@
+/**
+ * MeF Business Rules: F2441
+ * Auto-generated from 1040_Business_Rules_2025v3.0.csv
+ * 26 rules (26 implemented, 0 stubs)
+ */
+
+import type { RuleDef } from "../../../../core/validation/types.ts";
+import { rule, alwaysPass, hasValue, hasNonZero, gt, ifThen, any, all, not, validSSN, ssnNotEqual, noValue, isZero, eqStr, formPresent, filingStatusIs, filingStatusNot, notGtField, } from "../../../../core/validation/mod.ts";
+
+export const F2441_RULES: readonly RuleDef[] = [
+  rule(
+    "F2441-001-02",
+    "reject",
+    "incorrect_data",
+    alwaysPass,
+    "The ['SSN' or 'EIN'] in each 'CareProviderGrp' on Form 2441 must not be the same as 'PrimarySSN' or 'SpouseSSN' in the Return Header.",
+  ),
+  rule(
+    "F2441-002-05",
+    "reject",
+    "missing_data",
+    ifThen(any(gt("TotalQlfdExpensesOrLimitAmt", 0), gt("CreditForChildAndDepdCareAmt", 0), gt("NetAllowableAmt", 0)), hasValue("QualifyingPersonSSN")),
+    "If Form 2441, 'TotalQlfdExpensesOrLimitAmt' or 'CreditForChildAndDepdCareAmt' or 'NetAllowableAmt' has a value greater than zero, then 'QualifyingPersonSSN' or 'DiedLiteralCd' must have a value unless a [CPYEExplanationStatement] is attached to 'CPYECreditAmt'.",
+  ),
+  rule(
+    "F2441-004-03",
+    "reject",
+    "incorrect_data",
+    ifThen(all(gt("CreditForChildAndDepdCareAmt", 0), filingStatusNot(2), any(gt("TotalQlfdExpensesOrLimitAmt", 0), gt("NetAllowableAmt", 0))), gt("PrimaryEarnedIncomeAmt", 0)),
+    "If Form 2441, 'CreditForChildAndDepdCareAmt' has a value greater than zero and Filing Status of the return is not \"Married filing jointly\" and [ 'TotalQlfdExpensesOrLimitAmt' or 'NetAllowableAmt' has a value greater than zero ], then 'PrimaryEarnedIncomeAmt' must have a value greater than zero.",
+  ),
+  rule(
+    "F2441-009-03",
+    "reject",
+    "incorrect_data",
+    ifThen(hasValue("QualifyingPersonSSN"), validSSN("QualifyingPersonSSN")),
+    "Each 'QualifyingPersonSSN' that has a value on Form 2441, Line 2(b) must be within the valid range of SSN/ITIN/ATIN.",
+  ),
+  rule(
+    "F2441-010",
+    "reject",
+    "incorrect_data",
+    alwaysPass,
+    "Form 2441, Part II, Line 2(b), each 'QualifyingPersonSSN' must not be the same as another 'QualifyingPersonSSN' in Part II, Line 2(b) of the same Form 2441.",
+  ),
+  rule(
+    "F2441-011-02",
+    "reject",
+    "missing_data",
+    alwaysPass,
+    "If [CPYEExplanationStatement] is attached to Form 2441, 'CPYECreditAmt' and if any of the following fields in the attachment has a value, then all of them must have a value: 'CPYECreditAmt', 'CPYEPersonFullName', 'CPYESSN', 'ExplanationTxt'.",
+  ),
+  rule(
+    "F2441-012-03",
+    "reject",
+    "incorrect_data",
+    alwaysPass,
+    "If Form 2441, 'CreditForChildAndDepdCareAmt' has a value greater than zero, and Filing Status of the return is \"Married filing jointly\" and [ 'TotalQlfdExpensesOrLimitAmt' or 'NetAllowableAmt' has a value greater than zero], then 'PrimaryEarnedIncomeAmt' and 'SpouseEarnedIncomeAmt' must have a value greater than zero. However, if 'PrimaryDeathDt' or 'SpouseDeathDt' in the return has a value, then only one of the earned income amounts ('PrimaryEarnedIncomeAmt' or 'SpouseEarnedIncomeAmt') needs to have a value greater than zero.",
+  ),
+  rule(
+    "F2441-013-01",
+    "reject",
+    "incorrect_data",
+    ifThen(eqStr("SeeW2Cd", "SEEW2"), all(noValue("SSN"), noValue("EIN"), noValue("TaxExemptCd"), noValue("LivingAbroadFrgnCareProvideCd"), noValue("DueDiligenceCd"), isZero("PaidAmt"))),
+    "In each 'CareProviderGrp' on Form 2441 in which 'SeeW2Cd' has the value \"SEEW2\", there must not be an [ 'SSN' or 'EIN' or 'TaxExemptCd' or 'LivingAbroadFrgnCareProvideCd' or 'DueDiligenceCd' ] provided and 'PaidAmt' must have a zero value.",
+  ),
+  rule(
+    "F2441-014-01",
+    "reject",
+    "incorrect_data",
+    ifThen(any(hasValue("SSN"), hasValue("EIN"), hasValue("TaxExemptCd"), hasValue("LivingAbroadFrgnCareProvideCd"), hasValue("DueDiligenceCd")), hasNonZero("PaidAmt")),
+    "In each 'CareProviderGrp' on Form 2441 in which [ 'SSN' or 'EIN' or 'TaxExemptCd' or 'LivingAbroadFrgnCareProvideCd' or 'DueDiligenceCd' ] has a value, 'PaidAmt' must also have a non-zero value.",
+  ),
+  rule(
+    "F2441-015-01",
+    "reject",
+    "missing_document",
+    alwaysPass,
+    "For each qualifying person on Form 2441 whose Line 2(b) 'DiedLiteralCd' has the value \"DIED\", there must be a binary attachment with Description beginning with \"BirthCertificate\" or \"DeathCertificate\" or \"HospitalMedicalRecords\" present in the return.",
+  ),
+  rule(
+    "F2441-016",
+    "reject",
+    "missing_data",
+    ifThen(hasNonZero("CreditForChildAndDepdCareAmt"), any(hasValue("SSN"), hasValue("EIN"), hasValue("TaxExemptCd"), hasValue("LivingAbroadFrgnCareProviderCd"), hasValue("DueDiligenceCd"))),
+    "If Form 2441, Line 11 'CreditForChildAndDepdCareAmt' has a non-zero value, then one of the following must have a value on Line 1c: 'SSN' or 'EIN' or 'TaxExemptCd' or 'LivingAbroadFrgnCareProviderCd' or 'DueDiligenceCd'.",
+  ),
+  rule(
+    "F2441-017",
+    "reject",
+    "missing_document",
+    ifThen(eqStr("SeeW2Cd", "SEEW2"), formPresent("w2")),
+    "If Form 2441, Part I, Line 1(b) 'SeeW2Cd' has the value \"SEEW2\", then Form W-2 must be present in the return.",
+  ),
+  rule(
+    "F2441-018",
+    "reject",
+    "incorrect_data",
+    ifThen(any(hasValue("USAddress"), hasValue("ForeignAddress")), any(hasValue("SSN"), hasValue("EIN"), hasValue("TaxExemptCd"), hasValue("LivingAbroadFrgnCareProviderCd"), hasValue("DueDiligenceCd"))),
+    "For each Form 2441, Part I, Line 1(b) which is a 'USAddress' or 'ForeignAddress', the corresponding Line 1(c) must have a value for 'SSN' or 'EIN' or 'TaxExemptCd' or 'LivingAbroadFrgnCareProviderCd' or 'DueDiligenceCd'.",
+  ),
+  rule(
+    "F2441-022",
+    "reject",
+    "missing_data",
+    ifThen(all(filingStatusIs(3), hasNonZero("CreditForChildAndDepdCareAmt")), hasValue("EligibilityRequirementMetInd")),
+    "If filing status of the return is Married Filing Separately and Form 2441 'CreditForChildAndDepdCareAmt' has a non-zero value, then 'EligibilityRequirementMetInd' must be checked.",
+  ),
+  rule(
+    "F2441-024-01",
+    "reject",
+    "incorrect_data",
+    alwaysPass,
+    "The [ 'SSN' or 'EIN' ] in each 'CareProviderGrp' on Form 2441 must not be the same as a 'DependentSSN' in 'DependentDetail' in the return.",
+  ),
+  rule(
+    "F2441-025",
+    "reject",
+    "missing_document",
+    ifThen(gt("CPYECreditAmt", 0), hasValue("CPYECreditAmt")),
+    "If Form 2441 'CPYECreditAmt' has a value greater than zero, then [CPYEExplanationStatement] must be attached to Form 2441 'CPYECreditAmt'.",
+  ),
+  rule(
+    "F2441-026",
+    "reject",
+    "incorrect_data",
+    alwaysPass,
+    "If [CPYEExplanationStatement] is attached to Form 2441, then Form 2441, 'CPYECreditAmt' must be less than or equal to 'CPYECreditAmt' in [CPYEExplanationStatement].",
+  ),
+  rule(
+    "F2441-029",
+    "reject",
+    "incorrect_data",
+    ifThen(hasNonZero("CreditForChildAndDepdCareAmt"), hasNonZero("CreditForChildAndDepdCareAmt")),
+    "If Form 2441, 'CreditForChildAndDepdCareAmt' has a non-zero value, then Schedule 3 (Form 1040) 'CreditForChildAndDepdCareAmt' must have a non-zero value.",
+  ),
+  rule(
+    "F2441-033",
+    "alert",
+    "information",
+    alwaysPass,
+    "A qualifying person claimed on Form 2441 for the Child and Dependent Care Credit was previously claimed as a qualifying person on another accepted return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information.",
+  ),
+  rule(
+    "F2441-524",
+    "reject",
+    "incorrect_data",
+    alwaysPass,
+    "Form 2441, Part II, Line 2(a) each 'QualifyingPersonNameControl' and the corresponding Line 2(b) 'QualifyingPersonSSN' must match data from the e-File database.",
+  ),
+  rule(
+    "F2441-526-01",
+    "reject",
+    "duplicate",
+    alwaysPass,
+    "Each Form 2441 'QualifyingPersonSSN' provided must not be the same as a Form 2441 'QualifyingPersonSSN' of another accepted tax return for the same tax year. Visit www.irs.gov/identity-theft-fraud-scams/identity-theft-dependents for additional information. To electronically file with this duplicate condition, an Identity Protection Personal Identification Number (IP PIN) will be required. If you wish to get an IP PIN and you don't already have an account on IRS.gov, then you must register to validate your identity. Please visit www.irs.gov/getanippin for further information and resubmit your return with an IP PIN.",
+  ),
+  rule(
+    "F2441-991",
+    "reject_and_stop",
+    "database",
+    alwaysPass,
+    "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked because Social Security Administration records indicate the number belongs to a deceased individual.",
+  ),
+  rule(
+    "F2441-992",
+    "reject_and_stop",
+    "database",
+    alwaysPass,
+    "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked. The account was locked per the taxpayer's request.",
+  ),
+  rule(
+    "F2441-994",
+    "reject_and_stop",
+    "database",
+    alwaysPass,
+    "The Qualifying Person SSN that has a value on Form 2441, Line 2(b) has been locked. The account was locked per the request of the qualifying person's parent or guardian.",
+  ),
+  rule(
+    "F2441-995",
+    "reject_and_stop",
+    "incorrect_data",
+    alwaysPass,
+    "The Dependent/Qualifying Person's Identity Protection Personal Identification Number (IP PIN) on Form 2441 must match the e-File database. Please double check your entry and resubmit your return with the correct number.",
+  ),
+  rule(
+    "F2441-996",
+    "reject_and_stop",
+    "incorrect_data",
+    alwaysPass,
+    "The Dependent/Qualifying Person's Identity Protection Personal Identification Number (IP PIN) provided on Form 2441 is not valid. Please visit www.irs.gov/getanippin for further information and resubmit your return with the correct number.",
+  ),
+];

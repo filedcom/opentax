@@ -79,37 +79,37 @@ All builders registered in `builder.ts`, types added to `types.ts`, extractions 
 
 ---
 
-## Gap 3: No Validation Layer
+## Gap 3: MeF Validation Layer — IN PROGRESS
 
-**Severity: BLOCKER**
-**Location:** Does not exist
+**Severity: BLOCKER → PARTIALLY RESOLVED** (2026-03-31)
 
-The product.md spec calls for two-tier validation. None of it is implemented:
+### Completed
+1. ✓ **Validation engine** — `core/validation/` with types, context, predicates DSL, engine, report formatter
+2. ✓ **Predicate DSL** — composable rule builders: `hasValue`, `ifThen`, `eqField`, `eqSum`, `formPresent`, `filingStatusIs`, `validSSN`, and 25+ more combinators
+3. ✓ **ReturnContext** — read-only interface resolving MeF XML element names → pending dict via reverse field registry
+4. ✓ **Field registry** — reverse mapping from all 47 FIELD_MAP arrays (XML element → pending dict location)
+5. ✓ **All 1,916 active IRS rules parsed** — from `1040_Business_Rules_2025v3.0.csv` into 137 rule files organized by form prefix
+6. ✓ **255 rules auto-implemented** via pattern matching on rule text (hasValue, ifThen, eqField, etc.)
+7. ✓ **`tax return validate` CLI command** — `--returnId <id> [--format text|json]`
+8. ✓ **Professional diagnostics report** — Drake/Lacerte-style text output + JSON format
+9. ✓ **IRS XSD schemas present** — TY2025v3.0 package in `.research/docs/`
 
-### Tier 1 — MeF Business Rules (HARD BLOCK)
-The IRS publishes thousands of business rules that MeF XML must satisfy. Examples:
-- If Schedule C is present, Schedule SE must be present
-- If filing status is MFJ, spouse SSN is required
-- If line 27a (EIC) > 0, Schedule EIC must be attached
-- If dependent is claimed, dependent SSN must be provided
+### Remaining
+- **1,661 rule stubs** need manual implementation (check: null) — prioritized by form
+- **Export gating** — block `return export` when reject rules fail
+- **XSD validation** — validate generated XML against schemas before export
+- **Soft warnings migration** — replace `softValidationWarnings()` with diagnostics engine
 
-**Zero** of these are implemented. A return can export MeF XML that violates IRS rules.
-
-### Tier 2 — Soft Warnings
-- Suspiciously large deductions relative to income
-- Missing forms that are usually filed together
-- Data consistency checks
-
-Also not implemented.
-
-### XSD Schema Validation
-No IRS XSD schemas are present in the repo. No validation of generated XML against the official schema.
-
-**What to do:**
-1. Download IRS MeF schema package for TY2025 (XSD files)
-2. Build XML → XSD validation step in export pipeline
-3. Implement top-priority business rules (start with the ~50 most common rejection reasons)
-4. Add `tax validate` CLI command
+### Rule Coverage by Form
+| Form | Total Rules | Implemented | Stubs |
+|------|------------|-------------|-------|
+| IND (return-level) | 201 | 56 | 145 |
+| F1040 | 118 | 17 | 101 |
+| F8962 (PTC) | 85 | 11 | 74 |
+| F5695 (Energy) | 76 | 14 | 62 |
+| R0000 (Header) | 62 | 10 | 52 |
+| SA (Schedule A) | 61 | 5 | 56 |
+| + 131 more groups | 1,313 | 142 | 1,171 |
 
 ---
 

@@ -2,7 +2,7 @@ import type { Schedule2Fields, Schedule2Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name)
-const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule2Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule2Fields, string]> = [
   ["line1_amt", "AlternativeMinimumTaxAmt"],
   ["line4_se_tax", "SelfEmploymentTaxAmt"],
   ["line5_unreported_tip_tax", "SocSecMedicareTaxUnrptdTipAmt"],

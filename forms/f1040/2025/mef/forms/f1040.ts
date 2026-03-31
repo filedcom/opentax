@@ -1,7 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { IRS1040Fields, IRS1040Input } from "../types.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = [
   ["line1a_wages", "WagesAmt"],
   ["line1c_unreported_tips", "TipIncomeAmt"],
   ["line1e_taxable_dep_care", "TaxableDependentCareExpnsesAmt"],

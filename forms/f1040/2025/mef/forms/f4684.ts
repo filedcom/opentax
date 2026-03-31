@@ -4,7 +4,7 @@ import { element, elements } from "../../../mef/xml.ts";
 
 // --- Field Map ----------------------------------------------------------------
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form4684Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form4684Fields, string]> = [
   ["personal_fmv_before", "PersonalUsePropFMVBfrCsltyAmt"],
   ["personal_fmv_after", "PersonalUsePropFMVAftrCsltyAmt"],
   ["personal_basis", "CostOrOtherBasisPersonalUseAmt"],

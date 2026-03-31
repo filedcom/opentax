@@ -4,7 +4,7 @@ import { element, elements } from "../../../mef/xml.ts";
 
 // ─── Field Map ────────────────────────────────────────────────────────────────
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8815Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8815Fields, string]> = [
   ["ee_bond_interest", "SavingsBondInterestAmt"],
   ["bond_proceeds", "TotalProceedsAmt"],
   ["qualified_expenses", "QualifiedExpensesAmt"],

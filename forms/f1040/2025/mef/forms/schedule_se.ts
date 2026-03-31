@@ -1,7 +1,7 @@
 import type { ScheduleSEFields, ScheduleSEInput } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleSEFields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleSEFields, string]> = [
   ["net_profit_schedule_c", "NetProfitOrLossAmt"],
   ["net_profit_schedule_f", "NetFarmProfitOrLossAmt"],
   ["unreported_tips_4137", "Form4137UnreportedTipsAmt"],
