@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-building schema — one entry per Form 8609 / BIN

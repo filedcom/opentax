@@ -2,21 +2,26 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../schedule2/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  SS_WAGE_BASE_2025,
+  HOUSEHOLD_FICA_THRESHOLD_2025,
+  HOUSEHOLD_FUTA_QUARTERLY_THRESHOLD,
+} from "../../../config/2025.ts";
 
 // ─── TY2025 Constants (Rev Proc 2024-40; IRS Publication 926) ────────────────
 
 // FICA threshold — wages that trigger household employment taxes (IRC §3510)
 // If you pay any single household employee $2,800 or more in 2025, you must
 // withhold and pay FICA taxes on ALL wages paid to that employee.
-const FICA_THRESHOLD = 2_800;
+const FICA_THRESHOLD = HOUSEHOLD_FICA_THRESHOLD_2025;
 
 // Social Security wage base TY2025 (IRC §3121(a)(1))
-const SS_WAGE_BASE = 176_100;
+const SS_WAGE_BASE = SS_WAGE_BASE_2025;
 
 // FICA rates — employer and employee share each pay:
 // Social Security: 6.2% employer + 6.2% employee = 12.4% total
@@ -29,7 +34,7 @@ const MEDICARE_RATE_EMPLOYEE = 0.0145;
 
 // Federal Unemployment Tax (FUTA) — not computed here but threshold triggers filing
 // FUTA threshold: $1,000 in any calendar quarter
-const FUTA_THRESHOLD_QUARTERLY = 1_000;
+const FUTA_THRESHOLD_QUARTERLY = HOUSEHOLD_FUTA_QUARTERLY_THRESHOLD;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

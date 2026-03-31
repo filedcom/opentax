@@ -5,15 +5,15 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_se } from "../../intermediate/schedule_se/index.ts";
-import { form8995 } from "../../intermediate/form8995/index.ts";
-import { form8582 } from "../../intermediate/form8582/index.ts";
-import { form6198 } from "../../intermediate/form6198/index.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
-import { form8990 } from "../../intermediate/form8990/index.ts";
-import { form461 } from "../../intermediate/form461/index.ts";
+import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
+import { form8582 } from "../../intermediate/forms/form8582/index.ts";
+import { form6198 } from "../../intermediate/forms/form6198/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { form8990 } from "../../intermediate/forms/form8990/index.ts";
+import { form461 } from "../../intermediate/forms/form461/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ── TY2025 Constants ────────────────────────────────────────────────────────

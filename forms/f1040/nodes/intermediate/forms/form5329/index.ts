@@ -2,11 +2,11 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../schedule2/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 

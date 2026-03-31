@@ -3,7 +3,7 @@ import type { AtLeastOne, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { output } from "../../../../../core/types/tax-node.ts";
-import { form5695 } from "../../intermediate/form5695/index.ts";
+import { form5695 } from "../../intermediate/forms/form5695/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Input node that collects raw cost data from the taxpayer and passes it

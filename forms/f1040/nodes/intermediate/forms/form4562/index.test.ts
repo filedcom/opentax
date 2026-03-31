@@ -22,9 +22,9 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4562 } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { form6251 } from "../form6251/index.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4562.compute({ taxYear: 2025 }, input);

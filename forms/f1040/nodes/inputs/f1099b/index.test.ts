@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f1099b, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949 } from "../../intermediate/form8949/index.ts";
+import { form8949 } from "../../intermediate/forms/form8949/index.ts";
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 

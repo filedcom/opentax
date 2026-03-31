@@ -5,16 +5,16 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
-import { income_tax_calculation } from "../../intermediate/income_tax_calculation/index.ts";
-import { form8995 } from "../../intermediate/form8995/index.ts";
-import { form8995a } from "../../intermediate/form8995a/index.ts";
-import { form_1116 } from "../../intermediate/form_1116/index.ts";
-import { rate_28_gain_worksheet } from "../../intermediate/rate_28_gain_worksheet/index.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import { schedule_b } from "../../intermediate/schedule_b/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
-import { unrecaptured_1250_worksheet } from "../../intermediate/unrecaptured_1250_worksheet/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
+import { form8995a } from "../../intermediate/forms/form8995a/index.ts";
+import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 

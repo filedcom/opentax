@@ -6,7 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 

@@ -2,48 +2,27 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { FilingStatus, filingStatusSchema } from "../../types.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { FilingStatus, filingStatusSchema } from "../../../types.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  EITC_MAX_CREDIT_2025,
+  EITC_PHASE_IN_END_2025,
+  EITC_PHASEOUT_START_2025,
+  EITC_INCOME_LIMIT_2025,
+  EITC_INVESTMENT_INCOME_LIMIT_2025,
+} from "../../../config/2025.ts";
 
-// ─── TY2025 EITC Tables (Rev Proc 2024-40) ───────────────────────────────────
-// Maximum credit amounts by number of qualifying children
-const MAX_CREDIT: Record<number, number> = {
-  0: 649,
-  1: 4_328,
-  2: 7_152,
-  3: 8_046,
-};
+// ─── TY2025 EITC Tables (Rev Proc 2024-40) — see config/2025.ts ──────────────
 
-// Earned income amounts where credit is at maximum (phase-in ends)
-// (Phase-in rate × earned income = max credit)
-const PHASE_IN_END: Record<number, number> = {
-  0: 8_490,
-  1: 12_730,
-  2: 17_880,
-  3: 17_880,
-};
-
-// Phaseout start thresholds by filing status and children
-// [single/hoh/mfs, mfj/qss]
-const PHASEOUT_START: Record<number, [number, number]> = {
-  0: [9_524, 16_810],
-  1: [21_560, 28_845],
-  2: [21_560, 28_845],
-  3: [21_560, 28_845],
-};
-
-// Phaseout end (max income) by filing status and children
-// [single/hoh/mfs, mfj/qss]
-const INCOME_LIMIT: Record<number, [number, number]> = {
-  0: [18_591, 25_511],
-  1: [49_084, 56_004],
-  2: [55_768, 62_688],
-  3: [59_899, 66_819],
-};
+const MAX_CREDIT = EITC_MAX_CREDIT_2025;
+const PHASE_IN_END = EITC_PHASE_IN_END_2025;
+const PHASEOUT_START = EITC_PHASEOUT_START_2025;
+const INCOME_LIMIT = EITC_INCOME_LIMIT_2025;
+const INVESTMENT_INCOME_LIMIT = EITC_INVESTMENT_INCOME_LIMIT_2025;
 
 // Phase-in rates by number of qualifying children (IRC §32(b))
 const PHASE_IN_RATE: Record<number, number> = {
@@ -60,9 +39,6 @@ const PHASEOUT_RATE: Record<number, number> = {
   2: 0.2106,
   3: 0.2106,
 };
-
-// TY2025 investment income limit (Rev Proc 2024-40)
-const INVESTMENT_INCOME_LIMIT = 11_950;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

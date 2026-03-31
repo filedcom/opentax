@@ -3,10 +3,10 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, f1099int } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import { schedule_b } from "../../intermediate/schedule_b/index.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

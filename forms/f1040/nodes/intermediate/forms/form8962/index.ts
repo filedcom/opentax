@@ -2,12 +2,12 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../schedule3/index.ts";
-import { schedule2 } from "../schedule2/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Federal Poverty Level (2024 FPL used per IRS rules) ──────────────
 // IRS uses the prior year FPL for ACA/PTC calculations.

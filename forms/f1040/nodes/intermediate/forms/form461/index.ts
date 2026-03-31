@@ -1,11 +1,11 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { FilingStatus } from "../../types.ts";
-import { normalizeArray } from "../../utils.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { FilingStatus } from "../../../types.ts";
+import { normalizeArray } from "../../../utils.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { form_8829 } from "../../intermediate/form_8829/index.ts";
+import { form_8829 } from "../../intermediate/forms/form_8829/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";

@@ -1,33 +1,21 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { FilingStatus } from "../../types.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
+import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { FilingStatus } from "../../../types.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
+import {
+  STANDARD_DEDUCTION_BASE_2025,
+  STANDARD_DEDUCTION_ADDITIONAL_2025,
+} from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 Standard Deduction Amounts ───────────────────────────
-// Source: Rev. Proc. 2024-40, §3.14; IRC §63(c)
+// Source: Rev. Proc. 2024-40, §3.14; IRC §63(c) — see config/2025.ts
 
-// Base standard deduction by filing status
-const BASE_DEDUCTION: Record<FilingStatus, number> = {
-  [FilingStatus.Single]:  15_000,
-  [FilingStatus.MFJ]:     30_000,
-  [FilingStatus.MFS]:     15_000,
-  [FilingStatus.HOH]:     22_500,
-  [FilingStatus.QSS]:     30_000,
-};
-
-// Additional standard deduction per qualifying factor (age 65+ or blind)
-// Single/HOH: $1,600; MFJ/MFS/QSS: $1,350
-const ADDITIONAL_PER_FACTOR: Record<FilingStatus, number> = {
-  [FilingStatus.Single]:  1_600,
-  [FilingStatus.MFJ]:     1_350,
-  [FilingStatus.MFS]:     1_350,
-  [FilingStatus.HOH]:     1_600,
-  [FilingStatus.QSS]:     1_350,
-};
+const BASE_DEDUCTION = STANDARD_DEDUCTION_BASE_2025;
+const ADDITIONAL_PER_FACTOR = STANDARD_DEDUCTION_ADDITIONAL_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

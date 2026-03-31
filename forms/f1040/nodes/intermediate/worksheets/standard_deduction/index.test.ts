@@ -1,7 +1,7 @@
 import { assertEquals } from "@std/assert";
 import { standard_deduction, inputSchema } from "./index.ts";
-import { FilingStatus } from "../../types.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { FilingStatus } from "../../../types.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 const ctx: NodeContext = { taxYear: 2025 };
 

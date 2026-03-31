@@ -7,10 +7,10 @@ import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
-import { schedule_f } from "../../intermediate/schedule_f/index.ts";
+import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ---------------------------------------------------------------------------

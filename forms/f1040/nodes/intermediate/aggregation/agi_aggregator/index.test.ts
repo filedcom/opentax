@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
 import { agi_aggregator } from "./index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 const ctx: NodeContext = { taxYear: 2025 };
 

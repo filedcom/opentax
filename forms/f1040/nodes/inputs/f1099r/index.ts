@@ -6,10 +6,10 @@ import type {
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
-import { form5329 } from "../../intermediate/form5329/index.ts";
-import { form4972 } from "../../intermediate/form4972/index.ts";
-import { form8606 } from "../../intermediate/form8606/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { form5329 } from "../../intermediate/forms/form5329/index.ts";
+import { form4972 } from "../../intermediate/forms/form4972/index.ts";
+import { form8606 } from "../../intermediate/forms/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 

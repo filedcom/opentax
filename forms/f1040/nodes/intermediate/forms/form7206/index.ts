@@ -2,12 +2,12 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../agi_aggregator/index.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Long-Term Care Premium Age-Based Limits (Rev Proc 2024-40) ────────
 // IRC §213(d)(10): eligible long-term care premiums limited to age-based amounts

@@ -67,7 +67,7 @@ import { f8997, inputSchema as f8997InputSchema } from "../nodes/inputs/f8997/in
 import { schedule_j, inputSchema as scheduleJInputSchema } from "../nodes/inputs/schedule_j/index.ts";
 import { f8609, itemSchema as f8609ItemSchema } from "../nodes/inputs/f8609/index.ts";
 import { f4852, itemSchema as f4852ItemSchema } from "../nodes/inputs/f4852/index.ts";
-import { inputSchema as scheduleDInputSchema, schedule_d } from "../nodes/intermediate/schedule_d/index.ts";
+import { inputSchema as scheduleDInputSchema, schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance

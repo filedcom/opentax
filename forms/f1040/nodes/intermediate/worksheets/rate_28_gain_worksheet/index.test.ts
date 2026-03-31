@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, rate_28_gain_worksheet } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { qdcgtw } from "../qdcgtw/index.ts";
 
 function compute(input: Record<string, unknown>) {

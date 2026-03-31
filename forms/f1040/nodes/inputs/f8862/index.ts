@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { eitc } from "../../intermediate/eitc/index.ts";
+import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import { f8863 } from "../f8863/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";

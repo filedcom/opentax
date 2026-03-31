@@ -4,10 +4,10 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_b } from "../../intermediate/schedule_b/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
-import { form8995 } from "../../intermediate/form8995/index.ts";
-import { form_1116 } from "../../intermediate/form_1116/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
+import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits

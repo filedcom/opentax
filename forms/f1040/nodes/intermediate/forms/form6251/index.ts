@@ -1,49 +1,35 @@
 import { z } from "zod";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { FilingStatus } from "../../types.ts";
-import { schedule2 } from "../schedule2/index.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { FilingStatus } from "../../../types.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import {
+  AMT_EXEMPTION_2025,
+  AMT_PHASE_OUT_START_2025,
+  AMT_BRACKET_26_THRESHOLD_STANDARD_2025,
+  AMT_BRACKET_26_THRESHOLD_MFS_2025,
+  AMT_BRACKET_ADJUSTMENT_STANDARD_2025,
+  AMT_BRACKET_ADJUSTMENT_MFS_2025,
+} from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
+// Source: IRS Instructions for Form 6251 (2025); config/2025.ts
 
-// Exemption amounts — Form 6251 Line 5 Worksheet, Step 1
-// Source: IRS Instructions for Form 6251 (2025), page 9
-const EXEMPTION: Record<FilingStatus, number> = {
-  [FilingStatus.Single]: 88_100,
-  [FilingStatus.HOH]: 88_100,
-  [FilingStatus.MFJ]: 137_000,
-  [FilingStatus.QSS]: 137_000,
-  [FilingStatus.MFS]: 68_500,
-};
+const EXEMPTION = AMT_EXEMPTION_2025;
+const PHASE_OUT_START = AMT_PHASE_OUT_START_2025;
 
-// Phase-out start thresholds — Form 6251 Line 5 Worksheet, Step 3
-// Source: IRS Instructions for Form 6251 (2025), page 9
-const PHASE_OUT_START: Record<FilingStatus, number> = {
-  [FilingStatus.Single]: 626_350,
-  [FilingStatus.HOH]: 626_350,
-  [FilingStatus.MFJ]: 1_252_700,
-  [FilingStatus.QSS]: 1_252_700,
-  [FilingStatus.MFS]: 626_350,
-};
-
-// Phase-out rate: 25% of excess above threshold
-// Form 6251 Line 5 Worksheet, Step 5
+// Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
 const PHASE_OUT_RATE = 0.25;
 
-// AMT rate bracket threshold: 26% applies up to this amount of taxable excess
-// Source: IRS Instructions for Form 6251 (2025), "Line 7" / "What's New"
-const BRACKET_26_THRESHOLD_STANDARD = 239_100;
-const BRACKET_26_THRESHOLD_MFS = 119_550;
-
-// 28% rate savings adjustment (pre-computed: 239,100 × (0.28 − 0.26) = 4,782)
-// Used when line6 > bracket threshold: TMT = line6 × 28% − adjustment
-const BRACKET_ADJUSTMENT_STANDARD = 4_782;
-const BRACKET_ADJUSTMENT_MFS = 2_391;
+const BRACKET_26_THRESHOLD_STANDARD = AMT_BRACKET_26_THRESHOLD_STANDARD_2025;
+const BRACKET_26_THRESHOLD_MFS = AMT_BRACKET_26_THRESHOLD_MFS_2025;
+const BRACKET_ADJUSTMENT_STANDARD = AMT_BRACKET_ADJUSTMENT_STANDARD_2025;
+const BRACKET_ADJUSTMENT_MFS = AMT_BRACKET_ADJUSTMENT_MFS_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

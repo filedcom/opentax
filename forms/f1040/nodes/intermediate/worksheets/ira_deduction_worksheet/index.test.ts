@@ -1,8 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { ira_deduction_worksheet, inputSchema } from "./index.ts";
-import { FilingStatus } from "../../types.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { FilingStatus } from "../../../types.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return ira_deduction_worksheet.compute({ taxYear: 2025 }, inputSchema.parse(input));

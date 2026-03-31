@@ -6,8 +6,8 @@ import type {
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
-import { schedule_b } from "../../intermediate/schedule_b/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 // Per-item schema — one 1099-OID from one payer

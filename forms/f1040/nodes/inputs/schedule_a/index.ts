@@ -6,8 +6,8 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
-import { standard_deduction } from "../../intermediate/standard_deduction/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 SALT cap per OBBBA — $40,000 single/MFJ, $20,000 MFS

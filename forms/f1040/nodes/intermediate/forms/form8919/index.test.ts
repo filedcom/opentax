@@ -1,8 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8919, inputSchema, ReasonCode } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule2 } from "../schedule2/index.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 
 function compute(input: Record<string, unknown>) {

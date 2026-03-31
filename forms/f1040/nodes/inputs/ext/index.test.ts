@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { ext, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

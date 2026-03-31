@@ -6,8 +6,8 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Part I short-term: A (1099-B basis reported), B (1099-B no basis), C (no 1099-B)

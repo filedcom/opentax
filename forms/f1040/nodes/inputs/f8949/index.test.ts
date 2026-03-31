@@ -2,8 +2,8 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { QsbsCode, f8949, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form6251 } from "../../intermediate/form6251/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers

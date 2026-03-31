@@ -4,7 +4,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { form6198 } from "../../intermediate/form6198/index.ts";
+import { form6198 } from "../../intermediate/forms/form6198/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 4835 — Farm Rental Income and Expenses
