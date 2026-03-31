@@ -8,23 +8,29 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  SAVERS_CREDIT_CONTRIBUTION_CAP_2025,
+  SAVERS_CREDIT_AGI_SINGLE_2025,
+  SAVERS_CREDIT_AGI_HOH_2025,
+  SAVERS_CREDIT_AGI_MFJ_2025,
+} from "../../../config/2025.ts";
 
-// TY2025 constants — IRC §25B; Rev Proc 2024-40
-const CONTRIBUTION_CAP = 2000;
+// TY2025 constants — IRC §25B; Rev Proc 2024-40 (see config/2025.ts)
+const CONTRIBUTION_CAP = SAVERS_CREDIT_CONTRIBUTION_CAP_2025;
 
 // AGI thresholds (inclusive upper bound for each rate tier) by filing status group.
 // Single/MFS/QSS thresholds:
-const AGI_50_SINGLE = 23000;
-const AGI_20_SINGLE = 25000;
-const AGI_10_SINGLE = 38250;
+const AGI_50_SINGLE = SAVERS_CREDIT_AGI_SINGLE_2025.rate50;
+const AGI_20_SINGLE = SAVERS_CREDIT_AGI_SINGLE_2025.rate20;
+const AGI_10_SINGLE = SAVERS_CREDIT_AGI_SINGLE_2025.rate10;
 // HOH thresholds:
-const AGI_50_HOH = 34500;
-const AGI_20_HOH = 37500;
-const AGI_10_HOH = 57375;
+const AGI_50_HOH = SAVERS_CREDIT_AGI_HOH_2025.rate50;
+const AGI_20_HOH = SAVERS_CREDIT_AGI_HOH_2025.rate20;
+const AGI_10_HOH = SAVERS_CREDIT_AGI_HOH_2025.rate10;
 // MFJ thresholds:
-const AGI_50_MFJ = 46000;
-const AGI_20_MFJ = 50000;
-const AGI_10_MFJ = 76500;
+const AGI_50_MFJ = SAVERS_CREDIT_AGI_MFJ_2025.rate50;
+const AGI_20_MFJ = SAVERS_CREDIT_AGI_MFJ_2025.rate20;
+const AGI_10_MFJ = SAVERS_CREDIT_AGI_MFJ_2025.rate10;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
