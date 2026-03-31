@@ -3,6 +3,7 @@ import { execute } from "../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
+import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -26,5 +27,7 @@ export async function exportMefCommand(
   const engineInputs = buildEngineInputs(inputs);
   const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
   const pending = def.buildPending(result.pending);
-  return def.buildMefXml(pending);
+  const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
+  const filer = extractFilerIdentity(f1040);
+  return def.buildMefXml(pending, filer);
 }

@@ -20,37 +20,33 @@ A single W-2 wage earner can go from `form add` to MeF XML output today. The gap
 
 ---
 
-## Gap 1: MeF ReturnHeader — Missing Required Fields
+## ~~Gap 1: MeF ReturnHeader — Missing Required Fields~~ ✓ RESOLVED
 
-**Severity: BLOCKER**
-**File:** `forms/f1040/mef/header.ts`
+**Status: COMPLETE** (2026-03-31)
 
-The IRS MeF schema (Publication 4164) requires these header elements that are completely absent:
+`FilerIdentity` expanded with all Pub 4164 required fields. `buildReturnHeader()` now emits:
 
-| Required Element | Status | Notes |
-|---|---|---|
-| `ReturnType` | Done | "1040" |
-| `TaxPeriodBeginDate` / `TaxPeriodEndDate` | Done | |
-| `Filer` (SSN, name, address) | Done | Basic fields only |
-| `FilingStatusCd` | Done | |
-| `SoftwareId` | **Missing** | IRS-assigned ID for your software (applied for via e-Services) |
-| `SoftwareVersionNum` | **Missing** | |
-| `OriginatorGrp` (EFIN, Type) | **Missing** | Electronic Filing Identification Number of ERO |
-| `PINEnteredByCd` | **Missing** | "Taxpayer" or "ERO" |
-| `PrimaryPINEnteredByCd` | **Missing** | |
-| `ReturnsAcceptedForElecFilingCd` | **Missing** | |
-| `OnlineFilerInformation` | **Missing** | Required for self-filed returns |
-| `TaxpayerPIN` / `SpousePIN` | **Missing** | 5-digit PIN captured in general node but not wired to header |
-| `IPAddress` / `DeviceId` | **Missing** | Required for self-prepared returns |
-| `Timestamp` | **Missing** | |
+| Required Element | Status |
+|---|---|
+| `ReturnType`, `TaxPeriodBeginDate`, `TaxPeriodEndDate` | ✓ (existing) |
+| `Filer` (SSN, name, address, phone, email) | ✓ expanded |
+| `SpouseSSN`, `SpouseNameControlTxt` | ✓ added |
+| `FilingStatusCd` | ✓ (existing) |
+| `SoftwareId` / `SoftwareVersionNum` | ✓ added |
+| `OriginatorGrp` (EFIN, Type, PractitionerPIN) | ✓ added |
+| `PINEnteredByCd` / `PrimaryPINEnteredByCd` | ✓ added |
+| `OnlineFilerInformation` (IP, DeviceId) | ✓ added |
+| `TaxpayerPIN` / `SpousePIN` | ✓ added |
+| `PrimaryIPPIN` / `SpouseIPPIN` | ✓ added |
+| `BankAccountGrp` (routing, account, type) | ✓ added |
+| `Timestamp` | ✓ added |
+| `AddressLine2Txt` | ✓ added |
+| `ForeignAddress` support | ✓ added |
 
-**FilerIdentity interface** also missing:
-- Spouse SSN and name (for MFJ)
-- Phone number
-- Email address
-- Address line 2
+New interfaces: `SpouseIdentity`, `BankAccount`, `OriginatorInfo`, `OnlineFilerInfo`, `FilerAddress`.
+Enums: `PINEnteredBy`, `AccountType`.
 
-**What to do:** Expand `FilerIdentity` and `buildReturnHeader()` to include all Pub 4164 required elements. The `general` input node already captures some of this (ip_pin, signature PINs) — wire it through.
+**Note:** `SoftwareId` and `EFIN` are runtime configuration values (IRS-assigned). The header builder accepts them; the application must supply them at export time.
 
 ---
 
@@ -117,36 +113,35 @@ No IRS XSD schemas are present in the repo. No validation of generated XML again
 
 ---
 
-## Gap 4: Filer Identity & Direct Deposit Not Wired
+## ~~Gap 4: Filer Identity & Direct Deposit Not Wired~~ ✓ RESOLVED
 
-**Severity: BLOCKER**
+**Status: COMPLETE** (2026-03-31)
 
-The `general` input node captures taxpayer identity (SSN, name, DOB, filing status, dependents, signature PINs). But:
+1. ✓ **Filer extraction wired** — `extractFilerIdentity()` in `forms/f1040/mef/filer.ts` extracts `FilerIdentity` from the computed f1040 pending dict. `exportMefCommand()` now passes it to `buildMefXml()`.
+2. ✓ **Direct deposit fields added** — `bank_routing_number`, `bank_account_number`, `bank_account_type` in general input schema, passed through to f1040 pending dict.
+3. ✓ **Spouse identity wired** — `extractFilerIdentity()` builds `SpouseIdentity` from spouse fields when SSN + last name present.
+4. ✓ **Signature PINs wired** — `taxpayer_signature_pin` and `spouse_signature_pin` now pass through from general node to f1040 pending dict and into MeF header.
 
-1. **Filer data doesn't flow to MeF header** — `exportMefCommand()` calls `buildMefXml(pending, filer?)` but `filer` is not extracted from the pending dict. It's passed as `undefined`.
-2. **No direct deposit fields** — Refund routing number, account number, account type are not in any schema. Required for MeF `BankAccountGrp`.
-3. **No spouse identity** — MFJ returns need both SSNs, both names, both PINs in the header.
-4. **No preparer/ERO info** — Professional returns need PTIN, firm EIN, firm address.
-
-**What to do:** 
-- Add bank account fields to `general` input node
-- Add preparer info as a new input or extension of `general`
-- Wire `pending["general"]` → `FilerIdentity` → `buildReturnHeader()` in export pipeline
+**Remaining:** Preparer/ERO info (PTIN, firm EIN) is accepted by the header builder but not yet captured as input. This is a configuration concern for professional returns.
 
 ---
 
-## Gap 5: Incomplete Form CRUD Operations
+## ~~Gap 5: Incomplete Form CRUD Operations~~ ✓ RESOLVED
 
-**Severity: MEDIUM**
-**File:** `cli/commands/form.ts`, `cli/main.ts`
+**Status: COMPLETE** (2026-03-31)
 
-Only `form add` is implemented. Missing:
-- `form replace` — edit an existing W-2 or 1099
-- `form remove` — delete a form entry
-- `form list` — list all entries for a return
-- `form get` — retrieve a specific entry by ID
+All form CRUD operations implemented with schema validation and CLI registration:
 
-**Impact:** Tax professionals can't correct data entry errors without manually editing `inputs.json`. This is a usability blocker, not a technical one.
+| Command | Description |
+|---|---|
+| `form add` | ✓ (existing) — Add a form entry |
+| `form list` | ✓ — List all entries, optional `--node_type` filter |
+| `form get` | ✓ — Get entry by `--entryId` |
+| `form update` | ✓ — Replace entry data (validates against schema) |
+| `form delete` | ✓ — Remove entry by `--entryId` |
+
+Store layer: `listInputs()`, `getInput()`, `updateInput()`, `deleteInput()` in `cli/store/store.ts`.
+21 new tests covering all operations including error cases.
 
 ---
 
@@ -195,9 +190,9 @@ The unrecaptured §1250 gain worksheet is fully implemented with comprehensive t
 
 ### Must-Have for Valid MeF (Blockers)
 
-1. **ReturnHeader expansion** — Add SoftwareId, EFIN, PINs, timestamps, spouse info
-2. **Wire filer identity to export** — Extract from pending["general"] → FilerIdentity → header
-3. **Add bank account / direct deposit fields** — New fields in general node
+1. ~~**ReturnHeader expansion**~~ ✓ All Pub 4164 fields added
+2. ~~**Wire filer identity to export**~~ ✓ extractFilerIdentity() → buildMefXml()
+3. ~~**Add bank account / direct deposit fields**~~ ✓ In general node + passed through
 4. **Build top-50 MeF business rules** — Start with most common IRS rejection codes
 5. **XSD schema validation** — Download TY2025 schemas, validate before export
 6. **Add `tax validate` command** — Surface Tier 1 blocks before export
@@ -207,12 +202,12 @@ The unrecaptured §1250 gain worksheet is fully implemented with comprehensive t
 7. ~~**EITC MeF builder**~~ ✓
 8. ~~**Schedule A MeF builder**~~ ✓
 9. ~~**Missing MeF builders**~~ ✓ All 16 forms implemented
-10. **Form CRUD** — replace, remove, list, get commands (moved to Medium)
+10. ~~**Form CRUD**~~ ✓ list, get, update, delete commands
 
 ### Medium Priority (Professional Use)
 
 11. **PDF export** — AcroForm filling for paper/review copies
-12. **Preparer/ERO info** — PTIN, firm details for professional returns
+12. **Preparer/ERO info** — PTIN, firm details for professional returns (header accepts it; needs input capture)
 13. ~~**Return get improvements**~~ ✓ Full summary, form list, all lines, and warnings
 
 ### ~~Lower Priority~~ ✓ RESOLVED

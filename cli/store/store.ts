@@ -118,3 +118,83 @@ export async function appendInput(
   });
   return { id };
 }
+
+export async function listInputs(
+  returnPath: string,
+): Promise<{ nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }[]> {
+  const { inputs } = await readReturnJson(returnPath);
+  const result: { nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }[] = [];
+  for (const [nodeType, entries] of Object.entries(inputs)) {
+    for (const entry of entries) {
+      result.push({ nodeType, id: entry.id, fields: entry.fields });
+    }
+  }
+  return result;
+}
+
+export async function getInput(
+  returnPath: string,
+  entryId: string,
+): Promise<{ nodeType: string; id: string; fields: Readonly<Record<string, unknown>> }> {
+  const { inputs } = await readReturnJson(returnPath);
+  for (const [nodeType, entries] of Object.entries(inputs)) {
+    const entry = entries.find((e) => e.id === entryId);
+    if (entry) return { nodeType, id: entry.id, fields: entry.fields };
+  }
+  throw new Error(`Entry not found: ${entryId}`);
+}
+
+export async function updateInput(
+  returnPath: string,
+  entryId: string,
+  fields: Record<string, unknown>,
+): Promise<{ id: string; nodeType: string }> {
+  const returnData = await readReturnJson(returnPath);
+  for (const [nodeType, entries] of Object.entries(returnData.inputs)) {
+    const idx = entries.findIndex((e) => e.id === entryId);
+    if (idx >= 0) {
+      const updatedEntry: NodeInputEntry = { id: entryId, fields };
+      const updatedEntries = [
+        ...entries.slice(0, idx),
+        updatedEntry,
+        ...entries.slice(idx + 1),
+      ];
+      const updatedInputs: InputsJson = {
+        ...returnData.inputs,
+        [nodeType]: updatedEntries,
+      };
+      await writeReturnJson(returnPath, {
+        meta: returnData.meta,
+        inputs: updatedInputs,
+      });
+      return { id: entryId, nodeType };
+    }
+  }
+  throw new Error(`Entry not found: ${entryId}`);
+}
+
+export async function deleteInput(
+  returnPath: string,
+  entryId: string,
+): Promise<{ id: string; nodeType: string }> {
+  const returnData = await readReturnJson(returnPath);
+  for (const [nodeType, entries] of Object.entries(returnData.inputs)) {
+    const idx = entries.findIndex((e) => e.id === entryId);
+    if (idx >= 0) {
+      const updatedEntries = [
+        ...entries.slice(0, idx),
+        ...entries.slice(idx + 1),
+      ];
+      const updatedInputs: InputsJson = {
+        ...returnData.inputs,
+        [nodeType]: updatedEntries,
+      };
+      await writeReturnJson(returnPath, {
+        meta: returnData.meta,
+        inputs: updatedInputs,
+      });
+      return { id: entryId, nodeType };
+    }
+  }
+  throw new Error(`Entry not found: ${entryId}`);
+}

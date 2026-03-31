@@ -113,6 +113,10 @@ export const inputSchema = z.object({
   // QSS-specific
   qss_spouse_death_year: z.number().int().optional(),
   qss_qualifying_child_ssn: z.string().optional(),
+  // Refund direct deposit
+  bank_routing_number: z.string().length(9).optional(),
+  bank_account_number: z.string().min(4).max(17).optional(),
+  bank_account_type: z.enum(["checking", "savings"]).optional(),
   // Dependents
   dependents: z.array(dependentSchema).optional(),
 });
@@ -286,6 +290,15 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "mfs_spouse_itemizing", input.mfs_spouse_itemizing);
   addIfDefined(fields, "hoh_paid_more_than_half_home_costs", input.hoh_paid_more_than_half_home_costs);
   addIfDefined(fields, "qss_spouse_death_year", input.qss_spouse_death_year);
+
+  // Signature PINs
+  addIfDefined(fields, "taxpayer_signature_pin", input.taxpayer_signature_pin);
+  addIfDefined(fields, "spouse_signature_pin", input.spouse_signature_pin);
+
+  // Refund direct deposit
+  addIfDefined(fields, "bank_routing_number", input.bank_routing_number);
+  addIfDefined(fields, "bank_account_number", input.bank_account_number);
+  addIfDefined(fields, "bank_account_type", input.bank_account_type);
 
   return fields;
 }

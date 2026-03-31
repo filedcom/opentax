@@ -1,7 +1,13 @@
 import { parseArgs } from "@std/cli";
 import type { CommandDef, ParsedArgs } from "./commands/help.ts";
 import { printHelp } from "./commands/help.ts";
-import { formAddCommand } from "./commands/form.ts";
+import {
+  formAddCommand,
+  formDeleteCommand,
+  formGetCommand,
+  formListCommand,
+  formUpdateCommand,
+} from "./commands/form.ts";
 import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
@@ -130,6 +136,71 @@ const COMMANDS: readonly CommandDef[] = [
     },
   },
   {
+    cmd: "form",
+    sub: "list",
+    description: "List all form entries in a return",
+    usage: "tax form list --returnId <id> [--node_type <type>]",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--node_type", description: "Filter by node type (optional)" },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const nodeType = args.node_type as string | undefined;
+      await run(() => formListCommand({ returnId, baseDir: RETURNS_DIR, nodeType }));
+    },
+  },
+  {
+    cmd: "form",
+    sub: "get",
+    description: "Get a specific form entry by ID",
+    usage: "tax form get --returnId <id> --entryId <id>",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const entryId = requireArg("entryId", args.entryId);
+      await run(() => formGetCommand({ returnId, entryId, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
+    cmd: "form",
+    sub: "update",
+    description: "Update a form entry's data",
+    usage: "tax form update --returnId <id> --entryId <id> '{...}'",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const entryId = requireArg("entryId", args.entryId);
+      const dataJson = args._[2] as string | undefined;
+      if (!dataJson) {
+        console.error("Error: JSON data argument is required");
+        Deno.exit(1);
+      }
+      await run(() => formUpdateCommand({ returnId, entryId, dataJson, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
+    cmd: "form",
+    sub: "delete",
+    description: "Delete a form entry",
+    usage: "tax form delete --returnId <id> --entryId <id>",
+    options: [
+      { flag: "--returnId", description: "Return identifier", required: true },
+      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+    ],
+    handler: async (args) => {
+      const returnId = requireArg("returnId", args.returnId);
+      const entryId = requireArg("entryId", args.entryId);
+      await run(() => formDeleteCommand({ returnId, entryId, baseDir: RETURNS_DIR }));
+    },
+  },
+  {
     cmd: "node",
     sub: "graph",
     description: "View node dependency graph (Mermaid or JSON)",
@@ -155,7 +226,7 @@ const COMMANDS: readonly CommandDef[] = [
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth", "type", "form"],
+    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId"],
     boolean: ["json", "help"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;
