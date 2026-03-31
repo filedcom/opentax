@@ -174,8 +174,8 @@ class Schedule1Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Schedule1Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    assembleSchedule1(input);
-    return { outputs: [] };
+    const assembled = assembleSchedule1(input);
+    return { outputs: [{ nodeType: this.nodeType, fields: assembled }] };
   }
 }
 

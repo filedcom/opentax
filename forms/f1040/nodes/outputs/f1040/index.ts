@@ -292,10 +292,8 @@ class F1040Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    // assembleReturn validates and computes all lines; result stored in outputs as a
-    // self-referencing sink record (no downstream routing).
-    assembleReturn(input);
-    return { outputs: [] };
+    const assembled = assembleReturn(input);
+    return { outputs: [{ nodeType: this.nodeType, fields: assembled }] };
   }
 }
 
