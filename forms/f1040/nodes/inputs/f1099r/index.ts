@@ -12,6 +12,10 @@ import { form4972 } from "../../intermediate/forms/form4972/index.ts";
 import { form8606 } from "../../intermediate/forms/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  QCD_ANNUAL_LIMIT_2025,
+  PSO_EXCLUSION_LIMIT_2025,
+} from "../../config/2025.ts";
 
 // Distribution codes that produce zero taxable income (pure rollovers/non-taxable exchanges)
 const ZERO_TAXABLE_CODES = new Set(["G", "N", "R", "Q", "T", "6", "W"]);
@@ -23,8 +27,8 @@ const EARLY_DIST_CODES = new Set(["1"]);
 const LUMP_SUM_CODES = new Set(["5"]);
 
 // TY2025 constants
-const QCD_ANNUAL_LIMIT = 108_000;
-const PSO_EXCLUSION_LIMIT = 3_000;
+const QCD_ANNUAL_LIMIT = QCD_ANNUAL_LIMIT_2025;
+const PSO_EXCLUSION_LIMIT = PSO_EXCLUSION_LIMIT_2025;
 
 // Simplified Method Table 1 — single-life annuity (annuity start after 12/31/1997)
 function simplifiedMethodMonthsTable1(age: number): number {

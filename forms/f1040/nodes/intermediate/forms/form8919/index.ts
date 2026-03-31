@@ -9,6 +9,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { SS_WAGE_BASE_2025 } from "../../../config/2025.ts";
 
 // ─── Constants — mathematical rates, unchanged across years ──────────────────
 
@@ -100,7 +101,7 @@ class Form8919Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([f1040, schedule2, schedule_se]);
 
   // Rev Proc 2024-40 §3.28; Form 8919 line 9 — SS wage base (TY2025)
-  protected readonly ssWageBase = 176_100;
+  protected readonly ssWageBase = SS_WAGE_BASE_2025;
 
   compute(_ctx: NodeContext, rawInput: Form8919Input): NodeResult {
     const input = inputSchema.parse(rawInput);

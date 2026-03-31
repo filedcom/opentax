@@ -7,6 +7,12 @@ import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  MDA_MAX_2025,
+  MDA_PHASE_OUT_THRESHOLD_2025,
+  MDA_ZERO_THRESHOLD_2025,
+  DEATH_BENEFIT_MAX_2025,
+} from "../../../config/2025.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -14,13 +20,13 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 const CAPITAL_GAIN_RATE = 0.20;
 
 // Part III: Minimum Distribution Allowance parameters
-const MDA_MAX = 10_000;
-const MDA_PHASE_OUT_THRESHOLD = 20_000;
+const MDA_MAX = MDA_MAX_2025;
+const MDA_PHASE_OUT_THRESHOLD = MDA_PHASE_OUT_THRESHOLD_2025;
 const MDA_PHASE_OUT_RATE = 0.20;
-const MDA_ZERO_THRESHOLD = 70_000; // MDA = 0 when ordinary income ≥ this
+const MDA_ZERO_THRESHOLD = MDA_ZERO_THRESHOLD_2025; // MDA = 0 when ordinary income ≥ this
 
 // Part III: death benefit exclusion ceiling (pre-1984 plans)
-const DEATH_BENEFIT_MAX = 5_000;
+const DEATH_BENEFIT_MAX = DEATH_BENEFIT_MAX_2025;
 
 // Part III: 1986 single-filer rate schedule used for 10-year averaging
 // Source: Form 4972 instructions (permanent; does not change year to year)

@@ -17,6 +17,13 @@ import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  SCHEDULE_B_DIVIDEND_THRESHOLD,
+  FOREIGN_TAX_SINGLE_THRESHOLD,
+  FOREIGN_TAX_MFJ_THRESHOLD,
+  SEC199A_SINGLE_THRESHOLD_2025,
+  SEC199A_MFJ_THRESHOLD_2025,
+} from "../../config/2025.ts";
 
 export const itemSchema = z.object({
   payerName: z.string(),
@@ -55,11 +62,8 @@ export const inputSchema = z.object({
 type DIVItem = z.infer<typeof itemSchema>;
 type DIVInput = z.infer<typeof inputSchema>;
 
-const SCHEDULE_B_DIVIDEND_THRESHOLD = 1500;
-const FOREIGN_TAX_SINGLE_THRESHOLD = 300;
-const FOREIGN_TAX_MFJ_THRESHOLD = 600;
-const SEC199A_SINGLE_THRESHOLD = 197300;
-const SEC199A_MFJ_THRESHOLD = 394600;
+const SEC199A_SINGLE_THRESHOLD = SEC199A_SINGLE_THRESHOLD_2025;
+const SEC199A_MFJ_THRESHOLD = SEC199A_MFJ_THRESHOLD_2025;
 const HOLDING_PERIOD_199A_DAYS = 45;
 const HOLDING_PERIOD_FOREIGN_DAYS = 16;
 

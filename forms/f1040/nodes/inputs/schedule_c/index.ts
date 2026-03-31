@@ -15,6 +15,10 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form8990 } from "../../intermediate/forms/form8990/index.ts";
 import { form461 } from "../../intermediate/forms/form461/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  EBL_THRESHOLD_SINGLE_2025,
+  EBL_THRESHOLD_MFJ_2025,
+} from "../../config/2025.ts";
 
 // ── TY2025 Constants ────────────────────────────────────────────────────────
 
@@ -25,8 +29,8 @@ const MEALS_DOT_PCT = 0.80;                 // DOT hours-of-service workers
 const MEALS_WAGES_PCT = 1.00;              // Meals treated as employee wages
 const HOME_OFFICE_SIMPLIFIED_RATE = 5.00;  // $5.00 per sq ft (simplified method)
 const HOME_OFFICE_MAX_SQ_FT = 300;         // 300 sq ft maximum
-const EBL_THRESHOLD_SINGLE = 313_000;      // Excess business loss — single
-const EBL_THRESHOLD_MFJ = 626_000;         // Excess business loss — MFJ
+const EBL_THRESHOLD_SINGLE = EBL_THRESHOLD_SINGLE_2025;      // Excess business loss — single
+const EBL_THRESHOLD_MFJ = EBL_THRESHOLD_MFJ_2025;         // Excess business loss — MFJ
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 

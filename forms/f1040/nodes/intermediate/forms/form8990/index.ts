@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { SMALL_BIZ_GROSS_RECEIPTS_2025 } from "../../../config/2025.ts";
 
 // ─── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -13,7 +14,7 @@ const ATI_APPLICABLE_PERCENTAGE = 0.30;
 
 // IRC §163(j)(3), §448(c): small business gross receipts threshold for TY2025
 // (Rev. Proc. 2025-28 inflation adjustment)
-const SMALL_BIZ_GROSS_RECEIPTS_THRESHOLD = 31_000_000;
+const SMALL_BIZ_GROSS_RECEIPTS_THRESHOLD = SMALL_BIZ_GROSS_RECEIPTS_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

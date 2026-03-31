@@ -9,6 +9,7 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { LTC_PER_DIEM_DAILY_LIMIT_2025 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -17,7 +18,7 @@ const ARCHER_MSA_PENALTY_RATE = 0.20;
 // IRC §138(c)(2) — additional tax on non-qualified Medicare Advantage MSA distributions
 const MEDICARE_ADVANTAGE_PENALTY_RATE = 0.50;
 // Rev. Proc. 2024-40 §2.62 — LTC per diem exclusion limit for TY2025
-const LTC_PER_DIEM_DAILY_LIMIT = 420;
+const LTC_PER_DIEM_DAILY_LIMIT = LTC_PER_DIEM_DAILY_LIMIT_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

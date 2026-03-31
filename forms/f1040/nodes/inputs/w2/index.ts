@@ -21,6 +21,11 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  SS_WAGE_BASE_2025,
+  SS_MAX_TAX_PER_EMPLOYER_2025,
+  RETIREMENT_LIMITS_2025,
+} from "../../config/2025.ts";
 
 export enum Box12Code {
   A = "A",     // Uncollected SS tax on tips
@@ -99,15 +104,10 @@ type F1040Input = z.infer<typeof f1040.inputSchema>;
 type W2Item = z.infer<typeof w2ItemSchema>;
 type W2Items = W2Item[];
 
-const SS_WAGE_BASE = 176100;
-const SS_MAX_TAX = 10918.20;
+const SS_WAGE_BASE = SS_WAGE_BASE_2025;
+const SS_MAX_TAX = SS_MAX_TAX_PER_EMPLOYER_2025;
 
-const RETIREMENT_LIMITS: Record<string, Record<number, number>> = {
-  "401k": { 49: 23500, 59: 31000, 63: 34750, Infinity: 31000 },
-  "403b": { 49: 23500, 59: 31000, 63: 34750, Infinity: 31000 },
-  "457b": { 49: 23500, 59: 31000, 63: 34750, Infinity: 31000 },
-  "simple": { 49: 16500, 59: 20000, 63: 21750, Infinity: 20000 },
-};
+const RETIREMENT_LIMITS = RETIREMENT_LIMITS_2025;
 
 function retirementLimit(
   planType: keyof typeof RETIREMENT_LIMITS,

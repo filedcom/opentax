@@ -9,9 +9,10 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { SALT_CAP_2025 } from "../../config/2025.ts";
 
 // TY2025 SALT cap per OBBBA — $40,000 single/MFJ, $20,000 MFS
-const SALT_CAP = 40_000;
+const SALT_CAP = SALT_CAP_2025;
 
 // 60% AGI limit for cash charitable contributions to public charities
 const CASH_CONTRIBUTION_AGI_PCT = 0.60;

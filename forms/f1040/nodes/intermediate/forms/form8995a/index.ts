@@ -8,13 +8,18 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  QBI_THRESHOLD_SINGLE_2025,
+  QBI_THRESHOLD_MFJ_2025,
+  QBI_PHASE_IN_RANGE_2025,
+} from "../../../config/2025.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
 const QBI_RATE = 0.20; // IRC §199A(a) — 20% of net QBI
-const THRESHOLD_SINGLE = 197_300; // Rev. Proc. 2024-40 §3.24
-const THRESHOLD_MFJ = 394_600; // Rev. Proc. 2024-40 §3.24
-const PHASE_IN_RANGE = 100_000; // IRC §199A(b)(3)(B)(ii)
+const THRESHOLD_SINGLE = QBI_THRESHOLD_SINGLE_2025; // Rev. Proc. 2024-40 §3.24
+const THRESHOLD_MFJ = QBI_THRESHOLD_MFJ_2025; // Rev. Proc. 2024-40 §3.24
+const PHASE_IN_RANGE = QBI_PHASE_IN_RANGE_2025; // IRC §199A(b)(3)(B)(ii)
 const W2_LIMIT_A_RATE = 0.50; // IRC §199A(b)(2)(A)(i)
 const W2_LIMIT_B_WAGE_RATE = 0.25; // IRC §199A(b)(2)(A)(ii)
 const UBIA_RATE = 0.025; // IRC §199A(b)(2)(A)(ii)

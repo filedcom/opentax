@@ -8,13 +8,17 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  FPL_BASE_2025,
+  FPL_INCREMENT_2025,
+} from "../../../config/2025.ts";
 
 // ─── TY2025 Federal Poverty Level (2024 FPL used per IRS rules) ──────────────
 // IRS uses the prior year FPL for ACA/PTC calculations.
 // TY2025 uses 2024 FPL (48 contiguous states + DC):
 // Base: $15,060; increment per person: $5,380
-const FPL_BASE = 15_060;
-const FPL_INCREMENT = 5_380;
+const FPL_BASE = FPL_BASE_2025;
+const FPL_INCREMENT = FPL_INCREMENT_2025;
 
 // ACA §36B: Applicable percentage table (household income as % of FPL → premium %)
 // Income between 100% and 400% FPL qualifies (cliff eliminated TY2025 — extension applies)

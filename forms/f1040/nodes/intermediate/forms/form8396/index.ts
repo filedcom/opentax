@@ -7,12 +7,13 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { MCC_MAX_CREDIT_HIGH_RATE_2025 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
 // IRC §25(a)(1) — maximum annual mortgage interest credit when MCC rate > 20%.
 // Rev. Proc. 2024-40 / Form 8396 instructions (TY2025).
-const MAX_CREDIT_HIGH_RATE = 2_000;
+const MAX_CREDIT_HIGH_RATE = MCC_MAX_CREDIT_HIGH_RATE_2025;
 
 // MCC rate threshold above which the $2,000 cap applies (IRC §25(a)(2)).
 const HIGH_RATE_THRESHOLD = 0.20;

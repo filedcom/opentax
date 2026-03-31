@@ -7,6 +7,10 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  QPRI_CAP_STANDARD_2025,
+  QPRI_CAP_MFS_2025,
+} from "../../../config/2025.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -23,8 +27,8 @@ export enum ExclusionType {
 
 // IRC §108(a)(1)(E); Form 982 instructions (Rev. Dec 2021)
 // Applies to discharges before January 1, 2026
-const QPRI_CAP_STANDARD = 750_000;
-const QPRI_CAP_MFS = 375_000;
+const QPRI_CAP_STANDARD = QPRI_CAP_STANDARD_2025;
+const QPRI_CAP_MFS = QPRI_CAP_MFS_2025;
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 

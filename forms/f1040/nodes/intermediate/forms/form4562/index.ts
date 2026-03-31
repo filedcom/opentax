@@ -9,12 +9,20 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form6251 } from "../form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  SECTION_179_LIMIT_2025,
+  SECTION_179_PHASEOUT_THRESHOLD_2025,
+  LUXURY_AUTO_YEAR1_NO_BONUS_2025,
+  LUXURY_AUTO_YEAR1_WITH_BONUS_2025,
+  LUXURY_AUTO_YEAR2_2025,
+  LUXURY_AUTO_YEAR3_PLUS_2025,
+} from "../../../config/2025.ts";
 
 // ── TY2025 Constants ──────────────────────────────────────────────────────────
 
 // §179 limits (P.L. 119-21, "One Big Beautiful Bill Act")
-const SECTION_179_LIMIT = 2_500_000;
-const SECTION_179_PHASEOUT_THRESHOLD = 4_000_000;
+const SECTION_179_LIMIT = SECTION_179_LIMIT_2025;
+const SECTION_179_PHASEOUT_THRESHOLD = SECTION_179_PHASEOUT_THRESHOLD_2025;
 
 // Bonus depreciation rates
 const BONUS_RATE_PRE_JAN20 = 0.40;   // Property placed in service before Jan 20, 2025
@@ -22,10 +30,10 @@ const BONUS_RATE_POST_JAN19 = 1.00;  // Property placed in service after Jan 19,
 const BONUS_RATE_ELECT_40PCT = 0.40; // Taxpayer elects 40% instead of 100%
 
 // Luxury automobile limits TY2025 (Table 2 — acquired after Sep 27, 2017, placed in service 2025)
-const LUXURY_AUTO_YEAR1_NO_BONUS = 12_200;
-const LUXURY_AUTO_YEAR1_WITH_BONUS = 20_200;
-const LUXURY_AUTO_YEAR2 = 19_600;
-const LUXURY_AUTO_YEAR3_PLUS = 11_900;
+const LUXURY_AUTO_YEAR1_NO_BONUS = LUXURY_AUTO_YEAR1_NO_BONUS_2025;
+const LUXURY_AUTO_YEAR1_WITH_BONUS = LUXURY_AUTO_YEAR1_WITH_BONUS_2025;
+const LUXURY_AUTO_YEAR2 = LUXURY_AUTO_YEAR2_2025;
+const LUXURY_AUTO_YEAR3_PLUS = LUXURY_AUTO_YEAR3_PLUS_2025;
 
 // Business-use threshold for listed property bonus/§179 eligibility
 const LISTED_PROPERTY_QUALIFIED_USE_THRESHOLD = 50;

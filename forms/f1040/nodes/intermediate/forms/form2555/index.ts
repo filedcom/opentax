@@ -8,11 +8,12 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { FEIE_LIMIT_2025 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
 // IRC §911(b)(2)(D)(i); Rev. Proc. 2024-40 — TY2025 FEIE limit
-const FEIE_LIMIT = 130_000;
+const FEIE_LIMIT = FEIE_LIMIT_2025;
 
 // IRC §911(c)(1) — physical presence test: 330 full days in any 12-month period
 const PHYSICAL_PRESENCE_DAYS = 330;

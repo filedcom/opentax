@@ -14,6 +14,10 @@ import { form8582 } from "../form8582/index.ts";
 import { form6198 } from "../form6198/index.ts";
 import { form461 } from "../form461/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  EBL_THRESHOLD_SINGLE_2025,
+  EBL_THRESHOLD_MFJ_2025,
+} from "../../../config/2025.ts";
 
 // ── TY2025 Constants ──────────────────────────────────────────────────────────
 
@@ -24,8 +28,8 @@ const SE_TAX_THRESHOLD = 400;
 const CONSERVATION_LIMIT_PCT = 0.25;
 
 // IRC §461(l); Rev. Proc. 2024-40 — excess business loss thresholds
-const EBL_THRESHOLD_SINGLE = 313_000;
-const EBL_THRESHOLD_MFJ = 626_000;
+const EBL_THRESHOLD_SINGLE = EBL_THRESHOLD_SINGLE_2025;
+const EBL_THRESHOLD_MFJ = EBL_THRESHOLD_MFJ_2025;
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 

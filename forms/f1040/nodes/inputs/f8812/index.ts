@@ -9,6 +9,14 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  CTC_PER_CHILD_2025,
+  ODC_PER_DEPENDENT_2025,
+  ACTC_MAX_PER_CHILD_2025,
+  CTC_PHASE_OUT_THRESHOLD_MFJ_2025,
+  CTC_PHASE_OUT_THRESHOLD_OTHER_2025,
+  ACTC_EARNED_INCOME_FLOOR_2025,
+} from "../../config/2025.ts";
 
 export const itemSchema = z.object({
   qualifying_children_count: z.number().int().nonnegative().optional(),
@@ -39,15 +47,15 @@ export const inputSchema = z.object({
 });
 
 // TY2025 constants — One Big Beautiful Bill Act (PL 119-21, enacted July 4 2025)
-const CTC_PER_CHILD = 2200;
-const ODC_PER_DEPENDENT = 500;
-const ACTC_MAX_PER_CHILD = 1700;
+const CTC_PER_CHILD = CTC_PER_CHILD_2025;
+const ODC_PER_DEPENDENT = ODC_PER_DEPENDENT_2025;
+const ACTC_MAX_PER_CHILD = ACTC_MAX_PER_CHILD_2025;
 const PHASE_OUT_STEP = 50;
 const PHASE_OUT_INCREMENT = 1000;
 const ACTC_EARNED_INCOME_RATE = 0.15;
-const ACTC_EARNED_INCOME_FLOOR = 2500;
-const PHASE_OUT_THRESHOLD_MFJ = 400000;
-const PHASE_OUT_THRESHOLD_OTHER = 200000;
+const ACTC_EARNED_INCOME_FLOOR = ACTC_EARNED_INCOME_FLOOR_2025;
+const PHASE_OUT_THRESHOLD_MFJ = CTC_PHASE_OUT_THRESHOLD_MFJ_2025;
+const PHASE_OUT_THRESHOLD_OTHER = CTC_PHASE_OUT_THRESHOLD_OTHER_2025;
 
 type F8812Item = z.infer<typeof itemSchema>;
 type F8812Input = z.infer<typeof inputSchema>;
