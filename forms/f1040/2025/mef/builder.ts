@@ -1,105 +1,6 @@
 import { buildReturnHeader } from "../../mef/header.ts";
-import type { MefNode } from "./form.ts";
-import { irs1040 } from "./forms/f1040.ts";
-import { form1116 } from "./forms/f1116.ts";
-import { form2441 } from "./forms/f2441.ts";
-import { form4137 } from "./forms/f4137.ts";
-import { form4562 } from "./forms/f4562.ts";
-import { form4797 } from "./forms/f4797.ts";
-import { form4972 } from "./forms/f4972.ts";
-import { form5329 } from "./forms/f5329.ts";
-import { form6251 } from "./forms/f6251.ts";
-import { form8582 } from "./forms/f8582.ts";
-import { form8606 } from "./forms/f8606.ts";
-import { form8829 } from "./forms/f8829.ts";
-import { form8824 } from "./forms/f8824.ts";
-import { form8839 } from "./forms/f8839.ts";
-import { form8962 } from "./forms/f8962.ts";
-import { form8853 } from "./forms/f8853.ts";
-import { form8880 } from "./forms/f8880.ts";
-import { form8889 } from "./forms/f8889.ts";
-import { form8919 } from "./forms/f8919.ts";
-import { form8949 } from "./forms/f8949.ts";
-import { form8959 } from "./forms/f8959.ts";
-import { form8960 } from "./forms/f8960.ts";
-import { form8995 } from "./forms/f8995.ts";
-import { form8995a } from "./forms/f8995a.ts";
-import { schedule1 } from "./forms/schedule1.ts";
-import { schedule2 } from "./forms/schedule2.ts";
-import { schedule3 } from "./forms/schedule3.ts";
-import { scheduleB } from "./forms/schedule_b.ts";
-import { scheduleD } from "./forms/schedule_d.ts";
-import { scheduleF } from "./forms/schedule_f.ts";
-import { scheduleSE } from "./forms/schedule_se.ts";
-import { eitc } from "./forms/eitc.ts";
-import { form2555 } from "./forms/f2555.ts";
-import { form461 } from "./forms/f461.ts";
-import { form4684 } from "./forms/f4684.ts";
-import { form4952 } from "./forms/f4952.ts";
-import { form5695 } from "./forms/f5695.ts";
-import { form6198 } from "./forms/f6198.ts";
-import { form6252 } from "./forms/f6252.ts";
-import { form6781 } from "./forms/f6781.ts";
-import { form7206 } from "./forms/f7206.ts";
-import { form8396 } from "./forms/f8396.ts";
-import { form8615 } from "./forms/f8615.ts";
-import { form8815 } from "./forms/f8815.ts";
-import { form8990 } from "./forms/f8990.ts";
-import { form982 } from "./forms/f982.ts";
-import { scheduleH } from "./forms/schedule_h.ts";
-import { scheduleA } from "./forms/schedule_a.ts";
+import { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { FilerIdentity, MefFormsPending } from "./types.ts";
-
-const ALL_NODES: MefNode[] = [
-  irs1040,
-  schedule1,
-  schedule2,
-  schedule3,
-  scheduleD,
-  form8889,
-  form2441,
-  form8949,
-  form8959,
-  form8960,
-  form4137,
-  form8919,
-  form4972,
-  scheduleSE,
-  form8606,
-  form1116,
-  form8582,
-  scheduleF,
-  scheduleB,
-  form4797,
-  form8880,
-  form8995,
-  form4562,
-  form8995a,
-  form6251,
-  form5329,
-  form8853,
-  form8829,
-  form8839,
-  form8962,
-  form8824,
-  eitc,
-  form2555,
-  form461,
-  form4684,
-  form4952,
-  form5695,
-  form6198,
-  form6252,
-  form6781,
-  form7206,
-  form8396,
-  form8615,
-  form8815,
-  form8990,
-  form982,
-  scheduleH,
-  scheduleA,
-];
 
 export function buildMefXml(
   pending: MefFormsPending,
@@ -108,8 +9,12 @@ export function buildMefXml(
   year = 2025,
   returnType = "1040",
 ): string {
-  const forms = ALL_NODES
-    .map((node) => node.build(pending))
+  const forms = ALL_MEF_FORMS
+    .map((form) =>
+      form.build(
+        (pending[form.pendingKey as keyof MefFormsPending] ?? []) as never,
+      )
+    )
     .filter((s) => s !== "");
   const documentCnt = forms.length;
 

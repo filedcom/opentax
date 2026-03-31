@@ -14,7 +14,7 @@ function assertNotIncludes(actual: string, expected: string) {
 // ---------------------------------------------------------------------------
 
 Deno.test("empty transactions array returns empty string", () => {
-  assertEquals(form8949.build({ form8949: [] }), "");
+  assertEquals(form8949.build([]), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -22,7 +22,7 @@ Deno.test("empty transactions array returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single Box A transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
     date_acquired: "2025-01-15",
@@ -31,13 +31,13 @@ Deno.test("single Box A transaction: wrapped in ShortTermCapitalGainAndLossGrp",
     cost_basis: 3000,
     gain_loss: 2000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
   assertStringIncludes(result, "</ShortTermCapitalGainAndLossGrp>");
 });
 
 Deno.test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbox", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
     date_acquired: "2025-01-15",
@@ -46,7 +46,7 @@ Deno.test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbo
     cost_basis: 3000,
     gain_loss: 2000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
@@ -54,7 +54,7 @@ Deno.test("single Box A transaction: emits TransRptOn1099BThatShowBssInd checkbo
 });
 
 Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all fields", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
     date_acquired: "2025-01-15",
@@ -63,7 +63,7 @@ Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all f
     cost_basis: 3000,
     gain_loss: 2000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(result, "<CapitalGainAndLossAssetGrp>");
   assertStringIncludes(result, "<PropertyDesc>100 sh XYZ Corp</PropertyDesc>");
   assertStringIncludes(result, "<AcquiredDt>2025-01-15</AcquiredDt>");
@@ -83,7 +83,7 @@ Deno.test("single Box A transaction: emits CapitalGainAndLossAssetGrp with all f
 });
 
 Deno.test("single Box A transaction: emits totals", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
     date_acquired: "2025-01-15",
@@ -92,7 +92,7 @@ Deno.test("single Box A transaction: emits totals", () => {
     cost_basis: 3000,
     gain_loss: 2000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<TotalProceedsSalesPriceAmt>5000</TotalProceedsSalesPriceAmt>",
@@ -105,7 +105,7 @@ Deno.test("single Box A transaction: emits totals", () => {
 });
 
 Deno.test("single Box A transaction: result wrapped in IRS8949", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "100 sh XYZ Corp",
     date_acquired: "2025-01-15",
@@ -114,7 +114,7 @@ Deno.test("single Box A transaction: result wrapped in IRS8949", () => {
     cost_basis: 3000,
     gain_loss: 2000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(result, "<IRS8949>");
   assertStringIncludes(result, "</IRS8949>");
 });
@@ -124,7 +124,7 @@ Deno.test("single Box A transaction: result wrapped in IRS8949", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single Box D transaction: wrapped in LongTermCapitalGainAndLossGrp", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "D",
     description: "200 sh ABC Fund",
     date_acquired: "2024-03-01",
@@ -133,14 +133,14 @@ Deno.test("single Box D transaction: wrapped in LongTermCapitalGainAndLossGrp", 
     cost_basis: 6000,
     gain_loss: 2000,
     is_long_term: true,
-  }] });
+  }]);
   assertStringIncludes(result, "<LongTermCapitalGainAndLossGrp>");
   assertStringIncludes(result, "</LongTermCapitalGainAndLossGrp>");
   assertNotIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
 });
 
 Deno.test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbox", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "D",
     description: "200 sh ABC Fund",
     date_acquired: "2024-03-01",
@@ -149,7 +149,7 @@ Deno.test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbo
     cost_basis: 6000,
     gain_loss: 2000,
     is_long_term: true,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<TransRptOn1099BThatShowBssInd>X</TransRptOn1099BThatShowBssInd>",
@@ -161,7 +161,7 @@ Deno.test("single Box D transaction: emits TransRptOn1099BThatShowBssInd checkbo
 // ---------------------------------------------------------------------------
 
 Deno.test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "B",
     description: "50 sh DEF Corp",
     date_acquired: "2025-02-10",
@@ -170,7 +170,7 @@ Deno.test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", ()
     cost_basis: 1500,
     gain_loss: 1000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<TransRptOn1099BNotShowBasisInd>X</TransRptOn1099BNotShowBasisInd>",
@@ -180,7 +180,7 @@ Deno.test("Box B transaction: emits TransRptOn1099BNotShowBasisInd checkbox", ()
 });
 
 Deno.test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "B",
     description: "50 sh DEF Corp",
     date_acquired: "2025-02-10",
@@ -189,7 +189,7 @@ Deno.test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => 
     cost_basis: 1500,
     gain_loss: 1000,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
 });
 
@@ -198,7 +198,7 @@ Deno.test("Box B transaction: wrapped in ShortTermCapitalGainAndLossGrp", () => 
 // ---------------------------------------------------------------------------
 
 Deno.test("Box C transaction: emits TransactionsNotRptedOn1099BInd checkbox", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "C",
     description: "Coin XYZ",
     date_acquired: "2025-03-01",
@@ -207,7 +207,7 @@ Deno.test("Box C transaction: emits TransactionsNotRptedOn1099BInd checkbox", ()
     cost_basis: 800,
     gain_loss: 400,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<TransactionsNotRptedOn1099BInd>X</TransactionsNotRptedOn1099BInd>",
@@ -221,7 +221,7 @@ Deno.test("Box C transaction: emits TransactionsNotRptedOn1099BInd checkbox", ()
 // ---------------------------------------------------------------------------
 
 Deno.test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "Wash sale stock",
     date_acquired: "2025-04-01",
@@ -232,7 +232,7 @@ Deno.test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", (
     adjustment_amount: 100,
     gain_loss: -200,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<AdjustmentsToGainOrLossCd>W</AdjustmentsToGainOrLossCd>",
@@ -240,7 +240,7 @@ Deno.test("transaction with adjustment_codes emits AdjustmentsToGainOrLossCd", (
 });
 
 Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "Wash sale stock",
     date_acquired: "2025-04-01",
@@ -251,7 +251,7 @@ Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt",
     adjustment_amount: 100,
     gain_loss: -200,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<AdjustmentsToGainOrLossAmt>100</AdjustmentsToGainOrLossAmt>",
@@ -259,7 +259,7 @@ Deno.test("transaction with adjustment_amount emits AdjustmentsToGainOrLossAmt",
 });
 
 Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted in totals", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "Wash sale stock",
     date_acquired: "2025-04-01",
@@ -270,7 +270,7 @@ Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted i
     adjustment_amount: 100,
     gain_loss: -200,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(
     result,
     "<TotAdjustmentsToGainOrLossAmt>100</TotAdjustmentsToGainOrLossAmt>",
@@ -278,7 +278,7 @@ Deno.test("transaction with adjustments: TotAdjustmentsToGainOrLossAmt emitted i
 });
 
 Deno.test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "A",
     description: "Simple stock",
     date_acquired: "2025-01-01",
@@ -287,7 +287,7 @@ Deno.test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted
     cost_basis: 700,
     gain_loss: 300,
     is_long_term: false,
-  }] });
+  }]);
   assertNotIncludes(result, "<AdjustmentsToGainOrLossCd>");
   assertNotIncludes(result, "<AdjustmentsToGainOrLossAmt>");
   assertNotIncludes(result, "<TotAdjustmentsToGainOrLossAmt>");
@@ -298,7 +298,7 @@ Deno.test("transaction without adjustments: no AdjustmentsToGainOrLossCd emitted
 // ---------------------------------------------------------------------------
 
 Deno.test("two Box A transactions: both appear in same ShortTermCapitalGainAndLossGrp", () => {
-  const result = form8949.build({ form8949: [
+  const result = form8949.build([
     {
       part: "A",
       description: "Stock 1",
@@ -319,7 +319,7 @@ Deno.test("two Box A transactions: both appear in same ShortTermCapitalGainAndLo
       gain_loss: 1500,
       is_long_term: false,
     },
-  ] });
+  ]);
   // Only one group tag
   const openCount =
     (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
@@ -330,7 +330,7 @@ Deno.test("two Box A transactions: both appear in same ShortTermCapitalGainAndLo
 });
 
 Deno.test("two Box A transactions: totals are summed", () => {
-  const result = form8949.build({ form8949: [
+  const result = form8949.build([
     {
       part: "A",
       description: "Stock 1",
@@ -351,7 +351,7 @@ Deno.test("two Box A transactions: totals are summed", () => {
       gain_loss: 1500,
       is_long_term: false,
     },
-  ] });
+  ]);
   assertStringIncludes(
     result,
     "<TotalProceedsSalesPriceAmt>7000</TotalProceedsSalesPriceAmt>",
@@ -368,7 +368,7 @@ Deno.test("two Box A transactions: totals are summed", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted", () => {
-  const result = form8949.build({ form8949: [
+  const result = form8949.build([
     {
       part: "A",
       description: "ST stock",
@@ -389,7 +389,7 @@ Deno.test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted",
       gain_loss: 2000,
       is_long_term: true,
     },
-  ] });
+  ]);
   assertStringIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
   assertStringIncludes(result, "<LongTermCapitalGainAndLossGrp>");
 });
@@ -399,7 +399,7 @@ Deno.test("one Box A and one Box D: both ShortTerm and LongTerm groups emitted",
 // ---------------------------------------------------------------------------
 
 Deno.test("Part G transaction: grouped in ShortTermCapitalGainAndLossGrp with TransRptOn1099BThatShowBssInd", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "G",
     description: "Digital asset G",
     date_acquired: "2025-05-01",
@@ -408,7 +408,7 @@ Deno.test("Part G transaction: grouped in ShortTermCapitalGainAndLossGrp with Tr
     cost_basis: 2000,
     gain_loss: 1500,
     is_long_term: false,
-  }] });
+  }]);
   assertStringIncludes(result, "<ShortTermCapitalGainAndLossGrp>");
   assertStringIncludes(
     result,
@@ -418,7 +418,7 @@ Deno.test("Part G transaction: grouped in ShortTermCapitalGainAndLossGrp with Tr
 });
 
 Deno.test("Part G and Part A transactions grouped together in same group", () => {
-  const result = form8949.build({ form8949: [
+  const result = form8949.build([
     {
       part: "A",
       description: "Regular A",
@@ -439,7 +439,7 @@ Deno.test("Part G and Part A transactions grouped together in same group", () =>
       gain_loss: 500,
       is_long_term: false,
     },
-  ] });
+  ]);
   // Both in same group (one opening tag)
   const openCount =
     (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
@@ -449,7 +449,7 @@ Deno.test("Part G and Part A transactions grouped together in same group", () =>
 });
 
 Deno.test("Part J transaction: grouped in LongTermCapitalGainAndLossGrp with TransRptOn1099BThatShowBssInd", () => {
-  const result = form8949.build({ form8949: [{
+  const result = form8949.build([{
     part: "J",
     description: "Digital asset J",
     date_acquired: "2024-01-01",
@@ -458,7 +458,7 @@ Deno.test("Part J transaction: grouped in LongTermCapitalGainAndLossGrp with Tra
     cost_basis: 2500,
     gain_loss: 1500,
     is_long_term: true,
-  }] });
+  }]);
   assertStringIncludes(result, "<LongTermCapitalGainAndLossGrp>");
   assertStringIncludes(
     result,
@@ -534,7 +534,7 @@ Deno.test("all 6 categories produce 6 groups (3 short, 3 long)", () => {
       is_long_term: true,
     },
   ];
-  const result = form8949.build({ form8949: transactions });
+  const result = form8949.build(transactions);
   const stGroups =
     (result.match(/<ShortTermCapitalGainAndLossGrp>/g) || []).length;
   const ltGroups =
@@ -606,7 +606,7 @@ Deno.test("all 6 categories: each category has its correct checkbox indicator", 
       is_long_term: true,
     },
   ];
-  const result = form8949.build({ form8949: transactions });
+  const result = form8949.build(transactions);
   // 2 reported groups (A short + D long) = 2 TransRptOn1099BThatShowBssInd
   const reported =
     (result.match(/<TransRptOn1099BThatShowBssInd>/g) || []).length;
@@ -644,7 +644,7 @@ Deno.test("short-term groups emitted before long-term groups in XSD order", () =
       is_long_term: false,
     },
   ];
-  const result = form8949.build({ form8949: transactions });
+  const result = form8949.build(transactions);
   const stIdx = result.indexOf("<ShortTermCapitalGainAndLossGrp>");
   const ltIdx = result.indexOf("<LongTermCapitalGainAndLossGrp>");
   assertEquals(stIdx < ltIdx, true);

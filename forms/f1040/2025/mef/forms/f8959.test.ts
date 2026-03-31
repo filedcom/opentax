@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8959.build({ form8959: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8959.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("medicare_wages at zero is emitted", () => {
-  const result = form8959.build({ form8959: { medicare_wages: 0 } });
+  const result = form8959.build({ medicare_wages: 0 });
   assertStringIncludes(
     result,
     "<TotalW2MedicareWagesAndTipsAmt>0</TotalW2MedicareWagesAndTipsAmt>",
@@ -42,7 +42,7 @@ Deno.test("medicare_wages at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("medicare_wages maps to TotalW2MedicareWagesAndTipsAmt", () => {
-  const result = form8959.build({ form8959: { medicare_wages: 120000 } });
+  const result = form8959.build({ medicare_wages: 120000 });
   assertStringIncludes(
     result,
     "<TotalW2MedicareWagesAndTipsAmt>120000</TotalW2MedicareWagesAndTipsAmt>",
@@ -50,7 +50,7 @@ Deno.test("medicare_wages maps to TotalW2MedicareWagesAndTipsAmt", () => {
 });
 
 Deno.test("unreported_tips maps to TotalUnreportedMedicareTipsAmt", () => {
-  const result = form8959.build({ form8959: { unreported_tips: 5000 } });
+  const result = form8959.build({ unreported_tips: 5000 });
   assertStringIncludes(
     result,
     "<TotalUnreportedMedicareTipsAmt>5000</TotalUnreportedMedicareTipsAmt>",
@@ -58,7 +58,7 @@ Deno.test("unreported_tips maps to TotalUnreportedMedicareTipsAmt", () => {
 });
 
 Deno.test("wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
-  const result = form8959.build({ form8959: { wages_8919: 8000 } });
+  const result = form8959.build({ wages_8919: 8000 });
   assertStringIncludes(
     result,
     "<TotalWagesWithNoWithholdingAmt>8000</TotalWagesWithNoWithholdingAmt>",
@@ -66,7 +66,7 @@ Deno.test("wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
 });
 
 Deno.test("se_income maps to TotalSelfEmploymentIncomeAmt", () => {
-  const result = form8959.build({ form8959: { se_income: 45000 } });
+  const result = form8959.build({ se_income: 45000 });
   assertStringIncludes(
     result,
     "<TotalSelfEmploymentIncomeAmt>45000</TotalSelfEmploymentIncomeAmt>",
@@ -74,7 +74,7 @@ Deno.test("se_income maps to TotalSelfEmploymentIncomeAmt", () => {
 });
 
 Deno.test("rrta_wages maps to TotalRailroadRetirementCompAmt", () => {
-  const result = form8959.build({ form8959: { rrta_wages: 75000 } });
+  const result = form8959.build({ rrta_wages: 75000 });
   assertStringIncludes(
     result,
     "<TotalRailroadRetirementCompAmt>75000</TotalRailroadRetirementCompAmt>",
@@ -82,7 +82,7 @@ Deno.test("rrta_wages maps to TotalRailroadRetirementCompAmt", () => {
 });
 
 Deno.test("medicare_withheld maps to TotalW2MedicareTaxWithheldAmt", () => {
-  const result = form8959.build({ form8959: { medicare_withheld: 1740 } });
+  const result = form8959.build({ medicare_withheld: 1740 });
   assertStringIncludes(
     result,
     "<TotalW2MedicareTaxWithheldAmt>1740</TotalW2MedicareTaxWithheldAmt>",
@@ -90,7 +90,7 @@ Deno.test("medicare_withheld maps to TotalW2MedicareTaxWithheldAmt", () => {
 });
 
 Deno.test("rrta_medicare_withheld maps to TotalW2AddlRRTTaxAmt", () => {
-  const result = form8959.build({ form8959: { rrta_medicare_withheld: 900 } });
+  const result = form8959.build({ rrta_medicare_withheld: 900 });
   assertStringIncludes(
     result,
     "<TotalW2AddlRRTTaxAmt>900</TotalW2AddlRRTTaxAmt>",
@@ -102,7 +102,7 @@ Deno.test("rrta_medicare_withheld maps to TotalW2AddlRRTTaxAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8959.build({ form8959: { medicare_wages: 120000 } });
+  const result = form8959.build({ medicare_wages: 120000 });
   assertStringIncludes(
     result,
     "<TotalW2MedicareWagesAndTipsAmt>120000</TotalW2MedicareWagesAndTipsAmt>",
@@ -113,10 +113,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8959.build({ form8959: {
+  const result = form8959.build({
     medicare_wages: 120000,
     medicare_withheld: 1740,
-  } });
+  });
   assertStringIncludes(
     result,
     "<TotalW2MedicareWagesAndTipsAmt>120000</TotalW2MedicareWagesAndTipsAmt>",
@@ -144,13 +144,13 @@ const allFields = {
 };
 
 Deno.test("all 7 fields present: output wrapped in IRS8959 tag", () => {
-  const result = form8959.build({ form8959: allFields });
+  const result = form8959.build(allFields);
   assertStringIncludes(result, "<IRS8959>");
   assertStringIncludes(result, "</IRS8959>");
 });
 
 Deno.test("all 7 fields present: all elements emitted", () => {
-  const result = form8959.build({ form8959: allFields });
+  const result = form8959.build(allFields);
   assertStringIncludes(
     result,
     "<TotalW2MedicareWagesAndTipsAmt>100000</TotalW2MedicareWagesAndTipsAmt>",
@@ -186,7 +186,7 @@ Deno.test("all 7 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("filing_status string field is silently ignored", () => {
-  const result = form8959.build({ form8959: { filing_status: "MFJ", medicare_wages: 50000 } });
+  const result = form8959.build({ filing_status: "MFJ", medicare_wages: 50000 });
   assertStringIncludes(
     result,
     "<TotalW2MedicareWagesAndTipsAmt>50000</TotalW2MedicareWagesAndTipsAmt>",

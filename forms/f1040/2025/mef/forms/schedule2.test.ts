@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(schedule2.build({ schedule2: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(schedule2.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line1_amt at zero is emitted", () => {
-  const result = schedule2.build({ schedule2: { line1_amt: 0 } });
+  const result = schedule2.build({ line1_amt: 0 });
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
@@ -42,7 +42,7 @@ Deno.test("line1_amt at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line1_amt maps to AlternativeMinimumTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line1_amt: 5000 } });
+  const result = schedule2.build({ line1_amt: 5000 });
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt>",
@@ -50,7 +50,7 @@ Deno.test("line1_amt maps to AlternativeMinimumTaxAmt", () => {
 });
 
 Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line4_se_tax: 14100 } });
+  const result = schedule2.build({ line4_se_tax: 14100 });
   assertStringIncludes(
     result,
     "<SelfEmploymentTaxAmt>14100</SelfEmploymentTaxAmt>",
@@ -58,7 +58,7 @@ Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
 });
 
 Deno.test("line5_unreported_tip_tax maps to SocSecMedicareTaxUnrptdTipAmt", () => {
-  const result = schedule2.build({ schedule2: { line5_unreported_tip_tax: 300 } });
+  const result = schedule2.build({ line5_unreported_tip_tax: 300 });
   assertStringIncludes(
     result,
     "<SocSecMedicareTaxUnrptdTipAmt>300</SocSecMedicareTaxUnrptdTipAmt>",
@@ -66,7 +66,7 @@ Deno.test("line5_unreported_tip_tax maps to SocSecMedicareTaxUnrptdTipAmt", () =
 });
 
 Deno.test("line6_uncollected_8919 maps to UncollectedSocSecMedTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line6_uncollected_8919: 1200 } });
+  const result = schedule2.build({ line6_uncollected_8919: 1200 });
   assertStringIncludes(
     result,
     "<UncollectedSocSecMedTaxAmt>1200</UncollectedSocSecMedTaxAmt>",
@@ -74,17 +74,17 @@ Deno.test("line6_uncollected_8919 maps to UncollectedSocSecMedTaxAmt", () => {
 });
 
 Deno.test("line8_form5329_tax maps to TaxOnIRAsAmt", () => {
-  const result = schedule2.build({ schedule2: { line8_form5329_tax: 600 } });
+  const result = schedule2.build({ line8_form5329_tax: 600 });
   assertStringIncludes(result, "<TaxOnIRAsAmt>600</TaxOnIRAsAmt>");
 });
 
 Deno.test("line11_additional_medicare maps to TotalAMRRTTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line11_additional_medicare: 900 } });
+  const result = schedule2.build({ line11_additional_medicare: 900 });
   assertStringIncludes(result, "<TotalAMRRTTaxAmt>900</TotalAMRRTTaxAmt>");
 });
 
 Deno.test("line12_niit maps to IndivNetInvstIncomeTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line12_niit: 3800 } });
+  const result = schedule2.build({ line12_niit: 3800 });
   assertStringIncludes(
     result,
     "<IndivNetInvstIncomeTaxAmt>3800</IndivNetInvstIncomeTaxAmt>",
@@ -92,7 +92,7 @@ Deno.test("line12_niit maps to IndivNetInvstIncomeTaxAmt", () => {
 });
 
 Deno.test("line17b_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line17b_hsa_penalty: 400 } });
+  const result = schedule2.build({ line17b_hsa_penalty: 400 });
   assertStringIncludes(
     result,
     "<HSADistriAddnlPercentTaxAmt>400</HSADistriAddnlPercentTaxAmt>",
@@ -100,7 +100,7 @@ Deno.test("line17b_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
 });
 
 Deno.test("line17e_archer_msa_tax maps to ArcherMSAAddnlDistriTaxAmt", () => {
-  const result = schedule2.build({ schedule2: { line17e_archer_msa_tax: 200 } });
+  const result = schedule2.build({ line17e_archer_msa_tax: 200 });
   assertStringIncludes(
     result,
     "<ArcherMSAAddnlDistriTaxAmt>200</ArcherMSAAddnlDistriTaxAmt>",
@@ -110,9 +110,9 @@ Deno.test("line17e_archer_msa_tax maps to ArcherMSAAddnlDistriTaxAmt", () => {
 Deno.test(
   "line17f_medicare_advantage_msa_tax maps to MedicareMSAAddnlDistriTaxAmt",
   () => {
-    const result = schedule2.build({ schedule2: {
+    const result = schedule2.build({
       line17f_medicare_advantage_msa_tax: 150,
-    } });
+    });
     assertStringIncludes(
       result,
       "<MedicareMSAAddnlDistriTaxAmt>150</MedicareMSAAddnlDistriTaxAmt>",
@@ -121,7 +121,7 @@ Deno.test(
 );
 
 Deno.test("lump_sum_tax maps to PartialTaxOnAccumDistriAmt", () => {
-  const result = schedule2.build({ schedule2: { lump_sum_tax: 5500 } });
+  const result = schedule2.build({ lump_sum_tax: 5500 });
   assertStringIncludes(
     result,
     "<PartialTaxOnAccumDistriAmt>5500</PartialTaxOnAccumDistriAmt>",
@@ -135,10 +135,10 @@ Deno.test("lump_sum_tax maps to PartialTaxOnAccumDistriAmt", () => {
 Deno.test(
   "uncollected_fica(500) + uncollected_fica_gtl(300) emits UncollSSMedcrRRTAGrpInsTxAmt=800",
   () => {
-    const result = schedule2.build({ schedule2: {
+    const result = schedule2.build({
       uncollected_fica: 500,
       uncollected_fica_gtl: 300,
-    } });
+    });
     assertStringIncludes(
       result,
       "<UncollSSMedcrRRTAGrpInsTxAmt>800</UncollSSMedcrRRTAGrpInsTxAmt>",
@@ -149,7 +149,7 @@ Deno.test(
 Deno.test(
   "uncollected_fica(500) alone emits UncollSSMedcrRRTAGrpInsTxAmt=500",
   () => {
-    const result = schedule2.build({ schedule2: { uncollected_fica: 500 } });
+    const result = schedule2.build({ uncollected_fica: 500 });
     assertStringIncludes(
       result,
       "<UncollSSMedcrRRTAGrpInsTxAmt>500</UncollSSMedcrRRTAGrpInsTxAmt>",
@@ -160,7 +160,7 @@ Deno.test(
 Deno.test(
   "uncollected_fica_gtl(300) alone emits UncollSSMedcrRRTAGrpInsTxAmt=300",
   () => {
-    const result = schedule2.build({ schedule2: { uncollected_fica_gtl: 300 } });
+    const result = schedule2.build({ uncollected_fica_gtl: 300 });
     assertStringIncludes(
       result,
       "<UncollSSMedcrRRTAGrpInsTxAmt>300</UncollSSMedcrRRTAGrpInsTxAmt>",
@@ -171,10 +171,10 @@ Deno.test(
 Deno.test(
   "section409a_excise(1000) + line17h_nqdc_tax(500) emits IncmNonqlfyDefrdCompPlanAmt=1500",
   () => {
-    const result = schedule2.build({ schedule2: {
+    const result = schedule2.build({
       section409a_excise: 1000,
       line17h_nqdc_tax: 500,
-    } });
+    });
     assertStringIncludes(
       result,
       "<IncmNonqlfyDefrdCompPlanAmt>1500</IncmNonqlfyDefrdCompPlanAmt>",
@@ -185,7 +185,7 @@ Deno.test(
 Deno.test(
   "section409a_excise(1000) alone emits IncmNonqlfyDefrdCompPlanAmt=1000",
   () => {
-    const result = schedule2.build({ schedule2: { section409a_excise: 1000 } });
+    const result = schedule2.build({ section409a_excise: 1000 });
     assertStringIncludes(
       result,
       "<IncmNonqlfyDefrdCompPlanAmt>1000</IncmNonqlfyDefrdCompPlanAmt>",
@@ -196,10 +196,10 @@ Deno.test(
 Deno.test(
   "golden_parachute_excise(2000) + line17k_golden_parachute_excise(3000) emits ExcessParachutePaymentAmt=5000",
   () => {
-    const result = schedule2.build({ schedule2: {
+    const result = schedule2.build({
       golden_parachute_excise: 2000,
       line17k_golden_parachute_excise: 3000,
-    } });
+    });
     assertStringIncludes(
       result,
       "<ExcessParachutePaymentAmt>5000</ExcessParachutePaymentAmt>",
@@ -210,7 +210,7 @@ Deno.test(
 Deno.test(
   "golden_parachute_excise(2000) alone emits ExcessParachutePaymentAmt=2000",
   () => {
-    const result = schedule2.build({ schedule2: { golden_parachute_excise: 2000 } });
+    const result = schedule2.build({ golden_parachute_excise: 2000 });
     assertStringIncludes(
       result,
       "<ExcessParachutePaymentAmt>2000</ExcessParachutePaymentAmt>",
@@ -223,7 +223,7 @@ Deno.test(
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = schedule2.build({ schedule2: { line4_se_tax: 14100 } });
+  const result = schedule2.build({ line4_se_tax: 14100 });
   assertStringIncludes(
     result,
     "<SelfEmploymentTaxAmt>14100</SelfEmploymentTaxAmt>",
@@ -234,10 +234,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = schedule2.build({ schedule2: {
+  const result = schedule2.build({
     line1_amt: 3000,
     line12_niit: 1900,
-  } });
+  });
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>3000</AlternativeMinimumTaxAmt>",
@@ -275,13 +275,13 @@ const allFields = {
 };
 
 Deno.test("all fields present: output wrapped in IRS1040Schedule2 tag", () => {
-  const result = schedule2.build({ schedule2: allFields });
+  const result = schedule2.build(allFields);
   assertStringIncludes(result, "<IRS1040Schedule2>");
   assertStringIncludes(result, "</IRS1040Schedule2>");
 });
 
 Deno.test("all fields present: all direct-mapped elements emitted", () => {
-  const result = schedule2.build({ schedule2: allFields });
+  const result = schedule2.build(allFields);
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>100</AlternativeMinimumTaxAmt>",
@@ -323,7 +323,7 @@ Deno.test("all fields present: all direct-mapped elements emitted", () => {
 });
 
 Deno.test("all fields present: aggregated elements summed correctly", () => {
-  const result = schedule2.build({ schedule2: allFields });
+  const result = schedule2.build(allFields);
   // uncollected_fica(800) + uncollected_fica_gtl(900) = 1700
   assertStringIncludes(
     result,
@@ -346,7 +346,7 @@ Deno.test("all fields present: aggregated elements summed correctly", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("known field emitted, unknown field dropped", () => {
-  const result = schedule2.build({ schedule2: { line4_se_tax: 14100, junk: 999 } });
+  const result = schedule2.build({ line4_se_tax: 14100, junk: 999 });
   assertStringIncludes(
     result,
     "<SelfEmploymentTaxAmt>14100</SelfEmploymentTaxAmt>",
@@ -356,12 +356,12 @@ Deno.test("known field emitted, unknown field dropped", () => {
 });
 
 Deno.test("multiple known and unknown fields: only known emitted", () => {
-  const result = schedule2.build({ schedule2: {
+  const result = schedule2.build({
     line1_amt: 2500,
     unknown_field_1: 500,
     line12_niit: 800,
     not_a_real_key: "ignored",
-  } });
+  });
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>2500</AlternativeMinimumTaxAmt>",

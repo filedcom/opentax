@@ -22,7 +22,7 @@ Deno.test("f4972: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4972: all unknown keys returns empty string", () => {
-  assertEquals(form4972.build({ form4972: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form4972.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("f4972: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4972: lump_sum_amount at zero is emitted", () => {
-  const result = form4972.build({ form4972: { lump_sum_amount: 0 } });
+  const result = form4972.build({ lump_sum_amount: 0 });
   assertStringIncludes(result, "<LumpSumDistriAmt>0</LumpSumDistriAmt>");
 });
 
@@ -39,17 +39,17 @@ Deno.test("f4972: lump_sum_amount at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4972: lump_sum_amount maps to LumpSumDistriAmt", () => {
-  const result = form4972.build({ form4972: { lump_sum_amount: 100000 } });
+  const result = form4972.build({ lump_sum_amount: 100000 });
   assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
 });
 
 Deno.test("f4972: capital_gain_amount maps to CapitalGainAmt", () => {
-  const result = form4972.build({ form4972: { capital_gain_amount: 25000 } });
+  const result = form4972.build({ capital_gain_amount: 25000 });
   assertStringIncludes(result, "<CapitalGainAmt>25000</CapitalGainAmt>");
 });
 
 Deno.test("f4972: death_benefit_exclusion maps to DeathBenefitExclusionAmt", () => {
-  const result = form4972.build({ form4972: { death_benefit_exclusion: 5000 } });
+  const result = form4972.build({ death_benefit_exclusion: 5000 });
   assertStringIncludes(
     result,
     "<DeathBenefitExclusionAmt>5000</DeathBenefitExclusionAmt>",
@@ -61,17 +61,17 @@ Deno.test("f4972: death_benefit_exclusion maps to DeathBenefitExclusionAmt", () 
 // ---------------------------------------------------------------------------
 
 Deno.test("f4972: single known field emits only that element, absent fields omitted", () => {
-  const result = form4972.build({ form4972: { lump_sum_amount: 100000 } });
+  const result = form4972.build({ lump_sum_amount: 100000 });
   assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
   assertNotIncludes(result, "<CapitalGainAmt>");
   assertNotIncludes(result, "<DeathBenefitExclusionAmt>");
 });
 
 Deno.test("f4972: two fields present: only those two elements emitted", () => {
-  const result = form4972.build({ form4972: {
+  const result = form4972.build({
     lump_sum_amount: 100000,
     capital_gain_amount: 25000,
-  } });
+  });
   assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
   assertStringIncludes(result, "<CapitalGainAmt>25000</CapitalGainAmt>");
   assertNotIncludes(result, "<DeathBenefitExclusionAmt>");
@@ -88,13 +88,13 @@ const allFields = {
 };
 
 Deno.test("f4972: all 3 fields present: output wrapped in IRS4972 tag", () => {
-  const result = form4972.build({ form4972: allFields });
+  const result = form4972.build(allFields);
   assertStringIncludes(result, "<IRS4972>");
   assertStringIncludes(result, "</IRS4972>");
 });
 
 Deno.test("f4972: all 3 fields present: all elements emitted", () => {
-  const result = form4972.build({ form4972: allFields });
+  const result = form4972.build(allFields);
   assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
   assertStringIncludes(result, "<CapitalGainAmt>25000</CapitalGainAmt>");
   assertStringIncludes(
@@ -108,10 +108,10 @@ Deno.test("f4972: all 3 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4972: boolean field is silently ignored", () => {
-  const result = form4972.build({ form4972: {
+  const result = form4972.build({
     elected_lump_sum: true,
     lump_sum_amount: 50000,
-  } });
+  });
   assertStringIncludes(result, "<LumpSumDistriAmt>50000</LumpSumDistriAmt>");
   assertNotIncludes(result, "elected_lump_sum");
   assertNotIncludes(result, "true");

@@ -1,17 +1,19 @@
-import type { Form6781Fields, Form6781Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
+export interface Fields {
+  net_section_1256_gain?: number | null;
+  prior_year_loss_carryover?: number | null;
+}
 
-// ─── Field Map ────────────────────────────────────────────────────────────────
+type Input = Partial<Fields> & Record<string, unknown>;
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form6781Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["net_section_1256_gain", "NetSection1256ContractsAmt"],
   ["prior_year_loss_carryover", "PriorYearLossCarryoverAmt"],
 ];
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
-
-function buildIRS6781(fields: Form6781Input): string {
+function buildIRS6781(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -20,14 +22,11 @@ function buildIRS6781(fields: Form6781Input): string {
   return elements("IRS6781", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form6781MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f6781.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS6781(pending.form6781 ?? {});
-  }
-}
-
-export const form6781 = new Form6781MefNode();
+export const form6781: MefFormDescriptor<"form6781", Input> = {
+  pendingKey: "form6781",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6781.pdf",
+  build(fields) {
+    return buildIRS6781(fields);
+  },
+};

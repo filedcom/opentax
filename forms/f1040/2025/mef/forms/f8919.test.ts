@@ -22,7 +22,7 @@ Deno.test("f8919: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8919: all unknown keys returns empty string", () => {
-  assertEquals(form8919.build({ form8919: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8919.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("f8919: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8919: wages at zero is emitted", () => {
-  const result = form8919.build({ form8919: { wages: 0 } });
+  const result = form8919.build({ wages: 0 });
   assertStringIncludes(result, "<WagesReceivedAmt>0</WagesReceivedAmt>");
 });
 
@@ -39,12 +39,12 @@ Deno.test("f8919: wages at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8919: wages maps to WagesReceivedAmt", () => {
-  const result = form8919.build({ form8919: { wages: 45000 } });
+  const result = form8919.build({ wages: 45000 });
   assertStringIncludes(result, "<WagesReceivedAmt>45000</WagesReceivedAmt>");
 });
 
 Deno.test("f8919: prior_ss_wages maps to PriorSSWagesAmt", () => {
-  const result = form8919.build({ form8919: { prior_ss_wages: 20000 } });
+  const result = form8919.build({ prior_ss_wages: 20000 });
   assertStringIncludes(result, "<PriorSSWagesAmt>20000</PriorSSWagesAmt>");
 });
 
@@ -53,7 +53,7 @@ Deno.test("f8919: prior_ss_wages maps to PriorSSWagesAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8919: single known field emits only that element, absent fields omitted", () => {
-  const result = form8919.build({ form8919: { wages: 45000 } });
+  const result = form8919.build({ wages: 45000 });
   assertStringIncludes(result, "<WagesReceivedAmt>45000</WagesReceivedAmt>");
   assertNotIncludes(result, "<PriorSSWagesAmt>");
 });
@@ -68,13 +68,13 @@ const allFields = {
 };
 
 Deno.test("f8919: all 2 fields present: output wrapped in IRS8919 tag", () => {
-  const result = form8919.build({ form8919: allFields });
+  const result = form8919.build(allFields);
   assertStringIncludes(result, "<IRS8919>");
   assertStringIncludes(result, "</IRS8919>");
 });
 
 Deno.test("f8919: all 2 fields present: all elements emitted", () => {
-  const result = form8919.build({ form8919: allFields });
+  const result = form8919.build(allFields);
   assertStringIncludes(result, "<WagesReceivedAmt>45000</WagesReceivedAmt>");
   assertStringIncludes(result, "<PriorSSWagesAmt>20000</PriorSSWagesAmt>");
 });
@@ -84,7 +84,7 @@ Deno.test("f8919: all 2 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8919: reason_code string field is silently ignored", () => {
-  const result = form8919.build({ form8919: { reason_code: "G", wages: 10000 } });
+  const result = form8919.build({ reason_code: "G", wages: 10000 });
   assertStringIncludes(result, "<WagesReceivedAmt>10000</WagesReceivedAmt>");
   assertNotIncludes(result, "reason_code");
   assertNotIncludes(result, '"G"');

@@ -1,10 +1,17 @@
-import type { Form2555Fields, Form2555Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
+export interface Fields {
+  foreign_wages?: number | null;
+  foreign_self_employment_income?: number | null;
+  days_in_foreign_country?: number | null;
+  foreign_housing_expenses?: number | null;
+  employer_housing_exclusion?: number | null;
+}
 
-// --- Field Map ----------------------------------------------------------------
+type Input = Partial<Fields> & Record<string, unknown>;
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form2555Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["foreign_wages", "ForeignEarnedIncWagesAmt"],
   ["foreign_self_employment_income", "ForeignEarnedIncSelfEmplAmt"],
   ["days_in_foreign_country", "PhysicalPresenceDaysCnt"],
@@ -12,9 +19,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form2555Fields, string]> =
   ["employer_housing_exclusion", "EmployerHousingExclusionAmt"],
 ];
 
-// --- Builder ------------------------------------------------------------------
-
-function buildIRS2555(fields: Form2555Input): string {
+function buildIRS2555(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -23,14 +28,11 @@ function buildIRS2555(fields: Form2555Input): string {
   return elements("IRS2555", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form2555MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f2555.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS2555(pending.form2555 ?? {});
-  }
-}
-
-export const form2555 = new Form2555MefNode();
+export const form2555: MefFormDescriptor<"form2555", Input> = {
+  pendingKey: "form2555",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f2555.pdf",
+  build(fields) {
+    return buildIRS2555(fields);
+  },
+};

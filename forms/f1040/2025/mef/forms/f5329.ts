@@ -1,7 +1,27 @@
-import type { Form5329Fields, Form5329Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form5329Fields, string]> = [
+export interface Fields {
+  early_distribution?: number | null;
+  simple_ira_early_distribution?: number | null;
+  esa_able_distribution?: number | null;
+  excess_traditional_ira?: number | null;
+  traditional_ira_value?: number | null;
+  excess_roth_ira?: number | null;
+  roth_ira_value?: number | null;
+  excess_coverdell_esa?: number | null;
+  coverdell_esa_value?: number | null;
+  excess_archer_msa?: number | null;
+  archer_msa_value?: number | null;
+  excess_hsa?: number | null;
+  hsa_value?: number | null;
+  excess_able?: number | null;
+  able_value?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["early_distribution", "EarlyDistributionAmt"],
   ["simple_ira_early_distribution", "SimpleIRAEarlyDistriAmt"],
   ["esa_able_distribution", "ESAABLEDistributionAmt"],
@@ -19,7 +39,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form5329Fields, string]> =
   ["able_value", "ABLEAccountValueAmt"],
 ];
 
-function buildIRS5329(fields: Form5329Input): string {
+function buildIRS5329(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -28,14 +48,11 @@ function buildIRS5329(fields: Form5329Input): string {
   return elements("IRS5329", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form5329MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f5329.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS5329(pending.form5329 ?? {});
-  }
-}
-
-export const form5329 = new Form5329MefNode();
+export const form5329: MefFormDescriptor<"form5329", Input> = {
+  pendingKey: "form5329",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5329.pdf",
+  build(fields) {
+    return buildIRS5329(fields);
+  },
+};

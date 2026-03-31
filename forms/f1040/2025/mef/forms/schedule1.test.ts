@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(schedule1.build({ schedule1: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(schedule1.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,12 +30,12 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line7_unemployment at zero is emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 0 } });
+  const result = schedule1.build({ line7_unemployment: 0 });
   assertStringIncludes(result, "<UnemploymentCompAmt>0</UnemploymentCompAmt>");
 });
 
 Deno.test("line1_state_refund at zero is emitted", () => {
-  const result = schedule1.build({ schedule1: { line1_state_refund: 0 } });
+  const result = schedule1.build({ line1_state_refund: 0 });
   assertStringIncludes(
     result,
     "<StateLocalTaxRefundAmt>0</StateLocalTaxRefundAmt>",
@@ -47,7 +47,7 @@ Deno.test("line1_state_refund at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line3_schedule_c negative emits with minus sign", () => {
-  const result = schedule1.build({ schedule1: { line3_schedule_c: -5000 } });
+  const result = schedule1.build({ line3_schedule_c: -5000 });
   assertStringIncludes(
     result,
     "<BusinessIncomeLossAmt>-5000</BusinessIncomeLossAmt>",
@@ -55,7 +55,7 @@ Deno.test("line3_schedule_c negative emits with minus sign", () => {
 });
 
 Deno.test("line17_schedule_e negative emits with minus sign", () => {
-  const result = schedule1.build({ schedule1: { line17_schedule_e: -12000 } });
+  const result = schedule1.build({ line17_schedule_e: -12000 });
   assertStringIncludes(
     result,
     "<RentalRealEstateIncomeLossAmt>-12000</RentalRealEstateIncomeLossAmt>",
@@ -67,7 +67,7 @@ Deno.test("line17_schedule_e negative emits with minus sign", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line1_state_refund maps to StateLocalTaxRefundAmt", () => {
-  const result = schedule1.build({ schedule1: { line1_state_refund: 100 } });
+  const result = schedule1.build({ line1_state_refund: 100 });
   assertStringIncludes(
     result,
     "<StateLocalTaxRefundAmt>100</StateLocalTaxRefundAmt>",
@@ -75,7 +75,7 @@ Deno.test("line1_state_refund maps to StateLocalTaxRefundAmt", () => {
 });
 
 Deno.test("line3_schedule_c maps to BusinessIncomeLossAmt", () => {
-  const result = schedule1.build({ schedule1: { line3_schedule_c: 2500 } });
+  const result = schedule1.build({ line3_schedule_c: 2500 });
   assertStringIncludes(
     result,
     "<BusinessIncomeLossAmt>2500</BusinessIncomeLossAmt>",
@@ -83,7 +83,7 @@ Deno.test("line3_schedule_c maps to BusinessIncomeLossAmt", () => {
 });
 
 Deno.test("line7_unemployment maps to UnemploymentCompAmt", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 4800 } });
+  const result = schedule1.build({ line7_unemployment: 4800 });
   assertStringIncludes(
     result,
     "<UnemploymentCompAmt>4800</UnemploymentCompAmt>",
@@ -91,22 +91,22 @@ Deno.test("line7_unemployment maps to UnemploymentCompAmt", () => {
 });
 
 Deno.test("line8i_prizes_awards maps to PrizeAwardAmt", () => {
-  const result = schedule1.build({ schedule1: { line8i_prizes_awards: 500 } });
+  const result = schedule1.build({ line8i_prizes_awards: 500 });
   assertStringIncludes(result, "<PrizeAwardAmt>500</PrizeAwardAmt>");
 });
 
 Deno.test("line8z_rtaa maps to RTAAPaymentsAmt", () => {
-  const result = schedule1.build({ schedule1: { line8z_rtaa: 300 } });
+  const result = schedule1.build({ line8z_rtaa: 300 });
   assertStringIncludes(result, "<RTAAPaymentsAmt>300</RTAAPaymentsAmt>");
 });
 
 Deno.test("line8z_taxable_grants maps to TaxableGrantsAmt", () => {
-  const result = schedule1.build({ schedule1: { line8z_taxable_grants: 1200 } });
+  const result = schedule1.build({ line8z_taxable_grants: 1200 });
   assertStringIncludes(result, "<TaxableGrantsAmt>1200</TaxableGrantsAmt>");
 });
 
 Deno.test("line8z_substitute_payments maps to SubstitutePaymentsAmt", () => {
-  const result = schedule1.build({ schedule1: { line8z_substitute_payments: 750 } });
+  const result = schedule1.build({ line8z_substitute_payments: 750 });
   assertStringIncludes(
     result,
     "<SubstitutePaymentsAmt>750</SubstitutePaymentsAmt>",
@@ -116,7 +116,7 @@ Deno.test("line8z_substitute_payments maps to SubstitutePaymentsAmt", () => {
 Deno.test(
   "line8z_attorney_proceeds maps to GrossProeedsToAttorneyAmt (IRS typo: Proe not Proc)",
   () => {
-    const result = schedule1.build({ schedule1: { line8z_attorney_proceeds: 2000 } });
+    const result = schedule1.build({ line8z_attorney_proceeds: 2000 });
     assertStringIncludes(
       result,
       "<GrossProeedsToAttorneyAmt>2000</GrossProeedsToAttorneyAmt>",
@@ -125,7 +125,7 @@ Deno.test(
 );
 
 Deno.test("line8z_nqdc maps to NQDCDistributionAmt", () => {
-  const result = schedule1.build({ schedule1: { line8z_nqdc: 9000 } });
+  const result = schedule1.build({ line8z_nqdc: 9000 });
   assertStringIncludes(
     result,
     "<NQDCDistributionAmt>9000</NQDCDistributionAmt>",
@@ -133,12 +133,12 @@ Deno.test("line8z_nqdc maps to NQDCDistributionAmt", () => {
 });
 
 Deno.test("line8z_other maps to OtherIncomeAmt", () => {
-  const result = schedule1.build({ schedule1: { line8z_other: 400 } });
+  const result = schedule1.build({ line8z_other: 400 });
   assertStringIncludes(result, "<OtherIncomeAmt>400</OtherIncomeAmt>");
 });
 
 Deno.test("line8z_golden_parachute maps to ExcessGoldenParachuteAmt", () => {
-  const result = schedule1.build({ schedule1: { line8z_golden_parachute: 50000 } });
+  const result = schedule1.build({ line8z_golden_parachute: 50000 });
   assertStringIncludes(
     result,
     "<ExcessGoldenParachuteAmt>50000</ExcessGoldenParachuteAmt>",
@@ -146,7 +146,7 @@ Deno.test("line8z_golden_parachute maps to ExcessGoldenParachuteAmt", () => {
 });
 
 Deno.test("line8c_cod_income maps to CancellationOfDebtAmt", () => {
-  const result = schedule1.build({ schedule1: { line8c_cod_income: 3000 } });
+  const result = schedule1.build({ line8c_cod_income: 3000 });
   assertStringIncludes(
     result,
     "<CancellationOfDebtAmt>3000</CancellationOfDebtAmt>",
@@ -154,7 +154,7 @@ Deno.test("line8c_cod_income maps to CancellationOfDebtAmt", () => {
 });
 
 Deno.test("line17_schedule_e maps to RentalRealEstateIncomeLossAmt", () => {
-  const result = schedule1.build({ schedule1: { line17_schedule_e: 8000 } });
+  const result = schedule1.build({ line17_schedule_e: 8000 });
   assertStringIncludes(
     result,
     "<RentalRealEstateIncomeLossAmt>8000</RentalRealEstateIncomeLossAmt>",
@@ -162,7 +162,7 @@ Deno.test("line17_schedule_e maps to RentalRealEstateIncomeLossAmt", () => {
 });
 
 Deno.test("line18_early_withdrawal maps to EarlyWithdrawalPenaltyAmt", () => {
-  const result = schedule1.build({ schedule1: { line18_early_withdrawal: 600 } });
+  const result = schedule1.build({ line18_early_withdrawal: 600 });
   assertStringIncludes(
     result,
     "<EarlyWithdrawalPenaltyAmt>600</EarlyWithdrawalPenaltyAmt>",
@@ -170,7 +170,7 @@ Deno.test("line18_early_withdrawal maps to EarlyWithdrawalPenaltyAmt", () => {
 });
 
 Deno.test("line24f_501c18d maps to Sec501c18dContributionAmt", () => {
-  const result = schedule1.build({ schedule1: { line24f_501c18d: 250 } });
+  const result = schedule1.build({ line24f_501c18d: 250 });
   assertStringIncludes(
     result,
     "<Sec501c18dContributionAmt>250</Sec501c18dContributionAmt>",
@@ -182,7 +182,7 @@ Deno.test("line24f_501c18d maps to Sec501c18dContributionAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 4800 } });
+  const result = schedule1.build({ line7_unemployment: 4800 });
   assertStringIncludes(
     result,
     "<UnemploymentCompAmt>4800</UnemploymentCompAmt>",
@@ -193,10 +193,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = schedule1.build({ schedule1: {
+  const result = schedule1.build({
     line1_state_refund: 500,
     line7_unemployment: 1200,
-  } });
+  });
   assertStringIncludes(
     result,
     "<StateLocalTaxRefundAmt>500</StateLocalTaxRefundAmt>",
@@ -232,13 +232,13 @@ const allFields = {
 };
 
 Deno.test("all 15 fields present: output wrapped in IRS1040Schedule1 tag", () => {
-  const result = schedule1.build({ schedule1: allFields });
+  const result = schedule1.build(allFields);
   assertStringIncludes(result, "<IRS1040Schedule1>");
   assertStringIncludes(result, "</IRS1040Schedule1>");
 });
 
 Deno.test("all 15 fields present: all elements emitted", () => {
-  const result = schedule1.build({ schedule1: allFields });
+  const result = schedule1.build(allFields);
   assertStringIncludes(
     result,
     "<StateLocalTaxRefundAmt>100</StateLocalTaxRefundAmt>",
@@ -290,7 +290,7 @@ Deno.test("all 15 fields present: all elements emitted", () => {
 });
 
 Deno.test("all 15 fields present: elements appear in field map order", () => {
-  const result = schedule1.build({ schedule1: allFields });
+  const result = schedule1.build(allFields);
   const idxFirst = result.indexOf("<StateLocalTaxRefundAmt>");
   const idxMiddle = result.indexOf("<BusinessIncomeLossAmt>");
   const idxLast = result.indexOf("<Sec501c18dContributionAmt>");
@@ -309,7 +309,7 @@ Deno.test("all 15 fields present: elements appear in field map order", () => {
 Deno.test(
   "all 15 fields present: field map order — unemployment before prizes before rtaa",
   () => {
-    const result = schedule1.build({ schedule1: allFields });
+    const result = schedule1.build(allFields);
     const idxUnemployment = result.indexOf("<UnemploymentCompAmt>");
     const idxPrizes = result.indexOf("<PrizeAwardAmt>");
     const idxRtaa = result.indexOf("<RTAAPaymentsAmt>");
@@ -331,7 +331,7 @@ Deno.test(
 // ---------------------------------------------------------------------------
 
 Deno.test("known field emitted, unknown field dropped", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 4800, junk: 999 } });
+  const result = schedule1.build({ line7_unemployment: 4800, junk: 999 });
   assertStringIncludes(
     result,
     "<UnemploymentCompAmt>4800</UnemploymentCompAmt>",
@@ -341,12 +341,12 @@ Deno.test("known field emitted, unknown field dropped", () => {
 });
 
 Deno.test("multiple known and unknown fields: only known emitted", () => {
-  const result = schedule1.build({ schedule1: {
+  const result = schedule1.build({
     line1_state_refund: 1000,
     unknown_field_1: 500,
     line8z_other: 200,
     not_a_real_key: "ignored",
-  } });
+  });
   assertStringIncludes(
     result,
     "<StateLocalTaxRefundAmt>1000</StateLocalTaxRefundAmt>",
@@ -361,7 +361,7 @@ Deno.test("multiple known and unknown fields: only known emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("multiple line8z fields each emit their own element", () => {
-  const result = schedule1.build({ schedule1: {
+  const result = schedule1.build({
     line8z_rtaa: 300,
     line8z_taxable_grants: 1200,
     line8z_substitute_payments: 750,
@@ -369,7 +369,7 @@ Deno.test("multiple line8z fields each emit their own element", () => {
     line8z_nqdc: 9000,
     line8z_other: 400,
     line8z_golden_parachute: 50000,
-  } });
+  });
   assertStringIncludes(result, "<RTAAPaymentsAmt>300</RTAAPaymentsAmt>");
   assertStringIncludes(result, "<TaxableGrantsAmt>1200</TaxableGrantsAmt>");
   assertStringIncludes(
@@ -394,7 +394,7 @@ Deno.test("multiple line8z fields each emit their own element", () => {
 Deno.test(
   "multiple line8z fields: elements appear in field map order (rtaa before taxable_grants before substitute_payments)",
   () => {
-    const result = schedule1.build({ schedule1: {
+    const result = schedule1.build({
       line8z_rtaa: 300,
       line8z_taxable_grants: 1200,
       line8z_substitute_payments: 750,
@@ -402,7 +402,7 @@ Deno.test(
       line8z_nqdc: 9000,
       line8z_other: 400,
       line8z_golden_parachute: 50000,
-    } });
+    });
     const idxRtaa = result.indexOf("<RTAAPaymentsAmt>");
     const idxGrants = result.indexOf("<TaxableGrantsAmt>");
     const idxSubs = result.indexOf("<SubstitutePaymentsAmt>");
@@ -448,7 +448,7 @@ Deno.test(
 // ---------------------------------------------------------------------------
 
 Deno.test("single field: output is wrapped in IRS1040Schedule1 tag", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 4800 } });
+  const result = schedule1.build({ line7_unemployment: 4800 });
   assertStringIncludes(result, "<IRS1040Schedule1>");
   assertStringIncludes(result, "</IRS1040Schedule1>");
 });
@@ -458,103 +458,103 @@ Deno.test("single field: output is wrapped in IRS1040Schedule1 tag", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line4_other_gains maps to OtherGainLossAmt", () => {
-  const result = schedule1.build({ schedule1: { line4_other_gains: 8500 } });
+  const result = schedule1.build({ line4_other_gains: 8500 });
   assertStringIncludes(result, "<OtherGainLossAmt>8500</OtherGainLossAmt>");
 });
 Deno.test("line4_other_gains negative emits with minus sign", () => {
-  const result = schedule1.build({ schedule1: { line4_other_gains: -2000 } });
+  const result = schedule1.build({ line4_other_gains: -2000 });
   assertStringIncludes(result, "<OtherGainLossAmt>-2000</OtherGainLossAmt>");
 });
 Deno.test("line4_other_gains absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<OtherGainLossAmt>");
 });
 
 Deno.test("line6_schedule_f maps to NetFarmProfitLossAmt", () => {
-  const result = schedule1.build({ schedule1: { line6_schedule_f: 15000 } });
+  const result = schedule1.build({ line6_schedule_f: 15000 });
   assertStringIncludes(
     result,
     "<NetFarmProfitLossAmt>15000</NetFarmProfitLossAmt>",
   );
 });
 Deno.test("line6_schedule_f negative emits with minus sign", () => {
-  const result = schedule1.build({ schedule1: { line6_schedule_f: -3000 } });
+  const result = schedule1.build({ line6_schedule_f: -3000 });
   assertStringIncludes(
     result,
     "<NetFarmProfitLossAmt>-3000</NetFarmProfitLossAmt>",
   );
 });
 Deno.test("line6_schedule_f absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<NetFarmProfitLossAmt>");
 });
 
 Deno.test("line8e_archer_msa_dist maps to TotArcherMSAMedcrLTCAmt", () => {
-  const result = schedule1.build({ schedule1: { line8e_archer_msa_dist: 6000 } });
+  const result = schedule1.build({ line8e_archer_msa_dist: 6000 });
   assertStringIncludes(
     result,
     "<TotArcherMSAMedcrLTCAmt>6000</TotArcherMSAMedcrLTCAmt>",
   );
 });
 Deno.test("line8e_archer_msa_dist absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<TotArcherMSAMedcrLTCAmt>");
 });
 
 Deno.test("line8p_excess_business_loss maps to ExcessBusinessLossAmt", () => {
-  const result = schedule1.build({ schedule1: { line8p_excess_business_loss: 12000 } });
+  const result = schedule1.build({ line8p_excess_business_loss: 12000 });
   assertStringIncludes(
     result,
     "<ExcessBusinessLossAmt>12000</ExcessBusinessLossAmt>",
   );
 });
 Deno.test("line8p_excess_business_loss absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<ExcessBusinessLossAmt>");
 });
 
 Deno.test("line13_hsa_deduction maps to HealthSavingsAccountDedAmt", () => {
-  const result = schedule1.build({ schedule1: { line13_hsa_deduction: 3850 } });
+  const result = schedule1.build({ line13_hsa_deduction: 3850 });
   assertStringIncludes(
     result,
     "<HealthSavingsAccountDedAmt>3850</HealthSavingsAccountDedAmt>",
   );
 });
 Deno.test("line13_hsa_deduction absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<HealthSavingsAccountDedAmt>");
 });
 
 Deno.test("line15_se_deduction maps to DeductibleSelfEmploymentTaxAmt", () => {
-  const result = schedule1.build({ schedule1: { line15_se_deduction: 7065 } });
+  const result = schedule1.build({ line15_se_deduction: 7065 });
   assertStringIncludes(
     result,
     "<DeductibleSelfEmploymentTaxAmt>7065</DeductibleSelfEmploymentTaxAmt>",
   );
 });
 Deno.test("line15_se_deduction absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<DeductibleSelfEmploymentTaxAmt>");
 });
 
 Deno.test("line20_ira_deduction maps to IRADeductionAmt", () => {
-  const result = schedule1.build({ schedule1: { line20_ira_deduction: 6000 } });
+  const result = schedule1.build({ line20_ira_deduction: 6000 });
   assertStringIncludes(result, "<IRADeductionAmt>6000</IRADeductionAmt>");
 });
 Deno.test("line20_ira_deduction absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<IRADeductionAmt>");
 });
 
 Deno.test("line23_archer_msa_deduction maps to ArcherMSADeductionAmt", () => {
-  const result = schedule1.build({ schedule1: { line23_archer_msa_deduction: 2400 } });
+  const result = schedule1.build({ line23_archer_msa_deduction: 2400 });
   assertStringIncludes(
     result,
     "<ArcherMSADeductionAmt>2400</ArcherMSADeductionAmt>",
   );
 });
 Deno.test("line23_archer_msa_deduction absent not emitted", () => {
-  const result = schedule1.build({ schedule1: { line7_unemployment: 100 } });
+  const result = schedule1.build({ line7_unemployment: 100 });
   assertNotIncludes(result, "<ArcherMSADeductionAmt>");
 });
 
@@ -563,7 +563,7 @@ Deno.test("line23_archer_msa_deduction absent not emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all 23 fields present: all elements emitted and wrapped", () => {
-  const result = schedule1.build({ schedule1: {
+  const result = schedule1.build({
     line1_state_refund: 100,
     line3_schedule_c: 200,
     line4_other_gains: 300,
@@ -587,7 +587,7 @@ Deno.test("all 23 fields present: all elements emitted and wrapped", () => {
     line20_ira_deduction: 2100,
     line23_archer_msa_deduction: 2200,
     line24f_501c18d: 2300,
-  } });
+  });
 
   assertStringIncludes(result, "<IRS1040Schedule1>");
   assertStringIncludes(result, "</IRS1040Schedule1>");

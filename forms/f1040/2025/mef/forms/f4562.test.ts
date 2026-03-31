@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form4562.build({ form4562: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form4562.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("section_179_deduction at zero is emitted", () => {
-  const result = form4562.build({ form4562: { section_179_deduction: 0 } });
+  const result = form4562.build({ section_179_deduction: 0 });
   assertStringIncludes(
     result,
     "<Section179DeductionAmt>0</Section179DeductionAmt>",
@@ -42,7 +42,7 @@ Deno.test("section_179_deduction at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("section_179_deduction maps to Section179DeductionAmt", () => {
-  const result = form4562.build({ form4562: { section_179_deduction: 10000 } });
+  const result = form4562.build({ section_179_deduction: 10000 });
   assertStringIncludes(
     result,
     "<Section179DeductionAmt>10000</Section179DeductionAmt>",
@@ -50,7 +50,7 @@ Deno.test("section_179_deduction maps to Section179DeductionAmt", () => {
 });
 
 Deno.test("section_179_cost maps to Section179CostAmt", () => {
-  const result = form4562.build({ form4562: { section_179_cost: 25000 } });
+  const result = form4562.build({ section_179_cost: 25000 });
   assertStringIncludes(
     result,
     "<Section179CostAmt>25000</Section179CostAmt>",
@@ -58,7 +58,7 @@ Deno.test("section_179_cost maps to Section179CostAmt", () => {
 });
 
 Deno.test("section_179_elected maps to Section179ElectedCostAmt", () => {
-  const result = form4562.build({ form4562: { section_179_elected: 20000 } });
+  const result = form4562.build({ section_179_elected: 20000 });
   assertStringIncludes(
     result,
     "<Section179ElectedCostAmt>20000</Section179ElectedCostAmt>",
@@ -66,7 +66,7 @@ Deno.test("section_179_elected maps to Section179ElectedCostAmt", () => {
 });
 
 Deno.test("section_179_carryover maps to Section179CarryoverAmt", () => {
-  const result = form4562.build({ form4562: { section_179_carryover: 5000 } });
+  const result = form4562.build({ section_179_carryover: 5000 });
   assertStringIncludes(
     result,
     "<Section179CarryoverAmt>5000</Section179CarryoverAmt>",
@@ -74,7 +74,7 @@ Deno.test("section_179_carryover maps to Section179CarryoverAmt", () => {
 });
 
 Deno.test("business_income_limit maps to BusinessIncomeLimitAmt", () => {
-  const result = form4562.build({ form4562: { business_income_limit: 80000 } });
+  const result = form4562.build({ business_income_limit: 80000 });
   assertStringIncludes(
     result,
     "<BusinessIncomeLimitAmt>80000</BusinessIncomeLimitAmt>",
@@ -82,7 +82,7 @@ Deno.test("business_income_limit maps to BusinessIncomeLimitAmt", () => {
 });
 
 Deno.test("bonus_depreciation_basis maps to BonusDepreciationBasisAmt", () => {
-  const result = form4562.build({ form4562: { bonus_depreciation_basis: 50000 } });
+  const result = form4562.build({ bonus_depreciation_basis: 50000 });
   assertStringIncludes(
     result,
     "<BonusDepreciationBasisAmt>50000</BonusDepreciationBasisAmt>",
@@ -90,7 +90,7 @@ Deno.test("bonus_depreciation_basis maps to BonusDepreciationBasisAmt", () => {
 });
 
 Deno.test("bonus_depreciation_basis_post_jan19 maps to BonusDeprecBasisPostJan19Amt", () => {
-  const result = form4562.build({ form4562: { bonus_depreciation_basis_post_jan19: 30000 } });
+  const result = form4562.build({ bonus_depreciation_basis_post_jan19: 30000 });
   assertStringIncludes(
     result,
     "<BonusDeprecBasisPostJan19Amt>30000</BonusDeprecBasisPostJan19Amt>",
@@ -98,7 +98,7 @@ Deno.test("bonus_depreciation_basis_post_jan19 maps to BonusDeprecBasisPostJan19
 });
 
 Deno.test("macrs_gds_basis maps to MACRSGDSBasisAmt", () => {
-  const result = form4562.build({ form4562: { macrs_gds_basis: 40000 } });
+  const result = form4562.build({ macrs_gds_basis: 40000 });
   assertStringIncludes(
     result,
     "<MACRSGDSBasisAmt>40000</MACRSGDSBasisAmt>",
@@ -106,7 +106,7 @@ Deno.test("macrs_gds_basis maps to MACRSGDSBasisAmt", () => {
 });
 
 Deno.test("macrs_gds_recovery_period maps to MACRSGDSRecoveryPeriodAmt", () => {
-  const result = form4562.build({ form4562: { macrs_gds_recovery_period: 7 } });
+  const result = form4562.build({ macrs_gds_recovery_period: 7 });
   assertStringIncludes(
     result,
     "<MACRSGDSRecoveryPeriodAmt>7</MACRSGDSRecoveryPeriodAmt>",
@@ -114,7 +114,7 @@ Deno.test("macrs_gds_recovery_period maps to MACRSGDSRecoveryPeriodAmt", () => {
 });
 
 Deno.test("macrs_gds_year_of_service maps to MACRSGDSYearOfServiceAmt", () => {
-  const result = form4562.build({ form4562: { macrs_gds_year_of_service: 3 } });
+  const result = form4562.build({ macrs_gds_year_of_service: 3 });
   assertStringIncludes(
     result,
     "<MACRSGDSYearOfServiceAmt>3</MACRSGDSYearOfServiceAmt>",
@@ -122,7 +122,7 @@ Deno.test("macrs_gds_year_of_service maps to MACRSGDSYearOfServiceAmt", () => {
 });
 
 Deno.test("macrs_prior_depreciation maps to MACRSPriorDepreciationAmt", () => {
-  const result = form4562.build({ form4562: { macrs_prior_depreciation: 12000 } });
+  const result = form4562.build({ macrs_prior_depreciation: 12000 });
   assertStringIncludes(
     result,
     "<MACRSPriorDepreciationAmt>12000</MACRSPriorDepreciationAmt>",
@@ -130,7 +130,7 @@ Deno.test("macrs_prior_depreciation maps to MACRSPriorDepreciationAmt", () => {
 });
 
 Deno.test("business_use_pct maps to BusinessUsePct", () => {
-  const result = form4562.build({ form4562: { business_use_pct: 80 } });
+  const result = form4562.build({ business_use_pct: 80 });
   assertStringIncludes(result, "<BusinessUsePct>80</BusinessUsePct>");
 });
 
@@ -139,7 +139,7 @@ Deno.test("business_use_pct maps to BusinessUsePct", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form4562.build({ form4562: { section_179_deduction: 10000 } });
+  const result = form4562.build({ section_179_deduction: 10000 });
   assertStringIncludes(
     result,
     "<Section179DeductionAmt>10000</Section179DeductionAmt>",
@@ -150,10 +150,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form4562.build({ form4562: {
+  const result = form4562.build({
     section_179_deduction: 10000,
     business_use_pct: 80,
-  } });
+  });
   assertStringIncludes(
     result,
     "<Section179DeductionAmt>10000</Section179DeductionAmt>",
@@ -183,13 +183,13 @@ const allFields = {
 };
 
 Deno.test("all 12 fields present: output wrapped in IRS4562 tag", () => {
-  const result = form4562.build({ form4562: allFields });
+  const result = form4562.build(allFields);
   assertStringIncludes(result, "<IRS4562>");
   assertStringIncludes(result, "</IRS4562>");
 });
 
 Deno.test("all 12 fields present: all elements emitted", () => {
-  const result = form4562.build({ form4562: allFields });
+  const result = form4562.build(allFields);
   assertStringIncludes(
     result,
     "<Section179DeductionAmt>10000</Section179DeductionAmt>",
@@ -242,10 +242,10 @@ Deno.test("all 12 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("boolean field is silently ignored", () => {
-  const result = form4562.build({ form4562: {
+  const result = form4562.build({
     listed_property: true,
     section_179_deduction: 10000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<Section179DeductionAmt>10000</Section179DeductionAmt>",

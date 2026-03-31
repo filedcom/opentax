@@ -1,9 +1,26 @@
-import type { ScheduleDFields, ScheduleDInput } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
+export interface Fields {
+  line_1a_proceeds?: number | null;
+  line_1a_cost?: number | null;
+  line_4_other_st?: number | null;
+  line_5_k1_st?: number | null;
+  line_6_carryover?: number | null;
+  line_8a_proceeds?: number | null;
+  line_8a_cost?: number | null;
+  line_11_form2439?: number | null;
+  line_12_k1_lt?: number | null;
+  line13_cap_gain_distrib?: number | null;
+  line_12_cap_gain_dist?: number | null;
+  line_14_carryover?: number | null;
+  line19_unrecaptured_1250?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
 
 // Direct 1:1 scalar field mappings (inputSchema key -> XSD element name)
-export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleDFields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_4_other_st", "STGainOrLossFromFormsAmt"],
   ["line_5_k1_st", "NetSTGainOrLossFromSchK1Amt"],
   ["line_6_carryover", "STCapitalLossCarryoverAmt"],
@@ -17,7 +34,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleDFields, string]> 
 // Both line13_cap_gain_distrib (from f1099div) and line_12_cap_gain_dist (from d_screen)
 // represent Schedule D Line 13 from different input sources — they are not additive fields
 // but alternative sources that may both be present and should be summed.
-const AGGREGATED_CAP_GAIN_DIST: ReadonlyArray<keyof ScheduleDFields> = [
+const AGGREGATED_CAP_GAIN_DIST: ReadonlyArray<keyof Fields> = [
   "line13_cap_gain_distrib",
   "line_12_cap_gain_dist",
 ];
@@ -50,8 +67,8 @@ function buildBasisRptNoAdjGroup(
   return elements(groupTag, children);
 }
 
-function buildIRS1040ScheduleD(fields: ScheduleDInput): string {
-  const f = fields as ScheduleDFields;
+function buildIRS1040ScheduleD(fields: Input): string {
+  const f = fields as Fields;
   const children: string[] = [];
 
   // Nested groups first (XSD order: line 1a before line 8a)
@@ -89,14 +106,11 @@ function buildIRS1040ScheduleD(fields: ScheduleDInput): string {
   return elements("IRS1040ScheduleD", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class ScheduleDMefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS1040ScheduleD(pending.schedule_d ?? {});
-  }
-}
-
-export const scheduleD = new ScheduleDMefNode();
+export const scheduleD: MefFormDescriptor<"schedule_d", Input> = {
+  pendingKey: "schedule_d",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
+  build(fields) {
+    return buildIRS1040ScheduleD(fields);
+  },
+};

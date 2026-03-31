@@ -1,5 +1,6 @@
 import type { F8949Transaction } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 
 type Term = "short" | "long";
@@ -137,14 +138,13 @@ function buildIRS8949(transactions: F8949Transaction[]): string {
   return elements("IRS8949", groupChildren);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
+export type Fields = F8949Transaction[];
 
-class Form8949MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f8949.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS8949(pending.form8949 ?? []);
-  }
-}
-
-export const form8949 = new Form8949MefNode();
+export const form8949: MefFormDescriptor<"form8949", Fields> = {
+  pendingKey: "form8949",
+  FIELD_MAP: [],
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8949.pdf",
+  build(transactions) {
+    return buildIRS8949(transactions);
+  },
+};

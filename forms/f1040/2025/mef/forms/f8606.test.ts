@@ -22,7 +22,7 @@ Deno.test("f8606: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8606: all unknown keys returns empty string", () => {
-  assertEquals(form8606.build({ form8606: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8606.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("f8606: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8606: nondeductible_contributions at zero is emitted", () => {
-  const result = form8606.build({ form8606: { nondeductible_contributions: 0 } });
+  const result = form8606.build({ nondeductible_contributions: 0 });
   assertStringIncludes(
     result,
     "<NondeductibleContriAmt>0</NondeductibleContriAmt>",
@@ -42,7 +42,7 @@ Deno.test("f8606: nondeductible_contributions at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8606: nondeductible_contributions maps to NondeductibleContriAmt", () => {
-  const result = form8606.build({ form8606: { nondeductible_contributions: 6000 } });
+  const result = form8606.build({ nondeductible_contributions: 6000 });
   assertStringIncludes(
     result,
     "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
@@ -50,7 +50,7 @@ Deno.test("f8606: nondeductible_contributions maps to NondeductibleContriAmt", (
 });
 
 Deno.test("f8606: prior_basis maps to TotalBasisInTraditionalIRAAmt", () => {
-  const result = form8606.build({ form8606: { prior_basis: 12000 } });
+  const result = form8606.build({ prior_basis: 12000 });
   assertStringIncludes(
     result,
     "<TotalBasisInTraditionalIRAAmt>12000</TotalBasisInTraditionalIRAAmt>",
@@ -58,7 +58,7 @@ Deno.test("f8606: prior_basis maps to TotalBasisInTraditionalIRAAmt", () => {
 });
 
 Deno.test("f8606: year_end_ira_value maps to TraditionalIRAValueAmt", () => {
-  const result = form8606.build({ form8606: { year_end_ira_value: 80000 } });
+  const result = form8606.build({ year_end_ira_value: 80000 });
   assertStringIncludes(
     result,
     "<TraditionalIRAValueAmt>80000</TraditionalIRAValueAmt>",
@@ -66,7 +66,7 @@ Deno.test("f8606: year_end_ira_value maps to TraditionalIRAValueAmt", () => {
 });
 
 Deno.test("f8606: traditional_distributions maps to TraditionalIRADistriAmt", () => {
-  const result = form8606.build({ form8606: { traditional_distributions: 5000 } });
+  const result = form8606.build({ traditional_distributions: 5000 });
   assertStringIncludes(
     result,
     "<TraditionalIRADistriAmt>5000</TraditionalIRADistriAmt>",
@@ -74,12 +74,12 @@ Deno.test("f8606: traditional_distributions maps to TraditionalIRADistriAmt", ()
 });
 
 Deno.test("f8606: roth_conversion maps to RothConversionAmt", () => {
-  const result = form8606.build({ form8606: { roth_conversion: 20000 } });
+  const result = form8606.build({ roth_conversion: 20000 });
   assertStringIncludes(result, "<RothConversionAmt>20000</RothConversionAmt>");
 });
 
 Deno.test("f8606: roth_distribution maps to RothIRADistributionAmt", () => {
-  const result = form8606.build({ form8606: { roth_distribution: 3000 } });
+  const result = form8606.build({ roth_distribution: 3000 });
   assertStringIncludes(
     result,
     "<RothIRADistributionAmt>3000</RothIRADistributionAmt>",
@@ -87,7 +87,7 @@ Deno.test("f8606: roth_distribution maps to RothIRADistributionAmt", () => {
 });
 
 Deno.test("f8606: roth_basis_contributions maps to RothContributionsBasisAmt", () => {
-  const result = form8606.build({ form8606: { roth_basis_contributions: 18000 } });
+  const result = form8606.build({ roth_basis_contributions: 18000 });
   assertStringIncludes(
     result,
     "<RothContributionsBasisAmt>18000</RothContributionsBasisAmt>",
@@ -95,7 +95,7 @@ Deno.test("f8606: roth_basis_contributions maps to RothContributionsBasisAmt", (
 });
 
 Deno.test("f8606: roth_basis_conversions maps to RothConversionBasisAmt", () => {
-  const result = form8606.build({ form8606: { roth_basis_conversions: 10000 } });
+  const result = form8606.build({ roth_basis_conversions: 10000 });
   assertStringIncludes(
     result,
     "<RothConversionBasisAmt>10000</RothConversionBasisAmt>",
@@ -107,7 +107,7 @@ Deno.test("f8606: roth_basis_conversions maps to RothConversionBasisAmt", () => 
 // ---------------------------------------------------------------------------
 
 Deno.test("f8606: single known field emits only that element, absent fields omitted", () => {
-  const result = form8606.build({ form8606: { nondeductible_contributions: 6000 } });
+  const result = form8606.build({ nondeductible_contributions: 6000 });
   assertStringIncludes(
     result,
     "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
@@ -118,10 +118,10 @@ Deno.test("f8606: single known field emits only that element, absent fields omit
 });
 
 Deno.test("f8606: two fields present: only those two elements emitted", () => {
-  const result = form8606.build({ form8606: {
+  const result = form8606.build({
     nondeductible_contributions: 6000,
     roth_conversion: 20000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
@@ -147,13 +147,13 @@ const allFields = {
 };
 
 Deno.test("f8606: all 8 fields present: output wrapped in IRS8606 tag", () => {
-  const result = form8606.build({ form8606: allFields });
+  const result = form8606.build(allFields);
   assertStringIncludes(result, "<IRS8606>");
   assertStringIncludes(result, "</IRS8606>");
 });
 
 Deno.test("f8606: all 8 fields present: all elements emitted", () => {
-  const result = form8606.build({ form8606: allFields });
+  const result = form8606.build(allFields);
   assertStringIncludes(
     result,
     "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",
@@ -190,10 +190,10 @@ Deno.test("f8606: all 8 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8606: string field is silently ignored", () => {
-  const result = form8606.build({ form8606: {
+  const result = form8606.build({
     filing_status: "S",
     nondeductible_contributions: 6000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<NondeductibleContriAmt>6000</NondeductibleContriAmt>",

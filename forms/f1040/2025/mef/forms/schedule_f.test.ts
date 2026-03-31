@@ -22,7 +22,7 @@ Deno.test("schedule_f: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_f: all unknown keys returns empty string", () => {
-  assertEquals(scheduleF.build({ schedule_f: { junk: 999, foo: "bar" } }), "");
+  assertEquals(scheduleF.build({ junk: 999, foo: "bar" }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("schedule_f: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_f: crop_insurance at zero is emitted", () => {
-  const result = scheduleF.build({ schedule_f: { crop_insurance: 0 } });
+  const result = scheduleF.build({ crop_insurance: 0 });
   assertStringIncludes(
     result,
     "<CropInsuranceProceedsAmt>0</CropInsuranceProceedsAmt>",
@@ -42,7 +42,7 @@ Deno.test("schedule_f: crop_insurance at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_f: crop_insurance maps to CropInsuranceProceedsAmt", () => {
-  const result = scheduleF.build({ schedule_f: { crop_insurance: 25000 } });
+  const result = scheduleF.build({ crop_insurance: 25000 });
   assertStringIncludes(
     result,
     "<CropInsuranceProceedsAmt>25000</CropInsuranceProceedsAmt>",
@@ -50,7 +50,7 @@ Deno.test("schedule_f: crop_insurance maps to CropInsuranceProceedsAmt", () => {
 });
 
 Deno.test("schedule_f: line8_other_income maps to OtherFarmIncomeAmt", () => {
-  const result = scheduleF.build({ schedule_f: { line8_other_income: 5000 } });
+  const result = scheduleF.build({ line8_other_income: 5000 });
   assertStringIncludes(
     result,
     "<OtherFarmIncomeAmt>5000</OtherFarmIncomeAmt>",
@@ -62,7 +62,7 @@ Deno.test("schedule_f: line8_other_income maps to OtherFarmIncomeAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_f: single known field emits only that element, absent fields omitted", () => {
-  const result = scheduleF.build({ schedule_f: { crop_insurance: 25000 } });
+  const result = scheduleF.build({ crop_insurance: 25000 });
   assertStringIncludes(
     result,
     "<CropInsuranceProceedsAmt>25000</CropInsuranceProceedsAmt>",
@@ -80,13 +80,13 @@ const allFields = {
 };
 
 Deno.test("schedule_f: all 2 fields present: output wrapped in IRS1040ScheduleF tag", () => {
-  const result = scheduleF.build({ schedule_f: allFields });
+  const result = scheduleF.build(allFields);
   assertStringIncludes(result, "<IRS1040ScheduleF>");
   assertStringIncludes(result, "</IRS1040ScheduleF>");
 });
 
 Deno.test("schedule_f: all 2 fields present: all elements emitted", () => {
-  const result = scheduleF.build({ schedule_f: allFields });
+  const result = scheduleF.build(allFields);
   assertStringIncludes(
     result,
     "<CropInsuranceProceedsAmt>25000</CropInsuranceProceedsAmt>",

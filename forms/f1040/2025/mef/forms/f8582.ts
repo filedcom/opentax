@@ -1,7 +1,19 @@
-import type { Form8582Fields, Form8582Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8582Fields, string]> = [
+export interface Fields {
+  passive_schedule_c?: number | null;
+  passive_schedule_f?: number | null;
+  current_income?: number | null;
+  current_loss?: number | null;
+  prior_unallowed?: number | null;
+  modified_agi?: number | null;
+  active_participation?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["passive_schedule_c", "PassiveScheduleCIncomeAmt"],
   ["passive_schedule_f", "PassiveScheduleFIncomeAmt"],
   ["current_income", "CurrentYearIncomeAmt"],
@@ -11,7 +23,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8582Fields, string]> =
   ["active_participation", "ActiveParticipationAmt"],
 ];
 
-function buildIRS8582(fields: Form8582Input): string {
+function buildIRS8582(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -20,14 +32,11 @@ function buildIRS8582(fields: Form8582Input): string {
   return elements("IRS8582", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form8582MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f8582.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS8582(pending.form8582 ?? {});
-  }
-}
-
-export const form8582 = new Form8582MefNode();
+export const form8582: MefFormDescriptor<"form8582", Input> = {
+  pendingKey: "form8582",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582.pdf",
+  build(fields) {
+    return buildIRS8582(fields);
+  },
+};

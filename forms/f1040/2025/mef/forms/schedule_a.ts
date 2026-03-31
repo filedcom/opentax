@@ -1,10 +1,27 @@
-import type { ScheduleAMefFields, ScheduleAMefInput } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
+export interface Fields {
+  line_1_medical?: number | null;
+  agi?: number | null;
+  line_5a_tax_amount?: number | null;
+  line_5b_real_estate_tax?: number | null;
+  line_5c_personal_property_tax?: number | null;
+  line_6_other_taxes?: number | null;
+  line_8a_mortgage_interest_1098?: number | null;
+  line_8b_mortgage_interest_no_1098?: number | null;
+  line_8c_points_no_1098?: number | null;
+  line_9_investment_interest?: number | null;
+  line_11_cash_contributions?: number | null;
+  line_12_noncash_contributions?: number | null;
+  line_13_contribution_carryover?: number | null;
+  line_15_casualty_theft_loss?: number | null;
+  line_16_other_deductions?: number | null;
+}
 
-// ─── Field Map ────────────────────────────────────────────────────────────────
+type Input = Partial<Fields> & Record<string, unknown>;
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleAMefFields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_1_medical", "MedicalAndDentalExpensesAmt"],
   ["agi", "AGIAmt"],
   ["line_5a_tax_amount", "StateAndLocalIncomeTaxAmt"],
@@ -22,9 +39,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleAMefFields, string
   ["line_16_other_deductions", "OtherItemizedDeductionsAmt"],
 ];
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
-
-function buildIRS1040ScheduleA(fields: ScheduleAMefInput): string {
+function buildIRS1040ScheduleA(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -33,14 +48,11 @@ function buildIRS1040ScheduleA(fields: ScheduleAMefInput): string {
   return elements("IRS1040ScheduleA", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class ScheduleAMefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f1040sa.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS1040ScheduleA(pending.schedule_a ?? {});
-  }
-}
-
-export const scheduleA = new ScheduleAMefNode();
+export const scheduleA: MefFormDescriptor<"schedule_a", Input> = {
+  pendingKey: "schedule_a",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sa.pdf",
+  build(fields) {
+    return buildIRS1040ScheduleA(fields);
+  },
+};

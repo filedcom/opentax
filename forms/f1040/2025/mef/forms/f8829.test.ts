@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8829.build({ form_8829: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8829.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("total_area at zero is emitted", () => {
-  const result = form8829.build({ form_8829: { total_area: 0 } });
+  const result = form8829.build({ total_area: 0 });
   assertStringIncludes(
     result,
     "<TotalAreaOfHomeSqFtCnt>0</TotalAreaOfHomeSqFtCnt>",
@@ -42,7 +42,7 @@ Deno.test("total_area at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("total_area maps to TotalAreaOfHomeSqFtCnt", () => {
-  const result = form8829.build({ form_8829: { total_area: 2000 } });
+  const result = form8829.build({ total_area: 2000 });
   assertStringIncludes(
     result,
     "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
@@ -50,7 +50,7 @@ Deno.test("total_area maps to TotalAreaOfHomeSqFtCnt", () => {
 });
 
 Deno.test("business_area maps to BusinessAreaOfHomeSqFtCnt", () => {
-  const result = form8829.build({ form_8829: { business_area: 400 } });
+  const result = form8829.build({ business_area: 400 });
   assertStringIncludes(
     result,
     "<BusinessAreaOfHomeSqFtCnt>400</BusinessAreaOfHomeSqFtCnt>",
@@ -58,7 +58,7 @@ Deno.test("business_area maps to BusinessAreaOfHomeSqFtCnt", () => {
 });
 
 Deno.test("mortgage_interest maps to MortgageInterestAmt", () => {
-  const result = form8829.build({ form_8829: { mortgage_interest: 12000 } });
+  const result = form8829.build({ mortgage_interest: 12000 });
   assertStringIncludes(
     result,
     "<MortgageInterestAmt>12000</MortgageInterestAmt>",
@@ -66,17 +66,17 @@ Deno.test("mortgage_interest maps to MortgageInterestAmt", () => {
 });
 
 Deno.test("insurance maps to InsuranceAmt", () => {
-  const result = form8829.build({ form_8829: { insurance: 1500 } });
+  const result = form8829.build({ insurance: 1500 });
   assertStringIncludes(result, "<InsuranceAmt>1500</InsuranceAmt>");
 });
 
 Deno.test("rent maps to RentAmt", () => {
-  const result = form8829.build({ form_8829: { rent: 18000 } });
+  const result = form8829.build({ rent: 18000 });
   assertStringIncludes(result, "<RentAmt>18000</RentAmt>");
 });
 
 Deno.test("repairs_maintenance maps to RepairsAndMaintenanceAmt", () => {
-  const result = form8829.build({ form_8829: { repairs_maintenance: 500 } });
+  const result = form8829.build({ repairs_maintenance: 500 });
   assertStringIncludes(
     result,
     "<RepairsAndMaintenanceAmt>500</RepairsAndMaintenanceAmt>",
@@ -84,17 +84,17 @@ Deno.test("repairs_maintenance maps to RepairsAndMaintenanceAmt", () => {
 });
 
 Deno.test("utilities maps to UtilitiesAmt", () => {
-  const result = form8829.build({ form_8829: { utilities: 3000 } });
+  const result = form8829.build({ utilities: 3000 });
   assertStringIncludes(result, "<UtilitiesAmt>3000</UtilitiesAmt>");
 });
 
 Deno.test("other_expenses maps to OtherExpensesAmt", () => {
-  const result = form8829.build({ form_8829: { other_expenses: 600 } });
+  const result = form8829.build({ other_expenses: 600 });
   assertStringIncludes(result, "<OtherExpensesAmt>600</OtherExpensesAmt>");
 });
 
 Deno.test("gross_income_limit maps to GrossIncomeLimitAmt", () => {
-  const result = form8829.build({ form_8829: { gross_income_limit: 80000 } });
+  const result = form8829.build({ gross_income_limit: 80000 });
   assertStringIncludes(
     result,
     "<GrossIncomeLimitAmt>80000</GrossIncomeLimitAmt>",
@@ -102,7 +102,7 @@ Deno.test("gross_income_limit maps to GrossIncomeLimitAmt", () => {
 });
 
 Deno.test("prior_year_operating_carryover maps to PYOperatingExpensesCyovAmt", () => {
-  const result = form8829.build({ form_8829: { prior_year_operating_carryover: 200 } });
+  const result = form8829.build({ prior_year_operating_carryover: 200 });
   assertStringIncludes(
     result,
     "<PYOperatingExpensesCyovAmt>200</PYOperatingExpensesCyovAmt>",
@@ -110,7 +110,7 @@ Deno.test("prior_year_operating_carryover maps to PYOperatingExpensesCyovAmt", (
 });
 
 Deno.test("home_fmv_or_basis maps to HomeFMVOrAdjBasisAmt", () => {
-  const result = form8829.build({ form_8829: { home_fmv_or_basis: 350000 } });
+  const result = form8829.build({ home_fmv_or_basis: 350000 });
   assertStringIncludes(
     result,
     "<HomeFMVOrAdjBasisAmt>350000</HomeFMVOrAdjBasisAmt>",
@@ -118,7 +118,7 @@ Deno.test("home_fmv_or_basis maps to HomeFMVOrAdjBasisAmt", () => {
 });
 
 Deno.test("prior_year_depreciation_carryover maps to PYDepreciationCyovAmt", () => {
-  const result = form8829.build({ form_8829: { prior_year_depreciation_carryover: 300 } });
+  const result = form8829.build({ prior_year_depreciation_carryover: 300 });
   assertStringIncludes(
     result,
     "<PYDepreciationCyovAmt>300</PYDepreciationCyovAmt>",
@@ -130,7 +130,7 @@ Deno.test("prior_year_depreciation_carryover maps to PYDepreciationCyovAmt", () 
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8829.build({ form_8829: { total_area: 2000 } });
+  const result = form8829.build({ total_area: 2000 });
   assertStringIncludes(
     result,
     "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
@@ -141,7 +141,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8829.build({ form_8829: { total_area: 2000, mortgage_interest: 12000 } });
+  const result = form8829.build({ total_area: 2000, mortgage_interest: 12000 });
   assertStringIncludes(
     result,
     "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
@@ -174,13 +174,13 @@ const allFields = {
 };
 
 Deno.test("all 12 fields present: output wrapped in IRS8829 tag", () => {
-  const result = form8829.build({ form_8829: allFields });
+  const result = form8829.build(allFields);
   assertStringIncludes(result, "<IRS8829>");
   assertStringIncludes(result, "</IRS8829>");
 });
 
 Deno.test("all 12 fields present: all elements emitted", () => {
-  const result = form8829.build({ form_8829: allFields });
+  const result = form8829.build(allFields);
   assertStringIncludes(
     result,
     "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",
@@ -224,7 +224,7 @@ Deno.test("all 12 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("string field is silently ignored", () => {
-  const result = form8829.build({ form_8829: { method: "simplified", total_area: 2000 } });
+  const result = form8829.build({ method: "simplified", total_area: 2000 });
   assertStringIncludes(
     result,
     "<TotalAreaOfHomeSqFtCnt>2000</TotalAreaOfHomeSqFtCnt>",

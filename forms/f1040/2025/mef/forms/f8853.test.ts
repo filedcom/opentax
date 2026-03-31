@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8853.build({ form8853: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8853.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("employer_archer_msa at zero is emitted", () => {
-  const result = form8853.build({ form8853: { employer_archer_msa: 0 } });
+  const result = form8853.build({ employer_archer_msa: 0 });
   assertStringIncludes(
     result,
     "<EmployerArcherMSAContriAmt>0</EmployerArcherMSAContriAmt>",
@@ -42,7 +42,7 @@ Deno.test("employer_archer_msa at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("employer_archer_msa maps to EmployerArcherMSAContriAmt", () => {
-  const result = form8853.build({ form8853: { employer_archer_msa: 1000 } });
+  const result = form8853.build({ employer_archer_msa: 1000 });
   assertStringIncludes(
     result,
     "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
@@ -50,7 +50,7 @@ Deno.test("employer_archer_msa maps to EmployerArcherMSAContriAmt", () => {
 });
 
 Deno.test("taxpayer_archer_msa_contributions maps to TxpyrArcherMSAContriAmt", () => {
-  const result = form8853.build({ form8853: { taxpayer_archer_msa_contributions: 2000 } });
+  const result = form8853.build({ taxpayer_archer_msa_contributions: 2000 });
   assertStringIncludes(
     result,
     "<TxpyrArcherMSAContriAmt>2000</TxpyrArcherMSAContriAmt>",
@@ -58,7 +58,7 @@ Deno.test("taxpayer_archer_msa_contributions maps to TxpyrArcherMSAContriAmt", (
 });
 
 Deno.test("line3_limitation_amount maps to ArcherMSALimitationAmt", () => {
-  const result = form8853.build({ form8853: { line3_limitation_amount: 3000 } });
+  const result = form8853.build({ line3_limitation_amount: 3000 });
   assertStringIncludes(
     result,
     "<ArcherMSALimitationAmt>3000</ArcherMSALimitationAmt>",
@@ -66,12 +66,12 @@ Deno.test("line3_limitation_amount maps to ArcherMSALimitationAmt", () => {
 });
 
 Deno.test("compensation maps to CompensationAmt", () => {
-  const result = form8853.build({ form8853: { compensation: 50000 } });
+  const result = form8853.build({ compensation: 50000 });
   assertStringIncludes(result, "<CompensationAmt>50000</CompensationAmt>");
 });
 
 Deno.test("archer_msa_distributions maps to ArcherMSADistributionAmt", () => {
-  const result = form8853.build({ form8853: { archer_msa_distributions: 1500 } });
+  const result = form8853.build({ archer_msa_distributions: 1500 });
   assertStringIncludes(
     result,
     "<ArcherMSADistributionAmt>1500</ArcherMSADistributionAmt>",
@@ -79,7 +79,7 @@ Deno.test("archer_msa_distributions maps to ArcherMSADistributionAmt", () => {
 });
 
 Deno.test("archer_msa_rollover maps to ArcherMSARolloverAmt", () => {
-  const result = form8853.build({ form8853: { archer_msa_rollover: 500 } });
+  const result = form8853.build({ archer_msa_rollover: 500 });
   assertStringIncludes(
     result,
     "<ArcherMSARolloverAmt>500</ArcherMSARolloverAmt>",
@@ -87,7 +87,7 @@ Deno.test("archer_msa_rollover maps to ArcherMSARolloverAmt", () => {
 });
 
 Deno.test("archer_msa_qualified_expenses maps to ArcherMSAQualifiedExpnsAmt", () => {
-  const result = form8853.build({ form8853: { archer_msa_qualified_expenses: 800 } });
+  const result = form8853.build({ archer_msa_qualified_expenses: 800 });
   assertStringIncludes(
     result,
     "<ArcherMSAQualifiedExpnsAmt>800</ArcherMSAQualifiedExpnsAmt>",
@@ -95,7 +95,7 @@ Deno.test("archer_msa_qualified_expenses maps to ArcherMSAQualifiedExpnsAmt", ()
 });
 
 Deno.test("medicare_advantage_distributions maps to MedcrAdvntageMSADistriAmt", () => {
-  const result = form8853.build({ form8853: { medicare_advantage_distributions: 1200 } });
+  const result = form8853.build({ medicare_advantage_distributions: 1200 });
   assertStringIncludes(
     result,
     "<MedcrAdvntageMSADistriAmt>1200</MedcrAdvntageMSADistriAmt>",
@@ -103,7 +103,7 @@ Deno.test("medicare_advantage_distributions maps to MedcrAdvntageMSADistriAmt", 
 });
 
 Deno.test("medicare_advantage_qualified_expenses maps to MedcrAdvntageMSAQlfyExpnsAmt", () => {
-  const result = form8853.build({ form8853: { medicare_advantage_qualified_expenses: 900 } });
+  const result = form8853.build({ medicare_advantage_qualified_expenses: 900 });
   assertStringIncludes(
     result,
     "<MedcrAdvntageMSAQlfyExpnsAmt>900</MedcrAdvntageMSAQlfyExpnsAmt>",
@@ -111,7 +111,7 @@ Deno.test("medicare_advantage_qualified_expenses maps to MedcrAdvntageMSAQlfyExp
 });
 
 Deno.test("ltc_gross_payments maps to LTCGrossPaymentsAmt", () => {
-  const result = form8853.build({ form8853: { ltc_gross_payments: 4000 } });
+  const result = form8853.build({ ltc_gross_payments: 4000 });
   assertStringIncludes(
     result,
     "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",
@@ -119,7 +119,7 @@ Deno.test("ltc_gross_payments maps to LTCGrossPaymentsAmt", () => {
 });
 
 Deno.test("ltc_qualified_contract_amount maps to LTCQualifiedContractAmt", () => {
-  const result = form8853.build({ form8853: { ltc_qualified_contract_amount: 5000 } });
+  const result = form8853.build({ ltc_qualified_contract_amount: 5000 });
   assertStringIncludes(
     result,
     "<LTCQualifiedContractAmt>5000</LTCQualifiedContractAmt>",
@@ -127,7 +127,7 @@ Deno.test("ltc_qualified_contract_amount maps to LTCQualifiedContractAmt", () =>
 });
 
 Deno.test("ltc_accelerated_death_benefits maps to LTCAcceleratedDeathBnftAmt", () => {
-  const result = form8853.build({ form8853: { ltc_accelerated_death_benefits: 6000 } });
+  const result = form8853.build({ ltc_accelerated_death_benefits: 6000 });
   assertStringIncludes(
     result,
     "<LTCAcceleratedDeathBnftAmt>6000</LTCAcceleratedDeathBnftAmt>",
@@ -135,17 +135,17 @@ Deno.test("ltc_accelerated_death_benefits maps to LTCAcceleratedDeathBnftAmt", (
 });
 
 Deno.test("ltc_period_days maps to LTCPeriodDaysCnt", () => {
-  const result = form8853.build({ form8853: { ltc_period_days: 30 } });
+  const result = form8853.build({ ltc_period_days: 30 });
   assertStringIncludes(result, "<LTCPeriodDaysCnt>30</LTCPeriodDaysCnt>");
 });
 
 Deno.test("ltc_actual_costs maps to LTCActualCostsAmt", () => {
-  const result = form8853.build({ form8853: { ltc_actual_costs: 2500 } });
+  const result = form8853.build({ ltc_actual_costs: 2500 });
   assertStringIncludes(result, "<LTCActualCostsAmt>2500</LTCActualCostsAmt>");
 });
 
 Deno.test("ltc_reimbursements maps to LTCReimbursementsAmt", () => {
-  const result = form8853.build({ form8853: { ltc_reimbursements: 1800 } });
+  const result = form8853.build({ ltc_reimbursements: 1800 });
   assertStringIncludes(
     result,
     "<LTCReimbursementsAmt>1800</LTCReimbursementsAmt>",
@@ -157,7 +157,7 @@ Deno.test("ltc_reimbursements maps to LTCReimbursementsAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8853.build({ form8853: { employer_archer_msa: 1000 } });
+  const result = form8853.build({ employer_archer_msa: 1000 });
   assertStringIncludes(
     result,
     "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
@@ -168,10 +168,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8853.build({ form8853: {
+  const result = form8853.build({
     employer_archer_msa: 1000,
     ltc_reimbursements: 1800,
-  } });
+  });
   assertStringIncludes(
     result,
     "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
@@ -207,13 +207,13 @@ const allFields = {
 };
 
 Deno.test("all 15 fields present: output wrapped in IRS8853 tag", () => {
-  const result = form8853.build({ form8853: allFields });
+  const result = form8853.build(allFields);
   assertStringIncludes(result, "<IRS8853>");
   assertStringIncludes(result, "</IRS8853>");
 });
 
 Deno.test("all 15 fields present: all elements emitted", () => {
-  const result = form8853.build({ form8853: allFields });
+  const result = form8853.build(allFields);
   assertStringIncludes(
     result,
     "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
@@ -272,10 +272,10 @@ Deno.test("all 15 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("archer_msa_exception boolean field is silently ignored", () => {
-  const result = form8853.build({ form8853: {
+  const result = form8853.build({
     archer_msa_exception: true,
     employer_archer_msa: 1000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<EmployerArcherMSAContriAmt>1000</EmployerArcherMSAContriAmt>",
@@ -285,10 +285,10 @@ Deno.test("archer_msa_exception boolean field is silently ignored", () => {
 });
 
 Deno.test("medicare_advantage_exception boolean field is silently ignored", () => {
-  const result = form8853.build({ form8853: {
+  const result = form8853.build({
     medicare_advantage_exception: false,
     ltc_gross_payments: 4000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<LTCGrossPaymentsAmt>4000</LTCGrossPaymentsAmt>",

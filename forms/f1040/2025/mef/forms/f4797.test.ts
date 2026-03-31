@@ -22,7 +22,7 @@ Deno.test("f4797: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4797: all unknown keys returns empty string", () => {
-  assertEquals(form4797.build({ form4797: { junk: 999, foo: "bar", sales: [] } }), "");
+  assertEquals(form4797.build({ junk: 999, foo: "bar", sales: [] }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("f4797: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4797: section_1231_gain at zero is emitted", () => {
-  const result = form4797.build({ form4797: { section_1231_gain: 0 } });
+  const result = form4797.build({ section_1231_gain: 0 });
   assertStringIncludes(
     result,
     "<Section1231GainLossAmt>0</Section1231GainLossAmt>",
@@ -42,7 +42,7 @@ Deno.test("f4797: section_1231_gain at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4797: section_1231_gain maps to Section1231GainLossAmt", () => {
-  const result = form4797.build({ form4797: { section_1231_gain: 20000 } });
+  const result = form4797.build({ section_1231_gain: 20000 });
   assertStringIncludes(
     result,
     "<Section1231GainLossAmt>20000</Section1231GainLossAmt>",
@@ -50,7 +50,7 @@ Deno.test("f4797: section_1231_gain maps to Section1231GainLossAmt", () => {
 });
 
 Deno.test("f4797: nonrecaptured_1231_loss maps to Nonrecaptured1231LossAmt", () => {
-  const result = form4797.build({ form4797: { nonrecaptured_1231_loss: 5000 } });
+  const result = form4797.build({ nonrecaptured_1231_loss: 5000 });
   assertStringIncludes(
     result,
     "<Nonrecaptured1231LossAmt>5000</Nonrecaptured1231LossAmt>",
@@ -58,7 +58,7 @@ Deno.test("f4797: nonrecaptured_1231_loss maps to Nonrecaptured1231LossAmt", () 
 });
 
 Deno.test("f4797: ordinary_gain maps to OrdinaryGainLossAmt", () => {
-  const result = form4797.build({ form4797: { ordinary_gain: 8000 } });
+  const result = form4797.build({ ordinary_gain: 8000 });
   assertStringIncludes(
     result,
     "<OrdinaryGainLossAmt>8000</OrdinaryGainLossAmt>",
@@ -66,7 +66,7 @@ Deno.test("f4797: ordinary_gain maps to OrdinaryGainLossAmt", () => {
 });
 
 Deno.test("f4797: recapture_1245 maps to Section1245DepreciationAmt", () => {
-  const result = form4797.build({ form4797: { recapture_1245: 3000 } });
+  const result = form4797.build({ recapture_1245: 3000 });
   assertStringIncludes(
     result,
     "<Section1245DepreciationAmt>3000</Section1245DepreciationAmt>",
@@ -74,7 +74,7 @@ Deno.test("f4797: recapture_1245 maps to Section1245DepreciationAmt", () => {
 });
 
 Deno.test("f4797: recapture_1250 maps to Section1250DepreciationAmt", () => {
-  const result = form4797.build({ form4797: { recapture_1250: 1500 } });
+  const result = form4797.build({ recapture_1250: 1500 });
   assertStringIncludes(
     result,
     "<Section1250DepreciationAmt>1500</Section1250DepreciationAmt>",
@@ -86,7 +86,7 @@ Deno.test("f4797: recapture_1250 maps to Section1250DepreciationAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4797: single known field emits only that element, absent fields omitted", () => {
-  const result = form4797.build({ form4797: { section_1231_gain: 20000 } });
+  const result = form4797.build({ section_1231_gain: 20000 });
   assertStringIncludes(
     result,
     "<Section1231GainLossAmt>20000</Section1231GainLossAmt>",
@@ -110,13 +110,13 @@ const allFields = {
 };
 
 Deno.test("f4797: all 5 fields present: output wrapped in IRS4797 tag", () => {
-  const result = form4797.build({ form4797: allFields });
+  const result = form4797.build(allFields);
   assertStringIncludes(result, "<IRS4797>");
   assertStringIncludes(result, "</IRS4797>");
 });
 
 Deno.test("f4797: all 5 fields present: all elements emitted", () => {
-  const result = form4797.build({ form4797: allFields });
+  const result = form4797.build(allFields);
   assertStringIncludes(
     result,
     "<Section1231GainLossAmt>20000</Section1231GainLossAmt>",
@@ -144,10 +144,10 @@ Deno.test("f4797: all 5 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4797: array sales field is silently ignored", () => {
-  const result = form4797.build({ form4797: {
+  const result = form4797.build({
     sales: [{ amount: 1000 }],
     section_1231_gain: 20000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<Section1231GainLossAmt>20000</Section1231GainLossAmt>",

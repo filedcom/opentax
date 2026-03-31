@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form6251.build({ form6251: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form6251.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("regular_tax_income at zero is emitted", () => {
-  const result = form6251.build({ form6251: { regular_tax_income: 0 } });
+  const result = form6251.build({ regular_tax_income: 0 });
   assertStringIncludes(result, "<RegularTaxIncomeAmt>0</RegularTaxIncomeAmt>");
 });
 
@@ -39,7 +39,7 @@ Deno.test("regular_tax_income at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("regular_tax_income maps to RegularTaxIncomeAmt", () => {
-  const result = form6251.build({ form6251: { regular_tax_income: 75000 } });
+  const result = form6251.build({ regular_tax_income: 75000 });
   assertStringIncludes(
     result,
     "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
@@ -47,17 +47,17 @@ Deno.test("regular_tax_income maps to RegularTaxIncomeAmt", () => {
 });
 
 Deno.test("regular_tax maps to RegularTaxAmt", () => {
-  const result = form6251.build({ form6251: { regular_tax: 12000 } });
+  const result = form6251.build({ regular_tax: 12000 });
   assertStringIncludes(result, "<RegularTaxAmt>12000</RegularTaxAmt>");
 });
 
 Deno.test("iso_adjustment maps to ISOAdjustmentAmt", () => {
-  const result = form6251.build({ form6251: { iso_adjustment: 5000 } });
+  const result = form6251.build({ iso_adjustment: 5000 });
   assertStringIncludes(result, "<ISOAdjustmentAmt>5000</ISOAdjustmentAmt>");
 });
 
 Deno.test("depreciation_adjustment maps to DepreciationAdjustmentAmt", () => {
-  const result = form6251.build({ form6251: { depreciation_adjustment: 3000 } });
+  const result = form6251.build({ depreciation_adjustment: 3000 });
   assertStringIncludes(
     result,
     "<DepreciationAdjustmentAmt>3000</DepreciationAdjustmentAmt>",
@@ -65,12 +65,12 @@ Deno.test("depreciation_adjustment maps to DepreciationAdjustmentAmt", () => {
 });
 
 Deno.test("nol_adjustment maps to NOLAdjustmentAmt", () => {
-  const result = form6251.build({ form6251: { nol_adjustment: 2000 } });
+  const result = form6251.build({ nol_adjustment: 2000 });
   assertStringIncludes(result, "<NOLAdjustmentAmt>2000</NOLAdjustmentAmt>");
 });
 
 Deno.test("private_activity_bond_interest maps to PrivateActivityBondIntAmt", () => {
-  const result = form6251.build({ form6251: { private_activity_bond_interest: 800 } });
+  const result = form6251.build({ private_activity_bond_interest: 800 });
   assertStringIncludes(
     result,
     "<PrivateActivityBondIntAmt>800</PrivateActivityBondIntAmt>",
@@ -78,7 +78,7 @@ Deno.test("private_activity_bond_interest maps to PrivateActivityBondIntAmt", ()
 });
 
 Deno.test("qsbs_adjustment maps to QSBSAdjustmentAmt", () => {
-  const result = form6251.build({ form6251: { qsbs_adjustment: 10000 } });
+  const result = form6251.build({ qsbs_adjustment: 10000 });
   assertStringIncludes(
     result,
     "<QSBSAdjustmentAmt>10000</QSBSAdjustmentAmt>",
@@ -86,12 +86,12 @@ Deno.test("qsbs_adjustment maps to QSBSAdjustmentAmt", () => {
 });
 
 Deno.test("line2a_taxes_paid maps to TaxesPaidAmt", () => {
-  const result = form6251.build({ form6251: { line2a_taxes_paid: 15000 } });
+  const result = form6251.build({ line2a_taxes_paid: 15000 });
   assertStringIncludes(result, "<TaxesPaidAmt>15000</TaxesPaidAmt>");
 });
 
 Deno.test("other_adjustments maps to OtherAdjustmentsAmt", () => {
-  const result = form6251.build({ form6251: { other_adjustments: 1000 } });
+  const result = form6251.build({ other_adjustments: 1000 });
   assertStringIncludes(
     result,
     "<OtherAdjustmentsAmt>1000</OtherAdjustmentsAmt>",
@@ -99,7 +99,7 @@ Deno.test("other_adjustments maps to OtherAdjustmentsAmt", () => {
 });
 
 Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
-  const result = form6251.build({ form6251: { amtftc: 4500 } });
+  const result = form6251.build({ amtftc: 4500 });
   assertStringIncludes(
     result,
     "<AMTForeignTaxCreditAmt>4500</AMTForeignTaxCreditAmt>",
@@ -111,7 +111,7 @@ Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form6251.build({ form6251: { regular_tax_income: 75000 } });
+  const result = form6251.build({ regular_tax_income: 75000 });
   assertStringIncludes(
     result,
     "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
@@ -122,10 +122,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form6251.build({ form6251: {
+  const result = form6251.build({
     regular_tax_income: 75000,
     regular_tax: 12000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
@@ -153,13 +153,13 @@ const allFields = {
 };
 
 Deno.test("all 10 fields present: output wrapped in IRS6251 tag", () => {
-  const result = form6251.build({ form6251: allFields });
+  const result = form6251.build(allFields);
   assertStringIncludes(result, "<IRS6251>");
   assertStringIncludes(result, "</IRS6251>");
 });
 
 Deno.test("all 10 fields present: all elements emitted", () => {
-  const result = form6251.build({ form6251: allFields });
+  const result = form6251.build(allFields);
   assertStringIncludes(
     result,
     "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
@@ -195,10 +195,10 @@ Deno.test("all 10 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("filing_status string field is silently ignored", () => {
-  const result = form6251.build({ form6251: {
+  const result = form6251.build({
     filing_status: "MFJ",
     regular_tax_income: 75000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",

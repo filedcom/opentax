@@ -1,7 +1,24 @@
-import type { Form4562Fields, Form4562Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form4562Fields, string]> = [
+export interface Fields {
+  section_179_deduction?: number | null;
+  section_179_cost?: number | null;
+  section_179_elected?: number | null;
+  section_179_carryover?: number | null;
+  business_income_limit?: number | null;
+  bonus_depreciation_basis?: number | null;
+  bonus_depreciation_basis_post_jan19?: number | null;
+  macrs_gds_basis?: number | null;
+  macrs_gds_recovery_period?: number | null;
+  macrs_gds_year_of_service?: number | null;
+  macrs_prior_depreciation?: number | null;
+  business_use_pct?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["section_179_deduction", "Section179DeductionAmt"],
   ["section_179_cost", "Section179CostAmt"],
   ["section_179_elected", "Section179ElectedCostAmt"],
@@ -16,7 +33,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form4562Fields, string]> =
   ["business_use_pct", "BusinessUsePct"],
 ];
 
-function buildIRS4562(fields: Form4562Input): string {
+function buildIRS4562(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -25,14 +42,11 @@ function buildIRS4562(fields: Form4562Input): string {
   return elements("IRS4562", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form4562MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f4562.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS4562(pending.form4562 ?? {});
-  }
-}
-
-export const form4562 = new Form4562MefNode();
+export const form4562: MefFormDescriptor<"form4562", Input> = {
+  pendingKey: "form4562",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4562.pdf",
+  build(fields) {
+    return buildIRS4562(fields);
+  },
+};

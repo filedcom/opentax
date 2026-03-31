@@ -1,7 +1,22 @@
-import type { Form6251Fields, Form6251Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form6251Fields, string]> = [
+export interface Fields {
+  regular_tax_income?: number | null;
+  regular_tax?: number | null;
+  iso_adjustment?: number | null;
+  depreciation_adjustment?: number | null;
+  nol_adjustment?: number | null;
+  private_activity_bond_interest?: number | null;
+  qsbs_adjustment?: number | null;
+  line2a_taxes_paid?: number | null;
+  other_adjustments?: number | null;
+  amtftc?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["regular_tax_income", "RegularTaxIncomeAmt"],
   ["regular_tax", "RegularTaxAmt"],
   ["iso_adjustment", "ISOAdjustmentAmt"],
@@ -14,7 +29,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form6251Fields, string]> =
   ["amtftc", "AMTForeignTaxCreditAmt"],
 ];
 
-function buildIRS6251(fields: Form6251Input): string {
+function buildIRS6251(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -23,14 +38,11 @@ function buildIRS6251(fields: Form6251Input): string {
   return elements("IRS6251", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form6251MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f6251.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS6251(pending.form6251 ?? {});
-  }
-}
-
-export const form6251 = new Form6251MefNode();
+export const form6251: MefFormDescriptor<"form6251", Input> = {
+  pendingKey: "form6251",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6251.pdf",
+  build(fields) {
+    return buildIRS6251(fields);
+  },
+};

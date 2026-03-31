@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8889.build({ form8889: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8889.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("taxpayer_hsa_contributions at zero is emitted", () => {
-  const result = form8889.build({ form8889: { taxpayer_hsa_contributions: 0 } });
+  const result = form8889.build({ taxpayer_hsa_contributions: 0 });
   assertStringIncludes(result, "<HSAContributionAmt>0</HSAContributionAmt>");
 });
 
@@ -39,14 +39,14 @@ Deno.test("taxpayer_hsa_contributions at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("taxpayer_hsa_contributions maps to HSAContributionAmt", () => {
-  const result = form8889.build({ form8889: { taxpayer_hsa_contributions: 3000 } });
+  const result = form8889.build({ taxpayer_hsa_contributions: 3000 });
   assertStringIncludes(result, "<HSAContributionAmt>3000</HSAContributionAmt>");
 });
 
 Deno.test(
   "employer_hsa_contributions maps to HSAEmployerContributionAmt",
   () => {
-    const result = form8889.build({ form8889: { employer_hsa_contributions: 1200 } });
+    const result = form8889.build({ employer_hsa_contributions: 1200 });
     assertStringIncludes(
       result,
       "<HSAEmployerContributionAmt>1200</HSAEmployerContributionAmt>",
@@ -55,7 +55,7 @@ Deno.test(
 );
 
 Deno.test("hsa_distributions maps to TotalHSADistributionAmt", () => {
-  const result = form8889.build({ form8889: { hsa_distributions: 5000 } });
+  const result = form8889.build({ hsa_distributions: 5000 });
   assertStringIncludes(
     result,
     "<TotalHSADistributionAmt>5000</TotalHSADistributionAmt>",
@@ -65,7 +65,7 @@ Deno.test("hsa_distributions maps to TotalHSADistributionAmt", () => {
 Deno.test(
   "qualified_medical_expenses maps to UnreimbQualMedAndDentalExpAmt",
   () => {
-    const result = form8889.build({ form8889: { qualified_medical_expenses: 4500 } });
+    const result = form8889.build({ qualified_medical_expenses: 4500 });
     assertStringIncludes(
       result,
       "<UnreimbQualMedAndDentalExpAmt>4500</UnreimbQualMedAndDentalExpAmt>",
@@ -80,7 +80,7 @@ Deno.test(
 Deno.test(
   "single known field emits only that element, absent fields omitted",
   () => {
-    const result = form8889.build({ form8889: { taxpayer_hsa_contributions: 3000 } });
+    const result = form8889.build({ taxpayer_hsa_contributions: 3000 });
     assertStringIncludes(
       result,
       "<HSAContributionAmt>3000</HSAContributionAmt>",
@@ -103,13 +103,13 @@ const allFields = {
 };
 
 Deno.test("all fields present: output wrapped in IRS8889 tag", () => {
-  const result = form8889.build({ form8889: allFields });
+  const result = form8889.build(allFields);
   assertStringIncludes(result, "<IRS8889>");
   assertStringIncludes(result, "</IRS8889>");
 });
 
 Deno.test("all fields present: all elements emitted with correct values", () => {
-  const result = form8889.build({ form8889: allFields });
+  const result = form8889.build(allFields);
   assertStringIncludes(result, "<HSAContributionAmt>3000</HSAContributionAmt>");
   assertStringIncludes(
     result,
@@ -132,10 +132,10 @@ Deno.test("all fields present: all elements emitted with correct values", () => 
 Deno.test(
   "non-number fields silently skipped: coverage_type string excluded",
   () => {
-    const result = form8889.build({ form8889: {
+    const result = form8889.build({
       coverage_type: "self_only",
       taxpayer_hsa_contributions: 3000,
-    } });
+    });
     assertStringIncludes(
       result,
       "<HSAContributionAmt>3000</HSAContributionAmt>",
@@ -148,10 +148,10 @@ Deno.test(
 Deno.test(
   "non-number fields silently skipped: age_55_or_older boolean excluded",
   () => {
-    const result = form8889.build({ form8889: {
+    const result = form8889.build({
       age_55_or_older: true,
       taxpayer_hsa_contributions: 500,
-    } });
+    });
     assertStringIncludes(
       result,
       "<HSAContributionAmt>500</HSAContributionAmt>",
@@ -163,10 +163,10 @@ Deno.test(
 Deno.test(
   "non-number fields silently skipped: distribution_exception boolean excluded",
   () => {
-    const result = form8889.build({ form8889: {
+    const result = form8889.build({
       distribution_exception: false,
       hsa_distributions: 2000,
-    } });
+    });
     assertStringIncludes(
       result,
       "<TotalHSADistributionAmt>2000</TotalHSADistributionAmt>",
@@ -177,7 +177,7 @@ Deno.test(
 
 Deno.test("only non-number fields provided returns empty string", () => {
   assertEquals(
-    form8889.build({ form8889: { coverage_type: "family", age_55_or_older: true } }),
+    form8889.build({ coverage_type: "family", age_55_or_older: true }),
     "",
   );
 });

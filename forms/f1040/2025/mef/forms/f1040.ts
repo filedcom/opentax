@@ -1,7 +1,42 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { IRS1040Fields, IRS1040Input } from "../types.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = [
+export interface Fields {
+  line1a_wages?: number | null;
+  line1c_unreported_tips?: number | null;
+  line1e_taxable_dep_care?: number | null;
+  line1f_taxable_adoption_benefits?: number | null;
+  line1g_wages_8919?: number | null;
+  line1i_combat_pay?: number | null;
+  line2a_tax_exempt?: number | null;
+  line2b_taxable_interest?: number | null;
+  line3a_qualified_dividends?: number | null;
+  line3b_ordinary_dividends?: number | null;
+  line4a_ira_gross?: number | null;
+  line4b_ira_taxable?: number | null;
+  line5a_pension_gross?: number | null;
+  line5b_pension_taxable?: number | null;
+  line6a_ss_gross?: number | null;
+  line6b_ss_taxable?: number | null;
+  line7_capital_gain?: number | null;
+  line7a_cap_gain_distrib?: number | null;
+  line12e_itemized_deductions?: number | null;
+  line13_qbi_deduction?: number | null;
+  line17_additional_taxes?: number | null;
+  line20_nonrefundable_credits?: number | null;
+  line25a_w2_withheld?: number | null;
+  line25b_withheld_1099?: number | null;
+  line25c_additional_medicare_withheld?: number | null;
+  line28_actc?: number | null;
+  line29_refundable_aoc?: number | null;
+  line30_refundable_adoption?: number | null;
+  line31_additional_payments?: number | null;
+  line38_amount_paid_extension?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line1a_wages", "WagesAmt"],
   ["line1c_unreported_tips", "TipIncomeAmt"],
   ["line1e_taxable_dep_care", "TaxableDependentCareExpnsesAmt"],
@@ -34,7 +69,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof IRS1040Fields, string]> = 
   ["line38_amount_paid_extension", "AmountPaidWithExtensionAmt"],
 ];
 
-function buildIRS1040(fields: IRS1040Input): string {
+function buildIRS1040(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -43,14 +78,11 @@ function buildIRS1040(fields: IRS1040Input): string {
   return elements("IRS1040", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class IRS1040MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f1040.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS1040(pending.f1040 ?? {});
-  }
-}
-
-export const irs1040 = new IRS1040MefNode();
+export const irs1040: MefFormDescriptor<"f1040", Input> = {
+  pendingKey: "f1040",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+  build(fields) {
+    return buildIRS1040(fields);
+  },
+};

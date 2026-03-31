@@ -22,7 +22,7 @@ Deno.test("f8582: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8582: all unknown keys returns empty string", () => {
-  assertEquals(form8582.build({ form8582: { junk: 999, foo: "bar", active: true } }), "");
+  assertEquals(form8582.build({ junk: 999, foo: "bar", active: true }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("f8582: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8582: passive_schedule_c at zero is emitted", () => {
-  const result = form8582.build({ form8582: { passive_schedule_c: 0 } });
+  const result = form8582.build({ passive_schedule_c: 0 });
   assertStringIncludes(
     result,
     "<PassiveScheduleCIncomeAmt>0</PassiveScheduleCIncomeAmt>",
@@ -42,7 +42,7 @@ Deno.test("f8582: passive_schedule_c at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8582: passive_schedule_c maps to PassiveScheduleCIncomeAmt", () => {
-  const result = form8582.build({ form8582: { passive_schedule_c: 5000 } });
+  const result = form8582.build({ passive_schedule_c: 5000 });
   assertStringIncludes(
     result,
     "<PassiveScheduleCIncomeAmt>5000</PassiveScheduleCIncomeAmt>",
@@ -50,7 +50,7 @@ Deno.test("f8582: passive_schedule_c maps to PassiveScheduleCIncomeAmt", () => {
 });
 
 Deno.test("f8582: passive_schedule_f maps to PassiveScheduleFIncomeAmt", () => {
-  const result = form8582.build({ form8582: { passive_schedule_f: 3000 } });
+  const result = form8582.build({ passive_schedule_f: 3000 });
   assertStringIncludes(
     result,
     "<PassiveScheduleFIncomeAmt>3000</PassiveScheduleFIncomeAmt>",
@@ -58,7 +58,7 @@ Deno.test("f8582: passive_schedule_f maps to PassiveScheduleFIncomeAmt", () => {
 });
 
 Deno.test("f8582: current_income maps to CurrentYearIncomeAmt", () => {
-  const result = form8582.build({ form8582: { current_income: 12000 } });
+  const result = form8582.build({ current_income: 12000 });
   assertStringIncludes(
     result,
     "<CurrentYearIncomeAmt>12000</CurrentYearIncomeAmt>",
@@ -66,7 +66,7 @@ Deno.test("f8582: current_income maps to CurrentYearIncomeAmt", () => {
 });
 
 Deno.test("f8582: current_loss maps to CurrentYearLossAmt", () => {
-  const result = form8582.build({ form8582: { current_loss: 8000 } });
+  const result = form8582.build({ current_loss: 8000 });
   assertStringIncludes(
     result,
     "<CurrentYearLossAmt>8000</CurrentYearLossAmt>",
@@ -74,7 +74,7 @@ Deno.test("f8582: current_loss maps to CurrentYearLossAmt", () => {
 });
 
 Deno.test("f8582: prior_unallowed maps to PriorYearUnallowedLossAmt", () => {
-  const result = form8582.build({ form8582: { prior_unallowed: 2000 } });
+  const result = form8582.build({ prior_unallowed: 2000 });
   assertStringIncludes(
     result,
     "<PriorYearUnallowedLossAmt>2000</PriorYearUnallowedLossAmt>",
@@ -82,7 +82,7 @@ Deno.test("f8582: prior_unallowed maps to PriorYearUnallowedLossAmt", () => {
 });
 
 Deno.test("f8582: modified_agi maps to ModifiedAGIAmt", () => {
-  const result = form8582.build({ form8582: { modified_agi: 95000 } });
+  const result = form8582.build({ modified_agi: 95000 });
   assertStringIncludes(
     result,
     "<ModifiedAGIAmt>95000</ModifiedAGIAmt>",
@@ -90,7 +90,7 @@ Deno.test("f8582: modified_agi maps to ModifiedAGIAmt", () => {
 });
 
 Deno.test("f8582: active_participation maps to ActiveParticipationAmt", () => {
-  const result = form8582.build({ form8582: { active_participation: 15000 } });
+  const result = form8582.build({ active_participation: 15000 });
   assertStringIncludes(
     result,
     "<ActiveParticipationAmt>15000</ActiveParticipationAmt>",
@@ -102,7 +102,7 @@ Deno.test("f8582: active_participation maps to ActiveParticipationAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8582: single known field emits only that element, absent fields omitted", () => {
-  const result = form8582.build({ form8582: { passive_schedule_c: 5000 } });
+  const result = form8582.build({ passive_schedule_c: 5000 });
   assertStringIncludes(
     result,
     "<PassiveScheduleCIncomeAmt>5000</PassiveScheduleCIncomeAmt>",
@@ -127,13 +127,13 @@ const allFields = {
 };
 
 Deno.test("f8582: all 7 fields present: output wrapped in IRS8582 tag", () => {
-  const result = form8582.build({ form8582: allFields });
+  const result = form8582.build(allFields);
   assertStringIncludes(result, "<IRS8582>");
   assertStringIncludes(result, "</IRS8582>");
 });
 
 Deno.test("f8582: all 7 fields present: all elements emitted", () => {
-  const result = form8582.build({ form8582: allFields });
+  const result = form8582.build(allFields);
   assertStringIncludes(
     result,
     "<PassiveScheduleCIncomeAmt>5000</PassiveScheduleCIncomeAmt>",
@@ -163,7 +163,7 @@ Deno.test("f8582: all 7 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f8582: boolean active field is silently ignored", () => {
-  const result = form8582.build({ form8582: { active: true, passive_schedule_c: 5000 } });
+  const result = form8582.build({ active: true, passive_schedule_c: 5000 });
   assertStringIncludes(
     result,
     "<PassiveScheduleCIncomeAmt>5000</PassiveScheduleCIncomeAmt>",

@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form2441.build({ form2441: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form2441.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("dep_care_benefits at zero is emitted", () => {
-  const result = form2441.build({ form2441: { dep_care_benefits: 0 } });
+  const result = form2441.build({ dep_care_benefits: 0 });
   assertStringIncludes(
     result,
     "<DependentCareBenefitsAmt>0</DependentCareBenefitsAmt>",
@@ -42,7 +42,7 @@ Deno.test("dep_care_benefits at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("dep_care_benefits maps to DependentCareBenefitsAmt", () => {
-  const result = form2441.build({ form2441: { dep_care_benefits: 5000 } });
+  const result = form2441.build({ dep_care_benefits: 5000 });
   assertStringIncludes(
     result,
     "<DependentCareBenefitsAmt>5000</DependentCareBenefitsAmt>",
@@ -54,7 +54,7 @@ Deno.test("dep_care_benefits maps to DependentCareBenefitsAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("dep_care_benefits wrapped in IRS2441 tag", () => {
-  const result = form2441.build({ form2441: { dep_care_benefits: 5000 } });
+  const result = form2441.build({ dep_care_benefits: 5000 });
   assertStringIncludes(result, "<IRS2441>");
   assertStringIncludes(result, "</IRS2441>");
 });
@@ -64,7 +64,7 @@ Deno.test("dep_care_benefits wrapped in IRS2441 tag", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("known field emitted, unknown field dropped", () => {
-  const result = form2441.build({ form2441: { dep_care_benefits: 2500, junk: 999 } });
+  const result = form2441.build({ dep_care_benefits: 2500, junk: 999 });
   assertStringIncludes(
     result,
     "<DependentCareBenefitsAmt>2500</DependentCareBenefitsAmt>",
@@ -78,11 +78,11 @@ Deno.test("known field emitted, unknown field dropped", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("non-number field alongside numeric field: only numeric emitted", () => {
-  const result = form2441.build({ form2441: {
+  const result = form2441.build({
     dep_care_benefits: 3000,
     some_flag: true,
     some_label: "MFS",
-  } });
+  });
   assertStringIncludes(
     result,
     "<DependentCareBenefitsAmt>3000</DependentCareBenefitsAmt>",
@@ -93,7 +93,7 @@ Deno.test("non-number field alongside numeric field: only numeric emitted", () =
 
 Deno.test("only non-number fields provided returns empty string", () => {
   assertEquals(
-    form2441.build({ form2441: { filing_status: "MFS", has_dependents: true } }),
+    form2441.build({ filing_status: "MFS", has_dependents: true }),
     "",
   );
 });

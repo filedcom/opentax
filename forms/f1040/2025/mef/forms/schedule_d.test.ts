@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(scheduleD.build({ schedule_d: { junk: 999, foo: "bar" } }), "");
+  assertEquals(scheduleD.build({ junk: 999, foo: "bar" }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line_6_carryover at zero is emitted", () => {
-  const result = scheduleD.build({ schedule_d: { line_6_carryover: 0 } });
+  const result = scheduleD.build({ line_6_carryover: 0 });
   assertStringIncludes(
     result,
     "<STCapitalLossCarryoverAmt>0</STCapitalLossCarryoverAmt>",
@@ -42,7 +42,7 @@ Deno.test("line_6_carryover at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line_4_other_st maps to STGainOrLossFromFormsAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_4_other_st: 1500 } });
+  const result = scheduleD.build({ line_4_other_st: 1500 });
   assertStringIncludes(
     result,
     "<STGainOrLossFromFormsAmt>1500</STGainOrLossFromFormsAmt>",
@@ -50,7 +50,7 @@ Deno.test("line_4_other_st maps to STGainOrLossFromFormsAmt", () => {
 });
 
 Deno.test("line_5_k1_st maps to NetSTGainOrLossFromSchK1Amt", () => {
-  const result = scheduleD.build({ schedule_d: { line_5_k1_st: 2000 } });
+  const result = scheduleD.build({ line_5_k1_st: 2000 });
   assertStringIncludes(
     result,
     "<NetSTGainOrLossFromSchK1Amt>2000</NetSTGainOrLossFromSchK1Amt>",
@@ -58,7 +58,7 @@ Deno.test("line_5_k1_st maps to NetSTGainOrLossFromSchK1Amt", () => {
 });
 
 Deno.test("line_6_carryover maps to STCapitalLossCarryoverAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_6_carryover: 3000 } });
+  const result = scheduleD.build({ line_6_carryover: 3000 });
   assertStringIncludes(
     result,
     "<STCapitalLossCarryoverAmt>3000</STCapitalLossCarryoverAmt>",
@@ -66,7 +66,7 @@ Deno.test("line_6_carryover maps to STCapitalLossCarryoverAmt", () => {
 });
 
 Deno.test("line_11_form2439 maps to LTGainOrLossFromFormsAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_11_form2439: 4000 } });
+  const result = scheduleD.build({ line_11_form2439: 4000 });
   assertStringIncludes(
     result,
     "<LTGainOrLossFromFormsAmt>4000</LTGainOrLossFromFormsAmt>",
@@ -74,7 +74,7 @@ Deno.test("line_11_form2439 maps to LTGainOrLossFromFormsAmt", () => {
 });
 
 Deno.test("line_12_k1_lt maps to NetLTGainOrLossFromSchK1Amt", () => {
-  const result = scheduleD.build({ schedule_d: { line_12_k1_lt: 5000 } });
+  const result = scheduleD.build({ line_12_k1_lt: 5000 });
   assertStringIncludes(
     result,
     "<NetLTGainOrLossFromSchK1Amt>5000</NetLTGainOrLossFromSchK1Amt>",
@@ -82,7 +82,7 @@ Deno.test("line_12_k1_lt maps to NetLTGainOrLossFromSchK1Amt", () => {
 });
 
 Deno.test("line_14_carryover maps to LTCapitalLossCarryoverAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_14_carryover: 6000 } });
+  const result = scheduleD.build({ line_14_carryover: 6000 });
   assertStringIncludes(
     result,
     "<LTCapitalLossCarryoverAmt>6000</LTCapitalLossCarryoverAmt>",
@@ -90,7 +90,7 @@ Deno.test("line_14_carryover maps to LTCapitalLossCarryoverAmt", () => {
 });
 
 Deno.test("line19_unrecaptured_1250 maps to UnrcptrSect1250GainWrkshtAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line19_unrecaptured_1250: 7000 } });
+  const result = scheduleD.build({ line19_unrecaptured_1250: 7000 });
   assertStringIncludes(
     result,
     "<UnrcptrSect1250GainWrkshtAmt>7000</UnrcptrSect1250GainWrkshtAmt>",
@@ -98,7 +98,7 @@ Deno.test("line19_unrecaptured_1250 maps to UnrcptrSect1250GainWrkshtAmt", () =>
 });
 
 Deno.test("line13_cap_gain_distrib maps to CapitalGainDistributionsAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line13_cap_gain_distrib: 800 } });
+  const result = scheduleD.build({ line13_cap_gain_distrib: 800 });
   assertStringIncludes(
     result,
     "<CapitalGainDistributionsAmt>800</CapitalGainDistributionsAmt>",
@@ -106,7 +106,7 @@ Deno.test("line13_cap_gain_distrib maps to CapitalGainDistributionsAmt", () => {
 });
 
 Deno.test("line_12_cap_gain_dist maps to CapitalGainDistributionsAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_12_cap_gain_dist: 900 } });
+  const result = scheduleD.build({ line_12_cap_gain_dist: 900 });
   assertStringIncludes(
     result,
     "<CapitalGainDistributionsAmt>900</CapitalGainDistributionsAmt>",
@@ -120,10 +120,10 @@ Deno.test("line_12_cap_gain_dist maps to CapitalGainDistributionsAmt", () => {
 Deno.test(
   "line_1a_proceeds + line_1a_cost emit TotalSTCGL1099BBssRptNoAdjGrp with child elements",
   () => {
-    const result = scheduleD.build({ schedule_d: {
+    const result = scheduleD.build({
       line_1a_proceeds: 10000,
       line_1a_cost: 8000,
-    } });
+    });
     assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
     assertStringIncludes(
       result,
@@ -142,10 +142,10 @@ Deno.test(
 );
 
 Deno.test("line_1a group emits loss when cost > proceeds", () => {
-  const result = scheduleD.build({ schedule_d: {
+  const result = scheduleD.build({
     line_1a_proceeds: 5000,
     line_1a_cost: 8000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<TotalGainOrLossAmt>-3000</TotalGainOrLossAmt>",
@@ -159,10 +159,10 @@ Deno.test("line_1a group emits loss when cost > proceeds", () => {
 Deno.test(
   "line_8a_proceeds + line_8a_cost emit TotalLTCGL1099BBssRptNoAdjGrp with child elements",
   () => {
-    const result = scheduleD.build({ schedule_d: {
+    const result = scheduleD.build({
       line_8a_proceeds: 20000,
       line_8a_cost: 15000,
-    } });
+    });
     assertStringIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
     assertStringIncludes(
       result,
@@ -185,7 +185,7 @@ Deno.test(
 // ---------------------------------------------------------------------------
 
 Deno.test("line_1a with only proceeds emits group with just TotalProceedsSalesPriceAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_1a_proceeds: 5000 } });
+  const result = scheduleD.build({ line_1a_proceeds: 5000 });
   assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
   assertStringIncludes(
     result,
@@ -196,7 +196,7 @@ Deno.test("line_1a with only proceeds emits group with just TotalProceedsSalesPr
 });
 
 Deno.test("line_1a with only cost emits group with just TotalCostOrOtherBasisAmt", () => {
-  const result = scheduleD.build({ schedule_d: { line_1a_cost: 3000 } });
+  const result = scheduleD.build({ line_1a_cost: 3000 });
   assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
   assertStringIncludes(
     result,
@@ -211,7 +211,7 @@ Deno.test("line_1a with only cost emits group with just TotalCostOrOtherBasisAmt
 // ---------------------------------------------------------------------------
 
 Deno.test("single known scalar field: only that element emitted, absent fields omitted", () => {
-  const result = scheduleD.build({ schedule_d: { line_4_other_st: 500 } });
+  const result = scheduleD.build({ line_4_other_st: 500 });
   assertStringIncludes(
     result,
     "<STGainOrLossFromFormsAmt>500</STGainOrLossFromFormsAmt>",
@@ -242,13 +242,13 @@ const allFields = {
 };
 
 Deno.test("all fields present: output wrapped in IRS1040ScheduleD tag", () => {
-  const result = scheduleD.build({ schedule_d: allFields });
+  const result = scheduleD.build(allFields);
   assertStringIncludes(result, "<IRS1040ScheduleD>");
   assertStringIncludes(result, "</IRS1040ScheduleD>");
 });
 
 Deno.test("all fields present: line 1a nested group emitted", () => {
-  const result = scheduleD.build({ schedule_d: allFields });
+  const result = scheduleD.build(allFields);
   assertStringIncludes(result, "<TotalSTCGL1099BBssRptNoAdjGrp>");
   assertStringIncludes(
     result,
@@ -265,13 +265,13 @@ Deno.test("all fields present: line 1a nested group emitted", () => {
 });
 
 Deno.test("all fields present: line 8a nested group emitted", () => {
-  const result = scheduleD.build({ schedule_d: allFields });
+  const result = scheduleD.build(allFields);
   assertStringIncludes(result, "<TotalLTCGL1099BBssRptNoAdjGrp>");
   assertStringIncludes(result, "</TotalLTCGL1099BBssRptNoAdjGrp>");
 });
 
 Deno.test("all fields present: scalar fields emitted correctly", () => {
-  const result = scheduleD.build({ schedule_d: allFields });
+  const result = scheduleD.build(allFields);
   assertStringIncludes(
     result,
     "<STGainOrLossFromFormsAmt>200</STGainOrLossFromFormsAmt>",
@@ -313,10 +313,10 @@ Deno.test("all fields present: scalar fields emitted correctly", () => {
 Deno.test(
   "line13_cap_gain_distrib(400) + line_12_cap_gain_dist(200) aggregated to CapitalGainDistributionsAmt=600",
   () => {
-    const result = scheduleD.build({ schedule_d: {
+    const result = scheduleD.build({
       line13_cap_gain_distrib: 400,
       line_12_cap_gain_dist: 200,
-    } });
+    });
     assertStringIncludes(
       result,
       "<CapitalGainDistributionsAmt>600</CapitalGainDistributionsAmt>",
@@ -327,7 +327,7 @@ Deno.test(
 Deno.test(
   "line13_cap_gain_distrib(400) alone emits CapitalGainDistributionsAmt=400",
   () => {
-    const result = scheduleD.build({ schedule_d: { line13_cap_gain_distrib: 400 } });
+    const result = scheduleD.build({ line13_cap_gain_distrib: 400 });
     assertStringIncludes(
       result,
       "<CapitalGainDistributionsAmt>400</CapitalGainDistributionsAmt>",
@@ -340,7 +340,7 @@ Deno.test(
 // ---------------------------------------------------------------------------
 
 Deno.test("transaction array is silently ignored", () => {
-  const result = scheduleD.build({ schedule_d: {
+  const result = scheduleD.build({
     transaction: {
       part: "A",
       description: "test",
@@ -352,7 +352,7 @@ Deno.test("transaction array is silently ignored", () => {
       is_long_term: false,
     },
     line_4_other_st: 500,
-  } });
+  });
   assertStringIncludes(
     result,
     "<STGainOrLossFromFormsAmt>500</STGainOrLossFromFormsAmt>",
@@ -362,10 +362,10 @@ Deno.test("transaction array is silently ignored", () => {
 });
 
 Deno.test("filing_status is silently ignored", () => {
-  const result = scheduleD.build({ schedule_d: {
+  const result = scheduleD.build({
     filing_status: "MFJ",
     line_6_carryover: 3000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<STCapitalLossCarryoverAmt>3000</STCapitalLossCarryoverAmt>",
@@ -375,10 +375,10 @@ Deno.test("filing_status is silently ignored", () => {
 });
 
 Deno.test("box2c_qsbs boolean field is silently ignored", () => {
-  const result = scheduleD.build({ schedule_d: {
+  const result = scheduleD.build({
     box2c_qsbs: 5000,
     line_14_carryover: 1000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<LTCapitalLossCarryoverAmt>1000</LTCapitalLossCarryoverAmt>",
@@ -388,10 +388,10 @@ Deno.test("box2c_qsbs boolean field is silently ignored", () => {
 });
 
 Deno.test("capital_loss_carryover is silently ignored", () => {
-  const result = scheduleD.build({ schedule_d: {
+  const result = scheduleD.build({
     capital_loss_carryover: 9999,
     line19_unrecaptured_1250: 2000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<UnrcptrSect1250GainWrkshtAmt>2000</UnrcptrSect1250GainWrkshtAmt>",

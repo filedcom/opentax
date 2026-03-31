@@ -22,7 +22,7 @@ Deno.test("f4137: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4137: all unknown keys returns empty string", () => {
-  assertEquals(form4137.build({ form4137: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form4137.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("f4137: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4137: allocated_tips at zero is emitted", () => {
-  const result = form4137.build({ form4137: { allocated_tips: 0 } });
+  const result = form4137.build({ allocated_tips: 0 });
   assertStringIncludes(result, "<AllocatedTipsAmt>0</AllocatedTipsAmt>");
 });
 
@@ -39,17 +39,17 @@ Deno.test("f4137: allocated_tips at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4137: allocated_tips maps to AllocatedTipsAmt", () => {
-  const result = form4137.build({ form4137: { allocated_tips: 1500 } });
+  const result = form4137.build({ allocated_tips: 1500 });
   assertStringIncludes(result, "<AllocatedTipsAmt>1500</AllocatedTipsAmt>");
 });
 
 Deno.test("f4137: total_tips_received maps to TotalTipsRcvdAmt", () => {
-  const result = form4137.build({ form4137: { total_tips_received: 8000 } });
+  const result = form4137.build({ total_tips_received: 8000 });
   assertStringIncludes(result, "<TotalTipsRcvdAmt>8000</TotalTipsRcvdAmt>");
 });
 
 Deno.test("f4137: reported_tips maps to TipsReportedToEmployerAmt", () => {
-  const result = form4137.build({ form4137: { reported_tips: 3000 } });
+  const result = form4137.build({ reported_tips: 3000 });
   assertStringIncludes(
     result,
     "<TipsReportedToEmployerAmt>3000</TipsReportedToEmployerAmt>",
@@ -57,7 +57,7 @@ Deno.test("f4137: reported_tips maps to TipsReportedToEmployerAmt", () => {
 });
 
 Deno.test("f4137: ss_wages_from_w2 maps to SocSecWagesFromW2Amt", () => {
-  const result = form4137.build({ form4137: { ss_wages_from_w2: 50000 } });
+  const result = form4137.build({ ss_wages_from_w2: 50000 });
   assertStringIncludes(
     result,
     "<SocSecWagesFromW2Amt>50000</SocSecWagesFromW2Amt>",
@@ -69,7 +69,7 @@ Deno.test("f4137: ss_wages_from_w2 maps to SocSecWagesFromW2Amt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4137: single known field emits only that element, absent fields omitted", () => {
-  const result = form4137.build({ form4137: { allocated_tips: 1500 } });
+  const result = form4137.build({ allocated_tips: 1500 });
   assertStringIncludes(result, "<AllocatedTipsAmt>1500</AllocatedTipsAmt>");
   assertNotIncludes(result, "<TotalTipsRcvdAmt>");
   assertNotIncludes(result, "<TipsReportedToEmployerAmt>");
@@ -77,7 +77,7 @@ Deno.test("f4137: single known field emits only that element, absent fields omit
 });
 
 Deno.test("f4137: two fields present: only those two elements emitted", () => {
-  const result = form4137.build({ form4137: { allocated_tips: 1500, reported_tips: 3000 } });
+  const result = form4137.build({ allocated_tips: 1500, reported_tips: 3000 });
   assertStringIncludes(result, "<AllocatedTipsAmt>1500</AllocatedTipsAmt>");
   assertStringIncludes(
     result,
@@ -99,13 +99,13 @@ const allFields = {
 };
 
 Deno.test("f4137: all 4 fields present: output wrapped in IRS4137 tag", () => {
-  const result = form4137.build({ form4137: allFields });
+  const result = form4137.build(allFields);
   assertStringIncludes(result, "<IRS4137>");
   assertStringIncludes(result, "</IRS4137>");
 });
 
 Deno.test("f4137: all 4 fields present: all elements emitted", () => {
-  const result = form4137.build({ form4137: allFields });
+  const result = form4137.build(allFields);
   assertStringIncludes(result, "<AllocatedTipsAmt>1500</AllocatedTipsAmt>");
   assertStringIncludes(result, "<TotalTipsRcvdAmt>8000</TotalTipsRcvdAmt>");
   assertStringIncludes(
@@ -123,7 +123,7 @@ Deno.test("f4137: all 4 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4137: string field is silently ignored", () => {
-  const result = form4137.build({ form4137: { reason_code: "G", allocated_tips: 500 } });
+  const result = form4137.build({ reason_code: "G", allocated_tips: 500 });
   assertStringIncludes(result, "<AllocatedTipsAmt>500</AllocatedTipsAmt>");
   assertNotIncludes(result, "reason_code");
   assertNotIncludes(result, '"G"');

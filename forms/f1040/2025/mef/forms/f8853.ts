@@ -1,7 +1,27 @@
-import type { Form8853Fields, Form8853Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8853Fields, string]> = [
+export interface Fields {
+  employer_archer_msa?: number | null;
+  taxpayer_archer_msa_contributions?: number | null;
+  line3_limitation_amount?: number | null;
+  compensation?: number | null;
+  archer_msa_distributions?: number | null;
+  archer_msa_rollover?: number | null;
+  archer_msa_qualified_expenses?: number | null;
+  medicare_advantage_distributions?: number | null;
+  medicare_advantage_qualified_expenses?: number | null;
+  ltc_gross_payments?: number | null;
+  ltc_qualified_contract_amount?: number | null;
+  ltc_accelerated_death_benefits?: number | null;
+  ltc_period_days?: number | null;
+  ltc_actual_costs?: number | null;
+  ltc_reimbursements?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["employer_archer_msa", "EmployerArcherMSAContriAmt"],
   ["taxpayer_archer_msa_contributions", "TxpyrArcherMSAContriAmt"],
   ["line3_limitation_amount", "ArcherMSALimitationAmt"],
@@ -19,7 +39,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8853Fields, string]> =
   ["ltc_reimbursements", "LTCReimbursementsAmt"],
 ];
 
-function buildIRS8853(fields: Form8853Input): string {
+function buildIRS8853(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -28,14 +48,11 @@ function buildIRS8853(fields: Form8853Input): string {
   return elements("IRS8853", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form8853MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f8853.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS8853(pending.form8853 ?? {});
-  }
-}
-
-export const form8853 = new Form8853MefNode();
+export const form8853: MefFormDescriptor<"form8853", Input> = {
+  pendingKey: "form8853",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8853.pdf",
+  build(fields) {
+    return buildIRS8853(fields);
+  },
+};

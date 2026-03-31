@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(schedule3.build({ schedule3: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(schedule3.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line2_childcare_credit at zero is emitted", () => {
-  const result = schedule3.build({ schedule3: { line2_childcare_credit: 0 } });
+  const result = schedule3.build({ line2_childcare_credit: 0 });
   assertStringIncludes(
     result,
     "<CreditForChildAndDepdCareAmt>0</CreditForChildAndDepdCareAmt>",
@@ -42,7 +42,7 @@ Deno.test("line2_childcare_credit at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("line2_childcare_credit maps to CreditForChildAndDepdCareAmt", () => {
-  const result = schedule3.build({ schedule3: { line2_childcare_credit: 1200 } });
+  const result = schedule3.build({ line2_childcare_credit: 1200 });
   assertStringIncludes(
     result,
     "<CreditForChildAndDepdCareAmt>1200</CreditForChildAndDepdCareAmt>",
@@ -50,14 +50,14 @@ Deno.test("line2_childcare_credit maps to CreditForChildAndDepdCareAmt", () => {
 });
 
 Deno.test("line3_education_credit maps to EducationCreditAmt", () => {
-  const result = schedule3.build({ schedule3: { line3_education_credit: 2500 } });
+  const result = schedule3.build({ line3_education_credit: 2500 });
   assertStringIncludes(result, "<EducationCreditAmt>2500</EducationCreditAmt>");
 });
 
 Deno.test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt", () => {
-  const result = schedule3.build({ schedule3: {
+  const result = schedule3.build({
     line4_retirement_savings_credit: 400,
-  } });
+  });
   assertStringIncludes(
     result,
     "<RtrSavingsContributionsCrAmt>400</RtrSavingsContributionsCrAmt>",
@@ -65,7 +65,7 @@ Deno.test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt"
 });
 
 Deno.test("line6c_adoption_credit maps to AdoptionCreditAmt", () => {
-  const result = schedule3.build({ schedule3: { line6c_adoption_credit: 15950 } });
+  const result = schedule3.build({ line6c_adoption_credit: 15950 });
   assertStringIncludes(
     result,
     "<AdoptionCreditAmt>15950</AdoptionCreditAmt>",
@@ -73,7 +73,7 @@ Deno.test("line6c_adoption_credit maps to AdoptionCreditAmt", () => {
 });
 
 Deno.test("line10_amount_paid_extension maps to RequestForExtensionAmt", () => {
-  const result = schedule3.build({ schedule3: { line10_amount_paid_extension: 3000 } });
+  const result = schedule3.build({ line10_amount_paid_extension: 3000 });
   assertStringIncludes(
     result,
     "<RequestForExtensionAmt>3000</RequestForExtensionAmt>",
@@ -81,7 +81,7 @@ Deno.test("line10_amount_paid_extension maps to RequestForExtensionAmt", () => {
 });
 
 Deno.test("line11_excess_ss maps to ExcessSocSecAndTier1RRTATaxAmt", () => {
-  const result = schedule3.build({ schedule3: { line11_excess_ss: 5000 } });
+  const result = schedule3.build({ line11_excess_ss: 5000 });
   assertStringIncludes(
     result,
     "<ExcessSocSecAndTier1RRTATaxAmt>5000</ExcessSocSecAndTier1RRTATaxAmt>",
@@ -92,7 +92,7 @@ Deno.test("line11_excess_ss maps to ExcessSocSecAndTier1RRTATaxAmt", () => {
 // The 2025v3.0 XSD line 6b (MinAMTCrAmt) is the Minimum AMT Credit from Form 8801,
 // not the child tax credit. No XSD element maps to the engine's line6b_child_tax_credit.
 Deno.test("line6b_child_tax_credit is not emitted (no matching XSD element)", () => {
-  const result = schedule3.build({ schedule3: { line6b_child_tax_credit: 2000 } });
+  const result = schedule3.build({ line6b_child_tax_credit: 2000 });
   // When the only known field has no XSD mapping, result is empty
   assertEquals(result, "");
 });
@@ -102,10 +102,10 @@ Deno.test("line6b_child_tax_credit is not emitted (no matching XSD element)", ()
 // ---------------------------------------------------------------------------
 
 Deno.test("line1_foreign_tax_credit(1000) + line1_foreign_tax_1099(200) -> ForeignTaxCreditAmt=1200", () => {
-  const result = schedule3.build({ schedule3: {
+  const result = schedule3.build({
     line1_foreign_tax_credit: 1000,
     line1_foreign_tax_1099: 200,
-  } });
+  });
   assertStringIncludes(
     result,
     "<ForeignTaxCreditAmt>1200</ForeignTaxCreditAmt>",
@@ -113,7 +113,7 @@ Deno.test("line1_foreign_tax_credit(1000) + line1_foreign_tax_1099(200) -> Forei
 });
 
 Deno.test("line1_foreign_tax_credit alone -> ForeignTaxCreditAmt=1000", () => {
-  const result = schedule3.build({ schedule3: { line1_foreign_tax_credit: 1000 } });
+  const result = schedule3.build({ line1_foreign_tax_credit: 1000 });
   assertStringIncludes(
     result,
     "<ForeignTaxCreditAmt>1000</ForeignTaxCreditAmt>",
@@ -121,7 +121,7 @@ Deno.test("line1_foreign_tax_credit alone -> ForeignTaxCreditAmt=1000", () => {
 });
 
 Deno.test("line1_foreign_tax_1099 alone -> ForeignTaxCreditAmt=200", () => {
-  const result = schedule3.build({ schedule3: { line1_foreign_tax_1099: 200 } });
+  const result = schedule3.build({ line1_foreign_tax_1099: 200 });
   assertStringIncludes(
     result,
     "<ForeignTaxCreditAmt>200</ForeignTaxCreditAmt>",
@@ -129,7 +129,7 @@ Deno.test("line1_foreign_tax_1099 alone -> ForeignTaxCreditAmt=200", () => {
 });
 
 Deno.test("both line1 fields absent: ForeignTaxCreditAmt not emitted", () => {
-  const result = schedule3.build({ schedule3: { line2_childcare_credit: 500 } });
+  const result = schedule3.build({ line2_childcare_credit: 500 });
   assertNotIncludes(result, "<ForeignTaxCreditAmt>");
 });
 
@@ -138,7 +138,7 @@ Deno.test("both line1 fields absent: ForeignTaxCreditAmt not emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = schedule3.build({ schedule3: { line3_education_credit: 2500 } });
+  const result = schedule3.build({ line3_education_credit: 2500 });
   assertStringIncludes(result, "<EducationCreditAmt>2500</EducationCreditAmt>");
   assertNotIncludes(result, "<ForeignTaxCreditAmt>");
   assertNotIncludes(result, "<CreditForChildAndDepdCareAmt>");
@@ -148,10 +148,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = schedule3.build({ schedule3: {
+  const result = schedule3.build({
     line2_childcare_credit: 1200,
     line11_excess_ss: 5000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<CreditForChildAndDepdCareAmt>1200</CreditForChildAndDepdCareAmt>",
@@ -180,13 +180,13 @@ const allFields = {
 };
 
 Deno.test("all present: output wrapped in IRS1040Schedule3 tag", () => {
-  const result = schedule3.build({ schedule3: allFields });
+  const result = schedule3.build(allFields);
   assertStringIncludes(result, "<IRS1040Schedule3>");
   assertStringIncludes(result, "</IRS1040Schedule3>");
 });
 
 Deno.test("all present: all expected elements emitted", () => {
-  const result = schedule3.build({ schedule3: allFields });
+  const result = schedule3.build(allFields);
   // Aggregated: 800 + 200 = 1000
   assertStringIncludes(
     result,
@@ -213,7 +213,7 @@ Deno.test("all present: all expected elements emitted", () => {
 });
 
 Deno.test("all present: ForeignTaxCreditAmt appears before CreditForChildAndDepdCareAmt (XSD order)", () => {
-  const result = schedule3.build({ schedule3: allFields });
+  const result = schedule3.build(allFields);
   const foreignIdx = result.indexOf("<ForeignTaxCreditAmt>");
   const childcareIdx = result.indexOf("<CreditForChildAndDepdCareAmt>");
   assertEquals(
@@ -224,7 +224,7 @@ Deno.test("all present: ForeignTaxCreditAmt appears before CreditForChildAndDepd
 });
 
 Deno.test("all present: CreditForChildAndDepdCareAmt before ExcessSocSecAndTier1RRTATaxAmt", () => {
-  const result = schedule3.build({ schedule3: allFields });
+  const result = schedule3.build(allFields);
   const childcareIdx = result.indexOf("<CreditForChildAndDepdCareAmt>");
   const excessSsIdx = result.indexOf("<ExcessSocSecAndTier1RRTATaxAmt>");
   assertEquals(
@@ -239,10 +239,10 @@ Deno.test("all present: CreditForChildAndDepdCareAmt before ExcessSocSecAndTier1
 // ---------------------------------------------------------------------------
 
 Deno.test("known field emitted, unknown field dropped", () => {
-  const result = schedule3.build({ schedule3: {
+  const result = schedule3.build({
     line2_childcare_credit: 1200,
     junk: 999,
-  } });
+  });
   assertStringIncludes(
     result,
     "<CreditForChildAndDepdCareAmt>1200</CreditForChildAndDepdCareAmt>",
@@ -252,12 +252,12 @@ Deno.test("known field emitted, unknown field dropped", () => {
 });
 
 Deno.test("multiple known and unknown fields: only known emitted", () => {
-  const result = schedule3.build({ schedule3: {
+  const result = schedule3.build({
     line3_education_credit: 2500,
     unknown_field_1: 500,
     line11_excess_ss: 5000,
     not_a_real_key: "ignored",
-  } });
+  });
   assertStringIncludes(result, "<EducationCreditAmt>2500</EducationCreditAmt>");
   assertStringIncludes(
     result,

@@ -1,7 +1,21 @@
-import type { Form8880Fields, Form8880Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8880Fields, string]> = [
+export interface Fields {
+  ira_contributions_taxpayer?: number | null;
+  ira_contributions_spouse?: number | null;
+  elective_deferrals?: number | null;
+  elective_deferrals_taxpayer?: number | null;
+  elective_deferrals_spouse?: number | null;
+  distributions_taxpayer?: number | null;
+  distributions_spouse?: number | null;
+  agi?: number | null;
+  income_tax_liability?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["ira_contributions_taxpayer", "TxpyrRetirePlanContriAmt"],
   ["ira_contributions_spouse", "SpouseRetirePlanContriAmt"],
   ["elective_deferrals", "ElectiveDeferralAmt"],
@@ -13,7 +27,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8880Fields, string]> =
   ["income_tax_liability", "IncomeTaxLiabilityAmt"],
 ];
 
-function buildIRS8880(fields: Form8880Input): string {
+function buildIRS8880(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -22,14 +36,11 @@ function buildIRS8880(fields: Form8880Input): string {
   return elements("IRS8880", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form8880MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f8880.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS8880(pending.form8880 ?? {});
-  }
-}
-
-export const form8880 = new Form8880MefNode();
+export const form8880: MefFormDescriptor<"form8880", Input> = {
+  pendingKey: "form8880",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8880.pdf",
+  build(fields) {
+    return buildIRS8880(fields);
+  },
+};

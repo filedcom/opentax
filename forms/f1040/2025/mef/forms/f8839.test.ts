@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8839.build({ form8839: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8839.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("adoption_benefits at zero is emitted", () => {
-  const result = form8839.build({ form8839: { adoption_benefits: 0 } });
+  const result = form8839.build({ adoption_benefits: 0 });
   assertStringIncludes(result, "<AdoptionBenefitsAmt>0</AdoptionBenefitsAmt>");
 });
 
@@ -39,7 +39,7 @@ Deno.test("adoption_benefits at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("adoption_benefits maps to AdoptionBenefitsAmt", () => {
-  const result = form8839.build({ form8839: { adoption_benefits: 5000 } });
+  const result = form8839.build({ adoption_benefits: 5000 });
   assertStringIncludes(
     result,
     "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
@@ -47,12 +47,12 @@ Deno.test("adoption_benefits maps to AdoptionBenefitsAmt", () => {
 });
 
 Deno.test("magi maps to ModifiedAGIAmt", () => {
-  const result = form8839.build({ form8839: { magi: 120000 } });
+  const result = form8839.build({ magi: 120000 });
   assertStringIncludes(result, "<ModifiedAGIAmt>120000</ModifiedAGIAmt>");
 });
 
 Deno.test("income_tax_liability maps to IncomeTaxLiabilityAmt", () => {
-  const result = form8839.build({ form8839: { income_tax_liability: 15000 } });
+  const result = form8839.build({ income_tax_liability: 15000 });
   assertStringIncludes(
     result,
     "<IncomeTaxLiabilityAmt>15000</IncomeTaxLiabilityAmt>",
@@ -64,7 +64,7 @@ Deno.test("income_tax_liability maps to IncomeTaxLiabilityAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8839.build({ form8839: { adoption_benefits: 5000 } });
+  const result = form8839.build({ adoption_benefits: 5000 });
   assertStringIncludes(
     result,
     "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
@@ -74,7 +74,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8839.build({ form8839: { adoption_benefits: 5000, magi: 120000 } });
+  const result = form8839.build({ adoption_benefits: 5000, magi: 120000 });
   assertStringIncludes(
     result,
     "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
@@ -94,13 +94,13 @@ const allFields = {
 };
 
 Deno.test("all 3 fields present: output wrapped in IRS8839 tag", () => {
-  const result = form8839.build({ form8839: allFields });
+  const result = form8839.build(allFields);
   assertStringIncludes(result, "<IRS8839>");
   assertStringIncludes(result, "</IRS8839>");
 });
 
 Deno.test("all 3 fields present: all elements emitted", () => {
-  const result = form8839.build({ form8839: allFields });
+  const result = form8839.build(allFields);
   assertStringIncludes(
     result,
     "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
@@ -117,10 +117,10 @@ Deno.test("all 3 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("children array field is silently ignored", () => {
-  const result = form8839.build({ form8839: {
+  const result = form8839.build({
     children: [{ name: "child1" }],
     adoption_benefits: 5000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<AdoptionBenefitsAmt>5000</AdoptionBenefitsAmt>",
@@ -130,7 +130,7 @@ Deno.test("children array field is silently ignored", () => {
 });
 
 Deno.test("filing_status enum field is silently ignored", () => {
-  const result = form8839.build({ form8839: { filing_status: "MFJ", magi: 120000 } });
+  const result = form8839.build({ filing_status: "MFJ", magi: 120000 });
   assertStringIncludes(result, "<ModifiedAGIAmt>120000</ModifiedAGIAmt>");
   assertNotIncludes(result, "filing_status");
   assertNotIncludes(result, "MFJ");

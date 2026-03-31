@@ -23,7 +23,7 @@ Deno.test("f1116: empty object returns empty string", () => {
 
 Deno.test("f1116: all unknown keys returns empty string", () => {
   assertEquals(
-    form1116.build({ form_1116: { junk: 999, foo: "bar", income_category: "GEN" } }),
+    form1116.build({ junk: 999, foo: "bar", income_category: "GEN" }),
     "",
   );
 });
@@ -33,7 +33,7 @@ Deno.test("f1116: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f1116: foreign_tax_paid at zero is emitted", () => {
-  const result = form1116.build({ form_1116: { foreign_tax_paid: 0 } });
+  const result = form1116.build({ foreign_tax_paid: 0 });
   assertStringIncludes(
     result,
     "<ForeignTaxesPaidOrAccruedAmt>0</ForeignTaxesPaidOrAccruedAmt>",
@@ -45,7 +45,7 @@ Deno.test("f1116: foreign_tax_paid at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f1116: foreign_tax_paid maps to ForeignTaxesPaidOrAccruedAmt", () => {
-  const result = form1116.build({ form_1116: { foreign_tax_paid: 1500 } });
+  const result = form1116.build({ foreign_tax_paid: 1500 });
   assertStringIncludes(
     result,
     "<ForeignTaxesPaidOrAccruedAmt>1500</ForeignTaxesPaidOrAccruedAmt>",
@@ -53,7 +53,7 @@ Deno.test("f1116: foreign_tax_paid maps to ForeignTaxesPaidOrAccruedAmt", () => 
 });
 
 Deno.test("f1116: foreign_income maps to ForeignSourceIncomeAmt", () => {
-  const result = form1116.build({ form_1116: { foreign_income: 8000 } });
+  const result = form1116.build({ foreign_income: 8000 });
   assertStringIncludes(
     result,
     "<ForeignSourceIncomeAmt>8000</ForeignSourceIncomeAmt>",
@@ -61,7 +61,7 @@ Deno.test("f1116: foreign_income maps to ForeignSourceIncomeAmt", () => {
 });
 
 Deno.test("f1116: total_income maps to TotalIncomeAmt", () => {
-  const result = form1116.build({ form_1116: { total_income: 75000 } });
+  const result = form1116.build({ total_income: 75000 });
   assertStringIncludes(
     result,
     "<TotalIncomeAmt>75000</TotalIncomeAmt>",
@@ -69,7 +69,7 @@ Deno.test("f1116: total_income maps to TotalIncomeAmt", () => {
 });
 
 Deno.test("f1116: us_tax_before_credits maps to USTaxBeforeCreditsAmt", () => {
-  const result = form1116.build({ form_1116: { us_tax_before_credits: 12000 } });
+  const result = form1116.build({ us_tax_before_credits: 12000 });
   assertStringIncludes(
     result,
     "<USTaxBeforeCreditsAmt>12000</USTaxBeforeCreditsAmt>",
@@ -81,7 +81,7 @@ Deno.test("f1116: us_tax_before_credits maps to USTaxBeforeCreditsAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f1116: single known field emits only that element, absent fields omitted", () => {
-  const result = form1116.build({ form_1116: { foreign_tax_paid: 1500 } });
+  const result = form1116.build({ foreign_tax_paid: 1500 });
   assertStringIncludes(
     result,
     "<ForeignTaxesPaidOrAccruedAmt>1500</ForeignTaxesPaidOrAccruedAmt>",
@@ -103,13 +103,13 @@ const allFields = {
 };
 
 Deno.test("f1116: all 4 fields present: output wrapped in IRS1116 tag", () => {
-  const result = form1116.build({ form_1116: allFields });
+  const result = form1116.build(allFields);
   assertStringIncludes(result, "<IRS1116>");
   assertStringIncludes(result, "</IRS1116>");
 });
 
 Deno.test("f1116: all 4 fields present: all elements emitted", () => {
-  const result = form1116.build({ form_1116: allFields });
+  const result = form1116.build(allFields);
   assertStringIncludes(
     result,
     "<ForeignTaxesPaidOrAccruedAmt>1500</ForeignTaxesPaidOrAccruedAmt>",
@@ -133,10 +133,10 @@ Deno.test("f1116: all 4 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("f1116: income_category enum field is silently ignored", () => {
-  const result = form1116.build({ form_1116: {
+  const result = form1116.build({
     income_category: "GEN",
     foreign_tax_paid: 1500,
-  } });
+  });
   assertStringIncludes(
     result,
     "<ForeignTaxesPaidOrAccruedAmt>1500</ForeignTaxesPaidOrAccruedAmt>",
@@ -146,7 +146,7 @@ Deno.test("f1116: income_category enum field is silently ignored", () => {
 });
 
 Deno.test("f1116: filing_status string field is silently ignored", () => {
-  const result = form1116.build({ form_1116: { filing_status: "MFJ", foreign_income: 8000 } });
+  const result = form1116.build({ filing_status: "MFJ", foreign_income: 8000 });
   assertStringIncludes(
     result,
     "<ForeignSourceIncomeAmt>8000</ForeignSourceIncomeAmt>",

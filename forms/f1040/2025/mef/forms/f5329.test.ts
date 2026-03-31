@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form5329.build({ form5329: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form5329.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("early_distribution at zero is emitted", () => {
-  const result = form5329.build({ form5329: { early_distribution: 0 } });
+  const result = form5329.build({ early_distribution: 0 });
   assertStringIncludes(
     result,
     "<EarlyDistributionAmt>0</EarlyDistributionAmt>",
@@ -42,7 +42,7 @@ Deno.test("early_distribution at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("early_distribution maps to EarlyDistributionAmt", () => {
-  const result = form5329.build({ form5329: { early_distribution: 5000 } });
+  const result = form5329.build({ early_distribution: 5000 });
   assertStringIncludes(
     result,
     "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
@@ -50,7 +50,7 @@ Deno.test("early_distribution maps to EarlyDistributionAmt", () => {
 });
 
 Deno.test("simple_ira_early_distribution maps to SimpleIRAEarlyDistriAmt", () => {
-  const result = form5329.build({ form5329: { simple_ira_early_distribution: 3000 } });
+  const result = form5329.build({ simple_ira_early_distribution: 3000 });
   assertStringIncludes(
     result,
     "<SimpleIRAEarlyDistriAmt>3000</SimpleIRAEarlyDistriAmt>",
@@ -58,7 +58,7 @@ Deno.test("simple_ira_early_distribution maps to SimpleIRAEarlyDistriAmt", () =>
 });
 
 Deno.test("esa_able_distribution maps to ESAABLEDistributionAmt", () => {
-  const result = form5329.build({ form5329: { esa_able_distribution: 2000 } });
+  const result = form5329.build({ esa_able_distribution: 2000 });
   assertStringIncludes(
     result,
     "<ESAABLEDistributionAmt>2000</ESAABLEDistributionAmt>",
@@ -66,7 +66,7 @@ Deno.test("esa_able_distribution maps to ESAABLEDistributionAmt", () => {
 });
 
 Deno.test("excess_traditional_ira maps to ExcessContriTradIRAAmt", () => {
-  const result = form5329.build({ form5329: { excess_traditional_ira: 1500 } });
+  const result = form5329.build({ excess_traditional_ira: 1500 });
   assertStringIncludes(
     result,
     "<ExcessContriTradIRAAmt>1500</ExcessContriTradIRAAmt>",
@@ -74,7 +74,7 @@ Deno.test("excess_traditional_ira maps to ExcessContriTradIRAAmt", () => {
 });
 
 Deno.test("traditional_ira_value maps to TraditionalIRAValueAmt", () => {
-  const result = form5329.build({ form5329: { traditional_ira_value: 50000 } });
+  const result = form5329.build({ traditional_ira_value: 50000 });
   assertStringIncludes(
     result,
     "<TraditionalIRAValueAmt>50000</TraditionalIRAValueAmt>",
@@ -82,7 +82,7 @@ Deno.test("traditional_ira_value maps to TraditionalIRAValueAmt", () => {
 });
 
 Deno.test("excess_roth_ira maps to ExcessContriRothIRAAmt", () => {
-  const result = form5329.build({ form5329: { excess_roth_ira: 1000 } });
+  const result = form5329.build({ excess_roth_ira: 1000 });
   assertStringIncludes(
     result,
     "<ExcessContriRothIRAAmt>1000</ExcessContriRothIRAAmt>",
@@ -90,12 +90,12 @@ Deno.test("excess_roth_ira maps to ExcessContriRothIRAAmt", () => {
 });
 
 Deno.test("roth_ira_value maps to RothIRAValueAmt", () => {
-  const result = form5329.build({ form5329: { roth_ira_value: 30000 } });
+  const result = form5329.build({ roth_ira_value: 30000 });
   assertStringIncludes(result, "<RothIRAValueAmt>30000</RothIRAValueAmt>");
 });
 
 Deno.test("excess_coverdell_esa maps to ExcessContriCoverdellESAAmt", () => {
-  const result = form5329.build({ form5329: { excess_coverdell_esa: 500 } });
+  const result = form5329.build({ excess_coverdell_esa: 500 });
   assertStringIncludes(
     result,
     "<ExcessContriCoverdellESAAmt>500</ExcessContriCoverdellESAAmt>",
@@ -103,7 +103,7 @@ Deno.test("excess_coverdell_esa maps to ExcessContriCoverdellESAAmt", () => {
 });
 
 Deno.test("coverdell_esa_value maps to CoverdellESAValueAmt", () => {
-  const result = form5329.build({ form5329: { coverdell_esa_value: 10000 } });
+  const result = form5329.build({ coverdell_esa_value: 10000 });
   assertStringIncludes(
     result,
     "<CoverdellESAValueAmt>10000</CoverdellESAValueAmt>",
@@ -111,7 +111,7 @@ Deno.test("coverdell_esa_value maps to CoverdellESAValueAmt", () => {
 });
 
 Deno.test("excess_archer_msa maps to ExcessContriArcherMSAAmt", () => {
-  const result = form5329.build({ form5329: { excess_archer_msa: 750 } });
+  const result = form5329.build({ excess_archer_msa: 750 });
   assertStringIncludes(
     result,
     "<ExcessContriArcherMSAAmt>750</ExcessContriArcherMSAAmt>",
@@ -119,22 +119,22 @@ Deno.test("excess_archer_msa maps to ExcessContriArcherMSAAmt", () => {
 });
 
 Deno.test("archer_msa_value maps to ArcherMSAValueAmt", () => {
-  const result = form5329.build({ form5329: { archer_msa_value: 8000 } });
+  const result = form5329.build({ archer_msa_value: 8000 });
   assertStringIncludes(result, "<ArcherMSAValueAmt>8000</ArcherMSAValueAmt>");
 });
 
 Deno.test("excess_hsa maps to ExcessContriHSAAmt", () => {
-  const result = form5329.build({ form5329: { excess_hsa: 600 } });
+  const result = form5329.build({ excess_hsa: 600 });
   assertStringIncludes(result, "<ExcessContriHSAAmt>600</ExcessContriHSAAmt>");
 });
 
 Deno.test("hsa_value maps to HSAValueAmt", () => {
-  const result = form5329.build({ form5329: { hsa_value: 4000 } });
+  const result = form5329.build({ hsa_value: 4000 });
   assertStringIncludes(result, "<HSAValueAmt>4000</HSAValueAmt>");
 });
 
 Deno.test("excess_able maps to ExcessContriABLEAmt", () => {
-  const result = form5329.build({ form5329: { excess_able: 400 } });
+  const result = form5329.build({ excess_able: 400 });
   assertStringIncludes(
     result,
     "<ExcessContriABLEAmt>400</ExcessContriABLEAmt>",
@@ -142,7 +142,7 @@ Deno.test("excess_able maps to ExcessContriABLEAmt", () => {
 });
 
 Deno.test("able_value maps to ABLEAccountValueAmt", () => {
-  const result = form5329.build({ form5329: { able_value: 15000 } });
+  const result = form5329.build({ able_value: 15000 });
   assertStringIncludes(
     result,
     "<ABLEAccountValueAmt>15000</ABLEAccountValueAmt>",
@@ -154,7 +154,7 @@ Deno.test("able_value maps to ABLEAccountValueAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form5329.build({ form5329: { early_distribution: 5000 } });
+  const result = form5329.build({ early_distribution: 5000 });
   assertStringIncludes(
     result,
     "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
@@ -165,10 +165,10 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form5329.build({ form5329: {
+  const result = form5329.build({
     early_distribution: 5000,
     excess_traditional_ira: 1500,
-  } });
+  });
   assertStringIncludes(
     result,
     "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
@@ -204,13 +204,13 @@ const allFields = {
 };
 
 Deno.test("all 15 fields present: output wrapped in IRS5329 tag", () => {
-  const result = form5329.build({ form5329: allFields });
+  const result = form5329.build(allFields);
   assertStringIncludes(result, "<IRS5329>");
   assertStringIncludes(result, "</IRS5329>");
 });
 
 Deno.test("all 15 fields present: all elements emitted", () => {
-  const result = form5329.build({ form5329: allFields });
+  const result = form5329.build(allFields);
   assertStringIncludes(
     result,
     "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
@@ -266,10 +266,10 @@ Deno.test("all 15 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("distribution_code enum field is silently ignored", () => {
-  const result = form5329.build({ form5329: {
+  const result = form5329.build({
     distribution_code: "7",
     early_distribution: 5000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
@@ -279,10 +279,10 @@ Deno.test("distribution_code enum field is silently ignored", () => {
 });
 
 Deno.test("early_distribution_exception enum field is silently ignored", () => {
-  const result = form5329.build({ form5329: {
+  const result = form5329.build({
     early_distribution_exception: "02",
     excess_traditional_ira: 1500,
-  } });
+  });
   assertStringIncludes(
     result,
     "<ExcessContriTradIRAAmt>1500</ExcessContriTradIRAAmt>",

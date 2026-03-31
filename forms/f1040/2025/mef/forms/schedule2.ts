@@ -1,8 +1,30 @@
-import type { Schedule2Fields, Schedule2Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
+
+export interface Fields {
+  line1_amt?: number | null;
+  line4_se_tax?: number | null;
+  line5_unreported_tip_tax?: number | null;
+  line6_uncollected_8919?: number | null;
+  line8_form5329_tax?: number | null;
+  line11_additional_medicare?: number | null;
+  line12_niit?: number | null;
+  uncollected_fica?: number | null;
+  uncollected_fica_gtl?: number | null;
+  section409a_excise?: number | null;
+  line17h_nqdc_tax?: number | null;
+  golden_parachute_excise?: number | null;
+  line17k_golden_parachute_excise?: number | null;
+  line17b_hsa_penalty?: number | null;
+  line17e_archer_msa_tax?: number | null;
+  line17f_medicare_advantage_msa_tax?: number | null;
+  lump_sum_tax?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name)
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule2Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line1_amt", "AlternativeMinimumTaxAmt"],
   ["line4_se_tax", "SelfEmploymentTaxAmt"],
   ["line5_unreported_tip_tax", "SocSecMedicareTaxUnrptdTipAmt"],
@@ -18,9 +40,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Schedule2Fields, string]> 
 
 // Aggregated mappings: multiple inputSchema fields -> single XSD element
 // Each tuple: [XSD element name, ...inputSchema keys to sum]
-const AGGREGATED: ReadonlyArray<
-  readonly [string, ...(keyof Schedule2Fields)[]]
-> = [
+const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Fields)[]]> = [
   ["UncollSSMedcrRRTAGrpInsTxAmt", "uncollected_fica", "uncollected_fica_gtl"],
   ["IncmNonqlfyDefrdCompPlanAmt", "section409a_excise", "line17h_nqdc_tax"],
   [
@@ -30,7 +50,7 @@ const AGGREGATED: ReadonlyArray<
   ],
 ];
 
-function buildIRS1040Schedule2(fields: Schedule2Input): string {
+function buildIRS1040Schedule2(fields: Input): string {
   const children: string[] = [];
 
   // Direct mappings
@@ -53,14 +73,11 @@ function buildIRS1040Schedule2(fields: Schedule2Input): string {
   return elements("IRS1040Schedule2", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Schedule2MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS1040Schedule2(pending.schedule2 ?? {});
-  }
-}
-
-export const schedule2 = new Schedule2MefNode();
+export const schedule2: MefFormDescriptor<"schedule2", Input> = {
+  pendingKey: "schedule2",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf",
+  build(fields) {
+    return buildIRS1040Schedule2(fields);
+  },
+};

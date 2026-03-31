@@ -1,16 +1,17 @@
-import type { Form2441Fields, Form2441Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
+export interface Fields {
+  dep_care_benefits?: number | null;
+}
 
-// ─── Field Map ────────────────────────────────────────────────────────────────
+type Input = Partial<Fields> & Record<string, unknown>;
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form2441Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["dep_care_benefits", "DependentCareBenefitsAmt"],
 ];
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
-
-function buildIRS2441(fields: Form2441Input): string {
+function buildIRS2441(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -19,14 +20,11 @@ function buildIRS2441(fields: Form2441Input): string {
   return elements("IRS2441", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form2441MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f2441.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS2441(pending.form2441 ?? {});
-  }
-}
-
-export const form2441 = new Form2441MefNode();
+export const form2441: MefFormDescriptor<"form2441", Input> = {
+  pendingKey: "form2441",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f2441.pdf",
+  build(fields) {
+    return buildIRS2441(fields);
+  },
+};

@@ -1,13 +1,21 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { Form4972Fields, Form4972Input } from "../types.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form4972Fields, string]> = [
+export interface Fields {
+  lump_sum_amount?: number | null;
+  capital_gain_amount?: number | null;
+  death_benefit_exclusion?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["lump_sum_amount", "LumpSumDistriAmt"],
   ["capital_gain_amount", "CapitalGainAmt"],
   ["death_benefit_exclusion", "DeathBenefitExclusionAmt"],
 ];
 
-function buildIRS4972(fields: Form4972Input): string {
+function buildIRS4972(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -16,14 +24,11 @@ function buildIRS4972(fields: Form4972Input): string {
   return elements("IRS4972", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form4972MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f4972.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS4972(pending.form4972 ?? {});
-  }
-}
-
-export const form4972 = new Form4972MefNode();
+export const form4972: MefFormDescriptor<"form4972", Input> = {
+  pendingKey: "form4972",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4972.pdf",
+  build(fields) {
+    return buildIRS4972(fields);
+  },
+};

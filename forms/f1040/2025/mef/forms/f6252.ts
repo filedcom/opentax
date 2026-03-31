@@ -1,10 +1,17 @@
-import type { Form6252Fields, Form6252Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
+export interface Fields {
+  selling_price?: number | null;
+  gross_profit?: number | null;
+  contract_price?: number | null;
+  payments_received?: number | null;
+  depreciation_recapture?: number | null;
+}
 
-// ─── Field Map ────────────────────────────────────────────────────────────────
+type Input = Partial<Fields> & Record<string, unknown>;
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form6252Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["selling_price", "SellingPriceAmt"],
   ["gross_profit", "GrossProfitAmt"],
   ["contract_price", "ContractPriceAmt"],
@@ -12,9 +19,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form6252Fields, string]> =
   ["depreciation_recapture", "OrdinaryIncomeAmt"],
 ];
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
-
-function buildIRS6252(fields: Form6252Input): string {
+function buildIRS6252(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -23,14 +28,11 @@ function buildIRS6252(fields: Form6252Input): string {
   return elements("IRS6252", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form6252MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f6252.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS6252(pending.form6252 ?? {});
-  }
-}
-
-export const form6252 = new Form6252MefNode();
+export const form6252: MefFormDescriptor<"form6252", Input> = {
+  pendingKey: "form6252",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6252.pdf",
+  build(fields) {
+    return buildIRS6252(fields);
+  },
+};

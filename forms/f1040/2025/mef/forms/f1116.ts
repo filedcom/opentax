@@ -1,14 +1,23 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { Form1116Fields, Form1116Input } from "../types.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form1116Fields, string]> = [
+export interface Fields {
+  foreign_tax_paid?: number | null;
+  foreign_income?: number | null;
+  total_income?: number | null;
+  us_tax_before_credits?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["foreign_tax_paid", "ForeignTaxesPaidOrAccruedAmt"],
   ["foreign_income", "ForeignSourceIncomeAmt"],
   ["total_income", "TotalIncomeAmt"],
   ["us_tax_before_credits", "USTaxBeforeCreditsAmt"],
 ];
 
-function buildIRS1116(fields: Form1116Input): string {
+function buildIRS1116(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -17,14 +26,11 @@ function buildIRS1116(fields: Form1116Input): string {
   return elements("IRS1116", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form1116MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f1116.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS1116(pending.form_1116 ?? {});
-  }
-}
-
-export const form1116 = new Form1116MefNode();
+export const form1116: MefFormDescriptor<"form_1116", Input> = {
+  pendingKey: "form_1116",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116.pdf",
+  build(fields) {
+    return buildIRS1116(fields);
+  },
+};

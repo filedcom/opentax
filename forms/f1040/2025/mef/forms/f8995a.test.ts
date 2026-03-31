@@ -22,7 +22,7 @@ Deno.test("empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form8995a.build({ form8995a: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(form8995a.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("taxable_income at zero is emitted", () => {
-  const result = form8995a.build({ form8995a: { taxable_income: 0 } });
+  const result = form8995a.build({ taxable_income: 0 });
   assertStringIncludes(result, "<TaxableIncomeAmt>0</TaxableIncomeAmt>");
 });
 
@@ -39,17 +39,17 @@ Deno.test("taxable_income at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("taxable_income maps to TaxableIncomeAmt", () => {
-  const result = form8995a.build({ form8995a: { taxable_income: 80000 } });
+  const result = form8995a.build({ taxable_income: 80000 });
   assertStringIncludes(result, "<TaxableIncomeAmt>80000</TaxableIncomeAmt>");
 });
 
 Deno.test("net_capital_gain maps to NetCapitalGainAmt", () => {
-  const result = form8995a.build({ form8995a: { net_capital_gain: 5000 } });
+  const result = form8995a.build({ net_capital_gain: 5000 });
   assertStringIncludes(result, "<NetCapitalGainAmt>5000</NetCapitalGainAmt>");
 });
 
 Deno.test("qbi maps to QualifiedBusinessIncomeAmt", () => {
-  const result = form8995a.build({ form8995a: { qbi: 40000 } });
+  const result = form8995a.build({ qbi: 40000 });
   assertStringIncludes(
     result,
     "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
@@ -57,12 +57,12 @@ Deno.test("qbi maps to QualifiedBusinessIncomeAmt", () => {
 });
 
 Deno.test("w2_wages maps to W2WagesAmt", () => {
-  const result = form8995a.build({ form8995a: { w2_wages: 60000 } });
+  const result = form8995a.build({ w2_wages: 60000 });
   assertStringIncludes(result, "<W2WagesAmt>60000</W2WagesAmt>");
 });
 
 Deno.test("unadjusted_basis maps to UnadjustedBasisAmt", () => {
-  const result = form8995a.build({ form8995a: { unadjusted_basis: 200000 } });
+  const result = form8995a.build({ unadjusted_basis: 200000 });
   assertStringIncludes(
     result,
     "<UnadjustedBasisAmt>200000</UnadjustedBasisAmt>",
@@ -70,17 +70,17 @@ Deno.test("unadjusted_basis maps to UnadjustedBasisAmt", () => {
 });
 
 Deno.test("sstb_qbi maps to SSTBQBIAmt", () => {
-  const result = form8995a.build({ form8995a: { sstb_qbi: 30000 } });
+  const result = form8995a.build({ sstb_qbi: 30000 });
   assertStringIncludes(result, "<SSTBQBIAmt>30000</SSTBQBIAmt>");
 });
 
 Deno.test("sstb_w2_wages maps to SSTBW2WagesAmt", () => {
-  const result = form8995a.build({ form8995a: { sstb_w2_wages: 25000 } });
+  const result = form8995a.build({ sstb_w2_wages: 25000 });
   assertStringIncludes(result, "<SSTBW2WagesAmt>25000</SSTBW2WagesAmt>");
 });
 
 Deno.test("sstb_unadjusted_basis maps to SSTBUnadjustedBasisAmt", () => {
-  const result = form8995a.build({ form8995a: { sstb_unadjusted_basis: 150000 } });
+  const result = form8995a.build({ sstb_unadjusted_basis: 150000 });
   assertStringIncludes(
     result,
     "<SSTBUnadjustedBasisAmt>150000</SSTBUnadjustedBasisAmt>",
@@ -88,7 +88,7 @@ Deno.test("sstb_unadjusted_basis maps to SSTBUnadjustedBasisAmt", () => {
 });
 
 Deno.test("line6_sec199a_dividends maps to Section199ADividendsAmt", () => {
-  const result = form8995a.build({ form8995a: { line6_sec199a_dividends: 1200 } });
+  const result = form8995a.build({ line6_sec199a_dividends: 1200 });
   assertStringIncludes(
     result,
     "<Section199ADividendsAmt>1200</Section199ADividendsAmt>",
@@ -96,7 +96,7 @@ Deno.test("line6_sec199a_dividends maps to Section199ADividendsAmt", () => {
 });
 
 Deno.test("qbi_loss_carryforward maps to QBILossCarryforwardAmt", () => {
-  const result = form8995a.build({ form8995a: { qbi_loss_carryforward: 8000 } });
+  const result = form8995a.build({ qbi_loss_carryforward: 8000 });
   assertStringIncludes(
     result,
     "<QBILossCarryforwardAmt>8000</QBILossCarryforwardAmt>",
@@ -104,7 +104,7 @@ Deno.test("qbi_loss_carryforward maps to QBILossCarryforwardAmt", () => {
 });
 
 Deno.test("reit_loss_carryforward maps to REITLossCarryforwardAmt", () => {
-  const result = form8995a.build({ form8995a: { reit_loss_carryforward: 3000 } });
+  const result = form8995a.build({ reit_loss_carryforward: 3000 });
   assertStringIncludes(
     result,
     "<REITLossCarryforwardAmt>3000</REITLossCarryforwardAmt>",
@@ -116,7 +116,7 @@ Deno.test("reit_loss_carryforward maps to REITLossCarryforwardAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8995a.build({ form8995a: { qbi: 40000 } });
+  const result = form8995a.build({ qbi: 40000 });
   assertStringIncludes(
     result,
     "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",
@@ -127,7 +127,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8995a.build({ form8995a: { taxable_income: 80000, qbi: 40000 } });
+  const result = form8995a.build({ taxable_income: 80000, qbi: 40000 });
   assertStringIncludes(result, "<TaxableIncomeAmt>80000</TaxableIncomeAmt>");
   assertStringIncludes(
     result,
@@ -156,13 +156,13 @@ const allFields = {
 };
 
 Deno.test("all 11 fields present: output wrapped in IRS8995A tag", () => {
-  const result = form8995a.build({ form8995a: allFields });
+  const result = form8995a.build(allFields);
   assertStringIncludes(result, "<IRS8995A>");
   assertStringIncludes(result, "</IRS8995A>");
 });
 
 Deno.test("all 11 fields present: all elements emitted", () => {
-  const result = form8995a.build({ form8995a: allFields });
+  const result = form8995a.build(allFields);
   assertStringIncludes(result, "<TaxableIncomeAmt>80000</TaxableIncomeAmt>");
   assertStringIncludes(result, "<NetCapitalGainAmt>5000</NetCapitalGainAmt>");
   assertStringIncludes(
@@ -199,7 +199,7 @@ Deno.test("all 11 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("filing_status string field is silently ignored", () => {
-  const result = form8995a.build({ form8995a: { filing_status: "MFJ", qbi: 40000 } });
+  const result = form8995a.build({ filing_status: "MFJ", qbi: 40000 });
   assertStringIncludes(
     result,
     "<QualifiedBusinessIncomeAmt>40000</QualifiedBusinessIncomeAmt>",

@@ -1,7 +1,23 @@
-import type { Form8995AFields, Form8995AInput } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8995AFields, string]> = [
+export interface Fields {
+  taxable_income?: number | null;
+  net_capital_gain?: number | null;
+  qbi?: number | null;
+  w2_wages?: number | null;
+  unadjusted_basis?: number | null;
+  sstb_qbi?: number | null;
+  sstb_w2_wages?: number | null;
+  sstb_unadjusted_basis?: number | null;
+  line6_sec199a_dividends?: number | null;
+  qbi_loss_carryforward?: number | null;
+  reit_loss_carryforward?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["taxable_income", "TaxableIncomeAmt"],
   ["net_capital_gain", "NetCapitalGainAmt"],
   ["qbi", "QualifiedBusinessIncomeAmt"],
@@ -15,7 +31,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8995AFields, string]> 
   ["reit_loss_carryforward", "REITLossCarryforwardAmt"],
 ];
 
-function buildIRS8995A(fields: Form8995AInput): string {
+function buildIRS8995A(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -24,14 +40,11 @@ function buildIRS8995A(fields: Form8995AInput): string {
   return elements("IRS8995A", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form8995AMefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f8995a.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS8995A(pending.form8995a ?? {});
-  }
-}
-
-export const form8995a = new Form8995AMefNode();
+export const form8995a: MefFormDescriptor<"form8995a", Input> = {
+  pendingKey: "form8995a",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995a.pdf",
+  build(fields) {
+    return buildIRS8995A(fields);
+  },
+};

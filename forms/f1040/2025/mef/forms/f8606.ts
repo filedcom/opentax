@@ -1,7 +1,20 @@
-import type { Form8606Fields, Form8606Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8606Fields, string]> = [
+export interface Fields {
+  nondeductible_contributions?: number | null;
+  prior_basis?: number | null;
+  year_end_ira_value?: number | null;
+  traditional_distributions?: number | null;
+  roth_conversion?: number | null;
+  roth_distribution?: number | null;
+  roth_basis_contributions?: number | null;
+  roth_basis_conversions?: number | null;
+}
+
+type Input = Partial<Fields> & Record<string, unknown>;
+
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["nondeductible_contributions", "NondeductibleContriAmt"],
   ["prior_basis", "TotalBasisInTraditionalIRAAmt"],
   ["year_end_ira_value", "TraditionalIRAValueAmt"],
@@ -12,7 +25,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8606Fields, string]> =
   ["roth_basis_conversions", "RothConversionBasisAmt"],
 ];
 
-function buildIRS8606(fields: Form8606Input): string {
+function buildIRS8606(fields: Input): string {
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
@@ -21,14 +34,11 @@ function buildIRS8606(fields: Form8606Input): string {
   return elements("IRS8606", children);
 }
 
-import { MefNode } from "../form.ts";
-import type { MefFormsPending } from "../types.ts";
-
-class Form8606MefNode extends MefNode {
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f8606.pdf";
-  build(pending: MefFormsPending): string {
-    return buildIRS8606(pending.form8606 ?? {});
-  }
-}
-
-export const form8606 = new Form8606MefNode();
+export const form8606: MefFormDescriptor<"form8606", Input> = {
+  pendingKey: "form8606",
+  FIELD_MAP,
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8606.pdf",
+  build(fields) {
+    return buildIRS8606(fields);
+  },
+};

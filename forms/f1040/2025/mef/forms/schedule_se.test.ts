@@ -22,7 +22,7 @@ Deno.test("schedule_se: empty object returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_se: all unknown keys returns empty string", () => {
-  assertEquals(scheduleSE.build({ schedule_se: { junk: 999, foo: "bar", baz: 0 } }), "");
+  assertEquals(scheduleSE.build({ junk: 999, foo: "bar", baz: 0 }), "");
 });
 
 // ---------------------------------------------------------------------------
@@ -30,7 +30,7 @@ Deno.test("schedule_se: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_se: net_profit_schedule_c at zero is emitted", () => {
-  const result = scheduleSE.build({ schedule_se: { net_profit_schedule_c: 0 } });
+  const result = scheduleSE.build({ net_profit_schedule_c: 0 });
   assertStringIncludes(result, "<NetProfitOrLossAmt>0</NetProfitOrLossAmt>");
 });
 
@@ -39,7 +39,7 @@ Deno.test("schedule_se: net_profit_schedule_c at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_se: net_profit_schedule_c maps to NetProfitOrLossAmt", () => {
-  const result = scheduleSE.build({ schedule_se: { net_profit_schedule_c: 30000 } });
+  const result = scheduleSE.build({ net_profit_schedule_c: 30000 });
   assertStringIncludes(
     result,
     "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
@@ -47,7 +47,7 @@ Deno.test("schedule_se: net_profit_schedule_c maps to NetProfitOrLossAmt", () =>
 });
 
 Deno.test("schedule_se: net_profit_schedule_f maps to NetFarmProfitOrLossAmt", () => {
-  const result = scheduleSE.build({ schedule_se: { net_profit_schedule_f: 15000 } });
+  const result = scheduleSE.build({ net_profit_schedule_f: 15000 });
   assertStringIncludes(
     result,
     "<NetFarmProfitOrLossAmt>15000</NetFarmProfitOrLossAmt>",
@@ -55,7 +55,7 @@ Deno.test("schedule_se: net_profit_schedule_f maps to NetFarmProfitOrLossAmt", (
 });
 
 Deno.test("schedule_se: unreported_tips_4137 maps to Form4137UnreportedTipsAmt", () => {
-  const result = scheduleSE.build({ schedule_se: { unreported_tips_4137: 2000 } });
+  const result = scheduleSE.build({ unreported_tips_4137: 2000 });
   assertStringIncludes(
     result,
     "<Form4137UnreportedTipsAmt>2000</Form4137UnreportedTipsAmt>",
@@ -63,7 +63,7 @@ Deno.test("schedule_se: unreported_tips_4137 maps to Form4137UnreportedTipsAmt",
 });
 
 Deno.test("schedule_se: wages_8919 maps to WagesSubjectToSSTAmt", () => {
-  const result = scheduleSE.build({ schedule_se: { wages_8919: 8000 } });
+  const result = scheduleSE.build({ wages_8919: 8000 });
   assertStringIncludes(
     result,
     "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
@@ -71,7 +71,7 @@ Deno.test("schedule_se: wages_8919 maps to WagesSubjectToSSTAmt", () => {
 });
 
 Deno.test("schedule_se: w2_ss_wages maps to SocSecWagesAmt", () => {
-  const result = scheduleSE.build({ schedule_se: { w2_ss_wages: 100000 } });
+  const result = scheduleSE.build({ w2_ss_wages: 100000 });
   assertStringIncludes(result, "<SocSecWagesAmt>100000</SocSecWagesAmt>");
 });
 
@@ -80,7 +80,7 @@ Deno.test("schedule_se: w2_ss_wages maps to SocSecWagesAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_se: single known field emits only that element, absent fields omitted", () => {
-  const result = scheduleSE.build({ schedule_se: { net_profit_schedule_c: 30000 } });
+  const result = scheduleSE.build({ net_profit_schedule_c: 30000 });
   assertStringIncludes(
     result,
     "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
@@ -92,10 +92,10 @@ Deno.test("schedule_se: single known field emits only that element, absent field
 });
 
 Deno.test("schedule_se: two fields present: only those two elements emitted", () => {
-  const result = scheduleSE.build({ schedule_se: {
+  const result = scheduleSE.build({
     net_profit_schedule_c: 30000,
     wages_8919: 8000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
@@ -121,13 +121,13 @@ const allFields = {
 };
 
 Deno.test("schedule_se: all 5 fields present: output wrapped in IRS1040ScheduleSE tag", () => {
-  const result = scheduleSE.build({ schedule_se: allFields });
+  const result = scheduleSE.build(allFields);
   assertStringIncludes(result, "<IRS1040ScheduleSE>");
   assertStringIncludes(result, "</IRS1040ScheduleSE>");
 });
 
 Deno.test("schedule_se: all 5 fields present: all elements emitted", () => {
-  const result = scheduleSE.build({ schedule_se: allFields });
+  const result = scheduleSE.build(allFields);
   assertStringIncludes(
     result,
     "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",
@@ -152,10 +152,10 @@ Deno.test("schedule_se: all 5 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_se: string field is silently ignored", () => {
-  const result = scheduleSE.build({ schedule_se: {
+  const result = scheduleSE.build({
     filing_status: "MFJ",
     net_profit_schedule_c: 30000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<NetProfitOrLossAmt>30000</NetProfitOrLossAmt>",

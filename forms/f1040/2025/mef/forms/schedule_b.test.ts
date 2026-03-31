@@ -23,7 +23,7 @@ Deno.test("schedule_b: empty object returns empty string", () => {
 
 Deno.test("schedule_b: all unknown keys returns empty string", () => {
   assertEquals(
-    scheduleB.build({ schedule_b: { junk: 999, foo: "bar", payer_name: "Bank" } }),
+    scheduleB.build({ junk: 999, foo: "bar", payer_name: "Bank" }),
     "",
   );
 });
@@ -33,7 +33,7 @@ Deno.test("schedule_b: all unknown keys returns empty string", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: taxable_interest_net at zero is emitted", () => {
-  const result = scheduleB.build({ schedule_b: { taxable_interest_net: 0 } });
+  const result = scheduleB.build({ taxable_interest_net: 0 });
   assertStringIncludes(
     result,
     "<TotalInterestAmt>0</TotalInterestAmt>",
@@ -45,7 +45,7 @@ Deno.test("schedule_b: taxable_interest_net at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: taxable_interest_net maps to TotalInterestAmt", () => {
-  const result = scheduleB.build({ schedule_b: { taxable_interest_net: 3000 } });
+  const result = scheduleB.build({ taxable_interest_net: 3000 });
   assertStringIncludes(
     result,
     "<TotalInterestAmt>3000</TotalInterestAmt>",
@@ -53,7 +53,7 @@ Deno.test("schedule_b: taxable_interest_net maps to TotalInterestAmt", () => {
 });
 
 Deno.test("schedule_b: ee_bond_exclusion maps to ExcludibleSavingsBondIntAmt", () => {
-  const result = scheduleB.build({ schedule_b: { ee_bond_exclusion: 500 } });
+  const result = scheduleB.build({ ee_bond_exclusion: 500 });
   assertStringIncludes(
     result,
     "<ExcludibleSavingsBondIntAmt>500</ExcludibleSavingsBondIntAmt>",
@@ -61,7 +61,7 @@ Deno.test("schedule_b: ee_bond_exclusion maps to ExcludibleSavingsBondIntAmt", (
 });
 
 Deno.test("schedule_b: ordinaryDividends maps to TotalOrdinaryDividendsAmt", () => {
-  const result = scheduleB.build({ schedule_b: { ordinaryDividends: 1200 } });
+  const result = scheduleB.build({ ordinaryDividends: 1200 });
   assertStringIncludes(
     result,
     "<TotalOrdinaryDividendsAmt>1200</TotalOrdinaryDividendsAmt>",
@@ -73,7 +73,7 @@ Deno.test("schedule_b: ordinaryDividends maps to TotalOrdinaryDividendsAmt", () 
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: single known field emits only that element, absent fields omitted", () => {
-  const result = scheduleB.build({ schedule_b: { taxable_interest_net: 3000 } });
+  const result = scheduleB.build({ taxable_interest_net: 3000 });
   assertStringIncludes(
     result,
     "<TotalInterestAmt>3000</TotalInterestAmt>",
@@ -93,13 +93,13 @@ const allFields = {
 };
 
 Deno.test("schedule_b: all 3 fields present: output wrapped in IRS1040ScheduleB tag", () => {
-  const result = scheduleB.build({ schedule_b: allFields });
+  const result = scheduleB.build(allFields);
   assertStringIncludes(result, "<IRS1040ScheduleB>");
   assertStringIncludes(result, "</IRS1040ScheduleB>");
 });
 
 Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
-  const result = scheduleB.build({ schedule_b: allFields });
+  const result = scheduleB.build(allFields);
   assertStringIncludes(
     result,
     "<TotalInterestAmt>3000</TotalInterestAmt>",
@@ -119,10 +119,10 @@ Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("schedule_b: payer_name string field is silently ignored", () => {
-  const result = scheduleB.build({ schedule_b: {
+  const result = scheduleB.build({
     payer_name: "Bank of America",
     taxable_interest_net: 3000,
-  } });
+  });
   assertStringIncludes(
     result,
     "<TotalInterestAmt>3000</TotalInterestAmt>",
