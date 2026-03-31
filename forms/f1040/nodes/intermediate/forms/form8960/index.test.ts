@@ -1,6 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8960, inputSchema } from "./index.ts";
-import { FilingStatus } from "../../types.ts";
+import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8960.compute({ taxYear: 2025 }, inputSchema.parse(input));

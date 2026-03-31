@@ -1,9 +1,9 @@
 import { assert, assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, schedule_d } from "./index.ts";
-import { FilingStatus } from "../../types.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { rate_28_gain_worksheet } from "../rate_28_gain_worksheet/index.ts";
+import { FilingStatus } from "../../../types.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers (from original schedule_d tests)

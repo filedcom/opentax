@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f8812 } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
+import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {

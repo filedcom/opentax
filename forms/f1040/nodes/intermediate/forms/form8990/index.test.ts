@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8990 } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8990.compute({ taxYear: 2025 }, input);

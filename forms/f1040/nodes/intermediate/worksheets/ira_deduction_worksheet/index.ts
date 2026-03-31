@@ -2,13 +2,25 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../agi_aggregator/index.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { FilingStatus } from "../../types.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { FilingStatus } from "../../../types.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  IRA_CONTRIBUTION_LIMIT_2025,
+  IRA_CONTRIBUTION_LIMIT_AGE50_2025,
+  IRA_PHASEOUT_SINGLE_LOWER_2025,
+  IRA_PHASEOUT_SINGLE_UPPER_2025,
+  IRA_PHASEOUT_MFJ_LOWER_2025,
+  IRA_PHASEOUT_MFJ_UPPER_2025,
+  IRA_PHASEOUT_NONCOVERED_MFJ_LOWER_2025,
+  IRA_PHASEOUT_NONCOVERED_MFJ_UPPER_2025,
+  IRA_PHASEOUT_MFS_LOWER_2025,
+  IRA_PHASEOUT_MFS_UPPER_2025,
+} from "../../../config/2025.ts";
 
 // ─── Constants — IRS procedure constants, unchanged across years ──────────────
 
@@ -116,25 +128,25 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  // IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19 — TY2025
-  protected readonly contributionLimit = 7_000;
-  protected readonly contributionLimitAge50 = 8_000;
+  // IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19 — TY2025 (see config/2025.ts)
+  protected readonly contributionLimit = IRA_CONTRIBUTION_LIMIT_2025;
+  protected readonly contributionLimitAge50 = IRA_CONTRIBUTION_LIMIT_AGE50_2025;
 
   // Active participant phase-out: Single / HOH / QSS — Rev Proc 2024-40
-  protected readonly phaseOutSingleLower = 79_000;
-  protected readonly phaseOutSingleUpper = 89_000;
+  protected readonly phaseOutSingleLower = IRA_PHASEOUT_SINGLE_LOWER_2025;
+  protected readonly phaseOutSingleUpper = IRA_PHASEOUT_SINGLE_UPPER_2025;
 
   // Active participant phase-out: MFJ (covered taxpayer)
-  protected readonly phaseOutMfjLower = 126_000;
-  protected readonly phaseOutMfjUpper = 146_000;
+  protected readonly phaseOutMfjLower = IRA_PHASEOUT_MFJ_LOWER_2025;
+  protected readonly phaseOutMfjUpper = IRA_PHASEOUT_MFJ_UPPER_2025;
 
   // Non-covered MFJ spouse phase-out: taxpayer not active, but spouse is
-  protected readonly phaseOutNonCoveredLower = 236_000;
-  protected readonly phaseOutNonCoveredUpper = 246_000;
+  protected readonly phaseOutNonCoveredLower = IRA_PHASEOUT_NONCOVERED_MFJ_LOWER_2025;
+  protected readonly phaseOutNonCoveredUpper = IRA_PHASEOUT_NONCOVERED_MFJ_UPPER_2025;
 
   // MFS active participant phase-out (very narrow — Pub 590-A)
-  protected readonly phaseOutMfsLower = 0;
-  protected readonly phaseOutMfsUpper = 10_000;
+  protected readonly phaseOutMfsLower = IRA_PHASEOUT_MFS_LOWER_2025;
+  protected readonly phaseOutMfsUpper = IRA_PHASEOUT_MFS_UPPER_2025;
 
   compute(_ctx: NodeContext, rawInput: IraDeductionInput): NodeResult {
     const input = inputSchema.parse(rawInput);

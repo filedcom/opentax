@@ -5,10 +5,10 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_f } from "../../intermediate/schedule_f/index.ts";
+import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 thresholds from IRS Form 1099-G instructions

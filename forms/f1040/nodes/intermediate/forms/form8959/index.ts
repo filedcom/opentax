@@ -2,22 +2,27 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../schedule2/index.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { FilingStatus } from "../../types.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { FilingStatus } from "../../../types.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  ADDITIONAL_MEDICARE_THRESHOLD_MFJ,
+  ADDITIONAL_MEDICARE_THRESHOLD_MFS,
+  ADDITIONAL_MEDICARE_THRESHOLD_OTHER,
+} from "../../../config/2025.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §3101(b)(2); Form 8959 line 7 — Additional Medicare Tax rate
 const AMT_RATE = 0.009;
 
 // Threshold amounts — not indexed for inflation (Form 8959 instructions, TY2025)
-const THRESHOLD_MFJ = 250_000;
-const THRESHOLD_MFS = 125_000;
-const THRESHOLD_OTHER = 200_000; // Single, HOH, QSS
+const THRESHOLD_MFJ = ADDITIONAL_MEDICARE_THRESHOLD_MFJ;
+const THRESHOLD_MFS = ADDITIONAL_MEDICARE_THRESHOLD_MFS;
+const THRESHOLD_OTHER = ADDITIONAL_MEDICARE_THRESHOLD_OTHER; // Single, HOH, QSS
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 

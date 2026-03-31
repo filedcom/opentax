@@ -2,11 +2,11 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 

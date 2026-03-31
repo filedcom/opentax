@@ -6,7 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949, type Form8949Part } from "../../intermediate/form8949/index.ts";
+import { form8949, type Form8949Part } from "../../intermediate/forms/form8949/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 const LONG_TERM_PARTS = new Set(["D", "E", "F"]);

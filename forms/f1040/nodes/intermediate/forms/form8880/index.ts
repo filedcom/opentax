@@ -2,12 +2,12 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/schedule3/index.ts";
-import { FilingStatus } from "../../types.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { FilingStatus } from "../../../types.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // TY2025 constants — IRC §25B; Rev Proc 2024-40
 const CONTRIBUTION_CAP = 2000;

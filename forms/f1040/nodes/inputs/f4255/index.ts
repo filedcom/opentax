@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../../intermediate/schedule2/index.ts";
+import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 4255 — Recapture of Investment Credit (IRC §50(a))

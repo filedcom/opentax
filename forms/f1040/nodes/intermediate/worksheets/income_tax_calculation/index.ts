@@ -1,16 +1,22 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { FilingStatus } from "../../types.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { form6251 } from "../form6251/index.ts";
+import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { FilingStatus } from "../../../types.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form6251 } from "../../forms/form6251/index.ts";
+import {
+  BRACKETS_MFJ_2025,
+  BRACKETS_SINGLE_2025,
+  BRACKETS_HOH_2025,
+  BRACKETS_MFS_2025,
+  QDCGT_ZERO_CEILING_2025,
+  QDCGT_TWENTY_FLOOR_2025,
+  type Bracket,
+} from "../../../config/2025.ts";
 
-// ─── Constants — TY2025 Tax Brackets & QDCGT Thresholds ─────────────────────
-// Source: Rev. Proc. 2024-40, §3.01–§3.02; IRC §1(a)–(d), §1(h)
-
-type Bracket = { over: number; upTo: number; rate: number; base: number };
+// ─── Year-keyed bracket lookup ────────────────────────────────────────────────
 
 type YearBrackets = {
   mfj: ReadonlyArray<Bracket>;
@@ -19,78 +25,13 @@ type YearBrackets = {
   mfs: ReadonlyArray<Bracket>;
 };
 
-// IRC §1(a) — Married filing jointly / Qualifying surviving spouse
-const MFJ_BRACKETS_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 23_850,   rate: 0.10, base: 0 },
-  { over: 23_850,  upTo: 96_950,   rate: 0.12, base: 2_385 },
-  { over: 96_950,  upTo: 206_700,  rate: 0.22, base: 11_157 },
-  { over: 206_700, upTo: 394_600,  rate: 0.24, base: 35_302 },
-  { over: 394_600, upTo: 501_050,  rate: 0.32, base: 80_398 },
-  { over: 501_050, upTo: 751_600,  rate: 0.35, base: 114_462 },
-  { over: 751_600, upTo: Infinity, rate: 0.37, base: 202_154.50 },
-];
-
-// IRC §1(c) — Single
-const SINGLE_BRACKETS_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 11_925,   rate: 0.10, base: 0 },
-  { over: 11_925,  upTo: 48_475,   rate: 0.12, base: 1_192.50 },
-  { over: 48_475,  upTo: 103_350,  rate: 0.22, base: 5_578.50 },
-  { over: 103_350, upTo: 197_300,  rate: 0.24, base: 17_651 },
-  { over: 197_300, upTo: 250_525,  rate: 0.32, base: 40_199 },
-  { over: 250_525, upTo: 626_350,  rate: 0.35, base: 57_231 },
-  { over: 626_350, upTo: Infinity, rate: 0.37, base: 188_769.75 },
-];
-
-// IRC §1(b) — Head of household (wider brackets than Single)
-const HOH_BRACKETS_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 17_000,   rate: 0.10, base: 0 },
-  { over: 17_000,  upTo: 64_850,   rate: 0.12, base: 1_700 },
-  { over: 64_850,  upTo: 103_350,  rate: 0.22, base: 7_442 },
-  { over: 103_350, upTo: 197_300,  rate: 0.24, base: 15_912 },
-  { over: 197_300, upTo: 250_500,  rate: 0.32, base: 38_460 },
-  { over: 250_500, upTo: 626_350,  rate: 0.35, base: 55_484 },
-  { over: 626_350, upTo: Infinity, rate: 0.37, base: 187_031.50 },
-];
-
-// IRC §1(d) — Married filing separately (same lower brackets as Single, splits at $375,800)
-const MFS_BRACKETS_2025: ReadonlyArray<Bracket> = [
-  { over: 0,       upTo: 11_925,   rate: 0.10, base: 0 },
-  { over: 11_925,  upTo: 48_475,   rate: 0.12, base: 1_192.50 },
-  { over: 48_475,  upTo: 103_350,  rate: 0.22, base: 5_578.50 },
-  { over: 103_350, upTo: 197_300,  rate: 0.24, base: 17_651 },
-  { over: 197_300, upTo: 250_525,  rate: 0.32, base: 40_199 },
-  { over: 250_525, upTo: 375_800,  rate: 0.35, base: 57_231 },
-  { over: 375_800, upTo: Infinity, rate: 0.37, base: 101_077.25 },
-];
-
 const BRACKETS_BY_YEAR: Record<number, YearBrackets> = {
   2025: {
-    mfj: MFJ_BRACKETS_2025,
-    single: SINGLE_BRACKETS_2025,
-    hoh: HOH_BRACKETS_2025,
-    mfs: MFS_BRACKETS_2025,
+    mfj: BRACKETS_MFJ_2025,
+    single: BRACKETS_SINGLE_2025,
+    hoh: BRACKETS_HOH_2025,
+    mfs: BRACKETS_MFS_2025,
   },
-};
-
-// ─── Constants — TY2025 QDCGT Rate Thresholds ────────────────────────────────
-// Rev. Proc. 2024-40, §3.02; IRC §1(h)
-
-// Top of 0% LTCG/QD bracket (income above this is subject to 15% or 20%)
-const ZERO_RATE_CEILING_2025: Record<FilingStatus, number> = {
-  [FilingStatus.Single]:  48_350,
-  [FilingStatus.MFJ]:     96_700,
-  [FilingStatus.MFS]:     48_350,
-  [FilingStatus.HOH]:     64_750,
-  [FilingStatus.QSS]:     96_700,
-};
-
-// Bottom of 20% LTCG/QD bracket (income above this is subject to 20%)
-const TWENTY_RATE_FLOOR_2025: Record<FilingStatus, number> = {
-  [FilingStatus.Single]:  533_400,
-  [FilingStatus.MFJ]:     600_050,
-  [FilingStatus.MFS]:     300_025,
-  [FilingStatus.HOH]:     566_700,
-  [FilingStatus.QSS]:     600_050,
 };
 
 type QdcgtThresholds = {
@@ -100,8 +41,8 @@ type QdcgtThresholds = {
 
 const QDCGT_THRESHOLDS_BY_YEAR: Record<number, QdcgtThresholds> = {
   2025: {
-    zeroCeiling: ZERO_RATE_CEILING_2025,
-    twentyFloor: TWENTY_RATE_FLOOR_2025,
+    zeroCeiling: QDCGT_ZERO_CEILING_2025,
+    twentyFloor: QDCGT_TWENTY_FLOOR_2025,
   },
 };
 

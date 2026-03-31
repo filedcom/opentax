@@ -2,17 +2,18 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule2 } from "../../intermediate/schedule2/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { SS_WAGE_BASE_2025 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
 // IRC §3121(a)(1); Form 4137 line 7 — TY2025 SS wage base
-const SS_WAGE_BASE = 176_100;
+const SS_WAGE_BASE = SS_WAGE_BASE_2025;
 // Form 4137 line 11 — employee SS tax rate
 const SS_RATE = 0.062;
 // Form 4137 line 12 — employee Medicare tax rate

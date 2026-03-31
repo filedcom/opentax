@@ -1,7 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import type { NodeOutput } from "../../../../../core/types/tax-node.ts";
 import { f8997 } from "./index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return f8997.compute({ taxYear: 2025 }, input as Parameters<typeof f8997.compute>[1]);

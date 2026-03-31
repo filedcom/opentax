@@ -1,9 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8889, inputSchema, CoverageType } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { form5329 } from "../form5329/index.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule2 } from "../schedule2/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8889.compute({ taxYear: 2025 }, inputSchema.parse(input));

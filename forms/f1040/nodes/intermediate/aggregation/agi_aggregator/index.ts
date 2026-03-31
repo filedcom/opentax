@@ -1,11 +1,11 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { scheduleA } from "../../inputs/schedule_a/index.ts";
-import { standard_deduction } from "../standard_deduction/index.ts";
+import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { scheduleA } from "../../../inputs/schedule_a/index.ts";
+import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 
 // AGI Aggregator — Form 1040 Line 11
 //

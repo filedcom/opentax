@@ -2,10 +2,10 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { form982 } from "../../intermediate/form982/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { form982 } from "../../intermediate/forms/form982/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({

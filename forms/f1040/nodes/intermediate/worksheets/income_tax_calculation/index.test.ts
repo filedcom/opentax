@@ -1,10 +1,10 @@
 import { assertEquals, assertAlmostEquals } from "@std/assert";
 import { assertThrows } from "@std/assert";
 import { income_tax_calculation, inputSchema } from "./index.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { form6251 } from "../form6251/index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { FilingStatus } from "../../types.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form6251 } from "../../forms/form6251/index.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
+import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
   return income_tax_calculation.compute({ taxYear: 2025 }, inputSchema.parse(input));

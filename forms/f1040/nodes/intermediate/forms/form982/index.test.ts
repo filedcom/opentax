@@ -18,8 +18,8 @@
 
 import { assertEquals, assertThrows } from "@std/assert";
 import { form982, ExclusionType, inputSchema } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form982.compute({ taxYear: 2025 }, inputSchema.parse(input));

@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────

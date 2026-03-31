@@ -2,14 +2,19 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { agi_aggregator } from "../agi_aggregator/index.ts";
-import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule2 } from "../../intermediate/schedule2/index.ts";
-import { form5329 } from "../../intermediate/form5329/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { form5329 } from "../form5329/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import {
+  HSA_SELF_ONLY_LIMIT_2025,
+  HSA_FAMILY_LIMIT_2025,
+  HSA_CATCHUP_2025,
+} from "../../../config/2025.ts";
 
 // ─── Constants — mathematical/statutory rates, unchanged across years ─────────
 
@@ -152,11 +157,11 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2, form5329]);
 
   // IRC §223(b)(2)(A) — self-only HDHP annual contribution limit (TY2025)
-  protected readonly selfOnlyLimit = 4300;
+  protected readonly selfOnlyLimit = HSA_SELF_ONLY_LIMIT_2025;
   // IRC §223(b)(2)(B) — family HDHP annual contribution limit (TY2025)
-  protected readonly familyLimit = 8550;
+  protected readonly familyLimit = HSA_FAMILY_LIMIT_2025;
   // IRC §223(b)(3) — catch-up contribution for taxpayers age 55+ (TY2025)
-  protected readonly catchupLimit = 1000;
+  protected readonly catchupLimit = HSA_CATCHUP_2025;
 
   compute(_ctx: NodeContext, rawInput: Form8889Input): NodeResult {
     const input = inputSchema.parse(rawInput);

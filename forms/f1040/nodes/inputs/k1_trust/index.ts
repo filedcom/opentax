@@ -4,9 +4,9 @@ import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_b } from "../../intermediate/schedule_b/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
-import { form_1116 } from "../../intermediate/form_1116/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1041) — Beneficiary's Share of Income, Deductions, Credits

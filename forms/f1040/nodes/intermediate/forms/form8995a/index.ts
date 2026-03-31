@@ -2,12 +2,12 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { FilingStatus, filingStatusSchema } from "../../types.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { FilingStatus, filingStatusSchema } from "../../../types.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 

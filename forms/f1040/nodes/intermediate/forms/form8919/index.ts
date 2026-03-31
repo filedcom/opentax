@@ -2,13 +2,13 @@ import { z } from "zod";
 import type {
   NodeOutput,
   NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule2 } from "../../intermediate/schedule2/index.ts";
-import { schedule_se } from "../../intermediate/schedule_se/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
+} from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { schedule_se } from "../schedule_se/index.ts";
+import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants — mathematical rates, unchanged across years ──────────────────
 

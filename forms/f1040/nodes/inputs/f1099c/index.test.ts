@@ -1,9 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1099c } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { form982 } from "../../intermediate/form982/index.ts";
+import { form982 } from "../../intermediate/forms/form982/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule_d } from "../../intermediate/schedule_d/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
