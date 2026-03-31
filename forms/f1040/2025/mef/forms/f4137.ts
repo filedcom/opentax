@@ -1,7 +1,7 @@
 import type { Form4137Fields, Form4137Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form4137Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form4137Fields, string]> = [
   ["allocated_tips", "AllocatedTipsAmt"],
   ["total_tips_received", "TotalTipsRcvdAmt"],
   ["reported_tips", "TipsReportedToEmployerAmt"],

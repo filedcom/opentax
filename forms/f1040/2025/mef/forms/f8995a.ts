@@ -1,7 +1,7 @@
 import type { Form8995AFields, Form8995AInput } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8995AFields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8995AFields, string]> = [
   ["taxable_income", "TaxableIncomeAmt"],
   ["net_capital_gain", "NetCapitalGainAmt"],
   ["qbi", "QualifiedBusinessIncomeAmt"],

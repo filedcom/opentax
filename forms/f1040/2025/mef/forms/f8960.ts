@@ -2,7 +2,7 @@ import type { Form8960Fields, Form8960Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8960Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8960Fields, string]> = [
   ["line1_taxable_interest", "TaxableInterestAmt"],
   ["line2_ordinary_dividends", "OrdinaryDividendsAmt"],
   ["line3_annuities", "AnnuitesFromNonQlfPlansAmt"],

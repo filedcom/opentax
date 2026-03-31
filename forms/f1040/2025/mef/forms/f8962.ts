@@ -7,7 +7,7 @@ import type { MefFormsPending } from "../types.ts";
 // Maps Form8962Fields keys to IRS XSD element names for IRS8962.
 // Element order follows the XSD sequence for Form 8962 (Premium Tax Credit).
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8962Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8962Fields, string]> = [
   ["household_size", "ExemptionNumber"],
   ["household_income", "HouseholdIncomeAmt"],
   ["federal_poverty_line", "FederalPovertyLineAmt"],

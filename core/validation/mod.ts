@@ -1,0 +1,67 @@
+/**
+ * MeF Business Rules Validation — Public API
+ */
+
+export type {
+  DiagnosticEntry,
+  DiagnosticsReport,
+  DiagnosticsSummary,
+  ErrorCategory,
+  FieldLocation,
+  FieldRegistry,
+  ReturnContext,
+  RuleCheck,
+  RuleDef,
+  Severity,
+} from "./types.ts";
+
+export { createReturnContext } from "./context.ts";
+export type { FilerInfo } from "./context.ts";
+export { evaluateRules } from "./engine.ts";
+export { formatDiagnosticsJson, formatDiagnosticsText } from "./report.ts";
+export { rule } from "./rule-builder.ts";
+export {
+  all,
+  alwaysFail,
+  alwaysPass,
+  any,
+  eqField,
+  eqNum,
+  eqStr,
+  eqSum,
+  filingStatusIs,
+  filingStatusNot,
+  formAbsent,
+  formCountAtMost,
+  formPresent,
+  gt,
+  gte,
+  hasNonZero,
+  hasValue,
+  ifThen,
+  ifThenUnless,
+  isZero,
+  lt,
+  not,
+  notGtField,
+  notGtNum,
+  noValue,
+  dateYearEq,
+  dateYearEqOrNext,
+  dateYearGte,
+  charAfterIsAlpha,
+  charCountAtMost,
+  contains,
+  eqDiff,
+  eqDiffFloorZero,
+  eqMax,
+  eqMin,
+  eqProduct,
+  isITIN,
+  matchesHeaderSSN,
+  notLtSum,
+  notMatchesHeaderSSN,
+  ssnNotEqual,
+  validRTN,
+  validSSN,
+} from "./predicates.ts";

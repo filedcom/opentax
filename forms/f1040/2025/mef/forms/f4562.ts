@@ -1,7 +1,7 @@
 import type { Form4562Fields, Form4562Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form4562Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form4562Fields, string]> = [
   ["section_179_deduction", "Section179DeductionAmt"],
   ["section_179_cost", "Section179CostAmt"],
   ["section_179_elected", "Section179ElectedCostAmt"],

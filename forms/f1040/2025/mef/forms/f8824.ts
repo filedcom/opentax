@@ -8,7 +8,7 @@ import type { MefFormsPending } from "../types.ts";
 // Element order follows the XSD sequence for Form 8824 (Like-Kind Exchanges).
 // Part III covers the gain/loss computation (lines 12–25).
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8824Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8824Fields, string]> = [
   ["received_fmv", "FMVLikeKindPropertyReceivedAmt"],
   ["relinquished_basis", "AdjustedBasisLikeKindPropGivenUpAmt"],
   ["cash_received", "CashAndLiabilityReliefAmt"],

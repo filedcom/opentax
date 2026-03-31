@@ -1,7 +1,7 @@
 import type { Form8606Fields, Form8606Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8606Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8606Fields, string]> = [
   ["nondeductible_contributions", "NondeductibleContriAmt"],
   ["prior_basis", "TotalBasisInTraditionalIRAAmt"],
   ["year_end_ira_value", "TraditionalIRAValueAmt"],

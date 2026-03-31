@@ -1,7 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { Form1116Fields, Form1116Input } from "../types.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form1116Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form1116Fields, string]> = [
   ["foreign_tax_paid", "ForeignTaxesPaidOrAccruedAmt"],
   ["foreign_income", "ForeignSourceIncomeAmt"],
   ["total_income", "TotalIncomeAmt"],

@@ -1,7 +1,7 @@
 import type { Form8880Fields, Form8880Input } from "../types.ts";
 import { element, elements } from "../../../mef/xml.ts";
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof Form8880Fields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof Form8880Fields, string]> = [
   ["ira_contributions_taxpayer", "TxpyrRetirePlanContriAmt"],
   ["ira_contributions_spouse", "SpouseRetirePlanContriAmt"],
   ["elective_deferrals", "ElectiveDeferralAmt"],

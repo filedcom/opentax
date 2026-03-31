@@ -4,7 +4,7 @@ import { element, elements } from "../../../mef/xml.ts";
 
 // ─── Field Map ────────────────────────────────────────────────────────────────
 
-const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleAMefFields, string]> = [
+export const FIELD_MAP: ReadonlyArray<readonly [keyof ScheduleAMefFields, string]> = [
   ["line_1_medical", "MedicalAndDentalExpensesAmt"],
   ["agi", "AGIAmt"],
   ["line_5a_tax_amount", "StateAndLocalIncomeTaxAmt"],
