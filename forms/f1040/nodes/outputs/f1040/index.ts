@@ -45,6 +45,15 @@ const inputSchema = z.object({
   // Line 35 — Credit for federal tax on fuels (Form 4136)
   // IRC §§ 6421, 6427; refundable portion (farming use)
   line35_fuel_tax_credit: z.number().nonnegative().optional(),
+  // Line 12a — Standard deduction (from standard_deduction node)
+  // IRC §63(c); Rev. Proc. 2024-40 §3.14
+  line12a_standard_deduction: z.number().nonnegative().optional(),
+  // Line 15 — Taxable income (AGI minus deduction minus QBI deduction)
+  // Form 1040 Line 15; IRC §63(a)
+  line15_taxable_income: z.number().nonnegative().optional(),
+  // Line 11 — Adjusted gross income (from AGI Aggregator node)
+  // IRC §62; Form 1040 Line 11
+  line11_agi: z.number().nonnegative().optional(),
   // Line 16 — Income tax (from tax tables, worksheets, or Schedule J line 23)
   // IRC §§ 1, 55; Schedule J replaces regular tax computation when income averaging elected
   line16_income_tax: z.number().nonnegative().optional(),

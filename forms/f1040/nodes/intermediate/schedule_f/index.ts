@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import { form8995 } from "../form8995/index.ts";
@@ -197,6 +198,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
+    agi_aggregator,
     schedule_se,
     form8995,
     form8582,
@@ -226,6 +228,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
 
     // Schedule 1 line 6: aggregate net farm profit/loss (always when there is activity)
     outputs.push(this.outputNodes.output(schedule1, { line6_schedule_f: totalNetProfit }));
+    outputs.push(this.outputNodes.output(agi_aggregator, { line6_schedule_f: totalNetProfit }));
 
     // Per-item downstream routing
     for (let i = 0; i < input.schedule_fs.length; i++) {

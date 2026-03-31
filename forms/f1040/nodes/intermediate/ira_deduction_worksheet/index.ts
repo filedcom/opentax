@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -113,7 +114,7 @@ function schedule1Output(deductible: number): NodeOutput[] {
 class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ira_deduction_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   // IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19 — TY2025
   protected readonly contributionLimit = 7_000;
@@ -163,7 +164,11 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
       deductible = Math.min(capped, allowed);
     }
 
-    return { outputs: schedule1Output(deductible) };
+    const outputs: NodeOutput[] = [...schedule1Output(deductible)];
+    if (deductible > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, { line20_ira_deduction: deductible }));
+    }
+    return { outputs };
   }
 }
 

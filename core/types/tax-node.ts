@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { OutputNodes } from "./output-nodes.ts";
 import type { NodeContext } from "./node-context.ts";
+import { OutputNodes } from "./output-nodes.ts";
 
 export type NodeType = string;
 

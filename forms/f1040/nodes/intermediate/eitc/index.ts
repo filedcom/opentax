@@ -82,6 +82,9 @@ export const inputSchema = z.object({
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > INVESTMENT_INCOME_LIMIT, no EITC allowed
   investment_income: z.number().nonnegative().optional(),
+
+  // Set by Form 8862 when prior-year EITC disallowance has been cleared
+  form8862_filed: z.boolean().optional(),
 });
 
 type EitcInput = z.infer<typeof inputSchema>;

@@ -146,7 +146,7 @@ Deno.test("form6198 — output routes to schedule1 only", () => {
     schedule_c_loss: -10_000,
     amount_at_risk: 3_000,
   });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "schedule1");
 });
 

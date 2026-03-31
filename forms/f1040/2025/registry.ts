@@ -120,7 +120,10 @@ import { schedule_f } from "../nodes/intermediate/schedule_f/index.ts";
 import { schedule_h } from "../nodes/intermediate/schedule_h/index.ts";
 import { schedule_se } from "../nodes/intermediate/schedule_se/index.ts";
 import { unrecaptured_1250_worksheet } from "../nodes/intermediate/unrecaptured_1250_worksheet/index.ts";
+import { agi_aggregator } from "../nodes/intermediate/agi_aggregator/index.ts";
 import { income_tax_calculation } from "../nodes/intermediate/income_tax_calculation/index.ts";
+import { qdcgtw } from "../nodes/intermediate/qdcgtw/index.ts";
+import { standard_deduction } from "../nodes/intermediate/standard_deduction/index.ts";
 
 // ── Outputs ───────────────────────────────────────────────────────────────────
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
@@ -251,7 +254,10 @@ export const registry: NodeRegistry = {
   schedule_h,
   schedule_se,
   unrecaptured_1250_worksheet,
+  agi_aggregator,
   income_tax_calculation,
+  qdcgtw,
+  standard_deduction,
 
   // ── Outputs ─────────────────────────────────────────────────────────────────
   f1040,

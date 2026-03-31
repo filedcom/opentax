@@ -44,6 +44,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f8863s: z.array(itemSchema).min(1),
+  // Set by Form 8862 when prior-year AOTC disallowance has been cleared
+  form8862_filed: z.boolean().optional(),
 });
 
 type F8863Item = z.infer<typeof itemSchema>;

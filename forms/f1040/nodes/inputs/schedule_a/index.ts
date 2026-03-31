@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
+import { standard_deduction } from "../../intermediate/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 SALT cap per OBBBA — $40,000 single/MFJ, $20,000 MFS
@@ -71,7 +72,7 @@ function computeContributions(input: ScheduleAInput, agi: number): number {
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form6251]);
+  readonly outputNodes = new OutputNodes([f1040, form6251, standard_deduction]);
 
   compute(_ctx: NodeContext, input: ScheduleAInput): NodeResult {
     const agi = input.agi ?? 0;
@@ -86,6 +87,8 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line12e_itemized_deductions: totalItemized }),
+      // Feed standard_deduction node so it can compare standard vs itemized
+      this.outputNodes.output(standard_deduction, { itemized_deductions: totalItemized }),
       // AMT addback: taxes paid total (Line 7) flows to Form 6251 Line 2a
       ...(taxesTotal > 0 ? [this.outputNodes.output(form6251, { line2a_taxes_paid: taxesTotal })] : []),
     ];

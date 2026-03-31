@@ -141,7 +141,9 @@ Deno.test("housing — zero employer exclusion produces no housing output", () =
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes to schedule1", () => {
+Deno.test("output routes to schedule1 and agi_aggregator", () => {
   const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 365 });
-  assertEquals(result.outputs.every((o) => o.nodeType === "schedule1"), true);
+  const nodeTypes = new Set(result.outputs.map((o) => o.nodeType));
+  assertEquals(nodeTypes.has("schedule1"), true);
+  assertEquals(nodeTypes.has("agi_aggregator"), true);
 });

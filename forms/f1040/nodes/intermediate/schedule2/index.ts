@@ -1,12 +1,12 @@
 import { z } from "zod";
+import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -97,7 +97,8 @@ function line17h(input: Schedule2Input): number {
 // Line 17k: 20% excise on excess golden parachute payments
 // IRC §4999; Schedule 2 Line 17k
 function line17k(input: Schedule2Input): number {
-  return (input.golden_parachute_excise ?? 0) + (input.line17k_golden_parachute_excise ?? 0);
+  return (input.golden_parachute_excise ?? 0) +
+    (input.line17k_golden_parachute_excise ?? 0);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -110,8 +111,7 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const total =
-      (input.line4_se_tax ?? 0) +
+    const total = (input.line4_se_tax ?? 0) +
       (input.line5_unreported_tip_tax ?? 0) +
       line8(input) +
       (input.line1_amt ?? 0) +

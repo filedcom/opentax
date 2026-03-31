@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -200,7 +201,14 @@ function schedule1Output(input: Form8853Input): NodeOutput[] {
   if (totalTaxableIncome > 0) s1Input.line8e_archer_msa_dist = totalTaxableIncome;
   if (deduction > 0) s1Input.line23_archer_msa_deduction = deduction;
 
-  return [output(schedule1, s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
+  const agiInput: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+  if (totalTaxableIncome > 0) agiInput.line8e_archer_msa_dist = totalTaxableIncome;
+  if (deduction > 0) agiInput.line23_archer_msa_deduction = deduction;
+  const results: NodeOutput[] = [output(schedule1, s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
+  if (Object.keys(agiInput).length > 0) {
+    results.push(output(agi_aggregator, agiInput as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>));
+  }
+  return results;
 }
 
 // Schedule 2 output: line 17e (20% Archer MSA tax) and line 17f (50% Medicare Advantage MSA tax)
@@ -222,7 +230,7 @@ function schedule2Output(input: Form8853Input): NodeOutput[] {
 class Form8853Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8853";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule2]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2]);
 
   compute(_ctx: NodeContext, rawInput: Form8853Input): NodeResult {
     const input = inputSchema.parse(rawInput);

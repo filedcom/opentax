@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_f } from "../../intermediate/schedule_f/index.ts";
@@ -131,7 +132,7 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
 class F1099gNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099g";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, f1040, schedule_f]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, f1040, schedule_f]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -144,6 +145,23 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
       ...f1040Output(g99s),
       ...scheduleFOutput(g99s),
     ];
+
+    // Route income items to AGI aggregator
+    const unemploymentNet = netUnemployment(g99s);
+    const stateRefund = totalStateRefundTaxable(g99s);
+    const rtaa = totalRtaa(g99s);
+    const grants = totalTaxableGrants(g99s);
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) agiFields.line7_unemployment = unemploymentNet;
+    if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) agiFields.line1_state_refund = stateRefund;
+    if (rtaa >= RTAA_MIN_THRESHOLD) agiFields.line8z_rtaa = rtaa;
+    if (grants >= GRANTS_MIN_THRESHOLD) agiFields.line8z_taxable_grants = grants;
+    if (Object.keys(agiFields).length > 0) {
+      outputs.push(this.outputNodes.output(
+        agi_aggregator,
+        agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+      ));
+    }
 
     return { outputs };
   }

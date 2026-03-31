@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
@@ -405,6 +406,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
+    agi_aggregator,
     form8582,
     form6198,
     form8960,
@@ -428,8 +430,10 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
 
+    const totalNet = schedule_es.reduce((sum, item) => sum + computePropertyNet(item), 0);
     const outputs: NodeOutput[] = [
       ...schedule1Output(schedule_es),
+      this.outputNodes.output(agi_aggregator, { line5_schedule_e: totalNet }),
       ...form8582Outputs(schedule_es),
       ...form6198Outputs(schedule_es),
       ...form8960Outputs(schedule_es),

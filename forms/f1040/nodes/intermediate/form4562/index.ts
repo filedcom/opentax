@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -223,7 +224,7 @@ function applyLuxuryAutoLimit(
 class Form4562Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4562";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, form6251]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form6251]);
 
   compute(_ctx: NodeContext, input: Form4562Input): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -246,6 +247,7 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
 
     if (totalDepreciation > 0) {
       outputs.push(this.outputNodes.output(schedule1, { line13_depreciation: totalDepreciation }));
+      outputs.push(this.outputNodes.output(agi_aggregator, { line13_depreciation: totalDepreciation }));
     }
 
     if (amtAdjustment > 0) {

@@ -17,6 +17,7 @@ import { schedule2 } from "../../intermediate/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/schedule3/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
+import { agi_aggregator } from "../../intermediate/agi_aggregator/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -316,6 +317,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     f1040,
+    agi_aggregator,
     schedule1,
     schedule2,
     schedule3,
@@ -353,6 +355,20 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
+
+    // Route wages and §501(c)(18)(D) deduction to AGI aggregator
+    const agiWageFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    const wages = wageFields(input.w2s);
+    if (wages.line1a_wages !== undefined) agiWageFields.line1a_wages = wages.line1a_wages;
+    const entries = regularItems(input.w2s).flatMap((item) => item.box12_entries ?? []);
+    const h = entries.filter((e) => e.code === Box12Code.H).reduce((s, e) => s + e.amount, 0);
+    if (h > 0) agiWageFields.line24f_501c18d = h;
+    if (Object.keys(agiWageFields).length > 0) {
+      outputs.push(this.outputNodes.output(
+        agi_aggregator,
+        agiWageFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+      ));
+    }
 
     return { outputs };
   }

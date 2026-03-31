@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form6251 } from "../../intermediate/form6251/index.ts";
+import { income_tax_calculation } from "../../intermediate/income_tax_calculation/index.ts";
 import { form8995 } from "../../intermediate/form8995/index.ts";
 import { form8995a } from "../../intermediate/form8995a/index.ts";
 import { form_1116 } from "../../intermediate/form_1116/index.ts";
@@ -141,6 +142,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     schedule_b,
     f1040,
     schedule_d,
+    income_tax_calculation,
     form8995,
     form8995a,
     schedule3,
@@ -182,6 +184,11 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     if (totalBox2a > 0 && !anySubAmounts) f1040Fields.line7a_cap_gain_distrib = totalBox2a;
     if (Object.keys(f1040Fields).length > 0) {
       outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
+    }
+
+    // Qualified dividends → income_tax_calculation for QDCGT worksheet (IRC §1(h))
+    if (totalQualDiv > 0) {
+      outputs.push(this.outputNodes.output(income_tax_calculation, { qualified_dividends: totalQualDiv }));
     }
 
     // Cap gain distribution → schedule_d when sub-amounts present

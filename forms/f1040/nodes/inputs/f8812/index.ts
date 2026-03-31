@@ -34,6 +34,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f8812s: z.array(itemSchema),
+  // Set by Form 8862 when prior-year CTC/ACTC disallowance has been cleared
+  form8862_filed: z.boolean().optional(),
 });
 
 // TY2025 constants — One Big Beautiful Bill Act (PL 119-21, enacted July 4 2025)

@@ -5,6 +5,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -98,7 +99,10 @@ function computeDeduction(input: Form7206Input): number {
 
 function buildOutput(deduction: number): NodeOutput[] {
   if (deduction <= 0) return [];
-  return [output(schedule1, { line17_se_health_insurance: deduction })];
+  return [
+    output(schedule1, { line17_se_health_insurance: deduction }),
+    output(agi_aggregator, { line17_se_health_insurance: deduction }),
+  ];
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────
@@ -106,7 +110,7 @@ function buildOutput(deduction: number): NodeOutput[] {
 class Form7206Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form7206";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: Form7206Input): NodeResult {
     const input = inputSchema.parse(rawInput);

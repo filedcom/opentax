@@ -11,21 +11,25 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // ─── TY2025 Constants (IRC §25C, §25D) ───────────────────────────────────────
 
 // Part I — Residential Clean Energy Credit (IRC §25D)
-// 30% credit, no annual cap
 const PART_I_RATE = 0.30;
+// Fuel cell: $500 per ½ kW capacity = $1,000/kW (§25D(b)(1))
+const FUEL_CELL_CAP_PER_KW = 1_000;
+// Battery storage must be ≥3 kWh to qualify (§25D(d)(7))
+const BATTERY_MIN_KWH = 3;
 
 // Part II — Energy Efficient Home Improvement Credit (IRC §25C)
-// Annual cap: $1,200 total
 const PART_II_RATE = 0.30;
+// Overall annual cap for standard items (§25C(b)(1)(A))
 const PART_II_ANNUAL_CAP = 1_200;
-
-// Part II sub-limits
-const WINDOWS_DOORS_INSULATION_LIMIT = 600; // windows
-const EXTERIOR_DOOR_PER_DOOR_LIMIT = 250;    // per door
-const EXTERIOR_DOOR_TOTAL_LIMIT = 500;       // total exterior doors
-const ENERGY_AUDIT_LIMIT = 150;              // home energy audits
-const HVAC_WATER_HEATER_LIMIT = 600;         // heat pumps, central A/C, water heaters
-const BIOMASS_LIMIT = 2_000;                 // biomass stoves/boilers (separate higher limit)
+// Per-item cap: windows, central AC, gas water heater, furnace/boiler, panelboard (§25C(b)(1)(B))
+const PER_ITEM_CAP = 600;
+// Exterior doors: $250/door, $500 total (§25C(b)(3)(B))
+const EXTERIOR_DOOR_PER_DOOR_CAP = 250;
+const EXTERIOR_DOOR_TOTAL_CAP = 500;
+// Home energy audit (§25C(b)(4))
+const ENERGY_AUDIT_CAP = 150;
+// Heat pump + heat pump water heater + biomass combined (§25C(b)(2))
+const HEAT_PUMP_BIOMASS_CAP = 2_000;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -35,114 +39,134 @@ export const inputSchema = z.object({
   solar_electric_cost: z.number().nonnegative().optional(),
   // Solar water heating property (§25D(a)(2))
   solar_water_heater_cost: z.number().nonnegative().optional(),
-  // Fuel cell property (§25D(a)(3))
+  // Fuel cell property (§25D(a)(5))
   fuel_cell_cost: z.number().nonnegative().optional(),
-  // Small wind energy property (§25D(a)(4))
+  // Fuel cell kilowatt capacity — used to apply $500/½-kW dollar cap (§25D(b)(1))
+  fuel_cell_kw_capacity: z.number().nonnegative().optional(),
+  // Small wind energy property (§25D(a)(3))
   small_wind_cost: z.number().nonnegative().optional(),
-  // Geothermal heat pump property (§25D(a)(5))
+  // Geothermal heat pump property (§25D(a)(4))
   geothermal_cost: z.number().nonnegative().optional(),
-  // Battery storage technology (§25D(a)(7))
+  // Battery storage technology (§25D(d)(7))
   battery_storage_cost: z.number().nonnegative().optional(),
+  // Battery storage capacity in kWh — must be ≥3 kWh to qualify (§25D(d)(7))
+  battery_storage_kwh_capacity: z.number().nonnegative().optional(),
+  // Unused §25D credit carried forward from prior year (§25D(c))
+  prior_year_carryforward: z.number().nonnegative().optional(),
 
   // ── Part II — Energy Efficient Home Improvement (IRC §25C) ────────────────
-  // Windows (§25C(a)(1)(A); $600 cap per year)
+  // Windows/skylights (§25C(c)(2)(B); $600 cap)
   windows_cost: z.number().nonnegative().optional(),
-  // Exterior doors (§25C(a)(1)(B); $250/door, $500 total)
+  // Exterior doors (§25C(c)(2)(A); $250/door, $500 total)
   exterior_doors_cost: z.number().nonnegative().optional(),
   // Number of exterior doors (for per-door $250 cap)
   exterior_doors_count: z.number().int().nonnegative().optional(),
-  // Insulation materials (§25C(a)(1)(C))
+  // Insulation/air sealing (§25C(c)(1); counts toward $1,200 annual cap)
   insulation_cost: z.number().nonnegative().optional(),
-  // HVAC — central A/C, heat pumps (§25C(a)(2); $600 cap)
-  hvac_cost: z.number().nonnegative().optional(),
-  // Water heaters (§25C(a)(2); included in $600 HVAC cap)
-  water_heater_cost: z.number().nonnegative().optional(),
-  // Biomass stoves/boilers (§25C(a)(2); $2,000 separate cap)
+  // Central air conditioner (§25C(d)(1); $600 cap)
+  central_ac_cost: z.number().nonnegative().optional(),
+  // Natural gas/propane/oil water heater (§25C(d)(2); $600 cap)
+  gas_water_heater_cost: z.number().nonnegative().optional(),
+  // Gas/propane/oil furnace or hot water boiler (§25C(d)(3); $600 cap)
+  furnace_boiler_cost: z.number().nonnegative().optional(),
+  // Panelboard/subpanelboard enabling property (§25C(d)(5); $600 cap)
+  panelboard_cost: z.number().nonnegative().optional(),
+  // Electric/natural gas heat pump (§25C(d)(4); part of $2,000 combined cap)
+  heat_pump_cost: z.number().nonnegative().optional(),
+  // Heat pump water heater (§25C(d)(4); part of $2,000 combined cap)
+  heat_pump_water_heater_cost: z.number().nonnegative().optional(),
+  // Biomass stove/boiler (§25C(d)(6); part of $2,000 combined cap)
   biomass_cost: z.number().nonnegative().optional(),
-  // Home energy audits (§25C(a)(3); $150 cap)
+  // Home energy audit (§25C(b)(4); $150 cap)
   energy_audit_cost: z.number().nonnegative().optional(),
 });
 
 type Form5695Input = z.infer<typeof inputSchema>;
 
-// ─── Pure Helpers ─────────────────────────────────────────────────────────────
+// ─── Part I Helpers ───────────────────────────────────────────────────────────
 
-// Part I: Residential Clean Energy Credit — 30%, no cap
+function eligibleBatteryCost(cost: number | undefined, kwhCapacity: number | undefined): number {
+  if (cost === undefined) return 0;
+  // If capacity is explicitly provided and below threshold, battery does not qualify
+  if (kwhCapacity !== undefined && kwhCapacity < BATTERY_MIN_KWH) return 0;
+  return cost;
+}
+
+function fuelCellCredit(cost: number | undefined, kwCapacity: number | undefined): number {
+  if (!cost) return 0;
+  const credit = Math.round(cost * PART_I_RATE);
+  if (kwCapacity !== undefined && kwCapacity > 0) {
+    return Math.min(credit, Math.round(kwCapacity * FUEL_CELL_CAP_PER_KW));
+  }
+  return credit;
+}
+
 function partICredit(input: Form5695Input): number {
-  const totalCost =
+  const batteryCost = eligibleBatteryCost(input.battery_storage_cost, input.battery_storage_kwh_capacity);
+  const otherCost =
     (input.solar_electric_cost ?? 0) +
     (input.solar_water_heater_cost ?? 0) +
-    (input.fuel_cell_cost ?? 0) +
     (input.small_wind_cost ?? 0) +
     (input.geothermal_cost ?? 0) +
-    (input.battery_storage_cost ?? 0);
-
-  return Math.round(totalCost * PART_I_RATE);
+    batteryCost;
+  const otherCredit = Math.round(otherCost * PART_I_RATE);
+  const fcCredit = fuelCellCredit(input.fuel_cell_cost, input.fuel_cell_kw_capacity);
+  const carryforward = input.prior_year_carryforward ?? 0;
+  return otherCredit + fcCredit + carryforward;
 }
 
-// Windows/skylights: $600 annual cap
+// ─── Part II Helpers ──────────────────────────────────────────────────────────
+
 function windowsCredit(cost: number): number {
-  return Math.min(Math.round(cost * PART_II_RATE), WINDOWS_DOORS_INSULATION_LIMIT);
+  return Math.min(Math.round(cost * PART_II_RATE), PER_ITEM_CAP);
 }
 
-// Exterior doors: $250 per door, $500 total
 function doorsCredit(cost: number, count: number): number {
-  const perDoorCap = count > 0 ? count * EXTERIOR_DOOR_PER_DOOR_LIMIT : EXTERIOR_DOOR_TOTAL_LIMIT;
-  const doorsCap = Math.min(perDoorCap, EXTERIOR_DOOR_TOTAL_LIMIT);
-  return Math.min(Math.round(cost * PART_II_RATE), doorsCap);
+  const perDoorCap = count > 0 ? count * EXTERIOR_DOOR_PER_DOOR_CAP : EXTERIOR_DOOR_TOTAL_CAP;
+  const cap = Math.min(perDoorCap, EXTERIOR_DOOR_TOTAL_CAP);
+  return Math.min(Math.round(cost * PART_II_RATE), cap);
 }
 
-// HVAC + water heaters combined: $600 cap
-function hvacWaterHeaterCredit(hvacCost: number, waterHeaterCost: number): number {
-  const combined = (hvacCost + waterHeaterCost) * PART_II_RATE;
-  return Math.min(Math.round(combined), HVAC_WATER_HEATER_LIMIT);
+function perItemCredit(cost: number): number {
+  return Math.min(Math.round(cost * PART_II_RATE), PER_ITEM_CAP);
 }
 
-// Biomass: $2,000 cap (separate from the $1,200 annual cap)
-function biomassCredit(cost: number): number {
-  return Math.min(Math.round(cost * PART_II_RATE), BIOMASS_LIMIT);
-}
-
-// Energy audit: $150 cap
 function energyAuditCredit(cost: number): number {
-  return Math.min(Math.round(cost * PART_II_RATE), ENERGY_AUDIT_LIMIT);
+  return Math.min(Math.round(cost * PART_II_RATE), ENERGY_AUDIT_CAP);
 }
 
-// Part II: Energy Efficient Home Improvement Credit
-// $1,200 annual cap on the sum of all qualifying improvements (excluding biomass)
-// Biomass has its own $2,000 cap and does NOT count toward the $1,200 cap
+function heatPumpBiomassCredit(hpCost: number, hpWhCost: number, biomassCost: number): number {
+  return Math.min(Math.round((hpCost + hpWhCost + biomassCost) * PART_II_RATE), HEAT_PUMP_BIOMASS_CAP);
+}
+
+// Part II: standard items subject to per-item caps and $1,200 annual cap;
+// heat pump + heat pump water heater + biomass have a separate $2,000 combined cap.
 function partIICredit(input: Form5695Input): number {
   const winCredit = windowsCredit(input.windows_cost ?? 0);
-  const doorCredit = doorsCredit(
-    input.exterior_doors_cost ?? 0,
-    input.exterior_doors_count ?? 0,
-  );
+  const doorCredit = doorsCredit(input.exterior_doors_cost ?? 0, input.exterior_doors_count ?? 0);
   const insCredit = Math.round((input.insulation_cost ?? 0) * PART_II_RATE);
-  const hvacCredit = hvacWaterHeaterCredit(input.hvac_cost ?? 0, input.water_heater_cost ?? 0);
+  const acCredit = perItemCredit(input.central_ac_cost ?? 0);
+  const gasWhCredit = perItemCredit(input.gas_water_heater_cost ?? 0);
+  const furnaceCredit = perItemCredit(input.furnace_boiler_cost ?? 0);
+  const panelCredit = perItemCredit(input.panelboard_cost ?? 0);
   const auditCredit = energyAuditCredit(input.energy_audit_cost ?? 0);
-  const biomassAmt = biomassCredit(input.biomass_cost ?? 0);
 
-  // $1,200 annual cap applies to: windows + doors + insulation + HVAC/water heater + audit
-  const cappedSubtotal = Math.min(
-    winCredit + doorCredit + insCredit + hvacCredit + auditCredit,
-    PART_II_ANNUAL_CAP,
+  const standardItems = winCredit + doorCredit + insCredit + acCredit + gasWhCredit + furnaceCredit + panelCredit + auditCredit;
+  const cappedStandard = Math.min(standardItems, PART_II_ANNUAL_CAP);
+
+  const hpBiomass = heatPumpBiomassCredit(
+    input.heat_pump_cost ?? 0,
+    input.heat_pump_water_heater_cost ?? 0,
+    input.biomass_cost ?? 0,
   );
 
-  // Biomass is separate from the $1,200 cap — it has its own $2,000 cap
-  return cappedSubtotal + biomassAmt;
+  return cappedStandard + hpBiomass;
 }
 
 function buildOutputs(partI: number, partII: number): NodeOutput[] {
-  const outputs: NodeOutput[] = [];
-
-  // Schedule 3 line 5 — residential energy credits
-  // Form 5695 line 15 (Part I) + line 30 (Part II) → Schedule 3 line 5
   const total = partI + partII;
-  if (total > 0) {
-    outputs.push(output(schedule3, { line5_residential_energy: total }));
-  }
-
-  return outputs;
+  if (total === 0) return [];
+  return [output(schedule3, { line5_residential_energy: total })];
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────
@@ -154,10 +178,8 @@ class Form5695Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form5695Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-
     const partI = partICredit(input);
     const partII = partIICredit(input);
-
     return { outputs: buildOutputs(partI, partII) };
   }
 }

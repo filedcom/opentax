@@ -83,6 +83,24 @@ Deno.test("f1099patr.compute: box3_per_unit_retain routes to schedule1 line8z_ot
   assertEquals(fields.line8z_other_income, 200);
 });
 
+Deno.test("f1099patr.compute: box5_redeemed_nonqualified (non-business) routes to schedule1 line8z_other_income", () => {
+  // IRC §1385(a)(3) — redemption of nonqualified written notices of allocation is gross income
+  const result = compute([minimalItem({ box5_redeemed_nonqualified: 350 })]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_other_income, 350);
+});
+
+Deno.test("f1099patr.compute: box5_redeemed_nonqualified included in total with other boxes", () => {
+  const result = compute([minimalItem({ box1_patronage_dividends: 100, box5_redeemed_nonqualified: 250 })]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_other_income, 350);
+});
+
+Deno.test("f1099patr.compute: box5_redeemed_nonqualified with trade_or_business=true — not routed to schedule1", () => {
+  const result = compute([minimalItem({ box5_redeemed_nonqualified: 500, trade_or_business: true })]);
+  assertEquals(result.outputs.find((o) => o.nodeType === "schedule1"), undefined);
+});
+
 Deno.test("f1099patr.compute: box4_federal_withheld routes to f1040 line25b_withheld_1099", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 250 })]);
   const out = findOutput(result, "f1040");

@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assert, assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, schedule_d } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
@@ -418,23 +418,26 @@ Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () =
 // 8. Output counts
 // ---------------------------------------------------------------------------
 
-Deno.test("output count: gain only → exactly 1 output (f1040)", () => {
+Deno.test("output count: gain only → exactly 3 outputs (f1040 + agi_aggregator + income_tax_calculation)", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "f1040");
+  assertEquals(result.outputs.length, 3);
+  assert(result.outputs.some((o) => o.nodeType === "f1040"));
+  assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
+  assert(result.outputs.some((o) => o.nodeType === "income_tax_calculation"));
 });
 
-Deno.test("output count: gain + 28pct → exactly 2 outputs", () => {
+Deno.test("output count: gain + 28pct → exactly 4 outputs", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 4);
 });
 
-Deno.test("output count: pure loss → exactly 1 output (f1040, capped)", () => {
+Deno.test("output count: pure loss → exactly 2 outputs (f1040 + agi_aggregator, capped)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -5000, is_long_term: false }) });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "f1040");
+  assertEquals(result.outputs.length, 2);
+  assert(result.outputs.some((o) => o.nodeType === "f1040"));
+  assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
 });
 
 // ---------------------------------------------------------------------------
@@ -491,7 +494,8 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
   assertEquals(worksheetOut !== undefined, true);
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 600);
 
-  assertEquals(result.outputs.length, 2);
+  // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet
+  assertEquals(result.outputs.length, 4);
 });
 
 // ===========================================================================
