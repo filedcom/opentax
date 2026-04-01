@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, hasValue, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
 
 export const FW2_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-003-02",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-form check: EmployeeSSN must equal PrimarySSN or SpouseSSN in Return Header
+    matchesHeaderSSN("EmployeeSSN"),
     "Form W-2, Line a, 'EmployeeSSN' must be equal to 'PrimarySSN' or 'SpouseSSN' in the Return Header.",
   ),
   rule(

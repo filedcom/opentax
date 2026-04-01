@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, eqStr, hasNonZero, not, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, any, eqStr, hasNonZero, not, } from "../../../../core/validation/mod.ts";
 
 export const F4972_RULES: readonly RuleDef[] = [
   rule(
@@ -40,7 +40,7 @@ export const F4972_RULES: readonly RuleDef[] = [
     "F4972-005",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires mutual exclusion check: only one of EmployeeBeneficiaryDistriInd=No or QualifyingAge5YearMemberInd=No is allowed
+    not(all(eqStr("EmployeeBeneficiaryDistriInd", "No"), eqStr("QualifyingAge5YearMemberInd", "No"))),
     "Only one of the two choices given below is allowed on Form 4972: a choice of \"No\" for Line 3 'EmployeeBeneficiaryDistriInd' or a choice of \"No\" for Line 4 'QualifyingAge5YearMemberInd'.",
   ),
   rule(

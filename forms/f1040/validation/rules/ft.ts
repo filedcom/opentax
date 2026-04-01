@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, dateGteField, dateLteField, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, all, dateGteField, dateLteField, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const FT_RULES: readonly RuleDef[] = [
   rule(
