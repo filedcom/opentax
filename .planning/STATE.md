@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase complete — ready for verification
+status: Ready to plan
 stopped_at: Completed 02-deductions-worksheets-batch-2/02-01-PLAN.md
-last_updated: "2026-04-01T21:16:05.632Z"
+last_updated: "2026-04-01T21:18:03.276Z"
 progress:
   total_phases: 10
   completed_phases: 2
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-04-01)
 
 ## Current Position
 
-Phase: 02 (deductions-worksheets-batch-2) — EXECUTING
-Plan: 1 of 1
+Phase: 10
+Plan: Not started
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260401-59f | Write CRITIQUE.md: deep production-readiness and IRS MEF certification assessment of the tax codebase | 2026-04-01 | e1b1ee6 | [260401-59f-write-critique-md-deep-production-readin](.planning/quick/260401-59f-write-critique-md-deep-production-readin/) |
+| 260401-wdm | Phase 3 Special Situations A node audit: fix f5405 + household_wages to use output() helper, verify clergy/f8915f/f8915d routing | 2026-04-01 | db86742 | [260401-wdm-phase-3-special-situations-a-node-audit-](.planning/quick/260401-wdm-phase-3-special-situations-a-node-audit-/) |
 
 ## Session Continuity
 
