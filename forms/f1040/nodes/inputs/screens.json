@@ -173,7 +173,8 @@
   {
     "form": "499R-W",
     "description": "Withholding Statement (Puerto Rico)",
-    "screen_code": "W2PR"
+    "screen_code": "W2PR",
+    "filed_tax_node_type_code": "w2"
   },
   {
     "form": "843",
@@ -321,7 +322,8 @@
     "screen_code": "EXT",
     "alias_screen_codes": [
       "2350"
-    ]
+    ],
+    "filed_tax_node_type_code": "ext"
   },
   {
     "form": "2439",
@@ -1188,7 +1190,8 @@
     "screen_code": "99B",
     "alias_screen_codes": [
       "8949 > \"Additional Info\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f1099b"
   },
   {
     "form": "Form 1045",
@@ -1268,7 +1271,8 @@
   {
     "form": "RRB-1099",
     "description": "Railroad Retirement Board Payments",
-    "screen_code": "RRP"
+    "screen_code": "RRP",
+    "filed_tax_node_type_code": "rrb1099r"
   },
   {
     "form": "RRB-1099-R",
@@ -1310,7 +1314,8 @@
   {
     "form": "Schedule A",
     "description": "Long-Term Care Premiums",
-    "screen_code": "LTC"
+    "screen_code": "LTC",
+    "filed_tax_node_type_code": "ltc_premium"
   },
   {
     "form": "Schedule A",
@@ -1473,7 +1478,8 @@
     "screen_code": "K1F",
     "alias_screen_codes": [
       "K1F > \"1041 K1 12-14\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "k1_trust"
   },
   {
     "form": "Schedule K-1 (Form 1065) Basis Worksheet",
@@ -1626,7 +1632,8 @@
   {
     "form": "W-2PR",
     "description": "Withholding Statement (Puerto Rico)",
-    "screen_code": "W2PR"
+    "screen_code": "W2PR",
+    "filed_tax_node_type_code": "w2"
   },
   {
     "form": "W2",
@@ -1636,7 +1643,8 @@
   {
     "form": "Wks Auto",
     "description": "Auto Expense Worksheet",
-    "screen_code": "AUTO"
+    "screen_code": "AUTO",
+    "filed_tax_node_type_code": "auto_expense"
   },
   {
     "form": "Wks Clergy",
@@ -1647,17 +1655,20 @@
   {
     "form": "Wks DEPL",
     "description": "Oil and Gas Depletion Worksheet",
-    "screen_code": "DEPL"
+    "screen_code": "DEPL",
+    "filed_tax_node_type_code": "depletion"
   },
   {
     "form": "Wks SSB-1",
     "description": "Lump-Sum Social Security Distributions",
-    "screen_code": "LSSA"
+    "screen_code": "LSSA",
+    "filed_tax_node_type_code": "lump_sum_ss"
   },
   {
     "form": "Wks STAX",
     "description": "State and Local General Sales Tax Deduction Worksheet",
-    "screen_code": "STAX"
+    "screen_code": "STAX",
+    "filed_tax_node_type_code": "sales_tax_deduction"
   },
   {
     "form": "Wks_CARRY",

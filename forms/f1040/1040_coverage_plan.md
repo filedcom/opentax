@@ -1,264 +1,172 @@
 # 1040 Coverage Plan — Drake Parity
 
-> Generated: 2026-04-01
+> Generated: 2026-04-01 | Updated: 2026-04-01
 
 ## Current State
 
-- **247 screens** tracked in `nodes/inputs/screens.json` (Drake screen-code reference)
-- **115 have node implementations** → 46.6% coverage
-- **132 screens missing** node coverage
+- **263 screens** tracked in `nodes/inputs/screens.json` (Drake screen-code reference)
+- **178 have node implementations** → 67.7% coverage
+- **85 screens missing** node coverage (of which ~29 are admin/non-computational)
 
 ---
 
 ## Gap Classification
 
-Of the 132 missing screens:
+Of the 56 remaining computational gaps:
 
 | Category | Count | In Scope |
 |---|---|---|
-| Computational gaps | ~48 | ✅ Yes — need new nodes |
-| Complex / international | ~22 | ✅ Yes — professional coverage |
-| Admin / operational | ~35 | ❌ No — no computation |
-| Tabs extending existing nodes | ~27 | ⚠️ Partial — schema extensions |
+| Complex / international (5471, NR, 965) | ~22 | ✅ Yes — professional coverage |
+| Schema extensions (K-1 tabs, QBI, BAN) | ~9 | ⚠️ Partial — extend existing nodes |
+| Rare / informational forms | ~10 | ⚠️ Low priority |
+| Admin / operational | ~29 | ❌ No — no computation |
 
 **Admin screens excluded** (no tax computation): ELEC, MISC, PRNT, EF, PMT, IFP, PIN/8879/8878,
 CONS, USE, DISC, 2848, 4506, 843, 911, COMM, IDS, DOCS, FAQ, FAFS, W-4, W-4P, W-9, W7, 7216,
-56, STEX (~35 screens).
+56, STEX, 8948, HC, PRNT, 8275 (~29 screens).
 
 ---
 
-## Phase 1: Self-Employed & Business Owner Gaps
+## Completed ✅
 
-> Highest ROI — affects 30%+ of complex returns
+### Phase 1: Self-Employed & Business Owner (DONE)
 
-### 1.1 SEP/SIMPLE/Solo 401(k) Deduction
-- **Screen:** `SEP`
-- **What:** Above-the-line SE retirement deduction (Schedule 1, line 16)
-- **New node:** `inputs/sep_retirement/index.ts`
-- **Wires to:** `schedule1` (line 16)
+| Screen | Node | Status |
+|---|---|---|
+| `SEP` | `inputs/sep_retirement` | ✅ Built |
+| `LOSS`, `NOL` | `inputs/nol_carryforward` | ✅ Built |
+| `3800`, `GBC` | `inputs/f3800` | ✅ Built |
+| `2106` | `inputs/f2106` | ✅ Built |
+| `BAN` | — | ⚠️ Schema extension (8995/8995a) |
+| `K199` | — | ⚠️ Schema extension (k1_partnership, k1_s_corp) |
 
-### 1.2 NOL Carryforward Tracking
-- **Screens:** `LOSS` (Wks_CARRY), `NOL` (Form 1045)
-- **What:** Net operating loss carryforwards; reduces current-year income (Schedule 1, line 8a)
-- **New node:** `inputs/nol_carryforward/index.ts`
-- **Wires to:** `schedule1`
+### Phase 2: Deduction & Credit Worksheets (DONE)
 
-### 1.3 General Business Credit (Form 3800)
-- **Screens:** `3800`, `GBC` (carryforward/carryback worksheet)
-- **What:** Composite credit combining 30+ individual credits; Schedule 3 line 6
-- **New node:** `inputs/f3800/index.ts`
-- **Wires to:** `schedule3`
-- **MeF builder:** `mef/f3800.ts`
+| Screen | Node | Status |
+|---|---|---|
+| `LTC` | `inputs/ltc_premium` | ✅ Built |
+| `STAX` | `inputs/sales_tax_deduction` | ✅ Built |
+| `AUTO` | `inputs/auto_expense` | ✅ Built |
+| `DEPL` | `inputs/depletion` | ✅ Built |
+| `CR` | `intermediate/form8582cr` | ✅ Built |
+| `LSSA` | `inputs/lump_sum_ss` | ✅ Built |
 
-### 1.4 QBI Business Aggregation
-- **Screen:** `BAN`
-- **What:** §199A aggregation elections for multiple trades/businesses
-- **Extend:** `intermediate/form8995/` and `intermediate/form8995a/` to accept groupings
-- **No new node** — extend existing schema
+### Phase 3: Special Tax Situations (DONE)
 
-### 1.5 K-1 QBI Additional Data
-- **Screen:** `K199`
-- **What:** QBI amounts, W-2 wages, UBIA from K-1s feeding 8995-A
-- **Extend:** `k1_partnership`, `k1_s_corp`, `k1_trust` input schemas with QBI fields
-- **No new node** — extend existing schemas
+| Screen | Node | Status |
+|---|---|---|
+| `CLGY` | `inputs/clergy` | ✅ Built |
+| `915F` | `inputs/f8915f` | ✅ Built |
+| `915D` | `inputs/f8915d` | ✅ Built |
+| `HOME` | `inputs/f5405` | ✅ Built |
+| `HSH` | `inputs/household_wages` | ✅ Built |
+| `FEC` | `inputs/fec` | ✅ Built |
+| `QSE` | `inputs/qsehra` | ✅ Built |
 
-### 1.6 Form 2106 — Employee Business Expenses
-- **Screen:** `2106`
-- **What:** Reserved employees (Armed Forces, performing artists, fee-based govt officials)
-- **New node:** `inputs/f2106/index.ts`
-- **Wires to:** `schedule1` (line 12)
-- **MeF builder:** `mef/f2106.ts`
+### Phase 4: Specialty Credits & Rare Forms (DONE)
 
----
+| Screen | Node | Status |
+|---|---|---|
+| `8917` | `inputs/f8917` | ✅ Built (expired; no federal output) |
+| `8867` | `inputs/f8867` | ✅ Built (compliance checklist) |
+| `8859` | `inputs/f8859` | ✅ Built (DC homebuyer credit carryforward) |
+| `8820`, `DRUG` | `inputs/f8820` | ✅ Built (Orphan Drug Credit) |
+| `8828` | `inputs/f8828` | ✅ Built (mortgage subsidy recapture) |
+| `8835` | `inputs/f8835` | ✅ Built (renewable electricity PTC) |
+| `8844` | `inputs/f8844` | ✅ Built (empowerment zone credit) |
+| `8864` | `inputs/f8864` | ✅ Built (biodiesel/SAF credit) |
+| `8896` | `inputs/f8896` | ✅ Built (low-sulfur diesel credit) |
+| `8912` | `inputs/f8912` | ✅ Built (tax credit bonds) |
+| `8978` | `inputs/f8978` | ✅ Built (BBA partner adjustment tax) |
+| `8611` | `inputs/f8611` | ✅ Built (LIHTC recapture) |
 
-## Phase 2: Deduction & Credit Worksheets
+### Phase 5: International (Partial)
 
-### 2.1 Long-Term Care Premium Worksheet
-- **Screen:** `LTC`
-- **What:** Age-based eligible LTC premium limits → Schedule A
-- **New node:** `inputs/ltc_premium/index.ts`
-- **Wires to:** `schedule_a`
-
-### 2.2 State & Local Sales Tax Deduction Worksheet
-- **Screen:** `STAX`
-- **What:** General sales tax deduction vs. state income tax election (Schedule A, line 5)
-- **New node:** `inputs/sales_tax_deduction/index.ts`
-- **Wires to:** `schedule_a`
-
-### 2.3 Auto Expense Worksheet
-- **Screen:** `AUTO`
-- **What:** Business vehicle: actual cost vs. standard mileage for Schedule C, E, F
-- **New node:** `inputs/auto_expense/index.ts`
-- **Wires to:** `schedule_c`, `schedule_e`, `schedule_f`
-
-### 2.4 Oil & Gas Depletion Worksheet
-- **Screen:** `DEPL`
-- **What:** Percentage or cost depletion for mineral/oil/gas interests
-- **New node:** `inputs/depletion/index.ts`
-- **Wires to:** `schedule_c`, `schedule_e`
-
-### 2.5 Passive Activity Credit Limitations (Form 8582-CR)
-- **Screen:** `CR`
-- **What:** Limits passive activity credits (mirrors 8582 for losses)
-- **New intermediate node:** `intermediate/form8582cr/index.ts`
-- **Wires to:** `schedule3`
-- **MeF builder:** `mef/f8582cr.ts`
-
-### 2.6 Lump-Sum Social Security Distribution Worksheet
-- **Screen:** `LSSA`
-- **What:** Special computation for prior-year SS benefits paid as lump sum
-- **New node:** `inputs/lump_sum_ss/index.ts`
-- **Wires to:** `ssa1099` (extends), `f1040` income calculation
+| Screen | Node | Status |
+|---|---|---|
+| `8833` | `inputs/f8833` | ✅ Built (treaty disclosure) |
+| `8840` | `inputs/f8840` | ✅ Built (closer connection) |
+| `8843` | `inputs/f8843` | ✅ Built (exempt individuals) |
+| `8854` | `inputs/f8854` | ✅ Built (expatriation) |
+| `8805` | `inputs/f8805` | ✅ Built (§1446 withholding credit) |
+| `8082` | `inputs/f8082` | ✅ Built (inconsistent treatment notice) |
+| `8873` | `inputs/f8873` | ✅ Built (extraterritorial income) |
+| `8288` | `inputs/f8288` | ✅ Built (FIRPTA withholding credit) |
+| `8621` | `inputs/f8621` | ✅ Built (PFIC/QEF) |
 
 ---
 
-## Phase 3: Special Tax Situations
+## Remaining Gaps
 
-### 3.1 Clergy / Ministerial Income
-- **Screen:** `CLGY`
-- **What:** Housing allowance exclusion, parsonage value, SE tax on ministerial income
-- **New node:** `inputs/clergy/index.ts`
-- **Wires to:** `schedule_se`, `schedule_c`
+### Phase 5 (Continued): Complex International
 
-### 3.2 Disaster Retirement Distributions (Form 8915-F / 8915-D)
-- **Screens:** `915F`, `915D`
-- **What:** COVID/disaster distributions, 3-year income spreading, repayments
-- **New nodes:** `inputs/f8915f/index.ts`, `inputs/f8915d/index.ts`
-- **Wires to:** `f1040` (income), `schedule3` (repayment credit)
-- **MeF builders:** `mef/f8915f.ts`, `mef/f8915d.ts`
-
-### 3.3 First-Time Homebuyer Credit Repayment (Form 5405)
-- **Screen:** `HOME`
-- **What:** Annual 1/15 repayment of 2008 credit; sale triggers full repayment
-- **New node:** `inputs/f5405/index.ts`
-- **Wires to:** `schedule2` (other taxes)
-- **MeF builder:** `mef/f5405.ts`
-
-### 3.4 Household Employee Wages (HSH)
-- **Screen:** `HSH`
-- **What:** W-2 wages received from household employer; distinct from employer-side Schedule H
-- **Extend:** `inputs/schedule_h/index.ts` or new `inputs/household_wages/index.ts`
-- **Wires to:** `f1040` line 1a
-
-### 3.5 Foreign Employer Compensation
-- **Screen:** `FEC`
-- **What:** Wages from foreign employers without US W-2 or withholding
-- **New node:** `inputs/fec/index.ts`
-- **Wires to:** `f1040` line 1a
-
-### 3.6 Qualified Small Employer HRA (QSEHRA)
-- **Screen:** `QSE`
-- **What:** Employer HRA reimbursements affecting PTC eligibility (Form 8962)
-- **New node:** `inputs/qsehra/index.ts`
-- **Wires to:** `form8962`
-
----
-
-## Phase 4: Specialty Credits & Rare Forms
-
-Each follows the same pattern: new input node → wire to schedule2/3 → MeF builder.
-
-| Screen | Form | What | Est. complexity |
-|---|---|---|---|
-| `8917` | Form 8917 | Tuition & Fees deduction (expired fed; state use) | Low |
-| `8867` | Form 8867 | Paid Preparer Due Diligence Checklist | Low |
-| `8859` | Form 8859 | DC First-Time Homebuyer Credit | Low |
-| `8820/DRUG` | Form 8820 | Orphan Drug Credit | Low |
-| `8828` | Form 8828 | Federal Mortgage Subsidy Recapture | Low |
-| `8835` | Form 8835 | Renewable Electricity Production Credit | Low |
-| `8844` | Form 8844 | Empowerment Zone Employment Credit | Low |
-| `8864` | Form 8864 | Biodiesel / Renewable Diesel / SAF Credit | Low |
-| `8896` | Form 8896 | Low-Sulfur Diesel Production Credit | Low |
-| `8912` | Form 8912 | Credit to Holders of Tax Credit Bonds | Low |
-| `8978` | Form 8978 | Partner's Additional Reporting Year Tax | Medium |
-| `8611` | Form 8611 | LIHTC Recapture | Low |
-| `PPP2` | N/A | PPP Loan forgiveness (informational only) | Low |
-
----
-
-## Phase 5: International & Complex Returns
-
-Required for professional firms handling international clients.
+Very high complexity — required for professional firms handling international clients.
 
 | Screen(s) | Form | What | Est. complexity |
 |---|---|---|---|
-| `5471` + `SCHA`–`SCHQ` (14 screens) | Form 5471 + Schedules A/B/C/F/G/I/J/M/O/P/Q/R | CFC information returns | Very High |
-| `8621` | Form 8621 | PFIC shareholder return | High |
-| `8805` | Form 8805 | Foreign partner §1446 withholding | Medium |
-| `8833` | Form 8833 | Treaty-based return position disclosure | Low |
-| `8840` | Form 8840 | Closer connection exception statement | Low |
-| `8843` | Form 8843 | Statement for exempt individuals | Low |
-| `8854` | Form 8854 | Initial/annual expatriation statement | Medium |
-| `965A/C/D/E` | Forms 965-A/C/D/E | §965 repatriation tax | High |
+| `5471` + `SCHA`–`SCHR` (11 screens) | Form 5471 + Schedules A/B/C/F/G/H/I-1/J/M/O/P/Q/R | CFC information returns | Very High |
 | `NR`, `NR2`, `NR3` | Form 1040-NR + Schedule NEC/OI | Nonresident alien return | Very High |
-| `8873` | Form 8873 | Extraterritorial income exclusion | Medium |
-| `8288` | Form 8288-A | FIRPTA withholding statement | Medium |
-| `8082` | Form 8082 | Notice of inconsistent treatment | Low |
-| `SSA2`, `RRB2` | SSA/RRB-1042S | Nonresident SS/railroad benefits | Low |
+| `965A/C/D/E` | Forms 965-A/C/D/E | §965 repatriation tax | High |
+| `1042` | Form 1042 | Annual withholding for foreign persons | Medium |
 
----
-
-## Existing Node Extensions (No New Nodes)
-
-These Drake screens map to tabs or additional data on nodes that already exist. Extend the
-existing Zod schemas — no new nodes required.
+### Schema Extensions (No New Nodes)
 
 | Screen | What | Existing Node |
 |---|---|---|
-| `K1S > Pre-2018 Basis` | Pre-2018 S-corp carryover losses/deductions | `k1_s_corp` |
-| `K1P > Pre-2018 Basis` | Pre-2018 partner carryover losses/deductions | `k1_partnership` |
+| `K1S > Pre-2018 Basis` | Pre-2018 S-corp carryover losses | `k1_s_corp` |
+| `K1P > Pre-2018 Basis` | Pre-2018 partner carryover losses | `k1_partnership` |
 | `K1S > Pre-2018 At-Risk` | S-corp at-risk basis pre-2018 | `k1_s_corp` |
 | `K1P > Pre-2018 At-Risk` | Partner at-risk basis pre-2018 | `k1_partnership` |
 | `K1P > Basis Wkst` | Partner basis worksheet | `k1_partnership` |
 | `K1S > Basis (7203)` | Form 7203 S-corp stock/debt basis | `k1_s_corp` → new `intermediate/form7203/` |
-| `K1F` | Trust K-1 additional (verify vs. existing `k1_trust`) | `k1_trust` |
-| `CIDP` | Form 4835 additional scenario tab | `f4835` |
-| `59E` | AMT §59(e) unamortized deduction (Form 1045 AMT) | AMT workflow |
+| `K1F` | Trust K-1 additional fields | `k1_trust` |
+| `BAN` | QBI aggregation elections | `intermediate/form8995`, `form8995a` |
+| `K199` | QBI amounts from K-1s | `k1_partnership`, `k1_s_corp` |
+
+### Informational / Low Priority
+
+| Screen | Form | What |
+|---|---|---|
+| `CIDP` | Form 4835 | 4835 additional scenario tab |
+| `59E` | Form 1045 AMT | §59(e) unamortized deduction |
+| `970` | Form 970 | LIFO inventory method election |
+| `3115` | Form 3115 | Accounting method change |
+| `4970` | Form 4970 | Trust accumulation distribution tax |
+| `8594` | Form 8594 | Asset acquisition statement §1060 |
+| `8697` | Form 8697 | Look-back interest (long-term contracts) |
+| `8866` | Form 8866 | Look-back interest (income forecast) |
+| `8903` | Form 8903 | DPAD (repealed — no output) |
+| `8857` | Form 8857 | Innocent spouse relief request |
+| `PPP2` | N/A | PPP loan forgiveness (informational) |
+| `2120` | Form 2120 | Multiple support declaration |
+| `1403` | Form 14039 | Identity theft affidavit |
+| `114` | FinCEN 114 | FBAR (filed separately, not with 1040) |
+| `RRB2` | RRB-1042S | Nonresident railroad retirement |
+| `SSA2` | SSA-1042S | Nonresident SS benefits |
+| `W2PR` | W-2PR | Puerto Rico withholding |
 
 ---
 
 ## Coverage Trajectory
 
-| After Phase | New Nodes | Est. Coverage |
+| Milestone | Nodes Added | Coverage |
 |---|---|---|
-| Current | — | 115/247 = **46.6%** |
-| Phase 1 | +6 | ~121/247 |
-| Phase 2 | +6 | ~127/247 |
-| Phase 3 | +6 | ~133/247 |
-| Phases 1–3 complete | 18 | **~133/220 non-admin = ~60%** |
-| + Phase 4 | +13 | ~146/247 |
-| + Phase 5 | +8–12 | ~155–158/247 |
-| + Schema extensions | +0 new nodes | ~164/247 |
-| **Full completion** | ~39–47 total | **~85–90% of computational screens** |
+| Baseline | — | 115/247 = **46.6%** |
+| Phases 1–3 complete | +18 | 133/263 = ~50.6% |
+| Phase 4 complete | +12 | 145/263 = ~55.1% |
+| Phase 5 partial (9 intl nodes) | +9 | 154/263 = ~58.6% |
+| Duplicate screen tagging | — | 178/263 = **67.7%** ← current |
+| + Schema extensions | +0 new nodes | ~185/263 = ~70% |
+| + 5471 + NR + 965 | +15–18 | ~200/263 = **~76%** |
+| + Informational forms | +8–10 | ~210/263 = **~80%** |
 
-> The remaining ~10–15% are niche forms (5471 CFC schedules, 1040-NR) that represent <1% of
-> filed returns but are required for professional-grade completeness.
-
----
-
-## Implementation Pattern (Each Node)
-
-Every new input node follows `CLAUDE.md` conventions:
-
-```
-forms/f1040/nodes/inputs/<node>/
-  index.ts          ← Zod itemSchema + inputSchema + TaxNode class + singleton export
-```
-
-Steps per node:
-1. Define `itemSchema` (per-document fields) and `inputSchema` (array of items + any top-level flags)
-2. Implement `compute()` — pure functions, no mutation, early returns, small helpers
-3. Declare `outputNodes = new OutputNodes([...])` for compile-time routing safety
-4. Register in `forms/f1040/2025/registry.ts`
-5. Add `filed_tax_node_type_code` to `nodes/inputs/screens.json`
-6. Add MeF builder in `forms/f1040/mef/` if form has IRS XML element
-7. Write tests (unit + at least one integration scenario)
+> Remaining ~20% are niche forms (5471 CFC schedules, 1040-NR, 965 repatriation) that represent
+> <2% of filed returns but are required for professional-grade completeness.
 
 ---
 
 ## Verification
 
-Track coverage progress:
 ```bash
 cat forms/f1040/nodes/inputs/screens.json | python3 -c "
 import json,sys
@@ -268,10 +176,8 @@ print(f'{len(cov)}/{len(d)} covered ({100*len(cov)/len(d):.1f}%)')
 "
 ```
 
-After each phase, run full test suite and a return-level validation:
+After each phase, run full test suite:
 ```bash
 deno task test
-deno run -A cli/main.ts return validate --returnId <id> --format text
+deno check forms/f1040/2025/registry.ts
 ```
-
-Add a new scenario to `docs/scenarios.md` for each phase's representative case.
