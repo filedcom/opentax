@@ -111,11 +111,18 @@ import { inputSchema as scheduleDInputSchema, schedule_d } from "../nodes/interm
 import { f56, inputSchema as f56InputSchema } from "../nodes/inputs/f56/index.ts";
 import { f970, itemSchema as f970ItemSchema } from "../nodes/inputs/f970/index.ts";
 import { f3115, itemSchema as f3115ItemSchema } from "../nodes/inputs/f3115/index.ts";
+import { f4970, itemSchema as f4970ItemSchema } from "../nodes/inputs/f4970/index.ts";
+import { f8697, itemSchema as f8697ItemSchema } from "../nodes/inputs/f8697/index.ts";
+import { f8866, itemSchema as f8866ItemSchema } from "../nodes/inputs/f8866/index.ts";
 import { qbiAggregation, inputSchema as qbiAggregationInputSchema } from "../nodes/inputs/qbi_aggregation/index.ts";
 import { f843, inputSchema as f843InputSchema } from "../nodes/inputs/f843/index.ts";
 import { f2120, inputSchema as f2120InputSchema } from "../nodes/inputs/f2120/index.ts";
 import { f8275, inputSchema as f8275InputSchema } from "../nodes/inputs/f8275/index.ts";
 import { f8857, inputSchema as f8857InputSchema } from "../nodes/inputs/f8857/index.ts";
+
+import { f8965, inputSchema as f8965InputSchema } from "../nodes/inputs/f8965/index.ts";
+import { f59e, itemSchema as f59eItemSchema } from "../nodes/inputs/f59e/index.ts";
+import { f1040es, inputSchema as f1040esInputSchema } from "../nodes/inputs/f1040es/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
@@ -232,9 +239,15 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f56, inputSchema: f56InputSchema, isArray: false },
   { node: f970, itemSchema: f970ItemSchema, isArray: true },
   { node: f3115, itemSchema: f3115ItemSchema, isArray: true },
+  { node: f4970, itemSchema: f4970ItemSchema, isArray: true },
+  { node: f8697, itemSchema: f8697ItemSchema, isArray: true },
+  { node: f8866, itemSchema: f8866ItemSchema, isArray: true },
   { node: qbiAggregation, inputSchema: qbiAggregationInputSchema, isArray: false },
   { node: f843, inputSchema: f843InputSchema, isArray: false },
   { node: f2120, inputSchema: f2120InputSchema, isArray: false },
   { node: f8275, inputSchema: f8275InputSchema, isArray: false },
   { node: f8857, inputSchema: f8857InputSchema, isArray: false },
+  { node: f8965, inputSchema: f8965InputSchema, isArray: false },
+  { node: f59e, itemSchema: f59eItemSchema, isArray: true },
+  { node: f1040es, inputSchema: f1040esInputSchema, isArray: false },
 ];

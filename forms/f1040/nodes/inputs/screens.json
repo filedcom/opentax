@@ -119,7 +119,8 @@
   {
     "form": "1040-ES",
     "description": "Estimated Tax for Individuals",
-    "screen_code": "ES"
+    "screen_code": "ES",
+    "filed_tax_node_type_code": "f1040es"
   },
   {
     "form": "1040-NR",
@@ -554,7 +555,8 @@
   {
     "form": "4970",
     "description": "Tax on Accumulation Distribution of Trusts",
-    "screen_code": "4970"
+    "screen_code": "4970",
+    "filed_tax_node_type_code": "f4970"
   },
   {
     "form": "4972",
@@ -627,7 +629,7 @@
   },
   {
     "form": "5471, Schedule I",
-    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Summary of Shareholder\u2019s Income From Foreign Corporation",
+    "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Summary of Shareholder’s Income From Foreign Corporation",
     "screen_code": "SCHI",
     "alias_screen_codes": [
       "SCHI > SCH I Worksheet A\" tab"
@@ -799,7 +801,8 @@
   {
     "form": "8697",
     "description": "Interest Computation Under the Look-Back Method for Completed Long-Term Contracts",
-    "screen_code": "8697"
+    "screen_code": "8697",
+    "filed_tax_node_type_code": "f8697"
   },
   {
     "form": "8801",
@@ -976,7 +979,8 @@
     "screen_code": "8866",
     "alias_screen_codes": [
       "LOOK"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8866"
   },
   {
     "form": "8867",
@@ -1157,11 +1161,12 @@
   {
     "form": "8965",
     "description": "Health Coverage Exemptions",
-    "screen_code": "HC"
+    "screen_code": "HC",
+    "filed_tax_node_type_code": "f8965"
   },
   {
     "form": "8978",
-    "description": "Partner\u2019s Additional Reporting Year Tax",
+    "description": "Partner’s Additional Reporting Year Tax",
     "screen_code": "8978",
     "alias_screen_codes": [
       "8978 > \"Schedule A\" link"
@@ -1250,7 +1255,8 @@
   {
     "form": "Form 1045 AMT",
     "description": "Unamortized AMT Section 59e Deduction",
-    "screen_code": "59E"
+    "screen_code": "59E",
+    "filed_tax_node_type_code": "f59e"
   },
   {
     "form": "Form 3800 Attachment",
@@ -1501,7 +1507,7 @@
   },
   {
     "form": "Schedule K-1 (1065)",
-    "description": "Partner\u2019s Share of Income, Deductions, Credits, etc.",
+    "description": "Partner’s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1P",
     "alias_screen_codes": [
       "K1P > \"Add'l entries\" tab"
@@ -1510,7 +1516,7 @@
   },
   {
     "form": "Schedule K-1 (Form 1120-S)",
-    "description": "Shareholder\u2019s Share of Income, Deductions, Credits, etc.",
+    "description": "Shareholder’s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1S",
     "alias_screen_codes": [
       "K1S > \"Add'l entries\" tab",
@@ -1537,7 +1543,7 @@
   },
   {
     "form": "Schedule K-1 (Form 1041)",
-    "description": "Beneficiary\u2019s Share of Income, Deductions, Credits, etc.",
+    "description": "Beneficiary’s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1F",
     "alias_screen_codes": [
       "K1F > \"1041 K1 12-14\" tab"
@@ -1546,7 +1552,7 @@
   },
   {
     "form": "Schedule K-1 (Form 1065) Basis Worksheet",
-    "description": "Partner\u2019s Share of Income, Deductions, Credits, etc.",
+    "description": "Partner’s Share of Income, Deductions, Credits, etc.",
     "screen_code": "K1P > \"Basis Wkst\" tab",
     "alias_screen_codes": [
       "K1P > \"Basis Wkst cont\" tab",

@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8962
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 85 rules (85 implemented, 0 stubs)
+ * 85 rules (73 implemented, 12 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqDiv, eqField, eqFieldProduct, eqMin, eqStr, eqSum, filingStatusIs, formPresent, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqDiv, eqField, eqFieldProduct, eqMin, eqStr, eqSum, filingStatusIs, formPresent, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtField, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F8962_RULES: readonly RuleDef[] = [
   rule(
@@ -544,21 +544,21 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-317",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    notGtField("StartMonthNumberCd", "EndMonthNumberCd"),
     "Form 8962, Line 35c 'StartMonthNumberCd' must not be after Line 35d 'EndMonthNumberCd'.",
   ),
   rule(
     "F8962-318",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    notGtField("StartMonthNumberCd", "EndMonthNumberCd"),
     "Form 8962, Line 36c 'StartMonthNumberCd' must not be after Line 36d 'EndMonthNumberCd'.",
   ),
   rule(
     "F8962-319",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    notGtField("StartMonthNumberCd", "EndMonthNumberCd"),
     "Form 8962, Part 4 \"Shared Policy Allocation\", 'StartMonthNumberCd' must not be after 'EndMonthNumberCd'.",
   ),
   rule(
