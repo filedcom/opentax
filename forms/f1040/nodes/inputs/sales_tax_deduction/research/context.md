@@ -41,7 +41,7 @@ base = table_amount + (major_purchase_tax ?? 0)
 Source: IRC §164(b)(5); Schedule A Instructions, Line 5b
 
 ### Step 2 — Route to Schedule A
-The computed base amount flows to `schedule_a.line_5b_sales_tax` (Schedule A Line 5b). Schedule A applies the $10,000 SALT cap combining line 5 + line 6.
+The computed base amount flows to `schedule_a.line_5a_tax_amount` (Schedule A Line 5a, sales tax election). Schedule A applies the $10,000 SALT cap combining line 5 + line 6.
 
 Source: IRC §164(b)(5); Schedule A Line 5b; TCJA §11042
 
