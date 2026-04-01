@@ -9,7 +9,7 @@ Build ~45 missing tax nodes in 9 phases of 5 nodes each, expanding coverage from
 - [ ] **Phase 1: Self-Employed & Retirement (Batch 1)** - SEP retirement, NOL carryforward, Form 3800, Form 2106, LTC premium
 - [ ] **Phase 2: Deductions & Worksheets (Batch 2)** - Sales tax deduction, auto expense, depletion, Form 8582-CR, lump-sum SS
 - [ ] **Phase 3: Special Situations A (Batch 3)** - Clergy, Form 8915-F, Form 8915-D, Form 5405, household wages
-- [ ] **Phase 4: Special Situations B (Batch 4)** - Foreign employer compensation, QSEHRA, Form 8917, Form 8867, Form 8859
+- [x] **Phase 4: Special Situations B (Batch 4)** - Foreign employer compensation, QSEHRA, Form 8917, Form 8867, Form 8859 (completed 2026-04-01)
 - [ ] **Phase 5: Specialty Credits A (Batch 5)** - Form 8820, Form 8828, Form 8835, Form 8844, Form 8864
 - [ ] **Phase 6: Specialty Credits B (Batch 6)** - Form 8896, Form 8912, Form 8978, Form 8611, PPP informational
 - [ ] **Phase 7: Schema Extensions & Form 7203 (Batch 7)** - K-1 QBI fields, K-1 basis extensions, Form 7203, f4835 CIDP
@@ -77,7 +77,7 @@ Plans:
 - [ ] 03-03: Implement all 5 nodes + register + update screens.json
 
 ### Phase 4: Special Situations B (Batch 4)
-**Goal**: Build 5 nodes for foreign employer compensation (FEC), QSEHRA, tuition & fees (8917), paid preparer due diligence (8867), and DC first-time homebuyer credit (8859). For EACH node: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json update.
+**Goal**: Verify all 5 pre-built nodes (FEC, QSEHRA, F8917, F8867, F8859) meet success criteria. All nodes already implemented with passing tests -- this phase confirms correctness, registration, and research completeness.
 **Depends on**: Phase 3
 **Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06
 **Success Criteria** (what must be TRUE):
@@ -88,12 +88,10 @@ Plans:
   5. `forms/f1040/nodes/inputs/f8859/index.ts` exists, routes to schedule3
   6. All 5 nodes have research/context.md, passing tests, registered in registry.ts
   7. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 04-01: Research all 5 nodes
-- [ ] 04-02: Write black-box tests for all 5 nodes
-- [ ] 04-03: Implement all 5 nodes + register + update screens.json
+- [x] 04-01-PLAN.md — Verify all 5 nodes: run node-scoped tests (80 pass), confirm registry/inputs registration, audit research/context.md completeness
 
 ### Phase 5: Specialty Credits A (Batch 5)
 **Goal**: Build 5 specialty credit nodes: orphan drug credit (8820), federal mortgage subsidy recapture (8828), renewable electricity production credit (8835), empowerment zone employment credit (8844), biodiesel/renewable diesel/SAF credit (8864). Each: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json.
@@ -201,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 1. Self-Employed & Retirement | 2/3 | In Progress|  |
 | 2. Deductions & Worksheets | 0/1 | Not started | - |
 | 3. Special Situations A | 0/3 | Not started | - |
-| 4. Special Situations B | 0/3 | Not started | - |
+| 4. Special Situations B | 1/1 | Complete   | 2026-04-01 |
 | 5. Specialty Credits A | 0/3 | Not started | - |
 | 6. Specialty Credits B | 0/3 | Not started | - |
 | 7. Schema Extensions & Form 7203 | 0/3 | Not started | - |
@@ -213,7 +211,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 **Goal:** [To be planned]
 **Requirements**: TBD
 **Depends on:** Phase 9
-**Plans:** 2/3 plans executed
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 10 to break down)
