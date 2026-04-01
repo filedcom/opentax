@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: SEIC
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 24 rules (24 implemented, 0 stubs)
+ * 24 rules (2 implemented, 22 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";

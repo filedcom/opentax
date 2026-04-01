@@ -26,7 +26,7 @@ export const F4797_RULES: readonly RuleDef[] = [
     "F4797-008-01",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    alwaysPass, // cross-instance aggregation: sum across all Form 4684 instances vs this Form 4797 field
     "If Form 4684 is present in the return, then Form 4797 'GainForm4684Amt' must be equal to the sum of all Forms 4684 'LongTermPropIncomePlusGainAmt'.",
   ),
 ];

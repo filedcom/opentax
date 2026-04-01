@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: F9465
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 20 rules (20 implemented, 0 stubs)
+ * 20 rules (19 implemented, 1 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -145,7 +145,7 @@ export const F9465_RULES: readonly RuleDef[] = [
     "F9465-044",
     "reject",
     "missing_data",
-    alwaysPass,
+    alwaysPass, // requires range check (25000–50000) + payment-method OR across bank/payroll fields
     "If (1) Form 9465, 'TotalTaxDueAmt' is between 25000 and 50000 and (2) [ 'PaymentDueAmt' or 'RevisedMonthlyPaymentAmt' ] has a value greater than 'CalculatedMonthlyPymtAmt', then [ 'RoutingTransitNum' and 'BankAccountNum' must have values] or [ 'PayrollDeductionAgreementInd' must be checked ]. If you choose to pay by payroll deduction, choose not to provide bank account information, or elect neither payroll deduction or bank account withdrawal, then you must complete Form 9465 and Form 2159 on paper and mail them to the mailing address provided at https://www.irs.gov/filing/where-to-file-your-taxes-for-form-9465.",
   ),
 ];

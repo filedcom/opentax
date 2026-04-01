@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: S8812
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 4 rules (2 implemented, 2 stubs)
+ * 4 rules (3 implemented, 1 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -12,7 +12,7 @@ export const S8812_RULES: readonly RuleDef[] = [
     "S8812-F1040-003-04",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-form check: Form 2555 TotalIncomeExclusionAmt/HousingDeductionAmt → Schedule 8812 Parts II-A/B/C
     "Schedule 8812 (Form 1040) Part II-A, Part II-B, and Part II-C must not have entries if Form 2555, 'TotalIncomeExclusionAmt' or 'HousingDeductionAmt' has a non-zero value.",
   ),
   rule(

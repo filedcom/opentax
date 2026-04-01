@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8865
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 40 rules (40 implemented, 0 stubs)
+ * 40 rules (15 implemented, 25 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, formPresent, gt, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, any, eqStr, formPresent, gt, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const F8865_RULES: readonly RuleDef[] = [
   rule(
@@ -33,7 +33,7 @@ export const F8865_RULES: readonly RuleDef[] = [
     "F8865-194-02",
     "reject",
     "missing_data",
-    alwaysPass,
+    ifThen(hasValue("OwnsConstructiveInterestInd"), all(any(hasValue("ConstructiveOwnerName"), hasValue("ConstructiveOwnerPersonNm")), any(hasValue("ConstructiveOwnerUSAddress"), hasValue("ConstructiveOwnerFrgnAddress")), any(hasValue("ConstructiveOwnerSSN"), hasValue("ConstructiveOwnerEIN"), hasValue("MissingEINReasonCd")))),
     "If Form 8865, Schedule A, checkbox b 'OwnsConstructiveInterestInd' is checked, then data in the following must be provided: ['ConstructiveOwnerName' or 'ConstructiveOwnerPersonNm'], ['ConstructiveOwnerUSAddress' or 'ConstructiveOwnerFrgnAddress'], and ['ConstructiveOwnerSSN' or 'ConstructiveOwnerEIN' or 'MissingEINReasonCd'].",
   ),
   rule(
@@ -285,7 +285,7 @@ export const F8865_RULES: readonly RuleDef[] = [
     "F8865-233",
     "reject",
     "missing_document",
-    alwaysPass,
+    ifThen(hasValue("CorrectedInd"), all(hasValue("FormOrSchChgExplnStmt"), eqStr("ScheduleOrFormNum", "8865"))),
     "If Form 8865 'CorrectedInd' is check, then 'FormOrSchChgExplnStmt' must be present and 'ScheduleOrFormNum' must have the value of \"8865\".",
   ),
 ];

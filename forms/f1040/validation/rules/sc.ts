@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: SC
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 17 rules (17 implemented, 0 stubs)
+ * 17 rules (16 implemented, 1 stub)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqStr, formPresent, gt, hasNonZero, hasValue, ifThen, lt, matchesHeaderSSN, notMatchesHeaderSSN, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqDiff, eqStr, formPresent, gt, hasNonZero, hasValue, ifThen, lt, matchesHeaderSSN, notMatchesHeaderSSN, } from "../../../../core/validation/mod.ts";
 
 export const SC_RULES: readonly RuleDef[] = [
   rule(
@@ -103,7 +103,7 @@ export const SC_RULES: readonly RuleDef[] = [
     "SC-F1040-023-01",
     "reject",
     "math_error",
-    alwaysPass,
+    eqDiff("NetProfitOrLossAmt", "TentativeProfitOrLossAmt", "HomeBusinessExpenseAmt"),
     "Each 'NetProfitOrLossAmt' in Form 1040 Schedule C, must be equal to 'TentativeProfitOrLossAmt' minus (-) 'HomeBusinessExpenseAmt'.",
   ),
   rule(

@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8888
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 5 rules (3 implemented, 2 stubs)
+ * 5 rules (4 implemented, 1 stub)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, ifThen, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqField, eqSum, hasNonZero, hasValue, ifThen, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F8888_RULES: readonly RuleDef[] = [
   rule(
@@ -33,7 +33,7 @@ export const F8888_RULES: readonly RuleDef[] = [
     "F8888-016",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    hasNonZero("DepositorAccountNum"),
     "'DepositorAccountNum' on Form 8888 must not be all zeros.",
   ),
   rule(

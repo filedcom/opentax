@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F7218
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (3 implemented, 0 stubs)
+ * 3 rules (1 implemented, 2 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, dateYearGte, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const F7218_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const F7218_RULES: readonly RuleDef[] = [
     "F7218-003",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("SoldCalendarYr"), dateYearGte("SoldCalendarYr", "TaxYr")),
     "In each 'ClnAvnNonAvnFuelPrdcdSoldGrp' on Form 7218, if 'SoldCalendarYr' has a value, then it must not be prior to 'TaxYr' in the Return Header.",
   ),
 ];

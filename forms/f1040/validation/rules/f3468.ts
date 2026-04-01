@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F3468
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 16 rules (16 implemented, 0 stubs)
+ * 16 rules (15 implemented, 1 stub)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, eqNum, eqStr, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, any, eqNum, eqStr, hasNonZero, hasValue, ifThen, strLenEq, } from "../../../../core/validation/mod.ts";
 
 export const F3468_RULES: readonly RuleDef[] = [
   rule(
@@ -117,7 +117,7 @@ export const F3468_RULES: readonly RuleDef[] = [
     "F3468-040",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("Section48eOr48EhControlNum"), strLenEq("Section48eOr48EhControlNum", 9)),
     "If Form 3468, 'Section48eOr48EhControlNum' has a value, then it must be exactly 9 digits in length.",
   ),
 ];

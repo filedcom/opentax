@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8814
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (6 implemented, 0 stubs)
+ * 6 rules (4 implemented, 2 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, gt, hasNonZero, hasValue, ifThen, validSSN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, eqField, gt, hasNonZero, hasValue, ifThen, lt, validSSN, } from "../../../../core/validation/mod.ts";
 
 export const F8814_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const F8814_RULES: readonly RuleDef[] = [
     "F8814-003-08",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires range check: ChildInvestmentIncomeAmt must be > 1350 and < 13500
+    all(gt("ChildInvestmentIncomeAmt", 1350), lt("ChildInvestmentIncomeAmt", 13500)),
     "Form 8814, 'ChildInvestmentIncomeAmt' must be greater than 1350 and less than 13500.",
   ),
   rule(

@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8839
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (6 implemented, 0 stubs)
+ * 6 rules (4 implemented, 2 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, ssnNotEqual, validSSN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, hasValue, ifThen, notGtField, ssnNotEqual, validSSN, } from "../../../../core/validation/mod.ts";
 
 export const F8839_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const F8839_RULES: readonly RuleDef[] = [
     "F8839-004",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires date comparison: ChildBirthYr must not be greater than TaxYr in Return Header
+    ifThen(hasValue("ChildBirthYr"), notGtField("ChildBirthYr", "TaxYr")),
     "Each 'ChildBirthYr' on Form 8839, Line 1b must not be greater than the 'TaxYr' in the Return Header.",
   ),
   rule(

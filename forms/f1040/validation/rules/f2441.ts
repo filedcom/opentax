@@ -54,7 +54,14 @@ export const F2441_RULES: readonly RuleDef[] = [
     "F2441-012-03",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(
+      all(filingStatusIs(2), gt("CreditForChildAndDepdCareAmt", 0), any(gt("TotalQlfdExpensesOrLimitAmt", 0), gt("NetAllowableAmt", 0))),
+      any(
+        hasValue("PrimaryDeathDt"),
+        hasValue("SpouseDeathDt"),
+        all(gt("PrimaryEarnedIncomeAmt", 0), gt("SpouseEarnedIncomeAmt", 0)),
+      ),
+    ),
     "If Form 2441, 'CreditForChildAndDepdCareAmt' has a value greater than zero, and Filing Status of the return is \"Married filing jointly\" and [ 'TotalQlfdExpensesOrLimitAmt' or 'NetAllowableAmt' has a value greater than zero], then 'PrimaryEarnedIncomeAmt' and 'SpouseEarnedIncomeAmt' must have a value greater than zero. However, if 'PrimaryDeathDt' or 'SpouseDeathDt' in the return has a value, then only one of the earned income amounts ('PrimaryEarnedIncomeAmt' or 'SpouseEarnedIncomeAmt') needs to have a value greater than zero.",
   ),
   rule(

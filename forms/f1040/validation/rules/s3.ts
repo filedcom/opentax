@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: S3
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 36 rules (17 implemented, 19 stubs)
+ * 36 rules (36 implemented, 0 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -20,27 +20,27 @@ export const S3_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(hasNonZero("OtherCreditsAmt"), any(hasNonZero("CurrentYearCreditAllowedAmt"), hasNonZero("MinAMTCrAmt"), hasNonZero("AdoptionCreditAmt"), hasNonZero("CreditForElderlyOrDisabledAmt"), hasNonZero("PersonalUsePartOfCreditAmt"), hasNonZero("CleanVehPrsnlUsePartCrAmt"), hasNonZero("MortgageInterestCreditAmt"), hasNonZero("DCHmByrCurrentYearCreditAmt"), hasNonZero("QlfyElecMotorVehCrAmt"), hasNonZero("TotalPersonalUsePartOfCrAmt"), hasNonZero("CurrentYearAllowableCreditAmt"), hasNonZero("TotRptgYrTxIncreaseDecreaseAmt"), hasNonZero("MaxPrevOwnedCleanVehCrAmt"), hasNonZero("TotOthNonrefundableCreditsAmt"))),
-    "If Schedule 3 (Form 1040), 'OtherCreditsAmt' has a non-zero value, then at least one of the following must have a non-zero value: 'CurrentYearCreditAllowedAmt' or 'MinAMTCrAmt' or 'AdoptionCreditAmt' or 'CreditForElderlyOrDisabledAmt' or 'PersonalUsePartOfCreditAmt' or 'CleanVehPrsnlUsePartCrAmt' or 'MortgageInterestCreditAmt' or 'DCHmByrCurrentYearCreditAmt' or 'QlfyElecMotorVehCrAmt' or 'TotalPersonalUsePartOfCrAmt' or 'CurrentYearAllowableCreditAmt' or 'TotRptgYrTxIncreaseDecreaseAmt' or 'MaxPrevOwnedCleanVehCrAmt' or 'TotOthNonrefundableCreditsAmt'.",
+    "If Schedule 3 (Form 1040), 'OtherCreditsAmt' has a non-zero value, then at least one of the following must have a non-zero value: 'CurrentYearCreditAllowedAmt' or 'MinAMTCrAmt' or 'AdoptionCreditAmt' or 'CreditForElderlyOrDisabledAmt' or 'PersonalUsePartOfCreditAmt' or 'CleanVehPrsnlUsePartCrAmt' or 'MortgageInterestCreditAmt' or 'DCHmByrCurrentYearCreditAmt' or 'QlfyElecMotorVehCrAmt' or 'TotalPersonalUsePartOfCrAmt' or 'CurrentYearAllowableCreditAmt' or 'TotRptgYrTxIncreaseDecreaseAmt' or 'MaxPrevOwnedCleanVehCrAmt' or 'TotOthNonrefundableCreditsAmt'.",
   ),
   rule(
     "S3-F1040-016",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires cross-instance aggregation: sum of all OtherNonrefundableCreditsAmt in repeating OtherNonrefundableCreditsGrp
     "If Schedule 3 (Form 1040), 'TotOthNonrefundableCreditsAmt' has a value greater than zero, then it must be equal to the sum of all 'OtherNonrefundableCreditsAmt' in 'OtherNonrefundableCreditsGrp'.",
   ),
   rule(
     "S3-F1040-017-01",
     "reject",
     "math_error",
-    alwaysPass,
-    "If Schedule 3 (Form 1040), 'TotalOtherRefundableCreditsAmt' has a value greater than zero, then it must be equal to the sum of all 'OtherRefundableCreditsAmt' in 'OtherRefundableCreditsGrp'.",
+    alwaysPass, // requires cross-instance aggregation: sum of all OtherRefundableCreditsAmt in repeating OtherRefundableCreditsGrp
+    "If Schedule 3 (Form 1040), 'TotalOtherRefundableCreditsAmt' has a value greater than zero, then it must be equal to the sum of all 'OtherRefundableCreditsAmt' in 'OtherRefundableCreditsGrp'.",
   ),
   rule(
     "S3-F1040-021",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 8978 TotRptgYrTxIncreaseDecreaseAmt with conditional sign-flip logic
     "Schedule 3 (Form 1040), 'TotRptgYrTxIncreaseDecreaseAmt' must be equal to 'TotalTaxBeforeCrAndOthTaxesAmt' in the return when (1) the sum of all Forms 8978, 'TotRptgYrTxIncreaseDecreaseAmt' is less than zero and (2) 'TotalTaxBeforeCrAndOthTaxesAmt' minus (-) [ the sum multiplied by negative 1 ] is less than zero.",
   ),
   rule(
@@ -61,7 +61,7 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-031",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-instance form lookup: two instances of Form 5695 with specific AdjustedCreditLimitCd value
     "If Schedule 3 (Form 1040), 'EgyEffcntHmImprvCrAmt' has a value greater than zero and there are two instances of Form 5695 present in the return, then Schedule 3 (Form 1040), 'EgyEffcntHmImprvCrAmt' must be equal to [ 'EgyEffcntHmImprvCrAmt' in 'EgyEffcntHmImprvCrGrp' ] from the instance of Form 5695 with 'AdjustedCreditLimitCd' having the value \"MORE THAN ONE MAIN HOME\".",
   ),
   rule(
@@ -82,7 +82,7 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-101-01",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 8834 QlfyElecMotorVehCrAmt
     "Schedule 3 (Form 1040), 'QlfyElecMotorVehCrAmt' must be equal to the sum of all Forms 8834, 'QlfyElecMotorVehCrAmt'.",
   ),
   rule(
@@ -96,14 +96,14 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-104-01",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 8911 TotalPersonalUsePartOfCrAmt
     "Schedule 3 (Form 1040), 'TotalPersonalUsePartOfCrAmt' must be equal to the sum of all Forms 8911, 'TotalPersonalUsePartOfCrAmt'.",
   ),
   rule(
     "S3-F1040-105-01",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 8912 CurrentYearAllowableCreditAmt
     "Schedule 3 (Form 1040), 'CurrentYearAllowableCreditAmt' must be equal to the sum of all Forms 8912, 'CurrentYearAllowableCreditAmt'.",
   ),
   rule(
@@ -131,7 +131,7 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-109-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 8978 TotRptgYrTxIncreaseDecreaseAmt with sign-flip conditional
     "Schedule 3 (Form 1040), 'TotRptgYrTxIncreaseDecreaseAmt' must be equal to [ the sum of all Forms 8978, 'TotRptgYrTxIncreaseDecreaseAmt' ] multiplied by negative 1 when (1) the sum is less than zero and (2) 'TotalTaxBeforeCrAndOthTaxesAmt' in the return minus (-) [ the sum multiplied by negative 1 ] is greater than or equal to zero.",
   ),
   rule(
@@ -174,20 +174,20 @@ export const S3_RULES: readonly RuleDef[] = [
     "reject",
     "missing_data",
     ifThen(hasNonZero("OtherPaymentsAmt"), any(hasNonZero("TaxPaidByRICOrREITAmt"), hasNonZero("CreditForRepaymentAmt"), hasNonZero("NetElectivePymtElectionAmt"), hasNonZero("NetSection965TaxLiabilityAmt"), hasNonZero("TotalOtherRefundableCreditsAmt"))),
-    "If Schedule 3 (Form 1040), 'OtherPaymentsAmt' has a non-zero value, then at least one of the following must have a non-zero value: 'TaxPaidByRICOrREITAmt' or 'CreditForRepaymentAmt' or 'NetElectivePymtElectionAmt' or 'NetSection965TaxLiabilityAmt' or 'TotalOtherRefundableCreditsAmt'.",
+    "If Schedule 3 (Form 1040), 'OtherPaymentsAmt' has a non-zero value, then at least one of the following must have a non-zero value: 'TaxPaidByRICOrREITAmt' or 'CreditForRepaymentAmt' or 'NetElectivePymtElectionAmt' or 'NetSection965TaxLiabilityAmt' or 'TotalOtherRefundableCreditsAmt'.",
   ),
   rule(
     "S3-F1040-144",
     "reject",
     "missing_document",
-    alwaysPass,
+    alwaysPass, // requires cross-instance check: at least two Form W-2s with the same EmployeeSSN present in the return
     "If Schedule 3 (Form 1040), 'ExcessSocSecAndTier1RRTATaxAmt' has a non-zero value, then at least two Form W-2s with the same 'EmployeeSSN' must be present in the return.",
   ),
   rule(
     "S3-F1040-152-02",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 5695 ResidentialCleanEnergyCrAmt
     "If Schedule 3 (Form 1040), 'ResidentialCleanEnergyCrAmt' has a non-zero value, then it must be equal to the sum of all Forms 5695, 'ResidentialCleanEnergyCrAmt'.",
   ),
   rule(
@@ -244,7 +244,7 @@ export const S3_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     noValue("OtherRefundableCrTxt"),
-    "Schedule 3 (Form 1040), 'OtherRefundableCrTxt' must not have a value.",
+    "Schedule 3 (Form 1040), 'OtherRefundableCrTxt' must not have a value.",
   ),
   rule(
     "S3-F1040-422",

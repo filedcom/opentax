@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: F6765
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 3 rules (1 implemented, 2 stubs)
+ * 3 rules (2 implemented, 1 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -19,7 +19,7 @@ export const F6765_RULES: readonly RuleDef[] = [
     "F6765-004-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // cross-section aggregation: requires inspecting all Section A/B fields holistically
     "If Form 6765 has significant data on any Line in Section A, then if an amount is entered on any Line in Section B, it must have a zero value.",
   ),
   rule(

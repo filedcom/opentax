@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, any, eqStr, hasValue, ifThen, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
 
 export const FW2_RULES: readonly RuleDef[] = [
   rule(
@@ -47,7 +47,7 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-011",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires enum validation of EmployersUseCd against specific code set
+    ifThen(hasValue("EmployersUseCd"), any(eqStr("EmployersUseCd", "A"), eqStr("EmployersUseCd", "B"), eqStr("EmployersUseCd", "C"), eqStr("EmployersUseCd", "D"), eqStr("EmployersUseCd", "E"), eqStr("EmployersUseCd", "F"), eqStr("EmployersUseCd", "G"), eqStr("EmployersUseCd", "H"), eqStr("EmployersUseCd", "J"), eqStr("EmployersUseCd", "K"), eqStr("EmployersUseCd", "L"), eqStr("EmployersUseCd", "M"), eqStr("EmployersUseCd", "N"), eqStr("EmployersUseCd", "P"), eqStr("EmployersUseCd", "Q"), eqStr("EmployersUseCd", "R"), eqStr("EmployersUseCd", "S"), eqStr("EmployersUseCd", "T"), eqStr("EmployersUseCd", "V"), eqStr("EmployersUseCd", "W"), eqStr("EmployersUseCd", "Y"), eqStr("EmployersUseCd", "Z"), eqStr("EmployersUseCd", "AA"), eqStr("EmployersUseCd", "BB"), eqStr("EmployersUseCd", "DD"), eqStr("EmployersUseCd", "EE"), eqStr("EmployersUseCd", "FF"), eqStr("EmployersUseCd", "GG"), eqStr("EmployersUseCd", "HH"), eqStr("EmployersUseCd", "II"))),
     "If Form W-2, [ 'EmployersUseCd' in 'EmployersUseGrp' ] has a value, then it must be one of the following: {A, B, C, D, E, F, G, H, J, K, L, M, N, P, Q, R, S, T, V, W, Y, Z, AA, BB, DD, EE, FF, GG, HH, II}.",
   ),
   rule(
