@@ -743,7 +743,8 @@
   {
     "form": "8611",
     "description": "Recapture of Low-Income Housing Credit",
-    "screen_code": "8611"
+    "screen_code": "8611",
+    "filed_tax_node_type_code": "f8611"
   },
   {
     "form": "8615",
@@ -771,7 +772,8 @@
   {
     "form": "8805",
     "description": "Foreign Partner's Information Statement of Section 1446 Withholding Tax",
-    "screen_code": "8805"
+    "screen_code": "8805",
+    "filed_tax_node_type_code": "f8805"
   },
   {
     "form": "8814",
@@ -788,7 +790,8 @@
   {
     "form": "8820",
     "description": "Orphan Drug Credit",
-    "screen_code": "8820, DRUG"
+    "screen_code": "8820, DRUG",
+    "filed_tax_node_type_code": "f8820"
   },
   {
     "form": "8822",
@@ -826,7 +829,8 @@
     "screen_code": "8833",
     "alias_screen_codes": [
       "8833 \"Line 6\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8833"
   },
   {
     "form": "8834",
@@ -852,7 +856,8 @@
     "screen_code": "8840",
     "alias_screen_codes": [
       "8840 > \"Part IV\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8840"
   },
   {
     "form": "8843",
@@ -861,7 +866,8 @@
     "alias_screen_codes": [
       "8843 > \"Parts II, III\" tab",
       "8843 > \"Parts IV, V\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8843"
   },
   {
     "form": "8844",
@@ -886,7 +892,8 @@
       "8854 > \"Part II\" tab",
       "8854 > \"Part II Sec B\" tab",
       "8854 > \"Part III\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8854"
   },
   {
     "form": "8857",
@@ -900,7 +907,8 @@
   {
     "form": "8859",
     "description": "",
-    "screen_code": "8859"
+    "screen_code": "8859",
+    "filed_tax_node_type_code": "f8859"
   },
   {
     "form": "8862",
@@ -941,7 +949,8 @@
       "DD1",
       "DD1 > Head of household",
       "DD2"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8867"
   },
   {
     "form": "8873",
@@ -1010,7 +1019,8 @@
   {
     "form": "8896",
     "description": "Low-Sulfer Diesel Fuel Production Credit",
-    "screen_code": "8896"
+    "screen_code": "8896",
+    "filed_tax_node_type_code": "f8896"
   },
   {
     "form": "8903",
@@ -1032,7 +1042,8 @@
   {
     "form": "8912",
     "description": "Credit to Holders of Tax Credit Bonds",
-    "screen_code": "8912"
+    "screen_code": "8912",
+    "filed_tax_node_type_code": "f8912"
   },
   {
     "form": "8917",
@@ -1110,7 +1121,8 @@
     "screen_code": "8978",
     "alias_screen_codes": [
       "8978 > \"Schedule A\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8978"
   },
   {
     "form": "8990",
