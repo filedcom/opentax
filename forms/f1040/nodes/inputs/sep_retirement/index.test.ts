@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { sep_retirement, PlanType } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return { plan_type: PlanType.SEP, ...overrides };
@@ -397,7 +398,38 @@ Deno.test("sep_retirement.compute: throws on negative simple_employer_contributi
 });
 
 // =============================================================================
-// 8. Smoke Test
+// 8. AGI Aggregator Routing (above-the-line deduction must reduce AGI)
+// =============================================================================
+
+Deno.test("sep_retirement.compute: SEP deduction also routes to agi_aggregator.line16_sep_simple", () => {
+  const result = compute([minimalItem({
+    plan_type: PlanType.SEP,
+    sep_contribution: 15000,
+    net_self_employment_compensation: 100000,
+  })]);
+  const agiFields = fieldsOf(result.outputs, agi_aggregator)!;
+  assertEquals(agiFields.line16_sep_simple, 15000);
+});
+
+Deno.test("sep_retirement.compute: agi_aggregator output matches schedule1 output", () => {
+  const result = compute([minimalItem({
+    plan_type: PlanType.SIMPLE,
+    simple_employee_contribution: 10000,
+    simple_employer_contribution: 2000,
+  })]);
+  const s1Fields = fieldsOf(result.outputs, schedule1)!;
+  const agiFields = fieldsOf(result.outputs, agi_aggregator)!;
+  assertEquals(s1Fields.line16_sep_simple, agiFields.line16_sep_simple);
+});
+
+Deno.test("sep_retirement.compute: zero deduction — no agi_aggregator output", () => {
+  const result = compute([minimalItem({ plan_type: PlanType.SEP })]);
+  const out = result.outputs.find((o: { nodeType: string }) => o.nodeType === "agi_aggregator");
+  assertEquals(out, undefined);
+});
+
+// =============================================================================
+// 9. Smoke Test
 // =============================================================================
 
 Deno.test("sep_retirement.compute: smoke test — three plan types, all limits", () => {
