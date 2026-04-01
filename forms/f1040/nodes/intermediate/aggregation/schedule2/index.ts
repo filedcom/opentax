@@ -85,6 +85,9 @@ export const inputSchema = z.object({
   // Line 17 — Mark-to-market exit tax on covered expatriation (Form 8854 Part IV)
   // IRC §877A(a); taxable gain above $866k exclusion → Schedule 2 line 17
   line17_exit_tax: z.number().nonnegative().optional(),
+  // Line 9 — Net §965 tax liability installment payment (Form 965-A Part II col (k))
+  // IRC §965(h); Form 965-A Part II col (k) → Schedule 2 line 9
+  line9_965_net_tax_liability: z.number().nonnegative().optional(),
 });
 
 type Schedule2Input = z.infer<typeof inputSchema>;
@@ -148,7 +151,8 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
       (input.line10_recapture_tax ?? 0) +
       (input.line10_lihtc_recapture ?? 0) +
       (input.line17z_other_additional_taxes ?? 0) +
-      (input.line17_exit_tax ?? 0);
+      (input.line17_exit_tax ?? 0) +
+      (input.line9_965_net_tax_liability ?? 0);
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [

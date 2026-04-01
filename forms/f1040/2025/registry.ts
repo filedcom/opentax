@@ -102,11 +102,27 @@ import { f8833 } from "../nodes/inputs/f8833/index.ts";
 import { f8840 } from "../nodes/inputs/f8840/index.ts";
 import { f8843 } from "../nodes/inputs/f8843/index.ts";
 import { f8854 } from "../nodes/inputs/f8854/index.ts";
+import { f5471 } from "../nodes/inputs/f5471/index.ts";
 import { f8805 } from "../nodes/inputs/f8805/index.ts";
 import { depletion } from "../nodes/inputs/depletion/index.ts";
 import { lump_sum_ss } from "../nodes/inputs/lump_sum_ss/index.ts";
 import { fec } from "../nodes/inputs/fec/index.ts";
 import { qsehra } from "../nodes/inputs/qsehra/index.ts";
+import { f965 } from "../nodes/inputs/f965/index.ts";
+import { ppp_forgiveness } from "../nodes/inputs/ppp_forgiveness/index.ts";
+import { qbiAggregation } from "../nodes/inputs/qbi_aggregation/index.ts";
+import { f114 } from "../nodes/inputs/f114/index.ts";
+import { f8594 } from "../nodes/inputs/f8594/index.ts";
+import { f8903 } from "../nodes/inputs/f8903/index.ts";
+import { f14039 } from "../nodes/inputs/f14039/index.ts";
+import { f911 } from "../nodes/inputs/f911/index.ts";
+import { f843 } from "../nodes/inputs/f843/index.ts";
+import { f56 } from "../nodes/inputs/f56/index.ts";
+import { f970 } from "../nodes/inputs/f970/index.ts";
+import { f3115 } from "../nodes/inputs/f3115/index.ts";
+import { f8965 } from "../nodes/inputs/f8965/index.ts";
+import { f59e } from "../nodes/inputs/f59e/index.ts";
+import { f1040es } from "../nodes/inputs/f1040es/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
 import { eitc } from "../nodes/intermediate/forms/eitc/index.ts";
@@ -136,6 +152,7 @@ import { form8815 } from "../nodes/intermediate/forms/form8815/index.ts";
 import { form8839 } from "../nodes/intermediate/forms/form8839/index.ts";
 import { form8853 } from "../nodes/intermediate/forms/form8853/index.ts";
 import { form8880 } from "../nodes/intermediate/forms/form8880/index.ts";
+import { form7203 } from "../nodes/intermediate/forms/form7203/index.ts";
 import { form7206 } from "../nodes/intermediate/forms/form7206/index.ts";
 import { form8889 } from "../nodes/intermediate/forms/form8889/index.ts";
 import { form8919 } from "../nodes/intermediate/forms/form8919/index.ts";
@@ -274,11 +291,27 @@ export const registry: NodeRegistry = {
   f8840,
   f8843,
   f8854,
+  f5471,
   f8805,
   fec,
   qsehra,
+  f965,
+  ppp_forgiveness,
   depletion,
   lump_sum_ss,
+  qbi_aggregation: qbiAggregation,
+  f114,
+  f8594,
+  f8903,
+  f14039,
+  f911,
+  f843,
+  f56,
+  f970,
+  f3115,
+  f8965,
+  f59e,
+  f1040es,
 
   // ── Intermediates ───────────────────────────────────────────────────────────
   eitc,
@@ -308,6 +341,7 @@ export const registry: NodeRegistry = {
   form8839,
   form8853,
   form8880,
+  form7203,
   form7206,
   form8889,
   form8919,

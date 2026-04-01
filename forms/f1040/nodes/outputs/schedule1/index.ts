@@ -77,10 +77,15 @@ const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction
   line24f_501c18d: z.number().nonnegative().optional(),
+  // Line 24h — Domestic Production Activities Deduction (DPAD) — LEGACY TY2017 and prior only
+  // Repealed by TCJA §13305 effective TY2018+; retained for amended pre-2018 returns
+  line24h_dpad: z.number().nonnegative().optional(),
   // Form 6198 at-risk disallowance add-back
   at_risk_disallowed_add_back: z.number().nonnegative().optional(),
   // Form 8990 §163(j) disallowed business interest add-back
   biz_interest_disallowed_add_back: z.number().nonnegative().optional(),
+  // Form 7203 S-corp basis disallowance add-back (IRC §1366(d)(1))
+  basis_disallowed_add_back: z.number().nonnegative().optional(),
 });
 
 type Schedule1Input = z.infer<typeof inputSchema>;
@@ -107,7 +112,8 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_other_income ?? 0) +
     (input.line8z_other ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
-    (input.biz_interest_disallowed_add_back ?? 0)
+    (input.biz_interest_disallowed_add_back ?? 0) +
+    (input.basis_disallowed_add_back ?? 0)
   );
 }
 
@@ -139,7 +145,8 @@ function totalAdjustments(input: Schedule1Input): number {
     (input.line19_student_loan_interest ?? 0) +
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
-    (input.line24f_501c18d ?? 0)
+    (input.line24f_501c18d ?? 0) +
+    (input.line24h_dpad ?? 0)
   );
 }
 

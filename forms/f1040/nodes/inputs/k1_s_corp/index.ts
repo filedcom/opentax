@@ -8,6 +8,7 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits
@@ -57,9 +58,31 @@ export const itemSchema = z.object({
   box14_foreign_tax: z.number().nonnegative().optional(),
   box14_foreign_income: z.number().nonnegative().optional(),
 
-  // Box 17 — QBI/W-2 wages/UBIA for §199A deduction
+  // Box 17 — QBI/W-2 wages/UBIA for §199A deduction (legacy fields retained for compat)
   box17_w2_wages: z.number().nonnegative().optional(),
   box17_ubia: z.number().nonnegative().optional(),
+
+  // ── QBI fields (K-1 box 17 code V / K199 screen) ─────────────────────────
+  // Qualified business income/loss amount per §199A
+  qbi_amount: z.number().optional(),
+  // W-2 wages allocable to the qualified trade or business
+  w2_wages: z.number().nonnegative().optional(),
+  // Unadjusted basis immediately after acquisition of qualified property
+  ubia_qualified_property: z.number().nonnegative().optional(),
+  // True when the trade/business is a specified service trade/business (SSTB)
+  sstb_indicator: z.boolean().optional(),
+
+  // ── Form 7203 basis fields (K1S > "Basis (7203)" tab) ────────────────────
+  // Shareholder's stock basis at beginning of the tax year
+  stock_basis_beginning: z.number().nonnegative().optional(),
+  // Shareholder's debt basis at beginning of the tax year
+  debt_basis_beginning: z.number().nonnegative().optional(),
+
+  // ── Pre-2018 carryover fields ─────────────────────────────────────────────
+  // Losses suspended in pre-2018 years (K1S > "Pre-2018 Basis" tab)
+  pre2018_suspended_losses: z.number().nonnegative().optional(),
+  // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
+  pre2018_at_risk_suspended: z.number().nonnegative().optional(),
 });
 
 export const inputSchema = z.object({
@@ -132,15 +155,29 @@ function scheduleDOutput(items: K1SCorpItems): NodeOutput[] {
   return [output(schedule_d, { line_12_k1_lt: totalLt })];
 }
 
-// QBI routing: positive Box 1 ordinary income → form8995
-// W-2 wages (Box 17 W) → form8995
+// QBI routing: box1 positive ordinary income or explicit qbi_amount → form8995 (non-SSTB)
+// SSTB items route to form8995a via the sstb_qbi field.
+// Dedicated qbi_amount / w2_wages / ubia_qualified_property fields take priority over
+// the legacy box17_* fields when present.
+function resolveQbiAmount(item: K1SCorpItem): number {
+  if (item.qbi_amount !== undefined) return item.qbi_amount;
+  return Math.max(0, item.box1_ordinary_business ?? 0);
+}
+
+function resolveW2Wages(item: K1SCorpItem): number {
+  return (item.w2_wages ?? 0) + (item.box17_w2_wages ?? 0);
+}
+
+function resolveUbia(item: K1SCorpItem): number {
+  return (item.ubia_qualified_property ?? 0) + (item.box17_ubia ?? 0);
+}
+
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
-  const totalQbi = items.reduce(
-    (sum, item) => sum + Math.max(0, item.box1_ordinary_business ?? 0),
-    0,
-  );
-  const totalW2 = items.reduce((sum, item) => sum + (item.box17_w2_wages ?? 0), 0);
-  const totalUbia = items.reduce((sum, item) => sum + (item.box17_ubia ?? 0), 0);
+  // Non-SSTB items → form8995
+  const nonSstb = items.filter((item) => item.sstb_indicator !== true);
+  const totalQbi = nonSstb.reduce((sum, item) => sum + resolveQbiAmount(item), 0);
+  const totalW2 = nonSstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
+  const totalUbia = nonSstb.reduce((sum, item) => sum + resolveUbia(item), 0);
 
   if (totalQbi <= 0 && totalW2 <= 0 && totalUbia <= 0) return [];
 
@@ -150,6 +187,36 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
   if (totalUbia > 0) fields.unadjusted_basis = totalUbia;
 
   return [output(form8995, fields as Parameters<typeof output<typeof form8995>>[1])];
+}
+
+// Route Form 7203 basis data when stock or debt basis fields are provided
+function hasBasisData(item: K1SCorpItem): boolean {
+  return (
+    (item.stock_basis_beginning ?? 0) > 0 ||
+    (item.debt_basis_beginning ?? 0) > 0 ||
+    (item.pre2018_suspended_losses ?? 0) > 0 ||
+    (item.pre2018_at_risk_suspended ?? 0) > 0
+  );
+}
+
+function buildForm7203Fields(item: K1SCorpItem): Parameters<typeof output<typeof form7203>>[1] {
+  const loss = Math.max(0, -(item.box1_ordinary_business ?? 0));
+  // Pre-2018 suspended losses and at-risk suspended losses both map to
+  // form7203 prior_year_unallowed_loss (Part III column b)
+  const priorLoss = (item.pre2018_suspended_losses ?? 0) + (item.pre2018_at_risk_suspended ?? 0);
+  // hasBasisData guarantees at least one field is set; cast satisfies AtLeastOne
+  return {
+    stock_basis_beginning: item.stock_basis_beginning,
+    debt_basis_beginning: item.debt_basis_beginning,
+    ordinary_loss: loss > 0 ? loss : undefined,
+    prior_year_unallowed_loss: priorLoss > 0 ? priorLoss : undefined,
+  } as Parameters<typeof output<typeof form7203>>[1];
+}
+
+function form7203Outputs(items: K1SCorpItems): NodeOutput[] {
+  return items
+    .filter(hasBasisData)
+    .map((item) => output(form7203, buildForm7203Fields(item)));
 }
 
 // Route foreign taxes → form_1116
@@ -166,7 +233,7 @@ function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
 class K1SCorpNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_s_corp";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116]);
+  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116, form7203]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
@@ -179,6 +246,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       ...scheduleDOutput(k1_s_corps),
       ...form8995Output(k1_s_corps),
       ...form1116Outputs(k1_s_corps),
+      ...form7203Outputs(k1_s_corps),
     ];
 
     return { outputs };

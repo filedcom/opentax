@@ -221,6 +221,111 @@ Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
   assertEquals(sdOutputs[0].fields.line_12_k1_lt, 1000);
 });
 
+// ── 4. QBI dedicated fields (K199 screen) ─────────────────────────────────────
+
+Deno.test("qbi_amount routes to form8995 qbi (non-SSTB)", () => {
+  const result = compute([minimalItem({ qbi_amount: 12000 })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.qbi, 12000);
+});
+
+Deno.test("qbi_amount overrides box1 for form8995 routing", () => {
+  // qbi_amount provided: use it directly instead of clamping box1
+  const result = compute([minimalItem({ box1_ordinary_business: 5000, qbi_amount: 8000 })]);
+  const out = findOutput(result, "form8995");
+  // resolveQbiAmount returns qbi_amount (8000) for the non-SSTB item
+  assertEquals(out?.fields.qbi, 8000);
+});
+
+Deno.test("w2_wages field routes to form8995 w2_wages", () => {
+  const result = compute([minimalItem({ qbi_amount: 5000, w2_wages: 3000 })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.w2_wages, 3000);
+});
+
+Deno.test("ubia_qualified_property routes to form8995 unadjusted_basis", () => {
+  const result = compute([minimalItem({ qbi_amount: 5000, ubia_qualified_property: 50000 })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.unadjusted_basis, 50000);
+});
+
+Deno.test("sstb_indicator true excludes item from form8995 non-SSTB pool", () => {
+  // SSTB item should not contribute to form8995 (would go to form8995a instead)
+  const result = compute([minimalItem({ qbi_amount: 10000, sstb_indicator: true })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out, undefined);
+});
+
+Deno.test("mixed SSTB and non-SSTB: only non-SSTB routes to form8995", () => {
+  const result = compute([
+    minimalItem({ corporation_name: "Corp A", qbi_amount: 8000, sstb_indicator: false }),
+    minimalItem({ corporation_name: "Corp B", qbi_amount: 5000, sstb_indicator: true }),
+  ]);
+  const out = findOutput(result, "form8995");
+  // Only Corp A's 8000 should appear
+  assertEquals(out?.fields.qbi, 8000);
+});
+
+Deno.test("negative qbi_amount does not route to form8995", () => {
+  const result = compute([minimalItem({ qbi_amount: -3000 })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out, undefined);
+});
+
+Deno.test("box17_w2_wages and w2_wages are additive in form8995", () => {
+  const result = compute([minimalItem({ box1_ordinary_business: 10000, box17_w2_wages: 2000, w2_wages: 3000 })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.w2_wages, 5000);
+});
+
+// ── 5. Form 7203 basis routing (K1S > "Basis (7203)" tab) ────────────────────
+
+Deno.test("stock_basis_beginning routes to form7203", () => {
+  const result = compute([minimalItem({ stock_basis_beginning: 10000 })]);
+  const out = findOutput(result, "form7203");
+  assertEquals(out?.fields.stock_basis_beginning, 10000);
+});
+
+Deno.test("debt_basis_beginning routes to form7203", () => {
+  const result = compute([minimalItem({ debt_basis_beginning: 5000 })]);
+  const out = findOutput(result, "form7203");
+  assertEquals(out?.fields.debt_basis_beginning, 5000);
+});
+
+Deno.test("no basis fields does not route to form7203", () => {
+  const result = compute([minimalItem({ box1_ordinary_business: 10000 })]);
+  const out = findOutput(result, "form7203");
+  assertEquals(out, undefined);
+});
+
+Deno.test("loss with stock basis routes ordinary_loss to form7203", () => {
+  const result = compute([minimalItem({ box1_ordinary_business: -4000, stock_basis_beginning: 3000 })]);
+  const out = findOutput(result, "form7203");
+  assertEquals(out?.fields.ordinary_loss, 4000);
+});
+
+// ── 6. Pre-2018 carryover fields ──────────────────────────────────────────────
+
+Deno.test("pre2018_suspended_losses routes to form7203 as prior_year_unallowed_loss", () => {
+  const result = compute([minimalItem({ pre2018_suspended_losses: 7000 })]);
+  const out = findOutput(result, "form7203");
+  assertEquals(out?.fields.prior_year_unallowed_loss, 7000);
+});
+
+Deno.test("pre2018_at_risk_suspended routes to form7203 as prior_year_unallowed_loss", () => {
+  const result = compute([minimalItem({ pre2018_at_risk_suspended: 2500 })]);
+  const out = findOutput(result, "form7203");
+  assertEquals(out?.fields.prior_year_unallowed_loss, 2500);
+});
+
+Deno.test("negative pre2018_suspended_losses throws", () => {
+  assertThrows(() => compute([minimalItem({ pre2018_suspended_losses: -100 })]), Error);
+});
+
+Deno.test("negative pre2018_at_risk_suspended throws", () => {
+  assertThrows(() => compute([minimalItem({ pre2018_at_risk_suspended: -50 })]), Error);
+});
+
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
 
 Deno.test("smoke test — K-1 with all major boxes", () => {

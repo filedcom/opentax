@@ -78,6 +78,8 @@ export const inputSchema = z.object({
   at_risk_disallowed_add_back: z.number().nonnegative().optional(),
   // Form 8990 §163(j) disallowed business interest add-back
   biz_interest_disallowed_add_back: z.number().nonnegative().optional(),
+  // Form 7203 S-corp basis disallowance add-back (IRC §1366(d)(1))
+  basis_disallowed_add_back: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part I — Exclusions ────────────────────────────────────────
   // Line 8d — Foreign earned income exclusion (Form 2555)
@@ -140,7 +142,8 @@ function grossIncome(input: AgiInput): number {
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
-    (input.biz_interest_disallowed_add_back ?? 0)
+    (input.biz_interest_disallowed_add_back ?? 0) +
+    (input.basis_disallowed_add_back ?? 0)
   );
 }
 

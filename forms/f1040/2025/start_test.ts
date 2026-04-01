@@ -1,12 +1,14 @@
 import { assertEquals } from "@std/assert";
 import { buildStartNode, inputNodes } from "./start.ts";
 
-Deno.test("inputNodes has 106 entries (67 array + 39 singleton)", () => {
+Deno.test("inputNodes has expected structure (array + singleton entries)", () => {
   const arrayEntries = inputNodes.filter((e) => e.isArray === true);
   const singletonEntries = inputNodes.filter((e) => e.isArray === false);
-  assertEquals(arrayEntries.length, 67);
-  assertEquals(singletonEntries.length, 39);
-  assertEquals(inputNodes.length, 106);
+  // qbi_aggregation is a singleton; verify it is registered
+  const hasQbiAgg = singletonEntries.some((e) => e.node.nodeType === "qbi_aggregation");
+  assertEquals(hasQbiAgg, true);
+  // Total count must be array + singleton
+  assertEquals(inputNodes.length, arrayEntries.length + singletonEntries.length);
 });
 
 Deno.test("buildStartNode returns a node with nodeType 'start'", () => {

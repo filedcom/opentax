@@ -64,6 +64,16 @@ export const itemSchema = z.object({
 
   // Prior-year unallowed passive loss carryforward
   prior_unallowed_passive: z.number().nonnegative().optional(),
+
+  // ── CIDP — Crop Insurance and Disaster Payments (IRC §451(d)) ────────────
+  // Crop insurance proceeds received during the tax year
+  crop_insurance_proceeds: z.number().nonnegative().optional(),
+  // Government disaster payment received during the tax year
+  disaster_payment: z.number().nonnegative().optional(),
+  // Election to defer crop/disaster proceeds to the following tax year
+  defer_to_next_year: z.boolean().optional(),
+  // Amount elected for deferral (cannot exceed crop_insurance_proceeds + disaster_payment)
+  deferred_amount: z.number().nonnegative().optional(),
 });
 
 export const inputSchema = z.object({
@@ -72,6 +82,16 @@ export const inputSchema = z.object({
 
 type F4835Item = z.infer<typeof itemSchema>;
 type F4835Items = F4835Item[];
+
+// Amount of crop/disaster proceeds included in current-year income.
+// When defer_to_next_year is true, deferred_amount is excluded from current year.
+function currentYearCidpIncome(item: F4835Item): number {
+  const total = (item.crop_insurance_proceeds ?? 0) + (item.disaster_payment ?? 0);
+  if (total <= 0) return 0;
+  if (item.defer_to_next_year !== true) return total;
+  const deferred = Math.min(item.deferred_amount ?? 0, total);
+  return total - deferred;
+}
 
 // Compute net farm rental income for a single item
 function computeNet(item: F4835Item): number {
@@ -82,7 +102,8 @@ function computeNet(item: F4835Item): number {
 
   const totalIncome = item.gross_farm_rental_income +
     (item.ccc_loans_forfeited ?? 0) +
-    (item.agricultural_program_payments ?? 0);
+    (item.agricultural_program_payments ?? 0) +
+    currentYearCidpIncome(item);
 
   const totalExpenses =
     (item.expense_car_truck ?? 0) +

@@ -171,6 +171,99 @@ Deno.test("no at-risk flag does not route to form6198", () => {
   assertEquals(out, undefined);
 });
 
+// ── 5. CIDP — Crop Insurance and Disaster Payments (IRC §451(d)) ──────────────
+
+Deno.test("crop_insurance_proceeds adds to net income", () => {
+  const result = compute([
+    minimalItem({ gross_farm_rental_income: 5000, crop_insurance_proceeds: 2000 }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  assertEquals(out?.fields.line5_schedule_e, 7000);
+});
+
+Deno.test("disaster_payment adds to net income", () => {
+  const result = compute([
+    minimalItem({ gross_farm_rental_income: 5000, disaster_payment: 3000 }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  assertEquals(out?.fields.line5_schedule_e, 8000);
+});
+
+Deno.test("defer_to_next_year true excludes deferred_amount from current-year income", () => {
+  const result = compute([
+    minimalItem({
+      gross_farm_rental_income: 5000,
+      crop_insurance_proceeds: 4000,
+      defer_to_next_year: true,
+      deferred_amount: 4000, // defer all
+    }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  // Only the gross rental counts; all crop insurance deferred
+  assertEquals(out?.fields.line5_schedule_e, 5000);
+});
+
+Deno.test("defer partial amount: non-deferred portion included in net", () => {
+  const result = compute([
+    minimalItem({
+      gross_farm_rental_income: 5000,
+      crop_insurance_proceeds: 6000,
+      defer_to_next_year: true,
+      deferred_amount: 4000, // defer 4000, recognize 2000
+    }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  assertEquals(out?.fields.line5_schedule_e, 7000); // 5000 + 2000
+});
+
+Deno.test("defer_to_next_year false includes all crop_insurance_proceeds", () => {
+  const result = compute([
+    minimalItem({
+      gross_farm_rental_income: 5000,
+      crop_insurance_proceeds: 3000,
+      defer_to_next_year: false,
+    }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  assertEquals(out?.fields.line5_schedule_e, 8000);
+});
+
+Deno.test("deferred_amount capped at total CIDP proceeds when over-specified", () => {
+  const result = compute([
+    minimalItem({
+      gross_farm_rental_income: 5000,
+      crop_insurance_proceeds: 2000,
+      disaster_payment: 1000,
+      defer_to_next_year: true,
+      deferred_amount: 9999, // exceeds total proceeds of 3000 — capped to 3000
+    }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  // No CIDP income recognized; only gross
+  assertEquals(out?.fields.line5_schedule_e, 5000);
+});
+
+Deno.test("negative crop_insurance_proceeds throws", () => {
+  assertThrows(
+    () => compute([minimalItem({ crop_insurance_proceeds: -100 })]),
+    Error,
+  );
+});
+
+Deno.test("negative disaster_payment throws", () => {
+  assertThrows(
+    () => compute([minimalItem({ disaster_payment: -50 })]),
+    Error,
+  );
+});
+
+Deno.test("negative deferred_amount throws", () => {
+  assertThrows(
+    () => compute([minimalItem({ deferred_amount: -10 })]),
+    Error,
+  );
+});
+
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
 
 Deno.test("smoke test — full 4835 with all major fields", () => {

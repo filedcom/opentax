@@ -227,14 +227,156 @@ Deno.test("box1+box2+box3+box4a+box4b+box7 combined in schedule1", () => {
   assertEquals(out?.fields.line5_schedule_e, 7400); // 2000+1000+500+3000+500+400
 });
 
-// ── 7. Informational fields ───────────────────────────────────────────────────
+// ── 5. QBI extended fields (K199 screen) ─────────────────────────────────────
+
+Deno.test("box20_sstb true is accepted and does not produce extra outputs", () => {
+  // SSTB indicator is informational in this node — Form 8995-A handles phaseout.
+  // The field must be accepted by the schema without throwing.
+  const result = compute([minimalItem({ box20z_qbi: 10000, box20_sstb: true })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.qbi, 10000);
+});
+
+Deno.test("box20_sstb false is accepted", () => {
+  const result = compute([minimalItem({ box20z_qbi: 5000, box20_sstb: false })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.qbi, 5000);
+});
+
+Deno.test("box20_aggregation_group is accepted and does not affect routing", () => {
+  const result = compute([minimalItem({ box20z_qbi: 8000, box20_aggregation_group: "GroupA" })]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.qbi, 8000);
+});
+
+// ── 6. Partner Basis Worksheet fields (K1P > "Basis Wkst" tab) ───────────────
+
+Deno.test("basis_beginning is accepted (informational; no routing output)", () => {
+  const result = compute([minimalItem({ basis_beginning: 50000 })]);
+  // Basis fields are worksheet-only; they do not route to downstream nodes.
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("basis_contributions is accepted", () => {
+  const result = compute([minimalItem({ basis_contributions: 10000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("basis_share_of_income is accepted", () => {
+  const result = compute([minimalItem({ basis_share_of_income: 3000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("basis_share_of_losses is accepted", () => {
+  const result = compute([minimalItem({ basis_share_of_losses: 2000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("basis_distributions is accepted", () => {
+  const result = compute([minimalItem({ basis_distributions: 5000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("basis_liabilities_assumed is accepted", () => {
+  const result = compute([minimalItem({ basis_liabilities_assumed: 15000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("basis_liabilities_relieved is accepted", () => {
+  const result = compute([minimalItem({ basis_liabilities_relieved: 5000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("negative basis_beginning throws (nonnegative constraint)", () => {
+  assertThrows(() => compute([minimalItem({ basis_beginning: -100 })]), Error);
+});
+
+Deno.test("basis worksheet fields alongside income produce correct income routing", () => {
+  // Basis fields are stored but do not affect routing of income boxes.
+  const result = compute([
+    minimalItem({
+      box1_ordinary_business: 12000,
+      basis_beginning: 30000,
+      basis_contributions: 5000,
+      basis_distributions: 2000,
+    }),
+  ]);
+  const sch1 = findOutput(result, "schedule1");
+  assertEquals(sch1?.fields.line5_schedule_e, 12000);
+});
+
+// ── 7. Pre-2018 Basis Carryover fields (K1P> "Pre-2018 Basis" tab) ───────────
+
+Deno.test("pre2018_basis_ordinary_loss is accepted (informational; no routing output)", () => {
+  const result = compute([minimalItem({ pre2018_basis_ordinary_loss: 4000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("pre2018_basis_st_cap_loss is accepted", () => {
+  const result = compute([minimalItem({ pre2018_basis_st_cap_loss: 1500 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("pre2018_basis_lt_cap_loss is accepted", () => {
+  const result = compute([minimalItem({ pre2018_basis_lt_cap_loss: 2500 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("pre2018_basis_other_loss is accepted", () => {
+  const result = compute([minimalItem({ pre2018_basis_other_loss: 1000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("negative pre2018_basis_ordinary_loss throws (nonnegative constraint)", () => {
+  assertThrows(() => compute([minimalItem({ pre2018_basis_ordinary_loss: -500 })]), Error);
+});
+
+// ── 8. Pre-2018 At-Risk Carryover fields (K1P> "Pre-2018 At-Risk" tab) ───────
+
+Deno.test("pre2018_atrisk_ordinary_loss is accepted (informational; no routing output)", () => {
+  const result = compute([minimalItem({ pre2018_atrisk_ordinary_loss: 6000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("pre2018_atrisk_st_cap_loss is accepted", () => {
+  const result = compute([minimalItem({ pre2018_atrisk_st_cap_loss: 2000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("pre2018_atrisk_lt_cap_loss is accepted", () => {
+  const result = compute([minimalItem({ pre2018_atrisk_lt_cap_loss: 3000 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("pre2018_atrisk_other_loss is accepted", () => {
+  const result = compute([minimalItem({ pre2018_atrisk_other_loss: 1500 })]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("negative pre2018_atrisk_ordinary_loss throws (nonnegative constraint)", () => {
+  assertThrows(() => compute([minimalItem({ pre2018_atrisk_ordinary_loss: -100 })]), Error);
+});
+
+Deno.test("pre-2018 carryover fields alongside QBI produce correct QBI routing", () => {
+  const result = compute([
+    minimalItem({
+      box20z_qbi: 15000,
+      pre2018_basis_ordinary_loss: 3000,
+      pre2018_atrisk_ordinary_loss: 2000,
+    }),
+  ]);
+  const f8995 = findOutput(result, "form8995");
+  assertEquals(f8995?.fields.qbi, 15000);
+});
+
+// ── 9. Informational fields ───────────────────────────────────────────────────
 
 Deno.test("partnership_name alone produces no outputs", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
 
-// ── 8. Edge cases ─────────────────────────────────────────────────────────────
+// ── 10. Edge cases ────────────────────────────────────────────────────────────
 
 Deno.test("all-zero K-1 produces no outputs", () => {
   const result = compute([minimalItem()]);
@@ -249,7 +391,7 @@ Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
   assertEquals(sdOutputs[0].fields.line_12_k1_lt, 1200);
 });
 
-// ── 9. Smoke test ─────────────────────────────────────────────────────────────
+// ── 11. Smoke test ────────────────────────────────────────────────────────────
 
 Deno.test("smoke test — K-1 with all major boxes", () => {
   const result = compute([

@@ -74,6 +74,74 @@ export const itemSchema = z.object({
 
   // Box 20 — UBIA of qualified property
   box20_ubia: z.number().nonnegative().optional(),
+
+  // Box 20 — SSTB indicator (specified service trade or business)
+  // When true, QBI deduction may be limited or disallowed based on taxable income
+  box20_sstb: z.boolean().optional(),
+
+  // Box 20 — Aggregation group identifier (§199A aggregation election)
+  // Partners may aggregate multiple pass-throughs; group name ties K-1s together
+  box20_aggregation_group: z.string().optional(),
+
+  // ── Partner Basis Worksheet (K1P > "Basis Wkst" tab) ────────────────────────
+  // These fields track outside basis — the partner's tax basis in the partnership.
+  // Outside basis determines deductibility of losses (§704(d)) and gain/loss on
+  // sale. They are worksheet fields, not K-1 boxes; carried forward each year.
+
+  // Beginning-of-year outside basis
+  basis_beginning: z.number().nonnegative().optional(),
+
+  // Cash and property contributions made during the year
+  basis_contributions: z.number().nonnegative().optional(),
+
+  // Partner's share of income (increases basis)
+  basis_share_of_income: z.number().optional(),
+
+  // Partner's share of losses (decreases basis; reported as positive)
+  basis_share_of_losses: z.number().nonnegative().optional(),
+
+  // Distributions received (decrease basis; reported as positive)
+  basis_distributions: z.number().nonnegative().optional(),
+
+  // Increase in partner's share of liabilities (increases basis)
+  basis_liabilities_assumed: z.number().nonnegative().optional(),
+
+  // Decrease in partner's share of liabilities (decreases basis)
+  basis_liabilities_relieved: z.number().nonnegative().optional(),
+
+  // ── Pre-2018 Basis Carryover (K1P> "Pre-2018 Basis" tab) ────────────────────
+  // Losses from pre-TCJA years suspended under §704(d) (basis limitation).
+  // When basis became positive in a later year, these losses became deductible.
+  // The TCJA (2017) changed passive activity interaction; these carryovers track
+  // the amounts suspended before the new rules applied.
+
+  // Pre-2018 ordinary losses suspended due to basis limitations
+  pre2018_basis_ordinary_loss: z.number().nonnegative().optional(),
+
+  // Pre-2018 short-term capital losses suspended due to basis limitations
+  pre2018_basis_st_cap_loss: z.number().nonnegative().optional(),
+
+  // Pre-2018 long-term capital losses suspended due to basis limitations
+  pre2018_basis_lt_cap_loss: z.number().nonnegative().optional(),
+
+  // Pre-2018 other losses suspended due to basis limitations
+  pre2018_basis_other_loss: z.number().nonnegative().optional(),
+
+  // ── Pre-2018 At-Risk Carryover (K1P> "Pre-2018 At-Risk" tab) ────────────────
+  // Losses from pre-TCJA years suspended under §465 (at-risk limitation).
+  // Tracked separately from basis carryovers per Drake software convention.
+
+  // Pre-2018 ordinary losses suspended under at-risk rules (§465)
+  pre2018_atrisk_ordinary_loss: z.number().nonnegative().optional(),
+
+  // Pre-2018 short-term capital losses suspended under at-risk rules
+  pre2018_atrisk_st_cap_loss: z.number().nonnegative().optional(),
+
+  // Pre-2018 long-term capital losses suspended under at-risk rules
+  pre2018_atrisk_lt_cap_loss: z.number().nonnegative().optional(),
+
+  // Pre-2018 other losses suspended under at-risk rules
+  pre2018_atrisk_other_loss: z.number().nonnegative().optional(),
 });
 
 export const inputSchema = z.object({

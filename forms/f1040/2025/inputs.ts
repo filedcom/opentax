@@ -99,12 +99,23 @@ import { f8833, itemSchema as f8833ItemSchema } from "../nodes/inputs/f8833/inde
 import { f8840, inputSchema as f8840InputSchema } from "../nodes/inputs/f8840/index.ts";
 import { f8843, itemSchema as f8843ItemSchema } from "../nodes/inputs/f8843/index.ts";
 import { f8854, inputSchema as f8854InputSchema } from "../nodes/inputs/f8854/index.ts";
+import { f5471, itemSchema as f5471ItemSchema } from "../nodes/inputs/f5471/index.ts";
 import { f8805, itemSchema as f8805ItemSchema } from "../nodes/inputs/f8805/index.ts";
 import { fec, itemSchema as fecItemSchema } from "../nodes/inputs/fec/index.ts";
 import { qsehra, inputSchema as qsehraInputSchema } from "../nodes/inputs/qsehra/index.ts";
+import { f965, itemSchema as f965ItemSchema } from "../nodes/inputs/f965/index.ts";
+import { ppp_forgiveness, itemSchema as pppForgivenessItemSchema } from "../nodes/inputs/ppp_forgiveness/index.ts";
 import { depletion, itemSchema as depletionItemSchema } from "../nodes/inputs/depletion/index.ts";
 import { lump_sum_ss, itemSchema as lumpSumSSItemSchema } from "../nodes/inputs/lump_sum_ss/index.ts";
 import { inputSchema as scheduleDInputSchema, schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
+import { f56, inputSchema as f56InputSchema } from "../nodes/inputs/f56/index.ts";
+import { f970, itemSchema as f970ItemSchema } from "../nodes/inputs/f970/index.ts";
+import { f3115, itemSchema as f3115ItemSchema } from "../nodes/inputs/f3115/index.ts";
+import { qbiAggregation, inputSchema as qbiAggregationInputSchema } from "../nodes/inputs/qbi_aggregation/index.ts";
+import { f843, inputSchema as f843InputSchema } from "../nodes/inputs/f843/index.ts";
+import { f2120, inputSchema as f2120InputSchema } from "../nodes/inputs/f2120/index.ts";
+import { f8275, inputSchema as f8275InputSchema } from "../nodes/inputs/f8275/index.ts";
+import { f8857, inputSchema as f8857InputSchema } from "../nodes/inputs/f8857/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
@@ -207,12 +218,23 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8805, itemSchema: f8805ItemSchema, isArray: true },
   { node: f8840, inputSchema: f8840InputSchema, isArray: false },
   { node: f8854, inputSchema: f8854InputSchema, isArray: false },
+  { node: f5471, itemSchema: f5471ItemSchema, isArray: true },
   { node: f8828, itemSchema: f8828ItemSchema, isArray: true },
   { node: f8835, itemSchema: f8835ItemSchema, isArray: true },
   { node: f8844, itemSchema: f8844ItemSchema, isArray: true },
   { node: f8864, inputSchema: f8864InputSchema, isArray: false },
   { node: fec, itemSchema: fecItemSchema, isArray: true },
   { node: qsehra, inputSchema: qsehraInputSchema, isArray: false },
+  { node: f965, itemSchema: f965ItemSchema, isArray: true },
+  { node: ppp_forgiveness, itemSchema: pppForgivenessItemSchema, isArray: true },
   { node: depletion, itemSchema: depletionItemSchema, isArray: true },
   { node: lump_sum_ss, itemSchema: lumpSumSSItemSchema, isArray: true },
+  { node: f56, inputSchema: f56InputSchema, isArray: false },
+  { node: f970, itemSchema: f970ItemSchema, isArray: true },
+  { node: f3115, itemSchema: f3115ItemSchema, isArray: true },
+  { node: qbiAggregation, inputSchema: qbiAggregationInputSchema, isArray: false },
+  { node: f843, inputSchema: f843InputSchema, isArray: false },
+  { node: f2120, inputSchema: f2120InputSchema, isArray: false },
+  { node: f8275, inputSchema: f8275InputSchema, isArray: false },
+  { node: f8857, inputSchema: f8857InputSchema, isArray: false },
 ];

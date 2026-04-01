@@ -124,12 +124,14 @@
   {
     "form": "1040-NR",
     "description": "U.S. Nonresident Alien Income Tax Return",
-    "screen_code": "NR"
+    "screen_code": "NR",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040-X",
     "description": "Amended U.S. Individual Income Tax Return",
-    "screen_code": "X"
+    "screen_code": "X",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "965-A",
@@ -137,32 +139,38 @@
     "screen_code": "965A",
     "alias_screen_codes": [
       "A3"
-    ]
+    ],
+    "filed_tax_node_type_code": "f965"
   },
   {
     "form": "965-C",
     "description": "Transfer Agreement Under Section 965(h)(3)",
-    "screen_code": "965C"
+    "screen_code": "965C",
+    "filed_tax_node_type_code": "f965"
   },
   {
     "form": "965-D",
     "description": "Transfer Agreement Under Section 965(i)(2)",
-    "screen_code": "965D"
+    "screen_code": "965D",
+    "filed_tax_node_type_code": "f965"
   },
   {
     "form": "965-E",
     "description": "Consent Agreement Under Section 965(i)(4)(D)",
-    "screen_code": "965E"
+    "screen_code": "965E",
+    "filed_tax_node_type_code": "f965"
   },
   {
     "form": "56",
     "description": "Notice Concerning Fiduciary Relationship",
-    "screen_code": "56"
+    "screen_code": "56",
+    "filed_tax_node_type_code": "f56"
   },
   {
     "form": "1098E 109",
     "description": "1098 and 1099 Source Document Guide",
-    "screen_code": "DOCS"
+    "screen_code": "DOCS",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "461",
@@ -182,7 +190,8 @@
     "screen_code": "843",
     "alias_screen_codes": [
       "843 > \"Line 7 Cont.\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f843"
   },
   {
     "form": "911",
@@ -190,7 +199,8 @@
     "screen_code": "911",
     "alias_screen_codes": [
       "911 > \"Section II\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f911"
   },
   {
     "form": "970",
@@ -198,7 +208,8 @@
     "screen_code": "970",
     "alias_screen_codes": [
       "LIFO"
-    ]
+    ],
+    "filed_tax_node_type_code": "f970"
   },
   {
     "form": "982",
@@ -218,17 +229,20 @@
   {
     "form": "1040",
     "description": "Election Options",
-    "screen_code": "ELEC"
+    "screen_code": "ELEC",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040",
     "description": "Miscellaneous Codes / Military Information",
-    "screen_code": "MISC"
+    "screen_code": "MISC",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040",
     "description": "Print Options",
-    "screen_code": "PRNT"
+    "screen_code": "PRNT",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040",
@@ -236,12 +250,14 @@
     "screen_code": "1",
     "alias_screen_codes": [
       "2"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040",
     "description": "Integrated File and Pay",
-    "screen_code": "IFP"
+    "screen_code": "IFP",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040",
@@ -258,17 +274,20 @@
   {
     "form": "1040",
     "description": "Aggregation of Business Operations",
-    "screen_code": "BAN"
+    "screen_code": "BAN",
+    "filed_tax_node_type_code": "qbi_aggregation"
   },
   {
     "form": "1040",
     "description": "Electronic Funds Withdrawal Information",
-    "screen_code": "PMT"
+    "screen_code": "PMT",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1040",
     "description": "Federal and State EF Selections",
-    "screen_code": "EF"
+    "screen_code": "EF",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1042",
@@ -276,7 +295,8 @@
     "screen_code": "1042",
     "alias_screen_codes": [
       "1042 > \"Lines 14 - 17\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "1098",
@@ -308,7 +328,8 @@
   {
     "form": "2120",
     "description": "Multiple Support Declaration",
-    "screen_code": "2120"
+    "screen_code": "2120",
+    "filed_tax_node_type_code": "f2120"
   },
   {
     "form": "2210",
@@ -365,7 +386,8 @@
     "screen_code": "2848",
     "alias_screen_codes": [
       "POA"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "3115",
@@ -378,7 +400,8 @@
       "3115 > D - Parts I, II",
       "3115 > \"D - Part III\" tab",
       "ATT2"
-    ]
+    ],
+    "filed_tax_node_type_code": "f3115"
   },
   {
     "form": "3468",
@@ -443,7 +466,8 @@
     "screen_code": "4506",
     "alias_screen_codes": [
       "4506 > \"4506-T\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "4562",
@@ -557,32 +581,38 @@
     "alias_screen_codes": [
       "5471 > \"Persons on whose behalf this information return is filed\" link",
       "INFO"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule A",
     "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Stock of the Foreign Corporation",
-    "screen_code": "SCHA"
+    "screen_code": "SCHA",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule B",
     "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Shareholders of Foreign Corporation",
-    "screen_code": "SCHB"
+    "screen_code": "SCHB",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule C",
     "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Income Statement",
-    "screen_code": "5471 > \"Sch C\" tab"
+    "screen_code": "5471 > \"Sch C\" tab",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule F",
     "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Balance Sheet",
-    "screen_code": "5471 > \"Sch F\" tab"
+    "screen_code": "5471 > \"Sch F\" tab",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule F",
     "description": "Information Return of U.S. Persons With Respect To Certain Foreign Corporations, Subsidiary Schedule Balance Sheet",
-    "screen_code": "SCHF"
+    "screen_code": "SCHF",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule G",
@@ -592,7 +622,8 @@
       "5471 > \"Sch G cont'd\" tab",
       "5471 > \"Sch G\" tab > \"G2\" link",
       "5471 > \"Sch G \" tab \" G-1 link"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule I",
@@ -600,7 +631,8 @@
     "screen_code": "SCHI",
     "alias_screen_codes": [
       "SCHI > SCH I Worksheet A\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5471, Schedule O",
@@ -608,7 +640,8 @@
     "screen_code": "O1",
     "alias_screen_codes": [
       "O2"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "5695",
@@ -676,7 +709,8 @@
   {
     "form": "7216",
     "description": "Consent to Disclosure of Tax Return Information to Other Firms",
-    "screen_code": "CONS"
+    "screen_code": "CONS",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "8082",
@@ -687,7 +721,8 @@
   {
     "form": "8275",
     "description": "Disclosure Statement",
-    "screen_code": "8275"
+    "screen_code": "8275",
+    "filed_tax_node_type_code": "f8275"
   },
   {
     "form": "8283",
@@ -719,7 +754,8 @@
   {
     "form": "8594",
     "description": "Asset Acquisition Statement Under Section 1060",
-    "screen_code": "8594"
+    "screen_code": "8594",
+    "filed_tax_node_type_code": "f8594"
   },
   {
     "form": "8606",
@@ -904,7 +940,8 @@
     "alias_screen_codes": [
       "8857 > PAGE DOWN",
       "8857 > Page Down 2x"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8857"
   },
   {
     "form": "8859",
@@ -969,17 +1006,20 @@
   {
     "form": "8878",
     "description": "IRS e-file Signature Authorization for Form 4868 or Form 2350",
-    "screen_code": "PIN, 8878"
+    "screen_code": "PIN, 8878",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "8879",
     "description": "IRS e-file Signature Authorization",
-    "screen_code": "PIN"
+    "screen_code": "PIN",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "8879",
     "description": "NY Direct Debit Authorization",
-    "screen_code": "PIN > Page down"
+    "screen_code": "PIN > Page down",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "8880",
@@ -1027,7 +1067,8 @@
   {
     "form": "8903",
     "description": "Domestic Production Activities Deduction",
-    "screen_code": "8903"
+    "screen_code": "8903",
+    "filed_tax_node_type_code": "f8903"
   },
   {
     "form": "8908",
@@ -1083,7 +1124,8 @@
   {
     "form": "8948",
     "description": "Preparer Explanation for Not Filing Electronically",
-    "screen_code": "8948"
+    "screen_code": "8948",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "8949",
@@ -1163,7 +1205,8 @@
     "alias_screen_codes": [
       "1403 > \"14039-B\" tab",
       "1403 > \"Section F\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f14039"
   },
   {
     "form": "EITC",
@@ -1174,7 +1217,8 @@
   {
     "form": "FAFSA Worksheet",
     "description": "FAFSA&#160;Worksheet",
-    "screen_code": "FAFS"
+    "screen_code": "FAFS",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "FinCEN Form 114",
@@ -1182,7 +1226,8 @@
     "screen_code": "114",
     "alias_screen_codes": [
       "FRGN"
-    ]
+    ],
+    "filed_tax_node_type_code": "f114"
   },
   {
     "form": "Form 1099-B",
@@ -1216,7 +1261,8 @@
   {
     "form": "Form 4835",
     "description": "",
-    "screen_code": "CIDP"
+    "screen_code": "CIDP",
+    "filed_tax_node_type_code": "f4835"
   },
   {
     "form": "Form 7203",
@@ -1227,7 +1273,8 @@
       "K1S > \"Basis (7203)\" tab > NY and KY link",
       "K1S > \"Basis (7203) cont\" tab > NY and KY link",
       "K1S > \"Basis (7203)\" tab > \"Shareholder's Debt Basis Info\" Link"
-    ]
+    ],
+    "filed_tax_node_type_code": "k1_s_corp"
   },
   {
     "form": "Form 8582, Line 7",
@@ -1238,12 +1285,14 @@
   {
     "form": "IRC 7216",
     "description": "Consent to Use of Tax Return Information",
-    "screen_code": "USE"
+    "screen_code": "USE",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "IRC Section 6103(c)",
     "description": "Consent to Disclose Electronic Return Information",
-    "screen_code": "DISC"
+    "screen_code": "DISC",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "Letter",
@@ -1251,22 +1300,26 @@
     "screen_code": "COMM",
     "alias_screen_codes": [
       "LTR"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "N/A",
     "description": "Frequently Asked Questions",
-    "screen_code": "FAQ"
+    "screen_code": "FAQ",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "N/A",
     "description": "Paycheck Protection Program (PPP) Loans Received or Accrued",
-    "screen_code": "PPP2"
+    "screen_code": "PPP2",
+    "filed_tax_node_type_code": "ppp_forgiveness"
   },
   {
     "form": "N/A",
     "description": "Required Identification",
-    "screen_code": "IDS"
+    "screen_code": "IDS",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "RRB-1099",
@@ -1283,7 +1336,8 @@
   {
     "form": "RRB-1042S",
     "description": "Nonresident Alien Railroad Retirement Benefits",
-    "screen_code": "RRB2"
+    "screen_code": "RRB2",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "Schedule 1",
@@ -1291,7 +1345,8 @@
     "screen_code": "3",
     "alias_screen_codes": [
       "4"
-    ]
+    ],
+    "filed_tax_node_type_code": "schedule1"
   },
   {
     "form": "Schedule 2",
@@ -1371,27 +1426,32 @@
       "SE1 > \"Prev. Taxed E &P (v)\" tab",
       "SE1 > \"Prev. Taxed E&P (vi) - (viii)\" tab",
       "SE1 > \"Prev. Taxed E & P (ix - x)\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule E, page 2",
     "description": "Shareholder's Pre-2018 Carryover Losses and Deductions",
-    "screen_code": "K1S> \"Pre-2018 Basis\" tab"
+    "screen_code": "K1S> \"Pre-2018 Basis\" tab",
+    "filed_tax_node_type_code": "k1_s_corp"
   },
   {
     "form": "Schedule E, page 2",
     "description": "Partner's Pre-2018 Carryover Losses and Deductions",
-    "screen_code": "K1P> \"Pre-2018 Basis\" tab"
+    "screen_code": "K1P> \"Pre-2018 Basis\" tab",
+    "filed_tax_node_type_code": "k1_partnership"
   },
   {
     "form": "Schedule E, page 2",
     "description": "Shareholder's Pre-2018 At-Risk Limit Worksheet",
-    "screen_code": "K1S> \"Pre-2018 At-Risk\" tab"
+    "screen_code": "K1S> \"Pre-2018 At-Risk\" tab",
+    "filed_tax_node_type_code": "k1_s_corp"
   },
   {
     "form": "Schedule E, Page 2",
     "description": "Partner's Pre-2018 At-Risk Limit Worksheet",
-    "screen_code": "K1P> \"Pre-2018 At-Risk\" tab"
+    "screen_code": "K1P> \"Pre-2018 At-Risk\" tab",
+    "filed_tax_node_type_code": "k1_partnership"
   },
   {
     "form": "Schedule F (Form 1040)",
@@ -1412,12 +1472,14 @@
   {
     "form": "Schedule H (Form 5471)",
     "description": "Current Earnings and Profits",
-    "screen_code": "SCHH"
+    "screen_code": "SCHH",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule I-1 (Form 5471)",
     "description": "Information for Global Intangible Low-Taxed Income",
-    "screen_code": "I1"
+    "screen_code": "I1",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule J",
@@ -1434,7 +1496,8 @@
       "SCHJ > \"Prev. Taxed E & P (v)\" tab",
       "SCHJ > \"Prev. Taxed E & P (vi - xciii)\" tab",
       "SCHJ > \"Prev. Taxed E & P (ix - x)\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule K-1 (1065)",
@@ -1488,7 +1551,8 @@
     "alias_screen_codes": [
       "K1P > \"Basis Wkst cont\" tab",
       "K1P > \"Basis Wkst\" tab > \"NY and KY returns\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "k1_partnership"
   },
   {
     "form": "Schedule K-1 (Form 1065) Form 6198",
@@ -1504,7 +1568,8 @@
   {
     "form": "Schedule K-1 QBI",
     "description": "Qualified Business Income (QBI) for Schedule K-1",
-    "screen_code": "K199"
+    "screen_code": "K199",
+    "filed_tax_node_type_code": "k1_partnership"
   },
   {
     "form": "Schedule M (Form 5471)",
@@ -1512,22 +1577,26 @@
     "screen_code": "5471 > \"Sch M\" tab",
     "alias_screen_codes": [
       "5471 > \"Sch M cont'd\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule NEC (Form 1040-NR)",
     "description": "Tax on Income Not Effectively Connected With a U.S. Trade or Business",
-    "screen_code": "NR2"
+    "screen_code": "NR2",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "Schedule NEC (Form 1040-NR)",
     "description": "Tax on Income Not Effectively Connected With a U.S. Trade or Business",
-    "screen_code": "NR2"
+    "screen_code": "NR2",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "Schedule OI (Form 1040-NR)",
     "description": "Other Information",
-    "screen_code": "NR3"
+    "screen_code": "NR3",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "Schedule P (Form 5471)",
@@ -1536,7 +1605,8 @@
     "alias_screen_codes": [
       "SCHP > \"Sch P, Previously Taxed E & P (f)\" tab",
       "SCHP> \"Sch P Previously Taxed E & P (g) through (j)\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule Q (Form 5471)",
@@ -1545,7 +1615,8 @@
     "alias_screen_codes": [
       "SCHQ > \"Sch Q, Subpart F Income Groups cont'd\" tab",
       "SCHQ > \"Sch Q, Subpart F, Tested Income, Residual Groups\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule R",
@@ -1556,7 +1627,8 @@
   {
     "form": "Schedule R (Form 5471)",
     "description": "Distributions From a Foreign Corporation",
-    "screen_code": "SCHR"
+    "screen_code": "SCHR",
+    "filed_tax_node_type_code": "f5471"
   },
   {
     "form": "Schedule SE",
@@ -1579,7 +1651,8 @@
   {
     "form": "SSA-1042S",
     "description": "Nonresident Social Security Benefits",
-    "screen_code": "SSA2"
+    "screen_code": "SSA2",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "State Return",
@@ -1588,12 +1661,14 @@
     "alias_screen_codes": [
       "STEX > \"Amount Paid with Extensions\" tab",
       "STEX > \"Extension Payment Worksheet\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "W-9",
     "description": "Request for Taxpayer Identification Number and Certification",
-    "screen_code": "W9"
+    "screen_code": "W9",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "W-7",
@@ -1602,17 +1677,20 @@
     "alias_screen_codes": [
       "W7 > \"Birth/Other Information\" tab",
       "W7 > \"W-7 COA\" tab"
-    ]
+    ],
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "W-4",
     "description": "Employee's Withholding Certificate",
-    "screen_code": "W4"
+    "screen_code": "W4",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "W-4P",
     "description": "Withholding Certificate for Periodic Pension or Annuity Payments",
-    "screen_code": "W4P"
+    "screen_code": "W4P",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "W-2",
@@ -1638,7 +1716,8 @@
   {
     "form": "W2",
     "description": "Form W-2 - Locality Information for Ohio",
-    "screen_code": "W2 > OH"
+    "screen_code": "W2 > OH",
+    "filed_tax_node_type_code": "not_applicable"
   },
   {
     "form": "Wks Auto",
