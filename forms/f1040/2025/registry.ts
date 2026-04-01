@@ -123,6 +123,9 @@ import { f3115 } from "../nodes/inputs/f3115/index.ts";
 import { f8965 } from "../nodes/inputs/f8965/index.ts";
 import { f59e } from "../nodes/inputs/f59e/index.ts";
 import { f1040es } from "../nodes/inputs/f1040es/index.ts";
+import { f4970 } from "../nodes/inputs/f4970/index.ts";
+import { f8697 } from "../nodes/inputs/f8697/index.ts";
+import { f8866 } from "../nodes/inputs/f8866/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
 import { eitc } from "../nodes/intermediate/forms/eitc/index.ts";
@@ -312,6 +315,9 @@ export const registry: NodeRegistry = {
   f8965,
   f59e,
   f1040es,
+  f4970,
+  f8697,
+  f8866,
 
   // ── Intermediates ───────────────────────────────────────────────────────────
   eitc,

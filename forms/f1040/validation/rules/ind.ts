@@ -1,7 +1,19 @@
 /**
  * MeF Business Rules: IND
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 201 rules (all implemented)
+ * 201 rules (120 implemented, 81 stubs)
+ *
+ * Stubs kept as alwaysPass — all require runtime/external context:
+ *   - e-File database lookups (prior-year AGI/PIN match, SSN lock status, duplicate
+ *     SSN cross-instance checks, IP PIN verification, death-date cross-reference)
+ *   - Per-item iteration over DependentDetail array (uniqueness, relationship codes,
+ *     ITIN/ATIN checks, age checks, death-certificate attachments)
+ *   - Dependent count operations (CTC × $2,000 / ODC × $500 cap, ACTC × $1,700 cap)
+ *   - Server-side processing context (TaxPeriodEndDt vs. receipt date, prior-year
+ *     acceptance status, post-original return count limits, processing-year signature)
+ *   - Format validation without an available regex predicate (IP address, numeric PIN)
+ *   - Pure informational / policy alerts (IND-067-10, IND-145-01, IND-162, IND-450,
+ *     IND-607, IND-617, IND-644, IND-663)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
