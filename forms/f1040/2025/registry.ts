@@ -72,6 +72,7 @@ import { f8609 } from "../nodes/inputs/f8609/index.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
 import { clergy } from "../nodes/inputs/clergy/index.ts";
 import { f8915f } from "../nodes/inputs/f8915f/index.ts";
+import { f8915d } from "../nodes/inputs/f8915d/index.ts";
 import { sep_retirement } from "../nodes/inputs/sep_retirement/index.ts";
 import { f3800 } from "../nodes/inputs/f3800/index.ts";
 import { f2106 } from "../nodes/inputs/f2106/index.ts";
@@ -105,6 +106,7 @@ import { f8805 } from "../nodes/inputs/f8805/index.ts";
 import { depletion } from "../nodes/inputs/depletion/index.ts";
 import { lump_sum_ss } from "../nodes/inputs/lump_sum_ss/index.ts";
 import { fec } from "../nodes/inputs/fec/index.ts";
+import { qsehra } from "../nodes/inputs/qsehra/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
 import { eitc } from "../nodes/intermediate/forms/eitc/index.ts";
@@ -243,6 +245,7 @@ export const registry: NodeRegistry = {
   sep_retirement,
   clergy,
   f8915f,
+  f8915d,
   f3800,
   f2106,
   f5405,
@@ -273,6 +276,9 @@ export const registry: NodeRegistry = {
   f8854,
   f8805,
   fec,
+  qsehra,
+  depletion,
+  lump_sum_ss,
 
   // ── Intermediates ───────────────────────────────────────────────────────────
   eitc,
@@ -295,6 +301,7 @@ export const registry: NodeRegistry = {
   form6781,
   form8615,
   form8582,
+  form8582cr,
   form8606,
   form8396,
   form8815,

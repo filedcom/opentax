@@ -71,6 +71,7 @@ import { sep_retirement, itemSchema as sepRetirementItemSchema } from "../nodes/
 import { nol_carryforward, inputSchema as nolCarryforwardInputSchema } from "../nodes/inputs/nol_carryforward/index.ts";
 import { clergy, itemSchema as clergyItemSchema } from "../nodes/inputs/clergy/index.ts";
 import { f8915f, itemSchema as f8915fItemSchema } from "../nodes/inputs/f8915f/index.ts";
+import { f8915d, itemSchema as f8915dItemSchema } from "../nodes/inputs/f8915d/index.ts";
 import { f3800, itemSchema as f3800ItemSchema } from "../nodes/inputs/f3800/index.ts";
 import { f2106, itemSchema as f2106ItemSchema } from "../nodes/inputs/f2106/index.ts";
 import { f5405, itemSchema as f5405ItemSchema } from "../nodes/inputs/f5405/index.ts";
@@ -100,6 +101,9 @@ import { f8843, itemSchema as f8843ItemSchema } from "../nodes/inputs/f8843/inde
 import { f8854, inputSchema as f8854InputSchema } from "../nodes/inputs/f8854/index.ts";
 import { f8805, itemSchema as f8805ItemSchema } from "../nodes/inputs/f8805/index.ts";
 import { fec, itemSchema as fecItemSchema } from "../nodes/inputs/fec/index.ts";
+import { qsehra, inputSchema as qsehraInputSchema } from "../nodes/inputs/qsehra/index.ts";
+import { depletion, itemSchema as depletionItemSchema } from "../nodes/inputs/depletion/index.ts";
+import { lump_sum_ss, itemSchema as lumpSumSSItemSchema } from "../nodes/inputs/lump_sum_ss/index.ts";
 import { inputSchema as scheduleDInputSchema, schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
@@ -177,6 +181,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: schedule_j, inputSchema: scheduleJInputSchema, isArray: false },
   { node: clergy, itemSchema: clergyItemSchema, isArray: true },
   { node: f8915f, itemSchema: f8915fItemSchema, isArray: true },
+  { node: f8915d, itemSchema: f8915dItemSchema, isArray: true },
   { node: f3800, itemSchema: f3800ItemSchema, isArray: true },
   { node: f2106, itemSchema: f2106ItemSchema, isArray: true },
   { node: f5405, itemSchema: f5405ItemSchema, isArray: true },
@@ -207,4 +212,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8844, itemSchema: f8844ItemSchema, isArray: true },
   { node: f8864, inputSchema: f8864InputSchema, isArray: false },
   { node: fec, itemSchema: fecItemSchema, isArray: true },
+  { node: qsehra, inputSchema: qsehraInputSchema, isArray: false },
+  { node: depletion, itemSchema: depletionItemSchema, isArray: true },
+  { node: lump_sum_ss, itemSchema: lumpSumSSItemSchema, isArray: true },
 ];

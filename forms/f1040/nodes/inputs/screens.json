@@ -2,7 +2,8 @@
   {
     "form": "8915-D",
     "description": "Qualified 2019 Disaster Retirement Plan Distributions and Repayments",
-    "screen_code": "915D"
+    "screen_code": "915D",
+    "filed_tax_node_type_code": "f8915d"
   },
   {
     "form": "8915-F",
@@ -16,7 +17,20 @@
   {
     "form": "8582-CR",
     "description": "Passive Activity Credit Limitations",
-    "screen_code": "CR"
+    "screen_code": "CR",
+    "filed_tax_node_type_code": "form8582cr"
+  },
+  {
+    "form": "Depletion Worksheet",
+    "description": "Oil, Gas & Mineral Depletion Worksheet",
+    "screen_code": "DEPL",
+    "filed_tax_node_type_code": "depletion"
+  },
+  {
+    "form": "Lump-Sum SS Worksheet",
+    "description": "Lump-Sum Social Security Benefits Worksheet",
+    "screen_code": "LSSA",
+    "filed_tax_node_type_code": "lump_sum_ss"
   },
   {
     "form": "8288-A",
@@ -237,7 +251,8 @@
   {
     "form": "1040",
     "description": "Qualified Small Employer HRA",
-    "screen_code": "QSE"
+    "screen_code": "QSE",
+    "filed_tax_node_type_code": "qsehra"
   },
   {
     "form": "1040",

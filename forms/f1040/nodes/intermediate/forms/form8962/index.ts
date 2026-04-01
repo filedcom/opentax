@@ -60,6 +60,11 @@ export const inputSchema = z.object({
   monthly_premiums: z.array(z.number().nonnegative()).length(12).optional(),
   monthly_slcsps: z.array(z.number().nonnegative()).length(12).optional(),
   monthly_aptcs: z.array(z.number().nonnegative()).length(12).optional(),
+
+  // QSEHRA — Qualified Small Employer HRA amount offered (reduces PTC)
+  // IRC §36B(c)(2)(C)(iv); Notice 2017-67 §IV.C
+  // The annual QSEHRA amount offered reduces the PTC dollar-for-dollar.
+  qsehra_amount_offered: z.number().nonnegative().optional(),
 });
 
 type Form8962Input = z.infer<typeof inputSchema>;
@@ -186,8 +191,13 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const maxPtcAmt = maxPtc(slcsp, applicable);
     const allowed = allowedPtc(maxPtcAmt, premium);
 
-    // Net PTC = allowed PTC - APTC already received
-    const netPtc = allowed - aptc;
+    // QSEHRA reduces PTC dollar-for-dollar (IRC §36B(c)(2)(C)(iv))
+    const qsehra = input.qsehra_amount_offered ?? 0;
+    // Effective allowed PTC after QSEHRA reduction (floor at 0 — QSEHRA cannot create liability)
+    const allowedAfterQsehra = Math.max(0, allowed - qsehra);
+
+    // Net PTC = allowed (after QSEHRA) - APTC already received
+    const netPtc = allowedAfterQsehra - aptc;
 
     if (netPtc >= 0) {
       // Net credit owed to taxpayer
