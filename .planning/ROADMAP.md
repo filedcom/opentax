@@ -52,12 +52,10 @@ Plans:
   6. All 5 nodes have research/context.md with IRS citations
   7. All 5 nodes have passing tests
   8. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 02-01: Research all 5 nodes
-- [ ] 02-02: Write black-box tests for all 5 nodes
-- [ ] 02-03: Implement all 5 nodes + register + update screens.json
+- [x] 02-01-PLAN.md — Fix depletion IRS compliance bug (greater-of rule), fix stale context.md reference, verify all 5 nodes
 
 ### Phase 3: Special Situations A (Batch 3)
 **Goal**: Build 5 nodes for clergy income, disaster retirement distributions (8915-F and 8915-D), first-time homebuyer repayment (5405), and household employee wages. For EACH node: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json update.
@@ -201,7 +199,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Self-Employed & Retirement | 2/3 | In Progress|  |
-| 2. Deductions & Worksheets | 0/3 | Not started | - |
+| 2. Deductions & Worksheets | 0/1 | Not started | - |
 | 3. Special Situations A | 0/3 | Not started | - |
 | 4. Special Situations B | 0/3 | Not started | - |
 | 5. Specialty Credits A | 0/3 | Not started | - |
