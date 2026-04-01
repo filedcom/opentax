@@ -217,16 +217,17 @@ emitted before long-term groups in XSD order") — manually verified, but not ru
 XSD validator.
 
 Critical compliance gaps discovered:
-- XML elements are emitted as plain numbers (`String(value)`) without dollar-sign formatting.
-  IRS XSDs for monetary amounts use `USAmountType` which is an xs:integer — the engine emits
-  floats for amounts computed with decimal math (e.g., SE tax = $11,303.64). These would fail XSD
-  validation (`USAmountType` disallows decimals).
+- ~~XML elements are emitted as plain numbers (`String(value)`) without rounding. IRS XSDs for
+  monetary amounts use `USAmountType` which is `xs:integer` — floats like $11,303.64 fail XSD
+  validation.~~ **FIXED (2026-04-01, commit 2213f60):** `element()` in `mef/xml.ts` now applies
+  `Math.round()` before serialization. All dollar amounts emit as integers.
 - The `<Return>` element sets `returnVersion="2025v3.0"` hardcoded in `builder.ts` (line 9) but
   README claims "2025v5.2". This discrepancy suggests the version string has not been validated
   against the actual IRS published schema version.
-- XML namespace declarations in `builder.ts` (line 27): `xmlns="http://www.irs.gov/efile"`. Rule
+- ~~XML namespace declarations in `builder.ts` (line 27): `xmlns="http://www.irs.gov/efile"`. Rule
   X0000-008 requires both a default namespace and an `xmlns:efile` namespace declaration. The
-  current builder only emits the default namespace — this would trigger `X0000-008 reject_and_stop`.
+  current builder only emits the default namespace — this would trigger `X0000-008 reject_and_stop`.~~
+  **FIXED (2026-04-01, commit 2213f60):** `builder.ts` now emits both `xmlns` and `xmlns:efile`.
 
 ### 3.3 Transmission Protocol (COMPLETELY MISSING)
 
@@ -292,7 +293,7 @@ and no mechanism to compare output against IRS-published expected results for AT
 | State returns (e.g., California, New York) | Missing entirely | 16-32 weeks |
 | Form 1040-X (amendment) | Missing | 4-6 weeks |
 | Remaining alwaysPass rules (540 rules) | 540 stubs remaining | 12-24 weeks |
-| Decimal rounding (USAmountType) | Not enforced globally | 1-2 weeks |
+| ~~Decimal rounding (USAmountType)~~ | ~~Not enforced globally~~ | **FIXED 2026-04-01** |
 
 ---
 
@@ -493,8 +494,8 @@ Specifications) and IRS e-File application requirements. Key requirements not ad
 | Form 1040 computation (core) | Complete for common scenarios | Done |
 | Form 1040 XML generation | Partial — 48 forms | 2-4 weeks |
 | XSD validation of output | None | 1-2 weeks |
-| USAmountType integer rounding | Not enforced | 1 week |
-| XML namespace fix (X0000-008) | Missing efile prefix | 1 day |
+| ~~USAmountType integer rounding~~ | ~~Not enforced~~ | **FIXED 2026-04-01** |
+| ~~XML namespace fix (X0000-008)~~ | ~~Missing efile prefix~~ | **FIXED 2026-04-01** |
 | State return (at least CA/NY) | Zero | 16-24 weeks each |
 | Form 1040-X amendment | Zero | 4-6 weeks |
 | Submission ZIP package format | Zero | 2-3 weeks |
@@ -510,9 +511,8 @@ Specifications) and IRS e-File application requirements. Key requirements not ad
 
 ### 8.2 Recommended Sequencing
 
-1. **Fix the XML namespace issue** (X0000-008): One day. This is a hard reject from IRS.
-2. **Enforce integer rounding for USAmountType**: One week. Write a rounding pass before XML
-   emission. Every dollar amount must be rounded to nearest integer before emitting.
+1. ~~**Fix the XML namespace issue** (X0000-008): One day.~~ **DONE (2026-04-01)**
+2. ~~**Enforce integer rounding for USAmountType**: One week.~~ **DONE (2026-04-01)**
 3. **XSD validation in CI**: Two weeks. Run `xmllint --schema` against the IRS XSD for at least
    Form 1040 and Schedule 1. This will reveal additional structural issues.
 4. **Submission ZIP package**: Two weeks. Build the manifest + XML + attachment ZIP format that
@@ -582,15 +582,16 @@ requirements.
 
 ## 10. Top 10 Risks
 
-1. **XML namespace bug causes immediate reject-and-stop**: Rule X0000-008 requires `xmlns:efile`
+1. ~~**XML namespace bug causes immediate reject-and-stop**: Rule X0000-008 requires `xmlns:efile`
    declaration. The `builder.ts` only emits `xmlns="http://www.irs.gov/efile"`. Every generated
-   return would be rejected at the structural level before any business rules are evaluated.
-   File: `forms/f1040/2025/mef/builder.ts`, line 27.
+   return would be rejected at the structural level before any business rules are evaluated.~~
+   **FIXED (2026-04-01, commit 2213f60)** — `builder.ts` now emits both namespace declarations.
 
-2. **Floating-point amounts fail IRS XSD `USAmountType`**: IRS monetary amounts must be integers
+2. ~~**Floating-point amounts fail IRS XSD `USAmountType`**: IRS monetary amounts must be integers
    (no decimal point). The engine computes in floating-point (e.g., SE tax = $11,303.64) and
    emits floats directly. This would cause XSD schema validation failures on every return with
-   non-integer computed amounts. No global rounding pass exists.
+   non-integer computed amounts. No global rounding pass exists.~~
+   **FIXED (2026-04-01, commit 2213f60)** — `element()` in `mef/xml.ts` now applies `Math.round()`.
 
 3. **Plaintext PII storage is a regulatory blocker**: Any commercial deployment storing real SSNs
    and income data as plaintext JSON files would violate FTC Safeguards Rule (for tax preparers)
