@@ -234,32 +234,64 @@ function buildBankAccountBlock(filer: FilerIdentity): string {
 
 // ─── Main builder ─────────────────────────────────────────────────────────────
 
+/**
+ * Formats a JS Date (or ISO string) as an IRS TimestampType: "YYYY-MM-DDTHH:MM:SS-05:00".
+ * Uses a fixed UTC offset of -05:00 (EST) as a reasonable default for tests/offline use.
+ */
+function irsTimestamp(ts?: string): string {
+  const d = ts ? new Date(ts) : new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}` +
+    `T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}-05:00`;
+}
+
 export function buildReturnHeader(
   filer?: FilerIdentity,
   year = 2025,
   returnType = "1040",
 ): string {
+  const ts = irsTimestamp(filer?.timestamp);
+  const softwareId = filer?.softwareId ?? "00000001";
+  const softwareVersionNum = filer?.softwareVersionNum;
+  const efin = filer?.originator?.efin ?? "000000";
+  const originatorType = filer?.originator?.originatorType ?? "ERO";
+
+  // XSD-required sequence (ReturnHeader1040x.xsd):
+  //   ReturnTs → TaxYr → TaxPeriodBeginDt → TaxPeriodEndDt →
+  //   SoftwareId → [SoftwareVersionNum] → OriginatorGrp →
+  //   PINTypeCd → JuratDisclosureCd → ReturnTypeCd → Filer →
+  //   [PaidPreparerInformationGrp] → [OnlineFilerInformation]
+  // Attribute: binaryAttachmentCnt (required, default 0)
   const headerChildren = [
-    element("ReturnType", returnType),
-    element("TaxPeriodBeginDate", `${year}-01-01`),
-    element("TaxPeriodEndDate", `${year}-12-31`),
+    element("ReturnTs", ts),
+    element("TaxYr", String(year)),
+    element("TaxPeriodBeginDt", `${year}-01-01`),
+    element("TaxPeriodEndDt", `${year}-12-31`),
+    element("SoftwareId", softwareId),
+    element("SoftwareVersionNum", softwareVersionNum),
+    elements("OriginatorGrp", [
+      element("EFIN", efin),
+      element("OriginatorTypeCd", originatorType),
+      ...(filer?.originator?.practitionerPIN
+        ? [elements("PractitionerPINGrp", [
+            element("EFIN", efin),
+            element("PIN", filer.originator.practitionerPIN),
+          ])]
+        : []),
+    ]),
+    element("PINTypeCd", "Self-Select On-Line"),
+    element("JuratDisclosureCd", "Online Self Select PIN"),
+    element("ReturnTypeCd", returnType),
   ];
 
-  if (filer === undefined) {
-    return elements("ReturnHeader", headerChildren);
+  if (filer !== undefined) {
+    headerChildren.push(
+      buildFilerBlock(filer),
+      buildPaidPreparerBlock(filer),
+      buildOnlineFilerBlock(filer),
+    );
   }
 
-  headerChildren.push(
-    element("Timestamp", filer.timestamp),
-    buildSoftwareBlock(filer),
-    buildOriginatorBlock(filer),
-    buildOnlineFilerBlock(filer),
-    buildPaidPreparerBlock(filer),
-    buildFilerBlock(filer),
-    element("FilingStatusCd", String(filer.filingStatus)),
-    buildPINBlock(filer),
-    buildBankAccountBlock(filer),
-  );
-
-  return elements("ReturnHeader", headerChildren);
+  const inner = headerChildren.filter((s) => s !== "").join("");
+  return `<ReturnHeader binaryAttachmentCnt="0">${inner}</ReturnHeader>`;
 }

@@ -95,3 +95,12 @@ None - no external service configuration required.
 ---
 *Phase: 04-special-situations-b-batch-4*
 *Completed: 2026-04-02*
+
+## Self-Check: PASSED
+
+- SUMMARY.md exists at `.planning/phases/04-special-situations-b-batch-4/04-01-SUMMARY.md` — FOUND
+- Final commit `f085b8e` exists — FOUND
+- 80 node tests passed, 0 failed — VERIFIED
+- `deno check forms/f1040/2025/registry.ts` exits 0 — VERIFIED
+- All 5 nodes in registry.ts + inputs.ts — VERIFIED
+- All 5 research/context.md files present — VERIFIED

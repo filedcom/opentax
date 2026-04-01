@@ -11,7 +11,7 @@
   },
   "tasks": {
     "tax": "deno run --allow-read --allow-write cli/main.ts",
-    "test": "deno test --allow-read --allow-write",
+    "test": "deno test --allow-read --allow-write --allow-run=xmllint",
     "test:cli": "deno test --allow-read --allow-write cli/"
   }
 }
