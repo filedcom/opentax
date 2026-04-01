@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: FW2G
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 11 rules (3 implemented, 8 stubs)
+ * 11 rules (4 implemented, 7 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -68,7 +68,7 @@ export const FW2G_RULES: readonly RuleDef[] = [
     "FW2G-502",
     "reject",
     "database",
-    alwaysPass,
+    alwaysPass, // requires e-File database lookup for EIN validity
     "Form W-2G, 'PayerEIN' must match data in the e-File database.",
   ),
   rule(
@@ -82,7 +82,7 @@ export const FW2G_RULES: readonly RuleDef[] = [
     "FW2G-599",
     "reject",
     "database",
-    alwaysPass,
+    alwaysPass, // requires e-File database lookup for SSN validity
     "Form W-2G, 'PayerSSN' must match data in the e-File database.",
   ),
 ];

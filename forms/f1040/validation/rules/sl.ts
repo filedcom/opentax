@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: SL
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 2 rules (0 implemented, 2 stubs)
+ * 2 rules (1 implemented, 1 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -12,7 +12,7 @@ export const SL_RULES: readonly RuleDef[] = [
     "SL-F1118-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-instance reference count: Schedule L (Form 1118) must be referenced from exactly one Form 1118
     "If Schedule L (Form 1118) is present in the return, then it must be referenced from one and only one Form 1118.",
   ),
   rule(

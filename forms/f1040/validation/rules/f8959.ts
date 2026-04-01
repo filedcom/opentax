@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: F8959
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 18 rules (18 implemented, 0 stubs)
+ * 18 rules (15 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -82,7 +82,7 @@ export const F8959_RULES: readonly RuleDef[] = [
     "F8959-013",
     "reject",
     "math_error",
-    eqDiff("SEIncomeSubjToAddSETaxAmt", "TotalSelfEmploymentIncomeAmt", "MedcrWagesTipsBelowThrshldAmt"),
+    eqDiffFloorZero("SEIncomeSubjToAddSETaxAmt", "TotalSelfEmploymentIncomeAmt", "MedcrWagesTipsBelowThrshldAmt"),
     "Form 8959, Line 12 'SEIncomeSubjToAddSETaxAmt' must be equal to Line 8 'TotalSelfEmploymentIncomeAmt' minus (-) Line 11 'MedcrWagesTipsBelowThrshldAmt'.",
   ),
   rule(

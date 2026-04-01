@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: F7204
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (6 implemented, 0 stubs)
+ * 6 rules (3 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";

@@ -12,7 +12,7 @@ export const F4835_RULES: readonly RuleDef[] = [
     "F4835-001",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // cross-instance aggregation: sum across all Form 4835 instances vs Schedule E line
     "The sum of [all Forms 4835, Line 32 'NetFarmRentalIncomeOrLossAmt' with an amount greater than zero] minus (-) the sum of the absolute values of all Line 34c 'FarmRentalDeductibleLossAmt' must be equal to Schedule E (Form 1040), Line 40 'NetFarmRentalIncomeOrLossAmt'.",
   ),
   rule(

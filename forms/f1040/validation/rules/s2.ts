@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: S2
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 35 rules (9 implemented, 26 stubs)
+ * 35 rules (30 implemented, 5 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -47,7 +47,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-006",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    alwaysPass, // requires summing a variable number of Form 8621 instances — cross-instance aggregation
     "Schedule 2 (Form 1040), 'InterestOnEachNetIncrInTaxAmt' must be equal to the sum of all Forms 8621, 'InterestOnEachNetIncrInTaxAmt'.",
   ),
   rule(
@@ -89,7 +89,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-014",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires summing variable-count items in RecaptureOtherCreditsGrp — cross-instance aggregation
     "Schedule 2 (Form 1040), 'TotalRecaptureOtherCreditsAmt' must be equal to the sum of all 'OtherCreditsAmt' in 'RecaptureOtherCreditsGrp'.",
   ),
   rule(
@@ -180,7 +180,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-123-01",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires summing fields across variable number of Form 5329 instances — cross-instance aggregation
     "If Schedule 2 (Form 1040), 'TaxOnIRAsAmt' has a non-zero value and 'form5329NotRequiredInd' is not checked, then 'TaxOnIRAsAmt' must be equal to the sum of the following on all Forms 5329: 'IRAEarlyDistributionsTaxAmt' and 'EducIRADistributionsTaxAmt' and 'IRAExcessContribTaxAmt' and 'RothIRAExcessContribTaxAmt' and 'EducIRAExcessContribTaxAmt' and 'MSAExcessContribTaxAmt' and 'HSAExcessContribTaxAmt' and 'ABLEExcessContribTaxAmt' and 'RtmntAnntyExcessContribTaxAmt'.",
   ),
   rule(
@@ -201,14 +201,14 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-146-02",
     "reject",
     "math_error",
-    alwaysPass,
+    alwaysPass, // requires conditional aggregation across variable number of Schedule H instances — cross-instance check
     "Schedule 2 (Form 1040), 'HouseholdEmploymentTaxAmt' must be equal to the sum of all Schedule H (Form 1040), [ 'TotSocSecMedcrAndFedIncmTaxAmt' plus (+) 'CombinedFUTATaxPlusNetTaxesAmt' ]. If in any Schedule H (Form 1040), both 'TotSocSecMedcrAndFedIncmTaxAmt' and 'CombinedFUTATaxPlusNetTaxesAmt' have non-zero values, include only 'CombinedFUTATaxPlusNetTaxesAmt' in the sum.",
   ),
   rule(
     "S2-F1040-180-01",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    alwaysPass, // requires summing across variable number of Schedule SE instances — cross-instance aggregation
     "Schedule 2 (Form 1040), 'SelfEmploymentTaxAmt' must be equal to the sum of all Schedule SE (Form 1040), 'SelfEmploymentTaxAmt'.",
   ),
   rule(

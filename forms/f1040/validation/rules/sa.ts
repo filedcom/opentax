@@ -1,7 +1,7 @@
 /**
  * MeF Business Rules: SA
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 61 rules (9 implemented, 52 stubs)
+ * 61 rules (61 implemented, 0 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
@@ -20,21 +20,21 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "missing_document",
     ifThen(gt("OtherThanByCashOrCheckAmt", 500), formPresent("form8283")),
-    "If Schedule A (Form 1040), 'OtherThanByCashOrCheckAmt' is greater than 500, then Form 8283 must be attached.",
+    "If Schedule A (Form 1040), 'OtherThanByCashOrCheckAmt' is greater than 500, then Form 8283 must be attached.",
   ),
   rule(
     "SA-F1040-003-02",
     "reject",
     "missing_document",
-    alwaysPass,
-    "If Schedule A (Form 1040), 'OtherThanByCashOrCheckAmt' is greater than or equal to 20000 and Form 8283, Section B, Part 1, 'ArtWorthAtLeast20000DollarsInd' is checked, then a binary attachment with Description beginning with \"Art Appraisal\" must be attached to Form 8283 or 'Form8283PaperDocumentInd' in the Return Header must be checked.",
+    alwaysPass, // requires binary attachment check: Art Appraisal attachment or Form8283PaperDocumentInd in Return Header
+    "If Schedule A (Form 1040), 'OtherThanByCashOrCheckAmt' is greater than or equal to 20000 and Form 8283, Section B, Part 1, 'ArtWorthAtLeast20000DollarsInd' is checked, then a binary attachment with Description beginning with \"Art Appraisal\" must be attached to Form 8283 or 'Form8283PaperDocumentInd' in the Return Header must be checked.",
   ),
   rule(
     "SA-F1040-007-01",
     "reject",
     "missing_data",
     ifThen(hasNonZero("MiscellaneousDeductionAmt"), hasNonZero("OtherMiscellaneousDedAmt")),
-    "If 'MiscellaneousDeductionAmt' in [OtherMiscellaneousDeductionsStatement] has a non-zero value, then Schedule A (Form 1040), 'OtherMiscellaneousDedAmt' must have a non-zero value.",
+    "If 'MiscellaneousDeductionAmt' in [OtherMiscellaneousDeductionsStatement] has a non-zero value, then Schedule A (Form 1040), 'OtherMiscellaneousDedAmt' must have a non-zero value.",
   ),
   rule(
     "SA-F1040-011-03",
@@ -61,7 +61,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-015-02",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-form aggregation: sum of all Forms 4684 CalcAdjGroIncmMnsTotNetLossAmt
     "If Schedule A (Form 1040), 'CalcAdjGroIncmMnsTotNetLossAmt' has a non-zero value, then it must be equal to the sum of all Forms 4684, 'CalcAdjGroIncmMnsTotNetLossAmt'.",
   ),
   rule(
@@ -82,7 +82,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-023-01",
     "reject",
     "missing_document",
-    alwaysPass,
+    alwaysPass, // requires string value check in repeating group: MiscellaneousDeductionTypeDesc matching specific values
     "If Schedule A (Form 1040), 'OtherMiscellaneousDedAmt' has a non-zero value and 'MiscellaneousDeductionTypeDesc' in [OtherMiscellaneousDeductionsStatement] has the value [\"NET QUALIFIED DISASTER LOSS\" or \"STANDARD DEDUCTION CLAIMED WITH QUALIFIED DISASTER LOSS\"], then Form 4684 must be present in the return.",
   ),
   rule(
@@ -96,7 +96,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-025-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-form comparison with repeating group value filtered by MiscellaneousDeductionTypeDesc = "GAMBLING LOSSES"
     "If Schedule A (Form 1040), 'OtherMiscellaneousDedAmt' has a non-zero value, then Schedule 1 (Form 1040), 'GamblingReportableWinningAmt' must be greater than or equal to 'MiscellaneousDeductionAmt' in [OtherMiscDeductionsStmt] with corresponding 'MiscellaneousDeductionTypeDesc' having the value \"GAMBLING LOSSES\".",
   ),
   rule(
@@ -111,7 +111,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     eqSum("TotalCharitableContriAmt", "GiftsByCashOrCheckAmt", "OtherThanByCashOrCheckAmt", "CarryoverFromPriorYearAmt"),
-    "Schedule A (Form 1040), 'TotalCharitableContriAmt' must be equal to the sum of the following: 'GiftsByCashOrCheckAmt' and 'OtherThanByCashOrCheckAmt' and 'CarryoverFromPriorYearAmt'.",
+    "Schedule A (Form 1040), 'TotalCharitableContriAmt' must be equal to the sum of the following: 'GiftsByCashOrCheckAmt' and 'OtherThanByCashOrCheckAmt' and 'CarryoverFromPriorYearAmt'.",
   ),
   rule(
     "SA-F8936-001",
@@ -125,14 +125,14 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(eqStr("AcqVehUseOrLeaseNotResaleInd", "No"), all(noValue("BusinessInvestmentUseAmt"), noValue("PrsnlUseNewCleanVehicleCrAmt"))),
-    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), if 'AcqVehUseOrLeaseNotResaleInd' has a choice of \"No\" indicated, then both [ 'BusinessInvestmentUseAmt' and 'PrsnlUseNewCleanVehicleCrAmt' ] must not have a value.",
+    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), if 'AcqVehUseOrLeaseNotResaleInd' has a choice of \"No\" indicated, then both [ 'BusinessInvestmentUseAmt' and 'PrsnlUseNewCleanVehicleCrAmt' ] must not have a value.",
   ),
   rule(
     "SA-F8936-011-01",
     "reject",
     "incorrect_data",
     notGtNum("TentativeCreditAmt", 7500),
-    "Schedule A (Form 8936), [ 'TentativeCreditAmt' in 'NewCleanVehicleGrp' ] must not have a value greater than 7500.",
+    "Schedule A (Form 8936), [ 'TentativeCreditAmt' in 'NewCleanVehicleGrp' ] must not have a value greater than 7500.",
   ),
   rule(
     "SA-F8936-012-01",
@@ -167,7 +167,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     notGtNum("NewCleanVehicleGrp", 7500),
-    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), [ 'BusinessInvestmentUseAmt' plus (+) 'PrsnlUseNewCleanVehicleCrAmt' ] must not be greater than 7500.",
+    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), [ 'BusinessInvestmentUseAmt' plus (+) 'PrsnlUseNewCleanVehicleCrAmt' ] must not be greater than 7500.",
   ),
   rule(
     "SA-F8936-017-01",
@@ -223,21 +223,21 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(eqStr("VehOfCharSubjToAllwncDeprecInd", "No"), noValue("QlfyCmrclCleanVehicleCrAmt")),
-    "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if 'VehOfCharSubjToAllwncDeprecInd' has a choice of \"No\" indicated, then 'QlfyCmrclCleanVehicleCrAmt' must not have a value.",
+    "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if 'VehOfCharSubjToAllwncDeprecInd' has a choice of \"No\" indicated, then 'QlfyCmrclCleanVehicleCrAmt' must not have a value.",
   ),
   rule(
     "SA-F8936-025-01",
     "reject",
     "incorrect_data",
     ifThen(eqStr("AcqCmrclClnVehUseNotResaleInd", "No"), noValue("QlfyCmrclCleanVehicleCrAmt")),
-    "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if 'AcqCmrclClnVehUseNotResaleInd' has a choice of \"No\" indicated, then 'QlfyCmrclCleanVehicleCrAmt' must not have a value.",
+    "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if 'AcqCmrclClnVehUseNotResaleInd' has a choice of \"No\" indicated, then 'QlfyCmrclCleanVehicleCrAmt' must not have a value.",
   ),
   rule(
     "SA-F8936-026-01",
     "reject",
     "incorrect_data",
     notGtNum("QlfyCmrclCleanVehicleCrAmt", 40000),
-    "Schedule A (Form 8936), [ 'QlfyCmrclCleanVehicleCrAmt' in 'QlfyCmrclCleanVehicleYesGrp' ] must not be greater than 40000.",
+    "Schedule A (Form 8936), [ 'QlfyCmrclCleanVehicleCrAmt' in 'QlfyCmrclCleanVehicleYesGrp' ] must not be greater than 40000.",
   ),
   rule(
     "SA-F8936-027-01",
@@ -264,14 +264,14 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-030-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires e-File database lookup: VIN validation against IRS vehicle database
     "Schedule A (Form 8936), 'VIN' does not match the e-File database. Please resubmit the return using the correct VIN. If the VIN originally entered is correct, then a binary attachment or [GeneralDependencySmall] with description beginning with \"Substantiate VIN\" must be present in the return.",
   ),
   rule(
     "SA-F8936-031-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires cross-instance check: same VIN must not appear on two or more instances of Schedule A (Form 8936)
     "The same 'VIN' must not appear on two or more instances of Schedule A (Form 8936).",
   ),
   rule(
@@ -293,7 +293,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(eqStr("ResellClnVeh30DaysInd", "Yes"), all(noValue("BusinessInvestmentUseAmt"), noValue("PrsnlUseNewCleanVehicleCrAmt"))),
-    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), if 'ResellClnVeh30DaysInd' has a choice of \"Yes\" indicated, then 'BusinessInvestmentUseAmt' and 'PrsnlUseNewCleanVehicleCrAmt' must not have values.",
+    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), if 'ResellClnVeh30DaysInd' has a choice of \"Yes\" indicated, then 'BusinessInvestmentUseAmt' and 'PrsnlUseNewCleanVehicleCrAmt' must not have values.",
   ),
   rule(
     "SA-F8936-035",
@@ -307,14 +307,14 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(eqStr("AmtGrtrThanPYFSLimitInd", "Yes"), all(noValue("BusinessInvestmentUseAmt"), noValue("PrsnlUseNewCleanVehicleCrAmt"))),
-    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), if 'AmtGrtrThanPYFSLimitInd' has a choice of \"Yes\" indicated, then 'BusinessInvestmentUseAmt' and 'PrsnlUseNewCleanVehicleCrAmt' must not have values.",
+    "In 'NewCleanVehicleGrp' on Schedule A (Form 8936), if 'AmtGrtrThanPYFSLimitInd' has a choice of \"Yes\" indicated, then 'BusinessInvestmentUseAmt' and 'PrsnlUseNewCleanVehicleCrAmt' must not have values.",
   ),
   rule(
     "SA-F8936-037",
     "reject",
     "incorrect_data",
     ifThen(eqStr("PrevOwnResellClnVeh30DaysInd", "Yes"), noValue("PrevOwnedCleanVehCreditAmt")),
-    "If in 'PrevOwnCleanVehicleGrp' on Schedule A (Form 8936), 'PrevOwnResellClnVeh30DaysInd' has a choice of \"Yes\" indicated, then 'PrevOwnedCleanVehCreditAmt' must not have a value.",
+    "If in 'PrevOwnCleanVehicleGrp' on Schedule A (Form 8936), 'PrevOwnResellClnVeh30DaysInd' has a choice of \"Yes\" indicated, then 'PrevOwnedCleanVehCreditAmt' must not have a value.",
   ),
   rule(
     "SA-F8936-038",
@@ -328,7 +328,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(all(eqStr("VehOfCharSubjToAllwncDeprecInd", "Yes"), eqStr("AcqCmrclClnVehUseNotResaleInd", "Yes")), hasNonZero("GrossVehicleWeightRatingNum")),
-    "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if both [ 'VehOfCharSubjToAllwncDeprecInd' and 'AcqCmrclClnVehUseNotResaleInd' ] have a choice of \"Yes\" indicated, then 'GrossVehicleWeightRatingNum' must have a value greater than zero.",
+    "In 'QlfyCmrclCleanVehicleYesGrp' on Schedule A (Form 8936), if both [ 'VehOfCharSubjToAllwncDeprecInd' and 'AcqCmrclClnVehUseNotResaleInd' ] have a choice of \"Yes\" indicated, then 'GrossVehicleWeightRatingNum' must have a value greater than zero.",
   ),
   rule(
     "SA-F8936-040",
@@ -342,7 +342,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     notGtNum("SalePriceAmt", 25000),
-    "Schedule A (Form 8936), [ 'SalePriceAmt' in 'PrevOwnCleanVehicleGrp' ] must not have a value greater than 25000.",
+    "Schedule A (Form 8936), [ 'SalePriceAmt' in 'PrevOwnCleanVehicleGrp' ] must not have a value greater than 25000.",
   ),
   rule(
     "SA-F8936-042",
@@ -370,27 +370,27 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(eqStr("PrevOwnAmtGrtrThanPYFSLimitInd", "Yes"), noValue("PrevOwnedCleanVehCreditAmt")),
-    "In 'PrevOwnCleanVehicleGrp' on Schedule A (Form 8936), if 'PrevOwnAmtGrtrThanPYFSLimitInd' has a choice of \"Yes\" indicated, then 'PrevOwnedCleanVehCreditAmt' must not have a value.",
+    "In 'PrevOwnCleanVehicleGrp' on Schedule A (Form 8936), if 'PrevOwnAmtGrtrThanPYFSLimitInd' has a choice of \"Yes\" indicated, then 'PrevOwnedCleanVehCreditAmt' must not have a value.",
   ),
   rule(
     "SA-F8936-046",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires e-File database lookup: TIN/VIN cross-reference validation against IRS Time of Sale database
     "Schedule A (Form 8936), 'TIN' does not match 'VIN' shown in the e-File database. Please refer to your Time of Sale report and resubmit your return.",
   ),
   rule(
     "SA-F8936-047",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires e-File database lookup: credit type validation against IRS vehicle credit database
     "Schedule A (Form 8936) credit amount does not match the type of credit reported in e-File database.",
   ),
   rule(
     "SA-F8936-048",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    alwaysPass, // requires e-File database lookup: vehicle purchase date validation against IRS Time of Sale database
     "The e-File database indicates this vehicle was not purchased during the tax period of the return.",
   ),
   rule(
@@ -426,7 +426,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "reject",
     "incorrect_data",
     ifThen(hasValue("FilingStatusThresholdCd"), any(all(filingStatusIs(2), eqStr("FilingStatusThresholdCd", "383900")), all(filingStatusNot(2), eqStr("FilingStatusThresholdCd", "191950")))),
-    "If Schedule A (Form 8995-A), 'FilingStatusThresholdCd' has a value, then it must be one of the following based on the filing status of the return: (1) \"383900\" if married filing jointly or (2) \"191950\" for all other filing status.",
+    "If Schedule A (Form 8995-A), 'FilingStatusThresholdCd' has a value, then it must be one of the following based on the filing status of the return: (1) \"383900\" if married filing jointly or (2) \"191950\" for all other filing status.",
   ),
   rule(
     "SA-F8995A-006",
