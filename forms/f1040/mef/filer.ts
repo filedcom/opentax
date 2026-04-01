@@ -129,7 +129,7 @@ function extractOriginator(
 export function extractFilerIdentity(
   f1040: Record<string, unknown>,
 ): FilerIdentity | undefined {
-  const primarySSN = str(f1040["taxpayer_ssn"]);
+  const primarySSN = str(f1040["taxpayer_ssn"])?.replace(/-/g, "");
   const lastName = str(f1040["taxpayer_last_name"]);
   if (!primarySSN || !lastName) return undefined;
 
