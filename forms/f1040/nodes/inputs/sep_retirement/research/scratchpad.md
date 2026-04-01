@@ -25,7 +25,7 @@ Computes the deductible above-the-line retirement contribution amount flowing to
 - [x] Q: Where does each field flow on the 1040?
   → Schedule 1, Line 16 (SEP, SIMPLE, qualified plan deduction)
 - [x] Q: What are the TY2025 constants?
-  → SEP: $69,000 limit; SIMPLE employee: $16,500 ($19,500 age 50+); Solo 401k: $69,000 combined
+  → SEP: $70,000 limit (Rev Proc 2024-40 §3.20); SIMPLE employee: $16,500 ($19,500 age 50+); Solo 401k: $70,000 combined
 - [x] Q: What edge cases exist?
   → SEP 25% of net SE compensation calculation; combined limits; age catch-up
 - [x] Q: What upstream nodes feed into this node?

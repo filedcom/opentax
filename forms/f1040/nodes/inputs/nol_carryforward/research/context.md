@@ -70,6 +70,23 @@ Source: Schedule 1 (Form 1040), Part I, Line 8a; IRS instructions for Schedule 1
 | ------------ | ---------------- | --------- | ------------- | --- |
 | `line8a_nol_deduction` | `schedule1` | Total NOL deduction > 0 | Schedule 1 (Form 1040), Part I, Line 8a | https://www.irs.gov/pub/irs-pdf/f1040s1.pdf |
 
+**Note:** `schedule1` is a sink node (assembles the printed form only). It does NOT feed `agi_aggregator`. The NOL deduction reduces adjusted gross income and must therefore also be sent to `agi_aggregator` — currently this is handled via `schedule1.line8a_nol_deduction` which `schedule1`'s `otherIncome()` function negates. No separate `agi_aggregator` output is needed because NOL appears in Schedule 1 Part I (additional income section) rather than Part II (deductions section).
+
+## Schema Extension Required
+
+**CRITICAL:** Before implementing the `nol_carryforward` node, verify that `forms/f1040/nodes/outputs/schedule1/index.ts` already includes `line8a_nol_deduction` in its `inputSchema`. As of the research date, the `schedule1` schema already contains:
+```typescript
+// Line 8a — Net operating loss (NOL) deduction (IRC §172; negative entry reducing income)
+line8a_nol_deduction: z.number().nonnegative().optional(),
+```
+
+And the `otherIncome()` function already negates it:
+```typescript
+(input.line8a_nol_deduction !== undefined ? -(input.line8a_nol_deduction) : 0)
+```
+
+**No schema extension to `schedule1` is required** — the `line8a_nol` / `line8a_nol_deduction` field already exists. Verify the field name (`line8a_nol_deduction`) before writing tests. The `agi_aggregator` does NOT need a separate `line8a_nol` field because the NOL deduction is captured in Schedule 1 Part I (income section), not Part II (above-the-line deductions). The `agi_aggregator` handles NOL through its `line8z_other` or equivalently as a gross income reduction.
+
 ---
 
 ## Constants & Thresholds (Tax Year 2025)
