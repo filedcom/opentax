@@ -18,7 +18,7 @@ Only premiums paid for a "qualified long-term care insurance contract" under IRC
 
 | Field | Type | Required | Source / Label | Description | IRS Reference | URL |
 | ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
-| `age` | `number` (integer, 0–130) | Yes | Age of insured as of December 31, 2025 | The insured's age determines the applicable dollar limit. Age on the last day of the tax year is used. | IRC §213(d)(10); Rev. Proc. 2024-40 §3.45 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| `age` | `number` (integer, 0–130) | Yes | Age of insured as of December 31, 2025 | The insured's age determines the applicable dollar limit. Age on the last day of the tax year is used. | IRC §213(d)(10); Rev. Proc. 2024-40 §3.34 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
 | `actual_premium_paid` | `number` (nonnegative) | Yes | Annual LTC insurance premium paid | The total annual premium paid for the qualified LTC contract during tax year 2025. | IRC §213(d)(10) | https://www.irs.gov/instructions/i1040sca |
 | `is_qualified_contract` | `boolean` | Yes | Is this a qualified LTC contract under IRC §7702B? | Only premiums for qualified contracts are eligible. A qualified LTC contract must: be guaranteed renewable, have no cash surrender value, provide only qualified LTC services. | IRC §7702B | https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title26-section7702B |
 
@@ -35,10 +35,10 @@ Look up the age bracket for the insured's age (as of December 31, 2025):
 - Age ≤ 40: $480
 - Age 41–50: $900
 - Age 51–60: $1,800
-- Age 61–70: $4,830
-- Age 71+: $6,020
+- Age 61–70: $4,770
+- Age 71+: $5,970
 
-Source: Rev. Proc. 2024-40, §3.45, Table (TY2025 amounts)
+Source: Rev. Proc. 2024-40, §3.34, Table (TY2025 amounts); IRC §213(d)(10)
 
 ### Step 3 — Compute eligible premium
 ```
@@ -67,11 +67,11 @@ Source: IRC §213(d)(10); Schedule A Instructions Line 1
 
 | Constant | Value | Source | URL |
 | -------- | ----- | ------ | --- |
-| Age ≤ 40 limit | $480 | Rev. Proc. 2024-40 §3.45 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
-| Age 41–50 limit | $900 | Rev. Proc. 2024-40 §3.45 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
-| Age 51–60 limit | $1,800 | Rev. Proc. 2024-40 §3.45 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
-| Age 61–70 limit | $4,830 | Rev. Proc. 2024-40 §3.45 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
-| Age 71+ limit | $6,020 | Rev. Proc. 2024-40 §3.45 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| Age ≤ 40 limit | $480 | Rev. Proc. 2024-40 §3.34; IRC §213(d)(10) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| Age 41–50 limit | $900 | Rev. Proc. 2024-40 §3.34; IRC §213(d)(10) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| Age 51–60 limit | $1,800 | Rev. Proc. 2024-40 §3.34; IRC §213(d)(10) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| Age 61–70 limit | $4,770 | Rev. Proc. 2024-40 §3.34; IRC §213(d)(10) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| Age 71+ limit | $5,970 | Rev. Proc. 2024-40 §3.34; IRC §213(d)(10) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
 
 ---
 
@@ -114,7 +114,7 @@ flowchart LR
 
 4. **Age boundary — exactly 41.** A person who is exactly 41 uses the 41–50 bracket ($900).
 
-5. **Age boundary — exactly 71.** A person who is exactly 71 uses the 71+ bracket ($6,020).
+5. **Age boundary — exactly 71.** A person who is exactly 71 uses the 71+ bracket ($5,970).
 
 6. **Both spouses can each enter LTC premiums separately.** The taxpayer and spouse may each have their own LTC policy; they enter separate items. Each is independently capped, then the eligible amounts are summed before flowing to Schedule A.
 
@@ -130,7 +130,7 @@ flowchart LR
 
 | Document | Year | Section | URL | Saved as |
 | -------- | ---- | ------- | --- | -------- |
-| Rev. Proc. 2024-40 (TY2025 inflation adjustments) | 2024 | §3.45 (LTC eligible premium limits) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf | N/A |
+| Rev. Proc. 2024-40 (TY2025 inflation adjustments) | 2024 | §3.34 (LTC eligible premium limits) | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf | N/A |
 | IRC §213(d)(10) — Qualified LTC premiums as medical expense | Current | §213(d)(10) | https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title26-section213 | N/A |
 | IRC §7702B — Qualified LTC insurance contracts | Current | §7702B | https://uscode.house.gov/view.xhtml?req=granuleid:USC-prelim-title26-section7702B | N/A |
 | Schedule A (Form 1040) Instructions | 2025 | Line 1 (medical expenses) | https://www.irs.gov/instructions/i1040sca | N/A |
