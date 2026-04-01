@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqMin, eqSum, hasValue, hasNonZero, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, eqDiff, eqField, eqMin, eqSum, hasValue, hasNonZero, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const F8936_RULES: readonly RuleDef[] = [
   rule(
@@ -82,7 +82,7 @@ export const F8936_RULES: readonly RuleDef[] = [
     "F8936-037",
     "reject",
     "math_error",
-    alwaysPass,
+    ifThen(hasNonZero("AdjustedPersonalTaxCreditsAmt"), eqDiff("AdjustedPersonalTaxCreditsAmt", "TotalTaxBeforeCrAndOthTaxesAmt", "PersonalTaxCreditsAmt")),
     "If Form 8936, 'AdjustedPersonalTaxCreditsAmt' in 'CrPrsnlUsePartNewCleanVehGrp' has a non-zero value, then it must be equal to 'TotalTaxBeforeCrAndOthTaxesAmt' minus (-) 'PersonalTaxCreditsAmt'.",
   ),
   rule(
@@ -103,7 +103,7 @@ export const F8936_RULES: readonly RuleDef[] = [
     "F8936-041",
     "reject",
     "math_error",
-    alwaysPass,
+    ifThen(hasNonZero("AdjustedPersonalTaxCreditsAmt"), eqDiff("AdjustedPersonalTaxCreditsAmt", "TotalTaxBeforeCrAndOthTaxesAmt", "PersonalTaxCreditsAmt")),
     "If Form 8936, 'AdjustedPersonalTaxCreditsAmt' in 'CrPreviouslyOwnedCleanVehGrp' has a non-zero value, then it must be equal to 'TotalTaxBeforeCrAndOthTaxesAmt' minus (-) 'PersonalTaxCreditsAmt'.",
   ),
   rule(

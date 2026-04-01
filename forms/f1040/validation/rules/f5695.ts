@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqMin, eqProduct, eqStr, eqSum, filingStatusIs, formCountAtMost, gt, hasNonZero, hasValue, ifThen, isZero, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqField, eqMin, eqMinNum, eqProduct, eqStr, eqSum, filingStatusIs, formCountAtMost, gt, hasNonZero, hasValue, ifThen, isZero, lt, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F5695_RULES: readonly RuleDef[] = [
   rule(
@@ -285,7 +285,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-066",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(lt("FuelCellPropKWCapNum", 0.50), isZero("FuelCellPropKWCapNum")),
     "If Form 5695, [ 'FuelCellPropKWCapNum' in 'ResidentialCleanEnergyCrGrp' ] has a value less than 0.50, then [ 'FuelCellPropKWCapNum' in 'ResidentialCleanEnergyCrGrp' ] must be equal to zero if an amount is entered.",
   ),
   rule(
@@ -488,7 +488,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-095",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(all(noValue("JointOccupancyInd"), hasNonZero("EnergyEffcntImprvAllwblCostAmt")), eqMinNum("EnergyEffcntImprvAllwblCostAmt", "EgyEffcntImprvCreditSubtlAmt", 1200)),
     "If Form 5695, [ 'JointOccupancyInd' in 'EgyEffcntHmImprvCrGrp' ] is not checked and [ 'EnergyEffcntImprvAllwblCostAmt' in 'EgyEffcntHmImprvCrGrp' ] has a non-zero value, then [ 'EnergyEffcntImprvAllwblCostAmt' in 'EgyEffcntHmImprvCrGrp' ] must be equal to the smaller of [ 'EgyEffcntImprvCreditSubtlAmt' in 'EgyEffcntHmImprvCrGrp' ] or 1200.",
   ),
   rule(

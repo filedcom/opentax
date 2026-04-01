@@ -365,6 +365,22 @@ export const dateGteConst = (dateXml: string, year: number, month: number, day: 
     return dm >= refMs;
   };
 
+/** Year of a date field equals a constant year (e.g. 2017). */
+export const dateYearEqConst = (dateXml: string, year: number): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(dateXml) ?? "");
+    if (!d) return true;
+    return extractYear(d) === year;
+  };
+
+/** Target = numerator / denominator (small tolerance). Passes when denominator is zero. */
+export const eqDiv = (target: string, numerator: string, denominator: string): RuleCheck =>
+  (ctx) => {
+    const d = ctx.num(denominator);
+    if (d === 0) return true;
+    return Math.abs(ctx.num(target) - ctx.num(numerator) / d) < 0.001;
+  };
+
 // ─── Rule Builder Helper ────────────────────────────────
 
 /** Convenience: build a RuleDef with less boilerplate. */

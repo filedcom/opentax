@@ -73,5 +73,7 @@ export {
   validSSN,
   decimalPlacesEq,
   dateGteConst,
+  dateYearEqConst,
+  eqDiv,
   eqFieldProduct,
 } from "./predicates.ts";

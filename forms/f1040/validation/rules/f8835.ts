@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, eqDiff, eqFieldProduct, eqMin, eqProduct, eqStr, eqSum, hasNonZero, hasValue, ifThen, isZero, noValue, notGtField, notLtSum, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, any, dateGteConst, dateYearEqConst, eqDiff, eqField, eqFieldProduct, eqMin, eqProduct, eqStr, eqSum, hasNonZero, hasValue, ifThen, ifThenUnless, isZero, noValue, not, notGtField, notLtSum, } from "../../../../core/validation/mod.ts";
 
 export const F8835_RULES: readonly RuleDef[] = [
   rule(
@@ -61,42 +61,107 @@ export const F8835_RULES: readonly RuleDef[] = [
     "F8835-024",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        all(hasValue("FacilityConstructionStartDt"), dateYearEqConst("FacilityConstructionStartDt", 2017), hasNonZero("KwHrsPrdcdAndSoldWindCrAmt")),
+        notGtField("WindFacilityAmt", "AdjustedCreditReductionAmt"),
+      ),
+      ifThenUnless(
+        hasValue("WindFacilityAmt"),
+        isZero("WindFacilityAmt"),
+        all(hasValue("FacilityConstructionStartDt"), dateYearEqConst("FacilityConstructionStartDt", 2017), hasNonZero("KwHrsPrdcdAndSoldWindCrAmt")),
+      ),
+    ),
     "If Form 8835 'FacilityConstructionStartDt' is during 2017 and 'KwHrsPrdcdAndSoldWindCrAmt' has a non-zero value, then 'WindFacilityAmt' must be less than or equal to 'AdjustedCreditReductionAmt', otherwise 'WindFacilityAmt' must be equal to zero if an amount is entered.",
   ),
   rule(
     "F8835-025",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        any(noValue("FacilityPlacedInServiceDt"), dateGteConst("FacilityPlacedInServiceDt", 2022, 1, 1)),
+        isZero("WindFacilityPercentageAmt"),
+      ),
+      ifThen(
+        all(hasValue("FacilityPlacedInServiceDt"), not(dateGteConst("FacilityPlacedInServiceDt", 2022, 1, 1))),
+        eqProduct("WindFacilityPercentageAmt", "WindFacilityAmt", 0.20),
+      ),
+    ),
     "If Form 8835 'FacilityPlacedInServiceDt' is after 2021 or not provided, then 'WindFacilityPercentageAmt' must be equal to zero if an amount is entered, otherwise 'WindFacilityPercentageAmt' must be equal to ['WindFacilityAmt' multiplied by 20% (0.20)].",
   ),
   rule(
     "F8835-026",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        all(
+          hasValue("FacilityConstructionStartDt"),
+          any(dateYearEqConst("FacilityConstructionStartDt", 2018), dateYearEqConst("FacilityConstructionStartDt", 2020), dateYearEqConst("FacilityConstructionStartDt", 2021)),
+          hasNonZero("KwHrsPrdcdAndSoldWindCrAmt"),
+        ),
+        notGtField("WindFacilityYr2Amt", "AdjustedCreditReductionAmt"),
+      ),
+      ifThenUnless(
+        hasValue("WindFacilityYr2Amt"),
+        isZero("WindFacilityYr2Amt"),
+        all(
+          hasValue("FacilityConstructionStartDt"),
+          any(dateYearEqConst("FacilityConstructionStartDt", 2018), dateYearEqConst("FacilityConstructionStartDt", 2020), dateYearEqConst("FacilityConstructionStartDt", 2021)),
+          hasNonZero("KwHrsPrdcdAndSoldWindCrAmt"),
+        ),
+      ),
+    ),
     "If Form 8835 'FacilityConstructionStartDt' is during 2018, 2020, or 2021, and 'KwHrsPrdcdAndSoldWindCrAmt' has a non-zero value, then 'WindFacilityYr2Amt' must be less than or equal to 'AdjustedCreditReductionAmt', otherwise 'WindFacilityYr2Amt' must be equal to zero if an amount is entered.",
   ),
   rule(
     "F8835-027",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        any(noValue("FacilityPlacedInServiceDt"), dateGteConst("FacilityPlacedInServiceDt", 2022, 1, 1)),
+        isZero("WindFacilityPercentageYr2Amt"),
+      ),
+      ifThen(
+        all(hasValue("FacilityPlacedInServiceDt"), not(dateGteConst("FacilityPlacedInServiceDt", 2022, 1, 1))),
+        eqProduct("WindFacilityPercentageYr2Amt", "WindFacilityYr2Amt", 0.40),
+      ),
+    ),
     "If Form 8835 'FacilityPlacedInServiceDt' is after 2021 or not provided, then 'WindFacilityPercentageYr2Amt' must be equal to zero if an amount is entered, otherwise 'WindFacilityPercentageYr2Amt' must be equal to ['WindFacilityYr2Amt' multiplied by 40% (0.40)].",
   ),
   rule(
     "F8835-028",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        all(hasValue("FacilityConstructionStartDt"), dateYearEqConst("FacilityConstructionStartDt", 2019), hasNonZero("KwHrsPrdcdAndSoldWindCrAmt")),
+        notGtField("WindFacilityYr3Amt", "AdjustedCreditReductionAmt"),
+      ),
+      ifThenUnless(
+        hasValue("WindFacilityYr3Amt"),
+        isZero("WindFacilityYr3Amt"),
+        all(hasValue("FacilityConstructionStartDt"), dateYearEqConst("FacilityConstructionStartDt", 2019), hasNonZero("KwHrsPrdcdAndSoldWindCrAmt")),
+      ),
+    ),
     "If Form 8835 'FacilityConstructionStartDt' is during 2019 and 'KwHrsPrdcdAndSoldWindCrAmt' has a non-zero value, then 'WindFacilityYr3Amt' must be less than or equal to 'AdjustedCreditReductionAmt', otherwise 'WindFacilityYr3Amt' must be equal to zero if an amount is entered.",
   ),
   rule(
     "F8835-029",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        any(noValue("FacilityPlacedInServiceDt"), dateGteConst("FacilityPlacedInServiceDt", 2022, 1, 1)),
+        isZero("WindFcltyConstrPctYr3Amt"),
+      ),
+      ifThen(
+        all(hasValue("FacilityPlacedInServiceDt"), not(dateGteConst("FacilityPlacedInServiceDt", 2022, 1, 1))),
+        eqProduct("WindFcltyConstrPctYr3Amt", "WindFacilityYr3Amt", 0.60),
+      ),
+    ),
     "If Form 8835 'FacilityPlacedInServiceDt' is after 2021 or not provided, then 'WindFcltyConstrPctYr3Amt' must be equal to zero if an amount is entered, otherwise 'WindFcltyConstrPctYr3Amt' must be equal to ['WindFacilityYr3Amt' multiplied by 60% (0.60)].",
   ),
   rule(
@@ -117,7 +182,17 @@ export const F8835_RULES: readonly RuleDef[] = [
     "F8835-032",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    all(
+      ifThen(
+        any(eqStr("ProjectNetOutputUnder1MWInd", "Yes"), eqStr("FcltyConstrBeganBfrSpcfdDtInd", "Yes"), eqStr("FcltyStsfyWgAprntcshpRqrInd", "Yes")),
+        eqProduct("QualifiedFacilitiesIncrCrAmt", "NetWindFacilityPercentageAmt", 5.0),
+      ),
+      ifThenUnless(
+        all(eqStr("FacilityRqrNotStsfdInd", "No"), hasValue("QualifiedFacilitiesIncrCrAmt")),
+        eqField("QualifiedFacilitiesIncrCrAmt", "NetWindFacilityPercentageAmt"),
+        any(eqStr("ProjectNetOutputUnder1MWInd", "Yes"), eqStr("FcltyConstrBeganBfrSpcfdDtInd", "Yes"), eqStr("FcltyStsfyWgAprntcshpRqrInd", "Yes")),
+      ),
+    ),
     "If Form 8835, 'ProjectNetOutputUnder1MWInd' or 'FcltyConstrBeganBfrSpcfdDtInd' or 'FcltyStsfyWgAprntcshpRqrInd' is marked \"Yes\", then 'QualifiedFacilitiesIncrCrAmt' must equal 'NetWindFacilityPercentageAmt' multiplied by 5.0. Otherwise, if Form 8835, 'FacilityRqrNotStsfdInd' is marked \"No\", then 'QualifiedFacilitiesIncrCrAmt' must equal 'NetWindFacilityPercentageAmt' if an amount is entered.",
   ),
   rule(
@@ -145,7 +220,10 @@ export const F8835_RULES: readonly RuleDef[] = [
     "F8835-037",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    any(
+      eqField("ElectivePaymentAmt", "QlfyFcltsDomCntntEgyComCrAmt"),
+      eqProduct("ElectivePaymentAmt", "QlfyFcltsDomCntntEgyComCrAmt", 0.90),
+    ),
     "Form 8835, 'ElectivePaymentAmt' must be equal to 'QlfyFcltsDomCntntEgyComCrAmt' or 90% (0.90) of 'QlfyFcltsDomCntntEgyComCrAmt'.",
   ),
   rule(

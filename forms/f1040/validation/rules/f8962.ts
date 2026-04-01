@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqField, eqFieldProduct, eqMin, eqStr, eqSum, filingStatusIs, formPresent, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqDiv, eqField, eqFieldProduct, eqMin, eqStr, eqSum, filingStatusIs, formPresent, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F8962_RULES: readonly RuleDef[] = [
   rule(
@@ -40,7 +40,7 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-006-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("TotalExemptionsCnt"), eqDiv("FederalPovertyLevelPct", "HouseholdIncomeAmt", "PovertyLevelAmt")),
     "If Form 8962, Line 1 'TotalExemptionsCnt' has a non-zero value, then Line 5 'FederalPovertyLevelPct' must be equal to Line 3 'HouseholdIncomeAmt' divided by Line 4 'PovertyLevelAmt'.",
   ),
   rule(
