@@ -32,6 +32,8 @@ const inputSchema = z.object({
   // Line 7 — Unemployment compensation (Form 1099-G)
   line7_unemployment: z.number().optional(),
   // Line 8 — Other income (various line 8 sub-items)
+  // Line 8a — Net operating loss (NOL) deduction (IRC §172; negative entry reducing income)
+  line8a_nol_deduction: z.number().nonnegative().optional(),
   line8b_savings_bond_exclusion: z.number().nonnegative().optional(),
   line8c_cod_income: z.number().optional(),
   line8d_foreign_earned_income_exclusion: z.number().nonnegative().optional(),
@@ -87,6 +89,7 @@ type Schedule1Input = z.infer<typeof inputSchema>;
 
 function otherIncome(input: Schedule1Input): number {
   return (
+    (input.line8a_nol_deduction !== undefined ? -(input.line8a_nol_deduction) : 0) +
     (input.line8b_savings_bond_exclusion !== undefined ? -(input.line8b_savings_bond_exclusion) : 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8d_foreign_earned_income_exclusion !== undefined ? -(input.line8d_foreign_earned_income_exclusion) : 0) +

@@ -97,6 +97,8 @@ export const inputSchema = z.object({
   crop_insurance: z.number().nonnegative().optional(),
   // Other farm income from 1099-NEC Box 1 routed to Schedule F
   line8_other_income: z.number().nonnegative().optional(),
+  // Car and truck expenses from auto_expense worksheet (AUTO screen) — Schedule F Line 10
+  line10_car_truck: z.number().nonnegative().optional(),
 });
 
 type ScheduleFItem = z.infer<typeof itemSchema>;

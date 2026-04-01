@@ -70,6 +70,21 @@ export const inputSchema = z.object({
   // Line 17a — Recapture of investment credit (Form 4255)
   // IRC §50(a); Form 4255 → Schedule 2 line 17a
   line17a_investment_credit_recapture: z.number().nonnegative().optional(),
+  // Line 10 — Repayment of first-time homebuyer credit (Form 5405)
+  // IRC §36(f); Form 5405 → Schedule 2 line 10
+  line10_homebuyer_credit_repayment: z.number().nonnegative().optional(),
+  // Line 10 — Recapture of federal mortgage subsidy (Form 8828)
+  // IRC §143(m); Form 8828 → Schedule 2 line 10
+  line10_recapture_tax: z.number().nonnegative().optional(),
+  // Line 10 — Recapture of low-income housing credit (Form 8611)
+  // IRC §42(j); Form 8611 → Schedule 2 line 10
+  line10_lihtc_recapture: z.number().nonnegative().optional(),
+  // Line 17z — Other additional taxes (Form 8978 — partner's BBA audit tax)
+  // IRC §6226; Form 8978 → Schedule 2 line 17z
+  line17z_other_additional_taxes: z.number().nonnegative().optional(),
+  // Line 17 — Mark-to-market exit tax on covered expatriation (Form 8854 Part IV)
+  // IRC §877A(a); taxable gain above $866k exclusion → Schedule 2 line 17
+  line17_exit_tax: z.number().nonnegative().optional(),
 });
 
 type Schedule2Input = z.infer<typeof inputSchema>;
@@ -128,7 +143,12 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
       (input.line2_excess_advance_premium ?? 0) +
       (input.line7a_household_employment ?? 0) +
       (input.line17d_kiddie_tax ?? 0) +
-      (input.line17a_investment_credit_recapture ?? 0);
+      (input.line17a_investment_credit_recapture ?? 0) +
+      (input.line10_homebuyer_credit_repayment ?? 0) +
+      (input.line10_recapture_tax ?? 0) +
+      (input.line10_lihtc_recapture ?? 0) +
+      (input.line17z_other_additional_taxes ?? 0) +
+      (input.line17_exit_tax ?? 0);
     if (total === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [

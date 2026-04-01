@@ -10,7 +10,8 @@
     "screen_code": "915F",
     "alias_screen_codes": [
       "915F > \"Form 8915-F Prior Year Distributions and Repayments\" link"
-    ]
+    ],
+    "filed_tax_node_type_code": "f8915f"
   },
   {
     "form": "8582-CR",
@@ -20,7 +21,8 @@
   {
     "form": "8288-A",
     "description": "Statement of Withholding on Certain Dispositions by Foreign Persons",
-    "screen_code": "8288"
+    "screen_code": "8288",
+    "filed_tax_node_type_code": "f8288"
   },
   {
     "form": "1099-B",
@@ -195,7 +197,8 @@
     "screen_code": "3 > \"Household Employee\" link",
     "alias_screen_codes": [
       "HSH"
-    ]
+    ],
+    "filed_tax_node_type_code": "household_wages"
   },
   {
     "form": "1040",
@@ -228,7 +231,8 @@
   {
     "form": "1040",
     "description": "Foreign Employer Compensation",
-    "screen_code": "FEC"
+    "screen_code": "FEC",
+    "filed_tax_node_type_code": "fec"
   },
   {
     "form": "1040",
@@ -282,7 +286,8 @@
   {
     "form": "2106",
     "description": "Employee Business Expenses",
-    "screen_code": "2106"
+    "screen_code": "2106",
+    "filed_tax_node_type_code": "f2106"
   },
   {
     "form": "2120",
@@ -367,13 +372,32 @@
   {
     "form": "3800",
     "description": "General Business Credit",
-    "screen_code": "3800"
+    "screen_code": "3800",
+    "filed_tax_node_type_code": "f3800"
   },
   {
     "form": "3903",
     "description": "Moving Expenses",
     "screen_code": "3903",
     "filed_tax_node_type_code": "f3903"
+  },
+  {
+    "form": "LTC Premium Worksheet",
+    "description": "Long-Term Care Insurance Premium Worksheet",
+    "screen_code": "LTC",
+    "filed_tax_node_type_code": "ltc_premium"
+  },
+  {
+    "form": "Sales Tax Worksheet",
+    "description": "State and Local General Sales Tax Deduction Worksheet",
+    "screen_code": "STAX",
+    "filed_tax_node_type_code": "sales_tax_deduction"
+  },
+  {
+    "form": "Auto Expense Worksheet",
+    "description": "Business Vehicle / Auto Expense Worksheet",
+    "screen_code": "AUTO",
+    "filed_tax_node_type_code": "auto_expense"
   },
   {
     "form": "4136",
@@ -506,7 +530,8 @@
   {
     "form": "5405",
     "description": "Repayment of the First-Time Homebuyer Credit/Sale of Residence",
-    "screen_code": "HOME"
+    "screen_code": "HOME",
+    "filed_tax_node_type_code": "f5405"
   },
   {
     "form": "5471",
@@ -639,7 +664,8 @@
   {
     "form": "8082",
     "description": "Notice of Inconsistent Treatment or Administrative Adjustment Request",
-    "screen_code": "8082"
+    "screen_code": "8082",
+    "filed_tax_node_type_code": "f8082"
   },
   {
     "form": "8275",
@@ -713,7 +739,8 @@
   {
     "form": "8621",
     "description": "Information Return by a Shareholder of a Passive Foreign Investment Company or Qualified Electing Fund",
-    "screen_code": "8621"
+    "screen_code": "8621",
+    "filed_tax_node_type_code": "f8621"
   },
   {
     "form": "8697",
@@ -769,7 +796,8 @@
   {
     "form": "8828",
     "description": "Recapture of Federal Mortgage Subsidy",
-    "screen_code": "8828"
+    "screen_code": "8828",
+    "filed_tax_node_type_code": "f8828"
   },
   {
     "form": "8829",
@@ -794,7 +822,8 @@
   {
     "form": "8835",
     "description": "Renewable Electricity Production Credit",
-    "screen_code": "8835"
+    "screen_code": "8835",
+    "filed_tax_node_type_code": "f8835"
   },
   {
     "form": "8839",
@@ -822,7 +851,8 @@
   {
     "form": "8844",
     "description": "Empowerment Zone Employment Credit",
-    "screen_code": "8844"
+    "screen_code": "8844",
+    "filed_tax_node_type_code": "f8844"
   },
   {
     "form": "8853",
@@ -875,12 +905,8 @@
   {
     "form": "8864",
     "description": "Biodiesel and Renewable Diesel, or Sustainable Aviation Fuels Credit",
-    "screen_code": "8864"
-  },
-  {
-    "form": "8864",
-    "description": "Biodiesel and Renewable Diesel, or Sustainable Aviation Fuels Credit",
-    "screen_code": "8864"
+    "screen_code": "8864",
+    "filed_tax_node_type_code": "f8864"
   },
   {
     "form": "8866",
@@ -905,7 +931,8 @@
   {
     "form": "8873",
     "description": "Extraterritorial Income Exclusion",
-    "screen_code": "8873"
+    "screen_code": "8873",
+    "filed_tax_node_type_code": "f8873"
   },
   {
     "form": "8874",
@@ -995,7 +1022,8 @@
   {
     "form": "8917",
     "description": "Tuition and Fees Deduction",
-    "screen_code": "8917"
+    "screen_code": "8917",
+    "filed_tax_node_type_code": "f8917"
   },
   {
     "form": "8919",
@@ -1141,7 +1169,8 @@
     "screen_code": "NOL",
     "alias_screen_codes": [
       "1045"
-    ]
+    ],
+    "filed_tax_node_type_code": "nol_carryforward"
   },
   {
     "form": "Form 1045 AMT",
@@ -1151,7 +1180,8 @@
   {
     "form": "Form 3800 Attachment",
     "description": "General Business Credit Carryforwards and Carrybacks",
-    "screen_code": "GBC"
+    "screen_code": "GBC",
+    "filed_tax_node_type_code": "f3800"
   },
   {
     "form": "Form 4835",
@@ -1504,7 +1534,8 @@
   {
     "form": "SEP",
     "description": "Simplified Employee Pension",
-    "screen_code": "SEP"
+    "screen_code": "SEP",
+    "filed_tax_node_type_code": "sep_retirement"
   },
   {
     "form": "SSA-1099",
@@ -1583,7 +1614,8 @@
   {
     "form": "Wks Clergy",
     "description": "Ministerial Income Computations",
-    "screen_code": "CLGY"
+    "screen_code": "CLGY",
+    "filed_tax_node_type_code": "clergy"
   },
   {
     "form": "Wks DEPL",
@@ -1603,6 +1635,82 @@
   {
     "form": "Wks_CARRY",
     "description": "Net Operating Loss (NOL) Carryforward",
-    "screen_code": "LOSS"
+    "screen_code": "LOSS",
+    "filed_tax_node_type_code": "nol_carryforward"
+  },
+  {
+    "form": "8867",
+    "description": "Paid Preparer's Due Diligence Requirements",
+    "screen_code": "8867",
+    "filed_tax_node_type_code": "f8867"
+  },
+  {
+    "form": "8859",
+    "description": "Carryforward of the DC First-Time Homebuyer Credit",
+    "screen_code": "8859",
+    "filed_tax_node_type_code": "f8859"
+  },
+  {
+    "form": "8820",
+    "description": "Orphan Drug Credit",
+    "screen_code": "8820",
+    "alias_screen_codes": [
+      "DRUG"
+    ],
+    "filed_tax_node_type_code": "f8820"
+  },
+  {
+    "form": "8896",
+    "description": "Low Sulfur Diesel Fuel Production Credit",
+    "screen_code": "8896",
+    "filed_tax_node_type_code": "f8896"
+  },
+  {
+    "form": "8912",
+    "description": "Credit to Holders of Tax Credit Bonds",
+    "screen_code": "8912",
+    "filed_tax_node_type_code": "f8912"
+  },
+  {
+    "form": "8978",
+    "description": "Partner's Additional Reporting Year Tax",
+    "screen_code": "8978",
+    "filed_tax_node_type_code": "f8978"
+  },
+  {
+    "form": "8611",
+    "description": "Recapture of Low-Income Housing Credit",
+    "screen_code": "8611",
+    "filed_tax_node_type_code": "f8611"
+  },
+  {
+    "form": "8833",
+    "description": "Treaty-Based Return Position Disclosure",
+    "screen_code": "8833",
+    "filed_tax_node_type_code": "f8833"
+  },
+  {
+    "form": "8840",
+    "description": "Closer Connection Exception Statement for Aliens",
+    "screen_code": "8840",
+    "filed_tax_node_type_code": "f8840"
+  },
+  {
+    "form": "8843",
+    "description": "Statement for Exempt Individuals and Individuals With a Medical Condition",
+    "screen_code": "8843",
+    "filed_tax_node_type_code": "f8843"
+  },
+  {
+    "form": "8854",
+    "description": "Initial and Annual Expatriation Statement",
+    "screen_code": "8854",
+    "filed_tax_node_type_code": "f8854"
+  },
+  {
+    "form": "8805",
+    "description": "Foreign Partner's Information Statement of Section 1446 Withholding Tax",
+    "screen_code": "8805",
+    "filed_tax_node_type_code": "f8805"
   }
 ]

@@ -1,7 +1,7 @@
 # alwaysPass Rules Roadmap
 
-> Generated: 2026-03-31
-> Total: 540 rules across 79 files (99 converted on 2026-03-31)
+> Generated: 2026-03-31 | Updated: 2026-04-01
+> Total: 540 rules across 79 files (99 converted on 2026-03-31, 16 more on 2026-04-01 = 115 total converted)
 
 These rules are currently `alwaysPass` because they require capabilities beyond
 the current predicate DSL. This roadmap categorizes them by the capability needed
@@ -13,6 +13,9 @@ and suggests implementation approach for each category.
 `charCountAtMost`, `charAfterIsAlpha`, `validRTN`
 
 **Round 2:** `eqDiff`, `eqDiffFloorZero`, `eqProduct`, `eqMin`, `eqMax`, `notLtSum`
+
+**Round 3 (2026-04-01):** `ltField`, `sumGtNum`, `eqMinNum`, `strLenEq`,
+`dateYearGte`, `dateYearEq`, `dateYearEqOrNext`, `dateGteField`, `dateLteField`, `dateMonthDayEq`
 
 See `core/validation/predicates.ts`.
 
@@ -27,16 +30,16 @@ See `core/validation/predicates.ts`.
 | 3 | Per-Item / Repeating Group Iteration | 112 | Medium | DSL extension |
 | 4 | Form Reference Counting | 27 | Low | DSL extension |
 | 5 | Date/Age Arithmetic | 33 | Medium | DSL extension |
-| 6 | Cross-Form SSN Matching | 16 | Low | DSL extension |
+| 6 | Cross-Form SSN Matching | 28 | Low | DSL extension |
 | 7 | TIN/EIN Format & Cross-Ref Validation | 63 | Low | DSL extension |
 | 8 | Uniqueness / Non-Duplicate Checks | 3 | Low | DSL extension |
 | 9 | Binary Attachment Presence | 29 | Low | Manifest access |
-| 10 | Complex Math (multiply, smaller-of, subtract, percent) | 7 | Medium | DSL extension |
-| 11 | Conditional Math & Zero Checks | 42 | Medium | DSL extension |
+| 10 | Complex Math (multiply, smaller-of, subtract, percent) | 57 | Medium | DSL extension |
+| 11 | Conditional Math & Zero Checks | 86 | Medium | DSL extension |
 | 12 | String Content Analysis | 10 | Low | DSL extension |
 | 13 | Complex Checkbox / Indicator Logic | 11 | Low | DSL extension |
 | 14 | XML/Transmission Structural Validation | 11 | N/A | XSD layer |
-| 15 | Miscellaneous | 47 | Low | Review needed |
+| 15 | Miscellaneous | 57 | Low | Review needed |
 | 16 | State Program Participation | 3 | Low | Config data |
 
 ---
@@ -176,7 +179,7 @@ Add `dateField(xml)`, `ageBefore(xml, date)`, `yearEquals(xml, year)` predicates
 
 ## Cross-Form SSN Matching
 
-**Count:** 30 | **Effort:** Low | **Priority:** DSL extension
+**Count:** 28 | **Effort:** Low | **Priority:** DSL extension
 
 Rules requiring a form-level SSN to equal PrimarySSN or SpouseSSN from the Return Header. Need a `matchesHeaderSSN` predicate.
 
@@ -195,7 +198,6 @@ Rules requiring a form-level SSN to equal PrimarySSN or SpouseSSN from the Retur
 | f8889 | F8889-001-01 |
 | f8919 | F8919-001 |
 | f9000 | F9000-001 |
-| f9465 | F9465-014, F9465-015 |
 | r0000 | R0000-123-01, R0000-129-01 |
 | rrb | RRB-F1042S-001 |
 | sh | SH-F1040-001, SH-F1040-003 |
@@ -283,7 +285,7 @@ Rules checking that a PDF or binary attachment is included. Need access to the a
 
 ## Complex Math (multiply, smaller-of, subtract, percent)
 
-**Count:** 61 | **Effort:** Medium | **Priority:** DSL extension
+**Count:** 57 | **Effort:** Medium | **Priority:** DSL extension
 
 Rules needing arithmetic beyond simple sum equality — multiplication, division, min/max, percentage, subtraction with tolerance. Need `mul`, `sub`, `min`, `max`, `pct` predicates.
 
@@ -291,7 +293,6 @@ Rules needing arithmetic beyond simple sum equality — multiplication, division
 |------|-------|
 | f4684 | F4684-003-02 |
 | f5695 | F5695-038-01, F5695-039-02, F5695-040-02, F5695-041-02, F5695-046-02, F5695-047-02, F5695-048-02, F5695-049-02, F5695-051-01, F5695-054-02, F5695-067, F5695-095, F5695-099, F5695-102 |
-| f8379 | F8379-015, F8379-016, F8379-017, F8379-018 |
 | f8835 | F8835-018, F8835-020, F8835-021, F8835-022, F8835-025, F8835-027, F8835-029, F8835-031, F8835-032, F8835-048 |
 | f8889 | F8889-013, F8889-016 |
 | f8936 | F8936-030, F8936-039-01, F8936-043 |
@@ -310,7 +311,7 @@ Add `sub(a, b)`, `mul(a, b, n)`, `minOf(a, b)`, `maxOf(a, b)`, `pct(a, n)` predi
 
 ## Conditional Math & Zero Checks
 
-**Count:** 92 | **Effort:** Medium | **Priority:** DSL extension
+**Count:** 86 | **Effort:** Medium | **Priority:** DSL extension
 
 Rules with conditional zero-checks or field equality that involve complex conditions beyond the current DSL's expressiveness.
 
@@ -321,10 +322,9 @@ Rules with conditional zero-checks or field equality that involve complex condit
 | f2441 | F2441-012-03 |
 | f5695 | F5695-066 |
 | f6765 | F6765-004-02 |
-| f8379 | F8379-004, F8379-005, F8379-009, F8379-021, F8379-023, F8379-024 |
+| f8379 | F8379-021 |
 | f8697 | F8697-007-01 |
 | f8835 | F8835-024, F8835-026, F8835-028, F8835-037 |
-| f8854 | F8854-022 |
 | f8865 | F8865-204-01, F8865-205-01, F8865-206-01, F8865-207-01, F8865-208-01, F8865-209-01, F8865-210-01, F8865-211-01, F8865-212-01, F8865-213-01, F8865-214-01, F8865-215-01, F8865-216-01, F8865-217-01, F8865-218-01, F8865-219-01, F8865-220-01, F8865-221-01, F8865-222-01, F8865-223-01, F8865-224-01, F8865-225-01 |
 | f8866 | F8866-002-01 |
 | f8889 | F8889-005, F8889-009, F8889-010, F8889-011, F8889-012 |
@@ -396,7 +396,7 @@ Rules about XML structure, manifest integrity, or zip archive format. These belo
 
 ## Miscellaneous
 
-**Count:** 58 | **Effort:** Low | **Priority:** Review needed
+**Count:** 57 | **Effort:** Low | **Priority:** Review needed
 
 Rules that don't fit neatly into other categories. Review individually.
 
@@ -409,7 +409,6 @@ Rules that don't fit neatly into other categories. Review individually.
 | f2555 | F2555-003, F2555-004-01, F2555-006-01, F2555-010, F2555-019 |
 | f3468 | F3468-040 |
 | f5695 | F5695-057, F5695-058 |
-| f8379 | F8379-012-01 |
 | f8594 | F8594-001-01 |
 | f8828 | F8828-001 |
 | f8835 | F8835-023 |

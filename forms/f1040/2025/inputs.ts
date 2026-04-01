@@ -67,6 +67,39 @@ import { f8997, inputSchema as f8997InputSchema } from "../nodes/inputs/f8997/in
 import { schedule_j, inputSchema as scheduleJInputSchema } from "../nodes/inputs/schedule_j/index.ts";
 import { f8609, itemSchema as f8609ItemSchema } from "../nodes/inputs/f8609/index.ts";
 import { f4852, itemSchema as f4852ItemSchema } from "../nodes/inputs/f4852/index.ts";
+import { sep_retirement, itemSchema as sepRetirementItemSchema } from "../nodes/inputs/sep_retirement/index.ts";
+import { nol_carryforward, inputSchema as nolCarryforwardInputSchema } from "../nodes/inputs/nol_carryforward/index.ts";
+import { clergy, itemSchema as clergyItemSchema } from "../nodes/inputs/clergy/index.ts";
+import { f8915f, itemSchema as f8915fItemSchema } from "../nodes/inputs/f8915f/index.ts";
+import { f3800, itemSchema as f3800ItemSchema } from "../nodes/inputs/f3800/index.ts";
+import { f2106, itemSchema as f2106ItemSchema } from "../nodes/inputs/f2106/index.ts";
+import { f5405, itemSchema as f5405ItemSchema } from "../nodes/inputs/f5405/index.ts";
+import { household_wages, itemSchema as householdWagesItemSchema } from "../nodes/inputs/household_wages/index.ts";
+import { ltc_premium, itemSchema as ltcPremiumItemSchema } from "../nodes/inputs/ltc_premium/index.ts";
+import { sales_tax_deduction, inputSchema as salesTaxInputSchema } from "../nodes/inputs/sales_tax_deduction/index.ts";
+import { auto_expense, itemSchema as autoExpenseItemSchema } from "../nodes/inputs/auto_expense/index.ts";
+import { f8917, itemSchema as f8917ItemSchema } from "../nodes/inputs/f8917/index.ts";
+import { f8867, itemSchema as f8867ItemSchema } from "../nodes/inputs/f8867/index.ts";
+import { f8859, itemSchema as f8859ItemSchema } from "../nodes/inputs/f8859/index.ts";
+import { f8820, itemSchema as f8820ItemSchema } from "../nodes/inputs/f8820/index.ts";
+import { f8082, itemSchema as f8082ItemSchema } from "../nodes/inputs/f8082/index.ts";
+import { f8873, itemSchema as f8873ItemSchema } from "../nodes/inputs/f8873/index.ts";
+import { f8288, itemSchema as f8288ItemSchema } from "../nodes/inputs/f8288/index.ts";
+import { f8621, itemSchema as f8621ItemSchema } from "../nodes/inputs/f8621/index.ts";
+import { f8896, itemSchema as f8896ItemSchema } from "../nodes/inputs/f8896/index.ts";
+import { f8912, itemSchema as f8912ItemSchema } from "../nodes/inputs/f8912/index.ts";
+import { f8978, inputSchema as f8978InputSchema } from "../nodes/inputs/f8978/index.ts";
+import { f8611, itemSchema as f8611ItemSchema } from "../nodes/inputs/f8611/index.ts";
+import { f8828, itemSchema as f8828ItemSchema } from "../nodes/inputs/f8828/index.ts";
+import { f8835, itemSchema as f8835ItemSchema } from "../nodes/inputs/f8835/index.ts";
+import { f8844, itemSchema as f8844ItemSchema } from "../nodes/inputs/f8844/index.ts";
+import { f8864, inputSchema as f8864InputSchema } from "../nodes/inputs/f8864/index.ts";
+import { f8833, itemSchema as f8833ItemSchema } from "../nodes/inputs/f8833/index.ts";
+import { f8840, inputSchema as f8840InputSchema } from "../nodes/inputs/f8840/index.ts";
+import { f8843, itemSchema as f8843ItemSchema } from "../nodes/inputs/f8843/index.ts";
+import { f8854, inputSchema as f8854InputSchema } from "../nodes/inputs/f8854/index.ts";
+import { f8805, itemSchema as f8805ItemSchema } from "../nodes/inputs/f8805/index.ts";
+import { fec, itemSchema as fecItemSchema } from "../nodes/inputs/fec/index.ts";
 import { inputSchema as scheduleDInputSchema, schedule_d } from "../nodes/intermediate/aggregation/schedule_d/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
@@ -105,6 +138,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8908, itemSchema: f8908ItemSchema, isArray: true },
   { node: f8609, itemSchema: f8609ItemSchema, isArray: true },
   { node: f4852, itemSchema: f4852ItemSchema, isArray: true },
+  { node: sep_retirement, itemSchema: sepRetirementItemSchema, isArray: true },
   // Singleton inputs: entire form as a single object
   { node: scheduleA, inputSchema: scheduleAInputSchema, isArray: false },
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },
@@ -141,4 +175,36 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1310, inputSchema: f1310InputSchema, isArray: false },
   { node: f8997, inputSchema: f8997InputSchema, isArray: false },
   { node: schedule_j, inputSchema: scheduleJInputSchema, isArray: false },
+  { node: clergy, itemSchema: clergyItemSchema, isArray: true },
+  { node: f8915f, itemSchema: f8915fItemSchema, isArray: true },
+  { node: f3800, itemSchema: f3800ItemSchema, isArray: true },
+  { node: f2106, itemSchema: f2106ItemSchema, isArray: true },
+  { node: f5405, itemSchema: f5405ItemSchema, isArray: true },
+  { node: nol_carryforward, inputSchema: nolCarryforwardInputSchema, isArray: false },
+  { node: ltc_premium, itemSchema: ltcPremiumItemSchema, isArray: true },
+  { node: sales_tax_deduction, inputSchema: salesTaxInputSchema, isArray: false },
+  { node: auto_expense, itemSchema: autoExpenseItemSchema, isArray: true },
+  { node: f8917, itemSchema: f8917ItemSchema, isArray: true },
+  { node: f8867, itemSchema: f8867ItemSchema, isArray: true },
+  { node: f8859, itemSchema: f8859ItemSchema, isArray: true },
+  { node: f8820, itemSchema: f8820ItemSchema, isArray: true },
+  { node: f8082, itemSchema: f8082ItemSchema, isArray: true },
+  { node: f8873, itemSchema: f8873ItemSchema, isArray: true },
+  { node: f8288, itemSchema: f8288ItemSchema, isArray: true },
+  { node: f8621, itemSchema: f8621ItemSchema, isArray: true },
+  { node: f8896, itemSchema: f8896ItemSchema, isArray: true },
+  { node: f8912, itemSchema: f8912ItemSchema, isArray: true },
+  { node: f8978, inputSchema: f8978InputSchema, isArray: false },
+  { node: f8611, itemSchema: f8611ItemSchema, isArray: true },
+  { node: household_wages, itemSchema: householdWagesItemSchema, isArray: true },
+  { node: f8833, itemSchema: f8833ItemSchema, isArray: true },
+  { node: f8843, itemSchema: f8843ItemSchema, isArray: true },
+  { node: f8805, itemSchema: f8805ItemSchema, isArray: true },
+  { node: f8840, inputSchema: f8840InputSchema, isArray: false },
+  { node: f8854, inputSchema: f8854InputSchema, isArray: false },
+  { node: f8828, itemSchema: f8828ItemSchema, isArray: true },
+  { node: f8835, itemSchema: f8835ItemSchema, isArray: true },
+  { node: f8844, itemSchema: f8844ItemSchema, isArray: true },
+  { node: f8864, inputSchema: f8864InputSchema, isArray: false },
+  { node: fec, itemSchema: fecItemSchema, isArray: true },
 ];

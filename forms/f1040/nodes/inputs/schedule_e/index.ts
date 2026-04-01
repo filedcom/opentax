@@ -140,6 +140,11 @@ export const inputSchema = z.object({
   schedule_es: z.array(itemSchema),
   // Passthrough mortgage interest from 1098 Box 1 routed to Schedule E
   mortgage_interest: z.number().nonnegative().optional(),
+  // Auto/travel expense from auto_expense worksheet (AUTO screen)
+  expense_auto_travel: z.number().nonnegative().optional(),
+  // Depletion deduction from the depletion worksheet (DEPL screen)
+  // Routes depletion node output into Schedule E depletion expense
+  expense_depletion: z.number().nonnegative().optional(),
 });
 
 type EItem = z.infer<typeof itemSchema>;

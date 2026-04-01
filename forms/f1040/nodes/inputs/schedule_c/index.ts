@@ -141,6 +141,12 @@ export const inputSchema = z.object({
   withholding: z.number().nonnegative().optional(),
   // Mortgage interest from 1098 Box 1 routed to Schedule C (business use)
   line16a_interest_mortgage: z.number().nonnegative().optional(),
+  // Car and truck expenses from auto_expense worksheet (AUTO screen)
+  // Passes to supplement line_9_car_truck_expenses in schedule_c items
+  line_9_car_truck_expenses: z.number().nonnegative().optional(),
+  // Depletion deduction from the depletion worksheet (DEPL screen)
+  // Routes depletion node output into Schedule C line 12
+  line_12_depletion: z.number().nonnegative().optional(),
 });
 
 type ScheduleCItem = z.infer<typeof itemSchema>;

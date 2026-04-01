@@ -88,6 +88,10 @@ export const inputSchema = z.object({
   // Flows via Form 3800 → Schedule 3 line 7 (GBC) in IRS forms.
   // Tracked separately in the engine for audit traceability.
   line6b_low_income_housing_credit: z.number().nonnegative().optional(),
+
+  // Line 13 — §1446 withholding tax credit (from Form 8805)
+  // IRC §1446(d); Form 8805 Box 6 → Schedule 3 Part II line 13
+  line13_1446_withholding: z.number().nonnegative().optional(),
 });
 
 type Schedule3Input = z.infer<typeof inputSchema>;
@@ -125,7 +129,8 @@ function partIITotal(input: Schedule3Input): number {
   return (
     (input.line9_premium_tax_credit ?? 0) +
     (input.line10_amount_paid_extension ?? 0) +
-    (input.line11_excess_ss ?? 0)
+    (input.line11_excess_ss ?? 0) +
+    (input.line13_1446_withholding ?? 0)
   );
 }
 

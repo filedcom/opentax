@@ -70,6 +70,41 @@ import { f8997 } from "../nodes/inputs/f8997/index.ts";
 import { schedule_j } from "../nodes/inputs/schedule_j/index.ts";
 import { f8609 } from "../nodes/inputs/f8609/index.ts";
 import { f4852 } from "../nodes/inputs/f4852/index.ts";
+import { clergy } from "../nodes/inputs/clergy/index.ts";
+import { f8915f } from "../nodes/inputs/f8915f/index.ts";
+import { sep_retirement } from "../nodes/inputs/sep_retirement/index.ts";
+import { f3800 } from "../nodes/inputs/f3800/index.ts";
+import { f2106 } from "../nodes/inputs/f2106/index.ts";
+import { f5405 } from "../nodes/inputs/f5405/index.ts";
+import { ltc_premium } from "../nodes/inputs/ltc_premium/index.ts";
+import { sales_tax_deduction } from "../nodes/inputs/sales_tax_deduction/index.ts";
+import { auto_expense } from "../nodes/inputs/auto_expense/index.ts";
+import { nol_carryforward } from "../nodes/inputs/nol_carryforward/index.ts";
+import { f8082 } from "../nodes/inputs/f8082/index.ts";
+import { f8873 } from "../nodes/inputs/f8873/index.ts";
+import { f8288 } from "../nodes/inputs/f8288/index.ts";
+import { f8621 } from "../nodes/inputs/f8621/index.ts";
+import { f8917 } from "../nodes/inputs/f8917/index.ts";
+import { f8867 } from "../nodes/inputs/f8867/index.ts";
+import { f8859 } from "../nodes/inputs/f8859/index.ts";
+import { f8820 } from "../nodes/inputs/f8820/index.ts";
+import { f8896 } from "../nodes/inputs/f8896/index.ts";
+import { f8912 } from "../nodes/inputs/f8912/index.ts";
+import { f8978 } from "../nodes/inputs/f8978/index.ts";
+import { f8611 } from "../nodes/inputs/f8611/index.ts";
+import { household_wages } from "../nodes/inputs/household_wages/index.ts";
+import { f8828 } from "../nodes/inputs/f8828/index.ts";
+import { f8835 } from "../nodes/inputs/f8835/index.ts";
+import { f8844 } from "../nodes/inputs/f8844/index.ts";
+import { f8864 } from "../nodes/inputs/f8864/index.ts";
+import { f8833 } from "../nodes/inputs/f8833/index.ts";
+import { f8840 } from "../nodes/inputs/f8840/index.ts";
+import { f8843 } from "../nodes/inputs/f8843/index.ts";
+import { f8854 } from "../nodes/inputs/f8854/index.ts";
+import { f8805 } from "../nodes/inputs/f8805/index.ts";
+import { depletion } from "../nodes/inputs/depletion/index.ts";
+import { lump_sum_ss } from "../nodes/inputs/lump_sum_ss/index.ts";
+import { fec } from "../nodes/inputs/fec/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
 import { eitc } from "../nodes/intermediate/forms/eitc/index.ts";
@@ -92,6 +127,7 @@ import { form6252 } from "../nodes/intermediate/forms/form6252/index.ts";
 import { form8615 } from "../nodes/intermediate/forms/form8615/index.ts";
 import { form6781 } from "../nodes/intermediate/forms/form6781/index.ts";
 import { form8582 } from "../nodes/intermediate/forms/form8582/index.ts";
+import { form8582cr } from "../nodes/intermediate/forms/form8582cr/index.ts";
 import { form8606 } from "../nodes/intermediate/forms/form8606/index.ts";
 import { form8396 } from "../nodes/intermediate/forms/form8396/index.ts";
 import { form8815 } from "../nodes/intermediate/forms/form8815/index.ts";
@@ -204,6 +240,39 @@ export const registry: NodeRegistry = {
   schedule_j,
   f8609,
   f4852,
+  sep_retirement,
+  clergy,
+  f8915f,
+  f3800,
+  f2106,
+  f5405,
+  nol_carryforward,
+  ltc_premium,
+  sales_tax_deduction,
+  auto_expense,
+  f8917,
+  f8867,
+  f8859,
+  f8820,
+  f8896,
+  f8912,
+  f8978,
+  f8611,
+  f8082,
+  f8873,
+  f8288,
+  f8621,
+  household_wages,
+  f8828,
+  f8835,
+  f8844,
+  f8864,
+  f8833,
+  f8840,
+  f8843,
+  f8854,
+  f8805,
+  fec,
 
   // ── Intermediates ───────────────────────────────────────────────────────────
   eitc,
