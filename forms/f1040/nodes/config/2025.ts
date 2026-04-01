@@ -514,3 +514,37 @@ export const SEC199A_MFJ_THRESHOLD_2025 = 394_600;
 
 /** Maximum annual mortgage interest credit when MCC rate exceeds 20% (TY2025). */
 export const MCC_MAX_CREDIT_HIGH_RATE_2025 = 2_000;
+
+// ─── SEP-IRA / SIMPLE / Solo 401(k) Contribution Limits ──────────────────────
+// Rev. Proc. 2024-40, §3.20; IRC §404(a)(8), §408(k), §408(p)
+
+/** SEP contribution rate — 25% of net SE compensation (Pub 560, ch. 4; IRC §408(k)). */
+export const SEP_CONTRIBUTION_RATE_2025 = 0.25;
+
+/** SEP / Solo 401(k) combined annual addition limit (TY2025, Rev. Proc. 2024-40 §3.20). */
+export const SEP_MAX_CONTRIBUTION_2025 = 70_000;
+
+/** SIMPLE IRA employer matching rate — 3% of compensation (statutory; IRC §408(p)(2)(A)(iii)). */
+export const SIMPLE_EMPLOYER_MATCH_RATE_2025 = 0.03;
+
+// ─── Form 2106 — Employee Business Expenses ───────────────────────────────────
+// IRC §62(a)(2)(B)(ii); not indexed for inflation
+
+/** Performing artist AGI limit — combined AGI must not exceed $16,000 (IRC §62(b)(1)(C)). */
+export const F2106_PERFORMING_ARTIST_AGI_LIMIT = 16_000;
+
+// ─── LTC Insurance Premium Deductibility Limits ───────────────────────────────
+// Rev. Proc. 2024-40, §3.34; IRC §213(d)(10); IRC §213(d)(1)(D)
+
+/**
+ * Age-based deductible LTC insurance premium limits (TY2025).
+ * `maxAge` is the inclusive upper bound for each bracket; Infinity = age 71+.
+ * Source: Rev. Proc. 2024-40, §3.34.
+ */
+export const LTC_PREMIUM_LIMITS_2025: ReadonlyArray<{ readonly maxAge: number; readonly limit: number }> = [
+  { maxAge: 40,       limit:   480 },
+  { maxAge: 50,       limit:   900 },
+  { maxAge: 60,       limit: 1_800 },
+  { maxAge: 70,       limit: 4_770 },
+  { maxAge: Infinity, limit: 5_970 },
+] as const;
