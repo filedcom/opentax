@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -60,10 +60,7 @@ function totalRepayment(items: F5405Items): number {
 function schedule2Output(items: F5405Items): NodeOutput[] {
   const total = totalRepayment(items);
   if (total === 0) return [];
-  return [{
-    nodeType: schedule2.nodeType,
-    fields: { line10_homebuyer_credit_repayment: total },
-  }];
+  return [output(schedule2, { line10_homebuyer_credit_repayment: total })];
 }
 
 class F5405Node extends TaxNode<typeof inputSchema> {

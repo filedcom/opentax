@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -51,17 +51,10 @@ function f1040Output(items: HouseholdWageItems): NodeOutput[] {
   if (wages === 0) return [];
 
   const withheld = totalWithholding(items);
-  const fields: Record<string, number> = {
-    line1b_household_wages: wages,
-  };
   if (withheld > 0) {
-    fields.line25a_w2_withheld = withheld;
+    return [output(f1040, { line1b_household_wages: wages, line25a_w2_withheld: withheld })];
   }
-
-  return [{
-    nodeType: f1040.nodeType,
-    fields,
-  }];
+  return [output(f1040, { line1b_household_wages: wages })];
 }
 
 class HouseholdWagesNode extends TaxNode<typeof inputSchema> {
