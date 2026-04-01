@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, } from "../../../../core/validation/mod.ts";
+import { rule, dateGteConst, } from "../../../../core/validation/mod.ts";
 
 export const F8828_RULES: readonly RuleDef[] = [
   rule(
     "F8828-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    dateGteConst("MortgSbsdyOriginalLoanClsDt", 1991, 1, 1),
     "Form 8828, Line 5 'MortgSbsdyOriginalLoanClsDt' must not be before January 1, 1991.",
   ),
 ];

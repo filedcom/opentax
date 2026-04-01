@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, dateGteField, dateLteField, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, dateGteField, dateLteField, decimalPlacesEq, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, } from "../../../../core/validation/mod.ts";
 
 export const SA_RULES: readonly RuleDef[] = [
   rule(
@@ -411,14 +411,14 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8995A-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("PhaseInPct"), decimalPlacesEq("PhaseInPct", 5)),
     "If Schedule A (Form 8995-A), 'PhaseInPct' has a non-zero value, then it must have exactly five decimal places.",
   ),
   rule(
     "SA-F8995A-002",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("ApplicablePct"), decimalPlacesEq("ApplicablePct", 5)),
     "If Schedule A (Form 8995-A), 'ApplicablePct' has a non-zero value, then it must have exactly five decimal places.",
   ),
   rule(

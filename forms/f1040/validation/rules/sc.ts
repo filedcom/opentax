@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqStr, formPresent, gt, hasNonZero, hasValue, ifThen, lt, notMatchesHeaderSSN, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqDiff, eqStr, formPresent, gt, hasNonZero, hasValue, ifThen, lt, matchesHeaderSSN, notMatchesHeaderSSN, noValue, } from "../../../../core/validation/mod.ts";
 
 export const SC_RULES: readonly RuleDef[] = [
   rule(
@@ -110,7 +110,7 @@ export const SC_RULES: readonly RuleDef[] = [
     "SC-F1040-024",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    matchesHeaderSSN("SSN"),
     "For each Schedule C (Form 1040) present in the return, 'SSN' must be equal to the Primary SSN or Spouse SSN in the Return Header.",
   ),
   rule(

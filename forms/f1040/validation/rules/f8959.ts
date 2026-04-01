@@ -82,7 +82,7 @@ export const F8959_RULES: readonly RuleDef[] = [
     "F8959-013",
     "reject",
     "math_error",
-    alwaysPass,
+    eqDiff("SEIncomeSubjToAddSETaxAmt", "TotalSelfEmploymentIncomeAmt", "MedcrWagesTipsBelowThrshldAmt"),
     "Form 8959, Line 12 'SEIncomeSubjToAddSETaxAmt' must be equal to Line 8 'TotalSelfEmploymentIncomeAmt' minus (-) Line 11 'MedcrWagesTipsBelowThrshldAmt'.",
   ),
   rule(

@@ -339,6 +339,32 @@ export const alwaysPass: RuleCheck = () => true;
 /** Always fails — used for unconditional reject rules. */
 export const alwaysFail: RuleCheck = () => false;
 
+/** Target = field_a × field_b (penny tolerance). */
+export const eqFieldProduct = (target: string, a: string, b: string): RuleCheck =>
+  (ctx) => Math.abs(ctx.num(target) - ctx.num(a) * ctx.num(b)) < 0.01;
+
+/** Field string has exactly n decimal places. */
+export const decimalPlacesEq = (xml: string, n: number): RuleCheck =>
+  (ctx) => {
+    const v = ctx.field(xml);
+    if (typeof v !== "string" && typeof v !== "number") return true;
+    const s = String(v);
+    const dot = s.indexOf(".");
+    const actual = dot === -1 ? 0 : s.length - dot - 1;
+    return actual === n;
+  };
+
+/** Date field must be >= a specific constant date (year, 1-indexed month, day). */
+export const dateGteConst = (dateXml: string, year: number, month: number, day: number): RuleCheck =>
+  (ctx) => {
+    const d = String(ctx.field(dateXml) ?? "");
+    if (!d) return true;
+    const dm = parseDateMs(d);
+    if (dm === null) return true;
+    const refMs = Date.UTC(year, month - 1, day);
+    return dm >= refMs;
+  };
+
 // ─── Rule Builder Helper ────────────────────────────────
 
 /** Convenience: build a RuleDef with less boilerplate. */

@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, eqDiff, eqMin, eqProduct, eqStr, eqSum, hasNonZero, hasValue, ifThen, isZero, noValue, notGtField, notLtSum, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, any, eqDiff, eqFieldProduct, eqMin, eqProduct, eqStr, eqSum, hasNonZero, hasValue, ifThen, isZero, noValue, notGtField, notLtSum, } from "../../../../core/validation/mod.ts";
 
 export const F8835_RULES: readonly RuleDef[] = [
   rule(
@@ -33,7 +33,7 @@ export const F8835_RULES: readonly RuleDef[] = [
     "F8835-020",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(all(hasNonZero("CreditBeforeReductionAmt"), hasNonZero("CalcTaxExemptBondsPct")), eqFieldProduct("CreditBeforeReductionFncAmt", "CreditBeforeReductionAmt", "CalcTaxExemptBondsPct")),
     "If Form 8835, 'CreditBeforeReductionAmt' and 'CalcTaxExemptBondsPct' have non-zero values, then 'CreditBeforeReductionFncAmt' must be equal to 'CreditBeforeReductionAmt' multiplied by 'CalcTaxExemptBondsPct'.",
   ),
   rule(

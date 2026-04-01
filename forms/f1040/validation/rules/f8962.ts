@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqField, eqMin, eqStr, eqSum, filingStatusIs, formPresent, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, eqDiff, eqDiffFloorZero, eqField, eqFieldProduct, eqMin, eqStr, eqSum, filingStatusIs, formPresent, hasNonZero, hasValue, ifThen, isZero, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F8962_RULES: readonly RuleDef[] = [
   rule(
@@ -54,7 +54,7 @@ export const F8962_RULES: readonly RuleDef[] = [
     "F8962-008",
     "reject",
     "math_error",
-    alwaysPass,
+    ifThen(hasNonZero("TotalExemptionsCnt"), eqFieldProduct("AnnualContributionAmt", "HouseholdIncomeAmt", "ApplicableFigureRt")),
     "Form 8962, Line 8a 'AnnualContributionAmt' must be equal to Line 3 'HouseholdIncomeAmt' multiplied by Line 7 'ApplicableFigureRt'.",
   ),
   rule(

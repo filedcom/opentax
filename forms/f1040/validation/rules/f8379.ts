@@ -110,7 +110,7 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-021",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("JointReturnAmtGrp/NonrefundableCreditsAmt"), eqField("JointReturnAmtGrp/NonrefundableCreditsAmt", "TotalCreditsAmt")),
     "If Form 8379, 'NonrefundableCreditsAmt' in 'JointReturnAmtGrp' has a non-zero value, then it must be equal to Form 1040, 'TotalCreditsAmt'.",
   ),
   rule(

@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, hasValue, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
 
 export const F2439_RULES: readonly RuleDef[] = [
   rule(
     "F2439-002",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-form check: ShareholderSSN must equal PrimarySSN or SpouseSSN in Return Header
+    matchesHeaderSSN("ShareholderSSN"),
     "Form 2439, 'ShareholderSSN' must be equal to the 'PrimarySSN' or 'SpouseSSN' in the return header of Form 1040.",
   ),
   rule(

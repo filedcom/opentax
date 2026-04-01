@@ -71,4 +71,7 @@ export {
   ssnNotEqual,
   validRTN,
   validSSN,
+  decimalPlacesEq,
+  dateGteConst,
+  eqFieldProduct,
 } from "./predicates.ts";

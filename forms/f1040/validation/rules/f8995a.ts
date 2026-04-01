@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqStr, filingStatusIs, filingStatusNot, hasNonZero, hasValue, ifThen, notLtSum, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, any, decimalPlacesEq, eqField, eqStr, filingStatusIs, filingStatusNot, hasNonZero, hasValue, ifThen, notLtSum, } from "../../../../core/validation/mod.ts";
 
 export const F8995A_RULES: readonly RuleDef[] = [
   rule(
     "F8995A-001",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("PhaseInPct"), decimalPlacesEq("PhaseInPct", 5)),
     "If Form 8995-A, 'PhaseInPct' has a non-zero value, then it must have exactly five decimal places.",
   ),
   rule(
