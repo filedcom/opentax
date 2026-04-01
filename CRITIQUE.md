@@ -2,6 +2,24 @@
 
 > Generated: 2026-04-01 | Assessor: Claude (automated deep code review)
 > Codebase: @filed/tax-engine v0.0.1 | Runtime: Deno + TypeScript | Tax Year: 2025
+> Last updated: 2026-04-01 (commit 22e0e30 — P0/P2/P3 gaps closed)
+
+---
+
+## Recent Fixes (2026-04-01, commit 22e0e30)
+
+The following gaps from the production readiness audit were resolved in a parallel agent run:
+
+| Item | What was fixed |
+|---|---|
+| ✅ SEP/retirement AGI routing | `sep_retirement` and `f2106` now route to both `schedule1` and `agi_aggregator`. Deductions were previously written to the serialization sink only and silently dropped from AGI. |
+| ✅ Student loan interest node | New `f1098e` node: captures 1098-E data, enforces $2,500 cap (IRC §221(b)(1)), routes to `schedule1.line19_student_loan_interest` + `agi_aggregator`. |
+| ✅ Educator expenses node | New `educator_expenses` node: per-educator $300 cap ($600 MFJ), routes to `schedule1.line11_educator_expenses` + `agi_aggregator`. |
+| ✅ Export gating on reject rules | `return export` now runs MeF business rule validation before building XML. Reject-severity failures block export. `--force` flag available to override. |
+| ✅ F8812 Part II-B payroll method | Taxpayers with 3+ qualifying children or Puerto Rico residents now get ACTC = max(Part II-A, Part II-B). Previously only Part II-A was computed. |
+| ✅ E2E scenarios 11-14 | New scenarios: itemized deductions ($33K Schedule A), AMT trigger ($100K PAB interest → AMT $11,580), EITC with 2 qualifying children (HOH $32K → $4,953), CTC+ACTC (MFJ 3 children). |
+| ✅ Preparer/ERO input node | New `preparer` node: PTIN, EFIN, firm name/EIN/address, originator type. MeF header now emits `<PaidPreparerInfo>` or `<SelfPreparedReturnIndicator>`. EFIN was previously never populated. |
+| ✅ 8 MeF business rules | F8835 date-conditional wind facility rules and F8379 cross-form amount equality rule. |
 
 ---
 
@@ -250,9 +268,13 @@ The `FilerIdentity` interface in `forms/f1040/mef/header.ts` has an `originator`
 and `originatorType` properties. The `OriginatorGrp` XML block is built by `buildOriginatorBlock()`.
 So the data model for EFIN is present.
 
-However, there is no validation that EFIN is a valid 6-digit number, no enforcement that it is
+~~However, there is no validation that EFIN is a valid 6-digit number, no enforcement that it is
 present when filing electronically, and no concept of ERO (Electronic Return Originator) obligations
-such as Form 8879 (e-file authorization/signature). The business rules in `fpymt.ts` (Form Payment
+such as Form 8879 (e-file authorization/signature).~~ **PARTIALLY FIXED (2026-04-01, commit 22e0e30):**
+A new `preparer` input node captures PTIN (`/^P\d{8}$/`), EFIN (`/^\d{6}$/`), firm name/EIN,
+originator type, and self-prepared indicator. The MeF header now emits `<PaidPreparerInfo>` or
+`<SelfPreparedReturnIndicator>` based on this input. EFIN is now validated and populated. Form 8879
+(e-file authorization) is still not implemented. The business rules in `fpymt.ts` (Form Payment
 rules) are 12/13 stubs. The `PIN` entry screen is marked `not_applicable` in `screens.json` (row
 for 8879/8878).
 
@@ -382,9 +404,9 @@ Schedule C $80K) checks intermediate node outputs (`agi_aggregator`, `standard_d
 `income_tax_calculation`) as well as final summary lines. This is a good pattern.
 
 **Gaps in e2e coverage**: No scenario tests:
-- Itemized deductions vs. standard deduction comparison
-- AMT (Form 6251) triggering
-- EITC with qualifying children
+- ~~Itemized deductions vs. standard deduction comparison~~ **FIXED (2026-04-01, commit 22e0e30):** Scenario 11 covers $33K Schedule A vs. standard deduction.
+- ~~AMT (Form 6251) triggering~~ **FIXED (2026-04-01, commit 22e0e30):** Scenario 12 covers $100K PAB interest triggering AMT $11,580.
+- ~~EITC with qualifying children~~ **FIXED (2026-04-01, commit 22e0e30):** Scenario 13 covers HOH + 2 qualifying children → EITC $4,953.
 - Capital gains (1099-B + Schedule D + QDCGT worksheet)
 - Retirement distribution with early penalty
 - Multi-state filing scenarios
@@ -607,10 +629,12 @@ requirements.
    software. The current e2e tests are development tests, not ATS-aligned. Building ATS alignment
    takes 6-8 weeks and requires IRS test return data.
 
-6. **540 validation rule stubs mean the return validator cannot catch large classes of errors**:
-   Returns with errors in general business credits (Form 3800: 180 stubs), dependent income (Form
-   8615: stubs), foreign income exclusion (Form 2555: 20 stubs), and per-item repeating group
-   violations (112 stubs total) would pass validation when they should be rejected.
+6. **~532 validation rule stubs mean the return validator cannot catch large classes of errors**:
+   ~~540~~ 532 stubs remaining after 8 F8835/F8379 rules implemented (2026-04-01). Returns with errors
+   in general business credits (Form 3800: 180 stubs), dependent income (Form 8615: stubs), foreign
+   income exclusion (Form 2555: 20 stubs), and per-item repeating group violations (112 stubs total)
+   would pass validation when they should be rejected. Most remaining stubs require IRS e-file
+   database lookups or a `everyItem` DSL combinator that does not yet exist.
 
 7. **No state return infrastructure**: 43 states have individual income taxes. The product cannot
    be a complete filing solution without state returns. State returns are multiplicative work —
