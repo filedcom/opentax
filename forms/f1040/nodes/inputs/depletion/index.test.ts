@@ -153,8 +153,10 @@ Deno.test("depletion.compute: OTHER_MINERAL at 14% percentage depletion", () => 
 // 3. Cost Depletion
 // =============================================================================
 
-Deno.test("depletion.compute: COST method — cost depletion formula", () => {
+Deno.test("depletion.compute: COST method — greater-of wins (percentage > cost)", () => {
   // cost = (20000 / 100000) * 500 = 100
+  // percentage = min(5000*0.10, 5000*0.50) = min(500, 2500) = 500
+  // greater-of = 500 (percentage wins)
   const result = compute([minimalItem({
     property_type: PropertyType.COAL,
     method: DepletionMethod.COST,
@@ -166,10 +168,12 @@ Deno.test("depletion.compute: COST method — cost depletion formula", () => {
     purpose: DepletionPurpose.SCHEDULE_E,
   })]);
   const fields = fieldsOf(result.outputs, scheduleE)!;
-  assertEquals(fields.expense_depletion, 100);
+  assertEquals(fields.expense_depletion, 500);
 });
 
-Deno.test("depletion.compute: COST method with zero basis — no deduction", () => {
+Deno.test("depletion.compute: COST method with zero basis — percentage depletion applies", () => {
+  // cost = 0 (basis=0), percentage = min(5000*0.10, 5000*0.50) = 500
+  // greater-of = 500
   const result = compute([minimalItem({
     property_type: PropertyType.COAL,
     method: DepletionMethod.COST,
@@ -180,10 +184,13 @@ Deno.test("depletion.compute: COST method with zero basis — no deduction", () 
     units_sold: 500,
     purpose: DepletionPurpose.SCHEDULE_E,
   })]);
-  assertEquals(result.outputs.length, 0);
+  const fields = fieldsOf(result.outputs, scheduleE)!;
+  assertEquals(fields.expense_depletion, 500);
 });
 
-Deno.test("depletion.compute: COST method with zero reserves — no deduction", () => {
+Deno.test("depletion.compute: COST method with zero reserves — percentage depletion applies", () => {
+  // cost = 0 (reserves=0), percentage = min(5000*0.10, 5000*0.50) = 500
+  // greater-of = 500
   const result = compute([minimalItem({
     property_type: PropertyType.COAL,
     method: DepletionMethod.COST,
@@ -194,7 +201,8 @@ Deno.test("depletion.compute: COST method with zero reserves — no deduction", 
     units_sold: 500,
     purpose: DepletionPurpose.SCHEDULE_E,
   })]);
-  assertEquals(result.outputs.length, 0);
+  const fields = fieldsOf(result.outputs, scheduleE)!;
+  assertEquals(fields.expense_depletion, 500);
 });
 
 // =============================================================================
@@ -428,8 +436,10 @@ Deno.test("depletion.compute: OIL_GAS non-independent-producer → no percentage
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("depletion.compute: COST method ignores percentage depletion rate entirely", () => {
+Deno.test("depletion.compute: COST method: percentage=0 (non-independent OIL_GAS), cost wins", () => {
   // COST: basis=50000, reserves=1000000, units_sold=1000 → cost = 50
+  // percentage = 0 (non-independent OIL_GAS — §613A(c) requires independent producer)
+  // greater-of = 50 (cost wins because percentage is 0)
   const result = compute([minimalItem({
     property_type: PropertyType.OIL_GAS,
     method: DepletionMethod.COST,
@@ -445,7 +455,70 @@ Deno.test("depletion.compute: COST method ignores percentage depletion rate enti
 });
 
 // =============================================================================
-// 9. Smoke Test
+// 9. Greater of Cost vs Percentage (IRC §611 — taxpayer must take the greater)
+// =============================================================================
+
+Deno.test("depletion.compute: greater of — COST item where percentage wins (COAL)", () => {
+  // COAL, method=COST, adjusted_basis=1000, estimated_reserves=100000, units_sold=500
+  // gross_income=50000, deductible_expenses=10000
+  // cost = (1000/100000)*500 = 5
+  // percentage = min(50000*0.10, (50000-10000)*0.50) = min(5000, 20000) = 5000
+  // greater-of = 5000 (percentage wins even though method=COST)
+  const result = compute([minimalItem({
+    property_type: PropertyType.COAL,
+    method: DepletionMethod.COST,
+    gross_income: 50_000,
+    deductible_expenses: 10_000,
+    adjusted_basis: 1_000,
+    estimated_reserves: 100_000,
+    units_sold: 500,
+    purpose: DepletionPurpose.SCHEDULE_E,
+  })]);
+  const fields = fieldsOf(result.outputs, scheduleE)!;
+  assertEquals(fields.expense_depletion, 5_000);
+});
+
+Deno.test("depletion.compute: greater of — PERCENTAGE item where cost wins (METALS)", () => {
+  // METALS, method=PERCENTAGE, adjusted_basis=100000, estimated_reserves=1000, units_sold=800
+  // gross_income=5000, deductible_expenses=4000
+  // cost = (100000/1000)*800 = 80000
+  // percentage = min(5000*0.15, (5000-4000)*0.50) = min(750, 500) = 500
+  // greater-of = 80000 (cost wins even though method=PERCENTAGE)
+  const result = compute([minimalItem({
+    property_type: PropertyType.METALS,
+    method: DepletionMethod.PERCENTAGE,
+    gross_income: 5_000,
+    deductible_expenses: 4_000,
+    adjusted_basis: 100_000,
+    estimated_reserves: 1_000,
+    units_sold: 800,
+    purpose: DepletionPurpose.SCHEDULE_E,
+  })]);
+  const fields = fieldsOf(result.outputs, scheduleE)!;
+  assertEquals(fields.expense_depletion, 80_000);
+});
+
+Deno.test("depletion.compute: greater of — both methods yield same value", () => {
+  // OTHER_MINERAL, method=COST
+  // cost = (14000/100000)*1000 = 140
+  // percentage = min(1000*0.14, 1000*0.50) = min(140, 500) = 140
+  // greater-of = 140 (tie)
+  const result = compute([minimalItem({
+    property_type: PropertyType.OTHER_MINERAL,
+    method: DepletionMethod.COST,
+    gross_income: 1_000,
+    deductible_expenses: 0,
+    adjusted_basis: 14_000,
+    estimated_reserves: 100_000,
+    units_sold: 1_000,
+    purpose: DepletionPurpose.SCHEDULE_E,
+  })]);
+  const fields = fieldsOf(result.outputs, scheduleE)!;
+  assertEquals(fields.expense_depletion, 140);
+});
+
+// =============================================================================
+// 10. Smoke Test
 // =============================================================================
 
 Deno.test("depletion.compute: smoke test — two properties, cost and percentage", () => {
@@ -460,7 +533,7 @@ Deno.test("depletion.compute: smoke test — two properties, cost and percentage
       purpose: DepletionPurpose.SCHEDULE_E,
       // net=16000, 50%cap=8000, 10%of20000=2000 → 2000
     }),
-    // Property 2: oil business on Schedule C — cost depletion
+    // Property 2: oil business on Schedule C — greater-of applies
     minimalItem({
       property_type: PropertyType.OIL_GAS,
       method: DepletionMethod.COST,
@@ -472,7 +545,8 @@ Deno.test("depletion.compute: smoke test — two properties, cost and percentage
       is_independent_producer: true,
       taxable_income_before_depletion: 200_000,
       purpose: DepletionPurpose.SCHEDULE_C,
-      // cost = (100000/500000)*2500 = 500
+      // cost=500, pct=min(50000*0.15, 50000*1.0)=min(7500,50000)=7500, 65% cap=130000 (not binding)
+      // greater-of = 7500
     }),
   ]);
 
@@ -480,5 +554,5 @@ Deno.test("depletion.compute: smoke test — two properties, cost and percentage
   const eFields = fieldsOf(result.outputs, scheduleE)!;
   const cFields = fieldsOf(result.outputs, scheduleC)!;
   assertEquals(eFields.expense_depletion, 2_000);
-  assertEquals(cFields.line_12_depletion, 500);
+  assertEquals(cFields.line_12_depletion, 7_500);
 });

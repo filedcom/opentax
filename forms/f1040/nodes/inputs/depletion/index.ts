@@ -143,15 +143,12 @@ function percentageDepletion(item: DepletionItem): number {
   return Math.round(allowed * 100) / 100;
 }
 
+// IRC §611: taxpayer must use the greater of cost or percentage depletion.
+// The method field is a UI hint only — both are always computed and the greater wins.
 function depletionDeduction(item: DepletionItem): number {
-  if (item.method === DepletionMethod.COST) {
-    return costDepletion(item);
-  }
-  // PERCENTAGE method — percentage depletion (but use cost if higher)
-  // Per IRS: taxpayer takes the greater; PERCENTAGE method means
-  // primarily use percentage but cost is still computed for comparison.
-  // For simplicity matching standard practice: PERCENTAGE selects percentage only.
-  return percentageDepletion(item);
+  const cost = costDepletion(item);
+  const pct = percentageDepletion(item);
+  return Math.max(cost, pct);
 }
 
 function scheduleCItems(items: DepletionItems): DepletionItems {
