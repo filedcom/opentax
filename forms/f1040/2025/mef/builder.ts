@@ -24,5 +24,5 @@ export function buildMefXml(
 
   const returnHeader = buildReturnHeader(filer, year, returnType);
 
-  return `<Return returnVersion="${schemaVersion}" xmlns="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
+  return `<Return returnVersion="${schemaVersion}" xmlns="http://www.irs.gov/efile" xmlns:efile="http://www.irs.gov/efile">${returnHeader}${returnData}</Return>`;
 }
