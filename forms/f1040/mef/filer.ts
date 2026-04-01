@@ -5,6 +5,8 @@ import {
   type BankAccount,
   type FilerIdentity,
   type OnlineFilerInfo,
+  type OriginatorInfo,
+  type PreparedByInfo,
   type SpouseIdentity,
 } from "./header.ts";
 
@@ -87,6 +89,39 @@ function extractOnlineFiler(
   return { ipAddress: ip, deviceId: device };
 }
 
+function extractPreparedBy(
+  f1040: Record<string, unknown>,
+): PreparedByInfo | undefined {
+  const selfPrepared = bool(f1040["preparer_self_prepared"]);
+  const ptin = str(f1040["preparer_ptin"]);
+  const firmName = str(f1040["preparer_firm_name"]);
+  const firmEin = str(f1040["preparer_firm_ein"]);
+
+  if (selfPrepared === undefined && ptin === undefined && firmName === undefined && firmEin === undefined) {
+    return undefined;
+  }
+
+  return {
+    selfPrepared: selfPrepared,
+    ptin,
+    firmName,
+    firmEin,
+    firmAddressLine1: str(f1040["preparer_firm_address_line1"]),
+    firmCity: str(f1040["preparer_firm_city"]),
+    firmState: str(f1040["preparer_firm_state"]),
+    firmZip: str(f1040["preparer_firm_zip"]),
+  };
+}
+
+function extractOriginator(
+  f1040: Record<string, unknown>,
+): OriginatorInfo | undefined {
+  const efin = str(f1040["preparer_efin"]);
+  const originatorType = str(f1040["preparer_originator_type"]);
+  if (!efin || !originatorType) return undefined;
+  return { efin, originatorType };
+}
+
 /**
  * Extracts a FilerIdentity from the computed f1040 pending dict.
  * Returns undefined if minimal required fields (SSN, last name) are missing.
@@ -137,6 +172,8 @@ export function extractFilerIdentity(
     pinEnteredBy: PINEnteredBy.Taxpayer,
     bankAccount: extractBankAccount(f1040),
     onlineFiler: extractOnlineFiler(f1040),
+    originator: extractOriginator(f1040),
+    preparedBy: extractPreparedBy(f1040),
     timestamp: new Date().toISOString(),
   };
 }

@@ -7,6 +7,7 @@ import { TaxNode, type AtLeastOne } from "../../../../../core/types/tax-node.ts"
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
+import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -222,6 +223,34 @@ function dependentCounts(deps: DependentItem[]): {
   };
 }
 
+// EITC age test: under 19 at year-end, OR full-time student under 24, OR permanently disabled.
+// IRC §32(c)(3)(A); broader than CTC age test (< 17).
+function passesEitcAgeTest(dep: DependentItem): boolean {
+  if (dep.disabled === true) return true;
+  const age = ageAtYearEnd(dep.dob);
+  if (age < 19) return true;
+  if (dep.full_time_student === true && age < 24) return true;
+  return false;
+}
+
+// Determine whether a dependent qualifies as an EITC qualifying child.
+// Uses relationship and residency tests shared with CTC, plus the broader EITC age test.
+// IRC §32(c)(3)
+function isEitcQualifyingChild(dep: DependentItem): boolean {
+  return (
+    passesResidencyTest(dep) &&
+    passesRelationshipTest(dep) &&
+    passesEitcAgeTest(dep)
+  );
+}
+
+// Count EITC-qualifying children, clamped to 3 (IRS treats 3+ the same).
+function eitcQualifyingChildrenCount(deps: DependentItem[]): number {
+  const claimable = deps.filter((d) => d.dependent_on_another_return !== true);
+  const count = claimable.filter(isEitcQualifyingChild).length;
+  return Math.min(count, 3);
+}
+
 // Optional field helper — adds key/value to obj only if value is not undefined.
 function addIfDefined(
   obj: Record<string, unknown>,
@@ -308,7 +337,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc]);
 
   compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -323,9 +352,16 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     if (parsed.spouse_blind !== undefined) sdInput["spouse_blind"] = parsed.spouse_blind;
     if (parsed.mfs_spouse_itemizing !== undefined) sdInput["mfs_spouse_itemizing"] = parsed.mfs_spouse_itemizing;
 
+    const deps = parsed.dependents ?? [];
+    const eitcChildren = eitcQualifyingChildrenCount(deps);
+
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
       this.outputNodes.output(standard_deduction, sdInput as AtLeastOne<z.infer<typeof standard_deduction["inputSchema"]>>),
+      this.outputNodes.output(eitc, {
+        filing_status: parsed.filing_status,
+        qualifying_children: eitcChildren,
+      }),
     ];
 
     return { outputs };

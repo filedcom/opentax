@@ -31,6 +31,11 @@ export const itemSchema = z.object({
   form_4563_amount: z.number().nonnegative().optional(),
   // ACTC earned income
   nontaxable_combat_pay: z.number().nonnegative().optional(),
+  // Part II-B payroll tax method inputs (Lines 22-26)
+  ss_taxes_withheld: z.number().nonnegative().optional(),
+  medicare_taxes_withheld: z.number().nonnegative().optional(),
+  se_tax: z.number().nonnegative().optional(),
+  eic_amount: z.number().nonnegative().optional(),
   // Flags
   do_not_claim_actc: z.boolean().optional(),
   has_form_2555: z.boolean().optional(),
@@ -87,10 +92,27 @@ function computeEffectiveEarnedIncome(item: F8812Item): number {
   return (item.earned_income ?? 0) + (item.nontaxable_combat_pay ?? 0);
 }
 
-// Lines 19-20: ACTC via 15% earned income method
+// Lines 19-20: ACTC via 15% earned income method (Part II-A)
 function computeActcEarnedIncomeBased(effectiveEarnedIncome: number): number {
   const excess = Math.max(0, effectiveEarnedIncome - ACTC_EARNED_INCOME_FLOOR);
   return excess * ACTC_EARNED_INCOME_RATE;
+}
+
+// Lines 22-26: ACTC via payroll tax method (Part II-B)
+// Applies when taxpayer has 3+ qualifying children or is a bona fide Puerto Rico resident.
+// Returns 0 when the taxpayer does not qualify for Part II-B.
+function computePartIIB(
+  qualifyingChildren: number,
+  isPrResident: boolean,
+  ssTaxesWithheld: number,
+  medicareTaxesWithheld: number,
+  seTax: number,
+  eicAmount: number,
+): number {
+  const qualifies = qualifyingChildren >= 3 || isPrResident;
+  if (!qualifies) return 0;
+  const payrollTaxes = ssTaxesWithheld + medicareTaxesWithheld + seTax;
+  return Math.max(0, payrollTaxes - eicAmount);
 }
 
 class F8812Node extends TaxNode<typeof inputSchema> {
@@ -109,8 +131,13 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     let combinedModifiedAgi = 0;
     let combinedEarnedIncome = 0;
     let combinedTaxLiability: number | undefined = undefined;
+    let combinedSsWithheld = 0;
+    let combinedMedicareWithheld = 0;
+    let combinedSeTax = 0;
+    let combinedEicAmount = 0;
     let hasFEIE = false;
     let doNotClaimActc = false;
+    let isPrResident = false;
     let filingStatus = "single";
 
     for (const item of input.f8812s) {
@@ -119,6 +146,10 @@ class F8812Node extends TaxNode<typeof inputSchema> {
       combinedAgi += item.agi ?? 0;
       combinedModifiedAgi += computeModifiedAgi(item);
       combinedEarnedIncome += computeEffectiveEarnedIncome(item);
+      combinedSsWithheld += item.ss_taxes_withheld ?? 0;
+      combinedMedicareWithheld += item.medicare_taxes_withheld ?? 0;
+      combinedSeTax += item.se_tax ?? 0;
+      combinedEicAmount += item.eic_amount ?? 0;
 
       if (item.income_tax_liability !== undefined) {
         combinedTaxLiability = (combinedTaxLiability ?? 0) + item.income_tax_liability;
@@ -127,6 +158,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
         hasFEIE = true;
       }
       if (item.do_not_claim_actc === true) doNotClaimActc = true;
+      if (item.bona_fide_pr_resident === true) isPrResident = true;
       if (item.filing_status) filingStatus = item.filing_status;
     }
 
@@ -170,13 +202,20 @@ class F8812Node extends TaxNode<typeof inputSchema> {
       if (ctcUnused > 0 && actcCap > 0) {
         // Line 17: tentative ACTC = min(Line 16a, Line 16b)
         const tentativeActc = Math.min(ctcUnused, actcCap);
-        // Line 20: earned income based ACTC = (earned income − $2,500) × 15%
+        // Line 20: Part II-A — earned income based ACTC = (earned income − $2,500) × 15%
         const earnedIncomeBased = computeActcEarnedIncomeBased(combinedEarnedIncome);
-        // Line 27: final ACTC = min(tentativeActc, earnedIncomeBased)
-        // For Part II-A (non-PR, < 3 qualifying children): min(Line 17, Line 20)
-        // For Part II-B (3+ children or PR resident): Line 26 may be higher via payroll tax method
-        // Without ss/medicare withheld inputs, we use the Part II-A result
-        const actc = Math.min(tentativeActc, earnedIncomeBased);
+        const partIIA = Math.min(tentativeActc, earnedIncomeBased);
+        // Lines 22-26: Part II-B — payroll tax method (3+ children or PR resident)
+        const partIIB = computePartIIB(
+          totalQualifyingChildren,
+          isPrResident,
+          combinedSsWithheld,
+          combinedMedicareWithheld,
+          combinedSeTax,
+          combinedEicAmount,
+        );
+        // Line 27: final ACTC = min(tentativeActc, max(Part II-A, Part II-B))
+        const actc = Math.min(tentativeActc, Math.max(partIIA, partIIB));
 
         if (actc > 0) {
           outputs.push(this.outputNodes.output(f1040, { line28_actc: actc }));

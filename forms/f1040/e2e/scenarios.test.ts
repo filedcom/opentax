@@ -24,6 +24,7 @@ import { execute, type ExecuteResult } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { FilingStatus } from "../nodes/types.ts";
 import { SS_WAGE_BASE_2025 } from "../nodes/config/2025.ts";
+import { DependentRelationship } from "../nodes/inputs/general/index.ts";
 
 // ── Shared context ──────────────────────────────────────────────────────────
 
@@ -416,5 +417,260 @@ Deno.test("Scenario 10: Single, W-2 $140K (24% bracket) — refund $1,153", () =
   assertEquals(f["line24_total_tax"], 22_847, "total tax");
   assertEquals(f["line33_total_payments"], 24_000, "total payments");
   assertEquals(f["line35a_refund"], 1_153, "refund");
+  assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
+});
+
+// ── Scenario 11: Single, itemized deductions (Schedule A) ──────────────────
+//
+// Wages: $200,000  |  Withheld: $40,000
+// Schedule A: state taxes $10,000 (SALT cap $40,000; $10K < cap) + mortgage $18,000 + charitable $5,000
+// Total itemized = $10,000 + $18,000 + $5,000 = $33,000
+// Standard deduction = $15,000 → taxpayer itemizes ($33K > $15K)
+// AGI: $200,000  |  Taxable: $200,000 − $33,000 = $167,000
+// Tax (24% bracket): $17,651 + ($167,000 − $103,350) × 0.24
+//   = $17,651 + $63,650 × 0.24 = $17,651 + $15,276 = $32,927
+// Refund: $40,000 − $32,927 = $7,073
+
+Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $7,073", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(200_000, 40_000)],
+    schedule_a: {
+      line_5a_tax_amount: 10_000,   // state income taxes ($10K < $40K SALT cap)
+      line_8a_mortgage_interest_1098: 18_000,
+      line_11_cash_contributions: 5_000,
+    },
+  });
+
+  // Schedule A produces $33,000 itemized deductions, fed to standard_deduction node
+  assertEquals(
+    result.pending["standard_deduction"]?.["itemized_deductions"], 33_000,
+    "standard_deduction node receives $33,000 itemized deductions",
+  );
+
+  // income_tax_calculation sees taxable income = $200K - $33K = $167K
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"], 167_000,
+    "taxable income = $200K − $33K itemized",
+  );
+
+  const f = result.pending["f1040"] ?? {};
+
+  // Standard deduction is NOT used when itemizing
+  assertEquals(f["line12a_standard_deduction"], undefined, "no standard deduction when itemizing");
+
+  // Tax and refund (scalar summary lines are authoritative)
+  assertEquals(f["line24_total_tax"], 32_927, "total tax");
+  assertEquals(f["line33_total_payments"], 40_000, "total payments");
+  assertEquals(f["line35a_refund"], 7_073, "refund");
+  assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
+});
+
+// ── Scenario 12: Single, AMT trigger via private activity bond interest ──────
+//
+// Wages: $100,000  |  Withheld: $18,000
+// 1099-INT box8 (tax-exempt interest) = $100,000, box9 (PAB) = $100,000
+// PAB interest is tax-exempt for regular tax but is an AMT preference item.
+//
+// Regular tax:
+//   AGI: $100,000 (PAB interest excluded from regular income)
+//   Std ded: $15,000  |  Taxable: $85,000
+//   Tax (22% bracket): $5,578.50 + ($85,000 − $48,475) × 0.22
+//     = $5,578.50 + $36,525 × 0.22 = $5,578.50 + $8,035.50 = $13,614
+//
+// Form 6251 — AMT:
+//   AMTI = taxable income + PAB interest = $85,000 + $100,000 = $185,000
+//   AMT exemption (Single) = $88,100 (phase-out starts at $626,350; no phase-out here)
+//   Taxable excess = $185,000 − $88,100 = $96,900
+//   TMT = floor($96,900 × 0.26) = floor($25,194) = $25,194  [≤ $239,100 threshold]
+//   AMT = max(0, $25,194 − $13,614) = $11,580
+//
+// f1040 line16 = $13,614  |  line17 (AMT) = $11,580
+// Total tax = $13,614 + $11,580 = $25,194
+// Amount owed = $25,194 − $18,000 = $7,194
+
+Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $7,194", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(100_000, 18_000)],
+    f1099int: [
+      {
+        payer_name: "Muni Bond Fund",
+        box8: 100_000,   // tax-exempt interest (all PAB)
+        box9: 100_000,   // private activity bond interest → AMT preference item
+      },
+    ],
+  });
+
+  // Regular tax
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"], 85_000,
+    "taxable income = $100K − $15K std ded",
+  );
+
+  const f = result.pending["f1040"] ?? {};
+
+  // AMT fires — form6251 → schedule2 (scalar, no double-write)
+  assertEquals(result.pending["schedule2"]?.["line1_amt"], 11_580, "AMT computed by form6251 = $11,580");
+
+  // Income tax from brackets (line16) and AMT (line17) combine into total
+  assertEquals(f["line24_total_tax"], 25_194, "total tax = regular + AMT");
+  assertEquals(f["line33_total_payments"], 18_000, "total payments (W-2 withheld)");
+  assertEquals(f["line37_amount_owed"], 7_194, "amount owed");
+  assertEquals(f["line35a_refund"], undefined, "no refund when AMT fires");
+});
+
+// ── Scenario 13: HOH, EITC with 2 qualifying children ───────────────────────
+//
+// HOH filer, W-2 earned income $32,000, 2 qualifying children (ages 8 and 10)
+// Withheld: $3,500
+//
+// EITC (2 children, single/HOH phaseout):
+//   Max credit (2 children) = $7,152  (Rev Proc 2024-40)
+//   Phase-in ends at $17,880 → credit already at max (earned income $32K > $17,880)
+//   Phaseout start (single/HOH, 2 children) = $21,560
+//   Reduction = 0.2106 × ($32,000 − $21,560) = 0.2106 × $10,440 = $2,198.664
+//   EITC = max(0, $7,152 − $2,198.664) = $4,953.336 → rounded = $4,953
+//   Income limit (single, 2 children) = $55,768; $32,000 < $55,768 → eligible
+//
+// Regular tax:
+//   AGI: $32,000  |  Std ded (HOH): $22,500  |  Taxable: $9,500
+//   Tax (10% bracket, HOH): $9,500 × 0.10 = $950
+//
+// f1040 total payments = $3,500 (withheld) + $4,953 (EITC) = $8,453
+// Refund = $8,453 − $950 = $7,503
+
+Deno.test("Scenario 13: HOH, EITC 2 qualifying children $32K — refund $7,503", () => {
+  const result = runReturn({
+    general: {
+      ...hohGeneral(),
+      dependents: [
+        {
+          first_name: "Child1",
+          last_name: "Taxpayer",
+          dob: "2017-06-15",  // age 8 at 12/31/2025
+          relationship: DependentRelationship.Son,
+          months_in_home: 12,
+          ssn: "111-22-3334",
+        },
+        {
+          first_name: "Child2",
+          last_name: "Taxpayer",
+          dob: "2015-03-20",  // age 10 at 12/31/2025
+          relationship: DependentRelationship.Daughter,
+          months_in_home: 12,
+          ssn: "111-22-3335",
+        },
+      ],
+    },
+    w2: [w2Item(32_000, 3_500)],
+  });
+
+  // EITC should be $4,953
+  assertEquals(
+    result.pending["eitc"]?.["qualifying_children"], 2,
+    "eitc sees 2 qualifying children",
+  );
+
+  const f = result.pending["f1040"] ?? {};
+
+  // Tax and refund
+  assertEquals(f["line24_total_tax"], 950, "regular tax = $950");
+  assertEquals(f["line33_total_payments"], 8_453, "total payments = withheld + EITC");
+  assertEquals(f["line35a_refund"], 7_503, "refund = $7,503");
+  assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
+});
+
+// ── Scenario 14: MFJ, CTC + ACTC with 3 qualifying children ─────────────────
+//
+// MFJ, W-2 $85,000 combined, 3 qualifying children under 17, withheld $8,000
+//
+// Tax:
+//   AGI: $85,000  |  Std ded (MFJ): $30,000  |  Taxable: $55,000
+//   Tax (12% bracket): $2,385 + ($55,000 − $23,850) × 0.12
+//     = $2,385 + $31,150 × 0.12 = $2,385 + $3,738 = $6,123
+//
+// CTC (Form 8812):
+//   Tentative CTC = 3 × $2,200 = $6,600  (OBBBA TY2025)
+//   Phase-out threshold (MFJ) = $400,000; $85,000 << $400,000 → no reduction
+//   creditAfterPhaseOut = $6,600
+//   Nonrefundable CTC = min($6,600, $6,123 income_tax_liability) = $6,123
+//     → reduces f1040 line22 to $0
+//   CTC unused (potential ACTC) = $6,600 − $6,123 = $477
+//
+// ACTC (Form 8812 Part II-A, < 3 children in refundable path):
+//   ACTC cap = 3 × $1,700 = $5,100
+//   Earned income based = ($85,000 − $2,500) × 0.15 = $82,500 × 0.15 = $12,375
+//   tentativeACTC = min($477, $5,100) = $477
+//   ACTC = min($477, $12,375) = $477
+//
+// f1040:
+//   line19 = 0, line20 (nonrefundable CTC via Schedule 3) = $6,123
+//   line22 = max(0, $6,123 − $6,123) = $0
+//   line24 (total tax) = $0
+//   line28 (ACTC) = $477
+//   Total payments = $8,000 + $477 = $8,477
+//   Refund = $8,477 − $0 = $8,477
+
+Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,477", () => {
+  const result = runReturn({
+    general: {
+      ...mfjGeneral(),
+      dependents: [
+        {
+          first_name: "Child1",
+          last_name: "Taxpayer",
+          dob: "2010-05-01",  // age 15 at 12/31/2025
+          relationship: DependentRelationship.Son,
+          months_in_home: 12,
+          ssn: "111-22-3336",
+        },
+        {
+          first_name: "Child2",
+          last_name: "Taxpayer",
+          dob: "2012-08-15",  // age 13 at 12/31/2025
+          relationship: DependentRelationship.Daughter,
+          months_in_home: 12,
+          ssn: "111-22-3337",
+        },
+        {
+          first_name: "Child3",
+          last_name: "Taxpayer",
+          dob: "2014-11-30",  // age 11 at 12/31/2025
+          relationship: DependentRelationship.Son,
+          months_in_home: 12,
+          ssn: "111-22-3338",
+        },
+      ],
+    },
+    w2: [w2Item(85_000, 8_000)],
+    f8812: [
+      {
+        qualifying_children_count: 3,
+        agi: 85_000,
+        filing_status: FilingStatus.MFJ,
+        earned_income: 85_000,
+        income_tax_liability: 6_123,  // pre-computed above
+      },
+    ],
+  });
+
+  // Tax calculation
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"], 55_000,
+    "taxable income = $85K − $30K std ded",
+  );
+
+  const f = result.pending["f1040"] ?? {};
+
+  // Nonrefundable CTC flows through Schedule 3 → f1040 line20
+  assertEquals(f["line20_nonrefundable_credits"], 6_123, "nonrefundable CTC = $6,123");
+
+  // Total tax is $0 (CTC wipes out the $6,123 tax liability)
+  assertEquals(f["line24_total_tax"], 0, "total tax = $0 (CTC absorbs all tax)");
+
+  // Payments = $8,000 withheld + $477 ACTC refundable
+  assertEquals(f["line33_total_payments"], 8_477, "total payments = $8,477");
+  assertEquals(f["line35a_refund"], 8_477, "refund = $8,477");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });

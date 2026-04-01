@@ -123,6 +123,7 @@ import { f8857, inputSchema as f8857InputSchema } from "../nodes/inputs/f8857/in
 import { f8965, inputSchema as f8965InputSchema } from "../nodes/inputs/f8965/index.ts";
 import { f59e, itemSchema as f59eItemSchema } from "../nodes/inputs/f59e/index.ts";
 import { f1040es, inputSchema as f1040esInputSchema } from "../nodes/inputs/f1040es/index.ts";
+import { preparer, inputSchema as preparerInputSchema } from "../nodes/inputs/preparer/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
@@ -250,4 +251,5 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8965, inputSchema: f8965InputSchema, isArray: false },
   { node: f59e, itemSchema: f59eItemSchema, isArray: true },
   { node: f1040es, inputSchema: f1040esInputSchema, isArray: false },
+  { node: preparer, inputSchema: preparerInputSchema, isArray: false },
 ];

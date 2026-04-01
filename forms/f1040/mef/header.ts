@@ -55,6 +55,19 @@ export interface OriginatorInfo {
   readonly practitionerPIN?: string;
 }
 
+export interface PreparedByInfo {
+  // IRS PTIN (P + 8 digits). Absent when self_prepared is true.
+  readonly ptin?: string;
+  readonly firmName?: string;
+  readonly firmEin?: string;
+  readonly firmAddressLine1?: string;
+  readonly firmCity?: string;
+  readonly firmState?: string;
+  readonly firmZip?: string;
+  // When true the IRS SelfPreparedReturnIndicator is emitted instead of PaidPreparerInfo
+  readonly selfPrepared?: boolean;
+}
+
 export interface OnlineFilerInfo {
   readonly ipAddress?: string;
   readonly deviceId?: string;
@@ -87,6 +100,9 @@ export interface FilerIdentity {
   readonly softwareId?: string;
   readonly softwareVersionNum?: string;
   readonly originator?: OriginatorInfo;
+
+  // Paid preparer / self-prepared indicator
+  readonly preparedBy?: PreparedByInfo;
 
   // PIN signing
   readonly pinEnteredBy?: PINEnteredBy;
@@ -168,6 +184,23 @@ function buildOriginatorBlock(filer: FilerIdentity): string {
   return elements("OriginatorGrp", children);
 }
 
+function buildPaidPreparerBlock(filer: FilerIdentity): string {
+  if (!filer.preparedBy) return "";
+  if (filer.preparedBy.selfPrepared === true) {
+    return element("SelfPreparedReturnIndicator", "X");
+  }
+  const children = [
+    element("PTIN", filer.preparedBy.ptin),
+    element("FirmName", filer.preparedBy.firmName),
+    element("FirmEIN", filer.preparedBy.firmEin),
+    element("FirmAddressLine1", filer.preparedBy.firmAddressLine1),
+    element("FirmCityNm", filer.preparedBy.firmCity),
+    element("FirmStateAbbreviationCd", filer.preparedBy.firmState),
+    element("FirmZIPCd", filer.preparedBy.firmZip),
+  ];
+  return elements("PaidPreparerInfo", children);
+}
+
 function buildOnlineFilerBlock(filer: FilerIdentity): string {
   if (!filer.onlineFiler) return "";
   const children = [
@@ -221,6 +254,7 @@ export function buildReturnHeader(
     buildSoftwareBlock(filer),
     buildOriginatorBlock(filer),
     buildOnlineFilerBlock(filer),
+    buildPaidPreparerBlock(filer),
     buildFilerBlock(filer),
     element("FilingStatusCd", String(filer.filingStatus)),
     buildPINBlock(filer),

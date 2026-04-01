@@ -1,7 +1,7 @@
 import { assertMatch, assertRejects, assertStringIncludes } from "@std/assert";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand } from "./return.ts";
-import { exportMefCommand } from "./export.ts";
+import { ExportRejectedError, exportMefCommand } from "./export.ts";
 
 async function makeReturn(tmpDir: string): Promise<string> {
   const { returnId } = await createReturnCommand({
@@ -11,11 +11,11 @@ async function makeReturn(tmpDir: string): Promise<string> {
   return returnId;
 }
 
-Deno.test("exportMefCommand returns valid MeF XML wrapper", async () => {
+Deno.test("exportMefCommand returns valid MeF XML wrapper with --force", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
-    const xml = await exportMefCommand({ returnId, baseDir: tmpDir });
+    const xml = await exportMefCommand({ returnId, baseDir: tmpDir, force: true });
     assertStringIncludes(xml, "<Return ");
     assertStringIncludes(xml, 'returnVersion="2025v3.0"');
     assertStringIncludes(xml, "</Return>");
@@ -24,7 +24,7 @@ Deno.test("exportMefCommand returns valid MeF XML wrapper", async () => {
   }
 });
 
-Deno.test("exportMefCommand with W-2 includes wages in f1040 XML", async () => {
+Deno.test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
@@ -35,7 +35,7 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML", async () => {
       box2_fed_withheld: 10000,
     });
 
-    const xml = await exportMefCommand({ returnId, baseDir: tmpDir });
+    const xml = await exportMefCommand({ returnId, baseDir: tmpDir, force: true });
     assertStringIncludes(xml, "<IRS1040");
     assertMatch(xml, /85000/);
   } finally {
@@ -43,13 +43,26 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML", async () => {
   }
 });
 
-Deno.test("exportMefCommand empty return still produces valid XML", async () => {
+Deno.test("exportMefCommand empty return still produces valid XML with --force", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
-    const xml = await exportMefCommand({ returnId, baseDir: tmpDir });
+    const xml = await exportMefCommand({ returnId, baseDir: tmpDir, force: true });
     assertStringIncludes(xml, "<Return ");
     assertStringIncludes(xml, "</Return>");
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("exportMefCommand blocks export when reject rules fail", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await assertRejects(
+      () => exportMefCommand({ returnId, baseDir: tmpDir }),
+      ExportRejectedError,
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

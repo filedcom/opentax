@@ -18,6 +18,7 @@ import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -318,6 +319,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040,
     agi_aggregator,
+    eitc,
     schedule1,
     schedule2,
     schedule3,
@@ -368,6 +370,15 @@ class W2Node extends TaxNode<typeof inputSchema> {
         agi_aggregator,
         agiWageFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
       ));
+    }
+
+    // Route earned income (regular wages) to EITC node
+    const earnedIncome = regularItems(input.w2s).reduce(
+      (sum, item) => sum + item.box1_wages,
+      0,
+    );
+    if (earnedIncome > 0) {
+      outputs.push(this.outputNodes.output(eitc, { earned_income: earnedIncome }));
     }
 
     return { outputs };

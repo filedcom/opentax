@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8379
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 17 rules (15 implemented, 2 stubs)
+ * 17 rules (16 implemented, 1 stub)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqStr, eqSum, filingStatusIs, formAbsent, formPresent, hasNonZero, hasValue, ifThen, noValue, not, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, eqField, eqStr, eqSum, filingStatusIs, formAbsent, formPresent, hasNonZero, hasValue, ifThen, noValue, not, } from "../../../../core/validation/mod.ts";
 
 export const F8379_RULES: readonly RuleDef[] = [
   rule(
@@ -110,7 +110,7 @@ export const F8379_RULES: readonly RuleDef[] = [
     "F8379-021",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasNonZero("JointReturnAmtGrp/NonrefundableCreditsAmt"), eqField("JointReturnAmtGrp/NonrefundableCreditsAmt", "TotalCreditsAmt")),
     "If Form 8379, 'NonrefundableCreditsAmt' in 'JointReturnAmtGrp' has a non-zero value, then it must be equal to Form 1040, 'TotalCreditsAmt'.",
   ),
   rule(

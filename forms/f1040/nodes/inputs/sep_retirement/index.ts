@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Self-employed retirement plan deduction (IRC §404(a)(8), §408(k), §408(p), §401(k))
@@ -94,16 +95,25 @@ function schedule1Output(items: SepRetirementItems): NodeOutput[] {
   return [output(schedule1, { line16_sep_simple: deduction })];
 }
 
+function agiOutput(items: SepRetirementItems): NodeOutput[] {
+  const deduction = totalDeduction(items);
+  if (deduction === 0) return [];
+  return [output(agi_aggregator, { line16_sep_simple: deduction })];
+}
+
 // ── Node class ────────────────────────────────────────────────────────────────
 
 class SepRetirementNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "sep_retirement";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const outputs: NodeOutput[] = schedule1Output(parsed.sep_retirements);
+    const outputs: NodeOutput[] = [
+      ...schedule1Output(parsed.sep_retirements),
+      ...agiOutput(parsed.sep_retirements),
+    ];
     return { outputs };
   }
 }

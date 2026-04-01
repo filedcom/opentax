@@ -802,3 +802,198 @@ Deno.test("smoke: MFJ 3 children, high earned income, below phase-out — maximu
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 5100);
 });
+
+// ============================================================
+// 10. Part II-B (Payroll Tax Method)
+// ============================================================
+
+Deno.test("part2b: 2 qualifying children — Part II-B is ignored, Part II-A used", () => {
+  // 2 children < 3, non-PR → Part II-B does not apply
+  // Part II-A: tentativeActc = min(ctcUnused, actcCap)
+  //   CTC = 4400, nonrefundable = 0, ctcUnused = 4400
+  //   actcCap = 2 × 1700 = 3400
+  //   earnedIncomeBased = (30000 - 2500) × 0.15 = 4125
+  //   actc = min(3400, 4125) = 3400
+  // Even with payroll taxes that would give a higher Part II-B, result stays at Part II-A
+  const result = compute([minimalItem({
+    qualifying_children_count: 2,
+    agi: 50000,
+    earned_income: 30000,
+    income_tax_liability: 0,
+    ss_taxes_withheld: 5000,
+    medicare_taxes_withheld: 1200,
+    se_tax: 0,
+    eic_amount: 0,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  // Part II-B would be 6200 − 0 = 6200, but 2 children → Part II-B ignored
+  // Part II-A = 3400
+  assertEquals(input.line28_actc, 3400);
+});
+
+Deno.test("part2b: 3 qualifying children, Part II-B > Part II-A — Part II-B wins", () => {
+  // 3 children → Part II-B applies
+  // Part II-A: earnedIncomeBased = (10000 - 2500) × 0.15 = 1125
+  //   tentativeActc = min(ctcUnused, actcCap) = min(6600, 5100) = 5100
+  //   actc_IIA = min(5100, 1125) = 1125
+  // Part II-B: payrollTaxes = 4000 + 580 + 0 = 4580, eic = 0
+  //   partIIB = 4580
+  // Final = min(tentativeCTC - nonRefundable, max(1125, 4580))
+  //       = min(5100, 4580) = 4580
+  const result = compute([minimalItem({
+    qualifying_children_count: 3,
+    agi: 50000,
+    earned_income: 10000,
+    income_tax_liability: 0,
+    ss_taxes_withheld: 4000,
+    medicare_taxes_withheld: 580,
+    se_tax: 0,
+    eic_amount: 0,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 4580);
+});
+
+Deno.test("part2b: 3 qualifying children, Part II-A > Part II-B — Part II-A wins", () => {
+  // 3 children → Part II-B applies but Part II-A is larger
+  // Part II-A: earnedIncomeBased = (80000 - 2500) × 0.15 = 11625
+  //   tentativeActc = min(ctcUnused=6600, actcCap=5100) = 5100
+  //   actc_IIA = min(5100, 11625) = 5100
+  // Part II-B: payrollTaxes = 620 + 145 = 765, eic = 0
+  //   partIIB = 765
+  // Final = min(5100, max(5100, 765)) = min(5100, 5100) = 5100
+  const result = compute([minimalItem({
+    qualifying_children_count: 3,
+    agi: 50000,
+    earned_income: 80000,
+    income_tax_liability: 0,
+    ss_taxes_withheld: 620,
+    medicare_taxes_withheld: 145,
+    se_tax: 0,
+    eic_amount: 0,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 5100);
+});
+
+Deno.test("part2b: Puerto Rico resident (1 child) — Part II-B applies", () => {
+  // PR resident with 1 child triggers Part II-B even with < 3 children
+  // Part II-A: earnedIncomeBased = (20000 - 2500) × 0.15 = 2625
+  //   tentativeActc = min(ctcUnused=2200, actcCap=1700) = 1700
+  //   actc_IIA = min(1700, 2625) = 1700
+  // Part II-B: payrollTaxes = 1000 + 290 = 1290, eic = 200
+  //   partIIB = max(0, 1290 - 200) = 1090
+  // Final = min(1700, max(1700, 1090)) = min(1700, 1700) = 1700
+  const result = compute([minimalItem({
+    qualifying_children_count: 1,
+    agi: 30000,
+    earned_income: 20000,
+    income_tax_liability: 0,
+    bona_fide_pr_resident: true,
+    ss_taxes_withheld: 1000,
+    medicare_taxes_withheld: 290,
+    se_tax: 0,
+    eic_amount: 200,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  // Part II-A wins here (1700 > 1090), but the path is Part II-B
+  assertEquals(input.line28_actc, 1700);
+});
+
+Deno.test("part2b: Puerto Rico resident (1 child), Part II-B > Part II-A — Part II-B wins", () => {
+  // PR resident with low earned income but high payroll taxes
+  // Part II-A: earnedIncomeBased = (5000 - 2500) × 0.15 = 375
+  //   tentativeActc = min(ctcUnused=2200, actcCap=1700) = 1700
+  //   actc_IIA = min(1700, 375) = 375
+  // Part II-B: payrollTaxes = 1200 + 300 + 500 = 2000, eic = 100
+  //   partIIB = max(0, 2000 - 100) = 1900 (capped by tentativeActc = 1700)
+  // Final = min(1700, max(375, 1900)) = min(1700, 1900) = 1700
+  const result = compute([minimalItem({
+    qualifying_children_count: 1,
+    agi: 30000,
+    earned_income: 5000,
+    income_tax_liability: 0,
+    bona_fide_pr_resident: true,
+    ss_taxes_withheld: 1200,
+    medicare_taxes_withheld: 300,
+    se_tax: 500,
+    eic_amount: 100,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  // max(375, 1900) = 1900, but cap = tentativeActc = 1700, final = 1700
+  assertEquals(input.line28_actc, 1700);
+});
+
+Deno.test("part2b: eic_amount reduces payroll tax method result", () => {
+  // 3 children, Part II-B applies
+  // payrollTaxes = 3000, eic = 1500 → partIIB = 1500
+  // Part II-A: (15000 - 2500) × 0.15 = 1875; actcCap = 5100; tentativeActc = min(6600, 5100) = 5100
+  //   actc_IIA = min(5100, 1875) = 1875
+  // Final = min(5100, max(1875, 1500)) = min(5100, 1875) = 1875
+  const result = compute([minimalItem({
+    qualifying_children_count: 3,
+    agi: 50000,
+    earned_income: 15000,
+    income_tax_liability: 0,
+    ss_taxes_withheld: 2000,
+    medicare_taxes_withheld: 1000,
+    se_tax: 0,
+    eic_amount: 1500,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 1875);
+});
+
+Deno.test("part2b: eic_amount exceeds payroll taxes → partIIB = 0, Part II-A is used", () => {
+  // 3 children, Part II-B: payrollTaxes = 500, eic = 1000 → partIIB = max(0, -500) = 0
+  // Part II-A: (20000 - 2500) × 0.15 = 2625; actcCap = 5100; tentativeActc = min(6600, 5100) = 5100
+  //   actc_IIA = min(5100, 2625) = 2625
+  // Final = min(5100, max(2625, 0)) = 2625
+  const result = compute([minimalItem({
+    qualifying_children_count: 3,
+    agi: 50000,
+    earned_income: 20000,
+    income_tax_liability: 0,
+    ss_taxes_withheld: 300,
+    medicare_taxes_withheld: 200,
+    se_tax: 0,
+    eic_amount: 1000,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 2625);
+});
+
+Deno.test("part2b: se_tax included in payroll taxes for Part II-B", () => {
+  // 3 children, payroll = 1000 (ss) + 250 (medicare) + 2000 (se_tax) = 3250
+  // eic = 0 → partIIB = 3250
+  // Part II-A: (10000 - 2500) × 0.15 = 1125; actcCap = 5100; tentativeActc = min(6600, 5100) = 5100
+  //   actc_IIA = min(5100, 1125) = 1125
+  // Final = min(5100, max(1125, 3250)) = min(5100, 3250) = 3250
+  const result = compute([minimalItem({
+    qualifying_children_count: 3,
+    agi: 50000,
+    earned_income: 10000,
+    income_tax_liability: 0,
+    ss_taxes_withheld: 1000,
+    medicare_taxes_withheld: 250,
+    se_tax: 2000,
+    eic_amount: 0,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 3250);
+});
+
+Deno.test("part2b: no payroll inputs provided for 3-child filer — falls back to Part II-A", () => {
+  // 3 children, no ss/medicare/se_tax provided (undefined) → partIIB = 0
+  // Part II-A: (30000 - 2500) × 0.15 = 4125; actcCap = 5100; tentativeActc = min(6600, 5100) = 5100
+  //   actc_IIA = min(5100, 4125) = 4125
+  // Final = min(5100, max(4125, 0)) = 4125
+  const result = compute([minimalItem({
+    qualifying_children_count: 3,
+    agi: 50000,
+    earned_income: 30000,
+    income_tax_liability: 0,
+  })]);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 4125);
+});

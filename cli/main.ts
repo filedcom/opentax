@@ -99,10 +99,11 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "export",
     description: "Export a return as MEF XML",
-    usage: "tax return export --returnId <id> --type mef",
+    usage: "tax return export --returnId <id> --type mef [--force]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--type", description: "Export format (mef)", required: true },
+      { flag: "--force", description: "Bypass reject-severity validation gate", required: false },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
@@ -110,8 +111,9 @@ const COMMANDS: readonly CommandDef[] = [
         console.error("Error: --type must be 'mef'");
         Deno.exit(1);
       }
+      const force = args.force === true || args.force === "true";
       await run(async () => {
-        const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR });
+        const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR, force });
         console.log(xml);
       });
     },

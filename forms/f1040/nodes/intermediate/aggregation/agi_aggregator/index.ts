@@ -6,6 +6,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
+import { eitc } from "../../forms/eitc/index.ts";
 
 // AGI Aggregator — Form 1040 Line 11
 //
@@ -108,6 +109,14 @@ export const inputSchema = z.object({
   line23_archer_msa_deduction: z.number().nonnegative().optional(),
   // Line 24f — §501(c)(18)(D) pension plan deduction (W-2 Box 12 Code H)
   line24f_501c18d: z.number().nonnegative().optional(),
+  // Line 11 — Educator expenses (Schedule 1 Part II line 11)
+  line11_educator_expenses: z.number().nonnegative().optional(),
+  // Line 12 — Employee business expenses (Form 2106)
+  line12_business_expenses: z.number().nonnegative().optional(),
+  // Line 16 — SEP, SIMPLE, and qualified plan deductions
+  line16_sep_simple: z.number().nonnegative().optional(),
+  // Line 19 — Student loan interest deduction (Form 1098-E)
+  line19_student_loan_interest: z.number().nonnegative().optional(),
 });
 
 type AgiInput = z.infer<typeof inputSchema>;
@@ -160,12 +169,16 @@ function exclusions(input: AgiInput): number {
 // IRC §62 allows these before arriving at AGI.
 function aboveLineDeductions(input: AgiInput): number {
   return (
+    (input.line11_educator_expenses ?? 0) +
+    (input.line12_business_expenses ?? 0) +
     (input.line13_hsa_deduction ?? 0) +
     (input.line13_depreciation ?? 0) +
     (input.line14_moving_expenses ?? 0) +
     (input.line15_se_deduction ?? 0) +
+    (input.line16_sep_simple ?? 0) +
     (input.line17_se_health_insurance ?? 0) +
     (input.line18_early_withdrawal ?? 0) +
+    (input.line19_student_loan_interest ?? 0) +
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
     (input.line24f_501c18d ?? 0)
@@ -182,7 +195,7 @@ function computeAgi(input: AgiInput): number {
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc]);
 
   compute(_ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -192,6 +205,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, { line11_agi: agi }),
       this.outputNodes.output(standard_deduction, { agi }),
       this.outputNodes.output(scheduleA, { agi }),
+      this.outputNodes.output(eitc, { agi }),
     ];
 
     return { outputs };

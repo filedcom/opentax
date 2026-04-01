@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Form 2106: Employee Business Expenses
@@ -110,14 +111,25 @@ function schedule1Output(items: F2106Items): NodeOutput[] {
   return [output(schedule1, { line12_business_expenses: total })];
 }
 
+function agiOutput(items: F2106Items): NodeOutput[] {
+  const total = totalDeduction(items);
+  if (total === 0) return [];
+  return [output(agi_aggregator, { line12_business_expenses: total })];
+}
+
 class F2106Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f2106";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: schedule1Output(parsed.f2106s) };
+    return {
+      outputs: [
+        ...schedule1Output(parsed.f2106s),
+        ...agiOutput(parsed.f2106s),
+      ],
+    };
   }
 }
 
