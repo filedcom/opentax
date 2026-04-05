@@ -197,7 +197,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 9. International Complex | 0/1 | Planned    |  |
 | 10. XSD Validation in CI | 1/1 | Complete    | 2026-04-05 |
 | 11. Executor Error Isolation | 1/1 | Complete    | 2026-04-05 |
-| 12. Validation Rule Stubs | 2/3 | In Progress|  |
+| 12. Validation Rule Stubs | 3/3 | Complete   | 2026-04-05 |
 
 ### Phase 10: XSD Validation in CI
 **Goal**: Add programmatic MeF XML validation against IRS XSD files to the Deno test suite. The IRS 2025v3.0 XSDs live in `.research/docs/IMF_Series_2025v3.0/`. Currently generated XML is never validated against them. Wire `xmllint --schema` (or equivalent Deno subprocess) into a dedicated test file that generates MeF XML for at least 3 e2e scenarios and asserts XSD compliance. Fix any schema violations discovered. Add a `deno task validate:mef` task alias.
@@ -248,4 +248,4 @@ Plans:
 Plans:
 - [x] 12-01-PLAN.md — Create predicate test infra + add 4 new predicates (validEIN, betweenNum, diffLteNum, notGtPctOfField)
 - [x] 12-02-PLAN.md — Convert 40+ alwaysPass stubs to real predicate implementations across rule files
-- [ ] 12-03-PLAN.md — Update ALWAYSPASS_ROADMAP.md + final deno task test gate
+- [x] 12-03-PLAN.md — Update ALWAYSPASS_ROADMAP.md + final deno task test gate
