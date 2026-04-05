@@ -190,7 +190,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → 11 → 12
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -203,13 +203,55 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Schema Extensions & Form 7203 | 0/3 | Not started | - |
 | 8. International Simple | 0/3 | Not started | - |
 | 9. International Complex | 0/3 | Not started | - |
+| 10. XSD Validation in CI | 0/1 | Not started | - |
+| 11. Executor Error Isolation | 0/1 | Not started | - |
+| 12. Validation Rule Stubs | 0/1 | Not started | - |
 
-### Phase 10: XSD Validation in CI — xmllint against IRS XSD files, wire into Deno test suite
-
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 9
-**Plans:** 1/1 plans complete
+### Phase 10: XSD Validation in CI
+**Goal**: Add programmatic MeF XML validation against IRS XSD files to the Deno test suite. The IRS 2025v3.0 XSDs live in `.research/docs/IMF_Series_2025v3.0/`. Currently generated XML is never validated against them. Wire `xmllint --schema` (or equivalent Deno subprocess) into a dedicated test file that generates MeF XML for at least 3 e2e scenarios and asserts XSD compliance. Fix any schema violations discovered. Add a `deno task validate:mef` task alias.
+**Depends on**: Phase 9 (independent — can run anytime)
+**Requirements**: REQ-XSD-01
+**Success Criteria** (what must be TRUE):
+  1. `forms/f1040/2025/mef/xsd-validation.test.ts` exists and runs via `deno task test`
+  2. At least 3 e2e scenarios generate MeF XML and validate it against the IRS Form 1040 XSD
+  3. All XSD validation assertions pass (0 xmllint errors)
+  4. Any schema violations found during development are fixed before the test is committed
+  5. `deno task test` passes overall (56K+ tests)
+  6. `returnVersion` string matches the actual IRS published schema version in the XSD files
+**Plans**: TBD
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 10 to break down)
+- [ ] 10-01: Discover XSD structure, identify root XSD, write validation test harness, fix any violations found
+
+### Phase 11: Executor Error Isolation
+**Goal**: Fix the silent node skip bug in `core/runtime/executor.ts`. Currently if a node's pending input fails Zod parse (line 67-70), the node is silently skipped with `continue` — no error, no diagnostic, no indication to the caller. Wrap each node's execution in a per-node try/catch. On Zod parse failure OR compute() throw: add a `DiagnosticsReport` entry (severity: error, code: "EXECUTOR_NODE_FAILURE") and continue executing remaining nodes rather than aborting. Add tests that exercise both failure paths.
+**Depends on**: Phase 10 (independent — can run anytime)
+**Requirements**: REQ-EXEC-01
+**Success Criteria** (what must be TRUE):
+  1. `executor.ts` wraps each node execution in try/catch — no unhandled exceptions escape
+  2. Zod parse failure on a node produces a diagnostic entry, not a silent skip
+  3. `node.compute()` throw produces a diagnostic entry, does not abort the full execution
+  4. Remaining nodes in the DAG still execute after a single node failure
+  5. `core/runtime/executor.test.ts` has tests covering: parse failure produces diagnostic, compute throw produces diagnostic, other nodes still run after failure
+  6. `deno task test` passes overall
+**Plans**: TBD
+
+Plans:
+- [ ] 11-01: Fix executor.ts error isolation, add diagnostic entries, write tests covering both failure paths
+
+### Phase 12: Validation Rule Stubs — High-Value Batch
+**Goal**: Implement the highest-value subset of the 753 `alwaysPass` validation rule stubs. Focus on rules that are (a) implementable client-side (no IRS database lookup required), (b) catch real taxpayer errors, and (c) cover forms with broad usage. Target: TIN/EIN format validation (~30 rules from the 63 total TIN rules), simple conditional math rules (~20 rules from the 57 total), and binary presence rules that can be evaluated from the pending dict (~10 rules). Skip: database lookup rules (prior-year AGI, IP-PIN), per-item repeating group rules requiring `everyItem` DSL combinator.
+**Depends on**: Phase 11 (independent — can run anytime)
+**Requirements**: REQ-VAL-01
+**Success Criteria** (what must be TRUE):
+  1. At least 40 previously-`alwaysPass` rules now have real predicate implementations
+  2. All newly implemented rules have passing tests in their rule file's test suite
+  3. No previously-passing rules are broken
+  4. `deno task test` passes overall
+  5. `ALWAYSPASS_ROADMAP.md` updated to reflect newly implemented rules
+  6. At least 5 TIN/EIN format rules implemented (SSN format, EIN format, ITIN format)
+  7. At least 5 conditional math rules implemented (line totals, credit limits)
+**Plans**: TBD
+
+Plans:
+- [ ] 12-01: Audit alwaysPass rules, identify implementable subset, implement 40+ rules with tests

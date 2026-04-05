@@ -2,7 +2,101 @@
 
 > Generated: 2026-04-01 | Assessor: Claude (automated deep code review)
 > Codebase: @filed/tax-engine v0.0.1 | Runtime: Deno + TypeScript | Tax Year: 2025
-> Last updated: 2026-04-01 (commit 22e0e30 — P0/P2/P3 gaps closed)
+> Last updated: 2026-04-05 (second full-pass audit)
+
+---
+
+## Second Full-Pass Audit (2026-04-05)
+
+A second automated deep-review pass was conducted on 2026-04-05 against the full codebase state.
+The findings below supplement the 2026-04-01 analysis. New issues are flagged; items unchanged
+from the prior audit are not re-listed.
+
+### New Findings
+
+**Architecture**
+
+- **`mergePending` array promotion is a hidden interface contract.** Two upstream nodes depositing
+  the same pending key causes `executor.ts` to silently promote the value to an array. The receiving
+  node's Zod schema must accept both scalar and array (or declare `z.array(...)`). This is not
+  enforced by the type system — it is a documented runtime behaviour that any node author can
+  violate unknowingly. No test exercises this path for new nodes added after the executor was written.
+
+- **No per-node error isolation.** Confirmed via second read: if `node.compute()` throws, the entire
+  DAG execution aborts with an unhandled exception. For production use, each node should be wrapped
+  in a per-node try/catch that adds a diagnostic to the report rather than crashing the run.
+
+**Form Coverage**
+
+- **Form 4868 (extension) is not in the registry.** The `ext` node handles extension-related data
+  but does not generate a standalone 4868 XML payload. A user who needs to file an extension before
+  computing a full return has no supported workflow.
+
+- **Form 8879 (e-file authorization) is entirely absent.** The PIN entry screen is marked
+  `not_applicable` in `screens.json`. Without Form 8879, no return can be filed electronically by
+  a paid preparer — the IRS requires taxpayer signature authorization before transmission.
+
+- **Return version string mismatch.** `builder.ts` hardcodes `returnVersion="2025v3.0"` while the
+  README references "2025v5.2". The version string has not been validated against the actual IRS
+  published schema version. Submitting with the wrong version string may trigger an immediate reject.
+
+**Data Ingestion & Output**
+
+- **No REST/GraphQL API layer.** The engine is CLI-only. Any integration (web UI, mobile app,
+  third-party partner) must shell out to the CLI or be rewritten. This is an integration blocker for
+  any product built on top of the engine.
+
+- **No bulk import.** There is no mechanism to ingest W-2/1099 PDFs, employer payroll exports, or
+  brokerage CSVs. Every input must be entered as hand-crafted JSON — a significant friction point
+  for non-developer users.
+
+- **No prior-year data carryover.** `FilerIdentity.priorYearAgi` exists but there is no mechanism to
+  auto-populate it from a prior-year return stored in the system. IRS e-file validation requires
+  prior-year AGI for identity verification.
+
+- **No payment voucher support.** Form 1040-V and EFTPS integration are absent. A user who owes
+  tax has no supported payment workflow.
+
+**Security**
+
+- **`returns/` directory is not in `.gitignore`.** The directory containing plaintext PII-equivalent
+  JSON (SSN, wages, addresses) has no gitignore protection. A developer running `git add .` could
+  commit real taxpayer data. Even the synthetic test returns demonstrate the pattern: four return
+  directories are committed to the repo.
+
+- **No access control on CLI operations.** Any process with filesystem access to `./returns/` can
+  read, modify, or delete any return. There is no authentication, no role-based access, and no
+  concept of "who" is operating the CLI.
+
+**Tests**
+
+- **No test for capital gains + QDCGT worksheet end-to-end.** The 1099-B / Schedule D / Qualified
+  Dividends and Capital Gains Tax worksheet chain is one of the highest-complexity computation paths
+  in the engine. No e2e scenario exercises it end to end.
+
+- **No test for a return that *should* fail `canFile`.** All e2e scenarios are happy-path. There is
+  no test that constructs a deliberately invalid return and asserts `canFile === false`. The
+  validation engine's rejection logic is only exercised by unit tests on individual rule predicates,
+  not by integration-level tests.
+
+- **No stress tests.** No test with 10+ W-2s, 20+ K-1 items, or 50+ Schedule E rental properties.
+  The executor's `mergePending` accumulation and topological sort have not been exercised under any
+  meaningful load.
+
+### What Has Not Changed Since 2026-04-01
+
+- 753 `alwaysPass` validation rule stubs remain (Form 3800, 2555, K-2/K-3, per-item repeating
+  group rules, binary attachment presence checks).
+- No state return infrastructure.
+- No MeF XSD programmatic validation in CI.
+- No transmission layer (SOAP, ZIP package, clearinghouse API).
+- No acknowledgement processing (A-file/R-file/P-file parsing).
+- No Form 8879 e-signature workflow.
+- No PDF output.
+- No Form 1040-X (amendment) implementation.
+- 0/35 IRS ATS scenarios implemented.
+- Plaintext PII storage with no encryption at rest.
+- No audit log.
 
 ---
 
@@ -592,13 +686,13 @@ requirements.
 | Dimension | Score (1-10) | Notes |
 |---|---|---|
 | Architecture | 9 | DAG engine, pure nodes, Zod-first, OutputNodes type safety, immutability — genuinely well-designed |
-| Form Coverage | 6 | 100% Drake screen mapping, but many exotic nodes are disclosure-only stubs; state returns = zero |
-| MeF Compliance | 2 | XML generation exists but fails XSD validation (namespace, rounding), no transmission layer |
+| Form Coverage | 6 | 100% Drake screen mapping, but many exotic nodes are disclosure-only stubs; Form 8879 / 4868 absent; state returns = zero |
+| MeF Compliance | 2 | Namespace + rounding fixed; still no XSD validation in CI, no transmission, version string mismatch |
 | Validation Rules | 5 | 61% implemented (1,163/1,916), 39% stubs; e-file database rules inherently server-side |
-| Test Quality | 7 | 56K tests, 100% passing; good e2e scenarios; missing XSD validation tests and rejection tests |
-| CLI/UX | 4 | Functional but developer-only; no interview flow, no PDF, no guided review |
-| Security | 2 | Plaintext PII storage, no encryption, no audit log, no access control |
-| Production Readiness | 3 | Core engine production-quality; outer shell (transmission, security, states) early-stage |
+| Test Quality | 6 | 56K tests, 100% passing; no rejection scenario test, no QDCGT e2e, no XSD validation tests, no stress tests |
+| CLI/UX | 4 | Functional but developer-only; no REST API, no interview flow, no PDF, no payment workflow |
+| Security | 2 | Plaintext PII in unprotected `returns/` dir, no encryption, no access control, no audit log, returns not gitignored |
+| Production Readiness | 3 | Core engine production-quality; outer shell (transmission, security, states, API) early-stage |
 
 ---
 
@@ -657,11 +751,30 @@ requirements.
     `return true`. This could allow invalid SSN-like numbers to pass validation that the IRS would
     reject in their database lookups.
 
+11. **`returns/` directory is not gitignored**: Four return directories are committed to the repo.
+    A developer running `git add .` on a real deployment could commit actual taxpayer SSNs and
+    income data. The `.gitignore` must exclude `returns/` before any real user data is ever created.
+
+12. **Return version string mismatch**: `builder.ts` hardcodes `returnVersion="2025v3.0"` while
+    README references "2025v5.2". The IRS rejects returns with an unrecognized schema version. This
+    has not been validated against the current published IRS schema version and must be confirmed
+    before any test submission to a clearinghouse or the IRS ATS environment.
+
+13. **No test for a rejected return**: The validation engine's `canFile: false` path is exercised
+    only at the unit-predicate level, never at the integration level. There is no e2e test that
+    constructs a deliberately invalid return and asserts the validator rejects it. A regression in
+    the validation engine could silently allow bad returns to pass.
+
+14. **No capital gains e2e test**: The 1099-B → Schedule D → QDCGT worksheet chain is one of the
+    highest-complexity computation paths in the engine (multiple holding periods, netting rules,
+    preferential rate brackets). It has no end-to-end scenario test. A silent miscalculation in this
+    path could affect a large fraction of returns.
+
 ---
 
 ## Self-Check Notes
 
-This assessment is based on reading: `core/types/tax-node.ts`, `core/types/output-nodes.ts`,
+**First pass (2026-04-01)** — based on reading: `core/types/tax-node.ts`, `core/types/output-nodes.ts`,
 `core/runtime/executor.ts`, `core/runtime/graph.ts`, `core/runtime/planner.ts`,
 `core/validation/engine.ts`, `core/validation/predicates.ts`, `core/validation/rule-builder.ts`,
 `core/validation/types.ts`, `forms/f1040/mef/header.ts`, `forms/f1040/mef/xml.ts`,
@@ -675,6 +788,12 @@ This assessment is based on reading: `core/types/tax-node.ts`, `core/types/outpu
 `forms/f1040/validation/ALWAYSPASS_ROADMAP.md`, `forms/f1040/e2e/scenarios.test.ts`,
 `cli/main.ts`, `cli/store/store.ts`, `cli/commands/export.ts`, `deno.json`, `README.md`,
 `docs/product.md`, `forms/f1040/1040_coverage_plan.md`.
+
+**Second pass (2026-04-05)** — full structural survey via recursive directory listing and grep
+across all 4,591 source files and 2,217 test files. Additional files inspected: `.gitignore`,
+`forms/f1040/nodes/inputs/ext/`, `forms/f1040/nodes/inputs/preparer/`, `forms/f1040/e2e/scenarios.test.ts`
+(updated), `forms/f1040/2025/mef/builder.ts` (version string), `cli/store/store.ts` (access control),
+`forms/f1040/validation/rules/` (alwaysPass count), `docs/product.md` (re-read for alternative paths).
 
 Claim validation: All specific file paths and line number references were verified against actual
 file content at time of writing.
