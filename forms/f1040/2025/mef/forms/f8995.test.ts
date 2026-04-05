@@ -26,95 +26,58 @@ Deno.test("all unknown keys returns empty string", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
+// Section 3: Internal tracking fields do NOT emit (no valid IRS8995 element)
+// qbi_from_schedule_c and qbi_from_schedule_f are written by Schedule C/F nodes
+// for internal tracking; they have no IRS8995 top-level XSD element.
 // ---------------------------------------------------------------------------
 
-Deno.test("qbi_from_schedule_c at zero is emitted", () => {
-  const result = form8995.build({ qbi_from_schedule_c: 0 });
-  assertStringIncludes(
-    result,
-    "<QBIFromScheduleCAmt>0</QBIFromScheduleCAmt>",
-  );
+Deno.test("qbi_from_schedule_c alone returns empty string (tracking field only)", () => {
+  assertEquals(form8995.build({ qbi_from_schedule_c: 50000 }), "");
+});
+
+Deno.test("qbi_from_schedule_f alone returns empty string (tracking field only)", () => {
+  assertEquals(form8995.build({ qbi_from_schedule_f: 30000 }), "");
 });
 
 // ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 10 fields)
+// Section 4: Per-field mapping for valid IRS8995 XSD elements
+// Tag names verified against IRS8995.xsd (2025v3.0)
 // ---------------------------------------------------------------------------
 
-Deno.test("qbi_from_schedule_c maps to QBIFromScheduleCAmt", () => {
-  const result = form8995.build({ qbi_from_schedule_c: 50000 });
-  assertStringIncludes(
-    result,
-    "<QBIFromScheduleCAmt>50000</QBIFromScheduleCAmt>",
-  );
-});
-
-Deno.test("qbi_from_schedule_f maps to QBIFromScheduleFAmt", () => {
-  const result = form8995.build({ qbi_from_schedule_f: 30000 });
-  assertStringIncludes(
-    result,
-    "<QBIFromScheduleFAmt>30000</QBIFromScheduleFAmt>",
-  );
-});
-
-Deno.test("qbi maps to QualifiedBusinessIncomeAmt", () => {
+Deno.test("qbi maps to TotQualifiedBusinessIncomeAmt", () => {
   const result = form8995.build({ qbi: 80000 });
   assertStringIncludes(
     result,
-    "<QualifiedBusinessIncomeAmt>80000</QualifiedBusinessIncomeAmt>",
-  );
-});
-
-Deno.test("w2_wages maps to W2WagesAmt", () => {
-  const result = form8995.build({ w2_wages: 100000 });
-  assertStringIncludes(result, "<W2WagesAmt>100000</W2WagesAmt>");
-});
-
-Deno.test("unadjusted_basis maps to UnadjustedBasisAmt", () => {
-  const result = form8995.build({ unadjusted_basis: 200000 });
-  assertStringIncludes(
-    result,
-    "<UnadjustedBasisAmt>200000</UnadjustedBasisAmt>",
-  );
-});
-
-Deno.test("line6_sec199a_dividends maps to Section199ADividendsAmt", () => {
-  const result = form8995.build({ line6_sec199a_dividends: 5000 });
-  assertStringIncludes(
-    result,
-    "<Section199ADividendsAmt>5000</Section199ADividendsAmt>",
-  );
-});
-
-Deno.test("taxable_income maps to TaxableIncomeAmt", () => {
-  const result = form8995.build({ taxable_income: 150000 });
-  assertStringIncludes(
-    result,
-    "<TaxableIncomeAmt>150000</TaxableIncomeAmt>",
+    "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
   );
 });
 
 Deno.test("net_capital_gain maps to NetCapitalGainAmt", () => {
   const result = form8995.build({ net_capital_gain: 10000 });
+  assertStringIncludes(result, "<NetCapitalGainAmt>10000</NetCapitalGainAmt>");
+});
+
+Deno.test("taxable_income maps to TaxableIncomeBeforeQBIDedAmt", () => {
+  const result = form8995.build({ taxable_income: 150000 });
   assertStringIncludes(
     result,
-    "<NetCapitalGainAmt>10000</NetCapitalGainAmt>",
+    "<TaxableIncomeBeforeQBIDedAmt>150000</TaxableIncomeBeforeQBIDedAmt>",
   );
 });
 
-Deno.test("qbi_loss_carryforward maps to QBILossCarryforwardAmt", () => {
+Deno.test("qbi_loss_carryforward maps to TotQlfyBusLossCarryforwardAmt", () => {
   const result = form8995.build({ qbi_loss_carryforward: 3000 });
   assertStringIncludes(
     result,
-    "<QBILossCarryforwardAmt>3000</QBILossCarryforwardAmt>",
+    "<TotQlfyBusLossCarryforwardAmt>3000</TotQlfyBusLossCarryforwardAmt>",
   );
 });
 
-Deno.test("reit_loss_carryforward maps to REITLossCarryforwardAmt", () => {
+Deno.test("reit_loss_carryforward maps to TotQlfyREITDivPTPLossCfwdAmt", () => {
   const result = form8995.build({ reit_loss_carryforward: 1500 });
   assertStringIncludes(
     result,
-    "<REITLossCarryforwardAmt>1500</REITLossCarryforwardAmt>",
+    "<TotQlfyREITDivPTPLossCfwdAmt>1500</TotQlfyREITDivPTPLossCfwdAmt>",
   );
 });
 
@@ -126,76 +89,48 @@ Deno.test("single known field emits only that element, absent fields omitted", (
   const result = form8995.build({ qbi: 80000 });
   assertStringIncludes(
     result,
-    "<QualifiedBusinessIncomeAmt>80000</QualifiedBusinessIncomeAmt>",
+    "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
   );
-  assertNotIncludes(result, "<QBIFromScheduleCAmt>");
-  assertNotIncludes(result, "<W2WagesAmt>");
-  assertNotIncludes(result, "<TaxableIncomeAmt>");
+  assertNotIncludes(result, "<NetCapitalGainAmt>");
+  assertNotIncludes(result, "<TaxableIncomeBeforeQBIDedAmt>");
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
   const result = form8995.build({ qbi: 80000, taxable_income: 150000 });
   assertStringIncludes(
     result,
-    "<QualifiedBusinessIncomeAmt>80000</QualifiedBusinessIncomeAmt>",
+    "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
   );
   assertStringIncludes(
     result,
-    "<TaxableIncomeAmt>150000</TaxableIncomeAmt>",
+    "<TaxableIncomeBeforeQBIDedAmt>150000</TaxableIncomeBeforeQBIDedAmt>",
   );
-  assertNotIncludes(result, "<QBIFromScheduleCAmt>");
-  assertNotIncludes(result, "<W2WagesAmt>");
+  assertNotIncludes(result, "<NetCapitalGainAmt>");
 });
 
 // ---------------------------------------------------------------------------
-// Section 6: All fields present
+// Section 6: All mappable fields present
 // ---------------------------------------------------------------------------
 
 const allFields = {
-  qbi_from_schedule_c: 50000,
-  qbi_from_schedule_f: 30000,
   qbi: 80000,
-  w2_wages: 100000,
-  unadjusted_basis: 200000,
-  line6_sec199a_dividends: 5000,
-  taxable_income: 150000,
   net_capital_gain: 10000,
+  taxable_income: 150000,
   qbi_loss_carryforward: 3000,
   reit_loss_carryforward: 1500,
 };
 
-Deno.test("all 10 fields present: output wrapped in IRS8995 tag", () => {
+Deno.test("all 5 mappable fields present: output wrapped in IRS8995 tag", () => {
   const result = form8995.build(allFields);
   assertStringIncludes(result, "<IRS8995>");
   assertStringIncludes(result, "</IRS8995>");
 });
 
-Deno.test("all 10 fields present: all elements emitted", () => {
+Deno.test("all 5 mappable fields present: all elements emitted", () => {
   const result = form8995.build(allFields);
   assertStringIncludes(
     result,
-    "<QBIFromScheduleCAmt>50000</QBIFromScheduleCAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<QBIFromScheduleFAmt>30000</QBIFromScheduleFAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeAmt>80000</QualifiedBusinessIncomeAmt>",
-  );
-  assertStringIncludes(result, "<W2WagesAmt>100000</W2WagesAmt>");
-  assertStringIncludes(
-    result,
-    "<UnadjustedBasisAmt>200000</UnadjustedBasisAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<Section199ADividendsAmt>5000</Section199ADividendsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxableIncomeAmt>150000</TaxableIncomeAmt>",
+    "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
   );
   assertStringIncludes(
     result,
@@ -203,10 +138,14 @@ Deno.test("all 10 fields present: all elements emitted", () => {
   );
   assertStringIncludes(
     result,
-    "<QBILossCarryforwardAmt>3000</QBILossCarryforwardAmt>",
+    "<TaxableIncomeBeforeQBIDedAmt>150000</TaxableIncomeBeforeQBIDedAmt>",
   );
   assertStringIncludes(
     result,
-    "<REITLossCarryforwardAmt>1500</REITLossCarryforwardAmt>",
+    "<TotQlfyBusLossCarryforwardAmt>3000</TotQlfyBusLossCarryforwardAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotQlfyREITDivPTPLossCfwdAmt>1500</TotQlfyREITDivPTPLossCfwdAmt>",
   );
 });

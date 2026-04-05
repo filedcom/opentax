@@ -9,19 +9,44 @@ function assertNotIncludes(actual: string, expected: string) {
   );
 }
 
-// ─── Section 1: Empty input ──────────────────────────────────────────────────
+// ─── Section 1: Mandatory fields ─────────────────────────────────────────────
+// IRS1040 always emits IndividualReturnFilingStatusCd, VirtualCurAcquiredDurTYInd,
+// and RefundProductCd regardless of input (all required by IRS1040.xsd).
 
-Deno.test("empty object returns empty string", () => {
-  assertEquals(irs1040.build({}), "");
+Deno.test("empty object still emits required IRS1040 fields", () => {
+  const result = irs1040.build({});
+  assertStringIncludes(result, "<IRS1040>");
+  assertStringIncludes(result, "<IndividualReturnFilingStatusCd>");
+  assertStringIncludes(result, "<VirtualCurAcquiredDurTYInd>");
+  assertStringIncludes(result, "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>");
 });
 
-// ─── Section 2: Unknown keys ignored ─────────────────────────────────────────
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(irs1040.build({ unknown_field: 999, foo: 123, bar: "baz" }), "");
+Deno.test("all unknown keys still emits required IRS1040 fields", () => {
+  const result = irs1040.build({ unknown_field: 999, foo: 123, bar: "baz" });
+  assertStringIncludes(result, "<IRS1040>");
+  assertStringIncludes(result, "<IndividualReturnFilingStatusCd>");
+  assertStringIncludes(result, "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>");
 });
 
-// ─── Section 3: Zero value emitted ───────────────────────────────────────────
+Deno.test("filing_status single maps to IndividualReturnFilingStatusCd 1", () => {
+  const result = irs1040.build({ filing_status: "single" });
+  assertStringIncludes(result, "<IndividualReturnFilingStatusCd>1</IndividualReturnFilingStatusCd>");
+});
+
+Deno.test("filing_status mfj maps to IndividualReturnFilingStatusCd 2", () => {
+  const result = irs1040.build({ filing_status: "mfj" });
+  assertStringIncludes(result, "<IndividualReturnFilingStatusCd>2</IndividualReturnFilingStatusCd>");
+});
+
+Deno.test("RefundProductCd always emitted at end", () => {
+  const result = irs1040.build({ line1a_wages: 50000 });
+  assertStringIncludes(result, "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>");
+  const refundIdx = result.indexOf("<RefundProductCd>");
+  const closingIdx = result.indexOf("</IRS1040>");
+  assertEquals(refundIdx < closingIdx, true, "RefundProductCd must precede closing tag");
+});
+
+// ─── Section 2: Zero value emitted ───────────────────────────────────────────
 
 Deno.test("line1a_wages zero emits WagesAmt zero", () => {
   const result = irs1040.build({ line1a_wages: 0 });
@@ -33,83 +58,61 @@ Deno.test("line25a_w2_withheld zero emits WithholdingTaxAmt zero", () => {
   assertStringIncludes(result, "<WithholdingTaxAmt>0</WithholdingTaxAmt>");
 });
 
-Deno.test("line38_amount_paid_extension zero emits AmountPaidWithExtensionAmt zero", () => {
-  const result = irs1040.build({ line38_amount_paid_extension: 0 });
-  assertStringIncludes(
-    result,
-    "<AmountPaidWithExtensionAmt>0</AmountPaidWithExtensionAmt>",
-  );
+// line12e_itemized_deductions=0 is suppressed (means standard deduction was taken, not $0 deduction)
+Deno.test("line12e_itemized_deductions zero is suppressed", () => {
+  const result = irs1040.build({ line12e_itemized_deductions: 0 });
+  assertNotIncludes(result, "<TotalItemizedOrStandardDedAmt>");
 });
 
-// ─── Section 4: Per-field mapping ────────────────────────────────────────────
+// ─── Section 3: Per-field mapping ────────────────────────────────────────────
+// Tag names verified against IRS1040.xsd (2025v3.0)
 
 Deno.test("line1a_wages maps to WagesAmt", () => {
   const result = irs1040.build({ line1a_wages: 50000 });
   assertStringIncludes(result, "<WagesAmt>50000</WagesAmt>");
 });
 
-Deno.test("line1e_taxable_dep_care maps to TaxableDependentCareExpnsesAmt", () => {
+Deno.test("line1e_taxable_dep_care maps to TaxableBenefitsAmt", () => {
   const result = irs1040.build({ line1e_taxable_dep_care: 3000 });
-  assertStringIncludes(
-    result,
-    "<TaxableDependentCareExpnsesAmt>3000</TaxableDependentCareExpnsesAmt>",
-  );
+  assertStringIncludes(result, "<TaxableBenefitsAmt>3000</TaxableBenefitsAmt>");
 });
 
-Deno.test("line1i_combat_pay maps to CombatPayElectionAmt", () => {
+Deno.test("line1i_combat_pay maps to NontxCombatPayElectionAmt", () => {
   const result = irs1040.build({ line1i_combat_pay: 1200 });
   assertStringIncludes(
     result,
-    "<CombatPayElectionAmt>1200</CombatPayElectionAmt>",
+    "<NontxCombatPayElectionAmt>1200</NontxCombatPayElectionAmt>",
   );
 });
 
 Deno.test("line2a_tax_exempt maps to TaxExemptInterestAmt", () => {
   const result = irs1040.build({ line2a_tax_exempt: 500 });
-  assertStringIncludes(
-    result,
-    "<TaxExemptInterestAmt>500</TaxExemptInterestAmt>",
-  );
+  assertStringIncludes(result, "<TaxExemptInterestAmt>500</TaxExemptInterestAmt>");
 });
 
 Deno.test("line3a_qualified_dividends maps to QualifiedDividendsAmt", () => {
   const result = irs1040.build({ line3a_qualified_dividends: 1500 });
-  assertStringIncludes(
-    result,
-    "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>",
-  );
+  assertStringIncludes(result, "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>");
 });
 
-Deno.test("line4a_ira_gross maps to TotalIRADistributionsAmt", () => {
+Deno.test("line4a_ira_gross maps to IRADistributionsAmt", () => {
   const result = irs1040.build({ line4a_ira_gross: 20000 });
-  assertStringIncludes(
-    result,
-    "<TotalIRADistributionsAmt>20000</TotalIRADistributionsAmt>",
-  );
+  assertStringIncludes(result, "<IRADistributionsAmt>20000</IRADistributionsAmt>");
 });
 
-Deno.test("line4b_ira_taxable maps to TaxableIRADistributionsAmt", () => {
+Deno.test("line4b_ira_taxable maps to TaxableIRAAmt", () => {
   const result = irs1040.build({ line4b_ira_taxable: 18000 });
-  assertStringIncludes(
-    result,
-    "<TaxableIRADistributionsAmt>18000</TaxableIRADistributionsAmt>",
-  );
+  assertStringIncludes(result, "<TaxableIRAAmt>18000</TaxableIRAAmt>");
 });
 
-Deno.test("line5a_pension_gross maps to TotalPensionsAndAnnuitiesAmt", () => {
+Deno.test("line5a_pension_gross maps to PensionsAnnuitiesAmt", () => {
   const result = irs1040.build({ line5a_pension_gross: 24000 });
-  assertStringIncludes(
-    result,
-    "<TotalPensionsAndAnnuitiesAmt>24000</TotalPensionsAndAnnuitiesAmt>",
-  );
+  assertStringIncludes(result, "<PensionsAnnuitiesAmt>24000</PensionsAnnuitiesAmt>");
 });
 
-Deno.test("line5b_pension_taxable maps to TaxablePensionsAndAnnuitiesAmt", () => {
+Deno.test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
   const result = irs1040.build({ line5b_pension_taxable: 22000 });
-  assertStringIncludes(
-    result,
-    "<TaxablePensionsAndAnnuitiesAmt>22000</TaxablePensionsAndAnnuitiesAmt>",
-  );
+  assertStringIncludes(result, "<TotalTaxablePensionsAmt>22000</TotalTaxablePensionsAmt>");
 });
 
 Deno.test("line25a_w2_withheld maps to WithholdingTaxAmt", () => {
@@ -117,12 +120,9 @@ Deno.test("line25a_w2_withheld maps to WithholdingTaxAmt", () => {
   assertStringIncludes(result, "<WithholdingTaxAmt>8000</WithholdingTaxAmt>");
 });
 
-Deno.test("line25b_withheld_1099 maps to Form1099WithholdingAmt", () => {
+Deno.test("line25b_withheld_1099 maps to Form1099WithheldTaxAmt", () => {
   const result = irs1040.build({ line25b_withheld_1099: 450 });
-  assertStringIncludes(
-    result,
-    "<Form1099WithholdingAmt>450</Form1099WithholdingAmt>",
-  );
+  assertStringIncludes(result, "<Form1099WithheldTaxAmt>450</Form1099WithheldTaxAmt>");
 });
 
 Deno.test("line12e_itemized_deductions maps to TotalItemizedOrStandardDedAmt", () => {
@@ -135,131 +135,44 @@ Deno.test("line12e_itemized_deductions maps to TotalItemizedOrStandardDedAmt", (
 
 Deno.test("line28_actc maps to AdditionalChildTaxCreditAmt", () => {
   const result = irs1040.build({ line28_actc: 1600 });
-  assertStringIncludes(
-    result,
-    "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>",
-  );
+  assertStringIncludes(result, "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>");
 });
 
-Deno.test("line29_refundable_aoc maps to RefundableAOCreditAmt", () => {
+Deno.test("line29_refundable_aoc maps to RefundableAmerOppCreditAmt", () => {
   const result = irs1040.build({ line29_refundable_aoc: 2500 });
-  assertStringIncludes(
-    result,
-    "<RefundableAOCreditAmt>2500</RefundableAOCreditAmt>",
-  );
+  assertStringIncludes(result, "<RefundableAmerOppCreditAmt>2500</RefundableAmerOppCreditAmt>");
 });
 
-Deno.test("line38_amount_paid_extension maps to AmountPaidWithExtensionAmt", () => {
-  const result = irs1040.build({ line38_amount_paid_extension: 1000 });
-  assertStringIncludes(
-    result,
-    "<AmountPaidWithExtensionAmt>1000</AmountPaidWithExtensionAmt>",
-  );
+Deno.test("line17_additional_taxes maps to AdditionalTaxAmt", () => {
+  const result = irs1040.build({ line17_additional_taxes: 3200 });
+  assertStringIncludes(result, "<AdditionalTaxAmt>3200</AdditionalTaxAmt>");
 });
 
-// ─── Section 5: Sparse output ────────────────────────────────────────────────
+Deno.test("line33_total_payments maps to TotalPaymentsAmt", () => {
+  const result = irs1040.build({ line33_total_payments: 11000 });
+  assertStringIncludes(result, "<TotalPaymentsAmt>11000</TotalPaymentsAmt>");
+});
+
+// ─── Section 4: Sparse output ────────────────────────────────────────────────
 
 Deno.test("absent field not emitted when other field present", () => {
   const result = irs1040.build({ line3a_qualified_dividends: 1500 });
-  assertStringIncludes(
-    result,
-    "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>",
-  );
+  assertStringIncludes(result, "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>");
   assertNotIncludes(result, "<WagesAmt>");
 });
 
 Deno.test("IRA gross present but IRA taxable absent - only gross element emitted", () => {
   const result = irs1040.build({ line4a_ira_gross: 20000 });
-  assertStringIncludes(
-    result,
-    "<TotalIRADistributionsAmt>20000</TotalIRADistributionsAmt>",
-  );
-  assertNotIncludes(result, "<TaxableIRADistributionsAmt>");
+  assertStringIncludes(result, "<IRADistributionsAmt>20000</IRADistributionsAmt>");
+  assertNotIncludes(result, "<TaxableIRAAmt>");
 });
 
 Deno.test("null value field not emitted", () => {
-  assertEquals(irs1040.build({ line1a_wages: null }), "");
+  const result = irs1040.build({ line1a_wages: null });
+  assertNotIncludes(result, "<WagesAmt>");
 });
 
-// ─── Section 6: All fields present ───────────────────────────────────────────
-
-Deno.test("all 15 fields produces all 15 elements and IRS1040 wrapper", () => {
-  const result = irs1040.build({
-    line1a_wages: 50000,
-    line1e_taxable_dep_care: 3000,
-    line1i_combat_pay: 1200,
-    line2a_tax_exempt: 500,
-    line3a_qualified_dividends: 1500,
-    line4a_ira_gross: 20000,
-    line4b_ira_taxable: 18000,
-    line5a_pension_gross: 24000,
-    line5b_pension_taxable: 22000,
-    line25a_w2_withheld: 8000,
-    line25b_withheld_1099: 450,
-    line12e_itemized_deductions: 27700,
-    line28_actc: 1600,
-    line29_refundable_aoc: 2500,
-    line38_amount_paid_extension: 1000,
-  });
-
-  assertStringIncludes(result, "<IRS1040>");
-  assertStringIncludes(result, "<WagesAmt>50000</WagesAmt>");
-  assertStringIncludes(
-    result,
-    "<TaxableDependentCareExpnsesAmt>3000</TaxableDependentCareExpnsesAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<CombatPayElectionAmt>1200</CombatPayElectionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxExemptInterestAmt>500</TaxExemptInterestAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalIRADistributionsAmt>20000</TotalIRADistributionsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxableIRADistributionsAmt>18000</TaxableIRADistributionsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalPensionsAndAnnuitiesAmt>24000</TotalPensionsAndAnnuitiesAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxablePensionsAndAnnuitiesAmt>22000</TaxablePensionsAndAnnuitiesAmt>",
-  );
-  assertStringIncludes(result, "<WithholdingTaxAmt>8000</WithholdingTaxAmt>");
-  assertStringIncludes(
-    result,
-    "<Form1099WithholdingAmt>450</Form1099WithholdingAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<RefundableAOCreditAmt>2500</RefundableAOCreditAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<AmountPaidWithExtensionAmt>1000</AmountPaidWithExtensionAmt>",
-  );
-});
-
-// ─── Section 7: Mixed known/unknown keys ─────────────────────────────────────
+// ─── Section 5: Mixed known/unknown keys ─────────────────────────────────────
 
 Deno.test("known field emitted, unknown key dropped", () => {
   const result = irs1040.build({ line1a_wages: 50000, unknown_field: 999 });
@@ -268,12 +181,12 @@ Deno.test("known field emitted, unknown key dropped", () => {
   assertNotIncludes(result, ">999<");
 });
 
-Deno.test("wrapper IRS1040 element present when mappable fields exist", () => {
+Deno.test("wrapper IRS1040 element always present", () => {
   const result = irs1040.build({ line1a_wages: 100 });
   assertStringIncludes(result, "<IRS1040>");
 });
 
-// ─── Section 8: Element ordering ─────────────────────────────────────────────
+// ─── Section 6: Element ordering ─────────────────────────────────────────────
 
 Deno.test("elements emitted in field map order regardless of input insertion order", () => {
   // Input provides pension before wages, but output must follow field map order
@@ -282,11 +195,11 @@ Deno.test("elements emitted in field map order regardless of input insertion ord
     line1a_wages: 50000,
   });
   const wagesIdx = result.indexOf("<WagesAmt>");
-  const pensionIdx = result.indexOf("<TotalPensionsAndAnnuitiesAmt>");
+  const pensionIdx = result.indexOf("<PensionsAnnuitiesAmt>");
   assertEquals(
     wagesIdx < pensionIdx,
     true,
-    "WagesAmt must appear before TotalPensionsAndAnnuitiesAmt in field map order",
+    "WagesAmt must appear before PensionsAnnuitiesAmt in field map order",
   );
 });
 
@@ -306,111 +219,74 @@ Deno.test("all fields ordering matches field map sequence", () => {
     line12e_itemized_deductions: 12,
     line28_actc: 13,
     line29_refundable_aoc: 14,
-    line38_amount_paid_extension: 15,
+    line33_total_payments: 15,
   });
 
   const elementOrder = [
     "<WagesAmt>",
-    "<TaxableDependentCareExpnsesAmt>",
-    "<CombatPayElectionAmt>",
+    "<TaxableBenefitsAmt>",
+    "<NontxCombatPayElectionAmt>",
     "<TaxExemptInterestAmt>",
     "<QualifiedDividendsAmt>",
-    "<TotalIRADistributionsAmt>",
-    "<TaxableIRADistributionsAmt>",
-    "<TotalPensionsAndAnnuitiesAmt>",
-    "<TaxablePensionsAndAnnuitiesAmt>",
+    "<IRADistributionsAmt>",
+    "<TaxableIRAAmt>",
+    "<PensionsAnnuitiesAmt>",
+    "<TotalTaxablePensionsAmt>",
     "<TotalItemizedOrStandardDedAmt>",
     "<WithholdingTaxAmt>",
-    "<Form1099WithholdingAmt>",
+    "<Form1099WithheldTaxAmt>",
     "<AdditionalChildTaxCreditAmt>",
-    "<RefundableAOCreditAmt>",
-    "<AmountPaidWithExtensionAmt>",
+    "<RefundableAmerOppCreditAmt>",
+    "<TotalPaymentsAmt>",
   ];
 
   let prevIdx = -1;
-  for (const element of elementOrder) {
-    const idx = result.indexOf(element);
+  for (const el of elementOrder) {
+    const idx = result.indexOf(el);
     assertEquals(
       idx > prevIdx,
       true,
-      `${element} must appear after previous element in field map order`,
+      `${el} must appear after previous element in field map order`,
     );
     prevIdx = idx;
   }
 });
 
-// ─── Section 9: New fields (14 additions) ────────────────────────────────────
+// ─── Section 7: Additional field mappings ────────────────────────────────────
 
 Deno.test("line2b_taxable_interest maps to TaxableInterestAmt", () => {
   const result = irs1040.build({ line2b_taxable_interest: 1200 });
   assertStringIncludes(result, "<TaxableInterestAmt>1200</TaxableInterestAmt>");
 });
-Deno.test("line2b_taxable_interest absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TaxableInterestAmt>");
-});
 
 Deno.test("line3b_ordinary_dividends maps to OrdinaryDividendsAmt", () => {
   const result = irs1040.build({ line3b_ordinary_dividends: 800 });
-  assertStringIncludes(
-    result,
-    "<OrdinaryDividendsAmt>800</OrdinaryDividendsAmt>",
-  );
-});
-Deno.test("line3b_ordinary_dividends absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<OrdinaryDividendsAmt>");
+  assertStringIncludes(result, "<OrdinaryDividendsAmt>800</OrdinaryDividendsAmt>");
 });
 
 Deno.test("line6a_ss_gross maps to SocSecBnftAmt", () => {
   const result = irs1040.build({ line6a_ss_gross: 24000 });
   assertStringIncludes(result, "<SocSecBnftAmt>24000</SocSecBnftAmt>");
 });
-Deno.test("line6a_ss_gross absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<SocSecBnftAmt>");
-});
 
 Deno.test("line6b_ss_taxable maps to TaxableSocSecAmt", () => {
   const result = irs1040.build({ line6b_ss_taxable: 20400 });
   assertStringIncludes(result, "<TaxableSocSecAmt>20400</TaxableSocSecAmt>");
 });
-Deno.test("line6b_ss_taxable absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TaxableSocSecAmt>");
-});
 
 Deno.test("line7_capital_gain maps to CapitalGainLossAmt", () => {
   const result = irs1040.build({ line7_capital_gain: -3000 });
-  assertStringIncludes(
-    result,
-    "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>",
-  );
-});
-Deno.test("line7_capital_gain absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<CapitalGainLossAmt>");
+  assertStringIncludes(result, "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>");
 });
 
 Deno.test("line1c_unreported_tips maps to TipIncomeAmt", () => {
   const result = irs1040.build({ line1c_unreported_tips: 500 });
   assertStringIncludes(result, "<TipIncomeAmt>500</TipIncomeAmt>");
 });
-Deno.test("line1c_unreported_tips absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TipIncomeAmt>");
-});
 
 Deno.test("line1f_taxable_adoption_benefits maps to TaxableBenefitsForm8839Amt", () => {
   const result = irs1040.build({ line1f_taxable_adoption_benefits: 1500 });
-  assertStringIncludes(
-    result,
-    "<TaxableBenefitsForm8839Amt>1500</TaxableBenefitsForm8839Amt>",
-  );
-});
-Deno.test("line1f_taxable_adoption_benefits absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TaxableBenefitsForm8839Amt>");
+  assertStringIncludes(result, "<TaxableBenefitsForm8839Amt>1500</TaxableBenefitsForm8839Amt>");
 });
 
 Deno.test("line1g_wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
@@ -420,21 +296,10 @@ Deno.test("line1g_wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
     "<TotalWagesWithNoWithholdingAmt>7500</TotalWagesWithNoWithholdingAmt>",
   );
 });
-Deno.test("line1g_wages_8919 absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TotalWagesWithNoWithholdingAmt>");
-});
 
 Deno.test("line25c_additional_medicare_withheld maps to TaxWithheldOtherAmt", () => {
   const result = irs1040.build({ line25c_additional_medicare_withheld: 900 });
-  assertStringIncludes(
-    result,
-    "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>",
-  );
-});
-Deno.test("line25c_additional_medicare_withheld absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TaxWithheldOtherAmt>");
+  assertStringIncludes(result, "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>");
 });
 
 Deno.test("line13_qbi_deduction maps to QualifiedBusinessIncomeDedAmt", () => {
@@ -444,30 +309,10 @@ Deno.test("line13_qbi_deduction maps to QualifiedBusinessIncomeDedAmt", () => {
     "<QualifiedBusinessIncomeDedAmt>5000</QualifiedBusinessIncomeDedAmt>",
   );
 });
-Deno.test("line13_qbi_deduction absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<QualifiedBusinessIncomeDedAmt>");
-});
 
 Deno.test("line30_refundable_adoption maps to RefundableCreditsAmt", () => {
   const result = irs1040.build({ line30_refundable_adoption: 2000 });
-  assertStringIncludes(
-    result,
-    "<RefundableCreditsAmt>2000</RefundableCreditsAmt>",
-  );
-});
-Deno.test("line30_refundable_adoption absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<RefundableCreditsAmt>");
-});
-
-Deno.test("line17_additional_taxes maps to OtherTaxAmt", () => {
-  const result = irs1040.build({ line17_additional_taxes: 3200 });
-  assertStringIncludes(result, "<OtherTaxAmt>3200</OtherTaxAmt>");
-});
-Deno.test("line17_additional_taxes absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<OtherTaxAmt>");
+  assertStringIncludes(result, "<RefundableCreditsAmt>2000</RefundableCreditsAmt>");
 });
 
 Deno.test("line20_nonrefundable_credits maps to TotalNonrefundableCreditsAmt", () => {
@@ -477,10 +322,6 @@ Deno.test("line20_nonrefundable_credits maps to TotalNonrefundableCreditsAmt", (
     "<TotalNonrefundableCreditsAmt>4500</TotalNonrefundableCreditsAmt>",
   );
 });
-Deno.test("line20_nonrefundable_credits absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TotalNonrefundableCreditsAmt>");
-});
 
 Deno.test("line31_additional_payments maps to TotalOtherPaymentsRfdblCrAmt", () => {
   const result = irs1040.build({ line31_additional_payments: 1100 });
@@ -489,14 +330,10 @@ Deno.test("line31_additional_payments maps to TotalOtherPaymentsRfdblCrAmt", () 
     "<TotalOtherPaymentsRfdblCrAmt>1100</TotalOtherPaymentsRfdblCrAmt>",
   );
 });
-Deno.test("line31_additional_payments absent not emitted", () => {
-  const result = irs1040.build({ line1a_wages: 50000 });
-  assertNotIncludes(result, "<TotalOtherPaymentsRfdblCrAmt>");
-});
 
-// ─── Section 10: All 29 fields ───────────────────────────────────────────────
+// ─── Section 8: All mapped fields ────────────────────────────────────────────
 
-Deno.test("all 29 fields produces all 29 elements and IRS1040 wrapper", () => {
+Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () => {
   const result = irs1040.build({
     line1a_wages: 50000,
     line1c_unreported_tips: 500,
@@ -526,103 +363,38 @@ Deno.test("all 29 fields produces all 29 elements and IRS1040 wrapper", () => {
     line30_refundable_adoption: 2000,
     line31_additional_payments: 1100,
     line12e_itemized_deductions: 27700,
-    line38_amount_paid_extension: 1000,
+    line33_total_payments: 12000,
   });
 
   assertStringIncludes(result, "<IRS1040>");
   assertStringIncludes(result, "<WagesAmt>50000</WagesAmt>");
   assertStringIncludes(result, "<TipIncomeAmt>500</TipIncomeAmt>");
-  assertStringIncludes(
-    result,
-    "<TaxableDependentCareExpnsesAmt>3000</TaxableDependentCareExpnsesAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxableBenefitsForm8839Amt>1500</TaxableBenefitsForm8839Amt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalWagesWithNoWithholdingAmt>7500</TotalWagesWithNoWithholdingAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<CombatPayElectionAmt>1200</CombatPayElectionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxExemptInterestAmt>500</TaxExemptInterestAmt>",
-  );
+  assertStringIncludes(result, "<TaxableBenefitsAmt>3000</TaxableBenefitsAmt>");
+  assertStringIncludes(result, "<TaxableBenefitsForm8839Amt>1500</TaxableBenefitsForm8839Amt>");
+  assertStringIncludes(result, "<TotalWagesWithNoWithholdingAmt>7500</TotalWagesWithNoWithholdingAmt>");
+  assertStringIncludes(result, "<NontxCombatPayElectionAmt>1200</NontxCombatPayElectionAmt>");
+  assertStringIncludes(result, "<TaxExemptInterestAmt>500</TaxExemptInterestAmt>");
   assertStringIncludes(result, "<TaxableInterestAmt>1200</TaxableInterestAmt>");
-  assertStringIncludes(
-    result,
-    "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<OrdinaryDividendsAmt>800</OrdinaryDividendsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalIRADistributionsAmt>20000</TotalIRADistributionsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxableIRADistributionsAmt>18000</TaxableIRADistributionsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalPensionsAndAnnuitiesAmt>24000</TotalPensionsAndAnnuitiesAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxablePensionsAndAnnuitiesAmt>22000</TaxablePensionsAndAnnuitiesAmt>",
-  );
+  assertStringIncludes(result, "<QualifiedDividendsAmt>1500</QualifiedDividendsAmt>");
+  assertStringIncludes(result, "<OrdinaryDividendsAmt>800</OrdinaryDividendsAmt>");
+  assertStringIncludes(result, "<IRADistributionsAmt>20000</IRADistributionsAmt>");
+  assertStringIncludes(result, "<TaxableIRAAmt>18000</TaxableIRAAmt>");
+  assertStringIncludes(result, "<PensionsAnnuitiesAmt>24000</PensionsAnnuitiesAmt>");
+  assertStringIncludes(result, "<TotalTaxablePensionsAmt>22000</TotalTaxablePensionsAmt>");
   assertStringIncludes(result, "<SocSecBnftAmt>24000</SocSecBnftAmt>");
   assertStringIncludes(result, "<TaxableSocSecAmt>20400</TaxableSocSecAmt>");
-  assertStringIncludes(
-    result,
-    "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<QualifiedBusinessIncomeDedAmt>5000</QualifiedBusinessIncomeDedAmt>",
-  );
-  assertStringIncludes(result, "<OtherTaxAmt>3200</OtherTaxAmt>");
-  assertStringIncludes(
-    result,
-    "<TotalNonrefundableCreditsAmt>4500</TotalNonrefundableCreditsAmt>",
-  );
+  assertStringIncludes(result, "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>");
+  assertStringIncludes(result, "<QualifiedBusinessIncomeDedAmt>5000</QualifiedBusinessIncomeDedAmt>");
+  assertStringIncludes(result, "<AdditionalTaxAmt>3200</AdditionalTaxAmt>");
+  assertStringIncludes(result, "<TotalNonrefundableCreditsAmt>4500</TotalNonrefundableCreditsAmt>");
   assertStringIncludes(result, "<WithholdingTaxAmt>8000</WithholdingTaxAmt>");
-  assertStringIncludes(
-    result,
-    "<Form1099WithholdingAmt>450</Form1099WithholdingAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<RefundableAOCreditAmt>2500</RefundableAOCreditAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<RefundableCreditsAmt>2000</RefundableCreditsAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalOtherPaymentsRfdblCrAmt>1100</TotalOtherPaymentsRfdblCrAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<AmountPaidWithExtensionAmt>1000</AmountPaidWithExtensionAmt>",
-  );
+  assertStringIncludes(result, "<Form1099WithheldTaxAmt>450</Form1099WithheldTaxAmt>");
+  assertStringIncludes(result, "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>");
+  assertStringIncludes(result, "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>");
+  assertStringIncludes(result, "<RefundableAmerOppCreditAmt>2500</RefundableAmerOppCreditAmt>");
+  assertStringIncludes(result, "<RefundableCreditsAmt>2000</RefundableCreditsAmt>");
+  assertStringIncludes(result, "<TotalOtherPaymentsRfdblCrAmt>1100</TotalOtherPaymentsRfdblCrAmt>");
+  assertStringIncludes(result, "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>");
+  assertStringIncludes(result, "<TotalPaymentsAmt>12000</TotalPaymentsAmt>");
+  assertStringIncludes(result, "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>");
 });
