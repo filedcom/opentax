@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v3.0
 milestone_name: milestone
 status: Phase complete — ready for verification
-stopped_at: Completed 05-specialty-credits-a-batch-5/05-01-PLAN.md
-last_updated: "2026-04-01T22:34:02.389Z"
+stopped_at: Completed 10-01-PLAN.md — XSD validation in CI
+last_updated: "2026-04-05T16:33:06.565Z"
 progress:
-  total_phases: 10
-  completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 12
+  completed_phases: 5
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 05 — specialty-credits-a-batch-5
+**Current focus:** Phase 10 — xsd-validation-in-ci-xmllint-against-irs-xsd-files-wire-into-deno-test-suite
 
 ## Current Position
 
-Phase: 05 (specialty-credits-a-batch-5) — EXECUTING
+Phase: 10 (xsd-validation-in-ci-xmllint-against-irs-xsd-files-wire-into-deno-test-suite) — EXECUTING
 Plan: 1 of 1
 
 ## Performance Metrics
@@ -47,6 +47,7 @@ Plan: 1 of 1
 | Phase 02-deductions-worksheets-batch-2 P01 | 162 | 2 tasks | 3 files |
 | Phase 04-special-situations-b-batch-4 P01 | 3 | 2 tasks | 0 files |
 | Phase 05-specialty-credits-a-batch-5 P01 | 5 | 2 tasks | 0 files |
+| Phase 10-xsd-validation-in-ci-xmllint-against-irs-xsd-files-wire-into-deno-test-suite P01 | 120 | 2 tasks | 11 files |
 
 ### Decisions
 
@@ -61,6 +62,8 @@ Plan: 1 of 1
 - [Phase 02-deductions-worksheets-batch-2]: method field kept as UI hint only; depletionDeduction() always computes Math.max(cost, pct) per IRC §611
 - [Phase 04-special-situations-b-batch-4]: F8917 correct behavior for TY2025 is no output — IRC §222 repealed by P.L. 116-260 after TY2020; ROADMAP 'routes to schedule1' criterion is stale
 - [Phase 05-specialty-credits-a-batch-5]: Phase 5 verification is node-scoped only — full suite has 59 pre-existing MEF failures unrelated to Phase 5; 108 passed / 0 failed is the correct gate
+- [Phase 10]: IRS1040 always emits required XSD fields (IndividualReturnFilingStatusCd, VirtualCurAcquiredDurTYInd, RefundProductCd) regardless of income data
+- [Phase 10]: f8959 builder returns empty string — IRS8959 requires nested AdditionalTaxGrp structure; deferred to future plan
 
 ### Roadmap Evolution
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-01T22:34:02.386Z
-Stopped at: Completed 05-specialty-credits-a-batch-5/05-01-PLAN.md
+Last session: 2026-04-05T16:33:06.562Z
+Stopped at: Completed 10-01-PLAN.md — XSD validation in CI
 Resume file: None

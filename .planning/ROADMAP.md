@@ -203,7 +203,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 7. Schema Extensions & Form 7203 | 0/3 | Not started | - |
 | 8. International Simple | 0/3 | Not started | - |
 | 9. International Complex | 0/3 | Not started | - |
-| 10. XSD Validation in CI | 0/1 | Not started | - |
+| 10. XSD Validation in CI | 1/1 | Complete   | 2026-04-05 |
 | 11. Executor Error Isolation | 0/1 | Not started | - |
 | 12. Validation Rule Stubs | 0/1 | Not started | - |
 
@@ -218,10 +218,10 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
   4. Any schema violations found during development are fixed before the test is committed
   5. `deno task test` passes overall (56K+ tests)
   6. `returnVersion` string matches the actual IRS published schema version in the XSD files
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 10-01: Discover XSD structure, identify root XSD, write validation test harness, fix any violations found
+- [x] 10-01-PLAN.md — Create XSD validation test harness (3 e2e scenarios + xmllint) and add validate:mef task
 
 ### Phase 11: Executor Error Isolation
 **Goal**: Fix the silent node skip bug in `core/runtime/executor.ts`. Currently if a node's pending input fails Zod parse (line 67-70), the node is silently skipped with `continue` — no error, no diagnostic, no indication to the caller. Wrap each node's execution in a per-node try/catch. On Zod parse failure OR compute() throw: add a `DiagnosticsReport` entry (severity: error, code: "EXECUTOR_NODE_FAILURE") and continue executing remaining nodes rather than aborting. Add tests that exercise both failure paths.
