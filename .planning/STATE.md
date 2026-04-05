@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
-status: Phase complete — ready for verification
-stopped_at: Completed 09-international-complex-batch-9/09-01-PLAN.md
-last_updated: "2026-04-05T20:55:36.385Z"
+status: Ready to execute
+stopped_at: Completed 12-validation-rule-stubs-high-value-batch/12-02-PLAN.md
+last_updated: "2026-04-05T21:50:48.506Z"
 progress:
   total_phases: 12
   completed_phases: 10
-  total_plans: 15
-  completed_plans: 14
+  total_plans: 18
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 09 — international-complex-batch-9
+**Current focus:** Phase 12 — validation-rule-stubs-high-value-batch
 
 ## Current Position
 
-Phase: 09 (international-complex-batch-9) — EXECUTING
-Plan: 1 of 1
+Phase: 12 (validation-rule-stubs-high-value-batch) — EXECUTING
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Plan: 1 of 1
 | Phase 07-schema-extensions-form-7203-batch-7 P01 | 1 | 2 tasks | 0 files |
 | Phase 08-international-simple-batch-8 P01 | 2 | 2 tasks | 0 files |
 | Phase 09-international-complex-batch-9 P01 | 1 | 2 tasks | 0 files |
+| Phase 12-validation-rule-stubs-high-value-batch P02 | 28 | 2 tasks | 8 files |
 
 ### Decisions
 
@@ -86,6 +87,8 @@ Plan: 1 of 1
 - [Phase 09-international-complex-batch-9]: Phase 9 verification is node-scoped only — 139 passed / 0 failed is the correct gate; pre-existing MEF failures are unrelated
 - [Phase 09-international-complex-batch-9]: f8288 FIRPTA routes directly to f1040 line25b (not schedule3) — correct for withholding credits per IRC §1445
 - [Phase 09-international-complex-batch-9]: f8621 PFIC uses regime-based routing: excess distribution → schedule2, MTM/QEF → schedule1 per IRC §1291/§1293/§1296
+- [Phase 12-validation-rule-stubs-high-value-batch]: validEIN uses Pub 1586 Table 1 prefix Set — explicit Set over regex for auditability
+- [Phase 12-validation-rule-stubs-high-value-batch]: Only 7 alwaysPass stubs in the entire codebase are implementable with the single-instance predicate DSL; the remaining ~533 stubs require cross-instance iteration, database lookups, or binary attachment inspection
 
 ### Roadmap Evolution
 
@@ -108,6 +111,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T20:55:36.382Z
-Stopped at: Completed 09-international-complex-batch-9/09-01-PLAN.md
+Last session: 2026-04-05T21:50:48.504Z
+Stopped at: Completed 12-validation-rule-stubs-high-value-batch/12-02-PLAN.md
 Resume file: None
