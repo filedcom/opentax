@@ -234,10 +234,10 @@ Plans:
   4. Remaining nodes in the DAG still execute after a single node failure
   5. `core/runtime/executor.test.ts` has tests covering: parse failure produces diagnostic, compute throw produces diagnostic, other nodes still run after failure
   6. `deno task test` passes overall
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 11-01: Fix executor.ts error isolation, add diagnostic entries, write tests covering both failure paths
+- [ ] 11-01-PLAN.md — Per-node try/catch with diagnostic entries + tests for parse failure and compute throw paths
 
 ### Phase 12: Validation Rule Stubs — High-Value Batch
 **Goal**: Implement the highest-value subset of the 753 `alwaysPass` validation rule stubs. Focus on rules that are (a) implementable client-side (no IRS database lookup required), (b) catch real taxpayer errors, and (c) cover forms with broad usage. Target: TIN/EIN format validation (~30 rules from the 63 total TIN rules), simple conditional math rules (~20 rules from the 57 total), and binary presence rules that can be evaluated from the pending dict (~10 rules). Skip: database lookup rules (prior-year AGI, IP-PIN), per-item repeating group rules requiring `everyItem` DSL combinator.

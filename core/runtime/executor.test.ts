@@ -4,7 +4,7 @@ import type { NodeRegistry } from "../types/node-registry.ts";
 import type { NodeResult } from "../types/tax-node.ts";
 import { TaxNode } from "../types/tax-node.ts";
 import { OutputNodes } from "../types/output-nodes.ts";
-import { execute } from "./executor.ts";
+import { execute, type ExecutorDiagnosticEntry } from "./executor.ts";
 import type { ExecutionStep } from "./planner.ts";
 import type { NodeContext } from "../types/node-context.ts";
 
@@ -310,4 +310,186 @@ Deno.test("executor: multi-source diamond — two nodes depositing to same targe
   // D's pending has both x=10 and y=20 as scalars
   assertEquals(result.pending["diamond_d"]?.["x"], 10);
   assertEquals(result.pending["diamond_d"]?.["y"], 20);
+});
+
+Deno.test("executor: Zod parse failure produces diagnostic entry, not silent skip", () => {
+  // A node with a strict required string field receives a number — parse fails.
+  // Expect: diagnostic entry emitted, compute() NOT called (no downstream output).
+  const badParseInputSchema = z.object({ name: z.string() });
+  class MockBadParseNode extends TaxNode<typeof badParseInputSchema> {
+    readonly nodeType = "mock_bad_parse";
+    readonly inputSchema = badParseInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, _input: z.infer<typeof badParseInputSchema>): NodeResult {
+      // Should never be called — parse fails before reaching compute()
+      return { outputs: [{ nodeType: "should_not_appear", fields: { sentinel: true } }] };
+    }
+  }
+
+  const startSchema = z.object({ dummy: z.number() });
+  class BadParseStart extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, _input: z.infer<typeof startSchema>): NodeResult {
+      // Deposit { name: 123 } — a number where string is expected
+      return {
+        outputs: [{ nodeType: "mock_bad_parse", fields: { name: 123 } }],
+      };
+    }
+  }
+
+  const plan: readonly ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "mock_bad_parse", nodeType: "mock_bad_parse" },
+  ];
+
+  const registry: NodeRegistry = {
+    start: new BadParseStart(),
+    mock_bad_parse: new MockBadParseNode(),
+  };
+
+  const result = execute(plan, registry, { dummy: 1 }, { taxYear: 2025 });
+
+  // diagnostics must exist and have at least one entry
+  assertEquals(Array.isArray(result.diagnostics), true);
+  assertEquals(result.diagnostics.length >= 1, true);
+
+  const entry: ExecutorDiagnosticEntry = result.diagnostics[0];
+  assertEquals(entry.severity, "error");
+  assertEquals(entry.code, "EXECUTOR_NODE_FAILURE");
+  assertEquals(entry.nodeType, "mock_bad_parse");
+  // message should mention parse/validation
+  assertEquals(
+    entry.message.toLowerCase().includes("parse") ||
+      entry.message.toLowerCase().includes("validation") ||
+      entry.message.toLowerCase().includes("zod"),
+    true,
+  );
+
+  // compute() was NOT called — sentinel output should not appear
+  assertEquals(result.pending["should_not_appear"], undefined);
+});
+
+Deno.test("executor: compute() throw produces diagnostic entry, does not abort execution", () => {
+  // A node whose compute() throws — diagnostic emitted, no crash.
+  const throwInputSchema = z.object({ trigger: z.number() });
+  class MockThrowNode extends TaxNode<typeof throwInputSchema> {
+    readonly nodeType = "mock_throw";
+    readonly inputSchema = throwInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, _input: z.infer<typeof throwInputSchema>): NodeResult {
+      throw new Error("intentional boom");
+    }
+  }
+
+  const startSchema = z.object({ dummy: z.number() });
+  class ThrowStart extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, _input: z.infer<typeof startSchema>): NodeResult {
+      return {
+        outputs: [{ nodeType: "mock_throw", fields: { trigger: 1 } }],
+      };
+    }
+  }
+
+  const plan: readonly ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "mock_throw", nodeType: "mock_throw" },
+  ];
+
+  const registry: NodeRegistry = {
+    start: new ThrowStart(),
+    mock_throw: new MockThrowNode(),
+  };
+
+  const result = execute(plan, registry, { dummy: 1 }, { taxYear: 2025 });
+
+  assertEquals(Array.isArray(result.diagnostics), true);
+  assertEquals(result.diagnostics.length >= 1, true);
+
+  const entry: ExecutorDiagnosticEntry = result.diagnostics[0];
+  assertEquals(entry.severity, "error");
+  assertEquals(entry.code, "EXECUTOR_NODE_FAILURE");
+  assertEquals(entry.nodeType, "mock_throw");
+  assertEquals(entry.message.includes("intentional boom"), true);
+});
+
+Deno.test("executor: remaining nodes execute after single node failure", () => {
+  // 4-node plan: start -> good_a, start -> bad_b (throws), good_a -> good_c
+  // bad_b throws; good_a and good_c should still execute.
+  // Expect: good_c's output in pending, exactly 1 diagnostic (for bad_b).
+
+  const goodAInputSchema = z.object({ val: z.number() });
+  class GoodA extends TaxNode<typeof goodAInputSchema> {
+    readonly nodeType = "good_a";
+    readonly inputSchema = goodAInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, input: z.infer<typeof goodAInputSchema>): NodeResult {
+      return {
+        outputs: [{ nodeType: "good_c", fields: { result: input.val * 2 } }],
+      };
+    }
+  }
+
+  const badBInputSchema = z.object({ val: z.number() });
+  class BadB extends TaxNode<typeof badBInputSchema> {
+    readonly nodeType = "bad_b";
+    readonly inputSchema = badBInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, _input: z.infer<typeof badBInputSchema>): NodeResult {
+      throw new Error("bad_b always fails");
+    }
+  }
+
+  const goodCInputSchema = z.object({ result: z.number() });
+  class GoodC extends TaxNode<typeof goodCInputSchema> {
+    readonly nodeType = "good_c";
+    readonly inputSchema = goodCInputSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, _input: z.infer<typeof goodCInputSchema>): NodeResult {
+      return { outputs: [] };
+    }
+  }
+
+  const startSchema = z.object({ val: z.number() });
+  class ContinuationStart extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
+      return {
+        outputs: [
+          { nodeType: "good_a", fields: { val: input.val } },
+          { nodeType: "bad_b", fields: { val: input.val } },
+        ],
+      };
+    }
+  }
+
+  const plan: readonly ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "good_a", nodeType: "good_a" },
+    { id: "bad_b", nodeType: "bad_b" },
+    { id: "good_c", nodeType: "good_c" },
+  ];
+
+  const registry: NodeRegistry = {
+    start: new ContinuationStart(),
+    good_a: new GoodA(),
+    bad_b: new BadB(),
+    good_c: new GoodC(),
+  };
+
+  const result = execute(plan, registry, { val: 5 }, { taxYear: 2025 });
+
+  // good_c received output from good_a (val=5, doubled=10)
+  assertEquals(result.pending["good_c"]?.["result"], 10);
+
+  // exactly 1 diagnostic — only bad_b failed
+  assertEquals(result.diagnostics.length, 1);
+  assertEquals(result.diagnostics[0].nodeType, "bad_b");
+  assertEquals(result.diagnostics[0].code, "EXECUTOR_NODE_FAILURE");
 });
