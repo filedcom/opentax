@@ -63,20 +63,20 @@ Deno.test("ReturnHeader present", () => {
 
 Deno.test("ReturnType is 1040", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, "<ReturnTypeCd>1040</ReturnTypeCd>");
+  assertStringIncludes(xml, "<ReturnType>1040</ReturnType>");
 });
 
 Deno.test("TaxPeriodBeginDate is 2025-01-01", () => {
   const xml = buildMefXml({});
   assertStringIncludes(
     xml,
-    "<TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt>",
+    "<TaxPeriodBeginDate>2025-01-01</TaxPeriodBeginDate>",
   );
 });
 
 Deno.test("TaxPeriodEndDate is 2025-12-31", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
+  assertStringIncludes(xml, "<TaxPeriodEndDate>2025-12-31</TaxPeriodEndDate>");
 });
 
 // ─── 3. ReturnData always present ─────────────────────────────────────────────
