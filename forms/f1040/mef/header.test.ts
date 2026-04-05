@@ -60,9 +60,12 @@ Deno.test("return value is a string", () => {
 // Section 2: No filer — absent blocks
 // ---------------------------------------------------------------------------
 
-Deno.test("no filer: Filer block is absent", () => {
+Deno.test("no filer: placeholder Filer block is emitted (XSD requires Filer)", () => {
+  // ReturnHeader1040x.xsd §338 requires a Filer element.
+  // When no filer identity is provided, a placeholder is emitted so the schema
+  // validator accepts the document (test/preview use case).
   const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<Filer>"), false);
+  assertEquals(result.includes("<Filer>"), true);
 });
 
 Deno.test("no filer: FilingStatusCd is absent", () => {
@@ -70,14 +73,18 @@ Deno.test("no filer: FilingStatusCd is absent", () => {
   assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("no filer: USAddress block is absent", () => {
+Deno.test("no filer: placeholder USAddress is emitted (required by XSD)", () => {
+  // XSD requires USAddress or ForeignAddress inside Filer.
+  // Placeholder address is emitted when no filer identity is provided.
   const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<USAddress>"), false);
+  assertEquals(result.includes("<USAddress>"), true);
 });
 
-Deno.test("no filer: PrimarySSN is absent", () => {
+Deno.test("no filer: placeholder PrimarySSN is emitted (required by XSD)", () => {
+  // XSD requires PrimarySSN inside Filer.
+  // Placeholder SSN 000000000 is emitted when no filer identity is provided.
   const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<PrimarySSN>"), false);
+  assertEquals(result.includes("<PrimarySSN>"), true);
 });
 
 // ---------------------------------------------------------------------------
