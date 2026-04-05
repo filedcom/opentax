@@ -1,7 +1,8 @@
 # alwaysPass Rules Roadmap
 
-> Generated: 2026-03-31 | Updated: 2026-04-01
-> Total: 540 rules across 79 files (99 converted on 2026-03-31, 16 more on 2026-04-01 = 115 total converted)
+> Generated: 2026-03-31 | Updated: 2026-04-05
+> Total: 533 rules remain as alwaysPass stubs (540 original − 115 converted through Round 3 − 7 converted in Round 4)
+> Exhaustive audit (2026-04-05): Only 7 of the 540+ stubs were implementable with the single-instance predicate DSL. The remaining ~533 require cross-instance iteration, database lookups, or binary attachment inspection.
 
 These rules are currently `alwaysPass` because they require capabilities beyond
 the current predicate DSL. This roadmap categorizes them by the capability needed
@@ -16,6 +17,35 @@ and suggests implementation approach for each category.
 
 **Round 3 (2026-04-01):** `ltField`, `sumGtNum`, `eqMinNum`, `strLenEq`,
 `dateYearGte`, `dateYearEq`, `dateYearEqOrNext`, `dateGteField`, `dateLteField`, `dateMonthDayEq`
+
+**Round 4 (2026-04-05 — Phase 12):** `validEIN`, `betweenNum`, `diffLteNum`, `notGtPctOfField`
+Converted 7 rules across fpymt, f1116, f3468, f9465, f8814, sse files.
+
+### Phase 12 converted rules (Round 4)
+
+| Rule ID | File | Predicate(s) Used | Description |
+|---------|------|-------------------|-------------|
+| FPYMT-088-11 | fpymt.ts | `any(all(dateYearEqConst, dateMonthDayEq), ...)` | TY2025 quarterly due dates (4/15, 6/15, 9/15, 1/15 next year) |
+| FPYMT-089 | fpymt.ts | `notGtPctOfField("PaymentAmt", "OwedAmt", 2.0)` | Payment must not exceed 200% of owed amount |
+| F1116-007-01 | f1116.ts | `ifThen(formCountAtMost, all(isZero x8))` | Single Form 1116: all 8 credit fields must be zero |
+| F3468-032-01 | f3468.ts | `ifThen(hasValue, any(all x3))` | LowIncmSolarWindBonusCrPct percentage validation (.10/.20/0) |
+| F9465-044 | f9465.ts | `ifThen(betweenNum(25001,50000), any(all(routing+bank), payroll))` | Tax 25k-50k: must provide bank routing or payroll deduction |
+| F8814-001 | f8814.ts | `ifThen(formCountAtMost("form8814", 1), noValue("MultipleForm8814Ind"))` | Single Form 8814: MultipleForm8814Ind must not be checked |
+| SSE-F1040-001 | sse.ts | `matchesHeaderSSN("SSN")` | Schedule SE SSN must match primary or spouse SSN in header |
+
+### Why the remaining ~533 stubs are deferred
+
+After an exhaustive audit of all ~540 stubs in 79 rule files, the following breakdown explains why no further conversions are possible without DSL extensions:
+
+| Category | Count | Blocker |
+|----------|-------|---------|
+| Cross-instance iteration | ~320 | Needs `forEach`/`everyItem` combinator — rules like "each W-2", "every K-1 partner", "sum of all Form X" |
+| Database/server-side | ~135 | Requires IRS e-Services or local validation DB (AGI, IP PINs, SSN death records) |
+| Binary attachment inspection | ~55 | Needs attachment manifest access (PDF presence, XML form counts) |
+| Per-item repeating groups | ~23 | XSD group types (e.g. Form 7218 fuel groups, Form 8835 Part II lines) |
+| **Total deferred** | **~533** | |
+
+**Next unlock:** Adding `forEach(formType, predicate)`, `everyItem(groupField, predicate)`, and `sumOfAll(formType, fieldName)` to the predicate DSL would unlock ~320 cross-instance rules.
 
 See `core/validation/predicates.ts`.
 
