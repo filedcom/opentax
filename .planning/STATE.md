@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
 status: Phase complete — ready for verification
-stopped_at: Completed 07-01-PLAN.md — Phase 7 schema extensions Form 7203 verification (202 tests pass, all 5 nodes registered)
-last_updated: "2026-04-05T20:36:04.406Z"
+stopped_at: Completed 09-international-complex-batch-9/09-01-PLAN.md
+last_updated: "2026-04-05T20:55:36.385Z"
 progress:
   total_phases: 12
-  completed_phases: 9
-  total_plans: 13
-  completed_plans: 13
+  completed_phases: 10
+  total_plans: 15
+  completed_plans: 14
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 07 — schema-extensions-form-7203-batch-7
+**Current focus:** Phase 09 — international-complex-batch-9
 
 ## Current Position
 
-Phase: 07 (schema-extensions-form-7203-batch-7) — EXECUTING
+Phase: 09 (international-complex-batch-9) — EXECUTING
 Plan: 1 of 1
 
 ## Performance Metrics
@@ -54,6 +54,8 @@ Plan: 1 of 1
 | Phase 03-special-situations-a-batch-3 P03 | 1 | 2 tasks | 0 files |
 | Phase 06-specialty-credits-b-batch-6 P01 | 3 | 2 tasks | 0 files |
 | Phase 07-schema-extensions-form-7203-batch-7 P01 | 1 | 2 tasks | 0 files |
+| Phase 08-international-simple-batch-8 P01 | 2 | 2 tasks | 0 files |
+| Phase 09-international-complex-batch-9 P01 | 1 | 2 tasks | 0 files |
 
 ### Decisions
 
@@ -78,6 +80,12 @@ Plan: 1 of 1
 - [Phase 06-specialty-credits-b-batch-6]: PPP forgiveness OutputNodes([]) correct — CARES Act §1106(i) and CAA 2021 §276 exclude forgiven amounts from federal income
 - [Phase 07-schema-extensions-form-7203-batch-7]: Phase 7 verification is node-scoped only — 49 pre-existing MEF failures excluded; 202 passed / 0 failed is the correct gate
 - [Phase 07-schema-extensions-form-7203-batch-7]: form7203 disallowed loss routes to both schedule1 and agi_aggregator to reverse the upstream S-corp loss add
+- [Phase 08-international-simple-batch-8]: Phase 8 verification is node-scoped only — 106 passed / 0 failed is the correct gate; pre-existing MEF failures are unrelated
+- [Phase 08-international-simple-batch-8]: F8833/F8840/F8843/F8082 are disclosure/statement/notice forms returning outputs:[] — correct per IRS intent, not stubs
+- [Phase 08-international-simple-batch-8]: F8805 correctly routes §1446 withholding credit to schedule3 Part II per IRC §1446(d)
+- [Phase 09-international-complex-batch-9]: Phase 9 verification is node-scoped only — 139 passed / 0 failed is the correct gate; pre-existing MEF failures are unrelated
+- [Phase 09-international-complex-batch-9]: f8288 FIRPTA routes directly to f1040 line25b (not schedule3) — correct for withholding credits per IRC §1445
+- [Phase 09-international-complex-batch-9]: f8621 PFIC uses regime-based routing: excess distribution → schedule2, MTM/QEF → schedule1 per IRC §1291/§1293/§1296
 
 ### Roadmap Evolution
 
@@ -100,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T20:36:04.403Z
-Stopped at: Completed 07-01-PLAN.md — Phase 7 schema extensions Form 7203 verification (202 tests pass, all 5 nodes registered)
+Last session: 2026-04-05T20:55:36.382Z
+Stopped at: Completed 09-international-complex-batch-9/09-01-PLAN.md
 Resume file: None

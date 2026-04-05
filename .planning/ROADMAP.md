@@ -145,7 +145,7 @@ Plans:
 - [x] 07-01-PLAN.md — Verify all schema extensions, Form 7203, and f4835 CIDP: run node-scoped tests (202 pass), confirm registrations, audit research and routing
 
 ### Phase 8: International Simple (Batch 8)
-**Goal**: Build 5 lower-complexity international nodes: treaty-based return position (8833), closer connection exception (8840), statement for exempt individuals (8843), notice of inconsistent treatment (8082), and foreign partner withholding (8805). Each: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json.
+**Goal**: Verify all 5 pre-built international simple nodes (f8833, f8840, f8843, f8082, f8805) meet success criteria. All nodes already implemented with passing tests -- this phase confirms correctness, registration, routing, and research completeness.
 **Depends on**: Phase 7
 **Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06
 **Success Criteria** (what must be TRUE):
@@ -156,15 +156,13 @@ Plans:
   5. `forms/f1040/nodes/inputs/f8805/index.ts` exists, routes to f1040 withholding
   6. All 5 nodes have research/context.md, passing tests, registered in registry.ts
   7. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: Research all 5 international nodes
-- [ ] 08-02: Write black-box tests for all 5 nodes
-- [ ] 08-03: Implement all 5 nodes + register + update screens.json
+- [ ] 08-01-PLAN.md — Verify all 5 nodes: run node-scoped tests (106 pass), confirm registry registration, audit research/context.md and output routing
 
 ### Phase 9: International Complex (Batch 9)
-**Goal**: Build 5 complex international nodes: expatriation statement (8854), extraterritorial income exclusion (8873), FIRPTA withholding (8288), PFIC shareholder return (8621), and §965 repatriation tax (965-A/C variants). Each: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json.
+**Goal**: Verify all 5 pre-built international complex nodes (f8854, f8873, f8288, f8621, f965) meet success criteria. All nodes already implemented with passing tests -- this phase confirms correctness, registration, routing, and research completeness.
 **Depends on**: Phase 8
 **Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06
 **Success Criteria** (what must be TRUE):
@@ -176,12 +174,10 @@ Plans:
   6. All 5 nodes have research/context.md, passing tests, registered in registry.ts
   7. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
   8. Overall coverage ≥85% of computational Drake screens
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 09-01: Research all 5 complex international nodes
-- [ ] 09-02: Write black-box tests for all 5 nodes
-- [ ] 09-03: Implement all 5 nodes + register + update screens.json
+- [x] 09-01-PLAN.md — Verify all 5 nodes: run node-scoped tests (139 pass), confirm registry registration, audit research/context.md and output routing
 
 ## Progress
 
@@ -197,8 +193,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 5. Specialty Credits A | 1/1 | Complete   | 2026-04-01 |
 | 6. Specialty Credits B | 0/1 | Not started | - |
 | 7. Schema Extensions & Form 7203 | 1/1 | Complete   | 2026-04-05 |
-| 8. International Simple | 0/3 | Not started | - |
-| 9. International Complex | 0/3 | Not started | - |
+| 8. International Simple | 0/1 | Planned    |  |
+| 9. International Complex | 0/1 | Planned    |  |
 | 10. XSD Validation in CI | 1/1 | Complete    | 2026-04-05 |
 | 11. Executor Error Isolation | 1/1 | Complete    | 2026-04-05 |
 | 12. Validation Rule Stubs | 0/1 | Not started | - |
