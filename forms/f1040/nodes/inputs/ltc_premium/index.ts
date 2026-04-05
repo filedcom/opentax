@@ -4,14 +4,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-
-// TY2025 age-based eligible long-term care insurance premium limits
-// IRC §213(d)(10); Rev. Proc. 2024-40 §3.45
-const LTC_LIMIT_AGE_40_UNDER = 480;
-const LTC_LIMIT_AGE_41_50 = 900;
-const LTC_LIMIT_AGE_51_60 = 1800;
-const LTC_LIMIT_AGE_61_70 = 4830;
-const LTC_LIMIT_AGE_71_OVER = 6020;
+import { LTC_PREMIUM_LIMITS_2025 } from "../../config/2025.ts";
 
 // Per-person schema — one entry per insured (taxpayer + spouse each enter separately)
 export const itemSchema = z.object({
@@ -30,13 +23,12 @@ export const inputSchema = z.object({
 type LtcPremiumItem = z.infer<typeof itemSchema>;
 type LtcPremiumItems = LtcPremiumItem[];
 
-// Compute the age-based dollar limit for TY2025 (Rev. Proc. 2024-40 §3.45)
+// Compute the age-based dollar limit for TY2025 (Rev. Proc. 2024-40 §3.34)
 function ageBracketLimit(age: number): number {
-  if (age <= 40) return LTC_LIMIT_AGE_40_UNDER;
-  if (age <= 50) return LTC_LIMIT_AGE_41_50;
-  if (age <= 60) return LTC_LIMIT_AGE_51_60;
-  if (age <= 70) return LTC_LIMIT_AGE_61_70;
-  return LTC_LIMIT_AGE_71_OVER;
+  for (const bracket of LTC_PREMIUM_LIMITS_2025) {
+    if (age <= bracket.maxAge) return bracket.limit;
+  }
+  return LTC_PREMIUM_LIMITS_2025[LTC_PREMIUM_LIMITS_2025.length - 1].limit;
 }
 
 // Eligible premium = min(actual, age_limit) — only for qualified contracts

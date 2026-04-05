@@ -106,15 +106,15 @@ Deno.test("sep_retirement.compute: SEP contribution capped at 25% of net SE comp
   assertEquals(fields.line16_sep_simple, 20000);
 });
 
-Deno.test("sep_retirement.compute: SEP contribution capped at $69,000 annual limit", () => {
-  // 25% of 400000 = 100000 — but hard cap is 69000
+Deno.test("sep_retirement.compute: SEP contribution capped at $70,000 annual limit", () => {
+  // 25% of 400000 = 100000 — but hard cap is 70000
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 80000,
     net_self_employment_compensation: 400000,
   })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line16_sep_simple, 69000);
+  assertEquals(fields.line16_sep_simple, 70000);
 });
 
 Deno.test("sep_retirement.compute: SEP no contribution — no output", () => {
@@ -134,8 +134,8 @@ Deno.test("sep_retirement.compute: SEP zero contribution — no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("sep_retirement.compute: SEP contribution without SE compensation — capped at $69,000 only", () => {
-  // No SE compensation provided — only absolute $69,000 limit applies
+Deno.test("sep_retirement.compute: SEP contribution without SE compensation — capped at $70,000 only", () => {
+  // No SE compensation provided — only absolute $70,000 limit applies
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 50000,
@@ -235,18 +235,18 @@ Deno.test("sep_retirement.compute: Solo 401k employee deferral capped at $23,500
   assertEquals(fields.line16_sep_simple, 28500);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k combined limit $69,000 enforced", () => {
-  // employee 23500 + employer 50000 = 73500 — capped at 69000
+Deno.test("sep_retirement.compute: Solo 401k combined limit $70,000 enforced", () => {
+  // employee 23500 + employer 50000 = 73500 — capped at 70000
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 23500,
     solo401k_employer_contribution: 50000,
   })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line16_sep_simple, 69000);
+  assertEquals(fields.line16_sep_simple, 70000);
 });
 
-Deno.test("sep_retirement.compute: Solo 401k at exactly $69,000 combined passes through", () => {
+Deno.test("sep_retirement.compute: Solo 401k at exactly $70,000 combined passes through", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SOLO_401K,
     solo401k_employee_deferral: 23500,
@@ -311,7 +311,7 @@ Deno.test("sep_retirement.compute: SEP below 25% limit — contribution passes t
   assertEquals(fields.line16_sep_simple, 10000);
 });
 
-Deno.test("sep_retirement.compute: SEP exactly at $69,000 limit", () => {
+Deno.test("sep_retirement.compute: SEP exactly at $70,000 limit", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 69000,
@@ -321,14 +321,14 @@ Deno.test("sep_retirement.compute: SEP exactly at $69,000 limit", () => {
   assertEquals(fields.line16_sep_simple, 69000);
 });
 
-Deno.test("sep_retirement.compute: SEP above $69,000 limit — capped at 69000", () => {
+Deno.test("sep_retirement.compute: SEP above $70,000 limit — capped at 70000", () => {
   const result = compute([minimalItem({
     plan_type: PlanType.SEP,
     sep_contribution: 70000,
     net_self_employment_compensation: 400000,
   })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line16_sep_simple, 69000);
+  assertEquals(fields.line16_sep_simple, 70000);
 });
 
 Deno.test("sep_retirement.compute: SIMPLE exactly at $16,500 under-50 limit passes through", () => {

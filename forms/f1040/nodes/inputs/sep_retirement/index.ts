@@ -8,6 +8,10 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  SEP_MAX_CONTRIBUTION_2025,
+  SEP_CONTRIBUTION_RATE_2025,
+} from "../../config/2025.ts";
 
 // TY2025 — Self-employed retirement plan deduction (IRC §404(a)(8), §408(k), §408(p), §401(k))
 // Flows to Schedule 1, Part II, Line 16.
@@ -15,12 +19,12 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SEP_ANNUAL_LIMIT = 69_000;        // Rev Proc 2024-40, §3.20
-const SEP_RATE = 0.25;                  // IRC §404(a)(8); 25% of net SE compensation
+const SEP_ANNUAL_LIMIT = SEP_MAX_CONTRIBUTION_2025; // Rev Proc 2024-40, §3.20 — 70_000
+const SEP_RATE = SEP_CONTRIBUTION_RATE_2025;        // IRC §404(a)(8); 25% of net SE compensation
 const SIMPLE_EMPLOYEE_LIMIT = 16_500;   // Rev Proc 2024-40, §3.24
 const SIMPLE_CATCHUP_LIMIT = 19_500;    // Rev Proc 2024-40, §3.24 (age 50+)
 const SOLO401K_EMPLOYEE_LIMIT = 23_500; // Rev Proc 2024-40, §3.19
-const SOLO401K_COMBINED_LIMIT = 69_000; // IRC §415(c); Rev Proc 2024-40, §3.20
+const SOLO401K_COMBINED_LIMIT = SEP_MAX_CONTRIBUTION_2025; // IRC §415(c); Rev Proc 2024-40, §3.20 — 70_000
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 

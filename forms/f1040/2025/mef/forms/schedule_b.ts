@@ -10,8 +10,8 @@ export interface Fields {
 type Input = Partial<Fields> & Record<string, unknown>;
 
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["taxable_interest_net", "TotalInterestAmt"],
-  ["ee_bond_exclusion", "ExcludibleSavingsBondIntAmt"],
+  ["taxable_interest_net", "TaxableInterestSubtotalAmt"],
+  ["ee_bond_exclusion", "ExcludableSavingsBondIntAmt"],
   ["ordinaryDividends", "TotalOrdinaryDividendsAmt"],
 ];
 

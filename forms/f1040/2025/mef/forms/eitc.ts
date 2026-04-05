@@ -17,19 +17,12 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["investment_income", "InvestmentIncomeAmt"],
 ];
 
-// IRS1040ScheduleEIC only applies when there are qualifying children.
-// The XSD defines child-info sub-elements only — EarnedIncomeAmt and AGIAmt
-// are internal computation fields, not IRS1040ScheduleEIC elements.
-// Return "" for zero-children scenarios so the element is omitted entirely.
-function buildIRS1040ScheduleEIC(fields: Input): string {
-  const children = Number(fields["qualifying_children"]) ?? 0;
-  if (children <= 0) return "";
-  const mappedChildren = FIELD_MAP.map(([key, tag]) => {
-    const value = fields[key];
-    if (typeof value !== "number") return "";
-    return element(tag, value);
-  });
-  return elements("IRS1040ScheduleEIC", mappedChildren);
+// IRS1040ScheduleEIC is optional (minOccurs="0") in ReturnData1040.xsd.
+// The XSD only accepts QualifyingChildInformation repeating groups —
+// EarnedIncomeAmt and the other Fields are 1040 form elements, not Schedule EIC elements.
+// We omit the element entirely: the EITC credit flows through f1040.line27_eitc on the 1040.
+function buildIRS1040ScheduleEIC(_fields: Input): string {
+  return "";
 }
 
 export const eitc: MefFormDescriptor<"eitc", Input> = {

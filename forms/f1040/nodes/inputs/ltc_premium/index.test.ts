@@ -120,27 +120,27 @@ Deno.test("ltc_premium.compute: age 60 — premium below $1,800 limit", () => {
   assertEquals(fields.line_1_medical, 1500);
 });
 
-// Age 61–70: limit = $4,830
-Deno.test("ltc_premium.compute: age 61 — uses $4,830 bracket", () => {
+// Age 61–70: limit = $4,770
+Deno.test("ltc_premium.compute: age 61 — uses $4,770 bracket", () => {
   const result = compute([minimalItem({ age: 61, actual_premium_paid: 6000, is_qualified_contract: true })]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
-  assertEquals(fields.line_1_medical, 4830);
+  assertEquals(fields.line_1_medical, 4770);
 });
 
-Deno.test("ltc_premium.compute: age 70 — uses $4,830 bracket", () => {
+Deno.test("ltc_premium.compute: age 70 — uses $4,770 bracket", () => {
   const result = compute([minimalItem({ age: 70, actual_premium_paid: 4000, is_qualified_contract: true })]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_1_medical, 4000);
 });
 
-// Age 71+: limit = $6,020
-Deno.test("ltc_premium.compute: age 71 — uses $6,020 bracket", () => {
+// Age 71+: limit = $5,970
+Deno.test("ltc_premium.compute: age 71 — uses $5,970 bracket", () => {
   const result = compute([minimalItem({ age: 71, actual_premium_paid: 8000, is_qualified_contract: true })]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
-  assertEquals(fields.line_1_medical, 6020);
+  assertEquals(fields.line_1_medical, 5970);
 });
 
-Deno.test("ltc_premium.compute: age 80 — premium below $6,020 limit", () => {
+Deno.test("ltc_premium.compute: age 80 — premium below $5,970 limit", () => {
   const result = compute([minimalItem({ age: 80, actual_premium_paid: 5000, is_qualified_contract: true })]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
   assertEquals(fields.line_1_medical, 5000);
@@ -153,10 +153,10 @@ Deno.test("ltc_premium.compute: age 80 — premium below $6,020 limit", () => {
 Deno.test("ltc_premium.compute: two persons — eligible amounts summed", () => {
   const result = compute([
     minimalItem({ age: 55, actual_premium_paid: 1800, is_qualified_contract: true }),  // eligible: 1800
-    minimalItem({ age: 65, actual_premium_paid: 6000, is_qualified_contract: true }),  // eligible: 4830
+    minimalItem({ age: 65, actual_premium_paid: 6000, is_qualified_contract: true }),  // eligible: 4770
   ]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
-  assertEquals(fields.line_1_medical, 6630);
+  assertEquals(fields.line_1_medical, 6570);
 });
 
 Deno.test("ltc_premium.compute: mixed qualified/non-qualified — only qualified summed", () => {
@@ -220,7 +220,7 @@ Deno.test("ltc_premium.compute: age exactly at bracket boundary 41 — uses 41-5
 Deno.test("ltc_premium.compute: age exactly at bracket boundary 71 — uses 71+ bracket", () => {
   const result = compute([minimalItem({ age: 71, actual_premium_paid: 7000, is_qualified_contract: true })]);
   const fields = fieldsOf(result.outputs, scheduleA)!;
-  assertEquals(fields.line_1_medical, 6020);
+  assertEquals(fields.line_1_medical, 5970);
 });
 
 // =============================================================================
@@ -229,10 +229,10 @@ Deno.test("ltc_premium.compute: age exactly at bracket boundary 71 — uses 71+ 
 
 Deno.test("ltc_premium.compute: smoke test — taxpayer age 68 + spouse age 72", () => {
   const result = compute([
-    minimalItem({ age: 68, actual_premium_paid: 5000, is_qualified_contract: true }),  // capped at 4830
-    minimalItem({ age: 72, actual_premium_paid: 4500, is_qualified_contract: true }),  // capped at 6020 → 4500
+    minimalItem({ age: 68, actual_premium_paid: 5000, is_qualified_contract: true }),  // capped at 4770
+    minimalItem({ age: 72, actual_premium_paid: 4500, is_qualified_contract: true }),  // capped at 5970 → 4500
   ]);
-  // 4830 + 4500 = 9330
+  // 4770 + 4500 = 9270
   const fields = fieldsOf(result.outputs, scheduleA)!;
-  assertEquals(fields.line_1_medical, 9330);
+  assertEquals(fields.line_1_medical, 9270);
 });
