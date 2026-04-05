@@ -197,7 +197,12 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 9. International Complex | 0/1 | Planned    |  |
 | 10. XSD Validation in CI | 1/1 | Complete    | 2026-04-05 |
 | 11. Executor Error Isolation | 1/1 | Complete    | 2026-04-05 |
-| 12. Validation Rule Stubs | 3/3 | Complete   | 2026-04-05 |
+| 12. Validation Rule Stubs | 3/3 | Complete    | 2026-04-05 |
+| 13. Verification Paperwork | 0/1 | Not started | - |
+| 14. Phase 01 Constants + XSD e2e Fix | 1/1 | Complete    | 2026-04-06 |
+| 15. MEF Header Builder Fix | 0/1 | Not started | - |
+| 16. Executor Diagnostics CLI Surface | 0/1 | Not started | - |
+| 17. Validation DSL forEach/everyItem Extension | 0/2 | Not started | - |
 
 ### Phase 10: XSD Validation in CI
 **Goal**: Add programmatic MeF XML validation against IRS XSD files to the Deno test suite. The IRS 2025v3.0 XSDs live in `.research/docs/IMF_Series_2025v3.0/`. Currently generated XML is never validated against them. Wire `xmllint --schema` (or equivalent Deno subprocess) into a dedicated test file that generates MeF XML for at least 3 e2e scenarios and asserts XSD compliance. Fix any schema violations discovered. Add a `deno task validate:mef` task alias.
@@ -249,3 +254,86 @@ Plans:
 - [x] 12-01-PLAN.md — Create predicate test infra + add 4 new predicates (validEIN, betweenNum, diffLteNum, notGtPctOfField)
 - [x] 12-02-PLAN.md — Convert 40+ alwaysPass stubs to real predicate implementations across rule files
 - [x] 12-03-PLAN.md — Update ALWAYSPASS_ROADMAP.md + final deno task test gate
+
+### Phase 13: Verification Paperwork — Missing VERIFICATIONs
+**Goal**: Write missing VERIFICATION.md files for phases 02, 05, and 10. All three phases completed their work (111/108/4 tests passing respectively) but never produced formal verification artifacts. Run node-scoped test gates and verify success criteria from each phase's PLAN.md to produce valid VERIFICATION.md output.
+**Depends on**: Phase 12
+**Gap Closure**: Closes audit gaps for phases 02, 05, 10 (missing VERIFICATION.md)
+**Requirements**: REQ-02-VERIFY, REQ-05-VERIFY, REQ-XSD-VERIFY
+**Success Criteria** (what must be TRUE):
+  1. `.planning/phases/02-deductions-worksheets-batch-2/02-VERIFICATION.md` exists with status passed or gaps_found
+  2. `.planning/phases/05-specialty-credits-a-batch-5/05-VERIFICATION.md` exists with status passed or gaps_found
+  3. `.planning/phases/10-xsd-validation-in-ci-*/10-VERIFICATION.md` exists with status passed or gaps_found
+  4. Each VERIFICATION.md includes node-scoped test gate evidence (test counts, deno check)
+**Plans**: 1 plan
+
+Plans:
+- [x] 13-01-PLAN.md — Verify phases 02, 05, 10 and write VERIFICATION.md for each
+
+### Phase 14: Phase 01 Constant Alignment + XSD e2e Fix
+**Goal**: (1) Verify ltc_premium and sep_retirement TY2025 constants against Rev Proc 2024-40 and align the incorrect set (implementation vs config/2025.ts). (2) Fix the 2 failing XSD e2e scenarios in `forms/f1040/e2e/xsd_validation.test.ts` — EarnedIncomeAmt element ordering violation in EITC builder, and AMT+PAB scenario failure.
+**Depends on**: Phase 13
+**Gap Closure**: Closes Phase 01 audit Gap 2 (constant discrepancy); fixes 2 new XSD e2e failures identified in audit
+**Requirements**: REQ-01-CONST, REQ-XSD-E2E
+**Success Criteria** (what must be TRUE):
+  1. `forms/f1040/nodes/inputs/ltc_premium/index.ts` uses constants matching `config/2025.ts` (or config is corrected to match Rev Proc 2024-40)
+  2. `forms/f1040/nodes/inputs/sep_retirement/index.ts` uses constants matching `config/2025.ts`
+  3. `forms/f1040/e2e/xsd_validation.test.ts` passes all 6 scenarios (currently 4 pass, 2 fail)
+  4. `deno task test` passes for ltc_premium, sep_retirement, and xsd_validation test files
+**Plans**: 1 plan
+
+Plans:
+- [ ] 14-01-PLAN.md — Align ltc_premium/sep_retirement constants + fix XSD e2e EarnedIncomeAmt ordering
+
+### Phase 15: MEF Header Builder Fix
+**Goal**: Fix the 13 failing tests in `forms/f1040/mef/header.test.ts`. Tests expect ReturnHeader XML wrapping, correct FilingStatusCd values (1–5), and required fields (ReturnType, TaxPeriodBeginDate/EndDate) regardless of filer presence. The current builder fails all 13 of these assertions.
+**Depends on**: Phase 14
+**Gap Closure**: Closes REQ-04 (deno task test must pass) — eliminates the 230 MEF header failures blocking the full test suite
+**Requirements**: REQ-04
+**Success Criteria** (what must be TRUE):
+  1. `deno test forms/f1040/mef/header.test.ts` passes: 36/36 tests (currently 23 pass, 13 fail)
+  2. `deno task test` passes overall with 0 failures
+  3. ReturnHeader XML wraps all header output correctly
+  4. FilingStatusCd emits correct values 1–5 for all FilingStatus enum values
+  5. ReturnType, TaxPeriodBeginDate, TaxPeriodEndDate emitted regardless of filer presence
+  6. `deno check forms/f1040/2025/registry.ts` exits 0
+**Plans**: 1 plan
+
+Plans:
+- [ ] 15-01-PLAN.md — Diagnose and fix header.ts ReturnHeader wrapping + FilingStatusCd + required-field emission
+
+### Phase 16: Executor Diagnostics CLI Surface
+**Goal**: Wire `result.diagnostics` from `execute()` into all three CLI commands so node failures are visible to users. Also update `validate:mef` deno task to include the 6-test e2e file from Phase 14. Also recover `predicates.test.ts` (created in commit 4ce54a3 but absent from disk due to worktree divergence).
+**Depends on**: Phase 15
+**Gap Closure**: Closes REQ-EXEC-01 integration gap; fixes broken E2E flow "executor failure → user CLI warning"; fixes validate:mef task gap; recovers missing predicates.test.ts
+**Requirements**: REQ-EXEC-01
+**Success Criteria** (what must be TRUE):
+  1. `cli/commands/return.ts` reads `result.diagnostics` and emits EXECUTOR_NODE_FAILURE entries to stderr/output when present
+  2. `cli/commands/validate.ts` reads `result.diagnostics` and merges executor failures into the DiagnosticsReport output
+  3. `cli/commands/export.ts` reads `result.diagnostics` and warns when node failures occurred
+  4. `deno.json validate:mef` task runs both `forms/f1040/2025/mef/xsd-validation.test.ts` (4 tests) and `forms/f1040/e2e/xsd_validation.test.ts` (6 tests)
+  5. `core/validation/predicates.test.ts` exists on disk with 22 tests covering validEIN, betweenNum, diffLteNum, notGtPctOfField
+  6. `deno task test` continues to pass overall
+**Plans**: 1 plan
+
+Plans:
+- [ ] 16-01-PLAN.md — Wire executor diagnostics into CLI commands + update validate:mef + recover predicates.test.ts
+
+### Phase 17: Validation DSL forEach/everyItem Extension
+**Goal**: Implement `forEach` and `everyItem` DSL combinators in `core/validation/` to unlock the ~320 cross-instance validation rules that Phase 12 could not convert. Wire `validEIN` predicate (already built, unused) into at least 5 EIN format rule files. Target: convert at least 40 previously-`alwaysPass` rules using the new combinators.
+**Depends on**: Phase 16
+**Gap Closure**: Closes REQ-VAL-01 (40+ stubs, 5 TIN/EIN rules, 5 conditional math rules)
+**Requirements**: REQ-VAL-01
+**Success Criteria** (what must be TRUE):
+  1. `forEach(field, predicate)` combinator exists in `core/validation/mod.ts` with tests
+  2. `everyItem(predicate)` combinator exists in `core/validation/mod.ts` with tests
+  3. At least 40 previously-`alwaysPass` stubs converted using new combinators
+  4. `validEIN` predicate wired to at least 5 EIN format rule files (5 TIN/EIN rules satisfied)
+  5. At least 5 conditional math rules implemented (may combine with forEach-enabled rules)
+  6. `ALWAYSPASS_ROADMAP.md` updated to reflect Round 5 conversions
+  7. `deno task test` passes overall
+**Plans**: 2 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Implement forEach/everyItem DSL combinators with tests
+- [ ] 17-02-PLAN.md — Convert 40+ stubs using new combinators + wire validEIN + update ALWAYSPASS_ROADMAP.md
