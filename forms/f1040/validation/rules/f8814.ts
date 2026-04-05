@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, eqField, gt, hasNonZero, hasValue, ifThen, lt, validSSN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, eqField, formCountAtMost, gt, hasNonZero, hasValue, ifThen, lt, noValue, validSSN, } from "../../../../core/validation/mod.ts";
 
 export const F8814_RULES: readonly RuleDef[] = [
   rule(
     "F8814-001",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires form count check: if only one Form 8814, MultipleForm8814Ind must not be checked
+    ifThen(formCountAtMost("form8814", 1), noValue("MultipleForm8814Ind")),
     "If only one Form 8814 is present in the return, then Line C checkbox 'MultipleForm8814Ind' must not be checked.",
   ),
   rule(

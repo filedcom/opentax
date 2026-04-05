@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, hasNonZero, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, eqField, formCountAtMost, hasNonZero, hasValue, ifThen, isZero, } from "../../../../core/validation/mod.ts";
 
 export const F1116_RULES: readonly RuleDef[] = [
   rule(
@@ -33,7 +33,7 @@ export const F1116_RULES: readonly RuleDef[] = [
     "F1116-007-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires single-form-count check plus multiple fields must be zero
+    ifThen(formCountAtMost("form1116", 1), all(isZero("ForeignIncmSection951ACrAmt"), isZero("ForeignBranchIncomeCrAmt"), isZero("ForeignPassiveIncTaxCreditAmt"), isZero("ForeignGeneralIncTaxCreditAmt"), isZero("ForeignIncmSection901jCrAmt"), isZero("ForeignIncRsrcdTreatyTaxCrAmt"), isZero("ForeignIncLumpSumDistribCrAmt"), isZero("TentativeForeignTaxCreditAmt"))),
     "If only one Form 1116 is present in the return, then all of the following must be equal to zero if an amount is entered: 'ForeignIncmSection951ACrAmt', 'ForeignBranchIncomeCrAmt', 'ForeignPassiveIncTaxCreditAmt', 'ForeignGeneralIncTaxCreditAmt', 'ForeignIncmSection901jCrAmt', 'ForeignIncRsrcdTreatyTaxCrAmt', 'ForeignIncLumpSumDistribCrAmt', 'TentativeForeignTaxCreditAmt'.",
   ),
   rule(

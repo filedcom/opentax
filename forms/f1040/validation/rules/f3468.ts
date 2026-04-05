@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, eqNum, eqStr, hasNonZero, hasValue, ifThen, strLenEq, } from "../../../../core/validation/mod.ts";
+import { rule, all, any, eqNum, eqStr, hasNonZero, hasValue, ifThen, isZero, strLenEq, } from "../../../../core/validation/mod.ts";
 
 export const F3468_RULES: readonly RuleDef[] = [
   rule(
@@ -68,7 +68,7 @@ export const F3468_RULES: readonly RuleDef[] = [
     "F3468-032-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    ifThen(hasValue("LowIncmSolarWindBonusCrPct"), any(all(any(hasValue("SolarWindCrComSect45DeInd"), hasValue("SolarWindCrComIndianLandInd")), eqNum("LowIncmSolarWindBonusCrPct", 0.10)), all(any(hasValue("SolarWindCrComRsdntlBldgInd"), hasValue("SolarWindCrComEconomicBnftInd")), eqNum("LowIncmSolarWindBonusCrPct", 0.20)), all(any(hasValue("SolarWindCrComNotQlfyInd"), hasValue("ACNameplateCapKWQty"), hasValue("WindEnergyPropOrFacilityInd"), hasValue("NameplateCapKWQty")), isZero("LowIncmSolarWindBonusCrPct")))),
     "If Form 3468, 'LowIncmSolarWindBonusCrPct' has a value, then it must be [.10 if 'SolarWindCrComSect45DeInd' or 'SolarWindCrComIndianLandInd' is checked] or [.20 if 'SolarWindCrComRsdntlBldgInd' or 'SolarWindCrComEconomicBnftInd' is checked] or [.00 if 'SolarWindCrComNotQlfyInd', 'ACNameplateCapKWQty', 'WindEnergyPropOrFacilityInd', or 'NameplateCapKWQty' is checked and it is more than 5 MW ac].",
   ),
   rule(

@@ -5,14 +5,14 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, formPresent, hasNonZero, ifThen, not, all, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, any, formPresent, hasNonZero, ifThen, matchesHeaderSSN, not, all, noValue, } from "../../../../core/validation/mod.ts";
 
 export const SSE_RULES: readonly RuleDef[] = [
   rule(
     "SSE-F1040-001",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-form check: SSN must equal PrimarySSN or SpouseSSN in Return Header
+    matchesHeaderSSN("SSN"),
     "For each Schedule SE (Form 1040) present in the return, 'SSN' must be equal to the Primary SSN or Spouse SSN in the Return Header.",
   ),
   rule(

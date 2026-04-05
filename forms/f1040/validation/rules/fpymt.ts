@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, formPresent, gt, hasValue, ifThen, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, all, any, formPresent, gt, hasValue, ifThen, notGtNum, dateMonthDayEq, dateYearEqConst, notGtPctOfField, } from "../../../../core/validation/mod.ts";
 
 export const FPYMT_RULES: readonly RuleDef[] = [
   rule(
@@ -61,14 +61,19 @@ export const FPYMT_RULES: readonly RuleDef[] = [
     "FPYMT-088-11",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    any(
+      all(dateYearEqConst("EstimatedPaymentDueDt", 2026), dateMonthDayEq("EstimatedPaymentDueDt", 4, 15)),
+      all(dateYearEqConst("EstimatedPaymentDueDt", 2026), dateMonthDayEq("EstimatedPaymentDueDt", 6, 15)),
+      all(dateYearEqConst("EstimatedPaymentDueDt", 2026), dateMonthDayEq("EstimatedPaymentDueDt", 9, 15)),
+      all(dateYearEqConst("EstimatedPaymentDueDt", 2027), dateMonthDayEq("EstimatedPaymentDueDt", 1, 15)),
+    ),
     "'EstimatedPaymentDueDt' in the IRS ES Payment Record must be 04/15/2026 or 06/15/2026 or 09/15/2026 or 01/15/2027.",
   ),
   rule(
     "FPYMT-089",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    notGtPctOfField("PaymentAmt", "OwedAmt", 2.0),
     "'PaymentAmt' in the IRS Payment Record must not be more than 200% of 'OwedAmt'. If a value is not provided for 'OwedAmt', treat that value as zero.",
   ),
   rule(

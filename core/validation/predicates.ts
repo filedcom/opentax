@@ -95,6 +95,28 @@ export const isITIN = (xml: string): RuleCheck =>
     return (d45 >= 70 && d45 <= 88) || (d45 >= 90 && d45 <= 92) || (d45 >= 94 && d45 <= 99);
   };
 
+// ─── EIN Validation ─────────────────────────────────────
+
+// IRS Publication 1586 Table 1 — valid EIN assignment group prefixes
+const VALID_EIN_PREFIXES = new Set([
+  "01","02","03","04","05","06","10","11","12","13","14","15","16",
+  "20","21","22","23","24","25","26","27","30","31","32","33","34",
+  "35","36","37","38","39","40","41","42","43","44","45","46","47",
+  "48","50","51","52","53","54","55","56","57","58","59","60","61",
+  "62","63","64","65","66","67","68","71","72","73","74","75","76",
+  "77","80","81","82","83","84","85","86","87","88","90","91","92",
+  "93","94","95","98","99",
+]);
+
+/** EIN is 9 numeric digits with a valid IRS-assigned prefix (Pub 1586). */
+export const validEIN = (xml: string): RuleCheck =>
+  (ctx) => {
+    const v = String(ctx.field(xml) ?? "").replace(/\D/g, "");
+    if (!v) return true; // absent — nothing to validate
+    if (v.length !== 9) return false;
+    return VALID_EIN_PREFIXES.has(v.substring(0, 2));
+  };
+
 // ─── SSN / TIN Validation ───────────────────────────────
 
 /** SSN/ITIN is in valid range (9 digits, not all zeros/nines). */
@@ -228,6 +250,21 @@ export const strLenEq = (xml: string, len: number): RuleCheck =>
     const v = ctx.field(xml);
     return typeof v === "string" && v.length === len;
   };
+
+/** Field value is between lo and hi (inclusive). Absent field = 0. */
+export const betweenNum = (xml: string, lo: number, hi: number): RuleCheck =>
+  (ctx) => {
+    const v = ctx.num(xml);
+    return v >= lo && v <= hi;
+  };
+
+/** Difference of two fields must not exceed n. ctx.num(a) - ctx.num(b) <= n (penny tolerance). */
+export const diffLteNum = (a: string, b: string, n: number): RuleCheck =>
+  (ctx) => ctx.num(a) - ctx.num(b) <= n + 0.01;
+
+/** Field a must not be greater than pct * field b. notGtPctOfField("Payment","Owed",2.0) = Payment <= 2.0 * Owed. */
+export const notGtPctOfField = (a: string, b: string, pct: number): RuleCheck =>
+  (ctx) => ctx.num(a) <= ctx.num(b) * pct + 0.01;
 
 // ─── Date / Year Checks ────────────────────────────────
 
