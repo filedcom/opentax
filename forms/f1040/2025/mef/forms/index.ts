@@ -47,53 +47,101 @@ import { scheduleF } from "./schedule_f.ts";
 import { scheduleH } from "./schedule_h.ts";
 import { scheduleSE } from "./schedule_se.ts";
 
+// XSD-required element sequence from ReturnData1040.xsd.
+// Any reordering here must stay in sync with the sequence in that XSD or
+// xmllint will report "This element is not expected" errors.
 export const ALL_MEF_FORMS = [
+  // 1. IRS1040 (required)
   irs1040,
+  // 2-4. Schedules 1-3
   schedule1,
   schedule2,
   schedule3,
-  scheduleD,
-  form8889,
-  form2441,
-  form8949,
-  form8959,
-  form8960,
-  form4137,
-  form8919,
-  form4972,
-  scheduleSE,
-  form8606,
-  form1116,
-  form8582,
-  scheduleF,
-  scheduleB,
-  form4797,
-  form8880,
-  form8995,
-  form4562,
-  form8995a,
-  form6251,
-  form5329,
-  form8853,
-  form8829,
-  form8839,
-  form8962,
-  form8824,
-  eitc,
-  form2555,
-  form461,
-  form4684,
-  form4952,
-  form5695,
-  form6198,
-  form6252,
-  form6781,
-  form7206,
-  form8396,
-  form8615,
-  form8815,
-  form8990,
-  form982,
-  scheduleH,
+  // 6-7. Schedule A, Schedule B
   scheduleA,
+  scheduleB,
+  // 9. Schedule D
+  scheduleD,
+  // 11. Schedule EIC (eitc)
+  eitc,
+  // 12. Schedule F
+  scheduleF,
+  // 13. Schedule H
+  scheduleH,
+  // 16. Schedule SE
+  scheduleSE,
+  // 18. Form 461
+  form461,
+  // 22. Form 982
+  form982,
+  // 26. Form 1116
+  form1116,
+  // Form 2441
+  form2441,
+  // Form 2555
+  form2555,
+  // Form 4137
+  form4137,
+  // Form 4562
+  form4562,
+  // Form 4684
+  form4684,
+  // Form 4797
+  form4797,
+  // Form 4952
+  form4952,
+  // Form 4972
+  form4972,
+  // Form 5329
+  form5329,
+  // Form 5695
+  form5695,
+  // Form 6198
+  form6198,
+  // Form 6251
+  form6251,
+  // Form 6252
+  form6252,
+  // Form 6781
+  form6781,
+  // Form 7206
+  form7206,
+  // Form 8396
+  form8396,
+  // Form 8582
+  form8582,
+  // Form 8606
+  form8606,
+  // Form 8615
+  form8615,
+  // Form 8815
+  form8815,
+  // Form 8824
+  form8824,
+  // Form 8829
+  form8829,
+  // Form 8839
+  form8839,
+  // Form 8853
+  form8853,
+  // Form 8880
+  form8880,
+  // Form 8889
+  form8889,
+  // Form 8919
+  form8919,
+  // Form 8949
+  form8949,
+  // Form 8959 (must come after 8949 per XSD sequence)
+  form8959,
+  // Form 8960
+  form8960,
+  // Form 8962
+  form8962,
+  // Form 8990
+  form8990,
+  // Form 8995
+  form8995,
+  // Form 8995A
+  form8995a,
 ] as const;

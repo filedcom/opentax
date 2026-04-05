@@ -17,13 +17,19 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["investment_income", "InvestmentIncomeAmt"],
 ];
 
-function buildIRSEITC(fields: Input): string {
-  const children = FIELD_MAP.map(([key, tag]) => {
+// IRS1040ScheduleEIC only applies when there are qualifying children.
+// The XSD defines child-info sub-elements only — EarnedIncomeAmt and AGIAmt
+// are internal computation fields, not IRS1040ScheduleEIC elements.
+// Return "" for zero-children scenarios so the element is omitted entirely.
+function buildIRS1040ScheduleEIC(fields: Input): string {
+  const children = Number(fields["qualifying_children"]) ?? 0;
+  if (children <= 0) return "";
+  const mappedChildren = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
     return element(tag, value);
   });
-  return elements("IRSEITC", children);
+  return elements("IRS1040ScheduleEIC", mappedChildren);
 }
 
 export const eitc: MefFormDescriptor<"eitc", Input> = {
@@ -31,6 +37,6 @@ export const eitc: MefFormDescriptor<"eitc", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sei.pdf",
   build(fields) {
-    return buildIRSEITC(fields);
+    return buildIRS1040ScheduleEIC(fields);
   },
 };

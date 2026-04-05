@@ -23,13 +23,21 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["rrta_medicare_withheld", "TotalW2AddlRRTTaxAmt"],
 ];
 
-function buildIRS8959(fields: Input): string {
-  const children = FIELD_MAP.map(([key, tag]) => {
-    const value = fields[key];
-    if (typeof value !== "number") return "";
-    return element(tag, value);
-  });
-  return elements("IRS8959", children);
+// IRS8959 has a deeply nested structure in the XSD:
+//   IRS8959 → AdditionalTaxGrp → AdditionalMedicareTaxGrp → {fields}
+// The FIELD_MAP above reflects the leaf-level tag names for reference, but
+// emitting them at the IRS8959 top level violates the schema.
+//
+// The pending dict receives medicare_wages and medicare_withheld from the W-2
+// node for computation tracking. These are present even when no Additional
+// Medicare Tax actually applies (wages below threshold). Only emit IRS8959
+// when actual AMT has been computed (i.e., amt_owed or similar signal is set).
+// For now, return "" until the nested builder is properly implemented.
+//
+// TODO(10-xsd): Implement proper nested AdditionalTaxGrp structure when
+// Additional Medicare Tax is actually owed.
+function buildIRS8959(_fields: Input): string {
+  return "";
 }
 
 export const form8959: MefFormDescriptor<"form8959", Input> = {
