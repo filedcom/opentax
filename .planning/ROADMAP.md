@@ -12,7 +12,7 @@ Build ~45 missing tax nodes in 9 phases of 5 nodes each, expanding coverage from
 - [x] **Phase 4: Special Situations B (Batch 4)** - Foreign employer compensation, QSEHRA, Form 8917, Form 8867, Form 8859 (completed 2026-04-01)
 - [x] **Phase 5: Specialty Credits A (Batch 5)** - Form 8820, Form 8828, Form 8835, Form 8844, Form 8864 (completed 2026-04-01)
 - [ ] **Phase 6: Specialty Credits B (Batch 6)** - Form 8896, Form 8912, Form 8978, Form 8611, PPP informational
-- [ ] **Phase 7: Schema Extensions & Form 7203 (Batch 7)** - K-1 QBI fields, K-1 basis extensions, Form 7203, f4835 CIDP
+- [x] **Phase 7: Schema Extensions & Form 7203 (Batch 7)** - K-1 QBI fields, K-1 basis extensions, Form 7203, f4835 CIDP (completed 2026-04-05)
 - [ ] **Phase 8: International Simple (Batch 8)** - Form 8833, Form 8840, Form 8843, Form 8082, Form 8805
 - [ ] **Phase 9: International Complex (Batch 9)** - Form 8854, Form 8873, Form 8288, Form 8621, Form 965-A/C/D/E
 
@@ -139,12 +139,10 @@ Plans:
   5. `f4835` extended with CIDP additional scenario fields
   6. All extensions have passing tests
   7. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 07-01: Research K-1 QBI fields and Form 7203
-- [ ] 07-02: Write tests for all extensions
-- [ ] 07-03: Implement all extensions and Form 7203
+- [x] 07-01-PLAN.md — Verify all schema extensions, Form 7203, and f4835 CIDP: run node-scoped tests (202 pass), confirm registrations, audit research and routing
 
 ### Phase 8: International Simple (Batch 8)
 **Goal**: Build 5 lower-complexity international nodes: treaty-based return position (8833), closer connection exception (8840), statement for exempt individuals (8843), notice of inconsistent treatment (8082), and foreign partner withholding (8805). Each: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json.
@@ -198,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 4. Special Situations B | 1/1 | Complete   | 2026-04-01 |
 | 5. Specialty Credits A | 1/1 | Complete   | 2026-04-01 |
 | 6. Specialty Credits B | 0/1 | Not started | - |
-| 7. Schema Extensions & Form 7203 | 0/3 | Not started | - |
+| 7. Schema Extensions & Form 7203 | 1/1 | Complete   | 2026-04-05 |
 | 8. International Simple | 0/3 | Not started | - |
 | 9. International Complex | 0/3 | Not started | - |
 | 10. XSD Validation in CI | 1/1 | Complete    | 2026-04-05 |

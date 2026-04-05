@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
 status: Phase complete — ready for verification
-stopped_at: Completed 06-01-PLAN.md — Phase 6 specialty credits B verification (115 tests pass, all 5 nodes registered)
-last_updated: "2026-04-05T20:25:20.086Z"
+stopped_at: Completed 07-01-PLAN.md — Phase 7 schema extensions Form 7203 verification (202 tests pass, all 5 nodes registered)
+last_updated: "2026-04-05T20:36:04.406Z"
 progress:
   total_phases: 12
-  completed_phases: 8
-  total_plans: 12
-  completed_plans: 12
+  completed_phases: 9
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -19,11 +19,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 06 — specialty-credits-b-batch-6
+**Current focus:** Phase 07 — schema-extensions-form-7203-batch-7
 
 ## Current Position
 
-Phase: 06 (specialty-credits-b-batch-6) — EXECUTING
+Phase: 07 (schema-extensions-form-7203-batch-7) — EXECUTING
 Plan: 1 of 1
 
 ## Performance Metrics
@@ -53,6 +53,7 @@ Plan: 1 of 1
 | Phase 03-special-situations-a-batch-3 P02 | 1 | 1 tasks | 0 files |
 | Phase 03-special-situations-a-batch-3 P03 | 1 | 2 tasks | 0 files |
 | Phase 06-specialty-credits-b-batch-6 P01 | 3 | 2 tasks | 0 files |
+| Phase 07-schema-extensions-form-7203-batch-7 P01 | 1 | 2 tasks | 0 files |
 
 ### Decisions
 
@@ -75,6 +76,8 @@ Plan: 1 of 1
 - [Phase 03-special-situations-a-batch-3]: Clergy routes to OutputNodes([schedule_se, schedule1]); f8915f/f8915d route to schedule1.line8z_other_income; household_wages routes to f1040.line1b — ROADMAP approximate language does not affect correctness
 - [Phase 06-specialty-credits-b-batch-6]: Phase 6 verification is node-scoped only — 49 pre-existing MEF failures excluded; 115 passed / 0 failed is the correct gate
 - [Phase 06-specialty-credits-b-batch-6]: PPP forgiveness OutputNodes([]) correct — CARES Act §1106(i) and CAA 2021 §276 exclude forgiven amounts from federal income
+- [Phase 07-schema-extensions-form-7203-batch-7]: Phase 7 verification is node-scoped only — 49 pre-existing MEF failures excluded; 202 passed / 0 failed is the correct gate
+- [Phase 07-schema-extensions-form-7203-batch-7]: form7203 disallowed loss routes to both schedule1 and agi_aggregator to reverse the upstream S-corp loss add
 
 ### Roadmap Evolution
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T20:25:20.084Z
-Stopped at: Completed 06-01-PLAN.md — Phase 6 specialty credits B verification (115 tests pass, all 5 nodes registered)
+Last session: 2026-04-05T20:36:04.403Z
+Stopped at: Completed 07-01-PLAN.md — Phase 7 schema extensions Form 7203 verification (202 tests pass, all 5 nodes registered)
 Resume file: None
