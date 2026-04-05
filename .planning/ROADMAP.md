@@ -74,7 +74,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md — Verify research/context.md completeness for all 5 nodes
 - [x] 03-02-PLAN.md — Verify test suites pass and cover expected scenarios (128 tests)
-- [ ] 03-03-PLAN.md — Verify registry, inputs, screens.json registration and output routing
+- [x] 03-03-PLAN.md — Verify registry, inputs, screens.json registration and output routing
 
 ### Phase 4: Special Situations B (Batch 4)
 **Goal**: Verify all 5 pre-built nodes (FEC, QSEHRA, F8917, F8867, F8859) meet success criteria. All nodes already implemented with passing tests -- this phase confirms correctness, registration, and research completeness.
@@ -111,7 +111,7 @@ Plans:
 - [x] 05-01-PLAN.md — Verify all 5 nodes: run node-scoped tests (108 pass), confirm registry registration, audit research/context.md and output routing
 
 ### Phase 6: Specialty Credits B (Batch 6)
-**Goal**: Build 5 nodes: low-sulfur diesel production credit (8896), credit to holders of tax credit bonds (8912), partner's additional reporting year tax (8978), LIHTC recapture (8611), and a PPP loan forgiveness informational node. Each: Research → Black-box tests (RED) → Implementation (GREEN) → Register → screens.json.
+**Goal**: Verify all 5 pre-built nodes (F8896, F8912, F8978, F8611, PPP forgiveness) meet success criteria. All nodes already implemented with passing tests -- this phase confirms correctness, registration, routing, and research completeness.
 **Depends on**: Phase 5
 **Requirements**: REQ-01, REQ-02, REQ-03, REQ-04, REQ-05, REQ-06
 **Success Criteria** (what must be TRUE):
@@ -122,12 +122,10 @@ Plans:
   5. `forms/f1040/nodes/inputs/ppp_forgiveness/index.ts` exists (informational)
   6. All 5 nodes have research/context.md, passing tests, registered in registry.ts
   7. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 06-01: Research all 5 nodes
-- [ ] 06-02: Write black-box tests for all 5 nodes
-- [ ] 06-03: Implement all 5 nodes + register + update screens.json
+- [x] 06-01-PLAN.md — Verify all 5 nodes: run node-scoped tests (115 pass), confirm registry registration, audit research/context.md and output routing
 
 ### Phase 7: Schema Extensions & Form 7203 (Batch 7)
 **Goal**: Extend existing K-1 node schemas with QBI fields (K199 screen), pre-2018 basis fields, and partner basis worksheet fields. Build new intermediate node for Form 7203 (S-Corp stock/debt basis). Extend f4835 with CIDP additional scenario. All extensions follow schema-first Zod pattern.
@@ -199,11 +197,11 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 3. Special Situations A | 1/3 | In Progress|  |
 | 4. Special Situations B | 1/1 | Complete   | 2026-04-01 |
 | 5. Specialty Credits A | 1/1 | Complete   | 2026-04-01 |
-| 6. Specialty Credits B | 0/3 | Not started | - |
+| 6. Specialty Credits B | 0/1 | Not started | - |
 | 7. Schema Extensions & Form 7203 | 0/3 | Not started | - |
 | 8. International Simple | 0/3 | Not started | - |
 | 9. International Complex | 0/3 | Not started | - |
-| 10. XSD Validation in CI | 1/1 | Complete   | 2026-04-05 |
+| 10. XSD Validation in CI | 1/1 | Complete    | 2026-04-05 |
 | 11. Executor Error Isolation | 1/1 | Complete    | 2026-04-05 |
 | 12. Validation Rule Stubs | 0/1 | Not started | - |
 

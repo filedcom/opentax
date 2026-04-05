@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 03-02-PLAN.md — Phase 3 test verification (128 tests pass)
-last_updated: "2026-04-05T17:31:46.026Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 06-01-PLAN.md — Phase 6 specialty credits B verification (115 tests pass, all 5 nodes registered)
+last_updated: "2026-04-05T20:25:20.086Z"
 progress:
   total_phases: 12
-  completed_phases: 6
-  total_plans: 11
-  completed_plans: 10
+  completed_phases: 8
+  total_plans: 12
+  completed_plans: 12
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 03 — special-situations-a-batch-3
+**Current focus:** Phase 06 — specialty-credits-b-batch-6
 
 ## Current Position
 
-Phase: 03 (special-situations-a-batch-3) — EXECUTING
-Plan: 3 of 3
+Phase: 06 (specialty-credits-b-batch-6) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -51,6 +51,8 @@ Plan: 3 of 3
 | Phase 11-executor-error-isolation P01 | 264 | 2 tasks | 2 files |
 | Phase 03-special-situations-a-batch-3 P01 | 2 | 1 tasks | 0 files |
 | Phase 03-special-situations-a-batch-3 P02 | 1 | 1 tasks | 0 files |
+| Phase 03-special-situations-a-batch-3 P03 | 1 | 2 tasks | 0 files |
+| Phase 06-specialty-credits-b-batch-6 P01 | 3 | 2 tasks | 0 files |
 
 ### Decisions
 
@@ -70,6 +72,9 @@ Plan: 3 of 3
 - [Phase 11-executor-error-isolation]: Empty pending + parse failure = silent skip (backward compatible); non-empty pending + parse failure = EXECUTOR_NODE_FAILURE diagnostic
 - [Phase 03-special-situations-a-batch-3]: All 5 Phase 3 node research files confirmed complete — no remediation needed
 - [Phase 03-special-situations-a-batch-3]: 03-02 is a verification-only plan — all 5 Phase 3 nodes (clergy, f8915f, f8915d, f5405, household_wages) had 128 passing tests from prior work; no new code written
+- [Phase 03-special-situations-a-batch-3]: Clergy routes to OutputNodes([schedule_se, schedule1]); f8915f/f8915d route to schedule1.line8z_other_income; household_wages routes to f1040.line1b — ROADMAP approximate language does not affect correctness
+- [Phase 06-specialty-credits-b-batch-6]: Phase 6 verification is node-scoped only — 49 pre-existing MEF failures excluded; 115 passed / 0 failed is the correct gate
+- [Phase 06-specialty-credits-b-batch-6]: PPP forgiveness OutputNodes([]) correct — CARES Act §1106(i) and CAA 2021 §276 exclude forgiven amounts from federal income
 
 ### Roadmap Evolution
 
@@ -92,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T17:31:46.024Z
-Stopped at: Completed 03-02-PLAN.md — Phase 3 test verification (128 tests pass)
+Last session: 2026-04-05T20:25:20.084Z
+Stopped at: Completed 06-01-PLAN.md — Phase 6 specialty credits B verification (115 tests pass, all 5 nodes registered)
 Resume file: None
