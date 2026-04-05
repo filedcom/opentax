@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
-status: Phase complete — ready for verification
-stopped_at: Completed 10-01-PLAN.md — XSD validation in CI
-last_updated: "2026-04-05T16:33:06.565Z"
+status: Ready to execute
+stopped_at: Completed 03-01-PLAN.md — Phase 3 research verification
+last_updated: "2026-04-05T17:29:45.270Z"
 progress:
   total_phases: 12
-  completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 6
+  total_plans: 11
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 10 — xsd-validation-in-ci-xmllint-against-irs-xsd-files-wire-into-deno-test-suite
+**Current focus:** Phase 03 — special-situations-a-batch-3
 
 ## Current Position
 
-Phase: 10 (xsd-validation-in-ci-xmllint-against-irs-xsd-files-wire-into-deno-test-suite) — EXECUTING
-Plan: 1 of 1
+Phase: 03 (special-situations-a-batch-3) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -48,6 +48,8 @@ Plan: 1 of 1
 | Phase 04-special-situations-b-batch-4 P01 | 3 | 2 tasks | 0 files |
 | Phase 05-specialty-credits-a-batch-5 P01 | 5 | 2 tasks | 0 files |
 | Phase 10-xsd-validation-in-ci-xmllint-against-irs-xsd-files-wire-into-deno-test-suite P01 | 120 | 2 tasks | 11 files |
+| Phase 11-executor-error-isolation P01 | 264 | 2 tasks | 2 files |
+| Phase 03-special-situations-a-batch-3 P01 | 2 | 1 tasks | 0 files |
 
 ### Decisions
 
@@ -64,6 +66,8 @@ Plan: 1 of 1
 - [Phase 05-specialty-credits-a-batch-5]: Phase 5 verification is node-scoped only — full suite has 59 pre-existing MEF failures unrelated to Phase 5; 108 passed / 0 failed is the correct gate
 - [Phase 10]: IRS1040 always emits required XSD fields (IndividualReturnFilingStatusCd, VirtualCurAcquiredDurTYInd, RefundProductCd) regardless of income data
 - [Phase 10]: f8959 builder returns empty string — IRS8959 requires nested AdditionalTaxGrp structure; deferred to future plan
+- [Phase 11-executor-error-isolation]: Empty pending + parse failure = silent skip (backward compatible); non-empty pending + parse failure = EXECUTOR_NODE_FAILURE diagnostic
+- [Phase 03-special-situations-a-batch-3]: All 5 Phase 3 node research files confirmed complete — no remediation needed
 
 ### Roadmap Evolution
 
@@ -86,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T16:33:06.562Z
-Stopped at: Completed 10-01-PLAN.md — XSD validation in CI
+Last session: 2026-04-05T17:29:45.268Z
+Stopped at: Completed 03-01-PLAN.md — Phase 3 research verification
 Resume file: None
