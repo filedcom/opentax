@@ -200,7 +200,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 12. Validation Rule Stubs | 3/3 | Complete    | 2026-04-05 |
 | 13. Verification Paperwork | 0/1 | Not started | - |
 | 14. Phase 01 Constants + XSD e2e Fix | 1/1 | Complete    | 2026-04-06 |
-| 15. MEF Header Builder Fix | 0/1 | Not started | - |
+| 15. MEF Header Builder Fix | 1/1 | Complete   | 2026-04-05 |
 | 16. Executor Diagnostics CLI Surface | 0/1 | Not started | - |
 | 17. Validation DSL forEach/everyItem Extension | 0/2 | Not started | - |
 
@@ -300,7 +300,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 15-01-PLAN.md — Diagnose and fix header.ts ReturnHeader wrapping + FilingStatusCd + required-field emission
+- [x] 15-01-PLAN.md — Diagnose and fix header.ts ReturnHeader wrapping + FilingStatusCd + required-field emission
 
 ### Phase 16: Executor Diagnostics CLI Surface
 **Goal**: Wire `result.diagnostics` from `execute()` into all three CLI commands so node failures are visible to users. Also update `validate:mef` deno task to include the 6-test e2e file from Phase 14. Also recover `predicates.test.ts` (created in commit 4ce54a3 but absent from disk due to worktree divergence).

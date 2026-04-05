@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
 status: Phase complete — ready for verification
-stopped_at: Completed 12-validation-rule-stubs-high-value-batch/12-03-PLAN.md
-last_updated: "2026-04-05T21:59:22.158Z"
+stopped_at: Completed 15-mef-header-builder-fix/15-01-PLAN.md
+last_updated: "2026-04-05T23:42:49.877Z"
 progress:
-  total_phases: 12
-  completed_phases: 11
-  total_plans: 18
-  completed_plans: 17
+  total_phases: 17
+  completed_phases: 13
+  total_plans: 19
+  completed_plans: 20
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 12 — validation-rule-stubs-high-value-batch
+**Current focus:** Phase 15 — MEF Header Builder Fix
 
 ## Current Position
 
-Phase: 12 (validation-rule-stubs-high-value-batch) — EXECUTING
-Plan: 3 of 3
+Phase: 15 (MEF Header Builder Fix) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Plan: 3 of 3
 | Phase 09-international-complex-batch-9 P01 | 1 | 2 tasks | 0 files |
 | Phase 12-validation-rule-stubs-high-value-batch P02 | 28 | 2 tasks | 8 files |
 | Phase 12-validation-rule-stubs-high-value-batch P03 | 8 | 1 tasks | 1 files |
+| Phase 15-mef-header-builder-fix P01 | 5 | 2 tasks | 1 files |
 
 ### Decisions
 
@@ -91,6 +92,7 @@ Plan: 3 of 3
 - [Phase 12-validation-rule-stubs-high-value-batch]: validEIN uses Pub 1586 Table 1 prefix Set — explicit Set over regex for auditability
 - [Phase 12-validation-rule-stubs-high-value-batch]: Only 7 alwaysPass stubs in the entire codebase are implementable with the single-instance predicate DSL; the remaining ~533 stubs require cross-instance iteration, database lookups, or binary attachment inspection
 - [Phase 12-validation-rule-stubs-high-value-batch]: 285 test failures are all pre-existing; zero regressions from Phase 12 changes
+- [Phase 15-mef-header-builder-fix]: ReturnType/TaxPeriodBeginDate/TaxPeriodEndDate are the canonical IRS element names; FilingStatusCd emits String(filingStatus) numeric 1-5; binaryAttachmentCnt removed from ReturnHeader
 
 ### Roadmap Evolution
 
@@ -113,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T21:59:22.155Z
-Stopped at: Completed 12-validation-rule-stubs-high-value-batch/12-03-PLAN.md
+Last session: 2026-04-05T23:42:49.874Z
+Stopped at: Completed 15-mef-header-builder-fix/15-01-PLAN.md
 Resume file: None
