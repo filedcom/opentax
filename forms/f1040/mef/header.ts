@@ -161,6 +161,7 @@ function buildFilerBlock(filer: FilerIdentity): string {
     buildAddress(filer.address),
     element("PhoneNum", filer.phone),
     element("EmailAddressTxt", filer.email),
+    element("FilingStatusCd", String(filer.filingStatus)),
   ];
   return elements("Filer", children);
 }
@@ -257,16 +258,15 @@ export function buildReturnHeader(
   const originatorType = filer?.originator?.originatorType ?? "ERO";
 
   // XSD-required sequence (ReturnHeader1040x.xsd):
-  //   ReturnTs → TaxYr → TaxPeriodBeginDt → TaxPeriodEndDt →
+  //   ReturnTs → TaxYr → TaxPeriodBeginDate → TaxPeriodEndDate →
   //   SoftwareId → [SoftwareVersionNum] → OriginatorGrp →
-  //   PINTypeCd → JuratDisclosureCd → ReturnTypeCd → Filer →
+  //   PINTypeCd → JuratDisclosureCd → ReturnType → Filer →
   //   [PaidPreparerInformationGrp] → [OnlineFilerInformation]
-  // Attribute: binaryAttachmentCnt (required, default 0)
   const headerChildren = [
     element("ReturnTs", ts),
     element("TaxYr", String(year)),
-    element("TaxPeriodBeginDt", `${year}-01-01`),
-    element("TaxPeriodEndDt", `${year}-12-31`),
+    element("TaxPeriodBeginDate", `${year}-01-01`),
+    element("TaxPeriodEndDate", `${year}-12-31`),
     element("SoftwareId", softwareId),
     element("SoftwareVersionNum", softwareVersionNum),
     elements("OriginatorGrp", [
@@ -281,7 +281,7 @@ export function buildReturnHeader(
     ]),
     element("PINTypeCd", "Self-Select On-Line"),
     element("JuratDisclosureCd", "Online Self Select PIN"),
-    element("ReturnTypeCd", returnType),
+    element("ReturnType", returnType),
   ];
 
   if (filer !== undefined) {
@@ -312,5 +312,5 @@ export function buildReturnHeader(
   }
 
   const inner = headerChildren.filter((s) => s !== "").join("");
-  return `<ReturnHeader binaryAttachmentCnt="0">${inner}</ReturnHeader>`;
+  return `<ReturnHeader>${inner}</ReturnHeader>`;
 }
