@@ -63,20 +63,20 @@ Deno.test("ReturnHeader present", () => {
 
 Deno.test("ReturnType is 1040", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, "<ReturnType>1040</ReturnType>");
+  assertStringIncludes(xml, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
 Deno.test("TaxPeriodBeginDate is 2025-01-01", () => {
   const xml = buildMefXml({});
   assertStringIncludes(
     xml,
-    "<TaxPeriodBeginDate>2025-01-01</TaxPeriodBeginDate>",
+    "<TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt>",
   );
 });
 
 Deno.test("TaxPeriodEndDate is 2025-12-31", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, "<TaxPeriodEndDate>2025-12-31</TaxPeriodEndDate>");
+  assertStringIncludes(xml, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
 // ─── 3. ReturnData always present ─────────────────────────────────────────────
@@ -151,7 +151,7 @@ Deno.test("documentCnt=2 when both f1040 and schedule1 have data", () => {
 
 Deno.test("IRS1040 present when f1040 has data", () => {
   const xml = buildMefXml({ f1040: { line1a_wages: 50000 } });
-  assertStringIncludes(xml, "<IRS1040>");
+  assertStringIncludes(xml, "<IRS1040 ");
 });
 
 Deno.test("IRS1040 absent when f1040 missing from pending", () => {
@@ -168,7 +168,7 @@ Deno.test("IRS1040 absent when f1040 has only unknown keys", () => {
 
 Deno.test("IRS1040Schedule1 present when schedule1 has data", () => {
   const xml = buildMefXml({ schedule1: { line7_unemployment: 4800 } });
-  assertStringIncludes(xml, "<IRS1040Schedule1>");
+  assertStringIncludes(xml, "<IRS1040Schedule1 ");
 });
 
 Deno.test("IRS1040Schedule1 absent when schedule1 missing from pending", () => {
@@ -188,8 +188,8 @@ Deno.test("IRS1040 appears before IRS1040Schedule1 when both present", () => {
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
   });
-  const f1040Idx = xml.indexOf("<IRS1040>");
-  const sched1Idx = xml.indexOf("<IRS1040Schedule1>");
+  const f1040Idx = xml.indexOf("<IRS1040 ");
+  const sched1Idx = xml.indexOf("<IRS1040Schedule1 ");
   assertEquals(
     f1040Idx < sched1Idx,
     true,
@@ -221,7 +221,7 @@ Deno.test("Filer block present when filer provided", () => {
 
 Deno.test("FilingStatusCd present when filer provided", () => {
   const xml = buildMefXml({}, sampleFiler());
-  assertStringIncludes(xml, "<FilingStatusCd>1</FilingStatusCd>");
+  assertStringIncludes(xml, "<IndividualReturnFilingStatusCd>1</IndividualReturnFilingStatusCd>");
 });
 
 // ─── 13. No XML declaration ───────────────────────────────────────────────────
@@ -275,7 +275,7 @@ Deno.test("schedule1 BusinessIncomeLossAmt negative value appears in output", ()
 
 Deno.test("IRS1040Schedule2 present when schedule2 has data", () => {
   const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
-  assertStringIncludes(xml, "<IRS1040Schedule2>");
+  assertStringIncludes(xml, "<IRS1040Schedule2 ");
 });
 
 Deno.test("IRS1040Schedule2 absent when schedule2 missing from pending", () => {
@@ -292,7 +292,7 @@ Deno.test("IRS1040Schedule2 absent when schedule2 has only unknown keys", () => 
 
 Deno.test("IRS1040Schedule3 present when schedule3 has data", () => {
   const xml = buildMefXml({ schedule3: { line2_childcare_credit: 1200 } });
-  assertStringIncludes(xml, "<IRS1040Schedule3>");
+  assertStringIncludes(xml, "<IRS1040Schedule3 ");
 });
 
 Deno.test("IRS1040Schedule3 absent when schedule3 missing from pending", () => {
@@ -353,8 +353,8 @@ Deno.test("IRS1040 appears before IRS1040Schedule2 when both present", () => {
     f1040: { line1a_wages: 50000 },
     schedule2: { line1_amt: 5000 },
   });
-  const f1040Idx = xml.indexOf("<IRS1040>");
-  const sched2Idx = xml.indexOf("<IRS1040Schedule2>");
+  const f1040Idx = xml.indexOf("<IRS1040 ");
+  const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
   assertEquals(
     f1040Idx < sched2Idx,
     true,
@@ -367,8 +367,8 @@ Deno.test("IRS1040Schedule1 appears before IRS1040Schedule2 when both present", 
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line1_amt: 5000 },
   });
-  const sched1Idx = xml.indexOf("<IRS1040Schedule1>");
-  const sched2Idx = xml.indexOf("<IRS1040Schedule2>");
+  const sched1Idx = xml.indexOf("<IRS1040Schedule1 ");
+  const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
   assertEquals(
     sched1Idx < sched2Idx,
     true,
@@ -381,8 +381,8 @@ Deno.test("IRS1040Schedule2 appears before IRS1040Schedule3 when both present", 
     schedule2: { line1_amt: 5000 },
     schedule3: { line2_childcare_credit: 1200 },
   });
-  const sched2Idx = xml.indexOf("<IRS1040Schedule2>");
-  const sched3Idx = xml.indexOf("<IRS1040Schedule3>");
+  const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
+  const sched3Idx = xml.indexOf("<IRS1040Schedule3 ");
   assertEquals(
     sched2Idx < sched3Idx,
     true,
@@ -422,7 +422,7 @@ Deno.test("schedule2 aggregated UncollSSMedcrRRTAGrpInsTxAmt appears in assemble
 
 Deno.test("IRS1040ScheduleD present when schedule_d has data", () => {
   const xml = buildMefXml({ schedule_d: { line_4_other_st: 1000 } });
-  assertStringIncludes(xml, "<IRS1040ScheduleD>");
+  assertStringIncludes(xml, "<IRS1040ScheduleD ");
 });
 
 Deno.test("IRS1040ScheduleD absent when schedule_d missing from pending", () => {
@@ -437,7 +437,7 @@ Deno.test("IRS1040ScheduleD absent when schedule_d has only unknown keys", () =>
 
 Deno.test("IRS8889 present when form8889 has data", () => {
   const xml = buildMefXml({ form8889: { taxpayer_hsa_contributions: 3600 } });
-  assertStringIncludes(xml, "<IRS8889>");
+  assertStringIncludes(xml, "<IRS8889 ");
 });
 
 Deno.test("IRS8889 absent when form8889 missing from pending", () => {
@@ -447,7 +447,7 @@ Deno.test("IRS8889 absent when form8889 missing from pending", () => {
 
 Deno.test("IRS2441 present when form2441 has data", () => {
   const xml = buildMefXml({ form2441: { dep_care_benefits: 5000 } });
-  assertStringIncludes(xml, "<IRS2441>");
+  assertStringIncludes(xml, "<IRS2441 ");
 });
 
 Deno.test("IRS2441 absent when form2441 missing from pending", () => {
@@ -468,7 +468,7 @@ Deno.test("IRS8949 present when form8949 has transactions", () => {
       is_long_term: false,
     }],
   });
-  assertStringIncludes(xml, "<IRS8949>");
+  assertStringIncludes(xml, "<IRS8949 ");
 });
 
 Deno.test("IRS8949 absent when form8949 is empty array", () => {
@@ -494,7 +494,7 @@ Deno.test("IRS8959 absent when form8959 missing from pending", () => {
 
 Deno.test("IRS8960 present when form8960 has data", () => {
   const xml = buildMefXml({ form8960: { line1_taxable_interest: 1200 } });
-  assertStringIncludes(xml, "<IRS8960>");
+  assertStringIncludes(xml, "<IRS8960 ");
 });
 
 Deno.test("IRS8960 absent when form8960 missing from pending", () => {
@@ -579,8 +579,8 @@ Deno.test("only f1040 and form8889 populated: only IRS1040 and IRS8889 present",
     f1040: { line1a_wages: 50000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
   });
-  assertStringIncludes(xml, "<IRS1040>");
-  assertStringIncludes(xml, "<IRS8889>");
+  assertStringIncludes(xml, "<IRS1040 ");
+  assertStringIncludes(xml, "<IRS8889 ");
   assertNotIncludes(xml, "<IRS1040Schedule1>");
   assertNotIncludes(xml, "<IRS1040ScheduleD>");
   assertNotIncludes(xml, "<IRS8949>");
@@ -627,7 +627,7 @@ Deno.test("form8960 TaxableInterestAmt value appears in assembled output", () =>
 
 Deno.test("IRS4137 present when form4137 has data", () => {
   const xml = buildMefXml({ form4137: { allocated_tips: 500 } });
-  assertStringIncludes(xml, "<IRS4137>");
+  assertStringIncludes(xml, "<IRS4137 ");
 });
 
 Deno.test("IRS4137 absent when form4137 missing from pending", () => {
@@ -637,7 +637,7 @@ Deno.test("IRS4137 absent when form4137 missing from pending", () => {
 
 Deno.test("IRS8919 present when form8919 has data", () => {
   const xml = buildMefXml({ form8919: { wages: 45000 } });
-  assertStringIncludes(xml, "<IRS8919>");
+  assertStringIncludes(xml, "<IRS8919 ");
 });
 
 Deno.test("IRS8919 absent when form8919 missing from pending", () => {
@@ -647,7 +647,7 @@ Deno.test("IRS8919 absent when form8919 missing from pending", () => {
 
 Deno.test("IRS4972 present when form4972 has data", () => {
   const xml = buildMefXml({ form4972: { lump_sum_amount: 100000 } });
-  assertStringIncludes(xml, "<IRS4972>");
+  assertStringIncludes(xml, "<IRS4972 ");
 });
 
 Deno.test("IRS4972 absent when form4972 missing from pending", () => {
@@ -657,7 +657,7 @@ Deno.test("IRS4972 absent when form4972 missing from pending", () => {
 
 Deno.test("IRS1040ScheduleSE present when schedule_se has data", () => {
   const xml = buildMefXml({ schedule_se: { net_profit_schedule_c: 30000 } });
-  assertStringIncludes(xml, "<IRS1040ScheduleSE>");
+  assertStringIncludes(xml, "<IRS1040ScheduleSE ");
 });
 
 Deno.test("IRS1040ScheduleSE absent when schedule_se missing from pending", () => {
@@ -667,7 +667,7 @@ Deno.test("IRS1040ScheduleSE absent when schedule_se missing from pending", () =
 
 Deno.test("IRS8606 present when form8606 has data", () => {
   const xml = buildMefXml({ form8606: { nondeductible_contributions: 6000 } });
-  assertStringIncludes(xml, "<IRS8606>");
+  assertStringIncludes(xml, "<IRS8606 ");
 });
 
 Deno.test("IRS8606 absent when form8606 missing from pending", () => {
@@ -677,7 +677,7 @@ Deno.test("IRS8606 absent when form8606 missing from pending", () => {
 
 Deno.test("IRS1116 present when form_1116 has data", () => {
   const xml = buildMefXml({ form_1116: { foreign_tax_paid: 800 } });
-  assertStringIncludes(xml, "<IRS1116>");
+  assertStringIncludes(xml, "<IRS1116 ");
 });
 
 Deno.test("IRS1116 absent when form_1116 missing from pending", () => {
@@ -687,7 +687,7 @@ Deno.test("IRS1116 absent when form_1116 missing from pending", () => {
 
 Deno.test("IRS8582 present when form8582 has data", () => {
   const xml = buildMefXml({ form8582: { current_loss: 5000 } });
-  assertStringIncludes(xml, "<IRS8582>");
+  assertStringIncludes(xml, "<IRS8582 ");
 });
 
 Deno.test("IRS8582 absent when form8582 missing from pending", () => {
@@ -697,7 +697,7 @@ Deno.test("IRS8582 absent when form8582 missing from pending", () => {
 
 Deno.test("IRS1040ScheduleF present when schedule_f has data", () => {
   const xml = buildMefXml({ schedule_f: { crop_insurance: 2000 } });
-  assertStringIncludes(xml, "<IRS1040ScheduleF>");
+  assertStringIncludes(xml, "<IRS1040ScheduleF ");
 });
 
 Deno.test("IRS1040ScheduleF absent when schedule_f missing from pending", () => {
@@ -707,7 +707,7 @@ Deno.test("IRS1040ScheduleF absent when schedule_f missing from pending", () => 
 
 Deno.test("IRS1040ScheduleB present when schedule_b has data", () => {
   const xml = buildMefXml({ schedule_b: { taxable_interest_net: 1500 } });
-  assertStringIncludes(xml, "<IRS1040ScheduleB>");
+  assertStringIncludes(xml, "<IRS1040ScheduleB ");
 });
 
 Deno.test("IRS1040ScheduleB absent when schedule_b missing from pending", () => {
@@ -717,7 +717,7 @@ Deno.test("IRS1040ScheduleB absent when schedule_b missing from pending", () => 
 
 Deno.test("IRS4797 present when form4797 has data", () => {
   const xml = buildMefXml({ form4797: { section_1231_gain: 12000 } });
-  assertStringIncludes(xml, "<IRS4797>");
+  assertStringIncludes(xml, "<IRS4797 ");
 });
 
 Deno.test("IRS4797 absent when form4797 missing from pending", () => {
@@ -727,7 +727,7 @@ Deno.test("IRS4797 absent when form4797 missing from pending", () => {
 
 Deno.test("IRS8880 present when form8880 has data", () => {
   const xml = buildMefXml({ form8880: { ira_contributions_taxpayer: 3000 } });
-  assertStringIncludes(xml, "<IRS8880>");
+  assertStringIncludes(xml, "<IRS8880 ");
 });
 
 Deno.test("IRS8880 absent when form8880 missing from pending", () => {
@@ -737,7 +737,7 @@ Deno.test("IRS8880 absent when form8880 missing from pending", () => {
 
 Deno.test("IRS8995 present when form8995 has data", () => {
   const xml = buildMefXml({ form8995: { qbi: 50000 } });
-  assertStringIncludes(xml, "<IRS8995>");
+  assertStringIncludes(xml, "<IRS8995 ");
 });
 
 Deno.test("IRS8995 absent when form8995 missing from pending", () => {
@@ -767,7 +767,7 @@ Deno.test("IRS8995A absent when form8995a missing from pending", () => {
 
 Deno.test("IRS6251 present when form6251 has data", () => {
   const xml = buildMefXml({ form6251: { regular_tax_income: 80000 } });
-  assertStringIncludes(xml, "<IRS6251>");
+  assertStringIncludes(xml, "<IRS6251 ");
 });
 
 Deno.test("IRS6251 absent when form6251 missing from pending", () => {
@@ -777,7 +777,7 @@ Deno.test("IRS6251 absent when form6251 missing from pending", () => {
 
 Deno.test("IRS5329 present when form5329 has data", () => {
   const xml = buildMefXml({ form5329: { early_distribution: 5000 } });
-  assertStringIncludes(xml, "<IRS5329>");
+  assertStringIncludes(xml, "<IRS5329 ");
 });
 
 Deno.test("IRS5329 absent when form5329 missing from pending", () => {
@@ -904,32 +904,32 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
     form_8829: { mortgage_interest: 12000 },
     form8839: { adoption_benefits: 14890 },
   });
-  assertStringIncludes(xml, "<IRS1040>");
-  assertStringIncludes(xml, "<IRS1040Schedule1>");
-  assertStringIncludes(xml, "<IRS1040Schedule2>");
-  assertStringIncludes(xml, "<IRS1040Schedule3>");
-  assertStringIncludes(xml, "<IRS1040ScheduleD>");
-  assertStringIncludes(xml, "<IRS8889>");
-  assertStringIncludes(xml, "<IRS2441>");
-  assertStringIncludes(xml, "<IRS8949>");
+  assertStringIncludes(xml, "<IRS1040 ");
+  assertStringIncludes(xml, "<IRS1040Schedule1 ");
+  assertStringIncludes(xml, "<IRS1040Schedule2 ");
+  assertStringIncludes(xml, "<IRS1040Schedule3 ");
+  assertStringIncludes(xml, "<IRS1040ScheduleD ");
+  assertStringIncludes(xml, "<IRS8889 ");
+  assertStringIncludes(xml, "<IRS2441 ");
+  assertStringIncludes(xml, "<IRS8949 ");
   assertStringIncludes(xml, "<IRS8959>");
-  assertStringIncludes(xml, "<IRS8960>");
-  assertStringIncludes(xml, "<IRS4137>");
-  assertStringIncludes(xml, "<IRS8919>");
-  assertStringIncludes(xml, "<IRS4972>");
-  assertStringIncludes(xml, "<IRS1040ScheduleSE>");
-  assertStringIncludes(xml, "<IRS8606>");
-  assertStringIncludes(xml, "<IRS1116>");
-  assertStringIncludes(xml, "<IRS8582>");
-  assertStringIncludes(xml, "<IRS1040ScheduleF>");
-  assertStringIncludes(xml, "<IRS1040ScheduleB>");
-  assertStringIncludes(xml, "<IRS4797>");
-  assertStringIncludes(xml, "<IRS8880>");
-  assertStringIncludes(xml, "<IRS8995>");
+  assertStringIncludes(xml, "<IRS8960 ");
+  assertStringIncludes(xml, "<IRS4137 ");
+  assertStringIncludes(xml, "<IRS8919 ");
+  assertStringIncludes(xml, "<IRS4972 ");
+  assertStringIncludes(xml, "<IRS1040ScheduleSE ");
+  assertStringIncludes(xml, "<IRS8606 ");
+  assertStringIncludes(xml, "<IRS1116 ");
+  assertStringIncludes(xml, "<IRS8582 ");
+  assertStringIncludes(xml, "<IRS1040ScheduleF ");
+  assertStringIncludes(xml, "<IRS1040ScheduleB ");
+  assertStringIncludes(xml, "<IRS4797 ");
+  assertStringIncludes(xml, "<IRS8880 ");
+  assertStringIncludes(xml, "<IRS8995 ");
   assertStringIncludes(xml, "<IRS4562>");
   assertStringIncludes(xml, "<IRS8995A>");
-  assertStringIncludes(xml, "<IRS6251>");
-  assertStringIncludes(xml, "<IRS5329>");
+  assertStringIncludes(xml, "<IRS6251 ");
+  assertStringIncludes(xml, "<IRS5329 ");
   assertStringIncludes(xml, "<IRS8853>");
   assertStringIncludes(xml, "<IRS8829>");
   assertStringIncludes(xml, "<IRS8839>");
