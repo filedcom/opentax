@@ -69,12 +69,12 @@ Plans:
   5. `forms/f1040/nodes/inputs/household_wages/index.ts` exists, routes to f1040 line 1a
   6. All 5 nodes have research/context.md, passing tests, registered in registry.ts
   7. `deno task test` passes, `deno check forms/f1040/2025/registry.ts` exits 0
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Research all 5 nodes
-- [ ] 03-02: Write black-box tests for all 5 nodes
-- [ ] 03-03: Implement all 5 nodes + register + update screens.json
+- [x] 03-01-PLAN.md — Verify research/context.md completeness for all 5 nodes
+- [ ] 03-02-PLAN.md — Verify test suites pass and cover expected scenarios (128 tests)
+- [ ] 03-03-PLAN.md — Verify registry, inputs, screens.json registration and output routing
 
 ### Phase 4: Special Situations B (Batch 4)
 **Goal**: Verify all 5 pre-built nodes (FEC, QSEHRA, F8917, F8867, F8859) meet success criteria. All nodes already implemented with passing tests -- this phase confirms correctness, registration, and research completeness.
@@ -196,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 |-------|----------------|--------|-----------|
 | 1. Self-Employed & Retirement | 2/3 | In Progress|  |
 | 2. Deductions & Worksheets | 0/1 | Not started | - |
-| 3. Special Situations A | 0/3 | Not started | - |
+| 3. Special Situations A | 1/3 | In Progress|  |
 | 4. Special Situations B | 1/1 | Complete   | 2026-04-01 |
 | 5. Specialty Credits A | 1/1 | Complete   | 2026-04-01 |
 | 6. Specialty Credits B | 0/3 | Not started | - |
@@ -204,7 +204,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 8. International Simple | 0/3 | Not started | - |
 | 9. International Complex | 0/3 | Not started | - |
 | 10. XSD Validation in CI | 1/1 | Complete   | 2026-04-05 |
-| 11. Executor Error Isolation | 0/1 | Not started | - |
+| 11. Executor Error Isolation | 1/1 | Complete    | 2026-04-05 |
 | 12. Validation Rule Stubs | 0/1 | Not started | - |
 
 ### Phase 10: XSD Validation in CI
@@ -237,7 +237,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 11-01-PLAN.md — Per-node try/catch with diagnostic entries + tests for parse failure and compute throw paths
+- [x] 11-01-PLAN.md — Per-node try/catch with diagnostic entries + tests for parse failure and compute throw paths
 
 ### Phase 12: Validation Rule Stubs — High-Value Batch
 **Goal**: Implement the highest-value subset of the 753 `alwaysPass` validation rule stubs. Focus on rules that are (a) implementable client-side (no IRS database lookup required), (b) catch real taxpayer errors, and (c) cover forms with broad usage. Target: TIN/EIN format validation (~30 rules from the 63 total TIN rules), simple conditional math rules (~20 rules from the 57 total), and binary presence rules that can be evaluated from the pending dict (~10 rules). Skip: database lookup rules (prior-year AGI, IP-PIN), per-item repeating group rules requiring `everyItem` DSL combinator.
