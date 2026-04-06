@@ -47,6 +47,16 @@ export async function exportMefCommand(
   const engineInputs = buildEngineInputs(inputs);
   const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
 
+  // Warn about executor node failures before XML build
+  for (const d of result.diagnostics) {
+    console.warn(`[${d.code}] ${d.nodeType}: ${d.message}`);
+  }
+  if (result.diagnostics.length > 0) {
+    console.warn(
+      `[WARNING] ${result.diagnostics.length} node(s) failed during execution — exported XML may be incomplete.`,
+    );
+  }
+
   // Extract filer identity for header field access
   const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
   const filer = extractFilerIdentity(f1040);

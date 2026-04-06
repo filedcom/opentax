@@ -149,12 +149,17 @@ export async function getReturnCommand(
 
   const f1040 = result.pending["f1040"] ?? {};
 
+  const warnings = softValidationWarnings(result.pending);
+  for (const d of result.diagnostics) {
+    warnings.push(`[${d.code}] ${d.nodeType}: ${d.message}`);
+  }
+
   return {
     returnId: meta.returnId,
     year: meta.year,
     summary: extractSummary(f1040),
     forms: collectForms(result.pending),
     lines: f1040,
-    warnings: softValidationWarnings(result.pending),
+    warnings,
   };
 }

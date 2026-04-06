@@ -7,6 +7,7 @@
 
 import { join } from "@std/path";
 import { execute } from "../../core/runtime/executor.ts";
+import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../core/runtime/planner.ts";
 import { catalog } from "../../catalog.ts";
 import { buildEngineInputs, loadReturn } from "../store/store.ts";
@@ -14,7 +15,7 @@ import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
 import { formatDiagnosticsJson, formatDiagnosticsText } from "../../core/validation/report.ts";
-import type { DiagnosticsReport } from "../../core/validation/types.ts";
+import type { DiagnosticEntry, DiagnosticsReport, ErrorCategory } from "../../core/validation/types.ts";
 import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
 import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
 
@@ -69,11 +70,35 @@ export async function validateReturnCommand(
   // Run all rules
   const report = evaluateRules(ALL_RULES, ctx);
 
+  // Merge executor diagnostics into report entries
+  const executorEntries: DiagnosticEntry[] = result.diagnostics.map(
+    (d: ExecutorDiagnosticEntry) => ({
+      ruleNumber: d.code,
+      severity: "reject" as const,
+      category: "general" as ErrorCategory,
+      message: `${d.nodeType}: ${d.message}`,
+      formRef: d.nodeId,
+    }),
+  );
+
+  const hasExecutorFailures = executorEntries.length > 0;
+  const mergedEntries = [...executorEntries, ...report.entries];
+  const mergedSummary = {
+    ...report.summary,
+    total: report.summary.total + executorEntries.length,
+    rejected: report.summary.rejected + executorEntries.length,
+  };
+  const mergedReport: DiagnosticsReport = {
+    entries: mergedEntries,
+    summary: mergedSummary,
+    canFile: hasExecutorFailures ? false : report.canFile,
+  };
+
   // Format output
   const format = args.format ?? "json";
   const formatted = format === "text"
-    ? formatDiagnosticsText(report, args.returnId, meta.year)
-    : formatDiagnosticsJson(report);
+    ? formatDiagnosticsText(mergedReport, args.returnId, meta.year)
+    : formatDiagnosticsJson(mergedReport);
 
-  return { report, formatted };
+  return { report: mergedReport, formatted };
 }
