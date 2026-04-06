@@ -7,6 +7,9 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { eitc } from "../../forms/eitc/index.ts";
+import { f8812 } from "../../../inputs/f8812/index.ts";
+import { f2441 } from "../../../inputs/f2441/index.ts";
+import { form8995 } from "../../forms/form8995/index.ts";
 
 // AGI Aggregator — Form 1040 Line 11
 //
@@ -45,8 +48,13 @@ export const inputSchema = z.object({
   line4b_ira_taxable: z.number().optional(),
   // Line 5b — Pensions and annuities, taxable amount (Form 1099-R)
   line5b_pension_taxable: z.number().optional(),
+  // Line 6a — Social security benefits, gross (from SSA-1099 — for taxability worksheet)
+  line6a_ss_gross: z.number().nonnegative().optional(),
   // Line 6b — Social security benefits, taxable amount (SSA-1099 worksheet)
+  // If provided directly (e.g., from prior worksheet), use as-is.
   line6b_ss_taxable: z.number().nonnegative().optional(),
+  // Filing status — required for SSA taxability worksheet thresholds (MFJ vs other)
+  filing_status: z.string().optional(),
   // Line 7 — Capital gain or (loss) (Schedule D)
   line7_capital_gain: z.number().optional(),
 
@@ -121,11 +129,49 @@ export const inputSchema = z.object({
 
 type AgiInput = z.infer<typeof inputSchema>;
 
+// ─── SSA Taxability Worksheet (IRC §86) ───────────────────────────────────────
+// Computes the taxable portion of Social Security benefits.
+// IRS Publication 915; Form 1040 instructions for Line 6b.
+//
+// Thresholds (not indexed for inflation):
+//   MFJ: base $32,000, upper $44,000
+//   All others: base $25,000, upper $34,000
+
+const SSA_BASE_THRESHOLD_MFJ = 32_000;
+const SSA_UPPER_THRESHOLD_MFJ = 44_000;
+const SSA_BASE_THRESHOLD_OTHER = 25_000;
+const SSA_UPPER_THRESHOLD_OTHER = 34_000;
+
+function computeSsaTaxable(ssaGross: number, otherIncome: number, isMfj: boolean): number {
+  if (ssaGross <= 0) return 0;
+
+  const baseThreshold = isMfj ? SSA_BASE_THRESHOLD_MFJ : SSA_BASE_THRESHOLD_OTHER;
+  const upperThreshold = isMfj ? SSA_UPPER_THRESHOLD_MFJ : SSA_UPPER_THRESHOLD_OTHER;
+
+  // Provisional income = other AGI items + 50% × SSA gross benefits
+  const provisionalIncome = otherIncome + 0.5 * ssaGross;
+
+  if (provisionalIncome <= baseThreshold) return 0;
+
+  // Maximum possible taxable SSA = 85% of gross benefits
+  const maxTaxable = 0.85 * ssaGross;
+
+  if (provisionalIncome <= upperThreshold) {
+    // Between base and upper threshold: 50% of excess over base threshold
+    return Math.min(maxTaxable, 0.5 * (provisionalIncome - baseThreshold));
+  }
+
+  // Above upper threshold: tiered formula
+  // = 85% × (provisional - upper) + 50% × min(upper - base, SSA gross)
+  const tier1 = 0.85 * (provisionalIncome - upperThreshold);
+  const tier2 = 0.5 * Math.min(upperThreshold - baseThreshold, ssaGross);
+  return Math.min(maxTaxable, tier1 + tier2);
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Sum all income and addition items (before exclusions/deductions).
-// Fields can be negative (e.g., capital loss, schedule C net loss).
-function grossIncome(input: AgiInput): number {
+// Sum all non-SSA income items (used as "other income" for provisional income calculation).
+function nonSsaIncome(input: AgiInput): number {
   return (
     (input.line1a_wages ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
@@ -136,7 +182,6 @@ function grossIncome(input: AgiInput): number {
     (input.line3b_ordinary_dividends ?? 0) +
     (input.line4b_ira_taxable ?? 0) +
     (input.line5b_pension_taxable ?? 0) +
-    (input.line6b_ss_taxable ?? 0) +
     (input.line7_capital_gain ?? 0) +
     (input.line1_state_refund ?? 0) +
     (input.line3_schedule_c ?? 0) +
@@ -153,6 +198,27 @@ function grossIncome(input: AgiInput): number {
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0)
+  );
+}
+
+// Compute taxable SSA: prefer pre-computed line6b_ss_taxable; otherwise run the worksheet.
+// "Other income" for provisional income = AGI from non-SSA sources (after exclusions/deductions).
+function resolveSsaTaxable(input: AgiInput): number {
+  if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
+  const ssaGross = input.line6a_ss_gross ?? 0;
+  if (ssaGross === 0) return 0;
+  const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const otherAgi = Math.max(0, nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input));
+  return computeSsaTaxable(ssaGross, otherAgi, isMfj);
+}
+
+// Sum all income and addition items (before exclusions/deductions).
+// Fields can be negative (e.g., capital loss, schedule C net loss).
+function grossIncome(input: AgiInput): number {
+  const ssaTaxable = resolveSsaTaxable(input);
+  return (
+    nonSsaIncome(input) +
+    ssaTaxable
   );
 }
 
@@ -195,18 +261,36 @@ function computeAgi(input: AgiInput): number {
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995]);
 
   compute(_ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const input = inputSchema.parse(rawInput);
     const agi = computeAgi(input);
+
+    // Compute SSA taxable amount for f1040 line 6b pass-through
+    const ssaGross = input.line6a_ss_gross ?? 0;
+    const ssaTaxable = resolveSsaTaxable(input);
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line11_agi: agi }),
       this.outputNodes.output(standard_deduction, { agi }),
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),
+      // Pass AGI to f8812 for CTC/ACTC phase-out computation
+      this.outputNodes.output(f8812, { auto_agi: agi }),
+      // Pass AGI to f2441 for dependent care credit rate calculation
+      this.outputNodes.output(f2441, { agi }),
+      // Pass AGI to form8995 so it can apply the 20%-of-taxable-income income limit
+      this.outputNodes.output(form8995, { agi }),
     ];
+
+    // Pass SSA gross and taxable amounts to f1040 for display
+    if (ssaGross > 0) {
+      outputs.push(this.outputNodes.output(f1040, {
+        line6a_ss_gross: ssaGross,
+        line6b_ss_taxable: ssaTaxable,
+      }));
+    }
 
     return { outputs };
   }

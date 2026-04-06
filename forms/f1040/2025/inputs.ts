@@ -1,6 +1,7 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import { ext, inputSchema as extInputSchema } from "../nodes/inputs/ext/index.ts";
 import { f1098, itemSchema as f1098ItemSchema } from "../nodes/inputs/f1098/index.ts";
+import { f1098e, itemSchema as f1098eItemSchema } from "../nodes/inputs/f1098e/index.ts";
 import { f1099b, itemSchema as f1099bItemSchema } from "../nodes/inputs/f1099b/index.ts";
 import { f1099c, itemSchema as f1099cItemSchema } from "../nodes/inputs/f1099c/index.ts";
 import { f1099div, itemSchema as f1099divItemSchema } from "../nodes/inputs/f1099div/index.ts";
@@ -139,6 +140,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1099b, itemSchema: f1099bItemSchema, isArray: true },
   { node: f1099r, itemSchema: f1099rItemSchema, isArray: true },
   { node: f1098, itemSchema: f1098ItemSchema, isArray: true },
+  { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   { node: f4835, itemSchema: f4835ItemSchema, isArray: true },
   { node: f2441, itemSchema: f2441ItemSchema, isArray: true },
   { node: f8812, itemSchema: f8812ItemSchema, isArray: true },

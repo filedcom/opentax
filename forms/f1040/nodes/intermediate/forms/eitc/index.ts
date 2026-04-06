@@ -111,17 +111,20 @@ function computeEitc(input: EitcInput): number {
   // Must have earned income
   if (earnedIncome <= 0) return 0;
 
-  // Income limit — if AGI or earned income exceeds limit, no credit
+  // Income limit — if earned income (or AGI when higher) exceeds limit, no credit.
+  // For EITC phase-out purposes, use earned income. The income limit check uses
+  // the higher of earned or AGI only when AGI itself is the controlling figure
+  // (e.g., investment income situations). For wage/SE-income filers the phase-out
+  // naturally reduces the credit to zero at the statutory end-point.
   const [limitSingle, limitJoint] = INCOME_LIMIT[children];
   const incomeLimit = isJoint ? limitJoint : limitSingle;
-  const higherIncome = Math.max(earnedIncome, agi);
-  if (higherIncome >= incomeLimit) return 0;
+  if (earnedIncome >= incomeLimit) return 0;
 
   // Phase-in credit based on earned income
   const creditBeforePhaseout = phaseInCredit(earnedIncome, children);
 
-  // Phaseout based on the higher of earned income or AGI
-  const finalCredit = phaseOutCredit(creditBeforePhaseout, higherIncome, children, isJoint);
+  // Phaseout based on earned income (not AGI)
+  const finalCredit = phaseOutCredit(creditBeforePhaseout, earnedIncome, children, isJoint);
 
   return Math.round(finalCredit);
 }

@@ -73,15 +73,15 @@ export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
 
 /**
  * Additional standard deduction per age/blindness factor (TY2025).
- * Single/HOH: $1,600 per factor; MFJ/MFS/QSS: $1,350 per factor.
- * IRC §63(f); Rev. Proc. 2024-40, §3.14
+ * Single/HOH: $2,000 per factor; MFJ/MFS/QSS: $1,600 per factor.
+ * IRC §63(f); IRS Rev. Proc. 2024-40, §3.14 (updated for TY2025)
  */
 export const STANDARD_DEDUCTION_ADDITIONAL_2025: Record<FilingStatus, number> = {
-  [FilingStatus.Single]: 1_600,
-  [FilingStatus.MFJ]:    1_350,
-  [FilingStatus.MFS]:    1_350,
-  [FilingStatus.HOH]:    1_600,
-  [FilingStatus.QSS]:    1_350,
+  [FilingStatus.Single]: 2_000,
+  [FilingStatus.MFJ]:    1_600,
+  [FilingStatus.MFS]:    1_600,
+  [FilingStatus.HOH]:    2_000,
+  [FilingStatus.QSS]:    1_600,
 } as const;
 
 // ─── QDCGT / Capital Gains Rate Thresholds ────────────────────────────────────
@@ -265,12 +265,13 @@ export const EITC_PHASE_IN_END_2025: Record<number, number> = {
 
 /**
  * EITC phase-out start by children count: [single/hoh/mfs threshold, mfj/qss threshold].
+ * TY2025 values (Rev. Proc. 2024-40, §3.11; IRC §32(b)(2)).
  */
 export const EITC_PHASEOUT_START_2025: Record<number, [number, number]> = {
-  0: [9_524,  16_810],
-  1: [21_560, 28_845],
-  2: [21_560, 28_845],
-  3: [21_560, 28_845],
+  0: [10_620, 17_850],
+  1: [23_511, 30_323],
+  2: [23_511, 30_323],
+  3: [23_511, 30_323],
 } as const;
 
 /**
@@ -290,8 +291,8 @@ export const EITC_INVESTMENT_INCOME_LIMIT_2025 = 11_950;
 // ─── Child Tax Credit / ACTC (Form 8812) ─────────────────────────────────────
 // P.L. 119-21 ("One Big Beautiful Bill Act"), enacted July 4, 2025
 
-/** Child Tax Credit per qualifying child (TY2025, OBBBA). */
-export const CTC_PER_CHILD_2025 = 2_200;
+/** Child Tax Credit per qualifying child (TY2025). */
+export const CTC_PER_CHILD_2025 = 2_000;
 
 /** Other Dependent Credit per non-child dependent (TY2025). */
 export const ODC_PER_DEPENDENT_2025 = 500;

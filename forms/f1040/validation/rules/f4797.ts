@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, formPresent, hasNonZero, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, formPresent, hasNonZero, ifThen, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const F4797_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const F4797_RULES: readonly RuleDef[] = [
     "F4797-008-01",
     "reject",
     "data_mismatch",
-    alwaysPass, // cross-instance aggregation: sum across all Form 4684 instances vs this Form 4797 field
+    ifThen(formPresent("form4684"), sumOfAll("GainForm4684Amt", "LongTermPropIncomePlusGainAmt")),
     "If Form 4684 is present in the return, then Form 4797 'GainForm4684Amt' must be equal to the sum of all Forms 4684 'LongTermPropIncomePlusGainAmt'.",
   ),
 ];

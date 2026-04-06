@@ -8,9 +8,18 @@ import type {
 } from "./types.ts";
 
 export function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
-  const result: Record<string, unknown[]> = {};
+  const result: Record<string, unknown> = {};
   for (const [nodeType, entries] of Object.entries(inputs)) {
-    result[nodeType] = entries.map((e) => e.fields);
+    if (nodeType === "start") {
+      // Start entries contain start-node input fields directly (e.g. { general: {...} }).
+      // Merge them all into the top-level so the start node can find each field by key.
+      for (const entry of entries) {
+        Object.assign(result, entry.fields);
+      }
+    } else {
+      // All other node types are array inputs; the start node collects them by nodeType key.
+      result[nodeType] = entries.map((e) => e.fields);
+    }
   }
   return result;
 }

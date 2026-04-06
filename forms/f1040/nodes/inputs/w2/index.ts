@@ -21,6 +21,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
   SS_WAGE_BASE_2025,
@@ -333,6 +334,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     form8839,
     form8880,
     ira_deduction_worksheet,
+    f8812,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -372,13 +374,14 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ));
     }
 
-    // Route earned income (regular wages) to EITC node
+    // Route earned income (regular wages) to EITC node and f8812 (for ACTC computation)
     const earnedIncome = regularItems(input.w2s).reduce(
       (sum, item) => sum + item.box1_wages,
       0,
     );
     if (earnedIncome > 0) {
       outputs.push(this.outputNodes.output(eitc, { earned_income: earnedIncome }));
+      outputs.push(this.outputNodes.output(f8812, { auto_earned_income: earnedIncome }));
     }
 
     return { outputs };

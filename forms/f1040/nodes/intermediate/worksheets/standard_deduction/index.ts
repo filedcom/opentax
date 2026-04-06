@@ -107,7 +107,8 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
 
     const { deduction, takingStandard } = resolveDeduction(input);
     const qbi = input.qbi_deduction ?? 0;
-    const taxableIncome = Math.max(0, input.agi - deduction - qbi);
+    const preQbiTaxable = Math.max(0, input.agi - deduction);
+    const taxableIncome = Math.max(0, preQbiTaxable - qbi);
 
     const outputs: NodeOutput[] = [];
 

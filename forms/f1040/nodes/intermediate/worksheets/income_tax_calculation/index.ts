@@ -6,6 +6,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
+import { f8812 } from "../../../inputs/f8812/index.ts";
 import {
   BRACKETS_MFJ_2025,
   BRACKETS_SINGLE_2025,
@@ -145,7 +146,7 @@ function qdcgtTax(
 class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "income_tax_calculation";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form6251]);
+  readonly outputNodes = new OutputNodes([f1040, form6251, f8812]);
 
   compute(ctx: NodeContext, rawInput: IncomeTaxCalcInput): NodeResult {
     const yearBrackets = BRACKETS_BY_YEAR[ctx.taxYear];
@@ -161,7 +162,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
 
     if (input.taxable_income === 0) {
-      return { outputs: [] };
+      // Still notify f8812 of zero tax liability so ACTC can be computed.
+      return {
+        outputs: [this.outputNodes.output(f8812, { auto_income_tax_liability: 0 })],
+      };
     }
 
     const brackets = bracketsForStatus(input.filing_status, yearBrackets);
@@ -182,6 +186,8 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         regular_tax_income: input.taxable_income,
         filing_status: input.filing_status,
       }),
+      // Feed f8812 the income tax liability for CTC nonrefundable limit calculation.
+      this.outputNodes.output(f8812, { auto_income_tax_liability: tax }),
     ];
 
     return { outputs };

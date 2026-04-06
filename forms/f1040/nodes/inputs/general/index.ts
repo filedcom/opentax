@@ -8,6 +8,10 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import { eitc } from "../../intermediate/forms/eitc/index.ts";
+import { f8812 } from "../f8812/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -236,7 +240,12 @@ function passesEitcAgeTest(dep: DependentItem): boolean {
 // Determine whether a dependent qualifies as an EITC qualifying child.
 // Uses relationship and residency tests shared with CTC, plus the broader EITC age test.
 // IRC §32(c)(3)
+// If qualifying_child_for_ctc is explicitly set to true, it overrides EITC qualification
+// (any CTC qualifying child also satisfies EITC requirements, since EITC is more permissive).
 function isEitcQualifyingChild(dep: DependentItem): boolean {
+  if (dep.qualifying_child_for_ctc === true) {
+    return passesResidencyTest(dep) && passesEitcAgeTest(dep);
+  }
   return (
     passesResidencyTest(dep) &&
     passesRelationshipTest(dep) &&
@@ -337,7 +346,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc, f8812, agi_aggregator, form8959, form8995]);
 
   compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -354,6 +363,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
     const deps = parsed.dependents ?? [];
     const eitcChildren = eitcQualifyingChildrenCount(deps);
+    const counts = dependentCounts(deps);
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
@@ -362,7 +372,28 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         filing_status: parsed.filing_status,
         qualifying_children: eitcChildren,
       }),
+      // Pass filing_status to agi_aggregator for SSA taxability worksheet thresholds
+      this.outputNodes.output(agi_aggregator, { filing_status: parsed.filing_status }),
+      // Pass filing_status to form8959 so Additional Medicare Tax threshold is known
+      this.outputNodes.output(form8959, { filing_status: parsed.filing_status }),
+      // Pass filing_status and age/blindness flags to form8995 so the income limit uses
+      // the same standard deduction amount as the standard_deduction worksheet.
+      this.outputNodes.output(form8995, {
+        filing_status: parsed.filing_status,
+        ...(parsed.taxpayer_age_65_or_older !== undefined && { taxpayer_age_65_or_older: parsed.taxpayer_age_65_or_older }),
+        ...(parsed.taxpayer_blind !== undefined && { taxpayer_blind: parsed.taxpayer_blind }),
+        ...(parsed.spouse_age_65_or_older !== undefined && { spouse_age_65_or_older: parsed.spouse_age_65_or_older }),
+        ...(parsed.spouse_blind !== undefined && { spouse_blind: parsed.spouse_blind }),
+      } as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>),
     ];
+
+    // Route qualifying children count and filing status to f8812 for CTC/ACTC computation.
+    if (counts.qualifying_child_tax_credit_count > 0) {
+      outputs.push(this.outputNodes.output(f8812, {
+        auto_qualifying_children: counts.qualifying_child_tax_credit_count,
+        auto_filing_status: parsed.filing_status,
+      }));
+    }
 
     return { outputs };
   }

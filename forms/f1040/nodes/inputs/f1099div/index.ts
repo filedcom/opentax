@@ -169,9 +169,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       (item) => (item.box2b ?? 0) > 0 || (item.box2c ?? 0) > 0 || (item.box2d ?? 0) > 0,
     );
 
-    const outputs: NodeOutput[] = needsScheduleB(div1099s)
-      ? div1099s.flatMap(dividendScheduleBOutput)
-      : [];
+    const outputs: NodeOutput[] = div1099s.flatMap(dividendScheduleBOutput);
 
     // Aggregate all f1040 fields into one output
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};

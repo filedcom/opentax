@@ -13,6 +13,8 @@ export type ParsedArgs = {
   readonly type?: string;
   readonly form?: string;
   readonly entryId?: string;
+  readonly force?: boolean | string;
+  readonly format?: string;
   readonly json?: boolean;
   readonly help?: boolean;
 };

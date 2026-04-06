@@ -192,7 +192,10 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...schedule2Output(line18),
-      ...f1040Output(line24),
+      // Note: line25c (Medicare withholding reconciliation) is intentionally NOT
+      // sent to f1040 payments. W-2 box 6 (regular 1.45% Medicare tax) is a FICA
+      // tax and does not appear on Form 1040 line 25. The Additional Medicare Tax
+      // (0.9%) owed flows to Schedule 2 line 11 → Form 1040 line 17 (other taxes).
     ];
 
     return { outputs };

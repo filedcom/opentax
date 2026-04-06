@@ -46,9 +46,20 @@ export const itemSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  f8812s: z.array(itemSchema),
+  f8812s: z.array(itemSchema).optional(),
   // Set by Form 8862 when prior-year CTC/ACTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
+  // ── Auto-populated fields (used when f8812s is empty) ──────────────────────
+  // Number of qualifying children for CTC (from general node)
+  auto_qualifying_children: z.number().int().nonnegative().optional(),
+  // Filing status (from general node)
+  auto_filing_status: z.string().optional(),
+  // AGI (from agi_aggregator)
+  auto_agi: z.number().nonnegative().optional(),
+  // Income tax liability (from income_tax_calculation)
+  auto_income_tax_liability: z.number().nonnegative().optional(),
+  // Earned income (from w2 node)
+  auto_earned_income: z.number().nonnegative().optional(),
 });
 
 // TY2025 constants — One Big Beautiful Bill Act (PL 119-21, enacted July 4 2025)
@@ -64,6 +75,19 @@ const PHASE_OUT_THRESHOLD_OTHER = CTC_PHASE_OUT_THRESHOLD_OTHER_2025;
 
 type F8812Item = z.infer<typeof itemSchema>;
 type F8812Input = z.infer<typeof inputSchema>;
+
+// Build a synthetic f8812 item from auto-populated fields (engine-computed inputs).
+function buildAutoItem(input: F8812Input): F8812Item | null {
+  const children = input.auto_qualifying_children ?? 0;
+  if (children === 0) return null;
+  return {
+    qualifying_children_count: children,
+    filing_status: (input.auto_filing_status ?? "single") as F8812Item["filing_status"],
+    agi: input.auto_agi,
+    income_tax_liability: input.auto_income_tax_liability,
+    earned_income: input.auto_earned_income,
+  };
+}
 
 // Line 9: phase-out threshold based on filing status
 function phaseOutThreshold(filingStatus: string): number {
@@ -122,7 +146,19 @@ class F8812Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F8812Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    if (input.f8812s.length === 0) return { outputs: [] };
+
+    // Build item list: use explicit f8812s when provided; otherwise fall back to auto-populated fields.
+    const explicitItems = input.f8812s ?? [];
+    let items: F8812Item[];
+    if (explicitItems.length > 0) {
+      items = explicitItems;
+    } else {
+      const autoItem = buildAutoItem(input);
+      if (autoItem === null) return { outputs: [] };
+      items = [autoItem];
+    }
+
+    if (items.length === 0) return { outputs: [] };
 
     // Aggregate counts and flags across all items
     let totalQualifyingChildren = 0;
@@ -140,7 +176,7 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     let isPrResident = false;
     let filingStatus = "single";
 
-    for (const item of input.f8812s) {
+    for (const item of items) {
       totalQualifyingChildren += item.qualifying_children_count ?? 0;
       totalOtherDependents += item.other_dependents_count ?? 0;
       combinedAgi += item.agi ?? 0;

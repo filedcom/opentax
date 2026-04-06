@@ -35,6 +35,8 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f2441s: z.array(itemSchema).min(1),
+  // AGI provided by agi_aggregator — used as fallback when individual items omit agi
+  agi: z.number().nonnegative().optional(),
 });
 
 type F2441Item = z.infer<typeof itemSchema>;
@@ -62,12 +64,13 @@ function expenseCap(personCount: number): number {
 }
 
 // Computes outputs for a single f2441 item (one filing unit's data).
-function itemOutputs(item: F2441Item): NodeOutput[] {
+function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
   const filingStatus = item.filing_status ?? "single";
   const personCount = item.qualifying_person_count ?? 1;
   const expensesPaid = item.qualifying_expenses_paid ?? 0;
   const employerBenefits = item.employer_dep_care_benefits ?? 0;
-  const agi = item.agi ?? 0;
+  // Use item-level AGI if provided; otherwise fall back to aggregator-provided AGI.
+  const agi = item.agi ?? fallbackAgi ?? 0;
 
   // --- Part III: Employer-Provided Dependent Care Benefits ---
   const limit = exclusionLimit(filingStatus);
@@ -114,7 +117,8 @@ class F2441Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: parsed.f2441s.flatMap(itemOutputs) };
+    const fallbackAgi = parsed.agi;
+    return { outputs: parsed.f2441s.flatMap((item) => itemOutputs(item, fallbackAgi)) };
   }
 }
 

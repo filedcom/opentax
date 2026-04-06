@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-item schema — one SSA-1099 or RRB-1099
@@ -54,33 +55,36 @@ function totalWithheld(items: SsaItem[]): number {
   return items.reduce((sum, item) => sum + (item.box6_federal_withheld ?? 0), 0);
 }
 
-// Build f1040 output merging line6a_ss_gross and line25b_withheld_1099
-function f1040Output(items: SsaItem[]): NodeOutput[] {
+// Build outputs for SSA-1099 items.
+// Gross benefits route to agi_aggregator for the SSA taxability worksheet.
+// Withholding routes directly to f1040.
+function buildOutputs(items: SsaItem[]): NodeOutput[] {
   const netTotal = totalNetBenefits(items);
   const withheldTotal = totalWithheld(items);
+  const outputs: NodeOutput[] = [];
 
-  const fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
+  // Route SSA gross to agi_aggregator so the taxability worksheet can be applied.
+  // agi_aggregator will forward line6a_ss_gross and line6b_ss_taxable to f1040.
   if (netTotal > 0) {
-    fields.line6a_ss_gross = netTotal;
-  }
-  if (withheldTotal > 0) {
-    fields.line25b_withheld_1099 = withheldTotal;
+    outputs.push(output(agi_aggregator, { line6a_ss_gross: netTotal }));
   }
 
-  if (Object.keys(fields).length === 0) {
-    return [];
+  // SSA withholding appears on Form 1040 line 25b (same as other 1099 withholding).
+  if (withheldTotal > 0) {
+    outputs.push(output(f1040, { line25b_withheld_1099: withheldTotal }));
   }
-  return [output(f1040, fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>)];
+
+  return outputs;
 }
 
 class Ssa1099Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ssa1099";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { ssas } = inputSchema.parse(input);
-    const outputs: NodeOutput[] = f1040Output(ssas);
+    const outputs: NodeOutput[] = buildOutputs(ssas);
     return { outputs };
   }
 }

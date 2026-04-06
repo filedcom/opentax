@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, dateYearGte, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, dateYearGte, hasNonZero, hasValue, ifThen, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const F7218_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F7218_RULES: readonly RuleDef[] = [
     "F7218-002",
     "reject",
     "math_error",
-    alwaysPass,
+    ifThen(hasNonZero("TotClnAvnNonAvnFuelProdCrAmt"), sumOfAll("TotClnAvnNonAvnFuelProdCrAmt", "ClnAvnNonAvnFuelProdCrAmt")),
     "If Form 7218, 'TotClnAvnNonAvnFuelProdCrAmt' has a value greater than zero, then it must be equal to the sum of all [ 'ClnAvnNonAvnFuelProdCrAmt' in 'ClnAvnNonAvnFuelPrdcdSoldGrp' ].",
   ),
   rule(

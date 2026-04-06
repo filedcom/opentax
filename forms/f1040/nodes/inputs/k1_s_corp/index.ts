@@ -186,7 +186,7 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
   if (totalW2 > 0) fields.w2_wages = totalW2;
   if (totalUbia > 0) fields.unadjusted_basis = totalUbia;
 
-  return [output(form8995, fields as Parameters<typeof output<typeof form8995>>[1])];
+  return [output(form8995, fields as unknown as Parameters<typeof output<typeof form8995>>[1])];
 }
 
 // Route Form 7203 basis data when stock or debt basis fields are provided
