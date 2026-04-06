@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, ifThen, any, validSSN, ssnNotEqual, eqStr, eqNum, filingStatusIs, filingStatusNot, not, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, allDistinct, hasValue, ifThen, any, validSSN, ssnNotEqual, eqStr, eqNum, filingStatusIs, filingStatusNot, not, } from "../../../../core/validation/mod.ts";
 
 export const SEIC_RULES: readonly RuleDef[] = [
   rule(
@@ -54,7 +54,7 @@ export const SEIC_RULES: readonly RuleDef[] = [
     "SEIC-F1040-007-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    allDistinct("QualifyingChildSSN"),
     "Each 'QualifyingChildSSN' that has a value on Schedule EIC (Form 1040), must not be equal to another 'QualifyingChildSSN' on the same Schedule EIC (Form 1040).",
   ),
   rule(

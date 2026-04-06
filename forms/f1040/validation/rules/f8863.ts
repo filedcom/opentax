@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, hasNonZero, hasValue, ifThen, notGtNum, validSSN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, any, eqField, everyItem, hasNonZero, hasValue, ifThen, notGtNum, validSSN, } from "../../../../core/validation/mod.ts";
 
 export const F8863_RULES: readonly RuleDef[] = [
   rule(
@@ -89,7 +89,7 @@ export const F8863_RULES: readonly RuleDef[] = [
     "F8863-026-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: EIN must be present in each EducationalInstitutionGroup within StudentAndEducationalInstnGrp
+    ifThen(any(hasNonZero("RefundableAmerOppCreditAmt"), hasNonZero("TentativeEducCrLessRfdblCrAmt")), everyItem("EIN", (v) => v !== null && v !== undefined && v !== "")),
     "If Form 8863, 'RefundableAmerOppCreditAmt' and/or 'TentativeEducCrLessRfdblCrAmt' has a non-zero value, then 'EIN' must have a value in each occurrence of 'EducationalInstitutionGroup' in the 'StudentAndEducationalInstnGrp'.",
   ),
   rule(

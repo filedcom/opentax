@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, dateGteField, dateLteField, decimalPlacesEq, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, sumOfAll, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, dateGteField, dateLteField, decimalPlacesEq, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const SA_RULES: readonly RuleDef[] = [
   rule(
@@ -271,7 +271,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F8936-031-01",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: same VIN must not appear on two or more instances of Schedule A (Form 8936)
+    allDistinct("VIN"),
     "The same 'VIN' must not appear on two or more instances of Schedule A (Form 8936).",
   ),
   rule(

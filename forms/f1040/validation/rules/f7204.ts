@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
 
 export const F7204_RULES: readonly RuleDef[] = [
   rule(
@@ -47,7 +47,7 @@ export const F7204_RULES: readonly RuleDef[] = [
     "F7204-006",
     "reject",
     "missing_document",
-    alwaysPass, // requires per-instance uniqueness check of ContestedFrgnIncmTxRefIdNum across all Forms 7204
+    allDistinct("ContestedFrgnIncmTxRefIdNum"),
     "The same 'ContestedFrgnIncmTxRefIdNum' must not appear on two or more instances of Form 7204 present in the return.",
   ),
 ];

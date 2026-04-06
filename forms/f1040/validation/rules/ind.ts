@@ -19,6 +19,7 @@
 import type { RuleDef } from "../../../../core/validation/types.ts";
 import {
   all,
+  allDistinct,
   alwaysFail,
   alwaysPass,
   any,
@@ -544,7 +545,7 @@ export const IND_RULES: readonly RuleDef[] = [
     "IND-086-01",
     "reject",
     "duplicate",
-    alwaysPass,
+    allDistinct("DependentSSN"),
     "Each 'DependentSSN' in 'DependentDetail' ('QualifyingChildIdentifyingNum' in 'QualifyingChildInfoGrp' for 1040-SS) in the return must be unique among all dependent SSNs.",
   ),
   rule(

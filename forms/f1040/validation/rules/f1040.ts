@@ -30,6 +30,7 @@ import {
   notGtNum,
   isITIN,
   ssnNotEqual,
+  sumOfAll,
   validSSN,
 } from "../../../../core/validation/mod.ts";
 
@@ -283,7 +284,7 @@ export const F1040_RULES: readonly RuleDef[] = [
     "F1040-156-01",
     "reject",
     "data_mismatch",
-    alwaysPass,
+    sumOfAll("TaxableForeignPensionsTotalAmt", "ForeignPensionTaxableAmt"),
     "Form 1040, 'TaxableForeignPensionsTotalAmt' must be equal to the sum of 'ForeignPensionTaxableAmt' in all [FECRecord] present in the return.",
   ),
   rule(
