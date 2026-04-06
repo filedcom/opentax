@@ -201,7 +201,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 13. Verification Paperwork | 0/1 | Not started | - |
 | 14. Phase 01 Constants + XSD e2e Fix | 1/1 | Complete    | 2026-04-06 |
 | 15. MEF Header Builder Fix | 1/1 | Complete    | 2026-04-05 |
-| 16. Executor Diagnostics CLI Surface | 1/1 | Complete   | 2026-04-06 |
+| 16. Executor Diagnostics CLI Surface | 1/1 | Complete    | 2026-04-06 |
 | 17. Validation DSL forEach/everyItem Extension | 0/2 | Not started | - |
 
 ### Phase 10: XSD Validation in CI
@@ -335,5 +335,5 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Implement forEach/everyItem DSL combinators with tests
-- [ ] 17-02-PLAN.md — Convert 40+ stubs using new combinators + wire validEIN + update ALWAYSPASS_ROADMAP.md
+- [ ] 17-01-PLAN.md — Implement forEach/everyItem/sumOfAll/allDistinct combinators + wire validEIN into 6 EIN rule files
+- [ ] 17-02-PLAN.md — Convert 40+ alwaysPass stubs using new combinators + update ALWAYSPASS_ROADMAP.md
