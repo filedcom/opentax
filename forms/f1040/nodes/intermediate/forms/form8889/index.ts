@@ -32,8 +32,11 @@ export enum CoverageType {
 
 export const inputSchema = z.object({
   // ── Coverage (determines contribution limit) ─────────────────────────────
-  // Type of HDHP coverage for the year
-  coverage_type: z.nativeEnum(CoverageType),
+  // Type of HDHP coverage for the year.
+  // Optional: defaults to self_only when absent (e.g. employer-only W-2 Box 12W
+  // flows arrive without explicit coverage_type). Self-only is the conservative
+  // default — lower contribution limit ($4,300) prevents over-deduction.
+  coverage_type: z.nativeEnum(CoverageType).optional(),
 
   // ── Part I: Contributions ────────────────────────────────────────────────
   // Line 2: Taxpayer's own HSA contributions (not through payroll)
@@ -164,7 +167,13 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
   protected readonly catchupLimit = HSA_CATCHUP_2025;
 
   compute(_ctx: NodeContext, rawInput: Form8889Input): NodeResult {
-    const input = inputSchema.parse(rawInput);
+    const parsed = inputSchema.parse(rawInput);
+    // Default coverage_type to SelfOnly when not provided (e.g. employer-only
+    // W-2 Box 12 Code W contributions). Creating a new object — no mutation.
+    const input: Form8889Input & { coverage_type: CoverageType } = {
+      ...parsed,
+      coverage_type: parsed.coverage_type ?? CoverageType.SelfOnly,
+    };
 
     const deductible = deductibleContributions(
       input,

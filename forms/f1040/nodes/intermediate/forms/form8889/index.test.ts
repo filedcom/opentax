@@ -184,8 +184,11 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
 
 // ─── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: missing coverage_type throws", () => {
-  assertThrows(() => compute({}));
+Deno.test("validation: missing coverage_type defaults to self_only (no throw)", () => {
+  // coverage_type is now optional — defaults to self_only so employer-only
+  // W-2 Box 12 Code W contributions don't crash the node.
+  const result = compute({});
+  assertEquals(result.outputs.length, 0); // no contributions → no outputs
 });
 
 Deno.test("validation: negative contributions throw", () => {
