@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
 
 export const F4137_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F4137_RULES: readonly RuleDef[] = [
     "F4137-002",
     "reject",
     "incorrect_data",
-    alwaysPass, // cross-instance check: requires comparing SSNs across all Form 4137 instances
+    allDistinct("SSN"),
     "If two Forms 4137 are present in the return, then their 'SSN's must not be equal.",
   ),
 ];

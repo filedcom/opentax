@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8888
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 5 rules (4 implemented, 1 stub)
+ * 5 rules (5 implemented, 0 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasNonZero, hasValue, ifThen, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, eqField, eqSum, hasNonZero, hasValue, ifThen, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F8888_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const F8888_RULES: readonly RuleDef[] = [
     "F8888-015",
     "reject",
     "duplicate",
-    alwaysPass,
+    allDistinct("DepositorAccountNum"),
     "'DepositorAccountNum' on Form 8888 must be unique.",
   ),
   rule(

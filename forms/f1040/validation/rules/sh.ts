@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqStr, gte, hasNonZero, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notMatchesHeaderSSN, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, all, allDistinct, alwaysPass, any, eqField, eqStr, gte, hasNonZero, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notMatchesHeaderSSN, noValue, } from "../../../../core/validation/mod.ts";
 
 export const SH_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const SH_RULES: readonly RuleDef[] = [
     "SH-F1040-002",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    allDistinct("SSN"),
     "If two Schedules H (Form 1040) are present in the return, their SSN's must not be equal.",
   ),
   rule(
@@ -33,7 +33,7 @@ export const SH_RULES: readonly RuleDef[] = [
     "SH-F1040-004",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    allDistinct("EmployerEIN"),
     "If two Schedules H (Form 1040) are present in the return, their 'EmployerEIN's must not be equal.",
   ),
   rule(

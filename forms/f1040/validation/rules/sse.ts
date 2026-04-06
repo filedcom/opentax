@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: SSE
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 8 rules (4 implemented, 4 stubs)
+ * 8 rules (5 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, formPresent, hasNonZero, ifThen, matchesHeaderSSN, not, all, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, any, formPresent, hasNonZero, ifThen, matchesHeaderSSN, not, all, noValue, } from "../../../../core/validation/mod.ts";
 
 export const SSE_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const SSE_RULES: readonly RuleDef[] = [
     "SSE-F1040-002",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: if two Schedule SEs, their SSNs must differ
+    allDistinct("SSN"),
     "If two Schedule SEs (Form 1040) are present in the return, their Social Security Numbers must not be the same.",
   ),
   rule(

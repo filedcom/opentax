@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F1310
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 17 rules (13 implemented, 4 stubs)
+ * 17 rules (14 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, dateYearGte, eqField, eqStr, filingStatusIs, filingStatusNot, formPresent, hasValue, ifThen, noValue, ssnNotEqual, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, any, dateYearGte, eqField, eqStr, filingStatusIs, filingStatusNot, formPresent, hasValue, ifThen, noValue, ssnNotEqual, } from "../../../../core/validation/mod.ts";
 
 export const F1310_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const F1310_RULES: readonly RuleDef[] = [
     "F1310-005",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    allDistinct("DecedentSSN"),
     "If two Forms 1310 are present in the Return, their 'DecedentSSN's must not be equal.",
   ),
   rule(

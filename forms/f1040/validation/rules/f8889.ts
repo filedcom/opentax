@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqDiffFloorZero, eqField, eqProduct, eqSum, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, eqDiffFloorZero, eqField, eqProduct, eqSum, hasValue, ifThen, matchesHeaderSSN, not, notGtField, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F8889_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F8889_RULES: readonly RuleDef[] = [
     "F8889-002-01",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    allDistinct("RecipientSSN"),
     "If two Forms 8889 are present in the return, then their 'RecipientSSN's must not be equal.",
   ),
   rule(
