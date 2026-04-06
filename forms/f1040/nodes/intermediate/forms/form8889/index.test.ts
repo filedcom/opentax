@@ -38,26 +38,28 @@ Deno.test("part1: family personal contribution → schedule1 line13_hsa_deductio
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 5000);
 });
 
-Deno.test("part1: employer contributions reduce deductible personal amount (self_only limit 4300)", () => {
-  // employer contributes 2000, taxpayer contributes 2500 → total 4500 > 4300 limit
-  // deductible = min(2500, 4300 - 2000) = min(2500, 2300) = 2300
+Deno.test("part1: total contributions capped at annual limit (self_only 4300)", () => {
+  // employer 2000 + taxpayer 2500 = total 4500 > limit 4300 → deductible = 4300, excess = 200
+  // The full combined deduction is capped at the annual limit.
   const result = compute({
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 2500,
     employer_hsa_contributions: 2000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 2300);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 4300);
+  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 200);
 });
 
-Deno.test("part1: employer covers entire limit → no personal deduction", () => {
-  // employer contributes 4300 (full self_only limit), taxpayer 500 → all personal is excess
+Deno.test("part1: employer fills entire limit → full limit deductible, taxpayer excess to form5329", () => {
+  // employer 4300 fills the self_only limit entirely; taxpayer adds 500 on top → excess = 500
+  // Employer contribution itself IS deductible (capped at limit).
   const result = compute({
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 500,
     employer_hsa_contributions: 4300,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1, undefined); // no deduction
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 4300);
+  assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 500);
 });
 
 Deno.test("part1: age 55+ catch-up adds $1000 to self_only limit", () => {
