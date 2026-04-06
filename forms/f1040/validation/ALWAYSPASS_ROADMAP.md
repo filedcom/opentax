@@ -1,8 +1,9 @@
 # alwaysPass Rules Roadmap
 
 > Generated: 2026-03-31 | Updated: 2026-04-06
-> Total: ~499 rules remain as alwaysPass stubs (540 original − 115 converted through Round 3 − 7 converted in Round 4 − 34 converted in Round 5)
+> Total: ~493 rules remain as alwaysPass stubs (540 original − 115 converted through Round 3 − 7 converted in Round 4 − 34 converted in Round 5 − 6 converted in Round 5b)
 > Round 5 (2026-04-06): Added `forEach`, `everyItem`, `sumOfAll`, `allDistinct` cross-instance combinators (Phase 17). Converted 34 rules: 17 allDistinct SSN/EIN uniqueness + 17 sumOfAll cross-form aggregation.
+> Round 5b (2026-04-06): Converted 6 additional rules using existing combinators. Total new-combinator conversions: 40.
 
 These rules are currently `alwaysPass` because they require capabilities beyond
 the current predicate DSL. This roadmap categorizes them by the capability needed
@@ -23,6 +24,29 @@ Converted 7 rules across fpymt, f1116, f3468, f9465, f8814, sse files.
 
 **Round 5 (2026-04-06 — Phase 17):** `forEach`, `everyItem`, `sumOfAll`, `allDistinct`
 Converted 34 rules across 22 rule files using cross-instance combinators: 17 allDistinct SSN/EIN/account uniqueness checks + 17 sumOfAll cross-form aggregation rules.
+
+**Round 5b (2026-04-06 — Phase 17 gap closure):** 6 additional conversions using existing Phase 17 combinators. Running total: 40 new-combinator conversions.
+
+### Phase 17 gap closure converted rules (Round 5b)
+
+| Rule ID | File | Predicate(s) Used | Description |
+|---------|------|-------------------|-------------|
+| F1040-156-01 | f1040.ts | `sumOfAll("TaxableForeignPensionsTotalAmt", "ForeignPensionTaxableAmt")` | F1040 total must equal sum of ForeignPensionTaxableAmt in all FECRecords |
+| SEIC-F1040-007-01 | seic.ts | `allDistinct("QualifyingChildSSN")` | Each QualifyingChildSSN on Schedule EIC must be unique |
+| IND-086-01 | ind.ts | `allDistinct("DependentSSN")` | Each DependentSSN in DependentDetail must be unique |
+| F8863-026-01 | f8863.ts | `ifThen(any(hasNonZero x2), everyItem("EIN", non-empty))` | EIN required in each EducationalInstitutionGroup when credit claimed |
+| F7204-006 | f7204.ts | `allDistinct("ContestedFrgnIncmTxRefIdNum")` | ContestedFrgnIncmTxRefIdNum must be unique across all Form 7204 instances |
+| SA-F8936-031-01 | sa.ts | `allDistinct("VIN")` | VIN must be unique across all Schedule A (Form 8936) instances |
+
+### EIN format validation ceiling: 3 (not 5)
+
+The original Phase 17 plan estimated 5 EIN format stubs could be converted using `validEIN`. After investigation, only 3 true EIN format validation stubs exist:
+
+- `fw2.ts` — EmployerEIN format validation
+- `fw2g.ts` — EmployerEIN format validation
+- `f1099r.ts` — PayerEIN format validation
+
+All 3 were converted in Round 5. The remaining forms investigated (f8863, f8959, f8960) contain alwaysPass rules that are cross-instance aggregation checks or conditional attachment checks — not EIN format validation. 3 is the achievable ceiling for EIN format conversions without new predicate infrastructure.
 
 ### Phase 17 converted rules (Round 5)
 
@@ -87,7 +111,7 @@ After an exhaustive audit of all ~540 stubs in 79 rule files, the following brea
 | Per-item repeating groups | ~23 | XSD group types (e.g. Form 7218 fuel groups, Form 8835 Part II lines) |
 | **Total deferred** | **~533** | |
 
-**Round 5 note:** `forEach`, `everyItem`, `sumOfAll`, and `allDistinct` were added in Phase 17 and unlocked 34 conversions. The remaining ~286 cross-instance rules require more complex iteration patterns (per-item predicates, multi-field sums) beyond the current combinators.
+**Round 5 note:** `forEach`, `everyItem`, `sumOfAll`, and `allDistinct` were added in Phase 17 and unlocked 34 conversions (Round 5) plus 6 more (Round 5b) = 40 total new-combinator conversions. The remaining ~280 cross-instance rules require more complex iteration patterns (per-item predicates, multi-field sums) beyond the current combinators.
 
 See `core/validation/predicates.ts`.
 
