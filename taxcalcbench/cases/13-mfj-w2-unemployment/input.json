@@ -1,0 +1,42 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly \u2014 taxpayer has W-2, spouse received unemployment compensation",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Blake",
+          "taxpayer_last_name": "Anderson",
+          "taxpayer_dob": "1980-12-03",
+          "spouse_first_name": "Sage",
+          "spouse_last_name": "Anderson",
+          "spouse_dob": "1981-06-17",
+          "address_city": "Columbus",
+          "address_state": "OH",
+          "address_zip": "43201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 72000,
+        "box2_fed_withheld": 8000,
+        "box3_ss_wages": 72000,
+        "box4_ss_withheld": 4464,
+        "box5_medicare_wages": 72000,
+        "box6_medicare_withheld": 1044
+      }
+    },
+    {
+      "node_type": "f1099g",
+      "data": {
+        "box_1_unemployment": 11200,
+        "box_4_federal_withheld": 1120,
+        "payer_name": "Ohio Dept of Job and Family Services"
+      }
+    }
+  ]
+}

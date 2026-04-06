@@ -1,0 +1,59 @@
+{
+  "returnId": "1c83cf3a-331b-4a5e-870e-390e3af230ad",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 36000,
+    "line11_agi": 0,
+    "line15_taxable_income": 36000,
+    "line24_total_tax": 0,
+    "line33_total_payments": 3600,
+    "line35a_refund": 3600
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099r",
+    "schedule1",
+    "schedule_a",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      36000,
+      36000
+    ],
+    "line5b_pension_taxable": [
+      36000,
+      36000
+    ],
+    "line25b_withheld_1099": [
+      3600,
+      3600
+    ],
+    "line6a_ss_gross": [
+      24000,
+      24000
+    ],
+    "line11_agi": [
+      36000,
+      36000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 36000,
+    "line15_taxable_income": 36000,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 3600,
+    "line35a_refund": 3600
+  },
+  "warnings": []
+}

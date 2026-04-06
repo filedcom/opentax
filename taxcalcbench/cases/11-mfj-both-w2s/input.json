@@ -1,0 +1,45 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly, both spouses have W-2 income \u2014 tests 2025 MFJ brackets and $30,000 standard deduction",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Chris",
+          "taxpayer_last_name": "Davis",
+          "taxpayer_dob": "1983-03-20",
+          "spouse_first_name": "Jamie",
+          "spouse_last_name": "Davis",
+          "spouse_dob": "1984-09-14",
+          "address_city": "Minneapolis",
+          "address_state": "MN",
+          "address_zip": "55401"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 60000,
+        "box2_fed_withheld": 6500,
+        "box3_ss_wages": 60000,
+        "box4_ss_withheld": 3720,
+        "box5_medicare_wages": 60000,
+        "box6_medicare_withheld": 870
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 45000,
+        "box2_fed_withheld": 4000,
+        "box3_ss_wages": 45000,
+        "box4_ss_withheld": 2790,
+        "box5_medicare_wages": 45000,
+        "box6_medicare_withheld": 653
+      }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages plus taxable interest income exceeding Schedule B threshold",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Taylor",
+          "taxpayer_last_name": "Brooks",
+          "taxpayer_dob": "1985-04-18",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "73301"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 65000,
+        "box2_fed_withheld": 7500,
+        "box3_ss_wages": 65000,
+        "box4_ss_withheld": 4030,
+        "box5_medicare_wages": 65000,
+        "box6_medicare_withheld": 943
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "First National Bank",
+        "box1": 1200
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "Online Savings Co",
+        "box1": 2300
+      }
+    }
+  ]
+}

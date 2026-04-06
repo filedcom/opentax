@@ -1,0 +1,60 @@
+{
+  "year": 2025,
+  "scenario": "Head of household with W-2 income and three qualifying children — tests maximum EITC tier (3+ children) with partial CTC offset and large ACTC refund",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "hoh",
+          "taxpayer_first_name": "Dana",
+          "taxpayer_last_name": "Brooks",
+          "taxpayer_dob": "1988-02-14",
+          "address_city": "Phoenix",
+          "address_state": "AZ",
+          "address_zip": "85001",
+          "hoh_qualifying_person_name": "Chris Brooks",
+          "hoh_qualifying_person_relationship": "son",
+          "hoh_paid_more_than_half_home_costs": true,
+          "dependents": [
+            {
+              "first_name": "Chris",
+              "last_name": "Brooks",
+              "dob": "2015-06-10",
+              "relationship": "son",
+              "months_in_home": 12,
+              "qualifying_child_for_ctc": true
+            },
+            {
+              "first_name": "Alex",
+              "last_name": "Brooks",
+              "dob": "2017-11-22",
+              "relationship": "daughter",
+              "months_in_home": 12,
+              "qualifying_child_for_ctc": true
+            },
+            {
+              "first_name": "Taylor",
+              "last_name": "Brooks",
+              "dob": "2020-03-05",
+              "relationship": "son",
+              "months_in_home": 12,
+              "qualifying_child_for_ctc": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 27000,
+        "box2_fed_withheld": 1800,
+        "box3_ss_wages": 27000,
+        "box4_ss_withheld": 1674,
+        "box5_medicare_wages": 27000,
+        "box6_medicare_withheld": 392
+      }
+    }
+  ]
+}

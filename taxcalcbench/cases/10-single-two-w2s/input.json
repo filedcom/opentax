@@ -1,0 +1,42 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with two W-2s from different employers \u2014 tests combined wages calculation",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Drew",
+          "taxpayer_last_name": "Thompson",
+          "taxpayer_dob": "1991-05-07",
+          "address_city": "Atlanta",
+          "address_state": "GA",
+          "address_zip": "30301"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 45000,
+        "box2_fed_withheld": 4500,
+        "box3_ss_wages": 45000,
+        "box4_ss_withheld": 2790,
+        "box5_medicare_wages": 45000,
+        "box6_medicare_withheld": 653
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 32000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 32000,
+        "box4_ss_withheld": 1984,
+        "box5_medicare_wages": 32000,
+        "box6_medicare_withheld": 464
+      }
+    }
+  ]
+}

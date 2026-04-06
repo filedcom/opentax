@@ -1,0 +1,59 @@
+{
+  "returnId": "a22f33c2-b423-431b-a3ea-2e32e6178553",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 65000,
+    "line9_total_income": 65000,
+    "line11_agi": 0,
+    "line15_taxable_income": 130054.6575,
+    "line24_total_tax": 9890.685,
+    "line33_total_payments": 7000,
+    "line37_amount_owed": 2890.6849999999995
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "form8959",
+    "form8995",
+    "schedule1",
+    "schedule2",
+    "schedule_a",
+    "schedule_c",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      7000,
+      7000
+    ],
+    "line1a_wages": [
+      65000,
+      65000
+    ],
+    "line11_agi": [
+      130054.6575,
+      130054.6575
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line17_additional_taxes": [
+      9890.685,
+      9890.685
+    ],
+    "line1z_total_wages": 65000,
+    "line9_total_income": 65000,
+    "line15_taxable_income": 130054.6575,
+    "line18_total_tax_before_credits": 9890.685,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 9890.685,
+    "line24_total_tax": 9890.685,
+    "line33_total_payments": 7000,
+    "line37_amount_owed": 2890.6849999999995
+  },
+  "warnings": []
+}

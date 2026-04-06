@@ -1,0 +1,44 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly in retirement \u2014 1099-R pension distributions and Social Security income",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Lee",
+          "taxpayer_last_name": "Johnson",
+          "taxpayer_dob": "1950-05-15",
+          "taxpayer_age_65_or_older": true,
+          "spouse_first_name": "Terry",
+          "spouse_last_name": "Johnson",
+          "spouse_dob": "1951-09-08",
+          "spouse_age_65_or_older": true,
+          "address_city": "Scottsdale",
+          "address_state": "AZ",
+          "address_zip": "85251"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Federal Employee Retirement System",
+        "payer_ein": "52-0000001",
+        "box1_gross_distribution": 36000,
+        "box2a_taxable_amount": 36000,
+        "box4_federal_withheld": 3600,
+        "box7_distribution_code": "7"
+      }
+    },
+    {
+      "node_type": "ssa1099",
+      "data": {
+        "payer_name": "Social Security Administration",
+        "box3_gross_benefits": 24000,
+        "box6_federal_withheld": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "year": 2025,
+  "scenario": "Head of household who is legally blind with Social Security benefits, interest income, unemployment, and student loan interest — tests enhanced standard deduction and SSA taxability",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "hoh",
+          "taxpayer_first_name": "Linn",
+          "taxpayer_last_name": "Mar",
+          "taxpayer_dob": "1990-08-08",
+          "taxpayer_blind": true,
+          "address_city": "Seattle",
+          "address_state": "WA",
+          "address_zip": "98101",
+          "hoh_qualifying_person_name": "LM Lions",
+          "hoh_qualifying_person_relationship": "child",
+          "hoh_paid_more_than_half_home_costs": true
+        }
+      }
+    },
+    {
+      "node_type": "ssa1099",
+      "data": {
+        "payer_name": "Social Security Administration",
+        "box3_gross_benefits": 8742,
+        "box6_federal_withheld": 0
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "Savings Bank",
+        "box1": 1453
+      }
+    },
+    {
+      "node_type": "f1099g",
+      "data": {
+        "box_1_unemployment": 23413,
+        "box_4_federal_withheld": 17
+      }
+    },
+    {
+      "node_type": "f1098e",
+      "data": {
+        "box1_student_loan_interest": 347
+      }
+    }
+  ]
+}

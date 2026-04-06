@@ -1,0 +1,43 @@
+{
+  "case": "23-mfj-w2-schedule-c-student-loan",
+  "scenario": "Married filing jointly with W-2 and Schedule C self-employment income plus student loan interest deduction — tests SE tax, QBI, and student loan deduction interaction",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "mfj",
+    "wages": 15111.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 0.0,
+    "pension": 0.0,
+    "ssa_gross": 0.0,
+    "schedule_c_net": 23210.0,
+    "student_loan_int": 3000.0,
+    "qualifying_children": 0,
+    "eitc_children": 0,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 231.0
+  },
+  "correct": {
+    "line9_total_income": 38321.0,
+    "line11_agi": 34181.27,
+    "standard_deduction": 30000,
+    "qbi_deduction": 836.25,
+    "line15_taxable_income": 3345.02,
+    "ordinary_taxable": 3345.02,
+    "income_tax": 334.5,
+    "se_tax": 3279.47,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 3613.97,
+    "nonref_ctc": 0.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 649.0,
+    "actc": 0.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 3613.97,
+    "line33_total_payments": 880.0,
+    "line35a_refund": 0.0,
+    "line37_amount_owed": 2733.97
+  }
+}

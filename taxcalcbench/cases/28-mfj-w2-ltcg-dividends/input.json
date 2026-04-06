@@ -1,0 +1,45 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with W-2 wages, long-term capital gains, and qualified dividends — tests 0% LTCG rate when total income stays within the 0% bracket",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Morgan",
+          "taxpayer_last_name": "Rivera",
+          "taxpayer_dob": "1975-04-12",
+          "spouse_first_name": "Jordan",
+          "spouse_last_name": "Rivera",
+          "spouse_dob": "1977-09-22",
+          "address_city": "Nashville",
+          "address_state": "TN",
+          "address_zip": "37201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 80000,
+        "box2_fed_withheld": 9500,
+        "box3_ss_wages": 80000,
+        "box4_ss_withheld": 4960,
+        "box5_medicare_wages": 80000,
+        "box6_medicare_withheld": 1160
+      }
+    },
+    {
+      "node_type": "f1099div",
+      "data": {
+        "payerName": "Brokerage Co",
+        "isNominee": false,
+        "box11": false,
+        "box1a": 3000,
+        "box1b": 2500,
+        "box2a": 15000
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages plus unemployment compensation (1099-G)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Riley",
+          "taxpayer_last_name": "Chen",
+          "taxpayer_dob": "1979-09-12",
+          "address_city": "Cheyenne",
+          "address_state": "WY",
+          "address_zip": "82001"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 38000,
+        "box2_fed_withheld": 3200,
+        "box3_ss_wages": 38000,
+        "box4_ss_withheld": 2356,
+        "box5_medicare_wages": 38000,
+        "box6_medicare_withheld": 551
+      }
+    },
+    {
+      "node_type": "f1099g",
+      "data": {
+        "box_1_unemployment": 9800,
+        "box_4_federal_withheld": 980,
+        "payer_name": "Wyoming Dept of Workforce Services"
+      }
+    }
+  ]
+}

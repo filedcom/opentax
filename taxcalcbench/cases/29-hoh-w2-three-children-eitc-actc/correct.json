@@ -1,0 +1,43 @@
+{
+  "case": "29-hoh-w2-three-children-eitc-actc",
+  "scenario": "Head of household with W-2 income and three qualifying children — tests maximum EITC tier (3+ children) with partial CTC offset and large ACTC refund",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "hoh",
+    "wages": 27000.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 0.0,
+    "pension": 0.0,
+    "ssa_gross": 0.0,
+    "schedule_c_net": 0.0,
+    "student_loan_int": 0.0,
+    "qualifying_children": 3,
+    "eitc_children": 3,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 1800.0
+  },
+  "correct": {
+    "line9_total_income": 27000.0,
+    "line11_agi": 27000.0,
+    "standard_deduction": 22500,
+    "qbi_deduction": 0.0,
+    "line15_taxable_income": 4500.0,
+    "ordinary_taxable": 4500.0,
+    "income_tax": 450.0,
+    "se_tax": 0.0,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 450.0,
+    "nonref_ctc": 450.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 7311.22,
+    "actc": 3675.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 0.0,
+    "line33_total_payments": 12786.22,
+    "line35a_refund": 12786.22,
+    "line37_amount_owed": 0.0
+  }
+}

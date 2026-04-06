@@ -1,0 +1,43 @@
+{
+  "case": "28-mfj-w2-ltcg-dividends",
+  "scenario": "Married filing jointly with W-2 wages, long-term capital gains, and qualified dividends — tests 0% LTCG rate when total income stays within the 0% bracket",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "mfj",
+    "wages": 80000.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 3000.0,
+    "qualified_dividends": 2500.0,
+    "ltcg": 15000.0,
+    "pension": 0.0,
+    "ssa_gross": 0.0,
+    "schedule_c_net": 0.0,
+    "student_loan_int": 0.0,
+    "qualifying_children": 0,
+    "eitc_children": 0,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 9500.0
+  },
+  "correct": {
+    "line9_total_income": 98000.0,
+    "line11_agi": 98000.0,
+    "standard_deduction": 30000,
+    "qbi_deduction": 0.0,
+    "line15_taxable_income": 68000.0,
+    "ordinary_taxable": 50500.0,
+    "income_tax": 5583.0,
+    "se_tax": 0.0,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 5583.0,
+    "nonref_ctc": 0.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 0.0,
+    "actc": 0.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 5583.0,
+    "line33_total_payments": 9500.0,
+    "line35a_refund": 3917.0,
+    "line37_amount_owed": 0.0
+  }
+}

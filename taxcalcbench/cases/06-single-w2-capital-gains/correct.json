@@ -1,0 +1,43 @@
+{
+  "case": "06-single-w2-capital-gains",
+  "scenario": "Single filer with W-2 wages plus long-term capital gain from stock sale (0% rate bracket)",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "single",
+    "wages": 40000.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 5000.0,
+    "pension": 0.0,
+    "ssa_gross": 0.0,
+    "schedule_c_net": 0.0,
+    "student_loan_int": 0.0,
+    "qualifying_children": 0,
+    "eitc_children": 0,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 3500.0
+  },
+  "correct": {
+    "line9_total_income": 45000.0,
+    "line11_agi": 45000.0,
+    "standard_deduction": 15000,
+    "qbi_deduction": 0.0,
+    "line15_taxable_income": 30000.0,
+    "ordinary_taxable": 25000.0,
+    "income_tax": 2761.5,
+    "se_tax": 0.0,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 2761.5,
+    "nonref_ctc": 0.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 0.0,
+    "actc": 0.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 2761.5,
+    "line33_total_payments": 3500.0,
+    "line35a_refund": 738.5,
+    "line37_amount_owed": 0.0
+  }
+}
