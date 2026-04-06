@@ -1,14 +1,14 @@
 {
-  "returnId": "47bb3b4a-79a1-4168-80ba-841b4f26db66",
+  "returnId": "c291cd16-ee18-4cdf-a346-45433718ab36",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 58000,
     "line9_total_income": 58000,
     "line11_agi": 0,
     "line15_taxable_income": 0,
-    "line24_total_tax": 4921.5,
+    "line24_total_tax": 4681.5,
     "line33_total_payments": 7000,
-    "line35a_refund": 2078.5
+    "line35a_refund": 2318.5
   },
   "forms": [
     "agi_aggregator",
@@ -47,8 +47,8 @@
     "address_state": "CO",
     "address_zip": "80201",
     "line11_agi": [
-      58000,
-      58000
+      56000,
+      56000
     ],
     "line12e_itemized_deductions": [
       0,
@@ -59,24 +59,23 @@
       15000
     ],
     "line15_taxable_income": [
-      43000,
-      43000
+      41000,
+      41000
     ],
     "line16_income_tax": [
-      4921.5,
-      4921.5
+      4681.5,
+      4681.5
     ],
     "line1z_total_wages": 58000,
     "line9_total_income": 58000,
-    "line18_total_tax_before_credits": 4921.5,
+    "line18_total_tax_before_credits": 4681.5,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 4921.5,
-    "line24_total_tax": 4921.5,
+    "line22_tax_after_credits": 4681.5,
+    "line24_total_tax": 4681.5,
     "line33_total_payments": 7000,
-    "line35a_refund": 2078.5
+    "line35a_refund": 2318.5
   },
   "warnings": [
-    "[EXECUTOR_NODE_FAILURE] form8889: Zod validation failed for node \"form8889\": [\n  {\n    \"expected\": \"'self_only' | 'family'\",\n    \"received\": \"undefined\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"coverage_type\"\n    ],\n    \"message\": \"Required\"\n  }\n]",
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
   ]
 }
