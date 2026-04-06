@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8941
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 5 rules (4 implemented, 1 stubs)
+ * 5 rules (5 implemented, 0 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, gt, hasNonZero, ifThen, isZero, matchesHeaderSSN, eqMin, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, all, gt, hasNonZero, ifThen, isZero, matchesHeaderSSN, eqMin, } from "../../../../core/validation/mod.ts";
 
 export const F8941_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F8941_RULES: readonly RuleDef[] = [
     "F8941-002",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: if two Forms 8941, their SSNs must differ
+    allDistinct("SSN"),
     "If two Forms 8941 are present in the return, their SSN's must not be equal.",
   ),
   rule(

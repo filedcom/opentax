@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, all, any, eqStr, hasNonZero, not, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, all, any, eqStr, hasNonZero, not, } from "../../../../core/validation/mod.ts";
 
 export const F4972_RULES: readonly RuleDef[] = [
   rule(
@@ -54,7 +54,7 @@ export const F4972_RULES: readonly RuleDef[] = [
     "F4972-007",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: if two Forms 4972, their SSNs must differ
+    allDistinct("SSN"),
     "If two Forms 4972 are present in the return, then their 'SSN's must not be equal.",
   ),
 ];

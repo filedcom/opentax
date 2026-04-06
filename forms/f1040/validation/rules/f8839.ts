@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F8839
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 6 rules (4 implemented, 2 stubs)
+ * 6 rules (5 implemented, 1 stub)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, ifThen, notGtField, ssnNotEqual, validSSN, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, hasValue, ifThen, notGtField, ssnNotEqual, validSSN, } from "../../../../core/validation/mod.ts";
 
 export const F8839_RULES: readonly RuleDef[] = [
   rule(
@@ -40,7 +40,7 @@ export const F8839_RULES: readonly RuleDef[] = [
     "F8839-007",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires per-item uniqueness check across all ChildSSN values on Line 1f
+    allDistinct("ChildSSN"),
     "Each 'ChildSSN' on Form 8839, Line 1f must be unique among all 'ChildSSN's on Line 1f.",
   ),
   rule(

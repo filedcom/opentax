@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F5695
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 76 rules (56 implemented, 20 stubs)
+ * 76 rules (57 implemented, 19 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, any, eqField, eqMin, eqMinNum, eqProduct, eqStr, eqSum, filingStatusIs, formCountAtMost, gt, hasNonZero, hasValue, ifThen, isZero, lt, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
+import { rule, all, allDistinct, alwaysPass, any, eqField, eqMin, eqMinNum, eqProduct, eqStr, eqSum, filingStatusIs, formCountAtMost, gt, hasNonZero, hasValue, ifThen, isZero, lt, matchesHeaderSSN, noValue, not, notGtNum, } from "../../../../core/validation/mod.ts";
 
 export const F5695_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F5695_RULES: readonly RuleDef[] = [
     "F5695-002",
     "reject",
     "incorrect_data",
-    alwaysPass,
+    allDistinct("SSN"),
     "If two Forms 5695 are present in the return, then their SSN's must not be equal.",
   ),
   rule(

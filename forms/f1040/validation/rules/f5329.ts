@@ -5,7 +5,7 @@
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqStr, eqSum, gt, hasNonZero, hasValue, ifThen, isZero, matchesHeaderSSN, not, notLtSum, ssnNotEqual, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, eqStr, eqSum, gt, hasNonZero, hasValue, ifThen, isZero, matchesHeaderSSN, not, notLtSum, ssnNotEqual, } from "../../../../core/validation/mod.ts";
 
 export const F5329_RULES: readonly RuleDef[] = [
   rule(
@@ -19,7 +19,7 @@ export const F5329_RULES: readonly RuleDef[] = [
     "F5329-002",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-instance check: if two Forms 5329, their SSNs must differ
+    allDistinct("SSN"),
     "If two Forms 5329 are present in the return, then their 'SSN's must not be equal.",
   ),
   rule(
