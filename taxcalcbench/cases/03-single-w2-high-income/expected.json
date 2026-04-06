@@ -1,20 +1,26 @@
 {
-  "returnId": "b5a09fe0-4933-4dc7-911f-bccc9d8f4f51",
+  "returnId": "43478147-166b-464d-813f-7f81864317af",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 120000,
     "line9_total_income": 120000,
     "line11_agi": 0,
-    "line15_taxable_income": 120000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 18047,
     "line33_total_payments": 22000,
-    "line35a_refund": 22000
+    "line35a_refund": 3953
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "standard_deduction",
@@ -29,6 +35,16 @@
       120000,
       120000
     ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Jordan",
+    "taxpayer_last_name": "Patel",
+    "taxpayer_dob": "1982-11-05",
+    "address_city": "San Francisco",
+    "address_state": "CA",
+    "address_zip": "94105",
     "line11_agi": [
       120000,
       120000
@@ -37,15 +53,28 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      105000,
+      105000
+    ],
+    "line16_income_tax": [
+      18047,
+      18047
+    ],
     "line1z_total_wages": 120000,
     "line9_total_income": 120000,
-    "line15_taxable_income": 120000,
-    "line18_total_tax_before_credits": 0,
+    "line18_total_tax_before_credits": 18047,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line22_tax_after_credits": 18047,
+    "line24_total_tax": 18047,
     "line33_total_payments": 22000,
-    "line35a_refund": 22000
+    "line35a_refund": 3953
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

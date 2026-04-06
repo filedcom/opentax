@@ -1,20 +1,26 @@
 {
-  "returnId": "5bef1535-8757-468e-bb56-f4b41ccfff11",
+  "returnId": "c2670c4f-8dd1-4358-bd03-06cb0e6d5ae2",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 50000,
     "line9_total_income": 50000,
     "line11_agi": 0,
-    "line15_taxable_income": 50000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 3961.5,
     "line33_total_payments": 5000,
-    "line35a_refund": 5000
+    "line35a_refund": 1038.5
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "standard_deduction",
@@ -29,6 +35,16 @@
       50000,
       50000
     ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Morgan",
+    "taxpayer_last_name": "Lee",
+    "taxpayer_dob": "1988-07-22",
+    "address_city": "Denver",
+    "address_state": "CO",
+    "address_zip": "80201",
     "line11_agi": [
       50000,
       50000
@@ -37,15 +53,28 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      35000,
+      35000
+    ],
+    "line16_income_tax": [
+      3961.5,
+      3961.5
+    ],
     "line1z_total_wages": 50000,
     "line9_total_income": 50000,
-    "line15_taxable_income": 50000,
-    "line18_total_tax_before_credits": 0,
+    "line18_total_tax_before_credits": 3961.5,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line22_tax_after_credits": 3961.5,
+    "line24_total_tax": 3961.5,
     "line33_total_payments": 5000,
-    "line35a_refund": 5000
+    "line35a_refund": 1038.5
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }
