@@ -110,8 +110,14 @@ function buildReturn(caseData: CaseInput): TaxReturnInput {
         inp.marketplaceAptc!    += (p.annual_aptc    as number) ?? 0;
       }
     } else if (nt === "f1098e") {
-      for (const e of (f.data.f1098es ?? []) as Array<{box1_student_loan_interest?:number}>) {
-        inp.studentLoanInterestPaid! += e.box1_student_loan_interest ?? 0;
+      // Input format: flat fields at root (no f1098es wrapper)
+      if (typeof f.data.box1_student_loan_interest === "number") {
+        inp.studentLoanInterestPaid! += f.data.box1_student_loan_interest;
+      } else {
+        // Fallback: wrapped array format
+        for (const e of (f.data.f1098es ?? []) as Array<{box1_student_loan_interest?:number}>) {
+          inp.studentLoanInterestPaid! += e.box1_student_loan_interest ?? 0;
+        }
       }
     } else if (nt === "f2441") {
       inp.depCareExpenses = d.qualifying_expenses_paid ?? 0;

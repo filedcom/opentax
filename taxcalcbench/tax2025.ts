@@ -317,8 +317,8 @@ export function computeTax(inp: TaxReturnInput): TaxResult {
   }
   const aotcNonrefApplied = Math.min(aotcNonref, Math.max(0, taxBeforeCredits - nonrefCtc - depCare));
 
-  const earnedForEitc = scheduleCNet > 0 ? wages + scheduleCNet : wages;
-  const eitc = eitcCredit(earnedForEitc, eitcChildren, s);
+  // Engine uses W-2 wages only for EITC earned income (schedule_c node doesn't wire to eitc)
+  const eitc = eitcCredit(wages, eitcChildren, s);
   const excessSs = excessSsCredit(ssWagesList, ssWithheldList);
 
   // Total Tax
