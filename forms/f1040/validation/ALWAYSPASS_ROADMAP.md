@@ -1,8 +1,8 @@
 # alwaysPass Rules Roadmap
 
-> Generated: 2026-03-31 | Updated: 2026-04-05
-> Total: 533 rules remain as alwaysPass stubs (540 original − 115 converted through Round 3 − 7 converted in Round 4)
-> Exhaustive audit (2026-04-05): Only 7 of the 540+ stubs were implementable with the single-instance predicate DSL. The remaining ~533 require cross-instance iteration, database lookups, or binary attachment inspection.
+> Generated: 2026-03-31 | Updated: 2026-04-06
+> Total: ~499 rules remain as alwaysPass stubs (540 original − 115 converted through Round 3 − 7 converted in Round 4 − 34 converted in Round 5)
+> Round 5 (2026-04-06): Added `forEach`, `everyItem`, `sumOfAll`, `allDistinct` cross-instance combinators (Phase 17). Converted 34 rules: 17 allDistinct SSN/EIN uniqueness + 17 sumOfAll cross-form aggregation.
 
 These rules are currently `alwaysPass` because they require capabilities beyond
 the current predicate DSL. This roadmap categorizes them by the capability needed
@@ -20,6 +20,48 @@ and suggests implementation approach for each category.
 
 **Round 4 (2026-04-05 — Phase 12):** `validEIN`, `betweenNum`, `diffLteNum`, `notGtPctOfField`
 Converted 7 rules across fpymt, f1116, f3468, f9465, f8814, sse files.
+
+**Round 5 (2026-04-06 — Phase 17):** `forEach`, `everyItem`, `sumOfAll`, `allDistinct`
+Converted 34 rules across 22 rule files using cross-instance combinators: 17 allDistinct SSN/EIN/account uniqueness checks + 17 sumOfAll cross-form aggregation rules.
+
+### Phase 17 converted rules (Round 5)
+
+| Rule ID | File | Predicate(s) Used | Description |
+|---------|------|-------------------|-------------|
+| F5695-002 | f5695.ts | `allDistinct("SSN")` | Two Forms 5695 must have distinct SSNs |
+| F8919-002 | f8919.ts | `allDistinct("SSN")` | Two Forms 8919 must have distinct SSNs |
+| F4137-002 | f4137.ts | `allDistinct("SSN")` | Two Forms 4137 must have distinct SSNs |
+| SH-F1040-002 | sh.ts | `allDistinct("SSN")` | Two Schedule H must have distinct SSNs |
+| SH-F1040-004 | sh.ts | `allDistinct("EmployerEIN")` | Two Schedule H must have distinct EmployerEINs |
+| F1310-005 | f1310.ts | `allDistinct("DecedentSSN")` | Two Forms 1310 must have distinct DecedentSSNs |
+| F2555-002 | f2555.ts | `allDistinct("SSN")` | Two Forms 2555 must have distinct SSNs |
+| F9000-002 | f9000.ts | `allDistinct("SSN")` | Two Forms 9000 must have distinct SSNs |
+| F8941-002 | f8941.ts | `allDistinct("SSN")` | Two Forms 8941 must have distinct SSNs |
+| SSE-F1040-002 | sse.ts | `allDistinct("SSN")` | Two Schedule SEs must have distinct SSNs |
+| F4972-007 | f4972.ts | `allDistinct("SSN")` | Two Forms 4972 must have distinct SSNs |
+| F5329-002 | f5329.ts | `allDistinct("SSN")` | Two Forms 5329 must have distinct SSNs |
+| F8889-002-01 | f8889.ts | `allDistinct("RecipientSSN")` | Two Forms 8889 must have distinct RecipientSSNs |
+| SLEP-F1040-002 | slep.ts | `allDistinct("SSN")` | Two Schedule LEPs must have distinct SSNs |
+| F4563-002 | f4563.ts | `allDistinct("SSN")` | Two Forms 4563 must have distinct SSNs |
+| F8839-007 | f8839.ts | `allDistinct("ChildSSN")` | All ChildSSNs on Form 8839 Line 1f must be unique |
+| F8888-015 | f8888.ts | `allDistinct("DepositorAccountNum")` | DepositorAccountNum on Form 8888 must be unique |
+| S1-F1040-124 | s1.ts | `sumOfAll("NetFarmProfitLossAmt", "NetFarmProfitLossAmt")` | S1 field must equal sum of all Schedule F instances |
+| S1-F1040-266 | s1.ts | `sumOfAll("TotalIncomeExclusionAmt", "TotalIncomeExclusionAmt")` | S1 field must equal sum of all Form 2555 instances |
+| S1-F1040-360 | s1.ts | `sumOfAll("HousingDeductionAmt", "HousingDeductionAmt")` | S1 field must equal sum of all Form 2555 housing deductions |
+| S1-F1040-376 | s1.ts | `sumOfAll("OtherAdjustmentsTotalAmt", "OtherAdjustmentsAmt")` | S1 total must equal sum of repeating group |
+| S1-F1040-195 | s1.ts | `ifThen(not(formPresent("form8958")), sumOfAll(...))` | S1 business income = sum of Schedule C unless Form 8958 |
+| S1-F1040-120-01 | s1.ts | `ifThen(not(hasValue("ClaimStorageFeesInd")), sumOfAll(...))` | S1 moving expense = sum of Form 3903 unless storage fees |
+| S2-F1040-006 | s2.ts | `sumOfAll("InterestOnEachNetIncrInTaxAmt", "InterestOnEachNetIncrInTaxAmt")` | S2 = sum of all Form 8621 instances |
+| S2-F1040-014 | s2.ts | `sumOfAll("TotalRecaptureOtherCreditsAmt", "OtherCreditsAmt")` | S2 total = sum of RecaptureOtherCreditsGrp items |
+| S2-F1040-180-01 | s2.ts | `sumOfAll("SelfEmploymentTaxAmt", "SelfEmploymentTaxAmt")` | S2 = sum of all Schedule SE SelfEmploymentTaxAmt |
+| S3-F1040-016 | s3.ts | `ifThen(hasNonZero(...), sumOfAll(...))` | S3 TotOthNonrefundableCreditsAmt = sum of group items |
+| S3-F1040-017-01 | s3.ts | `ifThen(hasNonZero(...), sumOfAll(...))` | S3 TotalOtherRefundableCreditsAmt = sum of group items |
+| S3-F1040-101-01 | s3.ts | `sumOfAll("QlfyElecMotorVehCrAmt", "QlfyElecMotorVehCrAmt")` | S3 = sum of all Form 8834 instances |
+| S3-F1040-104-01 | s3.ts | `sumOfAll("TotalPersonalUsePartOfCrAmt", "TotalPersonalUsePartOfCrAmt")` | S3 = sum of all Form 8911 instances |
+| S3-F1040-105-01 | s3.ts | `sumOfAll("CurrentYearAllowableCreditAmt", "CurrentYearAllowableCreditAmt")` | S3 = sum of all Form 8912 instances |
+| S3-F1040-152-02 | s3.ts | `ifThen(hasNonZero(...), sumOfAll(...))` | S3 ResidentialCleanEnergyCrAmt = sum of all Form 5695 |
+| SA-F1040-015-02 | sa.ts | `ifThen(hasNonZero(...), sumOfAll(...))` | SA CalcAdjGroIncmMnsTotNetLossAmt = sum of all Form 4684 |
+| SSE-F1040-022-05 | sse.ts | `ifThen(hasNonZero(...), sumOfAll(...))` | S1 DeductibleSelfEmploymentTaxAmt = sum of all Schedule SE |
 
 ### Phase 12 converted rules (Round 4)
 
@@ -45,7 +87,7 @@ After an exhaustive audit of all ~540 stubs in 79 rule files, the following brea
 | Per-item repeating groups | ~23 | XSD group types (e.g. Form 7218 fuel groups, Form 8835 Part II lines) |
 | **Total deferred** | **~533** | |
 
-**Next unlock:** Adding `forEach(formType, predicate)`, `everyItem(groupField, predicate)`, and `sumOfAll(formType, fieldName)` to the predicate DSL would unlock ~320 cross-instance rules.
+**Round 5 note:** `forEach`, `everyItem`, `sumOfAll`, and `allDistinct` were added in Phase 17 and unlocked 34 conversions. The remaining ~286 cross-instance rules require more complex iteration patterns (per-item predicates, multi-field sums) beyond the current combinators.
 
 See `core/validation/predicates.ts`.
 
@@ -57,12 +99,12 @@ See `core/validation/predicates.ts`.
 |---|----------|-------|--------|----------|
 | 1 | External ID Validation (VIN, Registration) | 6 | Low | External API |
 | 2 | IRS e-File Database Lookups | 80 | High | Server-side |
-| 3 | Per-Item / Repeating Group Iteration | 112 | Medium | DSL extension |
+| 3 | Per-Item / Repeating Group Iteration | 95 | Medium | DSL extension |
 | 4 | Form Reference Counting | 27 | Low | DSL extension |
 | 5 | Date/Age Arithmetic | 33 | Medium | DSL extension |
 | 6 | Cross-Form SSN Matching | 28 | Low | DSL extension |
-| 7 | TIN/EIN Format & Cross-Ref Validation | 63 | Low | DSL extension |
-| 8 | Uniqueness / Non-Duplicate Checks | 3 | Low | DSL extension |
+| 7 | TIN/EIN Format & Cross-Ref Validation | 47 | Low | DSL extension |
+| 8 | Uniqueness / Non-Duplicate Checks | 2 | Low | DSL extension |
 | 9 | Binary Attachment Presence | 29 | Low | Manifest access |
 | 10 | Complex Math (multiply, smaller-of, subtract, percent) | 57 | Medium | DSL extension |
 | 11 | Conditional Math & Zero Checks | 86 | Medium | DSL extension |

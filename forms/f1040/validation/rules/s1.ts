@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: S1
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 28 rules (28 implemented, 0 stubs)
+ * 28 rules (25 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, notGtField, any, all, formPresent, filingStatusIs, filingStatusNot, sumGtNum, validSSN, ssnNotEqual, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, notGtField, any, all, formPresent, filingStatusIs, filingStatusNot, sumGtNum, sumOfAll, validSSN, ssnNotEqual, } from "../../../../core/validation/mod.ts";
 
 export const S1_RULES: readonly RuleDef[] = [
   rule(
@@ -103,14 +103,14 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-120-01",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 3903 MovingDeductionAmt, conditional on ClaimStorageFeesInd
+    ifThen(not(hasValue("ClaimStorageFeesInd")), sumOfAll("MovingExpenseAmt", "MovingDeductionAmt")),
     "Schedule 1 (Form 1040), 'MovingExpenseAmt' must be equal to the sum of all Forms 3903, 'MovingDeductionAmt' unless 'ClaimStorageFeesInd' is checked.",
   ),
   rule(
     "S1-F1040-124",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-form aggregation: sum of all Schedule F NetFarmProfitLossAmt
+    sumOfAll("NetFarmProfitLossAmt", "NetFarmProfitLossAmt"),
     "Schedule 1 (Form 1040), 'NetFarmProfitLossAmt' must be equal to the sum of all Schedule F (Form 1040), 'NetFarmProfitLossAmt' attached to 'NetFarmProfitLossAmt'.",
   ),
   rule(
@@ -131,7 +131,7 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-195",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Schedule C NetProfitOrLossAmt, unless Form 8958 present
+    ifThen(not(formPresent("form8958")), sumOfAll("BusinessIncomeLossAmt", "NetProfitOrLossAmt")),
     "Schedule 1 (Form 1040), 'BusinessIncomeLossAmt' must be equal to the sum of all Schedule C (Form 1040), 'NetProfitOrLossAmt' unless Form 8958 is present in the return.",
   ),
   rule(
@@ -145,7 +145,7 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-266",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 2555 TotalIncomeExclusionAmt
+    sumOfAll("TotalIncomeExclusionAmt", "TotalIncomeExclusionAmt"),
     "Schedule 1 (Form 1040), 'TotalIncomeExclusionAmt' must be equal to the sum of all Forms 2555, 'TotalIncomeExclusionAmt'.",
   ),
   rule(
@@ -159,14 +159,14 @@ export const S1_RULES: readonly RuleDef[] = [
     "S1-F1040-360",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 2555 HousingDeductionAmt
+    sumOfAll("HousingDeductionAmt", "HousingDeductionAmt"),
     "Schedule 1 (Form 1040), 'HousingDeductionAmt' must be equal to the sum of all Forms 2555, 'HousingDeductionAmt'.",
   ),
   rule(
     "S1-F1040-376",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires cross-instance aggregation: sum of all OtherAdjustmentsAmt in repeating OtherAdjustmentsStatement
+    sumOfAll("OtherAdjustmentsTotalAmt", "OtherAdjustmentsAmt"),
     "Schedule 1 (Form 1040), 'OtherAdjustmentsTotalAmt' must be equal to the sum of all 'OtherAdjustmentsAmt' in [OtherAdjustmentsStatement].",
   ),
   rule(

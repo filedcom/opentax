@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: S3
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 36 rules (36 implemented, 0 stubs)
+ * 36 rules (31 implemented, 5 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, any, all, formPresent, formCountAtMost, notGtNum, filingStatusIs, filingStatusNot, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, any, all, formPresent, formCountAtMost, notGtNum, filingStatusIs, filingStatusNot, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const S3_RULES: readonly RuleDef[] = [
   rule(
@@ -26,14 +26,14 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-016",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-instance aggregation: sum of all OtherNonrefundableCreditsAmt in repeating OtherNonrefundableCreditsGrp
+    ifThen(hasNonZero("TotOthNonrefundableCreditsAmt"), sumOfAll("TotOthNonrefundableCreditsAmt", "OtherNonrefundableCreditsAmt")),
     "If Schedule 3 (Form 1040), 'TotOthNonrefundableCreditsAmt' has a value greater than zero, then it must be equal to the sum of all 'OtherNonrefundableCreditsAmt' in 'OtherNonrefundableCreditsGrp'.",
   ),
   rule(
     "S3-F1040-017-01",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-instance aggregation: sum of all OtherRefundableCreditsAmt in repeating OtherRefundableCreditsGrp
+    ifThen(hasNonZero("TotalOtherRefundableCreditsAmt"), sumOfAll("TotalOtherRefundableCreditsAmt", "OtherRefundableCreditsAmt")),
     "If Schedule 3 (Form 1040), 'TotalOtherRefundableCreditsAmt' has a value greater than zero, then it must be equal to the sum of all 'OtherRefundableCreditsAmt' in 'OtherRefundableCreditsGrp'.",
   ),
   rule(
@@ -82,7 +82,7 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-101-01",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 8834 QlfyElecMotorVehCrAmt
+    sumOfAll("QlfyElecMotorVehCrAmt", "QlfyElecMotorVehCrAmt"),
     "Schedule 3 (Form 1040), 'QlfyElecMotorVehCrAmt' must be equal to the sum of all Forms 8834, 'QlfyElecMotorVehCrAmt'.",
   ),
   rule(
@@ -96,14 +96,14 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-104-01",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 8911 TotalPersonalUsePartOfCrAmt
+    sumOfAll("TotalPersonalUsePartOfCrAmt", "TotalPersonalUsePartOfCrAmt"),
     "Schedule 3 (Form 1040), 'TotalPersonalUsePartOfCrAmt' must be equal to the sum of all Forms 8911, 'TotalPersonalUsePartOfCrAmt'.",
   ),
   rule(
     "S3-F1040-105-01",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 8912 CurrentYearAllowableCreditAmt
+    sumOfAll("CurrentYearAllowableCreditAmt", "CurrentYearAllowableCreditAmt"),
     "Schedule 3 (Form 1040), 'CurrentYearAllowableCreditAmt' must be equal to the sum of all Forms 8912, 'CurrentYearAllowableCreditAmt'.",
   ),
   rule(
@@ -187,7 +187,7 @@ export const S3_RULES: readonly RuleDef[] = [
     "S3-F1040-152-02",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 5695 ResidentialCleanEnergyCrAmt
+    ifThen(hasNonZero("ResidentialCleanEnergyCrAmt"), sumOfAll("ResidentialCleanEnergyCrAmt", "ResidentialCleanEnergyCrAmt")),
     "If Schedule 3 (Form 1040), 'ResidentialCleanEnergyCrAmt' has a non-zero value, then it must be equal to the sum of all Forms 5695, 'ResidentialCleanEnergyCrAmt'.",
   ),
   rule(

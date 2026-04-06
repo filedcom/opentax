@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: SSE
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 8 rules (5 implemented, 3 stubs)
+ * 8 rules (6 implemented, 2 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, allDistinct, alwaysPass, any, formPresent, hasNonZero, ifThen, matchesHeaderSSN, not, all, noValue, } from "../../../../core/validation/mod.ts";
+import { rule, allDistinct, alwaysPass, any, formPresent, hasNonZero, ifThen, matchesHeaderSSN, not, all, noValue, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const SSE_RULES: readonly RuleDef[] = [
   rule(
@@ -64,7 +64,7 @@ export const SSE_RULES: readonly RuleDef[] = [
     "SSE-F1040-022-05",
     "reject",
     "math_error",
-    alwaysPass, // requires cross-form sum: Schedule 1 DeductibleSelfEmploymentTaxAmt must equal sum of all Schedule SE DeductibleSelfEmploymentTaxAmt
+    ifThen(hasNonZero("DeductibleSelfEmploymentTaxAmt"), sumOfAll("DeductibleSelfEmploymentTaxAmt", "DeductibleSelfEmploymentTaxAmt")),
     "If Schedule 1 (Form 1040), 'DeductibleSelfEmploymentTaxAmt' has a non-zero value, then it must be equal to the sum of all Schedule SE (Form 1040), 'DeductibleSelfEmploymentTaxAmt'.",
   ),
   rule(

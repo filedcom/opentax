@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: S2
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 35 rules (30 implemented, 5 stubs)
+ * 35 rules (32 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, any, all, formPresent, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, eqField, eqSum, hasValue, hasNonZero, gt, ifThen, isZero, noValue, not, any, all, formPresent, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const S2_RULES: readonly RuleDef[] = [
   rule(
@@ -47,7 +47,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-006",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires summing a variable number of Form 8621 instances — cross-instance aggregation
+    sumOfAll("InterestOnEachNetIncrInTaxAmt", "InterestOnEachNetIncrInTaxAmt"),
     "Schedule 2 (Form 1040), 'InterestOnEachNetIncrInTaxAmt' must be equal to the sum of all Forms 8621, 'InterestOnEachNetIncrInTaxAmt'.",
   ),
   rule(
@@ -89,7 +89,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-014",
     "reject",
     "math_error",
-    alwaysPass, // requires summing variable-count items in RecaptureOtherCreditsGrp — cross-instance aggregation
+    sumOfAll("TotalRecaptureOtherCreditsAmt", "OtherCreditsAmt"),
     "Schedule 2 (Form 1040), 'TotalRecaptureOtherCreditsAmt' must be equal to the sum of all 'OtherCreditsAmt' in 'RecaptureOtherCreditsGrp'.",
   ),
   rule(
@@ -208,7 +208,7 @@ export const S2_RULES: readonly RuleDef[] = [
     "S2-F1040-180-01",
     "reject",
     "data_mismatch",
-    alwaysPass, // requires summing across variable number of Schedule SE instances — cross-instance aggregation
+    sumOfAll("SelfEmploymentTaxAmt", "SelfEmploymentTaxAmt"),
     "Schedule 2 (Form 1040), 'SelfEmploymentTaxAmt' must be equal to the sum of all Schedule SE (Form 1040), 'SelfEmploymentTaxAmt'.",
   ),
   rule(

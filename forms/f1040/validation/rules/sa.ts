@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: SA
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 61 rules (61 implemented, 0 stubs)
+ * 61 rules (52 implemented, 9 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, dateGteField, dateLteField, decimalPlacesEq, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, dateGteField, dateLteField, decimalPlacesEq, eqField, eqMin, eqMinNum, eqNum, eqProduct, eqStr, eqSum, hasValue, hasNonZero, gt, gte, ifThen, isZero, lt, noValue, not, notGtField, notGtNum, notLtSum, strLenEq, any, all, formPresent, filingStatusIs, filingStatusNot, sumOfAll, } from "../../../../core/validation/mod.ts";
 
 export const SA_RULES: readonly RuleDef[] = [
   rule(
@@ -61,7 +61,7 @@ export const SA_RULES: readonly RuleDef[] = [
     "SA-F1040-015-02",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires cross-form aggregation: sum of all Forms 4684 CalcAdjGroIncmMnsTotNetLossAmt
+    ifThen(hasNonZero("CalcAdjGroIncmMnsTotNetLossAmt"), sumOfAll("CalcAdjGroIncmMnsTotNetLossAmt", "CalcAdjGroIncmMnsTotNetLossAmt")),
     "If Schedule A (Form 1040), 'CalcAdjGroIncmMnsTotNetLossAmt' has a non-zero value, then it must be equal to the sum of all Forms 4684, 'CalcAdjGroIncmMnsTotNetLossAmt'.",
   ),
   rule(
