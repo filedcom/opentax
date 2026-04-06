@@ -14,6 +14,8 @@ import { form6198 } from "../../intermediate/forms/form6198/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form8990 } from "../../intermediate/forms/form8990/index.ts";
 import { form461 } from "../../intermediate/forms/form461/index.ts";
+import { eitc } from "../../intermediate/forms/eitc/index.ts";
+import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
   EBL_THRESHOLD_SINGLE_2025,
@@ -276,6 +278,8 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     form6251,
     form8990,
     form461,
+    eitc,
+    f8812,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -295,6 +299,12 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
     outputs.push(this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }));
     outputs.push(this.outputNodes.output(agi_aggregator, { line3_schedule_c: totalNetProfit }));
+
+    // SE net profit counts as earned income for EITC (IRC §32(c)(2)(A)(ii)) and ACTC
+    if (totalNetProfit > 0) {
+      outputs.push(this.outputNodes.output(eitc, { se_net_profit: totalNetProfit }));
+      outputs.push(this.outputNodes.output(f8812, { auto_se_earned_income: totalNetProfit }));
+    }
 
     // Per-item downstream routing (SE, QBI, passive, at-risk, depletion, interest)
     for (let i = 0; i < input.schedule_cs.length; i++) {

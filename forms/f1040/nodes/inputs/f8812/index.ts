@@ -58,8 +58,10 @@ export const inputSchema = z.object({
   auto_agi: z.number().nonnegative().optional(),
   // Income tax liability (from income_tax_calculation)
   auto_income_tax_liability: z.number().nonnegative().optional(),
-  // Earned income (from w2 node)
+  // Earned income from wages (from w2 node)
   auto_earned_income: z.number().nonnegative().optional(),
+  // Net self-employment profit for ACTC earned income (from schedule_c node)
+  auto_se_earned_income: z.number().nonnegative().optional(),
 });
 
 // TY2025 constants — One Big Beautiful Bill Act (PL 119-21, enacted July 4 2025)
@@ -85,7 +87,7 @@ function buildAutoItem(input: F8812Input): F8812Item | null {
     filing_status: (input.auto_filing_status ?? "single") as F8812Item["filing_status"],
     agi: input.auto_agi,
     income_tax_liability: input.auto_income_tax_liability,
-    earned_income: input.auto_earned_income,
+    earned_income: (input.auto_earned_income ?? 0) + (input.auto_se_earned_income ?? 0) || undefined,
   };
 }
 
