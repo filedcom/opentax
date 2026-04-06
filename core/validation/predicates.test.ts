@@ -4,7 +4,7 @@
 
 import { assertEquals } from "@std/assert";
 import { createReturnContext } from "./context.ts";
-import { betweenNum, diffLteNum, notGtPctOfField, validEIN } from "./predicates.ts";
+import { allDistinct, betweenNum, diffLteNum, everyItem, forEach, notGtPctOfField, sumOfAll, validEIN } from "./predicates.ts";
 
 /** Build a ReturnContext with the given flat fields under "f1040". */
 function ctx(fields: Record<string, unknown>) {
@@ -124,4 +124,90 @@ Deno.test("notGtPctOfField: fails when Owed=0 and Payment=1 (1 > 0)", () => {
     notGtPctOfField("Payment", "Owed", 2.0)(ctx({ Payment: 1, Owed: 0 })),
     false,
   );
+});
+
+// ─── forEach ────────────────────────────────────────────
+
+Deno.test("forEach: passes when all array items satisfy predicate (valid EIN prefixes)", () => {
+  const isValidPrefix = (v: unknown): boolean => {
+    const s = String(v ?? "").replace(/\D/g, "");
+    return s.length === 9 && ["12", "27"].includes(s.substring(0, 2));
+  };
+  assertEquals(forEach("EIN", isValidPrefix)(ctx({ EIN: ["123456789", "271234567"] })), true);
+});
+
+Deno.test("forEach: fails when any item fails the predicate", () => {
+  const isValidPrefix = (v: unknown): boolean => {
+    const s = String(v ?? "").replace(/\D/g, "");
+    return s.length === 9 && ["12", "27"].includes(s.substring(0, 2));
+  };
+  assertEquals(forEach("EIN", isValidPrefix)(ctx({ EIN: ["123456789", "001234567"] })), false);
+});
+
+Deno.test("forEach: passes when field is a single value (not array)", () => {
+  const isNonEmpty = (v: unknown): boolean => String(v ?? "").length > 0;
+  assertEquals(forEach("EIN", isNonEmpty)(ctx({ EIN: "123456789" })), true);
+});
+
+Deno.test("forEach: passes when field is absent (vacuous truth)", () => {
+  const alwaysFalse = (_v: unknown): boolean => false;
+  assertEquals(forEach("EIN", alwaysFalse)(ctx({})), true);
+});
+
+Deno.test("forEach: passes empty array (vacuous truth)", () => {
+  const alwaysFalse = (_v: unknown): boolean => false;
+  assertEquals(forEach("EIN", alwaysFalse)(ctx({ EIN: [] })), true);
+});
+
+// ─── everyItem ──────────────────────────────────────────
+
+Deno.test("everyItem: passes when all items satisfy predicate", () => {
+  const isNonEmpty = (v: unknown): boolean => String(v ?? "").length > 0;
+  assertEquals(everyItem("SSN", isNonEmpty)(ctx({ SSN: ["123456789", "987654321"] })), true);
+});
+
+Deno.test("everyItem: fails when any item fails predicate", () => {
+  const isNonEmpty = (v: unknown): boolean => String(v ?? "").length > 0;
+  assertEquals(everyItem("SSN", isNonEmpty)(ctx({ SSN: ["123456789", ""] })), false);
+});
+
+Deno.test("everyItem: passes when field is absent (vacuous truth)", () => {
+  const alwaysFalse = (_v: unknown): boolean => false;
+  assertEquals(everyItem("SSN", alwaysFalse)(ctx({})), true);
+});
+
+// ─── sumOfAll ───────────────────────────────────────────
+
+Deno.test("sumOfAll: passes when target equals sum of array elements", () => {
+  assertEquals(sumOfAll("total_wages", "wages")(ctx({ wages: [50000, 30000], total_wages: 80000 })), true);
+});
+
+Deno.test("sumOfAll: fails when target does not equal sum of array elements", () => {
+  assertEquals(sumOfAll("total_wages", "wages")(ctx({ wages: [50000, 30000], total_wages: 75000 })), false);
+});
+
+Deno.test("sumOfAll: passes when source is absent (sum=0) and target=0", () => {
+  assertEquals(sumOfAll("total_wages", "wages")(ctx({ total_wages: 0 })), true);
+});
+
+Deno.test("sumOfAll: passes when source is a single (non-array) value", () => {
+  assertEquals(sumOfAll("total_wages", "wages")(ctx({ wages: 50000, total_wages: 50000 })), true);
+});
+
+// ─── allDistinct ────────────────────────────────────────
+
+Deno.test("allDistinct: passes when all array values are unique", () => {
+  assertEquals(allDistinct("SSN")(ctx({ SSN: ["123456789", "987654321"] })), true);
+});
+
+Deno.test("allDistinct: fails when duplicates exist", () => {
+  assertEquals(allDistinct("SSN")(ctx({ SSN: ["123456789", "123456789"] })), false);
+});
+
+Deno.test("allDistinct: passes on single value (not array)", () => {
+  assertEquals(allDistinct("SSN")(ctx({ SSN: "123456789" })), true);
+});
+
+Deno.test("allDistinct: passes on empty/absent field", () => {
+  assertEquals(allDistinct("SSN")(ctx({})), true);
 });

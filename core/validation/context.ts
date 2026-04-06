@@ -120,5 +120,12 @@ export function createReturnContext(
     formCount(formId: string): number {
       return formCounts.get(formId) ?? 0;
     },
+
+    fieldArray(xmlName: string): readonly unknown[] {
+      const v = resolveField(xmlName);
+      if (v === undefined || v === null || v === "") return [];
+      if (Array.isArray(v)) return v;
+      return [v];
+    },
   };
 }

@@ -22,6 +22,7 @@ export { formatDiagnosticsJson, formatDiagnosticsText } from "./report.ts";
 export { rule } from "./rule-builder.ts";
 export {
   all,
+  allDistinct,
   alwaysFail,
   alwaysPass,
   any,
@@ -31,8 +32,10 @@ export {
   eqNum,
   eqStr,
   eqSum,
+  everyItem,
   filingStatusIs,
   filingStatusNot,
+  forEach,
   formAbsent,
   formCountAtMost,
   formPresent,
@@ -72,6 +75,7 @@ export {
   notLtSum,
   notMatchesHeaderSSN,
   ssnNotEqual,
+  sumOfAll,
   validEIN,
   validRTN,
   validSSN,

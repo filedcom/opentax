@@ -52,6 +52,14 @@ export interface ReturnContext {
 
   /** Count of forms of a given type (for multiple-document rules). */
   formCount(formId: string): number;
+
+  /**
+   * Return the raw pending dict value as an array.
+   * - If the value is already an array (promoted by mergePending), return it directly.
+   * - If it is a single (non-null, non-empty) value, wrap it in [value].
+   * - If absent, null, or empty string, return [].
+   */
+  fieldArray(xmlName: string): readonly unknown[];
 }
 
 /** A rule check function. Returns true if the rule PASSES (no violation). */

@@ -418,6 +418,49 @@ export const eqDiv = (target: string, numerator: string, denominator: string): R
     return Math.abs(ctx.num(target) - ctx.num(numerator) / d) < 0.001;
   };
 
+// ─── Cross-Instance Combinators ─────────────────────────
+
+/**
+ * Every element of an array-valued field must satisfy the item predicate.
+ * Passes vacuously on absent or empty fields.
+ */
+export const forEach = (xml: string, itemPred: (v: unknown) => boolean): RuleCheck =>
+  (ctx) => ctx.fieldArray(xml).every(itemPred);
+
+/**
+ * Every element of an array-valued field must satisfy the item predicate.
+ * Alias for forEach — use when emphasizing "for every instance of this field".
+ */
+export const everyItem = (xml: string, itemPred: (v: unknown) => boolean): RuleCheck =>
+  (ctx) => ctx.fieldArray(xml).every(itemPred);
+
+/**
+ * Target field must equal the sum of all elements in the source array field.
+ * Treats absent/non-numeric elements as 0. Penny tolerance (< 0.01).
+ */
+export const sumOfAll = (target: string, source: string): RuleCheck =>
+  (ctx) => {
+    const items = ctx.fieldArray(source);
+    const sum = items.reduce<number>(
+      (s, v) => s + (typeof v === "number" ? v : Number(v) || 0),
+      0,
+    );
+    return Math.abs(ctx.num(target) - sum) < 0.01;
+  };
+
+/**
+ * All elements of an array-valued field must be unique (after stripping non-digit chars).
+ * Passes vacuously on empty or single-element arrays.
+ */
+export const allDistinct = (xml: string): RuleCheck =>
+  (ctx) => {
+    const items = ctx
+      .fieldArray(xml)
+      .map((v) => String(v ?? "").replace(/\D/g, ""))
+      .filter(Boolean);
+    return new Set(items).size === items.length;
+  };
+
 // ─── Rule Builder Helper ────────────────────────────────
 
 /** Convenience: build a RuleDef with less boilerplate. */
