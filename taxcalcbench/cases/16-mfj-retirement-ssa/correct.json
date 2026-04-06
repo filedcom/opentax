@@ -1,0 +1,43 @@
+{
+  "case": "16-mfj-retirement-ssa",
+  "scenario": "Married filing jointly in retirement \u2014 1099-R pension distributions and Social Security income",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "mfj",
+    "wages": 0.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 0.0,
+    "pension": 36000.0,
+    "ssa_gross": 24000.0,
+    "schedule_c_net": 0.0,
+    "student_loan_int": 0.0,
+    "qualifying_children": 0,
+    "eitc_children": 0,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 3600.0
+  },
+  "correct": {
+    "line9_total_income": 45400.0,
+    "line11_agi": 45400.0,
+    "standard_deduction": 33200,
+    "qbi_deduction": 0.0,
+    "line15_taxable_income": 12200.0,
+    "ordinary_taxable": 12200.0,
+    "income_tax": 1220.0,
+    "se_tax": 0.0,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 1220.0,
+    "nonref_ctc": 0.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 0.0,
+    "actc": 0.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 1220.0,
+    "line33_total_payments": 3600.0,
+    "line35a_refund": 2380.0,
+    "line37_amount_owed": 0.0
+  }
+}

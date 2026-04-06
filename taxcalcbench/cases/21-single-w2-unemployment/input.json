@@ -1,0 +1,38 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages and unemployment compensation — tests above-standard-deduction income with 1099-G",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Right",
+          "taxpayer_last_name": "Angle",
+          "taxpayer_dob": "1973-10-14",
+          "address_city": "Cheyenne",
+          "address_state": "WY",
+          "address_zip": "82001"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 145000,
+        "box2_fed_withheld": 12000,
+        "box3_ss_wages": 145000,
+        "box4_ss_withheld": 8240,
+        "box5_medicare_wages": 145000,
+        "box6_medicare_withheld": 2103
+      }
+    },
+    {
+      "node_type": "f1099g",
+      "data": {
+        "box_1_unemployment": 12345,
+        "box_4_federal_withheld": 1235
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "case": "15-mfj-schedule-c-qbi",
+  "scenario": "Married filing jointly \u2014 spouse has W-2, taxpayer has profitable Schedule C with QBI deduction",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "mfj",
+    "wages": 65000.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 0.0,
+    "pension": 0.0,
+    "ssa_gross": 0.0,
+    "schedule_c_net": 70000.0,
+    "student_loan_int": 0.0,
+    "qualifying_children": 0,
+    "eitc_children": 0,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 7000.0
+  },
+  "correct": {
+    "line9_total_income": 135000.0,
+    "line11_agi": 130054.66,
+    "standard_deduction": 30000,
+    "qbi_deduction": 14000.0,
+    "line15_taxable_income": 86054.66,
+    "ordinary_taxable": 86054.66,
+    "income_tax": 9849.56,
+    "se_tax": 9890.68,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 19740.24,
+    "nonref_ctc": 0.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 0.0,
+    "actc": 0.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 19740.24,
+    "line33_total_payments": 7000.0,
+    "line35a_refund": 0.0,
+    "line37_amount_owed": 12740.24
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with minimal wages equal to standard deduction \u2014 tests zero taxable income edge case",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Casey",
+          "taxpayer_last_name": "Jordan",
+          "taxpayer_dob": "1990-03-15",
+          "address_city": "Juneau",
+          "address_state": "AK",
+          "address_zip": "99801"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 15000,
+        "box2_fed_withheld": 0,
+        "box3_ss_wages": 15000,
+        "box4_ss_withheld": 930,
+        "box5_medicare_wages": 15000,
+        "box6_medicare_withheld": 218
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "case": "12-mfj-w2-with-child",
+  "scenario": "Married filing jointly with one qualifying child under 17 \u2014 tests Child Tax Credit ($2,000)",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "mfj",
+    "wages": 85000.0,
+    "unemployment": 0.0,
+    "interest": 0.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 0.0,
+    "pension": 0.0,
+    "ssa_gross": 0.0,
+    "schedule_c_net": 0.0,
+    "student_loan_int": 0.0,
+    "qualifying_children": 1,
+    "eitc_children": 1,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 9000.0
+  },
+  "correct": {
+    "line9_total_income": 85000.0,
+    "line11_agi": 85000.0,
+    "standard_deduction": 30000,
+    "qbi_deduction": 0.0,
+    "line15_taxable_income": 55000.0,
+    "ordinary_taxable": 55000.0,
+    "income_tax": 6123.0,
+    "se_tax": 0.0,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 6123.0,
+    "nonref_ctc": 2000,
+    "dependent_care_credit": 0.0,
+    "eitc": 0.0,
+    "actc": 0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 4123.0,
+    "line33_total_payments": 9000.0,
+    "line35a_refund": 4877.0,
+    "line37_amount_owed": 0.0
+  }
+}

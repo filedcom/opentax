@@ -1,0 +1,51 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with W-2 and Schedule C self-employment income plus student loan interest deduction — tests SE tax, QBI, and student loan deduction interaction",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "First",
+          "taxpayer_last_name": "Spriere",
+          "taxpayer_dob": "1980-12-12",
+          "spouse_first_name": "Spouse",
+          "spouse_last_name": "Spriere",
+          "spouse_dob": "2002-12-12",
+          "address_city": "Juneau",
+          "address_state": "AK",
+          "address_zip": "99801"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 15111,
+        "box2_fed_withheld": 231,
+        "box3_ss_wages": 15111,
+        "box4_ss_withheld": 937,
+        "box5_medicare_wages": 15111,
+        "box6_medicare_withheld": 219
+      }
+    },
+    {
+      "node_type": "schedule_c",
+      "data": {
+        "line_a_principal_business": "Consulting",
+        "line_b_business_code": "541990",
+        "line_f_accounting_method": "cash",
+        "line_g_material_participation": true,
+        "line_1_gross_receipts": 23210,
+        "line_30_home_office_deduction": 0
+      }
+    },
+    {
+      "node_type": "f1098e",
+      "data": {
+        "box1_student_loan_interest": 3000
+      }
+    }
+  ]
+}

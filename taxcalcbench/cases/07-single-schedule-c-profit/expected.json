@@ -1,0 +1,59 @@
+{
+  "returnId": "2994d41b-5c97-4a35-9792-895ed6dc832f",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 35000,
+    "line9_total_income": 35000,
+    "line11_agi": 0,
+    "line15_taxable_income": 68456.681,
+    "line24_total_tax": 5086.638,
+    "line33_total_payments": 3000,
+    "line37_amount_owed": 2086.638
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "form8959",
+    "form8995",
+    "schedule1",
+    "schedule2",
+    "schedule_a",
+    "schedule_c",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      3000,
+      3000
+    ],
+    "line1a_wages": [
+      35000,
+      35000
+    ],
+    "line11_agi": [
+      68456.681,
+      68456.681
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line17_additional_taxes": [
+      5086.638,
+      5086.638
+    ],
+    "line1z_total_wages": 35000,
+    "line9_total_income": 35000,
+    "line15_taxable_income": 68456.681,
+    "line18_total_tax_before_credits": 5086.638,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 5086.638,
+    "line24_total_tax": 5086.638,
+    "line33_total_payments": 3000,
+    "line37_amount_owed": 2086.638
+  },
+  "warnings": []
+}

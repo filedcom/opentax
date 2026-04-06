@@ -1,0 +1,62 @@
+{
+  "returnId": "6c9f0319-c902-4786-ac77-9d214f01328a",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 95000,
+    "line9_total_income": 98200,
+    "line11_agi": 0,
+    "line15_taxable_income": 98200,
+    "line24_total_tax": 0,
+    "line33_total_payments": 10500,
+    "line35a_refund": 10500
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099div",
+    "form8959",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      10500,
+      10500
+    ],
+    "line1a_wages": [
+      95000,
+      95000
+    ],
+    "line3a_qualified_dividends": [
+      2800,
+      2800
+    ],
+    "line3b_ordinary_dividends": [
+      3200,
+      3200
+    ],
+    "line11_agi": [
+      98200,
+      98200
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 95000,
+    "line9_total_income": 98200,
+    "line15_taxable_income": 98200,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 10500,
+    "line35a_refund": 10500
+  },
+  "warnings": []
+}

@@ -1,0 +1,57 @@
+{
+  "returnId": "1cf510d6-3284-4fcf-b3d9-4bed88ff4d39",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 65000,
+    "line9_total_income": 68500,
+    "line11_agi": 0,
+    "line15_taxable_income": 68500,
+    "line24_total_tax": 0,
+    "line33_total_payments": 7500,
+    "line35a_refund": 7500
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099int",
+    "form8959",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      7500,
+      7500
+    ],
+    "line1a_wages": [
+      65000,
+      65000
+    ],
+    "line2b_taxable_interest": [
+      3500,
+      3500
+    ],
+    "line11_agi": [
+      68500,
+      68500
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 65000,
+    "line9_total_income": 68500,
+    "line15_taxable_income": 68500,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 7500,
+    "line35a_refund": 7500
+  },
+  "warnings": []
+}

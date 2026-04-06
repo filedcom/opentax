@@ -1,0 +1,43 @@
+{
+  "case": "25-hoh-blind-ssa-unemployment-interest",
+  "scenario": "Head of household who is legally blind with Social Security benefits, interest income, unemployment, and student loan interest — tests enhanced standard deduction and SSA taxability",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "hoh",
+    "wages": 0.0,
+    "unemployment": 23413.0,
+    "interest": 1453.0,
+    "ordinary_dividends": 0.0,
+    "qualified_dividends": 0.0,
+    "ltcg": 0.0,
+    "pension": 0.0,
+    "ssa_gross": 8742.0,
+    "schedule_c_net": 0.0,
+    "student_loan_int": 347.0,
+    "qualifying_children": 0,
+    "eitc_children": 0,
+    "dep_care_expenses": 0.0,
+    "fed_withheld": 17.0
+  },
+  "correct": {
+    "line9_total_income": 26811.0,
+    "line11_agi": 26464.0,
+    "standard_deduction": 24500,
+    "qbi_deduction": 0.0,
+    "line15_taxable_income": 1964.0,
+    "ordinary_taxable": 1964.0,
+    "income_tax": 196.4,
+    "se_tax": 0.0,
+    "add_medicare_tax": 0,
+    "line18_tax_before_credits": 196.4,
+    "nonref_ctc": 0.0,
+    "dependent_care_credit": 0.0,
+    "eitc": 0.0,
+    "actc": 0.0,
+    "excess_ss_credit": 0,
+    "line24_total_tax": 196.4,
+    "line33_total_payments": 17.0,
+    "line35a_refund": 0.0,
+    "line37_amount_owed": 179.4
+  }
+}
