@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
-status: Phase complete — ready for verification
-stopped_at: Completed 16-executor-diagnostics-cli-surface/16-01-PLAN.md
-last_updated: "2026-04-06T00:19:10.320Z"
+status: Ready to execute
+stopped_at: Completed 17-validation-dsl-foreach-everyitem-extension/17-01-PLAN.md
+last_updated: "2026-04-06T00:49:18.504Z"
 progress:
   total_phases: 17
-  completed_phases: 14
-  total_plans: 20
-  completed_plans: 21
+  completed_phases: 15
+  total_plans: 21
+  completed_plans: 22
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 16 — Executor Diagnostics CLI Surface
+**Current focus:** Phase 17 — Validation DSL forEach/everyItem Extension
 
 ## Current Position
 
-Phase: 16 (Executor Diagnostics CLI Surface) — EXECUTING
-Plan: 1 of 1
+Phase: 17 (Validation DSL forEach/everyItem Extension) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Plan: 1 of 1
 | Phase 12-validation-rule-stubs-high-value-batch P03 | 8 | 1 tasks | 1 files |
 | Phase 15-mef-header-builder-fix P01 | 5 | 2 tasks | 1 files |
 | Phase 16-executor-diagnostics-cli-surface P01 | 15 | 3 tasks | 4 files |
+| Phase 17-validation-dsl-foreach-everyitem-extension P01 | 15 | 2 tasks | 8 files |
 
 ### Decisions
 
@@ -96,6 +97,8 @@ Plan: 1 of 1
 - [Phase 15-mef-header-builder-fix]: ReturnType/TaxPeriodBeginDate/TaxPeriodEndDate are the canonical IRS element names; FilingStatusCd emits String(filingStatus) numeric 1-5; binaryAttachmentCnt removed from ReturnHeader
 - [Phase 16-executor-diagnostics-cli-surface]: executor diagnostics mapped to reject severity in DiagnosticsReport so node failures block filing
 - [Phase 16-executor-diagnostics-cli-surface]: validate:mef extended with Phase 14 e2e xsd_validation.test.ts; pre-existing XSD failures are known
+- [Phase 17-validation-dsl-foreach-everyitem-extension]: forEach and everyItem have identical semantics — both iterate array-valued pending dict fields with vacuous truth on empty; kept both for DSL clarity
+- [Phase 17-validation-dsl-foreach-everyitem-extension]: Only 3 EIN format stubs exist in codebase (fw2, fw2g, f1099r); plan overestimated 6 — wired validEIN into all 3 that had true format validation stubs
 
 ### Roadmap Evolution
 
@@ -118,6 +121,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T00:19:10.318Z
-Stopped at: Completed 16-executor-diagnostics-cli-surface/16-01-PLAN.md
+Last session: 2026-04-06T00:49:18.501Z
+Stopped at: Completed 17-validation-dsl-foreach-everyitem-extension/17-01-PLAN.md
 Resume file: None
