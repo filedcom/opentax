@@ -14,6 +14,6 @@
     "test": "deno test --allow-read --allow-write --allow-run=xmllint",
     "test:cli": "deno test --allow-read --allow-write cli/",
     "validate:mef": "deno test --allow-read --allow-write --allow-run=xmllint forms/f1040/2025/mef/xsd-validation.test.ts forms/f1040/e2e/xsd_validation.test.ts",
-    "bench": "deno compile --output tax cli/main.ts && ./taxcalcbench/run_benchmark.sh"
+    "bench": "./taxcalcbench/run_benchmark.sh"
   }
 }
