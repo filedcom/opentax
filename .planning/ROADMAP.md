@@ -201,7 +201,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 13. Verification Paperwork | 0/1 | Not started | - |
 | 14. Phase 01 Constants + XSD e2e Fix | 1/1 | Complete    | 2026-04-06 |
 | 15. MEF Header Builder Fix | 1/1 | Complete    | 2026-04-05 |
-| 16. Executor Diagnostics CLI Surface | 0/1 | Not started | - |
+| 16. Executor Diagnostics CLI Surface | 1/1 | Complete   | 2026-04-06 |
 | 17. Validation DSL forEach/everyItem Extension | 0/2 | Not started | - |
 
 ### Phase 10: XSD Validation in CI
@@ -317,7 +317,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 16-01-PLAN.md — Wire executor diagnostics into CLI commands + update validate:mef + recover predicates.test.ts
+- [x] 16-01-PLAN.md — Wire executor diagnostics into CLI commands + update validate:mef + recover predicates.test.ts
 
 ### Phase 17: Validation DSL forEach/everyItem Extension
 **Goal**: Implement `forEach` and `everyItem` DSL combinators in `core/validation/` to unlock the ~320 cross-instance validation rules that Phase 12 could not convert. Wire `validEIN` predicate (already built, unused) into at least 5 EIN format rule files. Target: convert at least 40 previously-`alwaysPass` rules using the new combinators.

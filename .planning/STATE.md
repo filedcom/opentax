@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 15-mef-header-builder-fix/15-01-PLAN.md
-last_updated: "2026-04-05T23:58:01.111Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 16-executor-diagnostics-cli-surface/16-01-PLAN.md
+last_updated: "2026-04-06T00:19:10.320Z"
 progress:
   total_phases: 17
-  completed_phases: 13
-  total_plans: 19
-  completed_plans: 20
+  completed_phases: 14
+  total_plans: 20
+  completed_plans: 21
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-01)
 
 **Core value:** Pure transformation nodes — IRS-compliant, schema-first, tested
-**Current focus:** Phase 15 — MEF Header Builder Fix
+**Current focus:** Phase 16 — Executor Diagnostics CLI Surface
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
+Phase: 16 (Executor Diagnostics CLI Surface) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -59,6 +59,7 @@ Plan: Not started
 | Phase 12-validation-rule-stubs-high-value-batch P02 | 28 | 2 tasks | 8 files |
 | Phase 12-validation-rule-stubs-high-value-batch P03 | 8 | 1 tasks | 1 files |
 | Phase 15-mef-header-builder-fix P01 | 5 | 2 tasks | 1 files |
+| Phase 16-executor-diagnostics-cli-surface P01 | 15 | 3 tasks | 4 files |
 
 ### Decisions
 
@@ -93,6 +94,8 @@ Plan: Not started
 - [Phase 12-validation-rule-stubs-high-value-batch]: Only 7 alwaysPass stubs in the entire codebase are implementable with the single-instance predicate DSL; the remaining ~533 stubs require cross-instance iteration, database lookups, or binary attachment inspection
 - [Phase 12-validation-rule-stubs-high-value-batch]: 285 test failures are all pre-existing; zero regressions from Phase 12 changes
 - [Phase 15-mef-header-builder-fix]: ReturnType/TaxPeriodBeginDate/TaxPeriodEndDate are the canonical IRS element names; FilingStatusCd emits String(filingStatus) numeric 1-5; binaryAttachmentCnt removed from ReturnHeader
+- [Phase 16-executor-diagnostics-cli-surface]: executor diagnostics mapped to reject severity in DiagnosticsReport so node failures block filing
+- [Phase 16-executor-diagnostics-cli-surface]: validate:mef extended with Phase 14 e2e xsd_validation.test.ts; pre-existing XSD failures are known
 
 ### Roadmap Evolution
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-05T23:42:49.874Z
-Stopped at: Completed 15-mef-header-builder-fix/15-01-PLAN.md
+Last session: 2026-04-06T00:19:10.318Z
+Stopped at: Completed 16-executor-diagnostics-cli-surface/16-01-PLAN.md
 Resume file: None
