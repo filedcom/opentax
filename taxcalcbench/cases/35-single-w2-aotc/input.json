@@ -1,0 +1,43 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 income claiming American Opportunity Tax Credit for qualified education expenses — $2,500 max credit ($1,500 non-refundable + $1,000 refundable)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Tyler",
+          "taxpayer_last_name": "Nguyen",
+          "taxpayer_dob": "2002-08-20",
+          "address_city": "Columbus",
+          "address_state": "OH",
+          "address_zip": "43201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 42000,
+        "box2_fed_withheld": 4200,
+        "box3_ss_wages": 42000,
+        "box4_ss_withheld": 2604,
+        "box5_medicare_wages": 42000,
+        "box6_medicare_withheld": 609
+      }
+    },
+    {
+      "node_type": "f8863",
+      "data": {
+        "credit_type": "aoc",
+        "student_name": "Tyler Nguyen",
+        "enrolled_half_time": true,
+        "aoc_adjusted_expenses": 4000,
+        "aoc_claimed_4_prior_years": false,
+        "completed_4_years_postsec": false,
+        "felony_drug_conviction": false
+      }
+    }
+  ]
+}

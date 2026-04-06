@@ -1,0 +1,80 @@
+{
+  "returnId": "6fb0cc60-b00d-48d2-a297-0b6c2aece5be",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 12000,
+    "line9_total_income": 12000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 543,
+    "line35a_refund": 543
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      0,
+      0
+    ],
+    "line1a_wages": [
+      12000,
+      12000
+    ],
+    "filing_status": "hoh",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Leslie",
+    "taxpayer_last_name": "Ramirez",
+    "taxpayer_dob": "1993-08-07",
+    "address_city": "Albuquerque",
+    "address_state": "NM",
+    "address_zip": "87101",
+    "hoh_paid_more_than_half_home_costs": true,
+    "line11_agi": [
+      12000,
+      12000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line27_eitc": [
+      543,
+      543
+    ],
+    "line12a_standard_deduction": [
+      22500,
+      22500
+    ],
+    "line15_taxable_income": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 12000,
+    "line9_total_income": 12000,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 543,
+    "line35a_refund": 543
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "year": 2025,
+  "scenario": "Single senior age 70 with two separate 1099-R retirement distributions — taxable amounts from both pensions combined",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Harold",
+          "taxpayer_last_name": "Jensen",
+          "taxpayer_dob": "1955-01-30",
+          "taxpayer_age_65_or_older": true,
+          "address_city": "Omaha",
+          "address_state": "NE",
+          "address_zip": "68101"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Nebraska Public Employees Retirement",
+        "payer_ein": "47-0000001",
+        "box1_gross_distribution": 20000,
+        "box2a_taxable_amount": 18000,
+        "box4_federal_withheld": 1800,
+        "box7_distribution_code": "7"
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Fidelity Investments IRA",
+        "payer_ein": "04-3523567",
+        "box1_gross_distribution": 15000,
+        "box2a_taxable_amount": 13000,
+        "box4_federal_withheld": 1300,
+        "box7_distribution_code": "7"
+      }
+    }
+  ]
+}

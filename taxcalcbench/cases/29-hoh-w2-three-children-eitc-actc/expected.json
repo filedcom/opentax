@@ -1,0 +1,91 @@
+{
+  "returnId": "ae469c6c-3dc7-4796-bb59-b2c30c8b49a8",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 27000,
+    "line9_total_income": 27000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 12786,
+    "line35a_refund": 12786
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule3",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      1800,
+      1800
+    ],
+    "line1a_wages": [
+      27000,
+      27000
+    ],
+    "filing_status": "hoh",
+    "dependent_count": 3,
+    "qualifying_child_tax_credit_count": 3,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Dana",
+    "taxpayer_last_name": "Brooks",
+    "taxpayer_dob": "1988-02-14",
+    "address_city": "Phoenix",
+    "address_state": "AZ",
+    "address_zip": "85001",
+    "hoh_paid_more_than_half_home_costs": true,
+    "line11_agi": [
+      27000,
+      27000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line27_eitc": [
+      7311,
+      7311
+    ],
+    "line12a_standard_deduction": [
+      22500,
+      22500
+    ],
+    "line15_taxable_income": [
+      4500,
+      4500
+    ],
+    "line16_income_tax": [
+      450,
+      450
+    ],
+    "line28_actc": [
+      3675,
+      3675
+    ],
+    "line20_nonrefundable_credits": 450,
+    "line1z_total_wages": 27000,
+    "line9_total_income": 27000,
+    "line18_total_tax_before_credits": 450,
+    "line21_credits_total": 450,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 12786,
+    "line35a_refund": 12786
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "returnId": "6f2f4f0a-50b5-4bfe-bd6b-3fe80a0a6668",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 41500,
+    "line9_total_income": 41500,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 12642,
+    "line35a_refund": 12642
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule3",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      2100,
+      2100
+    ],
+    "line1a_wages": [
+      41500,
+      41500
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 3,
+    "qualifying_child_tax_credit_count": 3,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Ponderosa",
+    "taxpayer_last_name": "Pine",
+    "taxpayer_dob": "1977-11-08",
+    "spouse_first_name": "Monterey",
+    "spouse_last_name": "Pine",
+    "spouse_dob": "1978-07-05",
+    "address_city": "Juneau",
+    "address_state": "AK",
+    "address_zip": "99801",
+    "line11_agi": [
+      41500,
+      41500
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line27_eitc": [
+      5692,
+      5692
+    ],
+    "line12a_standard_deduction": [
+      30000,
+      30000
+    ],
+    "line15_taxable_income": [
+      11500,
+      11500
+    ],
+    "line16_income_tax": [
+      1150,
+      1150
+    ],
+    "line28_actc": [
+      4850,
+      4850
+    ],
+    "line20_nonrefundable_credits": 1150,
+    "line1z_total_wages": 41500,
+    "line9_total_income": 41500,
+    "line18_total_tax_before_credits": 1150,
+    "line21_credits_total": 1150,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 12642,
+    "line35a_refund": 12642
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

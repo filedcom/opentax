@@ -44,7 +44,10 @@ export async function exportMefCommand(
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
   const executionPlan = buildExecutionPlan(def.registry);
-  const engineInputs = buildEngineInputs(inputs);
+  const singletonNodeTypes = new Set(
+    def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
+  );
+  const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
   const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
 
   // Warn about executor node failures before XML build

@@ -1,0 +1,54 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with both spouses' W-2 income and marketplace health insurance (1095-A with no APTC) — tests Form 8962 PTC computation path",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Antonio",
+          "taxpayer_last_name": "Vasquez",
+          "taxpayer_dob": "1982-11-14",
+          "spouse_first_name": "Carmen",
+          "spouse_last_name": "Vasquez",
+          "spouse_dob": "1984-07-22",
+          "address_city": "San Diego",
+          "address_state": "CA",
+          "address_zip": "92101"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55000,
+        "box2_fed_withheld": 6000,
+        "box3_ss_wages": 55000,
+        "box4_ss_withheld": 3410,
+        "box5_medicare_wages": 55000,
+        "box6_medicare_withheld": 798
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 45000,
+        "box2_fed_withheld": 4500,
+        "box3_ss_wages": 45000,
+        "box4_ss_withheld": 2790,
+        "box5_medicare_wages": 45000,
+        "box6_medicare_withheld": 653
+      }
+    },
+    {
+      "node_type": "f1095a",
+      "data": {
+        "issuer_name": "Covered California",
+        "annual_premium": 12000,
+        "annual_slcsp": 13200,
+        "annual_aptc": 0
+      }
+    }
+  ]
+}

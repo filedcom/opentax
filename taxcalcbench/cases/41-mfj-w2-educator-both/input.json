@@ -1,0 +1,53 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with both spouses working as educators — each claims educator expense deduction capped at $300, total $600",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "David",
+          "taxpayer_last_name": "Kim",
+          "taxpayer_dob": "1981-09-04",
+          "spouse_first_name": "Sarah",
+          "spouse_last_name": "Kim",
+          "spouse_dob": "1983-06-17",
+          "address_city": "Portland",
+          "address_state": "OR",
+          "address_zip": "97201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55000,
+        "box2_fed_withheld": 6000,
+        "box3_ss_wages": 55000,
+        "box4_ss_withheld": 3410,
+        "box5_medicare_wages": 55000,
+        "box6_medicare_withheld": 798
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 45000,
+        "box2_fed_withheld": 4500,
+        "box3_ss_wages": 45000,
+        "box4_ss_withheld": 2790,
+        "box5_medicare_wages": 45000,
+        "box6_medicare_withheld": 653
+      }
+    },
+    {
+      "node_type": "educator_expenses",
+      "data": {
+        "educator1_expenses": 400,
+        "educator2_expenses": 350,
+        "filing_status": "mfj"
+      }
+    }
+  ]
+}

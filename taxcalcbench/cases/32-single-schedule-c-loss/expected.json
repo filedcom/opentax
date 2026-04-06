@@ -1,0 +1,82 @@
+{
+  "returnId": "ee3ef7b1-619e-4e5c-95ae-684531f77684",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 45000,
+    "line9_total_income": 45000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 2521.5,
+    "line33_total_payments": 5000,
+    "line35a_refund": 2478.5
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_c",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      5000,
+      5000
+    ],
+    "line1a_wages": [
+      45000,
+      45000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Casey",
+    "taxpayer_last_name": "Monroe",
+    "taxpayer_dob": "1985-03-22",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
+    "line11_agi": [
+      38000,
+      38000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      23000,
+      23000
+    ],
+    "line16_income_tax": [
+      2521.5,
+      2521.5
+    ],
+    "line1z_total_wages": 45000,
+    "line9_total_income": 45000,
+    "line18_total_tax_before_credits": 2521.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 2521.5,
+    "line24_total_tax": 2521.5,
+    "line33_total_payments": 5000,
+    "line35a_refund": 2478.5
+  },
+  "warnings": [
+    "Schedule C is present but Schedule SE is missing — self-employment tax may not be computed.",
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

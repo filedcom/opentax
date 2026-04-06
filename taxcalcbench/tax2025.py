@@ -237,13 +237,22 @@ class TaxReturn:
     schedule_c_net: float = 0.0 # after expenses
     # Above-the-line deductions
     student_loan_interest_paid: float = 0.0
+    hsa_employer: float = 0.0          # W-2 Box 12 Code W (HSA employer contrib)
+    educator_expenses: float = 0.0     # Educator expense deduction (taxpayer)
+    educator_expenses_sp: float = 0.0  # Educator expense deduction (spouse, MFJ)
     # Credits / other
     qualifying_children: int = 0    # CTC eligible children
     eitc_children: int = 0          # children for EITC
     dep_care_expenses: float = 0.0  # Form 2441 eligible expenses paid
     dep_care_persons: int = 0
+    aotc_expenses: float = 0.0      # Qualified education expenses for AOTC
+    # Marketplace / PTC
+    marketplace_premium: float = 0.0   # Annual premium paid (1095-A)
+    marketplace_slcsp: float = 0.0     # SLCSP benchmark premium
+    marketplace_aptc: float = 0.0      # Advance PTC received
     # Withholding / payments
     fed_withheld: float = 0.0
+    estimated_tax_payments: float = 0.0
     # SS over-collection tracking
     ss_wages_list: list[float] = field(default_factory=list)
     ss_withheld_list: list[float] = field(default_factory=list)
@@ -255,6 +264,14 @@ class TaxReturn:
         se_total, se_half = (0.0, 0.0)
         if self.schedule_c_net > 0:
             se_total, se_half = se_tax(self.schedule_c_net)
+
+        # ── Educator Expense Deduction ───────────────────────────────────────
+        edu_tp = min(self.educator_expenses, 300.0)
+        if s == "mfj":
+            edu_sp = min(self.educator_expenses_sp, 300.0)
+        else:
+            edu_sp = 0.0
+        educator_deduction = edu_tp + edu_sp
 
         # ── Student Loan Interest Deduction ─────────────────────────────────
         # Phase-out: $85k-$100k single, $175k-$205k mfj
@@ -282,7 +299,7 @@ class TaxReturn:
         total_income = (self.wages + self.unemployment + self.interest +
                         self.ordinary_dividends + self.ltcg + self.pension +
                         ss_taxable_amt + self.schedule_c_net)
-        above_line = se_half + sli
+        above_line = se_half + sli + self.hsa_employer + educator_deduction
         agi = round(total_income - above_line, 2)
 
         # ── Standard Deduction ───────────────────────────────────────────────
@@ -320,6 +337,38 @@ class TaxReturn:
         # ── Total Tax Before Credits ─────────────────────────────────────────
         tax_before_credits = round(total_income_tax + se_total + add_mcare, 2)
 
+        # ── AOTC ─────────────────────────────────────────────────────────────
+        # Phase-out: $80k-$90k single, $160k-$180k MFJ
+        aotc_phase_start = 160_000 if s == "mfj" else 80_000
+        aotc_phase_end   = 180_000 if s == "mfj" else 90_000
+        aotc_nonref = 0.0
+        aotc_refundable = 0.0
+        if self.aotc_expenses > 0:
+            if agi < aotc_phase_end:
+                if agi > aotc_phase_start:
+                    phase_frac = 1.0 - (agi - aotc_phase_start) / (aotc_phase_end - aotc_phase_start)
+                else:
+                    phase_frac = 1.0
+                first2k = min(self.aotc_expenses, 2_000)
+                next2k  = min(max(0, self.aotc_expenses - 2_000), 2_000)
+                raw_aotc = first2k * 1.0 + next2k * 0.25
+                raw_aotc = round(raw_aotc * phase_frac, 2)
+                aotc_nonref     = round(min(raw_aotc * 0.60, raw_aotc), 2)
+                aotc_refundable = round(raw_aotc - aotc_nonref, 2)
+
+        # ── Marketplace PTC ──────────────────────────────────────────────────
+        net_ptc = 0.0
+        ptc_repayment = 0.0
+        ptc_additional = 0.0
+        # Only compute when APTC was paid; engine returns no outputs when aptc=0
+        if self.marketplace_aptc > 0:
+            actual_ptc = min(self.marketplace_premium, self.marketplace_slcsp)
+            net_ptc = actual_ptc - self.marketplace_aptc
+            if net_ptc > 0:
+                ptc_additional = net_ptc   # additional credit → refundable
+            else:
+                ptc_repayment = -net_ptc   # excess APTC → owed
+
         # ── Non-Refundable Credits ───────────────────────────────────────────
         nonref_ctc, actc = ctc_and_actc(agi, self.wages, self.qualifying_children,
                                          tax_before_credits, s)
@@ -328,18 +377,23 @@ class TaxReturn:
             dep_care = dependent_care_credit(agi, self.dep_care_expenses, self.dep_care_persons)
             dep_care = min(dep_care, max(0, tax_before_credits - nonref_ctc))
 
-        eitc = eitc_credit(self.wages, self.eitc_children, s)
+        # AOTC non-refundable portion reduces tax before credits
+        aotc_nonref_applied = min(aotc_nonref, max(0, tax_before_credits - nonref_ctc - dep_care))
+
+        eitc = eitc_credit(self.wages + self.schedule_c_net if self.schedule_c_net > 0 else self.wages,
+                           self.eitc_children, s)
 
         # ── Excess SS Credit ─────────────────────────────────────────────────
         excess_ss = excess_ss_credit(self.ss_wages_list, self.ss_withheld_list)
 
         # ── Total Tax ─────────────────────────────────────────────────────────
-        nonref_credits = nonref_ctc + dep_care
-        total_tax = round(max(0.0, tax_before_credits - nonref_credits), 2)
+        nonref_credits = nonref_ctc + dep_care + aotc_nonref_applied
+        total_tax = round(max(0.0, tax_before_credits - nonref_credits + ptc_repayment), 2)
 
         # ── Payments ─────────────────────────────────────────────────────────
-        refundable_credits = actc + eitc
-        total_payments = round(self.fed_withheld + refundable_credits + excess_ss, 2)
+        refundable_credits = actc + eitc + aotc_refundable + ptc_additional
+        total_payments = round(self.fed_withheld + self.estimated_tax_payments +
+                               refundable_credits + excess_ss, 2)
 
         # ── Refund / Owed ─────────────────────────────────────────────────────
         balance = round(total_payments - total_tax, 2)
@@ -359,6 +413,10 @@ class TaxReturn:
             "line18_tax_before_credits": tax_before_credits,
             "nonref_ctc":               nonref_ctc,
             "dependent_care_credit":    dep_care,
+            "aotc_nonref":              aotc_nonref_applied,
+            "aotc_refundable":          aotc_refundable,
+            "ptc_additional":           ptc_additional,
+            "ptc_repayment":            ptc_repayment,
             "eitc":                     eitc,
             "actc":                     actc,
             "excess_ss_credit":         excess_ss,

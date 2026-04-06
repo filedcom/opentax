@@ -1,0 +1,32 @@
+{
+  "year": 2025,
+  "scenario": "Single service worker with W-2 wages and allocated Social Security tips (box 7) — tips already included in box 1 for income tax purposes",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Brianna",
+          "taxpayer_last_name": "Scott",
+          "taxpayer_dob": "1996-04-12",
+          "address_city": "Las Vegas",
+          "address_state": "NV",
+          "address_zip": "89101"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 30000,
+        "box2_fed_withheld": 2500,
+        "box3_ss_wages": 30000,
+        "box4_ss_withheld": 1860,
+        "box5_medicare_wages": 30000,
+        "box6_medicare_withheld": 435,
+        "box7_ss_tips": 5000
+      }
+    }
+  ]
+}

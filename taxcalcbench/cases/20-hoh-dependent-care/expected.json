@@ -1,21 +1,26 @@
 {
-  "returnId": "56d5bcf5-4cc2-4ab2-b2c3-d04d8185eb3e",
+  "returnId": "e9eeac07-0e37-4807-ba7d-bd61a18e150b",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 52000,
     "line9_total_income": 52000,
     "line11_agi": 0,
-    "line15_taxable_income": 52000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 600,
     "line33_total_payments": 5200,
-    "line35a_refund": 5200
+    "line35a_refund": 4600
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
     "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule3",
     "schedule_a",
@@ -31,7 +36,17 @@
       52000,
       52000
     ],
-    "line20_nonrefundable_credits": 1050,
+    "filing_status": "hoh",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Finley",
+    "taxpayer_last_name": "Martinez",
+    "taxpayer_dob": "1987-03-16",
+    "address_city": "San Diego",
+    "address_state": "CA",
+    "address_zip": "92101",
+    "hoh_paid_more_than_half_home_costs": true,
     "line11_agi": [
       52000,
       52000
@@ -40,15 +55,27 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      22500,
+      22500
+    ],
+    "line15_taxable_income": [
+      29500,
+      29500
+    ],
+    "line16_income_tax": [
+      3200,
+      3200
+    ],
+    "line20_nonrefundable_credits": 2600,
     "line1z_total_wages": 52000,
     "line9_total_income": 52000,
-    "line15_taxable_income": 52000,
-    "line18_total_tax_before_credits": 0,
-    "line21_credits_total": 1050,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line18_total_tax_before_credits": 3200,
+    "line21_credits_total": 2600,
+    "line22_tax_after_credits": 600,
+    "line24_total_tax": 600,
     "line33_total_payments": 5200,
-    "line35a_refund": 5200
+    "line35a_refund": 4600
   },
   "warnings": []
 }

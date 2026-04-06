@@ -1,21 +1,26 @@
 {
-  "returnId": "a22f33c2-b423-431b-a3ea-2e32e6178553",
+  "returnId": "c1b16f3c-3bdc-42f9-ae96-4ecf5cc9cde9",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 65000,
     "line9_total_income": 65000,
     "line11_agi": 0,
-    "line15_taxable_income": 130054.6575,
-    "line24_total_tax": 9890.685,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 19740.2439,
     "line33_total_payments": 7000,
-    "line37_amount_owed": 2890.6849999999995
+    "line37_amount_owed": 12740.243900000001
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
     "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule2",
     "schedule_a",
@@ -33,6 +38,19 @@
       65000,
       65000
     ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Morgan",
+    "taxpayer_last_name": "Clark",
+    "taxpayer_dob": "1984-04-05",
+    "spouse_first_name": "Sydney",
+    "spouse_last_name": "Clark",
+    "spouse_dob": "1985-10-22",
+    "address_city": "Boston",
+    "address_state": "MA",
+    "address_zip": "02101",
     "line11_agi": [
       130054.6575,
       130054.6575
@@ -41,19 +59,36 @@
       0,
       0
     ],
+    "line13_qbi_deduction": [
+      14000,
+      14000
+    ],
+    "line12a_standard_deduction": [
+      30000,
+      30000
+    ],
+    "line15_taxable_income": [
+      86054.6575,
+      86054.6575
+    ],
+    "line16_income_tax": [
+      9849.5589,
+      9849.5589
+    ],
     "line17_additional_taxes": [
       9890.685,
       9890.685
     ],
     "line1z_total_wages": 65000,
     "line9_total_income": 65000,
-    "line15_taxable_income": 130054.6575,
-    "line18_total_tax_before_credits": 9890.685,
+    "line18_total_tax_before_credits": 19740.2439,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 9890.685,
-    "line24_total_tax": 9890.685,
+    "line22_tax_after_credits": 19740.2439,
+    "line24_total_tax": 19740.2439,
     "line33_total_payments": 7000,
-    "line37_amount_owed": 2890.6849999999995
+    "line37_amount_owed": 12740.243900000001
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

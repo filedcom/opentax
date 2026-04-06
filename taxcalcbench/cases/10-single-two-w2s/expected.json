@@ -1,20 +1,26 @@
 {
-  "returnId": "6e1b0dad-76cb-4c5b-a032-887f6a898523",
+  "returnId": "c07e8d09-0f7d-4f14-aaa2-3c8418eaeeab",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 77000,
     "line9_total_income": 77000,
     "line11_agi": 0,
-    "line15_taxable_income": 77000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 8554,
     "line33_total_payments": 7500,
-    "line35a_refund": 7500
+    "line37_amount_owed": 1054
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "standard_deduction",
@@ -29,6 +35,16 @@
       77000,
       77000
     ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Drew",
+    "taxpayer_last_name": "Thompson",
+    "taxpayer_dob": "1991-05-07",
+    "address_city": "Atlanta",
+    "address_state": "GA",
+    "address_zip": "30301",
     "line11_agi": [
       77000,
       77000
@@ -37,15 +53,28 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      62000,
+      62000
+    ],
+    "line16_income_tax": [
+      8554,
+      8554
+    ],
     "line1z_total_wages": 77000,
     "line9_total_income": 77000,
-    "line15_taxable_income": 77000,
-    "line18_total_tax_before_credits": 0,
+    "line18_total_tax_before_credits": 8554,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line22_tax_after_credits": 8554,
+    "line24_total_tax": 8554,
     "line33_total_payments": 7500,
-    "line35a_refund": 7500
+    "line37_amount_owed": 1054
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

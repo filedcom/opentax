@@ -1,0 +1,41 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages plus 1099-NEC self-employment income routed through Schedule C — SE tax and QBI apply",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Alex",
+          "taxpayer_last_name": "Hoffman",
+          "taxpayer_dob": "1990-09-11",
+          "address_city": "Nashville",
+          "address_state": "TN",
+          "address_zip": "37201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 25000,
+        "box2_fed_withheld": 2500,
+        "box3_ss_wages": 25000,
+        "box4_ss_withheld": 1550,
+        "box5_medicare_wages": 25000,
+        "box6_medicare_withheld": 363
+      }
+    },
+    {
+      "node_type": "f1099nec",
+      "data": {
+        "payer_name": "Freelance Client LLC",
+        "payer_tin": "45-6789012",
+        "box1_nec": 20000,
+        "box4_federal_withheld": 0,
+        "for_routing": "schedule_c"
+      }
+    }
+  ]
+}

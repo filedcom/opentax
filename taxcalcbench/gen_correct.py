@@ -50,6 +50,9 @@ def build_return(case_data: dict) -> TaxReturn:
             r.fed_withheld += d.get("box2_fed_withheld", 0)
             ss_wages_list.append(d.get("box3_ss_wages", 0))
             ss_withheld_list.append(d.get("box4_ss_withheld", 0))
+            for entry in d.get("box12_entries", []):
+                if entry.get("code") == "W":
+                    r.hsa_employer += entry.get("amount", 0)
 
         elif nt == "f1099g":
             r.unemployment += d.get("box_1_unemployment", 0)
@@ -90,6 +93,44 @@ def build_return(case_data: dict) -> TaxReturn:
                             "line_g_material_participation")
                            and isinstance(v, (int, float)))
             r.schedule_c_net += gross - expenses
+
+        elif nt == "f1099nec":
+            r.schedule_c_net += d.get("box1_nec", 0)
+            r.fed_withheld   += d.get("box4_federal_withheld", 0)
+
+        elif nt == "educator_expenses":
+            r.educator_expenses    += d.get("educator1_expenses", 0)
+            r.educator_expenses_sp += d.get("educator2_expenses", 0)
+
+        elif nt == "f1040es":
+            r.estimated_tax_payments += sum(
+                d.get(k, 0) for k in ["payment_q1", "payment_q2", "payment_q3", "payment_q4"]
+            )
+
+        elif nt == "f8863":
+            # Support both flat format (single item at root) and wrapped format
+            if "f8863s" in d:
+                entries = d["f8863s"]
+            elif "credit_type" in d:
+                entries = [d]  # flat format — single student entry
+            else:
+                entries = []
+            for s_entry in entries:
+                if s_entry.get("credit_type") == "aoc":
+                    r.aotc_expenses += s_entry.get("aoc_adjusted_expenses", 0)
+
+        elif nt == "f1095a":
+            # Support both flat format (single item at root) and wrapped format
+            if "f1095as" in d:
+                plans = d["f1095as"]
+            elif "issuer_name" in d:
+                plans = [d]  # flat format — single policy entry
+            else:
+                plans = []
+            for plan in plans:
+                r.marketplace_premium += plan.get("annual_premium", 0)
+                r.marketplace_slcsp   += plan.get("annual_slcsp", 0)
+                r.marketplace_aptc    += plan.get("annual_aptc", 0)
 
         elif nt == "f1098e":
             for entry in d.get("f1098es", []):
@@ -136,9 +177,17 @@ def main():
                 "ssa_gross":         tr.ssa_gross,
                 "schedule_c_net":    tr.schedule_c_net,
                 "student_loan_int":  tr.student_loan_interest_paid,
+                "hsa_employer":      tr.hsa_employer,
+                "educator_expenses": tr.educator_expenses,
+                "educator_expenses_sp": tr.educator_expenses_sp,
+                "aotc_expenses":     tr.aotc_expenses,
+                "marketplace_premium": tr.marketplace_premium,
+                "marketplace_slcsp": tr.marketplace_slcsp,
+                "marketplace_aptc":  tr.marketplace_aptc,
                 "qualifying_children": tr.qualifying_children,
                 "eitc_children":     tr.eitc_children,
                 "dep_care_expenses": tr.dep_care_expenses,
+                "estimated_tax_payments": tr.estimated_tax_payments,
                 "fed_withheld":      tr.fed_withheld,
             },
             "correct": result,

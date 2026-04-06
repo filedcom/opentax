@@ -1,20 +1,26 @@
 {
-  "returnId": "552a29db-941a-410d-942d-1c4ed4e29459",
+  "returnId": "6bf8a85b-18b3-4322-8b48-49ed36fca6c2",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 200000,
     "line9_total_income": 200000,
     "line11_agi": 0,
-    "line15_taxable_income": 200000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 37247,
     "line33_total_payments": 40481.8,
-    "line35a_refund": 40481.8
+    "line35a_refund": 3234.800000000003
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule3",
     "schedule_a",
@@ -30,7 +36,16 @@
       200000,
       200000
     ],
-    "line31_additional_payments": 1481.7999999999993,
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Jordan",
+    "taxpayer_last_name": "Smith",
+    "taxpayer_dob": "1978-01-20",
+    "address_city": "New York",
+    "address_state": "NY",
+    "address_zip": "10001",
     "line11_agi": [
       200000,
       200000
@@ -39,15 +54,29 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      185000,
+      185000
+    ],
+    "line16_income_tax": [
+      37247,
+      37247
+    ],
+    "line31_additional_payments": 1481.7999999999993,
     "line1z_total_wages": 200000,
     "line9_total_income": 200000,
-    "line15_taxable_income": 200000,
-    "line18_total_tax_before_credits": 0,
+    "line18_total_tax_before_credits": 37247,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line22_tax_after_credits": 37247,
+    "line24_total_tax": 37247,
     "line33_total_payments": 40481.8,
-    "line35a_refund": 40481.8
+    "line35a_refund": 3234.800000000003
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

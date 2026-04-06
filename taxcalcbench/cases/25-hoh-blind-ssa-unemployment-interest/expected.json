@@ -1,0 +1,94 @@
+{
+  "returnId": "ae74a979-2b91-41a8-a7a3-383fc48e3e24",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 3398,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 196.4,
+    "line33_total_payments": 17,
+    "line37_amount_owed": 179.4
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1098e",
+    "f1099g",
+    "f1099int",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line25b_withheld_1099": [
+      17,
+      17
+    ],
+    "filing_status": "hoh",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Linn",
+    "taxpayer_last_name": "Mar",
+    "taxpayer_dob": "1990-08-08",
+    "taxpayer_blind": true,
+    "address_city": "Seattle",
+    "address_state": "WA",
+    "address_zip": "98101",
+    "hoh_paid_more_than_half_home_costs": true,
+    "line2b_taxable_interest": [
+      1453,
+      1453
+    ],
+    "line11_agi": [
+      26464,
+      26464
+    ],
+    "line6a_ss_gross": [
+      8742,
+      8742
+    ],
+    "line6b_ss_taxable": [
+      1945,
+      1945
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      24500,
+      24500
+    ],
+    "line15_taxable_income": [
+      1964,
+      1964
+    ],
+    "line16_income_tax": [
+      196.4,
+      196.4
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 3398,
+    "line18_total_tax_before_credits": 196.4,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 196.4,
+    "line24_total_tax": 196.4,
+    "line33_total_payments": 17,
+    "line37_amount_owed": 179.4
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

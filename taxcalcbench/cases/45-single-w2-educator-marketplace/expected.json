@@ -1,0 +1,82 @@
+{
+  "returnId": "c99eee91-dd0c-4172-bdf5-fa88ed65c8a4",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 40000,
+    "line9_total_income": 40000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 2761.5,
+    "line33_total_payments": 4000,
+    "line35a_refund": 1238.5
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1095a",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      4000,
+      4000
+    ],
+    "line1a_wages": [
+      40000,
+      40000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Natalie",
+    "taxpayer_last_name": "Brooks",
+    "taxpayer_dob": "1991-10-25",
+    "address_city": "Louisville",
+    "address_state": "KY",
+    "address_zip": "40201",
+    "line11_agi": [
+      40000,
+      40000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      25000,
+      25000
+    ],
+    "line16_income_tax": [
+      2761.5,
+      2761.5
+    ],
+    "line1z_total_wages": 40000,
+    "line9_total_income": 40000,
+    "line18_total_tax_before_credits": 2761.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 2761.5,
+    "line24_total_tax": 2761.5,
+    "line33_total_payments": 4000,
+    "line35a_refund": 1238.5
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

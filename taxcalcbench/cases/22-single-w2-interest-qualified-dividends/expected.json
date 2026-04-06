@@ -1,0 +1,95 @@
+{
+  "returnId": "899eb349-09e1-4141-80b9-ee69a072ba17",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 32123,
+    "line9_total_income": 34523,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 1948.26,
+    "line33_total_payments": 3455,
+    "line35a_refund": 1506.74
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099div",
+    "f1099int",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      3455,
+      3455
+    ],
+    "line1a_wages": [
+      32123,
+      32123
+    ],
+    "line3a_qualified_dividends": [
+      1300,
+      1300
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Winston",
+    "taxpayer_last_name": "Smith",
+    "taxpayer_dob": "2001-09-09",
+    "address_city": "Conway",
+    "address_state": "NH",
+    "address_zip": "03818",
+    "line2b_taxable_interest": [
+      1100,
+      1100
+    ],
+    "line3b_ordinary_dividends": [
+      1300,
+      1300
+    ],
+    "line11_agi": [
+      34523,
+      34523
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      19523,
+      19523
+    ],
+    "line16_income_tax": [
+      1948.26,
+      1948.26
+    ],
+    "line1z_total_wages": 32123,
+    "line9_total_income": 34523,
+    "line18_total_tax_before_credits": 1948.26,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1948.26,
+    "line24_total_tax": 1948.26,
+    "line33_total_payments": 3455,
+    "line35a_refund": 1506.74
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

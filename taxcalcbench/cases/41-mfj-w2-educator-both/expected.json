@@ -1,0 +1,84 @@
+{
+  "returnId": "8ea1c33f-7e8e-4c1e-aa54-ae8e3b2fca79",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 100000,
+    "line9_total_income": 100000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 7851,
+    "line33_total_payments": 10500,
+    "line35a_refund": 2649
+  },
+  "forms": [
+    "agi_aggregator",
+    "educator_expenses",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      10500,
+      10500
+    ],
+    "line1a_wages": [
+      100000,
+      100000
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "David",
+    "taxpayer_last_name": "Kim",
+    "taxpayer_dob": "1981-09-04",
+    "spouse_first_name": "Sarah",
+    "spouse_last_name": "Kim",
+    "spouse_dob": "1983-06-17",
+    "address_city": "Portland",
+    "address_state": "OR",
+    "address_zip": "97201",
+    "line11_agi": [
+      99400,
+      99400
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      30000,
+      30000
+    ],
+    "line15_taxable_income": [
+      69400,
+      69400
+    ],
+    "line16_income_tax": [
+      7851,
+      7851
+    ],
+    "line1z_total_wages": 100000,
+    "line9_total_income": 100000,
+    "line18_total_tax_before_credits": 7851,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 7851,
+    "line24_total_tax": 7851,
+    "line33_total_payments": 10500,
+    "line35a_refund": 2649
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

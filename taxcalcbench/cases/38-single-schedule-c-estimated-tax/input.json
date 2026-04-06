@@ -1,0 +1,39 @@
+{
+  "year": 2025,
+  "scenario": "Single self-employed filer with Schedule C profit and quarterly estimated tax payments — SE tax, QBI deduction, and estimated payments all apply",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Marcus",
+          "taxpayer_last_name": "Chen",
+          "taxpayer_dob": "1983-07-14",
+          "address_city": "Seattle",
+          "address_state": "WA",
+          "address_zip": "98101"
+        }
+      }
+    },
+    {
+      "node_type": "schedule_c",
+      "data": {
+        "line_a_principal_business": "IT Consulting",
+        "line_b_business_code": "541512",
+        "line_f_accounting_method": "cash",
+        "line_g_material_participation": true,
+        "line_1_gross_receipts": 60000
+      }
+    },
+    {
+      "node_type": "f1040es",
+      "data": {
+        "payment_q1": 3000,
+        "payment_q2": 3000,
+        "payment_q3": 3000,
+        "payment_q4": 3000
+      }
+    }
+  ]
+}

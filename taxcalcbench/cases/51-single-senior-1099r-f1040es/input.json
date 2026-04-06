@@ -1,0 +1,41 @@
+{
+  "year": 2025,
+  "scenario": "Single senior age 68 with 1099-R pension income and quarterly estimated tax payments — additional standard deduction for age 65+ applies",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Dorothy",
+          "taxpayer_last_name": "Anderson",
+          "taxpayer_dob": "1957-05-22",
+          "taxpayer_age_65_or_older": true,
+          "address_city": "St. Louis",
+          "address_state": "MO",
+          "address_zip": "63101"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Missouri State Employees Retirement",
+        "payer_ein": "43-0000001",
+        "box1_gross_distribution": 30000,
+        "box2a_taxable_amount": 30000,
+        "box4_federal_withheld": 3000,
+        "box7_distribution_code": "7"
+      }
+    },
+    {
+      "node_type": "f1040es",
+      "data": {
+        "payment_q1": 1500,
+        "payment_q2": 1500,
+        "payment_q3": 1500,
+        "payment_q4": 1500
+      }
+    }
+  ]
+}

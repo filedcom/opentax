@@ -1,0 +1,85 @@
+{
+  "returnId": "cda10737-7e7a-47cf-9ff5-6ea8cf4e9fed",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 28000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 1100,
+    "line33_total_payments": 2800,
+    "line35a_refund": 1700
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      35000,
+      35000
+    ],
+    "line5b_pension_taxable": [
+      28000,
+      28000
+    ],
+    "line25b_withheld_1099": [
+      2800,
+      2800
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Margaret",
+    "taxpayer_last_name": "Walters",
+    "taxpayer_dob": "1955-04-18",
+    "taxpayer_age_65_or_older": true,
+    "address_city": "Phoenix",
+    "address_state": "AZ",
+    "address_zip": "85001",
+    "line11_agi": [
+      28000,
+      28000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      17000,
+      17000
+    ],
+    "line15_taxable_income": [
+      11000,
+      11000
+    ],
+    "line16_income_tax": [
+      1100,
+      1100
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 28000,
+    "line18_total_tax_before_credits": 1100,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1100,
+    "line24_total_tax": 1100,
+    "line33_total_payments": 2800,
+    "line35a_refund": 1700
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

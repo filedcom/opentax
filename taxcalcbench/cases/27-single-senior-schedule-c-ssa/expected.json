@@ -1,0 +1,103 @@
+{
+  "returnId": "a6e6e2aa-15c3-41a1-b9a9-9d58280738d8",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 1222,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 3928.852,
+    "line33_total_payments": 89,
+    "line37_amount_owed": 3839.852
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1098e",
+    "f1099int",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule2",
+    "schedule_a",
+    "schedule_b",
+    "schedule_c",
+    "schedule_se",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line25b_withheld_1099": [
+      89,
+      89
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Carol",
+    "taxpayer_last_name": "Johnson",
+    "taxpayer_dob": "1947-03-19",
+    "taxpayer_age_65_or_older": true,
+    "address_city": "Juneau",
+    "address_state": "AK",
+    "address_zip": "99801",
+    "line2b_taxable_interest": [
+      1222,
+      1222
+    ],
+    "line11_agi": [
+      21955.80625,
+      21955.80625
+    ],
+    "line6a_ss_gross": [
+      1987,
+      1987
+    ],
+    "line6b_ss_taxable": [
+      0,
+      0
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line13_qbi_deduction": [
+      991.1612500000003,
+      991.1612500000003
+    ],
+    "line12a_standard_deduction": [
+      17000,
+      17000
+    ],
+    "line15_taxable_income": [
+      3964.6450000000013,
+      3964.6450000000013
+    ],
+    "line16_income_tax": [
+      396.46450000000016,
+      396.46450000000016
+    ],
+    "line17_additional_taxes": [
+      3532.3875,
+      3532.3875
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 1222,
+    "line18_total_tax_before_credits": 3928.852,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 3928.852,
+    "line24_total_tax": 3928.852,
+    "line33_total_payments": 89,
+    "line37_amount_owed": 3839.852
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

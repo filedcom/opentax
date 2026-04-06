@@ -1,0 +1,87 @@
+{
+  "returnId": "1df2c0e5-b653-4257-975e-da251df909cc",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 30000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 1321.5,
+    "line33_total_payments": 9000,
+    "line35a_refund": 7678.5
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1040es",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      30000,
+      30000
+    ],
+    "line5b_pension_taxable": [
+      30000,
+      30000
+    ],
+    "line25b_withheld_1099": [
+      3000,
+      3000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Dorothy",
+    "taxpayer_last_name": "Anderson",
+    "taxpayer_dob": "1957-05-22",
+    "taxpayer_age_65_or_older": true,
+    "address_city": "St. Louis",
+    "address_state": "MO",
+    "address_zip": "63101",
+    "line26_estimated_tax": 6000,
+    "line11_agi": [
+      30000,
+      30000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      17000,
+      17000
+    ],
+    "line15_taxable_income": [
+      13000,
+      13000
+    ],
+    "line16_income_tax": [
+      1321.5,
+      1321.5
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 30000,
+    "line18_total_tax_before_credits": 1321.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1321.5,
+    "line24_total_tax": 1321.5,
+    "line33_total_payments": 9000,
+    "line35a_refund": 7678.5
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

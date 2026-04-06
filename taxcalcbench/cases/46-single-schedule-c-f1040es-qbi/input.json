@@ -1,0 +1,39 @@
+{
+  "year": 2025,
+  "scenario": "Single self-employed consultant with high Schedule C profit, QBI deduction, and large estimated tax payments throughout the year",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Victor",
+          "taxpayer_last_name": "Okafor",
+          "taxpayer_dob": "1980-01-15",
+          "address_city": "Dallas",
+          "address_state": "TX",
+          "address_zip": "75201"
+        }
+      }
+    },
+    {
+      "node_type": "schedule_c",
+      "data": {
+        "line_a_principal_business": "Management Consulting",
+        "line_b_business_code": "541611",
+        "line_f_accounting_method": "cash",
+        "line_g_material_participation": true,
+        "line_1_gross_receipts": 75000
+      }
+    },
+    {
+      "node_type": "f1040es",
+      "data": {
+        "payment_q1": 5000,
+        "payment_q2": 5000,
+        "payment_q3": 5000,
+        "payment_q4": 3000
+      }
+    }
+  ]
+}

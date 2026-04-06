@@ -1,0 +1,79 @@
+{
+  "returnId": "666d1a32-294e-4b92-97b3-dc0a05233a89",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 14000,
+    "line9_total_income": 14000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 390,
+    "line35a_refund": 390
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      0,
+      0
+    ],
+    "line1a_wages": [
+      14000,
+      14000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Jamie",
+    "taxpayer_last_name": "Torres",
+    "taxpayer_dob": "1998-11-02",
+    "address_city": "El Paso",
+    "address_state": "TX",
+    "address_zip": "79901",
+    "line11_agi": [
+      14000,
+      14000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line27_eitc": [
+      390,
+      390
+    ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 14000,
+    "line9_total_income": 14000,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 390,
+    "line35a_refund": 390
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

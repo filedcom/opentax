@@ -1,21 +1,27 @@
 {
-  "returnId": "30784c16-449f-4b7d-9f92-0d26604e01e0",
+  "returnId": "d0ea0942-38ac-4d3a-a741-de9e2ad2eeac",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 72000,
     "line9_total_income": 72000,
     "line11_agi": 0,
-    "line15_taxable_income": 83200,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 5907,
     "line33_total_payments": 9120,
-    "line35a_refund": 9120
+    "line35a_refund": 3213
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
     "f1099g",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "standard_deduction",
@@ -34,6 +40,19 @@
       1120,
       1120
     ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Blake",
+    "taxpayer_last_name": "Anderson",
+    "taxpayer_dob": "1980-12-03",
+    "spouse_first_name": "Sage",
+    "spouse_last_name": "Anderson",
+    "spouse_dob": "1981-06-17",
+    "address_city": "Columbus",
+    "address_state": "OH",
+    "address_zip": "43201",
     "line11_agi": [
       83200,
       83200
@@ -42,15 +61,28 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      30000,
+      30000
+    ],
+    "line15_taxable_income": [
+      53200,
+      53200
+    ],
+    "line16_income_tax": [
+      5907,
+      5907
+    ],
     "line1z_total_wages": 72000,
     "line9_total_income": 72000,
-    "line15_taxable_income": 83200,
-    "line18_total_tax_before_credits": 0,
+    "line18_total_tax_before_credits": 5907,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line22_tax_after_credits": 5907,
+    "line24_total_tax": 5907,
     "line33_total_payments": 9120,
-    "line35a_refund": 9120
+    "line35a_refund": 3213
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

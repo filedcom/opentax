@@ -1,20 +1,26 @@
 {
-  "returnId": "61437e21-3e33-4ec7-a028-fedcfc0552a9",
+  "returnId": "27c385c3-f4c5-47b5-b9db-d8dc91026fe2",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 105000,
     "line9_total_income": 105000,
     "line11_agi": 0,
-    "line15_taxable_income": 105000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 8523,
     "line33_total_payments": 10500,
-    "line35a_refund": 10500
+    "line35a_refund": 1977
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "standard_deduction",
@@ -29,6 +35,19 @@
       105000,
       105000
     ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Chris",
+    "taxpayer_last_name": "Davis",
+    "taxpayer_dob": "1983-03-20",
+    "spouse_first_name": "Jamie",
+    "spouse_last_name": "Davis",
+    "spouse_dob": "1984-09-14",
+    "address_city": "Minneapolis",
+    "address_state": "MN",
+    "address_zip": "55401",
     "line11_agi": [
       105000,
       105000
@@ -37,15 +56,28 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      30000,
+      30000
+    ],
+    "line15_taxable_income": [
+      75000,
+      75000
+    ],
+    "line16_income_tax": [
+      8523,
+      8523
+    ],
     "line1z_total_wages": 105000,
     "line9_total_income": 105000,
-    "line15_taxable_income": 105000,
-    "line18_total_tax_before_credits": 0,
+    "line18_total_tax_before_credits": 8523,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line22_tax_after_credits": 8523,
+    "line24_total_tax": 8523,
     "line33_total_payments": 10500,
-    "line35a_refund": 10500
+    "line35a_refund": 1977
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

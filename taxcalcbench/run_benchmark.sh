@@ -3,7 +3,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-TAX="$SCRIPT_DIR/../tax"
+TAX_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+tax() { deno run --allow-read --allow-write "$TAX_DIR/cli/main.ts" "$@"; }
 CASES_DIR="$SCRIPT_DIR/cases"
 
 PASS=0; FAIL=0; TOTAL=0
@@ -27,16 +28,16 @@ for case_dir in "$CASES_DIR"/*/; do
   TOTAL=$((TOTAL + 1))
 
   YEAR=$(jq -r '.year' "$input")
-  RID=$("$TAX" return create --year "$YEAR" --json | jq -r '.returnId')
+  RID=$(tax return create --year "$YEAR" --json | jq -r '.returnId')
 
   FORM_COUNT=$(jq '.forms | length' "$input")
   for i in $(seq 0 $((FORM_COUNT - 1))); do
     NT=$(jq -r ".forms[$i].node_type" "$input")
     DATA=$(jq -c ".forms[$i].data" "$input")
-    "$TAX" form add --returnId "$RID" --node_type "$NT" "$DATA" --json > /dev/null
+    tax form add --returnId "$RID" --node_type "$NT" "$DATA" --json > /dev/null
   done
 
-  engine=$(  "$TAX" return get --returnId "$RID" --json)
+  engine=$(  tax return get --returnId "$RID" --json)
   # Arrays occur when multiple nodes write the same field; take first element
   scalar() { echo "$1" | jq -r 'if type=="array" then .[0] else . end // 0'; }
   eng_agi=$( scalar "$(echo "$engine" | jq '.lines.line11_agi // .summary.line11_agi // 0')")

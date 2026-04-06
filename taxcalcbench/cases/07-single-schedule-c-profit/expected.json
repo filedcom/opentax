@@ -1,21 +1,26 @@
 {
-  "returnId": "2994d41b-5c97-4a35-9792-895ed6dc832f",
+  "returnId": "e88c9224-8b26-4cde-9064-0a896ef48234",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 35000,
     "line9_total_income": 35000,
     "line11_agi": 0,
-    "line15_taxable_income": 68456.681,
-    "line24_total_tax": 5086.638,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 10398.939719999998,
     "line33_total_payments": 3000,
-    "line37_amount_owed": 2086.638
+    "line37_amount_owed": 7398.9397199999985
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
     "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule2",
     "schedule_a",
@@ -33,6 +38,16 @@
       35000,
       35000
     ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Sam",
+    "taxpayer_last_name": "Rivera",
+    "taxpayer_dob": "1986-02-14",
+    "address_city": "Portland",
+    "address_state": "OR",
+    "address_zip": "97201",
     "line11_agi": [
       68456.681,
       68456.681
@@ -41,19 +56,36 @@
       0,
       0
     ],
+    "line13_qbi_deduction": [
+      7200,
+      7200
+    ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      46256.681,
+      46256.681
+    ],
+    "line16_income_tax": [
+      5312.3017199999995,
+      5312.3017199999995
+    ],
     "line17_additional_taxes": [
       5086.638,
       5086.638
     ],
     "line1z_total_wages": 35000,
     "line9_total_income": 35000,
-    "line15_taxable_income": 68456.681,
-    "line18_total_tax_before_credits": 5086.638,
+    "line18_total_tax_before_credits": 10398.939719999998,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 5086.638,
-    "line24_total_tax": 5086.638,
+    "line22_tax_after_credits": 10398.939719999998,
+    "line24_total_tax": 10398.939719999998,
     "line33_total_payments": 3000,
-    "line37_amount_owed": 2086.638
+    "line37_amount_owed": 7398.9397199999985
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

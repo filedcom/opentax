@@ -1,0 +1,31 @@
+{
+  "year": 2025,
+  "scenario": "Single low-income filer with no dependents — tests EITC phase-out for 0 qualifying children at $14,000 earned income",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Jamie",
+          "taxpayer_last_name": "Torres",
+          "taxpayer_dob": "1998-11-02",
+          "address_city": "El Paso",
+          "address_state": "TX",
+          "address_zip": "79901"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 14000,
+        "box2_fed_withheld": 0,
+        "box3_ss_wages": 14000,
+        "box4_ss_withheld": 868,
+        "box5_medicare_wages": 14000,
+        "box6_medicare_withheld": 203
+      }
+    }
+  ]
+}

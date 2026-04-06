@@ -1,0 +1,98 @@
+{
+  "returnId": "91f97a77-4969-41bc-a78f-3aac28e870b3",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 35000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 180,
+    "line33_total_payments": 2500,
+    "line35a_refund": 2320
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      30000,
+      30000
+    ],
+    "line5b_pension_taxable": [
+      30000,
+      30000
+    ],
+    "line25b_withheld_1099": [
+      2500,
+      2500
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Harold",
+    "taxpayer_last_name": "Garner",
+    "taxpayer_dob": "1957-06-15",
+    "taxpayer_age_65_or_older": true,
+    "spouse_first_name": "Beverly",
+    "spouse_last_name": "Garner",
+    "spouse_dob": "1958-01-20",
+    "spouse_age_65_or_older": true,
+    "address_city": "Boca Raton",
+    "address_state": "FL",
+    "address_zip": "33431",
+    "line11_agi": [
+      35000,
+      35000
+    ],
+    "line6a_ss_gross": [
+      24000,
+      24000
+    ],
+    "line6b_ss_taxable": [
+      5000,
+      5000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      33200,
+      33200
+    ],
+    "line15_taxable_income": [
+      1800,
+      1800
+    ],
+    "line16_income_tax": [
+      180,
+      180
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 35000,
+    "line18_total_tax_before_credits": 180,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 180,
+    "line24_total_tax": 180,
+    "line33_total_payments": 2500,
+    "line35a_refund": 2320
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

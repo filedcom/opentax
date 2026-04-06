@@ -1,21 +1,28 @@
 {
-  "returnId": "d50d6428-a3f0-4e25-9ba1-edf4954bf0a2",
+  "returnId": "1416046d-711b-4b11-9354-602e3243fae5",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 38000,
     "line9_total_income": 38000,
     "line11_agi": 0,
-    "line15_taxable_income": 38000,
+    "line15_taxable_income": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 3000,
-    "line35a_refund": 3000
+    "line33_total_payments": 5463,
+    "line35a_refund": 5463
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
+    "schedule3",
     "schedule_a",
     "standard_deduction",
     "w2"
@@ -29,6 +36,17 @@
       38000,
       38000
     ],
+    "filing_status": "hoh",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "River",
+    "taxpayer_last_name": "Brown",
+    "taxpayer_dob": "1989-07-04",
+    "address_city": "Las Vegas",
+    "address_state": "NV",
+    "address_zip": "89101",
+    "hoh_paid_more_than_half_home_costs": true,
     "line11_agi": [
       38000,
       38000
@@ -37,15 +55,37 @@
       0,
       0
     ],
+    "line27_eitc": [
+      2013,
+      2013
+    ],
+    "line12a_standard_deduction": [
+      22500,
+      22500
+    ],
+    "line15_taxable_income": [
+      15500,
+      15500
+    ],
+    "line16_income_tax": [
+      1550,
+      1550
+    ],
+    "line28_actc": [
+      450,
+      450
+    ],
+    "line20_nonrefundable_credits": 1550,
     "line1z_total_wages": 38000,
     "line9_total_income": 38000,
-    "line15_taxable_income": 38000,
-    "line18_total_tax_before_credits": 0,
-    "line21_credits_total": 0,
+    "line18_total_tax_before_credits": 1550,
+    "line21_credits_total": 1550,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 3000,
-    "line35a_refund": 3000
+    "line33_total_payments": 5463,
+    "line35a_refund": 5463
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

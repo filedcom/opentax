@@ -1,0 +1,32 @@
+{
+  "year": 2025,
+  "scenario": "Single senior age 65+ with 1099-R taxable pension distribution — no W-2, additional standard deduction applies",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Margaret",
+          "taxpayer_last_name": "Walters",
+          "taxpayer_dob": "1955-04-18",
+          "taxpayer_age_65_or_older": true,
+          "address_city": "Phoenix",
+          "address_state": "AZ",
+          "address_zip": "85001"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Arizona State Retirement System",
+        "payer_ein": "86-0000001",
+        "box1_gross_distribution": 35000,
+        "box2a_taxable_amount": 28000,
+        "box4_federal_withheld": 2800,
+        "box7_distribution_code": "7"
+      }
+    }
+  ]
+}

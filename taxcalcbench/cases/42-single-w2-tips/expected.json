@@ -1,0 +1,80 @@
+{
+  "returnId": "804d2fae-c7d0-4a03-a4dd-564c1371605a",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 30000,
+    "line9_total_income": 30000,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 1561.5,
+    "line33_total_payments": 2500,
+    "line35a_refund": 938.5
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      2500,
+      2500
+    ],
+    "line1a_wages": [
+      30000,
+      30000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Brianna",
+    "taxpayer_last_name": "Scott",
+    "taxpayer_dob": "1996-04-12",
+    "address_city": "Las Vegas",
+    "address_state": "NV",
+    "address_zip": "89101",
+    "line11_agi": [
+      30000,
+      30000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15000,
+      15000
+    ],
+    "line15_taxable_income": [
+      15000,
+      15000
+    ],
+    "line16_income_tax": [
+      1561.5,
+      1561.5
+    ],
+    "line1z_total_wages": 30000,
+    "line9_total_income": 30000,
+    "line18_total_tax_before_credits": 1561.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1561.5,
+    "line24_total_tax": 1561.5,
+    "line33_total_payments": 2500,
+    "line35a_refund": 938.5
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

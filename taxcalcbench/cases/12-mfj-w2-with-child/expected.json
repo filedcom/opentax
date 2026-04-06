@@ -1,21 +1,28 @@
 {
-  "returnId": "1c7ff538-d51c-4d9c-8669-cd1f407c2779",
+  "returnId": "76d38404-42ca-402c-8e22-c5a5def70957",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 85000,
     "line9_total_income": 85000,
     "line11_agi": 0,
-    "line15_taxable_income": 85000,
-    "line24_total_tax": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 4123,
     "line33_total_payments": 9000,
-    "line35a_refund": 9000
+    "line35a_refund": 4877
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
+    "schedule3",
     "schedule_a",
     "standard_deduction",
     "w2"
@@ -29,6 +36,19 @@
       85000,
       85000
     ],
+    "filing_status": "mfj",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Robin",
+    "taxpayer_last_name": "Garcia",
+    "taxpayer_dob": "1986-07-11",
+    "spouse_first_name": "Quinn",
+    "spouse_last_name": "Garcia",
+    "spouse_dob": "1987-02-28",
+    "address_city": "Houston",
+    "address_state": "TX",
+    "address_zip": "77001",
     "line11_agi": [
       85000,
       85000
@@ -37,15 +57,29 @@
       0,
       0
     ],
+    "line12a_standard_deduction": [
+      30000,
+      30000
+    ],
+    "line15_taxable_income": [
+      55000,
+      55000
+    ],
+    "line16_income_tax": [
+      6123,
+      6123
+    ],
+    "line20_nonrefundable_credits": 2000,
     "line1z_total_wages": 85000,
     "line9_total_income": 85000,
-    "line15_taxable_income": 85000,
-    "line18_total_tax_before_credits": 0,
-    "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
+    "line18_total_tax_before_credits": 6123,
+    "line21_credits_total": 2000,
+    "line22_tax_after_credits": 4123,
+    "line24_total_tax": 4123,
     "line33_total_payments": 9000,
-    "line35a_refund": 9000
+    "line35a_refund": 4877
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }

@@ -7,7 +7,18 @@ import type {
   ReturnJson,
 } from "./types.ts";
 
-export function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
+/**
+ * Builds the engine input map from stored inputs.
+ *
+ * @param inputs - The stored inputs from return.json
+ * @param singletonNodeTypes - Set of node types that are singletons (isArray: false).
+ *   Singleton nodes are passed as a single object to the start node, not as an array.
+ *   Array nodes are passed as an array of objects.
+ */
+export function buildEngineInputs(
+  inputs: InputsJson,
+  singletonNodeTypes: ReadonlySet<string> = new Set(),
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [nodeType, entries] of Object.entries(inputs)) {
     if (nodeType === "start") {
@@ -16,8 +27,14 @@ export function buildEngineInputs(inputs: InputsJson): Record<string, unknown> {
       for (const entry of entries) {
         Object.assign(result, entry.fields);
       }
+    } else if (singletonNodeTypes.has(nodeType)) {
+      // Singleton inputs: the start node expects a single object, not an array.
+      // Use the first (and only) entry's fields.
+      if (entries.length > 0) {
+        result[nodeType] = entries[0].fields;
+      }
     } else {
-      // All other node types are array inputs; the start node collects them by nodeType key.
+      // Array inputs: the start node collects them by nodeType key as an array.
       result[nodeType] = entries.map((e) => e.fields);
     }
   }

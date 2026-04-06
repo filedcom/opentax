@@ -1,0 +1,38 @@
+{
+  "year": 2025,
+  "scenario": "Single teacher with W-2 income claiming educator expense deduction — $450 paid but capped at $300 above-the-line",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Priya",
+          "taxpayer_last_name": "Sharma",
+          "taxpayer_dob": "1992-05-30",
+          "address_city": "Minneapolis",
+          "address_state": "MN",
+          "address_zip": "55401"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 48000,
+        "box2_fed_withheld": 4800,
+        "box3_ss_wages": 48000,
+        "box4_ss_withheld": 2976,
+        "box5_medicare_wages": 48000,
+        "box6_medicare_withheld": 696
+      }
+    },
+    {
+      "node_type": "educator_expenses",
+      "data": {
+        "educator1_expenses": 450,
+        "filing_status": "single"
+      }
+    }
+  ]
+}

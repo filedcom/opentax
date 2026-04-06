@@ -27,8 +27,10 @@ export const inputSchema = z.object({
   educator1_expenses: z.number().nonnegative(),
   // Educator 2 unreimbursed classroom expenses (MFJ only; ignored for other statuses)
   educator2_expenses: z.number().nonnegative().optional(),
-  // Filing status — determines the total deduction cap
-  filing_status: z.nativeEnum(FilingStatus),
+  // Filing status — determines the total deduction cap.
+  // Optional here because it is deposited by the general node at execution time
+  // via mergePending; users only provide expense amounts when adding this form.
+  filing_status: z.nativeEnum(FilingStatus).optional(),
 });
 
 export type EducatorExpensesInput = z.infer<typeof inputSchema>;

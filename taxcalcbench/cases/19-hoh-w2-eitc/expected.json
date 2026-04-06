@@ -1,20 +1,25 @@
 {
-  "returnId": "7fcb390c-2a6f-4ac5-b6e1-e9b73fc69567",
+  "returnId": "e2aedc76-3aef-45ef-aed0-2d235a7d8dd1",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 22000,
     "line9_total_income": 22000,
     "line11_agi": 0,
-    "line15_taxable_income": 22000,
+    "line15_taxable_income": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 800,
-    "line35a_refund": 800
+    "line33_total_payments": 6828,
+    "line35a_refund": 6828
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f2441",
+    "f8812",
     "form8959",
+    "form8995",
+    "general",
+    "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "standard_deduction",
@@ -29,6 +34,17 @@
       22000,
       22000
     ],
+    "filing_status": "hoh",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Skyler",
+    "taxpayer_last_name": "Nguyen",
+    "taxpayer_dob": "1994-11-28",
+    "address_city": "San Antonio",
+    "address_state": "TX",
+    "address_zip": "78201",
+    "hoh_paid_more_than_half_home_costs": true,
     "line11_agi": [
       22000,
       22000
@@ -37,15 +53,32 @@
       0,
       0
     ],
+    "line27_eitc": [
+      4328,
+      4328
+    ],
+    "line12a_standard_deduction": [
+      22500,
+      22500
+    ],
+    "line15_taxable_income": [
+      0,
+      0
+    ],
+    "line28_actc": [
+      1700,
+      1700
+    ],
     "line1z_total_wages": 22000,
     "line9_total_income": 22000,
-    "line15_taxable_income": 22000,
     "line18_total_tax_before_credits": 0,
     "line21_credits_total": 0,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 800,
-    "line35a_refund": 800
+    "line33_total_payments": 6828,
+    "line35a_refund": 6828
   },
-  "warnings": []
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
 }
