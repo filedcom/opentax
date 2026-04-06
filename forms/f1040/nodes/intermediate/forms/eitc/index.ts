@@ -43,8 +43,12 @@ const PHASEOUT_RATE: Record<number, number> = {
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
-  // Earned income: wages, SE net profit (after 1/2 SE tax deduction)
+  // Earned income from wages (W-2 Box 1), fed by w2 node
   earned_income: z.number().nonnegative().optional(),
+
+  // Net profit from Schedule C (line 31, positive only), fed by schedule_c node
+  // IRC §32(c)(2)(A)(ii): net earnings from self-employment count as earned income
+  se_net_profit: z.number().nonnegative().optional(),
 
   // Adjusted Gross Income — used for EITC phaseout when AGI > earned income
   agi: z.number().nonnegative().optional(),
@@ -100,7 +104,7 @@ function phaseOutCredit(credit: number, agI: number, children: number, isJoint: 
 }
 
 function computeEitc(input: EitcInput): number {
-  const earnedIncome = input.earned_income ?? 0;
+  const earnedIncome = (input.earned_income ?? 0) + (input.se_net_profit ?? 0);
   const agi = input.agi ?? earnedIncome;
   const children = clampChildren(input.qualifying_children ?? 0);
   const isJoint = isJointFiler(input.filing_status);
