@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: FW2G
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 11 rules (4 implemented, 7 stubs)
+ * 11 rules (5 implemented, 6 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, all, alwaysPass, eqField, gt, hasNonZero, hasValue, ifThen, ltField, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
+import { rule, all, alwaysPass, eqField, gt, hasNonZero, hasValue, ifThen, ltField, matchesHeaderSSN, validEIN, } from "../../../../core/validation/mod.ts";
 
 export const FW2G_RULES: readonly RuleDef[] = [
   rule(
@@ -26,7 +26,7 @@ export const FW2G_RULES: readonly RuleDef[] = [
     "FW2G-003",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires EIN format validation against known invalid EINs for individual returns
+    validEIN("PayerEIN"),
     "Form W-2G, 'PayerEIN' is invalid for processing an Individual e-filed return.",
   ),
   rule(

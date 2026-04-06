@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: F1099R
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 7 rules (3 implemented, 4 stubs)
+ * 7 rules (4 implemented, 3 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, hasValue, ifThen, validEIN, } from "../../../../core/validation/mod.ts";
 
 export const F1099R_RULES: readonly RuleDef[] = [
   rule(
@@ -40,7 +40,7 @@ export const F1099R_RULES: readonly RuleDef[] = [
     "F1099R-499-02",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires EIN validation against known invalid EINs for individual returns
+    validEIN("PayerEIN"),
     "Form 1099-R, 'PayerEIN' is invalid for processing an Individual e-filed return.",
   ),
   rule(

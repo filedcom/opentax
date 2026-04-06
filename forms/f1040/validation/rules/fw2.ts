@@ -1,11 +1,11 @@
 /**
  * MeF Business Rules: FW2
  * Auto-generated from 1040_Business_Rules_2025v3.0.csv
- * 10 rules (10 implemented, 0 stubs)
+ * 10 rules (11 implemented, 0 stubs)
  */
 
 import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, alwaysPass, any, eqStr, hasValue, ifThen, matchesHeaderSSN, } from "../../../../core/validation/mod.ts";
+import { rule, alwaysPass, any, eqStr, hasValue, ifThen, matchesHeaderSSN, validEIN, } from "../../../../core/validation/mod.ts";
 
 export const FW2_RULES: readonly RuleDef[] = [
   rule(
@@ -61,7 +61,7 @@ export const FW2_RULES: readonly RuleDef[] = [
     "FW2-499",
     "reject",
     "incorrect_data",
-    alwaysPass, // requires EIN validation against known invalid EINs for individual returns
+    validEIN("EmployerEIN"),
     "Form W-2, Line B 'EmployerEIN' is invalid for processing an Individual e-filed return.",
   ),
   rule(
