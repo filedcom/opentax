@@ -202,7 +202,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 | 14. Phase 01 Constants + XSD e2e Fix | 1/1 | Complete    | 2026-04-06 |
 | 15. MEF Header Builder Fix | 1/1 | Complete    | 2026-04-05 |
 | 16. Executor Diagnostics CLI Surface | 1/1 | Complete    | 2026-04-06 |
-| 17. Validation DSL forEach/everyItem Extension | 1/1 | Complete   | 2026-04-06 |
+| 17. Validation DSL forEach/everyItem Extension | 2/2 | Complete   | 2026-04-06 |
 
 ### Phase 10: XSD Validation in CI
 **Goal**: Add programmatic MeF XML validation against IRS XSD files to the Deno test suite. The IRS 2025v3.0 XSDs live in `.research/docs/IMF_Series_2025v3.0/`. Currently generated XML is never validated against them. Wire `xmllint --schema` (or equivalent Deno subprocess) into a dedicated test file that generates MeF XML for at least 3 e2e scenarios and asserts XSD compliance. Fix any schema violations discovered. Add a `deno task validate:mef` task alias.
@@ -336,4 +336,4 @@ Plans:
 
 Plans:
 - [x] 17-01-PLAN.md — Implement forEach/everyItem/sumOfAll/allDistinct combinators + wire validEIN into 6 EIN rule files
-- [ ] 17-02-PLAN.md — Convert 40+ alwaysPass stubs using new combinators + update ALWAYSPASS_ROADMAP.md
+- [x] 17-02-PLAN.md — Convert 40+ alwaysPass stubs using new combinators + update ALWAYSPASS_ROADMAP.md

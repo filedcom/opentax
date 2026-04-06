@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 17-validation-dsl-foreach-everyitem-extension/17-01-PLAN.md
-last_updated: "2026-04-06T00:49:18.504Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 17-validation-dsl-foreach-everyitem-extension/17-02-PLAN.md
+last_updated: "2026-04-06T01:17:55.930Z"
 progress:
   total_phases: 17
   completed_phases: 15
-  total_plans: 21
-  completed_plans: 22
+  total_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -61,6 +61,7 @@ Plan: 2 of 2
 | Phase 15-mef-header-builder-fix P01 | 5 | 2 tasks | 1 files |
 | Phase 16-executor-diagnostics-cli-surface P01 | 15 | 3 tasks | 4 files |
 | Phase 17-validation-dsl-foreach-everyitem-extension P01 | 15 | 2 tasks | 8 files |
+| Phase 17-validation-dsl-foreach-everyitem-extension P02 | 25 | 2 tasks | 21 files |
 
 ### Decisions
 
@@ -99,6 +100,8 @@ Plan: 2 of 2
 - [Phase 16-executor-diagnostics-cli-surface]: validate:mef extended with Phase 14 e2e xsd_validation.test.ts; pre-existing XSD failures are known
 - [Phase 17-validation-dsl-foreach-everyitem-extension]: forEach and everyItem have identical semantics — both iterate array-valued pending dict fields with vacuous truth on empty; kept both for DSL clarity
 - [Phase 17-validation-dsl-foreach-everyitem-extension]: Only 3 EIN format stubs exist in codebase (fw2, fw2g, f1099r); plan overestimated 6 — wired validEIN into all 3 that had true format validation stubs
+- [Phase 17-validation-dsl-foreach-everyitem-extension]: allDistinct strips non-digit chars — appropriate for bank account numbers as well as SSN/EIN; F8888-015 DepositorAccountNum conversion valid
+- [Phase 17-validation-dsl-foreach-everyitem-extension]: sumOfAll with same source/target field name works: ctx.num reads scalar S1/S2/S3 value; ctx.fieldArray reads array of all Schedule F/SE/Form 2555 values via pending dict promotion
 
 ### Roadmap Evolution
 
@@ -121,6 +124,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-06T00:49:18.501Z
-Stopped at: Completed 17-validation-dsl-foreach-everyitem-extension/17-01-PLAN.md
+Last session: 2026-04-06T01:17:55.927Z
+Stopped at: Completed 17-validation-dsl-foreach-everyitem-extension/17-02-PLAN.md
 Resume file: None
