@@ -186,23 +186,23 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 →
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Self-Employed & Retirement | 2/3 | In Progress|  |
-| 2. Deductions & Worksheets | 0/1 | Not started | - |
-| 3. Special Situations A | 1/3 | In Progress|  |
+| 1. Self-Employed & Retirement | 3/3 | Complete   | 2026-04-01 |
+| 2. Deductions & Worksheets | 1/1 | Complete   | 2026-04-01 |
+| 3. Special Situations A | 3/3 | Complete   | 2026-04-01 |
 | 4. Special Situations B | 1/1 | Complete   | 2026-04-01 |
 | 5. Specialty Credits A | 1/1 | Complete   | 2026-04-01 |
-| 6. Specialty Credits B | 0/1 | Not started | - |
+| 6. Specialty Credits B | 1/1 | Complete   | 2026-04-05 |
 | 7. Schema Extensions & Form 7203 | 1/1 | Complete   | 2026-04-05 |
-| 8. International Simple | 0/1 | Planned    |  |
-| 9. International Complex | 0/1 | Planned    |  |
+| 8. International Simple | 1/1 | Complete   | 2026-04-05 |
+| 9. International Complex | 1/1 | Complete   | 2026-04-05 |
 | 10. XSD Validation in CI | 1/1 | Complete    | 2026-04-05 |
 | 11. Executor Error Isolation | 1/1 | Complete    | 2026-04-05 |
 | 12. Validation Rule Stubs | 3/3 | Complete    | 2026-04-05 |
-| 13. Verification Paperwork | 0/1 | Not started | - |
+| 13. Verification Paperwork | 1/1 | Complete    | 2026-04-06 |
 | 14. Phase 01 Constants + XSD e2e Fix | 1/1 | Complete    | 2026-04-06 |
-| 15. MEF Header Builder Fix | 1/1 | Complete    | 2026-04-05 |
+| 15. MEF Header Builder Fix | 1/1 | Complete    | 2026-04-06 |
 | 16. Executor Diagnostics CLI Surface | 1/1 | Complete    | 2026-04-06 |
-| 17. Validation DSL forEach/everyItem Extension | 2/2 | Complete   | 2026-04-06 |
+| 17. Validation DSL forEach/everyItem Extension | 2/2 | Complete    | 2026-04-06 |
 
 ### Phase 10: XSD Validation in CI
 **Goal**: Add programmatic MeF XML validation against IRS XSD files to the Deno test suite. The IRS 2025v3.0 XSDs live in `.research/docs/IMF_Series_2025v3.0/`. Currently generated XML is never validated against them. Wire `xmllint --schema` (or equivalent Deno subprocess) into a dedicated test file that generates MeF XML for at least 3 e2e scenarios and asserts XSD compliance. Fix any schema violations discovered. Add a `deno task validate:mef` task alias.

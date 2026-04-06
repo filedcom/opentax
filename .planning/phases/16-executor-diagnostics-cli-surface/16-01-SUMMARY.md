@@ -116,3 +116,14 @@ completed: 2026-04-06
 ---
 *Phase: 16-executor-diagnostics-cli-surface*
 *Completed: 2026-04-06*
+
+## Self-Check: PASSED
+
+- FOUND: cli/commands/return.ts
+- FOUND: cli/commands/validate.ts
+- FOUND: cli/commands/export.ts
+- FOUND: deno.json
+- FOUND: core/validation/predicates.test.ts
+- FOUND: .planning/phases/16-executor-diagnostics-cli-surface/16-01-SUMMARY.md
+- FOUND commit: 580ac7f (feat: wire executor diagnostics into CLI commands)
+- FOUND commit: 5c12cfa (chore: add e2e xsd_validation.test.ts to validate:mef task)
