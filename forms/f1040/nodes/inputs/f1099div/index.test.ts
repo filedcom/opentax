@@ -576,12 +576,14 @@ Deno.test("Schedule B not triggered when total box1a below $1,500", () => {
 
 Deno.test("Schedule B triggered when total box1a equals $1,500", () => {
   // IRS rule: Schedule B required only when dividends EXCEED $1,500 (> not >=).
-  // At exactly $1,500 Schedule B is NOT required.
+  // At exactly $1,500 Schedule B is NOT required — but ordinary dividends still
+  // route directly to f1040 and agi_aggregator.
   const withExactly1500 = compute([
     minimalItem({ box1a: 1500, isNominee: false }),
   ]);
-  const withoutDivs = compute([minimalItem({ box1a: 0, isNominee: false })]);
-  assertEquals(withExactly1500.outputs.length, withoutDivs.outputs.length);
+  assertEquals(findOutput(withExactly1500, "schedule_b"), undefined);
+  assertEquals(findOutput(withExactly1500, "f1040") !== undefined, true);
+  assertEquals(findOutput(withExactly1500, "agi_aggregator") !== undefined, true);
 });
 
 Deno.test("Schedule B triggered when total box1a above $1,500", () => {

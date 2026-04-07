@@ -12,6 +12,7 @@ import { form8995a } from "../../intermediate/forms/form8995a/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
@@ -143,6 +144,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099div";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
+    agi_aggregator,
     schedule_b,
     f1040,
     schedule_d,
@@ -169,12 +171,23 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       (item) => (item.box2b ?? 0) > 0 || (item.box2c ?? 0) > 0 || (item.box2d ?? 0) > 0,
     );
 
-    const outputs: NodeOutput[] = needsScheduleB(div1099s)
+    const shouldRouteScheduleB = needsScheduleB(div1099s);
+    const outputs: NodeOutput[] = shouldRouteScheduleB
       ? div1099s.flatMap(dividendScheduleBOutput)
       : [];
 
     // Aggregate all f1040 fields into one output
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
+
+    // When below the Schedule B threshold, ordinary dividends don't route through
+    // schedule_b — emit them directly to f1040 line 3b and agi_aggregator so they land in AGI.
+    if (!shouldRouteScheduleB) {
+      const totalOrdinary = div1099s.reduce((sum, item) => sum + item.box1a, 0);
+      if (totalOrdinary > 0) {
+        f1040Fields.line3b_ordinary_dividends = totalOrdinary;
+        outputs.push(this.outputNodes.output(agi_aggregator, { line3b_ordinary_dividends: totalOrdinary }));
+      }
+    }
     const totalQualDiv = div1099s.reduce((sum, item) => sum + (item.box1b ?? 0), 0);
     if (totalQualDiv > 0) f1040Fields.line3a_qualified_dividends = totalQualDiv;
     const totalWithholding = div1099s.reduce((sum, item) => sum + (item.box4 ?? 0), 0);

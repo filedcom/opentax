@@ -38,7 +38,7 @@
     "se_tax": 0,
     "add_medicare_tax": 0,
     "line18_tax_before_credits": 3200,
-    "nonref_ctc": 2000,
+    "nonref_ctc": 2200,
     "dependent_care_credit": 600,
     "aotc_nonref": 0,
     "aotc_refundable": 0,
@@ -47,9 +47,9 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 600,
+    "line24_total_tax": 400,
     "line33_total_payments": 5200,
-    "line35a_refund": 4600,
+    "line35a_refund": 4800,
     "line37_amount_owed": 0
   }
 }

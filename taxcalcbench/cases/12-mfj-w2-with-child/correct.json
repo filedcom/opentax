@@ -1,6 +1,6 @@
 {
   "case": "12-mfj-w2-with-child",
-  "scenario": "Married filing jointly with one qualifying child under 17 — tests Child Tax Credit ($2,000)",
+  "scenario": "Married filing jointly with one qualifying child under 17 — tests Child Tax Credit ($2,200)",
   "year": 2025,
   "inputs": {
     "filing_status": "mfj",
@@ -38,7 +38,7 @@
     "se_tax": 0,
     "add_medicare_tax": 0,
     "line18_tax_before_credits": 6123,
-    "nonref_ctc": 2000,
+    "nonref_ctc": 2200,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
     "aotc_refundable": 0,
@@ -47,9 +47,9 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 4123,
+    "line24_total_tax": 3923,
     "line33_total_payments": 9000,
-    "line35a_refund": 4877,
+    "line35a_refund": 5077,
     "line37_amount_owed": 0
   }
 }

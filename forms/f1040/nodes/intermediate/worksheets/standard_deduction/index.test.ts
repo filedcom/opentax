@@ -47,27 +47,27 @@ Deno.test("QSS: base standard deduction $30,000", () => {
 
 // ─── Additional deduction for age/blindness ───────────────────────────────────
 
-Deno.test("Single 65+: $15,000 + $1,600 = $16,600", () => {
+Deno.test("Single 65+: $15,000 + $2,000 = $17,000", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
     taxpayer_age_65_or_older: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 16_600);
+  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 17_000);
 });
 
-Deno.test("Single blind: $15,000 + $1,600 = $16,600", () => {
+Deno.test("Single blind: $15,000 + $2,000 = $17,000", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
     taxpayer_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 16_600);
+  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 17_000);
 });
 
-Deno.test("Single 65+ and blind: $15,000 + $3,200 = $18,200", () => {
+Deno.test("Single 65+ and blind: $15,000 + $4,000 = $19,000", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     agi: 50_000,
@@ -75,10 +75,10 @@ Deno.test("Single 65+ and blind: $15,000 + $3,200 = $18,200", () => {
     taxpayer_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 18_200);
+  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 19_000);
 });
 
-Deno.test("MFJ both spouses 65+: $30,000 + 2×$1,350 = $32,700", () => {
+Deno.test("MFJ both spouses 65+: $30,000 + 2×$1,600 = $33,200", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     agi: 80_000,
@@ -86,10 +86,10 @@ Deno.test("MFJ both spouses 65+: $30,000 + 2×$1,350 = $32,700", () => {
     spouse_age_65_or_older: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 32_700);
+  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 33_200);
 });
 
-Deno.test("MFJ all four factors: $30,000 + 4×$1,350 = $35,400", () => {
+Deno.test("MFJ all four factors: $30,000 + 4×$1,600 = $36,400", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     agi: 80_000,
@@ -99,7 +99,7 @@ Deno.test("MFJ all four factors: $30,000 + 4×$1,350 = $35,400", () => {
     spouse_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 35_400);
+  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 36_400);
 });
 
 // Spouse flags should be ignored for Single filers

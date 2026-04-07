@@ -73,15 +73,15 @@ export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
 
 /**
  * Additional standard deduction per age/blindness factor (TY2025).
- * Single/HOH: $1,600 per factor; MFJ/MFS/QSS: $1,350 per factor.
+ * Single/HOH: $2,000 per factor; MFJ/MFS/QSS: $1,600 per factor.
  * IRC §63(f); IRS Rev. Proc. 2024-40, §3.14 (updated for TY2025)
  */
 export const STANDARD_DEDUCTION_ADDITIONAL_2025: Record<FilingStatus, number> = {
-  [FilingStatus.Single]: 1_600,
-  [FilingStatus.MFJ]:    1_350,
-  [FilingStatus.MFS]:    1_350,
-  [FilingStatus.HOH]:    1_600,
-  [FilingStatus.QSS]:    1_350,
+  [FilingStatus.Single]: 2_000,
+  [FilingStatus.MFJ]:    1_600,
+  [FilingStatus.MFS]:    1_600,
+  [FilingStatus.HOH]:    2_000,
+  [FilingStatus.QSS]:    1_600,
 } as const;
 
 // ─── QDCGT / Capital Gains Rate Thresholds ────────────────────────────────────

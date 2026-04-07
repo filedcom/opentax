@@ -29,6 +29,14 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+// Extract gross receipts from a schedule_c output (which uses schedule_cs array)
+function schedCGrossReceipts(result: ReturnType<typeof compute>): number | undefined {
+  const out = findOutput(result, "schedule_c");
+  if (!out) return undefined;
+  const fields = out.fields as { schedule_cs?: Array<{ line_1_gross_receipts: number }> };
+  return fields.schedule_cs?.[0]?.line_1_gross_receipts;
+}
+
 // ---------------------------------------------------------------------------
 // 1. Input Schema Validation
 // ---------------------------------------------------------------------------
@@ -134,7 +142,7 @@ Deno.test("routing: box1_nec with schedule_c → schedule_c node", () => {
   const result = compute([minimalItem({ box1_nec: 5000, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 5000);
+  assertEquals(schedCGrossReceipts(result), 5000);
 });
 
 Deno.test("routing: box1_nec with schedule_f → schedule_f node", () => {
@@ -162,7 +170,7 @@ Deno.test("routing: omitting for_routing defaults to schedule_c", () => {
   const result = compute([minimalItem({ box1_nec: 3000 })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 3000);
+  assertEquals(schedCGrossReceipts(result), 3000);
 });
 
 Deno.test("routing: box1_nec = 0 with schedule_c produces no schedule_c output", () => {
@@ -241,7 +249,7 @@ Deno.test("aggregation: multiple schedule_c items sum box1_nec per item as separ
   // Expect two separate schedule_c outputs (one per item)
   assertEquals(schedCOutputs.length, 2);
   const amounts = schedCOutputs.map(
-    (o) => (o.fields as Record<string, unknown>).line1_gross_receipts as number,
+    (o) => ((o.fields as { schedule_cs?: Array<{ line_1_gross_receipts: number }> }).schedule_cs?.[0]?.line_1_gross_receipts) as number,
   );
   assertEquals(amounts.includes(5000), true);
   assertEquals(amounts.includes(3000), true);
@@ -308,14 +316,14 @@ Deno.test("threshold: box1_nec = 599 (below $600 payer threshold) — engine sti
   // Engine processes whatever value is entered; $600 threshold is payer's filing obligation
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 599);
+  assertEquals(schedCGrossReceipts(result), 599);
 });
 
 Deno.test("threshold: box1_nec = 600 (at $600 payer threshold) — engine routes", () => {
   const result = compute([minimalItem({ box1_nec: 600, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 600);
+  assertEquals(schedCGrossReceipts(result), 600);
 });
 
 Deno.test("threshold: box1_nec = 601 (above $600) — engine routes", () => {
@@ -550,14 +558,14 @@ Deno.test("edge: very large box1_nec (above SS wage base $176,100) — engine ro
   const result = compute([minimalItem({ box1_nec: 300000, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 300000);
+  assertEquals(schedCGrossReceipts(result), 300000);
 });
 
 Deno.test("edge: box1_nec exactly at SS wage base $176,100", () => {
   const result = compute([minimalItem({ box1_nec: 176100, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 176100);
+  assertEquals(schedCGrossReceipts(result), 176100);
 });
 
 Deno.test("edge: box1_nec below SE filing threshold $400 — still routes to schedule_c", () => {
@@ -565,14 +573,14 @@ Deno.test("edge: box1_nec below SE filing threshold $400 — still routes to sch
   const result = compute([minimalItem({ box1_nec: 399, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 399);
+  assertEquals(schedCGrossReceipts(result), 399);
 });
 
 Deno.test("edge: box1_nec = 400 (at SE threshold) — routes to schedule_c", () => {
   const result = compute([minimalItem({ box1_nec: 400, for_routing: "schedule_c" })]);
   const out = findOutput(result, "schedule_c");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line1_gross_receipts, 400);
+  assertEquals(schedCGrossReceipts(result), 400);
 });
 
 Deno.test("edge: single item with only payer info and no amounts produces empty outputs", () => {

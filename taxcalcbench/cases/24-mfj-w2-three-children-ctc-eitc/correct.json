@@ -45,11 +45,11 @@
     "ptc_additional": 0,
     "ptc_repayment": 0,
     "eitc": 5692.12,
-    "actc": 4850,
+    "actc": 5100,
     "excess_ss_credit": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 12642.12,
-    "line35a_refund": 12642.12,
+    "line33_total_payments": 12892.12,
+    "line35a_refund": 12892.12,
     "line37_amount_owed": 0
   }
 }
