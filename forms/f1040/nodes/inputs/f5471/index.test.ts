@@ -132,8 +132,8 @@ Deno.test("f5471.inputSchema: negative factoring_income fails", () => {
 
 Deno.test("f5471.compute: subpart_f_income > 0 — routes to schedule1 line8z_other", () => {
   const result = compute([minimalItem({ subpart_f_income: 10000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_other, 10000);
 });
 
 Deno.test("f5471.compute: subpart_f_income = 0 — no schedule1 output", () => {
@@ -180,8 +180,8 @@ Deno.test("f5471.compute: all three subpart_f components summed", () => {
 
 Deno.test("f5471.compute: gilti_inclusion > 0 — routes to schedule1 line8z_other", () => {
   const result = compute([minimalItem({ gilti_inclusion: 8000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_other, 8000);
 });
 
 Deno.test("f5471.compute: gilti_inclusion = 0 — no schedule1 output", () => {

@@ -15,9 +15,9 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ─── Basic routing smoke test ─────────────────────────────────────────────────
 
-Deno.test("smoke: valid input produces outputs", () => {
+Deno.test("smoke: valid input produces 3 outputs (f1040, schedule2, schedule_se)", () => {
   const result = compute({ wages: 50_000, reason_code: ReasonCode.C });
-  assertEquals(result.outputs.length > 0, true);
+  assertEquals(result.outputs.length, 3);
 });
 
 // ─── Zero wages — no outputs ──────────────────────────────────────────────────
@@ -31,21 +31,16 @@ Deno.test("zero wages: no outputs emitted", () => {
 
 Deno.test("routing: wages flow to f1040 line1g_wages_8919", () => {
   const result = compute({ wages: 40_000, reason_code: ReasonCode.D });
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1g_wages_8919, 40_000);
 });
 
 // ─── SS tax below wage base ───────────────────────────────────────────────────
 
-Deno.test("ss tax: wages below wage base → 6.2% of wages", () => {
-  // $50,000 × 6.2% = $3,100
-  const result = compute({ wages: 50_000, reason_code: ReasonCode.A });
-  const out = findOutput(result, "schedule2");
-  assertEquals(out !== undefined, true);
-  const input = fieldsOf(result.outputs, schedule2)!;
+Deno.test("ss tax: wages below wage base → 6.2% SS + 1.45% Medicare", () => {
   // SS = 50000 × 0.062 = 3100; Medicare = 50000 × 0.0145 = 725; total = 3825
-  assertEquals(input.line6_uncollected_8919, 3825);
+  const result = compute({ wages: 50_000, reason_code: ReasonCode.A });
+  const input = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(input.line6_uncollected_8919, 3_825);
 });
 
 // ─── SS tax at wage base (exact) ──────────────────────────────────────────────
@@ -98,8 +93,6 @@ Deno.test("medicare tax: no cap, applies to all wages", () => {
 
 Deno.test("routing: wages flow to schedule_se wages_8919", () => {
   const result = compute({ wages: 75_000, reason_code: ReasonCode.E });
-  const out = findOutput(result, "schedule_se");
-  assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule_se)!.wages_8919, 75_000);
 });
 
@@ -122,7 +115,7 @@ Deno.test("validation: negative wages throws", () => {
 Deno.test("validation: all reason codes A–H are accepted", () => {
   for (const code of Object.values(ReasonCode)) {
     const result = compute({ wages: 1_000, reason_code: code });
-    assertEquals(result.outputs.length > 0, true);
+    assertEquals(result.outputs.length, 3);
   }
 });
 

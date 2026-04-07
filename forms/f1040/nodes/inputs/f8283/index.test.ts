@@ -7,10 +7,6 @@ function compute(input: Record<string, unknown>) {
   return f8283.compute({ taxYear: 2025 }, input as Parameters<typeof f8283.compute>[1]);
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -69,16 +65,12 @@ Deno.test("f8283.inputSchema: invalid FMVMethod fails", () => {
 
 Deno.test("f8283.compute: section A item routes fmv to schedule_a line_12_noncash_contributions", () => {
   const result = compute({ section_a_items: [{ fmv: 300 }] });
-  const out = findOutput(result, "schedule_a");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule_a)!;
   assertEquals(fields.line_12_noncash_contributions, 300);
 });
 
 Deno.test("f8283.compute: section B item routes fmv to schedule_a line_12_noncash_contributions", () => {
   const result = compute({ section_b_items: [{ fmv: 6000 }] });
-  const out = findOutput(result, "schedule_a");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule_a)!;
   assertEquals(fields.line_12_noncash_contributions, 6000);
 });

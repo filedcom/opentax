@@ -34,8 +34,6 @@ Deno.test("validation: all-zero fields produce no output", () => {
 
 Deno.test("calc: uncollected_fica alone routes to f1040 line17", () => {
   const result = compute({ uncollected_fica: 500 });
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 500);
 });
 
@@ -165,11 +163,120 @@ Deno.test("smoke: all input fields populated — correct total emitted to f1040"
     line17k_golden_parachute_excise: 3000,
     line17h_nqdc_tax: 2000,
   });
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 8100);
   // Only one output
   assertEquals(result.outputs.length, 1);
+});
+
+// ── Previously untested major fields ─────────────────────────────────────────
+
+Deno.test("calc: line4_se_tax alone routes to f1040 line17", () => {
+  const result = compute({ line4_se_tax: 14_130 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 14_130);
+});
+
+Deno.test("calc: line5_unreported_tip_tax alone routes to f1040 line17", () => {
+  const result = compute({ line5_unreported_tip_tax: 765 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 765);
+});
+
+Deno.test("calc: line2_excess_advance_premium alone routes to f1040 line17", () => {
+  const result = compute({ line2_excess_advance_premium: 1_200 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 1_200);
+});
+
+Deno.test("calc: line7a_household_employment alone routes to f1040 line17", () => {
+  const result = compute({ line7a_household_employment: 2_400 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 2_400);
+});
+
+Deno.test("calc: line17d_kiddie_tax alone routes to f1040 line17", () => {
+  const result = compute({ line17d_kiddie_tax: 500 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 500);
+});
+
+Deno.test("calc: line17a_investment_credit_recapture alone routes to f1040 line17", () => {
+  const result = compute({ line17a_investment_credit_recapture: 3_000 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 3_000);
+});
+
+Deno.test("calc: line10_homebuyer_credit_repayment alone routes to f1040 line17", () => {
+  const result = compute({ line10_homebuyer_credit_repayment: 500 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 500);
+});
+
+Deno.test("calc: line10_recapture_tax alone routes to f1040 line17", () => {
+  const result = compute({ line10_recapture_tax: 1_000 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 1_000);
+});
+
+Deno.test("calc: line10_lihtc_recapture alone routes to f1040 line17", () => {
+  const result = compute({ line10_lihtc_recapture: 750 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 750);
+});
+
+Deno.test("calc: line17z_other_additional_taxes alone routes to f1040 line17", () => {
+  const result = compute({ line17z_other_additional_taxes: 800 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 800);
+});
+
+Deno.test("calc: line17_exit_tax alone routes to f1040 line17", () => {
+  const result = compute({ line17_exit_tax: 50_000 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 50_000);
+});
+
+Deno.test("calc: line9_965_net_tax_liability alone routes to f1040 line17", () => {
+  const result = compute({ line9_965_net_tax_liability: 10_000 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 10_000);
+});
+
+Deno.test("calc: lump_sum_tax alone routes to f1040 line17", () => {
+  const result = compute({ lump_sum_tax: 4_000 });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 4_000);
+});
+
+Deno.test("agg: 3 different tax sources sum to correct total", () => {
+  // SE tax + AMT + household employment
+  const result = compute({
+    line4_se_tax: 14_130,
+    line1_amt: 5_000,
+    line7a_household_employment: 2_400,
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 21_530);
+});
+
+Deno.test("agg: all fields populated — grand total is correct sum", () => {
+  const result = compute({
+    line1_amt: 1_000,
+    line2_excess_advance_premium: 200,
+    line4_se_tax: 300,
+    line5_unreported_tip_tax: 400,
+    line6_uncollected_8919: 500,
+    line7a_household_employment: 600,
+    line8_form5329_tax: 700,
+    line9_965_net_tax_liability: 800,
+    line10_homebuyer_credit_repayment: 900,
+    line10_recapture_tax: 1_000,
+    line10_lihtc_recapture: 1_100,
+    line11_additional_medicare: 1_200,
+    line12_niit: 1_300,
+    uncollected_fica: 1_400,
+    uncollected_fica_gtl: 1_500,
+    section409a_excise: 1_600,
+    line17h_nqdc_tax: 1_700,
+    golden_parachute_excise: 1_800,
+    line17k_golden_parachute_excise: 1_900,
+    line17e_archer_msa_tax: 2_000,
+    line17f_medicare_advantage_msa_tax: 2_100,
+    lump_sum_tax: 2_200,
+    line17b_hsa_penalty: 2_300,
+    line17d_kiddie_tax: 2_400,
+    line17a_investment_credit_recapture: 2_500,
+    line17z_other_additional_taxes: 2_600,
+    line17_exit_tax: 2_700,
+  });
+  // 27 values from 1000 to 2700 in steps of 100 → sum = 38_700
+  assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 38_700);
 });
 
 // ── Previously untested fields ───────────────────────────────────────────────

@@ -79,10 +79,10 @@ Deno.test("box4a_guaranteed_services routes to schedule1", () => {
   assertEquals(out?.fields.line5_schedule_e, 5000);
 });
 
-Deno.test("box4a_guaranteed_services routes to schedule_se", () => {
+Deno.test("box4a_guaranteed_services routes to schedule_se net_profit_schedule_c", () => {
   const result = compute([minimalItem({ box4a_guaranteed_services: 5000 })]);
   const out = findOutput(result, "schedule_se");
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.net_profit_schedule_c, 5000);
 });
 
 Deno.test("box4b_guaranteed_capital routes to schedule1 but not schedule_se", () => {
@@ -147,10 +147,10 @@ Deno.test("box9a_net_lt_cap_gain routes to schedule_d line_12_k1_lt", () => {
   assertEquals(out?.fields.line_12_k1_lt, 2500);
 });
 
-Deno.test("box14a_se_earnings routes to schedule_se", () => {
+Deno.test("box14a_se_earnings routes to schedule_se net_profit_schedule_c", () => {
   const result = compute([minimalItem({ box14a_se_earnings: 10000 })]);
   const out = findOutput(result, "schedule_se");
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.net_profit_schedule_c, 10000);
 });
 
 Deno.test("zero box14a does not route to schedule_se (no other SE income)", () => {
@@ -391,7 +391,59 @@ Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
   assertEquals(sdOutputs[0].fields.line_12_k1_lt, 1200);
 });
 
-// ── 11. Smoke test ────────────────────────────────────────────────────────────
+// ── 11. SE tax priority and multiple K-1 aggregation ─────────────────────────
+
+Deno.test("box14a takes priority over box4a for schedule_se when both present", () => {
+  // Box 14a is the authoritative SE earnings figure; box4a fallback only when 14a absent
+  const result = compute([minimalItem({ box4a_guaranteed_services: 5000, box14a_se_earnings: 12000 })]);
+  const out = findOutput(result, "schedule_se");
+  assertEquals(out?.fields.net_profit_schedule_c, 12000);
+});
+
+Deno.test("box14a_se_earnings from two K-1s produces two separate schedule_se outputs", () => {
+  // Each partnership issues its own SE earnings; each produces a distinct SE output
+  const result = compute([
+    minimalItem({ box14a_se_earnings: 8000 }),
+    minimalItem({ partnership_name: "Fund B", box14a_se_earnings: 6000 }),
+  ]);
+  const seOutputs = result.outputs.filter((o) => o.nodeType === "schedule_se");
+  assertEquals(seOutputs.length, 2);
+  const total = seOutputs.reduce((sum, o) => sum + (o.fields.net_profit_schedule_c as number), 0);
+  assertEquals(total, 14000);
+});
+
+Deno.test("box20z_qbi sums across K-1s to form8995 qbi", () => {
+  const result = compute([
+    minimalItem({ box20z_qbi: 10000 }),
+    minimalItem({ partnership_name: "Fund B", box20z_qbi: 5000 }),
+  ]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.qbi, 15000);
+});
+
+Deno.test("box20_w2_wages sums across K-1s to form8995 w2_wages", () => {
+  const result = compute([
+    minimalItem({ box20z_qbi: 8000, box20_w2_wages: 4000 }),
+    minimalItem({ partnership_name: "Fund B", box20z_qbi: 4000, box20_w2_wages: 2000 }),
+  ]);
+  const out = findOutput(result, "form8995");
+  assertEquals(out?.fields.w2_wages, 6000);
+});
+
+Deno.test("loss K-1 (box1 negative) does not suppress QBI from a second profitable K-1", () => {
+  const result = compute([
+    minimalItem({ box1_ordinary_business: -3000 }),
+    minimalItem({ partnership_name: "Fund B", box20z_qbi: 7000 }),
+  ]);
+  // schedule1 nets to -3000 + 0 = -3000
+  const sch1 = findOutput(result, "schedule1");
+  assertEquals(sch1?.fields.line5_schedule_e, -3000);
+  // QBI routes only from the second K-1
+  const f8995 = findOutput(result, "form8995");
+  assertEquals(f8995?.fields.qbi, 7000);
+});
+
+// ── 12. Smoke test ────────────────────────────────────────────────────────────
 
 Deno.test("smoke test — K-1 with all major boxes", () => {
   const result = compute([
@@ -418,7 +470,7 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   assertEquals(sd?.fields.line_5_k1_st, 1000);
   assertEquals(sd?.fields.line_12_k1_lt, 3000);
   const schSe = findOutput(result, "schedule_se");
-  assertEquals(schSe !== undefined, true);
+  assertEquals(schSe?.fields.net_profit_schedule_c, 25000);
   const f8995 = findOutput(result, "form8995");
   assertEquals(f8995?.fields.qbi, 20000);
   assertEquals(f8995?.fields.w2_wages, 10000);

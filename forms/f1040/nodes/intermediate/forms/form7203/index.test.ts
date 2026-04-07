@@ -57,14 +57,14 @@ Deno.test("form7203 — rejects negative tax_exempt_income", () => {
   assertThrows(() => compute({ tax_exempt_income: -500 }));
 });
 
-Deno.test("form7203 — accepts all zero inputs without throwing", () => {
+Deno.test("form7203 — accepts all zero inputs: no loss pool → no outputs", () => {
   const result = compute({
     stock_basis_beginning: 0,
     debt_basis_beginning: 0,
     ordinary_loss: 0,
     ordinary_income: 0,
   });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // ─── 3. No loss — no output ──────────────────────────────────────────────────
@@ -134,9 +134,7 @@ Deno.test("form7203 — loss exceeds stock only, no debt: routes basis_disallowe
     stock_basis_beginning: 2_000,
     ordinary_loss: 5_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 3_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
 Deno.test("form7203 — loss exceeds combined stock and debt: disallows correct amount", () => {
@@ -147,9 +145,7 @@ Deno.test("form7203 — loss exceeds combined stock and debt: disallows correct 
     debt_basis_beginning: 1_000,
     ordinary_loss: 5_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 2_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
 });
 
 // ─── 7. Zero basis — full disallowance ───────────────────────────────────────
@@ -161,17 +157,13 @@ Deno.test("form7203 — zero stock and debt basis: entire loss disallowed", () =
     debt_basis_beginning: 0,
     ordinary_loss: 8_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 8_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 8_000);
 });
 
 Deno.test("form7203 — omitted basis fields default to zero: entire loss disallowed", () => {
   // no basis provided → stock=0, debt=0, loss=3_000 → disallowed=3_000
   const result = compute({ ordinary_loss: 3_000 });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 3_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
 // ─── 8. Prior year unallowed losses ──────────────────────────────────────────
@@ -184,9 +176,7 @@ Deno.test("form7203 — prior year unallowed added to current loss", () => {
     ordinary_loss: 1_000,
     prior_year_unallowed_loss: 4_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 2_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
 });
 
 Deno.test("form7203 — prior year unallowed only (no current loss), within basis: no output", () => {
@@ -204,9 +194,7 @@ Deno.test("form7203 — prior year unallowed only, exceeds basis: disallowed", (
     stock_basis_beginning: 2_000,
     prior_year_unallowed_loss: 4_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 2_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
 });
 
 // ─── 9. Ordinary income increases stock basis ─────────────────────────────────
@@ -231,9 +219,7 @@ Deno.test("form7203 — distributions reduce stock basis before loss check", () 
     distributions: 6_000,
     ordinary_loss: 5_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 3_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
 });
 
 Deno.test("form7203 — distributions exceeding basis floored at zero, full loss disallowed", () => {
@@ -243,9 +229,7 @@ Deno.test("form7203 — distributions exceeding basis floored at zero, full loss
     distributions: 5_000,
     ordinary_loss: 4_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 4_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 4_000);
 });
 
 // ─── 11. Nondeductible expenses reduce stock basis ────────────────────────────
@@ -257,9 +241,7 @@ Deno.test("form7203 — nondeductible expenses reduce stock basis before loss ch
     nondeductible_expenses: 3_000,
     ordinary_loss: 5_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 2_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 2_000);
 });
 
 // ─── 12. Additional contributions increase basis ──────────────────────────────
@@ -285,24 +267,20 @@ Deno.test("form7203 — new loans increase debt basis available for losses", () 
     new_loans: 3_000,
     ordinary_loss: 4_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 1_000);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 1_000);
 });
 
 // ─── 14. Output routing ──────────────────────────────────────────────────────
 
 Deno.test("form7203 — disallowed loss routes to both schedule1 and agi_aggregator", () => {
+  // stock = 1_000, loss = 4_000 → disallowed = 3_000; routes to 2 outputs
   const result = compute({
     stock_basis_beginning: 1_000,
     ordinary_loss: 4_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  const agg = findOutput(result, "agi_aggregator");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(agg !== undefined, true);
-  assertEquals(s1!.fields.basis_disallowed_add_back, 3_000);
-  assertEquals(agg!.fields.basis_disallowed_add_back, 3_000);
+  assertEquals(result.outputs.length, 2);
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 3_000);
+  assertEquals(findOutput(result, "agi_aggregator")!.fields.basis_disallowed_add_back, 3_000);
 });
 
 Deno.test("form7203 — when no disallowance: no outputs at all", () => {
@@ -323,6 +301,19 @@ Deno.test("form7203 — tax_exempt_income increases stock basis before loss limi
     ordinary_loss: 3_000,
   });
   assertEquals(result.outputs.length, 0);
+});
+
+// ─── Spec scenario: stock=$5k, debt=$3k, loss=$9k ────────────────────────────
+
+Deno.test("form7203 — spec: stock_basis=5000, debt_basis=3000, loss=9000 → deductible=8000, suspended=1000", () => {
+  // allowed_from_stock = min(9000, 5000) = 5000, remaining = 4000
+  // allowed_from_debt = min(4000, 3000) = 3000, disallowed = 1000
+  const result = compute({
+    stock_basis_beginning: 5_000,
+    debt_basis_beginning: 3_000,
+    ordinary_loss: 9_000,
+  });
+  assertEquals(findOutput(result, "schedule1")!.fields.basis_disallowed_add_back, 1_000);
 });
 
 // ─── 16. Smoke test ───────────────────────────────────────────────────────────

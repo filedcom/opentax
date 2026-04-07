@@ -83,8 +83,6 @@ Deno.test("ssa1099.inputSchema: accepts item with box4_repaid omitted (treats as
 
 Deno.test("ssa.compute: box3_gross_benefits routes net to f1040 line6a_ss_gross", () => {
   const result = compute([minimalItem({ box3_gross_benefits: 15000 })]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 15000);
 });
@@ -99,8 +97,6 @@ Deno.test("ssa.compute: box4_repaid reduces line6a_ss_gross", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000, box4_repaid: 2000 }),
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 8000);
 });
@@ -109,8 +105,6 @@ Deno.test("ssa.compute: box6_federal_withheld routes to f1040 line25b_withheld_1
   const result = compute([
     minimalItem({ box3_gross_benefits: 12000, box6_federal_withheld: 1200 }),
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 1200);
 });
@@ -119,9 +113,8 @@ Deno.test("ssa.compute: box6_federal_withheld=0 does not add line25b to output",
   const result = compute([
     minimalItem({ box3_gross_benefits: 12000, box6_federal_withheld: 0 }),
   ]);
-  // Output may exist for line6a but line25b should be absent or undefined
   const f1040Fields = fieldsOf(result.outputs, f1040);
-  assertEquals(f1040Fields?.line25b_withheld_1099 === undefined || f1040Fields?.line25b_withheld_1099 === 0, true);
+  assertEquals(f1040Fields?.line25b_withheld_1099, undefined);
 });
 
 Deno.test("ssa.compute: box3 and box6 on same item emit single f1040 output with both fields", () => {
@@ -144,8 +137,6 @@ Deno.test("ssa.compute: two items — line6a_ss_gross sums both nets", () => {
     minimalItem({ box3_gross_benefits: 10000 }),
     minimalItem({ box3_gross_benefits: 5000 }),
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 15000);
 });
@@ -155,8 +146,6 @@ Deno.test("ssa.compute: two items — line25b_withheld_1099 sums both box6 amoun
     minimalItem({ box3_gross_benefits: 8000, box6_federal_withheld: 800 }),
     minimalItem({ box3_gross_benefits: 6000, box6_federal_withheld: 400 }),
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line25b_withheld_1099, 1200);
 });
@@ -166,8 +155,6 @@ Deno.test("ssa.compute: repayment exceeds gross on one item — that item contri
     minimalItem({ box3_gross_benefits: 1000, box4_repaid: 2000 }), // net = 0 (clamped)
     minimalItem({ box3_gross_benefits: 5000 }), // net = 5000
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 5000);
 });
@@ -213,16 +200,18 @@ Deno.test("ssa.compute: throws on negative box6_federal_withheld", () => {
 });
 
 // Boundary pass — zero values are valid
-Deno.test("ssa.compute: does not throw on zero box3_gross_benefits (boundary pass)", () => {
+Deno.test("ssa.compute: zero box3_gross_benefits produces no output", () => {
   const result = compute([minimalItem({ box3_gross_benefits: 0 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("ssa.compute: does not throw on zero box6_federal_withheld (boundary pass)", () => {
+Deno.test("ssa.compute: zero box6_federal_withheld still routes line6a from gross", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000, box6_federal_withheld: 0 }),
   ]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line6a_ss_gross, 10000);
+  assertEquals(input.line25b_withheld_1099, undefined);
 });
 
 // =============================================================================
@@ -268,9 +257,9 @@ Deno.test("ssa.compute: single item where box4 > box3 — net clamped to 0, no l
   const result = compute([
     minimalItem({ box3_gross_benefits: 1000, box4_repaid: 5000 }),
   ]);
-  // No line6a output since net = 0
+  // net = max(0, 1000-5000) = 0 → no f1040 output at all
   const f1040Fields2 = fieldsOf(result.outputs, f1040);
-  assertEquals(f1040Fields2?.line6a_ss_gross === undefined || f1040Fields2?.line6a_ss_gross === 0, true);
+  assertEquals(f1040Fields2, undefined);
 });
 
 Deno.test("ssa.compute: repayment on one item does not affect other item's net", () => {
@@ -278,28 +267,26 @@ Deno.test("ssa.compute: repayment on one item does not affect other item's net",
     minimalItem({ box3_gross_benefits: 500, box4_repaid: 1000 }), // net = 0
     minimalItem({ box3_gross_benefits: 8000 }), // net = 8000
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 8000);
 });
 
-Deno.test("ssa.compute: box3 and box6 on different items still produce single merged f1040 output", () => {
+Deno.test("ssa.compute: box3 and box6 on different items produce single merged f1040 output with both fields", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 10000 }),
     minimalItem({ box3_gross_benefits: 0, box6_federal_withheld: 500 }),
   ]);
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
-  // Only one merged output (for line25b); line6a may or may not be in same object
-  assertEquals(f1040Outputs.length <= 1, true);
+  assertEquals(f1040Outputs.length, 1);
+  const fields = fieldsOf(result.outputs, f1040)!;
+  assertEquals(fields.line6a_ss_gross, 10000);
+  assertEquals(fields.line25b_withheld_1099, 500);
 });
 
 Deno.test("ssa.compute: RRB-1099 treated same as SSA-1099 for routing", () => {
   const result = compute([
     minimalItem({ box3_gross_benefits: 20000, is_rrb: true }),
   ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line6a_ss_gross, 20000);
 });

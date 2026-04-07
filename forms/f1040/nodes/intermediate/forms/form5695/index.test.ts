@@ -249,6 +249,6 @@ Deno.test("Part I + Part II combined — total of both", () => {
 Deno.test("output routes to schedule3 line5_residential_energy", () => {
   const result = compute({ solar_electric_cost: 10_000 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3 !== undefined, true);
-  assertEquals("line5_residential_energy" in (s3?.fields ?? {}), true);
+  assertEquals(s3?.nodeType, "schedule3");
+  assertEquals(s3?.fields.line5_residential_energy, 3_000);
 });

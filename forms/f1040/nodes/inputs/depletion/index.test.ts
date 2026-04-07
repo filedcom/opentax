@@ -309,7 +309,7 @@ Deno.test("depletion.compute: COAL not subject to 65% taxable income cap", () =>
 // 6. Output Routing
 // =============================================================================
 
-Deno.test("depletion.compute: purpose SCHEDULE_E → routes to schedule_e", () => {
+Deno.test("depletion.compute: purpose SCHEDULE_E → routes to schedule_e with correct expense_depletion", () => {
   const result = compute([minimalItem({
     property_type: PropertyType.COAL,
     method: DepletionMethod.PERCENTAGE,
@@ -318,13 +318,11 @@ Deno.test("depletion.compute: purpose SCHEDULE_E → routes to schedule_e", () =
     units_sold: 0,
     purpose: DepletionPurpose.SCHEDULE_E,
   })]);
-  const sch_e = findOutput(result, "schedule_e");
-  const sch_c = findOutput(result, "schedule_c");
-  assertEquals(sch_e !== undefined, true);
-  assertEquals(sch_c, undefined);
+  assertEquals(fieldsOf(result.outputs, scheduleE)!.expense_depletion, 1_000);
+  assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
-Deno.test("depletion.compute: purpose SCHEDULE_C → routes to schedule_c", () => {
+Deno.test("depletion.compute: purpose SCHEDULE_C → routes to schedule_c with correct line_12_depletion", () => {
   const result = compute([minimalItem({
     property_type: PropertyType.COAL,
     method: DepletionMethod.PERCENTAGE,
@@ -333,10 +331,8 @@ Deno.test("depletion.compute: purpose SCHEDULE_C → routes to schedule_c", () =
     units_sold: 0,
     purpose: DepletionPurpose.SCHEDULE_C,
   })]);
-  const sch_c = findOutput(result, "schedule_c");
-  const sch_e = findOutput(result, "schedule_e");
-  assertEquals(sch_c !== undefined, true);
-  assertEquals(sch_e, undefined);
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line_12_depletion, 1_000);
+  assertEquals(findOutput(result, "schedule_e"), undefined);
 });
 
 Deno.test("depletion.compute: zero deduction → no output", () => {

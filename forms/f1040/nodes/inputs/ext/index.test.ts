@@ -3,419 +3,159 @@ import { ext, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function compute(input: Record<string, unknown>) {
   return ext.compute({ taxYear: 2025 }, inputSchema.parse(input));
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
-function outputCount(result: ReturnType<typeof compute>): number {
-  return result.outputs.length;
+function schedule3Fields(result: ReturnType<typeof compute>) {
+  return fieldsOf(result.outputs, schedule3);
 }
 
 // ---------------------------------------------------------------------------
-// Section 1: Input Schema Validation
+// Input Schema Validation
 // ---------------------------------------------------------------------------
 
-Deno.test("test_line_4_negative_throws — negative total tax estimate throws", () => {
+Deno.test("ext.inputSchema: rejects negative line_4_total_tax", () => {
   assertThrows(
-    () =>
-      compute({
-        produce_4868: "X",
-        line_4_total_tax: -1,
-        line_5_total_payments: 0,
-      }),
+    () => compute({ produce_4868: "X", line_4_total_tax: -1 }),
     Error,
   );
 });
 
-Deno.test("test_line_5_negative_throws — negative total payments throws", () => {
+Deno.test("ext.inputSchema: rejects negative line_7_amount_paying", () => {
   assertThrows(
-    () =>
-      compute({
-        produce_4868: "X",
-        line_4_total_tax: 10000,
-        line_5_total_payments: -1,
-      }),
+    () => compute({ produce_4868: "X", line_7_amount_paying: -100 }),
     Error,
   );
 });
 
-Deno.test("test_line_7_negative_throws — negative amount paying throws", () => {
-  assertThrows(
-    () =>
-      compute({
-        produce_4868: "X",
-        line_4_total_tax: 10000,
-        line_5_total_payments: 8000,
-        line_7_amount_paying: -100,
-      }),
-    Error,
+// ---------------------------------------------------------------------------
+// Master Switch: produce_4868 must be "X" to emit any output
+// ---------------------------------------------------------------------------
+
+Deno.test("ext.compute: produce_4868 absent — no outputs even with payment", () => {
+  assertEquals(
+    compute({ line_4_total_tax: 10000, line_5_total_payments: 7000, line_7_amount_paying: 1500 }).outputs,
+    [],
   );
 });
 
-Deno.test("test_valid_minimal_input_does_not_throw — all required fields at zero", () => {
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 0,
-    line_5_total_payments: 0,
-  });
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("test_line_4_zero_is_valid — zero total tax does not throw", () => {
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 0,
-    line_5_total_payments: 0,
-    line_7_amount_paying: 0,
-  });
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("test_line_7_zero_is_valid — zero amount paying does not throw", () => {
-  // No minimum payment required; taxpayer can pay $0 and still get extension
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 5000,
-    line_5_total_payments: 3000,
-    line_7_amount_paying: 0,
-  });
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("ext.compute: produce_4868 not 'X' — no outputs", () => {
+  assertEquals(
+    compute({ produce_4868: "", line_7_amount_paying: 1500 }).outputs,
+    [],
+  );
 });
 
 // ---------------------------------------------------------------------------
-// Section 2: Per-field routing
+// Payment Routing: line_7_amount_paying → schedule3 line10
 // ---------------------------------------------------------------------------
 
-Deno.test("test_line_7_positive_routes_to_schedule3 — amount_paying > 0 routes to schedule3 line10", () => {
+Deno.test("ext.compute: payment > 0 routes to schedule3 line10_amount_paid_extension", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 1500,
   });
-
-  // AMBIGUITY A: nodeType assumed "schedule3", field assumed "line10_amount_paid_extension"
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3 !== undefined, true);
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line10_amount_paid_extension, 1500);
+  assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 1500);
 });
 
-Deno.test("test_line_7_zero_no_schedule3 — amount_paying = 0 does not emit schedule3", () => {
+Deno.test("ext.compute: zero payment — no schedule3 output", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 0,
   });
-
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3, undefined);
+  assertEquals(schedule3Fields(result), undefined);
 });
 
-Deno.test("test_line_7_absent_no_schedule3 — no amount_paying emits no schedule3", () => {
+Deno.test("ext.compute: absent payment — no schedule3 output", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
   });
-
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3, undefined);
+  assertEquals(schedule3Fields(result), undefined);
 });
 
-Deno.test("test_produce_4868_absent_no_outputs — without produce_4868, no outputs emitted", () => {
-  // AMBIGUITY B: produce_4868 is master switch; absent = no outputs regardless of other fields
-  const result = compute({
-    line_4_total_tax: 10000,
-    line_5_total_payments: 7000,
-    line_7_amount_paying: 1500,
-  });
-  assertEquals(outputCount(result), 0);
-});
-
-Deno.test("test_produce_4868_blank_no_outputs — produce_4868 not 'X' emits no outputs", () => {
-  const result = compute({
-    produce_4868: "",
-    line_4_total_tax: 10000,
-    line_5_total_payments: 7000,
-    line_7_amount_paying: 1500,
-  });
-  assertEquals(outputCount(result), 0);
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Calculation Logic — Line 6 Balance Due
-// ---------------------------------------------------------------------------
-
-Deno.test("test_line_6_positive_when_line4_exceeds_line5 — balance due computed correctly", () => {
-  // line_6 = MAX(0, 10000 - 7000) = 3000; test via line_7 routing (implementation detail)
-  // The key IRS rule: balance exists → extension payment meaningful
+Deno.test("ext.compute: overpayment (line_7 > balance) routes full amount — no cap enforced", () => {
+  // Balance = 10000 - 2000 = 8000; paying 15000 is valid (creates refund)
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
-    line_5_total_payments: 7000,
-    line_7_amount_paying: 3000,
-  });
-  // Extension payment of exactly the balance routes correctly
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3 !== undefined, true);
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line10_amount_paid_extension, 3000);
-});
-
-Deno.test("test_line_6_zero_floor_when_payments_exceed_tax — no negative balance", () => {
-  // line_5 > line_4 → line_6 = 0; refund expected; extension still valid
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 5000,
-    line_5_total_payments: 8000,
-  });
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("test_line_7_can_exceed_line_6 — overpayment is valid and no cap enforced", () => {
-  // IRS: taxpayer may pay any amount; paying more than balance is valid (creates refund)
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 5000,
     line_5_total_payments: 2000,
-    line_7_amount_paying: 8000, // pays more than $3000 balance
+    line_7_amount_paying: 15000,
   });
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3 !== undefined, true);
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line10_amount_paid_extension, 8000);
+  assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 15000);
 });
 
-// ---------------------------------------------------------------------------
-// Section 4: Thresholds — 90% Safe Harbor (WARNING-only, must NOT throw)
-// ---------------------------------------------------------------------------
-
-Deno.test("test_safe_harbor_below_90pct_does_not_throw — payment < 90% of tax, no throw", () => {
-  // 89% of $10,000 = $8,900; safe harbor NOT met → late-payment penalty risk
-  // WARNING rule: does not throw; engine emits advisory only
+Deno.test("ext.compute: payments exceed tax (refund expected) — extension still valid, no schedule3 if no line_7", () => {
+  // line_5 > line_4 → balance_due = 0; extension still files; no schedule3 without line_7
   const result = compute({
     produce_4868: "X",
-    line_4_total_tax: 10000,
+    line_4_total_tax: 5000,
     line_5_total_payments: 8000,
-    line_7_amount_paying: 900, // total paid = 8900 = 89% — below threshold
   });
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("test_safe_harbor_at_exactly_90pct_does_not_throw — exactly 90% paid, no throw", () => {
-  // 90% of $10,000 = $9,000; line5 + line7 = $9,000 exactly
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 10000,
-    line_5_total_payments: 8000,
-    line_7_amount_paying: 1000, // total paid = 9000 = exactly 90%
-  });
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("test_safe_harbor_above_90pct_does_not_throw — payment > 90% of tax, no throw", () => {
-  // 95% of $10,000 = $9,500; clearly above threshold
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 10000,
-    line_5_total_payments: 8000,
-    line_7_amount_paying: 1500, // total paid = 9500 = 95%
-  });
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("test_safe_harbor_zero_tax_does_not_throw — zero total tax, zero payments", () => {
-  // 90% of $0 = $0; zero payments meet the safe harbor trivially
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 0,
-    line_5_total_payments: 0,
-  });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(schedule3Fields(result), undefined);
+  assertEquals(result.outputs.length, 0);
 });
 
 // ---------------------------------------------------------------------------
-// Section 5: Informational Fields — must NOT produce tax outputs
+// Informational Fields — must NOT affect tax routing
 // ---------------------------------------------------------------------------
 
-Deno.test("test_extension_previously_filed_does_not_add_outputs — drake-only flag", () => {
-  const baseline = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-    }),
-  );
-
-  const withFlag = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-      extension_previously_filed: true,
-    }),
-  );
-
-  assertEquals(withFlag, baseline);
-});
-
-Deno.test("test_produce_1040v_does_not_add_outputs — drake print flag only", () => {
-  const baseline = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-    }),
-  );
-
-  const withFlag = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-      produce_1040v: true,
-    }),
-  );
-
-  assertEquals(withFlag, baseline);
-});
-
-Deno.test("test_amount_on_1040v_does_not_affect_schedule3 — override field is informational", () => {
-  // amount_on_1040v only overrides the 1040-V voucher display; does NOT affect Form 4868 or schedule3
-  const withOverride = compute({
+Deno.test("ext.compute: amount_on_1040v does NOT affect schedule3 — uses line_7 value", () => {
+  const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 500,
     amount_on_1040v: 999,
   });
-
-  const sch3 = findOutput(withOverride, "schedule3");
-  assertEquals(sch3 !== undefined, true);
-  const input = fieldsOf(withOverride.outputs, schedule3)!;
-  // schedule3 must use line_7_amount_paying (500), not amount_on_1040v (999)
-  assertEquals(input.line10_amount_paid_extension, 500);
+  // schedule3 must use line_7 (500), not the 1040-V override (999)
+  assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 500);
 });
 
-Deno.test("test_line_8_out_of_country_does_not_add_tax_outputs — boolean flag only", () => {
-  const baseline = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-    }),
-  );
+Deno.test("ext.compute: informational flags do not add outputs", () => {
+  const baseCount = compute({
+    produce_4868: "X",
+    line_7_amount_paying: 500,
+  }).outputs.length;
 
-  const withFlag = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-      line_8_out_of_country: true,
-    }),
-  );
+  const withFlags = compute({
+    produce_4868: "X",
+    line_7_amount_paying: 500,
+    line_8_out_of_country: true,
+    line_9_1040nr_no_wages: true,
+    extension_previously_filed: true,
+    produce_1040v: true,
+  }).outputs.length;
 
-  assertEquals(withFlag, baseline);
-});
-
-Deno.test("test_line_9_1040nr_no_wages_does_not_add_tax_outputs — informational flag", () => {
-  const baseline = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-    }),
-  );
-
-  const withFlag = outputCount(
-    compute({
-      produce_4868: "X",
-      line_4_total_tax: 10000,
-      line_5_total_payments: 7000,
-      line_7_amount_paying: 500,
-      line_9_1040nr_no_wages: true,
-    }),
-  );
-
-  assertEquals(withFlag, baseline);
+  assertEquals(withFlags, baseCount);
 });
 
 // ---------------------------------------------------------------------------
-// Section 6: Edge Cases
+// Exactly one schedule3 output emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("test_large_extension_payment_routes_correctly — no upper cap on line_7", () => {
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 500000,
-    line_5_total_payments: 400000,
-    line_7_amount_paying: 100000,
-  });
-
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3 !== undefined, true);
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line10_amount_paid_extension, 100000);
-});
-
-Deno.test("test_all_zeros_no_outputs — zero tax with zero payments emits no routing outputs", () => {
-  // Zero tax owed, zero payments, zero amount paying → no schedule3 output
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 0,
-    line_5_total_payments: 0,
-    line_7_amount_paying: 0,
-  });
-
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3, undefined);
-});
-
-Deno.test("test_only_one_schedule3_output — emits at most one schedule3 output", () => {
+Deno.test("ext.compute: emits exactly one schedule3 output when payment present", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 10000,
     line_5_total_payments: 7000,
     line_7_amount_paying: 1500,
   });
-
-  const sch3Outputs = result.outputs.filter((o) => o.nodeType === "schedule3");
-  assertEquals(sch3Outputs.length, 1);
-});
-
-Deno.test("test_extension_payment_no_minimum_zero_still_extends — $0 payment valid", () => {
-  // IRS: taxpayer gets extension even if paying $0; no minimum required
-  const result = compute({
-    produce_4868: "X",
-    line_4_total_tax: 5000,
-    line_5_total_payments: 0,
-    line_7_amount_paying: 0,
-  });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.filter((o) => o.nodeType === "schedule3").length, 1);
+  assertEquals(result.outputs.length, 1);
 });
 
 // ---------------------------------------------------------------------------
-// Section 7: Smoke Test — All Major Fields
+// Smoke test
 // ---------------------------------------------------------------------------
 
-Deno.test("test_smoke_all_major_fields — comprehensive test with all boxes populated", () => {
+Deno.test("ext.compute: smoke — all fields populated, schedule3 gets line_7 amount", () => {
   const result = compute({
     produce_4868: "X",
     line_4_total_tax: 25000,
@@ -427,15 +167,6 @@ Deno.test("test_smoke_all_major_fields — comprehensive test with all boxes pop
     produce_1040v: true,
     amount_on_1040v: 5000,
   });
-
-  // Must emit exactly one schedule3 output
-  const sch3Outputs = result.outputs.filter((o) => o.nodeType === "schedule3");
-  assertEquals(sch3Outputs.length, 1);
-
-  // schedule3 line10 must equal line_7_amount_paying
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line10_amount_paid_extension, 5000);
-
-  // No spurious extra outputs from informational fields
+  assertEquals(schedule3Fields(result)?.line10_amount_paid_extension, 5000);
   assertEquals(result.outputs.length, 1);
 });

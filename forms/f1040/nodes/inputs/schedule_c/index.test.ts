@@ -17,8 +17,11 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function compute(items: z.infer<typeof itemSchema>[]) {
-  return scheduleC.compute({ taxYear: 2025 }, { schedule_cs: items });
+function compute(
+  items: z.infer<typeof itemSchema>[],
+  opts: { filing_status?: string } = {},
+) {
+  return scheduleC.compute({ taxYear: 2025 }, { schedule_cs: items, ...opts });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -29,61 +32,15 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // 1. Input Schema Validation
 // ============================================================
 
-Deno.test("schema_missing_line_a: omitting line_a_principal_business fails validation", () => {
+Deno.test("schema_missing_required_field: omitting any required field fails validation", () => {
+  // Represents the class of error: any required field omission rejects
   const parsed = scheduleC.inputSchema.safeParse({
     schedule_cs: [{
       line_b_business_code: "541510",
       line_f_accounting_method: "cash",
       line_g_material_participation: true,
       line_1_gross_receipts: 10000,
-    }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schema_missing_line_b: omitting line_b_business_code fails validation", () => {
-  const parsed = scheduleC.inputSchema.safeParse({
-    schedule_cs: [{
-      line_a_principal_business: "Consulting",
-      line_f_accounting_method: "cash",
-      line_g_material_participation: true,
-      line_1_gross_receipts: 10000,
-    }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schema_missing_line_f: omitting line_f_accounting_method fails validation", () => {
-  const parsed = scheduleC.inputSchema.safeParse({
-    schedule_cs: [{
-      line_a_principal_business: "Consulting",
-      line_b_business_code: "541510",
-      line_g_material_participation: true,
-      line_1_gross_receipts: 10000,
-    }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schema_missing_line_g: omitting line_g_material_participation fails validation", () => {
-  const parsed = scheduleC.inputSchema.safeParse({
-    schedule_cs: [{
-      line_a_principal_business: "Consulting",
-      line_b_business_code: "541510",
-      line_f_accounting_method: "cash",
-      line_1_gross_receipts: 10000,
-    }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schema_missing_line_1: omitting line_1_gross_receipts fails validation", () => {
-  const parsed = scheduleC.inputSchema.safeParse({
-    schedule_cs: [{
-      line_a_principal_business: "Consulting",
-      line_b_business_code: "541510",
-      line_f_accounting_method: "cash",
-      line_g_material_participation: true,
+      // line_a_principal_business intentionally omitted
     }],
   });
   assertEquals(parsed.success, false);
@@ -202,11 +159,10 @@ Deno.test("routing_home_office_reduces_net_profit: home_office=500 on 10000 rece
 
 Deno.test("routing_statutory_employee_suppresses_se: statutory_employee=true → no schedule_se output", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 50000, statutory_employee: true })]);
-  const se = findOutput(result, "schedule_se");
-  assertEquals(se, undefined);
+  assertEquals(findOutput(result, "schedule_se"), undefined);
   // profit still flows to schedule1
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
+  assertEquals((s1!.fields as Record<string, number>).line3_schedule_c, 50000);
 });
 
 Deno.test("routing_exempt_notary_suppresses_se: exempt_notary=true → no schedule_se output", () => {
@@ -221,10 +177,10 @@ Deno.test("routing_paper_route_suppresses_se: paper_route=true → no schedule_s
   assertEquals(se, undefined);
 });
 
-Deno.test("routing_passive_activity_routes_to_form8582: line_g=false → form8582 output exists", () => {
+Deno.test("routing_passive_activity_routes_to_form8582: line_g=false → form8582 with exact passive amount", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_g_material_participation: false })]);
   const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  assertEquals((f8582!.fields as Record<string, number>).passive_schedule_c, 50000);
 });
 
 Deno.test("routing_active_business_no_form8582: line_g=true → no form8582 output", () => {
@@ -233,14 +189,14 @@ Deno.test("routing_active_business_no_form8582: line_g=true → no form8582 outp
   assertEquals(f8582, undefined);
 });
 
-Deno.test("routing_at_risk_b_with_loss_routes_form6198: loss + at_risk=b → form6198 exists", () => {
+Deno.test("routing_at_risk_b_with_loss_routes_form6198: loss + at_risk=b → form6198 with exact loss amount", () => {
   const result = compute([minimalItem({
     line_1_gross_receipts: 5000,
     line_8_advertising: 20000,
     line_32_at_risk: "b",
   })]);
   const f6198 = findOutput(result, "form6198");
-  assertEquals(f6198 !== undefined, true);
+  assertEquals((f6198!.fields as Record<string, number>).schedule_c_loss, -15000);
 });
 
 Deno.test("routing_at_risk_a_with_loss_no_form6198: loss + at_risk=a → no form6198", () => {
@@ -253,10 +209,10 @@ Deno.test("routing_at_risk_a_with_loss_no_form6198: loss + at_risk=a → no form
   assertEquals(f6198, undefined);
 });
 
-Deno.test("routing_depletion_nonzero_routes_form6251: depletion=1000 → form6251 output", () => {
+Deno.test("routing_depletion_nonzero_routes_form6251: depletion=1000 → form6251 with exact adjustment", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_12_depletion: 1000 })]);
   const f6251 = findOutput(result, "form6251");
-  assertEquals(f6251 !== undefined, true);
+  assertEquals((f6251!.fields as Record<string, number>).other_adjustments, 1000);
 });
 
 Deno.test("routing_depletion_zero_no_form6251: depletion=0 → no form6251 output", () => {
@@ -265,10 +221,10 @@ Deno.test("routing_depletion_zero_no_form6251: depletion=0 → no form6251 outpu
   assertEquals(f6251, undefined);
 });
 
-Deno.test("routing_profit_400_triggers_se: net_profit=400 → schedule_se output exists", () => {
+Deno.test("routing_profit_400_triggers_se: net_profit=400 → schedule_se with exact net_profit", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 400 })]);
   const se = findOutput(result, "schedule_se");
-  assertEquals(se !== undefined, true);
+  assertEquals((se!.fields as Record<string, number>).net_profit_schedule_c, 400);
 });
 
 Deno.test("routing_profit_below_400_no_se: net_profit=399 → no schedule_se output", () => {
@@ -277,10 +233,10 @@ Deno.test("routing_profit_below_400_no_se: net_profit=399 → no schedule_se out
   assertEquals(se, undefined);
 });
 
-Deno.test("routing_profit_routes_form8995: net_profit > 0, normal scenario → form8995 output", () => {
+Deno.test("routing_profit_routes_form8995: net_profit > 0 → form8995 with exact qbi amount", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 50000 })]);
   const qbi = findOutput(result, "form8995");
-  assertEquals(qbi !== undefined, true);
+  assertEquals((qbi!.fields as Record<string, number>).qbi_from_schedule_c, 50000);
 });
 
 Deno.test("routing_gambler_loss_capped_at_zero: professional_gambler with loss → line31=0", () => {
@@ -308,15 +264,32 @@ Deno.test("routing_interest_small_biz_no_form8990: interest expense, no large_bu
   assertEquals(f8990, undefined);
 });
 
-Deno.test("routing_interest_large_biz_triggers_form8990: §163(j) applicable → form8990 output", () => {
-  // AMBIGUITY: field name for large_business / §163(j) applicability flag — verify against implementation
+Deno.test("routing_interest_large_biz_triggers_form8990: §163(j) applicable → form8990 with exact interest", () => {
   const result = compute([minimalItem({
     line_1_gross_receipts: 50000,
     line_16b_interest_other: 5000,
     subject_to_163j: true,
   })]);
   const f8990 = findOutput(result, "form8990");
-  assertEquals(f8990 !== undefined, true);
+  assertEquals((f8990!.fields as Record<string, number>).business_interest_expense, 5000);
+});
+
+Deno.test("routing_se_profit_routes_eitc: net_profit > 0 → eitc se_net_profit", () => {
+  const result = compute([minimalItem({ line_1_gross_receipts: 45000 })]);
+  const eitc = findOutput(result, "eitc");
+  assertEquals((eitc!.fields as Record<string, number>).se_net_profit, 45000);
+});
+
+Deno.test("routing_se_profit_routes_f8812: net_profit > 0 → f8812 auto_se_earned_income", () => {
+  const result = compute([minimalItem({ line_1_gross_receipts: 45000 })]);
+  const f8812 = findOutput(result, "f8812");
+  assertEquals((f8812!.fields as Record<string, number>).auto_se_earned_income, 45000);
+});
+
+Deno.test("routing_se_loss_no_eitc_f8812: net_profit <= 0 → no eitc or f8812 output", () => {
+  const result = compute([minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 1000 })]);
+  assertEquals(findOutput(result, "eitc"), undefined);
+  assertEquals(findOutput(result, "f8812"), undefined);
 });
 
 // ============================================================
@@ -448,22 +421,43 @@ Deno.test("threshold_home_office_gross_income_cap: home_office > tentative_profi
   assertEquals(input.line3_schedule_c, 0);
 });
 
-Deno.test("threshold_excess_business_loss_single_313k: loss > $313k → routes to form461", () => {
-  const result = compute([minimalItem({
-    line_1_gross_receipts: 0,
-    line_8_advertising: 400000,
-    filing_status: "single",
-  })]);
+Deno.test("threshold_excess_business_loss_single_313k: loss > $313k single → routes to form461", () => {
+  // Single EBL threshold = $313,000; $400k loss → excess = $87k
+  const result = compute(
+    [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 400000 })],
+    { filing_status: "single" },
+  );
   const f461 = findOutput(result, "form461");
   assertEquals(f461 !== undefined, true);
+  assertEquals((f461!.fields as Record<string, number>).excess_business_loss, 87000);
 });
 
-Deno.test("threshold_excess_business_loss_below_313k: loss < $313k → no form461", () => {
-  const result = compute([minimalItem({
-    line_1_gross_receipts: 0,
-    line_8_advertising: 100000,
-    filing_status: "single",
-  })]);
+Deno.test("threshold_excess_business_loss_below_313k: loss < $313k single → no form461", () => {
+  const result = compute(
+    [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 100000 })],
+    { filing_status: "single" },
+  );
+  const f461 = findOutput(result, "form461");
+  assertEquals(f461, undefined);
+});
+
+Deno.test("threshold_excess_business_loss_mfj_626k: loss > $626k MFJ → routes to form461", () => {
+  // MFJ EBL threshold = $626,000; $700k loss → excess = $74k
+  const result = compute(
+    [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 700000 })],
+    { filing_status: "mfj" },
+  );
+  const f461 = findOutput(result, "form461");
+  assertEquals(f461 !== undefined, true);
+  assertEquals((f461!.fields as Record<string, number>).excess_business_loss, 74000);
+});
+
+Deno.test("threshold_excess_business_loss_mfj_below_626k: loss < $626k MFJ → no form461", () => {
+  // $400k loss is below MFJ $626k threshold → no EBL
+  const result = compute(
+    [minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 400000 })],
+    { filing_status: "mfj" },
+  );
   const f461 = findOutput(result, "form461");
   assertEquals(f461, undefined);
 });

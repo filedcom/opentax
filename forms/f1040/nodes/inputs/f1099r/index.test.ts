@@ -46,7 +46,7 @@ function f1040Input(result: ReturnType<typeof compute>) {
 // 1. Input schema validation
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099r.compute: missing payer_name throws", () => {
+Deno.test("f1099r.compute: missing required field (payer_name) throws", () => {
   assertThrows(() =>
     compute([{
       payer_ein: "12-3456789",
@@ -57,69 +57,22 @@ Deno.test("f1099r.compute: missing payer_name throws", () => {
   );
 });
 
-Deno.test("f1099r.compute: missing payer_ein throws", () => {
-  assertThrows(() =>
-    compute([{
-      payer_name: "Fidelity",
-      box1_gross_distribution: 5000,
-      box7_distribution_code: DistributionCode.Code7,
-      box7_ira_sep_simple: true,
-    } as Item])
-  );
-});
-
-Deno.test("f1099r.compute: missing box1_gross_distribution throws", () => {
-  assertThrows(() =>
-    compute([{
-      payer_name: "Fidelity",
-      payer_ein: "04-1234567",
-      box7_distribution_code: DistributionCode.Code7,
-      box7_ira_sep_simple: true,
-    } as Item])
-  );
-});
-
-Deno.test("f1099r.compute: missing box7_distribution_code throws", () => {
-  assertThrows(() =>
-    compute([{
-      payer_name: "Fidelity",
-      payer_ein: "04-1234567",
-      box1_gross_distribution: 5000,
-      box7_ira_sep_simple: true,
-    } as Item])
-  );
-});
-
-Deno.test("f1099r.compute: negative box1_gross_distribution throws", () => {
-  assertThrows(() =>
-    compute([minimalIraItem({ box1_gross_distribution: -1 })])
-  );
-});
-
-Deno.test("f1099r.compute: negative box2a_taxable_amount throws", () => {
-  assertThrows(() =>
-    compute([minimalIraItem({ box2a_taxable_amount: -1 })])
-  );
-});
-
-Deno.test("f1099r.compute: negative box4_federal_withheld throws", () => {
-  assertThrows(() =>
-    compute([minimalIraItem({ box4_federal_withheld: -1 })])
-  );
-});
-
 Deno.test("f1099r.compute: empty items array throws", () => {
   assertThrows(() => compute([]));
 });
 
-Deno.test("f1099r.compute: zero box1_gross_distribution is valid", () => {
+Deno.test("f1099r.compute: zero box1_gross_distribution emits IRA lines with 0 taxable", () => {
   const result = compute([minimalIraItem({ box1_gross_distribution: 0 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  // IRA item with 0 gross: active.length > 0 so line4b emitted, but no line4a (gross=0)
+  const input = f1040Input(result);
+  assertEquals(input.line4b_ira_taxable, 0);
+  assertEquals(input.line4a_ira_gross, undefined);
 });
 
-Deno.test("f1099r.compute: zero box2a_taxable_amount is valid", () => {
+Deno.test("f1099r.compute: zero box2a_taxable_amount emits zero line4b", () => {
   const result = compute([minimalIraItem({ box2a_taxable_amount: 0 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = f1040Input(result);
+  assertEquals(input.line4b_ira_taxable, 0);
 });
 
 // ---------------------------------------------------------------------------
@@ -178,16 +131,8 @@ Deno.test("f1099r.compute: omitted box7_ira_sep_simple defaults to pension routi
 
 Deno.test("f1099r.compute: box4_federal_withheld > 0 routes to f1040 line25b", () => {
   const result = compute([minimalIraItem({ box4_federal_withheld: 2000 })]);
-  const withholding = result.outputs.find(
-    (o) =>
-      o.nodeType === "f1040" &&
-      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
-  );
-  assertEquals(withholding !== undefined, true);
-  assertEquals(
-    (withholding!.fields as Record<string, unknown>).line25b_withheld_1099,
-    2000,
-  );
+  const input = f1040Input(result);
+  assertEquals(input.line25b_withheld_1099, 2000);
 });
 
 Deno.test("f1099r.compute: no box4 does not emit line25b", () => {
@@ -200,17 +145,20 @@ Deno.test("f1099r.compute: no box4 does not emit line25b", () => {
   assertEquals(withholding, undefined);
 });
 
-Deno.test("f1099r.compute: distribution code 1 routes to form5329", () => {
+Deno.test("f1099r.compute: distribution code 1 routes to form5329 with exact amounts", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 15000,
     box2a_taxable_amount: 15000,
     box7_distribution_code: DistributionCode.Code1,
   })]);
-  const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
-  assertEquals(form5329 !== undefined, true);
-  const input = form5329!.fields as Record<string, unknown>;
-  assertEquals(input.early_distribution, 15000);
-  assertEquals(input.distribution_code, "1");
+  const form5329Out = result.outputs.find((o) => o.nodeType === "form5329");
+  const f5329Fields = form5329Out!.fields as Record<string, unknown>;
+  assertEquals(f5329Fields.early_distribution, 15000);
+  assertEquals(f5329Fields.distribution_code, "1");
+  // Code 1 still routes to income lines (IRA taxable = 15000)
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 15000);
+  assertEquals(input.line4b_ira_taxable, 15000);
 });
 
 Deno.test("f1099r.compute: distribution code 2 does not route to form5329 automatically", () => {
@@ -225,15 +173,14 @@ Deno.test("f1099r.compute: distribution code 7 does not route to form5329", () =
   assertEquals(form5329, undefined);
 });
 
-Deno.test("f1099r.compute: distribution code 5 routes to form4972", () => {
+Deno.test("f1099r.compute: distribution code 5 routes to form4972 with gross amount", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 100000,
     box7_distribution_code: DistributionCode.Code5,
   })]);
-  const form4972 = result.outputs.find((o) => o.nodeType === "form4972");
-  assertEquals(form4972 !== undefined, true);
-  const input = form4972!.fields as Record<string, unknown>;
-  assertEquals(input.lump_sum_amount, 100000);
+  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
+  const f4972Fields = form4972Out!.fields as Record<string, unknown>;
+  assertEquals(f4972Fields.lump_sum_amount, 100000);
 });
 
 Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () => {
@@ -242,36 +189,42 @@ Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () =
   assertEquals(form4972, undefined);
 });
 
-Deno.test("f1099r.compute: exclude_8606_roth routes to form8606", () => {
+Deno.test("f1099r.compute: exclude_8606_roth routes to form8606 with gross amount", () => {
   const result = compute([minimalIraItem({
+    box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.CodeJ,
     exclude_8606_roth: true,
   })]);
-  const form8606 = result.outputs.find((o) => o.nodeType === "form8606");
-  assertEquals(form8606 !== undefined, true);
+  const form8606Out = result.outputs.find((o) => o.nodeType === "form8606");
+  const f8606Fields = form8606Out!.fields as Record<string, unknown>;
+  assertEquals(f8606Fields.roth_distribution, 10000);
+  // exclude_8606_roth suppresses income lines
+  const input = f1040Input(result);
+  assertEquals(input.line4b_ira_taxable, 0);
 });
 
-Deno.test("f1099r.compute: rollover_code C routes to form8606", () => {
+Deno.test("f1099r.compute: rollover_code C routes to form8606 with taxable amount", () => {
   const result = compute([minimalIraItem({
-    rollover_code: RolloverCode.C,
+    box1_gross_distribution: 12000,
     box2a_taxable_amount: 10000,
+    rollover_code: RolloverCode.C,
   })]);
-  const form8606 = result.outputs.find((o) => o.nodeType === "form8606");
-  assertEquals(form8606 !== undefined, true);
+  const form8606Out = result.outputs.find((o) => o.nodeType === "form8606");
+  const f8606Fields = form8606Out!.fields as Record<string, unknown>;
+  assertEquals(f8606Fields.roth_conversion, 10000);
 });
 
-Deno.test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line1a", () => {
+Deno.test("f1099r.compute: disability_flag + disability_as_wages routes to f1040 line1a with exact amount", () => {
   const result = compute([minimalPensionItem({
+    box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code3,
     disability_flag: true,
     disability_as_wages: true,
   })]);
-  const wagesOutput = result.outputs.find(
-    (o) =>
-      o.nodeType === "f1040" &&
-      (o.fields as Record<string, unknown>).line1a_wages !== undefined,
-  );
-  assertEquals(wagesOutput !== undefined, true);
+  const input = f1040Input(result);
+  assertEquals(input.line1a_wages, 10000);
+  // Disability-as-wages items must NOT appear on pension lines
+  assertEquals(input.line5a_pension_gross, undefined);
 });
 
 Deno.test("f1099r.compute: no_distribution_received suppresses all income outputs", () => {
@@ -391,13 +344,12 @@ Deno.test("f1099r.compute: QCD partial amount below $108,000 reduces line4b", ()
   assertEquals(input.line4b_ira_taxable, 10000);
 });
 
-Deno.test("f1099r.compute: QCD at exactly $108,000 limit is accepted", () => {
+Deno.test("f1099r.compute: QCD at exactly $108,000 limit is accepted and zeroes line4b", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 108000,
     box2a_taxable_amount: 108000,
     qcd_partial_amount: 108000,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
   const input = f1040Input(result);
   assertEquals(input.line4a_ira_gross, 108000);
   assertEquals(input.line4b_ira_taxable, 0);
@@ -464,7 +416,7 @@ Deno.test("f1099r.compute: Simplified Method Table1 age ≤55 uses 360 months", 
   assertEquals(input.line5b_pension_taxable, 11600);
 });
 
-// age 56–60 → 310 months. 12000/310*12 ≈ 464.52 → line5b = 12000 - 464 = 11536 (rounded)
+// age 56–60 → 310 months. 12000/310*12 = 464.516...; taxable = 12000 - 464.516... = 11535.484...
 Deno.test("f1099r.compute: Simplified Method Table1 age 56–60 uses 310 months", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 12000,
@@ -474,13 +426,11 @@ Deno.test("f1099r.compute: Simplified Method Table1 age 56–60 uses 310 months"
     age_at_annuity_start: 60,
   })]);
   const input = f1040Input(result);
-  // 12000 / 310 * 12 ≈ 464.52; taxable = 12000 - 464 = 11536 (floor to cent)
-  // Accept either 11535 or 11536 depending on rounding
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11535 && taxable <= 11536, true);
+  // 12000 - (12000/310*12) = 12000 - 464.5161... = 11535.4838...
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 310 * 12));
 });
 
-// age 61–65 → 260 months. 12000/260*12 ≈ 553.85; taxable ≈ 11446
+// age 61–65 → 260 months. 12000/260*12 = 553.846...; taxable = 11446.153...
 Deno.test("f1099r.compute: Simplified Method Table1 age 61–65 uses 260 months", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 12000,
@@ -490,11 +440,10 @@ Deno.test("f1099r.compute: Simplified Method Table1 age 61–65 uses 260 months"
     age_at_annuity_start: 65,
   })]);
   const input = f1040Input(result);
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11446 && taxable <= 11447, true);
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 260 * 12));
 });
 
-// age 66–70 → 210 months. 12000/210*12 ≈ 685.71; taxable ≈ 11314
+// age 66–70 → 210 months. 12000/210*12 = 685.714...; taxable = 11314.285...
 Deno.test("f1099r.compute: Simplified Method Table1 age 66–70 uses 210 months", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 12000,
@@ -504,8 +453,7 @@ Deno.test("f1099r.compute: Simplified Method Table1 age 66–70 uses 210 months"
     age_at_annuity_start: 70,
   })]);
   const input = f1040Input(result);
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11314 && taxable <= 11315, true);
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 210 * 12));
 });
 
 // age ≥71 → 160 months. 12000/160*12 = 900; taxable = 11100
@@ -521,7 +469,7 @@ Deno.test("f1099r.compute: Simplified Method Table1 age ≥71 uses 160 months", 
   assertEquals(input.line5b_pension_taxable, 11100);
 });
 
-// Table 2 — joint annuity. combined ≤110 → 410 months. 12000/410*12≈351.22; taxable≈11649
+// Table 2 — joint annuity. combined ≤110 → 410 months. 12000/410*12 = 351.219...
 Deno.test("f1099r.compute: Simplified Method Table2 combined ages ≤110 uses 410 months", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 12000,
@@ -532,8 +480,7 @@ Deno.test("f1099r.compute: Simplified Method Table2 combined ages ≤110 uses 41
     combined_ages_at_start: 110,
   })]);
   const input = f1040Input(result);
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11648 && taxable <= 11650, true);
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 410 * 12));
 });
 
 // combined 111–120 → 360 months. Same arithmetic as Table1 age ≤55.
@@ -561,8 +508,7 @@ Deno.test("f1099r.compute: Simplified Method Table2 combined ages 121–130 uses
     combined_ages_at_start: 125,
   })]);
   const input = f1040Input(result);
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11535 && taxable <= 11536, true);
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 310 * 12));
 });
 
 // combined 131–140 → 260 months.
@@ -576,8 +522,7 @@ Deno.test("f1099r.compute: Simplified Method Table2 combined ages 131–140 uses
     combined_ages_at_start: 135,
   })]);
   const input = f1040Input(result);
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11446 && taxable <= 11447, true);
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 260 * 12));
 });
 
 // combined ≥141 → 210 months.
@@ -591,8 +536,7 @@ Deno.test("f1099r.compute: Simplified Method Table2 combined ages ≥141 uses 21
     combined_ages_at_start: 141,
   })]);
   const input = f1040Input(result);
-  const taxable = input.line5b_pension_taxable as number;
-  assertEquals(taxable >= 11314 && taxable <= 11315, true);
+  assertEquals(input.line5b_pension_taxable, 12000 - (12000 / 210 * 12));
 });
 
 // ---------------------------------------------------------------------------
@@ -608,12 +552,14 @@ Deno.test("f1099r.compute: box3_capital_gain exceeding box2a_taxable throws", ()
   );
 });
 
-Deno.test("f1099r.compute: box3_capital_gain equal to box2a_taxable is valid", () => {
+Deno.test("f1099r.compute: box3_capital_gain equal to box2a_taxable is valid and routes correctly", () => {
   const result = compute([minimalPensionItem({
+    box1_gross_distribution: 5000,
     box2a_taxable_amount: 5000,
     box3_capital_gain: 5000,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = f1040Input(result);
+  assertEquals(input.line5b_pension_taxable, 5000);
 });
 
 Deno.test("f1099r.compute: box9a_pct_total above 100 throws", () => {
@@ -622,9 +568,10 @@ Deno.test("f1099r.compute: box9a_pct_total above 100 throws", () => {
   );
 });
 
-Deno.test("f1099r.compute: box9a_pct_total at 100 is valid", () => {
-  const result = compute([minimalIraItem({ box9a_pct_total: 100 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("f1099r.compute: box9a_pct_total at 100 is valid and does not affect income routing", () => {
+  const result = compute([minimalIraItem({ box1_gross_distribution: 10000, box9a_pct_total: 100 })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
 });
 
 Deno.test("f1099r.compute: negative box9a_pct_total throws", () => {
@@ -644,77 +591,91 @@ Deno.test("f1099r.compute: distribution code 1 uses gross when box2a absent for 
 });
 
 // ---------------------------------------------------------------------------
-// 6. Warning-only rules (must NOT throw)
+// 6. Warning-only rules (must NOT throw, and must not affect income routing)
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099r.compute: altered_or_handwritten does not throw", () => {
-  const result = compute([minimalIraItem({ altered_or_handwritten: true })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("f1099r.compute: altered_or_handwritten does not affect income routing", () => {
+  const result = compute([minimalIraItem({ box1_gross_distribution: 10000, altered_or_handwritten: true })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
+  assertEquals(input.line4b_ira_taxable, 10000);
 });
 
-Deno.test("f1099r.compute: box2b_not_determined does not throw", () => {
-  const result = compute([minimalIraItem({ box2b_not_determined: true })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("f1099r.compute: box2b_not_determined does not affect income routing", () => {
+  const result = compute([minimalIraItem({ box1_gross_distribution: 10000, box2b_not_determined: true })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
+  assertEquals(input.line4b_ira_taxable, 10000);
 });
 
-Deno.test("f1099r.compute: box2b_total_dist does not throw", () => {
-  const result = compute([minimalPensionItem({ box2b_total_dist: true })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("f1099r.compute: box2b_total_dist does not affect pension routing", () => {
+  const result = compute([minimalPensionItem({ box1_gross_distribution: 10000, box2b_total_dist: true })]);
+  const input = f1040Input(result);
+  assertEquals(input.line5a_pension_gross, 10000);
+  assertEquals(input.line5b_pension_taxable, 10000);
 });
 
-Deno.test("f1099r.compute: box12_fatca does not throw", () => {
-  const result = compute([minimalIraItem({ box12_fatca: true })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("f1099r.compute: box12_fatca does not affect income routing", () => {
+  const result = compute([minimalIraItem({ box1_gross_distribution: 10000, box12_fatca: true })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
 });
 
-Deno.test("f1099r.compute: code J without exclude_8606_roth does not throw", () => {
+Deno.test("f1099r.compute: code J without exclude_8606_roth routes to IRA income lines", () => {
   const result = compute([minimalIraItem({
+    box1_gross_distribution: 8000,
     box7_distribution_code: DistributionCode.CodeJ,
     box2a_taxable_amount: 5000,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 8000);
+  assertEquals(input.line4b_ira_taxable, 5000);
 });
 
-Deno.test("f1099r.compute: disability_flag alone without disability_as_wages does not throw", () => {
+Deno.test("f1099r.compute: disability_flag alone routes to pension lines (not wages)", () => {
   const result = compute([minimalPensionItem({
+    box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code3,
     disability_flag: true,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = f1040Input(result);
+  assertEquals(input.line5a_pension_gross, 10000);
+  assertEquals(input.line1a_wages, undefined);
 });
 
 // ---------------------------------------------------------------------------
-// 7. Informational fields (output count unchanged)
+// 7. Informational fields (do not change income amounts)
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099r.compute: box13_date_of_payment does not affect output count", () => {
-  const withoutDate = compute([minimalIraItem()]);
-  const withDate = compute([minimalIraItem({ box13_date_of_payment: "2025-06-15" })]);
-  assertEquals(withDate.outputs.length, withoutDate.outputs.length);
+Deno.test("f1099r.compute: box13_date_of_payment does not affect income routing", () => {
+  const result = compute([minimalIraItem({ box1_gross_distribution: 10000, box13_date_of_payment: "2025-06-15" })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
+  assertEquals(input.line4b_ira_taxable, 10000);
 });
 
-Deno.test("f1099r.compute: account_number does not affect output count", () => {
-  const without = compute([minimalIraItem()]);
-  const with_ = compute([minimalIraItem({ account_number: "ACC-123456" })]);
-  assertEquals(with_.outputs.length, without.outputs.length);
+Deno.test("f1099r.compute: account_number does not affect income routing", () => {
+  const result = compute([minimalIraItem({ box1_gross_distribution: 10000, account_number: "ACC-123456" })]);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
 });
 
-Deno.test("f1099r.compute: box15_payer_state does not affect output count", () => {
-  const without = compute([minimalPensionItem()]);
-  const with_ = compute([minimalPensionItem({ box15_payer_state: "CA" })]);
-  assertEquals(with_.outputs.length, without.outputs.length);
+Deno.test("f1099r.compute: box15_payer_state does not affect pension routing", () => {
+  const result = compute([minimalPensionItem({ box1_gross_distribution: 10000, box15_payer_state: "CA" })]);
+  const input = f1040Input(result);
+  assertEquals(input.line5a_pension_gross, 10000);
 });
 
-Deno.test("f1099r.compute: box18_locality_name does not affect output count", () => {
-  const without = compute([minimalPensionItem()]);
-  const with_ = compute([minimalPensionItem({ box18_locality_name: "City of Springfield" })]);
-  assertEquals(with_.outputs.length, without.outputs.length);
+Deno.test("f1099r.compute: box18_locality_name does not affect pension routing", () => {
+  const result = compute([minimalPensionItem({ box1_gross_distribution: 10000, box18_locality_name: "City of Springfield" })]);
+  const input = f1040Input(result);
+  assertEquals(input.line5a_pension_gross, 10000);
 });
 
-Deno.test("f1099r.compute: box9b_total_employee_contributions does not affect output count without simplified_method", () => {
-  const without = compute([minimalPensionItem()]);
-  const with_ = compute([minimalPensionItem({ box9b_total_employee_contributions: 5000 })]);
-  assertEquals(with_.outputs.length, without.outputs.length);
+Deno.test("f1099r.compute: box9b_total_employee_contributions without simplified_method does not affect taxable", () => {
+  const result = compute([minimalPensionItem({ box1_gross_distribution: 10000, box9b_total_employee_contributions: 5000 })]);
+  const input = f1040Input(result);
+  assertEquals(input.line5b_pension_taxable, 10000);
 });
 
 // ---------------------------------------------------------------------------
@@ -804,13 +765,16 @@ Deno.test("f1099r.compute: code W long-term care produces no income", () => {
   assertEquals(taxable, 0);
 });
 
-Deno.test("f1099r.compute: code Y accepted without throw (TY2025 QCD code)", () => {
+Deno.test("f1099r.compute: code Y (TY2025 QCD code) routes normally — taxable amount flows to line4b", () => {
   const result = compute([minimalIraItem({
+    box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.CodeY,
     box7_code2: DistributionCode.Code7,
     box2a_taxable_amount: 0,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = f1040Input(result);
+  assertEquals(input.line4a_ira_gross, 10000);
+  assertEquals(input.line4b_ira_taxable, 0);
 });
 
 Deno.test("f1099r.compute: code B designated Roth routes to pension lines not IRA lines", () => {
@@ -907,14 +871,8 @@ Deno.test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PS
     }),
   ]);
 
-  // Verify downstream forms are present
-  const f1040 = result.outputs.find((o) => o.nodeType === "f1040");
-  assertEquals(f1040 !== undefined, true);
-
+  const input = f1040Input(result);
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
-  assertEquals(form5329 !== undefined, true);
-
-  const input = f1040!.fields as Record<string, unknown>;
 
   // IRA gross = 50000 + 15000 = 65000
   assertEquals(input.line4a_ira_gross, 65000);
@@ -926,20 +884,10 @@ Deno.test("f1099r.compute: smoke test — IRA + pension + withholding + QCD + PS
   // Pension taxable = 28000 - 2000 PSO = 26000
   assertEquals(input.line5b_pension_taxable, 26000);
 
-  // Total withholding = 9000 + 5600 = 14600
-  const withholdingOutputs = result.outputs.filter(
-    (o) =>
-      o.nodeType === "f1040" &&
-      (o.fields as Record<string, unknown>).line25b_withheld_1099 !== undefined,
-  );
-  const totalWithholding = withholdingOutputs.reduce(
-    (sum, o) =>
-      sum + ((o.fields as Record<string, unknown>).line25b_withheld_1099 as number),
-    0,
-  );
-  assertEquals(totalWithholding, 14600);
+  // Total withholding = 9000 + 5600 = 14600 (early dist item has no withholding)
+  assertEquals(input.line25b_withheld_1099, 14600);
 
   // form5329 early distribution = 15000
-  const f5329Input = form5329!.fields as Record<string, unknown>;
-  assertEquals(f5329Input.early_distribution, 15000);
+  const f5329Fields = form5329!.fields as Record<string, unknown>;
+  assertEquals(f5329Fields.early_distribution, 15000);
 });

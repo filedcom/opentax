@@ -1,4 +1,4 @@
-import { assertEquals, assertAlmostEquals } from "jsr:@std/assert";
+import { assertEquals, assertAlmostEquals, assertThrows } from "jsr:@std/assert";
 import { f4136 } from "./index.ts";
 
 // Singleton harness
@@ -167,13 +167,5 @@ Deno.test("f4136 boundary: very large gallons compute correctly", () => {
 // ── Schema validation ─────────────────────────────────────────────────────────
 
 Deno.test("f4136 schema: negative gallons throws", () => {
-  try {
-    compute({ gasoline_offhighway_gallons: -1 });
-    throw new Error("Should have thrown");
-  } catch (e) {
-    if (e instanceof Error && e.message === "Should have thrown") {
-      throw e;
-    }
-    // ZodError expected
-  }
+  assertThrows(() => compute({ gasoline_offhighway_gallons: -1 }), Error);
 });

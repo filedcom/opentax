@@ -110,7 +110,8 @@ Deno.test("depreciation recapture + installment income — both outputs", () => 
 
 // ─── Capital Asset vs §1231 Routing ──────────────────────────────────────────
 
-Deno.test("capital asset (default) — long-term routes to schedule_d line_11", () => {
+Deno.test("capital asset (default) — long-term routes to schedule_d line_11 with exact income", () => {
+  // GPR = 50,000 / 100,000 = 50%; income = 50% × 20,000 = $10,000
   const result = compute({
     selling_price: 100_000,
     gross_profit: 50_000,
@@ -118,8 +119,7 @@ Deno.test("capital asset (default) — long-term routes to schedule_d line_11", 
     payments_received: 20_000,
   });
   const sd = findOutput(result, "schedule_d");
-  assertEquals(sd !== undefined, true);
-  assertEquals(sd?.nodeType, "schedule_d");
+  assertEquals(sd?.fields.line_11_form2439, 10_000);
 });
 
 Deno.test("capital asset short-term — routes to schedule_d short-term proceeds", () => {

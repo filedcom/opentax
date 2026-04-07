@@ -22,7 +22,7 @@ Deno.test("validation: rejects invalid filing_status", () => {
 Deno.test("validation: accepts valid filing_status values", () => {
   for (const status of ["single", "mfj", "mfs", "hoh", "qss"]) {
     const result = compute({ excess_business_loss: 50_000, filing_status: status });
-    assertEquals(result.outputs.length > 0, true);
+    assertEquals(result.outputs.length, 1);
   }
 });
 
@@ -108,9 +108,7 @@ Deno.test("nol_carryforward: excess business loss treated as positive income on 
   // The value must be positive (increases taxable income in current year as add-back)
   const result = compute({ excess_business_loss: 313_001 });
   const s1 = findOutput(result, "schedule1");
-  const amount = s1?.fields.line8p_excess_business_loss as number;
-  assertEquals(amount > 0, true);
-  assertEquals(amount, 313_001);
+  assertEquals(s1?.fields.line8p_excess_business_loss, 313_001);
 });
 
 // ─── Edge Cases ──────────────────────────────────────────────────────────────
@@ -135,6 +133,15 @@ Deno.test("edge_case: fractional dollar amounts", () => {
   const result = compute({ excess_business_loss: 1_234.56 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line8p_excess_business_loss, 1_234.56);
+});
+
+// ─── Spec scenario: single filer excess loss ─────────────────────────────────
+
+Deno.test("spec_scenario: single filer, total_losses=400k, gains=50k, net=350k > 289k → excess=61000 to NOL", () => {
+  // The threshold enforcement and net computation happens upstream.
+  // form461 receives the pre-computed excess ($350k - $289k = $61k) and routes it.
+  const result = compute({ excess_business_loss: 61_000, filing_status: "single" });
+  assertEquals(findOutput(result, "schedule1")?.fields.line8p_excess_business_loss, 61_000);
 });
 
 // ─── Smoke Test ───────────────────────────────────────────────────────────────

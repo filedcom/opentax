@@ -278,8 +278,8 @@ Deno.test("routes to schedule_c when deduction > 0", () => {
     gross_income_limit: 10000,
   });
   const out = findOutput(result, "schedule_c");
-  assertEquals(out !== undefined, true);
-  assertEquals(typeof out?.fields.line_30_home_office, "number");
+  // 50% of $2000 = $1000
+  assertEquals(out?.fields.line_30_home_office, 1000);
 });
 
 Deno.test("no output when computed deduction is zero", () => {
@@ -361,7 +361,6 @@ Deno.test("smoke: comprehensive scenario with all major fields", () => {
   // total = 2300 + 935 = 3235
 
   const out = findOutput(result, "schedule_c");
-  assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line_30_home_office, 3235);
   assertEquals(result.outputs.length, 1);
 });

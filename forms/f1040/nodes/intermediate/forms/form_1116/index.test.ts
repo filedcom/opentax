@@ -152,6 +152,8 @@ Deno.test("fraction cap: foreign_income >= total_income → fraction = 1.0, cred
 // ─── Output routing to schedule3 ─────────────────────────────────────────────
 
 Deno.test("routing: credit routes to schedule3 line1_foreign_tax_credit", () => {
+  // FTC limit = 4000 × (5000 / 50000) = 400
+  // credit = min(300, 400) = 300 (full credit, taxes < limit)
   const result = compute({
     foreign_tax_paid: 300,
     foreign_income: 5000,
@@ -162,8 +164,7 @@ Deno.test("routing: credit routes to schedule3 line1_foreign_tax_credit", () => 
   });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "schedule3");
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(typeof input.line1_foreign_tax_credit, "number");
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 300);
 });
 
 // ─── Validation ───────────────────────────────────────────────────────────────

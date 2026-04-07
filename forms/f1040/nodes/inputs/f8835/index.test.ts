@@ -75,8 +75,15 @@ Deno.test("f8835.compute: throws when kwh_sold > kwh_produced", () => {
 });
 
 Deno.test("f8835.compute: kwh_sold equals kwh_produced — does not throw", () => {
-  const result = compute([minimalItem({ kwh_produced: 1_000_000, kwh_sold: 1_000_000 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const result = compute([minimalItem({
+    kwh_produced: 1_000_000,
+    kwh_sold: 1_000_000,
+    meets_prevailing_wage: true,
+    meets_apprenticeship: true,
+  })]);
+  // Wind full rate: 1,000,000 × $0.028 = $28,000
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6z_general_business_credit, 28_000);
 });
 
 // =============================================================================
@@ -243,12 +250,13 @@ Deno.test("f8835.compute: one facility with zero kWh and one with kWh — only o
 // =============================================================================
 
 Deno.test("f8835.compute: routes to schedule3 line6z_general_business_credit", () => {
+  // Wind full rate: 1,000,000 × $0.028 = $28,000
   const result = compute([minimalItem({
     meets_prevailing_wage: true,
     meets_apprenticeship: true,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6z_general_business_credit, 28_000);
 });
 
 Deno.test("f8835.compute: does not route to schedule2", () => {

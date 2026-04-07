@@ -147,6 +147,5 @@ Deno.test("f14039.compute: smoke test — all fields populated returns empty out
     police_report_number: "2025-RPT-98765",
     date_of_incident: "2025-02-14",
   });
-  assertEquals(Array.isArray(result.outputs), true);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });

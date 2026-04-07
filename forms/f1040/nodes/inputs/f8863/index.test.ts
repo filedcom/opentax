@@ -121,26 +121,26 @@ Deno.test("aoc_zero_expenses_no_output: AOC student with zero expenses produces 
 });
 
 Deno.test("aoc_routes_refundable_to_f1040: AOC with expenses routes refundable portion to f1040", () => {
+  // $4,000 expenses → $2,500 tentative → refundable 40% = $1,000
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
   ]);
   const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
-    (f1040Out!.fields as Record<string, number>).line29_refundable_aoc > 0,
-    true,
+    Math.round((f1040Out!.fields as Record<string, number>).line29_refundable_aoc),
+    1000,
   );
 });
 
 Deno.test("aoc_routes_nonrefundable_to_schedule3: AOC with expenses routes nonrefundable portion to schedule3", () => {
+  // $4,000 expenses → $2,500 tentative → nonrefundable 60% = $1,500
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
   ]);
   const sch3Out = findOutput(result, "schedule3");
-  assertEquals(sch3Out !== undefined, true);
   assertEquals(
-    (sch3Out!.fields as Record<string, number>).line3_education_credit > 0,
-    true,
+    Math.round((sch3Out!.fields as Record<string, number>).line3_education_credit),
+    1500,
   );
 });
 
@@ -219,14 +219,14 @@ Deno.test("llc_zero_expenses_no_output: LLC student with zero expenses produces 
 });
 
 Deno.test("llc_routes_to_schedule3: LLC with expenses routes to schedule3 line3_education_credit", () => {
+  // $5,000 expenses → 20% × $5,000 = $1,000 credit
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 5000, filer_magi: 0 }),
   ]);
   const sch3Out = findOutput(result, "schedule3");
-  assertEquals(sch3Out !== undefined, true);
   assertEquals(
-    (sch3Out!.fields as Record<string, number>).line3_education_credit > 0,
-    true,
+    Math.round((sch3Out!.fields as Record<string, number>).line3_education_credit),
+    1000,
   );
 });
 
@@ -234,8 +234,7 @@ Deno.test("llc_does_not_route_to_f1040_refundable: LLC credit never produces ref
   const result = compute([
     minimalLlcItem({ llc_adjusted_expenses: 10000, filer_magi: 0 }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out === undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
 Deno.test("llc_max_credit_2000: $10k expenses produce $2,000 credit (20% × $10k)", () => {
@@ -283,11 +282,9 @@ Deno.test("aoc_aggregates_across_students: two AOC students sum their credits", 
       filer_magi: 0,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     2000,
   );
@@ -350,10 +347,18 @@ Deno.test("aoc_and_llc_same_return_different_students: both credits appear on sa
       filer_magi: 0,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  const sch3Out = findOutput(result, "schedule3");
-  assertEquals(f1040Out !== undefined, true); // refundable AOC
-  assertEquals(sch3Out !== undefined, true); // nonrefundable AOC + LLC
+  // refundable AOC: $4,000 expenses → $2,500 → 40% = $1,000 refundable
+  assertEquals(
+    Math.round((findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc),
+    1000,
+  );
+  // Engine emits separate schedule3 outputs: AOC nonrefundable $1,500 + LLC $1,000
+  const sch3Outputs = result.outputs.filter((o) => o.nodeType === "schedule3");
+  const sch3Total = sch3Outputs.reduce(
+    (sum, o) => sum + (o.fields as Record<string, number>).line3_education_credit,
+    0,
+  );
+  assertEquals(Math.round(sch3Total), 2500);
 });
 
 // ============================================================
@@ -364,11 +369,9 @@ Deno.test("aoc_magi_zero_full_credit: MAGI $0 single yields full $1,000 refundab
   const result = compute([
     minimalAocItem({ aoc_adjusted_expenses: 4000, filer_magi: 0 }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
@@ -382,11 +385,9 @@ Deno.test("aoc_magi_at_lower_bound_single_80k: MAGI exactly $80k single yields f
       filing_status: FilingStatus.Single,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
@@ -394,7 +395,7 @@ Deno.test("aoc_magi_at_lower_bound_single_80k: MAGI exactly $80k single yields f
 
 Deno.test("aoc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% credit ($500 refundable)", () => {
   // fraction = (85000 − 80000) / 10000 = 0.5 → allowed = $2,500 × 0.5 = $1,250
-  // refundable = 40% × $1,250 = $500
+  // refundable = 40% × $1,250 = $500; nonrefundable = 60% × $1,250 = $750
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -402,13 +403,17 @@ Deno.test("aoc_magi_mid_phaseout_single_85k: MAGI $85k single yields 50% credit 
       filing_status: FilingStatus.Single,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     500,
+  );
+  assertEquals(
+    Math.round(
+      (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
+    ),
+    750,
   );
 });
 
@@ -442,18 +447,16 @@ Deno.test("aoc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full 
       filing_status: FilingStatus.MFJ,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
   );
 });
 
 Deno.test("aoc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields 50% credit ($500 refundable)", () => {
-  // fraction = (170000 − 160000) / 20000 = 0.5 → allowed = $1,250 → refundable = $500
+  // fraction = (170000 − 160000) / 20000 = 0.5 → allowed = $1,250 → refundable = $500; nonrefundable = $750
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -461,13 +464,17 @@ Deno.test("aoc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields 50% credit ($50
       filing_status: FilingStatus.MFJ,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     500,
+  );
+  assertEquals(
+    Math.round(
+      (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
+    ),
+    750,
   );
 });
 
@@ -577,10 +584,8 @@ Deno.test("llc_magi_mfj_at_lower_bound_160k: MAGI exactly $160k MFJ yields full 
       filing_status: FilingStatus.MFJ,
     }),
   ]);
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3 !== undefined, true);
   assertEquals(
-    (sch3!.fields as Record<string, number>).line3_education_credit,
+    (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
     2000,
   );
 });
@@ -594,10 +599,8 @@ Deno.test("llc_magi_mfj_mid_phaseout_170k: MAGI $170k MFJ yields $1,000 LLC cred
       filing_status: FilingStatus.MFJ,
     }),
   ]);
-  const sch3 = findOutput(result, "schedule3");
-  assertEquals(sch3 !== undefined, true);
   assertEquals(
-    (sch3!.fields as Record<string, number>).line3_education_credit,
+    (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
     1000,
   );
 });
@@ -614,7 +617,7 @@ Deno.test("aoc_gate_prior_4_years_blocks_aoc_refundable: aoc_claimed_4_prior_yea
       filer_magi: 0,
     }),
   ]);
-  assertEquals(findOutput(result, "f1040") === undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
 Deno.test("aoc_gate_not_half_time_blocks_aoc_refundable: enrolled_half_time=false → no f1040 output", () => {
@@ -625,7 +628,7 @@ Deno.test("aoc_gate_not_half_time_blocks_aoc_refundable: enrolled_half_time=fals
       filer_magi: 0,
     }),
   ]);
-  assertEquals(findOutput(result, "f1040") === undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
 Deno.test("aoc_gate_completed_4_years_blocks_aoc_refundable: completed_4_years_postsec=true → no f1040 output", () => {
@@ -636,7 +639,7 @@ Deno.test("aoc_gate_completed_4_years_blocks_aoc_refundable: completed_4_years_p
       filer_magi: 0,
     }),
   ]);
-  assertEquals(findOutput(result, "f1040") === undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
 Deno.test("aoc_gate_felony_blocks_aoc_refundable: felony_drug_conviction=true → no f1040 output", () => {
@@ -647,10 +650,10 @@ Deno.test("aoc_gate_felony_blocks_aoc_refundable: felony_drug_conviction=true �
       filer_magi: 0,
     }),
   ]);
-  assertEquals(findOutput(result, "f1040") === undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("aoc_all_gates_pass_allows_refundable: all eligibility flags correct → f1040 refundable credit present", () => {
+Deno.test("aoc_all_gates_pass_allows_refundable: all eligibility flags correct → f1040 refundable $1,000", () => {
   const result = compute([
     minimalAocItem({
       aoc_claimed_4_prior_years: false,
@@ -661,23 +664,29 @@ Deno.test("aoc_all_gates_pass_allows_refundable: all eligibility flags correct �
       filer_magi: 0,
     }),
   ]);
-  assertEquals(findOutput(result, "f1040") !== undefined, true);
+  assertEquals(
+    Math.round(
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
+    ),
+    1000,
+  );
 });
 
-Deno.test("aoc_gate_felony_does_not_block_llc_path: felony disqualifies AOC but compute does not throw", () => {
-  // Felony only blocks AOC; LLC is not affected. Engine should not crash.
+Deno.test("aoc_gate_felony_does_not_block_llc_path: felony disqualifies AOC but LLC path still produces credit", () => {
+  // Felony blocks AOC; LLC expenses on same item still produce a credit via llc path
+  // $5,000 LLC expenses → 20% × $5,000 = $1,000 credit; no f1040 refundable output
+  const result = compute([
+    minimalAocItem({
+      aoc_adjusted_expenses: 4000,
+      felony_drug_conviction: true,
+      llc_adjusted_expenses: 5000,
+      filer_magi: 0,
+    }),
+  ]);
+  assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(
-    Array.isArray(
-      compute([
-        minimalAocItem({
-          aoc_adjusted_expenses: 4000,
-          felony_drug_conviction: true,
-          llc_adjusted_expenses: 5000,
-          filer_magi: 0,
-        }),
-      ]).outputs,
-    ),
-    true,
+    Math.round((findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit),
+    1000,
   );
 });
 
@@ -694,13 +703,11 @@ Deno.test("kiddie_rule_true_aoc_fully_nonrefundable: entire AOC goes to schedule
     }),
   ]);
   // No refundable portion on f1040
-  assertEquals(findOutput(result, "f1040") === undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
   // Entire $2,500 credit is nonrefundable on schedule3
-  const sch3Out = findOutput(result, "schedule3");
-  assertEquals(sch3Out !== undefined, true);
   assertEquals(
     Math.round(
-      (sch3Out!.fields as Record<string, number>).line3_education_credit,
+      (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
     ),
     2500,
   );
@@ -714,13 +721,17 @@ Deno.test("kiddie_rule_false_allows_refundable: taxpayer_under_24_no_refundable_
       taxpayer_under_24_no_refundable_aoc: false,
     }),
   ]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     1000,
+  );
+  assertEquals(
+    Math.round(
+      (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
+    ),
+    1500,
   );
 });
 
@@ -866,6 +877,8 @@ Deno.test("edge_hoh_uses_single_thresholds: HOH at $90k ceiling yields zero cred
 });
 
 Deno.test("edge_hoh_below_ceiling_86k_has_credit: HOH at $86k yields partial credit", () => {
+  // fraction = (86000 − 80000) / 10000 = 0.6 → allowed = $2,500 × 0.4 = $1,000
+  // refundable = 40% × $1,000 = $400; nonrefundable = 60% × $1,000 = $600
   const result = compute([
     minimalAocItem({
       aoc_adjusted_expenses: 4000,
@@ -873,9 +886,14 @@ Deno.test("edge_hoh_below_ceiling_86k_has_credit: HOH at $86k yields partial cre
       filing_status: FilingStatus.HOH,
     }),
   ]);
-  assertEquals(Array.isArray(result.outputs), true);
-  // Credit may still exist at $86k (fraction = 0.6 → allowed = $1,000 → refundable = $400)
-  assertEquals(findOutput(result, "f1040") !== undefined, true);
+  assertEquals(
+    Math.round((findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc),
+    400,
+  );
+  assertEquals(
+    Math.round((findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit),
+    600,
+  );
 });
 
 Deno.test("edge_multiple_aoc_students_summed_per_student_rule: two $4k students → $2,000 refundable total", () => {
@@ -907,35 +925,41 @@ Deno.test("edge_multiple_aoc_students_summed_per_student_rule: two $4k students 
   );
 });
 
-Deno.test("edge_aoc_ineligible_student_llc_expenses_no_crash: AOC-ineligible student with LLC expenses does not throw", () => {
+Deno.test("edge_aoc_ineligible_student_llc_expenses_routes_llc_credit: AOC-ineligible student with LLC expenses routes LLC credit", () => {
+  // aoc_claimed_4_prior_years=true blocks AOC; LLC expenses still produce $1,000 credit
+  const result = compute([
+    minimalAocItem({
+      aoc_adjusted_expenses: 4000,
+      aoc_claimed_4_prior_years: true,
+      llc_adjusted_expenses: 5000,
+      filer_magi: 0,
+    }),
+  ]);
+  assertEquals(findOutput(result, "f1040"), undefined);
   assertEquals(
-    Array.isArray(
-      compute([
-        minimalAocItem({
-          aoc_adjusted_expenses: 4000,
-          aoc_claimed_4_prior_years: true,
-          llc_adjusted_expenses: 5000,
-          filer_magi: 0,
-        }),
-      ]).outputs,
-    ),
-    true,
+    Math.round((findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit),
+    1000,
   );
 });
 
-Deno.test("edge_phase_out_fraction_3_decimal_places: non-round MAGI fraction does not crash", () => {
-  // MAGI $87,333 → fraction = 0.7333 → rounds to 0.733
+Deno.test("edge_phase_out_fraction_3_decimal_places: non-round MAGI fraction computes correct credit", () => {
+  // MAGI $87,333 → fraction = (87333-80000)/10000 = 0.7333 → rounds to 0.733
+  // allowed = $2,500 × (1 - 0.733) = $2,500 × 0.267 = $667.50
+  // refundable = 40% × $667.50 = $267; nonrefundable = 60% × $667.50 = $400.50
+  const result = compute([
+    minimalAocItem({
+      aoc_adjusted_expenses: 4000,
+      filer_magi: 87333,
+      filing_status: FilingStatus.Single,
+    }),
+  ]);
   assertEquals(
-    Array.isArray(
-      compute([
-        minimalAocItem({
-          aoc_adjusted_expenses: 4000,
-          filer_magi: 87333,
-          filing_status: FilingStatus.Single,
-        }),
-      ]).outputs,
-    ),
-    true,
+    Math.round((findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc),
+    267,
+  );
+  assertEquals(
+    Math.round((findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit),
+    401,
   );
 });
 
@@ -949,13 +973,11 @@ Deno.test("edge_kiddie_rule_with_phase_out: kiddie rule + partial phase-out both
       taxpayer_under_24_no_refundable_aoc: true,
     }),
   ]);
-  assertEquals(findOutput(result, "f1040") === undefined, true);
-  const sch3Out = findOutput(result, "schedule3");
-  assertEquals(sch3Out !== undefined, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
   // $1,250 entirely nonrefundable
   assertEquals(
     Math.round(
-      (sch3Out!.fields as Record<string, number>).line3_education_credit,
+      (findOutput(result, "schedule3")!.fields as Record<string, number>).line3_education_credit,
     ),
     1250,
   );
@@ -1000,22 +1022,18 @@ Deno.test("smoke_test_full_scenario: two students (AOC + LLC), single filer MAGI
     },
   ]);
 
-  const f1040Out = findOutput(result, "f1040");
-  const sch3Out = findOutput(result, "schedule3");
-
-  // Refundable AOC = $500
-  assertEquals(f1040Out !== undefined, true);
+  // Refundable AOC: 40% × $1,250 = $500
   assertEquals(
     Math.round(
-      (f1040Out!.fields as Record<string, number>).line29_refundable_aoc,
+      (findOutput(result, "f1040")!.fields as Record<string, number>).line29_refundable_aoc,
     ),
     500,
   );
 
-  // Nonrefundable on schedule3 must be positive (may be merged AOC + LLC or separate)
-  assertEquals(sch3Out !== undefined, true);
-  assertEquals(
-    (sch3Out!.fields as Record<string, number>).line3_education_credit > 0,
-    true,
-  );
+  // Engine emits separate schedule3 outputs: AOC nonrefundable $750 + LLC $1,000
+  const sch3Outputs = result.outputs.filter((o) => o.nodeType === "schedule3");
+  const sch3Values = sch3Outputs.map(
+    (o) => Math.round((o.fields as Record<string, number>).line3_education_credit),
+  ).sort((a, b) => a - b);
+  assertEquals(sch3Values, [750, 1000]);
 });

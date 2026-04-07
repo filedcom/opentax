@@ -154,10 +154,11 @@ Deno.test("output_routes_to_schedule2", () => {
   assertEquals(result.outputs[0].nodeType, "schedule2");
 });
 
-Deno.test("output_field_is_line17a_investment_credit_recapture", () => {
+Deno.test("output_field_line17a_investment_credit_recapture_has_correct_value", () => {
   const result = compute([{ original_credit_amount: 5000, year_of_recapture: 2 }]);
   const s2 = findSchedule2(result);
-  assertEquals(Object.keys(s2?.fields ?? {}).includes("line17a_investment_credit_recapture"), true);
+  // year 2 = 80% of 5000 = 4000
+  assertEquals(s2?.fields.line17a_investment_credit_recapture, 4000);
 });
 
 // ── Smoke Test ────────────────────────────────────────────────────────────────

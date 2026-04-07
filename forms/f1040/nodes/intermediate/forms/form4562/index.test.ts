@@ -86,8 +86,6 @@ Deno.test("section_179: basic election within limit routes to schedule1", () => 
     section_179_elected: 50_000,
     business_income_limit: 200_000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 50_000);
 });
 
@@ -298,9 +296,8 @@ Deno.test("routing: total depreciation routes to schedule1 as line13_depreciatio
     macrs_gds_recovery_period: 5,
     macrs_gds_year_of_service: 1,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(typeof fieldsOf(result.outputs, schedule1)!.line13_depreciation, "number");
+  // 5-year year-1: 20% of $50,000 = $10,000
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 10_000);
 });
 
 Deno.test("routing: 200DB property creates AMT adjustment to form6251", () => {
@@ -312,8 +309,6 @@ Deno.test("routing: 200DB property creates AMT adjustment to form6251", () => {
     macrs_gds_recovery_period: 5,
     macrs_gds_year_of_service: 1,
   });
-  const f6251 = findOutput(result, "form6251");
-  assertEquals(f6251 !== undefined, true);
   assertEquals(fieldsOf(result.outputs, form6251)!.depreciation_adjustment, 5_000);
 });
 

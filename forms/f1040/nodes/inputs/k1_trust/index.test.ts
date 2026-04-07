@@ -147,14 +147,16 @@ Deno.test("zero box14 does not route to form_1116", () => {
 
 // ── 3. Aggregation across multiple K-1s ──────────────────────────────────────
 
-Deno.test("box1_interest sums across multiple K-1s to schedule_b (separate entries)", () => {
+Deno.test("box1_interest from multiple K-1s produces separate per-payer schedule_b entries", () => {
   const result = compute([
     minimalItem({ box1_interest: 300 }),
     minimalItem({ estate_trust_name: "Second Trust", box1_interest: 200 }),
   ]);
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
-  // Each K-1 produces its own schedule_b entry
-  assertEquals(sbOutputs.length >= 2, true);
+  // Each K-1 produces its own schedule_b entry with the per-payer amount
+  assertEquals(sbOutputs.length, 2);
+  const amounts = sbOutputs.map((o) => o.fields.taxable_interest_net as number).sort((a, b) => a - b);
+  assertEquals(amounts, [200, 300]);
 });
 
 Deno.test("box2b_qualified_dividends sums across K-1s to f1040", () => {
@@ -195,6 +197,33 @@ Deno.test("box6+box7+box8 combined routes to schedule1 line5_schedule_e", () => 
   const out = findOutput(result, "schedule1");
   // 1000 + 500 + 300 = 1800
   assertEquals(out?.fields.line5_schedule_e, 1800);
+});
+
+Deno.test("box5_other_portfolio and box6_ordinary_business together produce single schedule1 with both fields", () => {
+  // When both schedule_e income and other-portfolio income are nonzero, a single
+  // schedule1 output is emitted with both line5_schedule_e and line8z_other_income set
+  const result = compute([
+    minimalItem({ box5_other_portfolio: 400, box6_ordinary_business: 3000 }),
+  ]);
+  const sch1Outputs = result.outputs.filter((o) => o.nodeType === "schedule1");
+  assertEquals(sch1Outputs.length, 1);
+  assertEquals(sch1Outputs[0].fields.line5_schedule_e, 3000);
+  assertEquals(sch1Outputs[0].fields.line8z_other_income, 400);
+});
+
+Deno.test("negative box5_other_portfolio (portfolio loss) routes to schedule1 line8z_other_income", () => {
+  const result = compute([minimalItem({ box5_other_portfolio: -500 })]);
+  const out = findOutput(result, "schedule1");
+  assertEquals(out?.fields.line8z_other_income, -500);
+});
+
+Deno.test("box4a LTCG sums across K-1s to schedule_d", () => {
+  const result = compute([
+    minimalItem({ box4a_net_lt_cap_gain: 1500 }),
+    minimalItem({ estate_trust_name: "Trust B", box4a_net_lt_cap_gain: 2500 }),
+  ]);
+  const out = findOutput(result, "schedule_d");
+  assertEquals(out?.fields.line_12_k1_lt, 4000);
 });
 
 // ── 7. Informational fields ───────────────────────────────────────────────────
@@ -249,8 +278,9 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   assertEquals(sd?.fields.line_5_k1_st, 1000);
   assertEquals(sd?.fields.line_12_k1_lt, 2000);
   const sch1 = findOutput(result, "schedule1");
-  // box5=300 (other_income) + box6=5000 + box7=1500 = schedule_e total 6500
+  // box6=5000 + box7=1500 → line5_schedule_e=6500; box5=300 → line8z_other_income=300
   assertEquals(sch1?.fields.line5_schedule_e, 6500);
+  assertEquals(sch1?.fields.line8z_other_income, 300);
   const f1116 = findOutput(result, "form_1116");
   assertEquals(f1116?.fields.foreign_tax_paid, 100);
 });

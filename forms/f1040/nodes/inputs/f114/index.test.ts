@@ -207,6 +207,5 @@ Deno.test("f114.compute: smoke test — all fields populated returns empty outpu
       { country: "Luxembourg", institution_name: "Luxbank", account_type: AccountType.Other, max_value: 50000 },
     ],
   });
-  assertEquals(Array.isArray(result.outputs), true);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });

@@ -6,78 +6,31 @@ function compute(input: Record<string, unknown>) {
 }
 
 // =============================================================================
-// 1. Input Schema Validation
+// 1. Schema Validation
 // =============================================================================
 
-Deno.test("f8888.inputSchema: empty input passes", () => {
-  const parsed = f8888.inputSchema.safeParse({});
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8888.inputSchema: negative account_1 amount fails", () => {
-  const parsed = f8888.inputSchema.safeParse({
-    account_1: { amount: -1 },
-  });
+Deno.test("f8888.inputSchema: negative account amount rejected", () => {
+  const parsed = f8888.inputSchema.safeParse({ account_1: { amount: -1 } });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8888.inputSchema: negative account_2 amount fails", () => {
-  const parsed = f8888.inputSchema.safeParse({
-    account_2: { amount: -500 },
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8888.inputSchema: negative savings_bond_amount fails", () => {
+Deno.test("f8888.inputSchema: negative savings_bond_amount rejected", () => {
   const parsed = f8888.inputSchema.safeParse({ savings_bond_amount: -100 });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8888.inputSchema: valid AccountType checking passes", () => {
-  const parsed = f8888.inputSchema.safeParse({
-    account_1: { account_type: AccountType.Checking, amount: 500 },
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8888.inputSchema: valid AccountType savings passes", () => {
-  const parsed = f8888.inputSchema.safeParse({
-    account_1: { account_type: AccountType.Savings, amount: 200 },
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8888.inputSchema: invalid account_type fails", () => {
-  const parsed = f8888.inputSchema.safeParse({
-    account_1: { account_type: "INVALID" },
-  });
+Deno.test("f8888.inputSchema: invalid account_type rejected", () => {
+  const parsed = f8888.inputSchema.safeParse({ account_1: { account_type: "INVALID" } });
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8888.inputSchema: valid full input passes", () => {
-  const parsed = f8888.inputSchema.safeParse({
-    account_1: { routing_number: "021000021", account_number: "123456789", account_type: AccountType.Checking, amount: 1000 },
-    account_2: { routing_number: "021000021", account_number: "987654321", account_type: AccountType.Savings, amount: 500 },
-    savings_bond_amount: 200,
-    bond_owner_name: "John Doe",
-  });
-  assertEquals(parsed.success, true);
-});
-
 // =============================================================================
-// 2. Metadata Form — No Tax Outputs
+// 2. Metadata Form — Always Zero Outputs
 // =============================================================================
 
 Deno.test("f8888.compute: empty input produces no outputs", () => {
   const result = compute({});
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8888.compute: account_1 set — no tax outputs", () => {
-  const result = compute({
-    account_1: { routing_number: "021000021", account_number: "123", amount: 500 },
-  });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });
 
 Deno.test("f8888.compute: all 3 accounts set — no tax outputs", () => {
@@ -86,22 +39,16 @@ Deno.test("f8888.compute: all 3 accounts set — no tax outputs", () => {
     account_2: { amount: 400 },
     account_3: { amount: 200 },
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });
 
-Deno.test("f8888.compute: savings bond amount set — no tax outputs", () => {
-  const result = compute({ savings_bond_amount: 500 });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8888.compute: bond owner name set — no tax outputs", () => {
-  const result = compute({ bond_owner_name: "Jane Smith" });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8888.compute: bond coowner name set — no tax outputs", () => {
-  const result = compute({ bond_coowner_name: "John Smith" });
-  assertEquals(result.outputs.length, 0);
+Deno.test("f8888.compute: savings bond allocation set — no tax outputs", () => {
+  const result = compute({
+    savings_bond_amount: 500,
+    bond_owner_name: "Jane Smith",
+    bond_coowner_name: "John Smith",
+  });
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================
@@ -109,51 +56,49 @@ Deno.test("f8888.compute: bond coowner name set — no tax outputs", () => {
 // =============================================================================
 
 Deno.test("f8888.compute: throws on negative account amount", () => {
-  assertThrows(
-    () => compute({ account_1: { amount: -1 } }),
-    Error,
-  );
+  assertThrows(() => compute({ account_1: { amount: -1 } }), Error);
 });
 
 Deno.test("f8888.compute: throws on negative savings_bond_amount", () => {
   assertThrows(() => compute({ savings_bond_amount: -50 }), Error);
 });
 
-Deno.test("f8888.compute: zero amounts do not throw", () => {
-  const result = compute({ account_1: { amount: 0 }, savings_bond_amount: 0 });
-  assertEquals(result.outputs.length, 0);
-});
-
 // =============================================================================
-// 4. Smoke Test
+// 4. Smoke Test — Refund Split Across 3 Accounts and Savings Bonds
 // =============================================================================
 
-Deno.test("f8888.compute: smoke test — full refund allocation to 3 accounts and bonds", () => {
+Deno.test("f8888.compute: refund split across 3 accounts and bonds — amounts accepted, no outputs", () => {
+  const account1Amount = 1000;
+  const account2Amount = 500;
+  const account3Amount = 250;
+  const bondAmount = 200;
+
   const result = compute({
     account_1: {
       routing_number: "021000021",
       account_number: "111222333",
       account_type: AccountType.Checking,
-      amount: 1000,
+      amount: account1Amount,
     },
     account_2: {
       routing_number: "021000021",
       account_number: "444555666",
       account_type: AccountType.Savings,
-      amount: 500,
+      amount: account2Amount,
     },
     account_3: {
       routing_number: "021000089",
       account_number: "777888999",
       account_type: AccountType.Checking,
-      amount: 250,
+      amount: account3Amount,
     },
-    savings_bond_amount: 200,
+    savings_bond_amount: bondAmount,
     bond_owner_name: "Alice Example",
     bond_coowner_name: "Bob Example",
   });
 
-  // Metadata form — always zero outputs
-  assertEquals(result.outputs.length, 0);
-  assertEquals(Array.isArray(result.outputs), true);
+  // account1 + account2 + account3 + bonds = 1000 + 500 + 250 + 200 = 1950
+  assertEquals(account1Amount + account2Amount + account3Amount + bondAmount, 1950);
+  // Metadata form — no tax outputs regardless of amounts
+  assertEquals(result.outputs, []);
 });

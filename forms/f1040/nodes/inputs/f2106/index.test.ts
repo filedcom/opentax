@@ -111,8 +111,6 @@ Deno.test("f2106.inputSchema: valid full item passes", () => {
 
 Deno.test("f2106.compute: RESERVIST with expenses routes to schedule1.line12_business_expenses", () => {
   const result = compute([minimalItem({ travel_expenses: 1000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line12_business_expenses, 1000);
 });

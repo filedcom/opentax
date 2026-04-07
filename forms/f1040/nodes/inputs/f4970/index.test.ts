@@ -53,7 +53,6 @@ Deno.test("f4970: no f1040 output when tax_deemed_distributed is zero", () => {
 Deno.test("f4970: tax_deemed_distributed routes to f1040 line17_additional_taxes", () => {
   const result = compute([minimalItem({ tax_deemed_distributed: 2500 })]);
   const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   assertEquals((out!.fields as Record<string, unknown>).line17_additional_taxes, 2500);
 });
 
@@ -65,13 +64,12 @@ Deno.test("f4970: multiple items aggregate tax_deemed_distributed", () => {
     minimalItem({ trust_name: "Trust B", trust_ein: "22-2222222", tax_deemed_distributed: 1000 }),
   ]);
   const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   assertEquals((out!.fields as Record<string, unknown>).line17_additional_taxes, 2500);
 });
 
 // ── Optional fields ────────────────────────────────────────────────────────────
 
-Deno.test("f4970: throwback_years array accepted", () => {
+Deno.test("f4970: throwback_years array with tax_deemed_distributed routes correct value to f1040", () => {
   const result = compute([minimalItem({
     throwback_years: [
       { tax_year: 2022, accumulated_income: 5000, taxes_paid_by_trust: 1050 },
@@ -80,7 +78,7 @@ Deno.test("f4970: throwback_years array accepted", () => {
     tax_deemed_distributed: 800,
   })]);
   const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line17_additional_taxes, 800);
 });
 
 // ── Smoke test ────────────────────────────────────────────────────────────────

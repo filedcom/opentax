@@ -102,19 +102,19 @@ Deno.test("HOH — $650,000 (37% bracket)", () => {
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
 Deno.test("routes line16_income_tax to f1040", () => {
+  // $50k Single → $5,914 (same as bracket test above)
   const result = compute({ taxable_income: 50_000, filing_status: FilingStatus.Single });
   const fields = f1040Fields(result);
-  assertEquals(fields !== undefined, true);
-  assertEquals("line16_income_tax" in (fields ?? {}), true);
+  assertEquals(typeof fields?.line16_income_tax, "number");
+  assertEquals(Math.round(fields!.line16_income_tax as number), 5_914);
 });
 
 Deno.test("routes regular_tax, regular_tax_income, filing_status to form6251", () => {
   const result = compute({ taxable_income: 50_000, filing_status: FilingStatus.Single });
-  const fields = f6251Fields(result);
-  assertEquals(fields !== undefined, true);
-  assertAlmostEquals(fields?.regular_tax as number, 5_914, 1);
-  assertEquals(fields?.regular_tax_income, 50_000);
-  assertEquals(fields?.filing_status, FilingStatus.Single);
+  const fields = f6251Fields(result)!;
+  assertAlmostEquals(fields.regular_tax as number, 5_914, 1);
+  assertEquals(fields.regular_tax_income, 50_000);
+  assertEquals(fields.filing_status, FilingStatus.Single);
 });
 
 Deno.test("tax amounts agree between f1040 and form6251 outputs", () => {

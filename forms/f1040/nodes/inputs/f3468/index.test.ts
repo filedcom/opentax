@@ -97,10 +97,10 @@ Deno.test("fuel_cell_30pct_no_cap_when_no_capacity", () => {
   assertEquals(out?.fields.line6z_general_business_credit, 3_000);
 });
 
-Deno.test("fuel_cell_capped_by_capacity", () => {
+Deno.test("fuel_cell_rate_equals_cap_boundary", () => {
   // basis=$100,000 → 30% = $30,000
   // cap: 10 kW / 0.5 × $1,500 = 20 × $1,500 = $30,000
-  // min($30,000, $30,000) = $30,000 — no cap triggered
+  // min($30,000, $30,000) = $30,000 — cap exactly meets rate (boundary case)
   const result = compute({ fuel_cell_property_basis: 100_000, fuel_cell_capacity_kw: 10 });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6z_general_business_credit, 30_000);
@@ -248,8 +248,9 @@ Deno.test("routes_to_schedule3_node_type", () => {
 });
 
 Deno.test("credit_uses_line6z_field", () => {
+  // $10,000 × 30% = $3,000
   const result = compute({ solar_energy_property_basis: 10_000 });
-  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit !== undefined, true);
+  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit, 3_000);
 });
 
 Deno.test("produces_exactly_one_output_for_multiple_credits", () => {

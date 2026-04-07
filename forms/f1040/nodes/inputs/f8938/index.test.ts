@@ -99,7 +99,88 @@ Deno.test("f8938: MFJ abroad with multiple assets produces no outputs", () => {
 });
 
 // =============================================================================
-// 3. Enum completeness
+// 3. Threshold boundary — schema accepts values on both sides (no computation)
+// =============================================================================
+
+Deno.test("f8938: single US filer below $50k threshold — schema accepts", () => {
+  // year_end $49,999 < $50k single threshold — still valid to submit (informational)
+  const parsed = f8938.inputSchema.safeParse({
+    lives_abroad: false,
+    filing_status: "single",
+    year_end_value_all_assets: 49_999,
+    max_value_all_assets: 49_999,
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8938: single US filer at $50k threshold — schema accepts", () => {
+  const parsed = f8938.inputSchema.safeParse({
+    lives_abroad: false,
+    filing_status: "single",
+    year_end_value_all_assets: 50_000,
+    max_value_all_assets: 50_000,
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8938: MFJ US filer below $100k threshold — schema accepts", () => {
+  const parsed = f8938.inputSchema.safeParse({
+    lives_abroad: false,
+    filing_status: "mfj",
+    year_end_value_all_assets: 99_999,
+    max_value_all_assets: 99_999,
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8938: MFJ US filer at $100k threshold — schema accepts", () => {
+  const parsed = f8938.inputSchema.safeParse({
+    lives_abroad: false,
+    filing_status: "mfj",
+    year_end_value_all_assets: 100_000,
+    max_value_all_assets: 100_000,
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8938: single abroad below $200k threshold — schema accepts", () => {
+  const parsed = f8938.inputSchema.safeParse({
+    lives_abroad: true,
+    filing_status: "single",
+    year_end_value_all_assets: 199_999,
+    max_value_all_assets: 199_999,
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8938: MFJ abroad at $400k threshold — schema accepts", () => {
+  const parsed = f8938.inputSchema.safeParse({
+    lives_abroad: true,
+    filing_status: "mfj",
+    year_end_value_all_assets: 400_000,
+    max_value_all_assets: 400_000,
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8938: threshold inputs produce no outputs (disclosure node)", () => {
+  // Regardless of threshold crossing, no tax output is ever emitted
+  const resultBelow = compute({
+    lives_abroad: false,
+    filing_status: "single",
+    year_end_value_all_assets: 49_999,
+  });
+  const resultAbove = compute({
+    lives_abroad: false,
+    filing_status: "single",
+    year_end_value_all_assets: 50_001,
+  });
+  assertEquals(resultBelow.outputs.length, 0);
+  assertEquals(resultAbove.outputs.length, 0);
+});
+
+// =============================================================================
+// 4. Enum completeness
 // =============================================================================
 
 Deno.test("f8938: ForeignAssetType enum has 8 values", () => {

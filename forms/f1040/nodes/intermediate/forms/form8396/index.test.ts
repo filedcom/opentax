@@ -100,9 +100,9 @@ Deno.test("carryforward + current year, capped at $2,000 then carryforward added
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
 Deno.test("output routes to schedule3 line6f_mortgage_interest_credit", () => {
+  // $10,000 × 15% = $1,500
   const result = compute({ mortgage_interest_paid: 10_000, mcc_rate: 0.15 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3 !== undefined, true);
   assertEquals(s3?.nodeType, "schedule3");
-  assertEquals("line6f_mortgage_interest_credit" in (s3?.fields ?? {}), true);
+  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 1_500);
 });

@@ -34,7 +34,7 @@ Deno.test("f8936: business_use_pct < 0 rejected", () => {
 });
 
 // =============================================================================
-// New Vehicle Credit
+// New Vehicle Credit — up to $7,500 (IRC §30D)
 // =============================================================================
 
 Deno.test("f8936: new vehicle — full $7,500 credit", () => {
@@ -49,7 +49,7 @@ Deno.test("f8936: new vehicle — full $7,500 credit", () => {
   assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
 });
 
-Deno.test("f8936: new vehicle — partial $3,750 credit", () => {
+Deno.test("f8936: new vehicle — partial $3,750 credit honored exactly", () => {
   const s3 = findOutput(compute([{
     is_new_vehicle: true,
     credit_amount: 3_750,
@@ -61,7 +61,7 @@ Deno.test("f8936: new vehicle — partial $3,750 credit", () => {
   assertEquals(s3?.fields.line6d_clean_vehicle_credit, 3_750);
 });
 
-Deno.test("f8936: new vehicle — credit capped at $7,500", () => {
+Deno.test("f8936: new vehicle — credit_amount above $7,500 capped at $7,500", () => {
   const s3 = findOutput(compute([{
     is_new_vehicle: true,
     credit_amount: 10_000,
@@ -93,7 +93,7 @@ Deno.test("f8936: single at exactly $150k → credit allowed", () => {
     modified_agi: 150_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3 !== undefined, true);
+  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: MFJ exceeds $300k → no credit", () => {
@@ -124,8 +124,18 @@ Deno.test("f8936: HOH exceeds $225k → no credit", () => {
   }]), "schedule3"), undefined);
 });
 
+Deno.test("f8936: HOH at exactly $225k → credit allowed", () => {
+  const s3 = findOutput(compute([{
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    modified_agi: 225_000,
+    filing_status: FilingStatus.HOH,
+  }]), "schedule3");
+  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+});
+
 // =============================================================================
-// MSRP Cap
+// MSRP Caps
 // =============================================================================
 
 Deno.test("f8936: other type exceeds $55k MSRP → no credit", () => {
@@ -137,6 +147,18 @@ Deno.test("f8936: other type exceeds $55k MSRP → no credit", () => {
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3"), undefined);
+});
+
+Deno.test("f8936: other type at exactly $55k MSRP → credit allowed", () => {
+  const s3 = findOutput(compute([{
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    msrp: 55_000,
+    vehicle_type: "other",
+    modified_agi: 100_000,
+    filing_status: FilingStatus.Single,
+  }]), "schedule3");
+  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: SUV/van/truck allows up to $80k MSRP", () => {
@@ -166,7 +188,8 @@ Deno.test("f8936: SUV exceeds $80k MSRP → no credit", () => {
 // Business Use Reduction
 // =============================================================================
 
-Deno.test("f8936: 50% business use → credit reduced by 50%", () => {
+Deno.test("f8936: 50% business use reduces credit by 50%", () => {
+  // $7,500 × 50% personal = $3,750
   const s3 = findOutput(compute([{
     is_new_vehicle: true,
     credit_amount: 7_500,
@@ -179,7 +202,7 @@ Deno.test("f8936: 50% business use → credit reduced by 50%", () => {
   assertEquals(s3?.fields.line6d_clean_vehicle_credit, 3_750);
 });
 
-Deno.test("f8936: 100% business use → no personal credit", () => {
+Deno.test("f8936: 100% business use → no personal credit (zero output)", () => {
   assertEquals(findOutput(compute([{
     is_new_vehicle: true,
     credit_amount: 7_500,
@@ -189,12 +212,26 @@ Deno.test("f8936: 100% business use → no personal credit", () => {
   }]), "schedule3"), undefined);
 });
 
+Deno.test("f8936: 25% business use → 75% personal credit", () => {
+  // $7,500 × 75% = $5,625
+  const s3 = findOutput(compute([{
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    msrp: 45_000,
+    vehicle_type: "other",
+    business_use_pct: 0.25,
+    modified_agi: 100_000,
+    filing_status: FilingStatus.Single,
+  }]), "schedule3");
+  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 5_625);
+});
+
 // =============================================================================
-// Used Vehicle Credit
+// Used Vehicle Credit — 30% of sale price, max $4,000 (IRC §25E)
 // =============================================================================
 
-Deno.test("f8936: used vehicle — 30% of price, max $4,000", () => {
-  // $15,000 × 30% = $4,500, capped at $4,000
+Deno.test("f8936: used vehicle — 30% of price, capped at $4,000", () => {
+  // $15,000 × 30% = $4,500 → capped at $4,000
   const s3 = findOutput(compute([{
     is_new_vehicle: false,
     sale_price: 15_000,
@@ -204,8 +241,7 @@ Deno.test("f8936: used vehicle — 30% of price, max $4,000", () => {
   assertEquals(s3?.fields.line6d_clean_vehicle_credit, 4_000);
 });
 
-Deno.test("f8936: used vehicle — price below $13,333: 30% is less than $4,000", () => {
-  // $10,000 × 30% = $3,000
+Deno.test("f8936: used vehicle — $10,000 price × 30% = $3,000 (under cap)", () => {
   const s3 = findOutput(compute([{
     is_new_vehicle: false,
     sale_price: 10_000,
@@ -224,7 +260,18 @@ Deno.test("f8936: used vehicle — price exceeds $25,000 → no credit", () => {
   }]), "schedule3"), undefined);
 });
 
-Deno.test("f8936: used vehicle — single exceeds $150k → no credit", () => {
+Deno.test("f8936: used vehicle — price at exactly $25,000 → credit allowed", () => {
+  // $25,000 × 30% = $7,500 → capped at $4,000
+  const s3 = findOutput(compute([{
+    is_new_vehicle: false,
+    sale_price: 25_000,
+    modified_agi: 50_000,
+    filing_status: FilingStatus.Single,
+  }]), "schedule3");
+  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 4_000);
+});
+
+Deno.test("f8936: used vehicle — single exceeds $150k income → no credit", () => {
   assertEquals(findOutput(compute([{
     is_new_vehicle: false,
     sale_price: 20_000,
@@ -233,8 +280,8 @@ Deno.test("f8936: used vehicle — single exceeds $150k → no credit", () => {
   }]), "schedule3"), undefined);
 });
 
-Deno.test("f8936: used vehicle — business use reduces credit", () => {
-  // $15,000 × 30% = $4,500 → capped $4,000 × 75% personal = $3,000
+Deno.test("f8936: used vehicle — business use reduces personal credit", () => {
+  // $15,000 × 30% = $4,500 → capped at $4,000 × 75% personal = $3,000
   const s3 = findOutput(compute([{
     is_new_vehicle: false,
     sale_price: 15_000,
@@ -246,22 +293,41 @@ Deno.test("f8936: used vehicle — business use reduces credit", () => {
 });
 
 // =============================================================================
+// Routing
+// =============================================================================
+
+Deno.test("f8936: credit routes to schedule3 line6d_clean_vehicle_credit", () => {
+  const result = compute([{
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    msrp: 45_000,
+    vehicle_type: "other",
+    modified_agi: 100_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs[0]?.nodeType, "schedule3");
+  assertEquals(result.outputs[0]?.fields.line6d_clean_vehicle_credit, 7_500);
+});
+
+// =============================================================================
 // Multiple Vehicles
 // =============================================================================
 
-Deno.test("f8936: two vehicles each produce a schedule3 output", () => {
+Deno.test("f8936: two qualifying vehicles each produce a schedule3 output", () => {
   const result = compute([
     { is_new_vehicle: true, credit_amount: 7_500, msrp: 45_000, vehicle_type: "other", modified_agi: 100_000, filing_status: FilingStatus.Single },
     { is_new_vehicle: false, sale_price: 20_000, modified_agi: 50_000, filing_status: FilingStatus.Single },
   ]);
   assertEquals(result.outputs.length, 2);
-  assertEquals(result.outputs[0].nodeType, "schedule3");
-  assertEquals(result.outputs[1].nodeType, "schedule3");
+  assertEquals(result.outputs[0].fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(result.outputs[1].fields.line6d_clean_vehicle_credit, 4_000);
 });
 
-Deno.test("f8936: vehicle over income limit produces no output", () => {
+Deno.test("f8936: vehicle over income limit excluded, qualifying vehicle retained", () => {
   const result = compute([
     { is_new_vehicle: true, credit_amount: 7_500, modified_agi: 200_000, filing_status: FilingStatus.Single },
+    { is_new_vehicle: true, credit_amount: 7_500, msrp: 45_000, vehicle_type: "other", modified_agi: 100_000, filing_status: FilingStatus.Single },
   ]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].fields.line6d_clean_vehicle_credit, 7_500);
 });

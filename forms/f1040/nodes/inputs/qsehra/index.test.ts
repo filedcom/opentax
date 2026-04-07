@@ -62,14 +62,13 @@ Deno.test("qsehra.inputSchema: family coverage (is_self_only_coverage=false) pas
 // 2. Routing with MEC — routes to form8962
 // =============================================================================
 
-Deno.test("qsehra.compute: has_mec=true + qsehra_offered > 0 → routes to form8962", () => {
+Deno.test("qsehra.compute: has_mec=true + qsehra_offered > 0 → routes offered amount to form8962", () => {
   const result = compute(minimalItem({
     qsehra_amount_offered: 5000,
     qsehra_amount_received: 5000,
     has_minimum_essential_coverage: true,
   }));
   const out = findOutput(result, "form8962");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.qsehra_amount_offered, 5000);
 });
 
@@ -94,7 +93,6 @@ Deno.test("qsehra.compute: has_mec=false + received > 0 → routes received amou
     has_minimum_essential_coverage: false,
   }));
   const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line1a_wages, 4500);
 });
 
@@ -151,7 +149,6 @@ Deno.test("qsehra.compute: self-only at limit ($6,350) with MEC → routes full 
     is_self_only_coverage: true,
   }));
   const out = findOutput(result, "form8962");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.qsehra_amount_offered, 6350);
 });
 
@@ -163,7 +160,6 @@ Deno.test("qsehra.compute: family at limit ($12,800) with MEC → routes full am
     is_self_only_coverage: false,
   }));
   const out = findOutput(result, "form8962");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.qsehra_amount_offered, 12800);
 });
 
@@ -175,9 +171,9 @@ Deno.test("qsehra.compute: throws on negative qsehra_amount_offered", () => {
   assertThrows(() => compute(minimalItem({ qsehra_amount_offered: -500 })), Error);
 });
 
-Deno.test("qsehra.compute: zero qsehra_amount_offered does not throw", () => {
-  const result = compute(minimalItem({ qsehra_amount_offered: 0 }));
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("qsehra.compute: zero qsehra_amount_offered with mec — no output", () => {
+  const result = compute(minimalItem({ qsehra_amount_offered: 0, has_minimum_essential_coverage: true }));
+  assertEquals(result.outputs.length, 0);
 });
 
 // =============================================================================

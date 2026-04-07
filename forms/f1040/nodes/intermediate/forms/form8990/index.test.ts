@@ -11,12 +11,6 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
-// ─── Smoke test ───────────────────────────────────────────────────────────────
-
-Deno.test("form8990 — nodeType is 'form8990'", () => {
-  assertEquals(form8990.nodeType, "form8990");
-});
-
 // ─── Small business exemption ─────────────────────────────────────────────────
 
 Deno.test("form8990 — small business exemption: avg receipts <= $31M, no outputs", () => {
@@ -49,8 +43,10 @@ Deno.test("form8990 — tax shelter cannot use small business exemption", () => 
     is_tax_shelter: true,
   });
   // BIE $50k, ATI = 60k + 50k = 110k, 30% = 33k → disallowed = 17k
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.biz_interest_disallowed_add_back,
+    17_000,
+  );
 });
 
 // ─── Interest fully deductible (within 30% ATI) ───────────────────────────────
@@ -267,15 +263,19 @@ Deno.test("form8990 — no BIE and no carryforward: no outputs", () => {
 
 // ─── Output routing ───────────────────────────────────────────────────────────
 
-Deno.test("form8990 — disallowed BIE routes to schedule1 only", () => {
+Deno.test("form8990 — disallowed BIE routes to schedule1 and agi_aggregator", () => {
   const result = compute({
     business_interest_expense: 100_000,
     tentative_taxable_income: 0,
     avg_gross_receipts: 50_000_000,
   });
-  // ATI = 100k, 30% = 30k → disallowed = 70k
+  // ATI = 0 + 100k = 100k, 30% = 30k → deductible = 30k → disallowed = 70k
   assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "schedule1");
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.biz_interest_disallowed_add_back,
+    70_000,
+  );
 });
 
 // ─── Input validation ─────────────────────────────────────────────────────────

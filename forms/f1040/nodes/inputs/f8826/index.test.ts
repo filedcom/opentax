@@ -56,37 +56,39 @@ Deno.test("over_1M_receipts_AND_over_30_fte_produces_no_output", () => {
 });
 
 Deno.test("over_1M_receipts_but_under_30_fte_is_eligible", () => {
-  // fte ≤30 qualifies even if receipts > $1M
+  // fte ≤30 qualifies even if receipts > $1M; ($5,000 − $250) × 50% = $2,375
   const result = compute({
     eligible_expenditures: 5000,
     gross_receipts: 1_500_000,
     fte_count: 25,
   });
   const out = findSchedule3(result);
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.line6z_general_business_credit, 2375);
 });
 
 Deno.test("under_1M_receipts_but_over_30_fte_is_eligible", () => {
-  // receipts ≤$1M qualifies even if fte > 30
+  // receipts ≤$1M qualifies even if fte > 30; ($5,000 − $250) × 50% = $2,375
   const result = compute({
     eligible_expenditures: 5000,
     gross_receipts: 800_000,
     fte_count: 35,
   });
   const out = findSchedule3(result);
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.line6z_general_business_credit, 2375);
 });
 
 Deno.test("exactly_1M_receipts_is_eligible", () => {
+  // ($5,000 − $250) × 50% = $2,375
   const result = compute({ eligible_expenditures: 5000, gross_receipts: 1_000_000 });
   const out = findSchedule3(result);
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.line6z_general_business_credit, 2375);
 });
 
 Deno.test("exactly_30_fte_is_eligible", () => {
+  // ($5,000 − $250) × 50% = $2,375
   const result = compute({ eligible_expenditures: 5000, fte_count: 30 });
   const out = findSchedule3(result);
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.line6z_general_business_credit, 2375);
 });
 
 // ── Credit Calculation ────────────────────────────────────────────────────────
@@ -133,7 +135,3 @@ Deno.test("routes_to_schedule3", () => {
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
 });
 
-Deno.test("credit_uses_line6z_field", () => {
-  const result = compute({ eligible_expenditures: 5000 });
-  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit !== undefined, true);
-});

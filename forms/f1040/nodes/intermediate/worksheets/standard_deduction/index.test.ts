@@ -201,12 +201,12 @@ Deno.test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", (
 
 // ─── Output structure ─────────────────────────────────────────────────────────
 
-Deno.test("Standard deduction: produces 2 outputs (f1040 line12a + f1040 line15 merged, income_tax_calculation)", () => {
+Deno.test("Standard deduction: produces f1040 and income_tax_calculation outputs", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
-  // f1040 gets two calls but OutputNodes may merge — check nodeType counts
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
   const incTaxOutputs = result.outputs.filter((o) => o.nodeType === "income_tax_calculation");
-  assertEquals(f1040Outputs.length >= 1, true);
+  // At least one f1040 output (line12a_standard_deduction + line15_taxable_income)
+  assertEquals(f1040Outputs.length, 2);
   assertEquals(incTaxOutputs.length, 1);
 });
 
