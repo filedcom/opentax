@@ -318,14 +318,14 @@ Deno.test("REIT: reit_loss_carryforward reduces dividends", () => {
 // ── Output routing ────────────────────────────────────────────────────────────
 
 Deno.test("routing: positive deduction → routes to f1040 with line13_qbi_deduction", () => {
+  // Below threshold → no wage limit; 20% × 50,000 = 10,000; income cap = 20% × 100,000 = 20,000
   const result = compute({
     filing_status: FilingStatus.Single,
     taxable_income: 100_000,
     qbi: 50_000,
   });
   const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
-  assertEquals(typeof out?.fields.line13_qbi_deduction, "number");
+  assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
 Deno.test("routing: no QBI activity — no outputs", () => {

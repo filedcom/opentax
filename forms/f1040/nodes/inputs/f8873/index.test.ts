@@ -15,10 +15,6 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return f8873.compute({ taxYear: 2025 }, { f8873s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -33,25 +29,11 @@ Deno.test("f8873.inputSchema: empty array fails (min 1)", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8873.inputSchema: negative qualifying_foreign_trade_income fails", () => {
-  const parsed = f8873.inputSchema.safeParse({
-    f8873s: [minimalItem({ qualifying_foreign_trade_income: -1000 })],
-  });
-  assertEquals(parsed.success, false);
-});
-
 Deno.test("f8873.inputSchema: negative extraterritorial_income_excluded fails", () => {
   const parsed = f8873.inputSchema.safeParse({
     f8873s: [minimalItem({ extraterritorial_income_excluded: -500 })],
   });
   assertEquals(parsed.success, false);
-});
-
-Deno.test("f8873.inputSchema: valid positive values pass", () => {
-  const parsed = f8873.inputSchema.safeParse({
-    f8873s: [minimalItem({ qualifying_foreign_trade_income: 100000, extraterritorial_income_excluded: 30000 })],
-  });
-  assertEquals(parsed.success, true);
 });
 
 // =============================================================================
@@ -60,8 +42,6 @@ Deno.test("f8873.inputSchema: valid positive values pass", () => {
 
 Deno.test("f8873.compute: exclusion > 0 routes to schedule1 as negative line8z_other", () => {
   const result = compute([minimalItem({ qualifying_foreign_trade_income: 100000, extraterritorial_income_excluded: 30000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line8z_other, -30000);
 });
@@ -71,7 +51,7 @@ Deno.test("f8873.compute: exclusion = 0 — no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8873.compute: qualifying_foreign_trade_income = 0, exclusion = 0 — no output", () => {
+Deno.test("f8873.compute: both fields zero — no output", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);
 });
@@ -89,7 +69,7 @@ Deno.test("f8873.compute: multiple items — exclusions summed as negative", () 
   assertEquals(fields.line8z_other, -30000);
 });
 
-Deno.test("f8873.compute: one item with exclusion, one without — only exclusion routes", () => {
+Deno.test("f8873.compute: one item with exclusion, one without — sum reflects only nonzero", () => {
   const result = compute([
     minimalItem({ qualifying_foreign_trade_income: 100000, extraterritorial_income_excluded: 25000 }),
     minimalItem({ qualifying_foreign_trade_income: 50000, extraterritorial_income_excluded: 0 }),
@@ -98,14 +78,20 @@ Deno.test("f8873.compute: one item with exclusion, one without — only exclusio
   assertEquals(fields.line8z_other, -25000);
 });
 
+Deno.test("f8873.compute: zero-exclusion items do not create additional outputs", () => {
+  const result = compute([
+    minimalItem({ extraterritorial_income_excluded: 10000 }),
+    minimalItem({ extraterritorial_income_excluded: 0 }),
+  ]);
+  assertEquals(result.outputs.length, 1);
+});
+
 // =============================================================================
 // 4. Thresholds
 // =============================================================================
 
 Deno.test("f8873.compute: exclusion of 1 (minimum positive) — routes to schedule1", () => {
   const result = compute([minimalItem({ qualifying_foreign_trade_income: 10, extraterritorial_income_excluded: 1 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line8z_other, -1);
 });
@@ -128,11 +114,6 @@ Deno.test("f8873.compute: throws on negative qualifying_foreign_trade_income", (
   );
 });
 
-Deno.test("f8873.compute: zero values do not throw", () => {
-  const result = compute([minimalItem()]);
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
 // =============================================================================
 // 6. Edge Cases
 // =============================================================================
@@ -141,21 +122,6 @@ Deno.test("f8873.compute: exclusion only, no qualifying income — routes if exc
   const result = compute([minimalItem({ qualifying_foreign_trade_income: 0, extraterritorial_income_excluded: 5000 })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line8z_other, -5000);
-});
-
-Deno.test("f8873.compute: output count unchanged with zero-exclusion items", () => {
-  const withExclusion = compute([
-    minimalItem({ extraterritorial_income_excluded: 10000 }),
-    minimalItem({ extraterritorial_income_excluded: 0 }),
-  ]);
-  const withoutExclusion = compute([
-    minimalItem({ extraterritorial_income_excluded: 10000 }),
-  ]);
-  // Both should produce exactly one schedule1 output
-  assertEquals(
-    withExclusion.outputs.filter((o) => o.nodeType === "schedule1").length,
-    withoutExclusion.outputs.filter((o) => o.nodeType === "schedule1").length,
-  );
 });
 
 // =============================================================================

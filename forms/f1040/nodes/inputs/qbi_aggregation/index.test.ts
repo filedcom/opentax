@@ -80,17 +80,51 @@ Deno.test("single-business group is valid", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-// ── 3. Edge cases ─────────────────────────────────────────────────────────────
+// ── 3. Schema captures aggregation election details correctly ─────────────────
 
-Deno.test("many businesses in a group accepted", () => {
-  const result = compute([
-    minimalGroup({
-      group_name: "Large Group",
-      business_names: ["A", "B", "C", "D", "E"],
-    }),
-  ]);
-  assertEquals(result.outputs.length, 0);
+Deno.test("parsed group preserves group_name and business_names", () => {
+  const parsed = qbiAggregation.inputSchema.parse({
+    aggregation_groups: [minimalGroup({ group_name: "RE Portfolio", business_names: ["Sunrise Apts", "Harbor Lofts"] })],
+  });
+  assertEquals(parsed.aggregation_groups[0].group_name, "RE Portfolio");
+  assertEquals(parsed.aggregation_groups[0].business_names, ["Sunrise Apts", "Harbor Lofts"]);
 });
+
+Deno.test("parsed group preserves combined_for_limitation flag", () => {
+  const parsedTrue = qbiAggregation.inputSchema.parse({
+    aggregation_groups: [minimalGroup({ combined_for_limitation: true })],
+  });
+  assertEquals(parsedTrue.aggregation_groups[0].combined_for_limitation, true);
+
+  const parsedFalse = qbiAggregation.inputSchema.parse({
+    aggregation_groups: [minimalGroup({ combined_for_limitation: false })],
+  });
+  assertEquals(parsedFalse.aggregation_groups[0].combined_for_limitation, false);
+});
+
+Deno.test("multiple groups are all captured in order", () => {
+  const parsed = qbiAggregation.inputSchema.parse({
+    aggregation_groups: [
+      minimalGroup({ group_name: "Group A", business_names: ["Biz 1", "Biz 2"], combined_for_limitation: true }),
+      minimalGroup({ group_name: "Group B", business_names: ["Biz 3"], combined_for_limitation: false }),
+    ],
+  });
+  assertEquals(parsed.aggregation_groups.length, 2);
+  assertEquals(parsed.aggregation_groups[0].group_name, "Group A");
+  assertEquals(parsed.aggregation_groups[0].business_names.length, 2);
+  assertEquals(parsed.aggregation_groups[1].group_name, "Group B");
+  assertEquals(parsed.aggregation_groups[1].combined_for_limitation, false);
+});
+
+Deno.test("five businesses in a group are all captured", () => {
+  const businesses = ["Alpha LLC", "Beta Corp", "Gamma Partners", "Delta Inc", "Epsilon Co"];
+  const parsed = qbiAggregation.inputSchema.parse({
+    aggregation_groups: [minimalGroup({ business_names: businesses })],
+  });
+  assertEquals(parsed.aggregation_groups[0].business_names, businesses);
+});
+
+// ── 4. Edge cases ─────────────────────────────────────────────────────────────
 
 Deno.test("node type is qbi_aggregation", () => {
   assertEquals(qbiAggregation.nodeType, "qbi_aggregation");

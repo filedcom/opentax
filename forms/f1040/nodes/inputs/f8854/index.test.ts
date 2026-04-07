@@ -107,36 +107,39 @@ Deno.test("f8854.compute: non-covered (all below thresholds, compliant) — no o
 });
 
 Deno.test("f8854.compute: covered by average tax threshold — routes to schedule2", () => {
+  // avg tax ($201,001) > threshold → covered; gain = 866k+1000 - 866k exclusion = 1000
   const result = compute(minimalInput({
     average_annual_tax_prior_5_years: AVG_TAX_THRESHOLD + 1,
     net_worth_at_expatriation: 0,
     certified_tax_compliance: true,
     assets: [{ fmv_at_expatriation: EXCLUSION_AMOUNT + 1000, basis: 0 }],
   }));
-  const out = result.outputs.find((o) => o.nodeType === "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17_exit_tax, 1000);
 });
 
 Deno.test("f8854.compute: covered by net worth threshold — routes to schedule2", () => {
+  // net worth = $2M (at threshold) → covered; taxable gain = 866k+1000 - 866k = 1000
   const result = compute(minimalInput({
     average_annual_tax_prior_5_years: 0,
     net_worth_at_expatriation: NET_WORTH_THRESHOLD,
     certified_tax_compliance: true,
     assets: [{ fmv_at_expatriation: EXCLUSION_AMOUNT + 1000, basis: 0 }],
   }));
-  const out = result.outputs.find((o) => o.nodeType === "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17_exit_tax, 1000);
 });
 
 Deno.test("f8854.compute: covered by non-compliance (certified_tax_compliance false) — routes to schedule2", () => {
+  // non-compliance → covered; taxable gain = 866k+1000 - 866k exclusion = 1000
   const result = compute(minimalInput({
     average_annual_tax_prior_5_years: 0,
     net_worth_at_expatriation: 0,
     certified_tax_compliance: false,
     assets: [{ fmv_at_expatriation: EXCLUSION_AMOUNT + 1000, basis: 0 }],
   }));
-  const out = result.outputs.find((o) => o.nodeType === "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17_exit_tax, 1000);
 });
 
 // =============================================================================
@@ -162,14 +165,14 @@ Deno.test("f8854.compute: gain exactly at exclusion — no schedule2 output", ()
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8854.compute: gain just above exclusion — routes to schedule2", () => {
+Deno.test("f8854.compute: gain just above exclusion — taxable gain = $1 routes to schedule2", () => {
   const result = compute(minimalInput({
     net_worth_at_expatriation: NET_WORTH_THRESHOLD,
     certified_tax_compliance: true,
     assets: [{ fmv_at_expatriation: EXCLUSION_AMOUNT + 1, basis: 0 }],
   }));
-  const out = result.outputs.find((o) => o.nodeType === "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17_exit_tax, 1);
 });
 
 Deno.test("f8854.compute: taxable gain = fmv - basis - exclusion routed to schedule2", () => {
@@ -234,30 +237,31 @@ Deno.test("f8854.compute: avg tax exactly at threshold ($201,000) — covered", 
   assertEquals(out, undefined);
 });
 
-Deno.test("f8854.compute: net worth exactly at threshold ($2M) — covered", () => {
+Deno.test("f8854.compute: net worth exactly at threshold ($2M) — covered, taxable gain = $1", () => {
+  // IRC §877A(g)(1)(A)(ii): "at least $2M" → $2M exactly is covered
   const result = compute(minimalInput({
     average_annual_tax_prior_5_years: 0,
     net_worth_at_expatriation: NET_WORTH_THRESHOLD,
     certified_tax_compliance: true,
     assets: [{ fmv_at_expatriation: EXCLUSION_AMOUNT + 1, basis: 0 }],
   }));
-  // At $2M net worth: covered (IRC says "at least $2M")
-  const out = result.outputs.find((o) => o.nodeType === "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17_exit_tax, 1);
 });
 
 // =============================================================================
 // 5. Edge Cases
 // =============================================================================
 
-Deno.test("f8854.compute: LONG_TERM_RESIDENT type covered by net worth — routes to schedule2", () => {
+Deno.test("f8854.compute: LONG_TERM_RESIDENT type covered by net worth — taxable gain = $1000", () => {
+  // net worth = $2M → covered; taxable gain = 866k+1000 - 866k = 1000
   const result = compute(minimalInput({
     expatriate_type: ExpatriateType.LONG_TERM_RESIDENT,
     net_worth_at_expatriation: NET_WORTH_THRESHOLD,
     assets: [{ fmv_at_expatriation: EXCLUSION_AMOUNT + 1000, basis: 0 }],
   }));
-  const out = result.outputs.find((o) => o.nodeType === "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17_exit_tax, 1000);
 });
 
 // =============================================================================

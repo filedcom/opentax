@@ -48,7 +48,6 @@ Deno.test("f59e.inputSchema: all expenditure types pass", () => {
 Deno.test("f59e.compute: routes remaining_unamortized to form6251.other_adjustments", () => {
   const result = compute([minimalItem({ remaining_unamortized: 10000 })]);
   const out = findOutput(result, "form6251");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.other_adjustments, 10000);
 });
 
@@ -63,14 +62,12 @@ Deno.test("f59e.compute: multiple items — sums remaining_unamortized", () => {
     minimalItem({ expenditure_type: ExpenditureType.Mining, remaining_unamortized: 3000 }),
   ]);
   const out = findOutput(result, "form6251");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.other_adjustments, 8000);
 });
 
 Deno.test("f59e.compute: mining expenditure routes correctly", () => {
   const result = compute([minimalItem({ expenditure_type: ExpenditureType.Mining, remaining_unamortized: 7500 })]);
   const out = findOutput(result, "form6251");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.other_adjustments, 7500);
 });
 
@@ -87,6 +84,5 @@ Deno.test("f59e.compute: smoke test — multiple types summed", () => {
     minimalItem({ expenditure_type: ExpenditureType.Development, remaining_unamortized: 0 }),
   ]);
   const out = findOutput(result, "form6251");
-  assertEquals(out !== undefined, true);
   assertEquals(out!.fields.other_adjustments, 12500);
 });

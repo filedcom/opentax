@@ -208,14 +208,16 @@ Deno.test("f8611.compute: prior_recapture_amounts exceeds gross — floors at ze
 // 6. Output Routing
 // =============================================================================
 
-Deno.test("f8611.compute: routes to schedule2 line10_lihtc_recapture", () => {
+Deno.test("f8611.compute: routes to schedule2 line10_lihtc_recapture with correct amount", () => {
   const result = compute([minimalItem({
     original_credit_amount: 10_000,
     year_credit_first_claimed: 2020,
     year_of_recapture_event: 2025,
   })]);
-  const out = findOutput(result, "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  // years_held = 5, recapture_fraction = 10/15
+  const expected = 10_000 * (10 / 15);
+  assertEquals(Math.abs((fields.line10_lihtc_recapture ?? 0) - expected) < 0.01, true);
 });
 
 Deno.test("f8611.compute: zero original_credit_amount — no output", () => {

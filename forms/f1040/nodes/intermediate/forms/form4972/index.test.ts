@@ -50,8 +50,6 @@ Deno.test("form4972.compute: Part II only — 20% on capital gain amount", () =>
     elect_capital_gain: true,
     elect_10yr_averaging: false,
   });
-  const schedule2Out = findOutput(result, "schedule2");
-  assertEquals(schedule2Out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule2)!;
   // 30,000 × 20% = 6,000
   assertEquals(input.lump_sum_tax, 6_000);
@@ -88,28 +86,22 @@ Deno.test("form4972.compute: Part III only — 10-year averaging on small distri
   // 1986 rate on $1,000: $1,000 × 11% = $110
   // × 10 = $1,100 tentative tax
   // MDA: min($10,000, 50% × $10,000) = $5,000; no phase-out since $10,000 ≤ $20,000
-  // Tax reduction from MDA: need tax on $5,000 × 1/10 = $500 → $500 × 11% = $55 → × 10 = $550
-  // Actually MDA reduction = 20% × MDA = 20% × 5,000 = 1,000?
-  // No — MDA reduces tax differently. Let me use the actual form line math:
-  // Line 13 = $1,100 (tentative)
   // Line 14 = 1/10 × MDA = 1/10 × $5,000 = $500
-  // Line 15 = tax on line 14 using 1986 rate = $500 × 11% = $55
-  // Line 16 = line 15 × 10 = $550
-  // Line 17 = line 13 - line 16 = $1,100 - $550 = $550
+  // Line 15 = tax on $500 using 1986 rate = $500 × 11% = $55
+  // Line 16 = $55 × 10 = $550
+  // Line 17 = $1,100 - $550 = $550
   const result = compute({
     lump_sum_amount: 10_000,
     born_before_1936: true,
     elect_10yr_averaging: true,
     elect_capital_gain: false,
   });
-  const schedule2Out = findOutput(result, "schedule2");
-  assertEquals(schedule2Out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 550);
 });
 
 Deno.test("form4972.compute: Part III — large distribution, MDA phases out", () => {
-  // $100,000 lump sum — MDA should be 0 (since 100,000 > 70,000)
+  // $100,000 lump sum — MDA = 0 (ordinaryIncome $100,000 > $70,000 zero threshold)
   // 1/10 = $10,000
   // Tax on $10,000 using 1986 brackets:
   //   $2,480 × 11% = $272.80
@@ -117,7 +109,7 @@ Deno.test("form4972.compute: Part III — large distribution, MDA phases out", (
   //   ($5,940-$3,670)=$2,270 × 14% = $317.80
   //   ($8,200-$5,940)=$2,260 × 15% = $339.00
   //   ($10,000-$8,200)=$1,800 × 16% = $288.00
-  //   Total = $272.80+$142.80+$317.80+$339.00+$288.00 = $1,360.40 → floor = $1,360
+  //   Total = $1,360.40 → floor = $1,360
   // × 10 = $13,600 (no MDA reduction)
   const result = compute({
     lump_sum_amount: 100_000,
@@ -125,8 +117,6 @@ Deno.test("form4972.compute: Part III — large distribution, MDA phases out", (
     elect_10yr_averaging: true,
     elect_capital_gain: false,
   });
-  const schedule2Out = findOutput(result, "schedule2");
-  assertEquals(schedule2Out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 13_600);
 });
@@ -135,13 +125,10 @@ Deno.test("form4972.compute: Part III — death benefit exclusion reduces ordina
   // $20,000 lump sum, $5,000 death benefit exclusion
   // Ordinary income = $20,000 − $5,000 = $15,000
   // 1/10 = $1,500
-  // Tax on $1,500:
-  //   $1,500 × 11% = $165
+  // Tax on $1,500: $1,500 × 11% = $165 → floor = $165
   // × 10 = $1,650 tentative tax
-  // MDA: min($10,000, 50% × $15,000) = min($10,000, $7,500) = $7,500
-  //   Phase-out: $20,000 ≤ $20,000 → no phase-out?
-  //   Wait: the taxable amount here is the ORDINARY income = $15,000 ≤ $20,000
-  //   So MDA = min($10,000, $7,500) = $7,500
+  // MDA: ordinaryIncome=$15,000 ≤ $20,000 → no phase-out
+  //   baseMda = min($10,000, 50% × $15,000) = min($10,000, $7,500) = $7,500
   // Line 14 = $7,500 / 10 = $750
   // Tax on $750 = $750 × 11% = $82.50 → floor = $82
   // Line 16 = $82 × 10 = $820
@@ -153,8 +140,6 @@ Deno.test("form4972.compute: Part III — death benefit exclusion reduces ordina
     elect_capital_gain: false,
     death_benefit_exclusion: 5_000,
   });
-  const schedule2Out = findOutput(result, "schedule2");
-  assertEquals(schedule2Out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 830);
 });
@@ -184,8 +169,6 @@ Deno.test("form4972.compute: Part II + Part III combined", () => {
     elect_capital_gain: true,
     elect_10yr_averaging: true,
   });
-  const schedule2Out = findOutput(result, "schedule2");
-  assertEquals(schedule2Out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule2)!;
   assertEquals(input.lump_sum_tax, 14_000);
 });
@@ -226,7 +209,20 @@ Deno.test("form4972.compute: throws on death_benefit_exclusion exceeding $5,000"
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
-Deno.test("form4972.compute: smoke test — minimal eligible input produces schedule2 output", () => {
+Deno.test("form4972.compute: smoke test — $50k distribution produces exact schedule2 output", () => {
+  // $50,000 lump sum, 10-year averaging only
+  // MDA = 0 (ordinaryIncome $50,000 < $70,000 threshold; phase-out applies)
+  // baseMda = min($10,000, 50% × $50,000) = $10,000
+  // phaseOut = 20% × ($50,000 - $20,000) = 20% × $30,000 = $6,000
+  // MDA = $10,000 - $6,000 = $4,000
+  // 1/10 = $5,000; tax on $5,000:
+  //   $2,480 × 11% = $272.80
+  //   $1,190 × 12% = $142.80
+  //   ($5,000-$3,670)=$1,330 × 14% = $186.20
+  //   Total = $601.80 → floor = $601
+  // × 10 = $6,010 tentative tax
+  // MDA/10 = $400; tax on $400 = $400 × 11% = $44 → × 10 = $440
+  // Final = $6,010 - $440 = $5,570
   const result = compute({
     lump_sum_amount: 50_000,
     born_before_1936: true,
@@ -235,6 +231,5 @@ Deno.test("form4972.compute: smoke test — minimal eligible input produces sche
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "schedule2");
   const input = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(typeof input.lump_sum_tax, "number");
-  assertEquals((input.lump_sum_tax as number) > 0, true);
+  assertEquals(input.lump_sum_tax, 5_570);
 });

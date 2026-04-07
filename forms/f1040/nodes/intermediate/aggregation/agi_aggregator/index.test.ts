@@ -205,3 +205,120 @@ Deno.test("agi_aggregator: smoke — self-employed with SE tax and health insura
   // AGI = 120_000 - 8_479 - 18_000 - 7_000 = 86_521
   assertEquals(agi(result), 86_521);
 });
+
+// ─── All income types simultaneously ──────────────────────────────────────────
+
+Deno.test("agi_aggregator: all income types simultaneously sum correctly", () => {
+  const result = compute({
+    // F1040 income lines
+    line1a_wages: 50_000,
+    line1c_unreported_tips: 500,
+    line1e_taxable_dep_care: 200,
+    line2b_taxable_interest: 1_000,
+    line3b_ordinary_dividends: 800,
+    line4b_ira_taxable: 5_000,
+    line5b_pension_taxable: 3_000,
+    line6b_ss_taxable: 2_000,
+    line7_capital_gain: 4_000,
+    // Schedule 1 Part I additions
+    line1_state_refund: 300,
+    line3_schedule_c: 10_000,
+    line5_schedule_e: 6_000,
+    line7_unemployment: 2_500,
+    // Above-the-line deductions
+    line13_hsa_deduction: 3_650,
+    line15_se_deduction: 707,
+    line20_ira_deduction: 7_000,
+  });
+  // Total income = 50000+500+200+1000+800+5000+3000+2000+4000+300+10000+6000+2500 = 85_300
+  // Deductions = 3650+707+7000 = 11_357
+  // AGI = 85_300 - 11_357 = 73_943
+  assertEquals(agi(result), 73_943);
+});
+
+// ─── Multiple sources of same income type ─────────────────────────────────────
+
+Deno.test("agi_aggregator: two schedule_c profit entries sum into AGI", () => {
+  // Schedule_c sends one aggregated amount; test that two separate compute calls
+  // with different values produce correct AGI (upstream aggregation contract)
+  const result1 = compute({ line3_schedule_c: 40_000 });
+  const result2 = compute({ line3_schedule_c: 60_000 });
+  assertEquals(agi(result1), 40_000);
+  assertEquals(agi(result2), 60_000);
+});
+
+Deno.test("agi_aggregator: schedule_e rental income and schedule_c profit both included", () => {
+  const result = compute({ line3_schedule_c: 30_000, line5_schedule_e: 20_000 });
+  assertEquals(agi(result), 50_000);
+});
+
+Deno.test("agi_aggregator: schedule_c net loss reduces AGI from other sources", () => {
+  // Negative schedule_c (net loss) reduces AGI — loss offsets wages
+  const result = compute({ line1a_wages: 80_000, line3_schedule_c: -15_000 });
+  assertEquals(agi(result), 65_000);
+});
+
+// ─── Deduction coverage: untested deductions ──────────────────────────────────
+
+Deno.test("agi_aggregator: student loan interest deduction reduces AGI", () => {
+  const result = compute({ line1a_wages: 60_000, line19_student_loan_interest: 2_500 });
+  assertEquals(agi(result), 57_500);
+});
+
+Deno.test("agi_aggregator: SEP/SIMPLE/qualified plan deduction reduces AGI", () => {
+  const result = compute({ line3_schedule_c: 100_000, line16_sep_simple: 20_000 });
+  assertEquals(agi(result), 80_000);
+});
+
+Deno.test("agi_aggregator: educator expenses deduction reduces AGI", () => {
+  const result = compute({ line1a_wages: 55_000, line11_educator_expenses: 300 });
+  assertEquals(agi(result), 54_700);
+});
+
+Deno.test("agi_aggregator: employee business expenses deduction reduces AGI", () => {
+  const result = compute({ line1a_wages: 70_000, line12_business_expenses: 5_000 });
+  assertEquals(agi(result), 65_000);
+});
+
+Deno.test("agi_aggregator: Archer MSA deduction reduces AGI", () => {
+  const result = compute({ line1a_wages: 60_000, line23_archer_msa_deduction: 2_000 });
+  assertEquals(agi(result), 58_000);
+});
+
+// ─── SSA taxability worksheet ─────────────────────────────────────────────────
+
+Deno.test("agi_aggregator: SSA worksheet — provisional income below base threshold → $0 taxable SS", () => {
+  // Single filer: base threshold = $25,000
+  // provisional income = wages + 50% × SSA gross = 10_000 + 0.5 × 20_000 = 20_000 < 25_000
+  const result = compute({ line1a_wages: 10_000, line6a_ss_gross: 20_000, filing_status: "single" });
+  // SSA taxable = 0; AGI = wages only = 10_000
+  assertEquals(agi(result), 10_000);
+});
+
+Deno.test("agi_aggregator: SSA worksheet — provisional income above upper threshold → 85% taxable", () => {
+  // Single filer: upper threshold = $34,000
+  // provisional income = 40_000 + 0.5 × 20_000 = 50_000 > 34_000
+  // tier2 = 0.5 × min(34000 - 25000, 20000) = 0.5 × 9000 = 4500
+  // tier1 = 0.85 × (50000 - 34000) = 0.85 × 16000 = 13600
+  // taxable = min(0.85 × 20000, 4500 + 13600) = min(17000, 18100) = 17000
+  const result = compute({ line1a_wages: 40_000, line6a_ss_gross: 20_000, filing_status: "single" });
+  assertEquals(agi(result), 57_000); // 40_000 wages + 17_000 SSA taxable
+});
+
+Deno.test("agi_aggregator: pre-computed line6b_ss_taxable bypasses worksheet", () => {
+  // If line6b_ss_taxable is provided directly, it should be used as-is
+  const result = compute({ line1a_wages: 30_000, line6b_ss_taxable: 5_000 });
+  assertEquals(agi(result), 35_000);
+});
+
+// ─── Negative adjustment / loss from one source reduces AGI ──────────────────
+
+Deno.test("agi_aggregator: rental real estate passive loss reduces AGI", () => {
+  const result = compute({ line1a_wages: 100_000, line17_schedule_e: -25_000 });
+  assertEquals(agi(result), 75_000);
+});
+
+Deno.test("agi_aggregator: schedule_f farm net loss reduces AGI", () => {
+  const result = compute({ line1a_wages: 60_000, line6_schedule_f: -8_000 });
+  assertEquals(agi(result), 52_000);
+});

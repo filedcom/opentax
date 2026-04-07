@@ -20,10 +20,6 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return f8288.compute({ taxYear: 2025 }, { f8288s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -100,8 +96,6 @@ Deno.test("f8288.inputSchema: missing disposition_date fails", () => {
 
 Deno.test("f8288.compute: 15% rate — amount_withheld routes to f1040 line25b", () => {
   const result = compute([minimalItem({ withholding_rate: WithholdingRate.RATE_15, amount_withheld: 75000 })]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line25b_withheld_1099, 75000);
 });
@@ -195,9 +189,9 @@ Deno.test("f8288.compute: throws on negative gross_sales_price", () => {
   );
 });
 
-Deno.test("f8288.compute: zero amount_withheld does not throw", () => {
+Deno.test("f8288.compute: zero amount_withheld does not throw and produces no outputs", () => {
   const result = compute([minimalItem({ amount_withheld: 0 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // =============================================================================

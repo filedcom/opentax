@@ -31,18 +31,21 @@ Deno.test("wages below $2,800 threshold → no FICA (no explicit fica_wages)", (
 
 Deno.test("wages at $2,800 threshold → FICA applies", () => {
   // $2,800 exactly — triggers FICA
-  // FICA on $2,800: SS (12.4%) + Medicare (2.9%) = 15.3% × $2,800 = $428.40 → $428
+  // Employer SS: $2,800 × 6.2% = $173.60
+  // Employer Medicare: $2,800 × 1.45% = $40.60
+  // Employee SS: $2,800 × 6.2% = $173.60
+  // Employee Medicare: $2,800 × 1.45% = $40.60
+  // Total FICA: $428.40 → rounded to $428
   const result = compute({ total_cash_wages: 2_800 });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2 !== undefined, true);
-  const tax = s2?.fields.line7a_household_employment as number;
-  assertEquals(tax > 0, true);
+  assertEquals(s2?.fields.line7a_household_employment, 428);
 });
 
-Deno.test("wages above $2,800 → FICA applies on all wages", () => {
+Deno.test("wages above $2,800 → FICA applies on all wages (pinned)", () => {
+  // $10,000 above threshold → full FICA: 15.3% × $10,000 = $1,530
   const result = compute({ total_cash_wages: 10_000 });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2 !== undefined, true);
+  assertEquals(s2?.fields.line7a_household_employment, 1_530);
 });
 
 // ─── FICA Tax Computation ─────────────────────────────────────────────────────
@@ -151,8 +154,8 @@ Deno.test("combined: FICA + federal withholding + FUTA", () => {
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
 Deno.test("output routes to schedule2 line7a_household_employment", () => {
+  // $5,000 FICA wages → 15.3% = $765
   const result = compute({ fica_wages: 5_000 });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2 !== undefined, true);
-  assertEquals("line7a_household_employment" in (s2?.fields ?? {}), true);
+  assertEquals(s2?.fields.line7a_household_employment, 765);
 });

@@ -144,45 +144,39 @@ Deno.test("auto_expense.compute: actual method with no actual_expenses — no ou
 // 4. Purpose routing
 // =============================================================================
 
-Deno.test("auto_expense.compute: purpose SCHEDULE_C routes to schedule_c", () => {
+Deno.test("auto_expense.compute: purpose SCHEDULE_C routes to schedule_c with correct deduction", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
     method: AutoMethod.Standard,
     purpose: AutoPurpose.SCHEDULE_C,
   })]);
-  const out = findOutput(result, "schedule_c");
-  assertEquals(out !== undefined, true);
+  // 5000 × 0.70 = 3500
+  assertEquals(fieldsOf(result.outputs, scheduleC)!.line_9_car_truck_expenses, 3500);
   assertEquals(findOutput(result, "schedule_e"), undefined);
   assertEquals(findOutput(result, "schedule_f"), undefined);
 });
 
-Deno.test("auto_expense.compute: purpose SCHEDULE_E routes to schedule_e", () => {
+Deno.test("auto_expense.compute: purpose SCHEDULE_E routes to schedule_e with correct deduction", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
     method: AutoMethod.Standard,
     purpose: AutoPurpose.SCHEDULE_E,
   })]);
-  const out = findOutput(result, "schedule_e");
-  assertEquals(out !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, scheduleE)!.expense_auto_travel, 3500);
   assertEquals(findOutput(result, "schedule_c"), undefined);
-  const fields = fieldsOf(result.outputs, scheduleE)!;
-  assertEquals(fields.expense_auto_travel, 3500);
 });
 
-Deno.test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f", () => {
+Deno.test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f with correct deduction", () => {
   const result = compute([minimalItem({
     business_miles: 5000,
     total_miles: 10000,
     method: AutoMethod.Standard,
     purpose: AutoPurpose.SCHEDULE_F,
   })]);
-  const out = findOutput(result, "schedule_f");
-  assertEquals(out !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, schedule_f)!.line10_car_truck, 3500);
   assertEquals(findOutput(result, "schedule_c"), undefined);
-  const fields = fieldsOf(result.outputs, schedule_f)!;
-  assertEquals(fields.line10_car_truck, 3500);
 });
 
 // =============================================================================

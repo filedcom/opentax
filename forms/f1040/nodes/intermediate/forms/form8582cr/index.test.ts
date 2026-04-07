@@ -232,13 +232,14 @@ Deno.test("form8582cr: real estate professional → credits not limited by passi
 // =============================================================================
 
 Deno.test("form8582cr: allowed credit routes to schedule3.line6z_general_business_credit", () => {
+  // tax_attributable = 15000 - 12000 = 3000; credits = 2000; allowed = 2000
   const result = compute({
     total_passive_credits: 2_000,
     regular_tax_all_income: 15_000,
     regular_tax_without_passive: 12_000,
   });
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6z_general_business_credit, 2_000);
 });
 
 Deno.test("form8582cr: no credit allowed → no schedule3 output", () => {

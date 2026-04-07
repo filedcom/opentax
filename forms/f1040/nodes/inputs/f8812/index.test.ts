@@ -63,16 +63,12 @@ Deno.test("schema: negative earned_income throws", () => {
 
 Deno.test("routing: 1 qualifying child routes CTC to schedule3", () => {
   const result = compute([minimalItem({ qualifying_children_count: 1 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
 Deno.test("routing: 2 qualifying children routes $4400 CTC to schedule3", () => {
   const result = compute([minimalItem({ qualifying_children_count: 2 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 4400);
 });
@@ -86,16 +82,12 @@ Deno.test("routing: zero qualifying_children_count produces no schedule3 output 
 
 Deno.test("routing: 1 other dependent routes $500 ODC to schedule3", () => {
   const result = compute([minimalItem({ other_dependents_count: 1 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 500);
 });
 
 Deno.test("routing: 3 other dependents routes $1500 ODC to schedule3", () => {
   const result = compute([minimalItem({ other_dependents_count: 3 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1500);
 });
@@ -110,8 +102,6 @@ Deno.test("routing: zero other_dependents_count produces no ODC output", () => {
 Deno.test("routing: CTC and ODC combined route total to schedule3", () => {
   // 1 child ($2200) + 2 other deps ($1000) = $3200
   const result = compute([minimalItem({ qualifying_children_count: 1, other_dependents_count: 2 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 3200);
 });
@@ -126,8 +116,6 @@ Deno.test("aggregation: multiple f8812 items are aggregated (children sum)", () 
     minimalItem({ qualifying_children_count: 1 }),
     minimalItem({ qualifying_children_count: 1 }),
   ]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 4400);
 });
@@ -138,8 +126,6 @@ Deno.test("aggregation: multiple f8812 items with dependents aggregate ODC", () 
     minimalItem({ qualifying_children_count: 1, other_dependents_count: 1 }),
     minimalItem({ qualifying_children_count: 1, other_dependents_count: 2 }),
   ]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 5900);
 });
@@ -152,8 +138,6 @@ Deno.test("aggregation: multiple f8812 items with dependents aggregate ODC", () 
 
 Deno.test("threshold: TY2025 CTC is $2200 per qualifying child (not $2000)", () => {
   const result = compute([minimalItem({ qualifying_children_count: 1 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
@@ -166,16 +150,12 @@ Deno.test("threshold: TY2025 ACTC cap is $1700 per qualifying child (not $2000)"
     earned_income: 100000,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 1700);
 });
 
 Deno.test("threshold: ODC is $500 per other dependent", () => {
   const result = compute([minimalItem({ other_dependents_count: 1 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 500);
 });
@@ -188,8 +168,6 @@ Deno.test("threshold: MFJ phase-out starts at $400,000 — at threshold no reduc
     agi: 400000,
     filing_status: "mfj",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 0, reduction = 0, CTC = 2200
   assertEquals(input.line6b_child_tax_credit, 2200);
@@ -201,8 +179,6 @@ Deno.test("threshold: MFJ AGI just above $400,000 triggers phase-out", () => {
     agi: 400001,
     filing_status: "mfj",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
@@ -214,8 +190,6 @@ Deno.test("threshold: MFJ AGI $401,000 above threshold gives $50 reduction", () 
     agi: 401000,
     filing_status: "mfj",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1000 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
@@ -229,8 +203,6 @@ Deno.test("threshold: single filer phase-out starts at $200,000 — at threshold
     agi: 200000,
     filing_status: "single",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 0, reduction = 0, CTC = 2200
   assertEquals(input.line6b_child_tax_credit, 2200);
@@ -242,8 +214,6 @@ Deno.test("threshold: single filer AGI just above $200,000 triggers phase-out", 
     agi: 200001,
     filing_status: "single",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
@@ -256,8 +226,6 @@ Deno.test("threshold: MFS filer uses $200,000 phase-out threshold (not $400,000)
     agi: 201000,
     filing_status: "mfs",
   })]);
-  const mfsOut = findOutput(mfsResult, "schedule3");
-  assertEquals(mfsOut !== undefined, true);
   const mfsInput = fieldsOf(mfsResult.outputs, schedule3)!;
   // excess = 1000, reduction = 50, CTC = 2200 - 50 = 2150
   assertEquals(mfsInput.line6b_child_tax_credit, 2150);
@@ -269,8 +237,6 @@ Deno.test("threshold: HOH filer uses $200,000 phase-out threshold", () => {
     agi: 201000,
     filing_status: "hoh",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1000, reduction = 50, CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
@@ -284,8 +250,6 @@ Deno.test("threshold: phase-out uses ceiling rounding (excess $425 → $1000 →
     agi: 200425,
     filing_status: "single",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 425 → ceil to $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
@@ -297,8 +261,6 @@ Deno.test("threshold: phase-out ceiling — excess $1001 → $2000 → $100 redu
     agi: 201001,
     filing_status: "single",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1001 → ceil to $2000 → reduction = $100 → CTC = 2200 - 100 = 2100
   assertEquals(input.line6b_child_tax_credit, 2100);
@@ -310,8 +272,6 @@ Deno.test("threshold: phase-out exact multiple — excess $1000 → $1000 → $5
     agi: 201000,
     filing_status: "single",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // excess = 1000 → already a multiple → $1000 → reduction = $50 → CTC = 2200 - 50 = 2150
   assertEquals(input.line6b_child_tax_credit, 2150);
@@ -342,8 +302,6 @@ Deno.test("threshold: ACTC computed when earned income exceeds $2500 floor", () 
     earned_income: 10000,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 1125);
 });
@@ -359,8 +317,6 @@ Deno.test("threshold: ACTC is 15% of earned income above $2500", () => {
     earned_income: 20000,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line28_actc, 2625);
 });
@@ -377,8 +333,6 @@ Deno.test("threshold: 3 qualifying children (Line 16b = $5100) enables Part II-B
     earned_income: 30000,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   // (30000-2500)*0.15 = 4125, cap = 3*1700 = 5100, ctcUnused = 6600
   // actc = min(6600, 4125, 5100) = 4125
@@ -393,8 +347,6 @@ Deno.test("threshold: 2 qualifying children (Line 16b = $3400) skips Part II-B f
     earned_income: 30000,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   // (30000-2500)*0.15 = 4125, cap = 2*1700 = 3400, ctcUnused = 4400
   // actc = min(4400, 4125, 3400) = 3400
@@ -409,52 +361,68 @@ Deno.test("threshold: 2 qualifying children (Line 16b = $3400) skips Part II-B f
 // The IRS has no explicit computation rules that require a throw beyond schema validation
 // per context.md. The following verify boundary cases DO NOT throw.
 
-Deno.test("hard rule: zero agi does not throw", () => {
+Deno.test("hard rule: zero agi does not throw — full CTC at zero income", () => {
+  // AGI = 0 is below both phase-out thresholds → no reduction, full CTC = $2200
   const result = compute([minimalItem({ qualifying_children_count: 1, agi: 0 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
-Deno.test("hard rule: zero earned_income does not throw", () => {
+Deno.test("hard rule: zero earned_income — CTC routes to schedule3, ACTC is zero", () => {
+  // earned_income = 0 → ACTC earned income method yields 0, no line28 output
+  // income_tax_liability = 0 → nonrefundable CTC also 0, no schedule3 output
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     earned_income: 0,
     income_tax_liability: 0,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6b_child_tax_credit ?? 0, 0);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
 });
 
 // ============================================================
 // 6. Warning-Only / Does-Not-Throw Rules
 // ============================================================
 
-Deno.test("warning: form_2555_amounts > 0 adds to modified AGI but does not throw", () => {
+Deno.test("warning: form_2555_amounts > 0 increases modified AGI for phase-out", () => {
+  // AGI = 100000, form_2555_amounts = 50000 → modified AGI = 150000 (below $200K threshold)
+  // No phase-out reduction, full CTC = $2200
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     agi: 100000,
     form_2555_amounts: 50000,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
-Deno.test("warning: puerto_rico_excluded_income > 0 adds to modified AGI but does not throw", () => {
+Deno.test("warning: puerto_rico_excluded_income > 0 increases modified AGI for phase-out", () => {
+  // AGI = 100000, pr_income = 20000 → modified AGI = 120000 (below $200K threshold)
+  // No phase-out reduction, full CTC = $2200
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     agi: 100000,
     puerto_rico_excluded_income: 20000,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
-Deno.test("warning: form_4563_amount > 0 adds to modified AGI but does not throw", () => {
+Deno.test("warning: form_4563_amount > 0 increases modified AGI for phase-out", () => {
+  // AGI = 100000, form_4563 = 30000 → modified AGI = 130000 (below $200K threshold)
+  // No phase-out reduction, full CTC = $2200
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     agi: 100000,
     form_4563_amount: 30000,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
-Deno.test("warning: nontaxable_combat_pay increases earned income for ACTC — does not throw", () => {
+Deno.test("warning: nontaxable_combat_pay increases effective earned income for ACTC", () => {
+  // earned_income = 5000, combat_pay = 3000 → effective = 8000
+  // (8000 - 2500) × 0.15 = 825; cap = 1700; ctcUnused = 2200 → actc = 825
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     agi: 50000,
@@ -462,10 +430,14 @@ Deno.test("warning: nontaxable_combat_pay increases earned income for ACTC — d
     nontaxable_combat_pay: 3000,
     income_tax_liability: 0,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 825);
 });
 
-Deno.test("warning: do_not_claim_actc=true does not throw", () => {
+Deno.test("warning: do_not_claim_actc=true suppresses ACTC, CTC still routes to schedule3", () => {
+  // 2 children, large earned income, do_not_claim_actc=true
+  // Non-refundable CTC = min(4400, 0) = 0 (tax liability = 0), no schedule3
+  // ACTC = 0 (opted out)
   const result = compute([minimalItem({
     qualifying_children_count: 2,
     agi: 50000,
@@ -473,10 +445,12 @@ Deno.test("warning: do_not_claim_actc=true does not throw", () => {
     income_tax_liability: 0,
     do_not_claim_actc: true,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6b_child_tax_credit ?? 0, 0);
 });
 
-Deno.test("warning: has_form_2555=true does not throw", () => {
+Deno.test("warning: has_form_2555=true suppresses ACTC, non-refundable CTC still applies", () => {
+  // has_form_2555=true blocks ACTC; non-refundable CTC limited by tax liability
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     agi: 50000,
@@ -484,27 +458,31 @@ Deno.test("warning: has_form_2555=true does not throw", () => {
     income_tax_liability: 0,
     has_form_2555: true,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line28_actc ?? 0, 0);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6b_child_tax_credit ?? 0, 0);
 });
 
 // ============================================================
 // 7. Informational Fields — Must NOT produce additional tax outputs
 // ============================================================
 
-Deno.test("informational: nontaxable_combat_pay does not create new output nodeTypes", () => {
-  const without = compute([minimalItem({ qualifying_children_count: 1, agi: 50000, earned_income: 20000, income_tax_liability: 0 })]);
-  const withCombat = compute([minimalItem({ qualifying_children_count: 1, agi: 50000, earned_income: 20000, income_tax_liability: 0, nontaxable_combat_pay: 5000 })]);
-  // Both produce outputs; combat pay may increase ACTC but not add new output types
-  const withoutTypes = without.outputs.map((o) => o.nodeType).sort();
-  const withTypes = withCombat.outputs.map((o) => o.nodeType).sort();
-  assertEquals(withoutTypes.length <= withTypes.length, true); // same or more ACTC
+Deno.test("informational: nontaxable_combat_pay increases ACTC via higher earned income", () => {
+  // Without: (20000-2500)*0.15 = 2625, cap=1700 → actc=1700
+  // With combat pay 5000: (25000-2500)*0.15 = 3375, cap=1700 → actc=1700 (same, capped)
+  // Use lower earned income to see the difference
+  // Without: (5000-2500)*0.15 = 375; cap=1700 → actc=375
+  // With combat pay 5000: effective=10000, (10000-2500)*0.15=1125; cap=1700 → actc=1125
+  const without = compute([minimalItem({ qualifying_children_count: 1, agi: 50000, earned_income: 5000, income_tax_liability: 0 })]);
+  const withCombat = compute([minimalItem({ qualifying_children_count: 1, agi: 50000, earned_income: 5000, income_tax_liability: 0, nontaxable_combat_pay: 5000 })]);
+  assertEquals(fieldsOf(without.outputs, f1040)!.line28_actc, 375);
+  assertEquals(fieldsOf(withCombat.outputs, f1040)!.line28_actc, 1125);
 });
 
-Deno.test("informational: form_8332_override does not affect output structure (CTC claimed normally)", () => {
-  // form_8332_override is informational — CTC still routes to schedule3
+Deno.test("informational: form_8332_override does not affect CTC amount — routes full CTC to schedule3", () => {
+  // form_8332_override is informational — CTC still routes to schedule3 at full $2200
   const result = compute([minimalItem({ qualifying_children_count: 1, agi: 50000, form_8332_override: true })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  const input = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(input.line6b_child_tax_credit, 2200);
 });
 
 Deno.test("informational: ACTC refund delay flag — no impact on computed amounts", () => {
@@ -515,8 +493,6 @@ Deno.test("informational: ACTC refund delay flag — no impact on computed amoun
     earned_income: 20000,
     income_tax_liability: 0,
   })]);
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
   // (20000-2500)*0.15 = 2625, cap=1700, ctcUnused=2200 → actc = 1700
   assertEquals(input.line28_actc, 1700);
@@ -545,8 +521,6 @@ Deno.test("edge: ITIN child (ssn_not_valid_for_work) eligible for ODC but not CT
   // In the simplified schema, this is expressed by not counting child in qualifying_children_count
   // but counting in other_dependents_count (implementation must handle ssn_not_valid_for_work flag)
   const result = compute([minimalItem({ qualifying_children_count: 0, other_dependents_count: 1 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 500); // ODC = $500
 });
@@ -571,8 +545,6 @@ Deno.test("edge: has_form_2555=true still allows non-refundable CTC on schedule3
     income_tax_liability: 5000,
     has_form_2555: true,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200); // non-refundable CTC unaffected
 });
@@ -584,8 +556,6 @@ Deno.test("edge: phase-out rounding — $1 excess becomes $1000 (ceiling), not $
     agi: 200001,
     filing_status: "single",
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // NOT 2200 (that would mean no phase-out rounding)
   // NOT undefined (that would mean full phase-out)
@@ -599,8 +569,6 @@ Deno.test("edge: form_8332_override=true allows CTC for noncustodial parent", ()
     agi: 50000,
     form_8332_override: true,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 2200);
 });
@@ -624,14 +592,15 @@ Deno.test("edge: do_not_claim_actc=true does not affect non-refundable CTC on sc
     income_tax_liability: 5000,
     do_not_claim_actc: true,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 4400);
 });
 
 // Edge Case 7: Bona fide Puerto Rico resident — triggers Part II-B with < 3 children
 Deno.test("edge: bona_fide_pr_resident=true enables Part II-B path with 1 qualifying child", () => {
+  // PR resident with 1 child: Part II-B applies even with < 3 children
+  // Part II-A: (20000-2500)*0.15 = 2625; actcCap = 1700; actc_IIA = min(1700, 2625) = 1700
+  // No payroll taxes provided → partIIB = 0; actc = max(1700, 0) capped at 1700 = 1700
   const result = compute([minimalItem({
     qualifying_children_count: 1,
     agi: 30000,
@@ -639,10 +608,8 @@ Deno.test("edge: bona_fide_pr_resident=true enables Part II-B path with 1 qualif
     income_tax_liability: 0,
     bona_fide_pr_resident: true,
   })]);
-  assertEquals(Array.isArray(result.outputs), true);
-  // PR resident with 1 child goes to Part II-B regardless of < 3 children
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
+  const input = fieldsOf(result.outputs, f1040)!;
+  assertEquals(input.line28_actc, 1700);
 });
 
 // Edge Case 8: modified AGI exclusions (PR income, Form 2555, Form 4563) increase phase-out
@@ -655,8 +622,6 @@ Deno.test("edge: puerto_rico_excluded_income added to AGI for phase-out calculat
     filing_status: "single",
     puerto_rico_excluded_income: 10000,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1950);
 });
@@ -670,8 +635,6 @@ Deno.test("edge: form_2555_amounts added to AGI for modified AGI phase-out", () 
     filing_status: "single",
     form_2555_amounts: 10000,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1950);
 });
@@ -685,8 +648,6 @@ Deno.test("edge: form_4563_amount added to AGI for modified AGI phase-out", () =
     filing_status: "single",
     form_4563_amount: 10000,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line6b_child_tax_credit, 1950);
 });
@@ -698,8 +659,6 @@ Deno.test("edge: nonrefundable CTC limited to income_tax_liability", () => {
     agi: 50000,
     income_tax_liability: 1500,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // CTC = 4400, limited to tax liability = 1500
   assertEquals(input.line6b_child_tax_credit, 1500);
@@ -732,17 +691,8 @@ Deno.test("edge: nontaxable_combat_pay increases earned income for ACTC calculat
     income_tax_liability: 0,
   })]);
 
-  const f1040WithoutOut = findOutput(withoutCombat, "f1040");
-  const f1040WithOut = findOutput(withCombat, "f1040");
-
-  assertEquals(f1040WithoutOut !== undefined, true);
-  assertEquals(f1040WithOut !== undefined, true);
-
-  const withoutActc = fieldsOf(withoutCombat.outputs, f1040)!.line28_actc as number;
-  const withActc = fieldsOf(withCombat.outputs, f1040)!.line28_actc as number;
-
-  assertEquals(withoutActc, 375);
-  assertEquals(withActc, 1125); // combat pay boosts ACTC
+  assertEquals(fieldsOf(withoutCombat.outputs, f1040)!.line28_actc, 375);
+  assertEquals(fieldsOf(withCombat.outputs, f1040)!.line28_actc, 1125); // combat pay boosts ACTC
 });
 
 // ============================================================
@@ -770,15 +720,8 @@ Deno.test("smoke: 2 qualifying children + 1 other dependent, moderate income, pa
     income_tax_liability: 3000,
   })]);
 
-  const schedule3Out = findOutput(result, "schedule3");
-  assertEquals(schedule3Out !== undefined, true);
-  const s3Input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(s3Input.line6b_child_tax_credit, 3000); // limited by tax liability
-
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
-  const f1040Input = fieldsOf(result.outputs, f1040)!;
-  assertEquals(f1040Input.line28_actc, 1800);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line6b_child_tax_credit, 3000); // limited by tax liability
+  assertEquals(fieldsOf(result.outputs, f1040)!.line28_actc, 1800);
 });
 
 Deno.test("smoke: MFJ 3 children, high earned income, below phase-out — maximum ACTC", () => {
@@ -797,10 +740,7 @@ Deno.test("smoke: MFJ 3 children, high earned income, below phase-out — maximu
     income_tax_liability: 0,
   })]);
 
-  const f1040Out = findOutput(result, "f1040");
-  assertEquals(f1040Out !== undefined, true);
-  const input = fieldsOf(result.outputs, f1040)!;
-  assertEquals(input.line28_actc, 5100);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line28_actc, 5100);
 });
 
 // ============================================================

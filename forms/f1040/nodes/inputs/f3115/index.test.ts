@@ -110,18 +110,40 @@ Deno.test("f3115: multiple items with positive adjustments aggregate to single s
     minimalItem({ designated_change_number: "DCN-333", section_481_adjustment: 3000 }),
   ]);
   const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   assertEquals((out!.fields as Record<string, unknown>).line8z_other_income, 8000);
 });
 
-Deno.test("f3115: FilingType.AdvanceConsent is accepted", () => {
+Deno.test("f3115: negative adjustment with spread_period=4 routes one-quarter per year", () => {
+  const result = compute([minimalItem({ section_481_adjustment: -12000, spread_period: 4 })]);
+  const out = findOutput(result, "schedule1");
+  assertEquals((out!.fields as Record<string, unknown>).line8z_other, -3000);
+});
+
+Deno.test("f3115: mixed positive and negative items net to zero — no output", () => {
+  const result = compute([
+    minimalItem({ section_481_adjustment: 6000 }),
+    minimalItem({ designated_change_number: "DCN-444", section_481_adjustment: -6000 }),
+  ]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f3115: mixed items net to positive — routes as income", () => {
+  const result = compute([
+    minimalItem({ section_481_adjustment: 10000 }),
+    minimalItem({ designated_change_number: "DCN-555", section_481_adjustment: -4000 }),
+  ]);
+  const out = findOutput(result, "schedule1");
+  assertEquals((out!.fields as Record<string, unknown>).line8z_other_income, 6000);
+});
+
+Deno.test("f3115: FilingType.AdvanceConsent is accepted and produces no output without adjustment", () => {
   const result = compute([minimalItem({ filing_type: FilingType.AdvanceConsent })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // ── Optional fields ────────────────────────────────────────────────────────────
 
-Deno.test("f3115: optional accounting method fields accepted", () => {
+Deno.test("f3115: optional accounting method fields do not affect computed adjustment", () => {
   const result = compute([
     minimalItem({
       accounting_method_before: "Cash basis",
@@ -130,7 +152,7 @@ Deno.test("f3115: optional accounting method fields accepted", () => {
     }),
   ]);
   const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, unknown>).line8z_other_income, 10000);
 });
 
 // ── Smoke test ────────────────────────────────────────────────────────────────
@@ -147,6 +169,5 @@ Deno.test("f3115: smoke test with all fields populated", () => {
     }),
   ]);
   const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   assertEquals((out!.fields as Record<string, unknown>).line8z_other_income, 5000);
 });

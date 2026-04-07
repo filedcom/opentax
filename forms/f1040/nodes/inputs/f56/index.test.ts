@@ -80,24 +80,12 @@ Deno.test("f56.compute: returns empty outputs for minimal input", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f56.compute: returns empty outputs for executor type", () => {
-  const result = compute(minimalInput({ fiduciary_type: "executor" }));
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f56.compute: returns empty outputs for trustee type", () => {
-  const result = compute(minimalInput({ fiduciary_type: "trustee" }));
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f56.compute: returns empty outputs for other type", () => {
-  const result = compute(minimalInput({ fiduciary_type: "other" }));
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f56.compute: result.outputs is an array", () => {
-  const result = compute(minimalInput());
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("f56.compute: returns empty outputs for all fiduciary types", () => {
+  const types = ["executor", "administrator", "trustee", "guardian", "conservator", "receiver", "assignee", "other"];
+  for (const fiduciary_type of types) {
+    const result = compute(minimalInput({ fiduciary_type }));
+    assertEquals(result.outputs.length, 0);
+  }
 });
 
 // =============================================================================
@@ -128,5 +116,4 @@ Deno.test("f56.compute: smoke test — fully populated form produces no outputs"
     revocation_termination_date: "12/31/2025",
   }));
   assertEquals(result.outputs.length, 0);
-  assertEquals(Array.isArray(result.outputs), true);
 });

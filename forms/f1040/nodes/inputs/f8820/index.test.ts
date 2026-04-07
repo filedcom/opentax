@@ -11,10 +11,6 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return f8820.compute({ taxYear: 2025 }, { f8820s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -59,8 +55,8 @@ Deno.test("f8820.inputSchema: zero expenses passes", () => {
 
 Deno.test("f8820.compute: expenses route to schedule3 as GBC", () => {
   const result = compute([minimalItem({ qualified_clinical_testing_expenses: 100000 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].nodeType, "schedule3");
 });
 
 Deno.test("f8820.compute: credit = 25% of qualified expenses", () => {

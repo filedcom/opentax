@@ -213,7 +213,11 @@ Deno.test("threshold: zero taxable_income — no deduction allowed", () => {
 
 // ── Hard validation rules ─────────────────────────────────────────────────────
 
-Deno.test("validation hard pass: all valid fields — no throw", () => {
+Deno.test("validation hard pass: all valid fields — produces f1040 output", () => {
+  // qbi_from_schedule_c=50000 + qbi=10000 = 60000 net QBI; reit=5000
+  // 20% × 60000 = 12000 QBI component; 20% × 5000 = 1000 REIT component → total = 13000
+  // income_limit_base = 200000 - 10000 = 190000; limit = 20% × 190000 = 38000
+  // deduction = min(13000, 38000) = 13000
   const result = compute({
     qbi_from_schedule_c: 50000,
     qbi: 10000,
@@ -225,17 +229,17 @@ Deno.test("validation hard pass: all valid fields — no throw", () => {
     qbi_loss_carryforward: 0,
     reit_loss_carryforward: 0,
   });
-  // Does not throw; produces f1040 output
-  assertEquals(typeof result.outputs.length, "number");
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 13000);
 });
 
 // ── Output routing ────────────────────────────────────────────────────────────
 
 Deno.test("routing: positive QBI → routes to f1040 with line13_qbi_deduction", () => {
+  // 20% × 10000 = 2000; limit = 20% × 50000 = 10000 → deduction = 2000
   const result = compute({ qbi_from_schedule_c: 10000, taxable_income: 50000 });
   const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
-  assertEquals(typeof out?.fields.line13_qbi_deduction, "number");
+  assertEquals(out?.fields.line13_qbi_deduction, 2000);
 });
 
 Deno.test("routing: no QBI and no REIT dividends → no f1040 output", () => {

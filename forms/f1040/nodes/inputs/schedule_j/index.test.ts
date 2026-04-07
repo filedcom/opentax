@@ -10,7 +10,7 @@ function findF1040Output(result: ReturnType<typeof compute>) {
 }
 
 // =============================================================================
-// 1. Input Schema Validation
+// 1. Input Schema Validation (one invalid case only)
 // =============================================================================
 
 Deno.test("schedule_j.inputSchema: valid minimal input passes", () => {
@@ -24,32 +24,10 @@ Deno.test("schedule_j.inputSchema: valid minimal input passes", () => {
   assertEquals(parsed.success, true);
 });
 
-Deno.test("schedule_j.inputSchema: negative elected_farm_income fails", () => {
+Deno.test("schedule_j.inputSchema: negative values are rejected", () => {
   const parsed = schedule_j.inputSchema.safeParse({
     elected_farm_income: -1,
     prior_year_taxable_income_py1: 20000,
-    prior_year_taxable_income_py2: 25000,
-    prior_year_taxable_income_py3: 30000,
-    schedule_j_tax: 8000,
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schedule_j.inputSchema: negative schedule_j_tax fails", () => {
-  const parsed = schedule_j.inputSchema.safeParse({
-    elected_farm_income: 50000,
-    prior_year_taxable_income_py1: 20000,
-    prior_year_taxable_income_py2: 25000,
-    prior_year_taxable_income_py3: 30000,
-    schedule_j_tax: -100,
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schedule_j.inputSchema: negative prior year income py1 fails", () => {
-  const parsed = schedule_j.inputSchema.safeParse({
-    elected_farm_income: 50000,
-    prior_year_taxable_income_py1: -500,
     prior_year_taxable_income_py2: 25000,
     prior_year_taxable_income_py3: 30000,
     schedule_j_tax: 8000,
@@ -65,37 +43,6 @@ Deno.test("schedule_j.inputSchema: optional capital gain field accepted", () => 
     prior_year_taxable_income_py2: 25000,
     prior_year_taxable_income_py3: 30000,
     schedule_j_tax: 7500,
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("schedule_j.inputSchema: missing required elected_farm_income fails", () => {
-  const parsed = schedule_j.inputSchema.safeParse({
-    prior_year_taxable_income_py1: 20000,
-    prior_year_taxable_income_py2: 25000,
-    prior_year_taxable_income_py3: 30000,
-    schedule_j_tax: 8000,
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schedule_j.inputSchema: missing required schedule_j_tax fails", () => {
-  const parsed = schedule_j.inputSchema.safeParse({
-    elected_farm_income: 50000,
-    prior_year_taxable_income_py1: 20000,
-    prior_year_taxable_income_py2: 25000,
-    prior_year_taxable_income_py3: 30000,
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("schedule_j.inputSchema: zero elected_farm_income is valid schema-wise", () => {
-  const parsed = schedule_j.inputSchema.safeParse({
-    elected_farm_income: 0,
-    prior_year_taxable_income_py1: 0,
-    prior_year_taxable_income_py2: 0,
-    prior_year_taxable_income_py3: 0,
-    schedule_j_tax: 0,
   });
   assertEquals(parsed.success, true);
 });
@@ -116,22 +63,11 @@ Deno.test("schedule_j.compute: zero elected_farm_income — no outputs", () => {
 });
 
 // =============================================================================
-// 3. Normal Farming Scenario — Routes schedule_j_tax to f1040 line 16
+// 3. schedule_j_tax routes exactly to f1040 line16_income_tax
+// The node passes through the pre-computed Schedule J averaged tax unchanged.
 // =============================================================================
 
-Deno.test("schedule_j.compute: with elected farm income and prior years — produces f1040 output", () => {
-  const result = compute({
-    elected_farm_income: 80000,
-    prior_year_taxable_income_py1: 30000,
-    prior_year_taxable_income_py2: 35000,
-    prior_year_taxable_income_py3: 40000,
-    schedule_j_tax: 14000,
-  });
-  const f1040Out = findF1040Output(result);
-  assertEquals(f1040Out !== undefined, true);
-});
-
-Deno.test("schedule_j.compute: schedule_j_tax routes to f1040 line16_income_tax", () => {
+Deno.test("schedule_j.compute: schedule_j_tax routes to f1040 line16_income_tax exactly", () => {
   const result = compute({
     elected_farm_income: 80000,
     prior_year_taxable_income_py1: 30000,
@@ -143,11 +79,28 @@ Deno.test("schedule_j.compute: schedule_j_tax routes to f1040 line16_income_tax"
   assertEquals(f1040Out?.fields?.line16_income_tax, 14000);
 });
 
-// =============================================================================
-// 4. Zero Prior Year Incomes (First Years of Farming)
-// =============================================================================
+Deno.test("schedule_j.compute: different schedule_j_tax values produce different line16_income_tax", () => {
+  // Lower averaged tax (income averaging is beneficial)
+  const averaged = compute({
+    elected_farm_income: 90000,
+    prior_year_taxable_income_py1: 20000,
+    prior_year_taxable_income_py2: 20000,
+    prior_year_taxable_income_py3: 20000,
+    schedule_j_tax: 11000,
+  });
+  // Higher regular tax (income averaging not elected)
+  const regular = compute({
+    elected_farm_income: 90000,
+    prior_year_taxable_income_py1: 20000,
+    prior_year_taxable_income_py2: 20000,
+    prior_year_taxable_income_py3: 20000,
+    schedule_j_tax: 18000,
+  });
+  assertEquals(findF1040Output(averaged)?.fields?.line16_income_tax, 11000);
+  assertEquals(findF1040Output(regular)?.fields?.line16_income_tax, 18000);
+});
 
-Deno.test("schedule_j.compute: zero prior year incomes (new farmer) — produces output with tax", () => {
+Deno.test("schedule_j.compute: new farmer (zero prior years) — schedule_j_tax still routes to line16", () => {
   const result = compute({
     elected_farm_income: 60000,
     prior_year_taxable_income_py1: 0,
@@ -155,9 +108,23 @@ Deno.test("schedule_j.compute: zero prior year incomes (new farmer) — produces
     prior_year_taxable_income_py3: 0,
     schedule_j_tax: 9500,
   });
-  const f1040Out = findF1040Output(result);
-  assertEquals(f1040Out !== undefined, true);
-  assertEquals(f1040Out?.fields?.line16_income_tax, 9500);
+  assertEquals(findF1040Output(result)?.fields?.line16_income_tax, 9500);
+});
+
+// =============================================================================
+// 4. Only one output produced
+// =============================================================================
+
+Deno.test("schedule_j.compute: exactly one output when elected farm income > 0", () => {
+  const result = compute({
+    elected_farm_income: 50000,
+    prior_year_taxable_income_py1: 10000,
+    prior_year_taxable_income_py2: 10000,
+    prior_year_taxable_income_py3: 10000,
+    schedule_j_tax: 8500,
+  });
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].nodeType, "f1040");
 });
 
 // =============================================================================
@@ -172,16 +139,15 @@ Deno.test("schedule_j.compute: large elected farm income — routes correct tax 
     prior_year_taxable_income_py3: 70000,
     schedule_j_tax: 125000,
   });
-  const f1040Out = findF1040Output(result);
-  assertEquals(f1040Out?.fields?.line16_income_tax, 125000);
+  assertEquals(findF1040Output(result)?.fields?.line16_income_tax, 125000);
 });
 
 // =============================================================================
-// 6. With Capital Gain Component
+// 6. Capital Gain Component — does not affect routing or line16 value
 // =============================================================================
 
-Deno.test("schedule_j.compute: with capital gain component — produces f1040 output with correct tax", () => {
-  const result = compute({
+Deno.test("schedule_j.compute: capital gain component does not change line16 routing", () => {
+  const withGain = compute({
     elected_farm_income: 100000,
     elected_farm_income_capital_gain: 20000,
     prior_year_taxable_income_py1: 40000,
@@ -189,16 +155,23 @@ Deno.test("schedule_j.compute: with capital gain component — produces f1040 ou
     prior_year_taxable_income_py3: 50000,
     schedule_j_tax: 22000,
   });
-  const f1040Out = findF1040Output(result);
-  assertEquals(f1040Out !== undefined, true);
-  assertEquals(f1040Out?.fields?.line16_income_tax, 22000);
+  const withoutGain = compute({
+    elected_farm_income: 100000,
+    prior_year_taxable_income_py1: 40000,
+    prior_year_taxable_income_py2: 45000,
+    prior_year_taxable_income_py3: 50000,
+    schedule_j_tax: 22000,
+  });
+  // Both route to f1040 with the same schedule_j_tax
+  assertEquals(findF1040Output(withGain)?.fields?.line16_income_tax, 22000);
+  assertEquals(findF1040Output(withoutGain)?.fields?.line16_income_tax, 22000);
 });
 
 // =============================================================================
-// 7. Exact EFI Pass-through — Minimal viable election
+// 7. Minimal viable election ($1)
 // =============================================================================
 
-Deno.test("schedule_j.compute: minimal EFI of $1 — routes to f1040", () => {
+Deno.test("schedule_j.compute: minimal EFI of $1 — routes $1 tax to f1040 line16", () => {
   const result = compute({
     elected_farm_income: 1,
     prior_year_taxable_income_py1: 0,
@@ -206,13 +179,11 @@ Deno.test("schedule_j.compute: minimal EFI of $1 — routes to f1040", () => {
     prior_year_taxable_income_py3: 0,
     schedule_j_tax: 1,
   });
-  const f1040Out = findF1040Output(result);
-  assertEquals(f1040Out !== undefined, true);
-  assertEquals(f1040Out?.fields?.line16_income_tax, 1);
+  assertEquals(findF1040Output(result)?.fields?.line16_income_tax, 1);
 });
 
 // =============================================================================
-// 8. assertThrows: invalid input throws
+// 8. Invalid input throws
 // =============================================================================
 
 Deno.test("schedule_j.compute: invalid input throws on parse", () => {

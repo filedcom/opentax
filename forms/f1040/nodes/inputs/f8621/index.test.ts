@@ -19,10 +19,6 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return f8621.compute({ taxYear: 2025 }, { f8621s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -116,8 +112,9 @@ Deno.test("f8621.compute: excess_distribution regime, excess_distribution_amount
     regime: PficRegime.EXCESS_DISTRIBUTION,
     excess_distribution_amount: 10000,
   })]);
-  const out = findOutput(result, "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  // 10000 × 0.37 = 3700
+  assertEquals(fields.line17z_other_additional_taxes, 3700);
 });
 
 Deno.test("f8621.compute: excess_distribution regime, excess_distribution_amount = 0 — no output", () => {
@@ -152,8 +149,6 @@ Deno.test("f8621.compute: MTM regime, mtm_gain_loss > 0 — routes gain to sched
     regime: PficRegime.MTM,
     mtm_gain_loss: 5000,
   })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line8z_other, 5000);
 });
@@ -184,13 +179,11 @@ Deno.test("f8621.compute: MTM regime, no mtm_gain_loss provided — no output", 
 // 4. QEF Regime Routing
 // =============================================================================
 
-Deno.test("f8621.compute: QEF regime, qef_ordinary_income > 0 — routes to schedule1", () => {
+Deno.test("f8621.compute: QEF regime, qef_ordinary_income > 0 — routes to schedule1 line8z_other", () => {
   const result = compute([minimalItem({
     regime: PficRegime.QEF,
     qef_ordinary_income: 8000,
   })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line8z_other, 8000);
 });
@@ -298,9 +291,9 @@ Deno.test("f8621.compute: throws on negative qef_ordinary_income", () => {
   );
 });
 
-Deno.test("f8621.compute: does not throw when all optional fields absent", () => {
+Deno.test("f8621.compute: does not throw when all optional fields absent — no income fields means no outputs", () => {
   const result = compute([minimalItem()]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs, []);
 });
 
 // =============================================================================

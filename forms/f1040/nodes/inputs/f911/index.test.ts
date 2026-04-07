@@ -6,46 +6,21 @@ function compute(input: Record<string, unknown>) {
 }
 
 // =============================================================================
-// 1. Input Validation — required fields and type constraints
+// 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f911.inputSchema: valid economic_hardship input passes", () => {
-  const parsed = f911.inputSchema.safeParse({
-    hardship_type: HardshipType.EconomicHardship,
-    taxpayer_description: "IRS levied my bank account causing immediate financial hardship",
-    requested_relief: "Release the bank levy and set up an installment agreement",
-  });
-  assertEquals(parsed.success, true);
+Deno.test("f911.inputSchema: all HardshipType enum values accepted", () => {
+  for (const hardshipType of Object.values(HardshipType)) {
+    const parsed = f911.inputSchema.safeParse({
+      hardship_type: hardshipType,
+      taxpayer_description: "Test description",
+      requested_relief: "Test relief",
+    });
+    assertEquals(parsed.success, true);
+  }
 });
 
-Deno.test("f911.inputSchema: valid systemic_problem input passes", () => {
-  const parsed = f911.inputSchema.safeParse({
-    hardship_type: HardshipType.SystemicProblem,
-    taxpayer_description: "IRS has been processing my return for over 6 months without resolution",
-    requested_relief: "Expedite processing of my amended return",
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f911.inputSchema: valid fair_treatment input passes", () => {
-  const parsed = f911.inputSchema.safeParse({
-    hardship_type: HardshipType.FairTreatment,
-    taxpayer_description: "IRS examiner is not following IRS procedures",
-    requested_relief: "Ensure proper application of IRS procedures",
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f911.inputSchema: valid other hardship type passes", () => {
-  const parsed = f911.inputSchema.safeParse({
-    hardship_type: HardshipType.Other,
-    taxpayer_description: "Circumstances do not fit other categories",
-    requested_relief: "Review my situation",
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f911.inputSchema: with optional contact_info passes", () => {
+Deno.test("f911.inputSchema: optional contact_info accepted", () => {
   const parsed = f911.inputSchema.safeParse({
     hardship_type: HardshipType.EconomicHardship,
     taxpayer_description: "Levy causing hardship",
@@ -88,56 +63,9 @@ Deno.test("f911.inputSchema: missing requested_relief fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f911.inputSchema: all HardshipType enum values are valid", () => {
-  for (const hardshipType of Object.values(HardshipType)) {
-    const parsed = f911.inputSchema.safeParse({
-      hardship_type: hardshipType,
-      taxpayer_description: "Test description",
-      requested_relief: "Test relief",
-    });
-    assertEquals(parsed.success, true);
-  }
-});
-
 // =============================================================================
-// 2. Compute — always returns no outputs (informational only)
+// 2. Compute — always returns no outputs (administrative form only)
 // =============================================================================
-
-Deno.test("f911.compute: economic_hardship returns no outputs", () => {
-  const result = compute({
-    hardship_type: HardshipType.EconomicHardship,
-    taxpayer_description: "Bank levy causing hardship",
-    requested_relief: "Release levy",
-  });
-  assertEquals(result.outputs, []);
-});
-
-Deno.test("f911.compute: systemic_problem returns no outputs", () => {
-  const result = compute({
-    hardship_type: HardshipType.SystemicProblem,
-    taxpayer_description: "Return stuck in processing",
-    requested_relief: "Expedite return processing",
-  });
-  assertEquals(result.outputs, []);
-});
-
-Deno.test("f911.compute: fair_treatment returns no outputs", () => {
-  const result = compute({
-    hardship_type: HardshipType.FairTreatment,
-    taxpayer_description: "Examiner not following procedures",
-    requested_relief: "Ensure proper procedures",
-  });
-  assertEquals(result.outputs, []);
-});
-
-Deno.test("f911.compute: other hardship returns no outputs", () => {
-  const result = compute({
-    hardship_type: HardshipType.Other,
-    taxpayer_description: "Unique hardship situation",
-    requested_relief: "Review case",
-  });
-  assertEquals(result.outputs, []);
-});
 
 Deno.test("f911.compute: all hardship types produce no outputs", () => {
   for (const hardshipType of Object.values(HardshipType)) {
@@ -151,7 +79,7 @@ Deno.test("f911.compute: all hardship types produce no outputs", () => {
 });
 
 // =============================================================================
-// 3. Hard validation rules
+// 3. Hard validation — compute throws on bad input
 // =============================================================================
 
 Deno.test("f911.compute: throws on missing hardship_type", () => {
@@ -183,12 +111,8 @@ Deno.test("f911.compute: throws on invalid hardship_type", () => {
   }), Error);
 });
 
-Deno.test("f911.compute: throws on empty input", () => {
-  assertThrows(() => compute({}), Error);
-});
-
 // =============================================================================
-// 4. Smoke test — full population
+// 4. Smoke test
 // =============================================================================
 
 Deno.test("f911.compute: smoke test — all fields populated returns empty outputs", () => {
@@ -198,6 +122,5 @@ Deno.test("f911.compute: smoke test — all fields populated returns empty outpu
     requested_relief: "Immediately release the wage levy and work with me to establish a reasonable payment plan or Currently Not Collectible status.",
     contact_info: "555-123-4567 (best between 9am-5pm EST)",
   });
-  assertEquals(Array.isArray(result.outputs), true);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });

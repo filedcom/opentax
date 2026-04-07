@@ -67,11 +67,11 @@ Deno.test("f8828.compute: standard recapture routes to schedule2 line10_recaptur
   // federally_subsidized_amount = 100000 × 0.06 × 0.0625 = 375
   // year 5 holding percentage = 100% (1.0)
   // adjusted_recapture = 375 × 1.0 = 375
-  // income_percentage = ((120000 / 90000) - 1) × 100 = 33.33%
-  // recapture = min(375 × 0.3333, 50% × 50000) = min(125, 25000) = ~125
+  // income_pct = (120000 / 90000) - 1 = 1/3
+  // recapture = min(375 × (1/3), 50% × 50000) = min(125, 25000) = 125
   const result = compute(minimalItem());
-  const out = findOutput(result, "schedule2");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(Math.round(fields.line10_recapture_tax! * 1000) / 1000, 125);
 });
 
 Deno.test("f8828.compute: recapture capped at 50% of gain", () => {
@@ -224,9 +224,8 @@ Deno.test("f8828.compute: smoke test — full realistic scenario", () => {
   // Held 3 years → holding_pct = 60%
   // adjusted_recapture = 618.75 × 0.60 = 371.25
   // MAGI = $105,000; limit = $80,000
-  // income_pct: (105000/80000 - 1) = 31.25% of the limit; interpolate to 50%:
-  //   = ((105000 - 80000) / (0.25 × 80000)) × 50% = (25000/20000) × 50% = 1.25 × 50% → cap at 50%
-  // recapture = min(371.25 × 0.50, 0.50 × 30000) = min(185.625, 15000) = 185.625
+  // income_pct = (105000/80000) - 1 = 0.3125 (31.25%; not capped)
+  // recapture = min(371.25 × 0.3125, 0.50 × 30000) = min(116.015625, 15000) = 116.015625
   const result = compute(minimalItem({
     original_loan_amount: 180_000,
     subsidy_rate: 0.055,
@@ -237,7 +236,6 @@ Deno.test("f8828.compute: smoke test — full realistic scenario", () => {
     family_size: 4,
   }));
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax !== undefined, true);
-  assertEquals(fields.line10_recapture_tax! > 0, true);
+  assertEquals(fields.line10_recapture_tax, 116.015625);
   assertEquals(result.outputs.length, 1);
 });

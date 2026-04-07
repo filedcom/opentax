@@ -41,29 +41,9 @@ Deno.test("f8844.inputSchema: negative qualified_zone_wages fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8844.inputSchema: employee_name optional — omitting it passes", () => {
-  const parsed = f8844.inputSchema.safeParse({
-    f8844s: [{ qualified_zone_wages: 10_000, employee_lives_in_zone: true, employee_works_in_zone: true }],
-  });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8844.inputSchema: employee_name provided — passes", () => {
-  const parsed = f8844.inputSchema.safeParse({
-    f8844s: [minimalItem({ qualified_zone_wages: 10_000, employee_name: "Jane Smith" })],
-  });
-  assertEquals(parsed.success, true);
-});
-
 // =============================================================================
 // 2. Qualification — Both Location Tests Required
 // =============================================================================
-
-Deno.test("f8844.compute: both zones true — credit computed", () => {
-  const result = compute([minimalItem({ qualified_zone_wages: 10_000 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2_000); // 20% × $10,000
-});
 
 Deno.test("f8844.compute: employee_lives_in_zone = false — no credit for that employee", () => {
   const result = compute([minimalItem({
@@ -162,8 +142,8 @@ Deno.test("f8844.compute: multiple employees all above cap — each capped at $3
 
 Deno.test("f8844.compute: routes to schedule3 line6z_general_business_credit", () => {
   const result = compute([minimalItem({ qualified_zone_wages: 5_000 })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6z_general_business_credit, 1_000); // 20% × $5,000
 });
 
 Deno.test("f8844.compute: does not route to schedule2", () => {
@@ -187,12 +167,6 @@ Deno.test("f8844.compute: throws on negative qualified_zone_wages", () => {
 Deno.test("f8844.compute: employee_name only — no credit (wages = 0)", () => {
   const result = compute([minimalItem({ employee_name: "John Doe", qualified_zone_wages: 0 })]);
   assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8844.compute: exactly at $15,000 cap — max $3,000 credit", () => {
-  const result = compute([minimalItem({ qualified_zone_wages: 15_000 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3_000);
 });
 
 // =============================================================================

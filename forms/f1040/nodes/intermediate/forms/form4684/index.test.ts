@@ -54,9 +54,7 @@ Deno.test("personal loss — federal disaster qualifies", () => {
     is_federal_disaster: true,
     agi: 50_000,
   });
-  const sa = findOutput(result, "schedule_a");
-  assertEquals(sa !== undefined, true);
-  assertEquals(sa?.fields.line_15_casualty_theft_loss, 14_900);
+  assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 14_900);
 });
 
 // ─── $100 Per-Event Floor ─────────────────────────────────────────────────────
@@ -189,9 +187,7 @@ Deno.test("business §1231 property loss routes to form4797", () => {
     business_insurance: 0,
     business_is_section_1231: true,
   });
-  const f4797 = findOutput(result, "form4797");
-  assertEquals(f4797 !== undefined, true);
-  assertEquals(f4797?.fields.ordinary_gain, -30_000);
+  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain, -30_000);
   assertEquals(findOutput(result, "schedule_a"), undefined);
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
@@ -204,9 +200,7 @@ Deno.test("business investment property loss routes to schedule_d", () => {
     business_insurance: 0,
     business_is_section_1231: false,
   });
-  const sd = findOutput(result, "schedule_d");
-  assertEquals(sd !== undefined, true);
-  assertEquals(sd?.fields.line_11_form2439, -20_000);
+  assertEquals(findOutput(result, "schedule_d")?.fields.line_11_form2439, -20_000);
   assertEquals(findOutput(result, "form4797"), undefined);
 });
 
@@ -227,6 +221,8 @@ Deno.test("business loss reduced by insurance", () => {
 // ─── Personal + Business Combined ────────────────────────────────────────────
 
 Deno.test("personal federal disaster loss + business §1231 loss combined", () => {
+  // Personal: FMV decline $20k, basis $60k → loss $20k, after $100 floor $19,900, AGI $50k → 10%=$5k → net $14,900
+  // Business: FMV decline $30k, basis $50k → loss $30k
   const result = compute({
     // Personal
     personal_fmv_before: 50_000,
@@ -242,24 +238,24 @@ Deno.test("personal federal disaster loss + business §1231 loss combined", () =
     business_insurance: 0,
     business_is_section_1231: true,
   });
-  const sa = findOutput(result, "schedule_a");
-  const f4797 = findOutput(result, "form4797");
-  assertEquals(sa !== undefined, true);
-  assertEquals(f4797 !== undefined, true);
+  assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 14_900);
+  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain, -30_000);
 });
 
 // ─── Output Field Routing ─────────────────────────────────────────────────────
 
-Deno.test("personal loss routes to schedule_a line_15_casualty_theft_loss", () => {
+Deno.test("spec_scenario: FMV_loss=15000, AGI=60000 → deductible=max(0,15000-100-6000)=8900", () => {
+  // FMV before=$15,000, after=$0, basis=$15,000 → loss=min($15,000,$15,000)=$15,000
+  // After $100 floor: $14,900
+  // AGI=$60,000, 10%=$6,000
+  // Net: $14,900 - $6,000 = $8,900
   const result = compute({
-    personal_fmv_before: 50_000,
-    personal_fmv_after: 30_000,
-    personal_basis: 60_000,
+    personal_fmv_before: 15_000,
+    personal_fmv_after: 0,
+    personal_basis: 15_000,
     personal_insurance: 0,
     is_federal_disaster: true,
-    agi: 10_000,
+    agi: 60_000,
   });
-  const sa = findOutput(result, "schedule_a");
-  assertEquals(sa !== undefined, true);
-  assertEquals("line_15_casualty_theft_loss" in (sa?.fields ?? {}), true);
+  assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 8_900);
 });

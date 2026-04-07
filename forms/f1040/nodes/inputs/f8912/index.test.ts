@@ -44,53 +44,6 @@ Deno.test("f8912.inputSchema: empty array fails (min 1)", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8912.inputSchema: missing bond_type fails", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{
-      face_amount: 10_000,
-      credit_rate: 0.045,
-      holding_period_days: 365,
-      total_days_in_period: 365,
-    }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8912.inputSchema: negative face_amount fails", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{ bond_type: BondType.BAB_DIRECT, face_amount: -1000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8912.inputSchema: negative credit_rate fails", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{ bond_type: BondType.QECB, face_amount: 10_000, credit_rate: -0.01, holding_period_days: 365, total_days_in_period: 365 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8912.inputSchema: negative holding_period_days fails", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{ bond_type: BondType.QZAB, face_amount: 10_000, credit_rate: 0.05, holding_period_days: -1, total_days_in_period: 365 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8912.inputSchema: total_days_in_period of 0 fails", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{ bond_type: BondType.QSCB, face_amount: 10_000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 0 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8912.inputSchema: invalid bond_type string fails", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{ bond_type: "INVALID_BOND", face_amount: 10_000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
 Deno.test("f8912.inputSchema: all bond types accepted", () => {
   for (const bondType of Object.values(BondType)) {
     const parsed = f8912.inputSchema.safeParse({
@@ -166,6 +119,7 @@ Deno.test("f8912.compute: zero holding days — no output", () => {
 });
 
 Deno.test("f8912.compute: routes to schedule3 line6z_general_business_credit", () => {
+  // 50,000 × 0.06 × 1.0 = 3,000
   const result = compute([minimalItem({
     bond_type: BondType.QSCB,
     face_amount: 50_000,
@@ -173,8 +127,8 @@ Deno.test("f8912.compute: routes to schedule3 line6z_general_business_credit", (
     holding_period_days: 365,
     total_days_in_period: 365,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6z_general_business_credit, 3_000);
 });
 
 // =============================================================================

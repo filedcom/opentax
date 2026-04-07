@@ -176,7 +176,7 @@ Deno.test("w2g.compute: throws on negative box4_federal_withheld", () => {
 
 Deno.test("w2g.compute: zero values do not throw", () => {
   const result = compute([minimalItem({ box1_winnings: 0, box4_federal_withheld: 0 })]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // =============================================================================
@@ -186,7 +186,7 @@ Deno.test("w2g.compute: zero values do not throw", () => {
 Deno.test("w2g.compute: only withholding no winnings — no schedule1 output, has f1040 output", () => {
   const result = compute([minimalItem({ box4_federal_withheld: 250 })]);
   assertEquals(findOutput(result, "schedule1"), undefined);
-  assertEquals(findOutput(result, "f1040") !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25b_withheld_1099, 250);
 });
 
 Deno.test("w2g.compute: only winnings no withholding — has schedule1, no f1040 output", () => {

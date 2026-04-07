@@ -8,12 +8,15 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { FEIE_LIMIT_2025 } from "../../../config/2025.ts";
+import { FEIE_LIMIT_2025, FEIE_HOUSING_BASE_2025 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
 // IRC §911(b)(2)(D)(i); Rev. Proc. 2024-40 — TY2025 FEIE limit
 const FEIE_LIMIT = FEIE_LIMIT_2025;
+
+// IRC §911(c)(1)(B) — housing base amount: 16% of FEIE limit
+const HOUSING_BASE = FEIE_HOUSING_BASE_2025;
 
 // IRC §911(c)(1) — physical presence test: 330 full days in any 12-month period
 const PHYSICAL_PRESENCE_DAYS = 330;
@@ -71,14 +74,17 @@ function earnedIncomeExclusion(income: number): number {
   return Math.min(income, FEIE_LIMIT);
 }
 
-// Housing exclusion / deduction:
-// - Employer-provided housing portion → excluded (Form 2555 line 44)
-// - Taxpayer-paid housing above the FEIE base amount may also be excluded/deducted
-//   (IRC §911(c)). For this engine, the employer-provided portion plus taxpayer
-//   housing expenses are passed pre-computed; the node routes them as-is.
-// Returns the housing deduction/exclusion amount (Schedule 1 line 8d housing).
+// Housing exclusion / deduction (IRC §911(c)):
+// - Employer-provided portion → excluded as-is (Form 2555 line 44).
+// - Taxpayer-paid housing → excluded to the extent costs exceed the base amount
+//   (16% of FEIE limit). Only the excess above the base is excludable.
+//   IRC §911(c)(1)(B): housing exclusion = housing_expenses − base_amount (floor 0).
+// Returns the total housing deduction amount (Schedule 1 line 8d housing).
 function housingAmount(input: Form2555Input): number {
-  return (input.employer_housing_exclusion ?? 0);
+  const employer = input.employer_housing_exclusion ?? 0;
+  const taxpayerExpenses = input.foreign_housing_expenses ?? 0;
+  const taxpayerExclusion = Math.max(0, taxpayerExpenses - HOUSING_BASE);
+  return employer + taxpayerExclusion;
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -93,7 +99,10 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
 
     // No foreign income or qualification test not met → no outputs
     const income = totalForeignEarnedIncome(input);
-    if (income === 0 && (input.employer_housing_exclusion ?? 0) === 0) {
+    const hasHousingActivity =
+      (input.employer_housing_exclusion ?? 0) > 0 ||
+      (input.foreign_housing_expenses ?? 0) > 0;
+    if (income === 0 && !hasHousingActivity) {
       return { outputs: [] };
     }
 

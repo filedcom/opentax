@@ -77,8 +77,8 @@ Deno.test("f8805.inputSchema: valid full item passes", () => {
 
 Deno.test("f8805.compute: section_1446_tax_withheld present — routes to schedule3", () => {
   const result = compute([minimalItem({ section_1446_tax_withheld: 5000 })]);
-  const out = result.outputs.find((o) => o.nodeType === "schedule3");
-  assertEquals(out !== undefined, true);
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].nodeType, "schedule3");
 });
 
 Deno.test("f8805.compute: section_1446_tax_withheld routes correct amount to schedule3", () => {

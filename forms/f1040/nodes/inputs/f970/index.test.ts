@@ -51,26 +51,26 @@ Deno.test("f970: throws when inventory_method_before is invalid", () => {
 
 // ── Valid inputs ───────────────────────────────────────────────────────────────
 
-Deno.test("f970: minimal valid item does not throw", () => {
+Deno.test("f970: minimal valid item produces no outputs", () => {
   const result = compute([minimalItem()]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs, []);
 });
 
-Deno.test("f970: all InventoryMethodBefore enum values accepted", () => {
+Deno.test("f970: all InventoryMethodBefore enum values produce no outputs", () => {
   for (const method of Object.values(InventoryMethodBefore)) {
     const result = compute([minimalItem({ inventory_method_before: method })]);
-    assertEquals(Array.isArray(result.outputs), true);
+    assertEquals(result.outputs, []);
   }
 });
 
-Deno.test("f970: optional fields accepted", () => {
+Deno.test("f970: optional fields accepted — no outputs", () => {
   const result = compute([
     minimalItem({
       goods_to_which_lifo_applies: "Finished goods inventory",
       book_value_first_year: 50000,
     }),
   ]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs, []);
 });
 
 // ── No downstream outputs (administrative form) ───────────────────────────────

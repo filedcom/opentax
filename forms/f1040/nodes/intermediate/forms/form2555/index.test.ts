@@ -128,6 +128,49 @@ Deno.test("housing only — no foreign earned income, employer housing present",
   assertEquals(s1?.fields.line8d_foreign_housing_deduction, 20_000);
 });
 
+Deno.test("housing — taxpayer expenses above base: housing_costs=$30k, base=$20,800 → exclusion=$9,200", () => {
+  const result = compute({
+    days_in_foreign_country: 365,
+    foreign_housing_expenses: 30_000,
+  });
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(s1?.fields.line8d_foreign_housing_deduction, 9_200);
+});
+
+Deno.test("housing — taxpayer expenses exactly at base: no exclusion", () => {
+  const result = compute({
+    days_in_foreign_country: 365,
+    foreign_housing_expenses: 20_800,
+  });
+  const housingOutputs = result.outputs.filter(
+    (o) => o.nodeType === "schedule1" && "line8d_foreign_housing_deduction" in o.fields,
+  );
+  assertEquals(housingOutputs.length, 0);
+});
+
+Deno.test("housing — taxpayer expenses below base: no exclusion", () => {
+  const result = compute({
+    days_in_foreign_country: 365,
+    foreign_housing_expenses: 10_000,
+  });
+  const housingOutputs = result.outputs.filter(
+    (o) => o.nodeType === "schedule1" && "line8d_foreign_housing_deduction" in o.fields,
+  );
+  assertEquals(housingOutputs.length, 0);
+});
+
+Deno.test("housing — taxpayer expenses combined with employer exclusion", () => {
+  // taxpayer excess: 35,000 − 20,800 = 14,200; employer: 5,000; total: 19,200
+  const result = compute({
+    days_in_foreign_country: 365,
+    foreign_housing_expenses: 35_000,
+    employer_housing_exclusion: 5_000,
+  });
+  const outputs = result.outputs.filter((o) => o.nodeType === "schedule1");
+  const housingOut = outputs.find((o) => "line8d_foreign_housing_deduction" in o.fields);
+  assertEquals(housingOut?.fields.line8d_foreign_housing_deduction, 19_200);
+});
+
 Deno.test("housing — zero employer exclusion produces no housing output", () => {
   const result = compute({
     foreign_wages: 40_000,

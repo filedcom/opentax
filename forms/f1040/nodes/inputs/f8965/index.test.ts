@@ -91,11 +91,6 @@ Deno.test("f8965.compute: returns empty outputs for other exemption type", () =>
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8965.compute: result.outputs is an array", () => {
-  const result = compute(minimalInput());
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
 // =============================================================================
 // 3. Edge Cases
 // =============================================================================
@@ -131,6 +126,5 @@ Deno.test("f8965.compute: smoke test — fully populated form produces no federa
     months_without_coverage: months,
     household_income_below_threshold: false,
   }));
-  assertEquals(result.outputs.length, 0);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs, []);
 });

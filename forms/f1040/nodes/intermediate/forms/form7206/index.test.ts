@@ -182,12 +182,14 @@ Deno.test("profit cap applies after PTC reduction", () => {
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes to schedule1 line17_se_health_insurance", () => {
+Deno.test("output routes to schedule1 and agi_aggregator line17_se_health_insurance", () => {
   const result = compute({
     se_net_profit: 50_000,
     health_insurance_premiums: 8_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals("line17_se_health_insurance" in (s1?.fields ?? {}), true);
+  assertEquals(s1?.nodeType, "schedule1");
+  assertEquals(s1?.fields.line17_se_health_insurance, 8_000);
+  const agi = findOutput(result, "agi_aggregator");
+  assertEquals(agi?.fields.line17_se_health_insurance, 8_000);
 });

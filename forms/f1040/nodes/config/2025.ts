@@ -354,6 +354,13 @@ export const KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025 = 1_300;
 /** Foreign Earned Income Exclusion limit (TY2025). */
 export const FEIE_LIMIT_2025 = 130_000;
 
+/**
+ * Foreign housing exclusion base amount (TY2025).
+ * IRC §911(c)(1)(B): 16% of the FEIE limit = 16% × $130,000 = $20,800.
+ * Only housing costs above this amount are excludable (up to the housing limit).
+ */
+export const FEIE_HOUSING_BASE_2025 = 20_800;
+
 // ─── Section 179 / Depreciation (Form 4562) ──────────────────────────────────
 // P.L. 119-21 ("One Big Beautiful Bill Act"); IRC §179
 

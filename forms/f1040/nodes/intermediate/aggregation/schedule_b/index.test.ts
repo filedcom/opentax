@@ -194,6 +194,63 @@ Deno.test("box3_us_obligations: field is accepted by schema and does not affect 
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
   assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_000);
+});
+
+// ─── $1,500 threshold aggregation behavior ────────────────────────────────────
+
+Deno.test("threshold: 3 interest payers totaling $1,600 > $1,500 — all included in line2b", () => {
+  // $600 + $800 + $200 = $1,600; all three payer amounts aggregate to line2b
+  const result = compute({
+    payer_name: ["Payer A", "Payer B", "Payer C"],
+    taxable_interest_net: [600, 800, 200],
+  });
+  const f1040 = findOutput(result, "f1040");
+  assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_600);
+});
+
+Deno.test("threshold: interest total exactly $1,499 — included in line2b (below threshold)", () => {
+  const result = compute({
+    payer_name: ["Bank A", "Bank B"],
+    taxable_interest_net: [999, 500],
+  });
+  const f1040 = findOutput(result, "f1040");
+  assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_499);
+});
+
+Deno.test("threshold: dividend total $1,600 > $1,500 — all included in line3b", () => {
+  // 3 payers each with $600, $700, $300 = $1,600
+  const result = compute({
+    payerName: ["Fund A", "Fund B", "Fund C"],
+    ordinaryDividends: [600, 700, 300],
+  });
+  const f1040 = findOutput(result, "f1040");
+  assertEquals((f1040!.fields as Record<string, number>).line3b_ordinary_dividends, 1_600);
+});
+
+Deno.test("threshold: interest $800 + dividend $900 each below $1,500 — both route to f1040", () => {
+  const result = compute({
+    payer_name: "Bank",
+    taxable_interest_net: 800,
+    payerName: "Fund",
+    ordinaryDividends: 900,
+  });
+  const f1040 = findOutput(result, "f1040");
+  const fields = f1040!.fields as Record<string, number>;
+  assertEquals(fields.line2b_taxable_interest, 800);
+  assertEquals(fields.line3b_ordinary_dividends, 900);
+});
+
+// ─── AGI aggregator routing ───────────────────────────────────────────────────
+
+Deno.test("interest routes to agi_aggregator as well as f1040", () => {
+  const result = compute({ payer_name: "Bank", taxable_interest_net: 1_200 });
+  const agiOut = findOutput(result, "agi_aggregator");
+  assertEquals((agiOut!.fields as Record<string, number>).line2b_taxable_interest, 1_200);
+});
+
+Deno.test("dividends route to agi_aggregator as well as f1040", () => {
+  const result = compute({ payerName: "Fund", ordinaryDividends: 800 });
+  const agiOut = findOutput(result, "agi_aggregator");
+  assertEquals((agiOut!.fields as Record<string, number>).line3b_ordinary_dividends, 800);
 });

@@ -193,8 +193,9 @@ Deno.test("f8978.compute: intervening adjustments drive total negative — floor
 
 Deno.test("f8978.compute: routes to schedule2 line17z_other_additional_taxes", () => {
   const result = compute({ reviewed_tax_year: 2022, positive_adjustments_share: 50_000 });
-  const out = findOutput(result, "schedule2");
-  assertEquals(out !== undefined, true);
+  // 50,000 × 0.37 = 18,500
+  const fields = fieldsOf(result.outputs, schedule2)!;
+  assertEquals(fields.line17z_other_additional_taxes, 18_500);
 });
 
 Deno.test("f8978.compute: only one output", () => {

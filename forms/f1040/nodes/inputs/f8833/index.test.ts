@@ -100,9 +100,9 @@ Deno.test("f8833.compute: multiple positions — still no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8833.compute: result.outputs is an array", () => {
+Deno.test("f8833.compute: result.outputs is empty for minimal item", () => {
   const result = compute([minimalItem()]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // =============================================================================

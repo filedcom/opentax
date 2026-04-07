@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8275 } from "./index.ts";
+import { DisclosureType, f8275 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
   return f8275.compute({ taxYear: 2025 }, input as Parameters<typeof f8275.compute>[1]);
@@ -9,18 +9,8 @@ function compute(input: Record<string, unknown>) {
 // 1. Input Schema Validation
 // =============================================================================
 
-Deno.test("f8275.inputSchema: empty input passes", () => {
+Deno.test("f8275.inputSchema: empty input passes (all fields optional)", () => {
   const parsed = f8275.inputSchema.safeParse({});
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8275.inputSchema: valid disclosure_type position passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ disclosure_type: "position" });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8275.inputSchema: valid disclosure_type regulation passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ disclosure_type: "regulation" });
   assertEquals(parsed.success, true);
 });
 
@@ -29,41 +19,9 @@ Deno.test("f8275.inputSchema: invalid disclosure_type fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8275.inputSchema: valid form_or_schedule string passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ form_or_schedule: "Schedule C" });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8275.inputSchema: valid line_number string passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ line_number: "28" });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8275.inputSchema: valid amount passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ amount: 5000 });
-  assertEquals(parsed.success, true);
-});
-
 Deno.test("f8275.inputSchema: negative amount fails", () => {
   const parsed = f8275.inputSchema.safeParse({ amount: -100 });
   assertEquals(parsed.success, false);
-});
-
-Deno.test("f8275.inputSchema: zero amount passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ amount: 0 });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8275.inputSchema: valid item_description passes", () => {
-  const parsed = f8275.inputSchema.safeParse({ item_description: "Deduction for home office expenses" });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8275.inputSchema: valid information_summary passes", () => {
-  const parsed = f8275.inputSchema.safeParse({
-    information_summary: "Taxpayer maintained dedicated home office space of 200 sq ft.",
-  });
-  assertEquals(parsed.success, true);
 });
 
 // =============================================================================
@@ -75,28 +33,34 @@ Deno.test("f8275.compute: empty input produces no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: disclosure_type position — no tax outputs", () => {
-  const result = compute({ disclosure_type: "position" });
+Deno.test("f8275.compute: position disclosure — no tax outputs", () => {
+  const result = compute({
+    disclosure_type: DisclosureType.Position,
+    form_or_schedule: "Schedule C",
+    line_number: "28",
+    item_description: "Home office deduction",
+    amount: 5000,
+  });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: disclosure_type regulation — no tax outputs", () => {
-  const result = compute({ disclosure_type: "regulation" });
+Deno.test("f8275.compute: regulation disclosure — no tax outputs", () => {
+  const result = compute({
+    disclosure_type: DisclosureType.Regulation,
+    revenue_ruling: "Treas. Reg. §1.162-5",
+    information_summary: "Taxpayer deducted education expenses related to maintaining skills.",
+    amount: 3200,
+  });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8275.compute: amount set — no tax outputs", () => {
-  const result = compute({ amount: 5000 });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8275.compute: item_description set — no tax outputs", () => {
-  const result = compute({ item_description: "Home office deduction" });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8275.compute: information_summary set — no tax outputs", () => {
-  const result = compute({ information_summary: "Detailed explanation of position." });
+Deno.test("f8275.compute: large amount with summary — no tax outputs", () => {
+  // Confirms that even significant disclosed amounts do not produce tax credits or deductions
+  const result = compute({
+    disclosure_type: DisclosureType.Position,
+    amount: 500_000,
+    information_summary: "Large position disclosure.",
+  });
   assertEquals(result.outputs.length, 0);
 });
 
@@ -112,7 +76,7 @@ Deno.test("f8275.compute: throws on invalid disclosure_type", () => {
   assertThrows(() => compute({ disclosure_type: "invalid" }), Error);
 });
 
-Deno.test("f8275.compute: zero amount does not throw", () => {
+Deno.test("f8275.compute: zero amount does not throw and produces no outputs", () => {
   const result = compute({ amount: 0 });
   assertEquals(result.outputs.length, 0);
 });
@@ -121,9 +85,9 @@ Deno.test("f8275.compute: zero amount does not throw", () => {
 // 4. Smoke Test
 // =============================================================================
 
-Deno.test("f8275.compute: smoke test — full disclosure statement produces no outputs", () => {
+Deno.test("f8275.compute: full Form 8275 disclosure produces no outputs", () => {
   const result = compute({
-    disclosure_type: "position",
+    disclosure_type: DisclosureType.Position,
     form_or_schedule: "Schedule C",
     line_number: "28",
     item_description: "Home office deduction claimed under simplified method",
@@ -132,5 +96,17 @@ Deno.test("f8275.compute: smoke test — full disclosure statement produces no o
     revenue_ruling: "Rev. Rul. 2013-13",
   });
   assertEquals(result.outputs.length, 0);
-  assertEquals(Array.isArray(result.outputs), true);
+});
+
+Deno.test("f8275.compute: full Form 8275-R regulation disclosure produces no outputs", () => {
+  const result = compute({
+    disclosure_type: DisclosureType.Regulation,
+    form_or_schedule: "1040",
+    line_number: "15",
+    item_description: "IRA deduction taken contrary to Treas. Reg. §1.219-1",
+    amount: 7000,
+    information_summary: "Taxpayer believes regulation is invalid based on statutory text of IRC §219.",
+    revenue_ruling: "Treas. Reg. §1.219-1",
+  });
+  assertEquals(result.outputs.length, 0);
 });

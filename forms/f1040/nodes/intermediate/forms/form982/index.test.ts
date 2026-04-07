@@ -77,12 +77,12 @@ Deno.test("schema: negative insolvency_amount throws", () => {
   );
 });
 
-Deno.test("schema: valid minimal bankruptcy input does not throw", () => {
+Deno.test("schema: valid minimal bankruptcy input — fully excluded, no schedule1 output", () => {
   const result = compute({
     line2_excluded_cod: 5000,
     exclusion_type: ExclusionType.Bankruptcy,
   });
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // ============================================================
@@ -150,8 +150,6 @@ Deno.test("insolvency: COD exceeds insolvency amount — excess is taxable", () 
     exclusion_type: ExclusionType.Insolvency,
     insolvency_amount: 10000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 5000);
 });
@@ -162,8 +160,6 @@ Deno.test("insolvency: insolvency_amount = 0 — full COD is taxable", () => {
     exclusion_type: ExclusionType.Insolvency,
     insolvency_amount: 0,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 20000);
 });
@@ -174,8 +170,6 @@ Deno.test("insolvency: missing insolvency_amount — full COD is taxable (no cap
     line2_excluded_cod: 8000,
     exclusion_type: ExclusionType.Insolvency,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 8000);
 });
@@ -187,8 +181,6 @@ Deno.test("insolvency: partial exclusion — excess routes to schedule1 with exa
     exclusion_type: ExclusionType.Insolvency,
     insolvency_amount: 7500,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 17500);
 });
@@ -221,8 +213,6 @@ Deno.test("qpri: COD exceeds $750,000 — excess is taxable", () => {
     line2_excluded_cod: 900000,
     exclusion_type: ExclusionType.Qpri,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 150000);
 });
@@ -234,8 +224,6 @@ Deno.test("qpri: MFS flag lowers cap to $375,000", () => {
     exclusion_type: ExclusionType.Qpri,
     qpri_mfs: true,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 125000);
 });
@@ -334,8 +322,6 @@ Deno.test("output routing: schedule1 emitted with exact excess amount", () => {
     exclusion_type: ExclusionType.Insolvency,
     insolvency_amount: 4000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 8000);
 });
@@ -373,8 +359,6 @@ Deno.test("smoke: insolvency — $20,000 cancelled debt, $12,000 insolvent, $8,0
     exclusion_type: ExclusionType.Insolvency,
     insolvency_amount: 12000,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 8000);
 });
@@ -397,8 +381,6 @@ Deno.test("smoke: QPRI MFS — $450,000 discharged, MFS filer, $75,000 taxable e
     exclusion_type: ExclusionType.Qpri,
     qpri_mfs: true,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = fieldsOf(result.outputs, schedule1)!;
   assertEquals(input.line8c_cod_income, 75000);
 });

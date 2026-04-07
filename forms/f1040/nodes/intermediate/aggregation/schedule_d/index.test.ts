@@ -343,8 +343,6 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C pr
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
-  const out = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 1000);
 });
 
@@ -352,8 +350,6 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when code Q (QOF) present", (
   const result = compute({
     transaction: mkLtTx({ gain_loss: 800, adjustment_codes: "Q" }),
   });
-  const out = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 800);
 });
 
@@ -361,16 +357,14 @@ Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 500, adjustment_codes: "BCM" }),
   });
-  const out = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(out !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 500);
 });
 
 Deno.test("28pct: code Q embedded in multi-character adjustment_codes", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 400, adjustment_codes: "QZ" }),
   });
-  const out = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(out !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 400);
 });
 
 Deno.test("28pct: does NOT route when no special codes on LT transaction", () => {
@@ -490,8 +484,6 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
 
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 6800);
 
-  const worksheetOut = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(worksheetOut !== undefined, true);
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 600);
 
   // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet
@@ -843,10 +835,7 @@ Deno.test("8949 part=A (ST basis reported): gain routes to f1040 as ST gain", ()
   const result = computeWithTransactions([
     makeTransaction({ part: "A", proceeds: 2_000, cost_basis: 1_500 }),
   ]);
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 500);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 500);
 });
 
 // Part B (ST, basis NOT reported) → Schedule D Line 2
@@ -1104,17 +1093,8 @@ Deno.test("adjustment code C (collectible, LT part E): triggers 28% rate gain wo
       adjustment_amount: 0,
     }),
   ]);
-  // Should emit an output that signals 28% Rate Gain Worksheet is needed
-  const worksheet28 = findOutput(result, "schedule_d_tax_worksheet");
-  // At minimum, the gain must be on f1040
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 10_000);
-  // The 28% worksheet trigger must be indicated somehow in outputs
-  // schedule_d routes to rate_28_gain_worksheet; schedule_d_tax_worksheet and line18_28pct_gain are legacy d_screen fields
-  const rate28Out = findOutput(result, "rate_28_gain_worksheet");
-  assertEquals(worksheet28 !== undefined || input.line18_28pct_gain !== undefined || rate28Out !== undefined, true);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 10_000);
+  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 10_000);
 });
 
 // Code Q (QSB exclusion) — triggers 28% rate gain worksheet
@@ -1128,11 +1108,8 @@ Deno.test("adjustment code Q (QSB exclusion): triggers 28% rate gain worksheet o
       adjustment_amount: -20_000, // 50% exclusion amount for net gain 40000; exclusion = 20000
     }),
   ]);
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
   // col(h) = 50000 - 10000 + (-20000) = 20000
-  assertEquals(input.line7_capital_gain, 20_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 20_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -1178,24 +1155,16 @@ Deno.test("line 17 gate: combined net is zero → skip to line 22 (no preferenti
 // Section 10 — Worksheet Selection (Line 20 Gate)
 // ---------------------------------------------------------------------------
 
-Deno.test("line 20 = Yes: no 28% gain, no 1250 gain → qualified dividends worksheet triggered", () => {
-  // Pure LT gain, no special rate gains → simpler worksheet
+Deno.test("line 20 = Yes: no 28% gain, no 1250 gain → LT gain routes to income_tax_calculation", () => {
+  // Pure LT gain, no special rate gains → downstream worksheet handles preferential rate
   const result = computeD2({
     line_8a_proceeds: 30_000,
     line_8a_cost: 20_000, // LT net = 10000, combined = 10000
   });
-  const qdcg = findOutput(result, "qualified_dividends_worksheet");
-  const f1040 = findOutput(result, "f1040");
-  // Either qualified_dividends_worksheet output exists or downstream
-  // handles it; at minimum the gain must be on f1040
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 10_000);
-  // Verify preferred worksheet selection indicator if applicable
-  assertEquals(
-    qdcg !== undefined || input.line7_capital_gain === 10_000,
-    true,
-  );
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 10_000);
+  // LT gain → income_tax_calculation gets net_capital_gain for QDCGT worksheet
+  const itcOut = findOutput(result, "income_tax_calculation");
+  assertEquals((itcOut!.fields as Record<string, number>).net_capital_gain, 10_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -1214,10 +1183,7 @@ Deno.test("cap gain distributions always treated as LT — no ST treatment", () 
 Deno.test("cap gain distributions do NOT require Form 8949 — direct to Schedule D Line 13", () => {
   // Verifies distributions work without any 8949 transactions
   const result = computeD2({ line_12_cap_gain_dist: 8_000 });
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 8_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 8_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -1395,10 +1361,7 @@ Deno.test("edge case: adjustment code Y (QOF deferred gain recognized) — posit
       adjustment_amount: 0,
     }),
   ]);
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 10_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 10_000);
 });
 
 // Edge case 10: Code Z (deferred gain into QOF — negative adjustment reduces col h)
@@ -1413,10 +1376,7 @@ Deno.test("edge case: adjustment code Z (QOF deferral) — negative adjustment r
       adjustment_amount: -3_000,
     }),
   ]);
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 2_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 2_000);
 });
 
 // Edge case 11: E-file rule — negative amounts not allowed on lines 1a/8a
@@ -1426,10 +1386,7 @@ Deno.test("edge case: line_1a negative net does not cause invalid e-file (procee
     line_1a_proceeds: 5_000,
     line_1a_cost: 8_000, // net = -3000
   });
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, -3_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, -3_000);
 });
 
 // Edge case 12: line_11_form2439 negative (Form 4797/4684 loss)
@@ -1497,10 +1454,7 @@ Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → corr
     },
   );
 
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040 !== undefined, true);
-  const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 23_800);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 23_800);
 
   // Net gain is positive — no carryforward
   const carryover = findOutput(result, "schedule_d");

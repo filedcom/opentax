@@ -81,12 +81,7 @@ Deno.test("f8840.inputSchema: valid full input passes", () => {
 
 Deno.test("f8840.compute: valid closer connection — returns no outputs (election only)", () => {
   const result = compute(minimalInput());
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8840.compute: result.outputs is an array", () => {
-  const result = compute(minimalInput());
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs, []);
 });
 
 Deno.test("f8840.compute: with prior year days — returns no outputs", () => {

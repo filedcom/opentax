@@ -109,6 +109,5 @@ Deno.test("f2120.compute: smoke test — full multiple support declaration produ
     claiming_taxpayer_ssn: "987-65-4321",
     providing_party_names: ["Alice Brown", "Bob Jones"],
   });
-  assertEquals(result.outputs.length, 0);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs, []);
 });

@@ -109,45 +109,65 @@ Deno.test("f8082.inputSchema: amount_as_claimed can be negative (loss)", () => {
 });
 
 // =============================================================================
-// 2. Output Routing — notice form, no downstream outputs
+// 2. Output Routing — notice form produces no downstream outputs
 // =============================================================================
 
-Deno.test("f8082.compute: partnership item — no outputs (notice form)", () => {
-  const result = compute([minimalItem({ entity_type: EntityType.PARTNERSHIP })]);
-  assertEquals(result.outputs.length, 0);
+Deno.test("f8082.compute: all entity types produce no outputs (notice form only)", () => {
+  // Form 8082 is a disclosure attachment; it never routes tax amounts downstream
+  for (const et of Object.values(EntityType)) {
+    const result = compute([minimalItem({ entity_type: et })]);
+    assertEquals(result.outputs.length, 0);
+  }
 });
 
-Deno.test("f8082.compute: s_corp item — no outputs", () => {
-  const result = compute([minimalItem({ entity_type: EntityType.S_CORP })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8082.compute: trust item — no outputs", () => {
-  const result = compute([minimalItem({ entity_type: EntityType.TRUST })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8082.compute: estate item — no outputs", () => {
-  const result = compute([minimalItem({ entity_type: EntityType.ESTATE })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8082.compute: result.outputs is an array (does_not_throw)", () => {
-  const result = compute([minimalItem()]);
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-// =============================================================================
-// 3. Aggregation — multiple items
-// =============================================================================
-
-Deno.test("f8082.compute: multiple items — still no outputs", () => {
+Deno.test("f8082.compute: multiple inconsistency items produce no outputs", () => {
   const result = compute([
     minimalItem({ entity_type: EntityType.PARTNERSHIP, amount_as_reported: 50000, amount_as_claimed: 40000 }),
     minimalItem({ entity_type: EntityType.S_CORP, amount_as_reported: 10000, amount_as_claimed: 10000 }),
     minimalItem({ entity_type: EntityType.TRUST, amount_as_reported: -1000, amount_as_claimed: -2000 }),
   ]);
   assertEquals(result.outputs.length, 0);
+});
+
+// =============================================================================
+// 3. Schema captures inconsistency amounts correctly
+// =============================================================================
+
+Deno.test("f8082.inputSchema: parsed item preserves amount_as_reported and amount_as_claimed", () => {
+  const item = minimalItem({ amount_as_reported: 25000, amount_as_claimed: 18000 });
+  const parsed = f8082.inputSchema.parse({ f8082s: [item] });
+  assertEquals(parsed.f8082s[0].amount_as_reported, 25000);
+  assertEquals(parsed.f8082s[0].amount_as_claimed, 18000);
+});
+
+Deno.test("f8082.inputSchema: parsed item captures entity metadata", () => {
+  const item = minimalItem({
+    entity_type: EntityType.PARTNERSHIP,
+    entity_name: "Oakwood Capital LP",
+    entity_ein: "98-7654321",
+    schedule_k1_item_description: "Net section 1231 gain",
+  });
+  const parsed = f8082.inputSchema.parse({ f8082s: [item] });
+  assertEquals(parsed.f8082s[0].entity_type, EntityType.PARTNERSHIP);
+  assertEquals(parsed.f8082s[0].entity_name, "Oakwood Capital LP");
+  assertEquals(parsed.f8082s[0].entity_ein, "98-7654321");
+  assertEquals(parsed.f8082s[0].schedule_k1_item_description, "Net section 1231 gain");
+});
+
+Deno.test("f8082.inputSchema: negative amounts (losses) round-trip correctly", () => {
+  const parsed = f8082.inputSchema.parse({
+    f8082s: [minimalItem({ amount_as_reported: -5000, amount_as_claimed: -3000 })],
+  });
+  assertEquals(parsed.f8082s[0].amount_as_reported, -5000);
+  assertEquals(parsed.f8082s[0].amount_as_claimed, -3000);
+});
+
+Deno.test("f8082.inputSchema: reason_for_inconsistency round-trips when present", () => {
+  const reason = "Taxpayer used MACRS; entity used ADS";
+  const parsed = f8082.inputSchema.parse({
+    f8082s: [minimalItem({ reason_for_inconsistency: reason })],
+  });
+  assertEquals(parsed.f8082s[0].reason_for_inconsistency, reason);
 });
 
 // =============================================================================
@@ -166,29 +186,10 @@ Deno.test("f8082.compute: throws on invalid entity_type", () => {
 });
 
 // =============================================================================
-// 5. Edge Cases
+// 5. Smoke Test
 // =============================================================================
 
-Deno.test("f8082.compute: amounts equal (no inconsistency difference) — still no outputs", () => {
-  const result = compute([minimalItem({ amount_as_reported: 5000, amount_as_claimed: 5000 })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8082.compute: zero amounts — no outputs", () => {
-  const result = compute([minimalItem({ amount_as_reported: 0, amount_as_claimed: 0 })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8082.compute: reason_for_inconsistency present — no outputs", () => {
-  const result = compute([minimalItem({ reason_for_inconsistency: "Different depreciation method elected" })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 6. Smoke Test
-// =============================================================================
-
-Deno.test("f8082.compute: smoke test — comprehensive item, no outputs", () => {
+Deno.test("f8082.compute: smoke test — two inconsistency items, all entity metadata captured, no outputs", () => {
   const result = compute([
     minimalItem({
       entity_type: EntityType.PARTNERSHIP,
@@ -210,5 +211,4 @@ Deno.test("f8082.compute: smoke test — comprehensive item, no outputs", () => 
     }),
   ]);
   assertEquals(result.outputs.length, 0);
-  assertEquals(Array.isArray(result.outputs), true);
 });

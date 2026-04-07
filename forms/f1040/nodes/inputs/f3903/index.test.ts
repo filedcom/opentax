@@ -11,10 +11,6 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return f3903.compute({ taxYear: 2025 }, { f3903s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -67,8 +63,6 @@ Deno.test("f3903.compute: military move routes net deduction to schedule1 line14
     travel_expenses: 500,
     active_duty_military: true,
   })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line14_moving_expenses, 2500);
 });

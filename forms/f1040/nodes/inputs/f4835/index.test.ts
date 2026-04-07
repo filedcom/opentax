@@ -154,7 +154,7 @@ Deno.test("loss (negative net) aggregates correctly across two farms", () => {
   assertEquals(out?.fields.line5_schedule_e, -500);
 });
 
-Deno.test("at-risk flag routes to form6198", () => {
+Deno.test("at-risk flag routes to form6198 with current_year_income", () => {
   const result = compute([
     minimalItem({
       gross_farm_rental_income: 5000,
@@ -162,7 +162,7 @@ Deno.test("at-risk flag routes to form6198", () => {
     }),
   ]);
   const out = findOutput(result, "form6198");
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.fields.current_year_income, 5000);
 });
 
 Deno.test("no at-risk flag does not route to form6198", () => {

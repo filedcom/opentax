@@ -22,10 +22,6 @@ function compute(
   );
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o: { nodeType: string }) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
@@ -252,12 +248,13 @@ Deno.test("nol_carryforward.compute: zero nol_amount — no output", () => {
 });
 
 Deno.test("nol_carryforward.compute: routes to schedule1 line8a_nol_deduction when deduction > 0", () => {
+  // $5000 post-2017 NOL against $50000 income: 80% limit = 40000; 5000 < 40000 → 5000
   const result = compute(
     [minimalItem({ nol_type: NolType.POST2017, nol_amount: 5000 })],
     50000,
   );
-  const out = findOutput(result, "schedule1");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8a_nol_deduction, 5000);
 });
 
 // =============================================================================

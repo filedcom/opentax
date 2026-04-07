@@ -254,6 +254,11 @@ Deno.test("smoke: no inputs → no outputs", () => {
 });
 
 Deno.test("smoke: all fields present → produces schedule2 output (AMT owed) but no f1040 output", () => {
+  // MFJ threshold = $250,000
+  // Part I: wages($300k) + tips($5k) + 8919($2k) = $307k total; excess = $57k × 0.009 = $513
+  // Part II: se($50k), threshold reduced to max(0, $250k - $307k) = 0 → $50k × 0.009 = $450
+  // Part III: rrta($260k) - $250k = $10k × 0.009 = $90
+  // Total = $513 + $450 + $90 = $1,053
   const result = compute({
     filing_status: FilingStatus.MFJ,
     medicare_wages: 300_000,
@@ -264,9 +269,6 @@ Deno.test("smoke: all fields present → produces schedule2 output (AMT owed) bu
     medicare_withheld: 4_000,
     rrta_medicare_withheld: 200,
   });
-  // AMT owed → schedule2 only; withholding fields are informational, no f1040 deposit
-  const s2 = findOutput(result, "schedule2");
-  const f = findOutput(result, "f1040");
-  assertEquals(s2 !== undefined, true);
-  assertEquals(f, undefined);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 1_053);
+  assertEquals(findOutput(result, "f1040"), undefined);
 });

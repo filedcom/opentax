@@ -64,21 +64,23 @@ Deno.test("schedule_r.compute: no qualifying condition — no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("schedule_r.compute: single age 65+ qualifies — produces schedule3 output", () => {
+Deno.test("schedule_r.compute: single age 65+ qualifies — credit = 5000 * 15% = 750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_age_65_or_older: true,
   });
-  assertEquals(findOutput(result, "schedule3") !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
-Deno.test("schedule_r.compute: single disabled qualifies — produces schedule3 output", () => {
+Deno.test("schedule_r.compute: single disabled qualifies — disability income $5000 not capped, credit = 750", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     taxpayer_disabled: true,
     taxpayer_disability_income: 5000,
   });
-  assertEquals(findOutput(result, "schedule3") !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
 Deno.test("schedule_r.compute: MFJ neither spouse qualifies — no output", () => {
@@ -88,13 +90,14 @@ Deno.test("schedule_r.compute: MFJ neither spouse qualifies — no output", () =
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("schedule_r.compute: MFJ one spouse 65+ — produces output with $5000 base", () => {
+Deno.test("schedule_r.compute: MFJ one spouse 65+ — credit = 5000 * 15% = 750", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     taxpayer_age_65_or_older: true,
     agi: 0,
   });
-  assertEquals(findOutput(result, "schedule3") !== undefined, true);
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6d_elderly_disabled_credit, 750);
 });
 
 Deno.test("schedule_r.compute: MFJ both spouses 65+ — produces output with $7500 base", () => {

@@ -133,7 +133,7 @@ Deno.test("f965.inputSchema: full item with all fields passes", () => {
 Deno.test("f965.compute: current_year_installment > 0 — routes to schedule2", () => {
   const result = compute([minimalItem({ current_year_installment: 10000 })]);
   const out = findOutput(result, "schedule2");
-  assertEquals(out !== undefined, true);
+  assertEquals(out?.nodeType, "schedule2");
 });
 
 Deno.test("f965.compute: current_year_installment = 0 — no output emitted", () => {
@@ -261,7 +261,7 @@ Deno.test("f965.compute: throws on negative net_965_tax_liability", () => {
 
 Deno.test("f965.compute: does not throw when all optional fields absent", () => {
   const result = compute([minimalItem()]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // =============================================================================

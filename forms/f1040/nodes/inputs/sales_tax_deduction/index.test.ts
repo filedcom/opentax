@@ -127,10 +127,10 @@ Deno.test("sales_tax_deduction.compute: actual method ignores major_purchase_tax
 // 5. Output routing — routes to schedule_a
 // =============================================================================
 
-Deno.test("sales_tax_deduction.compute: routes to schedule_a", () => {
+Deno.test("sales_tax_deduction.compute: routes to schedule_a with correct amount", () => {
   const result = compute({ method: "actual", actual_sales_tax_paid: 1000 });
-  const out = findOutput(result, "schedule_a");
-  assertEquals(out !== undefined, true);
+  const fields = fieldsOf(result.outputs, scheduleA)!;
+  assertEquals(fields.line_5a_tax_amount, 1000);
 });
 
 Deno.test("sales_tax_deduction.compute: produces exactly one output", () => {

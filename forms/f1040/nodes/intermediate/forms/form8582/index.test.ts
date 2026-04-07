@@ -108,7 +108,6 @@ Deno.test("passive_loss_exceeds_income: pal=40000, active rental MAGI=90000 → 
     modified_agi: 90_000,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   assertEquals(s1?.fields.line17_schedule_e, -35_000);
 });
 
@@ -262,7 +261,6 @@ Deno.test("mfs_ineligible_for_special_allowance: MFS gets $0 allowance, only inc
     prior_unallowed: 0,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   assertEquals(s1?.fields.line17_schedule_e, -5_000);
 });
 
@@ -307,14 +305,15 @@ Deno.test("missing_modified_agi_skips_allowance: modified_agi omitted → allowa
 
 // ─── 5. Output Routing ────────────────────────────────────────────────────────
 
-Deno.test("routes_allowed_loss_to_schedule1: overall PAL exists, allowance covers part → schedule1 output exists", () => {
+Deno.test("routes_allowed_loss_to_schedule1: pal=30000, MAGI=80000, allowance=25000 → schedule1=-25000", () => {
+  // pal = 30000 - 0 = 30000, allowance = min(30000, 25000) = 25000, allowed = min(30000, 0+25000) = 25000
   const result = compute({
     current_loss: 30_000,
     has_active_rental: true,
     active_participation: true,
     modified_agi: 80_000,
   });
-  assertEquals(findOutput(result, "schedule1") !== undefined, true);
+  assertEquals(findOutput(result, "schedule1")?.fields.line17_schedule_e, -25_000);
 });
 
 Deno.test("schedule1_line17_is_negative: schedule1.line17_schedule_e is negative", () => {
@@ -428,34 +427,30 @@ Deno.test("smoke_full_scenario: complex scenario → pal=45000, phasedAllowance=
     filing_status: FilingStatus.MFJ,
     has_other_passive: true,
   });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  assertEquals(s1?.fields.line17_schedule_e, -45_000);
-});
-
-Deno.test("smoke_phase_out_correct: same smoke input → schedule1.line17_schedule_e = -45000", () => {
-  const result = compute({
-    current_income: 50_000,
-    current_loss: 80_000,
-    prior_unallowed: 15_000,
-    has_active_rental: true,
-    active_participation: true,
-    modified_agi: 120_000,
-    filing_status: FilingStatus.MFJ,
-    has_other_passive: true,
-  });
   assertEquals(findOutput(result, "schedule1")?.fields.line17_schedule_e, -45_000);
 });
 
-Deno.test("smoke_does_not_throw: smoke input does not throw", () => {
-  compute({
-    current_income: 50_000,
-    current_loss: 80_000,
-    prior_unallowed: 15_000,
+Deno.test("magi_110k_phase_out: MAGI=110000, loss=30000 → allowance reduced by 50%×10000=5000 → allowed=20000 → schedule1=-20000", () => {
+  // phase_out = 0.5 * (110000 - 100000) = 5000, phasedAllowance = max(0, 25000 - 5000) = 20000
+  // allowed = min(30000, 0 + 20000) = 20000
+  const result = compute({
     has_active_rental: true,
     active_participation: true,
-    modified_agi: 120_000,
-    filing_status: FilingStatus.MFJ,
-    has_other_passive: true,
+    modified_agi: 110_000,
+    current_loss: 30_000,
+    current_income: 0,
+    prior_unallowed: 0,
   });
+  assertEquals(findOutput(result, "schedule1")?.fields.line17_schedule_e, -20_000);
+});
+
+Deno.test("passive_loss_15k_income_10k_suspended_5k: passive_loss=15000, passive_income=10000 → pal=5000, no allowance → schedule1=-10000", () => {
+  // pal = 15000 - 10000 = 5000. no active rental → allowance = 0
+  // allowed = min(5000, 10000 + 0) = 5000
+  const result = compute({
+    current_income: 10_000,
+    current_loss: 15_000,
+    has_active_rental: false,
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line17_schedule_e, -5_000);
 });

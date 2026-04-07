@@ -63,25 +63,24 @@ Deno.test("f2441: qualifying_person_count of 0 throws (min 1)", () => {
   );
 });
 
-Deno.test("f2441: minimal item (all defaults) does not throw", () => {
+Deno.test("f2441: minimal item (all defaults) produces no outputs — no expenses, no benefits", () => {
   const result = compute([{}]);
-  assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(result.outputs.length, 0);
 });
 
 // ---------------------------------------------------------------------------
 // 2. Per-box routing — positive cases and zero-value cases
 // ---------------------------------------------------------------------------
 
-Deno.test("f2441: qualifying expenses with agi >$43000 route credit to schedule3", () => {
+Deno.test("f2441: qualifying expenses with agi >$43000 route credit to schedule3 at 20%", () => {
   const result = compute([{
     qualifying_expenses_paid: 3000,
     qualifying_person_count: 1,
     agi: 50000,
   }]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line2_childcare_credit !== undefined, true);
+  // AGI $50k → 20% rate; 3000 * 0.20 = 600
+  assertEquals(input.line2_childcare_credit, 600);
 });
 
 Deno.test("f2441: zero qualifying expenses produces no schedule3 output", () => {
@@ -98,11 +97,9 @@ Deno.test("f2441: employer benefits exceeding exclusion route taxable excess to 
     employer_dep_care_benefits: 6000,
     qualifying_person_count: 1,
   }]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, f1040)!;
-  assertEquals(typeof input.line1e_taxable_dep_care, "number");
-  assertEquals((input.line1e_taxable_dep_care as number) > 0, true);
+  // 6000 - 5000 exclusion = 1000 taxable
+  assertEquals(input.line1e_taxable_dep_care, 1000);
 });
 
 Deno.test("f2441: employer benefits at or below exclusion limit produce no f1040 output", () => {
@@ -422,15 +419,12 @@ Deno.test("f2441: FSA exclusion of $5000 with 1 person eliminates credit (FSA >=
 
 Deno.test("f2441: FSA of $5000 with 2 persons leaves $1000 residual for credit", () => {
   // Line 27 = 6000, Line 28 = 5000, Line 29 = 1000
-  // credit = min(1000, expenses - 5000) * 0.20
   const result = compute([{
     qualifying_expenses_paid: 8000,
     employer_dep_care_benefits: 5000,
     qualifying_person_count: 2,
     agi: 50000,
   }]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
   const input = fieldsOf(result.outputs, schedule3)!;
   // residual = 1000; credit = 1000 * 0.20 = 200
   assertEquals(input.line2_childcare_credit, 200);
@@ -588,8 +582,5 @@ Deno.test("f2441 smoke test: MFJ, 2 qualifying persons, partial FSA, earned inco
   assertEquals(findOutput(result, "f1040"), undefined);
 
   // Credit should be $600
-  const schedule3Out = findOutput(result, "schedule3");
-  assertEquals(schedule3Out !== undefined, true);
-  const input = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(input.line2_childcare_credit, 600);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line2_childcare_credit, 600);
 });

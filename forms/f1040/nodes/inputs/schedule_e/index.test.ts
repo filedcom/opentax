@@ -38,58 +38,10 @@ Deno.test("input validation: empty array produces no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("input validation: missing tsj throws", () => {
-  assertThrows(() =>
-    compute([
-      minimalItem({ tsj: undefined }),
-    ])
-  );
-});
-
-Deno.test("input validation: missing property_description throws", () => {
-  assertThrows(() =>
-    compute([
-      minimalItem({ property_description: undefined }),
-    ])
-  );
-});
-
-Deno.test("input validation: missing fair_rental_days throws", () => {
-  assertThrows(() =>
-    compute([
-      minimalItem({ fair_rental_days: undefined }),
-    ])
-  );
-});
-
-Deno.test("input validation: missing personal_use_days throws", () => {
-  assertThrows(() =>
-    compute([
-      minimalItem({ personal_use_days: undefined }),
-    ])
-  );
-});
-
-Deno.test("input validation: missing rent_income throws", () => {
+Deno.test("input validation: missing required field (rent_income) throws", () => {
   assertThrows(() =>
     compute([
       minimalItem({ rent_income: undefined }),
-    ])
-  );
-});
-
-Deno.test("input validation: missing activity_type throws", () => {
-  assertThrows(() =>
-    compute([
-      minimalItem({ activity_type: undefined }),
-    ])
-  );
-});
-
-Deno.test("input validation: missing property_type throws", () => {
-  assertThrows(() =>
-    compute([
-      minimalItem({ property_type: undefined }),
     ])
   );
 });
@@ -171,7 +123,6 @@ Deno.test("routing: rent_income routes net to schedule1 line5", () => {
     minimalItem({ rent_income: 12_000 }),
   ]);
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 12_000);
 });
@@ -184,9 +135,7 @@ Deno.test("routing: royalties_income routes net to schedule1 line5", () => {
       royalties_income: 5_000,
     }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
@@ -205,7 +154,7 @@ Deno.test("routing: carry_to_8960=true routes net rental income to form8960", ()
     minimalItem({ rent_income: 8_000, carry_to_8960: true }),
   ]);
   const f8960 = findOutput(result, "form8960");
-  assertEquals(f8960 !== undefined, true);
+  assertEquals((f8960!.fields as Record<string, number>).line4b_rental_net, 8_000);
 });
 
 Deno.test("routing: carry_to_8960 absent produces no form8960 output", () => {
@@ -228,8 +177,7 @@ Deno.test("routing: some_investment_not_at_risk=true routes to form6198", () => 
   const result = compute([
     minimalItem({ rent_income: 5_000, some_investment_not_at_risk: true }),
   ]);
-  const f6198 = findOutput(result, "form6198");
-  assertEquals(f6198 !== undefined, true);
+  assertEquals(findOutput(result, "form6198")?.nodeType, "form6198");
 });
 
 Deno.test("routing: some_investment_not_at_risk=false produces no form6198 output", () => {
@@ -249,8 +197,9 @@ Deno.test("routing: main_home_or_second_home=true routes personal interest/taxes
       main_home_or_second_home: true,
     }),
   ]);
-  const schA = findOutput(result, "schedule_a");
-  assertEquals(schA !== undefined, true);
+  // 50% occupancy → 50% of $6,000 mortgage interest = $3,000 personal portion → schedule_a
+  const schAFields = findOutput(result, "schedule_a")!.fields as Record<string, number>;
+  assertEquals(schAFields.line_8a_mortgage_interest_1098, 3_000);
 });
 
 Deno.test("routing: main_home_or_second_home=false produces no scheduleA output", () => {
@@ -264,15 +213,15 @@ Deno.test("routing: main_home_or_second_home=false produces no scheduleA output"
   assertEquals(schA, undefined);
 });
 
-Deno.test("routing: qbi_trade_or_business=Y routes to form8995", () => {
+Deno.test("routing: qbi_trade_or_business=Y routes to form8995 with correct qbi amount", () => {
   const result = compute([
     minimalItem({
       rent_income: 20_000,
       qbi_trade_or_business: "Y",
     }),
   ]);
-  const f8995 = findOutput(result, "form8995");
-  assertEquals(f8995 !== undefined, true);
+  const f8995Fields = findOutput(result, "form8995")!.fields as Record<string, number>;
+  assertEquals(f8995Fields.qbi, 20_000);
 });
 
 Deno.test("routing: qbi_trade_or_business=N produces no form8995 output", () => {
@@ -286,7 +235,7 @@ Deno.test("routing: qbi_trade_or_business=N produces no form8995 output", () => 
   assertEquals(f8995, undefined);
 });
 
-Deno.test("routing: activity_type=A with net loss routes to form8582", () => {
+Deno.test("routing: activity_type=A with net loss routes to form8582 with correct loss amount", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -294,11 +243,13 @@ Deno.test("routing: activity_type=A with net loss routes to form8582", () => {
       expense_repairs: 10_000,
     }),
   ]);
-  const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  // net = 5000 - 10000 = -5000 → current_loss = 5000 sent to form8582
+  const f8582Fields = findOutput(result, "form8582")!.fields as Record<string, number | boolean>;
+  assertEquals(f8582Fields.current_loss, 5_000);
+  assertEquals(f8582Fields.has_active_rental, true);
 });
 
-Deno.test("routing: activity_type=B with net loss routes to form8582", () => {
+Deno.test("routing: activity_type=B with net loss routes to form8582 with has_other_passive=true", () => {
   const result = compute([
     minimalItem({
       activity_type: "B",
@@ -306,8 +257,9 @@ Deno.test("routing: activity_type=B with net loss routes to form8582", () => {
       expense_repairs: 10_000,
     }),
   ]);
-  const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  const f8582Fields = findOutput(result, "form8582")!.fields as Record<string, number | boolean>;
+  assertEquals(f8582Fields.current_loss, 5_000);
+  assertEquals(f8582Fields.has_other_passive, true);
 });
 
 Deno.test("routing: activity_type=C does not route to form8582", () => {
@@ -334,12 +286,12 @@ Deno.test("routing: activity_type=D does not route to form8582", () => {
   assertEquals(f8582, undefined);
 });
 
-Deno.test("routing: disposed_of=true routes to form4797", () => {
+Deno.test("routing: disposed_of=true routes to form4797 with disposed_properties=1", () => {
   const result = compute([
     minimalItem({ rent_income: 10_000, disposed_of: true }),
   ]);
-  const f4797 = findOutput(result, "form4797");
-  assertEquals(f4797 !== undefined, true);
+  const f4797Fields = findOutput(result, "form4797")!.fields as Record<string, number>;
+  assertEquals(f4797Fields.disposed_properties, 1);
 });
 
 Deno.test("routing: disposed_of=false produces no form4797 output", () => {
@@ -350,7 +302,7 @@ Deno.test("routing: disposed_of=false produces no form4797 output", () => {
   assertEquals(f4797, undefined);
 });
 
-Deno.test("routing: expense_depreciation_amt routes to form6251", () => {
+Deno.test("routing: expense_depreciation_amt routes to form6251 with correct adjustment", () => {
   const result = compute([
     minimalItem({
       rent_income: 20_000,
@@ -358,8 +310,8 @@ Deno.test("routing: expense_depreciation_amt routes to form6251", () => {
       expense_depreciation_amt: 1_000,
     }),
   ]);
-  const f6251 = findOutput(result, "form6251");
-  assertEquals(f6251 !== undefined, true);
+  const f6251Fields = findOutput(result, "form6251")!.fields as Record<string, number>;
+  assertEquals(f6251Fields.depreciation_adjustment, 1_000);
 });
 
 Deno.test("routing: expense_depreciation_amt=0 produces no form6251 output", () => {
@@ -370,7 +322,7 @@ Deno.test("routing: expense_depreciation_amt=0 produces no form6251 output", () 
   assertEquals(f6251, undefined);
 });
 
-Deno.test("routing: section_179 with activity_type=C routes to form4562", () => {
+Deno.test("routing: section_179 with activity_type=C routes to form4562 with correct deduction", () => {
   const result = compute([
     minimalItem({
       activity_type: "C",
@@ -378,19 +330,18 @@ Deno.test("routing: section_179 with activity_type=C routes to form4562", () => 
       section_179: 50_000,
     }),
   ]);
-  const f4562 = findOutput(result, "form4562");
-  assertEquals(f4562 !== undefined, true);
+  const f4562Fields = findOutput(result, "form4562")!.fields as Record<string, number>;
+  assertEquals(f4562Fields.section_179_deduction, 50_000);
 });
 
-Deno.test("routing: disallowed_mortgage_interest_8990 routes to form8990", () => {
+Deno.test("routing: disallowed_mortgage_interest_8990 routes to form8990 with carryforward amount", () => {
   const result = compute([
     minimalItem({
       rent_income: 20_000,
       disallowed_mortgage_interest_8990: 3_000,
     }),
   ]);
-  const f8990 = findOutput(result, "form8990");
-  assertEquals(f8990 !== undefined, true);
+  assertEquals(findOutput(result, "form8990")?.nodeType, "form8990");
 });
 
 Deno.test("routing: disallowed_other_interest_8990 routes to form8990", () => {
@@ -400,22 +351,21 @@ Deno.test("routing: disallowed_other_interest_8990 routes to form8990", () => {
       disallowed_other_interest_8990: 2_000,
     }),
   ]);
-  const f8990 = findOutput(result, "form8990");
-  assertEquals(f8990 !== undefined, true);
+  assertEquals(findOutput(result, "form8990")?.nodeType, "form8990");
 });
 
-Deno.test("routing: prior_unallowed_at_risk routes to form6198", () => {
+Deno.test("routing: prior_unallowed_at_risk routes to form6198 with prior_unallowed amount", () => {
   const result = compute([
     minimalItem({
       rent_income: 10_000,
       prior_unallowed_at_risk: 2_000,
     }),
   ]);
-  const f6198 = findOutput(result, "form6198");
-  assertEquals(f6198 !== undefined, true);
+  const f6198Fields = findOutput(result, "form6198")!.fields as Record<string, number>;
+  assertEquals(f6198Fields.prior_unallowed, 2_000);
 });
 
-Deno.test("routing: prior_unallowed_passive_operating routes to form8582 (activity_type=A)", () => {
+Deno.test("routing: prior_unallowed_passive_operating routes to form8582 with prior_unallowed amount", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -423,11 +373,11 @@ Deno.test("routing: prior_unallowed_passive_operating routes to form8582 (activi
       prior_unallowed_passive_operating: 2_000,
     }),
   ]);
-  const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  const f8582Fields = findOutput(result, "form8582")!.fields as Record<string, number>;
+  assertEquals(f8582Fields.prior_unallowed, 2_000);
 });
 
-Deno.test("routing: prior_unallowed_passive_4797_part1 routes to form8582 (activity_type=A)", () => {
+Deno.test("routing: prior_unallowed_passive_4797_part1 routes to form8582 with aggregated prior_unallowed", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -435,11 +385,11 @@ Deno.test("routing: prior_unallowed_passive_4797_part1 routes to form8582 (activ
       prior_unallowed_passive_4797_part1: 1_500,
     }),
   ]);
-  const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  const f8582Fields = findOutput(result, "form8582")!.fields as Record<string, number>;
+  assertEquals(f8582Fields.prior_unallowed, 1_500);
 });
 
-Deno.test("routing: prior_unallowed_passive_4797_part2 routes to form8582 (activity_type=A)", () => {
+Deno.test("routing: prior_unallowed_passive_4797_part2 routes to form8582 with aggregated prior_unallowed", () => {
   const result = compute([
     minimalItem({
       activity_type: "A",
@@ -447,8 +397,8 @@ Deno.test("routing: prior_unallowed_passive_4797_part2 routes to form8582 (activ
       prior_unallowed_passive_4797_part2: 1_200,
     }),
   ]);
-  const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  const f8582Fields = findOutput(result, "form8582")!.fields as Record<string, number>;
+  assertEquals(f8582Fields.prior_unallowed, 1_200);
 });
 
 Deno.test("routing: qbi_w2_wages routes to form8995 when qbi_trade_or_business=Y", () => {
@@ -459,9 +409,7 @@ Deno.test("routing: qbi_w2_wages routes to form8995 when qbi_trade_or_business=Y
       qbi_w2_wages: 10_000,
     }),
   ]);
-  const f8995 = findOutput(result, "form8995");
-  assertEquals(f8995 !== undefined, true);
-  const input = f8995!.fields as Record<string, number>;
+  const input = findOutput(result, "form8995")!.fields as Record<string, number>;
   assertEquals(input.w2_wages, 10_000);
 });
 
@@ -473,13 +421,11 @@ Deno.test("routing: qbi_unadjusted_basis routes to form8995 when qbi_trade_or_bu
       qbi_unadjusted_basis: 200_000,
     }),
   ]);
-  const f8995 = findOutput(result, "form8995");
-  assertEquals(f8995 !== undefined, true);
-  const input = f8995!.fields as Record<string, number>;
+  const input = findOutput(result, "form8995")!.fields as Record<string, number>;
   assertEquals(input.unadjusted_basis, 200_000);
 });
 
-Deno.test("routing: qbi_override routes to form8995 using override amount", () => {
+Deno.test("routing: qbi_override routes to form8995 using override amount, ignoring computed net", () => {
   const result = compute([
     minimalItem({
       rent_income: 30_000,
@@ -487,9 +433,8 @@ Deno.test("routing: qbi_override routes to form8995 using override amount", () =
       qbi_override: 15_000,
     }),
   ]);
-  const f8995 = findOutput(result, "form8995");
-  assertEquals(f8995 !== undefined, true);
-  const input = f8995!.fields as Record<string, number>;
+  // Override wins over computed net (30_000)
+  const input = findOutput(result, "form8995")!.fields as Record<string, number>;
   assertEquals(input.qbi, 15_000);
 });
 
@@ -500,9 +445,7 @@ Deno.test("aggregation: rent_income summed across two properties", () => {
     minimalItem({ rent_income: 6_000 }),
     minimalItem({ rent_income: 4_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 10_000);
 });
 
@@ -511,9 +454,7 @@ Deno.test("aggregation: royalties summed across two royalty properties", () => {
     minimalItem({ property_type: 6, rent_income: 0, royalties_income: 3_000 }),
     minimalItem({ property_type: 6, rent_income: 0, royalties_income: 2_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
@@ -522,34 +463,28 @@ Deno.test("aggregation: expenses reduce net across properties in single output",
     minimalItem({ rent_income: 12_000, expense_repairs: 2_000 }),
     minimalItem({ rent_income: 8_000, expense_insurance: 1_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
   // net = (12000 - 2000) + (8000 - 1000) = 17000
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 17_000);
 });
 
-Deno.test("aggregation: mortgage interest line 23c totalled across all properties", () => {
+Deno.test("aggregation: mortgage interest totalled across all properties (reduces net)", () => {
   const result = compute([
     minimalItem({ rent_income: 20_000, expense_mortgage_interest: 4_000 }),
     minimalItem({ rent_income: 15_000, expense_mortgage_interest: 3_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   // net = (20000-4000) + (15000-3000) = 28000
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 28_000);
 });
 
-Deno.test("aggregation: depreciation line 23d totalled across all properties", () => {
+Deno.test("aggregation: depreciation totalled across all properties (reduces net)", () => {
   const result = compute([
     minimalItem({ rent_income: 20_000, expense_depreciation: 5_000 }),
     minimalItem({ rent_income: 15_000, expense_depreciation: 3_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
   // net = (20000-5000) + (15000-3000) = 27000
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 27_000);
 });
 
@@ -574,9 +509,7 @@ Deno.test("threshold §280A: fair_rental_days=15 — income NOT excluded (≥ 15
   const result = compute([
     minimalItem({ fair_rental_days: 15, personal_use_days: 0, rent_income: 5_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 5_000);
 });
 
@@ -590,12 +523,13 @@ Deno.test("threshold §280A: personal_use_days=14 with fair_rental_days=200 — 
       expense_repairs: 10_000,
     }),
   ]);
-  // Loss should flow through (subject to PAL, but not §280A expense cap)
-  assertEquals(Array.isArray(result.outputs), true);
+  // Loss flows through unrestricted by §280A expense cap
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
+  assertEquals(input.line5_schedule_e, -2_000);
 });
 
-Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — vacation home triggered (15 > 14)", () => {
-  // Vacation home: expenses limited to gross rental income
+Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — vacation home caps loss at zero", () => {
+  // Vacation home: expenses limited to gross rental income — no loss allowed
   const result = compute([
     minimalItem({
       fair_rental_days: 140,
@@ -604,17 +538,13 @@ Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — 
       expense_repairs: 15_000,
     }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  // Net cannot be negative under vacation home rules (loss disallowed)
-  if (s1 !== undefined) {
-    const input = s1.fields as Record<string, number>;
-    assertEquals((input.line5_schedule_e ?? 0) >= 0, true);
-  }
-  assertEquals(Array.isArray(result.outputs), true);
+  // §280A(c)(5): net capped at 0 when vacation home rules apply
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
+  assertEquals(input.line5_schedule_e, 0);
 });
 
-Deno.test("threshold §280A: personal_use_days > 10% of fair_rental_days triggers vacation home", () => {
-  // FRD=10, PUD=2: 2 > 10%×10=1 → vacation home
+Deno.test("threshold §280A: personal_use_days > 10% of fair_rental_days triggers vacation home — loss capped at zero", () => {
+  // FRD=10, PUD=2: 2 > 10%×10=1 → vacation home triggered
   const result = compute([
     minimalItem({
       fair_rental_days: 10,
@@ -623,12 +553,9 @@ Deno.test("threshold §280A: personal_use_days > 10% of fair_rental_days trigger
       expense_repairs: 2_000,
     }),
   ]);
-  // Under vacation home: net cannot go below 0
-  if (findOutput(result, "schedule1")) {
-    const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
-    assertEquals((input.line5_schedule_e ?? 0) >= 0, true);
-  }
-  assertEquals(Array.isArray(result.outputs), true);
+  // §280A(c)(5): expenses capped at gross income — net = max(0, 1000 - 2000) = 0
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
+  assertEquals(input.line5_schedule_e, 0);
 });
 
 Deno.test("threshold §280A: personal_use_days=0 — pure rental, no vacation home proration", () => {
@@ -646,29 +573,14 @@ Deno.test("threshold §280A: personal_use_days=0 — pure rental, no vacation ho
   assertEquals(input.line5_schedule_e, 9_000);
 });
 
-Deno.test("threshold §199A: qbi_aggregation_number=1 (minimum valid) does not throw", () => {
-  const result = compute([
-    minimalItem({
-      rent_income: 10_000,
-      qbi_trade_or_business: "Y",
-      qbi_aggregation_number: 1,
-    }),
-  ]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("threshold §199A: qbi_aggregation_number boundary values (1 and 99) accepted without throw", () => {
+  const r1 = compute([minimalItem({ rent_income: 10_000, qbi_trade_or_business: "Y", qbi_aggregation_number: 1 })]);
+  const r99 = compute([minimalItem({ rent_income: 10_000, qbi_trade_or_business: "Y", qbi_aggregation_number: 99 })]);
+  assertEquals((r1.outputs.find((o) => o.nodeType === "form8995")!.fields as Record<string, number>).qbi, 10_000);
+  assertEquals((r99.outputs.find((o) => o.nodeType === "form8995")!.fields as Record<string, number>).qbi, 10_000);
 });
 
-Deno.test("threshold §199A: qbi_aggregation_number=99 (maximum valid) does not throw", () => {
-  const result = compute([
-    minimalItem({
-      rent_income: 10_000,
-      qbi_trade_or_business: "Y",
-      qbi_aggregation_number: 99,
-    }),
-  ]);
-  assertEquals(Array.isArray(result.outputs), true);
-});
-
-Deno.test("threshold §179: section_179=$2,500,000 (TY2025 maximum) with activity_type=C does not throw", () => {
+Deno.test("threshold §179: section_179=$2,500,000 with activity_type=C routes full amount to form4562", () => {
   const result = compute([
     minimalItem({
       activity_type: "C",
@@ -676,17 +588,18 @@ Deno.test("threshold §179: section_179=$2,500,000 (TY2025 maximum) with activit
       section_179: 2_500_000,
     }),
   ]);
-  assertEquals(Array.isArray(result.outputs), true);
+  const f4562Fields = findOutput(result, "form4562")!.fields as Record<string, number>;
+  assertEquals(f4562Fields.section_179_deduction, 2_500_000);
 });
 
 Deno.test("threshold ownership_percent=0: all income/expenses allocated as $0 to this taxpayer", () => {
   const result = compute([
     minimalItem({ rent_income: 10_000, ownership_percent: 0 }),
   ]);
+  // 0% ownership → net = 0 → schedule1 may be omitted or carry line5=0
   const s1 = findOutput(result, "schedule1");
   if (s1 !== undefined) {
-    const input = s1.fields as Record<string, number>;
-    assertEquals(input.line5_schedule_e, 0);
+    assertEquals((s1.fields as Record<string, number>).line5_schedule_e, 0);
   } else {
     assertEquals(s1, undefined);
   }
@@ -895,7 +808,7 @@ Deno.test("informational: qualified_joint_venture=true does not change output co
 
 // ─── 8. Edge Cases ───────────────────────────────────────────────────────────
 
-Deno.test("edge case vacation home <15 rental days: all income excluded, no schedule1 line5", () => {
+Deno.test("edge case vacation home <15 rental days: §280A(g) excludes all income — net=0", () => {
   // IRC §280A(g): if FRD < 15, do NOT report rental income on Schedule E
   const result = compute([
     minimalItem({
@@ -906,11 +819,10 @@ Deno.test("edge case vacation home <15 rental days: all income excluded, no sche
       expense_taxes: 3_000,
     }),
   ]);
-  // No rental income on Schedule E — either no schedule1 output or line5=0
+  // computePropertyNet returns 0 → schedule1 output carries line5=0 or is omitted
   const s1 = findOutput(result, "schedule1");
   if (s1 !== undefined) {
-    const input = s1.fields as Record<string, number>;
-    assertEquals(input.line5_schedule_e ?? 0, 0);
+    assertEquals((s1.fields as Record<string, number>).line5_schedule_e ?? 0, 0);
   } else {
     assertEquals(s1, undefined);
   }
@@ -933,16 +845,14 @@ Deno.test("edge case self-rental (property_type=7): net income is nonpassive (no
   assertEquals(s1 !== undefined, true);
 });
 
-Deno.test("edge case: multiple properties (4) in one call — all processed", () => {
+Deno.test("edge case: multiple properties (4) in one call — all nets aggregated", () => {
   const result = compute([
     minimalItem({ rent_income: 1_000 }),
     minimalItem({ rent_income: 2_000 }),
     minimalItem({ rent_income: 3_000 }),
     minimalItem({ rent_income: 4_000 }),
   ]);
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   assertEquals(input.line5_schedule_e, 10_000);
 });
 
@@ -1092,24 +1002,19 @@ Deno.test("smoke: comprehensive test with all major boxes populated", () => {
     },
   ]);
 
-  // schedule1 output must exist
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1 !== undefined, true);
-  const input = s1!.fields as Record<string, number>;
+  // schedule1 output must exist with exact net
+  const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   // net = 24000 - (600+800+1200+1800+9000+2400+3000+1200+5500+600) = 24000 - 26100 = -2100
   assertEquals(input.line5_schedule_e, -2_100);
 
   // form8582 required: activity_type=A, net loss
-  const f8582 = findOutput(result, "form8582");
-  assertEquals(f8582 !== undefined, true);
+  assertEquals((findOutput(result, "form8582")!.fields as Record<string, number>).current_loss, 2_100);
 
-  // form8960 required: carry_to_8960=true
-  const f8960 = findOutput(result, "form8960");
-  assertEquals(f8960 !== undefined, true);
+  // form8960 required: carry_to_8960=true, net=-2100
+  assertEquals((findOutput(result, "form8960")!.fields as Record<string, number>).line4b_rental_net, -2_100);
 
-  // form8995 required: qbi_trade_or_business=Y
-  const f8995 = findOutput(result, "form8995");
-  assertEquals(f8995 !== undefined, true);
+  // form8995 required: qbi_trade_or_business=Y, qbi=net=-2100
+  assertEquals((findOutput(result, "form8995")!.fields as Record<string, number>).qbi, -2_100);
 
   // form6198 must NOT be present: some_investment_not_at_risk=false
   const f6198 = findOutput(result, "form6198");

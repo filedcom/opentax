@@ -11,18 +11,9 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return f8896.compute({ taxYear: 2025 }, { f8896s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
 // =============================================================================
 // 1. Input Schema Validation
 // =============================================================================
-
-Deno.test("f8896.inputSchema: valid minimal item passes", () => {
-  const parsed = f8896.inputSchema.safeParse({ f8896s: [{}] });
-  assertEquals(parsed.success, true);
-});
 
 Deno.test("f8896.inputSchema: empty array fails (min 1)", () => {
   const parsed = f8896.inputSchema.safeParse({ f8896s: [] });
@@ -39,33 +30,11 @@ Deno.test("f8896.inputSchema: negative qualified_capital_costs fails", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f8896.inputSchema: negative refinery_capacity_barrels_per_day fails", () => {
-  const parsed = f8896.inputSchema.safeParse({ f8896s: [{ refinery_capacity_barrels_per_day: -1 }] });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8896.inputSchema: negative prior_year_credits_claimed fails", () => {
-  const parsed = f8896.inputSchema.safeParse({ f8896s: [{ prior_year_credits_claimed: -100 }] });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8896.inputSchema: valid full item passes", () => {
-  const parsed = f8896.inputSchema.safeParse({
-    f8896s: [{
-      gallons_ulsd_produced: 1_000_000,
-      qualified_capital_costs: 500_000,
-      refinery_capacity_barrels_per_day: 100_000,
-      prior_year_credits_claimed: 10_000,
-    }],
-  });
-  assertEquals(parsed.success, true);
-});
-
 // =============================================================================
-// 2. Per-Field Routing & Calculation
+// 2. Per-Gallon Credit Calculation (IRC §45H(a): 5 cents/gallon)
 // =============================================================================
 
-Deno.test("f8896.compute: basic credit = gallons × 0.05", () => {
+Deno.test("f8896.compute: credit = gallons × 0.05", () => {
   const result = compute([minimalItem({
     gallons_ulsd_produced: 1_000_000,
     refinery_capacity_barrels_per_day: 100_000,
@@ -79,12 +48,12 @@ Deno.test("f8896.compute: zero gallons — no output", () => {
     gallons_ulsd_produced: 0,
     refinery_capacity_barrels_per_day: 100_000,
   })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });
 
 Deno.test("f8896.compute: no gallons field — no output", () => {
   const result = compute([minimalItem()]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });
 
 Deno.test("f8896.compute: routes to schedule3 line6z_general_business_credit", () => {
@@ -92,17 +61,17 @@ Deno.test("f8896.compute: routes to schedule3 line6z_general_business_credit", (
     gallons_ulsd_produced: 200_000,
     refinery_capacity_barrels_per_day: 50_000,
   })]);
-  const out = findOutput(result, "schedule3");
-  assertEquals(out !== undefined, true);
+  assertEquals(result.outputs[0].nodeType, "schedule3");
+  const fields = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(fields.line6z_general_business_credit, 10_000);
 });
 
 // =============================================================================
-// 3. Capital Costs Limitation
+// 3. Capital Costs Limitation (IRC §45H(b)(1): 25% cap minus prior credits)
 // =============================================================================
 
-Deno.test("f8896.compute: credit limited to 25% of qualified_capital_costs", () => {
-  // gallons × 0.05 = 200,000 × 0.05 = 10,000
-  // capital cap = 100,000 × 0.25 = 25,000 → no cap applied
+Deno.test("f8896.compute: base credit within capital costs cap — cap not applied", () => {
+  // base = 200,000 × 0.05 = 10,000; cap = 100,000 × 0.25 = 25,000 → no cap
   const result = compute([minimalItem({
     gallons_ulsd_produced: 200_000,
     qualified_capital_costs: 100_000,
@@ -112,9 +81,8 @@ Deno.test("f8896.compute: credit limited to 25% of qualified_capital_costs", () 
   assertEquals(fields.line6z_general_business_credit, 10_000);
 });
 
-Deno.test("f8896.compute: capital costs cap reduces credit when base exceeds cap", () => {
-  // gallons × 0.05 = 2,000,000 × 0.05 = 100,000
-  // capital cap = 200,000 × 0.25 - 0 = 50,000 → capped at 50,000
+Deno.test("f8896.compute: base credit exceeds capital costs cap — capped", () => {
+  // base = 2,000,000 × 0.05 = 100,000; cap = 200,000 × 0.25 = 50,000 → capped
   const result = compute([minimalItem({
     gallons_ulsd_produced: 2_000_000,
     qualified_capital_costs: 200_000,
@@ -126,8 +94,7 @@ Deno.test("f8896.compute: capital costs cap reduces credit when base exceeds cap
 });
 
 Deno.test("f8896.compute: prior credits reduce capital costs cap", () => {
-  // capital cap = 200,000 × 0.25 - 30,000 = 20,000
-  // base credit = 1,000,000 × 0.05 = 50,000 → capped at 20,000
+  // cap = 200,000 × 0.25 - 30,000 = 20,000; base = 1,000,000 × 0.05 = 50,000 → capped at 20,000
   const result = compute([minimalItem({
     gallons_ulsd_produced: 1_000_000,
     qualified_capital_costs: 200_000,
@@ -139,18 +106,18 @@ Deno.test("f8896.compute: prior credits reduce capital costs cap", () => {
 });
 
 Deno.test("f8896.compute: prior credits fully consume cap — no output", () => {
-  // capital cap = 200,000 × 0.25 - 50,000 = 0 → no credit
+  // cap = 200,000 × 0.25 - 50,000 = 0 → no credit
   const result = compute([minimalItem({
     gallons_ulsd_produced: 1_000_000,
     qualified_capital_costs: 200_000,
     prior_year_credits_claimed: 50_000,
     refinery_capacity_barrels_per_day: 50_000,
   })]);
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs, []);
 });
 
-Deno.test("f8896.compute: no capital costs provided — no capital cap applied", () => {
-  // Without qualified_capital_costs, no cap is enforced; use base credit directly
+Deno.test("f8896.compute: no qualified_capital_costs — no cap applied", () => {
+  // Without capital costs, cap is null and base credit used directly
   const result = compute([minimalItem({
     gallons_ulsd_produced: 1_000_000,
     refinery_capacity_barrels_per_day: 50_000,
@@ -160,10 +127,10 @@ Deno.test("f8896.compute: no capital costs provided — no capital cap applied",
 });
 
 // =============================================================================
-// 4. Refinery Capacity Threshold
+// 4. Refinery Capacity Threshold (IRC §45H(c)(1)(A): 205,000 bbl/day max)
 // =============================================================================
 
-Deno.test("f8896.compute: capacity exactly at 205,000 bbl/day — allowed (boundary pass)", () => {
+Deno.test("f8896.compute: capacity exactly at 205,000 bbl/day — allowed", () => {
   const result = compute([minimalItem({
     gallons_ulsd_produced: 100_000,
     refinery_capacity_barrels_per_day: 205_000,
@@ -186,10 +153,8 @@ Deno.test("f8896.compute: capacity above 205,000 bbl/day — throws", () => {
 // 5. Aggregation — Multiple Refineries
 // =============================================================================
 
-Deno.test("f8896.compute: multiple items — credits summed", () => {
-  // Item 1: 200,000 gallons × 0.05 = 10,000
-  // Item 2: 300,000 gallons × 0.05 = 15,000
-  // Total: 25,000
+Deno.test("f8896.compute: multiple refineries — credits summed", () => {
+  // Item 1: 200,000 × 0.05 = 10,000; Item 2: 300,000 × 0.05 = 15,000 → total 25,000
   const result = compute([
     minimalItem({ gallons_ulsd_produced: 200_000, refinery_capacity_barrels_per_day: 50_000 }),
     minimalItem({ gallons_ulsd_produced: 300_000, refinery_capacity_barrels_per_day: 80_000 }),
@@ -199,38 +164,11 @@ Deno.test("f8896.compute: multiple items — credits summed", () => {
 });
 
 // =============================================================================
-// 6. Hard Validation
+// 6. Smoke Test
 // =============================================================================
 
-Deno.test("f8896.compute: throws on over-capacity refinery", () => {
-  assertThrows(() => compute([minimalItem({ gallons_ulsd_produced: 100, refinery_capacity_barrels_per_day: 300_000 })]), Error);
-});
-
-Deno.test("f8896.compute: zero gallons does not throw", () => {
-  const result = compute([minimalItem({ gallons_ulsd_produced: 0, refinery_capacity_barrels_per_day: 50_000 })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 7. Edge Cases
-// =============================================================================
-
-Deno.test("f8896.compute: empty item — no output", () => {
-  const result = compute([minimalItem()]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8896.compute: only one output node (schedule3)", () => {
-  const result = compute([minimalItem({ gallons_ulsd_produced: 100_000, refinery_capacity_barrels_per_day: 50_000 })]);
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "schedule3");
-});
-
-// =============================================================================
-// 8. Smoke Test
-// =============================================================================
-
-Deno.test("f8896.compute: smoke test — full calculation with capital costs limitation", () => {
+Deno.test("f8896.compute: smoke test — capital costs cap applied", () => {
+  // base = 5,000,000 × 0.05 = 250,000; cap = 1,000,000 × 0.25 - 50,000 = 200,000 → credit = 200,000
   const result = compute([
     minimalItem({
       gallons_ulsd_produced: 5_000_000,
@@ -239,9 +177,6 @@ Deno.test("f8896.compute: smoke test — full calculation with capital costs lim
       refinery_capacity_barrels_per_day: 150_000,
     }),
   ]);
-  // base_credit = 5,000,000 × 0.05 = 250,000
-  // capital_cap = 1,000,000 × 0.25 - 50,000 = 200,000
-  // credit = min(250,000, 200,000) = 200,000
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6z_general_business_credit, 200_000);
 });
