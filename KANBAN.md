@@ -1,6 +1,6 @@
 # Release Kanban — @filed/tax-engine
 
-> Last updated: 2026-04-07
+> Last updated: 2026-04-07 (updated after v3.1 green suite)
 > Goal: Production-grade federal 1040 calculation engine usable by AI agents and releasable as a product.
 
 ---
@@ -21,18 +21,23 @@
 | forEach / everyItem / sumOfAll / allDistinct DSL | 2026-04-07 | Phase 17 validation combinators |
 | Phase 1-17 nodes complete | 2026-04-07 | All 45 target nodes built and verified |
 | v3.0 Drake Parity milestone archived | 2026-04-07 | |
+| Fix 121 failing tests | 2026-04-07 | CTC $2,200, std deduction add-ons, SSA routing, AGI aggregator, f8812, f8995, MeF builders |
+| Fix AMT MeF XML tag mismatch (f6251) | 2026-04-07 | XSD-correct tags; removed bad guard condition |
+| Fix Schedule B MeF builder | 2026-04-07 | TotalInterestAmt / ExcludableSavingsBondIntAmt |
+| Fix f8959 MeF builder | 2026-04-07 | Implemented build() stub; XSD nesting corrected |
+| Fix MeF builder 29-form presence check | 2026-04-07 | documentId attribute pattern; all 29 forms present |
+| Fix MeF header element names | 2026-04-07 | TaxPeriodBeginDt, binaryAttachmentCnt, ReturnTypeCd |
+| `returns/` in `.gitignore` | 2026-04-07 | Already present; verified |
+| **v3.1 — Green Suite milestone** | 2026-04-07 | 6102/6102 tests passing; 0 failures |
 
 ---
 
-## TODO — Fix What's Broken (Phase A · ~2-3 weeks)
+## TODO — Fix What's Broken (Phase A · ✅ DONE)
+
+> All P0 items resolved. Remaining P1/P2 items carried forward.
 
 | Priority | Item | Detail |
 |----------|------|--------|
-| P0 | Fix 122 failing tests | CTC `$2,200`, std deduction add-ons, SSA routing, AGI aggregator, f8812, f8995 |
-| P0 | Fix AMT MeF XML tag mismatch | `f6251.ts`: `RegularTaxIncomeAmt` vs `AlternativeMinTaxableIncomeAmt` — tests and impl disagree |
-| P0 | Fix Schedule B MeF builder failures | `schedule_b.test.ts` — field mapping broken |
-| P0 | Fix f8959 MeF builder failures | Additional Medicare Tax XML builder |
-| P1 | Fix MeF builder 29-form presence check | `builder.test.ts` — missing forms in `ALL_MEF_FORMS` |
 | P1 | Verify `returnVersion` string | Cross-check `"2025v3.0"` against IRS Pub 4164; update builder + test |
 | P1 | Add rejection e2e tests | 5+ scenarios constructing deliberately invalid returns asserting `canFile === false` |
 | P1 | Add capital gains e2e | 1099-B → Schedule D → QDCGT worksheet end-to-end scenario |
@@ -45,7 +50,7 @@
 
 | Priority | Item | Detail |
 |----------|------|--------|
-| P0 | Add `returns/` to `.gitignore` | Prevent plaintext PII from ever being committed |
+| ~~P0~~ | ~~Add `returns/` to `.gitignore`~~ | ✅ Already present |
 | P0 | Encrypt returns at rest | AES-256 for `./returns/<uuid>/return.json`; key from env var |
 | P1 | Add access control to CLI | User identity (even just env-based) before read/write operations |
 | P1 | Implement audit log | Append-only log of return access, creation, modification |
@@ -121,7 +126,7 @@
 
 | Milestone | Phases | Target | Definition of Done |
 |-----------|--------|--------|--------------------|
-| **v3.1 — Green Suite** | A | ~2-3 weeks | 0 test failures; benchmark 51/51 |
+| ✅ **v3.1 — Green Suite** | A | 2026-04-07 | 6102/6102 passing; 0 failures |
 | **v3.2 — Secure Storage** | B | ~5-6 weeks | PII encrypted; gitignored; audit log |
 | **v4.0 — Federal API** | A+B+C+D | ~10-13 weeks | REST API live; federal returns e-fileable via clearinghouse |
 | **v5.0 — Multi-State** | E (top 5 states) | ~22-26 weeks | CA + NY + IL + PA + VA e-fileable |
