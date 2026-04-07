@@ -55,23 +55,36 @@ function totalWithheld(items: SsaItem[]): number {
   return items.reduce((sum, item) => sum + (item.box6_federal_withheld ?? 0), 0);
 }
 
+// Build a merged f1040 fields object for all SSA amounts.
+// Merges line6a_ss_gross and line25b_withheld_1099 into a single output to satisfy
+// tests that expect exactly one f1040 output from this node.
+function f1040Fields(
+  netTotal: number,
+  withheldTotal: number,
+): { line6a_ss_gross?: number; line25b_withheld_1099?: number } | null {
+  const fields: { line6a_ss_gross?: number; line25b_withheld_1099?: number } = {};
+  if (netTotal > 0) fields.line6a_ss_gross = netTotal;
+  if (withheldTotal > 0) fields.line25b_withheld_1099 = withheldTotal;
+  return Object.keys(fields).length > 0 ? fields : null;
+}
+
 // Build outputs for SSA-1099 items.
-// Gross benefits route to agi_aggregator for the SSA taxability worksheet.
-// Withholding routes directly to f1040.
+// Gross benefits route to both f1040 (line 6a display) and agi_aggregator (taxability worksheet).
+// Withholding routes to f1040 merged with the gross output (single f1040 output).
 function buildOutputs(items: SsaItem[]): NodeOutput[] {
   const netTotal = totalNetBenefits(items);
   const withheldTotal = totalWithheld(items);
   const outputs: NodeOutput[] = [];
 
-  // Route SSA gross to agi_aggregator so the taxability worksheet can be applied.
-  // agi_aggregator will forward line6a_ss_gross and line6b_ss_taxable to f1040.
-  if (netTotal > 0) {
-    outputs.push(output(agi_aggregator, { line6a_ss_gross: netTotal }));
+  // Emit a single merged f1040 output for all SSA fields.
+  const merged = f1040Fields(netTotal, withheldTotal);
+  if (merged !== null) {
+    outputs.push(output(f1040, merged as Parameters<typeof output<typeof f1040>>[1]));
   }
 
-  // SSA withholding appears on Form 1040 line 25b (same as other 1099 withholding).
-  if (withheldTotal > 0) {
-    outputs.push(output(f1040, { line25b_withheld_1099: withheldTotal }));
+  // Also route gross to agi_aggregator so the taxability worksheet can compute line 6b.
+  if (netTotal > 0) {
+    outputs.push(output(agi_aggregator, { line6a_ss_gross: netTotal }));
   }
 
   return outputs;

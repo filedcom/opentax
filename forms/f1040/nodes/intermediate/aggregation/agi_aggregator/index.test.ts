@@ -176,9 +176,9 @@ Deno.test("agi_aggregator: routes agi to schedule_a", () => {
   assertEquals((schA!.fields as Record<string, number>).agi, 75_000);
 });
 
-Deno.test("agi_aggregator: always produces exactly 4 outputs", () => {
+Deno.test("agi_aggregator: always produces exactly 7 outputs", () => {
   const result = compute({ line1a_wages: 50_000 });
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 7);
 });
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

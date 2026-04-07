@@ -24,9 +24,10 @@ Deno.test("smoke — missing required fields throws", () => {
   assertThrows(() => inputSchema.parse({}));
 });
 
-Deno.test("smoke — zero taxable income returns no outputs", () => {
+Deno.test("smoke — zero taxable income returns f8812 liability output only", () => {
   const result = compute({ taxable_income: 0, filing_status: FilingStatus.Single });
-  assertEquals(result.outputs.length, 0);
+  // Even at zero income, notify f8812 of zero liability for ACTC computation
+  assertEquals(result.outputs.length, 1);
 });
 
 // ─── Bracket Computation ─────────────────────────────────────────────────────

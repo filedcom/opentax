@@ -36,7 +36,7 @@ Deno.test("schedule_b: taxable_interest_net at zero is emitted", () => {
   const result = scheduleB.build({ taxable_interest_net: 0 });
   assertStringIncludes(
     result,
-    "<TotalInterestAmt>0</TotalInterestAmt>",
+    "<TaxableInterestSubtotalAmt>0</TaxableInterestSubtotalAmt>",
   );
 });
 
@@ -44,19 +44,19 @@ Deno.test("schedule_b: taxable_interest_net at zero is emitted", () => {
 // Section 4: Per-field mapping (one test per field, 3 fields)
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: taxable_interest_net maps to TotalInterestAmt", () => {
+Deno.test("schedule_b: taxable_interest_net maps to TaxableInterestSubtotalAmt", () => {
   const result = scheduleB.build({ taxable_interest_net: 3000 });
   assertStringIncludes(
     result,
-    "<TotalInterestAmt>3000</TotalInterestAmt>",
+    "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
   );
 });
 
-Deno.test("schedule_b: ee_bond_exclusion maps to ExcludibleSavingsBondIntAmt", () => {
+Deno.test("schedule_b: ee_bond_exclusion maps to ExcludableSavingsBondIntAmt", () => {
   const result = scheduleB.build({ ee_bond_exclusion: 500 });
   assertStringIncludes(
     result,
-    "<ExcludibleSavingsBondIntAmt>500</ExcludibleSavingsBondIntAmt>",
+    "<ExcludableSavingsBondIntAmt>500</ExcludableSavingsBondIntAmt>",
   );
 });
 
@@ -76,9 +76,9 @@ Deno.test("schedule_b: single known field emits only that element, absent fields
   const result = scheduleB.build({ taxable_interest_net: 3000 });
   assertStringIncludes(
     result,
-    "<TotalInterestAmt>3000</TotalInterestAmt>",
+    "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
   );
-  assertNotIncludes(result, "<ExcludibleSavingsBondIntAmt>");
+  assertNotIncludes(result, "<ExcludableSavingsBondIntAmt>");
   assertNotIncludes(result, "<TotalOrdinaryDividendsAmt>");
 });
 
@@ -102,11 +102,11 @@ Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
   const result = scheduleB.build(allFields);
   assertStringIncludes(
     result,
-    "<TotalInterestAmt>3000</TotalInterestAmt>",
+    "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
   );
   assertStringIncludes(
     result,
-    "<ExcludibleSavingsBondIntAmt>500</ExcludibleSavingsBondIntAmt>",
+    "<ExcludableSavingsBondIntAmt>500</ExcludableSavingsBondIntAmt>",
   );
   assertStringIncludes(
     result,
@@ -125,7 +125,7 @@ Deno.test("schedule_b: payer_name string field is silently ignored", () => {
   });
   assertStringIncludes(
     result,
-    "<TotalInterestAmt>3000</TotalInterestAmt>",
+    "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
   );
   assertNotIncludes(result, "payer_name");
   assertNotIncludes(result, "Bank of America");

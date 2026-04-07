@@ -31,70 +31,70 @@ Deno.test("all unknown keys returns empty string", () => {
 
 Deno.test("regular_tax_income at zero is emitted", () => {
   const result = form6251.build({ regular_tax_income: 0 });
-  assertStringIncludes(result, "<RegularTaxIncomeAmt>0</RegularTaxIncomeAmt>");
+  assertStringIncludes(result, "<AGIOrAGILessDeductionAmt>0</AGIOrAGILessDeductionAmt>");
 });
 
 // ---------------------------------------------------------------------------
 // Section 4: Per-field mapping (one test per field, 10 fields)
 // ---------------------------------------------------------------------------
 
-Deno.test("regular_tax_income maps to RegularTaxIncomeAmt", () => {
+Deno.test("regular_tax_income maps to AGIOrAGILessDeductionAmt", () => {
   const result = form6251.build({ regular_tax_income: 75000 });
   assertStringIncludes(
     result,
-    "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
+    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
   );
 });
 
-Deno.test("regular_tax maps to RegularTaxAmt", () => {
+Deno.test("regular_tax maps to AdjustedRegularTaxAmt", () => {
   const result = form6251.build({ regular_tax: 12000 });
-  assertStringIncludes(result, "<RegularTaxAmt>12000</RegularTaxAmt>");
+  assertStringIncludes(result, "<AdjustedRegularTaxAmt>12000</AdjustedRegularTaxAmt>");
 });
 
-Deno.test("iso_adjustment maps to ISOAdjustmentAmt", () => {
+Deno.test("iso_adjustment maps to IncentiveStockOptionsAmt", () => {
   const result = form6251.build({ iso_adjustment: 5000 });
-  assertStringIncludes(result, "<ISOAdjustmentAmt>5000</ISOAdjustmentAmt>");
+  assertStringIncludes(result, "<IncentiveStockOptionsAmt>5000</IncentiveStockOptionsAmt>");
 });
 
-Deno.test("depreciation_adjustment maps to DepreciationAdjustmentAmt", () => {
+Deno.test("depreciation_adjustment maps to DepreciationAmt", () => {
   const result = form6251.build({ depreciation_adjustment: 3000 });
   assertStringIncludes(
     result,
-    "<DepreciationAdjustmentAmt>3000</DepreciationAdjustmentAmt>",
+    "<DepreciationAmt>3000</DepreciationAmt>",
   );
 });
 
-Deno.test("nol_adjustment maps to NOLAdjustmentAmt", () => {
+Deno.test("nol_adjustment maps to AltTaxNetOperatingLossDedAmt", () => {
   const result = form6251.build({ nol_adjustment: 2000 });
-  assertStringIncludes(result, "<NOLAdjustmentAmt>2000</NOLAdjustmentAmt>");
+  assertStringIncludes(result, "<AltTaxNetOperatingLossDedAmt>2000</AltTaxNetOperatingLossDedAmt>");
 });
 
-Deno.test("private_activity_bond_interest maps to PrivateActivityBondIntAmt", () => {
+Deno.test("private_activity_bond_interest maps to ExemptPrivateActivityBondsAmt", () => {
   const result = form6251.build({ private_activity_bond_interest: 800 });
   assertStringIncludes(
     result,
-    "<PrivateActivityBondIntAmt>800</PrivateActivityBondIntAmt>",
+    "<ExemptPrivateActivityBondsAmt>800</ExemptPrivateActivityBondsAmt>",
   );
 });
 
-Deno.test("qsbs_adjustment maps to QSBSAdjustmentAmt", () => {
+Deno.test("qsbs_adjustment maps to Section1202ExclusionAmt", () => {
   const result = form6251.build({ qsbs_adjustment: 10000 });
   assertStringIncludes(
     result,
-    "<QSBSAdjustmentAmt>10000</QSBSAdjustmentAmt>",
+    "<Section1202ExclusionAmt>10000</Section1202ExclusionAmt>",
   );
 });
 
-Deno.test("line2a_taxes_paid maps to TaxesPaidAmt", () => {
+Deno.test("line2a_taxes_paid maps to ScheduleATaxesAmt", () => {
   const result = form6251.build({ line2a_taxes_paid: 15000 });
-  assertStringIncludes(result, "<TaxesPaidAmt>15000</TaxesPaidAmt>");
+  assertStringIncludes(result, "<ScheduleATaxesAmt>15000</ScheduleATaxesAmt>");
 });
 
-Deno.test("other_adjustments maps to OtherAdjustmentsAmt", () => {
+Deno.test("other_adjustments maps to RelatedAdjustmentAmt", () => {
   const result = form6251.build({ other_adjustments: 1000 });
   assertStringIncludes(
     result,
-    "<OtherAdjustmentsAmt>1000</OtherAdjustmentsAmt>",
+    "<RelatedAdjustmentAmt>1000</RelatedAdjustmentAmt>",
   );
 });
 
@@ -114,11 +114,11 @@ Deno.test("single known field emits only that element, absent fields omitted", (
   const result = form6251.build({ regular_tax_income: 75000 });
   assertStringIncludes(
     result,
-    "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
+    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
   );
-  assertNotIncludes(result, "<RegularTaxAmt>");
-  assertNotIncludes(result, "<ISOAdjustmentAmt>");
-  assertNotIncludes(result, "<TaxesPaidAmt>");
+  assertNotIncludes(result, "<AdjustedRegularTaxAmt>");
+  assertNotIncludes(result, "<IncentiveStockOptionsAmt>");
+  assertNotIncludes(result, "<ScheduleATaxesAmt>");
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
@@ -128,11 +128,11 @@ Deno.test("two fields present: only those two elements emitted", () => {
   });
   assertStringIncludes(
     result,
-    "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
+    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
   );
-  assertStringIncludes(result, "<RegularTaxAmt>12000</RegularTaxAmt>");
-  assertNotIncludes(result, "<ISOAdjustmentAmt>");
-  assertNotIncludes(result, "<NOLAdjustmentAmt>");
+  assertStringIncludes(result, "<AdjustedRegularTaxAmt>12000</AdjustedRegularTaxAmt>");
+  assertNotIncludes(result, "<IncentiveStockOptionsAmt>");
+  assertNotIncludes(result, "<AltTaxNetOperatingLossDedAmt>");
 });
 
 // ---------------------------------------------------------------------------
@@ -162,27 +162,27 @@ Deno.test("all 10 fields present: all elements emitted", () => {
   const result = form6251.build(allFields);
   assertStringIncludes(
     result,
-    "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
+    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
   );
-  assertStringIncludes(result, "<RegularTaxAmt>12000</RegularTaxAmt>");
-  assertStringIncludes(result, "<ISOAdjustmentAmt>5000</ISOAdjustmentAmt>");
+  assertStringIncludes(result, "<AdjustedRegularTaxAmt>12000</AdjustedRegularTaxAmt>");
+  assertStringIncludes(result, "<IncentiveStockOptionsAmt>5000</IncentiveStockOptionsAmt>");
   assertStringIncludes(
     result,
-    "<DepreciationAdjustmentAmt>3000</DepreciationAdjustmentAmt>",
+    "<DepreciationAmt>3000</DepreciationAmt>",
   );
-  assertStringIncludes(result, "<NOLAdjustmentAmt>2000</NOLAdjustmentAmt>");
+  assertStringIncludes(result, "<AltTaxNetOperatingLossDedAmt>2000</AltTaxNetOperatingLossDedAmt>");
   assertStringIncludes(
     result,
-    "<PrivateActivityBondIntAmt>800</PrivateActivityBondIntAmt>",
+    "<ExemptPrivateActivityBondsAmt>800</ExemptPrivateActivityBondsAmt>",
   );
   assertStringIncludes(
     result,
-    "<QSBSAdjustmentAmt>10000</QSBSAdjustmentAmt>",
+    "<Section1202ExclusionAmt>10000</Section1202ExclusionAmt>",
   );
-  assertStringIncludes(result, "<TaxesPaidAmt>15000</TaxesPaidAmt>");
+  assertStringIncludes(result, "<ScheduleATaxesAmt>15000</ScheduleATaxesAmt>");
   assertStringIncludes(
     result,
-    "<OtherAdjustmentsAmt>1000</OtherAdjustmentsAmt>",
+    "<RelatedAdjustmentAmt>1000</RelatedAdjustmentAmt>",
   );
   assertStringIncludes(
     result,
@@ -201,7 +201,7 @@ Deno.test("filing_status string field is silently ignored", () => {
   });
   assertStringIncludes(
     result,
-    "<RegularTaxIncomeAmt>75000</RegularTaxIncomeAmt>",
+    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
   );
   assertNotIncludes(result, "filing_status");
   assertNotIncludes(result, "MFJ");

@@ -206,37 +206,44 @@ Deno.test("combined_all_parts: wages + SE + RRTA all contributing AMT", () => {
 });
 
 // ─── Part V: Withholding ──────────────────────────────────────────────────────
+//
+// W-2 box 6 is the regular 1.45% Medicare FICA tax — it does NOT appear on
+// Form 1040 line 25c. Line 25c is only for Additional Medicare Tax (0.9%)
+// withheld on wages (rare, uncommon on W-2s). Form 8959 Part V is a
+// *reconciliation* section; the AMT owed flows to Schedule 2 line 11,
+// not to Form 1040 payment lines. This node intentionally emits NO f1040
+// output; the withholding fields are informational for the MeF XML only.
 
-Deno.test("withholding_routes_to_f1040: medicare_withheld → f1040 line25c", () => {
+Deno.test("withholding_no_f1040_output: medicare_withheld alone → no f1040 output", () => {
+  // Only AMT owed (via schedule2) goes into the return — withholding inputs
+  // are informational and do not produce a separate f1040 deposit.
   const result = compute({
     filing_status: FilingStatus.Single,
     medicare_withheld: 2_900,
-  });
-  assertEquals(
-    fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
-    2_900,
-  );
-});
-
-Deno.test("withholding_zero_no_output: zero withholding → no f1040 output", () => {
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    medicare_wages: 150_000,
   });
   const out = findOutput(result, "f1040");
   assertEquals(out, undefined);
 });
 
-Deno.test("withholding_rrta_combined: medicare_withheld + rrta_medicare_withheld → combined f1040 output", () => {
+Deno.test("withholding_zero_no_output: only wages below threshold → no schedule2 or f1040 output", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    medicare_wages: 150_000, // below $200K threshold
+  });
+  const s2 = findOutput(result, "schedule2");
+  const f1 = findOutput(result, "f1040");
+  assertEquals(s2, undefined);
+  assertEquals(f1, undefined);
+});
+
+Deno.test("withholding_rrta_combined: medicare_withheld + rrta_medicare_withheld → no f1040 output (withholding is informational)", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     medicare_withheld: 1_000,
     rrta_medicare_withheld: 500,
   });
-  assertEquals(
-    fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
-    1_500,
-  );
+  const out = findOutput(result, "f1040");
+  assertEquals(out, undefined);
 });
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
@@ -246,7 +253,7 @@ Deno.test("smoke: no inputs → no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("smoke: all fields present → produces outputs", () => {
+Deno.test("smoke: all fields present → produces schedule2 output (AMT owed) but no f1040 output", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     medicare_wages: 300_000,
@@ -257,9 +264,9 @@ Deno.test("smoke: all fields present → produces outputs", () => {
     medicare_withheld: 4_000,
     rrta_medicare_withheld: 200,
   });
-  // Should have schedule2 and f1040 outputs
+  // AMT owed → schedule2 only; withholding fields are informational, no f1040 deposit
   const s2 = findOutput(result, "schedule2");
   const f = findOutput(result, "f1040");
   assertEquals(s2 !== undefined, true);
-  assertEquals(f !== undefined, true);
+  assertEquals(f, undefined);
 });

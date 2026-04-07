@@ -17,51 +17,38 @@ export interface Fields {
 type Input = Partial<Fields> & Record<string, unknown>;
 
 // Tag names verified against IRS6251.xsd (2025v3.0).
-// - regular_tax_income → AlternativeMinTaxableIncomeAmt (the AMTI line)
-// - regular_tax → AdjustedRegularTaxAmt (regular tax after certain credits)
-// - iso_adjustment → IncentiveStockOptionsAmt (line 2b preference)
-// - depreciation_adjustment → DepreciationAmt (line 2l preference)
-// - nol_adjustment → AltTaxNetOperatingLossDedAmt (line 2f preference)
-// - private_activity_bond_interest → ExemptPrivateActivityBondsAmt (line 2g preference)
-// - other_adjustments → RelatedAdjustmentAmt (catch-all adjustment)
-// - amtftc → AMTForeignTaxCreditAmt (line 32, already correct)
+// Element order matches the XSD sequence (required for validation).
+// - regular_tax_income → AGIOrAGILessDeductionAmt  (line 1)
+// - line2a_taxes_paid  → ScheduleATaxesAmt          (line 2a)
+// - nol_adjustment     → AltTaxNetOperatingLossDedAmt (line 2f)
+// - private_activity_bond_interest → ExemptPrivateActivityBondsAmt (line 2g)
+// - qsbs_adjustment    → Section1202ExclusionAmt    (line 2h)
+// - iso_adjustment     → IncentiveStockOptionsAmt   (line 2i)
+// - depreciation_adjustment → DepreciationAmt       (line 2l)
+// - other_adjustments  → RelatedAdjustmentAmt       (line 3)
+// - amtftc             → AMTForeignTaxCreditAmt     (line 8)
+// - regular_tax        → AdjustedRegularTaxAmt      (line 10)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["iso_adjustment", "IncentiveStockOptionsAmt"],
-  ["depreciation_adjustment", "DepreciationAmt"],
+  ["regular_tax_income", "AGIOrAGILessDeductionAmt"],
+  ["line2a_taxes_paid", "ScheduleATaxesAmt"],
   ["nol_adjustment", "AltTaxNetOperatingLossDedAmt"],
   ["private_activity_bond_interest", "ExemptPrivateActivityBondsAmt"],
+  ["qsbs_adjustment", "Section1202ExclusionAmt"],
+  ["iso_adjustment", "IncentiveStockOptionsAmt"],
+  ["depreciation_adjustment", "DepreciationAmt"],
   ["other_adjustments", "RelatedAdjustmentAmt"],
-  ["regular_tax_income", "AlternativeMinTaxableIncomeAmt"],
-  ["regular_tax", "AdjustedRegularTaxAmt"],
   ["amtftc", "AMTForeignTaxCreditAmt"],
+  ["regular_tax", "AdjustedRegularTaxAmt"],
 ];
 
-// Only emit IRS6251 when there are actual preference items or adjustments.
-// regular_tax_income and regular_tax are always written by upstream nodes for
-// computation purposes, so the presence of adjustment items is the signal that
-// this form is truly applicable to the return.
-function hasAdjustmentOrPreference(fields: Input): boolean {
-  const adjustmentKeys: Array<keyof Fields> = [
-    "iso_adjustment",
-    "depreciation_adjustment",
-    "nol_adjustment",
-    "private_activity_bond_interest",
-    "qsbs_adjustment",
-    "other_adjustments",
-    "amtftc",
-  ];
-  return adjustmentKeys.some((k) => typeof fields[k] === "number" && (fields[k] as number) !== 0);
-}
-
 function buildIRS6251(fields: Input): string {
-  // Only emit when this form is meaningful (non-zero preferences/adjustments).
-  // Prevents emitting invalid XML for returns where AMT has 0 impact.
-  if (!hasAdjustmentOrPreference(fields)) return "";
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";
     return element(tag, value);
   });
+  const hasChildren = children.some((c) => c !== "");
+  if (!hasChildren) return "";
   return elements("IRS6251", children);
 }
 

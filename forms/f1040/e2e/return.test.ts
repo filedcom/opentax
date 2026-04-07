@@ -228,12 +228,12 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
   );
 
   // ── Income tax calculation node inputs ────────────────────────────────────
-  // Taxable income = 74,348.18 − 15,000 = 59,348.18
+  // Taxable income = 74,348.18 − 15,000 (std ded) − 11,869.64 (QBI deduction) = 47,478.54
   const itcPending = result.pending["income_tax_calculation"] ?? {};
   assertEquals(
     Math.round((itcPending["taxable_income"] as number) * 100) / 100,
-    59_348.18,
-    "income_tax_calculation should receive taxable_income ≈ $59,348.18",
+    47_478.54,
+    "income_tax_calculation should receive taxable_income ≈ $47,478.54",
   );
 
   // ── F1040 final scalar summary ─────────────────────────────────────────────

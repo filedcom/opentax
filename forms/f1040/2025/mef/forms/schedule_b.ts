@@ -9,6 +9,11 @@ export interface Fields {
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
+// Tag names verified against IRS1040ScheduleB.xsd (2025v3.0).
+// Element order matches the XSD sequence (required for validation).
+// - taxable_interest_net → TaxableInterestSubtotalAmt (line 2)
+// - ee_bond_exclusion    → ExcludableSavingsBondIntAmt (line 3, note: "Excludable" not "Excludible")
+// - ordinaryDividends    → TotalOrdinaryDividendsAmt  (line 6)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["taxable_interest_net", "TaxableInterestSubtotalAmt"],
   ["ee_bond_exclusion", "ExcludableSavingsBondIntAmt"],

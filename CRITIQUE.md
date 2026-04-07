@@ -2,7 +2,92 @@
 
 > Generated: 2026-04-01 | Assessor: Claude (automated deep code review)
 > Codebase: @filed/tax-engine v0.0.1 | Runtime: Deno + TypeScript | Tax Year: 2025
-> Last updated: 2026-04-05 (second full-pass audit)
+> Last updated: 2026-04-07 (third full-pass audit)
+
+---
+
+## Third Full-Pass Audit (2026-04-07)
+
+A third automated deep-review pass was conducted on 2026-04-07. Includes live test run results and
+updated scorecard. New findings take precedence over prior audit sections where they conflict.
+
+### Critical: 122 Test Failures (Suite Is Not Clean)
+
+The full test suite (`deno task test`) currently has **122 failing tests** across 18 files. This is
+a regression from the "56,396 tests, 100% passing" state reported in the 2026-04-05 audit. The 51
+benchmark cases still pass because they use a $5 tolerance on only 3 output lines — they do not
+catch the node-level calculation bugs below.
+
+**Failing files and nature of failure:**
+
+| File | Nature |
+|---|---|
+| `nodes/inputs/f8812/index.test.ts` | CTC test asserts `$2,200/child` for TY2025; code likely has `$2,000` |
+| `nodes/intermediate/worksheets/standard_deduction/index.test.ts` | MFJ 4-factor add-on test expects `$35,400`; wrong add-on constant |
+| `nodes/inputs/ssa1099/index.test.ts` | 7+ SSA-1099 routing failures |
+| `nodes/inputs/f1099nec/index.test.ts` | `$600` payer threshold and routing |
+| `nodes/inputs/f1099div/index.test.ts` | Dividend routing |
+| `nodes/intermediate/forms/form8959/index.test.ts` | Additional Medicare Tax node |
+| `nodes/intermediate/worksheets/income_tax_calculation/index.test.ts` | Phase-out threshold tests |
+| `nodes/intermediate/aggregation/agi_aggregator/index.test.ts` | AGI aggregation |
+| `nodes/inputs/general/index.test.ts` | General node |
+| `nodes/intermediate/forms/form8995/index.test.ts` | QBI deduction |
+| `forms/f1040/2025/mef/forms/f6251.test.ts` | XML tag name mismatches (`RegularTaxIncomeAmt` expected, `AlternativeMinTaxableIncomeAmt` emitted) |
+| `forms/f1040/2025/mef/forms/f8959.test.ts` | Additional Medicare Tax MeF builder |
+| `forms/f1040/2025/mef/forms/schedule_b.test.ts` | Schedule B MeF builder |
+| `forms/f1040/2025/mef/builder.test.ts` | Root builder assembly (29-form presence check) |
+| `forms/f1040/2025/mef/xsd-validation.test.ts` | XSD validation against IRS XSD |
+| `forms/f1040/e2e/scenarios.test.ts` | E2E scenario failures |
+| `forms/f1040/e2e/return.test.ts` | Integration test failures |
+| `forms/f1040/e2e/xsd_validation.test.ts` | XSD e2e failures |
+
+**These failures affect real tax calculations** — CTC amounts, standard deduction add-ons, SSA
+routing, and Additional Medicare Tax are core 1040 lines, not edge cases.
+
+### Updated Scorecard (2026-04-07)
+
+| Dimension | Score | Change | Notes |
+|---|---|---|---|
+| Architecture | 9/10 | — | No change |
+| Calculation accuracy | **5/10** | ↓ from 7 | 122 failing tests; CTC, std deduction, SSA, AMT bugs |
+| Form coverage (federal) | 6/10 | — | No change |
+| MeF XML compliance | 3/10 | — | No change |
+| Validation rules | 5/10 | — | 681 `alwaysPass` stubs confirmed |
+| Test quality | **4/10** | ↓ from 6 | Failing tests; no rejection e2e; no QDCGT e2e |
+| Security | 2/10 | — | No change |
+| API / product layer | 2/10 | — | No change |
+| **Production readiness** | **2/10** | ↓ from 3 | Suite not clean |
+
+### New Findings (2026-04-07)
+
+- **`returnVersion="2025v3.0"` is hardcoded in `builder.ts`** and locked in `builder.test.ts`.
+  README references `2025v5.2`. Neither value has been cross-checked against the IRS Publication
+  4164 schema index. Wrong version = immediate IRS reject.
+
+- **`alwaysPass` stub count is 681** (down from 753 reported in Apr-05 audit — Phase 17 work
+  reduced this). Still 39% of all rules are stubs.
+
+- **MeF XML tag name mismatches in `f6251.ts`**: Tests expect `<RegularTaxIncomeAmt>` and
+  `<RegularTaxAmt>` but the implementation maps `regular_tax_income` to
+  `AlternativeMinTaxableIncomeAmt`. Either the tests or the implementation is wrong; both cannot
+  be correct. This is an unfixed bug in the AMT XML builder.
+
+- **No REST API or SDK**: Still CLI-only. An AI agent calling this engine must shell out to the
+  CLI, parse stdout JSON, and manage filesystem state. There is no `TaxEngine` class, no OpenAPI
+  spec, no programmatic SDK.
+
+### What Has Not Changed Since 2026-04-05
+
+- No state return infrastructure.
+- No MeF transmission layer (SOAP, ZIP package, clearinghouse API).
+- No acknowledgement processing (A-file / R-file / P-file).
+- No Form 8879 e-signature workflow.
+- No Form 1040-X (amendment) implementation.
+- 0/35 IRS ATS scenarios implemented.
+- Plaintext PII storage with no encryption at rest.
+- No audit log.
+- No PDF output.
+- `returns/` not in `.gitignore`.
 
 ---
 

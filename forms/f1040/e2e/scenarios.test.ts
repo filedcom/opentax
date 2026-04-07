@@ -298,12 +298,15 @@ Deno.test("Scenario 6: HOH, W-2 $52K — refund $1,000", () => {
 // SE tax: $11,303.64  |  SE deduction: $5,651.82
 //
 // AGI: $80,000 − $5,651.82 = $74,348.18
-// Std ded: $15,000  |  Taxable: $59,348.18
-// Income tax: $5,578.50 + ($59,348.18 − $48,475) × 0.22 = $7,970.5996
-// Total tax (income + SE): $7,970.5996 + $11,303.64 = $19,274.2396
-// Amount owed: $19,274.2396
+// Std ded: $15,000  |  Pre-QBI taxable: $59,348.18
+// QBI deduction: 20% × $59,348.18 = $11,869.636 (Form 8995)
+// Taxable income: $59,348.18 − $11,869.636 = $47,478.544
+// Income tax (12% bracket, single):
+//   $1,192.50 + ($47,478.544 − $11,925) × 0.12 = $1,192.50 + $4,266.425 = $5,458.925
+// Total tax (income + SE): $5,458.925 + $11,303.64 = $16,762.565
+// Amount owed: $16,762.57
 
-Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$19,274", () => {
+Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,763", () => {
   const result = runReturn({
     general: singleGeneral(),
     schedule_c: [
@@ -329,17 +332,17 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$19,274",
     "AGI = $80K − $5,651.82 SE deduction",
   );
 
-  // Income tax calculation receives correct taxable income
+  // Income tax calculation receives correct taxable income (after QBI deduction)
   assertEquals(
-    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 59_348.18,
-    "taxable income = AGI − $15K std ded",
+    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 47_478.54,
+    "taxable income = AGI − $15K std ded − QBI deduction",
   );
 
   // F1040 scalar summary (total tax = income tax + SE tax via schedule 2)
   const f = result.pending["f1040"] ?? {};
-  assertEquals(r2(f["line24_total_tax"] as number), 19_274.24, "total tax");
+  assertEquals(r2(f["line24_total_tax"] as number), 16_762.57, "total tax");
   assertEquals(f["line33_total_payments"], 0, "no payments");
-  assertEquals(r2(f["line37_amount_owed"] as number), 19_274.24, "amount owed");
+  assertEquals(r2(f["line37_amount_owed"] as number), 16_762.57, "amount owed");
   assertEquals(f["line35a_refund"], undefined, "no refund");
 });
 
@@ -520,7 +523,7 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $7,194", () 
   assertEquals(f["line35a_refund"], undefined, "no refund when AMT fires");
 });
 
-// ── Scenario 13: HOH, EITC with 2 qualifying children ───────────────────────
+// ── Scenario 13: HOH, EITC + CTC with 2 qualifying children ────────────────
 //
 // HOH filer, W-2 earned income $32,000, 2 qualifying children (ages 8 and 10)
 // Withheld: $3,500
@@ -528,19 +531,27 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $7,194", () 
 // EITC (2 children, single/HOH phaseout):
 //   Max credit (2 children) = $7,152  (Rev Proc 2024-40)
 //   Phase-in ends at $17,880 → credit already at max (earned income $32K > $17,880)
-//   Phaseout start (single/HOH, 2 children) = $21,560
-//   Reduction = 0.2106 × ($32,000 − $21,560) = 0.2106 × $10,440 = $2,198.664
-//   EITC = max(0, $7,152 − $2,198.664) = $4,953.336 → rounded = $4,953
-//   Income limit (single, 2 children) = $55,768; $32,000 < $55,768 → eligible
+//   Phaseout start (single/HOH, 2 children) = $23,511  (Rev Proc 2024-40, §3.11)
+//   Reduction = 0.2106 × ($32,000 − $23,511) = 0.2106 × $8,489 = $1,787.58
+//   EITC = max(0, $7,152 − $1,787.58) = $5,364.42 → rounded = $5,364
 //
 // Regular tax:
 //   AGI: $32,000  |  Std ded (HOH): $22,500  |  Taxable: $9,500
 //   Tax (10% bracket, HOH): $9,500 × 0.10 = $950
 //
-// f1040 total payments = $3,500 (withheld) + $4,953 (EITC) = $8,453
-// Refund = $8,453 − $950 = $7,503
+// CTC (Form 8812, OBBBA TY2025):
+//   2 qualifying children × $2,200 = $4,400 tentative CTC
+//   Phase-out threshold (HOH) = $200,000; $32,000 << threshold → no reduction
+//   Nonrefundable CTC = min($4,400, $950 income_tax) = $950 → tax reduced to $0
+//   Unused CTC for ACTC = $4,400 − $950 = $3,450
+//   ACTC cap = 2 × $1,700 = $3,400; earned income: ($32,000 − $2,500) × 15% = $4,425
+//   ACTC = min($3,450, $3,400, $4,425) = $3,400
+//
+// f1040 total payments = $3,500 (withheld) + $5,364 (EITC) + $3,400 (ACTC) = $12,264
+// Total tax = $0 (income tax $950 − CTC $950)
+// Refund = $12,264 − $0 = $12,264
 
-Deno.test("Scenario 13: HOH, EITC 2 qualifying children $32K — refund $7,503", () => {
+Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $12,264", () => {
   const result = runReturn({
     general: {
       ...hohGeneral(),
@@ -566,7 +577,7 @@ Deno.test("Scenario 13: HOH, EITC 2 qualifying children $32K — refund $7,503",
     w2: [w2Item(32_000, 3_500)],
   });
 
-  // EITC should be $4,953
+  // EITC should be $5,364
   assertEquals(
     result.pending["eitc"]?.["qualifying_children"], 2,
     "eitc sees 2 qualifying children",
@@ -574,10 +585,10 @@ Deno.test("Scenario 13: HOH, EITC 2 qualifying children $32K — refund $7,503",
 
   const f = result.pending["f1040"] ?? {};
 
-  // Tax and refund
-  assertEquals(f["line24_total_tax"], 950, "regular tax = $950");
-  assertEquals(f["line33_total_payments"], 8_453, "total payments = withheld + EITC");
-  assertEquals(f["line35a_refund"], 7_503, "refund = $7,503");
+  // CTC zeroes out tax; ACTC $3,400 flows as refundable credit
+  assertEquals(f["line24_total_tax"], 0, "total tax = $0 after CTC");
+  assertEquals(f["line33_total_payments"], 12_264, "total payments = withheld + EITC + ACTC");
+  assertEquals(f["line35a_refund"], 12_264, "refund = $12,264");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
 });
 

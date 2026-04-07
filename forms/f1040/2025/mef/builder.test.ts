@@ -63,20 +63,20 @@ Deno.test("ReturnHeader present", () => {
 
 Deno.test("ReturnType is 1040", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, "<ReturnType>1040</ReturnType>");
+  assertStringIncludes(xml, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
 Deno.test("TaxPeriodBeginDate is 2025-01-01", () => {
   const xml = buildMefXml({});
   assertStringIncludes(
     xml,
-    "<TaxPeriodBeginDate>2025-01-01</TaxPeriodBeginDate>",
+    "<TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt>",
   );
 });
 
 Deno.test("TaxPeriodEndDate is 2025-12-31", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, "<TaxPeriodEndDate>2025-12-31</TaxPeriodEndDate>");
+  assertStringIncludes(xml, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
 // ─── 3. ReturnData always present ─────────────────────────────────────────────
@@ -481,10 +481,9 @@ Deno.test("IRS8949 absent when form8949 missing from pending", () => {
   assertNotIncludes(xml, "<IRS8949>");
 });
 
-Deno.test("IRS8959 absent even when form8959 has data", () => {
-  // form8959 builder returns "" — nested AdditionalTaxGrp structure not yet implemented
+Deno.test("IRS8959 present when form8959 has data", () => {
   const xml = buildMefXml({ form8959: { medicare_wages: 250000 } });
-  assertNotIncludes(xml, "IRS8959");
+  assertStringIncludes(xml, "<IRS8959 ");
 });
 
 Deno.test("IRS8959 absent when form8959 missing from pending", () => {
@@ -504,9 +503,7 @@ Deno.test("IRS8960 absent when form8960 missing from pending", () => {
 
 // ─── 22. documentCnt with all 10 forms ───────────────────────────────────────
 
-Deno.test("documentCnt=9 when all 10 forms have data", () => {
-  // form8959 builder returns "" (requires nested XSD structure not yet implemented)
-  // so only 9 of the 10 forms actually emit XML
+Deno.test("documentCnt=10 when all 10 forms have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
@@ -528,11 +525,10 @@ Deno.test("documentCnt=9 when all 10 forms have data", () => {
     form8959: { medicare_wages: 250000 },
     form8960: { line1_taxable_interest: 1200 },
   });
-  assertStringIncludes(xml, 'documentCnt="9"');
+  assertStringIncludes(xml, 'documentCnt="10"');
 });
 
-Deno.test("all 10 forms populated: XML contains 9 emitting document tags", () => {
-  // form8959 returns "" (requires nested AdditionalTaxGrp XSD structure, not yet implemented)
+Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
@@ -562,7 +558,7 @@ Deno.test("all 10 forms populated: XML contains 9 emitting document tags", () =>
   assertStringIncludes(xml, "IRS8889");
   assertStringIncludes(xml, "IRS2441");
   assertStringIncludes(xml, "IRS8949");
-  assertNotIncludes(xml, "IRS8959"); // form8959 returns "" — nested XSD structure not yet implemented
+  assertStringIncludes(xml, "IRS8959");
   assertStringIncludes(xml, "IRS8960");
 });
 
@@ -609,13 +605,10 @@ Deno.test("form2441 DependentCareBenefitsAmt value appears in assembled output",
   );
 });
 
-Deno.test("form8959 does not emit XML (nested AdditionalTaxGrp structure not yet implemented)", () => {
-  // IRS8959.xsd requires AdditionalTaxGrp > AdditionalMedicareTaxGrp nesting.
-  // The flat FIELD_MAP fields cannot be emitted at the root level.
-  // form8959 builder intentionally returns "" until nested builder is implemented.
+Deno.test("form8959 emits XML with TotalW2MedicareWagesAndTipsAmt", () => {
   const xml = buildMefXml({ form8959: { medicare_wages: 250000 } });
-  assertNotIncludes(xml, "IRS8959");
-  assertNotIncludes(xml, "TotalW2MedicareWagesAndTipsAmt");
+  assertStringIncludes(xml, "<IRS8959 ");
+  assertStringIncludes(xml, "TotalW2MedicareWagesAndTipsAmt");
 });
 
 Deno.test("form8960 TaxableInterestAmt value appears in assembled output", () => {
@@ -747,7 +740,7 @@ Deno.test("IRS8995 absent when form8995 missing from pending", () => {
 
 Deno.test("IRS4562 present when form4562 has data", () => {
   const xml = buildMefXml({ form4562: { section_179_deduction: 10000 } });
-  assertStringIncludes(xml, "<IRS4562>");
+  assertStringIncludes(xml, "<IRS4562 ");
 });
 
 Deno.test("IRS4562 absent when form4562 missing from pending", () => {
@@ -757,7 +750,7 @@ Deno.test("IRS4562 absent when form4562 missing from pending", () => {
 
 Deno.test("IRS8995A present when form8995a has data", () => {
   const xml = buildMefXml({ form8995a: { qbi: 75000 } });
-  assertStringIncludes(xml, "<IRS8995A>");
+  assertStringIncludes(xml, "<IRS8995A ");
 });
 
 Deno.test("IRS8995A absent when form8995a missing from pending", () => {
@@ -787,7 +780,7 @@ Deno.test("IRS5329 absent when form5329 missing from pending", () => {
 
 Deno.test("IRS8853 present when form8853 has data", () => {
   const xml = buildMefXml({ form8853: { employer_archer_msa: 3650 } });
-  assertStringIncludes(xml, "<IRS8853>");
+  assertStringIncludes(xml, "<IRS8853 ");
 });
 
 Deno.test("IRS8853 absent when form8853 missing from pending", () => {
@@ -797,7 +790,7 @@ Deno.test("IRS8853 absent when form8853 missing from pending", () => {
 
 Deno.test("IRS8829 present when form_8829 has data", () => {
   const xml = buildMefXml({ form_8829: { mortgage_interest: 12000 } });
-  assertStringIncludes(xml, "<IRS8829>");
+  assertStringIncludes(xml, "<IRS8829 ");
 });
 
 Deno.test("IRS8829 absent when form_8829 missing from pending", () => {
@@ -807,7 +800,7 @@ Deno.test("IRS8829 absent when form_8829 missing from pending", () => {
 
 Deno.test("IRS8839 present when form8839 has data", () => {
   const xml = buildMefXml({ form8839: { adoption_benefits: 14890 } });
-  assertStringIncludes(xml, "<IRS8839>");
+  assertStringIncludes(xml, "<IRS8839 ");
 });
 
 Deno.test("IRS8839 absent when form8839 missing from pending", () => {
@@ -817,9 +810,7 @@ Deno.test("IRS8839 absent when form8839 missing from pending", () => {
 
 // ─── 25. Full 29-form smoke test ──────────────────────────────────────────────
 
-Deno.test("documentCnt=27 when all 29 forms have data", () => {
-  // form8959 returns "" (nested XSD structure not yet implemented)
-  // form6251 returns "" when only regular_tax_income set (requires adjustment/preference fields)
+Deno.test("documentCnt=29 when all 29 forms have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
@@ -860,7 +851,7 @@ Deno.test("documentCnt=27 when all 29 forms have data", () => {
     form_8829: { mortgage_interest: 12000 },
     form8839: { adoption_benefits: 14890 },
   });
-  assertStringIncludes(xml, 'documentCnt="27"');
+  assertStringIncludes(xml, 'documentCnt="29"');
 });
 
 Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
@@ -912,7 +903,7 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
   assertStringIncludes(xml, "<IRS8889 ");
   assertStringIncludes(xml, "<IRS2441 ");
   assertStringIncludes(xml, "<IRS8949 ");
-  assertStringIncludes(xml, "<IRS8959>");
+  assertStringIncludes(xml, "<IRS8959 ");
   assertStringIncludes(xml, "<IRS8960 ");
   assertStringIncludes(xml, "<IRS4137 ");
   assertStringIncludes(xml, "<IRS8919 ");
@@ -926,13 +917,13 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
   assertStringIncludes(xml, "<IRS4797 ");
   assertStringIncludes(xml, "<IRS8880 ");
   assertStringIncludes(xml, "<IRS8995 ");
-  assertStringIncludes(xml, "<IRS4562>");
-  assertStringIncludes(xml, "<IRS8995A>");
+  assertStringIncludes(xml, "<IRS4562 ");
+  assertStringIncludes(xml, "<IRS8995A ");
   assertStringIncludes(xml, "<IRS6251 ");
   assertStringIncludes(xml, "<IRS5329 ");
-  assertStringIncludes(xml, "<IRS8853>");
-  assertStringIncludes(xml, "<IRS8829>");
-  assertStringIncludes(xml, "<IRS8839>");
+  assertStringIncludes(xml, "<IRS8853 ");
+  assertStringIncludes(xml, "<IRS8829 ");
+  assertStringIncludes(xml, "<IRS8839 ");
 });
 
 Deno.test("empty MefFormsPending: IRS1040 still emits, no other form tags present", () => {

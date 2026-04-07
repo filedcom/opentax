@@ -260,8 +260,8 @@ Deno.test("routing: w2_wages and unadjusted_basis accepted but not routed separa
   });
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line13_qbi_deduction, 2000);
-  // No separate output for w2_wages or unadjusted_basis
-  assertEquals(result.outputs.length, 1);
+  // No separate output for w2_wages or unadjusted_basis (f1040 + standard_deduction)
+  assertEquals(result.outputs.length, 2);
 });
 
 // ── Edge cases ────────────────────────────────────────────────────────────────
@@ -337,5 +337,5 @@ Deno.test("smoke: full scenario — Schedule C + Schedule E + REIT dividends + c
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line13_qbi_deduction, 10600);
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2); // f1040 + standard_deduction
 });

@@ -284,10 +284,10 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8995, { agi }),
     ];
 
-    // Pass SSA gross and taxable amounts to f1040 for display
-    if (ssaGross > 0) {
+    // Pass SSA taxable amount to f1040 for line 6b.
+    // line6a_ss_gross is routed directly by ssa1099 node to avoid double-counting.
+    if (ssaGross > 0 && ssaTaxable > 0) {
       outputs.push(this.outputNodes.output(f1040, {
-        line6a_ss_gross: ssaGross,
         line6b_ss_taxable: ssaTaxable,
       }));
     }

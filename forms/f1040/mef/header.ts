@@ -152,6 +152,11 @@ function buildAddress(addr: FilerAddress): string {
 // ─── Sub-block builders ───────────────────────────────────────────────────────
 
 function buildFilerBlock(filer: FilerIdentity): string {
+  // XSD-required sequence (ReturnHeader1040x.xsd Filer element):
+  //   PrimarySSN → [SpouseSSN] → NameLine1Txt → [InCareOfNm] →
+  //   PrimaryNameControlTxt → [SpouseNameControlTxt] →
+  //   (USAddress | ForeignAddress) → [(PhoneNum | ForeignPhoneNum)]
+  // FilingStatusCd and EmailAddressTxt are NOT part of the Filer block in the header.
   const children = [
     element("PrimarySSN", filer.primarySSN),
     element("SpouseSSN", filer.spouse?.ssn),
@@ -160,8 +165,6 @@ function buildFilerBlock(filer: FilerIdentity): string {
     element("SpouseNameControlTxt", filer.spouse?.nameControl),
     buildAddress(filer.address),
     element("PhoneNum", filer.phone),
-    element("EmailAddressTxt", filer.email),
-    element("FilingStatusCd", String(filer.filingStatus)),
   ];
   return elements("Filer", children);
 }
@@ -258,15 +261,15 @@ export function buildReturnHeader(
   const originatorType = filer?.originator?.originatorType ?? "ERO";
 
   // XSD-required sequence (ReturnHeader1040x.xsd):
-  //   ReturnTs → TaxYr → TaxPeriodBeginDate → TaxPeriodEndDate →
+  //   ReturnTs → TaxYr → TaxPeriodBeginDt → TaxPeriodEndDt →
   //   SoftwareId → [SoftwareVersionNum] → OriginatorGrp →
   //   PINTypeCd → JuratDisclosureCd → ReturnType → Filer →
   //   [PaidPreparerInformationGrp] → [OnlineFilerInformation]
   const headerChildren = [
     element("ReturnTs", ts),
     element("TaxYr", String(year)),
-    element("TaxPeriodBeginDate", `${year}-01-01`),
-    element("TaxPeriodEndDate", `${year}-12-31`),
+    element("TaxPeriodBeginDt", `${year}-01-01`),
+    element("TaxPeriodEndDt", `${year}-12-31`),
     element("SoftwareId", softwareId),
     element("SoftwareVersionNum", softwareVersionNum),
     elements("OriginatorGrp", [
@@ -281,7 +284,7 @@ export function buildReturnHeader(
     ]),
     element("PINTypeCd", "Self-Select On-Line"),
     element("JuratDisclosureCd", "Online Self Select PIN"),
-    element("ReturnType", returnType),
+    element("ReturnTypeCd", returnType),
   ];
 
   if (filer !== undefined) {
@@ -312,5 +315,7 @@ export function buildReturnHeader(
   }
 
   const inner = headerChildren.filter((s) => s !== "").join("");
-  return `<ReturnHeader>${inner}</ReturnHeader>`;
+  // binaryAttachmentCnt is a required attribute per ReturnHeader1040x.xsd §990.
+  // Value is 0 for returns with no binary attachments.
+  return `<ReturnHeader binaryAttachmentCnt="0">${inner}</ReturnHeader>`;
 }

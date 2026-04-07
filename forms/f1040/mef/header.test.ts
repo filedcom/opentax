@@ -23,32 +23,32 @@ function sampleFiler(): FilerIdentity {
 
 Deno.test("always emits ReturnType 1040 with no filer", () => {
   const result = buildReturnHeader(undefined);
-  assertStringIncludes(result, "<ReturnType>1040</ReturnType>");
+  assertStringIncludes(result, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
 Deno.test("always emits TaxPeriodBeginDate with no filer", () => {
   const result = buildReturnHeader(undefined);
-  assertStringIncludes(result, "<TaxPeriodBeginDate>2025-01-01</TaxPeriodBeginDate>");
+  assertStringIncludes(result, "<TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt>");
 });
 
 Deno.test("always emits TaxPeriodEndDate with no filer", () => {
   const result = buildReturnHeader(undefined);
-  assertStringIncludes(result, "<TaxPeriodEndDate>2025-12-31</TaxPeriodEndDate>");
+  assertStringIncludes(result, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
 Deno.test("always emits ReturnType 1040 even when filer is provided", () => {
   const result = buildReturnHeader(sampleFiler());
-  assertStringIncludes(result, "<ReturnType>1040</ReturnType>");
+  assertStringIncludes(result, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
 Deno.test("always emits TaxPeriodBeginDate when filer is provided", () => {
   const result = buildReturnHeader(sampleFiler());
-  assertStringIncludes(result, "<TaxPeriodBeginDate>2025-01-01</TaxPeriodBeginDate>");
+  assertStringIncludes(result, "<TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt>");
 });
 
 Deno.test("always emits TaxPeriodEndDate when filer is provided", () => {
   const result = buildReturnHeader(sampleFiler());
-  assertStringIncludes(result, "<TaxPeriodEndDate>2025-12-31</TaxPeriodEndDate>");
+  assertStringIncludes(result, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
 Deno.test("return value is a string", () => {
@@ -156,37 +156,41 @@ Deno.test("filer ZIPCd is emitted for 9-digit zip with dash", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 6: Filer present — FilingStatusCd (all 5 values)
+// Section 6: Filer present — FilingStatusCd
 // ---------------------------------------------------------------------------
+// Per ReturnHeader1040x.xsd, FilingStatusCd is NOT part of the Filer block in
+// the header. It belongs in the return body (IRS1040.xsd). The header Filer
+// block contains: PrimarySSN, NameLine1Txt, PrimaryNameControlTxt, USAddress.
+// These tests verify FilingStatusCd is absent from the header output.
 
-Deno.test("FilingStatus.Single emits FilingStatusCd 1", () => {
+Deno.test("FilingStatus.Single: FilingStatusCd is NOT in the header (belongs in return body)", () => {
   const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.Single };
   const result = buildReturnHeader(filer);
-  assertStringIncludes(result, "<FilingStatusCd>1</FilingStatusCd>");
+  assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.MarriedFilingJointly emits FilingStatusCd 2", () => {
+Deno.test("FilingStatus.MarriedFilingJointly: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.MarriedFilingJointly };
   const result = buildReturnHeader(filer);
-  assertStringIncludes(result, "<FilingStatusCd>2</FilingStatusCd>");
+  assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.MarriedFilingSeparately emits FilingStatusCd 3", () => {
+Deno.test("FilingStatus.MarriedFilingSeparately: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.MarriedFilingSeparately };
   const result = buildReturnHeader(filer);
-  assertStringIncludes(result, "<FilingStatusCd>3</FilingStatusCd>");
+  assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.HeadOfHousehold emits FilingStatusCd 4", () => {
+Deno.test("FilingStatus.HeadOfHousehold: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.HeadOfHousehold };
   const result = buildReturnHeader(filer);
-  assertStringIncludes(result, "<FilingStatusCd>4</FilingStatusCd>");
+  assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
-Deno.test("FilingStatus.QualifyingSurvivingSpouse emits FilingStatusCd 5", () => {
+Deno.test("FilingStatus.QualifyingSurvivingSpouse: FilingStatusCd is NOT in the header", () => {
   const filer: FilerIdentity = { ...sampleFiler(), filingStatus: FilingStatus.QualifyingSurvivingSpouse };
   const result = buildReturnHeader(filer);
-  assertStringIncludes(result, "<FilingStatusCd>5</FilingStatusCd>");
+  assertEquals(result.includes("<FilingStatusCd>"), false);
 });
 
 // ---------------------------------------------------------------------------
@@ -227,9 +231,10 @@ Deno.test("address line with less-than: raw unescaped tag is not present as text
 // Section 8: Output structure
 // ---------------------------------------------------------------------------
 
-Deno.test("output is wrapped in opening ReturnHeader element", () => {
+Deno.test("output is wrapped in opening ReturnHeader element with binaryAttachmentCnt attribute", () => {
+  // ReturnHeader1040x.xsd requires binaryAttachmentCnt attribute (value 0 for no binary attachments)
   const result = buildReturnHeader(undefined);
-  assertStringIncludes(result, "<ReturnHeader>");
+  assertStringIncludes(result, '<ReturnHeader binaryAttachmentCnt="0">');
 });
 
 Deno.test("output closes ReturnHeader element", () => {
@@ -247,8 +252,8 @@ Deno.test("filer Filer block is closed when filer provided", () => {
   assertStringIncludes(result, "</Filer>");
 });
 
-Deno.test("output with filer still wrapped in ReturnHeader", () => {
+Deno.test("output with filer still wrapped in ReturnHeader with binaryAttachmentCnt attribute", () => {
   const result = buildReturnHeader(sampleFiler());
-  assertStringIncludes(result, "<ReturnHeader>");
+  assertStringIncludes(result, '<ReturnHeader binaryAttachmentCnt="0">');
   assertStringIncludes(result, "</ReturnHeader>");
 });

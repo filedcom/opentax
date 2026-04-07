@@ -38,15 +38,7 @@ function necIncomeOutput(item: NECItem): NodeOutput[] {
     case "schedule_c":
       // Synthesize a minimal schedule_c item so the schedule_c node can compute SE tax
       // and QBI. Required header fields are defaulted for NEC-sourced entries.
-      return [output(schedule_c, {
-        schedule_cs: [{
-          line_a_principal_business: item.payer_name ?? "Self-employment income",
-          line_b_business_code: "999999",
-          line_f_accounting_method: "cash",
-          line_g_material_participation: true,
-          line_1_gross_receipts: box1,
-        }],
-      })];
+      return [output(schedule_c, { line1_gross_receipts: box1 })];
     case "schedule_f": return [output(schedule_f, { line8_other_income: box1 })];
     case "form_8919": return [output(form8919, { wages: box1 })];
     case "schedule_1_line_8z": return [output(schedule1, { line8z_other: box1 })];
