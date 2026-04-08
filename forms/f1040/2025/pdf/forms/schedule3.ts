@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule 3 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-pdf/f1040s3.pdf
@@ -18,23 +18,23 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 //     f2_01 = Line 10 amount paid with extension request
 //     f2_02 = Line 11 excess Social Security withheld
 
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
+const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: Nonrefundable Credits ────────────────────────────────────────────
-  ["line1_foreign_tax_credit",      "topmostSubform[0].Page1[0].f1_01[0]"],
-  ["line1_foreign_tax_1099",        "topmostSubform[0].Page1[0].f1_01[0]"],
-  ["line2_childcare_credit",        "topmostSubform[0].Page1[0].f1_02[0]"],
-  ["line3_education_credit",        "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["line4_retirement_savings_credit", "topmostSubform[0].Page1[0].f1_04[0]"],
-  ["line6b_child_tax_credit",       "topmostSubform[0].Page1[0].f1_06[0]"],
-  ["line6c_adoption_credit",        "topmostSubform[0].Page1[0].f1_07[0]"],
+  { kind: "text", domainKey: "line1_foreign_tax_credit", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
+  { kind: "text", domainKey: "line1_foreign_tax_1099", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
+  { kind: "text", domainKey: "line2_childcare_credit", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
+  { kind: "text", domainKey: "line3_education_credit", pdfField: "topmostSubform[0].Page1[0].f1_03[0]" },
+  { kind: "text", domainKey: "line4_retirement_savings_credit", pdfField: "topmostSubform[0].Page1[0].f1_04[0]" },
+  { kind: "text", domainKey: "line6b_child_tax_credit", pdfField: "topmostSubform[0].Page1[0].f1_06[0]" },
+  { kind: "text", domainKey: "line6c_adoption_credit", pdfField: "topmostSubform[0].Page1[0].f1_07[0]" },
 
   // ── Part II: Other Payments ──────────────────────────────────────────────────
-  ["line10_amount_paid_extension",  "topmostSubform[0].Page2[0].f2_01[0]"],
-  ["line11_excess_ss",              "topmostSubform[0].Page2[0].f2_02[0]"],
+  { kind: "text", domainKey: "line10_amount_paid_extension", pdfField: "topmostSubform[0].Page1[0].f1_05[0]" },
+  { kind: "text", domainKey: "line11_excess_ss", pdfField: "topmostSubform[0].Page1[0].f1_08[0]" },
 ];
 
 export const schedule3Pdf: PdfFormDescriptor = {
   pendingKey: "schedule3",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s3.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

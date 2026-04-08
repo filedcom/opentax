@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 8959 (2025) AcroForm field names.
 // Additional Medicare Tax.
@@ -14,18 +14,18 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // rrta_wages            → line 10 (RRTA compensation)
 // medicare_withheld     → line 19 (Additional Medicare Tax withheld from W-2)
 // rrta_medicare_withheld → line 20 (Additional Medicare Tax withheld from RRTA)
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["medicare_wages",         "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["unreported_tips",        "topmostSubform[0].Page1[0].f1_04[0]"],
-  ["wages_8919",             "topmostSubform[0].Page1[0].f1_05[0]"],
-  ["se_income",              "topmostSubform[0].Page1[0].f1_09[0]"],
-  ["rrta_wages",             "topmostSubform[0].Page1[0].f1_13[0]"],
-  ["medicare_withheld",      "topmostSubform[0].Page1[0].f1_22[0]"],
-  ["rrta_medicare_withheld", "topmostSubform[0].Page1[0].f1_23[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "medicare_wages", pdfField: "topmostSubform[0].Page1[0].f1_3[0]" },
+  { kind: "text", domainKey: "unreported_tips", pdfField: "topmostSubform[0].Page1[0].f1_4[0]" },
+  { kind: "text", domainKey: "wages_8919", pdfField: "topmostSubform[0].Page1[0].f1_5[0]" },
+  { kind: "text", domainKey: "se_income", pdfField: "topmostSubform[0].Page1[0].f1_9[0]" },
+  { kind: "text", domainKey: "rrta_wages", pdfField: "topmostSubform[0].Page1[0].f1_13[0]" },
+  { kind: "text", domainKey: "medicare_withheld", pdfField: "topmostSubform[0].Page1[0].f1_22[0]" },
+  { kind: "text", domainKey: "rrta_medicare_withheld", pdfField: "topmostSubform[0].Page1[0].f1_23[0]" },
 ];
 
 export const form8959Pdf: PdfFormDescriptor = {
   pendingKey: "form8959",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8959.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

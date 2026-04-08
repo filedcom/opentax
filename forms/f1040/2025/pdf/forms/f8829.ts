@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 8829 (2025) AcroForm field names.
 // Expenses for Business Use of Your Home.
@@ -19,23 +19,23 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // prior_year_operating_carryover  → line 43 (prior-year operating expense carryover)
 // home_fmv_or_basis               → line 36 (smaller of FMV or adjusted basis)
 // prior_year_depreciation_carryover → line 44 (prior-year depreciation carryover)
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["total_area",                       "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["business_area",                    "topmostSubform[0].Page1[0].f1_04[0]"],
-  ["gross_income_limit",               "topmostSubform[0].Page1[0].f1_10[0]"],
-  ["mortgage_interest",                "topmostSubform[0].Page1[0].f1_13[0]"],
-  ["insurance",                        "topmostSubform[0].Page1[0].f1_22[0]"],
-  ["rent",                             "topmostSubform[0].Page1[0].f1_23[0]"],
-  ["repairs_maintenance",              "topmostSubform[0].Page1[0].f1_24[0]"],
-  ["utilities",                        "topmostSubform[0].Page1[0].f1_25[0]"],
-  ["other_expenses",                   "topmostSubform[0].Page1[0].f1_26[0]"],
-  ["home_fmv_or_basis",                "topmostSubform[0].Page1[0].f1_39[0]"],
-  ["prior_year_operating_carryover",   "topmostSubform[0].Page1[0].f1_46[0]"],
-  ["prior_year_depreciation_carryover","topmostSubform[0].Page1[0].f1_47[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "total_area", pdfField: "topmostSubform[0].Page1[0].f1_03[0]" },
+  { kind: "text", domainKey: "business_area", pdfField: "topmostSubform[0].Page1[0].f1_04[0]" },
+  { kind: "text", domainKey: "gross_income_limit", pdfField: "topmostSubform[0].Page1[0].Line8_ReadOrder[0].f1_10[0]" },
+  { kind: "text", domainKey: "mortgage_interest", pdfField: "topmostSubform[0].Page1[0].Table_Lines9-12[0].Line10[0].f1_13[0]" },
+  { kind: "text", domainKey: "insurance", pdfField: "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line16[0].f1_22[0]" },
+  { kind: "text", domainKey: "rent", pdfField: "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line16[0].f1_23[0]" },
+  { kind: "text", domainKey: "repairs_maintenance", pdfField: "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line17[0].f1_24[0]" },
+  { kind: "text", domainKey: "utilities", pdfField: "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line17[0].f1_25[0]" },
+  { kind: "text", domainKey: "other_expenses", pdfField: "topmostSubform[0].Page1[0].Table_Lines16-23[0].Line18[0].f1_26[0]" },
+  { kind: "text", domainKey: "home_fmv_or_basis", pdfField: "topmostSubform[0].Page1[0].f1_39[0]" },
+  { kind: "text", domainKey: "prior_year_operating_carryover", pdfField: "topmostSubform[0].Page1[0].f1_46[0]" },
+  { kind: "text", domainKey: "prior_year_depreciation_carryover", pdfField: "topmostSubform[0].Page1[0].f1_47[0]" },
 ];
 
 export const form8829Pdf: PdfFormDescriptor = {
   pendingKey: "form_8829",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8829.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };
