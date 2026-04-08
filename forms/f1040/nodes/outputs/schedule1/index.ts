@@ -68,7 +68,7 @@ const inputSchema = z.object({
   // Line 17 — Self-employed health insurance deduction (Form 7206)
   line17_se_health_insurance: z.number().nonnegative().optional(),
   // Line 18 — Penalty on early withdrawal of savings
-  line18_early_withdrawal: z.number().optional(),
+  line18_early_withdrawal: z.number().nonnegative().optional(),
   // Line 19 — Student loan interest deduction
   line19_student_loan_interest: z.number().nonnegative().optional(),
   // Line 20 — IRA deduction (IRA Deduction Worksheet)
