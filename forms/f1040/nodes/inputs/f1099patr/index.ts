@@ -7,7 +7,6 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { form8995a } from "../../intermediate/forms/form8995a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-entry schema — one 1099-PATR from one cooperative
@@ -78,39 +77,6 @@ function schedule1Output(items: PATRItems): NodeOutput[] {
   return [output(schedule1, { line8z_other_income: total })];
 }
 
-// Business patronage dividends (trade_or_business === true) → Schedule 1 line 3 (Schedule C)
-// IRC §1385(a); Treas. Reg. §1.1385-1: amounts received in the course of a trade or
-// business are includible as business income, not other income.
-function businessIncomeOutput(items: PATRItems): NodeOutput[] {
-  const bizItems = items.filter((item) => item.trade_or_business === true);
-  const patronage = totalPatronageDividends(bizItems);
-  const nonpatronage = totalNonpatronage(bizItems);
-  const perUnit = totalPerUnitRetain(bizItems);
-  const redeemed = totalRedeemedNonqualified(bizItems);
-  const total = patronage + nonpatronage + perUnit + redeemed;
-  if (total === 0) return [];
-  return [output(schedule1, { line3_schedule_c: total })];
-}
-
-// Box 7 qualified payments → form8995a qbi
-// IRC §199A(b)(7): qualified payments made to a cooperative inform the patron's
-// §199A deduction computation. Forwarded as QBI to form8995a for deduction calculation.
-function box7QualifiedPaymentsOutput(items: PATRItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box7_qualified_payments ?? 0), 0);
-  if (total <= 0) return [];
-  return [output(form8995a, { qbi: total })];
-}
-
-// Box 9 §199A(g) cooperative deduction → form8995a qbi
-// IRC §199A(g): the cooperative computes a §199A(g) deduction and passes it through
-// to patrons as a reduction of their own §199A deduction. The patron reduces their
-// QBI by this amount — represented here as negative QBI flowing into form8995a.
-function box9Section199aDeductionOutput(items: PATRItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box9_section199a_deduction ?? 0), 0);
-  if (total <= 0) return [];
-  return [output(form8995a, { qbi: -total })];
-}
-
 function f1040Output(items: PATRItems): NodeOutput[] {
   const withheld = totalFederalWithheld(items);
   if (withheld === 0) return [];
@@ -120,7 +86,7 @@ function f1040Output(items: PATRItems): NodeOutput[] {
 class F1099PATRNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099patr";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, f1040, form8995a]);
+  readonly outputNodes = new OutputNodes([schedule1, f1040]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -128,9 +94,6 @@ class F1099PATRNode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(f1099patrs),
-      ...businessIncomeOutput(f1099patrs),
-      ...box7QualifiedPaymentsOutput(f1099patrs),
-      ...box9Section199aDeductionOutput(f1099patrs),
       ...f1040Output(f1099patrs),
     ];
 

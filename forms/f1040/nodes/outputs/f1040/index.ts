@@ -270,9 +270,10 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
 
-  // Emit pass-through lines that are inputs to subtotals but not yet in the result
-  if (computed_line20 > 0) result.line20_nonrefundable_credits = computed_line20;
-  if (computed_line23 > 0) result.line23_other_taxes = computed_line23;
+  // line20_nonrefundable_credits and line23_other_taxes are deposited into the
+  // f1040 pending dict by upstream nodes (schedule3, etc.) before this node runs.
+  // Re-emitting them here would cause the executor to merge-accumulate duplicates.
+  // They are used above for line21/line22/line24 computation — no re-emission needed.
   if (input.line26_estimated_tax !== undefined) result.line26_estimated_tax = input.line26_estimated_tax;
   if (input.line30_refundable_adoption !== undefined) result.line30_refundable_adoption = input.line30_refundable_adoption;
   if (input.line31_additional_payments !== undefined) result.line31_additional_payments = input.line31_additional_payments;

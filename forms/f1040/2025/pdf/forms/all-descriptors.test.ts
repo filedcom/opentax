@@ -108,7 +108,6 @@ for (const descriptor of ALL_PDF_FORMS) {
   Deno.test(
     {
       name: `${label}: all mapped pdfField names exist in real IRS PDF`,
-      ignore: true,
       sanitizeResources: false,
       sanitizeOps: false,
     },

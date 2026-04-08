@@ -167,12 +167,8 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     }
 
     const totalBox7 = div1099s.reduce((sum, item) => sum + (item.box7 ?? 0), 0);
-    // box2c (§1202 QSBS) is intentionally excluded: QSBS gains do not require
-    // Schedule D routing for the 28% rate or §1250 worksheets. Including box2c
-    // here would push the entire cap gain distribution through Schedule D with no
-    // §1202 exclusion treatment, producing incorrect tax rates for QSBS investors.
     const anySubAmounts = div1099s.some(
-      (item) => (item.box2b ?? 0) > 0 || (item.box2d ?? 0) > 0,
+      (item) => (item.box2b ?? 0) > 0 || (item.box2c ?? 0) > 0 || (item.box2d ?? 0) > 0,
     );
 
     const shouldRouteScheduleB = needsScheduleB(div1099s);

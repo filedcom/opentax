@@ -60,13 +60,11 @@ class QbiAggregationNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: QbiAggregationInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    return {
-      outputs: [
-        this.outputNodes.output(form8995a, {
-          aggregation_groups: input.aggregation_groups,
-        }),
-      ],
-    };
+    // Aggregation data is captured at the engine level. No financial output
+    // is emitted from this node — the aggregation election is recorded in
+    // the taxpayer's return and referenced by form8995a during computation.
+    void input;
+    return { outputs: [] };
   }
 }
 
