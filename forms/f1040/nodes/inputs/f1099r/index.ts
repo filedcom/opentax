@@ -311,10 +311,25 @@ function disabilityWagesItems(items: R1099Items): R1099Items {
   );
 }
 
+// Whether an item should be excluded from gross distribution lines (4a/5a).
+// Per IRS Form 1040 instructions, direct rollovers and recharacterizations
+// are not reported on lines 4a/5a — only the taxable portion (4b/5b) matters,
+// and for these codes that is always zero.
+function isExcludedFromGross(item: R1099Item): boolean {
+  if (item.exclude_4972 === true) return true;
+  if (item.exclude_8606_roth === true) return true;
+  if (ZERO_TAXABLE_CODES.has(item.box7_distribution_code)) return true;
+  if (item.rollover_code === "G" || item.rollover_code === "S") return true;
+  return false;
+}
+
 // Build f1040 output for IRA distributions
 function iraF1040Fields(items: R1099Items): Record<string, number> {
   const active = iraItems(activeItems(items));
-  const gross = active.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
+  // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
+  // are not reported on line 4a (gross). Only reportable distributions contribute to gross.
+  const reportableItems = active.filter((item) => !isExcludedFromGross(item));
+  const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
   const taxable = active.reduce((sum, item) => sum + effectiveTaxableAmount(item), 0);
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line4a_ira_gross = gross;
@@ -328,7 +343,10 @@ function pensionF1040Fields(items: R1099Items): Record<string, number> {
   // Exclude disability-as-wages items from pension lines (they go to line1a)
   const disWagesSet = new Set(disabilityWagesItems(activeItems(items)));
   const active = pensionItems(activeItems(items)).filter((item) => !disWagesSet.has(item));
-  const gross = active.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
+  // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
+  // are not reported on line 5a (gross). Only reportable distributions contribute to gross.
+  const reportableItems = active.filter((item) => !isExcludedFromGross(item));
+  const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
   const taxable = active.reduce((sum, item) => sum + effectiveTaxableAmount(item), 0);
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line5a_pension_gross = gross;

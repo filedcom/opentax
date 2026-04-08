@@ -198,10 +198,6 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     );
     if (totalTaxExempt > 0) f1040Fields.line2a_tax_exempt = totalTaxExempt;
     const totalBox2a = div1099s.reduce((sum, item) => sum + (item.box2a ?? 0), 0);
-    if (totalBox2a > 0 && !anySubAmounts) {
-      f1040Fields.line7a_cap_gain_distrib = totalBox2a;
-      outputs.push(this.outputNodes.output(agi_aggregator, { line7a_cap_gain_distrib: totalBox2a }));
-    }
     if (Object.keys(f1040Fields).length > 0) {
       outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
@@ -211,18 +207,15 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(income_tax_calculation, { qualified_dividends: totalQualDiv }));
     }
 
-    // Cap gain distributions (simplified path, no Schedule D) → income_tax_calculation
-    // as net_capital_gain so the QDCGT worksheet applies preferential rates (IRC §1(h)).
-    if (totalBox2a > 0 && !anySubAmounts) {
-      outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: totalBox2a }));
-    }
-
-    // Cap gain distribution → schedule_d when sub-amounts present
-    if (totalBox2a > 0 && anySubAmounts) {
+    // Cap gain distributions always route through Schedule D (IRC §1(h), Sch D line 13).
+    // Schedule D computes the combined net_capital_gain and emits it to income_tax_calculation.
+    // This prevents double-routing when f1099b transactions also produce net_capital_gain via
+    // schedule_d — both sources are consolidated in schedule_d before reaching income_tax_calculation.
+    if (totalBox2a > 0) {
       const totalBox2c = div1099s.reduce((sum, item) => sum + (item.box2c ?? 0), 0);
       outputs.push(this.outputNodes.output(schedule_d, {
           line13_cap_gain_distrib: totalBox2a,
-          box2c_qsbs: totalBox2c > 0 ? totalBox2c : undefined,
+          ...(totalBox2c > 0 ? { box2c_qsbs: totalBox2c } : {}),
         }));
     }
 

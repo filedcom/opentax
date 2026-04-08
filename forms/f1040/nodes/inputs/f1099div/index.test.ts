@@ -151,10 +151,10 @@ Deno.test("box1b = 0 produces no qualified dividend output", () => {
   assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, undefined);
 });
 
-Deno.test("box2a without sub-amounts routes to f1040 line7a (simplified path)", () => {
+Deno.test("box2a without sub-amounts routes to schedule_d line13 (always via Schedule D)", () => {
   const result = compute([minimalItem({ box1a: 1000, box2a: 1000 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, 1000);
-  assertEquals(findOutput(result, "schedule_d"), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 1000);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
 });
 
 Deno.test("box2a with sub-amounts routes to schedule_d line13 (standard path)", () => {
@@ -565,12 +565,12 @@ Deno.test("foreign tax holding period < 16 days — does not throw, box7 exclude
 // 10. Edge Cases
 // ---------------------------------------------------------------------------
 
-Deno.test("box2a with no sub-amounts: simplified path (f1040 line7a), no schedule_d", () => {
+Deno.test("box2a with no sub-amounts: always routes to schedule_d line13, not f1040 line7a", () => {
   const result = compute([
     minimalItem({ box1a: 1000, box2a: 1000, box2b: 0, box2c: 0, box2d: 0 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, 1000);
-  assertEquals(findOutput(result, "schedule_d"), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 1000);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
 });
 
 Deno.test("box2a with any sub-amount > 0: standard path (schedule_d), not simplified", () => {
@@ -579,9 +579,10 @@ Deno.test("box2a with any sub-amount > 0: standard path (schedule_d), not simpli
   assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
 });
 
-Deno.test("box1a = 0, box2a > 0: pure cap-gain fund is valid", () => {
+Deno.test("box1a = 0, box2a > 0: pure cap-gain fund routes to schedule_d line13", () => {
   const result = compute([minimalItem({ box1a: 0, box2a: 500 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, 500);
+  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 500);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
 });
 
 Deno.test("isNominee=true passes full box1a amount to schedule_b (subtraction happens in schedule_b node)", () => {

@@ -682,7 +682,7 @@ Deno.test("f1099r.compute: box9b_total_employee_contributions without simplified
 // 8. Edge cases
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099r.compute: code G direct rollover produces zero taxable on IRA line", () => {
+Deno.test("f1099r.compute: code G direct rollover produces zero taxable on IRA line and no gross", () => {
   const result = compute([minimalIraItem({
     box1_gross_distribution: 5000,
     box2a_taxable_amount: 5000,
@@ -690,7 +690,8 @@ Deno.test("f1099r.compute: code G direct rollover produces zero taxable on IRA l
     rollover_code: RolloverCode.G,
   })]);
   const input = f1040Input(result);
-  assertEquals(input.line4a_ira_gross, 5000);
+  // Code G (direct rollover) is not reported on line 4a per IRS Form 1040 instructions
+  assertEquals(input.line4a_ira_gross, undefined);
   assertEquals(input.line4b_ira_taxable, 0);
 });
 
