@@ -19,7 +19,8 @@ export const inputSchema = z.object({
   prior_basis: z.number().nonnegative().optional(),
 
   // Line 6: FMV of all traditional IRAs as of December 31, 2025
-  year_end_ira_value: z.number().nonnegative(),
+  // Optional when routed from ira_deduction_worksheet (no distributions this year).
+  year_end_ira_value: z.number().nonnegative().optional(),
 
   // Line 7: total traditional IRA distributions received this year
   // (excluding conversions and rollovers — routed from f1099r)
@@ -54,7 +55,7 @@ function totalBasis(input: Form8606Input): number {
 // = year_end_value + traditional_distributions + roth_conversion
 function basisRatioDenominator(input: Form8606Input): number {
   return (
-    input.year_end_ira_value +
+    (input.year_end_ira_value ?? 0) +
     (input.traditional_distributions ?? 0) +
     (input.roth_conversion ?? 0)
   );
