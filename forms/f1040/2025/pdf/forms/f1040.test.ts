@@ -1,5 +1,5 @@
 import { assertEquals, assertMatch } from "@std/assert";
-import { irs1040Pdf, PDF_FIELD_MAP } from "./f1040.ts";
+import { irs1040Pdf } from "./f1040.ts";
 
 // ---------------------------------------------------------------------------
 // Descriptor structure
@@ -17,29 +17,29 @@ Deno.test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
 });
 
 // ---------------------------------------------------------------------------
-// PDF_FIELD_MAP structure
+// fields array structure
 // ---------------------------------------------------------------------------
 
-Deno.test("PDF_FIELD_MAP: all entries are [string, string] tuples", () => {
-  for (const entry of PDF_FIELD_MAP) {
-    assertEquals(entry.length, 2);
-    assertEquals(typeof entry[0], "string");
-    assertEquals(typeof entry[1], "string");
+Deno.test("irs1040Pdf.fields: all entries have kind, domainKey, pdfField", () => {
+  for (const entry of irs1040Pdf.fields) {
+    assertEquals(typeof entry.kind, "string");
+    assertEquals(typeof entry.domainKey, "string");
+    assertEquals(typeof entry.pdfField, "string");
   }
 });
 
-Deno.test("PDF_FIELD_MAP: all PDF field names are fully qualified AcroForm paths", () => {
-  for (const [_domain, pdfField] of PDF_FIELD_MAP) {
+Deno.test("irs1040Pdf.fields: all PDF field names are fully qualified AcroForm paths", () => {
+  for (const entry of irs1040Pdf.fields) {
     assertMatch(
-      pdfField,
+      entry.pdfField,
       /^topmostSubform\[0\]\.(Page1|Page2)\[0\]\./,
-      `Expected fully qualified path, got: ${pdfField}`,
+      `Expected fully qualified path, got: ${entry.pdfField}`,
     );
   }
 });
 
-Deno.test("PDF_FIELD_MAP: contains expected income line fields", () => {
-  const domainKeys = new Set(PDF_FIELD_MAP.map(([k]) => k));
+Deno.test("irs1040Pdf.fields: contains expected income line fields", () => {
+  const domainKeys = new Set(irs1040Pdf.fields.map((e) => e.domainKey));
   const expected = [
     "line1a_wages",
     "line2b_taxable_interest",
@@ -54,8 +54,8 @@ Deno.test("PDF_FIELD_MAP: contains expected income line fields", () => {
   }
 });
 
-Deno.test("PDF_FIELD_MAP: contains expected payment fields", () => {
-  const domainKeys = new Set(PDF_FIELD_MAP.map(([k]) => k));
+Deno.test("irs1040Pdf.fields: contains expected payment fields", () => {
+  const domainKeys = new Set(irs1040Pdf.fields.map((e) => e.domainKey));
   const expected = [
     "line25a_w2_withheld",
     "line25b_withheld_1099",
@@ -66,9 +66,30 @@ Deno.test("PDF_FIELD_MAP: contains expected payment fields", () => {
   }
 });
 
-Deno.test("PDF_FIELD_MAP: no empty domain keys or PDF field names", () => {
-  for (const [domain, pdfField] of PDF_FIELD_MAP) {
-    assertEquals(domain.length > 0, true, "Empty domain key found");
-    assertEquals(pdfField.length > 0, true, "Empty PDF field name found");
+Deno.test("irs1040Pdf.fields: no empty domain keys or PDF field names", () => {
+  for (const entry of irs1040Pdf.fields) {
+    assertEquals(entry.domainKey.length > 0, true, "Empty domain key found");
+    assertEquals(entry.pdfField.length > 0, true, "Empty PDF field name found");
+  }
+});
+
+// ---------------------------------------------------------------------------
+// filerFields structure
+// ---------------------------------------------------------------------------
+
+Deno.test("irs1040Pdf.filerFields: present and contains expected keys", () => {
+  const filerFields = irs1040Pdf.filerFields ?? [];
+  const domainKeys = new Set(filerFields.map((e) => e.domainKey));
+  const expected = [
+    "primary_first_name",
+    "primary_last_name",
+    "primary_ssn",
+    "address_street",
+    "address_city",
+    "address_state",
+    "address_zip",
+  ];
+  for (const key of expected) {
+    assertEquals(domainKeys.has(key), true, `Missing filerField key: ${key}`);
   }
 });

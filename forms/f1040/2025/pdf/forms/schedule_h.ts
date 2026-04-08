@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule H (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sh.pdf
@@ -13,19 +13,19 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 //   f1_10 = Line 10 FUTA wages
 //   f1_14 = Line 14 FUTA tax (after credits)
 
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["total_cash_wages",             "topmostSubform[0].Page1[0].f1_01[0]"],
-  ["ss_wages",                     "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["medicare_wages",               "topmostSubform[0].Page1[0].f1_05[0]"],
-  ["federal_income_tax_withheld",  "topmostSubform[0].Page1[0].f1_07[0]"],
-  ["employee_ss_withheld",         "topmostSubform[0].Page1[0].f1_08[0]"],
-  ["employee_medicare_withheld",   "topmostSubform[0].Page1[0].f1_09[0]"],
-  ["futa_wages",                   "topmostSubform[0].Page1[0].f1_10[0]"],
-  ["futa_tax",                     "topmostSubform[0].Page1[0].f1_14[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "total_cash_wages", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
+  { kind: "text", domainKey: "ss_wages", pdfField: "topmostSubform[0].Page1[0].CombField[0].f1_3[0]" },
+  { kind: "text", domainKey: "medicare_wages", pdfField: "topmostSubform[0].Page1[0].f1_5[0]" },
+  { kind: "text", domainKey: "federal_income_tax_withheld", pdfField: "topmostSubform[0].Page1[0].f1_7[0]" },
+  { kind: "text", domainKey: "employee_ss_withheld", pdfField: "topmostSubform[0].Page1[0].f1_8[0]" },
+  { kind: "text", domainKey: "employee_medicare_withheld", pdfField: "topmostSubform[0].Page1[0].f1_9[0]" },
+  { kind: "text", domainKey: "futa_wages", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
+  { kind: "text", domainKey: "futa_tax", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
 ];
 
 export const scheduleHPdf: PdfFormDescriptor = {
   pendingKey: "schedule_h",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sh.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

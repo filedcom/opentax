@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule B (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sb.pdf
@@ -17,17 +17,17 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 //   ee_bond_exclusion    → EE bond exclusion field
 //   ordinaryDividends    → last dividends total field
 
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
+const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: Interest ─────────────────────────────────────────────────────────
-  ["taxable_interest_net",  "topmostSubform[0].Page1[0].f1_29[0]"],
-  ["ee_bond_exclusion",     "topmostSubform[0].Page1[0].f1_30[0]"],
+  { kind: "text", domainKey: "taxable_interest_net", pdfField: "topmostSubform[0].Page1[0].f1_29[0]" },
+  { kind: "text", domainKey: "ee_bond_exclusion", pdfField: "topmostSubform[0].Page1[0].f1_30[0]" },
 
   // ── Part II: Dividends ───────────────────────────────────────────────────────
-  ["ordinaryDividends",     "topmostSubform[0].Page1[0].f1_49[0]"],
+  { kind: "text", domainKey: "ordinaryDividends", pdfField: "topmostSubform[0].Page1[0].f1_49[0]" },
 ];
 
 export const scheduleBPdf: PdfFormDescriptor = {
   pendingKey: "schedule_b",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sb.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

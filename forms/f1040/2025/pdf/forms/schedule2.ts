@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-pdf/f1040s2.pdf
@@ -17,21 +17,21 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 //     f1_11 = Line 12 net investment income tax (Form 8960)
 //     f1_17 = Line 17 other taxes (catch-all)
 
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
+const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: AMT ──────────────────────────────────────────────────────────────
-  ["line1_amt",                  "topmostSubform[0].Page1[0].f1_01[0]"],
+  { kind: "text", domainKey: "line1_amt", pdfField: "form1[0].Page1[0].f1_01[0]" },
 
   // ── Part II: Other Taxes ─────────────────────────────────────────────────────
-  ["line4_se_tax",               "topmostSubform[0].Page1[0].f1_04[0]"],
-  ["line5_unreported_tip_tax",   "topmostSubform[0].Page1[0].f1_05[0]"],
-  ["line6_uncollected_8919",     "topmostSubform[0].Page1[0].f1_06[0]"],
-  ["line8_form5329_tax",         "topmostSubform[0].Page1[0].f1_08[0]"],
-  ["line11_additional_medicare", "topmostSubform[0].Page1[0].f1_10[0]"],
-  ["line12_niit",                "topmostSubform[0].Page1[0].f1_11[0]"],
+  { kind: "text", domainKey: "line4_se_tax", pdfField: "form1[0].Page1[0].f1_04[0]" },
+  { kind: "text", domainKey: "line5_unreported_tip_tax", pdfField: "form1[0].Page1[0].f1_05[0]" },
+  { kind: "text", domainKey: "line6_uncollected_8919", pdfField: "form1[0].Page1[0].f1_06[0]" },
+  { kind: "text", domainKey: "line8_form5329_tax", pdfField: "form1[0].Page1[0].f1_08[0]" },
+  { kind: "text", domainKey: "line11_additional_medicare", pdfField: "form1[0].Page1[0].f1_10[0]" },
+  { kind: "text", domainKey: "line12_niit", pdfField: "form1[0].Page1[0].f1_11[0]" },
 ];
 
 export const schedule2Pdf: PdfFormDescriptor = {
   pendingKey: "schedule2",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

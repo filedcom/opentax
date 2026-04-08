@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 4562 (2025) AcroForm field names (223 fields).
 // f1_1–f1_3:  business name/EIN/activity (skipped).
@@ -20,23 +20,23 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 //   f1_28: MACRS GDS year of service.
 //   f1_29: MACRS prior depreciation.
 //   f1_30: business use percentage.
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["section_179_cost",                    "topmostSubform[0].Page1[0].f1_05[0]"],
-  ["section_179_elected",                 "topmostSubform[0].Page1[0].f1_15[0]"],
-  ["business_income_limit",               "topmostSubform[0].Page1[0].f1_18[0]"],
-  ["section_179_deduction",               "topmostSubform[0].Page1[0].f1_19[0]"],
-  ["section_179_carryover",               "topmostSubform[0].Page1[0].f1_20[0]"],
-  ["bonus_depreciation_basis",            "topmostSubform[0].Page1[0].f1_21[0]"],
-  ["bonus_depreciation_basis_post_jan19", "topmostSubform[0].Page1[0].f1_22[0]"],
-  ["macrs_gds_basis",                     "topmostSubform[0].Page1[0].f1_26[0]"],
-  ["macrs_gds_recovery_period",           "topmostSubform[0].Page1[0].f1_27[0]"],
-  ["macrs_gds_year_of_service",           "topmostSubform[0].Page1[0].f1_28[0]"],
-  ["macrs_prior_depreciation",            "topmostSubform[0].Page1[0].f1_29[0]"],
-  ["business_use_pct",                    "topmostSubform[0].Page1[0].f1_30[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "section_179_cost", pdfField: "topmostSubform[0].Page1[0].f1_5[0]" },
+  { kind: "text", domainKey: "section_179_elected", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
+  { kind: "text", domainKey: "business_income_limit", pdfField: "topmostSubform[0].Page1[0].f1_18[0]" },
+  { kind: "text", domainKey: "section_179_deduction", pdfField: "topmostSubform[0].Page1[0].f1_19[0]" },
+  { kind: "text", domainKey: "section_179_carryover", pdfField: "topmostSubform[0].Page1[0].f1_20[0]" },
+  { kind: "text", domainKey: "bonus_depreciation_basis", pdfField: "topmostSubform[0].Page1[0].f1_21[0]" },
+  { kind: "text", domainKey: "bonus_depreciation_basis_post_jan19", pdfField: "topmostSubform[0].Page1[0].f1_22[0]" },
+  { kind: "text", domainKey: "macrs_gds_basis", pdfField: "topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_26[0]" },
+  { kind: "text", domainKey: "macrs_gds_recovery_period", pdfField: "topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_27[0]" },
+  { kind: "text", domainKey: "macrs_gds_year_of_service", pdfField: "topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_28[0]" },
+  { kind: "text", domainKey: "macrs_prior_depreciation", pdfField: "topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_29[0]" },
+  { kind: "text", domainKey: "business_use_pct", pdfField: "topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_30[0]" },
 ];
 
 export const form4562Pdf: PdfFormDescriptor = {
   pendingKey: "form4562",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f4562.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

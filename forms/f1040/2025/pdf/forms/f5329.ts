@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 5329 (2025) AcroForm field names.
 // Multi-part form (Parts I–X). Each part has an "amount" field as the first
@@ -18,26 +18,26 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // Part VII — HSA FMV: line 37.
 // Part IX  — excess ABLE: line 42.
 // Part IX  — ABLE FMV: line 45.
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["early_distribution",             "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["simple_ira_early_distribution",  "topmostSubform[0].Page1[0].f1_10[0]"],
-  ["esa_able_distribution",          "topmostSubform[0].Page1[0].f1_29[0]"],
-  ["excess_traditional_ira",         "topmostSubform[0].Page1[0].f1_30[0]"],
-  ["traditional_ira_value",          "topmostSubform[0].Page1[0].f1_33[0]"],
-  ["excess_roth_ira",                "topmostSubform[0].Page2[0].f2_01[0]"],
-  ["roth_ira_value",                 "topmostSubform[0].Page2[0].f2_04[0]"],
-  ["excess_coverdell_esa",           "topmostSubform[0].Page2[0].f2_05[0]"],
-  ["coverdell_esa_value",            "topmostSubform[0].Page2[0].f2_08[0]"],
-  ["excess_archer_msa",              "topmostSubform[0].Page2[0].f2_09[0]"],
-  ["archer_msa_value",               "topmostSubform[0].Page2[0].f2_12[0]"],
-  ["excess_hsa",                     "topmostSubform[0].Page2[0].f2_13[0]"],
-  ["hsa_value",                      "topmostSubform[0].Page2[0].f2_16[0]"],
-  ["excess_able",                    "topmostSubform[0].Page2[0].f2_21[0]"],
-  ["able_value",                     "topmostSubform[0].Page2[0].f2_24[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "early_distribution", pdfField: "topmostSubform[0].Page1[0].f1_3[0]" },
+  { kind: "text", domainKey: "simple_ira_early_distribution", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
+  { kind: "text", domainKey: "esa_able_distribution", pdfField: "topmostSubform[0].Page1[0].f1_29[0]" },
+  { kind: "text", domainKey: "excess_traditional_ira", pdfField: "topmostSubform[0].Page1[0].f1_30[0]" },
+  { kind: "text", domainKey: "traditional_ira_value", pdfField: "topmostSubform[0].Page1[0].f1_33[0]" },
+  { kind: "text", domainKey: "excess_roth_ira", pdfField: "topmostSubform[0].Page2[0].f2_1[0]" },
+  { kind: "text", domainKey: "roth_ira_value", pdfField: "topmostSubform[0].Page2[0].f2_4[0]" },
+  { kind: "text", domainKey: "excess_coverdell_esa", pdfField: "topmostSubform[0].Page2[0].f2_5[0]" },
+  { kind: "text", domainKey: "coverdell_esa_value", pdfField: "topmostSubform[0].Page2[0].f2_8[0]" },
+  { kind: "text", domainKey: "excess_archer_msa", pdfField: "topmostSubform[0].Page2[0].f2_9[0]" },
+  { kind: "text", domainKey: "archer_msa_value", pdfField: "topmostSubform[0].Page2[0].f2_12[0]" },
+  { kind: "text", domainKey: "excess_hsa", pdfField: "topmostSubform[0].Page2[0].f2_13[0]" },
+  { kind: "text", domainKey: "hsa_value", pdfField: "topmostSubform[0].Page2[0].f2_16[0]" },
+  { kind: "text", domainKey: "excess_able", pdfField: "topmostSubform[0].Page2[0].f2_21[0]" },
+  { kind: "text", domainKey: "able_value", pdfField: "topmostSubform[0].Page2[0].f2_24[0]" },
 ];
 
 export const form5329Pdf: PdfFormDescriptor = {
   pendingKey: "form5329",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f5329.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

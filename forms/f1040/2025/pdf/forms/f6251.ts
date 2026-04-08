@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 6251 (2025) AcroForm field names.
 // Part I  — AMT adjustments and preferences (lines 1–3).
@@ -14,21 +14,21 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // Line 3:  other_adjustments.
 // Line 8:  amtftc (AMT foreign tax credit).
 // Line 10: regular_tax.
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["regular_tax_income",              "topmostSubform[0].Page1[0].f1_01[0]"],
-  ["line2a_taxes_paid",               "topmostSubform[0].Page1[0].f1_02[0]"],
-  ["nol_adjustment",                  "topmostSubform[0].Page1[0].f1_07[0]"],
-  ["private_activity_bond_interest",  "topmostSubform[0].Page1[0].f1_08[0]"],
-  ["qsbs_adjustment",                 "topmostSubform[0].Page1[0].f1_09[0]"],
-  ["iso_adjustment",                  "topmostSubform[0].Page1[0].f1_10[0]"],
-  ["depreciation_adjustment",         "topmostSubform[0].Page1[0].f1_13[0]"],
-  ["other_adjustments",               "topmostSubform[0].Page1[0].f1_18[0]"],
-  ["amtftc",                          "topmostSubform[0].Page1[0].f1_25[0]"],
-  ["regular_tax",                     "topmostSubform[0].Page1[0].f1_27[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "regular_tax_income", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
+  { kind: "text", domainKey: "line2a_taxes_paid", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
+  { kind: "text", domainKey: "nol_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_7[0]" },
+  { kind: "text", domainKey: "private_activity_bond_interest", pdfField: "topmostSubform[0].Page1[0].f1_8[0]" },
+  { kind: "text", domainKey: "qsbs_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_9[0]" },
+  { kind: "text", domainKey: "iso_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
+  { kind: "text", domainKey: "depreciation_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_13[0]" },
+  { kind: "text", domainKey: "other_adjustments", pdfField: "topmostSubform[0].Page1[0].f1_18[0]" },
+  { kind: "text", domainKey: "amtftc", pdfField: "topmostSubform[0].Page1[0].f1_25[0]" },
+  { kind: "text", domainKey: "regular_tax", pdfField: "topmostSubform[0].Page1[0].f1_27[0]" },
 ];
 
 export const form6251Pdf: PdfFormDescriptor = {
   pendingKey: "form6251",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6251.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

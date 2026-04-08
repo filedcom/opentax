@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 8995-A (2025) AcroForm field names.
 // Qualified Business Income Deduction.
@@ -14,22 +14,22 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // line6_sec199a_dividends → line 6 (Section 199A dividends)
 // qbi_loss_carryforward → line 16 (QBI loss carryforward)
 // reit_loss_carryforward → line 17 (REIT/PTP loss carryforward)
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["taxable_income",         "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["net_capital_gain",       "topmostSubform[0].Page1[0].f1_04[0]"],
-  ["qbi",                    "topmostSubform[0].Page1[0].f1_05[0]"],
-  ["w2_wages",               "topmostSubform[0].Page1[0].f1_06[0]"],
-  ["unadjusted_basis",       "topmostSubform[0].Page1[0].f1_07[0]"],
-  ["sstb_qbi",               "topmostSubform[0].Page1[0].f1_08[0]"],
-  ["sstb_w2_wages",          "topmostSubform[0].Page1[0].f1_09[0]"],
-  ["sstb_unadjusted_basis",  "topmostSubform[0].Page1[0].f1_10[0]"],
-  ["line6_sec199a_dividends","topmostSubform[0].Page1[0].f1_11[0]"],
-  ["qbi_loss_carryforward",  "topmostSubform[0].Page1[0].f1_14[0]"],
-  ["reit_loss_carryforward", "topmostSubform[0].Page1[0].f1_15[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "taxable_income", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].f1_03[0]" },
+  { kind: "text", domainKey: "net_capital_gain", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].RowA[0].f1_04[0]" },
+  { kind: "text", domainKey: "qbi", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].f1_05[0]" },
+  { kind: "text", domainKey: "w2_wages", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].RowB[0].f1_06[0]" },
+  { kind: "text", domainKey: "unadjusted_basis", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].f1_07[0]" },
+  { kind: "text", domainKey: "sstb_qbi", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].RowC[0].f1_08[0]" },
+  { kind: "text", domainKey: "sstb_w2_wages", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row2[0].f1_09[0]" },
+  { kind: "text", domainKey: "sstb_unadjusted_basis", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row2[0].f1_10[0]" },
+  { kind: "text", domainKey: "line6_sec199a_dividends", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row2[0].f1_11[0]" },
+  { kind: "text", domainKey: "qbi_loss_carryforward", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row3[0].f1_14[0]" },
+  { kind: "text", domainKey: "reit_loss_carryforward", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row4[0].f1_15[0]" },
 ];
 
 export const form8995aPdf: PdfFormDescriptor = {
   pendingKey: "form8995a",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8995a.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule D (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sd.pdf
@@ -18,28 +18,28 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // Part III Summary (lines 16–22):
 //   f2_01       = Line 19 unrecaptured Section 1250 gain
 
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
+const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: Short-Term ───────────────────────────────────────────────────────
-  ["line_1a_proceeds",          "topmostSubform[0].Page1[0].f1_01[0]"],
-  ["line_1a_cost",              "topmostSubform[0].Page1[0].f1_02[0]"],
-  ["line_4_other_st",           "topmostSubform[0].Page1[0].f1_13[0]"],
-  ["line_5_k1_st",              "topmostSubform[0].Page1[0].f1_14[0]"],
-  ["line_6_carryover",          "topmostSubform[0].Page1[0].f1_15[0]"],
+  { kind: "text", domainKey: "line_1a_proceeds", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
+  { kind: "text", domainKey: "line_1a_cost", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
+  { kind: "text", domainKey: "line_4_other_st", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row2[0].f1_13[0]" },
+  { kind: "text", domainKey: "line_5_k1_st", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row2[0].f1_14[0]" },
+  { kind: "text", domainKey: "line_6_carryover", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row3[0].f1_15[0]" },
 
   // ── Part II: Long-Term ───────────────────────────────────────────────────────
-  ["line_8a_proceeds",          "topmostSubform[0].Page1[0].f1_17[0]"],
-  ["line_8a_cost",              "topmostSubform[0].Page1[0].f1_18[0]"],
-  ["line_11_form2439",          "topmostSubform[0].Page1[0].f1_25[0]"],
-  ["line_12_k1_lt",             "topmostSubform[0].Page1[0].f1_26[0]"],
-  ["line13_cap_gain_distrib",   "topmostSubform[0].Page1[0].f1_27[0]"],
-  ["line_14_carryover",         "topmostSubform[0].Page1[0].f1_28[0]"],
+  { kind: "text", domainKey: "line_8a_proceeds", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row3[0].f1_17[0]" },
+  { kind: "text", domainKey: "line_8a_cost", pdfField: "topmostSubform[0].Page1[0].Table_PartI[0].Row3[0].f1_18[0]" },
+  { kind: "text", domainKey: "line_11_form2439", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_25[0]" },
+  { kind: "text", domainKey: "line_12_k1_lt", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8a[0].f1_26[0]" },
+  { kind: "text", domainKey: "line13_cap_gain_distrib", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8b[0].f1_27[0]" },
+  { kind: "text", domainKey: "line_14_carryover", pdfField: "topmostSubform[0].Page1[0].Table_PartII[0].Row8b[0].f1_28[0]" },
 
   // ── Part III: Summary ────────────────────────────────────────────────────────
-  ["line19_unrecaptured_1250",  "topmostSubform[0].Page2[0].f2_01[0]"],
+  { kind: "text", domainKey: "line19_unrecaptured_1250", pdfField: "topmostSubform[0].Page2[0].f2_1[0]" },
 ];
 
 export const scheduleDPdf: PdfFormDescriptor = {
   pendingKey: "schedule_d",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sd.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };

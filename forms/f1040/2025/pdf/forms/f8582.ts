@@ -1,4 +1,4 @@
-import type { PdfFormDescriptor } from "../form-descriptor.ts";
+import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Form 8582 (2025) AcroForm field names.
 // Passive Activity Loss Limitations.
@@ -12,18 +12,18 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 // Part II — Special allowance for rental real estate:
 //   modified_agi         → line 7  (modified adjusted gross income)
 //   active_participation → line 13 (special allowance)
-export const PDF_FIELD_MAP: ReadonlyArray<readonly [string, string]> = [
-  ["passive_schedule_c",  "topmostSubform[0].Page1[0].f1_03[0]"],
-  ["passive_schedule_f",  "topmostSubform[0].Page1[0].f1_04[0]"],
-  ["current_income",      "topmostSubform[0].Page1[0].f1_05[0]"],
-  ["current_loss",        "topmostSubform[0].Page1[0].f1_08[0]"],
-  ["prior_unallowed",     "topmostSubform[0].Page1[0].f1_09[0]"],
-  ["modified_agi",        "topmostSubform[0].Page1[0].f1_16[0]"],
-  ["active_participation","topmostSubform[0].Page1[0].f1_22[0]"],
+const fields: ReadonlyArray<PdfFieldEntry> = [
+  { kind: "text", domainKey: "passive_schedule_c", pdfField: "topmostSubform[0].Page1[0].f1_03[0]" },
+  { kind: "text", domainKey: "passive_schedule_f", pdfField: "topmostSubform[0].Page1[0].f1_04[0]" },
+  { kind: "text", domainKey: "current_income", pdfField: "topmostSubform[0].Page1[0].f1_05[0]" },
+  { kind: "text", domainKey: "current_loss", pdfField: "topmostSubform[0].Page1[0].f1_08[0]" },
+  { kind: "text", domainKey: "prior_unallowed", pdfField: "topmostSubform[0].Page1[0].f1_09[0]" },
+  { kind: "text", domainKey: "modified_agi", pdfField: "topmostSubform[0].Page1[0].f1_16[0]" },
+  { kind: "text", domainKey: "active_participation", pdfField: "topmostSubform[0].Page1[0].Table_Part4[0].Row1[0].f1_22[0]" },
 ];
 
 export const form8582Pdf: PdfFormDescriptor = {
   pendingKey: "form8582",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582.pdf",
-  PDF_FIELD_MAP,
+  fields,
 };
