@@ -2368,11 +2368,11 @@ These produce correct current-year returns but break multi-year continuity.
 | 47 | `w2` | Box 12 Code FF (QSEHRA) in enum but no output — never reduces Form 8962 PTC per IRC §36B(c)(4) |
 | 48 | `w2` | Box 7 SS tips have no Form 4137 path for unreported cash tips |
 | 49 | `household_wages` | `medicare_wages`, `medicare_tax_withheld` declared in schema but never read or emitted — Form 8959 never receives household Medicare wages |
-| 50 | `w2g` | Non-cash gambling prizes excluded from `totalWinnings()` — only Box 1 cash captured |
+| 50 | `w2g` | ~~Non-cash gambling prizes excluded from `totalWinnings()` — only Box 1 cash captured~~ | ✅ FIXED 2026-04-08 |
 | 51 | `k1_s_corp` | Box 9 §1231 gain field exists but no routing functions reference it — silently dropped |
-| 52 | `k1_partnership` | Box 9b unrecaptured §1250 gain absent; Box 17 AMT items absent; Box 13 deductions absent |
-| 53 | `schedule_d` | `collectibles_gain_form2439` never routed to rate_28_gain_worksheet |
-| 54 | `f2106` | `F2106_PERFORMING_ARTIST_AGI_LIMIT` imported in config but never used in node — all performing artists qualify unconditionally |
+| 52 | `k1_partnership` | ~~Box 9b unrecaptured §1250 gain absent~~ ✅ FIXED 2026-04-08; Box 17 AMT items absent; Box 13 deductions absent |
+| 53 | `schedule_d` | ~~`collectibles_gain_form2439` never routed to rate_28_gain_worksheet~~ | ✅ FIXED 2026-04-08 |
+| 54 | `f2106` | ~~`F2106_PERFORMING_ARTIST_AGI_LIMIT` imported in config but never used in node — all performing artists qualify unconditionally~~ | ✅ FIXED 2026-04-08 |
 | 55 | `sep_retirement` | SIMPLE catch-up limit hardcoded at $19,500 (should be $20,000); SECURE 2.0 age 60–63 super catch-up ($21,750) not implemented |
 
 ---
@@ -2383,9 +2383,9 @@ These produce correct current-year returns but break multi-year continuity.
 |---|------|-------|
 | 56 | `schedule_a` | Income tax + sales tax election unenforced — both can be entered simultaneously |
 | 57 | `schedule_a` | Charitable deduction applies single 60% cap to combined cash+noncash (should be separate 30%/50% per IRC §170) |
-| 58 | `form8880` | QSS uses Single AGI thresholds instead of MFJ thresholds — incorrect Saver's Credit rate for QSS filers |
+| 58 | `form8880` | ~~QSS uses Single AGI thresholds instead of MFJ thresholds — incorrect Saver's Credit rate for QSS filers~~ | ✅ FIXED 2026-04-08 |
 | 59 | `form8582` | `rentalNetLoss` uses all passive losses not just rental losses — overstates §469(i) $25K allowance in mixed-activity scenarios |
-| 60 | `form6251` | Duplicate Line 2g PAB interest fields — if both populated, PAB interest double-counted in AMTI |
+| 60 | `form6251` | ~~Duplicate Line 2g PAB interest fields — if both populated, PAB interest double-counted in AMTI~~ | ✅ FIXED 2026-04-08 |
 | 61 | `hsa (form8889)` | No partial-year proration (month-by-month) and no Archer MSA distribution offset (Form 8889 Line 4) |
 | 62 | `ira deduction` | Non-deductible IRA excess never routed to Form 8606 for basis tracking |
 | 63 | `f1099div` | Box 2c §1202 QSBS gain incorrectly routed to 28% worksheet — QSBS uses Form 8949 exclusion |
@@ -2437,8 +2437,8 @@ Week 3 — P2/P3 (Carryforwards + silent drops):
   24. Fix 1099-B market discount schema
   25. Wire W-2 Box 12 Code FF → Form 8962
   26. Wire household Medicare wages → Form 8959
-  27. Fix QBI aggregation input node (no-op)
-  28. Fix K-1 §1231 gain routing; add AMT item routing
+  27. Fix QBI aggregation input node (no-op) — manual, requires design
+  28. ~~Fix K-1 box9b §1250 gain routing~~ ✅ FIXED 2026-04-08; add AMT item routing (manual)
   29. Fix Form 8824 replacement basis computation
   30. Fix SIMPLE/SEP SECURE 2.0 catch-up limits
 ```
