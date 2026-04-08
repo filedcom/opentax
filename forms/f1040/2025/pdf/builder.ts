@@ -20,6 +20,16 @@ async function fetchWithCache(url: string, cacheDir: string): Promise<Uint8Array
   }
 }
 
+/** Resolves dot-notation paths like "address.line1" against a nested object. */
+function resolvePath(obj: Record<string, unknown>, path: string): unknown {
+  let current: unknown = obj;
+  for (const part of path.split(".")) {
+    if (current == null || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+  return current;
+}
+
 function fillEntry(
   form: ReturnType<PDFDocument["getForm"]>,
   entry: PdfFieldEntry,
@@ -28,6 +38,8 @@ function fillEntry(
 ): void {
   try {
     if (entry.kind === "text") {
+      // IRS convention: leave numeric fields blank when value is zero.
+      if (typeof value === "number" && Math.round(value) === 0) return;
       const text = typeof value === "number"
         ? Math.round(value).toString()
         : String(value);
@@ -74,12 +86,30 @@ async function fillFormPdf(
     fillEntry(form, entry, value, descriptor.pendingKey);
   }
 
-  // Fill filer identity fields
+  // Fill filer identity fields (domainKey supports dot-notation, e.g. "address.line1")
   if (filer !== undefined) {
+    const filerObj = filer as unknown as Record<string, unknown>;
     for (const entry of descriptor.filerFields ?? []) {
-      const value = filer[entry.domainKey as keyof FilerIdentity];
+      const value = resolvePath(filerObj, entry.domainKey);
       if (value === undefined || value === null) continue;
       fillEntry(form, entry, value, descriptor.pendingKey);
+    }
+
+    // Filing status checkboxes (Single=1, MFJ=2, MFS=3, HOH=4, QSS=5)
+    const statusCheckboxes: Record<number, string> = {
+      1: "topmostSubform[0].Page1[0].c1_1[0]",
+      2: "topmostSubform[0].Page1[0].c1_2[0]",
+      3: "topmostSubform[0].Page1[0].c1_3[0]",
+      4: "topmostSubform[0].Page1[0].c1_4[0]",
+      5: "topmostSubform[0].Page1[0].c1_5[0]",
+    };
+    const statusField = statusCheckboxes[filer.filingStatus];
+    if (statusField) {
+      try {
+        form.getCheckBox(statusField).check();
+      } catch (err) {
+        console.error(`[PDF] filing status checkbox: ${err}`);
+      }
     }
   }
 
