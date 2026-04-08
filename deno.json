@@ -21,6 +21,6 @@
     "bench:gen": "deno run --allow-read --allow-write taxcalcbench/gen_correct.ts",
     "bench:run-all": "deno run --allow-read --allow-write --allow-run taxcalcbench/run_all.ts",
     "inspect:pdf-fields": "deno run --allow-net=www.irs.gov --allow-read --allow-write scripts/inspect-pdf-fields.ts",
-    "test:pdf": "deno test --allow-net=www.irs.gov --allow-read forms/f1040/2025/pdf/"
+    "test:pdf": "deno test --allow-net=www.irs.gov --allow-read --allow-write forms/f1040/2025/pdf/"
   }
 }

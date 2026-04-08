@@ -52,13 +52,29 @@ function buildIRS1040ScheduleA(fields: Input): string {
   // Combine the mutually exclusive line 5a fields into a single XSD element.
   // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
   const line5a = (fields.line_5a_state_income_tax ?? 0) + (fields.line_5a_sales_tax ?? 0);
+
+  // Elements must follow the XSD sequence order defined in IRS1040ScheduleA.xsd:
+  //   MedicalAndDentalExpensesAmt → TaxReturnAGIAmt → ... → StateAndLocalTaxAmt → RealEstateTaxesAmt → ...
+  // TaxReturnAGIAmt (AGI, line 2) must appear before StateAndLocalTaxAmt (line 5a).
+  const mapField = ([key, tag]: readonly [keyof Fields, string]): string => {
+    const value = fields[key];
+    return typeof value === "number" ? element(tag, value) : "";
+  };
+
   const children = [
+    mapField(["line_1_medical", "MedicalAndDentalExpensesAmt"]),
+    mapField(["agi", "TaxReturnAGIAmt"]),
     ...(line5a > 0 ? [element("StateAndLocalTaxAmt", line5a)] : []),
-    ...FIELD_MAP.map(([key, tag]) => {
-      const value = fields[key];
-      if (typeof value !== "number") return "";
-      return element(tag, value);
-    }),
+    mapField(["line_5b_real_estate_tax", "RealEstateTaxesAmt"]),
+    mapField(["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"]),
+    mapField(["line_6_other_taxes", "OtherTaxesAmt"]),
+    mapField(["line_8a_mortgage_interest_1098", "RptHomeMortgIntAndPointsAmt"]),
+    mapField(["line_9_investment_interest", "InvestmentInterestAmt"]),
+    mapField(["line_11_cash_contributions", "GiftsByCashOrCheckAmt"]),
+    mapField(["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"]),
+    mapField(["line_13_contribution_carryover", "CarryoverFromPriorYearAmt"]),
+    mapField(["line_15_casualty_theft_loss", "CasualtyAndTheftLossesAmt"]),
+    mapField(["line_16_other_deductions", "OtherMiscellaneousDedAmt"]),
   ];
   return elements("IRS1040ScheduleA", children);
 }
