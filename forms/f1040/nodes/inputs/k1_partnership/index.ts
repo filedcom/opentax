@@ -10,6 +10,7 @@ import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -58,6 +59,10 @@ export const itemSchema = z.object({
 
   // Box 9a — Net LTCG/loss → Schedule D line 12
   box9a_net_lt_cap_gain: z.number().optional(),
+
+  // Box 9b — Unrecaptured §1250 gain → Unrecaptured §1250 Gain Worksheet
+  // Partner's share of §1250 gain from partnership property; taxed at 25% max rate.
+  box9b_unrecaptured_1250: z.number().nonnegative().optional(),
 
   // Box 14a — Net SE earnings → Schedule SE
   // This is the definitive SE income figure from the partnership
@@ -251,6 +256,13 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
   return [output(form8995, { w2_wages: totalW2 })];
 }
 
+// Box 9b — Unrecaptured §1250 gain → unrecaptured_1250_worksheet
+function unrecaptured1250Outputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box9b_unrecaptured_1250 ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total })];
+}
+
 // Route foreign taxes → form_1116
 function form1116Outputs(items: K1PartnershipItems): NodeOutput[] {
   return items
@@ -274,6 +286,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     schedule_se,
     form8995,
     form_1116,
+    unrecaptured_1250_worksheet,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -288,6 +301,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...scheduleSEOutputs(k1_partnerships),
       ...form8995Output(k1_partnerships),
       ...form1116Outputs(k1_partnerships),
+      ...unrecaptured1250Outputs(k1_partnerships),
     ];
 
     return { outputs };
