@@ -1,7 +1,28 @@
 import { assertEquals, assertGreater, assertRejects } from "@std/assert";
 import { join } from "@std/path";
-import { PDFDocument, PDFTextField } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { buildPdfBytes } from "./builder.ts";
+import type { FilerIdentity } from "../../mef/header.ts";
+import { FilingStatus } from "../../mef/header.ts";
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+
+const mockFiler: FilerIdentity = {
+  primarySSN: "123456789",
+  nameLine1: "JOHN DOE",
+  nameControl: "DOE",
+  firstName: "John",
+  lastName: "Doe",
+  address: {
+    line1: "123 Main St",
+    city: "Anytown",
+    state: "CA",
+    zip: "90210",
+  },
+  filingStatus: FilingStatus.Single,
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -56,7 +77,7 @@ Deno.test("buildPdfBytes: fills wage field and returns valid PDF bytes", async (
     const pending = {
       f1040: { line1a_wages: 75000 },
     };
-    const result = await buildPdfBytes(pending, tmpDir);
+    const result = await buildPdfBytes(pending, mockFiler, tmpDir);
 
     // Valid PDF starts with %PDF-
     const header = new TextDecoder().decode(result.slice(0, 5));
@@ -81,7 +102,7 @@ Deno.test("buildPdfBytes: filled wage value is readable from output PDF", async 
     // the merged doc's page count instead (flatten removes fields from the
     // interactive form but embeds values as content — not re-readable via
     // getTextField after flatten). We verify the output is a non-empty PDF.
-    const result = await buildPdfBytes(pending, tmpDir);
+    const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     assertGreater(result.length, 1000);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -101,7 +122,7 @@ Deno.test("buildPdfBytes: skips forms with no pending data", async () => {
       f1040: { line1a_wages: 50000 },
       schedule_b: undefined,
     };
-    const result = await buildPdfBytes(pending, tmpDir);
+    const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     const header = new TextDecoder().decode(result.slice(0, 5));
     assertEquals(header, "%PDF-");
   } finally {
@@ -124,7 +145,7 @@ Deno.test("buildPdfBytes: numeric values are rounded to integers", async () => {
 
     // The builder flattens, so we verify the output PDF is valid and non-empty
     const pending = { f1040: { line1a_wages: 75000.75 } };
-    const result = await buildPdfBytes(pending, tmpDir);
+    const result = await buildPdfBytes(pending, mockFiler, tmpDir);
     assertGreater(result.length, 100);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
@@ -136,7 +157,7 @@ Deno.test("buildPdfBytes: throws when no forms generate output", async () => {
   try {
     // Pass pending with no f1040 data — builder should throw
     await assertRejects(
-      () => buildPdfBytes({}, tmpDir),
+      () => buildPdfBytes({}, mockFiler, tmpDir),
       Error,
       "No PDF forms were generated",
     );
@@ -155,13 +176,48 @@ Deno.test("buildPdfBytes: caches IRS PDF after first call", async () => {
     const pending = { f1040: { line1a_wages: 75000 } };
 
     // First call
-    await buildPdfBytes(pending, tmpDir);
+    await buildPdfBytes(pending, mockFiler, tmpDir);
 
     // Cache file must exist
     const cacheFile = join(tmpDir, cacheSlug(F1040_PDF_URL));
     const stat = await Deno.stat(cacheFile);
     assertEquals(stat.isFile, true);
   } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("buildPdfBytes: unknown field names produce a logged error, not silent skip", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  const errors: string[] = [];
+  const originalError = console.error;
+  console.error = (...args: unknown[]) => {
+    errors.push(args.map(String).join(" "));
+  };
+
+  try {
+    // Seed the cache with a PDF that does NOT contain the field that the
+    // f1040 descriptor maps line1a_wages to. When the builder tries to fill
+    // that field it should catch the error from pdf-lib and log it.
+    const stubPdf = await makeMinimalF1040Pdf([]); // no fields at all
+    await seedCache(tmpDir, F1040_PDF_URL, stubPdf);
+
+    const pending = { f1040: { line1a_wages: 75000 } };
+
+    // Builder will still succeed (returns valid PDF from merged pages) but
+    // should have emitted at least one console.error for the missing field.
+    await buildPdfBytes(pending, mockFiler, tmpDir);
+
+    assertGreater(
+      errors.length,
+      0,
+      "Expected at least one console.error call for the unknown PDF field",
+    );
+    // The error message should reference the problematic field
+    const combined = errors.join("\n");
+    assertEquals(combined.includes("[PDF]"), true);
+  } finally {
+    console.error = originalError;
     await Deno.remove(tmpDir, { recursive: true });
   }
 });
