@@ -176,9 +176,34 @@ Deno.test("agi_aggregator: routes agi to schedule_a", () => {
   assertEquals((schA!.fields as Record<string, number>).agi, 75_000);
 });
 
-Deno.test("agi_aggregator: always produces exactly 7 outputs", () => {
+Deno.test("agi_aggregator: wages-only produces exactly 7 outputs (no Schedule 1 items)", () => {
+  // With wages only, line8=0 and line10=0 so no extra f1040 fields beyond line11_agi
   const result = compute({ line1a_wages: 50_000 });
   assertEquals(result.outputs.length, 7);
+});
+
+Deno.test("agi_aggregator: cap gain distributions included in AGI", () => {
+  const result = compute({ line1a_wages: 50_000, line7a_cap_gain_distrib: 5_000 });
+  assertEquals(agi(result), 55_000);
+});
+
+Deno.test("agi_aggregator: routes line8_additional_income to f1040 when Schedule 1 Part I present", () => {
+  const result = compute({ line1a_wages: 50_000, line3_schedule_c: 20_000 });
+  const f1040Out = result.outputs.find((o) => o.nodeType === "f1040");
+  assertEquals((f1040Out!.fields as Record<string, number>).line8_additional_income, 20_000);
+});
+
+Deno.test("agi_aggregator: routes line10_adjustments to f1040 when above-line deductions present", () => {
+  const result = compute({ line1a_wages: 60_000, line13_hsa_deduction: 4_000 });
+  const f1040Out = result.outputs.find((o) => o.nodeType === "f1040");
+  assertEquals((f1040Out!.fields as Record<string, number>).line10_adjustments, 4_000);
+});
+
+Deno.test("agi_aggregator: line8_additional_income nets exclusions against income (Schedule 1 Part I net)", () => {
+  // state refund 1000, foreign exclusion 800 → line8 = 200
+  const result = compute({ line1_state_refund: 1_000, line8d_foreign_earned_income_exclusion: 800 });
+  const f1040Out = result.outputs.find((o) => o.nodeType === "f1040");
+  assertEquals((f1040Out!.fields as Record<string, number>).line8_additional_income, 200);
 });
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

@@ -62,6 +62,7 @@ function buildReturn(caseData: CaseInput): TaxReturnInput {
     } else if (nt === "f1099div") {
       inp.ordinaryDividends!  += d.box1a ?? 0;
       inp.qualifiedDividends! += d.box1b ?? 0;
+      inp.ltcg!               += d.box2a ?? 0;  // cap gain distributions treated as LTCG
       inp.fedWithheld!        += d.box4  ?? 0;
     } else if (nt === "f1099b") {
       const gain = (d.proceeds ?? 0) - (d.cost_basis ?? 0);

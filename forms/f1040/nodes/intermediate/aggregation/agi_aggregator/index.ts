@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { TaxNode, type AtLeastOne } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
@@ -57,6 +57,8 @@ export const inputSchema = z.object({
   filing_status: z.string().optional(),
   // Line 7 — Capital gain or (loss) (Schedule D)
   line7_capital_gain: z.number().optional(),
+  // Line 7a — Capital gain distributions (no Schedule D required; from f1099div box2a)
+  line7a_cap_gain_distrib: z.number().nonnegative().optional(),
 
   // ── Schedule 1 Part I — Additional income ─────────────────────────────────
   // Line 1 — State and local income tax refunds (Form 1099-G)
@@ -183,6 +185,7 @@ function nonSsaIncome(input: AgiInput): number {
     (input.line4b_ira_taxable ?? 0) +
     (input.line5b_pension_taxable ?? 0) +
     (input.line7_capital_gain ?? 0) +
+    (input.line7a_cap_gain_distrib ?? 0) +
     (input.line1_state_refund ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
@@ -251,6 +254,31 @@ function aboveLineDeductions(input: AgiInput): number {
   );
 }
 
+// Sum Schedule 1 Part I items (Additional Income) net of exclusions.
+// This is what appears on Form 1040 line 8.
+function scheduleOnePartI(input: AgiInput): number {
+  return (
+    (input.line1_state_refund ?? 0) +
+    (input.line3_schedule_c ?? 0) +
+    (input.line4_other_gains ?? 0) +
+    (input.line5_schedule_e ?? 0) +
+    (input.line17_schedule_e ?? 0) +
+    (input.line6_schedule_f ?? 0) +
+    (input.line7_unemployment ?? 0) +
+    (input.line8c_cod_income ?? 0) +
+    (input.line8e_archer_msa_dist ?? 0) +
+    (input.line8z_other ?? 0) +
+    (input.line8z_rtaa ?? 0) +
+    (input.line8z_taxable_grants ?? 0) +
+    (input.at_risk_disallowed_add_back ?? 0) +
+    (input.biz_interest_disallowed_add_back ?? 0) +
+    (input.basis_disallowed_add_back ?? 0) -
+    (input.line8d_foreign_earned_income_exclusion ?? 0) -
+    (input.line8d_foreign_housing_deduction ?? 0) -
+    (input.line8b_savings_bond_exclusion ?? 0)
+  );
+}
+
 // AGI cannot be negative (loss limitation rules prevent it in practice).
 function computeAgi(input: AgiInput): number {
   return Math.max(0, grossIncome(input) - exclusions(input) - aboveLineDeductions(input));
@@ -271,8 +299,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     const ssaGross = input.line6a_ss_gross ?? 0;
     const ssaTaxable = resolveSsaTaxable(input);
 
+    const line8 = scheduleOnePartI(input);
+    const line10 = aboveLineDeductions(input);
+
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = { line11_agi: agi };
+    if (line8 !== 0) f1040Fields.line8_additional_income = line8;
+    if (line10 > 0) f1040Fields.line10_adjustments = line10;
+
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, { line11_agi: agi }),
+      this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
       this.outputNodes.output(standard_deduction, { agi }),
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),

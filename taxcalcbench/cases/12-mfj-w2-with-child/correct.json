@@ -1,6 +1,6 @@
 {
   "case": "12-mfj-w2-with-child",
-  "scenario": "Married filing jointly with one qualifying child under 17 — tests Child Tax Credit ($2,200)",
+  "scenario": "Married filing jointly with one qualifying child under 17 — tests Child Tax Credit ($2,000)",
   "year": 2025,
   "inputs": {
     "filing_status": "mfj",
