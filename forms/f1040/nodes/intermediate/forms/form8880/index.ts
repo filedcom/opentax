@@ -60,7 +60,7 @@ type Form8880Input = z.infer<typeof inputSchema>;
 // Returns the credit rate (as a decimal) based on AGI and filing status.
 // Returns 0 if AGI exceeds the upper limit for the filing status.
 function creditRate(agi: number, status: FilingStatus): number {
-  if (status === FilingStatus.MFJ) {
+  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
     if (agi <= AGI_50_MFJ) return 0.50;
     if (agi <= AGI_20_MFJ) return 0.20;
     if (agi <= AGI_10_MFJ) return 0.10;
@@ -72,7 +72,7 @@ function creditRate(agi: number, status: FilingStatus): number {
     if (agi <= AGI_10_HOH) return 0.10;
     return 0;
   }
-  // Single, MFS, QSS
+  // Single, MFS
   if (agi <= AGI_50_SINGLE) return 0.50;
   if (agi <= AGI_20_SINGLE) return 0.20;
   if (agi <= AGI_10_SINGLE) return 0.10;

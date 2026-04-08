@@ -357,11 +357,19 @@ Deno.test("form8880: MFS AGI=$22,000 (≤$23,000) → 50% rate", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 15. QSS filing status (same thresholds as single)
+// 15. QSS filing status (same thresholds as MFJ per IRC §25B)
 // ---------------------------------------------------------------------------
 
-Deno.test("form8880: QSS AGI=$20,000 → 50% rate", () => {
+Deno.test("form8880: QSS AGI=$20,000 → 50% rate (same as MFJ)", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 20000, filing_status: "qss" });
+  const input = fieldsOf(result.outputs, schedule3)!;
+  assertEquals(input.line4_retirement_savings_credit, 1000);
+});
+
+Deno.test("form8880: QSS AGI=$40,000 → 50% rate (MFJ threshold; Single would be 0%)", () => {
+  // Single/MFS 10% ceiling is ~$38,250 so AGI=$40k → 0% under Single rules.
+  // QSS uses MFJ thresholds (50% ceiling = $46,000) → 50% rate.
+  const result = compute({ ira_contributions_taxpayer: 2000, agi: 40000, filing_status: "qss" });
   const input = fieldsOf(result.outputs, schedule3)!;
   assertEquals(input.line4_retirement_savings_credit, 1000);
 });
