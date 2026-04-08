@@ -3,6 +3,7 @@ import { ira_deduction_worksheet, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { form8606 } from "../../forms/form8606/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return ira_deduction_worksheet.compute({ taxYear: 2025 }, inputSchema.parse(input));
@@ -106,24 +107,26 @@ Deno.test("active participant: HOH in phase-out → partial deduction", () => {
 
 // ─── Active participant — above phase-out (no deduction) ─────────────────────
 
-Deno.test("active participant: single above phase-out → no deduction", () => {
+Deno.test("active participant: single above phase-out → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     magi: 90_000, // at or above $89,000 upper bound
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
-Deno.test("active participant: MFJ above phase-out → no deduction", () => {
+Deno.test("active participant: MFJ above phase-out → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     magi: 150_000, // above $146,000
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
 // ─── Non-covered MFJ spouse phase-out ─────────────────────────────────────────
@@ -153,7 +156,7 @@ Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", 
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 
-Deno.test("non-covered MFJ spouse: above non-covered range → no deduction", () => {
+Deno.test("non-covered MFJ spouse: above non-covered range → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     magi: 246_001,
@@ -161,7 +164,8 @@ Deno.test("non-covered MFJ spouse: above non-covered range → no deduction", ()
     active_participant: false,
     spouse_active_participant: true,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
 // ─── Age 50+ catch-up contribution limit ─────────────────────────────────────
@@ -241,14 +245,15 @@ Deno.test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5
   assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
 });
 
-Deno.test("MFS active participant: above $10,000 MAGI → no deduction", () => {
+Deno.test("MFS active participant: above $10,000 MAGI → no deduction, form8606 basis tracked", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
     magi: 10_001,
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
 // ─── Schema validation ─────────────────────────────────────────────────────────

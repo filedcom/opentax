@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { form8606 } from "../../forms/form8606/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import {
@@ -126,7 +127,7 @@ function schedule1Output(deductible: number): NodeOutput[] {
 class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ira_deduction_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8606]);
 
   // IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19 — TY2025 (see config/2025.ts)
   protected readonly contributionLimit = IRA_CONTRIBUTION_LIMIT_2025;
@@ -180,6 +181,13 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
     if (deductible > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, { line20_ira_deduction: deductible }));
     }
+
+    // Non-deductible excess → Form 8606 for IRA basis tracking (IRC §408(o))
+    const nonDeductible = capped - deductible;
+    if (nonDeductible > 0) {
+      outputs.push(this.outputNodes.output(form8606, { nondeductible_contributions: nonDeductible }));
+    }
+
     return { outputs };
   }
 }
