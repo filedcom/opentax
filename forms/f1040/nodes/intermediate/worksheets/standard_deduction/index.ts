@@ -55,7 +55,7 @@ const SPOUSE_STATUSES = new Set<FilingStatus>([
 ]);
 
 // Count the total number of additional-deduction factors for age/blindness.
-// Each factor is $1,350 (MFJ/MFS/QSS) or $1,600 (Single/HOH).
+// Each factor is $1,600 (MFJ/MFS/QSS) or $2,000 (Single/HOH) for TY2025 per OBBBA.
 function additionalFactorCount(input: StandardDeductionInput): number {
   let count = 0;
   if (input.taxpayer_age_65_or_older) count += 1;

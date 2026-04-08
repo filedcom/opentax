@@ -83,24 +83,24 @@ Deno.test("LTC premiums — age 55 (51-60): $1,800 limit", () => {
   assertEquals(s1?.fields.line17_se_health_insurance, 1_800);
 });
 
-Deno.test("LTC premiums — age 65 (61-70): $4,810 limit", () => {
+Deno.test("LTC premiums — age 65 (61-70): $4,770 limit (TY2025)", () => {
   const result = compute({
     se_net_profit: 50_000,
     ltc_premiums: 10_000,
     taxpayer_age: 65,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line17_se_health_insurance, 4_810);
+  assertEquals(s1?.fields.line17_se_health_insurance, 4_770);
 });
 
-Deno.test("LTC premiums — age 71 (>70): $6,020 limit", () => {
+Deno.test("LTC premiums — age 71 (>70): $5,970 limit (TY2025)", () => {
   const result = compute({
     se_net_profit: 50_000,
     ltc_premiums: 10_000,
     taxpayer_age: 71,
   });
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line17_se_health_insurance, 6_020);
+  assertEquals(s1?.fields.line17_se_health_insurance, 5_970);
 });
 
 Deno.test("LTC premiums — below age limit → full amount allowed", () => {

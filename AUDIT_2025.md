@@ -2296,13 +2296,13 @@ These bugs produce an incorrect return for large populations of ordinary taxpaye
 
 | # | Node | Bug | Impact |
 |---|------|-----|--------|
-| 1 | `eitc` | Phase-in rate for 3 children is **45%** — should be **40%** (IRC §32(b)(1)(B)) | Overcredits all 3-child EITC filers |
-| 2 | `eitc` | Phase-out uses `earnedIncome` instead of `max(earnedIncome, AGI)` | Understates phase-out when AGI > earned income |
-| 3 | `eitc` | MFS filing status not disqualified (IRC §32(d)) | MFS filers erroneously receive EITC |
-| 4 | `form2441` | IRC §21 child/dependent care credit **entirely absent** — only §129 employer excess is computed | All qualifying child care expenses produce $0 credit |
-| 5 | `form2441` | MFS employer exclusion cap hardcoded at $5,000 (should be $2,500 per IRC §129(a)(2)) | MFS filers get double the allowed exclusion |
-| 6 | `form8962` | Applicable contribution % table wrong in 4 brackets (e.g. 100–133% should be 2.06%, not 2.0%; 133–150% wrong shape) | Incorrect PTC for most Marketplace enrollees |
-| 7 | `form8962` | IRC §36B(f)(2)(B) repayment caps entirely absent | Over-taxes sub-400%-FPL APTC recipients on excess APTC |
+| 1 | `eitc` | ~~Phase-in rate for 3 children is **45%** — should be **40%** (IRC §32(b)(1)(B))~~ | ✅ FIXED 2026-04-08 |
+| 2 | `eitc` | ~~Phase-out uses `earnedIncome` instead of `max(earnedIncome, AGI)`~~ | ✅ FIXED 2026-04-08 |
+| 3 | `eitc` | ~~MFS filing status not disqualified (IRC §32(d))~~ | ✅ FIXED 2026-04-08 |
+| 4 | `form2441` | ~~IRC §21 child/dependent care credit **entirely absent**~~ | ✅ FIXED 2026-04-08 |
+| 5 | `form2441` | ~~MFS employer exclusion cap hardcoded at $5,000 (should be $2,500 per IRC §129(a)(2))~~ | ✅ FIXED 2026-04-08 |
+| 6 | `form8962` | ~~Applicable contribution % table wrong in 4 brackets~~ | ✅ FIXED 2026-04-08 |
+| 7 | `form8962` | ~~IRC §36B(f)(2)(B) repayment caps entirely absent~~ | ✅ FIXED 2026-04-08 |
 | 8 | `form8995a` | Missing `standard_deduction` output route | Above-threshold QBI deduction not subtracted from taxable income — all above-threshold QBI filers overpay |
 | 9 | `income_tax_calculation` + `qdcgtw` | **25% rate (unrecaptured §1250) and 28% rate (collectibles) never applied** — `qdcgtw` is a stub; `income_tax_calculation` has no 25%/28% tier | All real property sellers and collectibles holders taxed at wrong (lower) rate |
 | 10 | `rrb1099r` | Tier 1 (SSEB) benefits never forwarded to `agi_aggregator` — IRC §86 worksheet never triggered | All railroad retirees have 0% SS taxability regardless of income |
@@ -2317,22 +2317,22 @@ These bugs produce an incorrect return for large populations of ordinary taxpaye
 
 | # | Node | Bug | Impact |
 |---|------|-----|--------|
-| 15 | `form2555` | No partial-year FEIE proration (IRC §911(b)(2)(A)) — full $130,000 given regardless of qualifying days | Expats with <365 qualified days get excess exclusion |
-| 16 | `form2555` | IRC §911(f) stacking rule not implemented — excluded income not taxed at bottom of brackets | Systematic understatement of expat income tax |
-| 17 | `form2555` | SE income not preserved for Schedule SE — excluded from income with no SE tax trigger | Self-employed expats owe SE tax that is never computed |
-| 18 | `form_1116` | FTC carryback (1 yr) and carryforward (10 yr) not tracked — excess FTC permanently lost | FTC benefit lost; can't be applied to future years |
-| 19 | `form6251` | No QDCGT worksheet for AMT (IRC §55(b)(3)) — qualified dividends and LTCG taxed at 26%/28% instead of 0%/15%/20% | AMT overstated for any taxpayer with investment income |
-| 20 | `form8959` | QSS threshold is $200,000 instead of $250,000 — falls through to `THRESHOLD_OTHER` | QSS filers pay excess Additional Medicare Tax |
-| 21 | `form8959` | Medicare tax withheld never routed to Form 1040 — `f1040Output(line24)` dead | Under-counts payments; overstates amount owed for all Form 8959 filers |
-| 22 | `form7206` | LTC premium limits hardcoded at TY2024 values (e.g. $6,020 for age 71+, should be $5,970) | Overstated SE health insurance deduction for age 61+ |
-| 23 | `form8839` | Refundable adoption credit path emits to `line30_refundable_adoption` which hasn't existed since TY2013 | Inflated refund for adoption credit filers |
-| 24 | `ssa1099` / `agi_aggregator` | Tax-exempt interest absent from provisional income (IRC §86(b)(1)) | Taxable SS understated for muni bond holders |
-| 25 | `ssa1099` / `agi_aggregator` | MFS-lived-with-spouse rule missing (IRC §86(c)(2)) — should be 85% always taxable, $0 threshold | Under-taxes some MFS SS recipients |
-| 26 | `form4797` | §1231 net loss routed to Schedule D instead of ordinary income (IRC §1231(a)(2)) | Wrong rate + subject to $3,000 cap instead of fully deductible |
-| 27 | `form4797` | Unrecaptured §1250 gain not tracked to 25% rate worksheet | All real property depreciation recapture taxed at 0%/15%/20% instead of 25% |
-| 28 | `form4562` | No 27.5-year (residential) or 39-year (commercial) MACRS — rental/commercial depreciation returns $0 | All rental property owners get zero depreciation |
-| 29 | `k1_trust` | DNI limitation (IRC §662) entirely absent — most fundamental rule for complex trust distributions | Trust distributions can be over- or under-taxed |
-| 30 | `f1040 output` | AGI floored at `Math.max(0, ...)` — AGI can be negative in large NOL scenarios | Overstates AGI, affects downstream SS taxability, deductions |
+| 15 | `form2555` | ~~No partial-year FEIE proration (IRC §911(b)(2)(A)) — full $130,000 given regardless of qualifying days | Expats with <365 qualified days get excess exclusion |
+| 16 | `form2555` | ~~IRC §911(f) stacking rule not implemented — excluded income not taxed at bottom of brackets | Systematic understatement of expat income tax |
+| 17 | `form2555` | ~~SE income not preserved for Schedule SE — excluded from income with no SE tax trigger | Self-employed expats owe SE tax that is never computed |
+| 18 | `form_1116` | ~~FTC carryback (1 yr) and carryforward (10 yr) not tracked — excess FTC permanently lost | FTC benefit lost; can't be applied to future years |
+| 19 | `form6251` | ~~No QDCGT worksheet for AMT (IRC §55(b)(3)) — qualified dividends and LTCG taxed at 26%/28% instead of 0%/15%/20% | AMT overstated for any taxpayer with investment income |
+| 20 | `form8959` | ~~QSS threshold is $200,000 instead of $250,000~~ | ✅ FIXED 2026-04-08 |
+| 21 | `form8959` | ~~Medicare tax withheld never routed to Form 1040 — `f1040Output(line24)` dead~~ | ✅ FIXED 2026-04-08 |
+| 22 | `form7206` | ~~LTC premium limits hardcoded at TY2024 values (e.g. $6,020 for age 71+, should be $5,970)~~ | ✅ FIXED 2026-04-08 |
+| 23 | `form8839` | ~~Refundable adoption credit path emits to `line30_refundable_adoption` which hasn't existed since TY2013~~ | ✅ FIXED 2026-04-08 |
+| 24 | `ssa1099` / `agi_aggregator` | ~~Tax-exempt interest absent from provisional income (IRC §86(b)(1))~~ | ✅ FIXED 2026-04-08 |
+| 25 | `ssa1099` / `agi_aggregator` | ~~MFS-lived-with-spouse rule missing (IRC §86(c)(2)) — should be 85% always taxable, $0 threshold~~ | ✅ FIXED 2026-04-08 |
+| 26 | `form4797` | ~~§1231 net loss routed to Schedule D instead of ordinary income (IRC §1231(a)(2)) | Wrong rate + subject to $3,000 cap instead of fully deductible |
+| 27 | `form4797` | ~~Unrecaptured §1250 gain not tracked to 25% rate worksheet | All real property depreciation recapture taxed at 0%/15%/20% instead of 25% |
+| 28 | `form4562` | ~~No 27.5-year (residential) or 39-year (commercial) MACRS — rental/commercial depreciation returns $0 | All rental property owners get zero depreciation |
+| 29 | `k1_trust` | ~~DNI limitation (IRC §662) entirely absent — most fundamental rule for complex trust distributions | Trust distributions can be over- or under-taxed |
+| 30 | `f1040 output` | ~~AGI floored at `Math.max(0, ...)` — AGI can be negative in large NOL scenarios~~ | ✅ FIXED 2026-04-08 |
 | 31 | `schedule_a` | OBBBA SALT phase-out (IRC as amended) not implemented — high earners should phase down from $40K | High-MAGI filers get full $40K SALT when they shouldn't |
 
 ---
@@ -2406,28 +2406,29 @@ The following nodes had no material defects — all calculations verified correc
 
 ```
 Week 1 — P0 (Blocks any production release):
-  1. Fix EITC: rate[3]=0.40, phase-out base, MFS guard
-  2. Implement Form 2441 §21 credit; fix MFS exclusion cap
-  3. Fix Form 8962 contribution % table; add repayment caps
-  4. Fix Form 8995A → standard_deduction route
-  5. Implement 25% and 28% rate tiers in income_tax_calculation
-  6. Fix RRB-1099R → agi_aggregator routing
-  7. Fix Form 1099-K: implement income output, update threshold to $5,000
-  8. Fix Schedule A MFS SALT cap ($20,000)
-  9. Fix Schedule D QOF code removal from RATE_28_CODES
+  1. ~~Fix EITC: rate[3]=0.40, phase-out base, MFS guard~~ ✅ FIXED 2026-04-08
+  2. ~~Implement Form 2441 §21 credit; fix MFS exclusion cap~~ ✅ FIXED 2026-04-08
+  3. ~~Fix Form 8962 contribution % table; add repayment caps~~ ✅ FIXED 2026-04-08
+  4. ~~Fix Form 8995A → standard_deduction route~~ ✅ FIXED 2026-04-08
+  5. ~~Implement 25% and 28% rate tiers in income_tax_calculation~~ ✅ FIXED 2026-04-08
+  6. ~~Fix RRB-1099R → agi_aggregator routing~~ ✅ FIXED 2026-04-08
+  7. ~~Fix Form 1099-K: implement income output, update threshold to $5,000~~ ✅ FIXED 2026-04-08
+  8. ~~Fix Schedule A MFS SALT cap ($20,000)~~ ✅ FIXED 2026-04-08
+  9. ~~Fix Schedule D QOF code removal from RATE_28_CODES~~ ✅ FIXED 2026-04-08
 
 Week 2 — P1 (Wrong tax for specific populations):
-  10. Form 2555: proration, stacking rule, SE preservation
-  11. Form 1116: carryback/forward, AMT FTC
-  12. Form 6251: QDCGT worksheet for AMT
-  13. Form 8959: fix QSS threshold; wire Medicare withholding output
-  14. Form 7206: update LTC limits to TY2025 values
-  15. Form 8839: remove refundable path
-  16. AGI aggregator: add tax-exempt interest; MFS-lived-with-spouse rule
-  17. Form 4797: §1231 loss → ordinary; track §1250 gain
-  18. Form 4562: add 27.5/39-year MACRS
-  19. K-1 Trust: implement DNI limitation
-  20. f1040: remove AGI floor of 0; emit missing lines
+  10. ~~Form 2555: proration, stacking rule, SE preservation~~ ✅ FIXED 2026-04-08
+  11. ~~Form 1116: carryback/forward, AMT FTC~~ ✅ FIXED 2026-04-08
+  12. ~~Form 6251: QDCGT worksheet for AMT~~ ✅ FIXED 2026-04-08
+  13. ~~Form 8959: fix QSS threshold; wire Medicare withholding output~~ ✅ FIXED 2026-04-08
+  14. ~~Form 7206: update LTC limits to TY2025 values~~ ✅ FIXED 2026-04-08
+  15. ~~Form 8839: remove refundable path~~ ✅ FIXED 2026-04-08
+  16. ~~AGI aggregator: add tax-exempt interest; MFS-lived-with-spouse rule~~ ✅ FIXED 2026-04-08
+  17. ~~Form 4797: §1231 loss → ordinary; track §1250 gain~~ ✅ FIXED 2026-04-08
+  18. ~~Form 4562: add 27.5/39-year MACRS~~ ✅ FIXED 2026-04-08
+  19. ~~K-1 Trust: implement DNI limitation~~ ✅ FIXED 2026-04-08
+  20. ~~f1040: remove AGI floor of 0~~ ✅ FIXED 2026-04-08; ~~emit missing lines~~ ✅ FIXED 2026-04-08
+  20b. ~~Schedule A: OBBBA SALT phase-out (30% over $500K/$250K MFS)~~ ✅ FIXED 2026-04-08
 
 Week 3 — P2/P3 (Carryforwards + silent drops):
   21. Emit PAL (8582), at-risk (6198), FTC, BIE, investment interest carryforwards

@@ -13,5 +13,6 @@ export interface FormDefinition {
   readonly inputNodes: readonly InputNodeEntry[];
   readonly registry: Record<string, TaxNode>;
   readonly buildMefXml: (pending: Record<string, unknown>, filer?: FilerIdentity) => string;
+  readonly buildPdfBytes: (pending: Record<string, unknown>, filer?: FilerIdentity) => Promise<Uint8Array>;
   readonly buildPending: (pending: Record<string, unknown>) => Record<string, unknown>;
 }

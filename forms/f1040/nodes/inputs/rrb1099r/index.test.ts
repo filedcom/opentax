@@ -385,6 +385,18 @@ Deno.test("rrb1099r: does not route to schedule1", () => {
   assertEquals(sched1, undefined);
 });
 
+Deno.test("rrb1099r: SSEB routes to agi_aggregator with line6a_ss_gross (IRC §86 worksheet)", () => {
+  const result = compute([minimalItem({ box3_sseb_gross: 12000 })]);
+  const agiOut = findOutput(result, "agi_aggregator");
+  assertEquals(agiOut !== undefined, true);
+  assertEquals((agiOut!.fields as Record<string, unknown>).line6a_ss_gross, 12000);
+});
+
+Deno.test("rrb1099r: no SSEB — no agi_aggregator output", () => {
+  const result = compute([minimalItem({ box8_tier2_gross: 8000 })]);
+  assertEquals(findOutput(result, "agi_aggregator"), undefined);
+});
+
 Deno.test("rrb1099r: no income produces zero outputs total", () => {
   const result = compute([minimalItem()]);
   assertEquals(result.outputs.length, 0);

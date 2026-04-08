@@ -148,9 +148,12 @@ Deno.test("household_wages.compute: ss_tax_withheld does not create separate out
   assertEquals(result.outputs.length, 1);
 });
 
-Deno.test("household_wages.compute: medicare_tax_withheld does not create separate output", () => {
+Deno.test("household_wages.compute: medicare_tax_withheld routes to form8959", () => {
   const result = compute([minimalItem({ wages_received: 20000, medicare_tax_withheld: 290 })]);
-  assertEquals(result.outputs.length, 1);
+  // f1040 output for wages + form8959 output for Medicare withholding
+  assertEquals(result.outputs.length, 2);
+  const f8959 = findOutput(result, "form8959");
+  assertEquals(f8959?.fields?.medicare_withheld, 290);
 });
 
 // =============================================================================
@@ -229,5 +232,6 @@ Deno.test("household_wages.compute: smoke test — two employers with full detai
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line1b_household_wages, 25000);
   assertEquals(out!.fields.line25a_w2_withheld, 3400);
-  assertEquals(result.outputs.length, 1);
+  // f1040 + form8959 (Medicare wages 25000, withheld 362.50)
+  assertEquals(result.outputs.length, 2);
 });

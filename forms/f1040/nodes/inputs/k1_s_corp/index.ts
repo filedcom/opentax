@@ -9,6 +9,7 @@ import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
+import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits
@@ -189,6 +190,14 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
   return [output(form8995, fields as unknown as Parameters<typeof output<typeof form8995>>[1])];
 }
 
+// Route K-1 Box 9 §1231 gain/loss → Form 4797 (Part I)
+// IRC §1231 gains/losses from S-corps flow through Form 4797
+function form4797Outputs(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box9_net_1231 ?? 0), 0);
+  if (total === 0) return [];
+  return [output(form4797, { section_1231_gain: total })];
+}
+
 // Route Form 7203 basis data when stock or debt basis fields are provided
 function hasBasisData(item: K1SCorpItem): boolean {
   return (
@@ -233,7 +242,7 @@ function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
 class K1SCorpNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_s_corp";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116, form7203]);
+  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116, form7203, form4797]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
@@ -247,6 +256,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       ...form8995Output(k1_s_corps),
       ...form1116Outputs(k1_s_corps),
       ...form7203Outputs(k1_s_corps),
+      ...form4797Outputs(k1_s_corps),
     ];
 
     return { outputs };

@@ -77,15 +77,26 @@ function netTaxableOid(item: OIDItem): number {
   return Math.max(0, oid - premium - nominee);
 }
 
-// Route each payer's net OID to Schedule B as interest income
+// Net taxable Treasury OID (box 8) after bond premium reduction (box 10)
+// Box 8 OID is taxable for federal purposes (exempt from state/local)
+function netTreasuryOid(item: OIDItem): number {
+  const oid = item.box8_oid_treasury ?? 0;
+  const premium = item.box10_bond_premium ?? 0;
+  return Math.max(0, oid - premium);
+}
+
+// Route each payer's net OID (box 1 + box 2 + box 8 Treasury) to Schedule B as interest income
 function scheduleBOutputs(items: OIDItems): NodeOutput[] {
-  return items.map((item) =>
-    output(schedule_b, {
-      payer_name: item.payer_name,
-      taxable_interest_net: netTaxableOid(item) +
-        (item.box2_other_interest ?? 0),
-    })
-  );
+  return items
+    .filter((item) => netTaxableOid(item) + (item.box2_other_interest ?? 0) + netTreasuryOid(item) > 0)
+    .map((item) =>
+      output(schedule_b, {
+        payer_name: item.payer_name,
+        taxable_interest_net: netTaxableOid(item) +
+          (item.box2_other_interest ?? 0) +
+          netTreasuryOid(item),
+      })
+    );
 }
 
 // Form 6251 AMT: tax-exempt OID from private activity bonds (box11)

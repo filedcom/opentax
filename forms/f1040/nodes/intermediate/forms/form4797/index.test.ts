@@ -62,16 +62,30 @@ Deno.test("Part I: zero §1231 gain produces no schedule_d output", () => {
   assertEquals(sd, undefined);
 });
 
-Deno.test("Part I: §1231 loss (negative) produces no schedule_d output and no ordinary gain", () => {
-  // Net §1231 loss goes on Sch D line 11 as negative for Part I purposes,
-  // but the IRS says report the loss on line 11 of Sch D when line 7 is negative.
-  // For our purposes: a loss flows to schedule_d as a negative LT number.
+// ─── Part I — §1231 net LOSS → ordinary income (IRC §1231(a)(2)) ──────────────
+
+Deno.test("Part I: §1231 net loss routes to schedule1 as ordinary loss — NOT schedule_d", () => {
+  // IRC §1231(a)(2): net §1231 losses are ordinary, fully deductible, no $3k cap
   const result = compute({ section_1231_gain: -4_000 });
   const sd = findOutput(result, "schedule_d");
-  // Losses from Part I flow to Sch D as negative
-  assertEquals(sd?.fields.line_11_form2439, -4_000);
   const s1 = findOutput(result, "schedule1");
-  assertEquals(s1, undefined);
+  assertEquals(sd, undefined); // must NOT go to Schedule D
+  assertEquals(s1?.fields.line4_other_gains, -4_000); // ordinary loss
+});
+
+Deno.test("Part I: §1231 loss combined with ordinary gain → single schedule1 output", () => {
+  // §1231 loss -3,000 + Part II ordinary gain 1,000 = net -2,000 ordinary
+  const result = compute({ section_1231_gain: -3_000, ordinary_gain: 1_000 });
+  const sd = findOutput(result, "schedule_d");
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(sd, undefined);
+  assertEquals(s1?.fields.line4_other_gains, -2_000);
+});
+
+Deno.test("Part I: §1231 loss also routes to agi_aggregator", () => {
+  const result = compute({ section_1231_gain: -5_000 });
+  const agi = findOutput(result, "agi_aggregator");
+  assertEquals(agi?.fields.line4_other_gains, -5_000);
 });
 
 // ─── Part II — Ordinary gains ─────────────────────────────────────────────────
@@ -108,6 +122,31 @@ Deno.test("Part III: §1250 recapture included in ordinary gain", () => {
   const result = compute({ ordinary_gain: 5_000, recapture_1250: 5_000 });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line4_other_gains, 5_000);
+});
+
+// ─── Unrecaptured §1250 gain → Schedule D line 19 (25% rate tier) ─────────────
+
+Deno.test("unrecaptured §1250 gain routes to schedule_d line19_unrecaptured_1250", () => {
+  // §1231 gain of 50,000 with 20,000 of unrecaptured §1250 gain
+  const result = compute({ section_1231_gain: 50_000, unrecaptured_section_1250_gain: 20_000 });
+  const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
+  const gainOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
+  const unrecapturedOut = sdOutputs.find((o) => "line19_unrecaptured_1250" in o.fields);
+  assertEquals(gainOut?.fields.line_11_form2439, 50_000);
+  assertEquals(unrecapturedOut?.fields.line19_unrecaptured_1250, 20_000);
+});
+
+Deno.test("unrecaptured §1250 gain routes to schedule_d even without §1231 gain", () => {
+  const result = compute({ ordinary_gain: 10_000, unrecaptured_section_1250_gain: 8_000 });
+  const sdOut = findOutput(result, "schedule_d");
+  assertEquals(sdOut?.fields.line19_unrecaptured_1250, 8_000);
+});
+
+Deno.test("zero unrecaptured §1250 gain produces no schedule_d line19 output", () => {
+  const result = compute({ section_1231_gain: 10_000, unrecaptured_section_1250_gain: 0 });
+  const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
+  const unrecapturedOut = sdOutputs.find((o) => "line19_unrecaptured_1250" in o.fields);
+  assertEquals(unrecapturedOut, undefined);
 });
 
 // ─── Combined scenarios ────────────────────────────────────────────────────────

@@ -118,22 +118,22 @@ Deno.test("f1099oid: multiple payers produce multiple schedule_b outputs", () =>
 // 5. Zero OID — schedule_b still emitted with 0
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: zero OID — schedule_b emitted with 0", () => {
+Deno.test("f1099oid: zero OID — no schedule_b emitted", () => {
   const result = compute([{ payer_name: "Corp", box1_oid: 0 }]);
   const sb = findOutput(result, "schedule_b");
-  assertEquals(sb?.fields?.taxable_interest_net, 0);
+  assertEquals(sb, undefined);
 });
 
 // ---------------------------------------------------------------------------
 // 6. Acquisition premium cannot push OID below 0
 // ---------------------------------------------------------------------------
 
-Deno.test("f1099oid: acquisition premium exceeding OID floors at 0", () => {
+Deno.test("f1099oid: acquisition premium exceeding OID — no schedule_b emitted", () => {
   const result = compute([{
     payer_name: "Corp",
     box1_oid: 100,
     box6_acquisition_premium: 500,
   }]);
   const sb = findOutput(result, "schedule_b");
-  assertEquals(sb?.fields?.taxable_interest_net, 0);
+  assertEquals(sb, undefined);
 });

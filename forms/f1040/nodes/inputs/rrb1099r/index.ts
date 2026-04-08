@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // RRB-1099-R — Railroad Retirement Board Pension, Annuity, and Retirement Benefits
@@ -156,7 +157,7 @@ function withholdingF1040Fields(items: RRBItems): Record<string, number> {
 class Rrb1099rNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "rrb1099r";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { rrb1099rs } = inputSchema.parse(input);
@@ -172,6 +173,13 @@ class Rrb1099rNode extends TaxNode<typeof inputSchema> {
       outputs.push(
         output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
       );
+    }
+
+    // Route SSEB (Tier 1 SS-equivalent) to agi_aggregator to trigger IRC §86
+    // taxability worksheet — matches ssa1099 node behavior.
+    const ssebTotal = rrb1099rs.reduce((sum, item) => sum + netSseb(item), 0);
+    if (ssebTotal > 0) {
+      outputs.push(output(agi_aggregator, { line6a_ss_gross: ssebTotal }));
     }
 
     return { outputs };

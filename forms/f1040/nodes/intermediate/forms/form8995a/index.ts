@@ -6,6 +6,7 @@ import type {
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import {
@@ -175,7 +176,7 @@ function hasQbiActivity(input: Form8995AInput): boolean {
 class Form8995ANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8995a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction]);
 
   compute(_ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -205,6 +206,7 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line13_qbi_deduction: deduction }),
+      this.outputNodes.output(standard_deduction, { qbi_deduction: deduction }),
     ];
 
     return { outputs };

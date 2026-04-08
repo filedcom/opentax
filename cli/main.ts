@@ -11,7 +11,7 @@ import {
 import { graphViewCommand } from "./commands/graph.ts";
 import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
-import { exportMefCommand } from "./commands/export.ts";
+import { exportMefCommand, exportPdfCommand } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
 
 const RETURNS_DIR = "./returns";
@@ -98,24 +98,32 @@ const COMMANDS: readonly CommandDef[] = [
   {
     cmd: "return",
     sub: "export",
-    description: "Export a return as MEF XML",
-    usage: "tax return export --returnId <id> --type mef [--force]",
+    description: "Export a return as MEF XML or filled IRS PDF",
+    usage: "tax return export --returnId <id> --type mef|pdf [--force] [--output <path>]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--type", description: "Export format (mef)", required: true },
+      { flag: "--type", description: "Export format: mef or pdf", required: true },
       { flag: "--force", description: "Bypass reject-severity validation gate", required: false },
+      { flag: "--output", description: "Output file path (pdf only; default: returns/<id>/export.pdf)", required: false },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
-      if (args.type !== "mef") {
-        console.error("Error: --type must be 'mef'");
+      const force = args.force === true || args.force === "true";
+      if (args.type === "mef") {
+        await run(async () => {
+          const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR, force });
+          console.log(xml);
+        });
+      } else if (args.type === "pdf") {
+        await run(async () => {
+          const outputPath = args.output as string | undefined;
+          const writtenPath = await exportPdfCommand({ returnId, baseDir: RETURNS_DIR, force, outputPath });
+          console.log(`PDF written to ${writtenPath}`);
+        });
+      } else {
+        console.error("Error: --type must be 'mef' or 'pdf'");
         Deno.exit(1);
       }
-      const force = args.force === true || args.force === "true";
-      await run(async () => {
-        const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR, force });
-        console.log(xml);
-      });
     },
   },
   {
@@ -255,7 +263,7 @@ const COMMANDS: readonly CommandDef[] = [
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format"],
+    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format", "output"],
     boolean: ["json", "help"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;

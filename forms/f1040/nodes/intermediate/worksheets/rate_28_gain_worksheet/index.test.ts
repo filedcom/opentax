@@ -31,10 +31,10 @@ Deno.test("explicit zeros: no outputs", () => {
 
 Deno.test("collectibles_gain_from_8949 only: routes to qdcgtw", () => {
   const result = compute({ collectibles_gain_from_8949: 5_000 });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,5_000);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 5_000);
 });
 
 Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
@@ -49,10 +49,10 @@ Deno.test("collectibles_gain_from_8949 only: no schedule_d output", () => {
 
 Deno.test("collectibles_gain only: routes to qdcgtw", () => {
   const result = compute({ collectibles_gain: 1_200 });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,1_200);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 1_200);
 });
 
 Deno.test("collectibles_gain only: no schedule_d output", () => {
@@ -67,10 +67,10 @@ Deno.test("collectibles_gain only: no schedule_d output", () => {
 
 Deno.test("combined gains: routes to qdcgtw with summed line18", () => {
   const result = compute({ collectibles_gain_from_8949: 4_000, collectibles_gain: 1_500 });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,5_500);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 5_500);
 });
 
 Deno.test("combined gains: no schedule_d output", () => {
@@ -110,10 +110,17 @@ Deno.test("non-numeric input: throws", () => {
 
 Deno.test("fractional cents: routes to qdcgtw with correct value", () => {
   const result = compute({ collectibles_gain_from_8949: 1234.56, collectibles_gain: 78.90 });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,1313.46);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 1313.46);
+});
+
+Deno.test("routes to income_tax_calculation with rate_28_gain", () => {
+  const result = compute({ collectibles_gain_from_8949: 5_000 });
+  const out = findOutput(result, "income_tax_calculation");
+  assertEquals(out !== undefined, true);
+  assertEquals((out!.fields as Record<string, number>).rate_28_gain, 5_000);
 });
 
 // ---------------------------------------------------------------------------
@@ -122,8 +129,8 @@ Deno.test("fractional cents: routes to qdcgtw with correct value", () => {
 
 Deno.test("smoke: large collectibles gain routes to qdcgtw", () => {
   const result = compute({ collectibles_gain_from_8949: 100_000, collectibles_gain: 25_000 });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   const out = findOutput(result, "qdcgtw");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain,125_000);
+  assertEquals(fieldsOf(result.outputs, qdcgtw)!.line18_28pct_gain, 125_000);
 });

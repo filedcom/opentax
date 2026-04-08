@@ -22,6 +22,12 @@ export const itemSchema = z.object({
   // Identification
   estate_trust_name: z.string().min(1),
 
+  // Distributable Net Income (DNI) — the ceiling on beneficiary inclusion
+  // per IRC §662(a). If provided and total distributions exceed DNI, all
+  // income characters are scaled proportionally per IRC §662(b).
+  // Omit (or set equal/greater than total distributions) to apply no cap.
+  distributable_net_income: z.number().nonnegative().optional(),
+
   // Box 1 — Interest income → Schedule B Part I
   box1_interest: z.number().nonnegative().optional(),
 
@@ -75,6 +81,63 @@ export const inputSchema = z.object({
 
 type K1TrustItem = z.infer<typeof itemSchema>;
 type K1TrustItems = K1TrustItem[];
+
+// ─── DNI limitation (IRC §662) ────────────────────────────────────────────────
+
+// Compute total positive income across all characters for DNI comparison.
+// Losses are excluded from the total — they reduce DNI directly at the trust level.
+function totalPositiveIncome(item: K1TrustItem): number {
+  return (
+    (item.box1_interest ?? 0) +
+    (item.box2a_ordinary_dividends ?? 0) +
+    Math.max(0, item.box3_net_st_cap_gain ?? 0) +
+    Math.max(0, item.box4a_net_lt_cap_gain ?? 0) +
+    Math.max(0, item.box5_other_portfolio ?? 0) +
+    Math.max(0, item.box6_ordinary_business ?? 0) +
+    Math.max(0, item.box7_rental_real_estate ?? 0) +
+    Math.max(0, item.box8_other_rental ?? 0)
+  );
+}
+
+// Apply the DNI limitation per IRC §662(a)/(b).
+// If total distributions exceed DNI, scale every income character proportionally
+// so that the beneficiary's total inclusion equals DNI.
+// Losses pass through unchanged (they are not "distributed income").
+function applyDniLimit(item: K1TrustItem): K1TrustItem {
+  const dni = item.distributable_net_income;
+  if (dni === undefined) return item;
+
+  const total = totalPositiveIncome(item);
+  if (total <= 0 || total <= dni) return item;
+
+  const ratio = dni / total;
+
+  return {
+    ...item,
+    box1_interest: item.box1_interest !== undefined
+      ? item.box1_interest * ratio : undefined,
+    box2a_ordinary_dividends: item.box2a_ordinary_dividends !== undefined
+      ? item.box2a_ordinary_dividends * ratio : undefined,
+    box2b_qualified_dividends: item.box2b_qualified_dividends !== undefined
+      ? item.box2b_qualified_dividends * ratio : undefined,
+    box3_net_st_cap_gain: item.box3_net_st_cap_gain !== undefined && item.box3_net_st_cap_gain > 0
+      ? item.box3_net_st_cap_gain * ratio : item.box3_net_st_cap_gain,
+    box4a_net_lt_cap_gain: item.box4a_net_lt_cap_gain !== undefined && item.box4a_net_lt_cap_gain > 0
+      ? item.box4a_net_lt_cap_gain * ratio : item.box4a_net_lt_cap_gain,
+    box5_other_portfolio: item.box5_other_portfolio !== undefined && item.box5_other_portfolio > 0
+      ? item.box5_other_portfolio * ratio : item.box5_other_portfolio,
+    box6_ordinary_business: item.box6_ordinary_business !== undefined && item.box6_ordinary_business > 0
+      ? item.box6_ordinary_business * ratio : item.box6_ordinary_business,
+    box7_rental_real_estate: item.box7_rental_real_estate !== undefined && item.box7_rental_real_estate > 0
+      ? item.box7_rental_real_estate * ratio : item.box7_rental_real_estate,
+    box8_other_rental: item.box8_other_rental !== undefined && item.box8_other_rental > 0
+      ? item.box8_other_rental * ratio : item.box8_other_rental,
+    box14_foreign_income: item.box14_foreign_income !== undefined
+      ? item.box14_foreign_income * ratio : undefined,
+  };
+}
+
+// ─── Output helpers ───────────────────────────────────────────────────────────
 
 // Per-payer schedule_b entries for interest (Box 1)
 function scheduleBInterestOutputs(items: K1TrustItems): NodeOutput[] {
@@ -167,13 +230,16 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_trusts } = inputSchema.parse(input);
 
+    // Apply DNI limitation per IRC §662 before routing any income
+    const limitedItems = k1_trusts.map(applyDniLimit);
+
     const outputs: NodeOutput[] = [
-      ...scheduleBInterestOutputs(k1_trusts),
-      ...scheduleBDividendOutputs(k1_trusts),
-      ...f1040QualDivOutput(k1_trusts),
-      ...scheduleDOutput(k1_trusts),
-      ...schedule1Output(k1_trusts),
-      ...form1116Outputs(k1_trusts),
+      ...scheduleBInterestOutputs(limitedItems),
+      ...scheduleBDividendOutputs(limitedItems),
+      ...f1040QualDivOutput(limitedItems),
+      ...scheduleDOutput(limitedItems),
+      ...schedule1Output(limitedItems),
+      ...form1116Outputs(limitedItems),
     ];
 
     return { outputs };

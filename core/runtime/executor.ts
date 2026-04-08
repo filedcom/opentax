@@ -13,6 +13,7 @@ export type ExecutorDiagnosticEntry = {
 export type ExecuteResult = {
   readonly pending: Readonly<Record<string, Record<string, unknown>>>;
   readonly diagnostics: readonly ExecutorDiagnosticEntry[];
+  readonly carryforwards: Readonly<Record<string, number>>;
 };
 
 /**
@@ -72,6 +73,7 @@ export function execute(
   pending["start"] = { ...inputs };
 
   const diagnostics: ExecutorDiagnosticEntry[] = [];
+  const carryforwards: Record<string, number> = {};
 
   for (const step of plan) {
     const node = registry[step.nodeType];
@@ -100,6 +102,9 @@ export function execute(
       for (const output of result.outputs) {
         mergePending(pending, output.nodeType, output.fields);
       }
+      if (result.carryforwards) {
+        Object.assign(carryforwards, result.carryforwards);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       diagnostics.push({
@@ -112,5 +117,5 @@ export function execute(
     }
   }
 
-  return { pending, diagnostics };
+  return { pending, diagnostics, carryforwards };
 }

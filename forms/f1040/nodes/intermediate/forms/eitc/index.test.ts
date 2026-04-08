@@ -219,16 +219,16 @@ Deno.test("2 children single — one dollar over limit ($55,769) → $0", () => 
 });
 
 // ─── Three Children (Single) ──────────────────────────────────────────────────
-// Phase-in rate: 45% | Phase-in end: $17,880 | Max credit: $8,046
+// Phase-in rate: 40% (IRC §32(b)(1)(B)) | Phase-in end: $17,880 | Max credit: $8,046
 // Phase-out start (single): $23,511 | Phase-out rate: 21.06% | Income limit: $59,899
 
-Deno.test("3 children single — phase-in midpoint ($8,940) → $4,023", () => {
-  // 8940 × 0.45 = 4023
+Deno.test("3 children single — phase-in midpoint ($8,940) → $3,576", () => {
+  // 8940 × 0.40 = 3576 (rate is 40%, not 45%)
   assertEquals(getCredit({
     earned_income: 8_940,
     qualifying_children: 3,
     filing_status: FilingStatus.Single,
-  }), 4_023);
+  }), 3_576);
 });
 
 Deno.test("3 children single — at phase-in end ($17,880) → max $8,046", () => {
@@ -313,20 +313,20 @@ Deno.test("MFJ_vs_single_1_child — $45,000 income: single phased out, MFJ stil
 });
 
 // ─── AGI vs Earned Income ─────────────────────────────────────────────────────
-// The implementation phases out based on earned_income, not AGI.
-// This test pins that behavior: when AGI > earned_income, phaseout uses earned_income.
+// IRC §32(a)(2)(B): phaseout uses max(earned_income, AGI).
+// When AGI > earned income (e.g. large capital gains), AGI controls.
 
-Deno.test("agi_vs_earned_income — phaseout uses earned_income, not AGI", () => {
+Deno.test("agi_vs_earned_income — phaseout uses max(earned_income, AGI) per IRC §32(a)(2)(B)", () => {
   // earned_income=$25,000 (just above phase-out start $23,511), agi=$40,000
-  // If phaseout used AGI: reduction = 0.1598 × (40000-23511) = 0.1598 × 16489 = 2634.94 → credit ≈ 1693
-  // If phaseout uses earned_income: reduction = 0.1598 × (25000-23511) = 0.1598 × 1489 = 237.93 → credit ≈ 4090
-  // Math.round(4328 - 0.1598 × (25000 - 23511)) = Math.round(4328 - 237.9322) = Math.round(4090.068) = 4090
+  // max(25000, 40000) = 40000 → phaseout base is AGI
+  // reduction = 0.1598 × (40000 - 23511) = 0.1598 × 16489 ≈ 2634.94
+  // Math.round(4328 - 2634.94) = Math.round(1693.06) = 1693
   assertEquals(getCredit({
     earned_income: 25_000,
     agi: 40_000,
     qualifying_children: 1,
     filing_status: FilingStatus.Single,
-  }), 4_090);
+  }), 1_693);
 });
 
 // ─── SE Income Counts as Earned Income ───────────────────────────────────────
@@ -348,6 +348,17 @@ Deno.test("se_net_profit combined with wages reaches max credit", () => {
     qualifying_children: 1,
     filing_status: FilingStatus.Single,
   }), 4_328);
+});
+
+// ─── MFS Disqualification ─────────────────────────────────────────────────────
+
+Deno.test("MFS filing status — disqualified from EITC (IRC §32(d))", () => {
+  // MFS filers are categorically ineligible regardless of income/children
+  assertEquals(getCredit({
+    earned_income: 12_730,
+    qualifying_children: 1,
+    filing_status: FilingStatus.MFS,
+  }), 0);
 });
 
 // ─── Output Routes to f1040 line27_eitc ──────────────────────────────────────

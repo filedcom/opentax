@@ -69,8 +69,10 @@ type Form8959Input = z.infer<typeof inputSchema>;
 
 // Threshold for filing status
 // Form 8959 line 5 / line 15; not indexed for inflation
+// QSS uses MFJ threshold per IRC §3101(b)(2) and Form 8959 instructions
 function threshold(status: FilingStatus): number {
   if (status === FilingStatus.MFJ) return THRESHOLD_MFJ;
+  if (status === FilingStatus.QSS) return THRESHOLD_MFJ;
   if (status === FilingStatus.MFS) return THRESHOLD_MFS;
   return THRESHOLD_OTHER;
 }
@@ -192,10 +194,9 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...schedule2Output(line18),
-      // Note: line25c (Medicare withholding reconciliation) is intentionally NOT
-      // sent to f1040 payments. W-2 box 6 (regular 1.45% Medicare tax) is a FICA
-      // tax and does not appear on Form 1040 line 25. The Additional Medicare Tax
-      // (0.9%) owed flows to Schedule 2 line 11 → Form 1040 line 17 (other taxes).
+      // Only route withholding to 1040 line25c when Additional Medicare Tax applies.
+      // When line18 = 0, Form 8959 is not filed and no line25c payment is credited.
+      ...(line18 > 0 ? f1040Output(line24) : []),
     ];
 
     return { outputs };

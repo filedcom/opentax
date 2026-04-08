@@ -13,6 +13,8 @@ export type NodeOutput = {
 // What compute() returns
 export type NodeResult = {
   readonly outputs: readonly NodeOutput[];
+  // Carryforward amounts to next tax year (key = descriptive label, value = positive amount)
+  readonly carryforwards?: Readonly<Record<string, number>>;
 };
 
 // Requires at least one key from T to be present

@@ -135,10 +135,18 @@ class Form8824Node extends TaxNode<typeof inputSchema> {
     const realized = gainRealized(input);
     const boot = bootReceived(input);
     const recognized = gainRecognized(realized, boot);
+    const deferred = Math.max(0, realized - recognized);
+
+    // Line 25: replacement property basis = FMV of replacement - deferred gain
+    // IRC §1031(d); Form 8824 line 25
+    const replacementBasis = Math.max(0, (input.received_fmv ?? 0) - deferred);
 
     const gainType = input.gain_type ?? "capital";
 
-    return { outputs: buildOutputs(recognized, gainType) };
+    return {
+      outputs: buildOutputs(recognized, gainType),
+      ...(replacementBasis > 0 ? { carryforwards: { replacement_property_basis_8824: replacementBasis } } : {}),
+    };
   }
 }
 

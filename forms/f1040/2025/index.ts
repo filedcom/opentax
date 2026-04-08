@@ -6,6 +6,7 @@ import { inputNodes } from "./inputs.ts";
 import { registry } from "./registry.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
+import { buildPdfBytes } from "./pdf/builder.ts";
 
 export const f1040_2025: FormDefinition = {
   ...F1040_2025_CONFIG,
@@ -19,6 +20,8 @@ export const f1040_2025: FormDefinition = {
       F1040_2025_CONFIG.taxYear,
       F1040_2025_CONFIG.formType === "f1040" ? "1040" : F1040_2025_CONFIG.formType,
     ),
+  buildPdfBytes: (pending) =>
+    buildPdfBytes(pending),
   buildPending: (pending: Record<string, unknown>) =>
     buildPending(pending) as Record<string, unknown>,
 };

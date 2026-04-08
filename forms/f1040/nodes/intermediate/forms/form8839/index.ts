@@ -88,24 +88,6 @@ function perChildAllowed(child: ChildItem, fraction: number, maxCreditPerChild: 
   return Math.round(baseline * (1 - fraction) * 100) / 100;
 }
 
-// Per-child refundable amount (Part II Line 11b): capped at maxRefundablePerChild per child.
-function perChildRefundable(allowed: number, maxRefundablePerChild: number): number {
-  return Math.min(allowed, maxRefundablePerChild);
-}
-
-// Total refundable credit across all children (Part II Line 13 → Form 1040 Line 30).
-function totalRefundable(
-  children: ChildItem[],
-  fraction: number,
-  maxCreditPerChild: number,
-  maxRefundablePerChild: number,
-): number {
-  return children.reduce((sum, child) => {
-    const allowed = perChildAllowed(child, fraction, maxCreditPerChild);
-    return sum + perChildRefundable(allowed, maxRefundablePerChild);
-  }, 0);
-}
-
 // Total credit across all children (Part II Line 12 = sum of Line 11a).
 function totalCredit(
   children: ChildItem[],
@@ -118,18 +100,14 @@ function totalCredit(
   );
 }
 
-// Nonrefundable credit = total credit minus refundable portion, then limited by tax liability.
+// Nonrefundable credit limited by tax liability.
 // Part II Line 17 → Schedule 3 Line 6c.
-function nonrefundableCredit(
-  total: number,
-  refundable: number,
-  taxLiability: number | undefined,
-): number {
-  const raw = total - refundable;
-  if (raw <= 0) return 0;
+// The adoption credit has been entirely nonrefundable since TY2013 (ATRA §104).
+function nonrefundableCredit(total: number, taxLiability: number | undefined): number {
+  if (total <= 0) return 0;
   // Credit limit worksheet: nonrefundable portion cannot exceed tax liability
   const limit = taxLiability ?? Infinity;
-  return Math.min(raw, limit);
+  return Math.min(total, limit);
 }
 
 // Employer-provided adoption benefits excluded from income (Part III).
@@ -157,30 +135,20 @@ function exclusionAmounts(
 }
 
 // Build credit outputs (Part II).
+// The adoption credit is entirely nonrefundable since TY2013 (ATRA §104).
 function creditOutputs(
   input: Form8839Input,
   fraction: number,
   maxCreditPerChild: number,
-  maxRefundablePerChild: number,
 ): NodeOutput[] {
   const children = input.children ?? [];
   if (children.length === 0) return [];
 
-  const refundable = totalRefundable(children, fraction, maxCreditPerChild, maxRefundablePerChild);
   const total = totalCredit(children, fraction, maxCreditPerChild);
-  const nonrefundable = nonrefundableCredit(total, refundable, input.income_tax_liability);
+  const nonrefundable = nonrefundableCredit(total, input.income_tax_liability);
 
-  const outputs: NodeOutput[] = [];
-
-  if (refundable > 0) {
-    outputs.push(output(f1040, { line30_refundable_adoption: refundable }));
-  }
-
-  if (nonrefundable > 0) {
-    outputs.push(output(schedule3, { line6c_adoption_credit: nonrefundable }));
-  }
-
-  return outputs;
+  if (nonrefundable <= 0) return [];
+  return [output(schedule3, { line6c_adoption_credit: nonrefundable })];
 }
 
 // Build exclusion output (Part III) — taxable employer benefits on f1040 line 1f.
@@ -224,7 +192,6 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
 
   // TY2025 — IRS Instructions for Form 8839 (Dec 8 2025) / Rev Proc 2024-40
   protected readonly maxCreditPerChild = 17280;
-  protected readonly maxRefundablePerChild = 5000;
   protected readonly phaseOutStart = 259190;
   protected readonly phaseOutRange = 40000; // $259,190 to $299,190
 
@@ -249,7 +216,7 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
     const normalized: Form8839Input = { ...input, children, magi };
 
     const outputs = mergeF1040Outputs([
-      ...creditOutputs(normalized, fraction, this.maxCreditPerChild, this.maxRefundablePerChild),
+      ...creditOutputs(normalized, fraction, this.maxCreditPerChild),
       ...exclusionOutputs(normalized, fraction, this.maxCreditPerChild),
     ]);
 

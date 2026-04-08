@@ -55,6 +55,12 @@ export const inputSchema = z.object({
   line6b_ss_taxable: z.number().nonnegative().optional(),
   // Filing status — required for SSA taxability worksheet thresholds (MFJ vs other)
   filing_status: z.string().optional(),
+  // Tax-exempt interest (Schedule B, Form 1099-INT box 8) — included in provisional income
+  // for Social Security taxability per IRC §86(b)(1) even though excluded from AGI
+  tax_exempt_interest: z.number().nonnegative().optional(),
+  // MFS filer who lived with spouse at any time during the year (IRC §86(c)(2))
+  // When true: 85% of SS benefits are always taxable, no threshold applies
+  mfs_lived_with_spouse: z.boolean().optional(),
   // Line 7 — Capital gain or (loss) (Schedule D)
   line7_capital_gain: z.number().optional(),
   // Line 7a — Capital gain distributions (no Schedule D required; from f1099div box2a)
@@ -144,14 +150,20 @@ const SSA_UPPER_THRESHOLD_MFJ = 44_000;
 const SSA_BASE_THRESHOLD_OTHER = 25_000;
 const SSA_UPPER_THRESHOLD_OTHER = 34_000;
 
-function computeSsaTaxable(ssaGross: number, otherIncome: number, isMfj: boolean): number {
+function computeSsaTaxable(
+  ssaGross: number,
+  otherIncome: number,
+  taxExemptInterest: number,
+  isMfj: boolean,
+): number {
   if (ssaGross <= 0) return 0;
 
   const baseThreshold = isMfj ? SSA_BASE_THRESHOLD_MFJ : SSA_BASE_THRESHOLD_OTHER;
   const upperThreshold = isMfj ? SSA_UPPER_THRESHOLD_MFJ : SSA_UPPER_THRESHOLD_OTHER;
 
-  // Provisional income = other AGI items + 50% × SSA gross benefits
-  const provisionalIncome = otherIncome + 0.5 * ssaGross;
+  // Provisional income = other AGI items + tax-exempt interest + 50% × SSA gross benefits
+  // IRC §86(b)(1): tax-exempt interest is included in provisional income
+  const provisionalIncome = otherIncome + taxExemptInterest + 0.5 * ssaGross;
 
   if (provisionalIncome <= baseThreshold) return 0;
 
@@ -210,9 +222,17 @@ function resolveSsaTaxable(input: AgiInput): number {
   if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
   const ssaGross = input.line6a_ss_gross ?? 0;
   if (ssaGross === 0) return 0;
+
+  // IRC §86(c)(2): MFS filer who lived with spouse at any time during the year —
+  // 85% of benefits are always taxable; no threshold applies.
+  if (input.filing_status === "mfs" && input.mfs_lived_with_spouse === true) {
+    return 0.85 * ssaGross;
+  }
+
   const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const taxExemptInterest = input.tax_exempt_interest ?? 0;
   const otherAgi = Math.max(0, nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input));
-  return computeSsaTaxable(ssaGross, otherAgi, isMfj);
+  return computeSsaTaxable(ssaGross, otherAgi, taxExemptInterest, isMfj);
 }
 
 // Sum all income and addition items (before exclusions/deductions).
@@ -279,9 +299,9 @@ function scheduleOnePartI(input: AgiInput): number {
   );
 }
 
-// AGI cannot be negative (loss limitation rules prevent it in practice).
+// AGI can be negative in large NOL scenarios (IRC §172); do not floor at 0.
 function computeAgi(input: AgiInput): number {
-  return Math.max(0, grossIncome(input) - exclusions(input) - aboveLineDeductions(input));
+  return grossIncome(input) - exclusions(input) - aboveLineDeductions(input);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────

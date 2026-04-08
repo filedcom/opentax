@@ -39,10 +39,10 @@ type Form6198Input = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Total loss from the activity for the year (absolute value).
-// = |schedule_c_loss| + prior_unallowed − current_year_income
+// = |schedule_c_loss| + |schedule_f_loss| + prior_unallowed − current_year_income
 // A positive result means there is a net loss subject to limitation.
 function netLossAmount(input: Form6198Input): number {
-  const currentLoss = Math.abs(input.schedule_c_loss ?? 0);
+  const currentLoss = Math.abs(input.schedule_c_loss ?? 0) + Math.abs(input.schedule_f_loss ?? 0);
   const priorCarryforward = input.prior_unallowed ?? 0;
   const income = input.current_year_income ?? 0;
   return Math.max(0, currentLoss + priorCarryforward - income);
@@ -88,6 +88,7 @@ class Form6198Node extends TaxNode<typeof inputSchema> {
         this.outputNodes.output(schedule1, { at_risk_disallowed_add_back: disallowed }),
         this.outputNodes.output(agi_aggregator, { at_risk_disallowed_add_back: disallowed }),
       ],
+      carryforwards: { suspended_at_risk_loss_6198: disallowed },
     };
   }
 }

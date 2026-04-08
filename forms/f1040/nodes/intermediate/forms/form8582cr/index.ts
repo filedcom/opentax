@@ -156,7 +156,11 @@ class Form8582CRNode extends TaxNode<typeof inputSchema> {
     if (available === 0) return { outputs: [] };
 
     const allowedCredit = computeAllowedCredit(input);
-    return { outputs: schedule3Output(allowedCredit) };
+    const suspendedPac = available - allowedCredit;
+    return {
+      outputs: schedule3Output(allowedCredit),
+      ...(suspendedPac > 0 ? { carryforwards: { suspended_pac_8582cr: suspendedPac } } : {}),
+    };
   }
 }
 

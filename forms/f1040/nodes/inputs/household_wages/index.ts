@@ -3,6 +3,7 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Household Employee Wages (IRC §3401(a)(3), §3121(a)(7))
@@ -57,14 +58,28 @@ function f1040Output(items: HouseholdWageItems): NodeOutput[] {
   return [output(f1040, { line1b_household_wages: wages })];
 }
 
+function form8959Output(items: HouseholdWageItems): NodeOutput[] {
+  const medicareWages = items.reduce((sum, item) => sum + (item.medicare_wages ?? 0), 0);
+  const medicareTax = items.reduce((sum, item) => sum + (item.medicare_tax_withheld ?? 0), 0);
+  if (medicareWages === 0 && medicareTax === 0) return [];
+  // Emit partial fields — executor merges; filing_status provided by other upstream nodes
+  if (medicareWages > 0 && medicareTax > 0) {
+    return [output(form8959, { medicare_wages: medicareWages, medicare_withheld: medicareTax } as unknown as Parameters<typeof output<typeof form8959>>[1])];
+  }
+  if (medicareWages > 0) {
+    return [output(form8959, { medicare_wages: medicareWages } as unknown as Parameters<typeof output<typeof form8959>>[1])];
+  }
+  return [output(form8959, { medicare_withheld: medicareTax } as unknown as Parameters<typeof output<typeof form8959>>[1])];
+}
+
 class HouseholdWagesNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "household_wages";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, form8959]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: f1040Output(parsed.household_wages) };
+    return { outputs: [...f1040Output(parsed.household_wages), ...form8959Output(parsed.household_wages)] };
   }
 }
 

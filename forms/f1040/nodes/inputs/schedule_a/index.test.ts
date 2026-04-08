@@ -1,12 +1,10 @@
 // UNRESOLVED ITEMS:
 //   - line_5a_election ("income_tax" | "sales_tax"): not in schema; only line_5a_tax_amount exists
 //   - line_18_itemize_checkbox: not in schema
-//   - magi field for SALT phase-out (OBBB Act): not in schema
-//   - MFS SALT cap ($20,000): filing_status not in schema; only single SALT_CAP ($40,000) is used
-//   - SALT cap phase-out (30% × excess MAGI over $500,000): magi field not in schema
 
 import { assertEquals } from "@std/assert";
 import { scheduleA } from "./index.ts";
+import { FilingStatus } from "../../types.ts";
 
 type ScheduleAInput = Parameters<typeof scheduleA.compute>[1];
 
@@ -365,4 +363,120 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
 
   // three outputs: f1040, standard_deduction, form6251
   assertEquals(result.outputs.length, 3);
+});
+
+// ── MFS SALT cap ─────────────────────────────────────────────────────────────
+
+Deno.test("MFS SALT cap: $25,000 SALT capped at $20,000 for MFS filer", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    line_5a_tax_amount: 15_000,
+    line_5b_real_estate_tax: 10_000, // total SALT = $25,000 → capped at $20,000
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 20_000);
+});
+
+Deno.test("MFS SALT cap: $40,000 SALT capped at $20,000 for MFS (not $40,000)", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    line_5a_tax_amount: 40_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 20_000);
+});
+
+Deno.test("Non-MFS SALT cap: $35,000 SALT capped at $40,000 for Single filer", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 35_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 35_000);
+});
+
+Deno.test("No filing_status: SALT uses $40,000 cap (backward compatible)", () => {
+  const result = compute({ line_5a_tax_amount: 50_000 });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
+});
+
+// =============================================================================
+// 10. OBBBA SALT PHASE-OUT — 30% of MAGI over $500K (single/MFJ/HOH), floor $10K
+// =============================================================================
+
+Deno.test("SALT phase-out: MAGI exactly $500,000 — no phase-out, cap stays $40,000", () => {
+  // At threshold, no reduction
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 40_000,
+    magi: 500_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
+});
+
+Deno.test("SALT phase-out: MAGI $600,000 single — cap reduced to $10,000 (floor)", () => {
+  // excess = 100K; reduction = 30% × 100K = 30K; cap = max(10K, 40K − 30K) = 10K
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 40_000,
+    magi: 600_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
+});
+
+Deno.test("SALT phase-out: MAGI $550,000 single — cap = $25,000", () => {
+  // excess = 50K; reduction = 30% × 50K = 15K; cap = 40K − 15K = 25K
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 40_000,
+    magi: 550_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 25_000);
+});
+
+Deno.test("SALT phase-out: MAGI $800,000 single — capped at floor $10,000", () => {
+  // excess = 300K; reduction = 90K; cap = max(10K, 40K − 90K) = 10K
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 40_000,
+    magi: 800_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
+});
+
+Deno.test("SALT phase-out: actual SALT below phased-down cap — actual SALT allowed", () => {
+  // cap at MAGI=550K = 25K; actual SALT = 15K < 25K → allowed = 15K
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 15_000,
+    magi: 550_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 15_000);
+});
+
+Deno.test("SALT phase-out MFS: MAGI $300,000 — cap reduced to floor $5,000", () => {
+  // MFS: threshold=250K, floor=5K; excess=50K; reduction=30%×50K=15K; cap=max(5K, 20K−15K)=5K
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    line_5a_tax_amount: 20_000,
+    magi: 300_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 5_000);
+});
+
+Deno.test("SALT phase-out MFS: MAGI $270,000 — cap = $14,000", () => {
+  // excess=20K; reduction=30%×20K=6K; cap=20K−6K=14K
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    line_5a_tax_amount: 20_000,
+    magi: 270_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 14_000);
+});
+
+Deno.test("SALT phase-out: magi defaults to agi when not provided", () => {
+  // agi=600K, no magi → uses agi for phase-out; cap = 10K
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line_5a_tax_amount: 40_000,
+    agi: 600_000,
+  });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
 });

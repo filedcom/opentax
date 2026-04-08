@@ -85,12 +85,22 @@ Deno.test("part1_hoh_above: HOH $210k wages → 0.9% on $10k = $90", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 90);
 });
 
-Deno.test("part1_qss_above: QSS $205k wages → 0.9% on $5k = $45", () => {
+// QSS uses MFJ threshold ($250k) per IRC §3101(b)(2) — NOT the OTHER threshold ($200k)
+Deno.test("part1_qss_below_mfj_threshold: QSS $205k wages → below $250k → no AMT", () => {
   const result = compute({
     filing_status: FilingStatus.QSS,
     medicare_wages: 205_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 45);
+  const out = findOutput(result, "schedule2");
+  assertEquals(out, undefined);
+});
+
+Deno.test("part1_qss_above_mfj_threshold: QSS $280k wages → 0.9% on $30k = $270", () => {
+  const result = compute({
+    filing_status: FilingStatus.QSS,
+    medicare_wages: 280_000,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 270);
 });
 
 // ─── Part II: SE Income combined with wages ────────────────────────────────────
@@ -207,28 +217,25 @@ Deno.test("combined_all_parts: wages + SE + RRTA all contributing AMT", () => {
 
 // ─── Part V: Withholding ──────────────────────────────────────────────────────
 //
-// W-2 box 6 is the regular 1.45% Medicare FICA tax — it does NOT appear on
-// Form 1040 line 25c. Line 25c is only for Additional Medicare Tax (0.9%)
-// withheld on wages (rare, uncommon on W-2s). Form 8959 Part V is a
-// *reconciliation* section; the AMT owed flows to Schedule 2 line 11,
-// not to Form 1040 payment lines. This node intentionally emits NO f1040
-// output; the withholding fields are informational for the MeF XML only.
+// Form 8959 Part V line 24 routes to Form 1040 line 25c ONLY when additional Medicare Tax
+// applies (line18 > 0). Below threshold, Form 8959 is not filed; line 25c = 0.
 
-Deno.test("withholding_no_f1040_output: medicare_withheld alone → no f1040 output", () => {
-  // Only AMT owed (via schedule2) goes into the return — withholding inputs
-  // are informational and do not produce a separate f1040 deposit.
+Deno.test("withholding_routes_to_f1040: wages above threshold + withheld → f1040 line25c", () => {
+  // Wages $250K above $200K threshold → line18 = 50K × 0.009 = $450; line24 = $2,900
   const result = compute({
     filing_status: FilingStatus.Single,
+    medicare_wages: 250_000,
     medicare_withheld: 2_900,
   });
-  const out = findOutput(result, "f1040");
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 2_900);
 });
 
-Deno.test("withholding_zero_no_output: only wages below threshold → no schedule2 or f1040 output", () => {
+Deno.test("withholding_no_amt_no_f1040: below threshold + withheld → no f1040 output", () => {
+  // Below threshold — no Additional Medicare Tax → Form 8959 not filed → no line25c
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 150_000, // below $200K threshold
+    medicare_wages: 150_000,
+    medicare_withheld: 2_175, // regular Medicare withheld but no AMT situation
   });
   const s2 = findOutput(result, "schedule2");
   const f1 = findOutput(result, "f1040");
@@ -236,14 +243,27 @@ Deno.test("withholding_zero_no_output: only wages below threshold → no schedul
   assertEquals(f1, undefined);
 });
 
-Deno.test("withholding_rrta_combined: medicare_withheld + rrta_medicare_withheld → no f1040 output (withholding is informational)", () => {
+Deno.test("withholding_zero_no_output: no withholding fields → no f1040 output", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
+    medicare_wages: 150_000, // below $200K threshold, no withholding
+  });
+  const s2 = findOutput(result, "schedule2");
+  const f1 = findOutput(result, "f1040");
+  assertEquals(s2, undefined);
+  assertEquals(f1, undefined);
+});
+
+Deno.test("withholding_rrta_combined: rrta above threshold + combined withheld → f1040 line25c", () => {
+  // RRTA wages $250K above MFJ $250K threshold → line17 = 0; but rrta $260K → excess=$10K → $90
+  // Use MFJ with rrta above threshold to trigger line18 > 0
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    rrta_wages: 260_000,
     medicare_withheld: 1_000,
     rrta_medicare_withheld: 500,
   });
-  const out = findOutput(result, "f1040");
-  assertEquals(out, undefined);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 1_500);
 });
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
@@ -253,12 +273,13 @@ Deno.test("smoke: no inputs → no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("smoke: all fields present → produces schedule2 output (AMT owed) but no f1040 output", () => {
+Deno.test("smoke: all fields present → schedule2 AMT + f1040 withholding credit", () => {
   // MFJ threshold = $250,000
   // Part I: wages($300k) + tips($5k) + 8919($2k) = $307k total; excess = $57k × 0.009 = $513
   // Part II: se($50k), threshold reduced to max(0, $250k - $307k) = 0 → $50k × 0.009 = $450
   // Part III: rrta($260k) - $250k = $10k × 0.009 = $90
   // Total = $513 + $450 + $90 = $1,053
+  // Part V: withheld = $4,000 + $200 = $4,200 → f1040 line25c
   const result = compute({
     filing_status: FilingStatus.MFJ,
     medicare_wages: 300_000,
@@ -270,5 +291,5 @@ Deno.test("smoke: all fields present → produces schedule2 output (AMT owed) bu
     rrta_medicare_withheld: 200,
   });
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 1_053);
-  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 4_200);
 });

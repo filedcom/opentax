@@ -139,16 +139,17 @@ Deno.test("sep_retirement.compute: SIMPLE employee contribution capped at $16,50
   assertEquals(fields.line16_sep_simple, 18500);
 });
 
-Deno.test("sep_retirement.compute: SIMPLE employee catch-up limit $19,500 when age 50+", () => {
-  // age 50+: cap = 19500; employee 20000 capped at 19500; employer 1000 → total 20500
+Deno.test("sep_retirement.compute: SIMPLE employee catch-up limit $20,000 when age 50+", () => {
+  // TY2025: age 50+ cap = 20000 (16500 + 3500 catch-up per Rev Proc 2024-40)
+  // employee 21000 capped at 20000; employer 1000 → total 21000
   const result = compute([minimalItem({
     plan_type: PlanType.SIMPLE,
-    simple_employee_contribution: 20000,
+    simple_employee_contribution: 21000,
     simple_employer_contribution: 1000,
     age_50_or_over: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule1)!;
-  assertEquals(fields.line16_sep_simple, 20500);
+  assertEquals(fields.line16_sep_simple, 21000);
 });
 
 Deno.test("sep_retirement.compute: SIMPLE age_50_or_over omitted — uses under-50 limit of $16,500", () => {

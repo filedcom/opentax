@@ -6,11 +6,12 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// TY2025 TPSO reporting threshold (One Big Beautiful Bill)
-const TPSO_GROSS_THRESHOLD = 20_000;
-const TPSO_TRANSACTION_THRESHOLD = 200;
+// TY2025 TPSO reporting threshold per OBBBA (IRC §6050W as amended)
+const TPSO_GROSS_THRESHOLD = 5_000;
 const MONTHLY_SUM_ROUNDING_TOLERANCE = 1;
 
 export const itemSchema = z.object({
@@ -47,6 +48,12 @@ export const itemSchema = z.object({
   // NOTE: On the 99K screen this is for state record. The engine routes it
   // directly to f1040.line25b_withheld_1099 for tax credit purposes.
   box4_federal_withheld: z.number().nonnegative().optional(),
+
+  // Routing — determines where box1a income is reported.
+  // When omitted, no income is routed (backward compatible).
+  //   "schedule_c"       → business income (Schedule C line 1)
+  //   "schedule_1_line_8z" → other income (Schedule 1 line 8z)
+  for_routing: z.enum(["schedule_c", "schedule_1_line_8z"]).optional(),
 
   // Boxes 5a–5l — Monthly gross payment amounts
   box5a_january: z.number().nonnegative().optional(),
@@ -125,16 +132,38 @@ function federalWithholdingOutputs(k99s: K99Items): NodeOutput[] {
     .map((item) => (output(f1040, { line25b_withheld_1099: item.box4_federal_withheld! })));
 }
 
-// Exported for reference (TY2025 thresholds)
+// Route box1a income when for_routing is set and amount exceeds TY2025 threshold.
+function incomeOutputs(k99s: K99Items): NodeOutput[] {
+  return k99s.flatMap((item) => {
+    if (!item.for_routing) return [];
+    const gross = item.box1a_gross_payments ?? 0;
+    if (gross <= TPSO_GROSS_THRESHOLD) return [];
+    switch (item.for_routing) {
+      case "schedule_c":
+        return [output(schedule_c, {
+          schedule_cs: [{
+            line_a_principal_business: item.pse_name ?? "Payment network income",
+            line_b_business_code: "999999",
+            line_f_accounting_method: "cash",
+            line_g_material_participation: true,
+            line_1_gross_receipts: gross,
+          }],
+        })];
+      case "schedule_1_line_8z":
+        return [output(schedule1, { line8z_other: gross })];
+    }
+  });
+}
+
+// Exported for reference (TY2025 threshold)
 export const TY2025 = {
   TPSO_GROSS_THRESHOLD,
-  TPSO_TRANSACTION_THRESHOLD,
 } as const;
 
 class F1099kNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099k";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, schedule_c, schedule1]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -145,6 +174,7 @@ class F1099kNode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...federalWithholdingOutputs(parsed.f1099ks),
+      ...incomeOutputs(parsed.f1099ks),
     ];
 
     return { outputs };

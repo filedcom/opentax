@@ -20,8 +20,10 @@ const CAPITAL_LOSS_LIMIT = -3_000;
 const CAPITAL_LOSS_LIMIT_MFS = -1_500;
 
 // Form 8949 adjustment codes that trigger 28% Rate Gain Worksheet
-// C = collectibles gain (IRC §1(h)(5)); Q = QOF gain (IRC §1400Z-2)
-const RATE_28_CODES = new Set(["C", "Q"]);
+// C = collectibles gain (IRC §1(h)(5))
+// Q (QOF) removed: IRC §1400Z-2 inclusion events are taxed at ordinary/LTCG rates,
+// not 28% rate. Only collectibles trigger the 28% tier.
+const RATE_28_CODES = new Set(["C"]);
 
 // Long-term parts: D/J aggregate to Sch D Line 8b, E/K → Line 9, F/L → Line 10
 const LONG_TERM_PARTS = new Set(["D", "E", "F", "J", "K", "L"]);
@@ -298,12 +300,22 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
     // Line 17 = Yes: both line 15 and line 16 are gains.
     // Route net_capital_gain (= min(line15, line16)) to income_tax_calculation
-    // for the QDCGT worksheet (IRC §1(h)).
+    // for the QDCGT / Schedule D Tax Worksheet (IRC §1(h)).
     if (line17Yes) {
       const netCapGain = Math.min(line15, line16);
-      outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: netCapGain }));
 
-      // Line 18: 28% Rate Gain Worksheet
+      // Line 19: unrecaptured §1250 gain — include for 25% tier when present
+      const unrecaptured1250 = input.line19_unrecaptured_1250 ?? 0;
+      if (unrecaptured1250 > 0) {
+        outputs.push(this.outputNodes.output(income_tax_calculation, {
+          net_capital_gain: netCapGain,
+          unrecaptured_1250_gain: unrecaptured1250,
+        }));
+      } else {
+        outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: netCapGain }));
+      }
+
+      // Line 18: 28% Rate Gain Worksheet (collectibles/1202 gains from f8949)
       const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs);
       if (gain28Pct > 0) {
         outputs.push(this.outputNodes.output(rate_28_gain_worksheet, { collectibles_gain_from_8949: gain28Pct }));

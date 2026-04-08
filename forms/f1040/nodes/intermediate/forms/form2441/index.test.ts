@@ -12,6 +12,8 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { form2441 } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
   return form2441.compute({ taxYear: 2025 }, input);
@@ -168,6 +170,162 @@ Deno.test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f10
   const input = fieldsOf(result.outputs, f1040)!;
   assertEquals(input.line1e_taxable_dep_care, 2500);
 
-  // No schedule3 output (credit not computed by this node)
+  // No schedule3 output when no qualifying_expenses provided
   assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
+// ---------------------------------------------------------------------------
+// 7. IRC §21 child and dependent care credit
+// ---------------------------------------------------------------------------
+
+Deno.test("form2441 §21: 1 qualifying person, AGI ≤ $15k → 35% rate, $3000 cap", () => {
+  // qualifying_expenses=$4,000, but capped at $3,000 for 1 person
+  // AGI=$10,000 → rate 35%
+  // credit = $3,000 × 0.35 = $1,050
+  const result = compute({
+    qualifying_expenses: 4_000,
+    qualifying_persons: 1,
+    agi: 10_000,
+    taxpayer_earned_income: 20_000,
+    filing_status: FilingStatus.Single,
+  });
+  const s3 = fieldsOf(result.outputs, schedule3);
+  assertEquals(s3?.line2_childcare_credit, 1_050);
+});
+
+Deno.test("form2441 §21: 2 qualifying persons, AGI ≤ $15k → 35% rate, $6000 cap", () => {
+  // qualifying_expenses=$7,000, capped at $6,000 for 2+ persons
+  // AGI=$12,000 → rate 35%
+  // credit = $6,000 × 0.35 = $2,100
+  const result = compute({
+    qualifying_expenses: 7_000,
+    qualifying_persons: 2,
+    agi: 12_000,
+    taxpayer_earned_income: 30_000,
+    filing_status: FilingStatus.Single,
+  });
+  const s3 = fieldsOf(result.outputs, schedule3);
+  assertEquals(s3?.line2_childcare_credit, 2_100);
+});
+
+Deno.test("form2441 §21: AGI $43,001+ → 20% minimum rate", () => {
+  // AGI=$50,000 → 15 steps over $15k → rate = max(0.20, 0.35 - 0.15) = 0.20
+  // 1 person, $3,000 cap, expenses=$3,000
+  // credit = $3,000 × 0.20 = $600
+  const result = compute({
+    qualifying_expenses: 3_000,
+    qualifying_persons: 1,
+    agi: 50_000,
+    taxpayer_earned_income: 60_000,
+    filing_status: FilingStatus.Single,
+  });
+  const s3 = fieldsOf(result.outputs, schedule3);
+  assertEquals(s3?.line2_childcare_credit, 600);
+});
+
+Deno.test("form2441 §21: AGI $25,000 → 25% rate (5 steps over $15k)", () => {
+  // 5 steps × $2,000 = $10,000 over threshold → rate = 0.35 - 5*0.01 = 0.30
+  // Wait: AGI=$25,000, over threshold=$10,000, ceil(10000/2000)=5, rate=0.35-0.05=0.30
+  // 1 person, expenses=$3,000
+  // credit = $3,000 × 0.30 = $900
+  const result = compute({
+    qualifying_expenses: 3_000,
+    qualifying_persons: 1,
+    agi: 25_000,
+    taxpayer_earned_income: 30_000,
+    filing_status: FilingStatus.Single,
+  });
+  const s3 = fieldsOf(result.outputs, schedule3);
+  assertEquals(s3?.line2_childcare_credit, 900);
+});
+
+Deno.test("form2441 §21: employer benefits reduce qualifying expense base", () => {
+  // dep_care_benefits=$3,000 excluded from $5,000 limit = $3,000 excluded
+  // 1 person cap=$3,000, reduced by excluded benefits: $3,000-$3,000=$0
+  // No credit
+  const result = compute({
+    dep_care_benefits: 3_000,
+    qualifying_expenses: 3_000,
+    qualifying_persons: 1,
+    agi: 20_000,
+    taxpayer_earned_income: 40_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
+Deno.test("form2441 §21: employer benefits partially reduce expense base", () => {
+  // dep_care_benefits=$2,000 excluded; 1 person cap=$3,000 reduced to $1,000
+  // AGI=$15,000 → rate 35%
+  // qualifying_expenses=$3,000, capped at $1,000 after employer offset
+  // credit = $1,000 × 0.35 = $350
+  const result = compute({
+    dep_care_benefits: 2_000,
+    qualifying_expenses: 3_000,
+    qualifying_persons: 1,
+    agi: 15_000,
+    taxpayer_earned_income: 40_000,
+    filing_status: FilingStatus.Single,
+  });
+  const s3 = fieldsOf(result.outputs, schedule3);
+  assertEquals(s3?.line2_childcare_credit, 350);
+});
+
+Deno.test("form2441 §21: MFJ — credit limited to lower spouse earned income", () => {
+  // taxpayer_earned=$50,000, spouse_earned=$2,000 → earned cap = $2,000
+  // 1 person, expenses=$3,000, capped at min($3,000, $2,000) = $2,000
+  // AGI=$60,000 → rate 20%
+  // credit = $2,000 × 0.20 = $400
+  const result = compute({
+    qualifying_expenses: 3_000,
+    qualifying_persons: 1,
+    agi: 60_000,
+    taxpayer_earned_income: 50_000,
+    spouse_earned_income: 2_000,
+    filing_status: FilingStatus.MFJ,
+  });
+  const s3 = fieldsOf(result.outputs, schedule3);
+  assertEquals(s3?.line2_childcare_credit, 400);
+});
+
+Deno.test("form2441 §21: no credit when no qualifying persons", () => {
+  const result = compute({
+    qualifying_expenses: 3_000,
+    qualifying_persons: 0,
+    agi: 20_000,
+    taxpayer_earned_income: 40_000,
+  });
+  assertEquals(findOutput(result, "schedule3"), undefined);
+});
+
+// ---------------------------------------------------------------------------
+// 8. MFS employer exclusion cap ($2,500 per IRC §129(a)(2))
+// ---------------------------------------------------------------------------
+
+Deno.test("form2441 MFS: employer exclusion capped at $2,500", () => {
+  // MFS filer with $3,500 dep care benefits
+  // Exclusion: min($3,500, $2,500) = $2,500
+  // Taxable excess: $3,500 - $2,500 = $1,000 → routes to f1040 line1e
+  const result = compute({
+    dep_care_benefits: 3_500,
+    filing_status: FilingStatus.MFS,
+  });
+  const f1040Fields = fieldsOf(result.outputs, f1040);
+  assertEquals(f1040Fields?.line1e_taxable_dep_care, 1_000);
+});
+
+Deno.test("form2441 MFS: benefits at $2,500 — no taxable excess", () => {
+  const result = compute({
+    dep_care_benefits: 2_500,
+    filing_status: FilingStatus.MFS,
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
+});
+
+Deno.test("form2441 non-MFS: employer exclusion still $5,000", () => {
+  const result = compute({
+    dep_care_benefits: 4_999,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
 });

@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8949, type Form8949Part } from "../../intermediate/forms/form8949/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 const LONG_TERM_PARTS = new Set(["D", "E", "F"]);
@@ -21,6 +22,10 @@ export const itemSchema = z.object({
   adjustment_codes: z.string().optional(),
   adjustment_amount: z.number().optional(),
   federal_withheld: z.number().nonnegative().optional(),
+  // Box 1f: accrued market discount (IRC §1278) — ordinary income, not capital gain
+  // When present, this amount should be treated as interest income on Schedule B,
+  // and the corresponding capital gain reduced by this amount.
+  box1f_accrued_market_discount: z.number().nonnegative().optional(),
 });
 
 export const inputSchema = z.object({
@@ -51,13 +56,20 @@ function processItem(item: B99Item): NodeOutput[] {
   if ((item.federal_withheld ?? 0) > 0) {
     outputs.push(output(f1040, { line25b_withheld_1099: item.federal_withheld! }));
   }
+  // Market discount (box 1f) = ordinary interest income per IRC §1278
+  if ((item.box1f_accrued_market_discount ?? 0) > 0) {
+    outputs.push(output(schedule_b, {
+      payer_name: item.description,
+      taxable_interest_net: item.box1f_accrued_market_discount!,
+    }));
+  }
   return outputs;
 }
 
 class F1099bNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099b";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([form8949, f1040]);
+  readonly outputNodes = new OutputNodes([form8949, f1040, schedule_b]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

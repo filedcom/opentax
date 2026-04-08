@@ -37,9 +37,14 @@ export class ExportRejectedError extends Error {
   }
 }
 
-export async function exportMefCommand(
-  args: ExportReturnArgs,
-): Promise<string> {
+type PipelineResult = {
+  readonly pending: Record<string, unknown>;
+  readonly def: ReturnType<typeof getCatalogEntry>;
+  readonly filer: ReturnType<typeof extractFilerIdentity>;
+};
+
+/** Shared: execute nodes, warn on failures, run validation gate. */
+async function runReturnPipeline(args: ExportReturnArgs): Promise<PipelineResult> {
   const returnPath = join(args.baseDir, args.returnId);
   const { meta, inputs } = await loadReturn(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
@@ -50,13 +55,13 @@ export async function exportMefCommand(
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
   const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
 
-  // Warn about executor node failures before XML build
+  // Warn about executor node failures before building output
   for (const d of result.diagnostics) {
     console.warn(`[${d.code}] ${d.nodeType}: ${d.message}`);
   }
   if (result.diagnostics.length > 0) {
     console.warn(
-      `[WARNING] ${result.diagnostics.length} node(s) failed during execution — exported XML may be incomplete.`,
+      `[WARNING] ${result.diagnostics.length} node(s) failed during execution — exported output may be incomplete.`,
     );
   }
 
@@ -64,7 +69,7 @@ export async function exportMefCommand(
   const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
   const filer = extractFilerIdentity(f1040);
 
-  // Run validation gate before building MeF XML
+  // Run validation gate
   const filerInfo = {
     primarySSN: filer?.primarySSN ?? "",
     spouseSSN: filer?.spouse?.ssn,
@@ -76,7 +81,6 @@ export async function exportMefCommand(
   const ctx = createReturnContext(result.pending, filerInfo, FIELD_REGISTRY);
   const report = evaluateRules(ALL_RULES, ctx);
 
-  // Collect reject-severity failures (not alerts)
   const rejectEntries = report.entries.filter(
     (e) => e.severity === "reject" || e.severity === "reject_and_stop",
   );
@@ -85,7 +89,6 @@ export async function exportMefCommand(
     throw new ExportRejectedError(rejectEntries);
   }
 
-  // Warn about alert-severity failures (always, even with --force)
   const alertEntries = report.entries.filter((e) => e.severity === "alert");
   for (const entry of alertEntries) {
     console.warn(`[ALERT] [${entry.ruleNumber}] ${entry.message}`);
@@ -99,6 +102,28 @@ export async function exportMefCommand(
     }
   }
 
-  const pending = def.buildPending(result.pending);
-  return def.buildMefXml(pending, filer);
+  return { pending: result.pending, def, filer };
+}
+
+export async function exportMefCommand(
+  args: ExportReturnArgs,
+): Promise<string> {
+  const { pending, def, filer } = await runReturnPipeline(args);
+  const normalized = def.buildPending(pending);
+  return def.buildMefXml(normalized, filer);
+}
+
+export type ExportPdfArgs = ExportReturnArgs & {
+  /** Output file path. Defaults to <baseDir>/<returnId>/export.pdf */
+  readonly outputPath?: string;
+};
+
+export async function exportPdfCommand(
+  args: ExportPdfArgs,
+): Promise<string> {
+  const { pending, def } = await runReturnPipeline(args);
+  const pdfBytes = await def.buildPdfBytes(pending);
+  const outPath = args.outputPath ?? join(args.baseDir, args.returnId, "export.pdf");
+  await Deno.writeFile(outPath, pdfBytes);
+  return outPath;
 }
