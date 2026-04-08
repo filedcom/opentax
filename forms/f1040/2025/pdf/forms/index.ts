@@ -40,7 +40,7 @@ import { form8853Pdf } from "./f8853.ts";
 import { form8880Pdf } from "./f8880.ts";
 import { form8889Pdf } from "./f8889.ts";
 import { form8919Pdf } from "./f8919.ts";
-// form8949 uses a transaction-array structure incompatible with AcroForm field mapping — excluded.
+import { form8949Pdf } from "./f8949.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
 import { form8962Pdf } from "./f8962.ts";
@@ -90,7 +90,7 @@ export const ALL_PDF_FORMS: readonly PdfFormDescriptor[] = [
   form8880Pdf,
   form8889Pdf,
   form8919Pdf,
-  // form8949 excluded: uses transaction-array structure, not AcroForm field mapping
+  form8949Pdf,
   form8959Pdf,
   form8960Pdf,
   form8962Pdf,
