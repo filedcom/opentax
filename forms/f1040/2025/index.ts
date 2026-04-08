@@ -20,8 +20,8 @@ export const f1040_2025: FormDefinition = {
       F1040_2025_CONFIG.taxYear,
       F1040_2025_CONFIG.formType === "f1040" ? "1040" : F1040_2025_CONFIG.formType,
     ),
-  buildPdfBytes: (pending) =>
-    buildPdfBytes(pending),
+  buildPdfBytes: (pending, filer) =>
+    buildPdfBytes(pending, filer),
   buildPending: (pending: Record<string, unknown>) =>
     buildPending(pending) as Record<string, unknown>,
 };

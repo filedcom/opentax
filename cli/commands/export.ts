@@ -121,8 +121,8 @@ export type ExportPdfArgs = ExportReturnArgs & {
 export async function exportPdfCommand(
   args: ExportPdfArgs,
 ): Promise<string> {
-  const { pending, def } = await runReturnPipeline(args);
-  const pdfBytes = await def.buildPdfBytes(pending);
+  const { pending, def, filer } = await runReturnPipeline(args);
+  const pdfBytes = await def.buildPdfBytes(pending, filer);
   const outPath = args.outputPath ?? join(args.baseDir, args.returnId, "export.pdf");
   await Deno.writeFile(outPath, pdfBytes);
   return outPath;
