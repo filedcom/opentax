@@ -39,7 +39,10 @@ type W2GItem = z.infer<typeof itemSchema>;
 type W2GItems = W2GItem[];
 
 function totalWinnings(items: W2GItems): number {
-  return items.reduce((sum, item) => sum + (item.box1_winnings ?? 0), 0);
+  return items.reduce(
+    (sum, item) => sum + (item.box1_winnings ?? 0) + (item.box7_winnings_noncash ?? 0),
+    0,
+  );
 }
 
 function totalFederalWithheld(items: W2GItems): number {

@@ -70,6 +70,18 @@ Deno.test("w2g.inputSchema: valid full item passes", () => {
 // 2. Per-Box Routing
 // =============================================================================
 
+Deno.test("w2g.compute: box7_winnings_noncash routes to schedule1 line8z_other_income", () => {
+  const result = compute([minimalItem({ box7_winnings_noncash: 1500 })]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_other_income, 1500);
+});
+
+Deno.test("w2g.compute: box1 + box7 noncash summed to schedule1", () => {
+  const result = compute([minimalItem({ box1_winnings: 2000, box7_winnings_noncash: 800 })]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line8z_other_income, 2800);
+});
+
 Deno.test("w2g.compute: box1_winnings routes to schedule1 line8z_other_income", () => {
   const result = compute([minimalItem({ box1_winnings: 2000 })]);
   const out = findOutput(result, "schedule1");
