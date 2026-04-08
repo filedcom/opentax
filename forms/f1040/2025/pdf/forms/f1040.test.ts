@@ -81,13 +81,13 @@ Deno.test("irs1040Pdf.filerFields: present and contains expected keys", () => {
   const filerFields = irs1040Pdf.filerFields ?? [];
   const domainKeys = new Set(filerFields.map((e) => e.domainKey));
   const expected = [
-    "primary_first_name",
-    "primary_last_name",
-    "primary_ssn",
-    "address_street",
-    "address_city",
-    "address_state",
-    "address_zip",
+    "firstName",
+    "lastName",
+    "primarySSN",
+    "address.line1",
+    "address.city",
+    "address.state",
+    "address.zip",
   ];
   for (const key of expected) {
     assertEquals(domainKeys.has(key), true, `Missing filerField key: ${key}`);
