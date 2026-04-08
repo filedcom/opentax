@@ -90,7 +90,11 @@ async function fillFormPdf(
       for (let i = 0; i < Math.min(items.length, descriptor.rows.maxRows); i++) {
         const row = items[i] as Record<string, unknown>;
         for (const rf of descriptor.rows.rowFields) {
-          const pdfField = rf.pdfFieldPattern.replace("{row}", String(i + 1));
+          let pdfField = rf.pdfFieldPattern.replace("{row}", String(i + 1));
+          if (rf.fieldNumBase !== undefined && descriptor.rows.rowStride !== undefined) {
+            const fieldNum = rf.fieldNumBase + i * descriptor.rows.rowStride;
+            pdfField = pdfField.replace("{field_num}", String(fieldNum).padStart(2, "0"));
+          }
           const value = row[rf.domainKey];
           if (value === undefined || value === null) continue;
           try {
