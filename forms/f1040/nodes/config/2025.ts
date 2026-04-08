@@ -60,15 +60,16 @@ export const BRACKETS_MFS_2025: ReadonlyArray<Bracket> = [
 ] as const;
 
 // ─── Standard Deduction ───────────────────────────────────────────────────────
-// Rev. Proc. 2024-40, §3.14; IRC §63(c)
+// Rev. Proc. 2024-40, §3.14; IRC §63(c); P.L. 119-21 (OBBBA) §70001
+// OBBBA increased base deductions by $750 (Single/MFS/HOH-proportional) effective TY2025.
 
-/** Base standard deduction by filing status (TY2025). */
+/** Base standard deduction by filing status (TY2025, post-OBBBA). */
 export const STANDARD_DEDUCTION_BASE_2025: Record<FilingStatus, number> = {
-  [FilingStatus.Single]: 15_000,
-  [FilingStatus.MFJ]:    30_000,
-  [FilingStatus.MFS]:    15_000,
-  [FilingStatus.HOH]:    22_500,
-  [FilingStatus.QSS]:    30_000,
+  [FilingStatus.Single]: 15_750,
+  [FilingStatus.MFJ]:    31_500,
+  [FilingStatus.MFS]:    15_750,
+  [FilingStatus.HOH]:    23_625,
+  [FilingStatus.QSS]:    31_500,
 } as const;
 
 /**

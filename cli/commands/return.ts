@@ -50,6 +50,7 @@ export type GetReturnResult = {
 };
 
 function num(value: unknown): number {
+  if (Array.isArray(value)) return typeof value[0] === "number" ? value[0] : 0;
   return typeof value === "number" ? value : 0;
 }
 

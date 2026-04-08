@@ -3,6 +3,17 @@ import { TaxNode, type NodeResult } from "../../../../../core/types/tax-node.ts"
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
+// Fields that may arrive from multiple upstream nodes accumulate as arrays in the
+// executor pending dict. Declaring them accumulable prevents Zod parse failure.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumField(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s, n) => s + n, 0);
+  return value;
+}
+
 // F1040 Output Node — Final Assembly
 //
 // Sink node: collects all computed values and assembles the complete
@@ -38,8 +49,8 @@ const inputSchema = z.object({
   line2a_tax_exempt: z.number().nonnegative().optional(),
   // Line 2b — Taxable interest
   line2b_taxable_interest: z.number().optional(),
-  // Line 3a — Qualified dividends
-  line3a_qualified_dividends: z.number().nonnegative().optional(),
+  // Line 3a — Qualified dividends (accumulable: k1_partnership + f1099div both route here)
+  line3a_qualified_dividends: accumulable(z.number().nonnegative()).optional(),
   // Line 3b — Ordinary dividends
   line3b_ordinary_dividends: z.number().optional(),
   // Line 4a — IRA distributions, gross
@@ -102,8 +113,8 @@ const inputSchema = z.object({
   // ── Part III — Payments ───────────────────────────────────────────────────
   // Line 25a — Federal income tax withheld (W-2 Box 2)
   line25a_w2_withheld: z.number().nonnegative().optional(),
-  // Line 25b — Federal tax withheld (1099 forms)
-  line25b_withheld_1099: z.number().nonnegative().optional(),
+  // Line 25b — Federal tax withheld (1099 forms) (accumulable: multiple 1099s route here)
+  line25b_withheld_1099: accumulable(z.number().nonnegative()).optional(),
   // Line 25c — Additional Medicare Tax withheld (Form 8959 line 24)
   line25c_additional_medicare_withheld: z.number().nonnegative().optional(),
   // Line 26 — 2025 estimated tax payments
@@ -202,7 +213,7 @@ function totalTax(input: F1040Input): number {
 function totalWithholding(input: F1040Input): number {
   return (
     (input.line25a_w2_withheld ?? 0) +
-    (input.line25b_withheld_1099 ?? 0) +
+    sumField(input.line25b_withheld_1099 as number | number[] | undefined) +
     (input.line25c_additional_medicare_withheld ?? 0)
   );
 }
@@ -253,7 +264,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   if (input.line1a_wages !== undefined) result.line1a_wages = input.line1a_wages;
   if (input.line2a_tax_exempt !== undefined) result.line2a_tax_exempt = input.line2a_tax_exempt;
   if (input.line2b_taxable_interest !== undefined) result.line2b_taxable_interest = input.line2b_taxable_interest;
-  if (input.line3a_qualified_dividends !== undefined) result.line3a_qualified_dividends = input.line3a_qualified_dividends;
+  const line3a = sumField(input.line3a_qualified_dividends as number | number[] | undefined);
+  if (line3a > 0) result.line3a_qualified_dividends = line3a;
   if (input.line3b_ordinary_dividends !== undefined) result.line3b_ordinary_dividends = input.line3b_ordinary_dividends;
   if (input.line4a_ira_gross !== undefined) result.line4a_ira_gross = input.line4a_ira_gross;
   if (input.line4b_ira_taxable !== undefined) result.line4b_ira_taxable = input.line4b_ira_taxable;
@@ -272,7 +284,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   if (input.line28_actc !== undefined) result.line28_actc = input.line28_actc;
   if (input.line29_refundable_aoc !== undefined) result.line29_refundable_aoc = input.line29_refundable_aoc;
   if (input.line25a_w2_withheld !== undefined) result.line25a_w2_withheld = input.line25a_w2_withheld;
-  if (input.line25b_withheld_1099 !== undefined) result.line25b_withheld_1099 = input.line25b_withheld_1099;
+  const line25b = sumField(input.line25b_withheld_1099 as number | number[] | undefined);
+  if (line25b > 0) result.line25b_withheld_1099 = line25b;
 
   if (balance >= 0) {
     result.line35a_refund = balance;

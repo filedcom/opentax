@@ -400,16 +400,15 @@ Deno.test("box14a takes priority over box4a for schedule_se when both present", 
   assertEquals(out?.fields.net_profit_schedule_c, 12000);
 });
 
-Deno.test("box14a_se_earnings from two K-1s produces two separate schedule_se outputs", () => {
-  // Each partnership issues its own SE earnings; each produces a distinct SE output
+Deno.test("box14a_se_earnings from two K-1s aggregates into one schedule_se output", () => {
+  // SE earnings are aggregated across K-1s to prevent array accumulation in schedule_se
   const result = compute([
     minimalItem({ box14a_se_earnings: 8000 }),
     minimalItem({ partnership_name: "Fund B", box14a_se_earnings: 6000 }),
   ]);
   const seOutputs = result.outputs.filter((o) => o.nodeType === "schedule_se");
-  assertEquals(seOutputs.length, 2);
-  const total = seOutputs.reduce((sum, o) => sum + (o.fields.net_profit_schedule_c as number), 0);
-  assertEquals(total, 14000);
+  assertEquals(seOutputs.length, 1);
+  assertEquals(seOutputs[0].fields.net_profit_schedule_c, 14000);
 });
 
 Deno.test("box20z_qbi sums across K-1s to form8995 qbi", () => {
@@ -443,7 +442,21 @@ Deno.test("loss K-1 (box1 negative) does not suppress QBI from a second profitab
   assertEquals(f8995?.fields.qbi, 7000);
 });
 
-// ── 12. Smoke test ────────────────────────────────────────────────────────────
+// ── 12. AGI aggregator routing ────────────────────────────────────────────────
+
+Deno.test("box1_ordinary_business routes to agi_aggregator line5_schedule_e", () => {
+  const result = compute([minimalItem({ box1_ordinary_business: 8000 })]);
+  const out = findOutput(result, "agi_aggregator");
+  assertEquals(out?.fields.line5_schedule_e, 8000);
+});
+
+Deno.test("zero income does not route to agi_aggregator", () => {
+  const result = compute([minimalItem()]);
+  const out = findOutput(result, "agi_aggregator");
+  assertEquals(out, undefined);
+});
+
+// ── 13. Smoke test ────────────────────────────────────────────────────────────
 
 Deno.test("smoke test — K-1 with all major boxes", () => {
   const result = compute([

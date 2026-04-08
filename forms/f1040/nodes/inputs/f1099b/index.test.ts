@@ -30,6 +30,16 @@ function findAllOutputs(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.filter((o) => o.nodeType === nodeType);
 }
 
+type TxFields = { part: string; description: string; date_acquired: string; date_sold: string; proceeds: number; cost_basis: number; adjustment_codes?: string; adjustment_amount?: number; gain_loss: number; is_long_term: boolean };
+
+function getTx(result: ReturnType<typeof compute>, outputIndex = 0): TxFields | undefined {
+  const outs = findAllOutputs(result, "form8949");
+  if (!outs[outputIndex]) return undefined;
+  const tx = (outs[outputIndex].fields as Record<string, unknown>).transaction;
+  if (!tx) return undefined;
+  return (Array.isArray(tx) ? tx[0] : tx) as TxFields;
+}
+
 // ─── 1. Input schema validation ────────────────────────────────────────────
 
 Deno.test("schema: empty b99s array is rejected", () => {
@@ -102,43 +112,42 @@ Deno.test("routing: part A routes to form8949", () => {
 
 Deno.test("routing: part A produces is_long_term = false (short-term)", () => {
   const result = compute([minimalItem({ part: "A" })]);
-  const input = fieldsOf(result.outputs, form8949)!;
-  assertEquals(input.is_long_term, false);
+  assertEquals(getTx(result)!.is_long_term, false);
 });
 
 Deno.test("routing: part B routes to form8949 as short-term", () => {
   const result = compute([minimalItem({ part: "B" })]);
   const out = findOutput(result, "form8949");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8949)!.is_long_term, false);
+  assertEquals(getTx(result)!.is_long_term, false);
 });
 
 Deno.test("routing: part C routes to form8949 as short-term", () => {
   const result = compute([minimalItem({ part: "C" })]);
   const out = findOutput(result, "form8949");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8949)!.is_long_term, false);
+  assertEquals(getTx(result)!.is_long_term, false);
 });
 
 Deno.test("routing: part D routes to form8949 as long-term", () => {
   const result = compute([minimalItem({ part: "D" })]);
   const out = findOutput(result, "form8949");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8949)!.is_long_term, true);
+  assertEquals(getTx(result)!.is_long_term, true);
 });
 
 Deno.test("routing: part E routes to form8949 as long-term", () => {
   const result = compute([minimalItem({ part: "E" })]);
   const out = findOutput(result, "form8949");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8949)!.is_long_term, true);
+  assertEquals(getTx(result)!.is_long_term, true);
 });
 
 Deno.test("routing: part F routes to form8949 as long-term", () => {
   const result = compute([minimalItem({ part: "F" })]);
   const out = findOutput(result, "form8949");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8949)!.is_long_term, true);
+  assertEquals(getTx(result)!.is_long_term, true);
 });
 
 Deno.test("routing: zero proceeds and zero basis routes to form8949 with gain_loss = 0", () => {
@@ -146,7 +155,7 @@ Deno.test("routing: zero proceeds and zero basis routes to form8949 with gain_lo
   const result = compute([minimalItem({ proceeds: 0, cost_basis: 0 })]);
   const out = findOutput(result, "form8949");
   assertEquals(out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 0);
+  assertEquals(getTx(result)!.gain_loss, 0);
 });
 
 Deno.test("routing: federal_withheld > 0 routes to f1040 with line25b_withheld_1099", () => {
@@ -205,13 +214,13 @@ Deno.test("aggregation: mix of items with and without withheld — only withheld
 Deno.test("gain_loss: proceeds minus cost_basis when no adjustment (gain)", () => {
   // col h = 30000 - 25000 = 5000
   const result = compute([minimalItem({ proceeds: 30000, cost_basis: 25000 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 5000);
+  assertEquals(getTx(result)!.gain_loss, 5000);
 });
 
 Deno.test("gain_loss: proceeds minus cost_basis when no adjustment (loss)", () => {
   // col h = 5000 - 8000 = -3000
   const result = compute([minimalItem({ proceeds: 5000, cost_basis: 8000 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, -3000);
+  assertEquals(getTx(result)!.gain_loss, -3000);
 });
 
 Deno.test("gain_loss: col h = col d − col e + col g (positive adjustment reduces gain)", () => {
@@ -219,26 +228,26 @@ Deno.test("gain_loss: col h = col d − col e + col g (positive adjustment reduc
   // col h = 10000 - 12000 + 1000 = -1000 → but let's use: proceeds=8000, basis=10000, adj=+1000
   // col h = 8000 - 10000 + 1000 = -1000
   const result = compute([minimalItem({ proceeds: 8000, cost_basis: 10000, adjustment_amount: 1000 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, -1000);
+  assertEquals(getTx(result)!.gain_loss, -1000);
 });
 
 Deno.test("gain_loss: col h = col d − col e + col g (negative adjustment reduces gain)", () => {
   // Selling expenses code E: proceeds=10000, basis=8000, adj=-500
   // col h = 10000 - 8000 + (-500) = 1500
   const result = compute([minimalItem({ proceeds: 10000, cost_basis: 8000, adjustment_amount: -500 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 1500);
+  assertEquals(getTx(result)!.gain_loss, 1500);
 });
 
 Deno.test("gain_loss: proceeds = 0 (worthless security) yields negative gain_loss equal to cost_basis", () => {
   // Worthless security under IRC §165(g): proceeds=0, basis=5000
   // col h = 0 - 5000 = -5000
   const result = compute([minimalItem({ proceeds: 0, cost_basis: 5000 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, -5000);
+  assertEquals(getTx(result)!.gain_loss, -5000);
 });
 
 Deno.test("gain_loss: gain_loss = 0 when proceeds equal cost_basis", () => {
   const result = compute([minimalItem({ proceeds: 5000, cost_basis: 5000 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 0);
+  assertEquals(getTx(result)!.gain_loss, 0);
 });
 
 // ─── 5. Hard validation rules ──────────────────────────────────────────────
@@ -323,39 +332,38 @@ Deno.test("informational: adjustment_codes field passes through to form8949 with
 
 Deno.test("informational: adjustment_codes and adjustment_amount pass through to form8949 input", () => {
   const result = compute([minimalItem({ adjustment_codes: "W", adjustment_amount: 500 })]);
-  const input = fieldsOf(result.outputs, form8949)!;
-  assertEquals(input.adjustment_codes, "W");
-  assertEquals(input.adjustment_amount, 500);
+  assertEquals(getTx(result)!.adjustment_codes, "W");
+  assertEquals(getTx(result)!.adjustment_amount, 500);
 });
 
 Deno.test("informational: description passes through verbatim to form8949 col (a)", () => {
   const result = compute([minimalItem({ description: "250 sh AAPL Corp" })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.description, "250 sh AAPL Corp");
+  assertEquals(getTx(result)!.description, "250 sh AAPL Corp");
 });
 
 Deno.test("informational: date_acquired passes through to form8949 col (b)", () => {
   const result = compute([minimalItem({ date_acquired: "01152024" })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.date_acquired, "01152024");
+  assertEquals(getTx(result)!.date_acquired, "01152024");
 });
 
 Deno.test("informational: date_sold passes through to form8949 col (c)", () => {
   const result = compute([minimalItem({ date_sold: "06302025" })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.date_sold, "06302025");
+  assertEquals(getTx(result)!.date_sold, "06302025");
 });
 
 Deno.test("informational: proceeds passes through to form8949 col (d)", () => {
   const result = compute([minimalItem({ proceeds: 12345 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.proceeds, 12345);
+  assertEquals(getTx(result)!.proceeds, 12345);
 });
 
 Deno.test("informational: cost_basis passes through to form8949 col (e)", () => {
   const result = compute([minimalItem({ cost_basis: 9876 })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.cost_basis, 9876);
+  assertEquals(getTx(result)!.cost_basis, 9876);
 });
 
 Deno.test("informational: part passes through to form8949", () => {
   const result = compute([minimalItem({ part: "E" })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.part, "E");
+  assertEquals(getTx(result)!.part, "E");
 });
 
 // ─── 8. Edge cases ─────────────────────────────────────────────────────────
@@ -370,7 +378,7 @@ Deno.test("edge: wash sale (code W) — disallowed amount is positive adjustment
     adjustment_codes: "W",
     adjustment_amount: 1000,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, -2000);
+  assertEquals(getTx(result)!.gain_loss, -2000);
 });
 
 Deno.test("edge: QSBS exclusion (code Q) — negative adjustment reduces recognized gain", () => {
@@ -383,7 +391,7 @@ Deno.test("edge: QSBS exclusion (code Q) — negative adjustment reduces recogni
     adjustment_codes: "Q",
     adjustment_amount: -150000,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 0);
+  assertEquals(getTx(result)!.gain_loss, 0);
 });
 
 Deno.test("edge: home sale exclusion (code H) — negative adjustment reduces gain", () => {
@@ -396,7 +404,7 @@ Deno.test("edge: home sale exclusion (code H) — negative adjustment reduces ga
     adjustment_codes: "H",
     adjustment_amount: -250000,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 50000);
+  assertEquals(getTx(result)!.gain_loss, 50000);
 });
 
 Deno.test("edge: loss_not_allowed (code L) — positive adjustment eliminates loss", () => {
@@ -408,7 +416,7 @@ Deno.test("edge: loss_not_allowed (code L) — positive adjustment eliminates lo
     adjustment_codes: "L",
     adjustment_amount: 2000,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 0);
+  assertEquals(getTx(result)!.gain_loss, 0);
 });
 
 Deno.test("edge: QOF deferral (code Z) — negative adjustment defers current gain", () => {
@@ -421,7 +429,7 @@ Deno.test("edge: QOF deferral (code Z) — negative adjustment defers current ga
     adjustment_codes: "Z",
     adjustment_amount: -40000,
   })]);
-  assertEquals(fieldsOf(result.outputs, form8949)!.gain_loss, 0);
+  assertEquals(getTx(result)!.gain_loss, 0);
 });
 
 Deno.test("edge: single item emits exactly one form8949 output and zero f1040 outputs when no withholding", () => {
@@ -471,21 +479,23 @@ Deno.test("smoke: comprehensive transaction with all major fields — all expect
   assertEquals(f8949Outputs.length, 2);
 
   // Transaction 1: short-term, wash sale reduces loss
-  const shortTermOut = f8949Outputs.find((o) =>
-    (o.fields as Record<string, unknown>).part === "B"
-  );
+  const shortTermOut = f8949Outputs.find((o) => {
+    const tx = (o.fields as Record<string, unknown>).transaction as Record<string, unknown> | undefined;
+    return tx?.part === "B";
+  });
   assertEquals(shortTermOut !== undefined, true);
-  const st = shortTermOut!.fields as Record<string, unknown>;
+  const st = ((shortTermOut!.fields as Record<string, unknown>).transaction) as Record<string, unknown>;
   assertEquals(st.is_long_term, false);
   // col h = 8000 - 10000 + 1500 = -500
   assertEquals(st.gain_loss, -500);
 
   // Transaction 2: long-term, QSBS exclusion zeroes out gain
-  const longTermOut = f8949Outputs.find((o) =>
-    (o.fields as Record<string, unknown>).part === "D"
-  );
+  const longTermOut = f8949Outputs.find((o) => {
+    const tx = (o.fields as Record<string, unknown>).transaction as Record<string, unknown> | undefined;
+    return tx?.part === "D";
+  });
   assertEquals(longTermOut !== undefined, true);
-  const lt = longTermOut!.fields as Record<string, unknown>;
+  const lt = ((longTermOut!.fields as Record<string, unknown>).transaction) as Record<string, unknown>;
   assertEquals(lt.is_long_term, true);
   // col h = 300000 - 50000 + (-250000) = 0
   assertEquals(lt.gain_loss, 0);

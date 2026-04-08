@@ -34,16 +34,18 @@ function processItem(item: B99Item): NodeOutput[] {
   const isLongTerm = LONG_TERM_PARTS.has(item.part);
   const outputs: NodeOutput[] = [
     output(form8949, {
-      part: item.part as Form8949Part,
-      description: item.description,
-      date_acquired: item.date_acquired,
-      date_sold: item.date_sold,
-      proceeds: item.proceeds,
-      cost_basis: item.cost_basis,
-      adjustment_codes: item.adjustment_codes,
-      adjustment_amount: item.adjustment_amount,
-      gain_loss: gainLoss,
-      is_long_term: isLongTerm,
+      transaction: {
+        part: item.part as Form8949Part,
+        description: item.description,
+        date_acquired: item.date_acquired,
+        date_sold: item.date_sold,
+        proceeds: item.proceeds,
+        cost_basis: item.cost_basis,
+        adjustment_codes: item.adjustment_codes,
+        adjustment_amount: item.adjustment_amount,
+        gain_loss: gainLoss,
+        is_long_term: isLongTerm,
+      },
     }),
   ];
   if ((item.federal_withheld ?? 0) > 0) {

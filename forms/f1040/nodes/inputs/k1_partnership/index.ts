@@ -9,6 +9,7 @@ import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -166,7 +167,10 @@ function schedule1Output(items: K1PartnershipItems): NodeOutput[] {
     0,
   );
   if (total === 0) return [];
-  return [output(schedule1, { line5_schedule_e: total })];
+  return [
+    output(schedule1, { line5_schedule_e: total }),
+    output(agi_aggregator, { line5_schedule_e: total }),
+  ];
 }
 
 // Per-payer schedule_b entries for interest (Box 5)
@@ -217,21 +221,17 @@ function scheduleDOutput(items: K1PartnershipItems): NodeOutput[] {
   return [output(schedule_d, { line_12_k1_lt: totalLt })];
 }
 
-// SE tax routing: Box 14a (net SE earnings) takes priority over Box 4a
-// Box 14a provided → route to schedule_se net_profit_schedule_c
-// Box 4a only (no Box 14a) → route guaranteed services to schedule_se
+// SE tax routing: aggregate all SE earnings across K-1s into a single output.
+// Box 14a (net SE earnings) takes priority per item; Box 4a used as fallback.
+// Aggregating prevents array accumulation in schedule_se when multiple K-1s are present.
 function scheduleSEOutputs(items: K1PartnershipItems): NodeOutput[] {
-  const outputs: NodeOutput[] = [];
-  for (const item of items) {
-    if ((item.box14a_se_earnings ?? 0) !== 0) {
-      // Box 14a is the authoritative SE earnings from the partnership
-      outputs.push(output(schedule_se, { net_profit_schedule_c: item.box14a_se_earnings! }));
-    } else if ((item.box4a_guaranteed_services ?? 0) > 0) {
-      // Fall back to Box 4a when Box 14a is absent
-      outputs.push(output(schedule_se, { net_profit_schedule_c: item.box4a_guaranteed_services! }));
-    }
-  }
-  return outputs;
+  const total = items.reduce((sum, item) => {
+    if ((item.box14a_se_earnings ?? 0) !== 0) return sum + item.box14a_se_earnings!;
+    if ((item.box4a_guaranteed_services ?? 0) > 0) return sum + item.box4a_guaranteed_services!;
+    return sum;
+  }, 0);
+  if (total === 0) return [];
+  return [output(schedule_se, { net_profit_schedule_c: total })];
 }
 
 // QBI routing: Box 20Z → form8995
@@ -267,6 +267,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
     schedule1,
+    agi_aggregator,
     schedule_b,
     f1040,
     schedule_d,

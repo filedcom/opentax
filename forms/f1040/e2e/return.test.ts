@@ -43,22 +43,22 @@ function runReturn(inputs: Record<string, unknown>): ExecuteResult {
 // Single filer, TY2025, W-2 wages $75,000, federal withholding $11,000.
 // No other income, no credits, no adjustments.
 //
-// 2025 Single brackets on $60,000 taxable income:
+// 2025 Single brackets on $59,250 taxable income:
 //   10% × $11,925                       = $1,192.50
 //   12% × ($48,475 − $11,925)           = 12% × $36,550 = $4,386.00
-//   22% × ($60,000 − $48,475)           = 22% × $11,525 = $2,535.50
-//   Total                               = $8,114.00
+//   22% × ($59,250 − $48,475)           = 22% × $10,775 = $2,370.50
+//   Total                               = $7,949.00
 //
 // Expected pipeline:
 //   agi_aggregator.line1a_wages         = $75,000
 //   standard_deduction inputs: agi      = $75,000, filing_status = single
 //   income_tax_calculation inputs:
-//     taxable_income                    = $60,000  (75,000 − 15,000)
+//     taxable_income                    = $59,250  (75,000 − 15,750)
 //     filing_status                     = single
 //   f1040 scalars:
-//     line24_total_tax                  = $8,114
+//     line24_total_tax                  = $7,949
 //     line33_total_payments             = $11,000
-//     line35a_refund                    = $2,886
+//     line35a_refund                    = $3,051
 
 Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, standard deduction, tax calculation to final refund", () => {
   const result = runReturn({
@@ -95,7 +95,7 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 
   // ── Standard deduction node inputs ────────────────────────────────────────
   // The standard_deduction node receives AGI and filing_status.
-  // For Single 2025 with no age/blind factors, the node emits $15,000.
+  // For Single 2025 with no age/blind factors, the node emits $15,750.
   // We verify the inputs it received (its pending dict), confirming the
   // AGI pipeline is correctly wired.
   assertEquals(
@@ -111,11 +111,11 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 
   // ── Income tax calculation node inputs ────────────────────────────────────
   // The income_tax_calculation node receives taxable_income = AGI − standard deduction.
-  // Taxable income = 75,000 − 15,000 = 60,000.
+  // Taxable income = 75,000 − 15,750 = 59,250.
   assertEquals(
     result.pending["income_tax_calculation"]?.["taxable_income"],
-    60_000,
-    "income_tax_calculation should receive taxable_income = $60,000",
+    59_250,
+    "income_tax_calculation should receive taxable_income = $59,250",
   );
   assertEquals(
     result.pending["income_tax_calculation"]?.["filing_status"],
@@ -130,8 +130,8 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 
   assertEquals(
     f1040["line24_total_tax"],
-    8_114,
-    "line24_total_tax should be $8,114 (bracket tax, no AMT/other taxes)",
+    7_949,
+    "line24_total_tax should be $7,949 (bracket tax, no AMT/other taxes)",
   );
 
   assertEquals(
@@ -140,11 +140,11 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
     "line33_total_payments should be $11,000 (W-2 withholding only)",
   );
 
-  // Refund = payments − tax = 11,000 − 8,114 = 2,886
+  // Refund = payments − tax = 11,000 − 7,949 = 3,051
   assertEquals(
     f1040["line35a_refund"],
-    2_886,
-    "line35a_refund should be $2,886",
+    3_051,
+    "line35a_refund should be $3,051",
   );
 
   assertEquals(
@@ -171,7 +171,7 @@ Deno.test("E2E Scenario 1: single W-2 wage earner — wages flow through AGI, st
 //   standard_deduction inputs:
 //     agi                  = $74,348.18  (80,000 − 5,651.82)
 //   income_tax_calculation inputs:
-//     taxable_income       = $59,348.18  (74,348.18 − 15,000)
+//     taxable_income       = $46,878.54  (74,348.18 − 15,750 std ded − QBI)
 //   f1040 scalars:
 //     line33_total_payments = $0          (no withholding)
 //     line37_amount_owed    = line24_total_tax  (owes full computed tax)
@@ -228,12 +228,12 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
   );
 
   // ── Income tax calculation node inputs ────────────────────────────────────
-  // Taxable income = 74,348.18 − 15,000 (std ded) − 11,869.64 (QBI deduction) = 47,478.54
+  // Taxable income = 74,348.18 − 15,750 (std ded) − 11,719.64 (QBI deduction) = 46,878.54
   const itcPending = result.pending["income_tax_calculation"] ?? {};
   assertEquals(
     Math.round((itcPending["taxable_income"] as number) * 100) / 100,
-    47_478.54,
-    "income_tax_calculation should receive taxable_income ≈ $47,478.54",
+    46_878.54,
+    "income_tax_calculation should receive taxable_income ≈ $46,878.54",
   );
 
   // ── F1040 final scalar summary ─────────────────────────────────────────────

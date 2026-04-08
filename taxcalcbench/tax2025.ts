@@ -7,7 +7,7 @@ export type FilingStatus = "single" | "mfj" | "mfs" | "hoh" | "qss";
 
 // ── 2025 Standard Deductions ──────────────────────────────────────────────────
 const STD_DEDUCTION: Record<FilingStatus, number> = {
-  single: 15_000, mfj: 30_000, mfs: 15_000, hoh: 22_500, qss: 30_000,
+  single: 15_750, mfj: 31_500, mfs: 15_750, hoh: 23_625, qss: 31_500,
 };
 const STD_EXTRA_SINGLE = 2_000; // single / hoh per qualifying senior or blind
 const STD_EXTRA_MFJ    = 1_600; // mfj / mfs / qss per qualifying senior or blind
@@ -104,7 +104,7 @@ function ctcAndActc(
   if (qualifyingChildren === 0) return [0, 0];
   const limit = (status === "mfj" || status === "qss") ? 400_000 : 200_000;
   const reduction = Math.max(0, Math.ceil((agi - limit) / 1000)) * 50;
-  const totalCtc = Math.max(0, qualifyingChildren * 2_000 - reduction);
+  const totalCtc = Math.max(0, qualifyingChildren * 2_200 - reduction);
   const nonref = Math.min(totalCtc, taxBeforeCredits);
   const unused = totalCtc - nonref;
   const actc = Math.min(Math.max(0, (earned - 2_500) * 0.15), qualifyingChildren * 1_700, unused);

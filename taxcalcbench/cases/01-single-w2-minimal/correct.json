@@ -30,7 +30,7 @@
   "correct": {
     "line9_total_income": 15000,
     "line11_agi": 15000,
-    "standard_deduction": 15000,
+    "standard_deduction": 15750,
     "qbi_deduction": 0,
     "line15_taxable_income": 0,
     "ordinary_taxable": 0,

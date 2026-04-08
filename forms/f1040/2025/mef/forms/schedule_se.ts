@@ -11,23 +11,35 @@ export interface Fields {
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
-// Tag names verified against IRS1040ScheduleSE.xsd (2025v3.0):
-//   net_profit_schedule_c → NetNonFarmProfitLossAmt (line 2; was NetProfitOrLossAmt)
-//   net_profit_schedule_f → NetFarmProfitLossAmt (line 1a; was NetFarmProfitOrLossAmt)
+// Tag names and element ordering verified against IRS1040ScheduleSE.xsd (2025v3.0):
+//   net_profit_schedule_f → NetFarmProfitLossAmt   (xsd line 79)
+//   net_profit_schedule_c → NetNonFarmProfitLossAmt (xsd line 97)
+//   w2_ss_wages           → SSTWagesRRTCompAmt      (xsd line 271; W-2 SS wages for SE cap)
+//   unreported_tips_4137  → UnreportedTipsAmt        (xsd line 280)
+//   wages_8919            → WagesSubjectToSSTAmt     (xsd line 289)
 // IRS1040ScheduleSE.xsd §60 requires SSN (no minOccurs) before all other fields.
 // When taxpayer_ssn is absent from the pending dict, "000000000" is used as a
 // placeholder to keep the XML well-formed.
+// SE_INCOME_KEYS: fields that trigger Schedule SE emission. w2_ss_wages alone
+// (W-2-only filers) should not cause a Schedule SE to be generated.
+const SE_INCOME_KEYS: ReadonlyArray<keyof Fields> = [
+  "net_profit_schedule_c",
+  "net_profit_schedule_f",
+  "unreported_tips_4137",
+  "wages_8919",
+];
+
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["net_profit_schedule_c", "NetNonFarmProfitLossAmt"],
   ["net_profit_schedule_f", "NetFarmProfitLossAmt"],
-  ["unreported_tips_4137", "Form4137UnreportedTipsAmt"],
+  ["net_profit_schedule_c", "NetNonFarmProfitLossAmt"],
+  ["w2_ss_wages", "SSTWagesRRTCompAmt"],
+  ["unreported_tips_4137", "UnreportedTipsAmt"],
   ["wages_8919", "WagesSubjectToSSTAmt"],
-  ["w2_ss_wages", "SocSecWagesAmt"],
 ];
 
 function buildIRS1040ScheduleSE(fields: Input): string {
-  const hasAnyNumericField = FIELD_MAP.some(([key]) => typeof fields[key] === "number");
-  if (!hasAnyNumericField) return "";
+  const hasSeIncome = SE_INCOME_KEYS.some((key) => typeof fields[key] === "number");
+  if (!hasSeIncome) return "";
 
   // IRS1040ScheduleSE.xsd §60 requires SSN before income fields.
   // Use taxpayer_ssn from pending dict if available; fall back to placeholder.

@@ -55,11 +55,11 @@ Deno.test("schedule_se: net_profit_schedule_f maps to NetFarmProfitLossAmt", () 
   );
 });
 
-Deno.test("schedule_se: unreported_tips_4137 maps to Form4137UnreportedTipsAmt", () => {
+Deno.test("schedule_se: unreported_tips_4137 maps to UnreportedTipsAmt", () => {
   const result = scheduleSE.build({ unreported_tips_4137: 2000 });
   assertStringIncludes(
     result,
-    "<Form4137UnreportedTipsAmt>2000</Form4137UnreportedTipsAmt>",
+    "<UnreportedTipsAmt>2000</UnreportedTipsAmt>",
   );
 });
 
@@ -71,9 +71,14 @@ Deno.test("schedule_se: wages_8919 maps to WagesSubjectToSSTAmt", () => {
   );
 });
 
-Deno.test("schedule_se: w2_ss_wages maps to SocSecWagesAmt", () => {
+Deno.test("schedule_se: w2_ss_wages alone does not emit SE form (W-2-only filer)", () => {
   const result = scheduleSE.build({ w2_ss_wages: 100000 });
-  assertStringIncludes(result, "<SocSecWagesAmt>100000</SocSecWagesAmt>");
+  assertEquals(result, "");
+});
+
+Deno.test("schedule_se: w2_ss_wages maps to SSTWagesRRTCompAmt when SE income present", () => {
+  const result = scheduleSE.build({ net_profit_schedule_c: 30000, w2_ss_wages: 100000 });
+  assertStringIncludes(result, "<SSTWagesRRTCompAmt>100000</SSTWagesRRTCompAmt>");
 });
 
 // ---------------------------------------------------------------------------
@@ -113,9 +118,9 @@ Deno.test("schedule_se: single known field emits only that element, absent field
     "<NetNonFarmProfitLossAmt>30000</NetNonFarmProfitLossAmt>",
   );
   assertNotIncludes(result, "<NetFarmProfitLossAmt>");
-  assertNotIncludes(result, "<Form4137UnreportedTipsAmt>");
+  assertNotIncludes(result, "<UnreportedTipsAmt>");
   assertNotIncludes(result, "<WagesSubjectToSSTAmt>");
-  assertNotIncludes(result, "<SocSecWagesAmt>");
+  assertNotIncludes(result, "<SSTWagesRRTCompAmt>");
 });
 
 Deno.test("schedule_se: two fields present: only those two elements emitted", () => {
@@ -132,7 +137,7 @@ Deno.test("schedule_se: two fields present: only those two elements emitted", ()
     "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
   );
   assertNotIncludes(result, "<NetFarmProfitLossAmt>");
-  assertNotIncludes(result, "<SocSecWagesAmt>");
+  assertNotIncludes(result, "<SSTWagesRRTCompAmt>");
 });
 
 // ---------------------------------------------------------------------------
@@ -165,13 +170,13 @@ Deno.test("schedule_se: all 5 fields present: all elements emitted", () => {
   );
   assertStringIncludes(
     result,
-    "<Form4137UnreportedTipsAmt>2000</Form4137UnreportedTipsAmt>",
+    "<UnreportedTipsAmt>2000</UnreportedTipsAmt>",
   );
   assertStringIncludes(
     result,
     "<WagesSubjectToSSTAmt>8000</WagesSubjectToSSTAmt>",
   );
-  assertStringIncludes(result, "<SocSecWagesAmt>100000</SocSecWagesAmt>");
+  assertStringIncludes(result, "<SSTWagesRRTCompAmt>100000</SSTWagesRRTCompAmt>");
 });
 
 // ---------------------------------------------------------------------------
