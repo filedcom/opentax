@@ -32,6 +32,8 @@ export const inputSchema = z.object({
   // ── Form 1040 income lines ─────────────────────────────────────────────────
   // Line 1a — Wages (W-2 Box 1, regular employees)
   line1a_wages: z.number().optional(),
+  // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
+  line1b_allocated_tips: z.number().nonnegative().optional(),
   // Line 1c — Unreported tips (Form 4137)
   line1c_unreported_tips: z.number().nonnegative().optional(),
   // Line 1e — Taxable dependent care benefits (Form 2441)
@@ -188,6 +190,7 @@ function computeSsaTaxable(
 function nonSsaIncome(input: AgiInput): number {
   return (
     (input.line1a_wages ?? 0) +
+    (input.line1b_allocated_tips ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +
     (input.line1f_taxable_adoption_benefits ?? 0) +
