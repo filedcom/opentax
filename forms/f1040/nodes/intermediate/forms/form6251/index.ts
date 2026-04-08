@@ -112,8 +112,7 @@ function computeAmti(input: Form6251Input): number {
     (input.iso_adjustment ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
-    (input.private_activity_bond_interest ?? 0) +
-    (input.line2g_pab_interest ?? 0) +
+    Math.max(input.private_activity_bond_interest ?? 0, input.line2g_pab_interest ?? 0) +
     (input.qsbs_adjustment ?? 0) +
     (input.other_adjustments ?? 0)
   );

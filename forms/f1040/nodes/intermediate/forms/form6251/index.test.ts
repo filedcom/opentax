@@ -289,6 +289,38 @@ Deno.test("form6251: throws on negative regular_tax", () => {
 
 // ─── Output routing ───────────────────────────────────────────────────────────
 
+Deno.test("form6251: line2g_pab_interest alias produces same AMTI as private_activity_bond_interest", () => {
+  // Both fields represent line 2g — only the larger should count (no double-count).
+  const via_primary = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    private_activity_bond_interest: 20_000,
+    regular_tax: 15_000,
+  });
+  const via_alias = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    line2g_pab_interest: 20_000,
+    regular_tax: 15_000,
+  });
+  assertEquals(
+    fieldsOf(via_primary.outputs, schedule2)!.line1_amt,
+    fieldsOf(via_alias.outputs, schedule2)!.line1_amt,
+  );
+});
+
+Deno.test("form6251: both PAB fields set to same value — no double-count", () => {
+  // Setting both to 20_000 should produce same result as setting either alone.
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    private_activity_bond_interest: 20_000,
+    line2g_pab_interest: 20_000,
+    regular_tax: 15_000,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 19_294);
+});
+
 Deno.test("form6251: routes exactly one output to schedule2", () => {
   // Single: AMTI = $250,000; exemption = $88,100; line6 = $161,900
   // TMT = $42,094; regular_tax = $20,000; AMT = $22,094
