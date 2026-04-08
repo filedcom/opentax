@@ -11,6 +11,7 @@ import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -88,6 +89,19 @@ export const itemSchema = z.object({
   // Box 20 — Aggregation group identifier (§199A aggregation election)
   // Partners may aggregate multiple pass-throughs; group name ties K-1s together
   box20_aggregation_group: z.string().optional(),
+
+  // Box 13 — Other deductions (various codes A-Z+)
+  // Net total of deductible partnership items from Box 13 that reduce the
+  // partner's income. Positive = deduction amount. Most common codes (e.g.,
+  // charitable contributions code A, investment interest code B) are collapsed
+  // to a single net figure for routing to Schedule A / AGI reduction.
+  box13_deductions: z.number().nonnegative().optional(),
+
+  // Box 17 — Alternative Minimum Tax (AMT) items (codes A-G)
+  // Net adjustment to AMTI from partnership-level AMT preferences/adjustments.
+  // Positive increases AMTI; negative decreases AMTI (e.g. AMT loss adjustments).
+  // IRC §702(a)(7); Form 6251 Line 2 adjustments.
+  box17_amt_adjustment: z.number().optional(),
 
   // ── Partner Basis Worksheet (K1P > "Basis Wkst" tab) ────────────────────────
   // These fields track outside basis — the partner's tax basis in the partnership.
@@ -263,6 +277,25 @@ function unrecaptured1250Outputs(items: K1PartnershipItems): NodeOutput[] {
   return [output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total })];
 }
 
+// Box 13 deductions → schedule1 line8z_other_income (as negative / deduction)
+// Partners deduct Box 13 items against income; most flow through Schedule A
+// or reduce AGI. We aggregate to a single above-the-line offset via line8z.
+function box13DeductionOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box13_deductions ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(schedule1, { line8z_other_income: -total })];
+}
+
+// Box 17 AMT items → form6251 other_adjustments
+// Partnership-level AMT preferences/adjustments passed through to the partner.
+// Routes to the catch-all other_adjustments field on Form 6251.
+// IRC §702(a)(7); Form 6251 Lines 2a–2t, 3.
+function form6251Outputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box17_amt_adjustment ?? 0), 0);
+  if (total === 0) return [];
+  return [output(form6251, { other_adjustments: total })];
+}
+
 // Route foreign taxes → form_1116
 function form1116Outputs(items: K1PartnershipItems): NodeOutput[] {
   return items
@@ -287,6 +320,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form8995,
     form_1116,
     unrecaptured_1250_worksheet,
+    form6251,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -302,6 +336,8 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...form8995Output(k1_partnerships),
       ...form1116Outputs(k1_partnerships),
       ...unrecaptured1250Outputs(k1_partnerships),
+      ...box13DeductionOutputs(k1_partnerships),
+      ...form6251Outputs(k1_partnerships),
     ];
 
     return { outputs };

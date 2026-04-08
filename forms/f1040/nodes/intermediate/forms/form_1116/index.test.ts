@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus, IncomeCategory, form1116, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { form6251 } from "../form6251/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form1116.compute({ taxYear: 2025 }, inputSchema.parse(input));
@@ -207,4 +208,96 @@ Deno.test("validation: zero total_income with foreign_income > 0 → fraction = 
     filing_status: FilingStatus.Single,
   });
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 200);
+});
+
+// ─── AMT FTC (IRC §59(a)) ─────────────────────────────────────────────────────
+
+Deno.test("amt ftc: no tentative_minimum_tax → no form6251 output", () => {
+  // Without TMT supplied, AMT FTC cannot be computed — no form6251 output
+  const result = compute({
+    foreign_tax_paid: 500,
+    foreign_income: 5000,
+    total_income: 50000,
+    us_tax_before_credits: 4000,
+    income_category: IncomeCategory.Passive,
+    filing_status: FilingStatus.Single,
+  });
+  const f6251 = result.outputs.find((o) => o.nodeType === "form6251");
+  assertEquals(f6251, undefined);
+});
+
+Deno.test("amt ftc: zero tentative_minimum_tax → no form6251 output", () => {
+  const result = compute({
+    foreign_tax_paid: 500,
+    foreign_income: 5000,
+    total_income: 50000,
+    us_tax_before_credits: 4000,
+    tentative_minimum_tax: 0,
+    income_category: IncomeCategory.Passive,
+    filing_status: FilingStatus.Single,
+  });
+  const f6251 = result.outputs.find((o) => o.nodeType === "form6251");
+  assertEquals(f6251, undefined);
+});
+
+Deno.test("amt ftc: taxes below AMT limit → full foreign taxes allowed as AMT FTC", () => {
+  // TMT = 10000, fraction = 5000/50000 = 0.10, AMT limit = 10000 × 0.10 = 1000
+  // foreign_tax_paid = 300 < 1000 → AMT FTC = 300
+  const result = compute({
+    foreign_tax_paid: 300,
+    foreign_income: 5000,
+    total_income: 50000,
+    us_tax_before_credits: 4000,
+    tentative_minimum_tax: 10_000,
+    income_category: IncomeCategory.Passive,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)!.amtftc, 300);
+});
+
+Deno.test("amt ftc: taxes above AMT limit → AMT FTC capped at limit", () => {
+  // TMT = 5000, fraction = 1000/50000 = 0.02, AMT limit = 5000 × 0.02 = 100
+  // foreign_tax_paid = 500 > 100 → AMT FTC = 100
+  const result = compute({
+    foreign_tax_paid: 500,
+    foreign_income: 1000,
+    total_income: 50000,
+    us_tax_before_credits: 4000,
+    tentative_minimum_tax: 5_000,
+    income_category: IncomeCategory.Passive,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)!.amtftc, 100);
+});
+
+Deno.test("amt ftc: fraction = 1.0 (all income foreign) → AMT FTC capped at TMT", () => {
+  // fraction = min(1.0, 60000/50000) = 1.0; limit = TMT × 1.0 = TMT
+  // foreign_tax_paid = 8000 > TMT 6000 → AMT FTC = 6000
+  const result = compute({
+    foreign_tax_paid: 8_000,
+    foreign_income: 60_000,
+    total_income: 50_000,
+    us_tax_before_credits: 5_000,
+    tentative_minimum_tax: 6_000,
+    income_category: IncomeCategory.General,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)!.amtftc, 6_000);
+});
+
+Deno.test("amt ftc: emits both schedule3 and form6251 outputs when both credits > 0", () => {
+  // Regular FTC: limit = 4000 × (5000/50000) = 400; credit = min(300, 400) = 300
+  // AMT FTC: limit = 8000 × (5000/50000) = 800; amtftc = min(300, 800) = 300
+  const result = compute({
+    foreign_tax_paid: 300,
+    foreign_income: 5_000,
+    total_income: 50_000,
+    us_tax_before_credits: 4_000,
+    tentative_minimum_tax: 8_000,
+    income_category: IncomeCategory.Passive,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(result.outputs.length, 2);
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 300);
+  assertEquals(fieldsOf(result.outputs, form6251)!.amtftc, 300);
 });

@@ -48,35 +48,25 @@ export const inputSchema = z.object({
 
 type QbiAggregationInput = z.infer<typeof inputSchema>;
 
-// ── Pure helpers ──────────────────────────────────────────────────────────────
-
-// Counts groups declared for the limitation aggregation
-function limitationGroupCount(input: QbiAggregationInput): number {
-  return input.aggregation_groups.filter((g) => g.combined_for_limitation).length;
-}
-
 // ── Node class ────────────────────────────────────────────────────────────────
 
 class QbiAggregationNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "qbi_aggregation";
   readonly inputSchema = inputSchema;
-  // Aggregation elections are consumed by form8995a (Schedule B).
-  // This node does not emit standalone financial outputs — it signals
-  // to form8995a that grouped treatment should be applied.
-  // We list form8995a as the output node so the registry type-checks.
+  // Aggregation elections are forwarded to form8995a so it can apply
+  // Schedule B grouped §199A treatment.
   readonly outputNodes = new OutputNodes([form8995a]);
 
   compute(_ctx: NodeContext, rawInput: QbiAggregationInput): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    // Validate: there must be at least one limitation group if any groups exist
-    // (purely informational check; does not block valid configurations)
-    void limitationGroupCount(input);
-
-    // Aggregation data is captured at the engine level. No financial output
-    // is emitted from this node — the aggregation election is recorded in
-    // the taxpayer's return and referenced by form8995a during computation.
-    return { outputs: [] };
+    return {
+      outputs: [
+        this.outputNodes.output(form8995a, {
+          aggregation_groups: input.aggregation_groups,
+        }),
+      ],
+    };
   }
 }
 

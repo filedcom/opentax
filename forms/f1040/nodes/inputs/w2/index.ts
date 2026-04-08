@@ -275,7 +275,7 @@ function scheduleAOutput(w2s: W2Items): NodeOutput[] {
   // All three contribute to Schedule A line 5a (state and local income taxes)
   const stateTaxTotal = line5a + line5b + line5c;
   if (stateTaxTotal === 0) return [];
-  return [output(schedule_a, { line_5a_tax_amount: stateTaxTotal })];
+  return [output(schedule_a, { line_5a_state_income_tax: stateTaxTotal })];
 }
 
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
@@ -368,10 +368,15 @@ class W2Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 
-    // Route wages and §501(c)(18)(D) deduction to AGI aggregator
+    // Route wages, allocated tips, and §501(c)(18)(D) deduction to AGI aggregator
     const agiWageFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
     const wages = wageFields(input.w2s);
     if (wages.line1a_wages !== undefined) agiWageFields.line1a_wages = wages.line1a_wages;
+    const allocatedTips = regularItems(input.w2s).reduce(
+      (sum, item) => sum + (item.box8_allocated_tips ?? 0),
+      0,
+    );
+    if (allocatedTips > 0) agiWageFields.line1b_allocated_tips = allocatedTips;
     const entries = regularItems(input.w2s).flatMap((item) => item.box12_entries ?? []);
     const h = entries.filter((e) => e.code === Box12Code.H).reduce((s, e) => s + e.amount, 0);
     if (h > 0) agiWageFields.line24f_501c18d = h;

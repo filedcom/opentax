@@ -82,6 +82,9 @@ const inputSchema = z.object({
   line24h_dpad: z.number().nonnegative().optional(),
   // Form 6198 at-risk disallowance add-back
   at_risk_disallowed_add_back: z.number().nonnegative().optional(),
+  // Form 6198 §465(e) recapture income — ordinary income when at-risk amount goes negative
+  // IRC §465(e): previously deducted losses are recaptured as ordinary income
+  at_risk_recapture: z.number().nonnegative().optional(),
   // Form 8990 §163(j) disallowed business interest add-back
   biz_interest_disallowed_add_back: z.number().nonnegative().optional(),
   // Form 7203 S-corp basis disallowance add-back (IRC §1366(d)(1))
@@ -112,6 +115,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_other_income ?? 0) +
     (input.line8z_other ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
+    (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0)
   );

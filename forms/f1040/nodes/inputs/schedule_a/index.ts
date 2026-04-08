@@ -23,8 +23,11 @@ import { FilingStatus } from "../../types.ts";
 const SALT_CAP = SALT_CAP_2025;
 const SALT_CAP_MFS = 20_000;
 
-// 60% AGI limit for cash charitable contributions to public charities
+// 60% AGI limit for cash charitable contributions to public charities (IRC §170(b)(1)(A))
 const CASH_CONTRIBUTION_AGI_PCT = 0.60;
+
+// 30% AGI limit for noncash capital gain property contributions (IRC §170(b)(1)(C))
+const NONCASH_CAPITAL_GAIN_AGI_PCT = 0.30;
 
 // 7.5% AGI floor for medical deductions
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
@@ -38,7 +41,12 @@ export const inputSchema = z.object({
   agi: z.number().nonnegative().optional(),
   // MAGI for OBBBA SALT phase-out (IRC §164(b)(6)(B)). Defaults to agi when not provided.
   magi: z.number().nonnegative().optional(),
-  line_5a_tax_amount: z.number().nonnegative().optional(),
+  // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
+  // per IRC §164(b)(5) election. Provide one or the other, never both.
+  line_5a_state_income_tax: z.number().nonnegative().optional(),
+  // Line 5a (alternative): General sales tax deduction in lieu of income taxes
+  // IRC §164(b)(5)(A) — taxpayer elects sales tax OR income tax, not both.
+  line_5a_sales_tax: z.number().nonnegative().optional(),
   line_5b_real_estate_tax: z.number().nonnegative().optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
   line_6_other_taxes: z.number().nonnegative().optional(),
@@ -46,11 +54,30 @@ export const inputSchema = z.object({
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
   line_8c_points_no_1098: z.number().nonnegative().optional(),
   line_9_investment_interest: z.number().nonnegative().optional(),
+  // Line 11: Cash contributions to public charities — 60% AGI cap (IRC §170(b)(1)(A))
   line_11_cash_contributions: z.number().nonnegative().optional(),
+  // Line 12: Noncash contributions — treated as capital gain property, 30% AGI cap
+  // IRC §170(b)(1)(C) for appreciated capital gain property; 50% cap for other noncash.
+  // This field represents the more restrictive capital gain property category.
   line_12_noncash_contributions: z.number().nonnegative().optional(),
   line_13_contribution_carryover: z.number().nonnegative().optional(),
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
+}).superRefine((data, ctx) => {
+  // IRC §164(b)(5): Taxpayer may elect to deduct general sales taxes in lieu of
+  // state and local income taxes. The election is mutually exclusive — you cannot
+  // deduct both. Reject when both are provided with nonzero values.
+  const hasSalesTax = (data.line_5a_sales_tax ?? 0) > 0;
+  const hasIncomeTax = (data.line_5a_state_income_tax ?? 0) > 0;
+  if (hasSalesTax && hasIncomeTax) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["line_5a_sales_tax"],
+      message:
+        "IRC §164(b)(5) election: you may deduct either state/local income taxes (line_5a_state_income_tax) " +
+        "or general sales taxes (line_5a_sales_tax), but not both. Remove one before proceeding.",
+    });
+  }
 });
 
 type ScheduleAInput = z.infer<typeof inputSchema>;
@@ -71,7 +98,9 @@ function effectiveSaltCap(input: ScheduleAInput): number {
 }
 
 function computeSALT(input: ScheduleAInput): number {
-  const saltTotal = (input.line_5a_tax_amount ?? 0) +
+  // line_5a is either state income tax or sales tax (election) — never both (validated in schema)
+  const line5a = (input.line_5a_state_income_tax ?? 0) + (input.line_5a_sales_tax ?? 0);
+  const saltTotal = line5a +
     (input.line_5b_real_estate_tax ?? 0) +
     (input.line_5c_personal_property_tax ?? 0);
   return Math.min(saltTotal, effectiveSaltCap(input));
@@ -85,13 +114,25 @@ function computeInterestTotal(input: ScheduleAInput): number {
 }
 
 function computeContributions(input: ScheduleAInput, agi: number): number {
-  const contributionsRaw = (input.line_11_cash_contributions ?? 0) +
-    (input.line_12_noncash_contributions ?? 0) +
-    (input.line_13_contribution_carryover ?? 0);
-  const contributionsAgiCap = agi * CASH_CONTRIBUTION_AGI_PCT;
-  return agi > 0
-    ? Math.min(contributionsRaw, contributionsAgiCap)
-    : contributionsRaw;
+  if (agi <= 0) {
+    return (input.line_11_cash_contributions ?? 0) +
+      (input.line_12_noncash_contributions ?? 0) +
+      (input.line_13_contribution_carryover ?? 0);
+  }
+  // IRC §170(b)(1)(A): cash contributions to public charities capped at 60% of AGI
+  const cashAllowed = Math.min(
+    input.line_11_cash_contributions ?? 0,
+    agi * CASH_CONTRIBUTION_AGI_PCT,
+  );
+  // IRC §170(b)(1)(C): noncash capital gain property contributions capped at 30% of AGI
+  const noncashAllowed = Math.min(
+    input.line_12_noncash_contributions ?? 0,
+    agi * NONCASH_CAPITAL_GAIN_AGI_PCT,
+  );
+  // Carryover follows the original contribution type; apply overall 60% ceiling to total
+  const carryover = input.line_13_contribution_carryover ?? 0;
+  const combined = cashAllowed + noncashAllowed + carryover;
+  return Math.min(combined, agi * CASH_CONTRIBUTION_AGI_PCT);
 }
 
 class ScheduleANode extends TaxNode<typeof inputSchema> {

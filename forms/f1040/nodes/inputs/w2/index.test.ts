@@ -219,12 +219,12 @@ Deno.test("box12_informational_codes_produce_no_routing: codes C, F, J, L, P, S 
 // 5. Box 14 routing
 // ============================================================
 
-Deno.test("box14_sdi_pfml_routes_to_schedule_a: $600 SDI → line_5a_tax_amount = 600", () => {
+Deno.test("box14_sdi_pfml_routes_to_schedule_a: $600 SDI → line_5a_state_income_tax = 600", () => {
   const result = compute([minimalItem({
     box1_wages: 80000,
     box14_entries: [{ description: "CA SDI", amount: 600, is_state_sdi_pfml: true }],
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount, 600);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 600);
 });
 
 Deno.test("box14_sdi_plus_state_withheld_combined_to_schedule_a: SDI $500 + box17 $3,000 → line_5a = 3500", () => {
@@ -233,17 +233,17 @@ Deno.test("box14_sdi_plus_state_withheld_combined_to_schedule_a: SDI $500 + box1
     box14_entries: [{ description: "CA SDI", amount: 500, is_state_sdi_pfml: true }],
     box17_state_withheld: 3000,
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount, 3500);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 3500);
 });
 
-Deno.test("box17_state_withheld_routes_to_schedule_a: $4,000 state withholding → line_5a_tax_amount = 4000", () => {
+Deno.test("box17_state_withheld_routes_to_schedule_a: $4,000 state withholding → line_5a_state_income_tax = 4000", () => {
   const result = compute([minimalItem({ box1_wages: 80000, box17_state_withheld: 4000 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount, 4000);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 4000);
 });
 
-Deno.test("box19_local_withheld_routes_to_schedule_a: $1,200 local → line_5a_tax_amount = 1200", () => {
+Deno.test("box19_local_withheld_routes_to_schedule_a: $1,200 local → line_5a_state_income_tax = 1200", () => {
   const result = compute([minimalItem({ box1_wages: 80000, box19_local_withheld: 1200 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount, 1200);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 1200);
 });
 
 Deno.test("box14_non_sdi_entry_does_not_route_to_schedule_a: union dues not routed", () => {
@@ -320,7 +320,7 @@ Deno.test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 li
     minimalItem({ box1_wages: 50000, box17_state_withheld: 2000 }),
     minimalItem({ box1_wages: 50000, box17_state_withheld: 3000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount, 5000);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 5000);
 });
 
 Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regular go to line1a", () => {
@@ -591,5 +591,5 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   // IRA worksheet
   assertEquals(fieldsOf(result.outputs, ira_deduction_worksheet)!.covered_by_retirement_plan, true);
   // schedule_a: SDI $400 + state $5,000
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_tax_amount, 5400);
+  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 5400);
 });

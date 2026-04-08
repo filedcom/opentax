@@ -47,6 +47,13 @@ export const inputSchema = z.object({
   // Whether the taxpayer is age 55 or older (enables $1,000 catch-up)
   // IRC §223(b)(3)
   age_55_or_older: z.boolean().optional(),
+  // Number of months the taxpayer had HDHP coverage during the year (1–12).
+  // IRC §223(b)(1): contribution limit is prorated by months of coverage.
+  // Omit or set to 12 for a full year of coverage.
+  months_of_hdhp_coverage: z.number().int().min(1).max(12).optional(),
+  // Line 4: Archer MSA distributions received during the year (Form 8853).
+  // IRC §223(b)(4)(B): Archer MSA distributions reduce the HSA contribution limit.
+  archer_msa_distributions: z.number().nonnegative().optional(),
 
   // ── Part II: Distributions ───────────────────────────────────────────────
   // Line 14a: Total HSA distributions received during the year (1099-SA box 1)
@@ -63,8 +70,11 @@ type Form8889Input = z.infer<typeof inputSchema>;
 
 // ─── Pure Helper Functions ────────────────────────────────────────────────────
 
-// Annual contribution limit based on coverage type and age
-// IRC §223(b)(2)–(3)
+// Annual contribution limit based on coverage type, age, months of coverage,
+// and Archer MSA distributions.
+// IRC §223(b)(1): limit prorated by months of HDHP coverage (month-by-month rule).
+// IRC §223(b)(2)–(3): base limit by coverage type; +$1,000 catch-up if age 55+.
+// IRC §223(b)(4)(B): Archer MSA distributions reduce the allowable HSA limit.
 function annualLimit(
   input: Form8889Input,
   selfOnlyLimit: number,
@@ -72,7 +82,13 @@ function annualLimit(
   catchupLimit: number,
 ): number {
   const base = input.coverage_type === CoverageType.Family ? familyLimit : selfOnlyLimit;
-  return input.age_55_or_older === true ? base + catchupLimit : base;
+  const withCatchup = input.age_55_or_older === true ? base + catchupLimit : base;
+  // Prorate by months of HDHP coverage; default to 12 (full year) when not provided.
+  const months = input.months_of_hdhp_coverage ?? 12;
+  const prorated = months < 12 ? Math.floor((withCatchup * months) / 12) : withCatchup;
+  // Subtract Archer MSA distributions; floor at zero.
+  const archerOffset = input.archer_msa_distributions ?? 0;
+  return Math.max(0, prorated - archerOffset);
 }
 
 // Part I, Line 13: Deductible HSA contributions for AGI purposes.

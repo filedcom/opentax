@@ -4,6 +4,7 @@ import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { schedule_d } from "../../aggregation/schedule_d/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -84,9 +85,15 @@ function stockBasisAfterIncreases(input: Form7203Input): number {
 }
 
 // Step 2: Stock basis after distributions (Part I Line 7)
-// IRC §1367(a)(2)(A) — floored at zero; excess distribution = capital gain (not computed here)
+// IRC §1367(a)(2)(A) — floored at zero; excess distribution = capital gain (IRC §1368(b)(2))
 function stockBasisAfterDistributions(basisAfterIncreases: number, input: Form7203Input): number {
   return Math.max(0, basisAfterIncreases - (input.distributions ?? 0));
+}
+
+// Excess distributions over stock basis = capital gain under IRC §1368(b)(2)
+// Treated as gain from sale of stock (long-term if held > 1 year)
+function excessDistributionGain(basisAfterIncreases: number, input: Form7203Input): number {
+  return Math.max(0, (input.distributions ?? 0) - basisAfterIncreases);
 }
 
 // Step 3: Tentative stock basis for loss allocation (Part I Line 10)
@@ -124,34 +131,48 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
   // Disallowed basis losses are added back to schedule1 as a positive adjustment,
   // reversing the upstream-posted S-corp loss (from k1_s_corp → schedule1 line5_schedule_e)
   // to the extent it exceeds the shareholder's adjusted stock + debt basis.
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule_d]);
 
   compute(_ctx: NodeContext, rawInput: Form7203Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
     const pool = totalLossPool(input);
+    const stockAfterIncreases = stockBasisAfterIncreases(input);
+    const excessGain = excessDistributionGain(stockAfterIncreases, input);
 
-    // No losses to limit — nothing to do
-    if (pool === 0) {
+    // No losses and no excess distributions — nothing to do
+    if (pool === 0 && excessGain === 0) {
       return { outputs: [] };
     }
 
-    const stockAfterIncreases = stockBasisAfterIncreases(input);
+    const outputs = [];
+
+    // Excess distributions over stock basis → capital gain (IRC §1368(b)(2))
+    // Treated as long-term gain from sale of stock; flows to Schedule D Line 11
+    if (excessGain > 0) {
+      outputs.push(this.outputNodes.output(schedule_d, { line_11_form2439: excessGain }));
+    }
+
+    // No losses to limit — only excess distribution output needed
+    if (pool === 0) {
+      return { outputs };
+    }
+
     const stockAfterDistrib = stockBasisAfterDistributions(stockAfterIncreases, input);
     const stockBasis = tentativeStockBasis(stockAfterDistrib, input);
     const debtBasis = tentativeDebtBasis(input);
-
     const disallowed = disallowedLoss(pool, stockBasis, debtBasis);
 
-    // Loss fully within basis — no limitation needed
+    // Loss fully within basis — no further limitation outputs needed
     if (disallowed === 0) {
-      return { outputs: [] };
+      return { outputs };
     }
 
     // Disallowed portion: add back to schedule1 as a positive adjustment
     // (reduces the net S-corp loss already posted by the k1_s_corp upstream node)
     return {
       outputs: [
+        ...outputs,
         this.outputNodes.output(schedule1, { basis_disallowed_add_back: disallowed }),
         this.outputNodes.output(agi_aggregator, { basis_disallowed_add_back: disallowed }),
       ],

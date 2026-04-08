@@ -95,6 +95,8 @@ export const inputSchema = z.object({
   line8z_taxable_grants: z.number().optional(),
   // Form 6198 at-risk disallowance add-back (restores previously posted loss)
   at_risk_disallowed_add_back: z.number().nonnegative().optional(),
+  // Form 6198 §465(e) recapture income — ordinary income when at-risk amount goes negative
+  at_risk_recapture: z.number().nonnegative().optional(),
   // Form 8990 §163(j) disallowed business interest add-back
   biz_interest_disallowed_add_back: z.number().nonnegative().optional(),
   // Form 7203 S-corp basis disallowance add-back (IRC §1366(d)(1))
@@ -214,6 +216,7 @@ function nonSsaIncome(input: AgiInput): number {
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
+    (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0)
   );
@@ -294,6 +297,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
+    (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0) -
     (input.line8d_foreign_earned_income_exclusion ?? 0) -

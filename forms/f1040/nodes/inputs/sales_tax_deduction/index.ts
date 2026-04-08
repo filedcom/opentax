@@ -39,7 +39,7 @@ function computeBase(input: SalesTaxInput): number {
 function scheduleAOutput(input: SalesTaxInput): NodeOutput[] {
   const base = computeBase(input);
   if (base === 0) return [];
-  return [output(scheduleA, { line_5a_tax_amount: base })];
+  return [output(scheduleA, { line_5a_sales_tax: base })];
 }
 
 class SalesTaxDeductionNode extends TaxNode<typeof inputSchema> {

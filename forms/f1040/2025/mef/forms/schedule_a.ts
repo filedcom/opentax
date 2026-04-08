@@ -4,7 +4,10 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 export interface Fields {
   line_1_medical?: number | null;
   agi?: number | null;
-  line_5a_tax_amount?: number | null;
+  // IRC §164(b)(5) election: either income tax or sales tax — mutually exclusive.
+  // Both fields map to the same IRS XSD element (StateAndLocalTaxAmt).
+  line_5a_state_income_tax?: number | null;
+  line_5a_sales_tax?: number | null;
   line_5b_real_estate_tax?: number | null;
   line_5c_personal_property_tax?: number | null;
   line_6_other_taxes?: number | null;
@@ -21,8 +24,9 @@ type Input = Partial<Fields> & Record<string, unknown>;
 
 // Tag names verified against IRS1040ScheduleA.xsd §2025v3.0.
 // - agi → TaxReturnAGIAmt (AGIAmt is not a valid element in this form's XSD)
-// - line_5a_tax_amount → StateAndLocalTaxAmt (covers income or sales taxes; use
-//   StateAndLocalSalesTaxInd checkbox for sales-tax election, not mapped here)
+// - line_5a_state_income_tax / line_5a_sales_tax → both map to StateAndLocalTaxAmt
+//   (IRC §164(b)(5) election; mutually exclusive so only one will be nonzero;
+//   combined in buildIRS1040ScheduleA before emission)
 // - line_8a_mortgage_interest_1098 → RptHomeMortgIntAndPointsAmt
 //   (MortgageInterestPd1098Amt is not in the 2025v3.0 XSD)
 // - line_8b_mortgage_interest_no_1098 → Form1098HomeMortgIntNotRptAmt
@@ -31,7 +35,7 @@ type Input = Partial<Fields> & Record<string, unknown>;
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_1_medical", "MedicalAndDentalExpensesAmt"],
   ["agi", "TaxReturnAGIAmt"],
-  ["line_5a_tax_amount", "StateAndLocalTaxAmt"],
+  // line_5a_state_income_tax and line_5a_sales_tax are combined below — not in FIELD_MAP
   ["line_5b_real_estate_tax", "RealEstateTaxesAmt"],
   ["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"],
   ["line_6_other_taxes", "OtherTaxesAmt"],
@@ -45,11 +49,17 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 ];
 
 function buildIRS1040ScheduleA(fields: Input): string {
-  const children = FIELD_MAP.map(([key, tag]) => {
-    const value = fields[key];
-    if (typeof value !== "number") return "";
-    return element(tag, value);
-  });
+  // Combine the mutually exclusive line 5a fields into a single XSD element.
+  // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
+  const line5a = (fields.line_5a_state_income_tax ?? 0) + (fields.line_5a_sales_tax ?? 0);
+  const children = [
+    ...(line5a > 0 ? [element("StateAndLocalTaxAmt", line5a)] : []),
+    ...FIELD_MAP.map(([key, tag]) => {
+      const value = fields[key];
+      if (typeof value !== "number") return "";
+      return element(tag, value);
+    }),
+  ];
   return elements("IRS1040ScheduleA", children);
 }
 

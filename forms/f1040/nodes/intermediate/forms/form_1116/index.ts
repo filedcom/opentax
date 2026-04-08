@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { form6251 } from "../form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -59,6 +60,12 @@ export const inputSchema = z.object({
   // IRC §904(a); does NOT include NIIT (§1411)
   us_tax_before_credits: z.number().nonnegative(),
 
+  // Tentative minimum tax (Form 6251 Line 7) before AMTFTC.
+  // Required to compute the AMT Foreign Tax Credit per IRC §59(a).
+  // The AMT FTC limitation = TMT × (foreign_income / total_income), capped at TMT.
+  // When omitted, no AMT FTC output is emitted.
+  tentative_minimum_tax: z.number().nonnegative().optional(),
+
   // Income category — separate Form 1116 must be filed per category
   // IRC §904(d)
   income_category: z.nativeEnum(IncomeCategory),
@@ -101,12 +108,37 @@ function schedule3Output(credit: number): NodeOutput[] {
   return [output(schedule3, { line1_foreign_tax_credit: credit })];
 }
 
+// AMT FTC limitation (IRC §59(a), Form 6251 Line 8 instructions):
+// AMT FTC limit = TMT × (foreign_income / total_income), capped at TMT.
+// The limitation fraction mirrors the regular FTC fraction (IRC §904(a)) but
+// applies against the tentative minimum tax rather than regular US tax.
+function amtFtcLimit(tmt: number, fraction: number): number {
+  return Math.min(tmt, tmt * fraction);
+}
+
+// AMT FTC allowed = min(foreign_taxes_paid, amtFtcLimit)
+// Cannot reduce TMT below zero (enforced in form6251 computeNetTmt).
+function allowedAmtFtc(input: Form1116Input): number {
+  const tmt = input.tentative_minimum_tax;
+  if (tmt === undefined || tmt <= 0) return 0;
+  const fraction = limitationFraction(input);
+  const limit = amtFtcLimit(tmt, fraction);
+  return Math.min(input.foreign_tax_paid, limit);
+}
+
+// Route AMT FTC → Form 6251 Line 8 (amtftc).
+// Only emit when AMT FTC > 0.
+function form6251Output(amtFtc: number): NodeOutput[] {
+  if (amtFtc <= 0) return [];
+  return [output(form6251, { amtftc: amtFtc })];
+}
+
 // ─── Node Class ───────────────────────────────────────────────────────────────
 
 class Form1116Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form_1116";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251]);
 
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -117,8 +149,14 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
     }
 
     const credit = allowedCredit(input);
+    const amtFtc = allowedAmtFtc(input);
 
-    return { outputs: schedule3Output(credit) };
+    return {
+      outputs: [
+        ...schedule3Output(credit),
+        ...form6251Output(amtFtc),
+      ],
+    };
   }
 }
 

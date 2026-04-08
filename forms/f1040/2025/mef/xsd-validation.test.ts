@@ -141,7 +141,7 @@ Deno.test(
       general: singleGeneral(),
       w2: [w2Item(200_000, 40_000)],
       schedule_a: {
-        line_5a_tax_amount: 10_000,
+        line_5a_state_income_tax: 10_000,
         line_8a_mortgage_interest_1098: 18_000,
         line_11_cash_contributions: 5_000,
       },

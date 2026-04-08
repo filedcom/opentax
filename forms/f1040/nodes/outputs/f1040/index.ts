@@ -265,12 +265,17 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     line33_total_payments: computed_line33,
   };
 
-  // Emit computed subtotals that are NEW (not received from upstream, so no double-accumulation)
-  if (computed_line10 > 0) result.line10_adjustments = computed_line10;
-  if (computed_line14 > 0) result.line14_deductions_qbi_total = computed_line14;
-  if (computed_line32 > 0) result.line32_refundable_credits_total = computed_line32;
-  // Note: line20, line23, line26, line30, line31, line25c are already in pending from upstream
-  // nodes (schedule3, schedule2, etc.) — re-emitting would double-accumulate in the executor.
+  // Emit computed subtotals — always include these aggregates regardless of value
+  result.line10_adjustments = computed_line10;
+  result.line14_deductions_qbi_total = computed_line14;
+  result.line32_refundable_credits_total = computed_line32;
+
+  // Emit pass-through lines that are inputs to subtotals but not yet in the result
+  if (computed_line20 > 0) result.line20_nonrefundable_credits = computed_line20;
+  if (computed_line23 > 0) result.line23_other_taxes = computed_line23;
+  if (input.line26_estimated_tax !== undefined) result.line26_estimated_tax = input.line26_estimated_tax;
+  if (input.line30_refundable_adoption !== undefined) result.line30_refundable_adoption = input.line30_refundable_adoption;
+  if (input.line31_additional_payments !== undefined) result.line31_additional_payments = input.line31_additional_payments;
 
   // Conditionally include optional pass-through fields
   if (input.line1a_wages !== undefined) result.line1a_wages = input.line1a_wages;

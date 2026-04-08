@@ -29,6 +29,12 @@ export const inputSchema = z.object({
   // Current-year net passive loss (positive amount; sum of |net| for loss activities)
   current_loss: z.number().nonnegative().optional(),
 
+  // Current-year net passive loss from rental real estate activities only (positive amount).
+  // Used for IRC §469(i) $25K special allowance — only rental losses qualify, not other
+  // passive activity losses (e.g., limited partnership losses, passive Schedule C losses).
+  // Must be <= current_loss. If omitted, defaults to zero (no rental-only carryforward).
+  rental_current_loss: z.number().nonnegative().optional(),
+
   // Prior-year unallowed PAL carryforward (positive amount)
   prior_unallowed: z.number().nonnegative().optional(),
 
@@ -172,7 +178,11 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
 
     // We have an overall PAL. Determine how much is allowed.
     // Allowed = passive income + special rental allowance (Part II)
-    const rentalNetLoss = loss; // simplified: treat all losses as potentially rental
+    // IRC §469(i): only rental real estate losses qualify for the $25K allowance.
+    // When rental_current_loss is provided, use it to isolate rental losses from
+    // other passive activity losses (e.g., limited partnership, passive Schedule C).
+    // Fallback to total loss only when no distinction is available (single-activity case).
+    const rentalNetLoss = input.rental_current_loss ?? loss;
     const allowance = this.specialAllowance(input, rentalNetLoss);
     const allowedLoss = Math.min(pal, income + allowance);
 

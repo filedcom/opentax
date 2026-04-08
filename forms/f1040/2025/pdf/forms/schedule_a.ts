@@ -32,7 +32,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   // Line 3 threshold and Line 4 net medical computed by PDF — not mapped
 
   // ── Taxes You Paid ───────────────────────────────────────────────────────────
-  { kind: "text", domainKey: "line_5a_tax_amount", pdfField: "form1[0].Page1[0].f1_5[0]" },
+  // IRC §164(b)(5) election: state income tax or sales tax — mutually exclusive.
+  // Both map to the same PDF field (line 5a). Only one will be nonzero at runtime.
+  { kind: "text", domainKey: "line_5a_state_income_tax", pdfField: "form1[0].Page1[0].f1_5[0]" },
+  { kind: "text", domainKey: "line_5a_sales_tax", pdfField: "form1[0].Page1[0].f1_5[0]" },
   { kind: "text", domainKey: "line_5b_real_estate_tax", pdfField: "form1[0].Page1[0].f1_6[0]" },
   { kind: "text", domainKey: "line_5c_personal_property_tax", pdfField: "form1[0].Page1[0].f1_7[0]" },
   { kind: "text", domainKey: "line_6_other_taxes", pdfField: "form1[0].Page1[0].f1_9[0]" },

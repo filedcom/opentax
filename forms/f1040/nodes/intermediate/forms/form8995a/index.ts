@@ -27,6 +27,18 @@ const UBIA_RATE = 0.025; // IRC §199A(b)(2)(A)(ii)
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
+// Schema for one §199A aggregation group (mirrors qbi_aggregation itemSchema).
+// Present when the taxpayer has made an aggregation election under Reg. §1.199A-4.
+// Form 8995-A Schedule B must be attached when aggregation_groups is non-empty.
+const aggregationGroupSchema = z.object({
+  // Taxpayer-assigned name for the aggregation group (required for Schedule B)
+  group_name: z.string().min(1),
+  // Names of the individual businesses included in this group
+  business_names: z.array(z.string().min(1)).min(1),
+  // True when this group is aggregated to meet the W-2 wage / UBIA limitation
+  combined_for_limitation: z.boolean(),
+});
+
 export const inputSchema = z.object({
   // Filing status — determines income threshold for wage limitation phase-in
   filing_status: filingStatusSchema,
@@ -56,6 +68,11 @@ export const inputSchema = z.object({
   qbi_loss_carryforward: z.number().nonpositive().optional(),
   // Prior-year REIT/PTP net loss carryforward (zero or negative)
   reit_loss_carryforward: z.number().nonpositive().optional(),
+
+  // §199A aggregation election groups forwarded from qbi_aggregation (BAN screen).
+  // Non-empty signals that Schedule B must be attached and grouped limitation
+  // treatment applied. Omit when no aggregation election has been made.
+  aggregation_groups: z.array(aggregationGroupSchema).optional(),
 });
 
 type Form8995AInput = z.infer<typeof inputSchema>;

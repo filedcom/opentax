@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
@@ -63,13 +63,10 @@ function form8959Output(items: HouseholdWageItems): NodeOutput[] {
   const medicareTax = items.reduce((sum, item) => sum + (item.medicare_tax_withheld ?? 0), 0);
   if (medicareWages === 0 && medicareTax === 0) return [];
   // Emit partial fields — executor merges; filing_status provided by other upstream nodes
-  if (medicareWages > 0 && medicareTax > 0) {
-    return [output(form8959, { medicare_wages: medicareWages, medicare_withheld: medicareTax } as unknown as Parameters<typeof output<typeof form8959>>[1])];
-  }
-  if (medicareWages > 0) {
-    return [output(form8959, { medicare_wages: medicareWages } as unknown as Parameters<typeof output<typeof form8959>>[1])];
-  }
-  return [output(form8959, { medicare_withheld: medicareTax } as unknown as Parameters<typeof output<typeof form8959>>[1])];
+  const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
+  if (medicareWages > 0) fields.medicare_wages = medicareWages;
+  if (medicareTax > 0) fields.medicare_withheld = medicareTax;
+  return [output(form8959, fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>)];
 }
 
 class HouseholdWagesNode extends TaxNode<typeof inputSchema> {

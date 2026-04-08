@@ -32,6 +32,12 @@ const inputSchema = z.object({
   // Amount at risk at year end (Part II line 10b or Part III line 19b).
   // The deductible loss cannot exceed this amount (IRC §465(a)(1)).
   amount_at_risk: z.number().nonnegative().optional(),
+
+  // IRC §465(e) recapture amount: when the taxpayer's at-risk amount drops below
+  // zero (e.g., due to distributions, debt relief, or changed at-risk status in a
+  // subsequent year), prior deductions must be recaptured as ordinary income.
+  // Positive amount representing the recapture income to report on Schedule 1 line 8z.
+  at_risk_recapture: z.number().nonnegative().optional(),
 });
 
 type Form6198Input = z.infer<typeof inputSchema>;
@@ -66,11 +72,21 @@ class Form6198Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form6198Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    const recapture = input.at_risk_recapture ?? 0;
     const totalLoss = netLossAmount(input);
+
+    // §465(e) recapture: at-risk amount went negative in a prior or current period.
+    // Recaptured amount is ordinary income regardless of current-year loss activity.
+    const recaptureOutputs = recapture > 0
+      ? [
+          this.outputNodes.output(schedule1, { at_risk_recapture: recapture }),
+          this.outputNodes.output(agi_aggregator, { at_risk_recapture: recapture }),
+        ]
+      : [];
 
     // No loss to limit — report all items in full (Part IV line 21 instruction).
     if (totalLoss === 0) {
-      return { outputs: [] };
+      return { outputs: recaptureOutputs };
     }
 
     const atRisk = input.amount_at_risk ?? 0;
@@ -78,13 +94,14 @@ class Form6198Node extends TaxNode<typeof inputSchema> {
 
     // Loss is fully within at-risk amount — no limitation needed.
     if (disallowed === 0) {
-      return { outputs: [] };
+      return { outputs: recaptureOutputs };
     }
 
     // Disallowed portion: add back to Schedule 1 as a positive adjustment
     // (reduces the net loss already posted by the upstream node).
     return {
       outputs: [
+        ...recaptureOutputs,
         this.outputNodes.output(schedule1, { at_risk_disallowed_add_back: disallowed }),
         this.outputNodes.output(agi_aggregator, { at_risk_disallowed_add_back: disallowed }),
       ],
