@@ -1,0 +1,232 @@
+{
+  "pendingKey": "schedule_se",
+  "pdfUrl": "https://www.irs.gov/pub/irs-pdf/f1040sse.pdf",
+  "realFields": [
+    {
+      "name": "topmostSubform[0].Page1[0].f1_1[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_2[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].c1_1[0]",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_3[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_4[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_5[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_6[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_7[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_8[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_9[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].Line5a_ReadOrder[0].f1_10[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_11[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_12[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_13[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].Line8a_ReadOrder[0].f1_14[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_15[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_16[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_17[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_18[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_19[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_20[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_21[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_22[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_1[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_2[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_3[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_4[0]",
+      "type": "PDFTextField"
+    }
+  ],
+  "matched": [],
+  "missing": [
+    "topmostSubform[0].Page1[0].f1_01[0]",
+    "topmostSubform[0].Page1[0].f1_02[0]",
+    "topmostSubform[0].Page1[0].f1_03[0]",
+    "topmostSubform[0].Page1[0].f1_04[0]",
+    "topmostSubform[0].Page1[0].f1_06[0]"
+  ],
+  "unmapped": [
+    {
+      "name": "topmostSubform[0].Page1[0].f1_1[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_2[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].c1_1[0]",
+      "type": "PDFCheckBox"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_3[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_4[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_5[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_6[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_7[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_8[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_9[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].Line5a_ReadOrder[0].f1_10[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_11[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_12[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_13[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].Line8a_ReadOrder[0].f1_14[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_15[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_16[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_17[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_18[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_19[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_20[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_21[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page1[0].f1_22[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_1[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_2[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_3[0]",
+      "type": "PDFTextField"
+    },
+    {
+      "name": "topmostSubform[0].Page2[0].f2_4[0]",
+      "type": "PDFTextField"
+    }
+  ]
+}
