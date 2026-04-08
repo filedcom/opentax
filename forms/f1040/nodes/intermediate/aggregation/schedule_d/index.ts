@@ -11,6 +11,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
+import { form8960 } from "../../forms/form8960/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -250,7 +251,7 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet, form8960]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -297,6 +298,11 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, { line7_capital_gain: capitalGainForReturn }),
       this.outputNodes.output(agi_aggregator, { line7_capital_gain: capitalGainForReturn }),
     ];
+
+    // NII: net capital gain (not loss) is subject to NIIT (IRC §1411(c)(1)(A)(iii))
+    if (capitalGainForReturn > 0) {
+      outputs.push(this.outputNodes.output(form8960, { line5a_net_gain: capitalGainForReturn }));
+    }
 
     // Line 17 = Yes: both line 15 and line 16 are gains.
     // Route net_capital_gain (= min(line15, line16)) to income_tax_calculation

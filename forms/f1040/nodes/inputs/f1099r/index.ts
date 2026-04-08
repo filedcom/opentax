@@ -106,7 +106,7 @@ function effectiveTaxableAmount(item: R1099Item): number {
   let taxable = rawTaxable;
 
   // QCD exclusion — IRA distributions only; reduces taxable portion
-  if (item.box7_ira_sep_simple === true) {
+  if (item.box7_ira_simple_indicator === true) {
     if (item.qcd_full === true) {
       const qcdAmount = Math.min(item.box1_gross_distribution, QCD_ANNUAL_LIMIT);
       taxable = Math.max(0, taxable - qcdAmount);
@@ -117,13 +117,13 @@ function effectiveTaxableAmount(item: R1099Item): number {
   }
 
   // PSO premium exclusion — pension distributions only (not IRA)
-  if (item.box7_ira_sep_simple !== true && (item.pso_premium ?? 0) > 0) {
+  if (item.box7_ira_simple_indicator !== true && (item.pso_premium ?? 0) > 0) {
     const psoExclusion = Math.min(item.pso_premium!, PSO_EXCLUSION_LIMIT);
     taxable = Math.max(0, taxable - psoExclusion);
   }
 
   // Simplified Method exclusion — pension distributions only
-  if (item.box7_ira_sep_simple !== true && item.simplified_method_flag === true) {
+  if (item.box7_ira_simple_indicator !== true && item.simplified_method_flag === true) {
     const exclusion = simplifiedMethodExclusion(item);
     taxable = Math.max(0, taxable - exclusion);
   }
@@ -205,7 +205,7 @@ export const itemSchema = z.object({
   // Box 7: Distribution codes and IRA checkbox
   box7_distribution_code: z.nativeEnum(DistributionCode),
   box7_code2: z.nativeEnum(DistributionCode).optional(),
-  box7_ira_sep_simple: z.boolean().optional(),
+  box7_ira_simple_indicator: z.boolean().optional(),
 
   // Box 8: Other
   box8_other: z.number().nonnegative().optional(),
@@ -294,14 +294,14 @@ function activeItems(items: R1099Items): R1099Items {
   return items.filter((item) => item.no_distribution_received !== true);
 }
 
-// IRA items: box7_ira_sep_simple = true
+// IRA items: box7_ira_simple_indicator = true
 function iraItems(items: R1099Items): R1099Items {
-  return items.filter((item) => item.box7_ira_sep_simple === true);
+  return items.filter((item) => item.box7_ira_simple_indicator === true);
 }
 
-// Pension/annuity items: box7_ira_sep_simple !== true
+// Pension/annuity items: box7_ira_simple_indicator !== true
 function pensionItems(items: R1099Items): R1099Items {
-  return items.filter((item) => item.box7_ira_sep_simple !== true);
+  return items.filter((item) => item.box7_ira_simple_indicator !== true);
 }
 
 // Disability-as-wages items: disability routing to line1a

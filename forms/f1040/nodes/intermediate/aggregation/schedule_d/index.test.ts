@@ -415,19 +415,20 @@ Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () =
 // 8. Output counts
 // ---------------------------------------------------------------------------
 
-Deno.test("output count: gain only → exactly 3 outputs (f1040 + agi_aggregator + income_tax_calculation)", () => {
+Deno.test("output count: gain only → exactly 4 outputs (f1040 + agi_aggregator + income_tax_calculation + form8960)", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
-  assertEquals(result.outputs.length, 3);
+  assertEquals(result.outputs.length, 4);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
   assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
   assert(result.outputs.some((o) => o.nodeType === "income_tax_calculation"));
+  assert(result.outputs.some((o) => o.nodeType === "form8960"));
 });
 
-Deno.test("output count: gain + 28pct → exactly 4 outputs", () => {
+Deno.test("output count: gain + 28pct → exactly 5 outputs", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 5);
 });
 
 Deno.test("output count: pure loss → exactly 2 outputs (f1040 + agi_aggregator, capped)", () => {
@@ -489,8 +490,8 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
 
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 600);
 
-  // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet
-  assertEquals(result.outputs.length, 4);
+  // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet + form8960
+  assertEquals(result.outputs.length, 5);
 });
 
 // ===========================================================================

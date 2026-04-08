@@ -10,6 +10,7 @@ import { eitc } from "../../forms/eitc/index.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { f2441 } from "../../../inputs/f2441/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
+import { form8960 } from "../../forms/form8960/index.ts";
 
 // AGI Aggregator — Form 1040 Line 11
 //
@@ -316,7 +317,7 @@ function computeAgi(input: AgiInput): number {
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960]);
 
   compute(_ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -344,6 +345,8 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f2441, { agi }),
       // Pass AGI to form8995 so it can apply the 20%-of-taxable-income income limit
       this.outputNodes.output(form8995, { agi }),
+      // Pass AGI as MAGI to form8960 for NIIT threshold comparison (AGI = MAGI for most taxpayers)
+      this.outputNodes.output(form8960, { magi: agi }),
     ];
 
     // Pass SSA taxable amount to f1040 for line 6b.

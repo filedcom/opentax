@@ -54,12 +54,15 @@ export const inputSchema = z.object({
   rrta_wages: z.number().nonnegative().optional(),
 
   // Part V: Withholding Reconciliation
-  // Line 19 — Medicare tax withheld (W-2 box 6 sum, includes box 12 codes B + N)
+  // Line 19 — Total Medicare tax withheld (W-2 box 6 sum, includes box 12 codes B + N)
+  // Includes both regular (1.45%) and additional (0.9%) Medicare; regular portion
+  // is subtracted in Part V (line 20) to isolate Additional Medicare Tax withheld.
   // Form 8959 line 19
   medicare_withheld: z.number().nonnegative().optional(),
 
-  // Line 23 — Additional Medicare Tax withheld on RRTA compensation (W-2 box 14)
-  // Form 8959 line 23
+  // Line 22 — Additional Medicare Tax withheld on RRTA compensation (W-2 box 14)
+  // This is already the additional-only portion as reported on W-2 box 14.
+  // Form 8959 line 22
   rrta_medicare_withheld: z.number().nonnegative().optional(),
 });
 
@@ -142,10 +145,26 @@ function totalAmtTax(p1: number, p2: number, p3: number): number {
   return toCents(p1 + p2 + p3);
 }
 
+// Part V, Line 20: regular Medicare tax on wages = line4 × 1.45%
+// Form 8959 line 20
+function regularMedicareOnWages(line4: number): number {
+  return toCents(line4 * 0.0145);
+}
+
+// Part V, Line 21: Additional Medicare Tax withheld from W-2 wages
+// = max(0, line19 − line20); isolates the 0.9% additional portion
+// Form 8959 line 21
+function additionalMedicareFromWages(medicareWithheld: number, line4: number): number {
+  return Math.max(0, medicareWithheld - regularMedicareOnWages(line4));
+}
+
 // Part V, Line 24: total Additional Medicare Tax withheld
+// = line21 (wages additional) + line22 (RRTA additional)
 // Form 8959 line 24 → Form 1040 line 25c
-function totalWithheld(input: Form8959Input): number {
-  return (input.medicare_withheld ?? 0) + (input.rrta_medicare_withheld ?? 0);
+function totalAdditionalWithheld(input: Form8959Input, line4: number): number {
+  const line21 = additionalMedicareFromWages(input.medicare_withheld ?? 0, line4);
+  const line22 = input.rrta_medicare_withheld ?? 0;
+  return toCents(line21 + line22);
 }
 
 // Route total AMT to schedule2 line 11 when > 0
@@ -190,7 +209,7 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const line18 = totalAmtTax(line7, line13, line17);
 
     // Part V
-    const line24 = totalWithheld(input);
+    const line24 = totalAdditionalWithheld(input, line4);
 
     const outputs: NodeOutput[] = [
       ...schedule2Output(line18),

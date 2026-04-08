@@ -14,7 +14,7 @@ function minimalIraItem(overrides: Partial<Item> = {}): Item {
     payer_ein: "12-3456789",
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
-    box7_ira_sep_simple: true,
+    box7_ira_simple_indicator: true,
     ...overrides,
   };
 }
@@ -25,7 +25,7 @@ function minimalPensionItem(overrides: Partial<Item> = {}): Item {
     payer_ein: "98-7654321",
     box1_gross_distribution: 10000,
     box7_distribution_code: DistributionCode.Code7,
-    box7_ira_sep_simple: false,
+    box7_ira_simple_indicator: false,
     ...overrides,
   };
 }
@@ -52,7 +52,7 @@ Deno.test("f1099r.compute: missing required field (payer_name) throws", () => {
       payer_ein: "12-3456789",
       box1_gross_distribution: 5000,
       box7_distribution_code: DistributionCode.Code7,
-      box7_ira_sep_simple: true,
+      box7_ira_simple_indicator: true,
     } as Item])
   );
 });
@@ -117,7 +117,7 @@ Deno.test("f1099r.compute: pension routing uses gross as taxable when box2a abse
   assertEquals(input.line5b_pension_taxable, 18000);
 });
 
-Deno.test("f1099r.compute: omitted box7_ira_sep_simple defaults to pension routing", () => {
+Deno.test("f1099r.compute: omitted box7_ira_simple_indicator defaults to pension routing", () => {
   const result = compute([{
     payer_name: "State Pension",
     payer_ein: "99-1234567",
@@ -779,14 +779,14 @@ Deno.test("f1099r.compute: code Y (TY2025 QCD code) routes normally — taxable 
 });
 
 Deno.test("f1099r.compute: code B designated Roth routes to pension lines not IRA lines", () => {
-  // 401k Roth (box7_ira_sep_simple = false, code B)
+  // 401k Roth (box7_ira_simple_indicator = false, code B)
   const result = compute([{
     payer_name: "401k Provider",
     payer_ein: "55-1234567",
     box1_gross_distribution: 15000,
     box2a_taxable_amount: 5000,
     box7_distribution_code: DistributionCode.CodeB,
-    box7_ira_sep_simple: false,
+    box7_ira_simple_indicator: false,
   }]);
   const input = f1040Input(result);
   assertEquals(input.line5a_pension_gross, 15000);

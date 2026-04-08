@@ -221,13 +221,15 @@ Deno.test("combined_all_parts: wages + SE + RRTA all contributing AMT", () => {
 // applies (line18 > 0). Below threshold, Form 8959 is not filed; line 25c = 0.
 
 Deno.test("withholding_routes_to_f1040: wages above threshold + withheld → f1040 line25c", () => {
-  // Wages $250K above $200K threshold → line18 = 50K × 0.009 = $450; line24 = $2,900
+  // Wages $250K (Single threshold $200K) → excess $50K × 0.009 = $450 AMT
+  // Realistic W-2 box 6: regular ($250K × 1.45% = $3,625) + additional ($450) = $4,075
+  // Part V: line20 = $3,625; line21 = $4,075 - $3,625 = $450 → line25c
   const result = compute({
     filing_status: FilingStatus.Single,
     medicare_wages: 250_000,
-    medicare_withheld: 2_900,
+    medicare_withheld: 4_075, // W-2 box 6: regular $3,625 + additional $450
   });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 2_900);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 450);
 });
 
 Deno.test("withholding_no_amt_no_f1040: below threshold + withheld → no f1040 output", () => {
@@ -279,7 +281,9 @@ Deno.test("smoke: all fields present → schedule2 AMT + f1040 withholding credi
   // Part II: se($50k), threshold reduced to max(0, $250k - $307k) = 0 → $50k × 0.009 = $450
   // Part III: rrta($260k) - $250k = $10k × 0.009 = $90
   // Total = $513 + $450 + $90 = $1,053
-  // Part V: withheld = $4,000 + $200 = $4,200 → f1040 line25c
+  // Part V: line4 = $307k; line20 (regular) = $307k × 1.45% = $4,451.50
+  //         medicare_withheld (box 6) = $4,000 < $4,451.50 → line21 = 0
+  //         line22 (RRTA additional) = $200 → line24 = $200 → f1040 line25c
   const result = compute({
     filing_status: FilingStatus.MFJ,
     medicare_wages: 300_000,
@@ -291,5 +295,5 @@ Deno.test("smoke: all fields present → schedule2 AMT + f1040 withholding credi
     rrta_medicare_withheld: 200,
   });
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 1_053);
-  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 4_200);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 200);
 });
