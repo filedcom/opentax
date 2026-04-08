@@ -31,6 +31,7 @@ type ItemOverrides = Partial<{
   box9: number;
   box10: number;
   box11: number;
+  elect_bond_premium_amortization: boolean;
   box12: number;
   box13: number;
   box14: string;
@@ -211,9 +212,14 @@ Deno.test("box10 (market discount) adds to schedule_b taxable_interest_net", () 
   assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 150);
 });
 
-Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net", () => {
-  const result = compute([minimalItem({ box1: 100, box11: 30 })]);
+Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net when election made", () => {
+  const result = compute([minimalItem({ box1: 100, box11: 30, elect_bond_premium_amortization: true })]);
   assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 70);
+});
+
+Deno.test("box11 (ABP) does NOT reduce net without IRC §171 election", () => {
+  const result = compute([minimalItem({ box1: 100, box11: 30 })]);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 100);
 });
 
 Deno.test("box12 (ABP treasury) reduces schedule_b taxable_interest_net", () => {
@@ -250,12 +256,13 @@ Deno.test("non_taxable_oid_adjustment reduces schedule_b taxable_interest_net", 
   assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 92);
 });
 
-Deno.test("combined reductions: box1 - box11 - nominee - accrued - oid adjustment", () => {
+Deno.test("combined reductions: box1 - box11 - nominee - accrued - oid adjustment (with election)", () => {
   // 200 - 20 - 15 - 10 - 5 = 150
   const result = compute([
     minimalItem({
       box1: 200,
       box11: 20,
+      elect_bond_premium_amortization: true,
       nominee_interest: 15,
       accrued_interest_paid: 10,
       non_taxable_oid_adjustment: 5,
