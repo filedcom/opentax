@@ -1464,6 +1464,29 @@ Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → corr
   assertEquals(carryover, undefined);
 });
 
+Deno.test("28pct: collectibles_gain_form2439 routes to rate_28_gain_worksheet", () => {
+  // LT gain of $10,000 + Form 2439 collectibles $2,000 → rate_28 gets $2,000
+  const result = compute({
+    filing_status: "single",
+    transaction: [mkLtTx({ gain_loss: 10_000, is_long_term: true })],
+    collectibles_gain_form2439: 2_000,
+  });
+  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 2_000);
+});
+
+Deno.test("28pct: collectibles_gain_form2439 combined with f8949 collectibles", () => {
+  // f8949 collectibles $1,000 + Form 2439 $500 → rate_28 gets $1,500
+  const result = compute({
+    filing_status: "single",
+    transaction: [
+      mkLtTx({ gain_loss: 5_000, is_long_term: true }),
+      mkLtTx({ gain_loss: 1_000, is_long_term: true, adjustment_codes: "C" }),
+    ],
+    collectibles_gain_form2439: 500,
+  });
+  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 1_500);
+});
+
 Deno.test("smoke: large net loss with MFJ filing — $3,000 limit applies", () => {
   const result = computeD2({
     line_1a_proceeds: 10_000,

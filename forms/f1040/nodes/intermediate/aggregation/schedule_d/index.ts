@@ -315,10 +315,12 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
         outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: netCapGain }));
       }
 
-      // Line 18: 28% Rate Gain Worksheet (collectibles/1202 gains from f8949)
+      // Line 18: 28% Rate Gain Worksheet (collectibles/1202 gains from f8949 + Form 2439)
       const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs);
-      if (gain28Pct > 0) {
-        outputs.push(this.outputNodes.output(rate_28_gain_worksheet, { collectibles_gain_from_8949: gain28Pct }));
+      const form2439Collectibles = input.collectibles_gain_form2439 ?? 0;
+      const total28Pct = gain28Pct + form2439Collectibles;
+      if (total28Pct > 0) {
+        outputs.push(this.outputNodes.output(rate_28_gain_worksheet, { collectibles_gain_from_8949: total28Pct }));
       }
     }
 
