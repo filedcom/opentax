@@ -12,8 +12,8 @@ function minimalItem(overrides: Partial<z.infer<typeof itemSchema>> = {}): F2106
   return { employee_type: EmployeeType.RESERVIST, ...overrides };
 }
 
-function compute(items: F2106Item[]) {
-  return f2106.compute({ taxYear: 2025 }, { f2106s: items as z.infer<typeof itemSchema>[] });
+function compute(items: F2106Item[], agi?: number) {
+  return f2106.compute({ taxYear: 2025 }, { f2106s: items as z.infer<typeof itemSchema>[], agi });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -376,4 +376,40 @@ Deno.test("f2106.compute: smoke test — two qualifying employees with different
   const fields = fieldsOf(result.outputs, schedule1)!;
   assertEquals(fields.line12_business_expenses, 2800);
   assertEquals(result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1").length, 1);
+});
+
+// =============================================================================
+// AGI limit for performing artists (IRC §62(b)(1)(C))
+// =============================================================================
+
+Deno.test("f2106: performing artist with AGI ≤ $16,000 — deduction allowed", () => {
+  const result = compute([
+    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 1000 }),
+  ], 15_000);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line12_business_expenses, 1000);
+});
+
+Deno.test("f2106: performing artist with AGI > $16,000 — deduction disallowed", () => {
+  const result = compute([
+    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 1000 }),
+  ], 20_000);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f2106: performing artist AGI > $16,000 but reservist present — reservist deduction retained", () => {
+  const result = compute([
+    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 500 }),
+    minimalItem({ employee_type: EmployeeType.RESERVIST, other_expenses: 800 }),
+  ], 25_000);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line12_business_expenses, 800);
+});
+
+Deno.test("f2106: no AGI provided — performing artist deduction allowed (no limit enforced)", () => {
+  const result = compute([
+    minimalItem({ employee_type: EmployeeType.PERFORMING_ARTIST, other_expenses: 600 }),
+  ]);
+  const fields = fieldsOf(result.outputs, schedule1)!;
+  assertEquals(fields.line12_business_expenses, 600);
 });

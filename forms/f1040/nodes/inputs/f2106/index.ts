@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { F2106_PERFORMING_ARTIST_AGI_LIMIT } from "../../config/2025.ts";
 
 // TY2025 — Form 2106: Employee Business Expenses
 // Post-TCJA (P.L. 115-97 §11045), deductible ONLY for four qualifying categories:
@@ -63,10 +64,22 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f2106s: z.array(itemSchema).min(1),
+  // AGI — required to enforce performing artist eligibility limit (IRC §62(b)(1)(C)).
+  // Performing artists with combined gross income from services >$16,000 are ineligible.
+  // All other employee types are not subject to an AGI limit.
+  agi: z.number().nonnegative().optional(),
 });
 
 type F2106Item = z.infer<typeof itemSchema>;
 type F2106Items = F2106Item[];
+type F2106Input = z.infer<typeof inputSchema>;
+
+// Returns true if performing artist AGI limit is exceeded.
+// IRC §62(b)(1)(C): performing artist must have combined AGI ≤ $16,000.
+function performingArtistEligible(agi: number | undefined): boolean {
+  if (agi === undefined) return true; // no AGI provided — allow deduction
+  return agi <= F2106_PERFORMING_ARTIST_AGI_LIMIT;
+}
 
 // Compute vehicle expense for one item.
 function vehicleExpense(item: F2106Item): number {
@@ -100,19 +113,27 @@ function netDeduction(item: F2106Item): number {
   return Math.max(0, totalExpenses(item) - (item.employer_reimbursements ?? 0));
 }
 
-// Total deduction across all qualifying items.
-function totalDeduction(items: F2106Items): number {
-  return items.reduce((sum, item) => sum + netDeduction(item), 0);
+// Filter items to only those eligible for deduction.
+// Performing artists are excluded when AGI exceeds IRC §62(b)(1)(C) limit.
+function eligibleItems(items: F2106Items, agi: number | undefined): F2106Items {
+  const paEligible = performingArtistEligible(agi);
+  if (paEligible) return items;
+  return items.filter((item) => item.employee_type !== EmployeeType.PERFORMING_ARTIST);
 }
 
-function schedule1Output(items: F2106Items): NodeOutput[] {
-  const total = totalDeduction(items);
+// Total deduction across all eligible items.
+function totalDeduction(items: F2106Items, agi: number | undefined): number {
+  return eligibleItems(items, agi).reduce((sum, item) => sum + netDeduction(item), 0);
+}
+
+function schedule1Output(items: F2106Items, agi: number | undefined): NodeOutput[] {
+  const total = totalDeduction(items, agi);
   if (total === 0) return [];
   return [output(schedule1, { line12_business_expenses: total })];
 }
 
-function agiOutput(items: F2106Items): NodeOutput[] {
-  const total = totalDeduction(items);
+function agiOutput(items: F2106Items, agi: number | undefined): NodeOutput[] {
+  const total = totalDeduction(items, agi);
   if (total === 0) return [];
   return [output(agi_aggregator, { line12_business_expenses: total })];
 }
@@ -122,12 +143,12 @@ class F2106Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, input: F2106Input): NodeResult {
     const parsed = inputSchema.parse(input);
     return {
       outputs: [
-        ...schedule1Output(parsed.f2106s),
-        ...agiOutput(parsed.f2106s),
+        ...schedule1Output(parsed.f2106s, parsed.agi),
+        ...agiOutput(parsed.f2106s, parsed.agi),
       ],
     };
   }
