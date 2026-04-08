@@ -8,16 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-
-// ─── TY2025 Long-Term Care Premium Age-Based Limits (Rev Proc 2024-40) ────────
-// IRC §213(d)(10): eligible long-term care premiums limited to age-based amounts
-const LTC_PREMIUM_LIMIT_BY_AGE: readonly { readonly maxAge: number; readonly limit: number }[] = [
-  { maxAge: 40, limit: 480 },
-  { maxAge: 50, limit: 900 },
-  { maxAge: 60, limit: 1_800 },
-  { maxAge: 70, limit: 4_810 },
-  { maxAge: Infinity, limit: 6_020 },
-];
+import { LTC_PREMIUM_LIMITS_2025 } from "../../../config/2025.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -52,10 +43,10 @@ type Form7206Input = z.infer<typeof inputSchema>;
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
 function ltcLimit(age: number): number {
-  for (const bracket of LTC_PREMIUM_LIMIT_BY_AGE) {
+  for (const bracket of LTC_PREMIUM_LIMITS_2025) {
     if (age <= bracket.maxAge) return bracket.limit;
   }
-  return LTC_PREMIUM_LIMIT_BY_AGE[LTC_PREMIUM_LIMIT_BY_AGE.length - 1].limit;
+  return LTC_PREMIUM_LIMITS_2025[LTC_PREMIUM_LIMITS_2025.length - 1].limit;
 }
 
 // Eligible LTC premiums — capped by age-based limit

@@ -133,8 +133,8 @@ const inputSchema = z.object({
   line32_refundable_credits_total: z.number().nonnegative().optional(),
   // Line 33 — Sum of 25d + 26 + 32
   line33_total_payments: z.number().nonnegative().optional(),
-  // Line 34 — Refund amount owed to taxpayer (33 - 24)
-  line34_total_payments: z.number().nonnegative().optional(),
+  // Line 34 — Overpayment (line 33 - line 24, when positive)
+  line34_overpayment: z.number().nonnegative().optional(),
   // Line 35a — Amount of refund
   line35a_refund: z.number().nonnegative().optional(),
   // Line 37 — Amount owed (24 - 33)
@@ -239,12 +239,17 @@ function totalPayments(input: F1040Input): number {
 function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line1z = input.line1z_total_wages ?? totalWages(input);
   const computed_line9 = totalIncome(input);
-  const computed_line11 = input.line11_agi ?? Math.max(0, computed_line9 - (input.line10_adjustments ?? 0));
+  const computed_line10 = input.line10_adjustments ?? 0;
+  const computed_line11 = input.line11_agi ?? computed_line9 - computed_line10;
+  const computed_line14 = (deductionAmount(input)) + (input.line13_qbi_deduction ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
+  const computed_line20 = input.line20_nonrefundable_credits ?? 0;
   const computed_line21 = creditsTotal(input);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
-  const computed_line24 = computed_line22 + (input.line23_other_taxes ?? 0);
+  const computed_line23 = input.line23_other_taxes ?? 0;
+  const computed_line24 = computed_line22 + computed_line23;
+  const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
   const balance = computed_line33 - computed_line24;
 
@@ -260,6 +265,13 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     line33_total_payments: computed_line33,
   };
 
+  // Emit computed subtotals that are NEW (not received from upstream, so no double-accumulation)
+  if (computed_line10 > 0) result.line10_adjustments = computed_line10;
+  if (computed_line14 > 0) result.line14_deductions_qbi_total = computed_line14;
+  if (computed_line32 > 0) result.line32_refundable_credits_total = computed_line32;
+  // Note: line20, line23, line26, line30, line31, line25c are already in pending from upstream
+  // nodes (schedule3, schedule2, etc.) — re-emitting would double-accumulate in the executor.
+
   // Conditionally include optional pass-through fields
   if (input.line1a_wages !== undefined) result.line1a_wages = input.line1a_wages;
   if (input.line2a_tax_exempt !== undefined) result.line2a_tax_exempt = input.line2a_tax_exempt;
@@ -274,20 +286,19 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   if (input.line6a_ss_gross !== undefined) result.line6a_ss_gross = input.line6a_ss_gross;
   if (input.line6b_ss_taxable !== undefined) result.line6b_ss_taxable = input.line6b_ss_taxable;
   if (input.line7_capital_gain !== undefined) result.line7_capital_gain = input.line7_capital_gain;
+  if (input.line7a_cap_gain_distrib !== undefined) result.line7a_cap_gain_distrib = input.line7a_cap_gain_distrib;
   if (input.line12a_standard_deduction !== undefined) result.line12a_standard_deduction = input.line12a_standard_deduction;
   if (input.line12e_itemized_deductions !== undefined) result.line12e_itemized_deductions = input.line12e_itemized_deductions;
   if (input.line13_qbi_deduction !== undefined) result.line13_qbi_deduction = input.line13_qbi_deduction;
   if (input.line16_income_tax !== undefined) result.line16_income_tax = input.line16_income_tax;
   if (input.line17_additional_taxes !== undefined) result.line17_additional_taxes = input.line17_additional_taxes;
   if (input.line19_child_tax_credit !== undefined) result.line19_child_tax_credit = input.line19_child_tax_credit;
-  if (input.line27_eitc !== undefined) result.line27_eitc = input.line27_eitc;
-  if (input.line28_actc !== undefined) result.line28_actc = input.line28_actc;
-  if (input.line29_refundable_aoc !== undefined) result.line29_refundable_aoc = input.line29_refundable_aoc;
   if (input.line25a_w2_withheld !== undefined) result.line25a_w2_withheld = input.line25a_w2_withheld;
   const line25b = sumField(input.line25b_withheld_1099 as number | number[] | undefined);
   if (line25b > 0) result.line25b_withheld_1099 = line25b;
 
   if (balance >= 0) {
+    result.line34_overpayment = balance;
     result.line35a_refund = balance;
   } else {
     result.line37_amount_owed = Math.abs(balance);

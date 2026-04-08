@@ -4,14 +4,15 @@
   "exports": "./mod.ts",
   "imports": {
     "zod": "npm:zod@^3.24",
+    "pdf-lib": "npm:pdf-lib@^1.17.1",
     "@std/assert": "jsr:@std/assert",
     "@std/fs": "jsr:@std/fs",
     "@std/cli": "jsr:@std/cli",
     "@std/path": "jsr:@std/path"
   },
   "tasks": {
-    "tax": "deno run --allow-read --allow-write cli/main.ts",
-    "compile": "deno compile --allow-read --allow-write --output dist/tax cli/main.ts",
+    "tax": "deno run --allow-read --allow-write --allow-net=www.irs.gov cli/main.ts",
+    "compile": "deno compile --allow-read --allow-write --allow-net=www.irs.gov --output dist/tax cli/main.ts",
     "compile:all": "deno compile --allow-read --allow-write --target x86_64-apple-darwin --output dist/tax-macos-x64 cli/main.ts && deno compile --allow-read --allow-write --target aarch64-apple-darwin --output dist/tax-macos-arm64 cli/main.ts && deno compile --allow-read --allow-write --target x86_64-unknown-linux-gnu --output dist/tax-linux-x64 cli/main.ts && deno compile --allow-read --allow-write --target x86_64-pc-windows-msvc --output dist/tax-windows-x64.exe cli/main.ts",
     "test": "deno test --allow-read --allow-write --allow-run=xmllint",
     "test:cli": "deno test --allow-read --allow-write cli/",

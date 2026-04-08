@@ -182,6 +182,86 @@ Deno.test("housing — zero employer exclusion produces no housing output", () =
   assertEquals(housingOut, undefined);
 });
 
+// ─── Partial-year FEIE proration (IRC §911(b)(2)(A)) ─────────────────────────
+
+Deno.test("proration — 182 qualifying days: limit = $130,000 × 182/365 ≈ $64,767", () => {
+  const result = compute({
+    foreign_wages: 200_000,
+    days_in_foreign_country: 330,
+    qualifying_days: 182,
+  });
+  const s1 = findOutput(result, "schedule1");
+  const expected = Math.min(200_000, Math.round(130_000 * 182 / 365));
+  assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, expected);
+});
+
+Deno.test("proration — 365 qualifying days: full $130,000 limit applies", () => {
+  const result = compute({ foreign_wages: 200_000, days_in_foreign_country: 365 });
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 130_000);
+});
+
+Deno.test("proration — income below prorated limit: full income excluded", () => {
+  // 91 qualifying days → limit ≈ $32,411; income $20,000 → exclude $20,000
+  const result = compute({
+    foreign_wages: 20_000,
+    days_in_foreign_country: 330,
+    qualifying_days: 91,
+  });
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 20_000);
+});
+
+// ─── SE income preservation for Schedule SE (row 17 fix) ─────────────────────
+
+Deno.test("SE income routes to schedule_se as net_profit_schedule_c", () => {
+  const result = compute({
+    foreign_self_employment_income: 50_000,
+    days_in_foreign_country: 365,
+  });
+  const se = findOutput(result, "schedule_se");
+  assertEquals(se?.fields.net_profit_schedule_c, 50_000);
+});
+
+Deno.test("SE income excluded from income tax but still triggers SE tax", () => {
+  const result = compute({
+    foreign_wages: 30_000,
+    foreign_self_employment_income: 40_000,
+    days_in_foreign_country: 365,
+  });
+  // Both excluded from income (capped at $130k): $70k excluded
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 70_000);
+  // SE income preserved for SE tax
+  const se = findOutput(result, "schedule_se");
+  assertEquals(se?.fields.net_profit_schedule_c, 40_000);
+});
+
+Deno.test("no SE income → no schedule_se output", () => {
+  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 365 });
+  const se = findOutput(result, "schedule_se");
+  assertEquals(se, undefined);
+});
+
+// ─── §911(f) stacking rule — routes exclusion to income_tax_calculation ───────
+
+Deno.test("stacking rule: exclusion emitted to income_tax_calculation", () => {
+  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 365 });
+  const itc = findOutput(result, "income_tax_calculation");
+  assertEquals(itc?.fields.foreign_earned_income_exclusion, 50_000);
+});
+
+Deno.test("stacking rule: housing exclusion included in income_tax_calculation amount", () => {
+  // FEIE $50k + housing $9,200 = $59,200 total exclusion
+  const result = compute({
+    foreign_wages: 50_000,
+    foreign_housing_expenses: 30_000,
+    days_in_foreign_country: 365,
+  });
+  const itc = findOutput(result, "income_tax_calculation");
+  assertEquals(itc?.fields.foreign_earned_income_exclusion, 59_200);
+});
+
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
 Deno.test("output routes to schedule1 and agi_aggregator", () => {

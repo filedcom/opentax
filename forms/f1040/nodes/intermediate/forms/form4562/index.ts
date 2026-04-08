@@ -38,6 +38,11 @@ const LUXURY_AUTO_YEAR3_PLUS = LUXURY_AUTO_YEAR3_PLUS_2025;
 // Business-use threshold for listed property bonus/§179 eligibility
 const LISTED_PROPERTY_QUALIFIED_USE_THRESHOLD = 50;
 
+// ── Real property MACRS periods using straight-line / mid-month convention ────
+// IRC §168(b)(3)(A): residential rental property — 27.5-year SL
+// IRC §168(b)(3)(B): nonresidential real property — 39-year SL
+const MACRS_SL_MIDMONTH_PERIODS = new Set([27.5, 39]);
+
 // ── MACRS Table A — 200% Declining Balance / Half-Year Convention ─────────────
 // Source: IRS Form 4562 Instructions TY2025, Table A (page 20)
 // Array indexed by year-of-service (0-based); length = recovery period + 1 (HY adds final year)
@@ -90,8 +95,12 @@ export const inputSchema = z.object({
 
   // MACRS GDS (Part III-A, Lines 19a-19j) — single asset entry
   macrs_gds_basis: z.number().nonnegative().optional(),
-  macrs_gds_recovery_period: z.number().int().positive().optional(),
+  // Recovery period — use 27.5 for residential rental, 39 for nonresidential real property
+  macrs_gds_recovery_period: z.number().positive().optional(),
   macrs_gds_year_of_service: z.number().int().min(1).optional(),
+  // Month placed in service (1–12) — required for 27.5-year and 39-year real property
+  // (mid-month convention per IRC §168(d)(2)). Ignored for personal property.
+  macrs_gds_month_placed_in_service: z.number().int().min(1).max(12).optional(),
   // MACRS prior-year depreciation (Line 17) — assets placed in service before 2025
   macrs_prior_depreciation: z.number().nonnegative().optional(),
 
@@ -162,6 +171,42 @@ function computeBonusDepreciation(input: Form4562Input): number {
   return preJan20Bonus + postJan19Bonus;
 }
 
+// Straight-line depreciation rate using mid-month convention.
+// Applies to 27.5-year (residential) and 39-year (nonresidential) real property.
+// IRC §168(b)(3), §168(d)(2); Rev. Proc. 87-57, Table A-6/A-7.
+//
+// Formula:
+//   year 1:   (12.5 - month) / 12 / period
+//   full years: 1 / period  (years 2 through 1 + floor(period - year1Fraction))
+//   last year:  remaining fraction / period
+//   beyond:     0
+function computeSLMidMonthRate(
+  period: number,
+  yearOfService: number,
+  month: number,
+): number {
+  const year1Fraction = (12.5 - month) / 12;
+  const fullRate = 1 / period;
+
+  if (yearOfService === 1) {
+    return year1Fraction * fullRate;
+  }
+
+  const remainingAfterYear1 = period - year1Fraction;
+  const fullYearsCount = Math.floor(remainingAfterYear1);
+  const lastYearFraction = remainingAfterYear1 - fullYearsCount;
+
+  // Years 2 through 1 + fullYearsCount are full depreciation years
+  if (yearOfService <= 1 + fullYearsCount) return fullRate;
+
+  // Final partial year (yearOfService = fullYearsCount + 2)
+  if (lastYearFraction > 0 && yearOfService === fullYearsCount + 2) {
+    return lastYearFraction * fullRate;
+  }
+
+  return 0;
+}
+
 function macrsPct(
   period: number,
   yearOfService: number,
@@ -195,6 +240,15 @@ function computeMacrsGds(
 
   const businessUsePct = (input.business_use_pct ?? 100) / 100;
   const effectiveBasis = basis * businessUsePct;
+
+  // 27.5-year (residential) and 39-year (nonresidential): straight-line, mid-month convention
+  // IRC §168(b)(3), §168(d)(2) — no AMT adjustment for SL real property
+  if (MACRS_SL_MIDMONTH_PERIODS.has(period)) {
+    const month = input.macrs_gds_month_placed_in_service ?? 1;
+    const rate = computeSLMidMonthRate(period, yearOfService, month);
+    const depreciation = Math.round(effectiveBasis * rate);
+    return { depreciation, amtAdjustment: 0 };
+  }
 
   const { rate, is200db } = macrsPct(period, yearOfService);
   const depreciation = Math.round(effectiveBasis * rate);

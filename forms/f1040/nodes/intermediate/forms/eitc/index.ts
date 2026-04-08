@@ -24,12 +24,12 @@ const PHASEOUT_START = EITC_PHASEOUT_START_2025;
 const INCOME_LIMIT = EITC_INCOME_LIMIT_2025;
 const INVESTMENT_INCOME_LIMIT = EITC_INVESTMENT_INCOME_LIMIT_2025;
 
-// Phase-in rates by number of qualifying children (IRC §32(b))
+// Phase-in rates by number of qualifying children (IRC §32(b)(1))
 const PHASE_IN_RATE: Record<number, number> = {
   0: 0.0765,
   1: 0.3400,
   2: 0.4000,
-  3: 0.4500,
+  3: 0.4000, // IRC §32(b)(1)(B): 40% for 3+ children, not 45%
 };
 
 // Phaseout rates by number of qualifying children (IRC §32(b))
@@ -109,26 +109,27 @@ function computeEitc(input: EitcInput): number {
   const children = clampChildren(input.qualifying_children ?? 0);
   const isJoint = isJointFiler(input.filing_status);
 
+  // MFS filers are disqualified (IRC §32(d))
+  if (input.filing_status === FilingStatus.MFS) return 0;
+
   // Investment income disqualifier (IRC §32(i))
   if ((input.investment_income ?? 0) > INVESTMENT_INCOME_LIMIT) return 0;
 
   // Must have earned income
   if (earnedIncome <= 0) return 0;
 
-  // Income limit — if earned income (or AGI when higher) exceeds limit, no credit.
-  // For EITC phase-out purposes, use earned income. The income limit check uses
-  // the higher of earned or AGI only when AGI itself is the controlling figure
-  // (e.g., investment income situations). For wage/SE-income filers the phase-out
-  // naturally reduces the credit to zero at the statutory end-point.
+  // Income limit — use max(earnedIncome, AGI) per IRC §32(a)(2)(B).
+  // When AGI exceeds earned income (e.g. large capital gains), AGI controls.
+  const phaseoutBase = Math.max(earnedIncome, agi);
   const [limitSingle, limitJoint] = INCOME_LIMIT[children];
   const incomeLimit = isJoint ? limitJoint : limitSingle;
-  if (earnedIncome >= incomeLimit) return 0;
+  if (phaseoutBase >= incomeLimit) return 0;
 
   // Phase-in credit based on earned income
   const creditBeforePhaseout = phaseInCredit(earnedIncome, children);
 
-  // Phaseout based on earned income (not AGI)
-  const finalCredit = phaseOutCredit(creditBeforePhaseout, earnedIncome, children, isJoint);
+  // Phaseout based on max(earnedIncome, AGI) per IRC §32(a)(2)(B)
+  const finalCredit = phaseOutCredit(creditBeforePhaseout, phaseoutBase, children, isJoint);
 
   return Math.round(finalCredit);
 }

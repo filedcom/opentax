@@ -15,6 +15,8 @@ import {
   AMT_BRACKET_26_THRESHOLD_MFS_2025,
   AMT_BRACKET_ADJUSTMENT_STANDARD_2025,
   AMT_BRACKET_ADJUSTMENT_MFS_2025,
+  QDCGT_ZERO_CEILING_2025,
+  QDCGT_TWENTY_FLOOR_2025,
 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
@@ -88,6 +90,12 @@ export const inputSchema = z.object({
   // Offsets tentative minimum tax. Cannot reduce TMT below zero.
   // IRC §59(a); Form 6251 Line 8
   amtftc: z.number().nonnegative().optional(),
+
+  // AMT QDCGT inputs (IRC §55(b)(3)) — same preferential 0%/15%/20% rates
+  // apply for AMT purposes, preventing over-taxation of investment income.
+  // Routed from income_tax_calculation alongside regular_tax_income.
+  qualified_dividends: z.number().nonnegative().optional(),
+  net_capital_gain: z.number().nonnegative().optional(),
 });
 
 type Form6251Input = z.infer<typeof inputSchema>;
@@ -164,6 +172,34 @@ function computeAmt(netTmt: number, regularTax: number): number {
   return Math.max(0, netTmt - regularTax);
 }
 
+// AMT QDCGT worksheet (IRC §55(b)(3)): applies 0%/15%/20% preferential rates
+// to qualified dividends and net capital gain within AMTI, instead of 26%/28%.
+// Uses the same thresholds as the regular QDCGT worksheet.
+function computeTmtWithQdcgt(
+  taxableExcess: number,
+  qualDividends: number,
+  netCapGain: number,
+  status: FilingStatus,
+): number {
+  const prefIncome = Math.min(qualDividends + netCapGain, taxableExcess);
+  if (prefIncome <= 0) return computeTentativeMinimumTax(taxableExcess, status);
+
+  const ordinary = taxableExcess - prefIncome;
+  const zeroCeiling = QDCGT_ZERO_CEILING_2025[status];
+  const twentyFloor = QDCGT_TWENTY_FLOOR_2025[status];
+
+  const inZero = Math.max(0, Math.min(taxableExcess, zeroCeiling) - ordinary);
+  const remaining = prefIncome - inZero;
+  const availFifteen = Math.max(0, twentyFloor - Math.max(ordinary, zeroCeiling));
+  const inFifteen = Math.min(remaining, availFifteen);
+  const inTwenty = remaining - inFifteen;
+
+  const prefTax = Math.floor(inFifteen * 0.15 + inTwenty * 0.20);
+  const ordTax = computeTentativeMinimumTax(ordinary, status);
+
+  return Math.min(prefTax + ordTax, computeTentativeMinimumTax(taxableExcess, status));
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form6251Node extends TaxNode<typeof inputSchema> {
@@ -184,7 +220,12 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const taxableExcess = computeTaxableExcess(amti, exemption);
 
     // Line 7 — Tentative Minimum Tax
-    const tmt = computeTentativeMinimumTax(taxableExcess, input.filing_status);
+    // Apply QDCGT preferential rates when qualified dividends / LTCG present
+    const qualDiv = input.qualified_dividends ?? 0;
+    const netCg = input.net_capital_gain ?? 0;
+    const tmt = (qualDiv > 0 || netCg > 0)
+      ? computeTmtWithQdcgt(taxableExcess, qualDiv, netCg, input.filing_status)
+      : computeTentativeMinimumTax(taxableExcess, input.filing_status);
 
     // Line 9 — Net TMT after AMTFTC
     const netTmt = computeNetTmt(tmt, input.amtftc ?? 0);

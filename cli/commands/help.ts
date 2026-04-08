@@ -15,6 +15,7 @@ export type ParsedArgs = {
   readonly entryId?: string;
   readonly force?: boolean | string;
   readonly format?: string;
+  readonly output?: string;
   readonly json?: boolean;
   readonly help?: boolean;
 };

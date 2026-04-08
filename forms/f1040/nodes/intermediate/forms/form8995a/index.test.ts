@@ -328,6 +328,25 @@ Deno.test("routing: positive deduction → routes to f1040 with line13_qbi_deduc
   assertEquals(out?.fields.line13_qbi_deduction, 10_000);
 });
 
+Deno.test("routing: positive deduction → also routes to standard_deduction with qbi_deduction", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxable_income: 100_000,
+    qbi: 50_000,
+  });
+  const out = findOutput(result, "standard_deduction");
+  assertEquals(out?.fields.qbi_deduction, 10_000);
+});
+
+Deno.test("routing: both f1040 and standard_deduction outputs present when deduction > 0", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxable_income: 100_000,
+    qbi: 50_000,
+  });
+  assertEquals(result.outputs.length, 2);
+});
+
 Deno.test("routing: no QBI activity — no outputs", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -376,5 +395,6 @@ Deno.test("smoke: mixed QBI + SSTB + REIT, above threshold, partial phase-in MFJ
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line13_qbi_deduction, 25_000);
-  assertEquals(result.outputs.length, 1);
+  assertEquals(findOutput(result, "standard_deduction")?.fields.qbi_deduction, 25_000);
+  assertEquals(result.outputs.length, 2);
 });

@@ -401,6 +401,32 @@ export const HOUSEHOLD_FUTA_QUARTERLY_THRESHOLD = 1_000;
  */
 export const SALT_CAP_2025 = 40_000;
 
+/**
+ * OBBBA SALT phase-out: MAGI threshold above which 30% phase-down begins.
+ * Single / MFJ / HOH / QSS: $500,000.
+ */
+export const SALT_PHASEOUT_THRESHOLD_2025 = 500_000;
+
+/**
+ * OBBBA SALT phase-out MAGI threshold for MFS filers: $250,000.
+ */
+export const SALT_PHASEOUT_THRESHOLD_MFS_2025 = 250_000;
+
+/**
+ * OBBBA SALT phase-out rate: 30% of excess MAGI over threshold.
+ */
+export const SALT_PHASEOUT_RATE_2025 = 0.30;
+
+/**
+ * OBBBA SALT floor after phase-down — Single/MFJ/HOH/QSS: $10,000.
+ */
+export const SALT_FLOOR_2025 = 10_000;
+
+/**
+ * OBBBA SALT floor after phase-down — MFS: $5,000.
+ */
+export const SALT_FLOOR_MFS_2025 = 5_000;
+
 // ─── Dependent Care (Form 2441) ───────────────────────────────────────────────
 // IRC §21; not indexed for inflation
 

@@ -12,6 +12,7 @@ import { form8853 } from "../../intermediate/forms/form8853/index.ts";
 import { form8880 } from "../../intermediate/forms/form8880/index.ts";
 import { form8889 } from "../../intermediate/forms/form8889/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
@@ -312,6 +313,10 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
     outputs.push(output(schedule2, schedule2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>));
   }
 
+  // Code FF: QSEHRA benefits reduce Form 8962 PTC per IRC §36B(c)(4)
+  const ff = sum(Box12Code.FF);
+  if (ff > 0) outputs.push(output(form8962, { qsehra_amount_offered: ff }));
+
   return outputs;
 }
 
@@ -334,6 +339,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     form8853,
     form8839,
     form8880,
+    form8962,
     ira_deduction_worksheet,
     f8812,
     schedule_se,

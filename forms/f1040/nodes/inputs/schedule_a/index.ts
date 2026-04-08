@@ -9,10 +9,19 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { SALT_CAP_2025 } from "../../config/2025.ts";
+import {
+  SALT_CAP_2025,
+  SALT_PHASEOUT_THRESHOLD_2025,
+  SALT_PHASEOUT_THRESHOLD_MFS_2025,
+  SALT_PHASEOUT_RATE_2025,
+  SALT_FLOOR_2025,
+  SALT_FLOOR_MFS_2025,
+} from "../../config/2025.ts";
+import { FilingStatus } from "../../types.ts";
 
-// TY2025 SALT cap per OBBBA — $40,000 single/MFJ, $20,000 MFS
+// TY2025 SALT caps per OBBBA (IRC §164(b)(6)): $40,000 single/MFJ, $20,000 MFS
 const SALT_CAP = SALT_CAP_2025;
+const SALT_CAP_MFS = 20_000;
 
 // 60% AGI limit for cash charitable contributions to public charities
 const CASH_CONTRIBUTION_AGI_PCT = 0.60;
@@ -21,10 +30,14 @@ const CASH_CONTRIBUTION_AGI_PCT = 0.60;
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
 
 export const inputSchema = z.object({
+  // MFS filers receive a $20,000 SALT cap (half of $40,000) per OBBBA §70002
+  filing_status: z.nativeEnum(FilingStatus).optional(),
   force_itemized: z.boolean().optional(),
   force_standard: z.boolean().optional(),
   line_1_medical: z.number().nonnegative().optional(),
   agi: z.number().nonnegative().optional(),
+  // MAGI for OBBBA SALT phase-out (IRC §164(b)(6)(B)). Defaults to agi when not provided.
+  magi: z.number().nonnegative().optional(),
   line_5a_tax_amount: z.number().nonnegative().optional(),
   line_5b_real_estate_tax: z.number().nonnegative().optional(),
   line_5c_personal_property_tax: z.number().nonnegative().optional(),
@@ -46,11 +59,22 @@ function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
   return Math.max(0, (input.line_1_medical ?? 0) - agi * MEDICAL_AGI_FLOOR_PCT);
 }
 
+function effectiveSaltCap(input: ScheduleAInput): number {
+  const isMfs = input.filing_status === FilingStatus.MFS;
+  const baseCap = isMfs ? SALT_CAP_MFS : SALT_CAP;
+  const magi = input.magi ?? input.agi ?? 0;
+  const threshold = isMfs ? SALT_PHASEOUT_THRESHOLD_MFS_2025 : SALT_PHASEOUT_THRESHOLD_2025;
+  const floor = isMfs ? SALT_FLOOR_MFS_2025 : SALT_FLOOR_2025;
+  if (magi <= threshold) return baseCap;
+  const reduction = Math.round(SALT_PHASEOUT_RATE_2025 * (magi - threshold));
+  return Math.max(floor, baseCap - reduction);
+}
+
 function computeSALT(input: ScheduleAInput): number {
   const saltTotal = (input.line_5a_tax_amount ?? 0) +
     (input.line_5b_real_estate_tax ?? 0) +
     (input.line_5c_personal_property_tax ?? 0);
-  return Math.min(saltTotal, SALT_CAP);
+  return Math.min(saltTotal, effectiveSaltCap(input));
 }
 
 function computeInterestTotal(input: ScheduleAInput): number {

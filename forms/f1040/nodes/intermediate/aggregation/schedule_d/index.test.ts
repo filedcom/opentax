@@ -346,11 +346,13 @@ Deno.test("28pct: routes to rate_28_gain_worksheet when line17=Yes and code C pr
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 1000);
 });
 
-Deno.test("28pct: routes to rate_28_gain_worksheet when code Q (QOF) present", () => {
+Deno.test("28pct: code Q (QOF) does NOT trigger 28% rate (IRC §1400Z-2 not a collectibles gain)", () => {
+  // QOF inclusion events are taxed at ordinary/LTCG rates per IRC §1400Z-2 — not 28% rate
   const result = compute({
     transaction: mkLtTx({ gain_loss: 800, adjustment_codes: "Q" }),
   });
-  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 800);
+  const out = findOutput(result, "rate_28_gain_worksheet");
+  assertEquals(out, undefined);
 });
 
 Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
@@ -360,11 +362,12 @@ Deno.test("28pct: code C embedded in multi-character adjustment_codes", () => {
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 500);
 });
 
-Deno.test("28pct: code Q embedded in multi-character adjustment_codes", () => {
+Deno.test("28pct: code Q embedded in multi-char codes does NOT trigger 28% rate", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 400, adjustment_codes: "QZ" }),
   });
-  assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 400);
+  const out = findOutput(result, "rate_28_gain_worksheet");
+  assertEquals(out, undefined);
 });
 
 Deno.test("28pct: does NOT route when no special codes on LT transaction", () => {

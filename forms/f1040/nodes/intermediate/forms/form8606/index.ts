@@ -94,11 +94,18 @@ function taxableConversion(conversions: number, nontaxableConv: number): number 
   return Math.max(0, conversions - nontaxableConv);
 }
 
+// Line 14: remaining basis = total basis - nontaxable portion used this year
+// This carries forward to next year's Form 8606 line 2 (prior_basis).
+function remainingBasis(basis: number, nontaxableAmt: number): number {
+  return Math.max(0, basis - nontaxableAmt);
+}
+
 // ─── Part I Computation ───────────────────────────────────────────────────────
 
 type PartIResult = {
   readonly taxableTraditionalDist: number;
   readonly taxableConversionAmt: number;
+  readonly line14RemainingBasis: number;
 };
 
 function computePartI(input: Form8606Input): PartIResult {
@@ -106,18 +113,19 @@ function computePartI(input: Form8606Input): PartIResult {
   const conversions = input.roth_conversion ?? 0;
   const totalDistributed = distributions + conversions;
 
-  // No distributions or conversions — Part I produces nothing
-  if (totalDistributed <= 0) {
-    return { taxableTraditionalDist: 0, taxableConversionAmt: conversions };
-  }
-
   const basis = totalBasis(input);
 
-  // No basis — all distributions are fully taxable
+  // No distributions or conversions — Part I produces nothing taxable, but basis carries forward
+  if (totalDistributed <= 0) {
+    return { taxableTraditionalDist: 0, taxableConversionAmt: conversions, line14RemainingBasis: basis };
+  }
+
+  // No basis — all distributions are fully taxable, no carryforward
   if (basis <= 0) {
     return {
       taxableTraditionalDist: distributions,
       taxableConversionAmt: conversions,
+      line14RemainingBasis: 0,
     };
   }
 
@@ -129,6 +137,7 @@ function computePartI(input: Form8606Input): PartIResult {
   return {
     taxableTraditionalDist: taxableTraditional(distributions, nontaxableDist),
     taxableConversionAmt: taxableConversion(conversions, nontaxableConv),
+    line14RemainingBasis: remainingBasis(basis, nontaxableAmt),
   };
 }
 
@@ -170,7 +179,7 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const { taxableTraditionalDist, taxableConversionAmt } = computePartI(input);
+    const { taxableTraditionalDist, taxableConversionAmt, line14RemainingBasis } = computePartI(input);
     const taxableRoth = computePartIII(input);
 
     const f1040Output = buildF1040Output(
@@ -184,7 +193,10 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
       outputs.push(f1040Output);
     }
 
-    return { outputs };
+    return {
+      outputs,
+      ...(line14RemainingBasis > 0 ? { carryforwards: { ira_remaining_basis_8606: line14RemainingBasis } } : {}),
+    };
   }
 }
 

@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { qdcgtw } from "../qdcgtw/index.ts";
+import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // line18_28pct_gain routes to the QDCGTW node.
@@ -47,7 +48,7 @@ function hasAnyGain(input: Rate28GainInput): boolean {
 class Rate28GainWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "rate_28_gain_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([qdcgtw]);
+  readonly outputNodes = new OutputNodes([qdcgtw, income_tax_calculation]);
 
   compute(_ctx: NodeContext, rawInput: Rate28GainInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -56,12 +57,11 @@ class Rate28GainWorksheetNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
+    const gain = netGain(input);
     return {
       outputs: [
-        {
-          nodeType: qdcgtw.nodeType,
-          fields: { line18_28pct_gain: netGain(input) },
-        },
+        this.outputNodes.output(qdcgtw, { line18_28pct_gain: gain }),
+        this.outputNodes.output(income_tax_calculation, { rate_28_gain: gain }),
       ],
     };
   }

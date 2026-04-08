@@ -284,3 +284,57 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   const f1116 = findOutput(result, "form_1116");
   assertEquals(f1116?.fields.foreign_tax_paid, 100);
 });
+
+// ── 10. DNI limitation (IRC §662) ─────────────────────────────────────────────
+
+Deno.test("DNI: no cap when distributable_net_income not provided", () => {
+  const result = compute([minimalItem({ box1_interest: 10_000 })]);
+  const sb = findOutput(result, "schedule_b");
+  assertEquals(sb?.fields.taxable_interest_net, 10_000);
+});
+
+Deno.test("DNI: no cap when total income <= DNI", () => {
+  const result = compute([minimalItem({ box1_interest: 5_000, distributable_net_income: 8_000 })]);
+  const sb = findOutput(result, "schedule_b");
+  assertEquals(sb?.fields.taxable_interest_net, 5_000);
+});
+
+Deno.test("DNI: caps single box when total exceeds DNI", () => {
+  // Total $10,000, DNI $6,000 → ratio 0.60 → interest = $6,000
+  const result = compute([minimalItem({ box1_interest: 10_000, distributable_net_income: 6_000 })]);
+  const sb = findOutput(result, "schedule_b");
+  assertEquals(sb?.fields.taxable_interest_net, 6_000);
+});
+
+Deno.test("DNI: prorates all characters proportionally", () => {
+  // interest=$4,000 + dividends=$6,000 = $10,000; DNI=$5,000 → ratio 0.50
+  const result = compute([
+    minimalItem({ box1_interest: 4_000, box2a_ordinary_dividends: 6_000, distributable_net_income: 5_000 }),
+  ]);
+  // Check schedule_b interest (4000 * 0.5 = 2000)
+  const sbInterest = result.outputs.find(
+    (o) => o.nodeType === "schedule_b" && "taxable_interest_net" in o.fields
+  );
+  assertEquals(sbInterest?.fields.taxable_interest_net, 2_000);
+});
+
+Deno.test("DNI: losses pass through unchanged regardless of DNI cap", () => {
+  // Loss in box6 should not be scaled
+  const result = compute([
+    minimalItem({ box6_ordinary_business: -3_000, box1_interest: 5_000, distributable_net_income: 2_000 }),
+  ]);
+  const sch1 = findOutput(result, "schedule1");
+  assertEquals(sch1?.fields.line5_schedule_e, -3_000); // loss unchanged
+});
+
+Deno.test("DNI: per-trust — DNI cap applied independently to each K-1", () => {
+  // Trust A: $10k interest, DNI $5k → $5k
+  // Trust B: $8k interest, no DNI → $8k
+  const result = compute([
+    minimalItem({ box1_interest: 10_000, distributable_net_income: 5_000 }),
+    minimalItem({ estate_trust_name: "Trust B", box1_interest: 8_000 }),
+  ]);
+  const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b" && "taxable_interest_net" in o.fields);
+  const amounts = sbOutputs.map((o) => o.fields.taxable_interest_net as number).sort((a, b) => a - b);
+  assertEquals(amounts, [5_000, 8_000]);
+});

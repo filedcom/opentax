@@ -176,7 +176,11 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
     const allowance = this.specialAllowance(input, rentalNetLoss);
     const allowedLoss = Math.min(pal, income + allowance);
 
-    return { outputs: schedule1Output(allowedLoss) };
+    const suspendedPal = pal - allowedLoss;
+    return {
+      outputs: schedule1Output(allowedLoss),
+      ...(suspendedPal > 0 ? { carryforwards: { suspended_pal_8582: suspendedPal } } : {}),
+    };
   }
 }
 

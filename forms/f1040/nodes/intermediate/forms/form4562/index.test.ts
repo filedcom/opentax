@@ -432,6 +432,140 @@ Deno.test("edge: §179 fully phased out at cost ≥ $6,500,000 produces no outpu
   assertEquals(s1 === undefined, true);
 });
 
+// ── 27.5-year residential rental property (SL / mid-month convention) ────────
+
+Deno.test("macrs 27.5yr: month-1 placement year-1 rate ≈ 3.485%", () => {
+  // year1Rate = (12.5-1)/12/27.5 = 11.5/330 = 0.034848
+  // $100,000 * 0.034848 = $3,485
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 27.5,
+    macrs_gds_year_of_service: 1,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 3_485);
+});
+
+Deno.test("macrs 27.5yr: month-7 placement year-1 rate ≈ 1.667%", () => {
+  // year1Rate = (12.5-7)/12/27.5 = 5.5/330 = 0.016667
+  // $100,000 * 0.016667 = $1,667
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 27.5,
+    macrs_gds_year_of_service: 1,
+    macrs_gds_month_placed_in_service: 7,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 1_667);
+});
+
+Deno.test("macrs 27.5yr: month-1 placement full year (year 2) rate = 3.636%", () => {
+  // fullRate = 1/27.5 = 0.036364
+  // $100,000 * 0.036364 = $3,636
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 27.5,
+    macrs_gds_year_of_service: 2,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 3_636);
+});
+
+Deno.test("macrs 27.5yr: month-1 last year (year 28) rate ≈ 1.970%", () => {
+  // year1Fraction=11.5/12=0.9583; remaining=26.5417; floor=26 full years; lastFrac=0.5417
+  // lastRate = 0.5417/27.5 = 0.019698 → $100,000 → $1,970
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 27.5,
+    macrs_gds_year_of_service: 28,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 1_970);
+});
+
+Deno.test("macrs 27.5yr: year beyond last returns zero depreciation", () => {
+  // Month 1: 28 years total; year 29 → 0
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 27.5,
+    macrs_gds_year_of_service: 29,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  const s1 = findOutput(result, "schedule1");
+  assertEquals(s1 === undefined, true);
+});
+
+Deno.test("macrs 27.5yr: no AMT adjustment (SL real property)", () => {
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 27.5,
+    macrs_gds_year_of_service: 1,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  const f6251 = findOutput(result, "form6251");
+  assertEquals(f6251 === undefined, true);
+});
+
+// ── 39-year nonresidential real property (SL / mid-month convention) ──────────
+
+Deno.test("macrs 39yr: month-1 placement year-1 rate ≈ 2.457%", () => {
+  // year1Rate = (12.5-1)/12/39 = 11.5/468 = 0.024573
+  // $100,000 * 0.024573 = $2,457
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 39,
+    macrs_gds_year_of_service: 1,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 2_457);
+});
+
+Deno.test("macrs 39yr: month-1 full year (year 2) rate = 2.564%", () => {
+  // fullRate = 1/39 = 0.025641
+  // $100,000 * 0.025641 = $2,564
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 39,
+    macrs_gds_year_of_service: 2,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 2_564);
+});
+
+Deno.test("macrs 39yr: month-1 last year (year 40) rate ≈ 0.107%", () => {
+  // year1Fraction=11.5/12=0.9583; remaining=38.0417; floor=38; lastFrac=0.0417
+  // lastRate = 0.0417/39 = 0.001069 → $100,000 → $107
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 39,
+    macrs_gds_year_of_service: 40,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 107);
+});
+
+Deno.test("macrs 39yr: no AMT adjustment (SL real property)", () => {
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 39,
+    macrs_gds_year_of_service: 1,
+    macrs_gds_month_placed_in_service: 1,
+  });
+  const f6251 = findOutput(result, "form6251");
+  assertEquals(f6251 === undefined, true);
+});
+
+Deno.test("macrs 39yr: month-12 placement year-1 minimal depreciation", () => {
+  // year1Rate = (12.5-12)/12/39 = 0.5/12/39 = 0.001068
+  // $100,000 * 0.001068 = $107
+  const result = compute({
+    macrs_gds_basis: 100_000,
+    macrs_gds_recovery_period: 39,
+    macrs_gds_year_of_service: 1,
+    macrs_gds_month_placed_in_service: 12,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_depreciation, 107);
+});
+
 // ── Smoke test ────────────────────────────────────────────────────────────────
 
 Deno.test("smoke: realistic Schedule E rental property with §179 and MACRS", () => {

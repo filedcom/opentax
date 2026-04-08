@@ -24,7 +24,8 @@ export const inputSchema = z.object({
 
   // Part I — Section 1231 net gain or loss (Form 4797, line 7 / line 9 after
   // nonrecaptured §1231 loss recapture). Positive = net §1231 gain before
-  // prior-loss offset. Negative = net §1231 loss (routes to Schedule D as LT loss).
+  // prior-loss offset. Negative = net §1231 LOSS treated as ordinary income
+  // under IRC §1231(a)(2) — NOT routed to Schedule D.
   section_1231_gain: z.number().optional(),
 
   // Part I line 8 — prior-year nonrecaptured §1231 losses that must be
@@ -44,6 +45,12 @@ export const inputSchema = z.object({
   // Informational — §1250 additional depreciation recapture (Part III, line 26).
   // Included in ordinary_gain; retained for audit trail.
   recapture_1250: z.number().nonnegative().optional(),
+
+  // Unrecaptured §1250 gain from the Unrecaptured §1250 Gain Worksheet.
+  // This is the portion of §1250 gain subject to the 25% rate (IRC §1(h)(1)(D))
+  // — distinct from recapture_1250 (which is ordinary income already in ordinary_gain).
+  // Routes to Schedule D line 19 → income_tax_calculation for 25% rate tier.
+  unrecaptured_section_1250_gain: z.number().nonnegative().optional(),
 });
 
 type Form4797Input = z.infer<typeof inputSchema>;
@@ -75,32 +82,32 @@ function netSection1231GainForScheduleD(grossGain: number, priorLoss: number): n
   return Math.max(0, grossGain - priorLoss);
 }
 
-// Build Schedule D output for Part I §1231 net gain/loss.
-// A positive net gain flows to Sch D line 11 (LT gain from Form 4797/2439).
-// A §1231 loss (grossGain < 0) also flows to Sch D line 11 as a negative number.
+// Build Schedule D output for Part I §1231 net gain only.
+// A positive net gain (after prior loss recapture) flows to Sch D line 11.
+// A §1231 LOSS is ordinary income per IRC §1231(a)(2) — NOT routed here.
 function scheduleDOutput(grossGain: number, priorLoss: number): NodeOutput | null {
-  if (grossGain < 0) {
-    // Net §1231 loss — report on Schedule D line 11 as a negative LT amount
-    return output(schedule_d, { line_11_form2439: grossGain });
-  }
+  if (grossGain <= 0) return null;
   const ltGain = netSection1231GainForScheduleD(grossGain, priorLoss);
   if (ltGain === 0) return null;
   return output(schedule_d, { line_11_form2439: ltGain });
 }
 
-// Build Schedule 1 output for ordinary gain/loss.
-// Combines two sources:
-//   1. Portion of §1231 gain recaptured as ordinary income (prior §1231 loss rule)
-//   2. Part II net ordinary gain or loss
-function schedule1Output(
+// Compute total ordinary income/loss for Schedule 1 and agi_aggregator.
+// Two sources:
+//   1. §1231 net LOSS — fully ordinary per IRC §1231(a)(2)
+//   2. Portion of §1231 net GAIN recaptured as ordinary (prior §1231 loss rule)
+//   3. Part II net ordinary gain or loss
+function ordinaryAmount(
   grossGain: number,
   priorLoss: number,
   ordinaryGain: number,
-): NodeOutput | null {
-  const recaptured = recapturedAsOrdinary(grossGain, priorLoss);
-  const total = recaptured + ordinaryGain;
-  if (total === 0) return null;
-  return output(schedule1, { line4_other_gains: total });
+): number {
+  if (grossGain < 0) {
+    // Net §1231 loss: treated as ordinary under IRC §1231(a)(2)
+    return grossGain + ordinaryGain;
+  }
+  // Net §1231 gain: only the recaptured portion is ordinary here
+  return recapturedAsOrdinary(grossGain, priorLoss) + ordinaryGain;
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -119,20 +126,26 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
 
     const grossGain = input.section_1231_gain ?? 0;
     const priorLoss = input.nonrecaptured_1231_loss ?? 0;
-    const ordinaryGain = input.ordinary_gain ?? 0;
+    const partIIOrdinaryGain = input.ordinary_gain ?? 0;
+    const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
     const outputs: NodeOutput[] = [];
 
+    // Schedule D: §1231 net gain → LT capital gain (line 11)
     const sdOut = scheduleDOutput(grossGain, priorLoss);
     if (sdOut !== null) outputs.push(sdOut);
 
-    const s1Out = schedule1Output(grossGain, priorLoss, ordinaryGain);
-    if (s1Out !== null) {
-      outputs.push(s1Out);
-      const total = recapturedAsOrdinary(grossGain, priorLoss) + ordinaryGain;
-      if (total !== 0) {
-        outputs.push(output(agi_aggregator, { line4_other_gains: total }));
-      }
+    // Schedule 1 / AGI: §1231 net loss (ordinary) + recaptured gain + Part II
+    const ordinary = ordinaryAmount(grossGain, priorLoss, partIIOrdinaryGain);
+    if (ordinary !== 0) {
+      outputs.push(output(schedule1, { line4_other_gains: ordinary }));
+      outputs.push(output(agi_aggregator, { line4_other_gains: ordinary }));
+    }
+
+    // Unrecaptured §1250 gain → Schedule D line 19 → 25% rate tier in QDCGT worksheet
+    // IRC §1(h)(1)(D); Form 4797 / Unrecaptured §1250 Gain Worksheet
+    if (unrecaptured1250 > 0) {
+      outputs.push(output(schedule_d, { line19_unrecaptured_1250: unrecaptured1250 }));
     }
 
     return { outputs };

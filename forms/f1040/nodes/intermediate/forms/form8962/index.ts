@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import {
   FPL_BASE_2025,
@@ -31,15 +32,33 @@ type ApplicablePercentageBracket = {
   readonly maxContrib: number; // max premium contribution percentage
 };
 
+// TY2025 applicable percentage table per Rev. Proc. 2024-57
+// ARP/IRA extension (through TY2025): 400% cliff eliminated; all incomes capped at 8.5%
 const APPLICABLE_PERCENTAGE_TABLE: readonly ApplicablePercentageBracket[] = [
-  { minPct: 100, maxPct: 133, minContrib: 2.0, maxContrib: 2.0 },
-  { minPct: 133, maxPct: 150, minContrib: 3.0, maxContrib: 4.0 },
-  { minPct: 150, maxPct: 200, minContrib: 4.0, maxContrib: 6.0 },
-  { minPct: 200, maxPct: 250, minContrib: 6.0, maxContrib: 8.5 },
-  { minPct: 250, maxPct: 300, minContrib: 8.5, maxContrib: 8.5 },
-  { minPct: 300, maxPct: 400, minContrib: 8.5, maxContrib: 8.5 },
-  // ARP extension (through TY2025): no cliff — incomes above 400% FPL capped at 8.5%
-  { minPct: 400, maxPct: Infinity, minContrib: 8.5, maxContrib: 8.5 },
+  { minPct: 100, maxPct: 133, minContrib: 2.06, maxContrib: 2.06 }, // flat 2.06%
+  { minPct: 133, maxPct: 150, minContrib: 3.09, maxContrib: 3.09 }, // flat 3.09%
+  { minPct: 150, maxPct: 200, minContrib: 4.12, maxContrib: 6.18 }, // linear
+  { minPct: 200, maxPct: 250, minContrib: 6.18, maxContrib: 8.24 }, // linear
+  { minPct: 250, maxPct: 300, minContrib: 8.24, maxContrib: 8.50 }, // linear
+  { minPct: 300, maxPct: 400, minContrib: 8.50, maxContrib: 8.50 }, // flat 8.5%
+  // ARP/IRA extension (through TY2025): no cliff — incomes above 400% FPL capped at 8.5%
+  { minPct: 400, maxPct: Infinity, minContrib: 8.50, maxContrib: 8.50 },
+];
+
+// IRC §36B(f)(2)(B): APTC repayment caps by household income as % of FPL
+// "Single filer" = Single or MFS; "Other household" = MFJ, HOH, QSS
+// Above 400% FPL (TY2025): no cap — ARP extension means 400%+ still eligible,
+//   so full excess APTC is repaid with no limit
+type RepaymentCapTier = {
+  readonly maxPct: number;        // income pct upper bound (exclusive)
+  readonly singleCap: number;
+  readonly otherCap: number;
+};
+
+const REPAYMENT_CAP_TIERS: readonly RepaymentCapTier[] = [
+  { maxPct: 200, singleCap: 350, otherCap: 700 },
+  { maxPct: 300, singleCap: 875, otherCap: 1_750 },
+  { maxPct: 400, singleCap: 1_400, otherCap: 2_800 },
 ];
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -65,6 +84,9 @@ export const inputSchema = z.object({
   // IRC §36B(c)(2)(C)(iv); Notice 2017-67 §IV.C
   // The annual QSEHRA amount offered reduces the PTC dollar-for-dollar.
   qsehra_amount_offered: z.number().nonnegative().optional(),
+
+  // Filing status — used for IRC §36B(f)(2)(B) repayment cap (Single/MFS vs other)
+  filing_status: filingStatusSchema.optional(),
 });
 
 type Form8962Input = z.infer<typeof inputSchema>;
@@ -128,6 +150,21 @@ function maxPtc(slcsp: number, applicable: number): number {
 // Allowed PTC = min(max PTC, actual premium paid)
 function allowedPtc(maxPtcAmt: number, actualPremium: number): number {
   return Math.min(maxPtcAmt, actualPremium);
+}
+
+// IRC §36B(f)(2)(B): cap on excess APTC repayment liability
+// Returns null when no cap applies (income ≥ 400% FPL)
+function repaymentCap(
+  incomePct: number,
+  status: FilingStatus | undefined,
+): number | null {
+  const isSingle = status === FilingStatus.Single || status === FilingStatus.MFS;
+  for (const tier of REPAYMENT_CAP_TIERS) {
+    if (incomePct < tier.maxPct) {
+      return isSingle ? tier.singleCap : tier.otherCap;
+    }
+  }
+  return null; // ≥ 400% FPL — no cap
 }
 
 function buildOutputs(
@@ -203,8 +240,11 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       // Net credit owed to taxpayer
       return { outputs: buildOutputs(netPtc, 0) };
     } else {
-      // Excess APTC received — must repay
-      return { outputs: buildOutputs(0, -netPtc) };
+      // Excess APTC received — apply IRC §36B(f)(2)(B) repayment cap
+      const rawExcess = -netPtc;
+      const cap = repaymentCap(incomePct, input.filing_status);
+      const cappedExcess = cap !== null ? Math.min(rawExcess, cap) : rawExcess;
+      return { outputs: buildOutputs(0, cappedExcess) };
     }
   }
 }

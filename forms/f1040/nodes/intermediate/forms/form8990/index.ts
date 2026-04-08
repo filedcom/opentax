@@ -162,6 +162,7 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
         this.outputNodes.output(schedule1, { biz_interest_disallowed_add_back: disallowed }),
         this.outputNodes.output(agi_aggregator, { biz_interest_disallowed_add_back: disallowed }),
       ],
+      carryforwards: { disallowed_bie_8990: disallowed },
     };
   }
 }

@@ -78,15 +78,23 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
     const nii = netInvestmentIncome(input);
     const deductible = deductibleInterest(total, nii);
 
+    const excess = total - Math.min(total, nii === 0 ? 0 : deductible);
+
     if (deductible === 0) {
-      return { outputs: [] };
+      return {
+        outputs: [],
+        ...(excess > 0 ? { carryforwards: { investment_interest_excess_4952: excess } } : {}),
+      };
     }
 
     const outputs: NodeOutput[] = [
       output(scheduleA, { line_9_investment_interest: deductible }),
     ];
 
-    return { outputs };
+    return {
+      outputs,
+      ...(excess > 0 ? { carryforwards: { investment_interest_excess_4952: excess } } : {}),
+    };
   }
 }
 

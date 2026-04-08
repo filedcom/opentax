@@ -22,7 +22,8 @@ import {
 const SEP_ANNUAL_LIMIT = SEP_MAX_CONTRIBUTION_2025; // Rev Proc 2024-40, §3.20 — 70_000
 const SEP_RATE = SEP_CONTRIBUTION_RATE_2025;        // IRC §404(a)(8); 25% of net SE compensation
 const SIMPLE_EMPLOYEE_LIMIT = 16_500;   // Rev Proc 2024-40, §3.24
-const SIMPLE_CATCHUP_LIMIT = 19_500;    // Rev Proc 2024-40, §3.24 (age 50+)
+const SIMPLE_CATCHUP_LIMIT = 20_000;    // Rev Proc 2024-40, §3.24 (age 50+/64+: $16,500 + $3,500 catch-up)
+const SIMPLE_SECURE20_CATCHUP_LIMIT = 21_750; // SECURE 2.0 §109: age 60-63 super catch-up ($16,500 + $5,250)
 const SOLO401K_EMPLOYEE_LIMIT = 23_500; // Rev Proc 2024-40, §3.19
 const SOLO401K_COMBINED_LIMIT = SEP_MAX_CONTRIBUTION_2025; // IRC §415(c); Rev Proc 2024-40, §3.20 — 70_000
 
@@ -45,6 +46,8 @@ export const itemSchema = z.object({
   simple_employee_contribution: z.number().nonnegative().optional(),
   simple_employer_contribution: z.number().nonnegative().optional(),
   age_50_or_over: z.boolean().optional(),
+  // SECURE 2.0 §109: age 60-63 super catch-up (higher limit than standard age 50+ catch-up)
+  age_60_to_63: z.boolean().optional(),
   // Solo 401(k) fields
   solo401k_employee_deferral: z.number().nonnegative().optional(),
   solo401k_employer_contribution: z.number().nonnegative().optional(),
@@ -71,7 +74,13 @@ function sepDeduction(item: SepRetirementItem): number {
 }
 
 function simpleDeduction(item: SepRetirementItem): number {
-  const employeeLimit = (item.age_50_or_over === true) ? SIMPLE_CATCHUP_LIMIT : SIMPLE_EMPLOYEE_LIMIT;
+  // SECURE 2.0 §109: age 60-63 receives the super catch-up limit
+  // Standard age 50+ (and 64+) receives the regular catch-up limit
+  const employeeLimit = item.age_60_to_63 === true
+    ? SIMPLE_SECURE20_CATCHUP_LIMIT
+    : item.age_50_or_over === true
+    ? SIMPLE_CATCHUP_LIMIT
+    : SIMPLE_EMPLOYEE_LIMIT;
   const employee = Math.min(item.simple_employee_contribution ?? 0, employeeLimit);
   const employer = item.simple_employer_contribution ?? 0;
   return employee + employer;

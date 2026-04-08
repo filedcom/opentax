@@ -30,9 +30,9 @@ Deno.test("agi_aggregator: all fields zero → AGI is 0", () => {
   assertEquals(agi(result), 0);
 });
 
-Deno.test("agi_aggregator: AGI floors at 0 when deductions exceed income", () => {
+Deno.test("agi_aggregator: deductions exceeding income produce negative AGI (NOL scenario per IRC §172)", () => {
   const result = compute({ line1a_wages: 5_000, line15_se_deduction: 10_000 });
-  assertEquals(agi(result), 0);
+  assertEquals(agi(result), -5_000);
 });
 
 // ─── Income components ────────────────────────────────────────────────────────
@@ -346,4 +346,66 @@ Deno.test("agi_aggregator: rental real estate passive loss reduces AGI", () => {
 Deno.test("agi_aggregator: schedule_f farm net loss reduces AGI", () => {
   const result = compute({ line1a_wages: 60_000, line6_schedule_f: -8_000 });
   assertEquals(agi(result), 52_000);
+});
+
+// ─── Tax-exempt interest in provisional income (IRC §86(b)(1)) ───────────────
+
+Deno.test("agi_aggregator: tax_exempt_interest raises provisional income for SSA taxability", () => {
+  // Single filer: base threshold = $25,000
+  // Without tax-exempt interest: provisional = 8_000 + 0.5 × 20_000 = 18_000 < 25_000 → $0 taxable SS
+  // With tax-exempt interest $8,000: provisional = 8_000 + 8_000 + 10_000 = 26_000 > 25_000
+  // taxable = min(0.85 × 20_000, 0.5 × (26_000 - 25_000)) = min(17_000, 500) = 500
+  // AGI = 8_000 wages + 500 SS = 8_500
+  const result = compute({
+    line1a_wages: 8_000,
+    line6a_ss_gross: 20_000,
+    tax_exempt_interest: 8_000,
+    filing_status: "single",
+  });
+  assertEquals(agi(result), 8_500);
+});
+
+Deno.test("agi_aggregator: tax_exempt_interest absent → provisional income excludes it", () => {
+  // Without tax-exempt interest, provisional = 8_000 + 10_000 = 18_000 < 25_000 → $0 SS taxable
+  const result = compute({
+    line1a_wages: 8_000,
+    line6a_ss_gross: 20_000,
+    filing_status: "single",
+  });
+  assertEquals(agi(result), 8_000);
+});
+
+// ─── MFS lived-with-spouse rule (IRC §86(c)(2)) ───────────────────────────────
+
+Deno.test("agi_aggregator: MFS lived-with-spouse → 85% of SS always taxable", () => {
+  // IRC §86(c)(2): 85% taxable regardless of provisional income level
+  // Wages $5_000 (well below any threshold without the rule)
+  // SSA gross $20_000 → taxable = 0.85 × 20_000 = 17_000
+  // AGI = 5_000 + 17_000 = 22_000
+  const result = compute({
+    line1a_wages: 5_000,
+    line6a_ss_gross: 20_000,
+    filing_status: "mfs",
+    mfs_lived_with_spouse: true,
+  });
+  assertEquals(agi(result), 22_000);
+});
+
+Deno.test("agi_aggregator: MFS not-lived-with-spouse → normal worksheet applies", () => {
+  // No mfs_lived_with_spouse flag → uses normal $25k/$34k thresholds
+  // provisional = 5_000 + 10_000 = 15_000 < 25_000 → $0 taxable
+  const result = compute({
+    line1a_wages: 5_000,
+    line6a_ss_gross: 20_000,
+    filing_status: "mfs",
+  });
+  assertEquals(agi(result), 5_000);
+});
+
+// ─── AGI can be negative in NOL scenarios (IRC §172) ─────────────────────────
+
+Deno.test("agi_aggregator: large schedule_c loss can produce negative AGI", () => {
+  // Large business loss exceeds wages → negative AGI allowed
+  const result = compute({ line1a_wages: 50_000, line3_schedule_c: -150_000 });
+  assertEquals(agi(result), -100_000);
 });

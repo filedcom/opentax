@@ -554,6 +554,39 @@ Deno.test("PSE item with all optional boxes present — only box4 produces feder
 // Section 9: Smoke test — all major boxes, multiple PSEs
 // ============================================================
 
+// ============================================================
+// Section 10: Income routing (for_routing field)
+// ============================================================
+
+Deno.test("for_routing=schedule_c: box1a above $5,000 routes to schedule_c", () => {
+  const result = compute([minimalItem({ box1a_gross_payments: 10_000, for_routing: "schedule_c" })]);
+  const schedCOut = findOutput(result, "schedule_c");
+  assertEquals(schedCOut !== undefined, true);
+});
+
+Deno.test("for_routing=schedule_c: box1a at $5,000 (at threshold) produces no income output", () => {
+  const result = compute([minimalItem({ box1a_gross_payments: 5_000, for_routing: "schedule_c" })]);
+  assertEquals(findOutput(result, "schedule_c"), undefined);
+});
+
+Deno.test("for_routing=schedule_1_line_8z: box1a above $5,000 routes to schedule1", () => {
+  const result = compute([minimalItem({ box1a_gross_payments: 8_000, for_routing: "schedule_1_line_8z" })]);
+  const sched1Out = findOutput(result, "schedule1");
+  assertEquals(sched1Out !== undefined, true);
+  assertEquals((sched1Out!.fields as Record<string, unknown>).line8z_other, 8_000);
+});
+
+Deno.test("no for_routing: box1a above threshold still produces no income output", () => {
+  const result = compute([minimalItem({ box1a_gross_payments: 50_000 })]);
+  assertEquals(findOutput(result, "schedule_c"), undefined);
+  assertEquals(findOutput(result, "schedule1"), undefined);
+});
+
+Deno.test("for_routing=schedule_c: box1a below threshold ($4,999) produces no income output", () => {
+  const result = compute([minimalItem({ box1a_gross_payments: 4_999, for_routing: "schedule_c" })]);
+  assertEquals(findOutput(result, "schedule_c"), undefined);
+});
+
 Deno.test("smoke: three PSEs — PayPal (TPSO), Square (payment card), Stripe (backup withheld) — only Stripe emits f1040 output", () => {
   const result = f1099k.compute({ taxYear: 2025 }, {
     f1099ks: [

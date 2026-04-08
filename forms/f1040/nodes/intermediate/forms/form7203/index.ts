@@ -155,6 +155,7 @@ class Form7203Node extends TaxNode<typeof inputSchema> {
         this.outputNodes.output(schedule1, { basis_disallowed_add_back: disallowed }),
         this.outputNodes.output(agi_aggregator, { basis_disallowed_add_back: disallowed }),
       ],
+      carryforwards: { suspended_scorp_loss_7203: disallowed },
     };
   }
 }
