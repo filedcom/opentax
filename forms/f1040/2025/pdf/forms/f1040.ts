@@ -98,13 +98,16 @@ export const irs1040Pdf: PdfFormDescriptor = {
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).
     // ── Primary taxpayer ────────────────────────────────────────────────────
-    { kind: "text", domainKey: "firstName",      pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
-    { kind: "text", domainKey: "lastName",       pdfField: "topmostSubform[0].Page1[0].f1_03[0]" },
-    { kind: "text", domainKey: "primarySSN",     pdfField: "topmostSubform[0].Page1[0].f1_04[0]" },
+    // Field numbers verified against 2025 IRS f1040.pdf AcroForm layer.
+    // f1_14 = "Your first name and middle initial", f1_15 = "Last name", f1_16 = SSN (maxLen=9)
+    { kind: "text", domainKey: "firstName",      pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
+    { kind: "text", domainKey: "lastName",       pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
+    { kind: "text", domainKey: "primarySSN",     pdfField: "topmostSubform[0].Page1[0].f1_16[0]" },
     // ── Spouse ──────────────────────────────────────────────────────────────
-    { kind: "text", domainKey: "spouse.firstName", pdfField: "topmostSubform[0].Page1[0].f1_05[0]" },
-    { kind: "text", domainKey: "spouse.lastName",  pdfField: "topmostSubform[0].Page1[0].f1_06[0]" },
-    { kind: "text", domainKey: "spouse.ssn",       pdfField: "topmostSubform[0].Page1[0].f1_07[0]" },
+    // f1_17 = "Spouse's first name and middle initial", f1_18 = "Last name", f1_19 = spouse SSN
+    { kind: "text", domainKey: "spouse.firstName", pdfField: "topmostSubform[0].Page1[0].f1_17[0]" },
+    { kind: "text", domainKey: "spouse.lastName",  pdfField: "topmostSubform[0].Page1[0].f1_18[0]" },
+    { kind: "text", domainKey: "spouse.ssn",       pdfField: "topmostSubform[0].Page1[0].f1_19[0]" },
     // ── Address ─────────────────────────────────────────────────────────────
     { kind: "text", domainKey: "address.line1",  pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_20[0]" },
     { kind: "text", domainKey: "address.city",   pdfField: "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_22[0]" },

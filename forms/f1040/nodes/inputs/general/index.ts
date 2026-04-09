@@ -205,6 +205,11 @@ function isQualifyingChildForCTC(dep: DependentItem): boolean {
   );
 }
 
+// IRS Pub 972: ODC requires the dependent to have a TIN (SSN, ITIN, or ATIN).
+function hasTin(dep: DependentItem): boolean {
+  return Boolean(dep.ssn) || Boolean(dep.itin) || Boolean(dep.atin);
+}
+
 // Count dependents in each category, excluding those claimed on another return.
 function dependentCounts(deps: DependentItem[]): {
   qualifying_child_tax_credit_count: number;
@@ -217,7 +222,8 @@ function dependentCounts(deps: DependentItem[]): {
   for (const dep of claimable) {
     if (isQualifyingChildForCTC(dep)) {
       ctcCount += 1;
-    } else {
+    } else if (hasTin(dep)) {
+      // ODC ($500) requires TIN (SSN, ITIN, or ATIN) per IRS Pub 972.
       odcCount += 1;
     }
   }

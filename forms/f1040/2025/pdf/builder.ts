@@ -1,4 +1,4 @@
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import { join } from "@std/path";
 import { normalizeAllPending } from "../pending.ts";
 import { ALL_PDF_FORMS } from "./forms/index.ts";
@@ -116,22 +116,9 @@ async function fillFormPdf(
       fillEntry(form, entry, value, descriptor.pendingKey);
     }
 
-    // Filing status checkboxes (Single=1, MFJ=2, MFS=3, HOH=4, QSS=5)
-    const statusCheckboxes: Record<number, string> = {
-      1: "topmostSubform[0].Page1[0].c1_1[0]",
-      2: "topmostSubform[0].Page1[0].c1_2[0]",
-      3: "topmostSubform[0].Page1[0].c1_3[0]",
-      4: "topmostSubform[0].Page1[0].c1_4[0]",
-      5: "topmostSubform[0].Page1[0].c1_5[0]",
-    };
-    const statusField = statusCheckboxes[filer.filingStatus];
-    if (statusField) {
-      try {
-        form.getCheckBox(statusField).check();
-      } catch (err) {
-        console.error(`[PDF] filing status checkbox: ${err}`);
-      }
-    }
+    // Note: Filing status checkboxes on Form 1040 are XFA-only fields.
+    // The 2025 IRS PDF uses XFA (LiveCycle) for those, which pdf-lib strips.
+    // They cannot be checked via AcroForm and will remain blank on the output.
   }
 
   // Fill row arrays (Form 8949-style)
@@ -167,6 +154,12 @@ async function fillFormPdf(
     }
   }
 
+  // IRS PDFs reference non-embedded fonts (e.g. HelveticaLTStd-Bold) in their
+  // field DA strings. pdf-lib cannot synthesize these, so form.flatten() would
+  // produce invisible content. Regenerating appearances with a standard embedded
+  // font ensures all field values render correctly after flattening.
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  form.updateFieldAppearances(font);
   form.flatten();
   return doc.save();
 }
