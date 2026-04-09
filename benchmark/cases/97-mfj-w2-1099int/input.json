@@ -1,0 +1,78 @@
+{
+  "year": 2025,
+  "source": "irs",
+  "scenario": "Married filing jointly with multiple W-2 wage income, interest income ",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "John",
+          "taxpayer_last_name": "James",
+          "address_city": "Springfield",
+          "address_state": "IL",
+          "address_zip": "62701",
+          "spouse_first_name": "Sarah",
+          "spouse_last_name": "James"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 77573.26,
+        "box2_fed_withheld": 6636.82,
+        "box3_ss_wages": 93748.32,
+        "box4_ss_withheld": 5812.4,
+        "box5_medicare_wages": 93748.32,
+        "box6_medicare_withheld": 1359.35,
+        "employer_name": "ACME INDUSTRIES INC",
+        "employer_ein": "95-1000085"
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 93203.34,
+        "box2_fed_withheld": 7114.2,
+        "box3_ss_wages": 99202.66,
+        "box4_ss_withheld": 6150.56,
+        "box5_medicare_wages": 99202.66,
+        "box6_medicare_withheld": 1438.44,
+        "employer_name": "SUMMIT CONSULTING LLC",
+        "employer_ein": "96-1000086"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "FIRST NATIONAL BANK",
+        "box1": 22.56,
+        "payer_tin": "97-1000087"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "LIBERTY INVESTMENTS LLC",
+        "box1": 339.74,
+        "payer_tin": "98-1000088"
+      }
+    },
+    {
+      "node_type": "f1098e",
+      "data": {
+        "box1_student_loan_interest": 388.73,
+        "lender_name": "American Education Services"
+      }
+    },
+    {
+      "node_type": "schedule_a",
+      "data": {
+        "line_8a_mortgage_interest_1098": 8300.61,
+        "line_5b_real_estate_tax": 7636.03
+      }
+    }
+  ]
+}

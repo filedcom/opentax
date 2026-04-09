@@ -11,18 +11,8 @@
     "@std/path": "jsr:@std/path"
   },
   "tasks": {
-    "docs:dev": "cd docs && mintlify dev",
-    "docs:build": "cd docs && mintlify build",
     "tax": "deno run --allow-read --allow-write --allow-net=www.irs.gov cli/main.ts",
-    "compile": "deno compile --allow-read --allow-write --allow-net=www.irs.gov --output dist/tax cli/main.ts",
-    "compile:all": "deno compile --allow-read --allow-write --target x86_64-apple-darwin --output dist/tax-macos-x64 cli/main.ts && deno compile --allow-read --allow-write --target aarch64-apple-darwin --output dist/tax-macos-arm64 cli/main.ts && deno compile --allow-read --allow-write --target x86_64-unknown-linux-gnu --output dist/tax-linux-x64 cli/main.ts && deno compile --allow-read --allow-write --target x86_64-pc-windows-msvc --output dist/tax-windows-x64.exe cli/main.ts",
     "test": "deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov",
-    "test:cli": "deno test --allow-read --allow-write cli/",
-    "validate:mef": "deno test --allow-read --allow-write --allow-run=xmllint forms/f1040/2025/mef/xsd-validation.test.ts forms/f1040/e2e/xsd_validation.test.ts",
-    "bench": "deno run --allow-read --allow-write --allow-run taxcalcbench/run_benchmark.ts",
-    "bench:gen": "deno run --allow-read --allow-write taxcalcbench/gen_correct.ts",
-    "bench:run-all": "deno run --allow-read --allow-write --allow-run taxcalcbench/run_all.ts",
-    "inspect:pdf-fields": "deno run --allow-net=www.irs.gov --allow-read --allow-write scripts/inspect-pdf-fields.ts",
-    "test:pdf": "deno test --allow-net=www.irs.gov --allow-read --allow-write forms/f1040/2025/pdf/"
+    "bench": "deno run --allow-read --allow-write --allow-run benchmark/run_benchmark.ts"
   }
 }

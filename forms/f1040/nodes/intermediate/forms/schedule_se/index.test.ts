@@ -21,7 +21,7 @@ const SS_RATE = 0.124;
 const MEDICARE_RATE = 0.029;
 const SE_DEDUCTION_RATE = 0.50;
 
-// W-2 wages do NOT offset the SE SS wage base (per CCH ground truth).
+// W-2 wages do NOT offset the SE SS wage base (IRC §1402(b)).
 // Only unreported tips (Form 4137) and Form 8919 wages reduce the base.
 function computeExpectedSeTax(
   netProfit: number,

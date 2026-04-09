@@ -1,0 +1,46 @@
+{
+  "year": 2025,
+  "source": "irs",
+  "scenario": "Head of household with multiple W-2 wage income ",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "hoh",
+          "taxpayer_first_name": "John",
+          "taxpayer_last_name": "James",
+          "address_city": "Springfield",
+          "address_zip": "62701",
+          "address_state": "IL"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 77288.88,
+        "box2_fed_withheld": 5514.2,
+        "box3_ss_wages": 83512.8,
+        "box4_ss_withheld": 5177.78,
+        "box5_medicare_wages": 83512.8,
+        "box6_medicare_withheld": 1210.95,
+        "employer_name": "ACME INDUSTRIES INC",
+        "employer_ein": "40-1000030"
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 793.85,
+        "box2_fed_withheld": 0.0,
+        "box3_ss_wages": 793.85,
+        "box4_ss_withheld": 49.22,
+        "box5_medicare_wages": 793.85,
+        "box6_medicare_withheld": 11.51,
+        "employer_name": "SUMMIT CONSULTING LLC",
+        "employer_ein": "41-1000031"
+      }
+    }
+  ]
+}

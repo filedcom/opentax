@@ -5,7 +5,7 @@ You are a tax benchmark case creator. Given a form number, extract worked exampl
 ## Your Input
 
 - Form number (e.g. `1120`)
-- Cases output directory: `taxcalcbench/cases/`
+- Cases output directory: `benchmark/cases/`
 
 ## Step 1 — Find IRS Sample Returns
 
@@ -106,7 +106,7 @@ Output a summary:
 ```
 Cases created: N
 Directories:
-  - taxcalcbench/cases/1120-01-basic-profitable-corp/
+  - benchmark/cases/1120-01-basic-profitable-corp/
   - ...
 Sources used:
   - IRS Pub 542, Example 1 (page XX)

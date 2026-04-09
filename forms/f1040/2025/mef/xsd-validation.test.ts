@@ -23,6 +23,15 @@ const XSD_PATH = new URL(
   import.meta.url,
 ).pathname;
 
+// Skip XSD tests when the IRS schema files are not present locally.
+let xsdAvailable = false;
+try {
+  Deno.statSync(XSD_PATH);
+  xsdAvailable = true;
+} catch {
+  // .research/docs not checked in; skip on machines without the IRS schema bundle
+}
+
 // ── Shared helpers ───────────────────────────────────────────────────────────
 
 const plan = buildExecutionPlan(registry);
@@ -90,6 +99,7 @@ Deno.test(
     name: "XSD: Single W-2 $75K validates against Return1040.xsd",
     sanitizeOps: false,
     sanitizeResources: false,
+    ignore: !xsdAvailable,
   },
   async () => {
     const result = runReturn({
@@ -108,6 +118,7 @@ Deno.test(
     name: "XSD: Self-employed Schedule C $80K validates against Return1040.xsd",
     sanitizeOps: false,
     sanitizeResources: false,
+    ignore: !xsdAvailable,
   },
   async () => {
     const result = runReturn({
@@ -135,6 +146,7 @@ Deno.test(
     name: "XSD: Itemized deductions Schedule A validates against Return1040.xsd",
     sanitizeOps: false,
     sanitizeResources: false,
+    ignore: !xsdAvailable,
   },
   async () => {
     const result = runReturn({

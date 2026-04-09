@@ -56,7 +56,7 @@
 │
 ├── scripts/                    # Dev utilities (not part of engine)
 │
-├── taxcalcbench/               # Accuracy benchmark — see taxcalcbench/README.md
+├── benchmark/               # Accuracy benchmark — see benchmark/README.md
 │   ├── README.md
 │   ├── run_benchmark.ts        # Run all cases, compare to correct.json
 │   ├── run_case.ts             # Run one case, save output.json

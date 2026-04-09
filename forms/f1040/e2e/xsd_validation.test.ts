@@ -26,6 +26,15 @@ const XSD_RETURN1040 = new URL(
   import.meta.url,
 ).pathname;
 
+// Skip XSD tests when the IRS schema files are not present locally.
+let xsdAvailable = false;
+try {
+  Deno.statSync(XSD_RETURN1040);
+  xsdAvailable = true;
+} catch {
+  // .research/docs not checked in; skip on machines without the IRS schema bundle
+}
+
 // ── Shared setup ─────────────────────────────────────────────────────────────
 
 const ctx = { taxYear: 2025 };
@@ -116,7 +125,7 @@ function w2Item(wages: number, withheld: number) {
 
 // ── XSD Validation Tests ─────────────────────────────────────────────────────
 
-Deno.test("XSD: Single W-2 $75K — conforms to Return1040.xsd", async () => {
+Deno.test({ name: "XSD: Single W-2 $75K — conforms to Return1040.xsd", ignore: !xsdAvailable }, async () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(75_000, 11_000)],
@@ -126,7 +135,7 @@ Deno.test("XSD: Single W-2 $75K — conforms to Return1040.xsd", async () => {
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test("XSD: MFJ dual W-2s $150K — conforms to Return1040.xsd", async () => {
+Deno.test({ name: "XSD: MFJ dual W-2s $150K — conforms to Return1040.xsd", ignore: !xsdAvailable }, async () => {
   const result = runReturn({
     general: mfjGeneral(),
     w2: [
@@ -139,7 +148,7 @@ Deno.test("XSD: MFJ dual W-2s $150K — conforms to Return1040.xsd", async () =>
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test("XSD: Single self-employed Schedule C $80K — conforms to Return1040.xsd", async () => {
+Deno.test({ name: "XSD: Single self-employed Schedule C $80K — conforms to Return1040.xsd", ignore: !xsdAvailable }, async () => {
   const result = runReturn({
     general: singleGeneral(),
     schedule_c: [{
@@ -156,7 +165,7 @@ Deno.test("XSD: Single self-employed Schedule C $80K — conforms to Return1040.
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test("XSD: Single itemized deductions Schedule A $33K — conforms to Return1040.xsd", async () => {
+Deno.test({ name: "XSD: Single itemized deductions Schedule A $33K — conforms to Return1040.xsd", ignore: !xsdAvailable }, async () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(200_000, 40_000)],
@@ -171,7 +180,7 @@ Deno.test("XSD: Single itemized deductions Schedule A $33K — conforms to Retur
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test("XSD: Single AMT via PAB interest $100K — conforms to Return1040.xsd", async () => {
+Deno.test({ name: "XSD: Single AMT via PAB interest $100K — conforms to Return1040.xsd", ignore: !xsdAvailable }, async () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 18_000)],
@@ -186,7 +195,7 @@ Deno.test("XSD: Single AMT via PAB interest $100K — conforms to Return1040.xsd
   assertEquals(success, true, `xmllint errors:\n${stderr}`);
 });
 
-Deno.test("XSD: HOH EITC 2 qualifying children $32K — conforms to Return1040.xsd", async () => {
+Deno.test({ name: "XSD: HOH EITC 2 qualifying children $32K — conforms to Return1040.xsd", ignore: !xsdAvailable }, async () => {
   const result = runReturn({
     general: {
       ...hohGeneral(),

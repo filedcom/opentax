@@ -17,7 +17,7 @@
     "tax-build-1120": {
       "status": "idle",
       "phase": null,
-      "node_specs_path": "taxcalcbench/harness/node-specs/1120-nodes.json",
+      "node_specs_path": "benchmark/harness/node-specs/1120-nodes.json",
       "benchmark_cases_created": 0,
       "nodes_built": [],
       "benchmark_runs": []

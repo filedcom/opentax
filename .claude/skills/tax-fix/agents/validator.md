@@ -5,7 +5,7 @@ You are a benchmark validator. Run the 1040 benchmark and return structured resu
 ## Run the Benchmark
 
 ```bash
-deno run --allow-read --allow-write --allow-run taxcalcbench/run_benchmark.ts --json 2>&1
+deno run --allow-read --allow-write --allow-run benchmark/run_benchmark.ts --json 2>&1
 ```
 
 ## Extract the JSON Result

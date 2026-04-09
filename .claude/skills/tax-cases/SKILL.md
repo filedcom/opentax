@@ -37,14 +37,14 @@ If sourcer finds no usable cases, stop and report which sources were tried.
 
 ## Step 3 — Determine Next Case Number
 
-Read the `taxcalcbench/cases/` directory. Find the highest existing case number (e.g. 97 → next is 98).
+Read the `benchmark/cases/` directory. Find the highest existing case number (e.g. 97 → next is 98).
 
 ## Step 4 — Spawn Case Writer Agents
 
 Read `.state/bench/irs-cases-raw.json`. For each raw case in the `cases` array, spawn one case-writer agent in parallel using `agents/case-writer.md`. Pass:
 - The raw case object (scenario description, form values, IRS-provided correct values, source citation)
 - The next available case number (increment per case: 98, 99, 100, …)
-- Cases directory: `taxcalcbench/cases/`
+- Cases directory: `benchmark/cases/`
 
 Spawn ALL case-writer agents in a single message (parallel).
 

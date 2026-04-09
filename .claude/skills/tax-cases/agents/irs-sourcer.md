@@ -136,4 +136,4 @@ Write to the output path:
 - If two exercises have identical inputs, keep both (they may test different code paths)
 - Include a `notes` field for anything unusual about the scenario or any assumptions made
 - Target 10–20 cases per run; quality over quantity
-- Prioritize scenarios that exercise edge cases not already in `taxcalcbench/cases/` (check that directory for what's already covered)
+- Prioritize scenarios that exercise edge cases not already in `benchmark/cases/` (check that directory for what's already covered)

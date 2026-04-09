@@ -1,0 +1,138 @@
+{
+  "year": 2025,
+  "source": "irs",
+  "scenario": "Single filer with W-2 wage income, retirement distributions, interest income, dividend income, capital gains/losses, Social Security benefits ",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "John",
+          "taxpayer_last_name": "James",
+          "address_city": "Springfield",
+          "address_zip": "62701",
+          "address_state": "IL"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 67.5,
+        "box2_fed_withheld": 0.0,
+        "box3_ss_wages": 67.5,
+        "box4_ss_withheld": 4.19,
+        "box5_medicare_wages": 67.5,
+        "box6_medicare_withheld": 0.98,
+        "employer_name": "ACME INDUSTRIES INC",
+        "employer_ein": "11-1000001"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "FIRST NATIONAL BANK",
+        "box1": 1.32,
+        "payer_tin": "12-1000002"
+      }
+    },
+    {
+      "node_type": "f1099div",
+      "data": {
+        "payerName": "LIBERTY INVESTMENTS LLC",
+        "isNominee": false,
+        "box11": false,
+        "box1a": 782.63,
+        "box1b": 358.9,
+        "box7": 18.87
+      }
+    },
+    {
+      "node_type": "f1099b",
+      "data": {
+        "description": "Schwab x4464 ST Covered",
+        "part": "A",
+        "date_acquired": "various",
+        "date_sold": "12/31/25",
+        "proceeds": 25009.05,
+        "cost_basis": 25165.85,
+        "adjustment_amount": 0.05,
+        "adjustment_codes": "MW"
+      }
+    },
+    {
+      "node_type": "f1099b",
+      "data": {
+        "description": "Schwab x4464 ST Noncovered",
+        "part": "A",
+        "date_acquired": "various",
+        "date_sold": "12/31/25",
+        "proceeds": 2.64,
+        "cost_basis": 0.0
+      }
+    },
+    {
+      "node_type": "f1099b",
+      "data": {
+        "description": "Schwab x4464 LT Covered",
+        "part": "D",
+        "date_acquired": "various",
+        "date_sold": "12/31/25",
+        "proceeds": 18612.61,
+        "cost_basis": 16743.43,
+        "adjustment_amount": 0.72,
+        "adjustment_codes": "MW"
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "HERITAGE FINANCIAL SERVICES",
+        "payer_ein": "12-1000002",
+        "box1_gross_distribution": 124157.17,
+        "box2a_taxable_amount": 124157.17,
+        "box4_federal_withheld": 18623.58,
+        "box7_distribution_code": "7",
+        "box7_ira_simple_indicator": true
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "PIONEER TRUST COMPANY",
+        "payer_ein": "13-1000003",
+        "box1_gross_distribution": 70375.0,
+        "box2a_taxable_amount": 70375.0,
+        "box4_federal_withheld": 14075.04,
+        "box7_distribution_code": "7",
+        "box7_ira_simple_indicator": true
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "GATEWAY SECURITIES INC",
+        "payer_ein": "14-1000004",
+        "box1_gross_distribution": 112844.0,
+        "box2a_taxable_amount": 3279.0,
+        "box4_federal_withheld": 0.0,
+        "box7_distribution_code": "7"
+      }
+    },
+    {
+      "node_type": "ssa1099",
+      "data": {
+        "box3_gross_benefits": 12923.6,
+        "box6_federal_withheld": 0.0
+      }
+    },
+    {
+      "node_type": "schedule_a",
+      "data": {
+        "line_8a_mortgage_interest_1098": 21764.38,
+        "line_5b_real_estate_tax": 9612.39
+      }
+    }
+  ]
+}

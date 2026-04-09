@@ -12,8 +12,8 @@ You will receive:
 
 Pick 1-2 representative cases from the cluster. For each:
 ```bash
-cat taxcalcbench/cases/{case-name}/input.json
-cat taxcalcbench/cases/{case-name}/correct.json
+cat benchmark/cases/{case-name}/input.json
+cat benchmark/cases/{case-name}/correct.json
 ```
 
 Find the case directory name by looking for directories whose number matches the case numbers. E.g. case 54 → `54-*`.
@@ -38,8 +38,8 @@ Compare engine output to correct.json. Identify exactly which field is wrong and
 Read the node file at `root_cause.node_path`. Understand its full logic.
 
 Also read:
-- `taxcalcbench/tax2025.ts` to understand the reference calculator's intent
-- `taxcalcbench/gen_correct.ts` to understand how correct.json was generated
+- `benchmark/tax2025.ts` to understand the reference calculator's intent
+- `benchmark/gen_correct.ts` to understand how correct.json was generated
 
 Trace: which part of the node produces the diverging field?
 
@@ -51,7 +51,7 @@ Use these hints to guide your investigation:
 
 **salt_cap_missing**: The cap code exists at `schedule_a/index.ts` but `output.json` shows two identical uncapped values deposited. Check if there's a second code path that sends the raw SALT amount without applying the cap. May be a second call site or an incorrect `accumulable` field that gets summed before the cap applies.
 
-**amt_stcg_routing**: Compare `taxcalcbench/tax2025.ts` `additionalMedicareTax()` — it uses `wages` (box1). Check that `form8959` uses box1, not box5 (medicare_wages). For STCG: check if f1099b short-term gains (Part A/B/C) are being sent to the same node as long-term gains and taxed at preferential rates.
+**amt_stcg_routing**: Compare `benchmark/tax2025.ts` `additionalMedicareTax()` — it uses `wages` (box1). Check that `form8959` uses box1, not box5 (medicare_wages). For STCG: check if f1099b short-term gains (Part A/B/C) are being sent to the same node as long-term gains and taxed at preferential rates.
 
 ## Step 5 — Write and Verify the Fix
 

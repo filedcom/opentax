@@ -45,7 +45,7 @@ Append to `.state/bench/progress.md`:
 
 Spawn one extractor agent (see `agents/extractor.md`). Pass:
 - Form number: $ARGUMENTS
-- Cases output dir: `taxcalcbench/cases/`
+- Cases output dir: `benchmark/cases/`
 
 Wait for completion. Count created case directories (`$ARGUMENTS-*`).
 

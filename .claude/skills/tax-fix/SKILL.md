@@ -20,7 +20,7 @@ Read `.state/bench/state.json`. Check `tasks.tax-fix-1040.status`:
 - If `"stalled"` → print stall message and stop.
 - Otherwise → set `status` to `"running"` and write state.json back.
 
-Read `taxcalcbench/AUDIT.md` for full context on failing cases.
+Read `benchmark/AUDIT.md` for full context on failing cases.
 
 ## Step 2 — Identify Pending Root Causes
 

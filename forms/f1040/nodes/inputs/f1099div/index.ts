@@ -73,9 +73,9 @@ const HOLDING_PERIOD_FOREIGN_DAYS = 16;
 // to payer data entry errors.
 //
 // box1b (qualified dividends) is passed through as reported, even when it
-// exceeds box1a (ordinary dividends). This mirrors CCH Axcess behavior: the
-// qualified dividend amount from box1b flows to the QDCG worksheet regardless
-// of its relationship to box1a. Ordinary dividends (box1a) are never inflated.
+// exceeds box1a (ordinary dividends). The qualified dividend amount from box1b
+// flows to the QDCG worksheet regardless of its relationship to box1a.
+// Ordinary dividends (box1a) are never inflated.
 // All other sub-boxes (box2b–box2f, box5, box13) are clamped to their parents.
 function normalizeDivItem(item: DIVItem): DIVItem {
   const box1a = item.box1a;
@@ -86,7 +86,7 @@ function normalizeDivItem(item: DIVItem): DIVItem {
     // box1a is authoritative for ordinary dividends — never inflate it
     box1a,
     // box1b is used as reported (qualified dividends may exceed ordinary when
-    // payer data has the boxes swapped; CCH Axcess accepts this without clamping)
+    // payer data has the boxes swapped — passed through without clamping)
     box1b: item.box1b,
     // box5 (§199A dividends) cannot exceed box1a
     box5: item.box5 !== undefined ? Math.min(item.box5, box1a) : undefined,

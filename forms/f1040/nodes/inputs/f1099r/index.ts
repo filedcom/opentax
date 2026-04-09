@@ -400,12 +400,11 @@ function withholdingF1040Fields(items: R1099Items): Record<string, number> {
   return { line25b_withheld_1099: total };
 }
 
-// Form 5329 outputs: code 1 (early, no exception) routes automatically for non-IRA distributions.
-// IRA distributions (box7_ira_simple_indicator=true) require an explicit exception code to avoid
-// the penalty — they are not auto-routed here since the IRA penalty applies via Part I of Form 5329
-// separately when the user specifies no exception applies.
+// Form 5329 outputs: code 1 (early, no exception) routes automatically for all distributions
+// (both IRA and pension) with code 1. The penalty applies to both account types unless an
+// exception applies, which is determined on Form 5329 itself.
 function form5329Outputs(items: R1099Items): NodeOutput[] {
-  const earlyItems = pensionItems(activeItems(items)).filter(
+  const earlyItems = activeItems(items).filter(
     (item) => EARLY_DIST_CODES.has(item.box7_distribution_code),
   );
   return earlyItems.map((item) => {

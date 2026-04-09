@@ -421,10 +421,10 @@ deno task tax return export --returnId abc-123 --type mef
 deno task test
 
 # Run accuracy benchmark (97 TY2025 scenarios)
-cd taxcalcbench && deno run --allow-read --allow-write --allow-run run_benchmark.ts
+cd benchmark && deno run --allow-read --allow-write --allow-run run_benchmark.ts
 
 # Run a single case
-cd taxcalcbench && deno run --allow-read --allow-write --allow-run run_benchmark.ts --form cases/02-single-w2-basic/
+cd benchmark && deno run --allow-read --allow-write --allow-run run_benchmark.ts --form cases/02-single-w2-basic/
 ```
 
 ### Benchmark harness
@@ -432,7 +432,7 @@ cd taxcalcbench && deno run --allow-read --allow-write --allow-run run_benchmark
 The harness tracks benchmark accuracy and drives autonomous bug-fixing sessions.
 
 ```
-taxcalcbench/harness/
+benchmark/harness/
   state.json     # Active task state: current pass/fail counts, root causes, phase
   progress.md    # Append-only log of harness runs and outcomes
 ```
@@ -458,7 +458,7 @@ If you're using Claude Code, three skills automate harness work:
 - Use `OutputNodes` for type-safe routing to downstream nodes
 - Break logic into small named pure helpers, compose in `compute()`
 
-See `CLAUDE.md` for full conventions. See [`taxcalcbench/STRUCTURE.md`](taxcalcbench/STRUCTURE.md) for benchmark case format.
+See `CLAUDE.md` for full conventions. See [`benchmark/STRUCTURE.md`](benchmark/STRUCTURE.md) for benchmark case format.
 
 ---
 
