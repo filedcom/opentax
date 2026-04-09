@@ -1,0 +1,131 @@
+---
+title: "Adding a Node"
+description: "How to contribute a new input node to the engine."
+---
+
+Each input node lives in its own directory under `forms/f1040/nodes/inputs/`.
+
+## File structure
+
+```
+forms/f1040/nodes/inputs/<name>/
+  index.ts        # Node class + singleton export
+  index.test.ts   # Unit tests
+```
+
+## Step 1 — Define the schema
+
+Start with the Zod schema. Infer types from it — never write them separately.
+
+```typescript
+import { z } from "zod";
+
+// Use nativeEnum for IRS codes (never plain strings)
+export enum Box12Code {
+  A = "A",   // Uncollected SS tax on tips
+  W = "W",   // Employer HSA contributions
+  // ...
+}
+
+const itemSchema = z.object({
+  box1_amount: z.number().nonnegative(),
+  box12_code: z.nativeEnum(Box12Code).optional(),
+  box12_amount: z.number().nonnegative().optional(),
+});
+
+const inputSchema = z.object({
+  items: z.array(itemSchema),
+});
+
+type Items = z.infer<typeof inputSchema>["items"];
+```
+
+## Step 2 — Write pure helper functions
+
+One function per concern. Each takes data, returns data. No side effects.
+
+```typescript
+function totalAmount(items: Items): number {
+  return items.reduce((sum, item) => sum + item.box1_amount, 0);
+}
+
+function hsamItems(items: Items): Items {
+  return items.filter(item => item.box12_code === Box12Code.W);
+}
+```
+
+## Step 3 — Implement the node class
+
+```typescript
+import { TaxNode, OutputNodes } from "../../../../core/types/tax-node.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
+
+class MyFormNode extends TaxNode<typeof inputSchema> {
+  readonly nodeType = "my_form";
+  readonly inputSchema = inputSchema;
+
+  compute(input: z.infer<typeof inputSchema>): NodeResult {
+    const out = new OutputNodes([f1040]);
+
+    const total = totalAmount(input.items);
+    if (total === 0) return { outputs: [] };
+
+    out.add(f1040, { line_xyz: total });
+
+    return { outputs: out.build() };
+  }
+}
+
+export const my_form = new MyFormNode();
+```
+
+## Step 4 — Register the node
+
+Add the singleton to `catalog.ts`:
+
+```typescript
+import { my_form } from "./forms/f1040/nodes/inputs/my_form/index.ts";
+
+export const catalog = [
+  // ... existing nodes ...
+  my_form,
+];
+```
+
+## Step 5 — Write tests
+
+```typescript
+import { assertEquals } from "@std/assert";
+import { my_form } from "./index.ts";
+
+Deno.test("my_form: basic case", () => {
+  const result = my_form.compute({
+    items: [{ box1_amount: 1000 }]
+  });
+
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].nodeType, "f1040");
+  assertEquals(result.outputs[0].input.line_xyz, 1000);
+});
+
+Deno.test("my_form: empty returns no outputs", () => {
+  const result = my_form.compute({ items: [] });
+  assertEquals(result.outputs.length, 0);
+});
+```
+
+Run:
+```bash
+deno test forms/f1040/nodes/inputs/my_form/
+```
+
+## Rules
+
+- **Schema first** — define Zod schema, infer types, never duplicate
+- **No mutation** — spread, map, filter, reduce; always return new values  
+- **Early returns** — return `[]` when there's nothing to emit
+- **Small functions** — each helper does exactly one thing
+- **Type safety** — no `any`, no `as unknown`, no `Record<string, unknown>` where a typed schema exists
+- **Enums for codes** — use `z.nativeEnum()` for any finite set of IRS values
+
+See `CLAUDE.md` in the repo root for the full conventions.

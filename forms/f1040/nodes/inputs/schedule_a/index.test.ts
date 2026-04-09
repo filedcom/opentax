@@ -78,52 +78,52 @@ Deno.test("scheduleA.compute: medical deduction with zero AGI equals full medica
 });
 
 // =============================================================================
-// 3. SALT CAP — $40,000 (TY2025 OBBBA)
+// 3. SALT CAP — $10,000 (IRC §164(b)(6), TCJA 2017)
 // =============================================================================
 
-Deno.test("scheduleA.compute: SALT below $40,000 cap passes through unchanged", () => {
-  const result = compute({ line_5a_state_income_tax: 39_999 });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 39_999);
+Deno.test("scheduleA.compute: SALT below $10,000 cap passes through unchanged", () => {
+  const result = compute({ line_5a_state_income_tax: 9_999 });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 9_999);
 });
 
-Deno.test("scheduleA.compute: SALT exactly $40,000 passes through unchanged", () => {
-  const result = compute({ line_5a_state_income_tax: 40_000 });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
+Deno.test("scheduleA.compute: SALT exactly $10,000 passes through unchanged", () => {
+  const result = compute({ line_5a_state_income_tax: 10_000 });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
 });
 
-Deno.test("scheduleA.compute: SALT $40,001 is capped at $40,000", () => {
-  const result = compute({ line_5a_state_income_tax: 40_001 });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
+Deno.test("scheduleA.compute: SALT $10,001 is capped at $10,000", () => {
+  const result = compute({ line_5a_state_income_tax: 10_001 });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
 });
 
 Deno.test("scheduleA.compute: SALT three components aggregate then cap — 5a+5b+5c well above cap", () => {
-  // 30000 + 25000 + 20000 = 75000 → capped at 40000
+  // 5000 + 4000 + 3000 = 12000 → capped at 10000
   const result = compute({
-    line_5a_state_income_tax: 30_000,
-    line_5b_real_estate_tax: 25_000,
-    line_5c_personal_property_tax: 20_000,
+    line_5a_state_income_tax: 5_000,
+    line_5b_real_estate_tax: 4_000,
+    line_5c_personal_property_tax: 3_000,
   });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
 });
 
-Deno.test("scheduleA.compute: SALT three components sum to exactly $40,000 passes through", () => {
-  // 20000 + 15000 + 5000 = 40000 = cap
+Deno.test("scheduleA.compute: SALT three components sum to exactly $10,000 passes through", () => {
+  // 5000 + 3000 + 2000 = 10000 = cap
   const result = compute({
-    line_5a_state_income_tax: 20_000,
-    line_5b_real_estate_tax: 15_000,
-    line_5c_personal_property_tax: 5_000,
+    line_5a_state_income_tax: 5_000,
+    line_5b_real_estate_tax: 3_000,
+    line_5c_personal_property_tax: 2_000,
   });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
 });
 
 Deno.test("scheduleA.compute: SALT aggregates 5a + 5b + 5c before applying cap (below cap)", () => {
-  // 10000 + 8000 + 3000 = 21000 < 40000 cap
+  // 3000 + 2000 + 1000 = 6000 < 10000 cap
   const result = compute({
-    line_5a_state_income_tax: 10_000,
-    line_5b_real_estate_tax: 8_000,
-    line_5c_personal_property_tax: 3_000,
+    line_5a_state_income_tax: 3_000,
+    line_5b_real_estate_tax: 2_000,
+    line_5c_personal_property_tax: 1_000,
   });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 21_000);
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 6_000);
 });
 
 // =============================================================================
@@ -131,22 +131,23 @@ Deno.test("scheduleA.compute: SALT aggregates 5a + 5b + 5c before applying cap (
 // =============================================================================
 
 Deno.test("scheduleA.compute: SALT alone routes capped amount to form6251 line2a", () => {
-  const result = compute({ line_5a_state_income_tax: 15_000 });
+  // 8000 < 10000 cap → passes through uncapped
+  const result = compute({ line_5a_state_income_tax: 8_000 });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 15_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 8_000);
 });
 
 Deno.test("scheduleA.compute: SALT capped amount (not raw) flows to form6251 line2a", () => {
-  // 5a = 50000 → capped at 40000; form6251 receives 40000
-  const result = compute({ line_5a_state_income_tax: 50_000 });
+  // 5a = 15000 → capped at 10000; form6251 receives 10000
+  const result = compute({ line_5a_state_income_tax: 15_000 });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 40_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 10_000);
 });
 
 Deno.test("scheduleA.compute: taxesTotal (SALT + line_6) flows to form6251 line2a", () => {
-  // SALT: 5000 + 8000 = 13000; line6: 3000 → taxesTotal = 16000
+  // SALT: 5000 + 8000 = 13000, capped at 10000; line6: 3000 → taxesTotal = 13000
   const result = compute({
     line_5a_state_income_tax: 5_000,
     line_5b_real_estate_tax: 8_000,
@@ -154,7 +155,7 @@ Deno.test("scheduleA.compute: taxesTotal (SALT + line_6) flows to form6251 line2
   });
   const form6251 = findOutput(result, "form6251");
   assertEquals(form6251 !== undefined, true);
-  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 16_000);
+  assertEquals((form6251!.fields as Record<string, number>).line2a_taxes_paid, 13_000);
 });
 
 Deno.test("scheduleA.compute: line_6_other_taxes alone produces form6251 addback", () => {
@@ -261,23 +262,23 @@ Deno.test("scheduleA.compute: all-zero inputs produce zero total itemized deduct
 
 Deno.test("scheduleA.compute: total itemized = medical + taxes + interest + contributions + casualty + other", () => {
   // medical: 10000 - (80000×7.5%) = 10000 - 6000 = 4000
-  // SALT: 12000 + 6000 = 18000 (under 40000 cap); line6: 2000 → taxesTotal = 20000
+  // SALT: 4000 + 4000 = 8000 (under 10000 cap); line6: 2000 → taxesTotal = 10000
   // interest: 15000
   // contributions: 3000 (under 60% of 80000=48000)
   // casualty: 2000; other: 500
-  // total = 4000 + 20000 + 15000 + 3000 + 2000 + 500 = 44500
+  // total = 4000 + 10000 + 15000 + 3000 + 2000 + 500 = 34500
   const result = compute({
     line_1_medical: 10_000,
     agi: 80_000,
-    line_5a_state_income_tax: 12_000,
-    line_5b_real_estate_tax: 6_000,
+    line_5a_state_income_tax: 4_000,
+    line_5b_real_estate_tax: 4_000,
     line_6_other_taxes: 2_000,
     line_8a_mortgage_interest_1098: 15_000,
     line_11_cash_contributions: 3_000,
     line_15_casualty_theft_loss: 2_000,
     line_16_other_deductions: 500,
   });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 44_500);
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 34_500);
 });
 
 Deno.test("scheduleA.compute: casualty loss enters total directly without re-applying floors", () => {
@@ -331,18 +332,18 @@ Deno.test("scheduleA.compute: force_standard does not crash and still routes f10
 
 Deno.test("scheduleA.compute: smoke — all major boxes populated produces correct total and form6251", () => {
   // Medical: 15000 - (120000 × 7.5%) = 15000 - 9000 = 6000
-  // SALT: 20000 + 10000 + 3000 = 33000 (under 40000 cap)
-  // line_6: 2500 → taxesTotal = 33000 + 2500 = 35500
+  // SALT: 4000 + 3000 + 2000 = 9000 (under 10000 cap)
+  // line_6: 2500 → taxesTotal = 9000 + 2500 = 11500
   // Interest: 18000 + 1000 + 3000 = 22000
   // Contributions: 10000 + 5000 + 2000 = 17000 (17000 < 60% × 120000 = 72000)
   // Casualty: 4000; Other: 750
-  // Total = 6000 + 35500 + 22000 + 17000 + 4000 + 750 = 85250
+  // Total = 6000 + 11500 + 22000 + 17000 + 4000 + 750 = 61250
   const result = compute({
     line_1_medical: 15_000,
     agi: 120_000,
-    line_5a_state_income_tax: 20_000,
-    line_5b_real_estate_tax: 10_000,
-    line_5c_personal_property_tax: 3_000,
+    line_5a_state_income_tax: 4_000,
+    line_5b_real_estate_tax: 3_000,
+    line_5c_personal_property_tax: 2_000,
     line_6_other_taxes: 2_500,
     line_8a_mortgage_interest_1098: 18_000,
     line_8c_points_no_1098: 1_000,
@@ -354,11 +355,11 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
     line_16_other_deductions: 750,
   });
 
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 85_250);
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 61_250);
 
   const form6251Out = findOutput(result, "form6251");
   assertEquals(form6251Out !== undefined, true);
-  assertEquals((form6251Out!.fields as Record<string, number>).line2a_taxes_paid, 35_500);
+  assertEquals((form6251Out!.fields as Record<string, number>).line2a_taxes_paid, 11_500);
 
   // three outputs: f1040, standard_deduction, form6251
   assertEquals(result.outputs.length, 3);
@@ -366,116 +367,32 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
 
 // ── MFS SALT cap ─────────────────────────────────────────────────────────────
 
-Deno.test("MFS SALT cap: $25,000 SALT capped at $20,000 for MFS filer", () => {
+Deno.test("MFS SALT cap: $8,000 SALT capped at $5,000 for MFS filer", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
-    line_5a_state_income_tax: 15_000,
-    line_5b_real_estate_tax: 10_000, // total SALT = $25,000 → capped at $20,000
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 20_000);
-});
-
-Deno.test("MFS SALT cap: $40,000 SALT capped at $20,000 for MFS (not $40,000)", () => {
-  const result = compute({
-    filing_status: FilingStatus.MFS,
-    line_5a_state_income_tax: 40_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 20_000);
-});
-
-Deno.test("Non-MFS SALT cap: $35,000 SALT capped at $40,000 for Single filer", () => {
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 35_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 35_000);
-});
-
-Deno.test("No filing_status: SALT uses $40,000 cap (backward compatible)", () => {
-  const result = compute({ line_5a_state_income_tax: 50_000 });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
-});
-
-// =============================================================================
-// 10. OBBBA SALT PHASE-OUT — 30% of MAGI over $500K (single/MFJ/HOH), floor $10K
-// =============================================================================
-
-Deno.test("SALT phase-out: MAGI exactly $500,000 — no phase-out, cap stays $40,000", () => {
-  // At threshold, no reduction
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 40_000,
-    magi: 500_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 40_000);
-});
-
-Deno.test("SALT phase-out: MAGI $600,000 single — cap reduced to $10,000 (floor)", () => {
-  // excess = 100K; reduction = 30% × 100K = 30K; cap = max(10K, 40K − 30K) = 10K
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 40_000,
-    magi: 600_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
-});
-
-Deno.test("SALT phase-out: MAGI $550,000 single — cap = $25,000", () => {
-  // excess = 50K; reduction = 30% × 50K = 15K; cap = 40K − 15K = 25K
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 40_000,
-    magi: 550_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 25_000);
-});
-
-Deno.test("SALT phase-out: MAGI $800,000 single — capped at floor $10,000", () => {
-  // excess = 300K; reduction = 90K; cap = max(10K, 40K − 90K) = 10K
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 40_000,
-    magi: 800_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
-});
-
-Deno.test("SALT phase-out: actual SALT below phased-down cap — actual SALT allowed", () => {
-  // cap at MAGI=550K = 25K; actual SALT = 15K < 25K → allowed = 15K
-  const result = compute({
-    filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 15_000,
-    magi: 550_000,
-  });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 15_000);
-});
-
-Deno.test("SALT phase-out MFS: MAGI $300,000 — cap reduced to floor $5,000", () => {
-  // MFS: threshold=250K, floor=5K; excess=50K; reduction=30%×50K=15K; cap=max(5K, 20K−15K)=5K
-  const result = compute({
-    filing_status: FilingStatus.MFS,
-    line_5a_state_income_tax: 20_000,
-    magi: 300_000,
+    line_5a_state_income_tax: 4_000,
+    line_5b_real_estate_tax: 4_000, // total SALT = $8,000 → capped at $5,000
   });
   assertEquals(f1040Input(result).line12e_itemized_deductions, 5_000);
 });
 
-Deno.test("SALT phase-out MFS: MAGI $270,000 — cap = $14,000", () => {
-  // excess=20K; reduction=30%×20K=6K; cap=20K−6K=14K
+Deno.test("MFS SALT cap: $10,000 SALT capped at $5,000 for MFS (not $10,000)", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
-    line_5a_state_income_tax: 20_000,
-    magi: 270_000,
+    line_5a_state_income_tax: 10_000,
   });
-  assertEquals(f1040Input(result).line12e_itemized_deductions, 14_000);
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 5_000);
 });
 
-Deno.test("SALT phase-out: magi defaults to agi when not provided", () => {
-  // agi=600K, no magi → uses agi for phase-out; cap = 10K
+Deno.test("Non-MFS SALT cap: $8,000 SALT passes through for Single filer (below $10,000 cap)", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    line_5a_state_income_tax: 40_000,
-    agi: 600_000,
+    line_5a_state_income_tax: 8_000,
   });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 8_000);
+});
+
+Deno.test("No filing_status: SALT uses $10,000 cap (backward compatible)", () => {
+  const result = compute({ line_5a_state_income_tax: 15_000 });
   assertEquals(f1040Input(result).line12e_itemized_deductions, 10_000);
 });

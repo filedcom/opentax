@@ -1,0 +1,112 @@
+---
+title: "Use with Claude"
+description: "Wire tax-engine into Claude Code, Claude.ai, or Claude Desktop."
+---
+
+Claude can run shell commands directly, which makes it the easiest AI to wire up. No configuration files, no plugins — just download the binary and ask.
+
+## Claude Code (recommended)
+
+[Claude Code](https://claude.ai/code) is a CLI for Claude that can execute terminal commands. Once the binary is installed, Claude Code can use it with no additional setup.
+
+**Install the binary:**
+
+```bash
+curl -L https://github.com/filed-app/tax-engine/releases/latest/download/tax-macos-arm64 \
+  -o /usr/local/bin/tax && chmod +x /usr/local/bin/tax
+```
+
+**Then just ask:**
+
+```
+Prepare a 2025 federal tax return. I'm single.
+My W-2: $95,000 wages, $14,200 withheld.
+1099-INT: $380 interest from Chase.
+Show me the finished 1040.
+```
+
+Claude Code creates the return, adds all the forms, runs the math, validates it, and shows you the results. It can also explain each line, identify issues, and export MeF XML — all in one conversation.
+
+<Tip>
+  Claude Code has permission to run `tax` commands automatically once you approve it the first time.
+</Tip>
+
+## Claude.ai (web)
+
+Paste this into any Claude.ai conversation. Claude will download and run the binary itself using its code execution capabilities:
+
+```
+Download the tax engine binary from:
+https://github.com/filed-app/tax-engine/releases/latest/download/tax-macos-arm64
+
+Make it executable, then prepare a 2025 federal tax return:
+- Filing status: single
+- W-2: $85,000 wages, $12,000 withheld
+- 1099-INT: $420 interest from Chase
+
+Show me the complete 1040.
+```
+
+## Claude Desktop
+
+Claude Desktop can run the tax engine as a subprocess via its tool-calling capabilities.
+
+**1.** Download the binary and move it to `/usr/local/bin/tax`.
+
+**2.** In your system prompt or project instructions, tell Claude it has access to the `tax` CLI:
+
+```
+You have access to the `tax` CLI for federal tax calculations.
+Use it by running: tax <command> [flags]
+
+Available commands:
+- tax return create --year YEAR
+- tax form add --returnId ID --node_type TYPE 'JSON'
+- tax return get --returnId ID
+- tax return validate --returnId ID
+- tax return export --returnId ID --type mef
+
+To see what fields a form accepts: tax node inspect --node_type TYPE
+To list all available forms: tax node list
+```
+
+**3.** Ask Claude to prepare your return:
+
+```
+I have a W-2 for $95,000 wages and $14,200 withheld. 
+I'm single, no dependents.
+Please prepare my 2025 federal tax return.
+```
+
+## Example conversation
+
+```
+You: I have a W-2 for $95k wages and $14.2k withheld. Single, no dependents. 
+     Prepare my 2025 federal return.
+
+Claude: I'll create your return now.
+
+  [runs: tax return create --year 2025]
+  → returnId: abc-123
+
+  [runs: tax form add --returnId abc-123 --node_type general '{"filing_status":"single"}']
+  [runs: tax form add --returnId abc-123 --node_type w2 '{"box1_wages":95000,"box2_fed_withheld":14200}']
+  [runs: tax return get --returnId abc-123]
+
+  Here's your 2025 return:
+
+  Adjusted Gross Income: $95,000
+  Standard Deduction: $15,000
+  Taxable Income: $80,000
+  Total Tax: $13,441
+  Federal Tax Withheld: $14,200
+  Refund: $759
+
+You: Validate it and export as XML.
+
+Claude: [runs: tax return validate --returnId abc-123]
+        [runs: tax return export --returnId abc-123 --type mef]
+        
+  Validation passed — no errors or warnings.
+  Here's your MeF XML: [...]
+```

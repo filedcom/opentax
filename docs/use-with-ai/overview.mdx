@@ -1,0 +1,66 @@
+---
+title: "Use with AI"
+description: "How to wire tax-engine into any AI platform as a CLI tool."
+---
+
+tax-engine is a CLI binary. Any AI platform that can run a subprocess or execute shell commands can use it — no plugins, no MCP, no API keys.
+
+## The pattern
+
+Every AI integration follows the same shape:
+
+1. The AI receives your prompt describing tax documents
+2. It calls the `tax` binary with the appropriate commands
+3. The binary returns JSON
+4. The AI reads the results and explains them
+
+The binary is the engine. The AI is the interface.
+
+## Wiring it up
+
+The binary accepts subcommands and returns JSON output. Your AI needs to be able to run shell commands like:
+
+```bash
+tax return create --year 2025
+tax form add --returnId abc-123 --node_type w2 '{"box1_wages": 95000}'
+tax return get --returnId abc-123
+```
+
+How you wire this in depends on the platform:
+
+<CardGroup cols={2}>
+  <Card title="Claude" href="/use-with-ai/claude" icon="message-circle">
+    Claude Code, Claude.ai, and Claude Desktop
+  </Card>
+  <Card title="ChatGPT" href="/use-with-ai/chatgpt" icon="bot">
+    OpenAI function calling with subprocess wrapper
+  </Card>
+  <Card title="Gemini" href="/use-with-ai/gemini" icon="sparkles">
+    Gemini API with tool definitions
+  </Card>
+  <Card title="Any AI" href="/use-with-ai/gemini" icon="cpu">
+    Any platform that supports tool/function calling
+  </Card>
+</CardGroup>
+
+## Example prompts
+
+Once wired in, these prompts work with any AI:
+
+**Simple W-2 filer**
+> "Prepare a 2025 federal return. I'm single. My W-2 shows $72,000 in box 1 and $9,800 in box 2."
+
+**Married with children**
+> "MFJ return for 2025. Two W-2s: $105k/$15k withheld and $38k/$4.5k withheld. Two kids ages 6 and 10. What's our refund?"
+
+**Self-employed**
+> "I'm single, self-employed. Schedule C: $92k gross, $31k expenses. I paid $4k in estimated taxes. What do I owe?"
+
+**Retirement income**
+> "I'm 68, single. SSA-1099 shows $24k in benefits. 1099-R shows $15k IRA distribution (code 7). What's my taxable income?"
+
+**After the return is computed**
+> "What is my effective tax rate?"  
+> "Am I subject to net investment income tax?"  
+> "Validate the return."  
+> "Export as MeF XML."

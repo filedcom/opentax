@@ -1,0 +1,138 @@
+---
+title: "Schedules"
+description: "Schedule A, C, E, F, H, J, R, and all K-1 variants."
+---
+
+## Schedule A — Itemized Deductions
+
+```bash
+tax form add --returnId ID --node_type schedule_a '{ ... }'
+```
+
+Triggers itemized deductions on the 1040. If the standard deduction is higher, Schedule A has no effect on taxable income.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `medical_expenses` | number | Unreimbursed medical/dental |
+| `state_local_taxes` | number | State and local income/sales tax (SALT) |
+| `real_estate_taxes` | number | Real estate taxes |
+| `home_mortgage_interest` | number | Home mortgage interest |
+| `investment_interest` | number | Investment interest |
+| `charitable_cash` | number | Cash charitable contributions |
+| `charitable_noncash` | number | Non-cash charitable contributions |
+| `casualty_losses` | number | Casualty/theft losses |
+
+<Note>
+  The SALT deduction (state/local taxes + real estate taxes) is capped at $10,000 ($5,000 MFS) under current law.
+</Note>
+
+---
+
+## Schedule C — Business Income
+
+```bash
+tax form add --returnId ID --node_type schedule_c '{ ... }'
+```
+
+One Schedule C per business. Add multiple for multiple businesses.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `business_name` | string | Business name |
+| `gross_receipts` | number | Gross receipts or sales |
+| `returns_allowances` | number | Returns and allowances |
+| `cost_of_goods_sold` | number | Cost of goods sold |
+| `total_expenses` | number | Total business expenses |
+| `home_office` | number | Home office deduction |
+| `car_expenses` | number | Car and truck expenses |
+
+---
+
+## Schedule E — Rental, Royalty, Partnership
+
+```bash
+tax form add --returnId ID --node_type schedule_e '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rental_income` | number | Rents received |
+| `rental_expenses` | number | Total rental expenses |
+| `royalty_income` | number | Royalties received |
+| `passive_activity_loss` | number | Prior year passive losses |
+
+---
+
+## Schedule F — Farm Income
+
+```bash
+tax form add --returnId ID --node_type schedule_f '{ ... }'
+```
+
+---
+
+## Schedule H — Household Employment
+
+```bash
+tax form add --returnId ID --node_type schedule_h '{ ... }'
+```
+
+For household employers — nannies, housekeepers, and other domestic workers.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `cash_wages` | number | Cash wages paid |
+| `ss_wages` | number | Social Security wages |
+| `medicare_wages` | number | Medicare wages |
+
+---
+
+## Schedule J — Farm Income Averaging
+
+```bash
+tax form add --returnId ID --node_type schedule_j '{ ... }'
+```
+
+---
+
+## Schedule R — Credit for Elderly/Disabled
+
+```bash
+tax form add --returnId ID --node_type schedule_r '{ ... }'
+```
+
+---
+
+## Schedule K-1 (Form 1065) — Partnership
+
+```bash
+tax form add --returnId ID --node_type k1_partnership '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `box1_ordinary_income` | number | Ordinary business income (loss) |
+| `box2_net_rental_real_estate` | number | Net rental real estate income |
+| `box5_interest` | number | Interest income |
+| `box6a_ordinary_dividends` | number | Ordinary dividends |
+| `box7_royalties` | number | Royalties |
+| `box8_net_stcg` | number | Net short-term capital gain |
+| `box9a_net_ltcg` | number | Net long-term capital gain |
+| `box11_other_income` | number | Other income |
+| `box13_*` | various | Deductions and credits |
+
+---
+
+## Schedule K-1 (Form 1120-S) — S Corporation
+
+```bash
+tax form add --returnId ID --node_type k1_s_corp '{ ... }'
+```
+
+---
+
+## Schedule K-1 (Form 1041) — Trust/Estate
+
+```bash
+tax form add --returnId ID --node_type k1_trust '{ ... }'
+```

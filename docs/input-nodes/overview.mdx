@@ -1,0 +1,62 @@
+---
+title: "Input Nodes"
+description: "131 input nodes covering the full range of 1040 source documents."
+---
+
+Input nodes are the entry points for tax data. Each one corresponds to a real-world tax document or election — a W-2, a 1099, a schedule you fill out, or a special situation.
+
+## How nodes work
+
+When you run `form add`, the data flows into the node's `compute()` function. The node validates it, runs IRS logic, and passes results downstream to the forms that need them.
+
+```
+tax form add --returnId abc-123 --node_type w2 '{"box1_wages": 95000}'
+                                                        ↓
+                                              W2Node.compute()
+                                                        ↓
+                                              → Form 1040 (wages, withholding)
+                                              → Schedule C (if statutory employee)
+                                              → Form 4137 (if allocated tips)
+```
+
+## Inspect any node
+
+```bash
+tax node inspect --node_type w2
+```
+
+Shows every field the node accepts, whether it's required, and what it feeds into.
+
+## Categories
+
+<CardGroup cols={2}>
+  <Card title="Income" href="/input-nodes/income" icon="dollar-sign">
+    W-2, 1099-INT, 1099-DIV, 1099-NEC, 1099-R, SSA-1099, and more
+  </Card>
+  <Card title="Schedules" href="/input-nodes/schedules" icon="list">
+    Schedule A, C, E, F, H, J, R, and all K-1 variants
+  </Card>
+  <Card title="Deductions" href="/input-nodes/deductions" icon="minus-circle">
+    Mortgage interest, student loans, IRA, educator expenses, and more
+  </Card>
+  <Card title="Credits" href="/input-nodes/credits" icon="star">
+    Child tax credit, dependent care, education, energy credits
+  </Card>
+  <Card title="Capital" href="/input-nodes/capital" icon="trending-up">
+    Form 8949, installment sales, like-kind exchanges
+  </Card>
+  <Card title="Other" href="/input-nodes/other" icon="more-horizontal">
+    Estimated payments, foreign forms, FBAR, injured spouse
+  </Card>
+</CardGroup>
+
+## The `general` node
+
+Every return needs a `general` entry for taxpayer info and filing status:
+
+```bash
+tax form add --returnId abc-123 --node_type general \
+  '{"filing_status": "single"}'
+```
+
+Filing status values: `single`, `married_filing_jointly`, `married_filing_separately`, `head_of_household`, `qualifying_surviving_spouse`

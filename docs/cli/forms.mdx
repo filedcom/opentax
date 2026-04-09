@@ -1,0 +1,104 @@
+---
+title: "Forms"
+description: "Add, list, update, and delete input documents in a return."
+---
+
+## `form add`
+
+Add a tax input document to an existing return.
+
+```bash
+tax form add --returnId abc-123 --node_type w2 \
+  '{"box1_wages": 95000, "box2_fed_withheld": 14200}'
+```
+
+```json
+{ "entryId": "entry-789", "node_type": "w2", "data": { ... } }
+```
+
+**Flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--returnId ID` | Yes | Return ID |
+| `--node_type TYPE` | Yes | Form type (e.g. `w2`, `f1099int`, `schedule_c`) |
+| `JSON` (positional) | Yes | Field data as a JSON string |
+
+The data is validated against the node's Zod schema before being saved. Invalid fields are rejected with a descriptive error.
+
+<Tip>
+  To see what fields a form accepts, run `tax node inspect --node_type TYPE`.
+</Tip>
+
+---
+
+## `form list`
+
+List all input documents in a return.
+
+```bash
+tax form list --returnId abc-123
+tax form list --returnId abc-123 --node_type w2
+```
+
+**Flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--returnId ID` | Yes | Return ID |
+| `--node_type TYPE` | No | Filter to a specific form type |
+
+---
+
+## `form get`
+
+Get a specific input document by entry ID.
+
+```bash
+tax form get --returnId abc-123 --entryId entry-789
+```
+
+**Flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--returnId ID` | Yes | Return ID |
+| `--entryId ID` | Yes | Entry ID from `form add` or `form list` |
+
+---
+
+## `form update`
+
+Update fields on an existing input document.
+
+```bash
+tax form update --returnId abc-123 --entryId entry-789 \
+  '{"box1_wages": 97500}'
+```
+
+The update is merged with existing data. Fields not included in the JSON are unchanged.
+
+**Flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--returnId ID` | Yes | Return ID |
+| `--entryId ID` | Yes | Entry ID |
+| `JSON` (positional) | Yes | Fields to update |
+
+---
+
+## `form delete`
+
+Remove an input document from a return.
+
+```bash
+tax form delete --returnId abc-123 --entryId entry-789
+```
+
+**Flags:**
+
+| Flag | Required | Description |
+|------|----------|-------------|
+| `--returnId ID` | Yes | Return ID |
+| `--entryId ID` | Yes | Entry ID |
