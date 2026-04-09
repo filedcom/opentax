@@ -1,14 +1,14 @@
 {
-  "returnId": "16f94654-76e1-44e2-9cbe-10e6b996b299",
+  "returnId": "e7cfa749-dc3f-48ae-88c6-588fb8beb522",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 710911.55,
     "line9_total_income": 904592.6000000001,
     "line11_agi": 904592.6000000001,
     "line15_taxable_income": 888842.6000000001,
-    "line24_total_tax": 285088.02790000004,
+    "line24_total_tax": 284716.34790000005,
     "line33_total_payments": 300080.49,
-    "line35a_refund": 14992.462099999946
+    "line35a_refund": 15364.14209999994
   },
   "forms": [
     "agi_aggregator",
@@ -33,6 +33,7 @@
     "k1_partnership",
     "schedule1",
     "schedule2",
+    "schedule3",
     "schedule_a",
     "schedule_b",
     "schedule_d",
@@ -112,22 +113,22 @@
       11654.08,
       11654.08
     ],
+    "line20_nonrefundable_credits": 371.68,
     "line1z_total_wages": 710911.55,
     "line9_total_income": 904592.6000000001,
     "line18_total_tax_before_credits": 285088.02790000004,
-    "line21_credits_total": 0,
-    "line22_tax_after_credits": 285088.02790000004,
-    "line24_total_tax": 285088.02790000004,
+    "line21_credits_total": 371.68,
+    "line22_tax_after_credits": 284716.34790000005,
+    "line24_total_tax": 284716.34790000005,
     "line25d_total_withholding": 300080.49,
     "line33_total_payments": 300080.49,
     "line10_adjustments": 0,
     "line14_deductions_qbi_total": 6,
     "line32_refundable_credits_total": 0,
-    "line34_overpayment": 14992.462099999946,
-    "line35a_refund": 14992.462099999946
+    "line34_overpayment": 15364.14209999994,
+    "line35a_refund": 15364.14209999994
   },
   "warnings": [
-    "[EXECUTOR_NODE_FAILURE] form_1116: Zod validation failed for node \"form_1116\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"foreign_income\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"total_income\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"us_tax_before_credits\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"expected\": \"'passive' | 'general' | 'section_951a' | 'branch' | 'treaty' | 'section_901j'\",\n    \"received\": \"undefined\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"income_category\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"expected\": \"'single' | 'mfj' | 'mfs' | 'hoh' | 'qss'\",\n    \"received\": \"undefined\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"filing_status\"\n    ],\n    \"message\": \"Required\"\n  }\n]",
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
   ]
 }

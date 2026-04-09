@@ -420,9 +420,36 @@ deno task tax return export --returnId abc-123 --type mef
 # Run all tests
 deno task test
 
-# Run accuracy benchmark (51 TY2025 scenarios)
+# Run accuracy benchmark (97 TY2025 scenarios)
 cd taxcalcbench && deno run --allow-read --allow-write --allow-run run_benchmark.ts
+
+# Run a single case
+cd taxcalcbench && deno run --allow-read --allow-write --allow-run run_benchmark.ts --form cases/02-single-w2-basic/
 ```
+
+### Benchmark harness
+
+The harness tracks benchmark accuracy and drives autonomous bug-fixing sessions.
+
+```
+taxcalcbench/harness/
+  state.json     # Active task state: current pass/fail counts, root causes, phase
+  progress.md    # Append-only log of harness runs and outcomes
+```
+
+**97 TY2025 scenarios** covering single, MFJ, HOH filers with W-2, 1099-R, SSA, Schedule C, K-1, capital gains, credits, and estimated tax payments. Pass criterion: engine within ±$5 of correct value for `line24_total_tax`, `line35a_refund`, and `line37_amount_owed`.
+
+**Current accuracy: 94/97 passing.** The 3 remaining failures involve SSA + 1099-B combinations (cases 67, 91, 95) — likely NIIT/AMT mismatch.
+
+#### Claude Code skills (in-repo)
+
+If you're using Claude Code, three skills automate harness work:
+
+| Skill | Purpose |
+|-------|---------|
+| `/tax-status` | Print current pass/fail, root causes, and recent activity |
+| `/tax-fix` | Autonomous bug-fixing loop: runs benchmark, diagnoses failures, patches nodes, iterates until pass rate improves or stalls |
+| `/tax-build` | Build a new form node end-to-end: research → ground truth → implementation → benchmark |
 
 ### Adding a node
 

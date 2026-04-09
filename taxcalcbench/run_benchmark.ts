@@ -10,6 +10,14 @@ const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
 const TAX_DIR    = join(SCRIPT_DIR, "..");
 const CASES_DIR  = join(SCRIPT_DIR, "cases");
 
+// ── CLI flags ─────────────────────────────────────────────────────────────────
+const args = Deno.args;
+const formFlag = (() => {
+  const i = args.indexOf("--form");
+  return i !== -1 ? args[i + 1] : null;
+})();
+const jsonFlag = args.includes("--json");
+
 const RED = "\x1b[31m", GRN = "\x1b[32m", YEL = "\x1b[33m", DIM = "\x1b[2m", RST = "\x1b[0m";
 const CLEAR_LINE = "\x1b[2K\r";
 
@@ -150,7 +158,10 @@ const CONCURRENCY = 8;
 
 const names: string[] = [];
 for await (const e of Deno.readDir(CASES_DIR)) {
-  if (e.isDirectory) names.push(e.name);
+  if (!e.isDirectory) continue;
+  if (formFlag === "1120" && !e.name.startsWith("1120-")) continue;
+  if (formFlag === "1040" && e.name.startsWith("1120-")) continue;
+  names.push(e.name);
 }
 names.sort();
 
@@ -195,3 +206,8 @@ const pass = results.filter(r => r.ok).length;
 const fail = results.length - pass;
 
 write(`\n  ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  ${DIM}out of ${results.length} cases  ·  green = within $5${RST}\n\n`);
+
+if (jsonFlag) {
+  const failing = results.filter(r => !r.ok).map(r => r.name);
+  console.log(JSON.stringify({ total: results.length, pass, fail, failing }));
+}

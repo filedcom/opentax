@@ -1,6 +1,6 @@
 # taxcalcbench
 
-Accuracy benchmark for the `tax` engine — 51 TY2025 scenarios with independently
+Accuracy benchmark for the `tax` engine — 97 TY2025 scenarios with independently
 computed correct values. Passes when every engine output is within $5 of the correct
 value for total tax, refund, and amount owed.
 
@@ -26,7 +26,7 @@ taxcalcbench/
 
 ## Cases
 
-51 scenarios covering the common return types:
+97 scenarios covering the common return types:
 
 | Range | Filing status | Key features tested |
 |-------|--------------|---------------------|
