@@ -47,18 +47,19 @@ export const inputSchema = z.object({
   foreign_tax_paid: z.number().nonnegative(),
 
   // Gross foreign source income in the applicable category (Part I, Line 1a)
-  // IRC §904(d)
-  foreign_income: z.number().nonnegative(),
+  // IRC §904(d). When absent, full-credit simplified mode is used (fraction = 1).
+  foreign_income: z.number().nonnegative().optional(),
 
   // Worldwide gross income from all sources (Part I, Line 3e)
-  // Used as the denominator of the FTC limitation fraction
-  // IRC §904(a)
-  total_income: z.number().nonnegative(),
+  // Used as the denominator of the FTC limitation fraction.
+  // IRC §904(a). When absent, full-credit simplified mode is used (fraction = 1).
+  total_income: z.number().nonnegative().optional(),
 
   // Regular US tax liability before credits (Part III, Line 20)
   // = Form 1040 line 16, minus AMT allocable to Form 4972 income
-  // IRC §904(a); does NOT include NIIT (§1411)
-  us_tax_before_credits: z.number().nonnegative(),
+  // IRC §904(a); does NOT include NIIT (§1411).
+  // When absent, no FTC limitation is applied (full credit).
+  us_tax_before_credits: z.number().nonnegative().optional(),
 
   // Tentative minimum tax (Form 6251 Line 7) before AMTFTC.
   // Required to compute the AMT Foreign Tax Credit per IRC §59(a).
@@ -67,11 +68,11 @@ export const inputSchema = z.object({
   tentative_minimum_tax: z.number().nonnegative().optional(),
 
   // Income category — separate Form 1116 must be filed per category
-  // IRC §904(d)
-  income_category: z.nativeEnum(IncomeCategory),
+  // IRC §904(d). Optional; defaults to passive.
+  income_category: z.nativeEnum(IncomeCategory).optional(),
 
-  // Filing status — drives de minimis threshold (applied upstream)
-  filing_status: z.nativeEnum(FilingStatus),
+  // Filing status — drives de minimis threshold (applied upstream). Optional.
+  filing_status: z.nativeEnum(FilingStatus).optional(),
 });
 
 type Form1116Input = z.infer<typeof inputSchema>;
@@ -79,20 +80,24 @@ type Form1116Input = z.infer<typeof inputSchema>;
 // ─── Pure Helper Functions ────────────────────────────────────────────────────
 
 // Part I, Line 3f — limitation fraction = foreign_income / total_income
-// Capped at 1.0 per IRC §904(a); treated as 1.0 if total_income is zero to avoid
-// division by zero (degenerate case where all income is foreign)
+// When inputs are absent (simplified mode), returns 1.0 (full credit, no limitation).
+// Capped at 1.0 per IRC §904(a).
 // IRC §904(a)
 function limitationFraction(input: Form1116Input): number {
-  if (input.total_income <= 0) {
-    return input.foreign_income > 0 ? 1.0 : 0;
-  }
-  return Math.min(1.0, input.foreign_income / input.total_income);
+  const foreignIncome = input.foreign_income;
+  const totalIncome = input.total_income;
+  if (foreignIncome === undefined || totalIncome === undefined) return 1.0;
+  if (totalIncome <= 0) return foreignIncome > 0 ? 1.0 : 0;
+  return Math.min(1.0, foreignIncome / totalIncome);
 }
 
 // Part III, Line 21 — FTC limitation = us_tax × fraction
+// When us_tax_before_credits is absent, no limitation is applied.
 // IRC §904(a)
 function ftcLimit(input: Form1116Input): number {
-  return input.us_tax_before_credits * limitationFraction(input);
+  const usTax = input.us_tax_before_credits;
+  if (usTax === undefined) return input.foreign_tax_paid; // no limitation → full credit
+  return usTax * limitationFraction(input);
 }
 
 // Part III, Line 24 — allowed credit = min(foreign_taxes_paid, ftc_limit)
@@ -143,8 +148,12 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    // No foreign income or no taxes paid → no credit possible
-    if (input.foreign_income <= 0 || input.foreign_tax_paid <= 0) {
+    // No taxes paid → no credit possible
+    if (input.foreign_tax_paid <= 0) {
+      return { outputs: [] };
+    }
+    // When foreign_income is explicitly zero, no credit (income-based guard)
+    if (input.foreign_income !== undefined && input.foreign_income <= 0) {
       return { outputs: [] };
     }
 

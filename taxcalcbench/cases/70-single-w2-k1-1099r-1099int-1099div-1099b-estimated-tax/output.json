@@ -1,14 +1,14 @@
 {
-  "returnId": "e1360199-c239-4ddf-bf8a-22c83bdd682d",
+  "returnId": "c2a18915-ebea-4d62-b301-69326327abe9",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 789920.3,
     "line9_total_income": 952229.36,
     "line11_agi": 952229.36,
     "line15_taxable_income": 933185.88,
-    "line24_total_tax": 293565.6437,
+    "line24_total_tax": 293288.18370000005,
     "line33_total_payments": 265182.77999999997,
-    "line37_amount_owed": 28382.863700000045
+    "line37_amount_owed": 28105.403700000083
   },
   "forms": [
     "agi_aggregator",
@@ -37,7 +37,6 @@
     "schedule_a",
     "schedule_b",
     "schedule_d",
-    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -109,8 +108,8 @@
       281813.67370000004
     ],
     "line17_additional_taxes": [
-      11751.97,
-      11751.97
+      11474.509999999998,
+      11474.509999999998
     ],
     "line31_additional_payments": [
       10918.2,
@@ -118,16 +117,16 @@
     ],
     "line1z_total_wages": 789920.3,
     "line9_total_income": 952229.36,
-    "line18_total_tax_before_credits": 293565.6437,
+    "line18_total_tax_before_credits": 293288.18370000005,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 293565.6437,
-    "line24_total_tax": 293565.6437,
+    "line22_tax_after_credits": 293288.18370000005,
+    "line24_total_tax": 293288.18370000005,
     "line25d_total_withholding": 203464.58,
     "line33_total_payments": 265182.77999999997,
     "line10_adjustments": 0,
     "line14_deductions_qbi_total": 19043.48,
     "line32_refundable_credits_total": 10918.2,
-    "line37_amount_owed": 28382.863700000045
+    "line37_amount_owed": 28105.403700000083
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] form_1116: Zod validation failed for node \"form_1116\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"foreign_income\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"total_income\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"us_tax_before_credits\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"expected\": \"'passive' | 'general' | 'section_951a' | 'branch' | 'treaty' | 'section_901j'\",\n    \"received\": \"undefined\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"income_category\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"expected\": \"'single' | 'mfj' | 'mfs' | 'hoh' | 'qss'\",\n    \"received\": \"undefined\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"filing_status\"\n    ],\n    \"message\": \"Required\"\n  }\n]",

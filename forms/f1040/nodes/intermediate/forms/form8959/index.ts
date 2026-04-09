@@ -223,9 +223,10 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...schedule2Output(line18),
-      // Only route withholding to 1040 line25c when Additional Medicare Tax applies.
-      // When line18 = 0, Form 8959 is not filed and no line25c payment is credited.
-      ...(line18 > 0 ? f1040Output(line24) : []),
+      // Route excess Medicare withholding to 1040 line25c whenever present.
+      // Employers may withhold the additional 0.9% Medicare rate before wages hit
+      // the $200k threshold; that excess is always creditable (IRC §31; Form 8959 Part V).
+      ...f1040Output(line24),
     ];
 
     return { outputs };
