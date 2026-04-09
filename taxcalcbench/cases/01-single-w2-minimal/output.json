@@ -1,0 +1,84 @@
+{
+  "returnId": "4eeaa88d-68eb-400f-929a-3022156bbbca",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 15000,
+    "line9_total_income": 15000,
+    "line11_agi": 15000,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 314,
+    "line35a_refund": 314
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      0,
+      0
+    ],
+    "line1a_wages": [
+      15000,
+      15000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Casey",
+    "taxpayer_last_name": "Jordan",
+    "taxpayer_dob": "1990-03-15",
+    "address_city": "Juneau",
+    "address_state": "AK",
+    "address_zip": "99801",
+    "line11_agi": [
+      15000,
+      15000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line27_eitc": 314,
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 15000,
+    "line9_total_income": 15000,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line25d_total_withholding": 0,
+    "line33_total_payments": 314,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 314,
+    "line34_overpayment": 314,
+    "line35a_refund": 314
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

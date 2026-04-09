@@ -1,0 +1,89 @@
+{
+  "returnId": "213eebd2-b2f9-4630-a306-06dcc9335036",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 52000,
+    "line9_total_income": 52000,
+    "line11_agi": 52000,
+    "line15_taxable_income": 28375,
+    "line24_total_tax": 265,
+    "line33_total_payments": 5200,
+    "line35a_refund": 4935
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule3",
+    "schedule_a",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      5200,
+      5200
+    ],
+    "line1a_wages": [
+      52000,
+      52000
+    ],
+    "filing_status": "hoh",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Finley",
+    "taxpayer_last_name": "Martinez",
+    "taxpayer_dob": "1987-03-16",
+    "address_city": "San Diego",
+    "address_state": "CA",
+    "address_zip": "92101",
+    "hoh_paid_more_than_half_home_costs": true,
+    "line11_agi": [
+      52000,
+      52000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      23625,
+      23625
+    ],
+    "line15_taxable_income": [
+      28375,
+      28375
+    ],
+    "line16_income_tax": [
+      3065,
+      3065
+    ],
+    "line20_nonrefundable_credits": 2800,
+    "line1z_total_wages": 52000,
+    "line9_total_income": 52000,
+    "line18_total_tax_before_credits": 3065,
+    "line21_credits_total": 2800,
+    "line22_tax_after_credits": 265,
+    "line24_total_tax": 265,
+    "line25d_total_withholding": 5200,
+    "line33_total_payments": 5200,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 23625,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 4935,
+    "line35a_refund": 4935
+  },
+  "warnings": []
+}

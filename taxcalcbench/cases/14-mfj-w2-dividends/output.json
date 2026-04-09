@@ -1,0 +1,101 @@
+{
+  "returnId": "6fd8a102-0d36-4a0b-9dc4-72dc36b931f0",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 95000,
+    "line9_total_income": 98200,
+    "line11_agi": 98200,
+    "line15_taxable_income": 66700,
+    "line24_total_tax": 7191,
+    "line33_total_payments": 10500,
+    "line35a_refund": 3309
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099div",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      10500,
+      10500
+    ],
+    "line1a_wages": [
+      95000,
+      95000
+    ],
+    "line3a_qualified_dividends": [
+      2800,
+      2800
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Cameron",
+    "taxpayer_last_name": "White",
+    "taxpayer_dob": "1975-08-19",
+    "spouse_first_name": "Jordan",
+    "spouse_last_name": "White",
+    "spouse_dob": "1977-11-30",
+    "address_city": "Nashville",
+    "address_state": "TN",
+    "address_zip": "37201",
+    "line3b_ordinary_dividends": [
+      3200,
+      3200
+    ],
+    "line11_agi": [
+      98200,
+      98200
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      31500,
+      31500
+    ],
+    "line15_taxable_income": [
+      66700,
+      66700
+    ],
+    "line16_income_tax": [
+      7191,
+      7191
+    ],
+    "line1z_total_wages": 95000,
+    "line9_total_income": 98200,
+    "line18_total_tax_before_credits": 7191,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 7191,
+    "line24_total_tax": 7191,
+    "line25d_total_withholding": 10500,
+    "line33_total_payments": 10500,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 31500,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 3309,
+    "line35a_refund": 3309
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

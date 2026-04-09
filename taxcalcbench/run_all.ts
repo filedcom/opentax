@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
 /**
- * Run all benchmark cases and generate expected.json for each.
+ * Run all benchmark cases and generate output.json for each.
  * Run: deno run --allow-read --allow-write --allow-run taxcalcbench/run_all.ts
  */
 
@@ -48,8 +48,8 @@ for (const name of names) {
     }
 
     const result = await tax("return", "get", "--returnId", rid, "--json");
-    await Deno.writeTextFile(join(caseDir, "expected.json"), result);
-    console.log(`  Saved: expected.json`);
+    await Deno.writeTextFile(join(caseDir, "output.json"), result);
+    console.log(`  Saved: output.json`);
     pass++;
   } catch (err) {
     console.error(`  FAILED: ${err}`);

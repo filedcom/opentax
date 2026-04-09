@@ -1,0 +1,105 @@
+{
+  "returnId": "d06e6fd3-be11-40e8-bead-2594b1d7c89e",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 15111,
+    "line9_total_income": 38321,
+    "line11_agi": 34181.2657225,
+    "line15_taxable_income": 2145.0125780000003,
+    "line24_total_tax": 3493.9698128000005,
+    "line33_total_payments": 231,
+    "line37_amount_owed": 3262.9698128000005
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1098e",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule2",
+    "schedule_a",
+    "schedule_c",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      231,
+      231
+    ],
+    "line1a_wages": [
+      15111,
+      15111
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "First",
+    "taxpayer_last_name": "Spriere",
+    "taxpayer_dob": "1980-12-12",
+    "spouse_first_name": "Spouse",
+    "spouse_last_name": "Spriere",
+    "spouse_dob": "2002-12-12",
+    "address_city": "Juneau",
+    "address_state": "AK",
+    "address_zip": "99801",
+    "line11_agi": [
+      34181.2657225,
+      34181.2657225
+    ],
+    "line8_additional_income": 23210,
+    "line10_adjustments": [
+      4139.7342775,
+      4139.7342775
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line13_qbi_deduction": [
+      536.2531445000001,
+      536.2531445000001
+    ],
+    "line12a_standard_deduction": [
+      31500,
+      31500
+    ],
+    "line15_taxable_income": [
+      2145.0125780000003,
+      2145.0125780000003
+    ],
+    "line16_income_tax": [
+      214.50125780000005,
+      214.50125780000005
+    ],
+    "line17_additional_taxes": [
+      3279.4685550000004,
+      3279.4685550000004
+    ],
+    "line1z_total_wages": 15111,
+    "line9_total_income": 38321,
+    "line18_total_tax_before_credits": 3493.9698128000005,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 3493.9698128000005,
+    "line24_total_tax": 3493.9698128000005,
+    "line25d_total_withholding": 231,
+    "line33_total_payments": 231,
+    "line14_deductions_qbi_total": 32036.2531445,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 3262.9698128000005
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

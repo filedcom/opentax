@@ -1,0 +1,80 @@
+{
+  "year": 2025,
+  "source": "cch",
+  "scenario": "Single filer with W-2 wage income, retirement distributions, interest income \u2014 CCH ground truth",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "John",
+          "taxpayer_last_name": "James",
+          "address_city": "Springfield",
+          "address_zip": "62701",
+          "address_state": "IL"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 183248.35,
+        "box2_fed_withheld": 32652.03,
+        "box3_ss_wages": 176100.0,
+        "box4_ss_withheld": 10918.2,
+        "box5_medicare_wages": 183848.35,
+        "box6_medicare_withheld": 2665.8,
+        "employer_name": "ACME INDUSTRIES INC",
+        "employer_ein": "37-1000027"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "FIRST NATIONAL BANK",
+        "box1": 701.11,
+        "payer_tin": "38-1000028"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "LIBERTY INVESTMENTS LLC",
+        "box1": 20.17,
+        "payer_tin": "39-1000029"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "HERITAGE FINANCIAL SERVICES",
+        "box1": 7.03,
+        "payer_tin": "39-1000029"
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "PIONEER TRUST COMPANY",
+        "payer_ein": "32-1000022",
+        "box1_gross_distribution": 4234.22,
+        "box2a_taxable_amount": 0.0,
+        "box4_federal_withheld": 0.0,
+        "box7_distribution_code": "R"
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "GATEWAY SECURITIES INC",
+        "payer_ein": "12-1000002",
+        "box1_gross_distribution": 5127.89,
+        "box2a_taxable_amount": 5127.89,
+        "box4_federal_withheld": 0.0,
+        "box7_distribution_code": "2",
+        "box7_ira_simple_indicator": true
+      }
+    }
+  ]
+}

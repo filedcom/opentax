@@ -1,0 +1,105 @@
+{
+  "returnId": "f9838a80-81f1-4aa5-a067-643eabf09d31",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 45400,
+    "line11_agi": 45400,
+    "line15_taxable_income": 10700,
+    "line24_total_tax": 1070,
+    "line33_total_payments": 3600,
+    "line35a_refund": 2530
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      36000,
+      36000
+    ],
+    "line5b_pension_taxable": [
+      36000,
+      36000
+    ],
+    "line25b_withheld_1099": [
+      3600,
+      3600
+    ],
+    "line6a_ss_gross": [
+      24000,
+      24000
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Lee",
+    "taxpayer_last_name": "Johnson",
+    "taxpayer_dob": "1950-05-15",
+    "taxpayer_age_65_or_older": true,
+    "spouse_first_name": "Terry",
+    "spouse_last_name": "Johnson",
+    "spouse_dob": "1951-09-08",
+    "spouse_age_65_or_older": true,
+    "address_city": "Scottsdale",
+    "address_state": "AZ",
+    "address_zip": "85251",
+    "line11_agi": [
+      45400,
+      45400
+    ],
+    "line6b_ss_taxable": [
+      9400,
+      9400
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      34700,
+      34700
+    ],
+    "line15_taxable_income": [
+      10700,
+      10700
+    ],
+    "line16_income_tax": [
+      1070,
+      1070
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 45400,
+    "line18_total_tax_before_credits": 1070,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1070,
+    "line24_total_tax": 1070,
+    "line25d_total_withholding": 3600,
+    "line33_total_payments": 3600,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 34700,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 2530,
+    "line35a_refund": 2530
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

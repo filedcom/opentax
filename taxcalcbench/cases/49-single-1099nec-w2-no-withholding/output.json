@@ -1,0 +1,102 @@
+{
+  "returnId": "e6e7380a-26af-46b7-ae35-8bc3b118b24d",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 30000,
+    "line9_total_income": 45000,
+    "line11_agi": 43940.28375,
+    "line15_taxable_income": 25190.283750000002,
+    "line24_total_tax": 4903.76655,
+    "line33_total_payments": 3000,
+    "line37_amount_owed": 1903.7665500000003
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099nec",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule2",
+    "schedule_a",
+    "schedule_c",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      3000,
+      3000
+    ],
+    "line1a_wages": [
+      30000,
+      30000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Keisha",
+    "taxpayer_last_name": "Williams",
+    "taxpayer_dob": "1994-06-28",
+    "address_city": "Atlanta",
+    "address_state": "GA",
+    "address_zip": "30301",
+    "line11_agi": [
+      43940.28375,
+      43940.28375
+    ],
+    "line8_additional_income": 15000,
+    "line10_adjustments": [
+      1059.71625,
+      1059.71625
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line13_qbi_deduction": [
+      3000,
+      3000
+    ],
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      25190.283750000002,
+      25190.283750000002
+    ],
+    "line16_income_tax": [
+      2784.3340500000004,
+      2784.3340500000004
+    ],
+    "line17_additional_taxes": [
+      2119.4325,
+      2119.4325
+    ],
+    "line1z_total_wages": 30000,
+    "line9_total_income": 45000,
+    "line18_total_tax_before_credits": 4903.76655,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 4903.76655,
+    "line24_total_tax": 4903.76655,
+    "line25d_total_withholding": 3000,
+    "line33_total_payments": 3000,
+    "line14_deductions_qbi_total": 18750,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 1903.7665500000003
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}
