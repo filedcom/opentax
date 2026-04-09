@@ -27,7 +27,7 @@ import { FilingStatus } from "../nodes/types.ts";
 
 // ── Shared context ────────────────────────────────────────────────────────────
 
-const ctx = { taxYear: 2025 };
+const ctx = { taxYear: 2025, formType: "f1040" };
 
 // Build the plan once — it is purely structural (registry topology only).
 const plan = buildExecutionPlan(registry);

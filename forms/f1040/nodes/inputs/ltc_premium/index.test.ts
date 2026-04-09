@@ -13,7 +13,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return ltc_premium.compute({ taxYear: 2025 }, { ltc_premiums: items });
+  return ltc_premium.compute({ taxYear: 2025, formType: "f1040" }, { ltc_premiums: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

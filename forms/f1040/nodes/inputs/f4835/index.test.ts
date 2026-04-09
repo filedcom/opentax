@@ -10,7 +10,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f4835.compute({ taxYear: 2025 }, { f4835s: items });
+  return f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -20,12 +20,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => f4835.compute({ taxYear: 2025 }, { f4835s: [] }), Error);
+  assertThrows(() => f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: [] }), Error);
 });
 
 Deno.test("missing activity_name throws", () => {
   assertThrows(
-    () => f4835.compute({ taxYear: 2025 }, { f4835s: [{ gross_farm_rental_income: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () => f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: [{ gross_farm_rental_income: 100 } as unknown as ReturnType<typeof minimalItem>] }),
     Error,
   );
 });

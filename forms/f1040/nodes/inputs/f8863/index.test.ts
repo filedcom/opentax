@@ -43,7 +43,7 @@ function minimalLlcItem(overrides: Partial<F8863Item> = {}): F8863Item {
 }
 
 function compute(items: F8863Item[]) {
-  return f8863.compute({ taxYear: 2025 }, { f8863s: items });
+  return f8863.compute({ taxYear: 2025, formType: "f1040" }, { f8863s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -56,7 +56,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 Deno.test("schema_empty_array: f8863s array must have at least 1 item", () => {
   assertThrows(
-    () => f8863.compute({ taxYear: 2025 }, { f8863s: [] }),
+    () => f8863.compute({ taxYear: 2025, formType: "f1040" }, { f8863s: [] }),
     Error,
   );
 });

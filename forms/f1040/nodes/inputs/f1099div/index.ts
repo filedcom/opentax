@@ -19,12 +19,10 @@ import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrec
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import {
-  SCHEDULE_B_DIVIDEND_THRESHOLD,
   FOREIGN_TAX_SINGLE_THRESHOLD,
   FOREIGN_TAX_MFJ_THRESHOLD,
-  SEC199A_SINGLE_THRESHOLD_2025,
-  SEC199A_MFJ_THRESHOLD_2025,
 } from "../../config/2025.ts";
 
 export const itemSchema = z.object({
@@ -64,8 +62,6 @@ export const inputSchema = z.object({
 type DIVItem = z.infer<typeof itemSchema>;
 type DIVInput = z.infer<typeof inputSchema>;
 
-const SEC199A_SINGLE_THRESHOLD = SEC199A_SINGLE_THRESHOLD_2025;
-const SEC199A_MFJ_THRESHOLD = SEC199A_MFJ_THRESHOLD_2025;
 const HOLDING_PERIOD_199A_DAYS = 45;
 const HOLDING_PERIOD_FOREIGN_DAYS = 16;
 
@@ -144,10 +140,10 @@ function validateDivItem(item: DIVItem): void {
   }
 }
 
-function needsScheduleB(items: DIVItem[]): boolean {
+function needsScheduleB(items: DIVItem[], scheduleBDividendThreshold: number): boolean {
   if (items.some((item) => item.isNominee)) return true;
   const totalBox1a = items.reduce((sum, item) => sum + item.box1a, 0);
-  return totalBox1a > SCHEDULE_B_DIVIDEND_THRESHOLD;
+  return totalBox1a > scheduleBDividendThreshold;
 }
 
 function dividendScheduleBOutput(item: DIVItem): NodeOutput[] {
@@ -161,11 +157,13 @@ function dividendScheduleBOutput(item: DIVItem): NodeOutput[] {
 function isAbove199AThreshold(
   taxableIncome: number | undefined,
   filingStatus: string | undefined,
+  sec199aSingleThreshold: number,
+  sec199aMfjThreshold: number,
 ): boolean {
   if (taxableIncome === undefined) return false;
   const threshold = filingStatus === "mfj"
-    ? SEC199A_MFJ_THRESHOLD
-    : SEC199A_SINGLE_THRESHOLD;
+    ? sec199aMfjThreshold
+    : sec199aSingleThreshold;
   return taxableIncome > threshold;
 }
 
@@ -188,7 +186,9 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     form8960,
   ]);
 
-  compute(_ctx: NodeContext, input: DIVInput): NodeResult {
+  compute(ctx: NodeContext, input: DIVInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const { taxableIncome, filingStatus } = parsed;
     // Normalize items first (clamp sub-box values that payers occasionally report
@@ -204,7 +204,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       (item) => (item.box2b ?? 0) > 0 || (item.box2c ?? 0) > 0 || (item.box2d ?? 0) > 0,
     );
 
-    const shouldRouteScheduleB = needsScheduleB(div1099s);
+    const shouldRouteScheduleB = needsScheduleB(div1099s, cfg.scheduleBDividendThreshold);
     const outputs: NodeOutput[] = shouldRouteScheduleB
       ? div1099s.flatMap(dividendScheduleBOutput)
       : [];
@@ -275,7 +275,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       )
       .reduce((sum, item) => sum + (item.box5 ?? 0), 0);
     if (totalBox5 > 0) {
-      const useForm8995a = isAbove199AThreshold(taxableIncome, filingStatus);
+      const useForm8995a = isAbove199AThreshold(taxableIncome, filingStatus, cfg.sec199aSingleThreshold, cfg.sec199aMfjThreshold);
       outputs.push({
         nodeType: useForm8995a ? form8995a.nodeType : form8995.nodeType,
         fields: { line6_sec199a_dividends: totalBox5 },

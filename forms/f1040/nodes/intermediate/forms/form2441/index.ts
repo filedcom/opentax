@@ -9,14 +9,8 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  DEP_CARE_EXPENSE_CAP_ONE_2025,
-  DEP_CARE_EXPENSE_CAP_TWO_PLUS_2025,
-  DEP_CARE_EMPLOYER_EXCLUSION_2025,
-  DEP_CARE_EMPLOYER_EXCLUSION_MFS_2025,
-  DEP_CARE_CREDIT_RATE_AGI_THRESHOLD_2025,
-  DEP_CARE_CREDIT_RATE_BRACKET_SIZE_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import type { F1040Config } from "../../../config/index.ts";
 
 // IRC §21(a): credit rate — 35% at AGI ≤ $15,000, drops 1% per $2,000, floor 20%
 const MAX_CREDIT_RATE = 0.35;
@@ -55,29 +49,29 @@ type Form2441Input = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // IRC §129(a)(2): employer exclusion limit — $5,000 general, $2,500 for MFS
-function employerExclusionLimit(status: FilingStatus | undefined): number {
+function employerExclusionLimit(status: FilingStatus | undefined, cfg: F1040Config): number {
   return status === FilingStatus.MFS
-    ? DEP_CARE_EMPLOYER_EXCLUSION_MFS_2025
-    : DEP_CARE_EMPLOYER_EXCLUSION_2025;
+    ? cfg.depCareEmployerExclusionMfs
+    : cfg.depCareEmployerExclusion;
 }
 
 // Amount of employer benefits that exceeds the §129 exclusion → taxable income (f1040 line 1e)
-function taxableExcess(benefits: number, status: FilingStatus | undefined): number {
-  return Math.max(0, benefits - employerExclusionLimit(status));
+function taxableExcess(benefits: number, status: FilingStatus | undefined, cfg: F1040Config): number {
+  return Math.max(0, benefits - employerExclusionLimit(status, cfg));
 }
 
 // IRC §21(a)(2): applicable credit percentage based on AGI
-function applicablePercentage(agi: number): number {
-  if (agi <= DEP_CARE_CREDIT_RATE_AGI_THRESHOLD_2025) return MAX_CREDIT_RATE;
+function applicablePercentage(agi: number, cfg: F1040Config): number {
+  if (agi <= cfg.depCareCreditRateAgiThreshold) return MAX_CREDIT_RATE;
   const stepsOver = Math.ceil(
-    (agi - DEP_CARE_CREDIT_RATE_AGI_THRESHOLD_2025) / DEP_CARE_CREDIT_RATE_BRACKET_SIZE_2025,
+    (agi - cfg.depCareCreditRateAgiThreshold) / cfg.depCareCreditRateBracketSize,
   );
   return Math.max(MIN_CREDIT_RATE, MAX_CREDIT_RATE - stepsOver * 0.01);
 }
 
 // Qualifying expense dollar limit (IRC §21(c)): $3,000 for 1 person, $6,000 for 2+
-function expenseDollarLimit(persons: number): number {
-  return persons >= 2 ? DEP_CARE_EXPENSE_CAP_TWO_PLUS_2025 : DEP_CARE_EXPENSE_CAP_ONE_2025;
+function expenseDollarLimit(persons: number, cfg: F1040Config): number {
+  return persons >= 2 ? cfg.depCareExpenseCapTwoPlus : cfg.depCareExpenseCapOne;
 }
 
 // Earned income cap: MFJ uses lesser of two spouses' earned incomes (IRC §21(d))
@@ -93,17 +87,17 @@ function earnedIncomeCap(
 }
 
 // IRC §21 credit: qualifying expenses × applicable percentage
-function computeSection21Credit(input: Form2441Input): number {
+function computeSection21Credit(input: Form2441Input, cfg: F1040Config): number {
   const expenses = input.qualifying_expenses ?? 0;
   const persons = input.qualifying_persons ?? 0;
   const agi = input.agi ?? 0;
   const taxpayerEarned = input.taxpayer_earned_income ?? 0;
   const benefits = input.dep_care_benefits ?? 0;
-  const excludedBenefits = Math.min(benefits, employerExclusionLimit(input.filing_status));
+  const excludedBenefits = Math.min(benefits, employerExclusionLimit(input.filing_status, cfg));
 
   if (expenses <= 0 || persons <= 0) return 0;
 
-  const dollarCap = expenseDollarLimit(persons);
+  const dollarCap = expenseDollarLimit(persons, cfg);
   // Employer-excluded benefits reduce the qualifying expense base (Form 2441 line 9)
   const reducedCap = Math.max(0, dollarCap - excludedBenefits);
   const earnedCap = earnedIncomeCap(taxpayerEarned, input.spouse_earned_income, input.filing_status);
@@ -111,7 +105,7 @@ function computeSection21Credit(input: Form2441Input): number {
 
   if (allowedExpenses <= 0) return 0;
 
-  return Math.round(allowedExpenses * applicablePercentage(agi));
+  return Math.round(allowedExpenses * applicablePercentage(agi, cfg));
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -121,19 +115,21 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule3]);
 
-  compute(_ctx: NodeContext, input: Form2441Input): NodeResult {
+  compute(ctx: NodeContext, input: Form2441Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const benefits = parsed.dep_care_benefits ?? 0;
     const outputs: NodeOutput[] = [];
 
     // Part III — §129 employer exclusion: excess above limit is taxable income
-    const taxable = taxableExcess(benefits, parsed.filing_status);
+    const taxable = taxableExcess(benefits, parsed.filing_status, cfg);
     if (taxable > 0) {
       outputs.push(this.outputNodes.output(f1040, { line1e_taxable_dep_care: taxable }));
     }
 
     // Part II — §21 credit: route to Schedule 3 line 2
-    const credit = computeSection21Credit(parsed);
+    const credit = computeSection21Credit(parsed, cfg);
     if (credit > 0) {
       outputs.push(this.outputNodes.output(schedule3, { line2_childcare_credit: credit }));
     }

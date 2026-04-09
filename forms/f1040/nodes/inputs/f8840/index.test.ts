@@ -12,7 +12,7 @@ function minimalInput(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(input: ReturnType<typeof minimalInput>) {
-  return f8840.compute({ taxYear: 2025 }, input);
+  return f8840.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 // =============================================================================
@@ -130,7 +130,7 @@ Deno.test("f8840.compute: prior year days absent — no outputs", () => {
 // =============================================================================
 
 Deno.test("f8840.compute: smoke test — full valid closer connection claim", () => {
-  const result = f8840.compute({ taxYear: 2025 }, {
+  const result = f8840.compute({ taxYear: 2025, formType: "f1040" }, {
     country_of_tax_home: "United Kingdom",
     days_in_us_current_year: 200,
     days_in_us_prior_year_1: 80,

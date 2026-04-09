@@ -10,11 +10,9 @@ import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8959 } from "../form8959/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { SS_WAGE_BASE_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
-// Rev Proc 2024-40 §3.28; Schedule SE (Form 1040) 2025, Part I Line 7
-const SS_WAGE_BASE = SS_WAGE_BASE_2025;
 // IRC §1402(b) — minimum SE earnings to owe SE tax
 const SE_EARNINGS_THRESHOLD = 400;
 // IRC §1402(a)(12) — net-earnings multiplier (100% − employer SS/Medicare rate)
@@ -62,10 +60,10 @@ function netEarningsFromSE(line3: number): number {
 // This prevents double-payment of SS tax on the same dollars (IRC §1402(b)).
 // Unreported tips (Form 4137 Line 10) → Line 8b; Form 8919 wages → Line 8c.
 // Line 8d = 8a + 8b + 8c; Line 9 = max(0, Line 7 − Line 8d).
-function remainingWageBase(input: ScheduleSEInput): number {
+function remainingWageBase(ssWageBase: number, input: ScheduleSEInput): number {
   return Math.max(
     0,
-    SS_WAGE_BASE -
+    ssWageBase -
       (input.w2_ss_wages ?? 0) -
       (input.unreported_tips_4137 ?? 0) -
       (input.wages_8919 ?? 0),
@@ -89,7 +87,9 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator, form8959]);
 
-  compute(_ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No schedule_se config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     // Line 3: combined farm + nonfarm net profit
@@ -107,7 +107,7 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
     const line6 = line4a;
 
     // Lines 8a–8d, 9: wage base offset and remaining base
-    const line9 = remainingWageBase(input);
+    const line9 = remainingWageBase(cfg.ssWageBase, input);
 
     // Line 10: SS tax on the lesser of line 6 or remaining wage base
     const line10 = ssTax(line6, line9);

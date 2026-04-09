@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f8857, ReliefType } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f8857.compute({ taxYear: 2025 }, input as Parameters<typeof f8857.compute>[1]);
+  return f8857.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f8857.compute>[1]);
 }
 
 // =============================================================================

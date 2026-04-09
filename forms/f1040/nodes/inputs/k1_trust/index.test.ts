@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1_trust.compute({ taxYear: 2025 }, { k1_trusts: items });
+  return k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -19,12 +19,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => k1_trust.compute({ taxYear: 2025 }, { k1_trusts: [] }), Error);
+  assertThrows(() => k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: [] }), Error);
 });
 
 Deno.test("missing estate_trust_name throws", () => {
   assertThrows(
-    () => k1_trust.compute({ taxYear: 2025 }, { k1_trusts: [{ box1_interest: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () => k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: [{ box1_interest: 100 } as unknown as ReturnType<typeof minimalItem>] }),
     Error,
   );
 });

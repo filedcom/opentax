@@ -10,7 +10,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8843.compute({ taxYear: 2025 }, { f8843s: items });
+  return f8843.compute({ taxYear: 2025, formType: "f1040" }, { f8843s: items });
 }
 
 // =============================================================================
@@ -176,7 +176,7 @@ Deno.test("f8843.compute: GOVERNMENT_OFFICIAL with no supervising institution â€
 // =============================================================================
 
 Deno.test("f8843.compute: smoke test â€” multiple exempt categories, all no outputs", () => {
-  const result = f8843.compute({ taxYear: 2025 }, {
+  const result = f8843.compute({ taxYear: 2025, formType: "f1040" }, {
     f8843s: [
       {
         exempt_category: ExemptCategory.STUDENT,

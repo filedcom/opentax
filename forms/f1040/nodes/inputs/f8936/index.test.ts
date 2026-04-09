@@ -3,7 +3,7 @@ import { f8936 } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
 function compute(items: Parameters<typeof f8936.compute>[1]["f8936s"]) {
-  return f8936.compute({ taxYear: 2025 }, { f8936s: items });
+  return f8936.compute({ taxYear: 2025, formType: "f1040" }, { f8936s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

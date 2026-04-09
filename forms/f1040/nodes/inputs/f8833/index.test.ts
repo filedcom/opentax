@@ -11,7 +11,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8833.compute({ taxYear: 2025 }, { f8833s: items });
+  return f8833.compute({ taxYear: 2025, formType: "f1040" }, { f8833s: items });
 }
 
 // =============================================================================
@@ -144,7 +144,7 @@ Deno.test("f8833.compute: multiple treaty positions for same country — no outp
 // =============================================================================
 
 Deno.test("f8833.compute: smoke test — multiple countries, amounts, all output empty", () => {
-  const result = f8833.compute({ taxYear: 2025 }, {
+  const result = f8833.compute({ taxYear: 2025, formType: "f1040" }, {
     f8833s: [
       {
         treaty_country: "United Kingdom",

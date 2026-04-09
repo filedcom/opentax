@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { form7206 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form7206.compute({ taxYear: 2025 }, input);
+  return form7206.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

@@ -10,18 +10,8 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../types.ts";
-import {
-  SALT_CAP_2025,
-  SALT_FLOOR_2025,
-  SALT_FLOOR_MFS_2025,
-  SALT_PHASEOUT_RATE_2025,
-  SALT_PHASEOUT_THRESHOLD_2025,
-  SALT_PHASEOUT_THRESHOLD_MFS_2025,
-} from "../../config/2025.ts";
-
-// OBBBA §70002 (TY2025): $40,000 cap (Single/MFJ/HOH/QSS), $20,000 for MFS
-// Phase-out: 30% of excess MAGI over $500K ($250K MFS), floor $10K ($5K MFS)
-const SALT_CAP_MFS = SALT_CAP_2025 / 2; // $20,000 for MFS (half of standard cap)
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
+import type { F1040Config } from "../../config/index.ts";
 
 // 60% AGI limit for cash charitable contributions to public charities (IRC §170(b)(1)(A))
 const CASH_CONTRIBUTION_AGI_PCT = 0.60;
@@ -84,24 +74,24 @@ function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
   return Math.max(0, (input.line_1_medical ?? 0) - agi * MEDICAL_AGI_FLOOR_PCT);
 }
 
-function effectiveSaltCap(input: ScheduleAInput): number {
+function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
   const isMfs = input.filing_status === FilingStatus.MFS;
-  const baseCap = isMfs ? SALT_CAP_MFS : SALT_CAP_2025;
-  const floor = isMfs ? SALT_FLOOR_MFS_2025 : SALT_FLOOR_2025;
-  const threshold = isMfs ? SALT_PHASEOUT_THRESHOLD_MFS_2025 : SALT_PHASEOUT_THRESHOLD_2025;
+  const baseCap = isMfs ? cfg.saltCap / 2 : cfg.saltCap;
+  const floor = isMfs ? cfg.saltFloorMfs : cfg.saltFloor;
+  const threshold = isMfs ? cfg.saltPhaseoutThresholdMfs : cfg.saltPhaseoutThreshold;
   const magi = input.agi ?? 0;
   if (magi <= threshold) return baseCap;
-  const reduction = (magi - threshold) * SALT_PHASEOUT_RATE_2025;
+  const reduction = (magi - threshold) * cfg.saltPhaseoutRate;
   return Math.max(floor, baseCap - reduction);
 }
 
-function computeSALT(input: ScheduleAInput): number {
+function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   // line_5a is either state income tax or sales tax (election) — never both (validated in schema)
   const line5a = (input.line_5a_state_income_tax ?? 0) + (input.line_5a_sales_tax ?? 0);
   const saltTotal = line5a +
     (input.line_5b_real_estate_tax ?? 0) +
     (input.line_5c_personal_property_tax ?? 0);
-  return Math.min(saltTotal, effectiveSaltCap(input));
+  return Math.min(saltTotal, effectiveSaltCap(input, cfg));
 }
 
 function computeInterestTotal(input: ScheduleAInput): number {
@@ -138,9 +128,11 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, form6251, standard_deduction]);
 
-  compute(_ctx: NodeContext, input: ScheduleAInput): NodeResult {
+  compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const agi = input.agi ?? 0;
-    const saltCapped = computeSALT(input);
+    const saltCapped = computeSALT(input, cfg);
     const taxesTotal = saltCapped + (input.line_6_other_taxes ?? 0);
     const totalItemized = computeMedicalDeduction(input, agi) +
       taxesTotal +

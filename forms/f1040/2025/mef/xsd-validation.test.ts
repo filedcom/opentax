@@ -37,7 +37,7 @@ try {
 const plan = buildExecutionPlan(registry);
 
 function runReturn(inputs: Record<string, unknown>) {
-  return execute(plan, registry, inputs, { taxYear: 2025 });
+  return execute(plan, registry, inputs, { taxYear: 2025, formType: "f1040" });
 }
 
 function singleGeneral() {

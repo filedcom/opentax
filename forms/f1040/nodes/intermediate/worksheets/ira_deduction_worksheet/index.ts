@@ -10,18 +10,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8606 } from "../../forms/form8606/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  IRA_CONTRIBUTION_LIMIT_2025,
-  IRA_CONTRIBUTION_LIMIT_AGE50_2025,
-  IRA_PHASEOUT_SINGLE_LOWER_2025,
-  IRA_PHASEOUT_SINGLE_UPPER_2025,
-  IRA_PHASEOUT_MFJ_LOWER_2025,
-  IRA_PHASEOUT_MFJ_UPPER_2025,
-  IRA_PHASEOUT_NONCOVERED_MFJ_LOWER_2025,
-  IRA_PHASEOUT_NONCOVERED_MFJ_UPPER_2025,
-  IRA_PHASEOUT_MFS_LOWER_2025,
-  IRA_PHASEOUT_MFS_UPPER_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants — IRS procedure constants, unchanged across years ──────────────
 
@@ -129,43 +118,25 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8606]);
 
-  // IRC §219(b)(5)(A); Rev Proc 2024-40 §3.19 — TY2025 (see config/2025.ts)
-  protected readonly contributionLimit = IRA_CONTRIBUTION_LIMIT_2025;
-  protected readonly contributionLimitAge50 = IRA_CONTRIBUTION_LIMIT_AGE50_2025;
-
-  // Active participant phase-out: Single / HOH / QSS — Rev Proc 2024-40
-  protected readonly phaseOutSingleLower = IRA_PHASEOUT_SINGLE_LOWER_2025;
-  protected readonly phaseOutSingleUpper = IRA_PHASEOUT_SINGLE_UPPER_2025;
-
-  // Active participant phase-out: MFJ (covered taxpayer)
-  protected readonly phaseOutMfjLower = IRA_PHASEOUT_MFJ_LOWER_2025;
-  protected readonly phaseOutMfjUpper = IRA_PHASEOUT_MFJ_UPPER_2025;
-
-  // Non-covered MFJ spouse phase-out: taxpayer not active, but spouse is
-  protected readonly phaseOutNonCoveredLower = IRA_PHASEOUT_NONCOVERED_MFJ_LOWER_2025;
-  protected readonly phaseOutNonCoveredUpper = IRA_PHASEOUT_NONCOVERED_MFJ_UPPER_2025;
-
-  // MFS active participant phase-out (very narrow — Pub 590-A)
-  protected readonly phaseOutMfsLower = IRA_PHASEOUT_MFS_LOWER_2025;
-  protected readonly phaseOutMfsUpper = IRA_PHASEOUT_MFS_UPPER_2025;
-
-  compute(_ctx: NodeContext, rawInput: IraDeductionInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: IraDeductionInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     if (input.ira_contribution <= 0) return { outputs: schedule1Output(0) };
 
-    const limit = contributionLimit(input, this.contributionLimit, this.contributionLimitAge50);
+    const limit = contributionLimit(input, cfg.iraContributionLimit, cfg.iraContributionLimitAge50);
     const capped = Math.min(input.ira_contribution, limit);
     const range = phaseOutRange(
       input,
-      this.phaseOutSingleLower,
-      this.phaseOutSingleUpper,
-      this.phaseOutMfjLower,
-      this.phaseOutMfjUpper,
-      this.phaseOutNonCoveredLower,
-      this.phaseOutNonCoveredUpper,
-      this.phaseOutMfsLower,
-      this.phaseOutMfsUpper,
+      cfg.iraPhaseoutSingleLower,
+      cfg.iraPhaseoutSingleUpper,
+      cfg.iraPhaseoutMfjLower,
+      cfg.iraPhaseoutMfjUpper,
+      cfg.iraPhaseoutNoncoveredMfjLower,
+      cfg.iraPhaseoutNoncoveredMfjUpper,
+      cfg.iraPhaseoutMfsLower,
+      cfg.iraPhaseoutMfsUpper,
     );
 
     let deductible: number;

@@ -28,7 +28,7 @@ function mkLtTx(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(input: Record<string, unknown>) {
-  return schedule_d.compute({ taxYear: 2025 }, inputSchema.parse(input));
+  return schedule_d.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -63,14 +63,14 @@ function makeTransaction(overrides: Partial<TransactionInput> = {}): Transaction
 }
 
 function computeD2(fields: Record<string, unknown> = {}) {
-  return schedule_d.compute({ taxYear: 2025 }, inputSchema.parse(fields));
+  return schedule_d.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(fields));
 }
 
 function computeWithTransactions(
   transactions: TransactionInput[],
   d2Fields: Record<string, unknown> = {},
 ) {
-  return schedule_d.compute({ taxYear: 2025 }, inputSchema.parse({
+  return schedule_d.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse({
     ...d2Fields,
     transactions,
   }));
@@ -744,7 +744,7 @@ Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward
 
 // MFS filing status: $1,500 limit
 Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, no carryforward", () => {
-  const result = schedule_d.compute({ taxYear: 2025 }, inputSchema.parse({
+  const result = schedule_d.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse({
     line_1a_proceeds: 8_500,
     line_1a_cost: 10_000, // net = -1500
     filing_status: FilingStatus.MFS,

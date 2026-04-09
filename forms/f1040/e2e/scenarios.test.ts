@@ -28,7 +28,7 @@ import { DependentRelationship } from "../nodes/inputs/general/index.ts";
 
 // ── Shared context ──────────────────────────────────────────────────────────
 
-const ctx = { taxYear: 2025 };
+const ctx = { taxYear: 2025, formType: "f1040" };
 const plan = buildExecutionPlan(registry);
 
 function runReturn(inputs: Record<string, unknown>): ExecuteResult {

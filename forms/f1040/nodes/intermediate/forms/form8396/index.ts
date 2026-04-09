@@ -7,13 +7,9 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { MCC_MAX_CREDIT_HIGH_RATE_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
-
-// IRC §25(a)(1) — maximum annual mortgage interest credit when MCC rate > 20%.
-// Rev. Proc. 2024-40 / Form 8396 instructions (TY2025).
-const MAX_CREDIT_HIGH_RATE = MCC_MAX_CREDIT_HIGH_RATE_2025;
 
 // MCC rate threshold above which the $2,000 cap applies (IRC §25(a)(2)).
 const HIGH_RATE_THRESHOLD = 0.20;
@@ -61,9 +57,9 @@ function tentativeCredit(
 
 // Apply $2,000 cap when MCC rate > 20%.
 // IRC §25(a)(2)
-function applyRateCap(tentative: number, rate: number): number {
+function applyRateCap(tentative: number, rate: number, maxCreditHighRate: number): number {
   if (rate > HIGH_RATE_THRESHOLD) {
-    return Math.min(tentative, MAX_CREDIT_HIGH_RATE);
+    return Math.min(tentative, maxCreditHighRate);
   }
   return tentative;
 }
@@ -80,7 +76,9 @@ class Form8396Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(_ctx: NodeContext, rawInput: Form8396Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8396Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     const interest = input.mortgage_interest_paid ?? 0;
@@ -93,7 +91,7 @@ class Form8396Node extends TaxNode<typeof inputSchema> {
     }
 
     const tentative = tentativeCredit(interest, rate);
-    const capped = applyRateCap(tentative, rate);
+    const capped = applyRateCap(tentative, rate, cfg.mccMaxCreditHighRate);
     const total = totalCredit(capped, carryforward);
 
     if (total <= 0) {

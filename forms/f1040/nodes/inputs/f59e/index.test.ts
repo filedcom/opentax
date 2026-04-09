@@ -12,7 +12,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f59e.compute({ taxYear: 2025 }, { f59es: items });
+  return f59e.compute({ taxYear: 2025, formType: "f1040" }, { f59es: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

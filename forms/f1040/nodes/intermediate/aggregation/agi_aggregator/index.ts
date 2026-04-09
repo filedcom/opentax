@@ -12,12 +12,7 @@ import { f2441 } from "../../../inputs/f2441/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
-import {
-  SLI_PHASE_OUT_START_SINGLE_2025,
-  SLI_PHASE_OUT_END_SINGLE_2025,
-  SLI_PHASE_OUT_START_MFJ_2025,
-  SLI_PHASE_OUT_END_MFJ_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // AGI Aggregator — Form 1040 Line 11
 //
@@ -232,7 +227,7 @@ function nonSsaIncome(input: AgiInput): number {
 
 // Compute taxable SSA: prefer pre-computed line6b_ss_taxable; otherwise run the worksheet.
 // "Other income" for provisional income = AGI from non-SSA sources (after exclusions/deductions).
-function resolveSsaTaxable(input: AgiInput): number {
+function resolveSsaTaxable(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
   if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
   const ssaGross = input.line6a_ss_gross ?? 0;
   if (ssaGross === 0) return 0;
@@ -245,14 +240,14 @@ function resolveSsaTaxable(input: AgiInput): number {
 
   const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
   const taxExemptInterest = input.tax_exempt_interest ?? 0;
-  const otherAgi = Math.max(0, nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input));
+  const otherAgi = Math.max(0, nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg));
   return computeSsaTaxable(ssaGross, otherAgi, taxExemptInterest, isMfj);
 }
 
 // Sum all income and addition items (before exclusions/deductions).
 // Fields can be negative (e.g., capital loss, schedule C net loss).
-function grossIncome(input: AgiInput): number {
-  const ssaTaxable = resolveSsaTaxable(input);
+function grossIncome(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+  const ssaTaxable = resolveSsaTaxable(input, cfg);
   return (
     nonSsaIncome(input) +
     ssaTaxable
@@ -289,15 +284,15 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 // Compute phase-out adjusted student loan interest deduction (IRC §221(b)(2)).
 // MAGI = provisional AGI without SLI = gross income - exclusions - other above-line deductions.
 // Phase-out: single/HOH $85k–$100k; MFJ $175k–$205k; MFS not eligible.
-function computeAdjustedSli(input: AgiInput): number {
+function computeAdjustedSli(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
   const raw = input.line19_student_loan_interest ?? 0;
   if (raw <= 0) return 0;
   // MFS cannot deduct student loan interest (IRC §221(b)(2)(B))
   if (input.filing_status === "mfs") return 0;
 
   const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
-  const phaseOutStart = isMfj ? SLI_PHASE_OUT_START_MFJ_2025 : SLI_PHASE_OUT_START_SINGLE_2025;
-  const phaseOutEnd = isMfj ? SLI_PHASE_OUT_END_MFJ_2025 : SLI_PHASE_OUT_END_SINGLE_2025;
+  const phaseOutStart = isMfj ? cfg.sliPhaseOutStartMfj : cfg.sliPhaseOutStartSingle;
+  const phaseOutEnd = isMfj ? cfg.sliPhaseOutEndMfj : cfg.sliPhaseOutEndSingle;
 
   // MAGI for SLI = AGI before SLI deduction.
   // Use SSA gross from input (line6b_ss_taxable if pre-computed, else 0 for MAGI purposes)
@@ -315,8 +310,8 @@ function computeAdjustedSli(input: AgiInput): number {
 
 // Sum above-the-line deductions (Schedule 1 Part II).
 // IRC §62 allows these before arriving at AGI.
-function aboveLineDeductions(input: AgiInput): number {
-  return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input);
+function aboveLineDeductions(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+  return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input, cfg);
 }
 
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
@@ -346,8 +341,8 @@ function scheduleOnePartI(input: AgiInput): number {
 }
 
 // AGI can be negative in large NOL scenarios (IRC §172); do not floor at 0.
-function computeAgi(input: AgiInput): number {
-  return grossIncome(input) - exclusions(input) - aboveLineDeductions(input);
+function computeAgi(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+  return grossIncome(input, cfg) - exclusions(input) - aboveLineDeductions(input, cfg);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -357,16 +352,18 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962]);
 
-  compute(_ctx: NodeContext, rawInput: AgiInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
-    const agi = computeAgi(input);
+    const agi = computeAgi(input, cfg);
 
     // Compute SSA taxable amount for f1040 line 6b pass-through
     const ssaGross = input.line6a_ss_gross ?? 0;
-    const ssaTaxable = resolveSsaTaxable(input);
+    const ssaTaxable = resolveSsaTaxable(input, cfg);
 
     const line8 = scheduleOnePartI(input);
-    const line10 = aboveLineDeductions(input);
+    const line10 = aboveLineDeductions(input, cfg);
 
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = { line11_agi: agi };
     if (line8 !== 0) f1040Fields.line8_additional_income = line8;

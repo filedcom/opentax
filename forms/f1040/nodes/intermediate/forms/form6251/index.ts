@@ -8,30 +8,10 @@ import type {
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { FilingStatus } from "../../../types.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
-import {
-  AMT_EXEMPTION_2025,
-  AMT_PHASE_OUT_START_2025,
-  AMT_BRACKET_26_THRESHOLD_STANDARD_2025,
-  AMT_BRACKET_26_THRESHOLD_MFS_2025,
-  AMT_BRACKET_ADJUSTMENT_STANDARD_2025,
-  AMT_BRACKET_ADJUSTMENT_MFS_2025,
-  QDCGT_ZERO_CEILING_2025,
-  QDCGT_TWENTY_FLOOR_2025,
-} from "../../../config/2025.ts";
-
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
-// Source: IRS Instructions for Form 6251 (2025); config/2025.ts
-
-const EXEMPTION = AMT_EXEMPTION_2025;
-const PHASE_OUT_START = AMT_PHASE_OUT_START_2025;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
 const PHASE_OUT_RATE = 0.25;
-
-const BRACKET_26_THRESHOLD_STANDARD = AMT_BRACKET_26_THRESHOLD_STANDARD_2025;
-const BRACKET_26_THRESHOLD_MFS = AMT_BRACKET_26_THRESHOLD_MFS_2025;
-const BRACKET_ADJUSTMENT_STANDARD = AMT_BRACKET_ADJUSTMENT_STANDARD_2025;
-const BRACKET_ADJUSTMENT_MFS = AMT_BRACKET_ADJUSTMENT_MFS_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -122,10 +102,15 @@ function computeAmti(input: Form6251Input): number {
 // Full exemption phases out at 25¢ per dollar of AMTI above the threshold.
 // Exemption = max(0, full_exemption − 25% × max(0, AMTI − phase_out_start))
 // IRC §55(d); Form 6251 Instructions page 9
-function computeExemption(amti: number, status: FilingStatus): number {
-  const fullExemption = EXEMPTION[status];
-  const phaseOutStart = PHASE_OUT_START[status];
-  const excess = Math.max(0, amti - phaseOutStart);
+function computeExemption(
+  amti: number,
+  status: FilingStatus,
+  exemption: Record<FilingStatus, number>,
+  phaseOutStart: Record<FilingStatus, number>,
+): number {
+  const fullExemption = exemption[status];
+  const start = phaseOutStart[status];
+  const excess = Math.max(0, amti - start);
   const reduction = Math.floor(excess * PHASE_OUT_RATE);
   return Math.max(0, fullExemption - reduction);
 }
@@ -144,14 +129,14 @@ function computeTaxableExcess(amti: number, exemption: number): number {
 function computeTentativeMinimumTax(
   taxableExcess: number,
   status: FilingStatus,
+  thresholdStandard: number,
+  thresholdMfs: number,
+  adjustmentStandard: number,
+  adjustmentMfs: number,
 ): number {
   if (taxableExcess === 0) return 0;
-  const threshold = status === FilingStatus.MFS
-    ? BRACKET_26_THRESHOLD_MFS
-    : BRACKET_26_THRESHOLD_STANDARD;
-  const adjustment = status === FilingStatus.MFS
-    ? BRACKET_ADJUSTMENT_MFS
-    : BRACKET_ADJUSTMENT_STANDARD;
+  const threshold = status === FilingStatus.MFS ? thresholdMfs : thresholdStandard;
+  const adjustment = status === FilingStatus.MFS ? adjustmentMfs : adjustmentStandard;
   if (taxableExcess <= threshold) {
     return Math.floor(taxableExcess * 0.26);
   }
@@ -179,13 +164,24 @@ function computeTmtWithQdcgt(
   qualDividends: number,
   netCapGain: number,
   status: FilingStatus,
+  zeroCeilingMap: Record<FilingStatus, number>,
+  twentyFloorMap: Record<FilingStatus, number>,
+  thresholdStandard: number,
+  thresholdMfs: number,
+  adjustmentStandard: number,
+  adjustmentMfs: number,
 ): number {
   const prefIncome = Math.min(qualDividends + netCapGain, taxableExcess);
-  if (prefIncome <= 0) return computeTentativeMinimumTax(taxableExcess, status);
+  if (prefIncome <= 0) {
+    return computeTentativeMinimumTax(
+      taxableExcess, status,
+      thresholdStandard, thresholdMfs, adjustmentStandard, adjustmentMfs,
+    );
+  }
 
   const ordinary = taxableExcess - prefIncome;
-  const zeroCeiling = QDCGT_ZERO_CEILING_2025[status];
-  const twentyFloor = QDCGT_TWENTY_FLOOR_2025[status];
+  const zeroCeiling = zeroCeilingMap[status];
+  const twentyFloor = twentyFloorMap[status];
 
   const inZero = Math.max(0, Math.min(taxableExcess, zeroCeiling) - ordinary);
   const remaining = prefIncome - inZero;
@@ -194,9 +190,18 @@ function computeTmtWithQdcgt(
   const inTwenty = remaining - inFifteen;
 
   const prefTax = Math.floor(inFifteen * 0.15 + inTwenty * 0.20);
-  const ordTax = computeTentativeMinimumTax(ordinary, status);
+  const ordTax = computeTentativeMinimumTax(
+    ordinary, status,
+    thresholdStandard, thresholdMfs, adjustmentStandard, adjustmentMfs,
+  );
 
-  return Math.min(prefTax + ordTax, computeTentativeMinimumTax(taxableExcess, status));
+  return Math.min(
+    prefTax + ordTax,
+    computeTentativeMinimumTax(
+      taxableExcess, status,
+      thresholdStandard, thresholdMfs, adjustmentStandard, adjustmentMfs,
+    ),
+  );
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -206,14 +211,20 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form6251Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form6251Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+
     const input = inputSchema.parse(rawInput);
 
     // Part I — AMTI (Line 4)
     const amti = computeAmti(input);
 
     // Part II — Exemption (Line 5)
-    const exemption = computeExemption(amti, input.filing_status);
+    const exemption = computeExemption(
+      amti, input.filing_status,
+      cfg.amtExemption, cfg.amtPhaseOutStart,
+    );
 
     // Line 6 — Taxable excess
     const taxableExcess = computeTaxableExcess(amti, exemption);
@@ -223,8 +234,17 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const qualDiv = input.qualified_dividends ?? 0;
     const netCg = input.net_capital_gain ?? 0;
     const tmt = (qualDiv > 0 || netCg > 0)
-      ? computeTmtWithQdcgt(taxableExcess, qualDiv, netCg, input.filing_status)
-      : computeTentativeMinimumTax(taxableExcess, input.filing_status);
+      ? computeTmtWithQdcgt(
+          taxableExcess, qualDiv, netCg, input.filing_status,
+          cfg.qdcgtZeroCeiling, cfg.qdcgtTwentyFloor,
+          cfg.amtBracket26ThresholdStandard, cfg.amtBracket26ThresholdMfs,
+          cfg.amtBracketAdjustmentStandard, cfg.amtBracketAdjustmentMfs,
+        )
+      : computeTentativeMinimumTax(
+          taxableExcess, input.filing_status,
+          cfg.amtBracket26ThresholdStandard, cfg.amtBracket26ThresholdMfs,
+          cfg.amtBracketAdjustmentStandard, cfg.amtBracketAdjustmentMfs,
+        );
 
     // Line 9 — Net TMT after AMTFTC
     const netTmt = computeNetTmt(tmt, input.amtftc ?? 0);

@@ -11,14 +11,14 @@ function minimalGroup(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(groups: ReturnType<typeof minimalGroup>[]) {
-  return qbiAggregation.compute({ taxYear: 2025 }, { aggregation_groups: groups });
+  return qbiAggregation.compute({ taxYear: 2025, formType: "f1040" }, { aggregation_groups: groups });
 }
 
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty aggregation_groups throws", () => {
   assertThrows(
-    () => qbiAggregation.compute({ taxYear: 2025 }, { aggregation_groups: [] }),
+    () => qbiAggregation.compute({ taxYear: 2025, formType: "f1040" }, { aggregation_groups: [] }),
     Error,
   );
 });

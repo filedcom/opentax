@@ -5,7 +5,7 @@ import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form1116.compute({ taxYear: 2025 }, inputSchema.parse(input));
+  return form1116.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

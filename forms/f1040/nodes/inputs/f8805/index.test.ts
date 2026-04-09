@@ -11,7 +11,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8805.compute({ taxYear: 2025 }, { f8805s: items });
+  return f8805.compute({ taxYear: 2025, formType: "f1040" }, { f8805s: items });
 }
 
 // =============================================================================
@@ -188,7 +188,7 @@ Deno.test("f8805.compute: partnership_ein optional — withholding still routes"
 // =============================================================================
 
 Deno.test("f8805.compute: smoke test — multiple partnerships, mixed withholding types", () => {
-  const result = f8805.compute({ taxYear: 2025 }, {
+  const result = f8805.compute({ taxYear: 2025, formType: "f1040" }, {
     f8805s: [
       {
         partnership_name: "Global Commodities LP",

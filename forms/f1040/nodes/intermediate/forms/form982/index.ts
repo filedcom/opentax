@@ -7,10 +7,7 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  QPRI_CAP_STANDARD_2025,
-  QPRI_CAP_MFS_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -23,12 +20,6 @@ export enum ExclusionType {
   Qpri = "qpri",                          // Line 1e — Qualified principal residence indebtedness
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-// IRC §108(a)(1)(E); Form 982 instructions (Rev. Dec 2021)
-// Applies to discharges before January 1, 2026
-const QPRI_CAP_STANDARD = QPRI_CAP_STANDARD_2025;
-const QPRI_CAP_MFS = QPRI_CAP_MFS_2025;
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -53,7 +44,7 @@ type Form982Input = z.infer<typeof inputSchema>;
 
 // Returns the maximum amount that can be excluded under the given exclusion type.
 // Infinity = no cap (bankruptcy, farm debt, real property business).
-function exclusionCap(input: Form982Input): number {
+function exclusionCap(input: Form982Input, cfg: import("../../../config/index.ts").F1040Config): number {
   switch (input.exclusion_type) {
     case ExclusionType.Bankruptcy:
       return Infinity; // Title 11 — no dollar cap (IRC §108(a)(1)(A))
@@ -75,8 +66,7 @@ function exclusionCap(input: Form982Input): number {
 
     case ExclusionType.Qpri: {
       // IRC §108(a)(1)(E): max $750,000 ($375,000 if MFS); discharges before Jan 1, 2026
-      const cap = input.qpri_mfs === true ? QPRI_CAP_MFS : QPRI_CAP_STANDARD;
-      return cap;
+      return input.qpri_mfs === true ? cfg.qpriCapMfs : cfg.qpriCapStandard;
     }
   }
 }
@@ -105,7 +95,9 @@ class Form982Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  compute(_ctx: NodeContext, rawInput: Form982Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form982Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     // Nothing to process if no excluded COD was passed from upstream
@@ -113,7 +105,7 @@ class Form982Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const cap = exclusionCap(input);
+    const cap = exclusionCap(input, cfg);
     const excluded = computeExcluded(input.line2_excluded_cod, cap);
     const taxableExcess = computeTaxableExcess(input.line2_excluded_cod, excluded);
 

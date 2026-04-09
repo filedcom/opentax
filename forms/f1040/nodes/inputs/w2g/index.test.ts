@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return w2g.compute({ taxYear: 2025 }, { w2gs: items });
+  return w2g.compute({ taxYear: 2025, formType: "f1040" }, { w2gs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

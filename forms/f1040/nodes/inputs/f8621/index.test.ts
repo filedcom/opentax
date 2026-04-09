@@ -16,7 +16,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8621.compute({ taxYear: 2025 }, { f8621s: items });
+  return f8621.compute({ taxYear: 2025, formType: "f1040" }, { f8621s: items });
 }
 
 // =============================================================================

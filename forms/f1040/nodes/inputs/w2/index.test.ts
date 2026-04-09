@@ -29,7 +29,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return w2.compute({ taxYear: 2025 }, { w2s: items });
+  return w2.compute({ taxYear: 2025, formType: "f1040" }, { w2s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

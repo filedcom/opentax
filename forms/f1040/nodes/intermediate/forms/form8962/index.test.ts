@@ -8,7 +8,7 @@ import { form8962 } from "./index.ts";
 //   size 4: $31,200
 
 function compute(input: Record<string, unknown>) {
-  return form8962.compute({ taxYear: 2025 }, input);
+  return form8962.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

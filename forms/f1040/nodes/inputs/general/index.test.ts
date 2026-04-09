@@ -22,7 +22,7 @@ import { FilingStatus } from "../../types.ts";
 import { DependentRelationship } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return general.compute({ taxYear: 2025 }, general.inputSchema.parse(input));
+  return general.compute({ taxYear: 2025, formType: "f1040" }, general.inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -460,7 +460,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
     ],
   });
 
-  assertEquals(result.outputs.length, 8, "eight outputs (f1040 + standard_deduction + eitc + agi_aggregator + form8959 + form8960 + form8995 + f8812)");
+  assertEquals(result.outputs.length, 9, "nine outputs (f1040 + standard_deduction + eitc + agi_aggregator + form8959 + form8960 + scheduleA + form8995 + f8812)");
 
   const out = findOutput(result, "f1040");
   const input = out?.fields as Record<string, unknown>;
@@ -644,7 +644,7 @@ Deno.test("smoke: all new major fields populated → routes correctly to f1040",
     ],
   });
 
-  assertEquals(result.outputs.length, 8);
+  assertEquals(result.outputs.length, 9);
   const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.filing_status, FilingStatus.MFJ);
   // First child (age 15) qualifies for CTC; second (age 23, student) does not

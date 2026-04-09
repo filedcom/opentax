@@ -9,7 +9,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { SS_WAGE_BASE_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants — mathematical rates, unchanged across years ──────────────────
 
@@ -100,17 +100,17 @@ class Form8919Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule2, schedule_se]);
 
-  // Rev Proc 2024-40 §3.28; Form 8919 line 9 — SS wage base (TY2025)
-  protected readonly ssWageBase = SS_WAGE_BASE_2025;
-
-  compute(_ctx: NodeContext, rawInput: Form8919Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8919Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const { wages } = input;
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const { ssWageBase } = cfg;
 
     if (wages <= 0) return { outputs: [] };
 
     const priorSsWages = input.prior_ss_wages ?? 0;
-    const line9 = remainingSsWageBase(this.ssWageBase, priorSsWages);
+    const line9 = remainingSsWageBase(ssWageBase, priorSsWages);
     const line10 = ssSubjectWages(wages, line9);
     const line11 = ssTax(line10);
     const line12 = medicareTax(wages);

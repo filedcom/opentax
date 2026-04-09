@@ -6,16 +6,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
-import {
-  STANDARD_DEDUCTION_BASE_2025,
-  STANDARD_DEDUCTION_ADDITIONAL_2025,
-} from "../../../config/2025.ts";
-
-// ─── Constants — TY2025 Standard Deduction Amounts ───────────────────────────
-// Source: Rev. Proc. 2024-40, §3.14; IRC §63(c) — see config/2025.ts
-
-const BASE_DEDUCTION = STANDARD_DEDUCTION_BASE_2025;
-const ADDITIONAL_PER_FACTOR = STANDARD_DEDUCTION_ADDITIONAL_2025;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -70,19 +61,25 @@ function additionalFactorCount(input: StandardDeductionInput): number {
 }
 
 // Compute the standard deduction amount (base + additional for age/blindness).
-function computeStandardAmount(input: StandardDeductionInput): number {
-  const base = BASE_DEDUCTION[input.filing_status];
-  const additionalPerFactor = ADDITIONAL_PER_FACTOR[input.filing_status];
+function computeStandardAmount(
+  input: StandardDeductionInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
+  const base = cfg.standardDeductionBase[input.filing_status];
+  const additionalPerFactor = cfg.standardDeductionAdditional[input.filing_status];
   return base + additionalFactorCount(input) * additionalPerFactor;
 }
 
 // Determine the deduction to use and whether it is the standard deduction.
 // Returns { deduction, takingStandard }.
-function resolveDeduction(input: StandardDeductionInput): {
+function resolveDeduction(
+  input: StandardDeductionInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): {
   deduction: number;
   takingStandard: boolean;
 } {
-  const standardAmount = computeStandardAmount(input);
+  const standardAmount = computeStandardAmount(input, cfg);
   const itemized = input.itemized_deductions ?? 0;
 
   // IRC §63(c)(6)(A): MFS taxpayer whose spouse itemizes must also itemize.
@@ -104,10 +101,12 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, income_tax_calculation]);
 
-  compute(_ctx: NodeContext, rawInput: StandardDeductionInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: StandardDeductionInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    const { deduction, takingStandard } = resolveDeduction(input);
+    const { deduction, takingStandard } = resolveDeduction(input, cfg);
     const qbi = input.qbi_deduction ?? 0;
     const taxableIncome = Math.max(0, Math.max(0, input.agi - deduction) - qbi);
 

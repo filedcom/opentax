@@ -32,7 +32,7 @@ function r1099Item(overrides: Partial<Item> = {}): Item {
 }
 
 function compute(items: Item[]) {
-  return f4852.compute({ taxYear: 2025 }, { f4852s: items });
+  return f4852.compute({ taxYear: 2025, formType: "f1040" }, { f4852s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -48,12 +48,12 @@ function f1040Fields(result: ReturnType<typeof compute>) {
 // ---------------------------------------------------------------------------
 
 Deno.test("f4852: empty array throws (min 1 required)", () => {
-  assertThrows(() => f4852.compute({ taxYear: 2025 }, { f4852s: [] }));
+  assertThrows(() => f4852.compute({ taxYear: 2025, formType: "f1040" }, { f4852s: [] }));
 });
 
 Deno.test("f4852: missing form_type throws", () => {
   assertThrows(() =>
-    f4852.compute({ taxYear: 2025 }, {
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, {
       f4852s: [
         {
           payer_name: "Acme",
@@ -68,7 +68,7 @@ Deno.test("f4852: missing form_type throws", () => {
 
 Deno.test("f4852: missing payer_name throws", () => {
   assertThrows(() =>
-    f4852.compute({ taxYear: 2025 }, {
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, {
       f4852s: [
         {
           form_type: FormType.W2,
@@ -83,7 +83,7 @@ Deno.test("f4852: missing payer_name throws", () => {
 
 Deno.test("f4852: W2 type with no wages or federal_withheld throws", () => {
   assertThrows(() =>
-    f4852.compute({ taxYear: 2025 }, {
+    f4852.compute({ taxYear: 2025, formType: "f1040" }, {
       f4852s: [
         {
           form_type: FormType.W2,

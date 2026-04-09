@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { PartyType, f8594 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f8594.compute({ taxYear: 2025 }, input as Parameters<typeof f8594.compute>[1]);
+  return f8594.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f8594.compute>[1]);
 }
 
 // =============================================================================

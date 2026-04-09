@@ -6,7 +6,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8867.compute({ taxYear: 2025 }, { f8867s: items });
+  return f8867.compute({ taxYear: 2025, formType: "f1040" }, { f8867s: items });
 }
 
 // =============================================================================
@@ -104,7 +104,7 @@ Deno.test("f8867.compute: multiple items — still no output", () => {
 
 Deno.test("f8867.compute: throws on invalid credit code in credits_claimed", () => {
   assertThrows(
-    () => f8867.compute({ taxYear: 2025 }, { f8867s: [{ credits_claimed: ["INVALID" as CreditClaimed] }] }),
+    () => f8867.compute({ taxYear: 2025, formType: "f1040" }, { f8867s: [{ credits_claimed: ["INVALID" as CreditClaimed] }] }),
     Error,
   );
 });

@@ -12,10 +12,7 @@ import { form4972 } from "../../intermediate/forms/form4972/index.ts";
 import { form8606 } from "../../intermediate/forms/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import {
-  QCD_ANNUAL_LIMIT_2025,
-  PSO_EXCLUSION_LIMIT_2025,
-} from "../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 // Distribution codes that produce zero taxable income (pure rollovers/non-taxable exchanges)
 const ZERO_TAXABLE_CODES = new Set(["G", "N", "R", "Q", "T", "6", "W"]);
@@ -27,10 +24,6 @@ const EARLY_DIST_CODES = new Set(["1", "J"]);
 
 // Distribution codes triggering form4972 (lump-sum election)
 const LUMP_SUM_CODES = new Set(["5"]);
-
-// TY2025 constants
-const QCD_ANNUAL_LIMIT = QCD_ANNUAL_LIMIT_2025;
-const PSO_EXCLUSION_LIMIT = PSO_EXCLUSION_LIMIT_2025;
 
 // Simplified Method Table 1 — single-life annuity (annuity start after 12/31/1997)
 function simplifiedMethodMonthsTable1(age: number): number {
@@ -86,7 +79,11 @@ function simplifiedMethodExclusion(item: R1099Item): number {
 // - PSO premium exclusion (pension only)
 // - Simplified Method exclusion (pension only)
 // - exclude_4972 / exclude_8606_roth flags (suppresses income lines)
-function effectiveTaxableAmount(item: R1099Item): number {
+function effectiveTaxableAmount(
+  item: R1099Item,
+  qcdAnnualLimit: number,
+  psoExclusionLimit: number,
+): number {
   // Suppressed items contribute no taxable income
   if (item.exclude_4972 === true) return 0;
   if (item.exclude_8606_roth === true) return 0;
@@ -110,17 +107,17 @@ function effectiveTaxableAmount(item: R1099Item): number {
   // QCD exclusion — IRA distributions only; reduces taxable portion
   if (item.box7_ira_simple_indicator === true) {
     if (item.qcd_full === true) {
-      const qcdAmount = Math.min(item.box1_gross_distribution, QCD_ANNUAL_LIMIT);
+      const qcdAmount = Math.min(item.box1_gross_distribution, qcdAnnualLimit);
       taxable = Math.max(0, taxable - qcdAmount);
     } else if ((item.qcd_partial_amount ?? 0) > 0) {
-      const qcdAmount = Math.min(item.qcd_partial_amount!, QCD_ANNUAL_LIMIT);
+      const qcdAmount = Math.min(item.qcd_partial_amount!, qcdAnnualLimit);
       taxable = Math.max(0, taxable - qcdAmount);
     }
   }
 
   // PSO premium exclusion — pension distributions only (not IRA)
   if (item.box7_ira_simple_indicator !== true && (item.pso_premium ?? 0) > 0) {
-    const psoExclusion = Math.min(item.pso_premium!, PSO_EXCLUSION_LIMIT);
+    const psoExclusion = Math.min(item.pso_premium!, psoExclusionLimit);
     taxable = Math.max(0, taxable - psoExclusion);
   }
 
@@ -343,7 +340,11 @@ function routedThrough8606PartI(item: R1099Item): boolean {
 }
 
 // Build f1040 output for IRA distributions
-function iraF1040Fields(items: R1099Items): Record<string, number> {
+function iraF1040Fields(
+  items: R1099Items,
+  qcdAnnualLimit: number,
+  psoExclusionLimit: number,
+): Record<string, number> {
   const active = iraItems(activeItems(items));
   // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
   // are not reported on line 4a (gross). Only reportable distributions contribute to gross.
@@ -351,7 +352,10 @@ function iraF1040Fields(items: R1099Items): Record<string, number> {
   const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
   // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
   const nonBasisItems = active.filter((item) => !routedThrough8606PartI(item));
-  const taxable = nonBasisItems.reduce((sum, item) => sum + effectiveTaxableAmount(item), 0);
+  const taxable = nonBasisItems.reduce(
+    (sum, item) => sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
+    0,
+  );
   const has8606Items = active.some((item) => routedThrough8606PartI(item));
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line4a_ira_gross = gross;
@@ -365,7 +369,11 @@ function iraF1040Fields(items: R1099Items): Record<string, number> {
 }
 
 // Build f1040 output for pension/annuity distributions
-function pensionF1040Fields(items: R1099Items): Record<string, number> {
+function pensionF1040Fields(
+  items: R1099Items,
+  qcdAnnualLimit: number,
+  psoExclusionLimit: number,
+): Record<string, number> {
   // Exclude disability-as-wages items from pension lines (they go to line1a)
   const disWagesSet = new Set(disabilityWagesItems(activeItems(items)));
   const active = pensionItems(activeItems(items)).filter((item) => !disWagesSet.has(item));
@@ -373,7 +381,10 @@ function pensionF1040Fields(items: R1099Items): Record<string, number> {
   // are not reported on line 5a (gross). Only reportable distributions contribute to gross.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
   const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
-  const taxable = active.reduce((sum, item) => sum + effectiveTaxableAmount(item), 0);
+  const taxable = active.reduce(
+    (sum, item) => sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
+    0,
+  );
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line5a_pension_gross = gross;
   if (active.length > 0) fields.line5b_pension_taxable = taxable;
@@ -381,11 +392,15 @@ function pensionF1040Fields(items: R1099Items): Record<string, number> {
 }
 
 // Build f1040 line1a output for disability-as-wages items
-function disabilityWagesF1040Fields(items: R1099Items): Record<string, number> {
+function disabilityWagesF1040Fields(
+  items: R1099Items,
+  qcdAnnualLimit: number,
+  psoExclusionLimit: number,
+): Record<string, number> {
   const disItems = disabilityWagesItems(activeItems(items));
   if (disItems.length === 0) return {};
   const total = disItems.reduce(
-    (sum, item) => sum + effectiveTaxableAmount(item),
+    (sum, item) => sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
     0,
   );
   if (total <= 0) return {};
@@ -459,7 +474,9 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form5329, form4972, form8606]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const { f1099rs: r1099s } = parsed;
 
@@ -471,11 +488,11 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // IRA f1040 fields
-    const iraFields = iraF1040Fields(r1099s);
+    const iraFields = iraF1040Fields(r1099s, cfg.qcdAnnualLimit, cfg.psoExclusionLimit);
     // Pension f1040 fields
-    const pensionFields = pensionF1040Fields(r1099s);
+    const pensionFields = pensionF1040Fields(r1099s, cfg.qcdAnnualLimit, cfg.psoExclusionLimit);
     // Disability-as-wages fields
-    const disWagesFields = disabilityWagesF1040Fields(r1099s);
+    const disWagesFields = disabilityWagesF1040Fields(r1099s, cfg.qcdAnnualLimit, cfg.psoExclusionLimit);
     // Withholding fields
     const withholdingFields = withholdingF1040Fields(r1099s);
 

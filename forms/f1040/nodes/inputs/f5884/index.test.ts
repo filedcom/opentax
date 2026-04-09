@@ -14,7 +14,7 @@ function minimalItem(overrides: Partial<F5884Item> = {}): F5884Item {
 }
 
 function compute(items: F5884Item[]) {
-  return f5884.compute({ taxYear: 2025 }, { f5884s: items });
+  return f5884.compute({ taxYear: 2025, formType: "f1040" }, { f5884s: items });
 }
 
 function findSchedule3(result: ReturnType<typeof compute>) {
@@ -24,7 +24,7 @@ function findSchedule3(result: ReturnType<typeof compute>) {
 // ── Schema Validation ────────────────────────────────────────────────────────
 
 Deno.test("schema_rejects_empty_array", () => {
-  assertThrows(() => f5884.compute({ taxYear: 2025 }, { f5884s: [] }), Error);
+  assertThrows(() => f5884.compute({ taxYear: 2025, formType: "f1040" }, { f5884s: [] }), Error);
 });
 
 Deno.test("schema_rejects_negative_wages", () => {

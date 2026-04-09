@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { HardshipType, f911 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f911.compute({ taxYear: 2025 }, input as Parameters<typeof f911.compute>[1]);
+  return f911.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f911.compute>[1]);
 }
 
 // =============================================================================

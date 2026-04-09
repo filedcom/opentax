@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return sep_retirement.compute({ taxYear: 2025 }, { sep_retirements: items });
+  return sep_retirement.compute({ taxYear: 2025, formType: "f1040" }, { sep_retirements: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

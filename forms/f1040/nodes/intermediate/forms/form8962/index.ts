@@ -9,17 +9,8 @@ import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  FPL_BASE_2025,
-  FPL_INCREMENT_2025,
-} from "../../../config/2025.ts";
-
-// ─── TY2025 Federal Poverty Level (2024 FPL used per IRS rules) ──────────────
-// IRS uses the prior year FPL for ACA/PTC calculations.
-// TY2025 uses 2024 FPL (48 contiguous states + DC):
-// Base: $15,060; increment per person: $5,380
-const FPL_BASE = FPL_BASE_2025;
-const FPL_INCREMENT = FPL_INCREMENT_2025;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import type { F1040Config } from "../../../config/index.ts";
 
 // ACA §36B: Applicable percentage table (household income as % of FPL → premium %)
 // Income between 100% and 400% FPL qualifies (cliff eliminated TY2025 — extension applies)
@@ -93,8 +84,8 @@ type Form8962Input = z.infer<typeof inputSchema>;
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
-function federalPovertyLevel(householdSize: number): number {
-  return FPL_BASE + FPL_INCREMENT * (householdSize - 1);
+function federalPovertyLevel(householdSize: number, cfg: F1040Config): number {
+  return cfg.fplBase + cfg.fplIncrement * (householdSize - 1);
 }
 
 function applicableContributionPct(incomeAsFplPct: number): number {
@@ -188,7 +179,9 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form8962Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8962Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     const premium = totalPremium(input);
@@ -207,7 +200,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const fpl = federalPovertyLevel(size);
+    const fpl = federalPovertyLevel(size, cfg);
     const incomePct = (income / fpl) * 100;
 
     // Below 100% FPL — generally not eligible (except CO-OP states)

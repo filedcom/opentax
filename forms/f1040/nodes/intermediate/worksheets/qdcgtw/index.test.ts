@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return qdcgtw.compute({ taxYear: 2025 }, inputSchema.parse(input));
+  return qdcgtw.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
 // ---------------------------------------------------------------------------
