@@ -146,7 +146,7 @@ function applicablePremium(income: number, incomePct: number): number {
 // IRS Form 8962 line 11: max premium assistance = SLCSP - required contribution;
 // allowed = lesser of enrollment premium or max premium assistance (IRC §36B(b)(2)(A))
 function allowedPtc(slcsp: number, actualPremium: number, applicable: number): number {
-  return Math.max(0, Math.min(actualPremium, slcsp - applicable));
+  return Math.max(0, Math.min(actualPremium, slcsp) - applicable);
 }
 
 // IRC §36B(f)(2)(B): cap on excess APTC repayment liability
