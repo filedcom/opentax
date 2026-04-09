@@ -8,23 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule_b } from "../../aggregation/schedule_b/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  SAVINGS_BOND_PHASEOUT_START_MFJ_2025,
-  SAVINGS_BOND_PHASEOUT_END_MFJ_2025,
-  SAVINGS_BOND_PHASEOUT_START_SINGLE_2025,
-  SAVINGS_BOND_PHASEOUT_END_SINGLE_2025,
-} from "../../../config/2025.ts";
-
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
-
-// IRC §135(b)(2)(A); Rev. Proc. 2024-40 — TY2025 phaseout thresholds
-// MFJ / QSS phaseout range
-const PHASEOUT_START_MFJ = SAVINGS_BOND_PHASEOUT_START_MFJ_2025;
-const PHASEOUT_END_MFJ = SAVINGS_BOND_PHASEOUT_END_MFJ_2025;
-
-// Single / HOH phaseout range
-const PHASEOUT_START_SINGLE = SAVINGS_BOND_PHASEOUT_START_SINGLE_2025;
-const PHASEOUT_END_SINGLE = SAVINGS_BOND_PHASEOUT_END_SINGLE_2025;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -77,11 +61,12 @@ function isEligible(input: Form8815Input): boolean {
 // Phaseout start and end thresholds for the given filing status.
 function phaseoutRange(
   status: FilingStatus | undefined,
+  cfg: import("../../../config/index.ts").F1040Config,
 ): { start: number; end: number } {
   if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
-    return { start: PHASEOUT_START_MFJ, end: PHASEOUT_END_MFJ };
+    return { start: cfg.savingsBondPhaseoutStartMfj, end: cfg.savingsBondPhaseoutEndMfj };
   }
-  return { start: PHASEOUT_START_SINGLE, end: PHASEOUT_END_SINGLE };
+  return { start: cfg.savingsBondPhaseoutStartSingle, end: cfg.savingsBondPhaseoutEndSingle };
 }
 
 // Proportional interest exclusion when expenses < proceeds.
@@ -121,7 +106,9 @@ class Form8815Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule_b]);
 
-  compute(_ctx: NodeContext, rawInput: Form8815Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8815Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     const interest = input.ee_bond_interest ?? 0;
@@ -149,7 +136,7 @@ class Form8815Node extends TaxNode<typeof inputSchema> {
 
     // Apply AGI phaseout
     const magi = input.modified_agi ?? 0;
-    const { start, end } = phaseoutRange(input.filing_status);
+    const { start, end } = phaseoutRange(input.filing_status, cfg);
     const finalExclusion = applyPhaseout(baseExclusion, magi, start, end);
 
     if (finalExclusion <= 0) {

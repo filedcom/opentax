@@ -5,16 +5,12 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { SMALL_BIZ_GROSS_RECEIPTS_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── TY2025 Constants ─────────────────────────────────────────────────────────
 
 // IRC §163(j)(1)(B): applicable percentage for ATI limitation
 const ATI_APPLICABLE_PERCENTAGE = 0.30;
-
-// IRC §163(j)(3), §448(c): small business gross receipts threshold for TY2025
-// (Rev. Proc. 2025-28 inflation adjustment)
-const SMALL_BIZ_GROSS_RECEIPTS_THRESHOLD = SMALL_BIZ_GROSS_RECEIPTS_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -66,11 +62,11 @@ type Form8990Input = z.infer<typeof inputSchema>;
 
 // §163(j)(3): small business taxpayer exemption
 // Exempt if avg gross receipts <= threshold AND not a tax shelter
-function isSmallBusinessExempt(input: Form8990Input): boolean {
+function isSmallBusinessExempt(input: Form8990Input, smallBizThreshold: number): boolean {
   if (input.is_tax_shelter === true) return false;
   const avgReceipts = input.avg_gross_receipts;
   if (avgReceipts === undefined) return false;
-  return avgReceipts <= SMALL_BIZ_GROSS_RECEIPTS_THRESHOLD;
+  return avgReceipts <= smallBizThreshold;
 }
 
 // Part I, Line 5: Total BIE subject to limitation
@@ -129,11 +125,13 @@ class Form8990Node extends TaxNode<typeof inputSchema> {
   // reversing the upstream-posted deduction to the extent it exceeds the §163(j) cap.
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, rawInput: Form8990Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8990Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     // §163(j)(3): small business taxpayers are fully exempt — no limitation
-    if (isSmallBusinessExempt(input)) {
+    if (isSmallBusinessExempt(input, cfg.smallBizGrossReceipts)) {
       return { outputs: [] };
     }
 

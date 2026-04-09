@@ -10,15 +10,9 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { FEIE_LIMIT_2025, FEIE_HOUSING_BASE_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
-
-// IRC §911(b)(2)(D)(i); Rev. Proc. 2024-40 — TY2025 FEIE limit
-const FEIE_LIMIT = FEIE_LIMIT_2025;
-
-// IRC §911(c)(1)(B) — housing base amount: 16% of FEIE limit
-const HOUSING_BASE = FEIE_HOUSING_BASE_2025;
 
 // IRC §911(d)(1)(B) — physical presence test: 330 full days
 const PHYSICAL_PRESENCE_DAYS = 330;
@@ -80,9 +74,9 @@ function totalForeignEarnedIncome(input: Form2555Input): number {
 // Prorate FEIE limit per IRC §911(b)(2)(A): limit × (qualifying_days / 365).
 // Bona fide residents default to 365 qualifying days (full year).
 // Prorate FEIE limit and round to nearest dollar (IRS rounding rule).
-function proratedFeieLimit(input: Form2555Input): number {
+function proratedFeieLimit(input: Form2555Input, feieLimit: number): number {
   const days = input.qualifying_days ?? DAYS_IN_YEAR;
-  return Math.round(FEIE_LIMIT * (days / DAYS_IN_YEAR));
+  return Math.round(feieLimit * (days / DAYS_IN_YEAR));
 }
 
 // FEIE: lesser of foreign earned income or prorated annual limit.
@@ -91,10 +85,10 @@ function earnedIncomeExclusion(income: number, limit: number): number {
 }
 
 // Housing exclusion / deduction (IRC §911(c)).
-function housingAmount(input: Form2555Input): number {
+function housingAmount(input: Form2555Input, housingBase: number): number {
   const employer = input.employer_housing_exclusion ?? 0;
   const taxpayerExpenses = input.foreign_housing_expenses ?? 0;
-  const taxpayerExclusion = Math.max(0, taxpayerExpenses - HOUSING_BASE);
+  const taxpayerExclusion = Math.max(0, taxpayerExpenses - housingBase);
   return employer + taxpayerExclusion;
 }
 
@@ -110,7 +104,9 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     income_tax_calculation,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: Form2555Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form2555Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     const income = totalForeignEarnedIncome(input);
@@ -129,7 +125,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // FEIE — prorated by qualifying days per IRC §911(b)(2)(A)
-    const feieLimit = proratedFeieLimit(input);
+    const feieLimit = proratedFeieLimit(input, cfg.feieLimit);
     const exclusion = earnedIncomeExclusion(income, feieLimit);
     if (exclusion > 0) {
       outputs.push(output(schedule1, { line8d_foreign_earned_income_exclusion: exclusion }));
@@ -137,7 +133,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     }
 
     // Housing deduction — IRC §911(a)(2), (c)
-    const housing = housingAmount(input);
+    const housing = housingAmount(input, cfg.feieHousingBase);
     if (housing > 0) {
       outputs.push(output(schedule1, { line8d_foreign_housing_deduction: housing }));
       outputs.push(output(agi_aggregator, { line8d_foreign_housing_deduction: housing }));

@@ -9,16 +9,14 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { LTC_PER_DIEM_DAILY_LIMIT_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 // IRC §220(f)(4) — additional tax on non-qualified Archer MSA distributions
 const ARCHER_MSA_PENALTY_RATE = 0.20;
 // IRC §138(c)(2) — additional tax on non-qualified Medicare Advantage MSA distributions
 const MEDICARE_ADVANTAGE_PENALTY_RATE = 0.50;
-// Rev. Proc. 2024-40 §2.62 — LTC per diem exclusion limit for TY2025
-const LTC_PER_DIEM_DAILY_LIMIT = LTC_PER_DIEM_DAILY_LIMIT_2025;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -156,44 +154,44 @@ function ltcTotalPerDiemPayments(input: Form8853Input): number {
   return (input.ltc_qualified_contract_amount ?? 0) + (input.ltc_accelerated_death_benefits ?? 0);
 }
 
-// Line 21: Per diem limit = $420 × number of days in LTC period
+// Line 21: Per diem limit = daily limit × number of days in LTC period
 // Rev. Proc. 2024-40 §2.62; Form 8853 Section C line 21
-function ltcPerDiemLimit(input: Form8853Input): number {
+function ltcPerDiemLimit(input: Form8853Input, ltcDailyLimit: number): number {
   const days = input.ltc_period_days ?? 0;
-  return LTC_PER_DIEM_DAILY_LIMIT * days;
+  return ltcDailyLimit * days;
 }
 
 // Line 23: Exclusion amount = max(line21_per_diem_limit, line22_actual_costs)
-function ltcExclusionAmount(input: Form8853Input): number {
-  const perDiemLimit = ltcPerDiemLimit(input);
+function ltcExclusionAmount(input: Form8853Input, ltcDailyLimit: number): number {
+  const perDiemLimit = ltcPerDiemLimit(input, ltcDailyLimit);
   const actualCosts = input.ltc_actual_costs ?? 0;
   return Math.max(perDiemLimit, actualCosts);
 }
 
 // Line 25: Per diem limitation = max(0, line23 - line24_reimbursements)
-function ltcPerDiemLimitation(input: Form8853Input): number {
-  const exclusion = ltcExclusionAmount(input);
+function ltcPerDiemLimitation(input: Form8853Input, ltcDailyLimit: number): number {
+  const exclusion = ltcExclusionAmount(input, ltcDailyLimit);
   const reimbursements = input.ltc_reimbursements ?? 0;
   return Math.max(0, exclusion - reimbursements);
 }
 
 // Line 26: Taxable LTC payments = max(0, line20 - line25)
 // IRC §7702B(d); Form 8853 Section C line 26 → Schedule 1 line 8e
-function ltcTaxablePayments(input: Form8853Input): number {
+function ltcTaxablePayments(input: Form8853Input, ltcDailyLimit: number): number {
   const total = ltcTotalPerDiemPayments(input);
   if (total <= 0) return 0;
-  const limitation = ltcPerDiemLimitation(input);
+  const limitation = ltcPerDiemLimitation(input, ltcDailyLimit);
   return Math.max(0, total - limitation);
 }
 
 // ─── Output Builders ─────────────────────────────────────────────────────────
 
 // Schedule 1 output: line 8e (taxable MSA/LTC income) and line 23 (Archer MSA deduction)
-function schedule1Output(input: Form8853Input): NodeOutput[] {
+function schedule1Output(input: Form8853Input, ltcDailyLimit: number): NodeOutput[] {
   const deduction = archerMsaDeduction(input);
   const taxableArcher = archerMsaTaxableDist(input);
   const taxableMedicareAdv = medicareAdvantaxableDist(input);
-  const taxableLtc = ltcTaxablePayments(input);
+  const taxableLtc = ltcTaxablePayments(input, ltcDailyLimit);
   const totalTaxableIncome = taxableArcher + taxableMedicareAdv + taxableLtc;
 
   if (deduction <= 0 && totalTaxableIncome <= 0) return [];
@@ -233,11 +231,13 @@ class Form8853Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form8853Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8853Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
     return {
       outputs: [
-        ...schedule1Output(input),
+        ...schedule1Output(input, cfg.ltcPerDiemDailyLimit),
         ...schedule2Output(input),
       ],
     };

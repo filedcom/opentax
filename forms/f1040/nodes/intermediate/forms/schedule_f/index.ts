@@ -14,10 +14,7 @@ import { form8582 } from "../form8582/index.ts";
 import { form6198 } from "../form6198/index.ts";
 import { form461 } from "../form461/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  EBL_THRESHOLD_SINGLE_2025,
-  EBL_THRESHOLD_MFJ_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ── TY2025 Constants ──────────────────────────────────────────────────────────
 
@@ -26,10 +23,6 @@ const SE_TAX_THRESHOLD = 400;
 
 // Pub. 225 ch. 5 — conservation expenses limited to 25% of gross farm income
 const CONSERVATION_LIMIT_PCT = 0.25;
-
-// IRC §461(l); Rev. Proc. 2024-40 — excess business loss thresholds
-const EBL_THRESHOLD_SINGLE = EBL_THRESHOLD_SINGLE_2025;
-const EBL_THRESHOLD_MFJ = EBL_THRESHOLD_MFJ_2025;
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
@@ -193,8 +186,8 @@ function perItemOutputs(item: ScheduleFItem, netProfit: number): NodeOutput[] {
 }
 
 // EBL threshold based on filing status
-function eblThreshold(filingStatus: FilingStatus | undefined): number {
-  return filingStatus === FilingStatus.MFJ ? EBL_THRESHOLD_MFJ : EBL_THRESHOLD_SINGLE;
+function eblThreshold(filingStatus: FilingStatus | undefined, thresholdSingle: number, thresholdMfj: number): number {
+  return filingStatus === FilingStatus.MFJ ? thresholdMfj : thresholdSingle;
 }
 
 // ── Node class ────────────────────────────────────────────────────────────────
@@ -212,7 +205,9 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     form461,
   ]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     if (input.schedule_fs.length === 0) {
@@ -244,7 +239,7 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     // Excess business loss — Form 461 (IRC §461(l))
     if (totalNetProfit < 0) {
       const loss = Math.abs(totalNetProfit);
-      const threshold = eblThreshold(input.filing_status);
+      const threshold = eblThreshold(input.filing_status, cfg.eblThresholdSingle, cfg.eblThresholdMfj);
       if (loss > threshold) {
         outputs.push(this.outputNodes.output(form461, { excess_business_loss: loss - threshold }));
       }

@@ -9,31 +9,14 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form6251 } from "../form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  SECTION_179_LIMIT_2025,
-  SECTION_179_PHASEOUT_THRESHOLD_2025,
-  LUXURY_AUTO_YEAR1_NO_BONUS_2025,
-  LUXURY_AUTO_YEAR1_WITH_BONUS_2025,
-  LUXURY_AUTO_YEAR2_2025,
-  LUXURY_AUTO_YEAR3_PLUS_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ── TY2025 Constants ──────────────────────────────────────────────────────────
-
-// §179 limits (P.L. 119-21, "One Big Beautiful Bill Act")
-const SECTION_179_LIMIT = SECTION_179_LIMIT_2025;
-const SECTION_179_PHASEOUT_THRESHOLD = SECTION_179_PHASEOUT_THRESHOLD_2025;
 
 // Bonus depreciation rates
 const BONUS_RATE_PRE_JAN20 = 0.40;   // Property placed in service before Jan 20, 2025
 const BONUS_RATE_POST_JAN19 = 1.00;  // Property placed in service after Jan 19, 2025
 const BONUS_RATE_ELECT_40PCT = 0.40; // Taxpayer elects 40% instead of 100%
-
-// Luxury automobile limits TY2025 (Table 2 — acquired after Sep 27, 2017, placed in service 2025)
-const LUXURY_AUTO_YEAR1_NO_BONUS = LUXURY_AUTO_YEAR1_NO_BONUS_2025;
-const LUXURY_AUTO_YEAR1_WITH_BONUS = LUXURY_AUTO_YEAR1_WITH_BONUS_2025;
-const LUXURY_AUTO_YEAR2 = LUXURY_AUTO_YEAR2_2025;
-const LUXURY_AUTO_YEAR3_PLUS = LUXURY_AUTO_YEAR3_PLUS_2025;
 
 // Business-use threshold for listed property bonus/§179 eligibility
 const LISTED_PROPERTY_QUALIFIED_USE_THRESHOLD = 50;
@@ -117,12 +100,12 @@ type Form4562Input = z.infer<typeof inputSchema>;
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
-function section179PhaseOutLimit(cost: number): number {
-  const excess = Math.max(0, cost - SECTION_179_PHASEOUT_THRESHOLD);
-  return Math.max(0, SECTION_179_LIMIT - excess);
+function section179PhaseOutLimit(cost: number, limit: number, phaseoutThreshold: number): number {
+  const excess = Math.max(0, cost - phaseoutThreshold);
+  return Math.max(0, limit - excess);
 }
 
-function computeSection179(input: Form4562Input): number {
+function computeSection179(input: Form4562Input, cfg: import("../../../config/index.ts").F1040Config): number {
   // Pre-computed upstream deduction (e.g. from schedule_e) — already validated upstream
   const upstream = input.section_179_deduction ?? 0;
 
@@ -133,7 +116,7 @@ function computeSection179(input: Form4562Input): number {
 
   let directAllowed = 0;
   if (elected > 0 && cost > 0) {
-    const limit = section179PhaseOutLimit(cost);
+    const limit = section179PhaseOutLimit(cost, cfg.section179Limit, cfg.section179PhaseoutThreshold);
     directAllowed = Math.min(elected, limit);
   }
 
@@ -263,22 +246,23 @@ function computeMacrsGds(
   return { depreciation, amtAdjustment };
 }
 
-function luxuryAutoLimit(year: number, hasBonusDep: boolean): number {
+function luxuryAutoLimit(year: number, hasBonusDep: boolean, cfg: import("../../../config/index.ts").F1040Config): number {
   if (year === 1) {
-    return hasBonusDep ? LUXURY_AUTO_YEAR1_WITH_BONUS : LUXURY_AUTO_YEAR1_NO_BONUS;
+    return hasBonusDep ? cfg.luxuryAutoYear1WithBonus : cfg.luxuryAutoYear1NoBonus;
   }
-  if (year === 2) return LUXURY_AUTO_YEAR2;
-  return LUXURY_AUTO_YEAR3_PLUS;
+  if (year === 2) return cfg.luxuryAutoYear2;
+  return cfg.luxuryAutoYear3Plus;
 }
 
 function applyLuxuryAutoLimit(
   input: Form4562Input,
   computed: number,
   hasBonusDep: boolean,
+  cfg: import("../../../config/index.ts").F1040Config,
 ): number {
   if (!input.is_luxury_auto) return computed;
   const year = input.luxury_auto_year ?? 1;
-  return Math.min(computed, luxuryAutoLimit(year, hasBonusDep));
+  return Math.min(computed, luxuryAutoLimit(year, hasBonusDep, cfg));
 }
 
 // ── Node class ────────────────────────────────────────────────────────────────
@@ -288,10 +272,12 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form6251]);
 
-  compute(_ctx: NodeContext, input: Form4562Input): NodeResult {
+  compute(ctx: NodeContext, input: Form4562Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
 
-    const s179 = computeSection179(parsed);
+    const s179 = computeSection179(parsed, cfg);
     const bonus = computeBonusDepreciation(parsed);
     const { depreciation: macrsGds, amtAdjustment } = computeMacrsGds(parsed);
     const macrs_prior = parsed.macrs_prior_depreciation ?? 0;
@@ -303,7 +289,7 @@ class Form4562Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const totalDepreciation = applyLuxuryAutoLimit(parsed, rawDepreciation, hasBonusDep);
+    const totalDepreciation = applyLuxuryAutoLimit(parsed, rawDepreciation, hasBonusDep, cfg);
 
     const outputs: NodeOutput[] = [];
 

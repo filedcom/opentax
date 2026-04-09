@@ -7,12 +7,7 @@ import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  MDA_MAX_2025,
-  MDA_PHASE_OUT_THRESHOLD_2025,
-  MDA_ZERO_THRESHOLD_2025,
-  DEATH_BENEFIT_MAX_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -20,13 +15,7 @@ import {
 const CAPITAL_GAIN_RATE = 0.20;
 
 // Part III: Minimum Distribution Allowance parameters
-const MDA_MAX = MDA_MAX_2025;
-const MDA_PHASE_OUT_THRESHOLD = MDA_PHASE_OUT_THRESHOLD_2025;
 const MDA_PHASE_OUT_RATE = 0.20;
-const MDA_ZERO_THRESHOLD = MDA_ZERO_THRESHOLD_2025; // MDA = 0 when ordinary income ≥ this
-
-// Part III: death benefit exclusion ceiling (pre-1984 plans)
-const DEATH_BENEFIT_MAX = DEATH_BENEFIT_MAX_2025;
 
 // Part III: 1986 single-filer rate schedule used for 10-year averaging
 // Source: Form 4972 instructions (permanent; does not change year to year)
@@ -68,18 +57,24 @@ export const inputSchema = z.object({
   elect_10yr_averaging: z.boolean().optional(),
 
   // Part III, Line 10: death benefit exclusion (pre-1984 plans, max $5,000)
-  death_benefit_exclusion: z.number().nonnegative().max(DEATH_BENEFIT_MAX).optional(),
+  death_benefit_exclusion: z.number().nonnegative().optional(),
 });
 
 type Form4972Input = z.infer<typeof inputSchema>;
 
 // ─── Cross-field validation ────────────────────────────────────────────────────
 
-function validateInput(input: Form4972Input): void {
+function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   const capGain = input.capital_gain_amount ?? 0;
   if (capGain > input.lump_sum_amount) {
     throw new Error(
       `form4972: capital_gain_amount (${capGain}) cannot exceed lump_sum_amount (${input.lump_sum_amount})`,
+    );
+  }
+  const deathBenefit = input.death_benefit_exclusion ?? 0;
+  if (deathBenefit > deathBenefitMax) {
+    throw new Error(
+      `form4972: death_benefit_exclusion (${deathBenefit}) cannot exceed ${deathBenefitMax}`,
     );
   }
 }
@@ -98,13 +93,18 @@ function taxOn1986Rate(income: number): number {
 }
 
 // Minimum Distribution Allowance (Form 4972, Lines 15–17)
-// = min($10,000, 50% × ordinaryIncome) − 20% × max(0, ordinaryIncome − $20,000)
-// Floored at 0; effectively 0 when ordinaryIncome ≥ $70,000
-function minimumDistributionAllowance(ordinaryIncome: number): number {
-  if (ordinaryIncome >= MDA_ZERO_THRESHOLD) return 0;
-  const baseMda = Math.min(MDA_MAX, 0.5 * ordinaryIncome);
-  const phaseOut = ordinaryIncome > MDA_PHASE_OUT_THRESHOLD
-    ? MDA_PHASE_OUT_RATE * (ordinaryIncome - MDA_PHASE_OUT_THRESHOLD)
+// = min(mdaMax, 50% × ordinaryIncome) − 20% × max(0, ordinaryIncome − phaseOutThreshold)
+// Floored at 0; effectively 0 when ordinaryIncome ≥ zeroThreshold
+function minimumDistributionAllowance(
+  ordinaryIncome: number,
+  mdaMax: number,
+  phaseOutThreshold: number,
+  zeroThreshold: number,
+): number {
+  if (ordinaryIncome >= zeroThreshold) return 0;
+  const baseMda = Math.min(mdaMax, 0.5 * ordinaryIncome);
+  const phaseOut = ordinaryIncome > phaseOutThreshold
+    ? MDA_PHASE_OUT_RATE * (ordinaryIncome - phaseOutThreshold)
     : 0;
   return Math.max(0, baseMda - phaseOut);
 }
@@ -116,7 +116,12 @@ function partIITax(capitalGain: number): number {
 
 // Part III tax: 10-year averaging on ordinary income (Lines 8–18)
 // ordinaryIncome = lump_sum_amount − capital_gain_elected − death_benefit_exclusion
-function partIIITax(ordinaryIncome: number): number {
+function partIIITax(
+  ordinaryIncome: number,
+  mdaMax: number,
+  mdaPhaseOutThreshold: number,
+  mdaZeroThreshold: number,
+): number {
   if (ordinaryIncome <= 0) return 0;
 
   // Line 11: 1/10 of ordinary income
@@ -125,7 +130,7 @@ function partIIITax(ordinaryIncome: number): number {
   const tentativeTax = taxOn1986Rate(oneTenth) * 10;
 
   // Lines 14–17: MDA reduction
-  const mdaAmount = minimumDistributionAllowance(ordinaryIncome);
+  const mdaAmount = minimumDistributionAllowance(ordinaryIncome, mdaMax, mdaPhaseOutThreshold, mdaZeroThreshold);
   const mdaReduction = taxOn1986Rate(mdaAmount / 10) * 10;
 
   // Line 18: final Part III tax
@@ -139,7 +144,9 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form4972Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form4972Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     // Part I eligibility gate
@@ -154,7 +161,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    validateInput(input);
+    validateInput(input, cfg.deathBenefitMax);
 
     const capitalGain = input.capital_gain_amount ?? 0;
     const deathBenefit = input.death_benefit_exclusion ?? 0;
@@ -165,7 +172,9 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
 
     // Part III: 10-year averaging on ordinary income portion
     const ordinaryIncome = input.lump_sum_amount - capitalGainElected - deathBenefit;
-    const partIIITaxAmt = elect10yr ? partIIITax(Math.max(0, ordinaryIncome)) : 0;
+    const partIIITaxAmt = elect10yr
+      ? partIIITax(Math.max(0, ordinaryIncome), cfg.mdaMax, cfg.mdaPhaseOutThreshold, cfg.mdaZeroThreshold)
+      : 0;
 
     const totalTax = partIITaxAmt + partIIITaxAmt;
 

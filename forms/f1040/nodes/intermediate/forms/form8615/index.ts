@@ -8,28 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025,
-  KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025,
-  BRACKETS_MFJ_2025,
-  BRACKETS_SINGLE_2025,
-  BRACKETS_MFS_2025,
-} from "../../../config/2025.ts";
-
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
-
-// IRC §1(g)(4)(A)(ii)(I); Rev. Proc. 2024-40 — TY2025 unearned income threshold.
-// Net unearned income above this amount is taxed at the parent's rate.
-const UNEARNED_INCOME_THRESHOLD = KIDDIE_TAX_UNEARNED_INCOME_THRESHOLD_2025;
-
-// IRC §1(g)(4)(A)(ii)(II) — standard deduction floor for computing net unearned income.
-// (Greater of $1,300 or earned income + $450, but the floor is $1,300.)
-const STANDARD_DEDUCTION_FLOOR = KIDDIE_TAX_STANDARD_DEDUCTION_FLOOR_2025;
-
-// TY2025 tax brackets for computing tax at parent's rate — see config/2025.ts
-const MFJ_BRACKETS = BRACKETS_MFJ_2025;
-const SINGLE_BRACKETS = BRACKETS_SINGLE_2025;
-const MFS_BRACKETS = BRACKETS_MFS_2025;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -71,14 +50,15 @@ type Bracket = { over: number; upTo: number; rate: number; base: number };
 // Select the bracket table for the parent's filing status.
 function bracketsForStatus(
   status: FilingStatus | undefined,
+  cfg: import("../../../config/index.ts").F1040Config,
 ): ReadonlyArray<Bracket> {
   if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
-    return MFJ_BRACKETS;
+    return cfg.bracketsMfj;
   }
   if (status === FilingStatus.MFS) {
-    return MFS_BRACKETS;
+    return cfg.bracketsMfs;
   }
-  return SINGLE_BRACKETS;
+  return cfg.bracketsSingle;
 }
 
 // Compute regular income tax from a bracket table.
@@ -91,8 +71,8 @@ function taxFromBrackets(income: number, brackets: ReadonlyArray<Bracket>): numb
 
 // Net unearned income subject to kiddie tax (amounts above threshold).
 // Form 8615 line 6.
-function taxableNUI(nui: number): number {
-  return Math.max(0, nui - UNEARNED_INCOME_THRESHOLD);
+function taxableNUI(nui: number, threshold: number): number {
+  return Math.max(0, nui - threshold);
 }
 
 // Kiddie tax: tax on (parent_income + taxable_nui) − parent_tax.
@@ -117,11 +97,13 @@ class Form8615Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form8615Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8615Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     const nui = input.net_unearned_income ?? 0;
-    const taxableNui = taxableNUI(nui);
+    const taxableNui = taxableNUI(nui, cfg.kiddieUnearnedIncomeThreshold);
 
     // No unearned income above threshold → no kiddie tax
     if (taxableNui === 0) {
@@ -130,7 +112,7 @@ class Form8615Node extends TaxNode<typeof inputSchema> {
 
     const parentIncome = input.parent_taxable_income ?? 0;
     const parentTax = input.parent_tax ?? 0;
-    const brackets = bracketsForStatus(input.parent_filing_status);
+    const brackets = bracketsForStatus(input.parent_filing_status, cfg);
 
     const kTax = kiddietax(parentIncome, taxableNui, parentTax, brackets);
 
