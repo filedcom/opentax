@@ -8,22 +8,12 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  NIIT_THRESHOLD_MFJ,
-  NIIT_THRESHOLD_MFS,
-  NIIT_THRESHOLD_OTHER,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
 import { normalizeArray } from "../../../utils.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §1411(a)(1); Form 8960 line 17 — Net Investment Income Tax rate
 const NIIT_RATE = 0.038;
-
-// Threshold amounts — not indexed for inflation (Form 8960 instructions, TY2025)
-// Form 8960 line 14
-const THRESHOLD_MFJ = NIIT_THRESHOLD_MFJ;
-const THRESHOLD_MFS = NIIT_THRESHOLD_MFS;
-const THRESHOLD_OTHER = NIIT_THRESHOLD_OTHER; // Single, HOH, QSS
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -96,11 +86,11 @@ type Form8960Input = z.infer<typeof inputSchema>;
 
 // MAGI threshold by filing status
 // Form 8960 line 14; not indexed for inflation (TY2025)
-function threshold(status: FilingStatus): number {
-  if (status === FilingStatus.MFJ) return THRESHOLD_MFJ;
-  if (status === FilingStatus.QSS) return THRESHOLD_MFJ;
-  if (status === FilingStatus.MFS) return THRESHOLD_MFS;
-  return THRESHOLD_OTHER; // Single, HOH
+function threshold(status: FilingStatus, cfg: F1040Config): number {
+  if (status === FilingStatus.MFJ) return cfg.niitThresholdMfj;
+  if (status === FilingStatus.QSS) return cfg.niitThresholdMfj;
+  if (status === FilingStatus.MFS) return cfg.niitThresholdMfs;
+  return cfg.niitThresholdOther; // Single, HOH
 }
 
 // Sum ordinary dividends from potentially-array field (f1099div + k1_partnership both route here)
@@ -176,10 +166,12 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: Form8960Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8960Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    const limit = threshold(input.filing_status);
+    const limit = threshold(input.filing_status, cfg);
     const excess = magiExcess(input.magi, limit);
 
     // Early return: MAGI at or below threshold → no NIIT

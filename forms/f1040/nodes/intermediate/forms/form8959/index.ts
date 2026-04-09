@@ -9,20 +9,11 @@ import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  ADDITIONAL_MEDICARE_THRESHOLD_MFJ,
-  ADDITIONAL_MEDICARE_THRESHOLD_MFS,
-  ADDITIONAL_MEDICARE_THRESHOLD_OTHER,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §3101(b)(2); Form 8959 line 7 — Additional Medicare Tax rate
 const AMT_RATE = 0.009;
-
-// Threshold amounts — not indexed for inflation (Form 8959 instructions, TY2025)
-const THRESHOLD_MFJ = ADDITIONAL_MEDICARE_THRESHOLD_MFJ;
-const THRESHOLD_MFS = ADDITIONAL_MEDICARE_THRESHOLD_MFS;
-const THRESHOLD_OTHER = ADDITIONAL_MEDICARE_THRESHOLD_OTHER; // Single, HOH, QSS
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -79,11 +70,11 @@ type Form8959Input = z.infer<typeof inputSchema>;
 // Threshold for filing status
 // Form 8959 line 5 / line 15; not indexed for inflation
 // QSS uses MFJ threshold per IRC §3101(b)(2) and Form 8959 instructions
-function threshold(status: FilingStatus): number {
-  if (status === FilingStatus.MFJ) return THRESHOLD_MFJ;
-  if (status === FilingStatus.QSS) return THRESHOLD_MFJ;
-  if (status === FilingStatus.MFS) return THRESHOLD_MFS;
-  return THRESHOLD_OTHER;
+function threshold(status: FilingStatus, cfg: F1040Config): number {
+  if (status === FilingStatus.MFJ) return cfg.additionalMedicareThresholdMfj;
+  if (status === FilingStatus.QSS) return cfg.additionalMedicareThresholdMfj;
+  if (status === FilingStatus.MFS) return cfg.additionalMedicareThresholdMfs;
+  return cfg.additionalMedicareThresholdOther;
 }
 
 // Part I, Line 4: total Medicare wages + tips (all sources)
@@ -196,10 +187,12 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2, f1040]);
 
-  compute(_ctx: NodeContext, rawInput: Form8959Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8959Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    const limit = threshold(input.filing_status);
+    const limit = threshold(input.filing_status, cfg);
 
     // Part I
     const line4 = totalMedicareWages(input);
