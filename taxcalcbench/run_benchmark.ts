@@ -10,7 +10,7 @@ const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
 const TAX_DIR    = join(SCRIPT_DIR, "..");
 const CASES_DIR  = join(SCRIPT_DIR, "cases");
 
-const RED = "\x1b[0;31m", GRN = "\x1b[0;32m", YEL = "\x1b[0;33m", DIM = "\x1b[2m", RST = "\x1b[0m";
+const RED = "\x1b[31m", GRN = "\x1b[32m", YEL = "\x1b[33m", DIM = "\x1b[2m", RST = "\x1b[0m";
 const CLEAR_LINE = "\x1b[2K\r";
 
 async function tax(...args: string[]): Promise<string> {
@@ -26,20 +26,45 @@ function scalar(val: unknown): number {
   return (val as number) ?? 0;
 }
 
-const COL = "\x1b[2m│\x1b[0m";
+// ── Table layout ─────────────────────────────────────────────────────────────
 
-function fmtCell(eng: number, cor: number): string {
-  const s = Math.round(eng).toString().padStart(10);
-  return Math.abs(eng - cor) <= 5 ? `${GRN}${s}${RST}` : `${RED}${s}${RST}`;
+const COLS = [
+  { label: "#",        width: 3,  align: "r" },
+  { label: "Case",     width: 58, align: "l" },
+  { label: "AGI",      width: 10, align: "r" },
+  { label: "Taxable",  width: 10, align: "r" },
+  { label: "TotalTax", width: 10, align: "r" },
+  { label: "Payments", width: 10, align: "r" },
+  { label: "Refund",   width: 10, align: "r" },
+  { label: "Owed",     width: 10, align: "r" },
+  { label: "Result",   width: 6,  align: "c" },
+] as const;
+
+function pad(s: string, w: number, align: "l" | "r" | "c"): string {
+  if (align === "r") return s.padStart(w);
+  if (align === "l") return s.padEnd(w);
+  const total = w - s.length;
+  const l = Math.floor(total / 2), r = total - l;
+  return " ".repeat(l) + s + " ".repeat(r);
 }
 
-const names: string[] = [];
-for await (const e of Deno.readDir(CASES_DIR)) {
-  if (e.isDirectory) names.push(e.name);
+function border(left: string, mid: string, right: string, fill: string): string {
+  return left + COLS.map(c => fill.repeat(c.width + 2)).join(mid) + right;
 }
-names.sort();
 
-const CONCURRENCY = 8;
+const TOP    = border("┌", "┬", "┐", "─");
+const HDR_DIV = border("├", "┼", "┤", "─");
+const BOT    = border("└", "┴", "┘", "─");
+
+function tableRow(cells: string[]): string {
+  return "│" + cells.map((c, i) => " " + pad(c, COLS[i].width, COLS[i].align) + " ").join("│") + "│";
+}
+
+function headerRow(): string {
+  return tableRow(COLS.map(c => c.label));
+}
+
+// ── Case runner ───────────────────────────────────────────────────────────────
 
 type CaseResult = {
   name: string;
@@ -73,96 +98,100 @@ async function runCase(name: string): Promise<CaseResult | null> {
   const engRef = scalar(sm.line35a_refund ?? 0);
   const engOwe = scalar(sm.line37_amount_owed ?? 0);
 
-  const c      = correct.correct;
-  const ok = Math.abs(engTax - c.line24_total_tax) <= 5 &&
-             Math.abs(engRef - c.line35a_refund)    <= 5 &&
-             Math.abs(engOwe - c.line37_amount_owed) <= 5;
+  const c   = correct.correct;
+  const ok  = Math.abs(engTax - c.line24_total_tax)    <= 5 &&
+              Math.abs(engRef - c.line35a_refund)       <= 5 &&
+              Math.abs(engOwe - c.line37_amount_owed)   <= 5;
 
   return { name, engAgi, engTi, engTax, engPay, engRef, engOwe, correct: c, ok };
 }
 
-function fmtRow(r: CaseResult): string {
-  return COL + " " + r.name.padEnd(36) +
-    COL + fmtCell(r.engAgi, r.correct.line11_agi)            +
-    COL + fmtCell(r.engTi,  r.correct.line15_taxable_income) +
-    COL + fmtCell(r.engTax, r.correct.line24_total_tax)      +
-    COL + fmtCell(r.engPay, r.correct.line33_total_payments) +
-    COL + fmtCell(r.engRef, r.correct.line35a_refund)        +
-    COL + fmtCell(r.engOwe, r.correct.line37_amount_owed)    +
-    COL + ` ${r.ok ? `${GRN}PASS${RST}` : `${RED}FAIL${RST}`}`;
+function colorNum(eng: number, cor: number, width: number): string {
+  const s = Math.round(eng).toLocaleString().padStart(width);
+  return Math.abs(eng - cor) <= 5 ? `${GRN}${s}${RST}` : `${RED}${s}${RST}`;
 }
 
-function statusLine(done: number, total: number, running: string[]): string {
-  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-  const bar = `[${done}/${total}] ${pct}%`;
-  const active = running.length > 0
-    ? `  ${YEL}▶${RST} ${DIM}${running.length} running${RST}`
-    : "";
-  return `${CLEAR_LINE}${bar}${active}`;
+function resultRow(r: CaseResult, idx: number): string {
+  const numW = COLS[2].width; // all number columns share this width
+  const nums = [
+    colorNum(r.engAgi, r.correct.line11_agi,            numW),
+    colorNum(r.engTi,  r.correct.line15_taxable_income, numW),
+    colorNum(r.engTax, r.correct.line24_total_tax,      numW),
+    colorNum(r.engPay, r.correct.line33_total_payments, numW),
+    colorNum(r.engRef, r.correct.line35a_refund,        numW),
+    colorNum(r.engOwe, r.correct.line37_amount_owed,    numW),
+  ];
+  const result = r.ok ? `${GRN} PASS ${RST}` : `${RED} FAIL ${RST}`;
+  // Plain cells use pad(); pre-padded colored cells are inserted directly.
+  return "│" +
+    ` ${pad(String(idx + 1), COLS[0].width, "r")} │` +
+    ` ${pad(r.name, COLS[1].width, "l")} │` +
+    nums.map(n => ` ${n} `).join("│") + "│" +
+    ` ${result} │`;
 }
+
+// ── Progress + streaming output (all on stdout) ───────────────────────────────
 
 const encoder = new TextEncoder();
-const write = (s: string) => Deno.stderr.writeSync(encoder.encode(s));
+const write = (s: string) => Deno.stdout.writeSync(encoder.encode(s));
 
-async function runWithConcurrency(caseNames: string[], limit: number): Promise<CaseResult[]> {
-  const results: CaseResult[] = [];
-  const running = new Set<string>();
-  let idx = 0;
-  let done = 0;
+function progressLine(done: number, total: number, running: number): string {
+  const BAR_W = 30;
+  const filled = total > 0 ? Math.round((done / total) * BAR_W) : 0;
+  const bar = GRN + "█".repeat(filled) + RST + DIM + "░".repeat(BAR_W - filled) + RST;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const spin = running > 0 ? `  ${YEL}▶${RST} ${DIM}${running} running${RST}` : "";
+  return `${CLEAR_LINE}  ${bar}  ${DIM}${done}/${total}${RST} ${pct}%${spin}`;
+}
+
+// ── Orchestrator ──────────────────────────────────────────────────────────────
+
+const CONCURRENCY = 8;
+
+const names: string[] = [];
+for await (const e of Deno.readDir(CASES_DIR)) {
+  if (e.isDirectory) names.push(e.name);
+}
+names.sort();
+
+async function runAll(caseNames: string[]): Promise<CaseResult[]> {
+  const allResults: CaseResult[] = [];
+  let idx = 0, done = 0, printed = 0;
   const total = caseNames.length;
 
-  const W = 38 + 11*6 + 6 + 2; // col widths + separators
-  const DIV = "─".repeat(W);
-  const hdr = (s: string, w: number) => s.padStart(w);
-
-  // Print header before results start streaming
-  console.log();
-  console.log(
-    COL + " " + "Case".padEnd(36) +
-    COL + hdr("AGI", 10) +
-    COL + hdr("Taxable", 10) +
-    COL + hdr("TotalTax", 10) +
-    COL + hdr("Payments", 10) +
-    COL + hdr("Refund", 10) +
-    COL + hdr("Owed", 10) +
-    COL + " Result"
-  );
-  console.log(DIV);
-
-  write(statusLine(0, total, []));
+  // Print header once
+  write("\n" + TOP + "\n" + headerRow() + "\n" + HDR_DIV + "\n");
+  write(progressLine(0, total, 0));
 
   async function worker() {
     while (idx < caseNames.length) {
-      const i = idx++;
-      const name = caseNames[i];
-      running.add(name);
-      write(statusLine(done, total, [...running].sort()));
+      const name = caseNames[idx++];
+      const activeCount = Math.min(CONCURRENCY, total - done);
 
       const result = await runCase(name);
-      running.delete(name);
       done++;
+      if (result) allResults.push(result);
 
-      if (result) {
-        results.push(result);
-        // Clear status line, print result row, then reprint status
-        write(CLEAR_LINE);
-        console.log(fmtRow(result));
-      }
-      write(statusLine(done, total, [...running].sort()));
+      // Clear progress bar, print completed row, redraw progress bar
+      const row = result ? resultRow(result, printed++) : null;
+      write(CLEAR_LINE);
+      if (row) write(row + "\n");
+      if (done < total) write(progressLine(done, total, activeCount - 1));
     }
   }
 
-  await Promise.all(Array.from({ length: limit }, () => worker()));
-  write(CLEAR_LINE); // clear final status line
-  return results;
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+  write(CLEAR_LINE);
+  return allResults;
 }
 
-const results = await runWithConcurrency(names, CONCURRENCY);
+const results = await runAll(names);
 
-let pass = 0, fail = 0;
-for (const r of results) { if (r.ok) pass++; else fail++; }
-const total = results.length;
+// ── Footer ────────────────────────────────────────────────────────────────────
 
-console.log("\n" + "─".repeat(38 + 11*6 + 6 + 2));
-console.log(`Results: ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  out of ${total} cases`);
-console.log(`Green = within $5 of correct value.  Red = engine differs from expected.\n`);
+write(BOT + "\n");
+
+const pass = results.filter(r => r.ok).length;
+const fail = results.length - pass;
+
+write(`\n  ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  ${DIM}out of ${results.length} cases  ·  green = within $5${RST}\n\n`);
