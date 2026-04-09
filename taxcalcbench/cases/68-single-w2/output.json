@@ -1,0 +1,87 @@
+{
+  "returnId": "0f8fed99-dce9-4cf3-9711-b98a06337006",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 139163,
+    "line9_total_income": 139163,
+    "line11_agi": 139163,
+    "line15_taxable_income": 123413,
+    "line24_total_tax": 22466.12,
+    "line33_total_payments": 30647,
+    "line35a_refund": 8180.880000000001
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      30647,
+      30647
+    ],
+    "line1a_wages": [
+      139163,
+      139163
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "John",
+    "taxpayer_last_name": "James",
+    "address_city": "Springfield",
+    "address_state": "IL",
+    "address_zip": "62701",
+    "line11_agi": [
+      139163,
+      139163
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      123413,
+      123413
+    ],
+    "line16_income_tax": [
+      22466.12,
+      22466.12
+    ],
+    "line1z_total_wages": 139163,
+    "line9_total_income": 139163,
+    "line18_total_tax_before_credits": 22466.12,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 22466.12,
+    "line24_total_tax": 22466.12,
+    "line25d_total_withholding": 30647,
+    "line33_total_payments": 30647,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 8180.880000000001,
+    "line35a_refund": 8180.880000000001
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

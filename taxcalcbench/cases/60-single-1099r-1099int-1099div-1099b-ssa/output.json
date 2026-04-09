@@ -1,0 +1,130 @@
+{
+  "returnId": "cf31de66-f369-4b5a-b340-8a1a8c3abe10",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 100756.83999999998,
+    "line11_agi": 100756.84,
+    "line15_taxable_income": 85006.84,
+    "line24_total_tax": 8990.8984,
+    "line33_total_payments": 653.47,
+    "line37_amount_owed": 8337.4284
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099b",
+    "f1099div",
+    "f1099int",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8949",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule3",
+    "schedule_a",
+    "schedule_b",
+    "schedule_d",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line3a_qualified_dividends": [
+      6969.87,
+      6969.87
+    ],
+    "line4a_ira_gross": [
+      6000,
+      6000
+    ],
+    "line4b_ira_taxable": [
+      6000,
+      6000
+    ],
+    "line5a_pension_gross": [
+      12901.08,
+      12901.08
+    ],
+    "line5b_pension_taxable": [
+      12901.08,
+      12901.08
+    ],
+    "line25b_withheld_1099": [
+      653.47,
+      653.47
+    ],
+    "line6a_ss_gross": [
+      21696,
+      21696
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "John",
+    "taxpayer_last_name": "James",
+    "address_city": "Springfield",
+    "address_state": "IL",
+    "address_zip": "62701",
+    "line2b_taxable_interest": [
+      9.73,
+      9.73
+    ],
+    "line3b_ordinary_dividends": [
+      16507.48,
+      16507.48
+    ],
+    "line7_capital_gain": [
+      46896.94999999998,
+      46896.94999999998
+    ],
+    "line11_agi": [
+      100756.84,
+      100756.84
+    ],
+    "line6b_ss_taxable": [
+      18441.6,
+      18441.6
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      85006.84,
+      85006.84
+    ],
+    "line16_income_tax": [
+      9012.2784,
+      9012.2784
+    ],
+    "line20_nonrefundable_credits": 21.38,
+    "line1z_total_wages": 0,
+    "line9_total_income": 100756.83999999998,
+    "line18_total_tax_before_credits": 9012.2784,
+    "line21_credits_total": 21.38,
+    "line22_tax_after_credits": 8990.8984,
+    "line24_total_tax": 8990.8984,
+    "line25d_total_withholding": 653.47,
+    "line33_total_payments": 653.47,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 8337.4284
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
 /**
- * Run a single benchmark case through the tax engine and save expected.json.
+ * Run a single benchmark case through the tax engine and save output.json.
  * Usage: deno run --allow-read --allow-write --allow-run taxcalcbench/run_case.ts <case_dir>
  */
 
@@ -39,7 +39,7 @@ for (const f of caseData.forms) {
 
 console.log("  Computing result...");
 const result      = await tax("return", "get", "--returnId", rid, "--json");
-const outputFile  = join(caseDir, "expected.json");
+const outputFile  = join(caseDir, "output.json");
 await Deno.writeTextFile(outputFile, result);
 console.log(`  Saved: ${outputFile}`);
 

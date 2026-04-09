@@ -10,7 +10,8 @@ const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
 const TAX_DIR    = join(SCRIPT_DIR, "..");
 const CASES_DIR  = join(SCRIPT_DIR, "cases");
 
-const RED = "\x1b[0;31m", GRN = "\x1b[0;32m", RST = "\x1b[0m";
+const RED = "\x1b[0;31m", GRN = "\x1b[0;32m", YEL = "\x1b[0;33m", DIM = "\x1b[2m", RST = "\x1b[0m";
+const CLEAR_LINE = "\x1b[2K\r";
 
 async function tax(...args: string[]): Promise<string> {
   const { stdout } = await new Deno.Command("deno", {
@@ -36,19 +37,21 @@ for await (const e of Deno.readDir(CASES_DIR)) {
 }
 names.sort();
 
-let pass = 0, fail = 0, total = 0;
+const CONCURRENCY = 8;
 
-console.log();
-console.log(`${"Case".padEnd(30)} ${"AGI".padStart(12)} ${"Taxable".padStart(12)} ${"TotalTax".padStart(12)} ${"Payments".padStart(12)} ${"Refund".padStart(12)} ${"Owed".padStart(12)}`);
-console.log("─".repeat(108));
+type CaseResult = {
+  name: string;
+  engAgi: number; engTi: number; engTax: number; engPay: number; engRef: number; engOwe: number;
+  correct: Record<string, number>;
+  ok: boolean;
+};
 
-for (const name of names) {
+async function runCase(name: string): Promise<CaseResult | null> {
   const caseDir     = join(CASES_DIR, name);
   const inputFile   = join(caseDir, "input.json");
   const correctFile = join(caseDir, "correct.json");
-  try { await Deno.stat(inputFile); await Deno.stat(correctFile); } catch { continue; }
+  try { await Deno.stat(inputFile); await Deno.stat(correctFile); } catch { return null; }
 
-  total++;
   const caseData = JSON.parse(await Deno.readTextFile(inputFile));
   const correct  = JSON.parse(await Deno.readTextFile(correctFile));
 
@@ -73,19 +76,76 @@ for (const name of names) {
              Math.abs(engRef - c.line35a_refund)    <= 5 &&
              Math.abs(engOwe - c.line37_amount_owed) <= 5;
 
-  if (ok) pass++; else fail++;
-
-  console.log(
-    name.padEnd(30) +
-    fmtCell(engAgi, c.line11_agi)            +
-    fmtCell(engTi,  c.line15_taxable_income) +
-    fmtCell(engTax, c.line24_total_tax)      +
-    fmtCell(engPay, c.line33_total_payments) +
-    fmtCell(engRef, c.line35a_refund)        +
-    fmtCell(engOwe, c.line37_amount_owed)    +
-    `  ${ok ? `${GRN}PASS${RST}` : `${RED}FAIL${RST}`}`,
-  );
+  return { name, engAgi, engTi, engTax, engPay, engRef, engOwe, correct: c, ok };
 }
+
+function fmtRow(r: CaseResult): string {
+  return r.name.padEnd(30) +
+    fmtCell(r.engAgi, r.correct.line11_agi)            +
+    fmtCell(r.engTi,  r.correct.line15_taxable_income) +
+    fmtCell(r.engTax, r.correct.line24_total_tax)      +
+    fmtCell(r.engPay, r.correct.line33_total_payments) +
+    fmtCell(r.engRef, r.correct.line35a_refund)        +
+    fmtCell(r.engOwe, r.correct.line37_amount_owed)    +
+    `  ${r.ok ? `${GRN}PASS${RST}` : `${RED}FAIL${RST}`}`;
+}
+
+function statusLine(done: number, total: number, running: string[]): string {
+  const bar = `[${done}/${total}]`;
+  const active = running.length > 0
+    ? `  ${YEL}running:${RST} ${DIM}${running.join(", ")}${RST}`
+    : "";
+  return `${CLEAR_LINE}${bar}${active}`;
+}
+
+const encoder = new TextEncoder();
+const write = (s: string) => Deno.stderr.writeSync(encoder.encode(s));
+
+async function runWithConcurrency(caseNames: string[], limit: number): Promise<CaseResult[]> {
+  const results: CaseResult[] = [];
+  const running = new Set<string>();
+  let idx = 0;
+  let done = 0;
+  const total = caseNames.length;
+
+  // Print header before results start streaming
+  console.log();
+  console.log(`${"Case".padEnd(30)} ${"AGI".padStart(12)} ${"Taxable".padStart(12)} ${"TotalTax".padStart(12)} ${"Payments".padStart(12)} ${"Refund".padStart(12)} ${"Owed".padStart(12)}`);
+  console.log("─".repeat(108));
+
+  write(statusLine(0, total, []));
+
+  async function worker() {
+    while (idx < caseNames.length) {
+      const i = idx++;
+      const name = caseNames[i];
+      running.add(name);
+      write(statusLine(done, total, [...running].sort()));
+
+      const result = await runCase(name);
+      running.delete(name);
+      done++;
+
+      if (result) {
+        results.push(result);
+        // Clear status line, print result row, then reprint status
+        write(CLEAR_LINE);
+        console.log(fmtRow(result));
+      }
+      write(statusLine(done, total, [...running].sort()));
+    }
+  }
+
+  await Promise.all(Array.from({ length: limit }, () => worker()));
+  write(CLEAR_LINE); // clear final status line
+  return results;
+}
+
+const results = await runWithConcurrency(names, CONCURRENCY);
+
+let pass = 0, fail = 0;
+for (const r of results) { if (r.ok) pass++; else fail++; }
+const total = results.length;
 
 console.log("\n" + "─".repeat(66));
 console.log(`Results: ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  out of ${total} cases`);

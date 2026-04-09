@@ -1,0 +1,97 @@
+{
+  "returnId": "0dae2d2c-1b2c-43da-b3b0-a8588fde2d44",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 160111.53,
+    "line9_total_income": 160243.81,
+    "line11_agi": 160243.81,
+    "line15_taxable_income": 128743.81,
+    "line24_total_tax": 15951.638200000001,
+    "line33_total_payments": 14898.420000000002,
+    "line37_amount_owed": 1053.2181999999993
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099int",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule3",
+    "schedule_a",
+    "schedule_b",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      14898.420000000002,
+      14898.420000000002
+    ],
+    "line1a_wages": [
+      160111.53,
+      160111.53
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "John",
+    "taxpayer_last_name": "James",
+    "spouse_first_name": "Sarah",
+    "spouse_last_name": "James",
+    "address_city": "Springfield",
+    "address_state": "IL",
+    "address_zip": "62701",
+    "line2b_taxable_interest": [
+      132.28,
+      132.28
+    ],
+    "line11_agi": [
+      160243.81,
+      160243.81
+    ],
+    "line12e_itemized_deductions": [
+      7087.34,
+      7087.34
+    ],
+    "line12a_standard_deduction": [
+      31500,
+      31500
+    ],
+    "line15_taxable_income": [
+      128743.81,
+      128743.81
+    ],
+    "line16_income_tax": [
+      18151.6382,
+      18151.6382
+    ],
+    "line20_nonrefundable_credits": 2200,
+    "line1z_total_wages": 160111.53,
+    "line9_total_income": 160243.81,
+    "line18_total_tax_before_credits": 18151.6382,
+    "line21_credits_total": 2200,
+    "line22_tax_after_credits": 15951.638200000001,
+    "line24_total_tax": 15951.638200000001,
+    "line25d_total_withholding": 14898.420000000002,
+    "line33_total_payments": 14898.420000000002,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 7087.34,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 1053.2181999999993
+  },
+  "warnings": [
+    "Medical expenses ($9,589.25) are at or below the 7.5% AGI floor — no deduction will result.",
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

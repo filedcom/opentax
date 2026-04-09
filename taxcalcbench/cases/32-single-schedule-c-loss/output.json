@@ -1,0 +1,90 @@
+{
+  "returnId": "810ec29a-5080-4fe1-ae0a-dc172bc482b6",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 45000,
+    "line9_total_income": 38000,
+    "line11_agi": 38000,
+    "line15_taxable_income": 22250,
+    "line24_total_tax": 2431.5,
+    "line33_total_payments": 5000,
+    "line35a_refund": 2568.5
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_c",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      5000,
+      5000
+    ],
+    "line1a_wages": [
+      45000,
+      45000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Casey",
+    "taxpayer_last_name": "Monroe",
+    "taxpayer_dob": "1985-03-22",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
+    "line11_agi": [
+      38000,
+      38000
+    ],
+    "line8_additional_income": -7000,
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      22250,
+      22250
+    ],
+    "line16_income_tax": [
+      2431.5,
+      2431.5
+    ],
+    "line1z_total_wages": 45000,
+    "line9_total_income": 38000,
+    "line18_total_tax_before_credits": 2431.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 2431.5,
+    "line24_total_tax": 2431.5,
+    "line25d_total_withholding": 5000,
+    "line33_total_payments": 5000,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 2568.5,
+    "line35a_refund": 2568.5
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}
