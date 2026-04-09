@@ -109,7 +109,10 @@ function softValidationWarnings(
   }
 
   // Schedule D present but no Form 8949 transactions
-  if (pending["schedule_d"] && !pending["form8949"]) {
+  // Exception: cap gain distributions (1099-DIV box 2a → Schedule D line 13) don't require Form 8949
+  const scheduleD = pending["schedule_d"] ?? {};
+  const hasCapGainDistrib = num(scheduleD["line13_cap_gain_distrib"]) > 0;
+  if (pending["schedule_d"] && !pending["form8949"] && !hasCapGainDistrib) {
     warnings.push("Schedule D is present but no Form 8949 transactions found — capital gains may be incomplete.");
   }
 

@@ -1,29 +1,31 @@
 {
-  "returnId": "9e5f2248-d823-4b5f-a404-adf2e1f14abc",
+  "returnId": "90eb5288-718a-464e-9ff3-8318062cc2a9",
   "year": 2025,
   "summary": {
-    "line1z_total_wages": 48000,
-    "line9_total_income": 48000,
-    "line11_agi": 47700,
-    "line15_taxable_income": 31950,
-    "line24_total_tax": 3595.5,
-    "line33_total_payments": 4800,
-    "line35a_refund": 1204.5
+    "line1z_total_wages": 28000,
+    "line9_total_income": 28000,
+    "line11_agi": 28000,
+    "line15_taxable_income": 12250,
+    "line24_total_tax": 1231.5,
+    "line33_total_payments": 4832,
+    "line35a_refund": 3600.5
   },
   "forms": [
     "agi_aggregator",
-    "educator_expenses",
     "eitc",
     "f1040",
+    "f1095a",
     "f2441",
     "f8812",
     "form6251",
     "form8959",
     "form8960",
+    "form8962",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
+    "schedule3",
     "schedule_a",
     "schedule_se",
     "standard_deduction",
@@ -31,30 +33,26 @@
   ],
   "lines": {
     "line25a_w2_withheld": [
-      4800,
-      4800
+      2800,
+      2800
     ],
     "line1a_wages": [
-      48000,
-      48000
+      28000,
+      28000
     ],
     "filing_status": "single",
     "dependent_count": 0,
     "qualifying_child_tax_credit_count": 0,
     "other_dependent_count": 0,
-    "taxpayer_first_name": "Priya",
-    "taxpayer_last_name": "Sharma",
-    "taxpayer_dob": "1992-05-30",
-    "address_city": "Minneapolis",
-    "address_state": "MN",
-    "address_zip": "55401",
+    "taxpayer_first_name": "Avery",
+    "taxpayer_last_name": "Singh",
+    "taxpayer_dob": "1992-08-14",
+    "address_city": "Albuquerque",
+    "address_state": "NM",
+    "address_zip": "87101",
     "line11_agi": [
-      47700,
-      47700
-    ],
-    "line10_adjustments": [
-      300,
-      300
+      28000,
+      28000
     ],
     "line12e_itemized_deductions": [
       0,
@@ -65,25 +63,30 @@
       15750
     ],
     "line15_taxable_income": [
-      31950,
-      31950
+      12250,
+      12250
     ],
     "line16_income_tax": [
-      3595.5,
-      3595.5
+      1231.5,
+      1231.5
     ],
-    "line1z_total_wages": 48000,
-    "line9_total_income": 48000,
-    "line18_total_tax_before_credits": 3595.5,
+    "line31_additional_payments": [
+      2032,
+      2032
+    ],
+    "line1z_total_wages": 28000,
+    "line9_total_income": 28000,
+    "line18_total_tax_before_credits": 1231.5,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 3595.5,
-    "line24_total_tax": 3595.5,
-    "line25d_total_withholding": 4800,
-    "line33_total_payments": 4800,
+    "line22_tax_after_credits": 1231.5,
+    "line24_total_tax": 1231.5,
+    "line25d_total_withholding": 2800,
+    "line33_total_payments": 4832,
+    "line10_adjustments": 0,
     "line14_deductions_qbi_total": 15750,
-    "line32_refundable_credits_total": 0,
-    "line34_overpayment": 1204.5,
-    "line35a_refund": 1204.5
+    "line32_refundable_credits_total": 2032,
+    "line34_overpayment": 3600.5,
+    "line35a_refund": 3600.5
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

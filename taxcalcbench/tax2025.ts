@@ -299,11 +299,25 @@ export function computeTax(inp: TaxReturnInput): TaxResult {
     aotcRefundable = r2(rawAotc - aotcNonref);
   }
 
-  // Marketplace PTC
+  // Marketplace PTC — compute allowed PTC from FPL table, then reconcile with APTC
   let ptcAdditional = 0, ptcRepayment = 0;
-  if (marketplaceAptc > 0) {
-    const netPtc = Math.min(marketplacePremium, marketplaceSlcsp) - marketplaceAptc;
-    if (netPtc > 0) ptcAdditional = netPtc; else ptcRepayment = -netPtc;
+  if (marketplacePremium > 0 || marketplaceSlcsp > 0 || marketplaceAptc > 0) {
+    // 2024 FPL (used for TY2025): base $15,060, +$5,380 per additional person
+    // Applicable percentage table (ARP/IRA extension through TY2025, 400% cliff eliminated)
+    const fpl = 15_060; // household size = 1 (single); gen_correct.ts doesn't track dependents for FPL
+    const incomePct = agi / fpl * 100;
+    let contribPct: number;
+    if      (incomePct < 100)  contribPct = Infinity;
+    else if (incomePct < 133)  contribPct = 0.0206;
+    else if (incomePct < 150)  contribPct = 0.0309;
+    else if (incomePct < 200)  contribPct = 0.0412 + (incomePct - 150) / 50 * (0.0618 - 0.0412);
+    else if (incomePct < 250)  contribPct = 0.0618 + (incomePct - 200) / 50 * (0.0824 - 0.0618);
+    else if (incomePct < 300)  contribPct = 0.0824 + (incomePct - 250) / 50 * (0.0850 - 0.0824);
+    else                       contribPct = 0.0850; // 300%+ FPL capped at 8.5% (ARP extension)
+    const allowedPtc = contribPct === Infinity ? 0 :
+      Math.max(0, Math.min(marketplacePremium, marketplaceSlcsp) - r2(agi * contribPct));
+    const netPtc = r2(allowedPtc - marketplaceAptc);
+    if (netPtc > 0) ptcAdditional = netPtc; else if (netPtc < 0) ptcRepayment = -netPtc;
   }
 
   // Non-Refundable Credits

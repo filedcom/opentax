@@ -1,14 +1,14 @@
 {
-  "returnId": "71cc2b0c-ca41-491e-951b-d00210d50017",
+  "returnId": "a324fe76-782b-4a11-878b-901a0b302ef8",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 45000,
-    "line9_total_income": 45000,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
-    "line24_total_tax": 2521.5,
+    "line9_total_income": 38000,
+    "line11_agi": 38000,
+    "line15_taxable_income": 22250,
+    "line24_total_tax": 2431.5,
     "line33_total_payments": 5000,
-    "line35a_refund": 2478.5
+    "line35a_refund": 2568.5
   },
   "forms": [
     "agi_aggregator",
@@ -18,12 +18,14 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule_a",
     "schedule_c",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -50,33 +52,38 @@
       38000,
       38000
     ],
+    "line8_additional_income": -7000,
     "line12e_itemized_deductions": [
       0,
       0
     ],
     "line12a_standard_deduction": [
-      15000,
-      15000
+      15750,
+      15750
     ],
     "line15_taxable_income": [
-      23000,
-      23000
+      22250,
+      22250
     ],
     "line16_income_tax": [
-      2521.5,
-      2521.5
+      2431.5,
+      2431.5
     ],
     "line1z_total_wages": 45000,
-    "line9_total_income": 45000,
-    "line18_total_tax_before_credits": 2521.5,
+    "line9_total_income": 38000,
+    "line18_total_tax_before_credits": 2431.5,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 2521.5,
-    "line24_total_tax": 2521.5,
+    "line22_tax_after_credits": 2431.5,
+    "line24_total_tax": 2431.5,
+    "line25d_total_withholding": 5000,
     "line33_total_payments": 5000,
-    "line35a_refund": 2478.5
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 2568.5,
+    "line35a_refund": 2568.5
   },
   "warnings": [
-    "Schedule C is present but Schedule SE is missing — self-employment tax may not be computed.",
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
   ]
 }

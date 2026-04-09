@@ -1,14 +1,14 @@
 {
-  "returnId": "1f3079a3-797d-4b56-9585-10626cf1af59",
+  "returnId": "6c1a9018-79f4-4499-8730-d4542f9cd437",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 100000,
     "line9_total_income": 100000,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
-    "line24_total_tax": 7851,
+    "line11_agi": 99400,
+    "line15_taxable_income": 67900,
+    "line24_total_tax": 7671,
     "line33_total_payments": 10500,
-    "line35a_refund": 2649
+    "line35a_refund": 2829
   },
   "forms": [
     "agi_aggregator",
@@ -19,11 +19,13 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule_a",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -53,30 +55,38 @@
       99400,
       99400
     ],
+    "line10_adjustments": [
+      600,
+      600
+    ],
     "line12e_itemized_deductions": [
       0,
       0
     ],
     "line12a_standard_deduction": [
-      30000,
-      30000
+      31500,
+      31500
     ],
     "line15_taxable_income": [
-      69400,
-      69400
+      67900,
+      67900
     ],
     "line16_income_tax": [
-      7851,
-      7851
+      7671,
+      7671
     ],
     "line1z_total_wages": 100000,
     "line9_total_income": 100000,
-    "line18_total_tax_before_credits": 7851,
+    "line18_total_tax_before_credits": 7671,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 7851,
-    "line24_total_tax": 7851,
+    "line22_tax_after_credits": 7671,
+    "line24_total_tax": 7671,
+    "line25d_total_withholding": 10500,
     "line33_total_payments": 10500,
-    "line35a_refund": 2649
+    "line14_deductions_qbi_total": 31500,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 2829,
+    "line35a_refund": 2829
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

@@ -1,10 +1,10 @@
 {
-  "returnId": "eb615c66-600e-40a0-849c-e479dbd62235",
+  "returnId": "5f3e6cc2-4336-4052-a6b1-a2d09ed9fb7c",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 14000,
     "line9_total_income": 14000,
-    "line11_agi": 0,
+    "line11_agi": 14000,
     "line15_taxable_income": 0,
     "line24_total_tax": 0,
     "line33_total_payments": 390,
@@ -17,11 +17,13 @@
     "f2441",
     "f8812",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule_a",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -52,13 +54,10 @@
       0,
       0
     ],
-    "line27_eitc": [
-      390,
-      390
-    ],
+    "line27_eitc": 390,
     "line12a_standard_deduction": [
-      15000,
-      15000
+      15750,
+      15750
     ],
     "line15_taxable_income": [
       0,
@@ -70,7 +69,12 @@
     "line21_credits_total": 0,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
+    "line25d_total_withholding": 0,
     "line33_total_payments": 390,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 390,
+    "line34_overpayment": 390,
     "line35a_refund": 390
   },
   "warnings": [

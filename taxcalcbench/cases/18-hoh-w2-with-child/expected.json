@@ -1,14 +1,14 @@
 {
-  "returnId": "f817123f-5a09-472c-82c9-f077905f3ef5",
+  "returnId": "21e50c48-25e9-4388-9448-6ca7502d7844",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 38000,
     "line9_total_income": 38000,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
+    "line11_agi": 38000,
+    "line15_taxable_income": 14375,
     "line24_total_tax": 0,
-    "line33_total_payments": 5463,
-    "line35a_refund": 5463
+    "line33_total_payments": 5775.5,
+    "line35a_refund": 5775.5
   },
   "forms": [
     "agi_aggregator",
@@ -18,12 +18,14 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule3",
     "schedule_a",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -55,35 +57,34 @@
       0,
       0
     ],
-    "line27_eitc": [
-      2013,
-      2013
-    ],
+    "line27_eitc": 2013,
     "line12a_standard_deduction": [
-      22500,
-      22500
+      23625,
+      23625
     ],
     "line15_taxable_income": [
-      15500,
-      15500
+      14375,
+      14375
     ],
     "line16_income_tax": [
-      1550,
-      1550
+      1437.5,
+      1437.5
     ],
-    "line28_actc": [
-      450,
-      450
-    ],
-    "line20_nonrefundable_credits": 1550,
+    "line28_actc": 762.5,
+    "line20_nonrefundable_credits": 1437.5,
     "line1z_total_wages": 38000,
     "line9_total_income": 38000,
-    "line18_total_tax_before_credits": 1550,
-    "line21_credits_total": 1550,
+    "line18_total_tax_before_credits": 1437.5,
+    "line21_credits_total": 1437.5,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
-    "line33_total_payments": 5463,
-    "line35a_refund": 5463
+    "line25d_total_withholding": 3000,
+    "line33_total_payments": 5775.5,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 23625,
+    "line32_refundable_credits_total": 2775.5,
+    "line34_overpayment": 5775.5,
+    "line35a_refund": 5775.5
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
