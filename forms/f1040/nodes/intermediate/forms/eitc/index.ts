@@ -8,21 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  EITC_MAX_CREDIT_2025,
-  EITC_PHASE_IN_END_2025,
-  EITC_PHASEOUT_START_2025,
-  EITC_INCOME_LIMIT_2025,
-  EITC_INVESTMENT_INCOME_LIMIT_2025,
-} from "../../../config/2025.ts";
-
-// ─── TY2025 EITC Tables (Rev Proc 2024-40) — see config/2025.ts ──────────────
-
-const MAX_CREDIT = EITC_MAX_CREDIT_2025;
-const PHASE_IN_END = EITC_PHASE_IN_END_2025;
-const PHASEOUT_START = EITC_PHASEOUT_START_2025;
-const INCOME_LIMIT = EITC_INCOME_LIMIT_2025;
-const INVESTMENT_INCOME_LIMIT = EITC_INVESTMENT_INCOME_LIMIT_2025;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // Phase-in rates by number of qualifying children (IRC §32(b)(1))
 const PHASE_IN_RATE: Record<number, number> = {
@@ -60,7 +46,7 @@ export const inputSchema = z.object({
   filing_status: filingStatusSchema.optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
-  // If investment_income > INVESTMENT_INCOME_LIMIT, no EITC allowed
+  // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
   investment_income: z.number().nonnegative().optional(),
 
   // Set by Form 8862 when prior-year EITC disallowance has been cleared
@@ -80,30 +66,48 @@ function clampChildren(children: number): number {
   return Math.min(children, 3);
 }
 
-function phaseInCredit(earnedIncome: number, children: number): number {
+function phaseInCredit(
+  earnedIncome: number,
+  children: number,
+  maxCredit: Record<number, number>,
+  phaseInEnd: Record<number, number>,
+): number {
   const rate = PHASE_IN_RATE[children];
-  const maxCredit = MAX_CREDIT[children];
-  const phaseInEnd = PHASE_IN_END[children];
+  const max = maxCredit[children];
+  const end = phaseInEnd[children];
 
   if (earnedIncome <= 0) return 0;
 
   // Credit phases in at rate × earned income up to maximum
-  if (earnedIncome >= phaseInEnd) return maxCredit;
-  return Math.min(rate * earnedIncome, maxCredit);
+  if (earnedIncome >= end) return max;
+  return Math.min(rate * earnedIncome, max);
 }
 
-function phaseOutCredit(credit: number, agI: number, children: number, isJoint: boolean): number {
-  const [startSingle, startJoint] = PHASEOUT_START[children];
-  const phaseoutStart = isJoint ? startJoint : startSingle;
+function phaseOutCredit(
+  credit: number,
+  agI: number,
+  children: number,
+  isJoint: boolean,
+  phaseoutStart: Record<number, [number, number]>,
+): number {
+  const [startSingle, startJoint] = phaseoutStart[children];
+  const start = isJoint ? startJoint : startSingle;
 
-  if (agI <= phaseoutStart) return credit;
+  if (agI <= start) return credit;
 
   const rate = PHASEOUT_RATE[children];
-  const reduction = rate * (agI - phaseoutStart);
+  const reduction = rate * (agI - start);
   return Math.max(0, credit - reduction);
 }
 
-function computeEitc(input: EitcInput): number {
+function computeEitc(
+  input: EitcInput,
+  maxCredit: Record<number, number>,
+  phaseInEnd: Record<number, number>,
+  phaseoutStart: Record<number, [number, number]>,
+  incomeLimit: Record<number, [number, number]>,
+  investmentIncomeLimit: number,
+): number {
   const earnedIncome = (input.earned_income ?? 0) + (input.se_net_profit ?? 0);
   const agi = input.agi ?? earnedIncome;
   const children = clampChildren(input.qualifying_children ?? 0);
@@ -113,7 +117,7 @@ function computeEitc(input: EitcInput): number {
   if (input.filing_status === FilingStatus.MFS) return 0;
 
   // Investment income disqualifier (IRC §32(i))
-  if ((input.investment_income ?? 0) > INVESTMENT_INCOME_LIMIT) return 0;
+  if ((input.investment_income ?? 0) > investmentIncomeLimit) return 0;
 
   // Must have earned income
   if (earnedIncome <= 0) return 0;
@@ -121,15 +125,15 @@ function computeEitc(input: EitcInput): number {
   // Income limit — use max(earnedIncome, AGI) per IRC §32(a)(2)(B).
   // When AGI exceeds earned income (e.g. large capital gains), AGI controls.
   const phaseoutBase = Math.max(earnedIncome, agi);
-  const [limitSingle, limitJoint] = INCOME_LIMIT[children];
-  const incomeLimit = isJoint ? limitJoint : limitSingle;
-  if (phaseoutBase >= incomeLimit) return 0;
+  const [limitSingle, limitJoint] = incomeLimit[children];
+  const limit = isJoint ? limitJoint : limitSingle;
+  if (phaseoutBase >= limit) return 0;
 
   // Phase-in credit based on earned income
-  const creditBeforePhaseout = phaseInCredit(earnedIncome, children);
+  const creditBeforePhaseout = phaseInCredit(earnedIncome, children, maxCredit, phaseInEnd);
 
   // Phaseout based on max(earnedIncome, AGI) per IRC §32(a)(2)(B)
-  const finalCredit = phaseOutCredit(creditBeforePhaseout, phaseoutBase, children, isJoint);
+  const finalCredit = phaseOutCredit(creditBeforePhaseout, phaseoutBase, children, isJoint, phaseoutStart);
 
   return Math.round(finalCredit);
 }
@@ -146,9 +150,19 @@ class EitcNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(_ctx: NodeContext, rawInput: EitcInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: EitcInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+
     const input = inputSchema.parse(rawInput);
-    const credit = computeEitc(input);
+    const credit = computeEitc(
+      input,
+      cfg.eitcMaxCredit,
+      cfg.eitcPhaseInEnd,
+      cfg.eitcPhaseoutStart,
+      cfg.eitcIncomeLimit,
+      cfg.eitcInvestmentIncomeLimit,
+    );
     return { outputs: buildOutput(credit) };
   }
 }
