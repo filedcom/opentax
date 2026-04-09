@@ -8,12 +8,12 @@ value for total tax, refund, and amount owed.
 
 ```
 taxcalcbench/
-  tax2025.ts          # Reference Deno/TS 2025 tax calculator (brackets, EITC, CTC,
-  #                     SE tax, SSA taxability, LTCG, QBI, Additional Medicare Tax)
-  gen_correct.ts      # Reads each input.json → writes correct.json (ground truth)
   run_benchmark.ts    # Runs all cases through the engine, compares to correct.json
   run_case.ts         # Runs a single case through the engine, saves output.json
   run_all.ts          # Regenerates output.json for every case (bulk engine run)
+  harness/
+    state.json        # Active task state: pass/fail counts, root causes, phase
+    progress.md       # Append-only log of harness runs and outcomes
   cases/
     01-single-w2-minimal/
       input.json      # Tax return inputs (forms + filing info)
@@ -120,23 +120,15 @@ keyed by 1040 line numbers:
 }
 ```
 
-## Regenerating correct values
-
-If you update `tax2025.ts` (e.g. to fix a table value) or add new cases, regenerate
-all ground-truth files:
-
-```bash
-cd taxcalcbench
-deno run --allow-read --allow-write gen_correct.ts
-```
-
 ## Adding a new case
 
+Use `/tax-cases` to generate IRS-sourced cases automatically, or create manually:
+
 1. Create `cases/NN-description/input.json` following the format above.
-2. Run `deno run --allow-read --allow-write gen_correct.ts` to generate `correct.json`.
+2. Write `correct.json` with values sourced directly from an IRS publication (VITA Pub 4491, Pub 17, MeF test cases). Do not compute values — cite the IRS source.
 3. Run `deno run --allow-read --allow-write --allow-run run_benchmark.ts` to verify the engine result.
 
-## 2025 tax parameters (used in tax2025.ts)
+## 2025 tax parameters
 
 | Parameter | Value |
 |-----------|-------|
