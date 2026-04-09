@@ -8,15 +8,20 @@ import { dirname, fromFileUrl, join } from "@std/path";
 
 const SCRIPT_DIR = dirname(fromFileUrl(import.meta.url));
 const TAX_DIR    = join(SCRIPT_DIR, "..");
-const CASES_DIR  = join(SCRIPT_DIR, "cases");
 
 // ── CLI flags ─────────────────────────────────────────────────────────────────
 const args = Deno.args;
-const formFlag = (() => {
-  const i = args.indexOf("--form");
-  return i !== -1 ? args[i + 1] : null;
-})();
+
+function getFlag(flag: string, defaultVal: string): string {
+  const i = args.indexOf(flag);
+  return i !== -1 ? args[i + 1] : defaultVal;
+}
+
+const formFlag = getFlag("--form", "f1040");
+const yearFlag = getFlag("--year", "2025");
 const jsonFlag = args.includes("--json");
+
+const CASES_DIR = join(SCRIPT_DIR, "cases", formFlag, yearFlag);
 
 const RED = "\x1b[31m", GRN = "\x1b[32m", YEL = "\x1b[33m", DIM = "\x1b[2m", RST = "\x1b[0m";
 const CLEAR_LINE = "\x1b[2K\r";
@@ -159,8 +164,6 @@ const CONCURRENCY = 8;
 const names: string[] = [];
 for await (const e of Deno.readDir(CASES_DIR)) {
   if (!e.isDirectory) continue;
-  if (formFlag === "1120" && !e.name.startsWith("1120-")) continue;
-  if (formFlag === "1040" && e.name.startsWith("1120-")) continue;
   names.push(e.name);
 }
 names.sort();
