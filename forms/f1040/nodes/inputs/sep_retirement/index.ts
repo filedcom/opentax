@@ -8,24 +8,17 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import {
-  SEP_MAX_CONTRIBUTION_2025,
-  SEP_CONTRIBUTION_RATE_2025,
-} from "../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 // TY2025 — Self-employed retirement plan deduction (IRC §404(a)(8), §408(k), §408(p), §401(k))
 // Flows to Schedule 1, Part II, Line 16.
 // Limits from Rev Proc 2024-40.
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-const SEP_ANNUAL_LIMIT = SEP_MAX_CONTRIBUTION_2025; // Rev Proc 2024-40, §3.20 — 70_000
-const SEP_RATE = SEP_CONTRIBUTION_RATE_2025;        // IRC §404(a)(8); 25% of net SE compensation
-const SIMPLE_EMPLOYEE_LIMIT = 16_500;   // Rev Proc 2024-40, §3.24
-const SIMPLE_CATCHUP_LIMIT = 20_000;    // Rev Proc 2024-40, §3.24 (age 50+/64+: $16,500 + $3,500 catch-up)
+// ── Constants — unchanged across years ────────────────────────────────────────
+const SIMPLE_EMPLOYEE_LIMIT = 16_500;        // Rev Proc 2024-40, §3.24
+const SIMPLE_CATCHUP_LIMIT = 20_000;         // Rev Proc 2024-40, §3.24 (age 50+/64+: $16,500 + $3,500 catch-up)
 const SIMPLE_SECURE20_CATCHUP_LIMIT = 21_750; // SECURE 2.0 §109: age 60-63 super catch-up ($16,500 + $5,250)
-const SOLO401K_EMPLOYEE_LIMIT = 23_500; // Rev Proc 2024-40, §3.19
-const SOLO401K_COMBINED_LIMIT = SEP_MAX_CONTRIBUTION_2025; // IRC §415(c); Rev Proc 2024-40, §3.20 — 70_000
+const SOLO401K_EMPLOYEE_LIMIT = 23_500;      // Rev Proc 2024-40, §3.19
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
@@ -62,15 +55,14 @@ type SepRetirementItems = SepRetirementItem[];
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
-function sepDeduction(item: SepRetirementItem): number {
+function sepDeduction(item: SepRetirementItem, sepMax: number, sepRate: number): number {
   const contribution = item.sep_contribution ?? 0;
   if (contribution === 0) return 0;
-  const absoluteCap = SEP_ANNUAL_LIMIT;
   if (item.net_self_employment_compensation == null) {
-    return Math.min(contribution, absoluteCap);
+    return Math.min(contribution, sepMax);
   }
-  const seLimit = item.net_self_employment_compensation * SEP_RATE;
-  return Math.min(contribution, seLimit, absoluteCap);
+  const seLimit = item.net_self_employment_compensation * sepRate;
+  return Math.min(contribution, seLimit, sepMax);
 }
 
 function simpleDeduction(item: SepRetirementItem): number {
@@ -86,30 +78,30 @@ function simpleDeduction(item: SepRetirementItem): number {
   return employee + employer;
 }
 
-function solo401kDeduction(item: SepRetirementItem): number {
+function solo401kDeduction(item: SepRetirementItem, sepMax: number): number {
   const employee = Math.min(item.solo401k_employee_deferral ?? 0, SOLO401K_EMPLOYEE_LIMIT);
   const employer = item.solo401k_employer_contribution ?? 0;
-  return Math.min(employee + employer, SOLO401K_COMBINED_LIMIT);
+  return Math.min(employee + employer, sepMax);
 }
 
-function planDeduction(item: SepRetirementItem): number {
-  if (item.plan_type === PlanType.SEP) return sepDeduction(item);
+function planDeduction(item: SepRetirementItem, sepMax: number, sepRate: number): number {
+  if (item.plan_type === PlanType.SEP) return sepDeduction(item, sepMax, sepRate);
   if (item.plan_type === PlanType.SIMPLE) return simpleDeduction(item);
-  return solo401kDeduction(item);
+  return solo401kDeduction(item, sepMax);
 }
 
-function totalDeduction(items: SepRetirementItems): number {
-  return items.reduce((sum, item) => sum + planDeduction(item), 0);
+function totalDeduction(items: SepRetirementItems, sepMax: number, sepRate: number): number {
+  return items.reduce((sum, item) => sum + planDeduction(item, sepMax, sepRate), 0);
 }
 
-function schedule1Output(items: SepRetirementItems): NodeOutput[] {
-  const deduction = totalDeduction(items);
+function schedule1Output(items: SepRetirementItems, sepMax: number, sepRate: number): NodeOutput[] {
+  const deduction = totalDeduction(items, sepMax, sepRate);
   if (deduction === 0) return [];
   return [output(schedule1, { line16_sep_simple: deduction })];
 }
 
-function agiOutput(items: SepRetirementItems): NodeOutput[] {
-  const deduction = totalDeduction(items);
+function agiOutput(items: SepRetirementItems, sepMax: number, sepRate: number): NodeOutput[] {
+  const deduction = totalDeduction(items, sepMax, sepRate);
   if (deduction === 0) return [];
   return [output(agi_aggregator, { line16_sep_simple: deduction })];
 }
@@ -121,11 +113,13 @@ class SepRetirementNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     const outputs: NodeOutput[] = [
-      ...schedule1Output(parsed.sep_retirements),
-      ...agiOutput(parsed.sep_retirements),
+      ...schedule1Output(parsed.sep_retirements, cfg.sepMaxContribution, cfg.sepContributionRate),
+      ...agiOutput(parsed.sep_retirements, cfg.sepMaxContribution, cfg.sepContributionRate),
     ];
     return { outputs };
   }

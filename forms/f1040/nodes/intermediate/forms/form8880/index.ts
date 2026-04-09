@@ -8,29 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  SAVERS_CREDIT_CONTRIBUTION_CAP_2025,
-  SAVERS_CREDIT_AGI_SINGLE_2025,
-  SAVERS_CREDIT_AGI_HOH_2025,
-  SAVERS_CREDIT_AGI_MFJ_2025,
-} from "../../../config/2025.ts";
-
-// TY2025 constants — IRC §25B; Rev Proc 2024-40 (see config/2025.ts)
-const CONTRIBUTION_CAP = SAVERS_CREDIT_CONTRIBUTION_CAP_2025;
-
-// AGI thresholds (inclusive upper bound for each rate tier) by filing status group.
-// Single/MFS/QSS thresholds:
-const AGI_50_SINGLE = SAVERS_CREDIT_AGI_SINGLE_2025.rate50;
-const AGI_20_SINGLE = SAVERS_CREDIT_AGI_SINGLE_2025.rate20;
-const AGI_10_SINGLE = SAVERS_CREDIT_AGI_SINGLE_2025.rate10;
-// HOH thresholds:
-const AGI_50_HOH = SAVERS_CREDIT_AGI_HOH_2025.rate50;
-const AGI_20_HOH = SAVERS_CREDIT_AGI_HOH_2025.rate20;
-const AGI_10_HOH = SAVERS_CREDIT_AGI_HOH_2025.rate10;
-// MFJ thresholds:
-const AGI_50_MFJ = SAVERS_CREDIT_AGI_MFJ_2025.rate50;
-const AGI_20_MFJ = SAVERS_CREDIT_AGI_MFJ_2025.rate20;
-const AGI_10_MFJ = SAVERS_CREDIT_AGI_MFJ_2025.rate10;
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -59,31 +37,37 @@ type Form8880Input = z.infer<typeof inputSchema>;
 
 // Returns the credit rate (as a decimal) based on AGI and filing status.
 // Returns 0 if AGI exceeds the upper limit for the filing status.
-function creditRate(agi: number, status: FilingStatus): number {
+function creditRate(
+  agi: number,
+  status: FilingStatus,
+  agiSingle: { rate50: number; rate20: number; rate10: number },
+  agiHoh: { rate50: number; rate20: number; rate10: number },
+  agiMfj: { rate50: number; rate20: number; rate10: number },
+): number {
   if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
-    if (agi <= AGI_50_MFJ) return 0.50;
-    if (agi <= AGI_20_MFJ) return 0.20;
-    if (agi <= AGI_10_MFJ) return 0.10;
+    if (agi <= agiMfj.rate50) return 0.50;
+    if (agi <= agiMfj.rate20) return 0.20;
+    if (agi <= agiMfj.rate10) return 0.10;
     return 0;
   }
   if (status === FilingStatus.HOH) {
-    if (agi <= AGI_50_HOH) return 0.50;
-    if (agi <= AGI_20_HOH) return 0.20;
-    if (agi <= AGI_10_HOH) return 0.10;
+    if (agi <= agiHoh.rate50) return 0.50;
+    if (agi <= agiHoh.rate20) return 0.20;
+    if (agi <= agiHoh.rate10) return 0.10;
     return 0;
   }
   // Single, MFS
-  if (agi <= AGI_50_SINGLE) return 0.50;
-  if (agi <= AGI_20_SINGLE) return 0.20;
-  if (agi <= AGI_10_SINGLE) return 0.10;
+  if (agi <= agiSingle.rate50) return 0.50;
+  if (agi <= agiSingle.rate20) return 0.20;
+  if (agi <= agiSingle.rate10) return 0.10;
   return 0;
 }
 
 // Returns eligible contribution for one person after distributions and cap.
-// Line 3 = max(Line 1 - Line 2, 0); Line 4 = min(Line 3, CONTRIBUTION_CAP).
-function eligibleContribution(contributions: number, distributions: number): number {
+// Line 3 = max(Line 1 - Line 2, 0); Line 4 = min(Line 3, contributionCap).
+function eligibleContribution(contributions: number, distributions: number, contributionCap: number): number {
   const line3 = Math.max(0, contributions - distributions);
-  return Math.min(line3, CONTRIBUTION_CAP);
+  return Math.min(line3, contributionCap);
 }
 
 // Determines taxpayer elective deferrals.
@@ -108,12 +92,14 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(_ctx: NodeContext, input: Form8880Input): NodeResult {
+  compute(ctx: NodeContext, input: Form8880Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
 
     const agi = parsed.agi ?? 0;
     const status = parsed.filing_status ?? FilingStatus.Single;
-    const rate = creditRate(agi, status);
+    const rate = creditRate(agi, status, cfg.saversCreditAgiSingle, cfg.saversCreditAgiHoh, cfg.saversCreditAgiMfj);
 
     if (rate === 0) {
       return { outputs: [] };
@@ -121,10 +107,10 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
 
     // Part I — per-person eligible contributions
     const tContributions = (parsed.ira_contributions_taxpayer ?? 0) + taxpayerDeferrals(parsed);
-    const tEligible = eligibleContribution(tContributions, parsed.distributions_taxpayer ?? 0);
+    const tEligible = eligibleContribution(tContributions, parsed.distributions_taxpayer ?? 0, cfg.saversCreditContributionCap);
 
     const sContributions = (parsed.ira_contributions_spouse ?? 0) + spouseDeferrals(parsed);
-    const sEligible = eligibleContribution(sContributions, parsed.distributions_spouse ?? 0);
+    const sEligible = eligibleContribution(sContributions, parsed.distributions_spouse ?? 0, cfg.saversCreditContributionCap);
 
     // Part II — credit computation
     const totalEligible = tEligible + sEligible; // Line 7

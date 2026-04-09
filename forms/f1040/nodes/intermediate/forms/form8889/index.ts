@@ -10,11 +10,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form5329 } from "../form5329/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  HSA_SELF_ONLY_LIMIT_2025,
-  HSA_FAMILY_LIMIT_2025,
-  HSA_CATCHUP_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants — mathematical/statutory rates, unchanged across years ─────────
 
@@ -180,14 +176,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2, form5329]);
 
-  // IRC §223(b)(2)(A) — self-only HDHP annual contribution limit (TY2025)
-  protected readonly selfOnlyLimit = HSA_SELF_ONLY_LIMIT_2025;
-  // IRC §223(b)(2)(B) — family HDHP annual contribution limit (TY2025)
-  protected readonly familyLimit = HSA_FAMILY_LIMIT_2025;
-  // IRC §223(b)(3) — catch-up contribution for taxpayers age 55+ (TY2025)
-  protected readonly catchupLimit = HSA_CATCHUP_2025;
-
-  compute(_ctx: NodeContext, rawInput: Form8889Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8889Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(rawInput);
     // Default coverage_type to SelfOnly when not provided (e.g. employer-only
     // W-2 Box 12 Code W contributions). Creating a new object — no mutation.
@@ -198,15 +189,15 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
 
     const deductible = deductibleContributions(
       input,
-      this.selfOnlyLimit,
-      this.familyLimit,
-      this.catchupLimit,
+      cfg.hsaSelfOnlyLimit,
+      cfg.hsaFamilyLimit,
+      cfg.hsaCatchup,
     );
     const excess = excessContributions(
       input,
-      this.selfOnlyLimit,
-      this.familyLimit,
-      this.catchupLimit,
+      cfg.hsaSelfOnlyLimit,
+      cfg.hsaFamilyLimit,
+      cfg.hsaCatchup,
     );
     const taxable = taxableDistributions(input);
     const penalty = nonQualifiedPenalty(input, taxable);
