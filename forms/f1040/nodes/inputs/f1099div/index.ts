@@ -69,27 +69,25 @@ const SEC199A_MFJ_THRESHOLD = SEC199A_MFJ_THRESHOLD_2025;
 const HOLDING_PERIOD_199A_DAYS = 45;
 const HOLDING_PERIOD_FOREIGN_DAYS = 16;
 
-// Normalize a DIV item: repair sub-box values that may exceed their parent due
-// to payer data entry errors. Per IRS instructions box1b ≤ box1a must hold
-// (qualified dividends are a subset of ordinary dividends), but real-world
-// brokerage data occasionally violates this.
+// Normalize a DIV item: clamp sub-box values that may exceed their parent due
+// to payer data entry errors.
 //
-// When box1b > box1a, the most likely cause is that the payer reported the
-// qualified amount in the wrong box. In this case we promote box1b to be the
-// ordinary dividend amount (box1a) — the larger figure — so no income is lost,
-// and keep box1b at that same (promoted) value so all dividends qualify.
-// This matches how professional tax software (e.g., CCH Axcess) treats the error.
+// box1b (qualified dividends) is passed through as reported, even when it
+// exceeds box1a (ordinary dividends). This mirrors CCH Axcess behavior: the
+// qualified dividend amount from box1b flows to the QDCG worksheet regardless
+// of its relationship to box1a. Ordinary dividends (box1a) are never inflated.
+// All other sub-boxes (box2b–box2f, box5, box13) are clamped to their parents.
 function normalizeDivItem(item: DIVItem): DIVItem {
-  const box1b = item.box1b ?? 0;
-  const box1a = box1b > item.box1a ? box1b : item.box1a;
+  const box1a = item.box1a;
   const box2a = item.box2a ?? 0;
   const box12 = item.box12 ?? 0;
   return {
     ...item,
-    // When box1b exceeded the original box1a, promote box1a to match box1b
+    // box1a is authoritative for ordinary dividends — never inflate it
     box1a,
-    // box1b is already ≤ box1a after the promotion above
-    box1b: item.box1b !== undefined ? Math.min(item.box1b, box1a) : undefined,
+    // box1b is used as reported (qualified dividends may exceed ordinary when
+    // payer data has the boxes swapped; CCH Axcess accepts this without clamping)
+    box1b: item.box1b,
     // box5 (§199A dividends) cannot exceed box1a
     box5: item.box5 !== undefined ? Math.min(item.box5, box1a) : undefined,
     // box2e (Section 897 ordinary dividends) cannot exceed box1a
@@ -117,11 +115,6 @@ function validateDivItem(item: DIVItem): void {
   const box12 = item.box12 ?? 0;
   const box13 = item.box13 ?? 0;
 
-  if (box1b > box1a) {
-    throw new Error(
-      `DIV validation error: box1b (${box1b}) cannot exceed box1a (${box1a}) — qualified dividends cannot exceed total ordinary dividends`,
-    );
-  }
   if (box2b + box2c + box2d + box2f > box2a) {
     throw new Error(
       `DIV validation error: sum of box2b+box2c+box2d+box2f (${

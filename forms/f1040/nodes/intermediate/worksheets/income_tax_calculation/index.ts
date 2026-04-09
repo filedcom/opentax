@@ -47,6 +47,20 @@ const QDCGT_THRESHOLDS_BY_YEAR: Record<number, QdcgtThresholds> = {
   },
 };
 
+// ─── Accumulable helper ───────────────────────────────────────────────────────
+
+// Fields that may arrive from multiple upstream nodes (e.g. f1099div and k1_partnership
+// both routing qualified_dividends) accumulate as arrays in the executor pending dict.
+// Declaring them accumulable prevents Zod parse failure; sumField collapses to a scalar.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumField(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s: number, n: number) => s + n, 0);
+  return value;
+}
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 // Income Tax Calculation — Form 1040 Line 16
@@ -66,8 +80,10 @@ export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
 
   // ── QDCGT Worksheet inputs (optional) ────────────────────────────────────
-  // Form 1040 Line 3a — Qualified dividends (from f1099div).
-  qualified_dividends: z.number().nonnegative().optional(),
+  // Form 1040 Line 3a — Qualified dividends (from f1099div, k1_partnership, k1_s_corp, etc.).
+  // Accumulable: multiple upstream nodes may each deposit their portion; the executor
+  // accumulates them as an array which sumField collapses to a single total.
+  qualified_dividends: accumulable(z.number().nonnegative()).optional(),
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
@@ -199,7 +215,9 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const floor = input.foreign_earned_income_exclusion ?? 0;
 
     // Apply QDCGT / Schedule D Tax Worksheet when preferential income is present.
-    const qualDiv = input.qualified_dividends ?? 0;
+    // qualified_dividends is accumulable: multiple upstream nodes (f1099div, k1_partnership, etc.)
+    // may each deposit their portion; sumField collapses the accumulated array to a scalar.
+    const qualDiv = sumField(input.qualified_dividends as number | number[] | undefined);
     const netCg = input.net_capital_gain ?? 0;
     const unrecaptured1250 = input.unrecaptured_1250_gain ?? 0;
     const rate28 = input.rate_28_gain ?? 0;

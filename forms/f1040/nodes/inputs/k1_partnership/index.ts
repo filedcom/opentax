@@ -12,6 +12,7 @@ import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -216,11 +217,16 @@ function scheduleBDividendOutputs(items: K1PartnershipItems): NodeOutput[] {
     );
 }
 
-// Aggregate qualified dividends (Box 6b) → f1040 line3a
+// Aggregate qualified dividends (Box 6b) → f1040 line3a + income_tax_calculation QDCGT worksheet
+// IRC §1(h): qualified dividends from partnerships receive preferential 0%/15%/20% rates.
+// Both outputs carry the same aggregated total; income_tax_calculation uses it for QDCGT.
 function f1040QualDivOutput(items: K1PartnershipItems): NodeOutput[] {
   const total = items.reduce((sum, item) => sum + (item.box6b_qualified_dividends ?? 0), 0);
   if (total <= 0) return [];
-  return [output(f1040, { line3a_qualified_dividends: total })];
+  return [
+    output(f1040, { line3a_qualified_dividends: total }),
+    output(income_tax_calculation, { qualified_dividends: total }),
+  ];
 }
 
 // Aggregate capital gains/losses → schedule_d (one merged output)
@@ -321,6 +327,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form_1116,
     unrecaptured_1250_worksheet,
     form6251,
+    income_tax_calculation,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
