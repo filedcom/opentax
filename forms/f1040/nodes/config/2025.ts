@@ -581,6 +581,21 @@ export const SEP_MAX_CONTRIBUTION_2025 = 70_000;
 /** SIMPLE IRA employer matching rate — 3% of compensation (statutory; IRC §408(p)(2)(A)(iii)). */
 export const SIMPLE_EMPLOYER_MATCH_RATE_2025 = 0.03;
 
+// ─── Student Loan Interest Deduction Phase-out (IRC §221(b)) ─────────────────
+// Rev. Proc. 2024-40, §3.15; IRC §221(b)(2)
+
+/** SLI phase-out start — Single/HOH/QSS (TY2025). */
+export const SLI_PHASE_OUT_START_SINGLE_2025 = 85_000;
+
+/** SLI phase-out end — Single/HOH/QSS (TY2025). */
+export const SLI_PHASE_OUT_END_SINGLE_2025 = 100_000;
+
+/** SLI phase-out start — MFJ (TY2025). */
+export const SLI_PHASE_OUT_START_MFJ_2025 = 175_000;
+
+/** SLI phase-out end — MFJ (TY2025). */
+export const SLI_PHASE_OUT_END_MFJ_2025 = 205_000;
+
 // ─── Form 2106 — Employee Business Expenses ───────────────────────────────────
 // IRC §62(a)(2)(B)(ii); not indexed for inflation
 

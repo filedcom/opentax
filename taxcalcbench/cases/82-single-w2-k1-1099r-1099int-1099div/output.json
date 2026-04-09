@@ -1,14 +1,14 @@
 {
-  "returnId": "f3e7cf7e-b25b-431e-8ecf-b598a0b53fd8",
+  "returnId": "fb2e3c29-bd12-4911-84eb-f4439db8c470",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 140125,
     "line9_total_income": 198812,
-    "line11_agi": 196312,
-    "line15_taxable_income": 180562,
-    "line24_total_tax": 35342.880000000005,
-    "line33_total_payments": 17590,
-    "line37_amount_owed": 17752.880000000005
+    "line11_agi": 198812,
+    "line15_taxable_income": 183062,
+    "line24_total_tax": 35942.880000000005,
+    "line33_total_payments": 18381.87,
+    "line37_amount_owed": 17561.010000000006
   },
   "forms": [
     "agi_aggregator",
@@ -33,7 +33,6 @@
     "schedule_a",
     "schedule_b",
     "schedule_d",
-    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -80,15 +79,12 @@
       2900,
       2900
     ],
+    "line25c_additional_medicare_withheld": 791.87,
     "line11_agi": [
-      196312,
-      196312
+      198812,
+      198812
     ],
     "line8_additional_income": 50265,
-    "line10_adjustments": [
-      2500,
-      2500
-    ],
     "line12e_itemized_deductions": [
       0,
       0
@@ -98,25 +94,26 @@
       15750
     ],
     "line15_taxable_income": [
-      180562,
-      180562
+      183062,
+      183062
     ],
     "line16_income_tax": [
-      35398.880000000005,
-      35398.880000000005
+      35998.880000000005,
+      35998.880000000005
     ],
     "line20_nonrefundable_credits": 56,
     "line1z_total_wages": 140125,
     "line9_total_income": 198812,
-    "line18_total_tax_before_credits": 35398.880000000005,
+    "line18_total_tax_before_credits": 35998.880000000005,
     "line21_credits_total": 56,
-    "line22_tax_after_credits": 35342.880000000005,
-    "line24_total_tax": 35342.880000000005,
-    "line25d_total_withholding": 17590,
-    "line33_total_payments": 17590,
+    "line22_tax_after_credits": 35942.880000000005,
+    "line24_total_tax": 35942.880000000005,
+    "line25d_total_withholding": 18381.87,
+    "line33_total_payments": 18381.87,
+    "line10_adjustments": 0,
     "line14_deductions_qbi_total": 15750,
     "line32_refundable_credits_total": 0,
-    "line37_amount_owed": 17752.880000000005
+    "line37_amount_owed": 17561.010000000006
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

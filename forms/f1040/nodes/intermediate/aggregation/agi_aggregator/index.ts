@@ -12,6 +12,12 @@ import { f2441 } from "../../../inputs/f2441/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
+import {
+  SLI_PHASE_OUT_START_SINGLE_2025,
+  SLI_PHASE_OUT_END_SINGLE_2025,
+  SLI_PHASE_OUT_START_MFJ_2025,
+  SLI_PHASE_OUT_END_MFJ_2025,
+} from "../../../config/2025.ts";
 
 // AGI Aggregator — Form 1040 Line 11
 //
@@ -262,9 +268,8 @@ function exclusions(input: AgiInput): number {
   );
 }
 
-// Sum above-the-line deductions (Schedule 1 Part II).
-// IRC §62 allows these before arriving at AGI.
-function aboveLineDeductions(input: AgiInput): number {
+// Sum above-the-line deductions excluding SLI (used to compute MAGI for SLI phase-out).
+function aboveLineDeductionsExceptSli(input: AgiInput): number {
   return (
     (input.line11_educator_expenses ?? 0) +
     (input.line12_business_expenses ?? 0) +
@@ -275,11 +280,43 @@ function aboveLineDeductions(input: AgiInput): number {
     (input.line16_sep_simple ?? 0) +
     (input.line17_se_health_insurance ?? 0) +
     (input.line18_early_withdrawal ?? 0) +
-    (input.line19_student_loan_interest ?? 0) +
     (input.line20_ira_deduction ?? 0) +
     (input.line23_archer_msa_deduction ?? 0) +
     (input.line24f_501c18d ?? 0)
   );
+}
+
+// Compute phase-out adjusted student loan interest deduction (IRC §221(b)(2)).
+// MAGI = provisional AGI without SLI = gross income - exclusions - other above-line deductions.
+// Phase-out: single/HOH $85k–$100k; MFJ $175k–$205k; MFS not eligible.
+function computeAdjustedSli(input: AgiInput): number {
+  const raw = input.line19_student_loan_interest ?? 0;
+  if (raw <= 0) return 0;
+  // MFS cannot deduct student loan interest (IRC §221(b)(2)(B))
+  if (input.filing_status === "mfs") return 0;
+
+  const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
+  const phaseOutStart = isMfj ? SLI_PHASE_OUT_START_MFJ_2025 : SLI_PHASE_OUT_START_SINGLE_2025;
+  const phaseOutEnd = isMfj ? SLI_PHASE_OUT_END_MFJ_2025 : SLI_PHASE_OUT_END_SINGLE_2025;
+
+  // MAGI for SLI = AGI before SLI deduction.
+  // Use SSA gross from input (line6b_ss_taxable if pre-computed, else 0 for MAGI purposes)
+  // to avoid circular dependency with resolveSsaTaxable.
+  const ssaTaxable = input.line6b_ss_taxable ?? 0;
+  const magi = nonSsaIncome(input) + ssaTaxable - exclusions(input) - aboveLineDeductionsExceptSli(input);
+
+  if (magi <= phaseOutStart) return raw;
+  if (magi >= phaseOutEnd) return 0;
+
+  // Linear phase-out; IRS rounds to nearest dollar
+  const phaseOutRatio = (magi - phaseOutStart) / (phaseOutEnd - phaseOutStart);
+  return Math.round(raw * (1 - phaseOutRatio));
+}
+
+// Sum above-the-line deductions (Schedule 1 Part II).
+// IRC §62 allows these before arriving at AGI.
+function aboveLineDeductions(input: AgiInput): number {
+  return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input);
 }
 
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
