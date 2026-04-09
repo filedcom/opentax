@@ -1,5 +1,5 @@
 {
-  "returnId": "4e4ff26e-f370-47df-8cf7-65fda255c93d",
+  "returnId": "4981313e-776e-4a62-8935-31fc4644987d",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 410388.67,
@@ -33,6 +33,7 @@
     "schedule_a",
     "schedule_b",
     "schedule_d",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
