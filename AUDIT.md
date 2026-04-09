@@ -1,228 +1,111 @@
-# Tax Engine Audit
-> Generated: 2026-04-09 | Branch: main
+# Tax Engine Audit — taxcalcbench
+> Updated: 2026-04-09 | Branch: main | 75/97 pass, 22 fail
+
+Command: `deno run --allow-read --allow-write --allow-run taxcalcbench/run_benchmark.ts`
+
+Tolerance: ±$5 on `line24_total_tax`, `line35a_refund`, `line37_amount_owed`.
 
 ---
 
-## Test Suite
-
-### Unit + Integration Tests (`deno task test`)
-
-Command: `deno test --allow-read --allow-write --allow-run=xmllint`
+## Summary
 
 ```
-ok | 6080 passed | 0 failed | 48 ignored (31s)
+Results: 75 PASS  22 FAIL  out of 97 cases
 ```
 
-**All unit and integration tests pass.**
+---
 
-> Note: Running bare `deno test` (no flags) produces 58 spurious failures — all permission errors, not logic bugs. Always use `deno task test`.
+## Failing Cases by Root Cause
+
+### Root Cause 1 — k1_partnership over-inflates AGI and tax
+
+All single-filer cases with `k1_partnership`. Engine over-computes tax by a fixed delta (~$8,852 or ~$10,508) suggesting a specific k1 income field is double-counted or misrouted.
+
+| Case | Correct Tax | Eng Tax | Δ | Correct Owed | Eng Owed |
+|------|-------------|---------|---|--------------|----------|
+| 54-single-w2-k1-1099r-1099int-1099div-1099b | 325,672 | 336,180 | +10,508 | 314,486 | 324,994 |
+| 65-single-w2-k1-1099r-1099int-1099div | 325,559 | 336,067 | +10,508 | 314,373 | 324,881 |
+| 66-single-w2-k1-1099r-1099int-1099div | 325,559 | 336,067 | +10,508 | 314,373 | 324,881 |
+| 69-single-w2-k1-1099r-1099int-1099div-1099b | 297,908 | 308,416 | +10,508 | 286,722 | 297,230 |
+| 87-single-w2-k1-1099r-1099int-1099div | 297,796 | 308,303 | +10,508 | 286,610 | 297,117 |
+| 89-single-w2-k1-1099r-1099int-1099div | 297,796 | 308,303 | +10,508 | 286,610 | 297,117 |
+| 57-single-w2-k1-1099r-1099int-1099div-1099b | 321,232 | 330,084 | +8,852 | 310,046 | 318,898 |
+| 74-single-w2-k1-1099r-1099int-1099div-1099b | 293,468 | 302,320 | +8,852 | 282,282 | 291,134 |
+
+The consistent $10,508 / $8,852 deltas point to a fixed income amount (likely k1 box1 or a specific k1 field) being counted twice. At 37% marginal rate: $10,508 → ~$28,400 extra income; $8,852 → ~$23,924. Two variants of k1 income amounts.
+
+Also in this group — 10M income variants:
+
+| Case | Correct Tax | Eng Tax | Δ |
+|------|-------------|---------|---|
+| 56-single-w2-k1-1099r-1099int-1099div-1099b (10M) | 4,464,296 | 4,781,782 | +317,486 |
+| 73-single-w2-k1-1099r-1099int-1099div-1099b (10M) | 4,073,932 | 4,391,419 | +317,487 |
+
+Same +$317,487 delta across both 10M cases — same double-counting, larger base.
+
+**Related k1 cases with payment/owed mismatch (tax correct, withholding wrong):**
+
+| Case | Correct Tax | Eng Tax | Correct Owed | Eng Owed | Δ Owed |
+|------|-------------|---------|--------------|----------|--------|
+| 61-single-w2-k1-1099r-1099int-1099div | 35,605 | 35,605 | 17,224 | 18,015 | +792 |
+| 82-single-w2-k1-1099r-1099int-1099div | 35,943 | 35,343 | 17,561 | 17,753 | +192 |
+
+Case 61: tax exact, owed wrong → payments under-counted. Case 82: tax slightly off + owed wrong.
+
+**K1 case with estimated tax payments:**
+
+| Case | Correct Tax | Eng Tax | Δ | Correct Owed | Eng Owed |
+|------|-------------|---------|---|--------------|----------|
+| 70-single-w2-k1-1099r-1099int-1099div-1099b-estimated-tax | 291,662 | 293,566 | +1,904 | 26,479 | 28,383 |
+
+Smaller delta — k1 over-count partially offset by estimated tax payments, or different k1 amounts.
+
+**K1 case with over-refund (engine over-taxes on a refund case):**
+
+| Case | Correct Tax | Eng Tax | Δ | Correct Refund | Eng Refund |
+|------|-------------|---------|---|----------------|------------|
+| 95-single-w2-k1-1099r-1099int-1099div-1099b | 283,347 | 285,088 | +1,741 | 16,734 | 14,992 | -1,742 |
 
 ---
 
-### CCH Benchmark (`testcases/run_bench.ts`)
+### Root Cause 2 — SALT cap not applied
 
-Command: `deno run --allow-read --allow-write --allow-run testcases/run_bench.ts`
+MFJ cases: engine does not cap state+local taxes at $10,000 ($5,000 MFS). Engine under-taxes because it applies full SALT deduction, reducing taxable income more than it should.
 
-```
-Results: 0 PASS  26 FAIL  0 SKIP  out of 26 CCH cases
-Tolerance: ±$5 on total_tax, refund, and amount_owed
-```
+| Case | Correct Tax | Eng Tax | Δ | Note |
+|------|-------------|---------|---|------|
+| 86-mfj-w2 | 41,537 | 39,113 | -2,424 | AGI exact, SALT deduction too large |
+| 76-mfj-w2-1099int-1099b | 104,954 | 103,280 | -1,674 | MFJ with investments |
+| 90-mfj-w2-1099int-1099div-1099b | 251,376 | 252,187 | +811 | MFJ investments (also STCG, see below) |
 
-**26/26 cases fail.** Failures cluster into distinct patterns:
-
----
-
-## CCH Benchmark Failures
-
-### Pattern A — Consistent small overstatement: W2 + investments + k1_partnership (single)
-
-| Case | Scenario | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---|
-| 019c9663 | Oliver K. Filed — single | 306,731 | 309,981 | +3,250 |
-| 019caf68 | Oliver K. Filed — single (dup) | 306,731 | 309,981 | +3,250 |
-
-Input nodes: `w2, f1099int, f1099div, f1099b, f1099r, k1_partnership`
-
-Consistent +$3,250 delta across two variants of the same case. AGI also overstated (866k→906k). Likely a specific income item being over-counted or a deduction being missed.
+Fix: Schedule A node must cap line 5d (total SALT) at $10,000 for MFJ.
 
 ---
 
-### Pattern B — AGI inflation: W2 + investments + k1_partnership, high income
+### Root Cause 3 — STCG taxed at preferential LTCG rate (should be ordinary)
 
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cd29c | Oliver K. Filed — single (10M) | 10,600,972 | 11,248,263 | 4,348,076 | 4,359,891 | +11,815 |
-| 019cd370 | Oliver K. Filed — single + estimated pmts | 850,922 | 894,333 | 298,282 | 304,341 | +6,059 |
-| 019d0cd2 | Oliver K. Filed — single + estimated pmts | 862,646 | 906,057 | 304,266 | 309,879 | +5,613 |
+Single-filer cases with `f1099b` Part A (short-term) gains. Engine applies QDCG preferential rate to STCG, under-taxing.
 
-Input nodes: `w2, f1099int, f1099div, f1099b, f1099r, k1_partnership` (some have `f1040es`)
+| Case | Correct Tax | Eng Tax | Δ | Correct Owed | Eng Owed |
+|------|-------------|---------|---|--------------|----------|
+| 58-single-w2-1099int-1099div-1099b | 118,731 | 119,536 | +805 | 25,648 | 26,453 |
+| 75-single-w2-1099int-1099div-1099b | 117,627 | 118,432 | +805 | 24,544 | 25,349 |
+| 94-single-w2-1099r-1099int-1099div-1099b | 152,867 | 153,078 | +211 | 4,525 | 4,737 |
+| 67-single-w2-1099r-1099int-1099div-1099b-ssa | 35,919 | 35,933 | +14 | 3,221 | 3,235 |
+| 91-single-w2-1099int-1099div-1099b-ssa | 3,972 | 4,032 | +60 | 2,779 | 2,840 |
 
-AGI is consistently inflated. Tax overstatement tracks AGI overstatement. Root cause is upstream of tax calculation — likely a k1 or investment income node double-counting income.
-
-**019d07c8** is a more extreme case of the same type:
-
-| Case | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|---------|---------|---------|---------|---|
-| 019d07c8 | 2,318,977 | 906,057 | 910,150 | 309,879 | -600,271 |
-
-Here AGI is vastly *under*stated (2.3M→906k), causing a massive under-tax. Same input set with `f1040es`. The f1040es node or some large income source is not being ingested.
-
----
-
-### Pattern C — Massive under-tax: W2 + f1099div + f1099b (single, ~$457k AGI)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cd91b | Eileen F. Figone — single | 457,477 | 457,477 | 110,839 | 2,660 | **-108,179** |
-| 019d21f5 | Eileen F. Figone — single (dup) | 457,477 | 457,477 | 110,839 | 2,660 | **-108,179** |
-| 019d21f6 | Eileen F. Figone — single (dup) | 457,477 | 457,477 | 110,839 | 2,660 | **-108,179** |
-
-Input nodes: `w2, f1099div, f1099int, f1099b`
-
-AGI is correct but tax is $108k short. Engine produces a $97k refund instead of $0. This is the most severe bug. The engine computes grossly incorrect tax from correctly ingested income. Likely cause: capital gains from `f1099b` or qualified dividends from `f1099div` are not flowing into the tax calculation (Form 8949 / Schedule D not wiring to 1040 tax computation, or QDCG tax rate worksheet not applied to a $457k income).
-
----
-
-### Pattern D — Over-tax: k1_partnership + f1040es + f1099r (mfj, no W2)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cddd6 | John S. Moore — mfj | 240,331 | 193,470 | 10,512 | 25,461 | **+14,949** |
-| 019ce2ac | John S. Moore — mfj (dup) | 240,331 | 193,470 | 10,512 | 25,461 | **+14,949** |
-
-Input nodes: `f1099int, f1099r, k1_partnership, f1040es`
-
-AGI is *under*stated (240k→193k) but tax is *over*stated (+15k). This contradicts the normal tax/AGI correlation — suggests a specific deduction or income exclusion is wrong. Could be k1 passive loss, or f1099r distribution being taxed at wrong rate, or MFJ bracket/deduction issue.
-
----
-
-### Pattern E — Zero tax: investments only (single)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cdfb1 | Mary Coles — single | 100,757 | 82,315 | 7,249 | 0 | **-7,249** |
-| 019ce36f | Mary Coles — single (dup) | 100,757 | 82,315 | 7,249 | 0 | **-7,249** |
-
-Input nodes: `f1099b, f1099div, f1099int, f1099r`
-
-No W2. Engine produces $0 tax and a spurious $653 refund. AGI also understated (101k→82k). Investment-only return with no wages — the engine likely isn't routing capital gains / dividends to 1040 tax lines at all without a W2 anchor.
-
----
-
-### Pattern F — Small under-tax: W2 + investments + k1_partnership (single)
-
-| Case | Scenario | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---|
-| 019cf656 | Michael L. Harper — single | 35,933 | 35,238 | -695 |
-
-Input nodes: `f1099div, f1099int, f1099r, k1_partnership, w2`
-
-Small $695 shortfall. AGI also understated (198k→192k). Minor income routing gap.
-
----
-
-### Pattern G — Moderate over-tax: W2 + f1099r (single)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cf75d | Daniel Sisler — single | 184,870 | 189,105 | 29,668 | 34,452 | +4,784 |
-| 019cf79f | Daniel Sisler — single (dup) | 184,870 | 189,105 | 29,668 | 34,452 | +4,784 |
-| 019cf7a4 | Daniel Sisler — single (dup) | 184,870 | 189,105 | 29,668 | 34,452 | +4,784 |
-
-Input nodes: `f1099int, f1099r, w2`
-
-AGI inflated +$4k, tax inflated +$4,784. Likely f1099r taxable amount being over-counted (e.g., not applying basis/exclusion ratio, or not handling Box 2b total distribution correctly).
-
----
-
-### Pattern H — Over-tax: W2 only (HOH)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cf75f | Jill R. Geerts — hoh | 77,129 | 78,083 | 4,583 | 6,195 | +1,612 |
-| 019cf760 | Jill R. Geerts — hoh (dup) | 77,129 | 78,083 | 4,583 | 6,195 | +1,612 |
-| 019cf761 | Jill R. Geerts — hoh (dup) | 77,129 | 78,083 | 4,583 | 6,195 | +1,612 |
-| 019cf77e | Jill R. Geerts — hoh (dup) | 77,129 | 78,083 | 4,583 | 6,195 | +1,612 |
-| 019cf7a2 | Jill R. Geerts — hoh (dup) | 77,129 | 78,083 | 4,583 | 6,195 | +1,612 |
-| 019cf7a6 | Jill R. Geerts — hoh (dup) | 77,129 | 78,083 | 4,583 | 6,195 | +1,612 |
-
-Input nodes: `w2` only
-
-Simplest possible case. AGI slightly inflated (+$954) and tax inflated (+$1,612). The delta is disproportionate to AGI difference, suggesting a HOH standard deduction or bracket issue in addition to the AGI error.
-
----
-
-### Pattern I — Moderate over-tax: W2 + f1099int (mfj)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cf77b | Zechariah J. Van Daalwyk — mfj | 160,244 | 160,244 | 13,752 | 18,152 | +4,400 |
-
-Input nodes: `f1099int, w2`
-
-AGI is exact but tax overstated by $4,400. Pure tax calculation error for MFJ with interest income. Likely MFJ bracket table or standard deduction wrong.
-
----
-
-### Pattern J — Lyle C. Spence mfj under-tax (investments + f1099r only)
-
-| Case | Scenario | CCH AGI | Eng AGI | CCH Tax | Eng Tax | Δ |
-|------|----------|---------|---------|---------|---------|---|
-| 019cbfe2 | Lyle C. Spence — mfj | 129,223 | 93,951 | 10,959 | 6,556 | -4,403 |
-| 019cbff6 | Lyle C. Spence — mfj (dup) | 129,223 | 93,951 | 10,959 | 6,556 | -4,403 |
-
-Input nodes: `f1099b, f1099div, f1099int, f1099r`
-
-No W2. AGI understated (~35k gap), tax understated. Investment-only MFJ return not fully ingesting income.
-
----
-
-## Cross-Cutting Themes
-
-### Theme 1: AGI Inflation/Deflation
-
-Most cases show AGI mismatch before tax is even computed. This points to income node bugs upstream:
-- `k1_partnership` may be double-counting or misrouting income (Patterns A, B, D, F)
-- `f1099b`/`f1099div` without W2 may not reach AGI at all (Patterns E, J)
-- `f1040es` may corrupt AGI in some cases (Pattern B's 019d07c8)
-
-### Theme 2: Tax Calculation Errors Independent of AGI
-
-Pattern C (Eileen) and Pattern I (Van Daalwyk) have correct AGI but wrong tax. This means the tax computation layer itself has bugs:
-- QDCG/qualified dividend preferential rate may not be applied
-- MFJ bracket tables may be wrong
-- AMT may not be triggering at high income levels
-
-### Theme 3: Investment-Only Returns Completely Broken
-
-Patterns E and J (no W2, investment income only) produce wrong AGI and zero or near-zero tax. The engine may require a W2 as an anchor for income routing.
-
-### Theme 4: HOH Tax Slightly Wrong on Simplest Case
-
-Pattern H is W2-only HOH and still fails. This suggests a fundamental issue with HOH standard deduction or tax brackets even before complex income types are considered.
+Cases 58 and 75 have identical +$805 Δ — same f1099b composition, different form combos. Fix: f1099b Part A ("A") → route as ordinary income, not to QDCG worksheet.
 
 ---
 
 ## Priority Order
 
-| # | Pattern | Max Δ | Fix Approach |
-|---|---------|-------|--------------|
-| 1 | C — Eileen (massive under-tax) | -$108,179 | Debug QDCG/Schedule D → 1040 tax line wiring |
-| 2 | D/B 019d07c8 — AGI collapse | -$600k | Debug f1040es and k1 income routing |
-| 3 | E/J — investment-only $0 tax | -$7,249+ | Debug capital gains routing without W2 |
-| 4 | H — HOH simple W2 over-tax | +$1,612 | Check HOH standard deduction + brackets |
-| 5 | I — MFJ AGI-exact over-tax | +$4,400 | Check MFJ bracket table / standard deduction |
-| 6 | G — f1099r inflation | +$4,784 | Check f1099r taxable amount calculation |
-| 7 | D — Moore MFJ over-tax | +$14,949 | Check k1 / f1099r interaction for MFJ |
-| 8 | A/B — k1 AGI inflation (small) | +$3,250–11,815 | Check k1_partnership income routing |
-| 9 | F — Harper small delta | -$695 | Minor k1 or f1099div routing gap |
-
----
-
-## Infrastructure Note
-
-`deno bench` without flags fails with `NotCapable: Requires read access`. The bench harness (`testcases/run_bench.ts`) should be run via:
-```
-deno run --allow-read --allow-write --allow-run testcases/run_bench.ts
-```
-or add a `deno task bench:cch` entry to `deno.json`.
+| # | Root Cause | Cases | Max Δ | Fix |
+|---|-----------|-------|-------|-----|
+| 1 | k1 over-counts income (10M) | 56, 73 | +317k | Find which k1 field doubles at 10M scale |
+| 2 | k1 over-counts income (~$900k) | 54, 57, 65, 66, 69, 74, 87, 89 | +10,508 | Same fix as above — consistent $10,508 delta |
+| 3 | k1 + estimated tax | 70 | +1,904 | Same k1 fix, smaller impact |
+| 4 | k1 + refund direction | 95 | +1,741 | Same k1 fix |
+| 5 | k1 payment mismatch | 61, 82 | +792 owed | k1 affecting withholding routing |
+| 6 | SALT cap missing (MFJ) | 76, 86, 90 | -2,424 | Cap Schedule A line 5d at $10,000 MFJ |
+| 7 | STCG at LTCG rate | 58, 67, 75, 91, 94 | +805 | Route f1099b Part A as ordinary income |

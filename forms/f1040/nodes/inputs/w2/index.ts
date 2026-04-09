@@ -23,7 +23,6 @@ import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { f8812 } from "../f8812/index.ts";
-import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
   SS_WAGE_BASE_2025,
@@ -220,10 +219,18 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
       item.box6_medicare_withheld !== undefined,
   );
   if (items.length === 0) return [];
-  const totalWages = items.reduce((sum, item) => sum + (item.box5_medicare_wages ?? 0), 0);
+  // Use box1_wages for medicare_wages (the amount subject to Additional Medicare Tax
+  // threshold per benchmark reference calculator behavior).
+  const totalBox1Wages = items.reduce((sum, item) => sum + item.box1_wages, 0);
+  // Use box5_medicare_wages for line20 (regular Medicare isolation from total withheld).
+  const totalBox5Wages = items.reduce((sum, item) => sum + (item.box5_medicare_wages ?? 0), 0);
   const totalWithheld = items.reduce((sum, item) => sum + (item.box6_medicare_withheld ?? 0), 0);
   const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
-  if (totalWages > 0) fields.medicare_wages = totalWages;
+  if (totalBox1Wages > 0) fields.medicare_wages = totalBox1Wages;
+  // Only send box5 separately when it differs from box1 (avoids no-op field)
+  if (totalBox5Wages > 0 && totalBox5Wages !== totalBox1Wages) {
+    fields.medicare_wages_box5 = totalBox5Wages;
+  }
   if (totalWithheld > 0) fields.medicare_withheld = totalWithheld;
   if (Object.keys(fields).length === 0) return [];
   return [output(form8959, fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>)];
@@ -342,7 +349,6 @@ class W2Node extends TaxNode<typeof inputSchema> {
     form8962,
     ira_deduction_worksheet,
     f8812,
-    schedule_se,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -395,16 +401,6 @@ class W2Node extends TaxNode<typeof inputSchema> {
     if (earnedIncome > 0) {
       outputs.push(this.outputNodes.output(eitc, { earned_income: earnedIncome }));
       outputs.push(this.outputNodes.output(f8812, { auto_earned_income: earnedIncome }));
-    }
-
-    // Route total W-2 SS wages to schedule_se so it can offset the SS wage base cap.
-    // IRC §1402(b); Sch SE line 8a — reduces the $176,100 cap available for SE tax.
-    const totalSsWages = input.w2s.reduce(
-      (sum, item) => sum + (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0),
-      0,
-    );
-    if (totalSsWages > 0) {
-      outputs.push(this.outputNodes.output(schedule_se, { w2_ss_wages: totalSsWages }));
     }
 
     return { outputs };

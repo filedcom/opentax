@@ -60,6 +60,12 @@ export const inputSchema = z.object({
   // Form 8959 line 19
   medicare_withheld: z.number().nonnegative().optional(),
 
+  // Line 20 override wages — W-2 box 5 wages used only for line 20 regular Medicare
+  // computation (line20 = box5 × 1.45%). When present, overrides line4 for line 20.
+  // Required when box5 ≠ box1 (e.g., employer reports higher Medicare wages than
+  // box 1 wages). If absent, falls back to line4 (same as medicare_wages).
+  medicare_wages_box5: z.number().nonnegative().optional(),
+
   // Line 22 — Additional Medicare Tax withheld on RRTA compensation (W-2 box 14)
   // This is already the additional-only portion as reported on W-2 box 14.
   // Form 8959 line 22
@@ -154,15 +160,19 @@ function regularMedicareOnWages(line4: number): number {
 // Part V, Line 21: Additional Medicare Tax withheld from W-2 wages
 // = max(0, line19 − line20); isolates the 0.9% additional portion
 // Form 8959 line 21
-function additionalMedicareFromWages(medicareWithheld: number, line4: number): number {
-  return Math.max(0, medicareWithheld - regularMedicareOnWages(line4));
+// wagesForLine20: use box5 when available (for accurate regular Medicare subtraction),
+// otherwise fall back to line4 (box1-based).
+function additionalMedicareFromWages(medicareWithheld: number, wagesForLine20: number): number {
+  return Math.max(0, medicareWithheld - regularMedicareOnWages(wagesForLine20));
 }
 
 // Part V, Line 24: total Additional Medicare Tax withheld
 // = line21 (wages additional) + line22 (RRTA additional)
 // Form 8959 line 24 → Form 1040 line 25c
 function totalAdditionalWithheld(input: Form8959Input, line4: number): number {
-  const line21 = additionalMedicareFromWages(input.medicare_withheld ?? 0, line4);
+  // Use box5 wages for line20 when provided; otherwise fall back to line4 (box1-based)
+  const wagesForLine20 = input.medicare_wages_box5 ?? line4;
+  const line21 = additionalMedicareFromWages(input.medicare_withheld ?? 0, wagesForLine20);
   const line22 = input.rrta_medicare_withheld ?? 0;
   return toCents(line21 + line22);
 }

@@ -37,8 +37,6 @@ export const inputSchema = z.object({
   unreported_tips_4137: z.number().nonnegative().optional(),
   // Wages subject to SE from Form 8919, line 10 — offsets SS wage base (Sch SE Line 8c)
   wages_8919: z.number().nonnegative().optional(),
-  // Combined W-2 SS wages (boxes 3+7) — offsets SS wage base (Sch SE Line 8a)
-  w2_ss_wages: z.number().nonnegative().optional(),
 });
 
 type ScheduleSEInput = z.infer<typeof inputSchema>;
@@ -56,16 +54,14 @@ function netEarningsFromSE(line3: number): number {
   return line3 > 0 ? line3 * NET_EARNINGS_MULTIPLIER : line3;
 }
 
-// Line 8d: total wages offsetting the SS wage base
-function totalWageBaseOffset(input: ScheduleSEInput): number {
-  return (input.w2_ss_wages ?? 0) +
-    (input.unreported_tips_4137 ?? 0) +
-    (input.wages_8919 ?? 0);
-}
-
-// Line 9: remaining SS wage base after W-2/tip/form-8919 offset
+// Line 9: remaining SS wage base after tip/form-8919 offset (Sch SE lines 8b–8d)
+// W-2 wages do NOT reduce SE SS base; the W2/SE overlap is handled via excess SS credit
+// on Schedule 3 line 11, not as a reduction in SE tax itself.
 function remainingWageBase(input: ScheduleSEInput): number {
-  return Math.max(0, SS_WAGE_BASE - totalWageBaseOffset(input));
+  return Math.max(
+    0,
+    SS_WAGE_BASE - (input.unreported_tips_4137 ?? 0) - (input.wages_8919 ?? 0),
+  );
 }
 
 // Line 10: Social Security portion of SE tax

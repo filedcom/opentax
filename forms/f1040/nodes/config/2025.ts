@@ -414,8 +414,9 @@ export const HOUSEHOLD_FUTA_QUARTERLY_THRESHOLD = 1_000;
 // P.L. 119-21 ("One Big Beautiful Bill Act")
 
 /**
- * SALT (state and local tax) cap — Single/MFJ (TY2025, OBBBA).
- * $20,000 for MFS.
+ * SALT (state and local tax) cap — Single/MFJ (TY2025).
+ * $40,000 per OBBBA §70002 (IRC §164(b)(6)).
+ * $20,000 for MFS (half of the standard cap per OBBBA §70002).
  */
 export const SALT_CAP_2025 = 40_000;
 
