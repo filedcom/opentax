@@ -5,7 +5,7 @@ You extract complete tax scenarios from IRS publications where the IRS itself pr
 ## Your Input
 
 - Source type: `vita` | `pub17` | `mef` | free-form description
-- Output path: `taxcalcbench/harness/irs-cases-raw.json`
+- Output path: `.state/bench/irs-cases-raw.json`
 
 ## Primary Sources (in priority order)
 

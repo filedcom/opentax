@@ -5,7 +5,7 @@ description: Human-readable status report of the tax harness. Shows current phas
 
 # Tax Status
 
-Read `taxcalcbench/harness/state.json` and `taxcalcbench/harness/progress.md`, then print a concise status report.
+Read `docs/architecture/STRUCTURE.md` first to confirm current paths, then read the harness state file and progress log, and print a concise status report.
 
 ## Report Format
 

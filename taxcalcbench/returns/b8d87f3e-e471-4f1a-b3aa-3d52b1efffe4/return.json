@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "returnId": "b8d87f3e-e471-4f1a-b3aa-3d52b1efffe4",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:07:35.136Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Casey",
+            "taxpayer_last_name": "Jordan",
+            "taxpayer_dob": "1990-03-15",
+            "address_city": "Juneau",
+            "address_state": "AK",
+            "address_zip": "99801"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 15000,
+          "box2_fed_withheld": 0,
+          "box3_ss_wages": 15000,
+          "box4_ss_withheld": 930,
+          "box5_medicare_wages": 15000,
+          "box6_medicare_withheld": 218
+        }
+      }
+    ]
+  }
+}

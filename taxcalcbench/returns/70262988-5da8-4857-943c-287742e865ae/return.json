@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "returnId": "70262988-5da8-4857-943c-287742e865ae",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:06:31.641Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "mfj",
+            "taxpayer_first_name": "Blake",
+            "taxpayer_last_name": "Anderson",
+            "taxpayer_dob": "1980-12-03",
+            "spouse_first_name": "Sage",
+            "spouse_last_name": "Anderson",
+            "spouse_dob": "1981-06-17",
+            "address_city": "Columbus",
+            "address_state": "OH",
+            "address_zip": "43201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 72000,
+          "box2_fed_withheld": 8000,
+          "box3_ss_wages": 72000,
+          "box4_ss_withheld": 4464,
+          "box5_medicare_wages": 72000,
+          "box6_medicare_withheld": 1044
+        }
+      }
+    ],
+    "f1099g": [
+      {
+        "id": "f1099g_01",
+        "fields": {
+          "box_1_unemployment": 11200,
+          "box_4_federal_withheld": 1120,
+          "payer_name": "Ohio Dept of Job and Family Services"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "returnId": "9007bce6-74ba-4940-bdab-38c3b5ff9252",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:09:58.279Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Riley",
+            "taxpayer_last_name": "Chen",
+            "taxpayer_dob": "1979-09-12",
+            "address_city": "Cheyenne",
+            "address_state": "WY",
+            "address_zip": "82001"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 38000,
+          "box2_fed_withheld": 3200,
+          "box3_ss_wages": 38000,
+          "box4_ss_withheld": 2356,
+          "box5_medicare_wages": 38000,
+          "box6_medicare_withheld": 551
+        }
+      }
+    ],
+    "f1099g": [
+      {
+        "id": "f1099g_01",
+        "fields": {
+          "box_1_unemployment": 9800,
+          "box_4_federal_withheld": 980,
+          "payer_name": "Wyoming Dept of Workforce Services"
+        }
+      }
+    ]
+  }
+}

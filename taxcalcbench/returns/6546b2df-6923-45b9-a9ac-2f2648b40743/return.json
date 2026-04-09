@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "returnId": "6546b2df-6923-45b9-a9ac-2f2648b40743",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:07:38.326Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "mfj",
+            "taxpayer_first_name": "Ponderosa",
+            "taxpayer_last_name": "Pine",
+            "taxpayer_dob": "1977-11-08",
+            "spouse_first_name": "Monterey",
+            "spouse_last_name": "Pine",
+            "spouse_dob": "1978-07-05",
+            "address_city": "Juneau",
+            "address_state": "AK",
+            "address_zip": "99801",
+            "dependents": [
+              {
+                "first_name": "Spruce",
+                "last_name": "Pine",
+                "dob": "2019-06-01",
+                "relationship": "son",
+                "months_in_home": 12,
+                "qualifying_child_for_ctc": true
+              },
+              {
+                "first_name": "Sugar",
+                "last_name": "Pine",
+                "dob": "2016-03-03",
+                "relationship": "daughter",
+                "months_in_home": 12,
+                "qualifying_child_for_ctc": true
+              },
+              {
+                "first_name": "Spring",
+                "last_name": "Pine",
+                "dob": "2011-09-10",
+                "relationship": "other",
+                "months_in_home": 12,
+                "qualifying_child_for_ctc": true
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 41500,
+          "box2_fed_withheld": 2100,
+          "box3_ss_wages": 41500,
+          "box4_ss_withheld": 2573,
+          "box5_medicare_wages": 41500,
+          "box6_medicare_withheld": 602
+        }
+      }
+    ]
+  }
+}

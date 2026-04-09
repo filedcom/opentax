@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "returnId": "79692e70-ed80-4fb2-9de1-b3ce443fc923",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:05:19.965Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "John",
+            "taxpayer_last_name": "James",
+            "address_city": "Springfield",
+            "address_zip": "62701",
+            "address_state": "IL"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 183248.35,
+          "box2_fed_withheld": 32652.03,
+          "box3_ss_wages": 176100,
+          "box4_ss_withheld": 10918.2,
+          "box5_medicare_wages": 183848.35,
+          "box6_medicare_withheld": 2665.8,
+          "employer_name": "ACME INDUSTRIES INC",
+          "employer_ein": "59-1000049"
+        }
+      }
+    ],
+    "f1099int": [
+      {
+        "id": "f1099int_01",
+        "fields": {
+          "payer_name": "FIRST NATIONAL BANK",
+          "box1": 701.11,
+          "payer_tin": "60-1000050"
+        }
+      },
+      {
+        "id": "f1099int_02",
+        "fields": {
+          "payer_name": "LIBERTY INVESTMENTS LLC",
+          "box1": 20.17,
+          "payer_tin": "61-1000051"
+        }
+      },
+      {
+        "id": "f1099int_03",
+        "fields": {
+          "payer_name": "HERITAGE FINANCIAL SERVICES",
+          "box1": 7.03,
+          "payer_tin": "61-1000051"
+        }
+      }
+    ],
+    "f1099r": [
+      {
+        "id": "f1099r_01",
+        "fields": {
+          "payer_name": "PIONEER TRUST COMPANY",
+          "payer_ein": "12-1000002",
+          "box1_gross_distribution": 4234.22,
+          "box2a_taxable_amount": 0,
+          "box4_federal_withheld": 0,
+          "box7_distribution_code": "R"
+        }
+      },
+      {
+        "id": "f1099r_02",
+        "fields": {
+          "payer_name": "GATEWAY SECURITIES INC",
+          "payer_ein": "17-1000007",
+          "box1_gross_distribution": 5127.89,
+          "box2a_taxable_amount": 5127.89,
+          "box4_federal_withheld": 0,
+          "box7_distribution_code": "2",
+          "box7_ira_simple_indicator": true
+        }
+      }
+    ],
+    "schedule_a": [
+      {
+        "id": "schedule_a_01",
+        "fields": {
+          "line_8a_mortgage_interest_1098": 24335.08
+        }
+      }
+    ]
+  }
+}

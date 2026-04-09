@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "returnId": "cc29c99c-9bcc-4758-a463-ef0d57a60102",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:51:51.185Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Jamie",
+            "taxpayer_last_name": "Torres",
+            "taxpayer_dob": "1998-11-02",
+            "address_city": "El Paso",
+            "address_state": "TX",
+            "address_zip": "79901"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 14000,
+          "box2_fed_withheld": 0,
+          "box3_ss_wages": 14000,
+          "box4_ss_withheld": 868,
+          "box5_medicare_wages": 14000,
+          "box6_medicare_withheld": 203
+        }
+      }
+    ]
+  }
+}

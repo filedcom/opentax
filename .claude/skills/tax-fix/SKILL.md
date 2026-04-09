@@ -7,11 +7,15 @@ description: Autonomous 1040 bug-fix loop. Reads failing benchmark cases, spawns
 
 ## Overview
 
-This skill runs autonomously to fix failing 1040 benchmark cases. It reads root cause clusters from `taxcalcbench/harness/state.json`, spawns parallel fix agents, validates results, and commits improvements. It loops until all cases pass or no improvement is made for 3 consecutive rounds.
+This skill runs autonomously to fix failing 1040 benchmark cases. It reads root cause clusters from the harness state file, spawns parallel fix agents, validates results, and commits improvements. It loops until all cases pass or no improvement is made for 3 consecutive rounds.
+
+## Step 0 — Read STRUCTURE.md
+
+Read `docs/architecture/STRUCTURE.md`. All paths used in this skill (harness state, cases dir, progress log, audit file) are defined there. Use those paths — do not rely on hardcoded values below if STRUCTURE.md differs.
 
 ## Step 1 — Load State
 
-Read `taxcalcbench/harness/state.json`. Check `tasks.tax-fix-1040.status`:
+Read `.state/bench/state.json`. Check `tasks.tax-fix-1040.status`:
 - If `"done"` → print "All 1040 cases passing. Nothing to do." and stop.
 - If `"stalled"` → print stall message and stop.
 - Otherwise → set `status` to `"running"` and write state.json back.
@@ -47,11 +51,11 @@ Compare current pass count to baseline in state.json:
   ```
   Update `state.json` baseline to current pass/fail counts. Mark fixed root causes as `"done"` (any cluster where all its cases now pass).
 
-- **No net improvement**: increment `no_improvement_count` in state.json. If count reaches 3 → set `status: "stalled"`, append stall summary to `taxcalcbench/harness/progress.md`, stop.
+- **No net improvement**: increment `no_improvement_count` in state.json. If count reaches 3 → set `status: "stalled"`, append stall summary to `.state/bench/progress.md`, stop.
 
 ## Step 6 — Log and Loop
 
-Append to `taxcalcbench/harness/progress.md`:
+Append to `.state/bench/progress.md`:
 ```
 ## Round N — [timestamp]
 - Baseline: X pass / Y fail

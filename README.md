@@ -453,18 +453,12 @@ If you're using Claude Code, three skills automate harness work:
 
 ### Adding a node
 
-```
-forms/f1040/nodes/inputs/<name>/
-  index.ts        # Node class + singleton export
-  index.test.ts   # Tests
-```
-
 - Define a Zod schema, infer types from it — never duplicate
 - `compute()` is a pure function: no state, no mutations
 - Use `OutputNodes` for type-safe routing to downstream nodes
 - Break logic into small named pure helpers, compose in `compute()`
 
-See `CLAUDE.md` for full conventions.
+See `CLAUDE.md` for full conventions. See [`taxcalcbench/STRUCTURE.md`](taxcalcbench/STRUCTURE.md) for benchmark case format.
 
 ---
 

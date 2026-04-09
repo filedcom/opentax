@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "returnId": "0c1728de-0908-4b43-b2f0-cc7a08217f74",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:07:43.795Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Riley",
+            "taxpayer_last_name": "Nakamura",
+            "taxpayer_dob": "1985-03-22",
+            "address_city": "Portland",
+            "address_state": "OR",
+            "address_zip": "97201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 65000,
+          "box2_fed_withheld": 6500,
+          "box3_ss_wages": 65000,
+          "box4_ss_withheld": 4030,
+          "box5_medicare_wages": 65000,
+          "box6_medicare_withheld": 943
+        }
+      }
+    ],
+    "f1095a": [
+      {
+        "id": "f1095a_01",
+        "fields": {
+          "issuer_name": "Oregon Health Plan Exchange",
+          "annual_premium": 6000,
+          "annual_slcsp": 6600,
+          "annual_aptc": 4800
+        }
+      }
+    ]
+  }
+}

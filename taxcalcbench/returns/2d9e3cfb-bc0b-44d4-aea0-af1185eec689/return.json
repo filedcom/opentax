@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "returnId": "2d9e3cfb-bc0b-44d4-aea0-af1185eec689",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:10:22.780Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Dana",
+            "taxpayer_last_name": "Reyes",
+            "taxpayer_dob": "1987-12-05",
+            "address_city": "Kansas City",
+            "address_state": "MO",
+            "address_zip": "64101"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 35000,
+          "box2_fed_withheld": 3500,
+          "box3_ss_wages": 35000,
+          "box4_ss_withheld": 2170,
+          "box5_medicare_wages": 35000,
+          "box6_medicare_withheld": 508
+        }
+      }
+    ],
+    "f1095a": [
+      {
+        "id": "f1095a_01",
+        "fields": {
+          "issuer_name": "HealthConnect",
+          "annual_premium": 4800,
+          "annual_slcsp": 5100,
+          "annual_aptc": 0
+        }
+      }
+    ]
+  }
+}

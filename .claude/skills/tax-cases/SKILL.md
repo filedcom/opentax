@@ -11,6 +11,10 @@ description: Generate realistic benchmark cases from IRS-published sources (VITA
 
 Generates new benchmark cases where the correct values are sourced directly from IRS publications. No computed ground truth — the IRS numbers are the ground truth.
 
+## Step 0 — Read STRUCTURE.md
+
+Read `docs/architecture/STRUCTURE.md`. All paths used in this skill (cases dir, harness scratch file, progress log, file formats) are defined there. Use those paths — do not rely on hardcoded values below if STRUCTURE.md differs.
+
 ## Step 1 — Determine Source
 
 Parse $ARGUMENTS:
@@ -25,7 +29,7 @@ If no argument, default to `vita`.
 
 Spawn one agent using `agents/irs-sourcer.md`. Pass:
 - Source type / description: $ARGUMENTS
-- Output path: `taxcalcbench/harness/irs-cases-raw.json`
+- Output path: `.state/bench/irs-cases-raw.json`
 
 Wait for completion. Verify the file exists and contains a `cases` array with at least one entry.
 
@@ -37,7 +41,7 @@ Read the `taxcalcbench/cases/` directory. Find the highest existing case number 
 
 ## Step 4 — Spawn Case Writer Agents
 
-Read `taxcalcbench/harness/irs-cases-raw.json`. For each raw case in the `cases` array, spawn one case-writer agent in parallel using `agents/case-writer.md`. Pass:
+Read `.state/bench/irs-cases-raw.json`. For each raw case in the `cases` array, spawn one case-writer agent in parallel using `agents/case-writer.md`. Pass:
 - The raw case object (scenario description, form values, IRS-provided correct values, source citation)
 - The next available case number (increment per case: 98, 99, 100, …)
 - Cases directory: `taxcalcbench/cases/`
@@ -70,7 +74,7 @@ New cases:
 Next step: run /tax-fix to see how the engine performs on these cases.
 ```
 
-Append to `taxcalcbench/harness/progress.md`:
+Append to `.state/bench/progress.md`:
 ```
 ## Cases Added — [timestamp]
 - Source: [source]

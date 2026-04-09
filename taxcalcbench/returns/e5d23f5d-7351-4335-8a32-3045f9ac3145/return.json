@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "returnId": "e5d23f5d-7351-4335-8a32-3045f9ac3145",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:20:34.687Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "mfj",
+            "taxpayer_first_name": "Cameron",
+            "taxpayer_last_name": "White",
+            "taxpayer_dob": "1975-08-19",
+            "spouse_first_name": "Jordan",
+            "spouse_last_name": "White",
+            "spouse_dob": "1977-11-30",
+            "address_city": "Nashville",
+            "address_state": "TN",
+            "address_zip": "37201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 95000,
+          "box2_fed_withheld": 10500,
+          "box3_ss_wages": 95000,
+          "box4_ss_withheld": 5890,
+          "box5_medicare_wages": 95000,
+          "box6_medicare_withheld": 1378
+        }
+      }
+    ],
+    "f1099div": [
+      {
+        "id": "f1099div_01",
+        "fields": {
+          "payerName": "Vanguard Total Market",
+          "isNominee": false,
+          "box11": false,
+          "box1a": 3200,
+          "box1b": 2800
+        }
+      }
+    ]
+  }
+}

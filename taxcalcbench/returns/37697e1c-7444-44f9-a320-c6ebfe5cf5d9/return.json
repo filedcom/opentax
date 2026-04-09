@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "returnId": "37697e1c-7444-44f9-a320-c6ebfe5cf5d9",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:37:51.045Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "hoh",
+            "taxpayer_first_name": "Leslie",
+            "taxpayer_last_name": "Ramirez",
+            "taxpayer_dob": "1993-08-07",
+            "address_city": "Albuquerque",
+            "address_state": "NM",
+            "address_zip": "87101",
+            "hoh_qualifying_person_name": "Carlos Ramirez",
+            "hoh_qualifying_person_relationship": "brother",
+            "hoh_paid_more_than_half_home_costs": true
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 12000,
+          "box2_fed_withheld": 0,
+          "box3_ss_wages": 12000,
+          "box4_ss_withheld": 744,
+          "box5_medicare_wages": 12000,
+          "box6_medicare_withheld": 174
+        }
+      }
+    ]
+  }
+}

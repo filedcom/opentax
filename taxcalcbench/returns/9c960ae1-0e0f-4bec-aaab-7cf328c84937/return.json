@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "returnId": "9c960ae1-0e0f-4bec-aaab-7cf328c84937",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:20:35.559Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Jordan",
+            "taxpayer_last_name": "Smith",
+            "taxpayer_dob": "1978-01-20",
+            "address_city": "New York",
+            "address_state": "NY",
+            "address_zip": "10001"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 110000,
+          "box2_fed_withheld": 22000,
+          "box3_ss_wages": 110000,
+          "box4_ss_withheld": 6820,
+          "box5_medicare_wages": 110000,
+          "box6_medicare_withheld": 1595
+        }
+      },
+      {
+        "id": "w2_02",
+        "fields": {
+          "box1_wages": 90000,
+          "box2_fed_withheld": 17000,
+          "box3_ss_wages": 90000,
+          "box4_ss_withheld": 5580,
+          "box5_medicare_wages": 90000,
+          "box6_medicare_withheld": 1305
+        }
+      }
+    ]
+  }
+}

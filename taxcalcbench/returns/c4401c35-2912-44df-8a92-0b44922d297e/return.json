@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "returnId": "c4401c35-2912-44df-8a92-0b44922d297e",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:21:32.856Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Taylor",
+            "taxpayer_last_name": "Brooks",
+            "taxpayer_dob": "1985-04-18",
+            "address_city": "Austin",
+            "address_state": "TX",
+            "address_zip": "73301"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 65000,
+          "box2_fed_withheld": 7500,
+          "box3_ss_wages": 65000,
+          "box4_ss_withheld": 4030,
+          "box5_medicare_wages": 65000,
+          "box6_medicare_withheld": 943
+        }
+      }
+    ],
+    "f1099int": [
+      {
+        "id": "f1099int_01",
+        "fields": {
+          "payer_name": "First National Bank",
+          "box1": 1200
+        }
+      },
+      {
+        "id": "f1099int_02",
+        "fields": {
+          "payer_name": "Online Savings Co",
+          "box1": 2300
+        }
+      }
+    ]
+  }
+}

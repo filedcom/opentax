@@ -9,8 +9,8 @@
  *   deno run --allow-net=www.irs.gov --allow-read --allow-write scripts/inspect-pdf-fields.ts
  *
  * Output:
- *   scripts/field-dumps/<pendingKey>.json  — per-form dump
- *   scripts/field-dumps/cache/<filename>   — cached PDFs (avoid re-downloading)
+ *   .state/field-dumps/<pendingKey>.json  — per-form dump
+ *   .state/field-dumps/cache/<filename>   — cached PDFs (avoid re-downloading)
  */
 
 import { PDFDocument } from "pdf-lib";
@@ -18,8 +18,8 @@ import { ensureDir } from "@std/fs";
 import { join, basename } from "@std/path";
 import { ALL_PDF_FORMS } from "../forms/f1040/2025/pdf/forms/index.ts";
 
-const CACHE_DIR = new URL("./field-dumps/cache/", import.meta.url).pathname;
-const DUMP_DIR = new URL("./field-dumps/", import.meta.url).pathname;
+const CACHE_DIR = new URL("../.state/field-dumps/cache/", import.meta.url).pathname;
+const DUMP_DIR = new URL("../.state/field-dumps/", import.meta.url).pathname;
 
 interface FieldInfo {
   name: string;
