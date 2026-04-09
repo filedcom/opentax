@@ -62,10 +62,12 @@
 │   ├── run_case.ts             # Run one case, save output.json
 │   ├── run_all.ts              # Bulk regenerate output.json
 │   └── cases/
-│       └── NN-description/
-│           ├── input.json      # Engine inputs: forms array the CLI accepts
-│           ├── correct.json    # IRS-authoritative correct values + source citation
-│           └── output.json     # Last engine output (not committed)
+│       └── {form}/             # e.g. f1040, f1120
+│           └── {year}/         # e.g. 2025
+│               └── NN-description/
+│                   ├── input.json      # Engine inputs: forms array the CLI accepts
+│                   ├── correct.json    # IRS-authoritative correct values + source citation
+│                   └── output.json     # Last engine output (not committed)
 │
 └── .state/                     # Runtime state — gitignored except where noted
     ├── bench/                  # Benchmark harness state (tracked)

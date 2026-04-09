@@ -11,9 +11,16 @@ description: Generate realistic benchmark cases from IRS-published sources (VITA
 
 Generates new benchmark cases where the correct values are sourced directly from IRS publications. No computed ground truth — the IRS numbers are the ground truth.
 
-## Step 0 — Read STRUCTURE.md
+## Step 0 — Derive Paths
 
-Read `docs/architecture/STRUCTURE.md`. All paths used in this skill (cases dir, harness scratch file, progress log, file formats) are defined there. Use those paths — do not rely on hardcoded values below if STRUCTURE.md differs.
+Parse $ARGUMENTS for an optional `{form}:{year}` prefix (e.g. `f1040:2025 vita`). Extract:
+- `form` — defaults to `f1040` if not specified
+- `year` — defaults to `2025` if not specified
+- remaining tokens → source argument for Step 1
+
+Cases directory: `benchmark/cases/{form}/{year}/`
+
+Read `docs/architecture/STRUCTURE.md` to confirm paths are still current. If STRUCTURE.md differs, use those paths.
 
 ## Step 1 — Determine Source
 
