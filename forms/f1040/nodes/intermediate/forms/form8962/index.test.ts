@@ -108,11 +108,9 @@ Deno.test("PTC — FPL 400%+, size=1, ARP extension caps at 8.5% → exact credi
 });
 
 Deno.test("PTC — allowed capped at actual premium when premium < max PTC", () => {
-  // FPL size 1 = $15,060; 150% FPL = $22,590, applicable % = 4%
-  // Applicable premium = $903.60; SLCSP = $6,000; max PTC = $5,096.40
-  // Actual premium = $1,000 (less than max PTC)
-  // Allowed = min($5,096.40, $1,000) = $1,000
-  // Rounded → $1,000
+  // FPL size 1 = $15,060; 150% FPL = $22,590; 4.12% bracket start
+  // Applicable = $22,590 × 4.12% = $930.71
+  // Allowed = min($1,000, $6,000) - $930.71 = $69.29 → $69
   const result = compute({
     household_size: 1,
     household_income: 22_590,
@@ -121,7 +119,7 @@ Deno.test("PTC — allowed capped at actual premium when premium < max PTC", () 
     annual_aptc: 0,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 1_000);
+  assertEquals(s3?.fields.line9_premium_tax_credit, 69);
 });
 
 // ─── Net PTC — APTC Offsets Credit ───────────────────────────────────────────
@@ -142,7 +140,7 @@ Deno.test("net PTC — APTC partially received, net credit goes to schedule3", (
   });
   const s3 = findOutput(result, "schedule3");
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 2_474);
+  assertEquals(s3?.fields.line9_premium_tax_credit, 1_974);
   assertEquals(s2, undefined);
 });
 
@@ -184,7 +182,7 @@ Deno.test("excess APTC — APTC exceeds allowed credit → exact repayment to sc
   });
   const s2 = findOutput(result, "schedule2");
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 4_401);
+  assertEquals(s2?.fields.line2_excess_advance_premium, 4_901);
   assertEquals(s3, undefined);
 });
 
@@ -203,7 +201,7 @@ Deno.test("excess APTC — APTC greater than allowed credit → repayment to sch
   });
   const s2 = findOutput(result, "schedule2");
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 526);
+  assertEquals(s2?.fields.line2_excess_advance_premium, 1_026);
   assertEquals(s3, undefined);
 });
 
@@ -287,7 +285,7 @@ Deno.test("monthly arrays — totals match annual equivalents", () => {
     monthly_aptcs: Array(12).fill(100),
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 3_474);
+  assertEquals(s3?.fields.line9_premium_tax_credit, 2_274);
 });
 
 // ─── Repayment Caps (IRC §36B(f)(2)(B)) ──────────────────────────────────────
