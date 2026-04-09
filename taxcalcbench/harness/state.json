@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "tasks": {
+    "tax-fix-1040": {
+      "status": "idle",
+      "benchmark_baseline": { "pass": 94, "fail": 3 },
+      "no_improvement_count": 0,
+      "root_causes": {
+        "ssa_niit_mismatch": {
+          "status": "pending",
+          "cases": [67, 91, 95],
+          "description": "3 remaining failures: cases 67, 91, 95 — all involve SSA + 1099-B combinations. Likely SSA taxability calculation or NIIT/Additional Medicare Tax mismatch vs gen_correct.ts reference",
+          "node_path": "forms/f1040/nodes/intermediate/forms/form8959/index.ts"
+        }
+      }
+    },
+    "tax-build-1120": {
+      "status": "idle",
+      "phase": null,
+      "node_specs_path": "taxcalcbench/harness/node-specs/1120-nodes.json",
+      "benchmark_cases_created": 0,
+      "nodes_built": [],
+      "benchmark_runs": []
+    }
+  }
+}
