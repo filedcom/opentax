@@ -1,6 +1,6 @@
 {
   "case": "84-hoh-w2",
-  "scenario": "Head of household with multiple W-2 wage income — CCH ground truth",
+  "scenario": "Head of household with multiple W-2 wage income \u2014 CCH ground truth",
   "year": 2025,
   "inputs": {
     "filing_status": "hoh",
@@ -9,10 +9,13 @@
     "interest": 0,
     "ordinary_dividends": 0,
     "qualified_dividends": 0,
+    "stcg": 0,
     "ltcg": 0,
     "pension": 0,
     "ssa_gross": 0,
     "schedule_c_net": 0,
+    "k1_ordinary": 0,
+    "k1_rental": 0,
     "student_loan_int": 953.96,
     "hsa_employer": 0,
     "educator_expenses": 0,
@@ -25,7 +28,9 @@
     "eitc_children": 2,
     "dep_care_expenses": 0,
     "estimated_tax_payments": 0,
-    "fed_withheld": 5514.2
+    "fed_withheld": 5514.2,
+    "foreign_tax_paid": 0,
+    "itemized_deductions": 16946.37
   },
   "correct": {
     "line9_total_income": 78082.73,
@@ -36,7 +41,7 @@
     "ordinary_taxable": 53503.77,
     "income_tax": 6080.45,
     "se_tax": 0,
-    "add_medicare_tax": 0,
+    "add_medicare_tax": 0.0,
     "line18_tax_before_credits": 6080.45,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
@@ -44,12 +49,12 @@
     "aotc_refundable": 0,
     "ptc_additional": 0,
     "ptc_repayment": 0,
-    "eitc": 0,
+    "eitc": 0.0,
     "actc": 0,
-    "excess_ss_credit": 0,
+    "excess_ss_credit": 0.0,
     "line24_total_tax": 5080.45,
-    "line33_total_payments": 5514.2,
-    "line35a_refund": 433.75,
+    "line33_total_payments": 5514.21,
+    "line35a_refund": 433.76,
     "line37_amount_owed": 0
   }
 }

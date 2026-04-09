@@ -48,8 +48,8 @@
     "actc": 0,
     "excess_ss_credit": 0,
     "line24_total_tax": 19560.25,
-    "line33_total_payments": 7000,
+    "line33_total_payments": 7000.5,
     "line35a_refund": 0,
-    "line37_amount_owed": 12560.25
+    "line37_amount_owed": 12559.75
   }
 }

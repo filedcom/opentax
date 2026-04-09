@@ -22,7 +22,8 @@
               "months_in_home": 12,
               "dob": "2013-05-18",
               "middle_initial": "J",
-              "ssn": "755301852"
+              "ssn": "755301852",
+              "qualifying_child_for_ctc": true
             }
           ],
           "address_state": "IL"

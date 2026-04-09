@@ -30,10 +30,10 @@
   "correct": {
     "line9_total_income": 189104.55,
     "line11_agi": 189104.55,
-    "standard_deduction": 0,
+    "standard_deduction": 24335.08,
     "qbi_deduction": 0,
     "line15_taxable_income": 164769.47,
-    "ordinary_taxable": 173354.55,
+    "ordinary_taxable": 164769.47,
     "income_tax": 32391.67,
     "se_tax": 0,
     "add_medicare_tax": 0,

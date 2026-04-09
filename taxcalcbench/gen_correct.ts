@@ -50,6 +50,10 @@ function buildReturn(caseData: CaseInput): TaxReturnInput {
       inp.fedWithheld!   += d.box2_fed_withheld ?? 0;
       inp.ssWagesList!.push(d.box3_ss_wages    ?? 0);
       inp.ssWithheldList!.push(d.box4_ss_withheld ?? 0);
+      if (!inp.medicareWagesList) inp.medicareWagesList = [];
+      if (!inp.medicareWithheldList) inp.medicareWithheldList = [];
+      inp.medicareWagesList.push(d.box5_medicare_wages ?? 0);
+      inp.medicareWithheldList.push(d.box6_medicare_withheld ?? 0);
       for (const e of (f.data.box12_entries ?? []) as Array<{code:string;amount:number}>) {
         if (e.code === "W") inp.hsaEmployer! += e.amount ?? 0;
       }
@@ -64,10 +68,12 @@ function buildReturn(caseData: CaseInput): TaxReturnInput {
       inp.qualifiedDividends! += d.box1b ?? 0;
       inp.ltcg!               += d.box2a ?? 0;  // cap gain distributions treated as LTCG
       inp.fedWithheld!        += d.box4  ?? 0;
+      inp.foreignTaxPaid       = (inp.foreignTaxPaid ?? 0) + (d.box7 ?? 0);
     } else if (nt === "f1099b") {
-      const gain = (d.proceeds ?? 0) - (d.cost_basis ?? 0);
+      const gain = (d.proceeds ?? 0) - (d.cost_basis ?? 0) + (d.adjustment_amount ?? 0);
       const part = ((f.data.part ?? "") as string).toUpperCase();
-      if (part === "D" || part === "") inp.ltcg! += gain;
+      // All cap gains (ST and LT) flow through Schedule D → line 7
+      inp.ltcg! += gain;
     } else if (nt === "f1099r") {
       inp.pension!       += d.box2a_taxable_amount ?? d.box1_gross_distribution ?? 0;
       inp.fedWithheld!   += d.box4_federal_withheld ?? 0;
@@ -123,6 +129,15 @@ function buildReturn(caseData: CaseInput): TaxReturnInput {
     } else if (nt === "f2441") {
       inp.depCareExpenses = d.qualifying_expenses_paid ?? 0;
       inp.depCarePersons  = d.qualifying_person_count  ?? 1;
+    } else if (nt === "schedule_a") {
+      // Sum all numeric fields as total itemized deductions
+      let total = 0;
+      for (const v of Object.values(f.data)) {
+        if (typeof v === "number") total += v;
+      }
+      inp.itemizedDeductions = (inp.itemizedDeductions ?? 0) + total;
+    } else if (nt === "form8889") {
+      inp.hsaEmployer! += d.employer_hsa_contributions ?? 0;
     }
   }
 

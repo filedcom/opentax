@@ -21,7 +21,8 @@
               "relationship": "daughter",
               "months_in_home": 12,
               "dob": "2012-01-31",
-              "ssn": "221336517"
+              "ssn": "221336517",
+              "qualifying_child_for_ctc": true
             },
             {
               "first_name": "Mackenzie",
@@ -29,7 +30,8 @@
               "relationship": "daughter",
               "months_in_home": 12,
               "dob": "2014-07-09",
-              "ssn": "663212205"
+              "ssn": "663212205",
+              "qualifying_child_for_ctc": true
             }
           ],
           "address_state": "IL"

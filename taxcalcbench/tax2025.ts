@@ -163,6 +163,10 @@ export interface TaxReturnInput {
   estimatedTaxPayments?: number;
   ssWagesList?: number[];
   ssWithheldList?: number[];
+  itemizedDeductions?: number;
+  foreignTaxPaid?: number;
+  medicareWagesList?: number[];
+  medicareWithheldList?: number[];
 }
 
 export interface TaxResult {
@@ -262,15 +266,19 @@ export function computeTax(inp: TaxReturnInput): TaxResult {
     );
   }
 
+  // Use greater of standard or itemized deduction
+  const itemized = inp.itemizedDeductions ?? 0;
+  const deduction = Math.max(std, itemized);
+
   // QBI Deduction
   const qbiThreshold = s === "mfj" ? 394_600 : 197_300;
   let qbi = 0;
   if (scheduleCNet > 0 && agi <= qbiThreshold) {
-    qbi = Math.max(0, r2(Math.min(scheduleCNet * 0.20, (agi - std) * 0.20)));
+    qbi = Math.max(0, r2(Math.min(scheduleCNet * 0.20, (agi - deduction) * 0.20)));
   }
 
   // Taxable Income
-  const taxable = Math.max(0, r2(agi - std - qbi));
+  const taxable = Math.max(0, r2(agi - deduction - qbi));
 
   // Ordinary vs Preferential Income
   const prefIncome     = qualifiedDividends + ltcg;
@@ -284,8 +292,13 @@ export function computeTax(inp: TaxReturnInput): TaxResult {
   // Additional Medicare Tax (0.9%)
   const addMcare = additionalMedicareTax(wages, scheduleCNet, s);
 
+  // NIIT — 3.8% on net investment income above threshold (Form 8960)
+  const niitThreshold = s === "mfj" ? 250_000 : 200_000;
+  const netInvestmentIncome = interest + ordinaryDividends + ltcg + pension;
+  const niit = r2(Math.max(0, Math.min(netInvestmentIncome, agi - niitThreshold) * 0.038));
+
   // Total Tax Before Credits
-  const taxBeforeCredits = r2(totalIncomeTax + seTotal + addMcare);
+  const taxBeforeCredits = r2(totalIncomeTax + seTotal + addMcare + niit);
 
   // AOTC
   const aotcPhaseStart = s === "mfj" ? 160_000 : 80_000;
@@ -331,15 +344,27 @@ export function computeTax(inp: TaxReturnInput): TaxResult {
   }
   const aotcNonrefApplied = Math.min(aotcNonref, Math.max(0, taxBeforeCredits - nonrefCtc - depCare));
 
+  // Foreign Tax Credit (nonrefundable, simplified — full credit up to tax liability)
+  const foreignTaxPaid = inp.foreignTaxPaid ?? 0;
+  const ftc = Math.min(foreignTaxPaid, Math.max(0, taxBeforeCredits - nonrefCtc - depCare - aotcNonrefApplied));
+
   // EITC earned income = wages + positive SE net profit (IRC §32(c)(2)(A)(ii))
   const eitc = eitcCredit(wages + Math.max(0, scheduleCNet), eitcChildren, s);
   const excessSs = excessSsCredit(ssWagesList, ssWithheldList);
 
+  // Additional Medicare Tax withholding (0.9% on wages above threshold, withheld by employer)
+  const medicareWagesList    = inp.medicareWagesList    ?? [];
+  const medicareWithheldList = inp.medicareWithheldList ?? [];
+  const totalMedicareWithheld = medicareWithheldList.reduce((a, b) => a + b, 0);
+  const totalMedicareWages    = medicareWagesList.reduce((a, b) => a + b, 0);
+  const requiredMedicare      = totalMedicareWages * 0.0145;
+  const addMedicareWithheld   = r2(Math.max(0, totalMedicareWithheld - requiredMedicare));
+
   // Total Tax
-  const totalTax = r2(Math.max(0, taxBeforeCredits - nonrefCtc - depCare - aotcNonrefApplied + ptcRepayment));
+  const totalTax = r2(Math.max(0, taxBeforeCredits - nonrefCtc - depCare - aotcNonrefApplied - ftc + ptcRepayment));
 
   // Payments
-  const totalPayments = r2(fedWithheld + estimatedTaxPayments + actc + eitc + aotcRefundable + ptcAdditional + excessSs);
+  const totalPayments = r2(fedWithheld + estimatedTaxPayments + actc + eitc + aotcRefundable + ptcAdditional + excessSs + addMedicareWithheld);
 
   // Refund / Owed
   const balance = r2(totalPayments - totalTax);
@@ -347,7 +372,7 @@ export function computeTax(inp: TaxReturnInput): TaxResult {
   return {
     line9_total_income:        r2(totalIncome),
     line11_agi:                agi,
-    standard_deduction:        std,
+    standard_deduction:        deduction,
     qbi_deduction:             qbi,
     line15_taxable_income:     taxable,
     ordinary_taxable:          ordinaryTaxable,

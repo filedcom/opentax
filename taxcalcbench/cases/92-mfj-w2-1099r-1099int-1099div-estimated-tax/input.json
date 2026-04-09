@@ -23,7 +23,8 @@
               "months_in_home": 12,
               "dob": "2017-10-08",
               "middle_initial": "J",
-              "ssn": "710270447"
+              "ssn": "710270447",
+              "qualifying_child_for_ctc": true
             },
             {
               "first_name": "Isaac",
@@ -32,7 +33,8 @@
               "months_in_home": 12,
               "dob": "2019-06-04",
               "middle_initial": "J",
-              "ssn": "801729749"
+              "ssn": "801729749",
+              "qualifying_child_for_ctc": true
             }
           ]
         }
