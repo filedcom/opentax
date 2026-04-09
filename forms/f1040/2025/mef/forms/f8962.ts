@@ -6,6 +6,8 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 // Element order follows the XSD sequence for Form 8962 (Premium Tax Credit).
 
 export interface Fields {
+  // QSEHRA indicator (required by XSD; true when taxpayer has a QSEHRA)
+  qsehra_ind?: boolean | null;
   // Line 1: Household size
   household_size?: number | null;
   // Line 2a: Modified AGI (household income)
@@ -49,11 +51,25 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 // ─── Builder ──────────────────────────────────────────────────────────────────
 
 function buildIRS8962(fields: Input): string {
-  const children = FIELD_MAP.map(([key, tag]) => {
-    const value = fields[key];
-    if (typeof value !== "number") return "";
-    return element(tag, value);
-  });
+  // Only emit Form 8962 when there is actual PTC or excess APTC data.
+  // household_income alone (from agi_aggregator routing) does not make a return
+  // require Form 8962 — marketplace coverage data is needed.
+  const hasPtcData = typeof fields.net_premium_tax_credit === "number" ||
+    typeof fields.excess_advance_premium === "number" ||
+    typeof fields.annual_premium === "number" ||
+    typeof fields.household_size === "number";
+  if (!hasPtcData) return "";
+
+  // QSEHRAInd is required by XSD (no minOccurs="0") and must be first
+  const qsehraInd = fields.qsehra_ind === true ? "true" : "false";
+  const children = [
+    element("QSEHRAInd", qsehraInd),
+    ...FIELD_MAP.map(([key, tag]) => {
+      const value = fields[key];
+      if (typeof value !== "number") return "";
+      return element(tag, value);
+    }),
+  ];
   return elements("IRS8962", children);
 }
 

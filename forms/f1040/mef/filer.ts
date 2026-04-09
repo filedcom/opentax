@@ -129,10 +129,12 @@ function extractOriginator(
 export function extractFilerIdentity(
   f1040: Record<string, unknown>,
 ): FilerIdentity | undefined {
-  const primarySSN = str(f1040["taxpayer_ssn"])?.replace(/-/g, "") ?? "";
+  const ssnRaw = str(f1040["taxpayer_ssn"]);
+  if (!ssnRaw) return undefined;
+  const primarySSN = ssnRaw.replace(/-/g, "");
   const lastName = str(f1040["taxpayer_last_name"]);
+  if (!lastName) return undefined;
   const firstName = str(f1040["taxpayer_first_name"]);
-  if (!lastName && !firstName) return undefined;
 
   const middleInitial = str(f1040["taxpayer_middle_initial"]);
   const filingStatusRaw = f1040["filing_status"];
@@ -154,7 +156,7 @@ export function extractFilerIdentity(
   return {
     primarySSN,
     nameLine1: nameLine1(firstName, lastName, middleInitial),
-    nameControl: nameControl(lastName),
+    nameControl: nameControl(lastName ?? ""),
     firstName,
     lastName,
     middleInitial,
