@@ -315,13 +315,16 @@ function unrecaptured1250Outputs(items: K1PartnershipItems): NodeOutput[] {
   return [output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total })];
 }
 
-// Box 13 deductions → schedule1 line8z_other_income (as negative / deduction)
-// Partners deduct Box 13 items against income; most flow through Schedule A
-// or reduce AGI. We aggregate to a single above-the-line offset via line8z.
-function box13DeductionOutputs(items: K1PartnershipItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box13_deductions ?? 0), 0);
-  if (total <= 0) return [];
-  return [output(schedule1, { line8z_other_income: -total })];
+// Box 13 deductions — K-1 box 13 covers various codes (A–Z+):
+//   Code A: Cash charitable contributions → Schedule A line 12
+//   Code B: Capital gain property contributions → Schedule A line 12
+//   Code K: Section 179 deduction → Form 4562
+//   etc.
+// These are itemized deductions that flow through Schedule A, NOT above-the-line.
+// The input layer (parse_cch.py) aggregates box13 amounts into the schedule_a
+// input data. This node does not route box13 to avoid double-counting.
+function box13DeductionOutputs(_items: K1PartnershipItems): NodeOutput[] {
+  return [];
 }
 
 // Box 17 AMT items → form6251 other_adjustments
