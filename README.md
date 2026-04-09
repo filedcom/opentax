@@ -1,4 +1,4 @@
-# @filed/tax-engine
+# Filed OpenTax
 
 Open-source IRS Form 1040 tax engine built for AI agents.
 
@@ -244,7 +244,7 @@ deno task tax node inspect --node_type w2
 # See the full dependency graph from any node
 deno task tax node graph --node_type start
 
-# List all 184 registered nodes
+# List all registered nodes
 deno task tax node list
 ```
 
@@ -275,7 +275,7 @@ deno task tax node list
 
 | Command                                            | Description                        |
 | -------------------------------------------------- | ---------------------------------- |
-| `node list`                                        | List all 184 registered nodes      |
+| `node list`                                        | List all registered nodes          |
 | `node inspect --node_type TYPE`                    | Show input schema and output nodes |
 | `node inspect --node_type TYPE --json`             | Same, as JSON                      |
 | `node graph --node_type TYPE [--depth N] [--json]` | Mermaid or JSON dependency graph   |
@@ -416,40 +416,40 @@ deno task tax return export --returnId abc-123 --type mef
 
 ## Development
 
+Requires [Deno](https://deno.land).
+
 ```bash
 # Run all tests
 deno task test
 
-# Run accuracy benchmark (97 TY2025 scenarios)
-cd benchmark && deno run --allow-read --allow-write --allow-run run_benchmark.ts
+# Run a single directory
+deno task test forms/f1040/nodes/inputs/w2/
 
-# Run a single case
-cd benchmark && deno run --allow-read --allow-write --allow-run run_benchmark.ts --form cases/02-single-w2-basic/
+# Run accuracy benchmark
+deno task bench
+
+# Filter to a specific form
+deno task bench --form 1040
 ```
 
-### Benchmark harness
+### Filed OpenTax Bench
 
-The harness tracks benchmark accuracy and drives autonomous bug-fixing sessions.
+97 real-world TY2025 scenarios covering single, MFJ, and HOH filers across W-2, 1099-R, SSA, Schedule C, K-1, capital gains, credits, and estimated tax payments.
 
-```
-benchmark/harness/
-  state.json     # Active task state: current pass/fail counts, root causes, phase
-  progress.md    # Append-only log of harness runs and outcomes
-```
+Pass criterion: engine within ±$5 of correct value for `line24_total_tax`, `line35a_refund`, and `line37_amount_owed`.
 
-**97 TY2025 scenarios** covering single, MFJ, HOH filers with W-2, 1099-R, SSA, Schedule C, K-1, capital gains, credits, and estimated tax payments. Pass criterion: engine within ±$5 of correct value for `line24_total_tax`, `line35a_refund`, and `line37_amount_owed`.
-
-**Current accuracy: 94/97 passing.** The 3 remaining failures involve SSA + 1099-B combinations (cases 67, 91, 95) — likely NIIT/AMT mismatch.
+Benchmark state is tracked in `.state/bench/` (see `docs/architecture/STRUCTURE.md` for the full layout).
 
 #### Claude Code skills (in-repo)
 
-If you're using Claude Code, three skills automate harness work:
+If you're using Claude Code, four skills automate benchmark and development work:
 
 | Skill | Purpose |
 |-------|---------|
-| `/tax-status` | Print current pass/fail, root causes, and recent activity |
-| `/tax-fix` | Autonomous bug-fixing loop: runs benchmark, diagnoses failures, patches nodes, iterates until pass rate improves or stalls |
-| `/tax-build` | Build a new form node end-to-end: research → ground truth → implementation → benchmark |
+| `/tax-status` | Print current pass/fail counts, root causes, and recent activity |
+| `/tax-fix` | Autonomous bug-fixing loop: runs benchmark, diagnoses failures, patches nodes, iterates |
+| `/tax-cases` | Source new real-world test cases and write them to `benchmark/cases/` |
+| `/tax-build` | Build a new form end-to-end: research → ground truth → nodes → benchmark |
 
 ### Adding a node
 
@@ -458,7 +458,7 @@ If you're using Claude Code, three skills automate harness work:
 - Use `OutputNodes` for type-safe routing to downstream nodes
 - Break logic into small named pure helpers, compose in `compute()`
 
-See `CLAUDE.md` for full conventions. See [`benchmark/STRUCTURE.md`](benchmark/STRUCTURE.md) for benchmark case format.
+See `CLAUDE.md` for full conventions.
 
 ---
 

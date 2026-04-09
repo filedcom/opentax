@@ -19,7 +19,7 @@ import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const XSD_PATH = new URL(
-  "../../../../.research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/1040x_Schema_2025v3.0/2025v3.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../../.state/research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/1040x_Schema_2025v3.0/2025v3.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 

@@ -22,7 +22,7 @@ import { DependentRelationship } from "../nodes/inputs/general/index.ts";
 // ── XSD paths ────────────────────────────────────────────────────────────────
 
 const XSD_RETURN1040 = new URL(
-  "../../../.research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/1040x_Schema_2025v3.0/2025v3.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
+  "../../../.state/research/docs/IMF_Series_2025v3.0/1040x_2025v3.0/1040x_Schema_2025v3.0/2025v3.0/IndividualIncomeTax/Ind1040/Return1040.xsd",
   import.meta.url,
 ).pathname;
 
