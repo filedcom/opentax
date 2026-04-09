@@ -21,7 +21,9 @@ import {
 const ZERO_TAXABLE_CODES = new Set(["G", "N", "R", "Q", "T", "6", "W"]);
 
 // Distribution codes triggering form5329 (early distribution penalty)
-const EARLY_DIST_CODES = new Set(["1"]);
+// Code 1 = early distribution, no known exception (traditional/SEP/SIMPLE IRA, pension)
+// Code J = early distribution from Roth IRA, no known exception (IRC §72(t))
+const EARLY_DIST_CODES = new Set(["1", "J"]);
 
 // Distribution codes triggering form4972 (lump-sum election)
 const LUMP_SUM_CODES = new Set(["5"]);

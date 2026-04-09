@@ -87,9 +87,13 @@ function threshold(status: FilingStatus): number {
 }
 
 // Part I, Line 4: total Medicare wages + tips (all sources)
+// Form 8959 line 1 = W-2 box 5 (Medicare wages). When medicare_wages_box5 is present
+// (i.e., box5 ≠ box1), use it as the wage base for the threshold comparison.
+// When absent (box5 == box1), fall back to medicare_wages (box1).
 // Form 8959 line 4
 function totalMedicareWages(input: Form8959Input): number {
-  return (input.medicare_wages ?? 0) +
+  const wageBase = input.medicare_wages_box5 ?? input.medicare_wages ?? 0;
+  return wageBase +
     (input.unreported_tips ?? 0) +
     (input.wages_8919 ?? 0);
 }

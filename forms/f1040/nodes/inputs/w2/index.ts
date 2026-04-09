@@ -16,6 +16,7 @@ import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -285,6 +286,20 @@ function scheduleAOutput(w2s: W2Items): NodeOutput[] {
   return [output(schedule_a, { line_5a_state_income_tax: stateTaxTotal })];
 }
 
+// Route combined W-2 SS wages (box 3 + box 7 tips) to Schedule SE.
+// Schedule SE Line 8a uses total W-2 SS wages to reduce the SS wage base,
+// preventing double SS tax on wages already subject to FICA withholding.
+// IRC §1402(b); Schedule SE Part I Lines 8a–8d.
+// Only regular (non-statutory) employees have SS wages subject to this offset.
+function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
+  const totalSsWages = regularItems(w2s).reduce(
+    (sum, item) => sum + (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0),
+    0,
+  );
+  if (totalSsWages <= 0) return [];
+  return [output(schedule_se, { w2_ss_wages: totalSsWages })];
+}
+
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
   const sum = (...codes: Box12Code[]) =>
@@ -339,6 +354,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     schedule3,
     schedule_a,
     schedule_c,
+    schedule_se,
     form4137,
     form2441,
     form8959,
@@ -370,6 +386,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...depCareOutput(input.w2s),
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
+      ...scheduleSEOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];

@@ -37,6 +37,9 @@ export const inputSchema = z.object({
   unreported_tips_4137: z.number().nonnegative().optional(),
   // Wages subject to SE from Form 8919, line 10 — offsets SS wage base (Sch SE Line 8c)
   wages_8919: z.number().nonnegative().optional(),
+  // W-2 SS wages (box 3 + box 7 tips) — offsets SS wage base (Sch SE Line 8a)
+  // IRC §1402(b); Schedule SE Part I Lines 8a–8d
+  w2_ss_wages: z.number().nonnegative().optional(),
 });
 
 type ScheduleSEInput = z.infer<typeof inputSchema>;
@@ -54,13 +57,18 @@ function netEarningsFromSE(line3: number): number {
   return line3 > 0 ? line3 * NET_EARNINGS_MULTIPLIER : line3;
 }
 
-// Line 9: remaining SS wage base after tip/form-8919 offset (Sch SE lines 8b–8d)
-// W-2 wages do NOT reduce SE SS base; the W2/SE overlap is handled via excess SS credit
-// on Schedule 3 line 11, not as a reduction in SE tax itself.
+// Line 9: remaining SS wage base after W-2/tip/form-8919 offsets (Sch SE lines 8a–8d)
+// W-2 SS wages (box 3 + box 7) reduce the SE SS wage base per Schedule SE Line 8a.
+// This prevents double-payment of SS tax on the same dollars (IRC §1402(b)).
+// Unreported tips (Form 4137 Line 10) → Line 8b; Form 8919 wages → Line 8c.
+// Line 8d = 8a + 8b + 8c; Line 9 = max(0, Line 7 − Line 8d).
 function remainingWageBase(input: ScheduleSEInput): number {
   return Math.max(
     0,
-    SS_WAGE_BASE - (input.unreported_tips_4137 ?? 0) - (input.wages_8919 ?? 0),
+    SS_WAGE_BASE -
+      (input.w2_ss_wages ?? 0) -
+      (input.unreported_tips_4137 ?? 0) -
+      (input.wages_8919 ?? 0),
   );
 }
 
