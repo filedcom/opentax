@@ -11,6 +11,7 @@ import {
 } from "../../../../../../core/types/tax-node.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../agi_aggregator/index.ts";
+import { form8960 } from "../../forms/form8960/index.ts";
 import { normalizeArray } from "../../../utils.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
@@ -67,7 +68,7 @@ function line6OrdinaryDividends(input: ScheduleBInput): number {
 class ScheduleBNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_b";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form8960]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleBInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -98,6 +99,13 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
         agi_aggregator,
         agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
       ));
+    }
+
+    // Route total taxable interest (Part I line 4) to Form 8960 line 1 for NIIT.
+    // IRC §1411(c)(1)(A): taxable interest is net investment income.
+    // Note: dividends are routed to form8960 directly by f1099div; schedule_b only handles interest.
+    if (line4 > 0) {
+      outputs.push(this.outputNodes.output(form8960, { line1_taxable_interest: line4 }));
     }
 
     return { outputs };

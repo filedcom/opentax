@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { form8959 } from "../form8959/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { SS_WAGE_BASE_2025 } from "../../../config/2025.ts";
 
@@ -82,7 +83,7 @@ function medicareTax(line6: number): number {
 class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_se";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator, form8959]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -120,6 +121,10 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
       this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),
+      // Route SE net earnings to Form 8959 Part II for Additional Medicare Tax.
+      // IRC §3101(b)(2): 0.9% additional medicare tax applies to SE income above threshold.
+      // line6 = net SE earnings (before the deduction split); form8959 handles the threshold math.
+      this.outputNodes.output(form8959, { se_income: line6 }),
     ];
 
     return { outputs };

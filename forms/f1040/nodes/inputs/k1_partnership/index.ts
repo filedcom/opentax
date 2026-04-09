@@ -13,6 +13,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
+import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -246,6 +247,37 @@ function scheduleDOutput(items: K1PartnershipItems): NodeOutput[] {
   return [output(schedule_d, { line_12_k1_lt: totalLt })];
 }
 
+// NIIT routing: K-1 partnership income → Form 8960 lines 2 and 4a.
+// IRC §1411(c)(1)(A)/(2)(A):
+//   - line4a (passive income): Box 1 ordinary business + Box 2 rental + Box 3 other rental + Box 7 royalties
+//   - line2 (ordinary dividends): Box 6a ordinary dividends from partnership investment portfolio
+// Note: form8960 line2_ordinary_dividends is accumulable — f1099div also routes there.
+// Sending as separate NodeOutput objects avoids merging issues and lets the executor
+// accumulate them into an array that form8960 sums via normalizeArray.
+function form8960Output(items: K1PartnershipItems): NodeOutput[] {
+  const passiveTotal = items.reduce(
+    (sum, item) =>
+      sum +
+      (item.box1_ordinary_business ?? 0) +
+      (item.box2_rental_re ?? 0) +
+      (item.box3_other_rental ?? 0) +
+      (item.box7_royalties ?? 0),
+    0,
+  );
+  const dividendTotal = items.reduce(
+    (sum, item) => sum + (item.box6a_ordinary_dividends ?? 0),
+    0,
+  );
+  const outputs: NodeOutput[] = [];
+  if (passiveTotal !== 0) {
+    outputs.push(output(form8960, { line4a_passive_income: passiveTotal }));
+  }
+  if (dividendTotal > 0) {
+    outputs.push(output(form8960, { line2_ordinary_dividends: dividendTotal }));
+  }
+  return outputs;
+}
+
 // SE tax routing: aggregate all SE earnings across K-1s into a single output.
 // Box 14a (net SE earnings) takes priority per item; Box 4a used as fallback.
 // Aggregating prevents array accumulation in schedule_se when multiple K-1s are present.
@@ -328,6 +360,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     unrecaptured_1250_worksheet,
     form6251,
     income_tax_calculation,
+    form8960,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -345,6 +378,7 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...unrecaptured1250Outputs(k1_partnerships),
       ...box13DeductionOutputs(k1_partnerships),
       ...form6251Outputs(k1_partnerships),
+      ...form8960Output(k1_partnerships),
     ];
 
     return { outputs };

@@ -13,6 +13,7 @@ import {
   NIIT_THRESHOLD_MFS,
   NIIT_THRESHOLD_OTHER,
 } from "../../../config/2025.ts";
+import { normalizeArray } from "../../../utils.ts";
 
 // ─── TY2025 Constants ──────────────────────────────────────────────────────────
 // IRC §1411(a)(1); Form 8960 line 17 — Net Investment Income Tax rate
@@ -42,9 +43,10 @@ export const inputSchema = z.object({
   // IRC §1411(c)(1)(A); Form 8960 line 1
   line1_taxable_interest: z.number().optional(),
 
-  // Line 2 — Ordinary dividends (Form 1040 line 3b / Schedule B)
+  // Line 2 — Ordinary dividends (Form 1040 line 3b / Schedule B + K-1 box 6a)
   // IRC §1411(c)(1)(A); Form 8960 line 2
-  line2_ordinary_dividends: z.number().optional(),
+  // Accumulable: f1099div and k1_partnership both route here; executor merges to array.
+  line2_ordinary_dividends: z.union([z.number(), z.array(z.number())]).optional(),
 
   // Line 3 — Annuities subject to NIIT (non-qualified retirement plan annuities)
   // IRC §1411(c)(1)(A); Form 8960 line 3
@@ -101,13 +103,18 @@ function threshold(status: FilingStatus): number {
   return THRESHOLD_OTHER; // Single, HOH
 }
 
+// Sum ordinary dividends from potentially-array field (f1099div + k1_partnership both route here)
+function sumDividends(input: Form8960Input): number {
+  return normalizeArray(input.line2_ordinary_dividends).reduce((s, n) => s + n, 0);
+}
+
 // Part I, Line 8: Total NII gross (sum of lines 1–7)
 // Lines 4b, 5b, 7 can be negative (adjustments/exclusions)
 // Form 8960 line 8
 function niiGross(input: Form8960Input): number {
   return (
     (input.line1_taxable_interest ?? 0) +
-    (input.line2_ordinary_dividends ?? 0) +
+    sumDividends(input) +
     (input.line3_annuities ?? 0) +
     (input.line4a_passive_income ?? 0) +
     (input.line4b_rental_net ?? 0) +
