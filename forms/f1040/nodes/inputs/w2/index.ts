@@ -24,11 +24,7 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import {
-  SS_WAGE_BASE_2025,
-  SS_MAX_TAX_PER_EMPLOYER_2025,
-  RETIREMENT_LIMITS_2025,
-} from "../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 export enum Box12Code {
   A = "A",     // Uncollected SS tax on tips
@@ -107,16 +103,12 @@ type F1040Input = z.infer<typeof f1040.inputSchema>;
 type W2Item = z.infer<typeof w2ItemSchema>;
 type W2Items = W2Item[];
 
-const SS_WAGE_BASE = SS_WAGE_BASE_2025;
-const SS_MAX_TAX = SS_MAX_TAX_PER_EMPLOYER_2025;
-
-const RETIREMENT_LIMITS = RETIREMENT_LIMITS_2025;
-
 function retirementLimit(
-  planType: keyof typeof RETIREMENT_LIMITS,
+  retirementLimits: Record<string, Record<number, number>>,
+  planType: string,
   age: number | undefined,
 ): number {
-  const limits = RETIREMENT_LIMITS[planType];
+  const limits = retirementLimits[planType];
   if (age === undefined) return limits[59]; // default to standard catch-up limit
   if (age <= 49) return limits[49];
   if (age <= 59) return limits[59];
@@ -124,16 +116,21 @@ function retirementLimit(
   return limits[Infinity];
 }
 
-function validateItem(item: W2Item): void {
+function validateItem(
+  item: W2Item,
+  ssWageBase: number,
+  ssTaxPerEmployer: number,
+  retirementLimits: Record<string, Record<number, number>>,
+): void {
   const ssWages = (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
-  if (ssWages > SS_WAGE_BASE) {
+  if (ssWages > ssWageBase) {
     throw new Error(
-      `W-2 validation error: SS taxable wages (${ssWages}) exceed the wage base limit (${SS_WAGE_BASE})`,
+      `W-2 validation error: SS taxable wages (${ssWages}) exceed the wage base limit (${ssWageBase})`,
     );
   }
-  if ((item.box4_ss_withheld ?? 0) > SS_MAX_TAX) {
+  if ((item.box4_ss_withheld ?? 0) > ssTaxPerEmployer) {
     throw new Error(
-      `W-2 validation error: SS tax withheld (${item.box4_ss_withheld}) exceeds the per-employer maximum (${SS_MAX_TAX})`,
+      `W-2 validation error: SS tax withheld (${item.box4_ss_withheld}) exceeds the per-employer maximum (${ssTaxPerEmployer})`,
     );
   }
 
@@ -142,25 +139,25 @@ function validateItem(item: W2Item): void {
 
   const code401k = entries.filter((e) => e.code === Box12Code.D || e.code === Box12Code.AA)
     .reduce((s, e) => s + e.amount, 0);
-  if (code401k > retirementLimit("401k", age)) {
+  if (code401k > retirementLimit(retirementLimits, "401k", age)) {
     throw new Error(`W-2 validation error: 401(k) deferrals (${code401k}) exceed the limit`);
   }
 
   const code403b = entries.filter((e) => e.code === Box12Code.E || e.code === Box12Code.BB)
     .reduce((s, e) => s + e.amount, 0);
-  if (code403b > retirementLimit("403b", age)) {
+  if (code403b > retirementLimit(retirementLimits, "403b", age)) {
     throw new Error(`W-2 validation error: 403(b) deferrals (${code403b}) exceed the limit`);
   }
 
   const code457b = entries.filter((e) => e.code === Box12Code.G || e.code === Box12Code.EE)
     .reduce((s, e) => s + e.amount, 0);
-  if (code457b > retirementLimit("457b", age)) {
+  if (code457b > retirementLimit(retirementLimits, "457b", age)) {
     throw new Error(`W-2 validation error: 457(b) deferrals (${code457b}) exceed the limit`);
   }
 
   const codeS = entries.filter((e) => e.code === Box12Code.S)
     .reduce((s, e) => s + e.amount, 0);
-  if (codeS > retirementLimit("simple", age)) {
+  if (codeS > retirementLimit(retirementLimits, "simple", age)) {
     throw new Error(`W-2 validation error: SIMPLE IRA deferrals (${codeS}) exceed the limit`);
   }
 }
@@ -194,9 +191,9 @@ function combatPayFields(w2s: W2Items): F1040Input {
   return total > 0 ? { line1i_combat_pay: total } : {};
 }
 
-function excessSsOutput(w2s: W2Items): NodeOutput[] {
+function excessSsOutput(w2s: W2Items, ssTaxPerEmployer: number): NodeOutput[] {
   const totalSsWithheld = w2s.reduce((sum, item) => sum + (item.box4_ss_withheld ?? 0), 0);
-  const excess = totalSsWithheld - SS_MAX_TAX;
+  const excess = totalSsWithheld - ssTaxPerEmployer;
   if (w2s.length < 2 || excess <= 0) return [];
   return [output(schedule3, { line11_excess_ss: excess })];
 }
@@ -351,9 +348,11 @@ class W2Node extends TaxNode<typeof inputSchema> {
     f8812,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     for (const item of input.w2s) {
-      validateItem(item);
+      validateItem(item, cfg.ssWageBase, cfg.ssTaxPerEmployer, cfg.retirementLimits);
     }
 
     const f1040Fields: F1040Input = {
@@ -363,7 +362,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     };
 
     const outputs: NodeOutput[] = [
-      ...excessSsOutput(input.w2s),
+      ...excessSsOutput(input.w2s, cfg.ssTaxPerEmployer),
       ...statutoryOutput(input.w2s),
       ...medicareOutput(input.w2s),
       ...allocatedTipsOutput(input.w2s),

@@ -8,7 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { F2106_PERFORMING_ARTIST_AGI_LIMIT } from "../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 // TY2025 — Form 2106: Employee Business Expenses
 // Post-TCJA (P.L. 115-97 §11045), deductible ONLY for four qualifying categories:
@@ -76,9 +76,9 @@ type F2106Input = z.infer<typeof inputSchema>;
 
 // Returns true if performing artist AGI limit is exceeded.
 // IRC §62(b)(1)(C): performing artist must have combined AGI ≤ $16,000.
-function performingArtistEligible(agi: number | undefined): boolean {
+function performingArtistEligible(agi: number | undefined, agiLimit: number): boolean {
   if (agi === undefined) return true; // no AGI provided — allow deduction
-  return agi <= F2106_PERFORMING_ARTIST_AGI_LIMIT;
+  return agi <= agiLimit;
 }
 
 // Compute vehicle expense for one item.
@@ -115,25 +115,25 @@ function netDeduction(item: F2106Item): number {
 
 // Filter items to only those eligible for deduction.
 // Performing artists are excluded when AGI exceeds IRC §62(b)(1)(C) limit.
-function eligibleItems(items: F2106Items, agi: number | undefined): F2106Items {
-  const paEligible = performingArtistEligible(agi);
+function eligibleItems(items: F2106Items, agi: number | undefined, agiLimit: number): F2106Items {
+  const paEligible = performingArtistEligible(agi, agiLimit);
   if (paEligible) return items;
   return items.filter((item) => item.employee_type !== EmployeeType.PERFORMING_ARTIST);
 }
 
 // Total deduction across all eligible items.
-function totalDeduction(items: F2106Items, agi: number | undefined): number {
-  return eligibleItems(items, agi).reduce((sum, item) => sum + netDeduction(item), 0);
+function totalDeduction(items: F2106Items, agi: number | undefined, agiLimit: number): number {
+  return eligibleItems(items, agi, agiLimit).reduce((sum, item) => sum + netDeduction(item), 0);
 }
 
-function schedule1Output(items: F2106Items, agi: number | undefined): NodeOutput[] {
-  const total = totalDeduction(items, agi);
+function schedule1Output(items: F2106Items, agi: number | undefined, agiLimit: number): NodeOutput[] {
+  const total = totalDeduction(items, agi, agiLimit);
   if (total === 0) return [];
   return [output(schedule1, { line12_business_expenses: total })];
 }
 
-function agiOutput(items: F2106Items, agi: number | undefined): NodeOutput[] {
-  const total = totalDeduction(items, agi);
+function agiOutput(items: F2106Items, agi: number | undefined, agiLimit: number): NodeOutput[] {
+  const total = totalDeduction(items, agi, agiLimit);
   if (total === 0) return [];
   return [output(agi_aggregator, { line12_business_expenses: total })];
 }
@@ -143,12 +143,14 @@ class F2106Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
 
-  compute(_ctx: NodeContext, input: F2106Input): NodeResult {
+  compute(ctx: NodeContext, input: F2106Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const parsed = inputSchema.parse(input);
     return {
       outputs: [
-        ...schedule1Output(parsed.f2106s, parsed.agi),
-        ...agiOutput(parsed.f2106s, parsed.agi),
+        ...schedule1Output(parsed.f2106s, parsed.agi, cfg.f2106PerformingArtistAgiLimit),
+        ...agiOutput(parsed.f2106s, parsed.agi, cfg.f2106PerformingArtistAgiLimit),
       ],
     };
   }
