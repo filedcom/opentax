@@ -1,0 +1,40 @@
+{
+  "year": 2025,
+  "scenario": "Single filer, $65k wages, marketplace coverage at 432% FPL — received too much APTC and must repay full excess on Form 8962 (above 400% FPL, no repayment cap)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Riley",
+          "taxpayer_last_name": "Nakamura",
+          "taxpayer_dob": "1985-03-22",
+          "address_city": "Portland",
+          "address_state": "OR",
+          "address_zip": "97201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 65000,
+        "box2_fed_withheld": 6500,
+        "box3_ss_wages": 65000,
+        "box4_ss_withheld": 4030,
+        "box5_medicare_wages": 65000,
+        "box6_medicare_withheld": 943
+      }
+    },
+    {
+      "node_type": "f1095a",
+      "data": {
+        "issuer_name": "Oregon Health Plan Exchange",
+        "annual_premium": 6000,
+        "annual_slcsp": 6600,
+        "annual_aptc": 4800
+      }
+    }
+  ]
+}

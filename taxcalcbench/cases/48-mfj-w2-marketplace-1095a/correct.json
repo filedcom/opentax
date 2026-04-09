@@ -42,14 +42,14 @@
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
     "aotc_refundable": 0,
-    "ptc_additional": 0,
+    "ptc_additional": 3500,
     "ptc_repayment": 0,
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
     "line24_total_tax": 7743,
-    "line33_total_payments": 10500,
-    "line35a_refund": 2757,
+    "line33_total_payments": 14000,
+    "line35a_refund": 6257,
     "line37_amount_owed": 0
   }
 }

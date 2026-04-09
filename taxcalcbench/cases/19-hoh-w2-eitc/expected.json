@@ -1,10 +1,10 @@
 {
-  "returnId": "cd4b16da-943d-4a04-926f-bdf16c22d19b",
+  "returnId": "dd5e7fb4-b453-4296-9df2-23d834278d3c",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 22000,
     "line9_total_income": 22000,
-    "line11_agi": 0,
+    "line11_agi": 22000,
     "line15_taxable_income": 0,
     "line24_total_tax": 0,
     "line33_total_payments": 6828,
@@ -17,11 +17,13 @@
     "f2441",
     "f8812",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule_a",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -53,32 +55,32 @@
       0,
       0
     ],
-    "line27_eitc": [
-      4328,
-      4328
-    ],
+    "line27_eitc": 4328,
     "line12a_standard_deduction": [
-      22500,
-      22500
+      23625,
+      23625
     ],
     "line15_taxable_income": [
       0,
       0
     ],
-    "line28_actc": [
-      1700,
-      1700
-    ],
+    "line28_actc": 1700,
     "line1z_total_wages": 22000,
     "line9_total_income": 22000,
     "line18_total_tax_before_credits": 0,
     "line21_credits_total": 0,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
+    "line25d_total_withholding": 800,
     "line33_total_payments": 6828,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 23625,
+    "line32_refundable_credits_total": 6028,
+    "line34_overpayment": 6828,
     "line35a_refund": 6828
   },
   "warnings": [
+    "Refund is more than double total withholding — verify refundable credits.",
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
   ]
 }

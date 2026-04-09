@@ -1,11 +1,11 @@
 {
-  "returnId": "5d7819e4-230c-4730-9f1c-2e45f2f331b1",
+  "returnId": "9e7112e8-e37f-45f8-a8d2-6d50690c432a",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 27000,
     "line9_total_income": 27000,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
+    "line11_agi": 27000,
+    "line15_taxable_income": 3375,
     "line24_total_tax": 0,
     "line33_total_payments": 12786,
     "line35a_refund": 12786
@@ -18,12 +18,14 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule3",
     "schedule_a",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -55,37 +57,37 @@
       0,
       0
     ],
-    "line27_eitc": [
-      7311,
-      7311
-    ],
+    "line27_eitc": 7311,
     "line12a_standard_deduction": [
-      22500,
-      22500
+      23625,
+      23625
     ],
     "line15_taxable_income": [
-      4500,
-      4500
+      3375,
+      3375
     ],
     "line16_income_tax": [
-      450,
-      450
+      337.5,
+      337.5
     ],
-    "line28_actc": [
-      3675,
-      3675
-    ],
-    "line20_nonrefundable_credits": 450,
+    "line28_actc": 3675,
+    "line20_nonrefundable_credits": 337.5,
     "line1z_total_wages": 27000,
     "line9_total_income": 27000,
-    "line18_total_tax_before_credits": 450,
-    "line21_credits_total": 450,
+    "line18_total_tax_before_credits": 337.5,
+    "line21_credits_total": 337.5,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
+    "line25d_total_withholding": 1800,
     "line33_total_payments": 12786,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 23625,
+    "line32_refundable_credits_total": 10986,
+    "line34_overpayment": 12786,
     "line35a_refund": 12786
   },
   "warnings": [
+    "Refund is more than double total withholding — verify refundable credits.",
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
   ]
 }

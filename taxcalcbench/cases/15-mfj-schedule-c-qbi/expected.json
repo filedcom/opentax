@@ -1,14 +1,14 @@
 {
-  "returnId": "bb9edd67-3be5-43b7-bb32-d7f7c0f097b3",
+  "returnId": "332c9e49-1fa6-4974-8008-bc93ae65568a",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 65000,
-    "line9_total_income": 65000,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
-    "line24_total_tax": 19740.2439,
+    "line9_total_income": 135000,
+    "line11_agi": 130054.6575,
+    "line15_taxable_income": 84554.6575,
+    "line24_total_tax": 19560.2439,
     "line33_total_payments": 7000,
-    "line37_amount_owed": 12740.243900000001
+    "line37_amount_owed": 12560.243900000001
   },
   "forms": [
     "agi_aggregator",
@@ -18,6 +18,7 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
@@ -55,6 +56,11 @@
       130054.6575,
       130054.6575
     ],
+    "line8_additional_income": 70000,
+    "line10_adjustments": [
+      4945.3425,
+      4945.3425
+    ],
     "line12e_itemized_deductions": [
       0,
       0
@@ -64,29 +70,32 @@
       14000
     ],
     "line12a_standard_deduction": [
-      30000,
-      30000
+      31500,
+      31500
     ],
     "line15_taxable_income": [
-      86054.6575,
-      86054.6575
+      84554.6575,
+      84554.6575
     ],
     "line16_income_tax": [
-      9849.5589,
-      9849.5589
+      9669.5589,
+      9669.5589
     ],
     "line17_additional_taxes": [
       9890.685,
       9890.685
     ],
     "line1z_total_wages": 65000,
-    "line9_total_income": 65000,
-    "line18_total_tax_before_credits": 19740.2439,
+    "line9_total_income": 135000,
+    "line18_total_tax_before_credits": 19560.2439,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 19740.2439,
-    "line24_total_tax": 19740.2439,
+    "line22_tax_after_credits": 19560.2439,
+    "line24_total_tax": 19560.2439,
+    "line25d_total_withholding": 7000,
     "line33_total_payments": 7000,
-    "line37_amount_owed": 12740.243900000001
+    "line14_deductions_qbi_total": 45500,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 12560.243900000001
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

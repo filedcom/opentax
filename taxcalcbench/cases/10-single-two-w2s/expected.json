@@ -1,14 +1,14 @@
 {
-  "returnId": "3b783520-2f65-4671-98c3-14a4b978ddef",
+  "returnId": "c8ccc42e-2cc8-4287-8c74-4a8b99c56a3f",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 77000,
     "line9_total_income": 77000,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
-    "line24_total_tax": 8554,
+    "line11_agi": 77000,
+    "line15_taxable_income": 61250,
+    "line24_total_tax": 8389,
     "line33_total_payments": 7500,
-    "line37_amount_owed": 1054
+    "line37_amount_owed": 889
   },
   "forms": [
     "agi_aggregator",
@@ -18,11 +18,13 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
     "schedule1",
     "schedule_a",
+    "schedule_se",
     "standard_deduction",
     "w2"
   ],
@@ -54,25 +56,29 @@
       0
     ],
     "line12a_standard_deduction": [
-      15000,
-      15000
+      15750,
+      15750
     ],
     "line15_taxable_income": [
-      62000,
-      62000
+      61250,
+      61250
     ],
     "line16_income_tax": [
-      8554,
-      8554
+      8389,
+      8389
     ],
     "line1z_total_wages": 77000,
     "line9_total_income": 77000,
-    "line18_total_tax_before_credits": 8554,
+    "line18_total_tax_before_credits": 8389,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 8554,
-    "line24_total_tax": 8554,
+    "line22_tax_after_credits": 8389,
+    "line24_total_tax": 8389,
+    "line25d_total_withholding": 7500,
     "line33_total_payments": 7500,
-    "line37_amount_owed": 1054
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 889
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

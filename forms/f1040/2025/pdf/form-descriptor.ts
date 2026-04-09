@@ -1,7 +1,9 @@
 export type PdfFieldEntry =
-  | { readonly kind: "text";     readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
-  | { readonly kind: "checkbox"; readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
-  | { readonly kind: "radio";    readonly domainKey: string; readonly pdfField: string; readonly valueMap: Readonly<Record<string, string>> };
+  | { readonly kind: "text";         readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
+  | { readonly kind: "checkbox";     readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
+  /** Checks the box only when the domain value equals `whenValue` (string comparison). */
+  | { readonly kind: "checkboxWhen"; readonly domainKey: string; readonly pdfField: string; readonly whenValue: string }
+  | { readonly kind: "radio";        readonly domainKey: string; readonly pdfField: string; readonly valueMap: Readonly<Record<string, string>> };
 
 export interface PdfRowDescriptor {
   readonly domainKey: string;

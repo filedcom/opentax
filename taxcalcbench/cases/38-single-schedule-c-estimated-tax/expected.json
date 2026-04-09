@@ -1,14 +1,14 @@
 {
-  "returnId": "6039d178-526b-4e75-aa13-1eb851ee585b",
+  "returnId": "e24f9e5a-45a6-4eeb-8d03-65b1e2c3ee8f",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 0,
-    "line9_total_income": 0,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
-    "line24_total_tax": 12152.29896,
+    "line9_total_income": 60000,
+    "line11_agi": 55761.135,
+    "line15_taxable_income": 32008.908000000003,
+    "line24_total_tax": 12080.29896,
     "line33_total_payments": 12000,
-    "line37_amount_owed": 152.29896000000008
+    "line37_amount_owed": 80.29896000000008
   },
   "forms": [
     "agi_aggregator",
@@ -19,6 +19,7 @@
     "f8812",
     "form6251",
     "form8959",
+    "form8960",
     "form8995",
     "general",
     "income_tax_calculation",
@@ -40,43 +41,54 @@
     "address_city": "Seattle",
     "address_state": "WA",
     "address_zip": "98101",
-    "line26_estimated_tax": 12000,
+    "line26_estimated_tax": [
+      12000,
+      12000
+    ],
     "line11_agi": [
       55761.135,
       55761.135
+    ],
+    "line8_additional_income": 60000,
+    "line10_adjustments": [
+      4238.865,
+      4238.865
     ],
     "line12e_itemized_deductions": [
       0,
       0
     ],
     "line13_qbi_deduction": [
-      8152.227000000001,
-      8152.227000000001
+      8002.227000000001,
+      8002.227000000001
     ],
     "line12a_standard_deduction": [
-      15000,
-      15000
+      15750,
+      15750
     ],
     "line15_taxable_income": [
-      32608.908000000003,
-      32608.908000000003
+      32008.908000000003,
+      32008.908000000003
     ],
     "line16_income_tax": [
-      3674.56896,
-      3674.56896
+      3602.56896,
+      3602.56896
     ],
     "line17_additional_taxes": [
       8477.73,
       8477.73
     ],
     "line1z_total_wages": 0,
-    "line9_total_income": 0,
-    "line18_total_tax_before_credits": 12152.29896,
+    "line9_total_income": 60000,
+    "line18_total_tax_before_credits": 12080.29896,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 12152.29896,
-    "line24_total_tax": 12152.29896,
+    "line22_tax_after_credits": 12080.29896,
+    "line24_total_tax": 12080.29896,
+    "line25d_total_withholding": 0,
     "line33_total_payments": 12000,
-    "line37_amount_owed": 152.29896000000008
+    "line14_deductions_qbi_total": 23752.227,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 80.29896000000008
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

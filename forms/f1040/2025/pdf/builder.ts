@@ -47,6 +47,8 @@ function fillEntry(
     } else if (entry.kind === "checkbox") {
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
+    } else if (entry.kind === "checkboxWhen") {
+      if (String(value) === entry.whenValue) form.getCheckBox(entry.pdfField).check();
     } else if (entry.kind === "radio") {
       const mapped = entry.valueMap[String(value)];
       if (mapped) form.getRadioGroup(entry.pdfField).select(mapped);

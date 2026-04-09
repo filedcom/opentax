@@ -142,14 +142,11 @@ function applicablePremium(income: number, incomePct: number): number {
   return income * contrib;
 }
 
-// Maximum PTC = SLCSP premium - applicable premium (floor 0)
-function maxPtc(slcsp: number, applicable: number): number {
-  return Math.max(0, slcsp - applicable);
-}
-
-// Allowed PTC = min(max PTC, actual premium paid)
-function allowedPtc(maxPtcAmt: number, actualPremium: number): number {
-  return Math.min(maxPtcAmt, actualPremium);
+// Allowed PTC = max(0, min(SLCSP, actual_premium) - applicable_premium)
+// IRS Form 8962 line 11: use the lower of enrollment premium or SLCSP premium
+// before subtracting the required contribution (IRC §36B(b)(2)(A))
+function allowedPtc(slcsp: number, actualPremium: number, applicable: number): number {
+  return Math.max(0, Math.min(slcsp, actualPremium) - applicable);
 }
 
 // IRC §36B(f)(2)(B): cap on excess APTC repayment liability
@@ -225,8 +222,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     }
 
     const applicable = applicablePremium(income, incomePct);
-    const maxPtcAmt = maxPtc(slcsp, applicable);
-    const allowed = allowedPtc(maxPtcAmt, premium);
+    const allowed = allowedPtc(slcsp, premium, applicable);
 
     // QSEHRA reduces PTC dollar-for-dollar (IRC §36B(c)(2)(C)(iv))
     const qsehra = input.qsehra_amount_offered ?? 0;
