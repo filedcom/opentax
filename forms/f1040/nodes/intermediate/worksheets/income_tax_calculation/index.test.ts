@@ -135,7 +135,7 @@ Deno.test("unknown tax year throws with year in message", () => {
   assertThrows(
     () => income_tax_calculation.compute({ taxYear: 9999 }, inputSchema.parse({ taxable_income: 50_000, filing_status: FilingStatus.Single })),
     Error,
-    "No tax brackets for year 9999",
+    "No f1040 config for year 9999",
   );
 });
 

@@ -7,45 +7,8 @@ import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
-import {
-  BRACKETS_MFJ_2025,
-  BRACKETS_SINGLE_2025,
-  BRACKETS_HOH_2025,
-  BRACKETS_MFS_2025,
-  QDCGT_ZERO_CEILING_2025,
-  QDCGT_TWENTY_FLOOR_2025,
-  type Bracket,
-} from "../../../config/2025.ts";
-
-// ─── Year-keyed bracket lookup ────────────────────────────────────────────────
-
-type YearBrackets = {
-  mfj: ReadonlyArray<Bracket>;
-  single: ReadonlyArray<Bracket>;
-  hoh: ReadonlyArray<Bracket>;
-  mfs: ReadonlyArray<Bracket>;
-};
-
-const BRACKETS_BY_YEAR: Record<number, YearBrackets> = {
-  2025: {
-    mfj: BRACKETS_MFJ_2025,
-    single: BRACKETS_SINGLE_2025,
-    hoh: BRACKETS_HOH_2025,
-    mfs: BRACKETS_MFS_2025,
-  },
-};
-
-type QdcgtThresholds = {
-  zeroCeiling: Record<FilingStatus, number>;
-  twentyFloor: Record<FilingStatus, number>;
-};
-
-const QDCGT_THRESHOLDS_BY_YEAR: Record<number, QdcgtThresholds> = {
-  2025: {
-    zeroCeiling: QDCGT_ZERO_CEILING_2025,
-    twentyFloor: QDCGT_TWENTY_FLOOR_2025,
-  },
-};
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import type { Bracket } from "../../../config/2025.ts";
 
 // ─── Accumulable helper ───────────────────────────────────────────────────────
 
@@ -109,12 +72,12 @@ type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 function bracketsForStatus(
   status: FilingStatus,
-  yearBrackets: YearBrackets,
+  cfg: { bracketsMfj: ReadonlyArray<Bracket>; bracketsSingle: ReadonlyArray<Bracket>; bracketsHoh: ReadonlyArray<Bracket>; bracketsMfs: ReadonlyArray<Bracket> },
 ): ReadonlyArray<Bracket> {
-  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) return yearBrackets.mfj;
-  if (status === FilingStatus.HOH) return yearBrackets.hoh;
-  if (status === FilingStatus.MFS) return yearBrackets.mfs;
-  return yearBrackets.single;
+  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) return cfg.bracketsMfj;
+  if (status === FilingStatus.HOH) return cfg.bracketsHoh;
+  if (status === FilingStatus.MFS) return cfg.bracketsMfs;
+  return cfg.bracketsSingle;
 }
 
 // Compute tax using the pre-computed base amounts stored in each bracket.
@@ -146,7 +109,8 @@ function qdcgtTax(
   netCapGain: number,
   status: FilingStatus,
   brackets: ReadonlyArray<Bracket>,
-  thresholds: QdcgtThresholds,
+  zeroCeiling: Record<FilingStatus, number>,
+  twentyFloor: Record<FilingStatus, number>,
   unrecaptured1250: number,
   rate28Gain: number,
 ): number {
@@ -154,11 +118,11 @@ function qdcgtTax(
   if (prefIncome <= 0) return taxFromBrackets(taxableIncome, brackets);
 
   const ordinary = taxableIncome - prefIncome;
-  const zeroCeiling = thresholds.zeroCeiling[status];
-  const twentyFloor = thresholds.twentyFloor[status];
+  const zeroCeilingVal = zeroCeiling[status];
+  const twentyFloorVal = twentyFloor[status];
 
   // Amount of preferentially taxed income in the 0% bracket
-  const inZero = Math.max(0, Math.min(taxableIncome, zeroCeiling) - ordinary);
+  const inZero = Math.max(0, Math.min(taxableIncome, zeroCeilingVal) - ordinary);
 
   // Remaining preferential income above the zero-rate ceiling
   const remaining = prefIncome - inZero;
@@ -172,7 +136,7 @@ function qdcgtTax(
   const remaining28 = remaining25 - in28;
 
   // Room available in the 15% bracket above the zero ceiling
-  const availFifteen = Math.max(0, twentyFloor - Math.max(ordinary, zeroCeiling));
+  const availFifteen = Math.max(0, twentyFloorVal - Math.max(ordinary, zeroCeilingVal));
 
   const inFifteen = Math.min(remaining28, availFifteen);
   const inTwenty = remaining28 - inFifteen;
@@ -192,15 +156,8 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([f1040, form6251, f8812]);
 
   compute(ctx: NodeContext, rawInput: IncomeTaxCalcInput): NodeResult {
-    const yearBrackets = BRACKETS_BY_YEAR[ctx.taxYear];
-    if (yearBrackets === undefined) {
-      throw new Error(`No tax brackets for year ${ctx.taxYear}`);
-    }
-
-    const qdcgtThresholds = QDCGT_THRESHOLDS_BY_YEAR[ctx.taxYear];
-    if (qdcgtThresholds === undefined) {
-      throw new Error(`No QDCGT thresholds for year ${ctx.taxYear}`);
-    }
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
 
     const input = inputSchema.parse(rawInput);
 
@@ -211,7 +168,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       };
     }
 
-    const brackets = bracketsForStatus(input.filing_status, yearBrackets);
+    const brackets = bracketsForStatus(input.filing_status, cfg);
     const floor = input.foreign_earned_income_exclusion ?? 0;
 
     // Apply QDCGT / Schedule D Tax Worksheet when preferential income is present.
@@ -230,12 +187,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     if (floor > 0) {
       const stackedIncome = input.taxable_income + floor;
       const stackedTax = hasPrefIncome
-        ? qdcgtTax(stackedIncome, qualDiv, netCg, input.filing_status, brackets, qdcgtThresholds, unrecaptured1250, rate28)
+        ? qdcgtTax(stackedIncome, qualDiv, netCg, input.filing_status, brackets, cfg.qdcgtZeroCeiling, cfg.qdcgtTwentyFloor, unrecaptured1250, rate28)
         : taxFromBrackets(stackedIncome, brackets);
       const floorTax = taxFromBrackets(floor, brackets);
       tax = Math.max(0, stackedTax - floorTax);
     } else if (hasPrefIncome) {
-      tax = qdcgtTax(input.taxable_income, qualDiv, netCg, input.filing_status, brackets, qdcgtThresholds, unrecaptured1250, rate28);
+      tax = qdcgtTax(input.taxable_income, qualDiv, netCg, input.filing_status, brackets, cfg.qdcgtZeroCeiling, cfg.qdcgtTwentyFloor, unrecaptured1250, rate28);
     } else {
       tax = taxFromBrackets(input.taxable_income, brackets);
     }
