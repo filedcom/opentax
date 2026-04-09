@@ -12,3 +12,4 @@ testcases/
 # Tracked state (committed)
 # .state/bench/       ← state.json + progress.md are tracked
 # .state/field-dumps/ ← IRS field extracts are tracked
+.worktrees
