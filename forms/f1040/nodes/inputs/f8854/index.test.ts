@@ -20,7 +20,7 @@ function minimalInput(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(input: ReturnType<typeof minimalInput>) {
-  return f8854.compute({ taxYear: 2025 }, input);
+  return f8854.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 // =============================================================================
@@ -272,7 +272,7 @@ Deno.test("f8854.compute: smoke test — covered by avg tax, multiple assets", (
   // avg tax > threshold => covered
   // Asset gains: (3M-1M) + (500k-200k) = 2M + 300k = 2.3M
   // taxable = 2.3M - 866k = 1.434M
-  const result = f8854.compute({ taxYear: 2025 }, {
+  const result = f8854.compute({ taxYear: 2025, formType: "f1040" }, {
     expatriation_date: "2025-04-15",
     expatriate_type: ExpatriateType.CITIZEN,
     average_annual_tax_prior_5_years: 250_000,

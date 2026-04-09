@@ -4,7 +4,7 @@ import { f8997 } from "./index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f8997.compute({ taxYear: 2025 }, input as Parameters<typeof f8997.compute>[1]);
+  return f8997.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f8997.compute>[1]);
 }
 
 // =============================================================================

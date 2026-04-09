@@ -22,7 +22,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: z.infer<typeof itemSchema>[]) {
-  return f1099m.compute({ taxYear: 2025 }, { f1099ms: items });
+  return f1099m.compute({ taxYear: 2025, formType: "f1040" }, { f1099ms: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -438,7 +438,7 @@ Deno.test("f1099m.inputSchema or compute: box14 reserved field with non-zero val
   // Either schema rejects it, or it passes but should not route anywhere
   // If schema accepts it, verify compute does not route it
   if (parsed.success) {
-    const result = f1099m.compute({ taxYear: 2025 }, parsed.data as Parameters<typeof f1099m.compute>[1]);
+    const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, parsed.data as Parameters<typeof f1099m.compute>[1]);
     // box14_reserved must not produce any tax output
     const hasBox14Output = result.outputs.some(
       (o) => JSON.stringify(o.fields).includes("box14") || JSON.stringify(o.fields).includes("golden_parachute"),
@@ -455,21 +455,21 @@ Deno.test("f1099m.inputSchema or compute: box14 reserved field with non-zero val
 // ---------------------------------------------------------------------------
 
 Deno.test("f1099m.compute: box9_crop_insurance with deferral election does not throw", () => {
-  const result = f1099m.compute({ taxYear: 2025 }, {
+  const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ms: [{ ...minimalItem(), box9_crop_insurance: 5000, box9_crop_insurance_deferred: true }],
   });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
 Deno.test("f1099m.compute: box10_attorney_proceeds with physical injury exclusion does not throw", () => {
-  const result = f1099m.compute({ taxYear: 2025 }, {
+  const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ms: [{ ...minimalItem(), box10_attorney_proceeds: 20000, box10_attorney_taxable: false }],
   });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
 Deno.test("f1099m.compute: box3_other_income with physical injury classification does not throw", () => {
-  const result = f1099m.compute({ taxYear: 2025 }, {
+  const result = f1099m.compute({ taxYear: 2025, formType: "f1040" }, {
     f1099ms: [{ ...minimalItem(), box3_other_income: 10000, box3_other_income_routing: "excluded" }],
   });
   assertEquals(Array.isArray(result.outputs), true);

@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099patr.compute({ taxYear: 2025 }, { f1099patrs: items });
+  return f1099patr.compute({ taxYear: 2025, formType: "f1040" }, { f1099patrs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

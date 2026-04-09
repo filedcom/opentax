@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return sales_tax_deduction.compute({ taxYear: 2025 }, input as Parameters<typeof sales_tax_deduction.compute>[1]);
+  return sales_tax_deduction.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof sales_tax_deduction.compute>[1]);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

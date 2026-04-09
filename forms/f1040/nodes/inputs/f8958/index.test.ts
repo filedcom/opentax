@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { CommunityPropertyState, f8958, inputSchema } from "./index.ts";
 
 function compute(input: Parameters<typeof f8958.compute>[1]) {
-  return f8958.compute({ taxYear: 2025 }, input);
+  return f8958.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 // =============================================================================
@@ -148,7 +148,7 @@ Deno.test("f8958: disclosure-only form always produces no tax outputs", () => {
 
 Deno.test("f8958: compute throws on invalid state", () => {
   assertThrows(() =>
-    f8958.compute({ taxYear: 2025 }, {
+    f8958.compute({ taxYear: 2025, formType: "f1040" }, {
       state: "NY" as CommunityPropertyState,
     })
   );

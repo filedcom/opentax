@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f8903 } from "./index.ts";
 
 function compute(input: Parameters<typeof f8903.compute>[1]) {
-  return f8903.compute({ taxYear: 2025 }, input);
+  return f8903.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -120,7 +120,7 @@ Deno.test("f8903.compute: oil_gas_rate=true applies 6% rate", () => {
 
 Deno.test("f8903.compute: throws on missing qualified_production_activities_income", () => {
   assertThrows(
-    () => f8903.compute({ taxYear: 2025 }, { form_w2_wages: 80000 } as Parameters<typeof f8903.compute>[1]),
+    () => f8903.compute({ taxYear: 2025, formType: "f1040" }, { form_w2_wages: 80000 } as Parameters<typeof f8903.compute>[1]),
     Error,
   );
 });
@@ -129,7 +129,7 @@ Deno.test("f8903.compute: throws on missing form_w2_wages", () => {
   assertThrows(
     () =>
       f8903.compute(
-        { taxYear: 2025 },
+        { taxYear: 2025, formType: "f1040" },
         { qualified_production_activities_income: 100000 } as Parameters<typeof f8903.compute>[1],
       ),
     Error,

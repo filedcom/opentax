@@ -18,7 +18,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return auto_expense.compute({ taxYear: 2025 }, { auto_expenses: items });
+  return auto_expense.compute({ taxYear: 2025, formType: "f1040" }, { auto_expenses: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

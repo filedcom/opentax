@@ -21,7 +21,7 @@ function compute(
   items: z.infer<typeof itemSchema>[],
   opts: { filing_status?: string } = {},
 ) {
-  return scheduleC.compute({ taxYear: 2025 }, { schedule_cs: items, ...opts });
+  return scheduleC.compute({ taxYear: 2025, formType: "f1040" }, { schedule_cs: items, ...opts });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -75,7 +75,7 @@ Deno.test("schema_invalid_accounting_method: 'FIFO' fails validation", () => {
 });
 
 Deno.test("schema_empty_array: empty schedule_cs array does not throw", () => {
-  const result = scheduleC.compute({ taxYear: 2025 }, { schedule_cs: [] });
+  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, { schedule_cs: [] });
   assertEquals(Array.isArray(result.outputs), true);
 });
 

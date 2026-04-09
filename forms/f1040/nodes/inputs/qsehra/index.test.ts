@@ -12,7 +12,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(input: ReturnType<typeof minimalItem>) {
-  return qsehra.compute({ taxYear: 2025 }, input);
+  return qsehra.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

@@ -13,7 +13,7 @@ function minimalItem(overrides: Partial<z.infer<typeof itemSchema>> = {}): F2106
 }
 
 function compute(items: F2106Item[], agi?: number) {
-  return f2106.compute({ taxYear: 2025 }, { f2106s: items as z.infer<typeof itemSchema>[], agi });
+  return f2106.compute({ taxYear: 2025, formType: "f1040" }, { f2106s: items as z.infer<typeof itemSchema>[], agi });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -302,7 +302,7 @@ Deno.test("f2106.compute: throws on negative employer_reimbursements", () => {
 
 Deno.test("f2106.compute: throws on invalid employee_type", () => {
   assertThrows(
-    () => f2106.compute({ taxYear: 2025 }, { f2106s: [{ employee_type: "NOT_A_TYPE" as EmployeeType }] }),
+    () => f2106.compute({ taxYear: 2025, formType: "f1040" }, { f2106s: [{ employee_type: "NOT_A_TYPE" as EmployeeType }] }),
     Error,
   );
 });

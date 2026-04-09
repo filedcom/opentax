@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f2210.compute({ taxYear: 2025 }, input as Parameters<typeof f2210.compute>[1]);
+  return f2210.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f2210.compute>[1]);
 }
 
 function penaltyOutput(result: ReturnType<typeof compute>) {

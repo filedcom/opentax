@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { AccountType, f114 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f114.compute({ taxYear: 2025 }, input as Parameters<typeof f114.compute>[1]);
+  return f114.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f114.compute>[1]);
 }
 
 // =============================================================================

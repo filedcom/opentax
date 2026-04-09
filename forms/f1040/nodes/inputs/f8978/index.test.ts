@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 
 function compute(input: Parameters<typeof f8978.compute>[1]) {
-  return f8978.compute({ taxYear: 2025 }, input);
+  return f8978.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

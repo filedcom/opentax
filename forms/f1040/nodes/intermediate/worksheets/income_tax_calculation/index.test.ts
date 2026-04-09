@@ -7,7 +7,7 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return income_tax_calculation.compute({ taxYear: 2025 }, inputSchema.parse(input));
+  return income_tax_calculation.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
 function f1040Fields(result: ReturnType<typeof compute>) {
@@ -133,7 +133,7 @@ Deno.test("$1 taxable income — 10% bracket", () => {
 
 Deno.test("unknown tax year throws with year in message", () => {
   assertThrows(
-    () => income_tax_calculation.compute({ taxYear: 9999 }, inputSchema.parse({ taxable_income: 50_000, filing_status: FilingStatus.Single })),
+    () => income_tax_calculation.compute({ taxYear: 9999, formType: "f1040" }, inputSchema.parse({ taxable_income: 50_000, filing_status: FilingStatus.Single })),
     Error,
     "No f1040 config for year 9999",
   );

@@ -17,7 +17,7 @@ function compute(
   current_year_taxable_income = 0,
 ) {
   return nol_carryforward.compute(
-    { taxYear: 2025 },
+    { taxYear: 2025, formType: "f1040" },
     { nol_carryforwards: items, current_year_taxable_income },
   );
 }

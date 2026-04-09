@@ -12,7 +12,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return lump_sum_ss.compute({ taxYear: 2025 }, { lump_sum_sss: items });
+  return lump_sum_ss.compute({ taxYear: 2025, formType: "f1040" }, { lump_sum_sss: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

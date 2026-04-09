@@ -14,7 +14,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8082.compute({ taxYear: 2025 }, { f8082s: items });
+  return f8082.compute({ taxYear: 2025, formType: "f1040" }, { f8082s: items });
 }
 
 // =============================================================================
@@ -175,7 +175,7 @@ Deno.test("f8082.inputSchema: reason_for_inconsistency round-trips when present"
 // =============================================================================
 
 Deno.test("f8082.compute: throws on empty items array", () => {
-  assertThrows(() => f8082.compute({ taxYear: 2025 }, { f8082s: [] }), Error);
+  assertThrows(() => f8082.compute({ taxYear: 2025, formType: "f1040" }, { f8082s: [] }), Error);
 });
 
 Deno.test("f8082.compute: throws on invalid entity_type", () => {

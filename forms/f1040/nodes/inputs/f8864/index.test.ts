@@ -15,7 +15,7 @@ function minimalInput(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(input: ReturnType<typeof minimalInput>) {
-  return f8864.compute({ taxYear: 2025 }, input);
+  return f8864.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 // =============================================================================

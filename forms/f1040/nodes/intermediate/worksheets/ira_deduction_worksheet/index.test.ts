@@ -6,7 +6,7 @@ import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8606 } from "../../forms/form8606/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return ira_deduction_worksheet.compute({ taxYear: 2025 }, inputSchema.parse(input));
+  return ira_deduction_worksheet.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────

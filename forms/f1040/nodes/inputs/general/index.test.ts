@@ -22,7 +22,7 @@ import { FilingStatus } from "../../types.ts";
 import { DependentRelationship } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return general.compute({ taxYear: 2025 }, general.inputSchema.parse(input));
+  return general.compute({ taxYear: 2025, formType: "f1040" }, general.inputSchema.parse(input));
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

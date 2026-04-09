@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { ReasonForClaim, TaxType, f843 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f843.compute({ taxYear: 2025 }, input as Parameters<typeof f843.compute>[1]);
+  return f843.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f843.compute>[1]);
 }
 
 // =============================================================================

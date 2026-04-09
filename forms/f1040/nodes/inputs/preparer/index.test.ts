@@ -3,7 +3,7 @@ import { OriginatorType, preparer } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
   return preparer.compute(
-    { taxYear: 2025 },
+    { taxYear: 2025, formType: "f1040" },
     input as Parameters<typeof preparer.compute>[1],
   );
 }

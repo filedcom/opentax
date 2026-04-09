@@ -9,7 +9,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099g.compute({ taxYear: 2025 }, { f1099gs: items });
+  return f1099g.compute({ taxYear: 2025, formType: "f1040" }, { f1099gs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -428,7 +428,7 @@ Deno.test("f1099g.compute: mixed itemized and non-itemized refunds — only item
 });
 
 Deno.test("f1099g.compute: empty g99s array produces no outputs", () => {
-  const result = f1099g.compute({ taxYear: 2025 }, { f1099gs: [] });
+  const result = f1099g.compute({ taxYear: 2025, formType: "f1040" }, { f1099gs: [] });
   assertEquals(result.outputs.length, 0);
 });
 

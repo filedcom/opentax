@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { schedule_j } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_j.compute({ taxYear: 2025 }, input as Parameters<typeof schedule_j.compute>[1]);
+  return schedule_j.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof schedule_j.compute>[1]);
 }
 
 function findF1040Output(result: ReturnType<typeof compute>) {

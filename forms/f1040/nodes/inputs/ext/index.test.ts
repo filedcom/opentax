@@ -4,7 +4,7 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return ext.compute({ taxYear: 2025 }, inputSchema.parse(input));
+  return ext.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
 function schedule3Fields(result: ReturnType<typeof compute>) {

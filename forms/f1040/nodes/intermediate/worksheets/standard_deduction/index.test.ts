@@ -3,7 +3,7 @@ import { standard_deduction, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
-const ctx: NodeContext = { taxYear: 2025 };
+const ctx: NodeContext = { taxYear: 2025, formType: "f1040" };
 
 function compute(input: Parameters<typeof standard_deduction.compute>[1]) {
   return standard_deduction.compute(ctx, input);

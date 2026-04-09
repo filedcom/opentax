@@ -5,7 +5,7 @@ import { FilingStatus } from "../../../types.ts";
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
 function compute(input: Record<string, unknown>) {
-  return eitc.compute({ taxYear: 2025 }, input);
+  return eitc.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function getCredit(input: Record<string, unknown>): number {

@@ -8,7 +8,7 @@ function minimalItem(overrides: Partial<PppItem> = {}): PppItem {
 }
 
 function compute(items: PppItem[]) {
-  return ppp_forgiveness.compute({ taxYear: 2025 }, { ppp_forgivenesses: items });
+  return ppp_forgiveness.compute({ taxYear: 2025, formType: "f1040" }, { ppp_forgivenesses: items });
 }
 
 // =============================================================================
@@ -88,7 +88,7 @@ Deno.test("ppp_forgiveness.compute: forgiveness_year 2021 (second PPP round) —
 
 Deno.test("ppp_forgiveness.compute: throws on negative forgiven_amount", () => {
   assertThrows(
-    () => ppp_forgiveness.compute({ taxYear: 2025 }, {
+    () => ppp_forgiveness.compute({ taxYear: 2025, formType: "f1040" }, {
       ppp_forgivenesses: [{ forgiven_amount: -500 }],
     }),
     Error,
@@ -97,7 +97,7 @@ Deno.test("ppp_forgiveness.compute: throws on negative forgiven_amount", () => {
 
 Deno.test("ppp_forgiveness.compute: throws on empty array", () => {
   assertThrows(
-    () => ppp_forgiveness.compute({ taxYear: 2025 }, { ppp_forgivenesses: [] }),
+    () => ppp_forgiveness.compute({ taxYear: 2025, formType: "f1040" }, { ppp_forgivenesses: [] }),
     Error,
   );
 });

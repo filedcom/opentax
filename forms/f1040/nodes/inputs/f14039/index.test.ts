@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { IncidentType, f14039 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f14039.compute({ taxYear: 2025 }, input as Parameters<typeof f14039.compute>[1]);
+  return f14039.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f14039.compute>[1]);
 }
 
 // =============================================================================

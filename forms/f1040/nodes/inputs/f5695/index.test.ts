@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { f5695 } from "./index.ts";
 
 function compute(input: Parameters<typeof f5695.compute>[1]) {
-  return f5695.compute({ taxYear: 2025 }, input);
+  return f5695.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

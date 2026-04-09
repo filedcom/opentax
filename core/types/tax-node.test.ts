@@ -40,7 +40,7 @@ Deno.test("MockAddNode: can be instantiated", () => {
 
 Deno.test("MockAddNode: compute() returns a valid NodeResult with outputs array", () => {
   const node = new MockAddNode();
-  const result = node.compute({ taxYear: 2025 }, { a: 3, b: 4 });
+  const result = node.compute({ taxYear: 2025, formType: "f1040" }, { a: 3, b: 4 });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "mock_output");
   assertEquals((result.outputs[0].fields as { sum: number }).sum, 7);

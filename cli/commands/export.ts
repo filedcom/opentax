@@ -53,7 +53,7 @@ async function runReturnPipeline(args: ExportReturnArgs): Promise<PipelineResult
     def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
-  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year });
+  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year, formType: meta.formType ?? "f1040" });
 
   // Warn about executor node failures before building output
   for (const d of result.diagnostics) {

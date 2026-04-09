@@ -6,7 +6,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 
 function compute(input: EducatorExpensesInput) {
-  return educator_expenses.compute({ taxYear: 2025 }, input);
+  return educator_expenses.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 // =============================================================================

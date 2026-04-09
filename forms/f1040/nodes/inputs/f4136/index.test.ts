@@ -3,7 +3,7 @@ import { f4136 } from "./index.ts";
 
 // Singleton harness
 function compute(input: Parameters<typeof f4136.compute>[1]) {
-  return f4136.compute({ taxYear: 2025 }, input);
+  return f4136.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 // ── Smoke test ────────────────────────────────────────────────────────────────

@@ -60,7 +60,7 @@ function compute(
   context: { taxableIncome?: number; filingStatus?: string } = {},
 ) {
   return f1099div.compute(
-    { taxYear: 2025 },
+    { taxYear: 2025, formType: "f1040" },
     inputSchema.parse({ f1099divs: items, ...context }),
   );
 }

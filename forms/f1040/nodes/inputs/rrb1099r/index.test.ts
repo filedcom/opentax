@@ -6,7 +6,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return rrb1099r.compute({ taxYear: 2025 }, { rrb1099rs: items });
+  return rrb1099r.compute({ taxYear: 2025, formType: "f1040" }, { rrb1099rs: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -23,7 +23,7 @@ function f1040Fields(result: ReturnType<typeof compute>) {
 
 Deno.test("rrb1099r: empty array throws (min(1) constraint)", () => {
   assertThrows(
-    () => rrb1099r.compute({ taxYear: 2025 }, { rrb1099rs: [] }),
+    () => rrb1099r.compute({ taxYear: 2025, formType: "f1040" }, { rrb1099rs: [] }),
     Error,
   );
 });
@@ -33,7 +33,7 @@ Deno.test("rrb1099r: missing payer_name throws", () => {
   // deno-lint-ignore no-explicit-any
   const badInput = { rrb1099rs: [{ box3_sseb_gross: 1000 }] } as any;
   assertThrows(
-    () => rrb1099r.compute({ taxYear: 2025 }, badInput),
+    () => rrb1099r.compute({ taxYear: 2025, formType: "f1040" }, badInput),
     Error,
   );
 });

@@ -2,7 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { DisclosureType, f8275 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return f8275.compute({ taxYear: 2025 }, input as Parameters<typeof f8275.compute>[1]);
+  return f8275.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f8275.compute>[1]);
 }
 
 // =============================================================================

@@ -53,7 +53,7 @@ function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
 
 function compute(items: ItemOverrides[], filingStatus?: string) {
   return f1099int.compute(
-    { taxYear: 2025 },
+    { taxYear: 2025, formType: "f1040" },
     inputSchema.parse({ f1099ints: items, filing_status: filingStatus }),
   );
 }

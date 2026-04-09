@@ -17,7 +17,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return depletion.compute({ taxYear: 2025 }, { depletions: items });
+  return depletion.compute({ taxYear: 2025, formType: "f1040" }, { depletions: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

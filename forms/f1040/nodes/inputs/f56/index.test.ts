@@ -12,7 +12,7 @@ function minimalInput(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(input: ReturnType<typeof minimalInput>) {
-  return f56.compute({ taxYear: 2025 }, input as Parameters<typeof f56.compute>[1]);
+  return f56.compute({ taxYear: 2025, formType: "f1040" }, input as Parameters<typeof f56.compute>[1]);
 }
 
 // =============================================================================

@@ -21,7 +21,7 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return ssa1099.compute({ taxYear: 2025 }, { ssas: items });
+  return ssa1099.compute({ taxYear: 2025, formType: "f1040" }, { ssas: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

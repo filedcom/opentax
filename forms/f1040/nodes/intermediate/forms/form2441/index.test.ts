@@ -16,7 +16,7 @@ import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form2441.compute({ taxYear: 2025 }, input);
+  return form2441.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {

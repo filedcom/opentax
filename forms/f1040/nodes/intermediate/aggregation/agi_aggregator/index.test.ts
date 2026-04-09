@@ -2,7 +2,7 @@ import { assertEquals } from "@std/assert";
 import { agi_aggregator } from "./index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
-const ctx: NodeContext = { taxYear: 2025 };
+const ctx: NodeContext = { taxYear: 2025, formType: "f1040" };
 
 function compute(input: Parameters<typeof agi_aggregator.compute>[1]) {
   return agi_aggregator.compute(ctx, input);
