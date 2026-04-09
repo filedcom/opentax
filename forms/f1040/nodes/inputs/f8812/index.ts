@@ -9,14 +9,7 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import {
-  CTC_PER_CHILD_2025,
-  ODC_PER_DEPENDENT_2025,
-  ACTC_MAX_PER_CHILD_2025,
-  CTC_PHASE_OUT_THRESHOLD_MFJ_2025,
-  CTC_PHASE_OUT_THRESHOLD_OTHER_2025,
-  ACTC_EARNED_INCOME_FLOOR_2025,
-} from "../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 export const itemSchema = z.object({
   qualifying_children_count: z.number().int().nonnegative().optional(),
@@ -66,16 +59,9 @@ export const inputSchema = z.object({
   auto_other_dependents: z.number().int().nonnegative().optional(),
 });
 
-// TY2025 constants — One Big Beautiful Bill Act (PL 119-21, enacted July 4 2025)
-const CTC_PER_CHILD = CTC_PER_CHILD_2025;
-const ODC_PER_DEPENDENT = ODC_PER_DEPENDENT_2025;
-const ACTC_MAX_PER_CHILD = ACTC_MAX_PER_CHILD_2025;
 const PHASE_OUT_STEP = 50;
 const PHASE_OUT_INCREMENT = 1000;
 const ACTC_EARNED_INCOME_RATE = 0.15;
-const ACTC_EARNED_INCOME_FLOOR = ACTC_EARNED_INCOME_FLOOR_2025;
-const PHASE_OUT_THRESHOLD_MFJ = CTC_PHASE_OUT_THRESHOLD_MFJ_2025;
-const PHASE_OUT_THRESHOLD_OTHER = CTC_PHASE_OUT_THRESHOLD_OTHER_2025;
 
 type F8812Item = z.infer<typeof itemSchema>;
 type F8812Input = z.infer<typeof inputSchema>;
@@ -96,14 +82,19 @@ function buildAutoItem(input: F8812Input): F8812Item | null {
 }
 
 // Line 9: phase-out threshold based on filing status
-function phaseOutThreshold(filingStatus: string): number {
-  return filingStatus === "mfj" ? PHASE_OUT_THRESHOLD_MFJ : PHASE_OUT_THRESHOLD_OTHER;
+function phaseOutThreshold(filingStatus: string, mfj: number, other: number): number {
+  return filingStatus === "mfj" ? mfj : other;
 }
 
 // Lines 10-11: phase-out reduction uses ceiling rounding per IRS instructions
 // "round UP to next $1,000" — ceiling, not standard rounding
-function computePhaseOutReduction(modifiedAgi: number, filingStatus: string): number {
-  const excess = Math.max(0, modifiedAgi - phaseOutThreshold(filingStatus));
+function computePhaseOutReduction(
+  modifiedAgi: number,
+  filingStatus: string,
+  thresholdMfj: number,
+  thresholdOther: number,
+): number {
+  const excess = Math.max(0, modifiedAgi - phaseOutThreshold(filingStatus, thresholdMfj, thresholdOther));
   if (excess === 0) return 0;
   const steps = Math.ceil(excess / PHASE_OUT_INCREMENT);
   return steps * PHASE_OUT_STEP;
@@ -123,8 +114,8 @@ function computeEffectiveEarnedIncome(item: F8812Item): number {
 }
 
 // Lines 19-20: ACTC via 15% earned income method (Part II-A)
-function computeActcEarnedIncomeBased(effectiveEarnedIncome: number): number {
-  const excess = Math.max(0, effectiveEarnedIncome - ACTC_EARNED_INCOME_FLOOR);
+function computeActcEarnedIncomeBased(effectiveEarnedIncome: number, floor: number): number {
+  const excess = Math.max(0, effectiveEarnedIncome - floor);
   return excess * ACTC_EARNED_INCOME_RATE;
 }
 
@@ -150,7 +141,10 @@ class F8812Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
-  compute(_ctx: NodeContext, rawInput: F8812Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: F8812Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+
     const input = inputSchema.parse(rawInput);
 
     // Build item list: use explicit f8812s when provided; otherwise fall back to auto-populated fields.
@@ -169,7 +163,6 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     // Aggregate counts and flags across all items
     let totalQualifyingChildren = 0;
     let totalOtherDependents = 0;
-    let combinedAgi = 0;
     let combinedModifiedAgi = 0;
     let combinedEarnedIncome = 0;
     let combinedTaxLiability: number | undefined = undefined;
@@ -185,7 +178,6 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     for (const item of items) {
       totalQualifyingChildren += item.qualifying_children_count ?? 0;
       totalOtherDependents += item.other_dependents_count ?? 0;
-      combinedAgi += item.agi ?? 0;
       combinedModifiedAgi += computeModifiedAgi(item);
       combinedEarnedIncome += computeEffectiveEarnedIncome(item);
       combinedSsWithheld += item.ss_taxes_withheld ?? 0;
@@ -204,17 +196,20 @@ class F8812Node extends TaxNode<typeof inputSchema> {
       if (item.filing_status) filingStatus = item.filing_status;
     }
 
-    // Line 5: tentative CTC = children × $2,200
-    const tentativeCTC = totalQualifyingChildren * CTC_PER_CHILD;
-    // Line 7: tentative ODC = other dependents × $500
-    const tentativeODC = totalOtherDependents * ODC_PER_DEPENDENT;
+    // Line 5: tentative CTC = children × cfg.ctcPerChild
+    const tentativeCTC = totalQualifyingChildren * cfg.ctcPerChild;
+    // Line 7: tentative ODC = other dependents × cfg.odcPerDependent
+    const tentativeODC = totalOtherDependents * cfg.odcPerDependent;
     // Line 8: total tentative credit
     const tentativeTotal = tentativeCTC + tentativeODC;
 
     if (tentativeTotal === 0) return { outputs: [] };
 
     // Lines 10-12: apply phase-out using modified AGI
-    const phaseOutReduction = computePhaseOutReduction(combinedModifiedAgi, filingStatus);
+    const phaseOutReduction = computePhaseOutReduction(
+      combinedModifiedAgi, filingStatus,
+      cfg.ctcPhaseOutThresholdMfj, cfg.ctcPhaseOutThresholdOther,
+    );
     const creditAfterPhaseOut = Math.max(0, tentativeTotal - phaseOutReduction);
 
     if (creditAfterPhaseOut === 0) return { outputs: [] };
@@ -238,14 +233,14 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     if (canClaimActc) {
       // Line 16a: unabsorbed CTC (potential ACTC)
       const ctcUnused = Math.max(0, creditAfterPhaseOut - nonrefundableCTC);
-      // Line 16b: ACTC cap = qualifying children × $1,700
-      const actcCap = totalQualifyingChildren * ACTC_MAX_PER_CHILD;
+      // Line 16b: ACTC cap = qualifying children × cfg.actcMaxPerChild
+      const actcCap = totalQualifyingChildren * cfg.actcMaxPerChild;
 
       if (ctcUnused > 0 && actcCap > 0) {
         // Line 17: tentative ACTC = min(Line 16a, Line 16b)
         const tentativeActc = Math.min(ctcUnused, actcCap);
-        // Line 20: Part II-A — earned income based ACTC = (earned income − $2,500) × 15%
-        const earnedIncomeBased = computeActcEarnedIncomeBased(combinedEarnedIncome);
+        // Line 20: Part II-A — earned income based ACTC = (earned income − floor) × 15%
+        const earnedIncomeBased = computeActcEarnedIncomeBased(combinedEarnedIncome, cfg.actcEarnedIncomeFloor);
         const partIIA = Math.min(tentativeActc, earnedIncomeBased);
         // Lines 22-26: Part II-B — payroll tax method (3+ children or PR resident)
         const partIIB = computePartIIB(
