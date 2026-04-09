@@ -129,17 +129,27 @@ function extractOriginator(
 export function extractFilerIdentity(
   f1040: Record<string, unknown>,
 ): FilerIdentity | undefined {
-  const primarySSN = str(f1040["taxpayer_ssn"])?.replace(/-/g, "");
+  const primarySSN = str(f1040["taxpayer_ssn"])?.replace(/-/g, "") ?? "";
   const lastName = str(f1040["taxpayer_last_name"]);
-  if (!primarySSN || !lastName) return undefined;
-
   const firstName = str(f1040["taxpayer_first_name"]);
+  if (!lastName && !firstName) return undefined;
+
   const middleInitial = str(f1040["taxpayer_middle_initial"]);
   const filingStatusRaw = f1040["filing_status"];
+  // filing_status is stored as a string enum ("single", "mfj", etc.); map to MEF numeric enum.
+  const STATUS_MAP: Record<string, FilingStatus> = {
+    single: FilingStatus.Single,
+    mfj: FilingStatus.MarriedFilingJointly,
+    mfs: FilingStatus.MarriedFilingSeparately,
+    hoh: FilingStatus.HeadOfHousehold,
+    qss: FilingStatus.QualifyingSurvivingSpouse,
+  };
   const filingStatus =
-    typeof filingStatusRaw === "number"
-      ? (filingStatusRaw as FilingStatus)
-      : FilingStatus.Single;
+    typeof filingStatusRaw === "string" && filingStatusRaw in STATUS_MAP
+      ? STATUS_MAP[filingStatusRaw]
+      : typeof filingStatusRaw === "number"
+        ? (filingStatusRaw as FilingStatus)
+        : FilingStatus.Single;
 
   return {
     primarySSN,
