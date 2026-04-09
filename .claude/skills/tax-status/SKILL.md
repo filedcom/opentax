@@ -1,43 +1,41 @@
 ---
 name: tax-status
-description: Human-readable status report of the tax harness. Shows current phase, benchmark accuracy history, which root causes are resolved, and last run summary.
+description: Human-readable status report for all tax forms. Shows benchmark accuracy, active root causes, and build/fix state for each form:year.
 ---
 
 # Tax Status
 
-Read `docs/architecture/STRUCTURE.md` first to confirm current paths, then read the harness state file and progress log, and print a concise status report.
+## Step 0 — Discover Forms
 
-## Report Format
+Glob `forms/f*/FORM.md` to enumerate all known forms.
+Read `.state/bench/state.json`. If it does not exist → print "Harness not initialized." and stop.
+Confirm `version === 2`. If `version === 1` → print "State schema outdated. Run migration." and stop.
+
+## Step 1 — Print Report
+
+For each entry in `state.forms`, print one section:
 
 ```
 ━━━ Tax Harness Status ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1040 Bug Fix
-  Status:    {idle|running|done|stalled}
-  Baseline:  75 pass / 22 fail
-  Current:   {pass} pass / {fail} fail
-  Progress:  ████████░░ 73%
-
+{form}:{year} Fix
+  Status:    {fix.status}
+  Baseline:  {fix.benchmark_baseline.pass} pass / {fix.benchmark_baseline.fail} fail
+  Progress:  ████████░░ {pct}%
   Root Causes:
-    ✓ k1_income_double_count   (fixed)
-    ✗ salt_cap_missing         (pending — cases 76, 86, 90)
-    ✗ amt_stcg_routing         (pending — cases 58, 67, 75, 91, 94)
+    ✓ {name}  (fixed)
+    ✗ {name}  (pending — cases {list})
 
-1120 Build
-  Status:    {idle|running|done|stalled}
-  Phase:     {research|ground_truth|build|validate|null}
-  Cases:     {benchmark_cases_created} benchmark cases
-  Nodes:     {nodes_built.length} nodes built
-  Accuracy:  {last pass_rate}%
+{form}:{year} Build
+  Status:    {build.status}
+  Phase:     {build.phase}
+  Cases:     {build.benchmark_cases_created} benchmark cases
+  Nodes:     {build.nodes_built.length} nodes built
+  Last run:  {last benchmark_runs entry}
 
 ━━━ Recent Activity ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-{last 5 entries from progress.md}
+{last 5 entries from .state/bench/progress.md}
 ```
 
-Use color if terminal supports it:
-- ✓ green for done/fixed
-- ✗ red for pending/failed
-- Yellow for running/in-progress
-
-If state.json does not exist, print: "Harness not initialized. Run /tax-fix or /tax-build to start."
+Use color: green for done/fixed, red for pending/failed, yellow for running.
