@@ -390,10 +390,11 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       } as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>),
     ];
 
-    // Route qualifying children count and filing status to f8812 for CTC/ACTC computation.
-    if (counts.qualifying_child_tax_credit_count > 0) {
+    // Route qualifying children and other dependent counts to f8812 for CTC/ODC/ACTC computation.
+    if (counts.qualifying_child_tax_credit_count > 0 || counts.other_dependent_count > 0) {
       outputs.push(this.outputNodes.output(f8812, {
-        auto_qualifying_children: counts.qualifying_child_tax_credit_count,
+        auto_qualifying_children: counts.qualifying_child_tax_credit_count || undefined,
+        auto_other_dependents: counts.other_dependent_count || undefined,
         auto_filing_status: parsed.filing_status,
       }));
     }

@@ -77,8 +77,12 @@ Deno.test("schema: rejects negative box1a", () => {
   assertThrows(() => compute([minimalItem({ box1a: -1 })]), Error);
 });
 
-Deno.test("schema: rejects box1b exceeding box1a", () => {
-  assertThrows(() => compute([minimalItem({ box1a: 400, box1b: 500 })]), Error);
+Deno.test("schema: normalizes box1b exceeding box1a — promotes box1a to box1b", () => {
+  // When box1b > box1a, box1a is promoted to box1b so no income is lost.
+  const result = compute([minimalItem({ box1a: 400, box1b: 500 })]);
+  // Promoted box1a = 500, routed below Schedule B threshold → f1040 line3b
+  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 500);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, 500);
 });
 
 Deno.test("schema: accepts box1b equal to box1a (boundary)", () => {
@@ -103,16 +107,22 @@ Deno.test("schema: accepts box2b+2c+2d+2f sum equal to box2a (boundary)", () => 
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("schema: rejects box13 exceeding box12", () => {
-  assertThrows(() => compute([minimalItem({ box12: 150, box13: 200 })]), Error);
+Deno.test("schema: normalizes box13 exceeding box12 — clamps box13 to box12", () => {
+  // box13 (specified PAB) is clamped to box12 (exempt-interest dividends).
+  const result = compute([minimalItem({ box12: 150, box13: 200 })]);
+  assertEquals(fieldsOf(result.outputs, form6251)?.private_activity_bond_interest, 150);
 });
 
-Deno.test("schema: rejects box5 exceeding box1a (no holdingPeriodDays)", () => {
-  assertThrows(() => compute([minimalItem({ box1a: 500, box5: 600 })]), Error);
+Deno.test("schema: normalizes box5 exceeding box1a — clamps box5 to box1a", () => {
+  // box5 (§199A dividends) is clamped to box1a so income is not over-counted.
+  const result = compute([minimalItem({ box1a: 500, box5: 600 })]);
+  assertEquals(fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends, 500);
 });
 
-Deno.test("schema: rejects box2e exceeding box1a", () => {
-  assertThrows(() => compute([minimalItem({ box1a: 500, box2e: 600 })]), Error);
+Deno.test("schema: normalizes box2e exceeding box1a — clamps box2e to box1a", () => {
+  // box2e (Section 897 ordinary dividends) is clamped to box1a.
+  const result = compute([minimalItem({ box1a: 500, box2e: 600 })]);
+  assertEquals(Array.isArray(result.outputs), true);
 });
 
 // ---------------------------------------------------------------------------
@@ -367,11 +377,13 @@ Deno.test("multiple payers — box4 withholding summed to single f1040 output", 
 });
 
 Deno.test("multiple payers — box5 (§199A) summed when holding period met", () => {
+  // box5 is clamped to box1a per normalization, so the second item's box5 (600)
+  // is clamped to box1a (500) before routing. Total = 400 + 500 = 900.
   const result = compute([
     minimalItem({ box1a: 500, box5: 400, holdingPeriodDays: 60 }),
     minimalItem({ box1a: 500, box5: 600, holdingPeriodDays: 60 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends, 1000);
+  assertEquals(fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends, 900);
 });
 
 Deno.test("multiple payers — box7 summed, simplified path if total <= $300 single", () => {
@@ -524,23 +536,29 @@ Deno.test("form_1116 required when box7 exceeds $600 MFJ threshold", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 8. Hard Validation Rules (throw)
+// 8. Normalization Rules (clamp/promote instead of throw)
 // ---------------------------------------------------------------------------
 
-Deno.test("V1: throws when box1b exceeds box1a — qualified cannot exceed ordinary", () => {
-  assertThrows(() => compute([minimalItem({ box1a: 400, box1b: 500 })]), Error);
+Deno.test("V1: box1b exceeding box1a — promotes box1a to box1b, does not throw", () => {
+  // Produces outputs with promoted ordinary dividend amount.
+  const result = compute([minimalItem({ box1a: 400, box1b: 500 })]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 500);
 });
 
-Deno.test("V2: throws when box2f exceeds box2a", () => {
-  assertThrows(() => compute([minimalItem({ box2a: 200, box2f: 300 })]), Error);
+Deno.test("V2: box2f exceeding box2a — clamps box2f to box2a, does not throw", () => {
+  // box2f is clamped; node continues to produce outputs.
+  const result = compute([minimalItem({ box2a: 200, box2f: 300 })]);
+  assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("V3: throws when box2e exceeds box1a", () => {
-  assertThrows(() => compute([minimalItem({ box1a: 500, box2e: 600 })]), Error);
+Deno.test("V3: box2e exceeding box1a — clamps box2e to box1a, does not throw", () => {
+  const result = compute([minimalItem({ box1a: 500, box2e: 600 })]);
+  assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("V4: throws when box13 exceeds box12", () => {
-  assertThrows(() => compute([minimalItem({ box12: 150, box13: 200 })]), Error);
+Deno.test("V4: box13 exceeding box12 — clamps box13 to box12, does not throw", () => {
+  const result = compute([minimalItem({ box12: 150, box13: 200 })]);
+  assertEquals(fieldsOf(result.outputs, form6251)?.private_activity_bond_interest, 150);
 });
 
 // ---------------------------------------------------------------------------

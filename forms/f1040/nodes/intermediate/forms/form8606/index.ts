@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
@@ -175,7 +176,7 @@ function buildF1040Output(
 class Form8606Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8606";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
 
   compute(_ctx: NodeContext, rawInput: Form8606Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -192,6 +193,9 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
     if (f1040Output !== null) {
       outputs.push(f1040Output);
+      // Also route taxable IRA amount to agi_aggregator so AGI reflects Form 8606 computation.
+      const totalTaxable = taxableTraditionalDist + taxableConversionAmt + taxableRoth;
+      outputs.push(this.outputNodes.output(agi_aggregator, { line4b_ira_taxable: totalTaxable }));
     }
 
     return {

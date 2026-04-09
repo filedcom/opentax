@@ -51,6 +51,27 @@ function fillEntry(
       const mapped = entry.valueMap[String(value)];
       if (mapped) form.getRadioGroup(entry.pdfField).select(mapped);
     }
+    // Fill any additional PDF fields that share the same domain value
+    if ("extraPdfFields" in entry && entry.extraPdfFields) {
+      for (const extraField of entry.extraPdfFields) {
+        try {
+          if (entry.kind === "text") {
+            if (typeof value === "number" && Math.round(value) === 0) continue;
+            const text = typeof value === "number"
+              ? Math.round(value).toString()
+              : String(value);
+            form.getTextField(extraField).setText(text);
+          } else if (entry.kind === "checkbox") {
+            const box = form.getCheckBox(extraField);
+            value ? box.check() : box.uncheck();
+          }
+        } catch (extraErr) {
+          console.error(
+            `[PDF] ${formKey}: failed to fill extra field "${extraField}" (${entry.kind}) — ${extraErr}`,
+          );
+        }
+      }
+    }
   } catch (err) {
     console.error(
       `[PDF] ${formKey}: failed to fill field "${entry.pdfField}" (${entry.kind}) — ${err}`,

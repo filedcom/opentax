@@ -179,8 +179,9 @@ function totalIncome(input: F1040Input): number {
 }
 
 function deductionAmount(input: F1040Input): number {
-  // Itemized deductions take precedence if provided
-  if (input.line12e_itemized_deductions !== undefined) return input.line12e_itemized_deductions;
+  // Itemized deductions take precedence only when they are non-zero.
+  // A value of 0 means no itemized deductions were provided, not that itemized = $0.
+  if ((input.line12e_itemized_deductions ?? 0) > 0) return input.line12e_itemized_deductions!;
   return input.line12a_standard_deduction ?? 0;
 }
 
@@ -249,6 +250,7 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
   const computed_line23 = input.line23_other_taxes ?? 0;
   const computed_line24 = computed_line22 + computed_line23;
+  const computed_line25d = totalWithholding(input);
   const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
   const balance = computed_line33 - computed_line24;
@@ -262,6 +264,7 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     line21_credits_total: computed_line21,
     line22_tax_after_credits: computed_line22,
     line24_total_tax: computed_line24,
+    line25d_total_withholding: computed_line25d,
     line33_total_payments: computed_line33,
   };
 

@@ -11,8 +11,8 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-item schema — one SSA-1099 or RRB-1099
 export const itemSchema = z.object({
-  // Payer identification
-  payer_name: z.string().min(1),
+  // Payer identification — optional because the payer is always Social Security Administration
+  payer_name: z.string().optional(),
 
   // Box 3 — Total social security benefits paid in 2025
   box3_gross_benefits: z.number().nonnegative(),

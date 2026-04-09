@@ -62,6 +62,8 @@ export const inputSchema = z.object({
   auto_earned_income: z.number().nonnegative().optional(),
   // Net self-employment profit for ACTC earned income (from schedule_c node)
   auto_se_earned_income: z.number().nonnegative().optional(),
+  // Number of other qualifying dependents for ODC (from general node)
+  auto_other_dependents: z.number().int().nonnegative().optional(),
 });
 
 // TY2025 constants — One Big Beautiful Bill Act (PL 119-21, enacted July 4 2025)
@@ -81,9 +83,11 @@ type F8812Input = z.infer<typeof inputSchema>;
 // Build a synthetic f8812 item from auto-populated fields (engine-computed inputs).
 function buildAutoItem(input: F8812Input): F8812Item | null {
   const children = input.auto_qualifying_children ?? 0;
-  if (children === 0) return null;
+  const otherDeps = input.auto_other_dependents ?? 0;
+  if (children === 0 && otherDeps === 0) return null;
   return {
-    qualifying_children_count: children,
+    qualifying_children_count: children || undefined,
+    other_dependents_count: otherDeps || undefined,
     filing_status: (input.auto_filing_status ?? "single") as F8812Item["filing_status"],
     agi: input.auto_agi,
     income_tax_liability: input.auto_income_tax_liability,

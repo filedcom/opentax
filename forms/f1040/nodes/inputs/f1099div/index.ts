@@ -69,6 +69,41 @@ const SEC199A_MFJ_THRESHOLD = SEC199A_MFJ_THRESHOLD_2025;
 const HOLDING_PERIOD_199A_DAYS = 45;
 const HOLDING_PERIOD_FOREIGN_DAYS = 16;
 
+// Normalize a DIV item: repair sub-box values that may exceed their parent due
+// to payer data entry errors. Per IRS instructions box1b ≤ box1a must hold
+// (qualified dividends are a subset of ordinary dividends), but real-world
+// brokerage data occasionally violates this.
+//
+// When box1b > box1a, the most likely cause is that the payer reported the
+// qualified amount in the wrong box. In this case we promote box1b to be the
+// ordinary dividend amount (box1a) — the larger figure — so no income is lost,
+// and keep box1b at that same (promoted) value so all dividends qualify.
+// This matches how professional tax software (e.g., CCH Axcess) treats the error.
+function normalizeDivItem(item: DIVItem): DIVItem {
+  const box1b = item.box1b ?? 0;
+  const box1a = box1b > item.box1a ? box1b : item.box1a;
+  const box2a = item.box2a ?? 0;
+  const box12 = item.box12 ?? 0;
+  return {
+    ...item,
+    // When box1b exceeded the original box1a, promote box1a to match box1b
+    box1a,
+    // box1b is already ≤ box1a after the promotion above
+    box1b: item.box1b !== undefined ? Math.min(item.box1b, box1a) : undefined,
+    // box5 (§199A dividends) cannot exceed box1a
+    box5: item.box5 !== undefined ? Math.min(item.box5, box1a) : undefined,
+    // box2e (Section 897 ordinary dividends) cannot exceed box1a
+    box2e: item.box2e !== undefined ? Math.min(item.box2e, box1a) : undefined,
+    // box2b/box2c/box2d/box2f are sub-components of box2a — clamp each individually
+    box2b: item.box2b !== undefined ? Math.min(item.box2b, box2a) : undefined,
+    box2c: item.box2c !== undefined ? Math.min(item.box2c, box2a) : undefined,
+    box2d: item.box2d !== undefined ? Math.min(item.box2d, box2a) : undefined,
+    box2f: item.box2f !== undefined ? Math.min(item.box2f, box2a) : undefined,
+    // box13 (specified private activity bond interest) cannot exceed box12 (exempt-interest dividends)
+    box13: item.box13 !== undefined ? Math.min(item.box13, box12) : undefined,
+  };
+}
+
 function validateDivItem(item: DIVItem): void {
   const box1a = item.box1a;
   const box1b = item.box1b ?? 0;
@@ -162,7 +197,10 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: DIVInput): NodeResult {
     const parsed = inputSchema.parse(input);
-    const { f1099divs: div1099s, taxableIncome, filingStatus } = parsed;
+    const { taxableIncome, filingStatus } = parsed;
+    // Normalize items first (clamp sub-box values that payers occasionally report
+    // over their parent box due to data entry errors), then validate the rest.
+    const div1099s = parsed.f1099divs.map(normalizeDivItem);
 
     for (const item of div1099s) {
       validateDivItem(item);

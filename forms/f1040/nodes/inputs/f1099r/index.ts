@@ -265,6 +265,16 @@ export const itemSchema = z.object({
   combined_ages_at_start: z.number().nonnegative().optional(),
   prior_excludable_recovered: z.number().nonnegative().optional(),
 
+  // Form 8606 — traditional IRA prior basis (nondeductible contributions carried forward).
+  // When set, this item's gross distribution is routed through Form 8606 Part I to compute
+  // the correct taxable amount (box2a is suppressed from line4b; form8606 emits taxable instead).
+  prior_ira_basis: z.number().nonnegative().optional(),
+
+  // Form 8606 — year-end FMV of all traditional IRAs (line 6).
+  // Required when prior_ira_basis is set and there are remaining IRA assets after distribution.
+  // Defaults to 0 when absent (full distribution consumed the IRA).
+  year_end_ira_value: z.number().nonnegative().optional(),
+
   // Miscellaneous flags
   altered_or_handwritten: z.boolean().optional(),
   no_distribution_received: z.boolean().optional(),
@@ -323,6 +333,13 @@ function isExcludedFromGross(item: R1099Item): boolean {
   return false;
 }
 
+// Whether this IRA item's taxable amount is delegated to Form 8606 Part I.
+// When prior_ira_basis is set, box2a is suppressed from line4b and form8606 computes
+// the correct taxable amount after applying the nondeductible basis ratio.
+function routedThrough8606PartI(item: R1099Item): boolean {
+  return item.box7_ira_simple_indicator === true && (item.prior_ira_basis ?? 0) > 0;
+}
+
 // Build f1040 output for IRA distributions
 function iraF1040Fields(items: R1099Items): Record<string, number> {
   const active = iraItems(activeItems(items));
@@ -330,11 +347,18 @@ function iraF1040Fields(items: R1099Items): Record<string, number> {
   // are not reported on line 4a (gross). Only reportable distributions contribute to gross.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
   const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
-  const taxable = active.reduce((sum, item) => sum + effectiveTaxableAmount(item), 0);
+  // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
+  const nonBasisItems = active.filter((item) => !routedThrough8606PartI(item));
+  const taxable = nonBasisItems.reduce((sum, item) => sum + effectiveTaxableAmount(item), 0);
+  const has8606Items = active.some((item) => routedThrough8606PartI(item));
   const fields: Record<string, number> = {};
   if (gross > 0) fields.line4a_ira_gross = gross;
-  // Always emit line4b (even if zero) when there are IRA items, so rollover/QCD zero cases are visible
-  if (active.length > 0) fields.line4b_ira_taxable = taxable;
+  // Emit line4b when taxable > 0, or when there are non-basis IRA items with zero taxable
+  // (so rollover/QCD zero cases remain visible). When all IRA taxable is handled by form8606,
+  // suppress the zero to avoid accumulation conflicts with form8606's own line4b emission.
+  if (taxable > 0 || (nonBasisItems.length > 0 && !has8606Items)) {
+    fields.line4b_ira_taxable = taxable;
+  }
   return fields;
 }
 
@@ -399,7 +423,7 @@ function form4972Outputs(items: R1099Items): NodeOutput[] {
   return lumpItems.map((item) => (output(form4972, { lump_sum_amount: item.box1_gross_distribution })));
 }
 
-// Form 8606 outputs: triggered by exclude_8606_roth or rollover_code = C
+// Form 8606 outputs: triggered by exclude_8606_roth, rollover_code = C, or prior_ira_basis.
 function form8606Outputs(items: R1099Items): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   for (const item of activeItems(items)) {
@@ -410,6 +434,16 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
     } else if (item.rollover_code === "C") {
       outputs.push(output(form8606, {
           roth_conversion: item.box2a_taxable_amount ?? item.box1_gross_distribution,
+        }));
+    } else if (routedThrough8606PartI(item)) {
+      // Traditional IRA with nondeductible basis: Form 8606 Part I computes the taxable amount.
+      // prior_ira_basis is the total nondeductible basis carried into this year (line 2).
+      // year_end_ira_value is the FMV of remaining traditional IRAs on 12/31 (line 6; 0 if fully distributed).
+      outputs.push(output(form8606, {
+          nondeductible_contributions: 0,
+          prior_basis: item.prior_ira_basis!,
+          traditional_distributions: item.box1_gross_distribution,
+          year_end_ira_value: item.year_end_ira_value ?? 0,
         }));
     }
   }
@@ -452,9 +486,11 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
     }
 
-    // Route IRA/pension taxable amounts to AGI aggregator
+    // Route IRA/pension taxable amounts to AGI aggregator.
+    // Only emit line4b_ira_taxable when > 0 to avoid accumulation conflicts with form8606,
+    // which emits its own line4b_ira_taxable to agi_aggregator for items with prior_ira_basis.
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
-    if (iraFields.line4b_ira_taxable !== undefined) agiFields.line4b_ira_taxable = iraFields.line4b_ira_taxable;
+    if ((iraFields.line4b_ira_taxable ?? 0) > 0) agiFields.line4b_ira_taxable = iraFields.line4b_ira_taxable;
     if (pensionFields.line5b_pension_taxable !== undefined) agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
     if (Object.keys(agiFields).length > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>));

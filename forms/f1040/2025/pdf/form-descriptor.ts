@@ -1,6 +1,6 @@
 export type PdfFieldEntry =
-  | { readonly kind: "text";     readonly domainKey: string; readonly pdfField: string }
-  | { readonly kind: "checkbox"; readonly domainKey: string; readonly pdfField: string }
+  | { readonly kind: "text";     readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
+  | { readonly kind: "checkbox"; readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
   | { readonly kind: "radio";    readonly domainKey: string; readonly pdfField: string; readonly valueMap: Readonly<Record<string, string>> };
 
 export interface PdfRowDescriptor {
