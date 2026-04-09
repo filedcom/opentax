@@ -1,0 +1,126 @@
+---
+title: "Quick Start"
+description: "Compute your first return in 60 seconds."
+---
+
+This walks through a simple W-2 return from scratch using the CLI directly.
+
+## 1. Create a return
+
+```bash
+tax return create --year 2025
+```
+
+```json
+{ "returnId": "abc-123" }
+```
+
+Save the `returnId` — you'll use it for every command.
+
+## 2. Add taxpayer info
+
+```bash
+tax form add --returnId abc-123 --node_type general \
+  '{"filing_status": "single"}'
+```
+
+The `general` node sets filing status, dependents, and identity info. See all available fields:
+
+```bash
+tax node inspect --node_type general
+```
+
+## 3. Add income documents
+
+Add as many documents as you have. Each one is a separate `form add` call.
+
+```bash
+# W-2 wages
+tax form add --returnId abc-123 --node_type w2 \
+  '{"box1_wages": 95000, "box2_fed_withheld": 14200}'
+
+# Interest income
+tax form add --returnId abc-123 --node_type f1099int \
+  '{"payer_name": "Chase Bank", "box1_interest": 420}'
+```
+
+<Tip>
+  Not sure what fields a form takes? Run `tax node inspect --node_type w2` to see the full schema.
+</Tip>
+
+## 4. Compute the return
+
+```bash
+tax return get --returnId abc-123
+```
+
+This runs the full 1040 computation and prints every calculated line — adjusted gross income, taxable income, total tax, and refund or amount owed.
+
+## 5. Validate
+
+```bash
+tax return validate --returnId abc-123
+```
+
+Runs the IRS MeF business rules engine and reports errors, warnings, and informational diagnostics.
+
+## 6. Export as MeF XML
+
+```bash
+tax return export --returnId abc-123 --type mef > return.xml
+```
+
+Produces IRS 2025v5.2 compliant XML, ready for submission through a clearinghouse.
+
+---
+
+## Common scenarios
+
+**Married filing jointly with children**
+
+```bash
+tax return create --year 2025
+# → { "returnId": "xyz-456" }
+
+tax form add --returnId xyz-456 --node_type general \
+  '{"filing_status": "married_filing_jointly", "dependents": [{"name": "Alice Smith", "ssn": "XXX-XX-0001", "relationship": "daughter", "months_in_home": 12}, {"name": "Bob Smith", "ssn": "XXX-XX-0002", "relationship": "son", "months_in_home": 12}]}'
+
+tax form add --returnId xyz-456 --node_type w2 \
+  '{"box1_wages": 105000, "box2_fed_withheld": 15000}'
+
+tax form add --returnId xyz-456 --node_type w2 \
+  '{"box1_wages": 38000, "box2_fed_withheld": 4500}'
+
+tax return get --returnId xyz-456
+```
+
+**Self-employed**
+
+```bash
+tax form add --returnId abc-123 --node_type schedule_c \
+  '{"gross_receipts": 92000, "total_expenses": 31000}'
+
+tax form add --returnId abc-123 --node_type f1040es \
+  '{"q1_payment": 1000, "q2_payment": 1000, "q3_payment": 1000, "q4_payment": 1000}'
+```
+
+**Retirement income**
+
+```bash
+tax form add --returnId abc-123 --node_type ssa1099 \
+  '{"box5_net_benefits": 24000}'
+
+tax form add --returnId abc-123 --node_type f1099r \
+  '{"box1_gross_distribution": 15000, "box7_distribution_code": "7"}'
+```
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Use with Claude" href="/use-with-ai/claude" icon="message-circle">
+    Let Claude drive the CLI — just describe your documents
+  </Card>
+  <Card title="CLI Reference" href="/cli/overview" icon="terminal">
+    Every command and flag
+  </Card>
+</CardGroup>

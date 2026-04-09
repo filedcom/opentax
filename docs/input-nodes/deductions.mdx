@@ -1,0 +1,143 @@
+---
+title: "Deductions & Adjustments"
+description: "Above-the-line deductions, adjustments to income, and special situations."
+---
+
+## 1098 Mortgage Interest
+
+```bash
+tax form add --returnId ID --node_type f1098 '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `box1_mortgage_interest` | number | Mortgage interest received |
+| `box2_outstanding_principal` | number | Outstanding mortgage principal |
+| `box5_mortgage_insurance` | number | Mortgage insurance premiums |
+| `box10_real_estate_taxes` | number | Real estate taxes paid from escrow |
+
+---
+
+## 1098-E Student Loan Interest
+
+```bash
+tax form add --returnId ID --node_type f1098e '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `box1_interest` | number | Student loan interest received |
+
+Deductible above-the-line, subject to MAGI phase-out.
+
+---
+
+## Form 2106 — Employee Business Expenses
+
+```bash
+tax form add --returnId ID --node_type f2106 '{ ... }'
+```
+
+For Armed Forces members and certain other employees subject to the Department of Transportation hours-of-service limits.
+
+---
+
+## Educator Expenses
+
+```bash
+tax form add --returnId ID --node_type educator_expenses '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `amount` | number | Qualified educator expenses (max $300) |
+
+---
+
+## SEP/SIMPLE/Keogh Retirement Contributions
+
+```bash
+tax form add --returnId ID --node_type sep_retirement '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sep_contribution` | number | SEP-IRA contribution |
+| `simple_contribution` | number | SIMPLE IRA contribution |
+| `keogh_contribution` | number | Keogh/HR-10 plan contribution |
+
+---
+
+## IRA Deduction Worksheet
+
+```bash
+tax form add --returnId ID --node_type ira_deduction_worksheet '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `traditional_ira_contribution` | number | Traditional IRA contribution |
+| `covered_by_retirement_plan` | boolean | Covered by workplace plan |
+| `spouse_covered` | boolean | Spouse covered by plan |
+
+The deduction phases out based on MAGI and whether you (or your spouse) are covered by a workplace retirement plan.
+
+---
+
+## State/Local Sales Tax Deduction
+
+```bash
+tax form add --returnId ID --node_type sales_tax_deduction '{ ... }'
+```
+
+Alternative to deducting state income tax on Schedule A.
+
+---
+
+## Long-Term Care Premium
+
+```bash
+tax form add --returnId ID --node_type ltc_premium '{ ... }'
+```
+
+---
+
+## QSEHRA Reimbursements
+
+```bash
+tax form add --returnId ID --node_type qsehra '{ ... }'
+```
+
+Qualified Small Employer Health Reimbursement Arrangement amounts affect the premium tax credit calculation.
+
+---
+
+## Depletion
+
+```bash
+tax form add --returnId ID --node_type depletion '{ ... }'
+```
+
+---
+
+## Net Operating Loss Carryforward
+
+```bash
+tax form add --returnId ID --node_type nol_carryforward '{ ... }'
+```
+
+---
+
+## PPP Loan Forgiveness
+
+```bash
+tax form add --returnId ID --node_type ppp_forgiveness '{ ... }'
+```
+
+---
+
+## Clergy Housing Allowance
+
+```bash
+tax form add --returnId ID --node_type clergy '{ ... }'
+```

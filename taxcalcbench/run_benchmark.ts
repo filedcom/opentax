@@ -26,8 +26,10 @@ function scalar(val: unknown): number {
   return (val as number) ?? 0;
 }
 
+const COL = "\x1b[2m│\x1b[0m";
+
 function fmtCell(eng: number, cor: number): string {
-  const s = Math.round(eng).toString().padStart(12);
+  const s = Math.round(eng).toString().padStart(10);
   return Math.abs(eng - cor) <= 5 ? `${GRN}${s}${RST}` : `${RED}${s}${RST}`;
 }
 
@@ -80,20 +82,21 @@ async function runCase(name: string): Promise<CaseResult | null> {
 }
 
 function fmtRow(r: CaseResult): string {
-  return r.name.padEnd(30) +
-    fmtCell(r.engAgi, r.correct.line11_agi)            +
-    fmtCell(r.engTi,  r.correct.line15_taxable_income) +
-    fmtCell(r.engTax, r.correct.line24_total_tax)      +
-    fmtCell(r.engPay, r.correct.line33_total_payments) +
-    fmtCell(r.engRef, r.correct.line35a_refund)        +
-    fmtCell(r.engOwe, r.correct.line37_amount_owed)    +
-    `  ${r.ok ? `${GRN}PASS${RST}` : `${RED}FAIL${RST}`}`;
+  return COL + " " + r.name.padEnd(36) +
+    COL + fmtCell(r.engAgi, r.correct.line11_agi)            +
+    COL + fmtCell(r.engTi,  r.correct.line15_taxable_income) +
+    COL + fmtCell(r.engTax, r.correct.line24_total_tax)      +
+    COL + fmtCell(r.engPay, r.correct.line33_total_payments) +
+    COL + fmtCell(r.engRef, r.correct.line35a_refund)        +
+    COL + fmtCell(r.engOwe, r.correct.line37_amount_owed)    +
+    COL + ` ${r.ok ? `${GRN}PASS${RST}` : `${RED}FAIL${RST}`}`;
 }
 
 function statusLine(done: number, total: number, running: string[]): string {
-  const bar = `[${done}/${total}]`;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const bar = `[${done}/${total}] ${pct}%`;
   const active = running.length > 0
-    ? `  ${YEL}running:${RST} ${DIM}${running.join(", ")}${RST}`
+    ? `  ${YEL}▶${RST} ${DIM}${running.length} running${RST}`
     : "";
   return `${CLEAR_LINE}${bar}${active}`;
 }
@@ -108,10 +111,23 @@ async function runWithConcurrency(caseNames: string[], limit: number): Promise<C
   let done = 0;
   const total = caseNames.length;
 
+  const W = 38 + 11*6 + 6 + 2; // col widths + separators
+  const DIV = "─".repeat(W);
+  const hdr = (s: string, w: number) => s.padStart(w);
+
   // Print header before results start streaming
   console.log();
-  console.log(`${"Case".padEnd(30)} ${"AGI".padStart(12)} ${"Taxable".padStart(12)} ${"TotalTax".padStart(12)} ${"Payments".padStart(12)} ${"Refund".padStart(12)} ${"Owed".padStart(12)}`);
-  console.log("─".repeat(108));
+  console.log(
+    COL + " " + "Case".padEnd(36) +
+    COL + hdr("AGI", 10) +
+    COL + hdr("Taxable", 10) +
+    COL + hdr("TotalTax", 10) +
+    COL + hdr("Payments", 10) +
+    COL + hdr("Refund", 10) +
+    COL + hdr("Owed", 10) +
+    COL + " Result"
+  );
+  console.log(DIV);
 
   write(statusLine(0, total, []));
 
@@ -147,6 +163,6 @@ let pass = 0, fail = 0;
 for (const r of results) { if (r.ok) pass++; else fail++; }
 const total = results.length;
 
-console.log("\n" + "─".repeat(66));
+console.log("\n" + "─".repeat(38 + 11*6 + 6 + 2));
 console.log(`Results: ${GRN}${pass} PASS${RST}  ${RED}${fail} FAIL${RST}  out of ${total} cases`);
 console.log(`Green = within $5 of correct value.  Red = engine differs from expected.\n`);

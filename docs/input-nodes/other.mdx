@@ -1,0 +1,150 @@
+---
+title: "Other Nodes"
+description: "Estimated payments, penalties, foreign reporting, and special situations."
+---
+
+## General — Taxpayer Info & Filing Status
+
+```bash
+tax form add --returnId ID --node_type general '{ ... }'
+```
+
+Required for every return. Sets identity, filing status, and dependents.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `filing_status` | string | `single`, `married_filing_jointly`, `married_filing_separately`, `head_of_household`, `qualifying_surviving_spouse` |
+| `dependents` | array | List of qualifying dependents |
+| `blind` | boolean | Taxpayer is legally blind |
+| `spouse_blind` | boolean | Spouse is legally blind |
+| `age` | number | Taxpayer age (for standard deduction add-on) |
+| `spouse_age` | number | Spouse age |
+
+---
+
+## Form 1040-ES — Estimated Tax Payments
+
+```bash
+tax form add --returnId ID --node_type f1040es '{ ... }'
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `q1_payment` | number | Q1 payment (due April 15) |
+| `q2_payment` | number | Q2 payment (due June 15) |
+| `q3_payment` | number | Q3 payment (due September 15) |
+| `q4_payment` | number | Q4 payment (due January 15) |
+
+---
+
+## Form 2210 — Underpayment Penalty
+
+```bash
+tax form add --returnId ID --node_type f2210 '{ ... }'
+```
+
+Use to request a waiver or compute the penalty yourself. Leave out to let the IRS compute.
+
+---
+
+## Form 8283 — Non-Cash Charitable Contributions
+
+```bash
+tax form add --returnId ID --node_type f8283 '{ ... }'
+```
+
+Required for non-cash contributions over $500.
+
+---
+
+## Form 8332 — Release of Dependency Claim
+
+```bash
+tax form add --returnId ID --node_type f8332 '{ ... }'
+```
+
+Used when a custodial parent releases the dependency exemption to a noncustodial parent.
+
+---
+
+## Form 8379 — Injured Spouse Allocation
+
+```bash
+tax form add --returnId ID --node_type f8379 '{ ... }'
+```
+
+Protects the injured spouse's share of a joint refund when the other spouse owes a prior debt.
+
+---
+
+## Form 8621 — PFIC Annual Report
+
+```bash
+tax form add --returnId ID --node_type f8621 '{ ... }'
+```
+
+Required for each Passive Foreign Investment Company held directly or indirectly.
+
+---
+
+## Form 8938 — Foreign Financial Assets
+
+```bash
+tax form add --returnId ID --node_type f8938 '{ ... }'
+```
+
+FATCA reporting for foreign financial accounts over reporting thresholds.
+
+---
+
+## Form 8958 — Community Property Allocation
+
+```bash
+tax form add --returnId ID --node_type f8958 '{ ... }'
+```
+
+For married filing separately taxpayers in community property states.
+
+---
+
+## Form 9465 — Installment Agreement Request
+
+```bash
+tax form add --returnId ID --node_type f9465 '{ ... }'
+```
+
+---
+
+## FinCEN 114 (FBAR)
+
+```bash
+tax form add --returnId ID --node_type f114 '{ ... }'
+```
+
+Foreign Bank Account Report — required when aggregate foreign account balances exceed $10,000 at any point in the year.
+
+---
+
+## Form 1310 — Deceased Taxpayer
+
+```bash
+tax form add --returnId ID --node_type f1310 '{ ... }'
+```
+
+For claiming a refund on behalf of a deceased taxpayer.
+
+---
+
+## Other nodes
+
+| Node type | Description |
+|-----------|-------------|
+| `household_wages` | Household employee wages (nanny, housekeeper) |
+| `auto_expense` | Vehicle/auto business expense detail |
+| `lump_sum_ss` | Lump-sum Social Security election |
+| `qbi_aggregation` | QBI aggregation election for pass-throughs |
+| `preparer` | Paid preparer information |
+
+<Tip>
+  Run `tax node list` to see every available node type with descriptions.
+</Tip>

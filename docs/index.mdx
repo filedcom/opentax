@@ -1,0 +1,68 @@
+---
+title: "Tax Engine"
+description: "Open-source IRS Form 1040 tax engine. Fully local. Works with Claude, ChatGPT, Gemini, and any AI."
+---
+
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
+  <div>
+    <img className="block dark:hidden" src="/logo/light.svg" alt="Tax Engine" style={{ width: '280px' }} />
+    <img className="hidden dark:block" src="/logo/dark.svg" alt="Tax Engine" style={{ width: '280px' }} />
+  </div>
+  <a href="https://github.com/filed-app/tax-engine" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1.25rem', borderRadius: '0.5rem', border: '1px solid #e2e8f0', fontWeight: '600', fontSize: '0.95rem', textDecoration: 'none', color: 'inherit' }}>
+    ⭐ Star on GitHub
+  </a>
+</div>
+
+## The open-source tax engine for AI
+
+A single binary that runs the full IRS Form 1040 math — locally, offline, inside any AI platform you already use.
+
+Wire it into Claude, ChatGPT, or Gemini as a CLI tool. Tell the AI what's on your tax documents. The engine runs the numbers and hands back a finished return.
+
+```bash
+# Create a return
+tax return create --year 2025
+# → { "returnId": "abc-123" }
+
+# Add your W-2
+tax form add --returnId abc-123 --node_type w2 \
+  '{"box1_wages": 95000, "box2_fed_withheld": 14200}'
+
+# Compute the full 1040
+tax return get --returnId abc-123
+```
+
+## Why tax-engine?
+
+1. **Fully local** — runs as a binary on your machine, no data ever leaves, no accounts, no subscriptions
+2. **131 input nodes** — covers W-2s, every 1099 variant, all schedules, credits, deductions, and foreign forms
+3. **IRS-accurate** — 97+ test cases from the IRS, benchmarked against CCH TaxPrep
+4. **Works in any AI** — Claude, ChatGPT, Gemini, or any platform that can run a subprocess
+5. **MeF XML export** — produces IRS-valid e-file XML ready for a clearinghouse
+6. **Open source** — MIT licensed, no black box
+
+## How it works
+
+```
+W-2         → wages, withholding    ╮
+1099-INT    → interest income       ├→ Form 1040 → Schedule 1 → … → refund / owed
+1099-DIV    → dividends             ╯
+Schedule C  → self-employment
+```
+
+Each tax document is an **input node**. The engine resolves dependencies, runs the IRS math in topological order, and produces every computed line on the 1040.
+
+<CardGroup cols={2}>
+  <Card title="Install" href="/getting-started/install" icon="download">
+    Download the binary for your platform — no setup required
+  </Card>
+  <Card title="Quick Start" href="/getting-started/quick-start" icon="rocket">
+    Compute your first return in 60 seconds
+  </Card>
+  <Card title="Use with Claude" href="/use-with-ai/claude" icon="message-circle">
+    Wire the engine into Claude as a CLI tool
+  </Card>
+  <Card title="CLI Reference" href="/cli/overview" icon="terminal">
+    Every command, flag, and output format
+  </Card>
+</CardGroup>

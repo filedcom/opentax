@@ -249,19 +249,27 @@ function scheduleDOutput(items: K1PartnershipItems): NodeOutput[] {
 
 // NIIT routing: K-1 partnership income → Form 8960 lines 2 and 4a.
 // IRC §1411(c)(1)(A)/(2)(A):
-//   - line4a (passive income): Box 1 ordinary business + Box 2 rental + Box 3 other rental + Box 7 royalties
+//   - line4a (passive income): Box 2 rental + Box 3 other rental + Box 7 royalties
+//     Box 1 ordinary business income is EXCLUDED when box14a_se_earnings is present —
+//     active partners with SE income are not passive, so box1 is not NII per Reg §1.1411-5.
 //   - line2 (ordinary dividends): Box 6a ordinary dividends from partnership investment portfolio
 // Note: form8960 line2_ordinary_dividends is accumulable — f1099div also routes there.
 // Sending as separate NodeOutput objects avoids merging issues and lets the executor
 // accumulate them into an array that form8960 sums via normalizeArray.
 function form8960Output(items: K1PartnershipItems): NodeOutput[] {
   const passiveTotal = items.reduce(
-    (sum, item) =>
-      sum +
-      (item.box1_ordinary_business ?? 0) +
-      (item.box2_rental_re ?? 0) +
-      (item.box3_other_rental ?? 0) +
-      (item.box7_royalties ?? 0),
+    (sum, item) => {
+      // Only include box1 ordinary business income in NII when there is NO SE earnings
+      // (box14a absent or zero), meaning the partner is passive for this activity.
+      const box1Passive = (item.box14a_se_earnings ?? 0) === 0
+        ? (item.box1_ordinary_business ?? 0)
+        : 0;
+      return sum +
+        box1Passive +
+        (item.box2_rental_re ?? 0) +
+        (item.box3_other_rental ?? 0) +
+        (item.box7_royalties ?? 0);
+    },
     0,
   );
   const dividendTotal = items.reduce(
