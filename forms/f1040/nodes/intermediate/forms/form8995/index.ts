@@ -9,7 +9,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { STANDARD_DEDUCTION_BASE_2025, STANDARD_DEDUCTION_ADDITIONAL_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -89,11 +89,14 @@ const SPOUSE_STATUSES = new Set<FilingStatus>([FilingStatus.MFJ, FilingStatus.MF
 // Compute the effective standard deduction for a filing status, including age/blindness additions.
 // This mirrors the logic in the standard_deduction worksheet so that the QBI income limit
 // uses the same deduction amount that will ultimately be applied to taxable income.
-function standardDeductionAmount(input: Form8995Input): number {
+function standardDeductionAmount(
+  input: Form8995Input,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   const status = input.filing_status;
   if (status === undefined) return 0;
-  const base = STANDARD_DEDUCTION_BASE_2025[status] ?? 0;
-  const additionalPerFactor = STANDARD_DEDUCTION_ADDITIONAL_2025[status] ?? 0;
+  const base = cfg.standardDeductionBase[status] ?? 0;
+  const additionalPerFactor = cfg.standardDeductionAdditional[status] ?? 0;
   let factors = 0;
   if (input.taxpayer_age_65_or_older) factors += 1;
   if (input.taxpayer_blind) factors += 1;
@@ -104,7 +107,10 @@ function standardDeductionAmount(input: Form8995Input): number {
   return base + factors * additionalPerFactor;
 }
 
-function incomeLimitBase(input: Form8995Input): number {
+function incomeLimitBase(
+  input: Form8995Input,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   const capGain = input.net_capital_gain ?? 0;
 
   // Preferred: use explicit taxable_income (pre-QBI) when available
@@ -117,7 +123,7 @@ function incomeLimitBase(input: Form8995Input): number {
   // (taxable income before QBI deduction). Using the full standard deduction amount
   // matches what the standard_deduction worksheet will compute.
   if (input.agi !== undefined) {
-    const stdDed = standardDeductionAmount(input);
+    const stdDed = standardDeductionAmount(input, cfg);
     return Math.max(0, input.agi - stdDed - capGain);
   }
 
@@ -126,16 +132,22 @@ function incomeLimitBase(input: Form8995Input): number {
   return Infinity;
 }
 
-function incomeLimit(input: Form8995Input): number {
-  const base = incomeLimitBase(input);
+function incomeLimit(
+  input: Form8995Input,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
+  const base = incomeLimitBase(input, cfg);
   if (base === Infinity) return Infinity;
   return base * QBI_RATE;
 }
 
-function qbiDeduction(input: Form8995Input): number {
+function qbiDeduction(
+  input: Form8995Input,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   const total = totalBeforeLimit(input);
   if (total <= 0) return 0;
-  const limit = incomeLimit(input);
+  const limit = incomeLimit(input, cfg);
   if (limit === Infinity) return total;
   return Math.min(total, limit);
 }
@@ -157,14 +169,16 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, standard_deduction]);
 
-  compute(_ctx: NodeContext, rawInput: Form8995Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8995Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     if (!hasQbiActivity(input)) {
       return { outputs: [] };
     }
 
-    const deduction = qbiDeduction(input);
+    const deduction = qbiDeduction(input, cfg);
     if (deduction <= 0) {
       return { outputs: [] };
     }

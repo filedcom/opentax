@@ -9,18 +9,11 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import {
-  QBI_THRESHOLD_SINGLE_2025,
-  QBI_THRESHOLD_MFJ_2025,
-  QBI_PHASE_IN_RANGE_2025,
-} from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
 const QBI_RATE = 0.20; // IRC §199A(a) — 20% of net QBI
-const THRESHOLD_SINGLE = QBI_THRESHOLD_SINGLE_2025; // Rev. Proc. 2024-40 §3.24
-const THRESHOLD_MFJ = QBI_THRESHOLD_MFJ_2025; // Rev. Proc. 2024-40 §3.24
-const PHASE_IN_RANGE = QBI_PHASE_IN_RANGE_2025; // IRC §199A(b)(3)(B)(ii)
 const W2_LIMIT_A_RATE = 0.50; // IRC §199A(b)(2)(A)(i)
 const W2_LIMIT_B_WAGE_RATE = 0.25; // IRC §199A(b)(2)(A)(ii)
 const UBIA_RATE = 0.025; // IRC §199A(b)(2)(A)(ii)
@@ -79,20 +72,27 @@ type Form8995AInput = z.infer<typeof inputSchema>;
 
 // ── Threshold helpers ─────────────────────────────────────────────────────────
 
-function threshold(filingStatus: FilingStatus): number {
-  return filingStatus === FilingStatus.MFJ ? THRESHOLD_MFJ : THRESHOLD_SINGLE;
+function threshold(
+  filingStatus: FilingStatus,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
+  return filingStatus === FilingStatus.MFJ ? cfg.qbiThresholdMfj : cfg.qbiThresholdSingle;
 }
 
 /**
  * Reduction ratio for phase-in of wage limitation and SSTB phase-out.
  * 0 = below threshold (no limitation), 1 = fully above range (full limitation).
  */
-function reductionRatio(taxableIncome: number, filingStatus: FilingStatus): number {
-  const base = threshold(filingStatus);
+function reductionRatio(
+  taxableIncome: number,
+  filingStatus: FilingStatus,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
+  const base = threshold(filingStatus, cfg);
   const excess = taxableIncome - base;
   if (excess <= 0) return 0;
-  if (excess >= PHASE_IN_RANGE) return 1;
-  return excess / PHASE_IN_RANGE;
+  if (excess >= cfg.qbiPhaseInRange) return 1;
+  return excess / cfg.qbiPhaseInRange;
 }
 
 // ── SSTB adjustment ───────────────────────────────────────────────────────────
@@ -195,14 +195,16 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, standard_deduction]);
 
-  compute(_ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8995AInput): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
     if (!hasQbiActivity(input)) {
       return { outputs: [] };
     }
 
-    const ratio = reductionRatio(input.taxable_income, input.filing_status);
+    const ratio = reductionRatio(input.taxable_income, input.filing_status, cfg);
     const sstb = adjustedSstbAmounts(input, ratio);
     const totals = combinedTotals(input, sstb);
 
