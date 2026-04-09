@@ -11,11 +11,24 @@ description: Autonomous form builder. Given a form number (e.g. 1120), researche
 
 This skill autonomously builds a new tax form from scratch. It runs in phases, tracking progress in the harness state file so it can resume if interrupted.
 
-## Phase 0 — Read STRUCTURE.md + Load State
+## Phase 0 — Derive Paths + Load State
 
-Read `docs/architecture/STRUCTURE.md`. All paths used in this skill (harness state, cases dir, node-specs dir, progress log) are defined there. Use those paths — do not rely on hardcoded values below if STRUCTURE.md differs.
+Parse `$ARGUMENTS` as form number (e.g. `1120`). Prepend `f` to get form dir prefix: `f1120`.
 
-Read `.state/bench/state.json`. Check `tasks.tax-build-$ARGUMENTS.phase`:
+Derive all paths from convention:
+- Form dir:     `forms/f{ARGUMENTS}/`
+- Shared nodes: `forms/f{ARGUMENTS}/nodes/`
+- Year dir:     `forms/f{ARGUMENTS}/2025/`
+- Policy doc:   `forms/f{ARGUMENTS}/FORM.md`  (create if building new form)
+- Benchmark cases: `benchmark/cases/f{ARGUMENTS}/2025/`
+- State key:    `f{ARGUMENTS}:2025` in `.state/bench/state.json` under `forms`
+- Node specs:   `.state/bench/node-specs/{ARGUMENTS}-2025-nodes.json`
+- Progress log: `.state/bench/progress.md`
+
+Read `CLAUDE.md` and (if it exists) `forms/f{ARGUMENTS}/FORM.md`.
+Pass both as context to all spawned agents throughout this skill.
+
+Read `.state/bench/state.json`. Navigate to `forms.f{ARGUMENTS}:2025.build`:
 - `null` or missing → start from Phase 1
 - `"research"` → skip to Phase 2
 - `"ground_truth"` → skip to Phase 3
@@ -45,7 +58,7 @@ Append to `.state/bench/progress.md`:
 
 Spawn one extractor agent (see `agents/extractor.md`). Pass:
 - Form number: $ARGUMENTS
-- Cases output dir: `benchmark/cases/`
+- Cases output dir: `benchmark/cases/f{ARGUMENTS}/2025/`
 
 Wait for completion. Count created case directories (`$ARGUMENTS-*`).
 
