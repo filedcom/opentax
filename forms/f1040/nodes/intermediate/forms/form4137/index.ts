@@ -8,12 +8,10 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { SS_WAGE_BASE_2025 } from "../../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
-// IRC §3121(a)(1); Form 4137 line 7 — TY2025 SS wage base
-const SS_WAGE_BASE = SS_WAGE_BASE_2025;
 // Form 4137 line 11 — employee SS tax rate
 const SS_RATE = 0.062;
 // Form 4137 line 12 — employee Medicare tax rate
@@ -65,8 +63,8 @@ function medicareSubjectTips(line4: number, sub20: number): number {
 }
 
 // Form 4137 line 9: remaining room under the SS wage base after prior wages/tips.
-function ssWageBaseRoom(priorSsWages: number): number {
-  return Math.max(0, SS_WAGE_BASE - priorSsWages);
+function ssWageBaseRoom(ssWageBase: number, priorSsWages: number): number {
+  return Math.max(0, ssWageBase - priorSsWages);
 }
 
 // Form 4137 line 10: unreported tips subject to SS tax (capped at wage base room).
@@ -108,12 +106,14 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, schedule2]);
 
-  compute(_ctx: NodeContext, input: Form4137Input): NodeResult {
+  compute(ctx: NodeContext, input: Form4137Input): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No form4137 config for year ${ctx.taxYear}`);
     const line4 = unreportedTips(input);
     const sub20 = input.sub_$20_tips ?? 0;
     const line6 = medicareSubjectTips(line4, sub20);
     const line8 = input.ss_wages_from_w2 ?? 0;
-    const line9 = ssWageBaseRoom(line8);
+    const line9 = ssWageBaseRoom(cfg.ssWageBase, line8);
     const line10 = ssSubjectTips(line6, line9);
     const line11 = ssTax(line10);
     const line12 = medicareTax(line6);
