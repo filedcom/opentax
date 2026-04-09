@@ -35,14 +35,14 @@
   "correct": {
     "line9_total_income": 295230.09,
     "line11_agi": 295230.09,
-    "standard_deduction": 45915.15,
+    "standard_deduction": 31500,
     "qbi_deduction": 0,
-    "line15_taxable_income": 249314.94,
-    "ordinary_taxable": 249314.94,
-    "income_tax": 45529.59,
+    "line15_taxable_income": 239030.5,
+    "ordinary_taxable": 239030.5,
+    "income_tax": 43061.32,
     "se_tax": 0,
     "add_medicare_tax": 407.07,
-    "line18_tax_before_credits": 45936.66,
+    "line18_tax_before_credits": 43468.39,
     "nonref_ctc": 4400.0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -52,9 +52,10 @@
     "eitc": 0.0,
     "actc": 0.0,
     "excess_ss_credit": 5710.53,
-    "line24_total_tax": 41536.66,
+    "line24_total_tax": 39068.39,
     "line33_total_payments": 46181.6,
-    "line35a_refund": 4644.94,
-    "line37_amount_owed": 0
+    "line35a_refund": 7113.21,
+    "line37_amount_owed": 0,
+    "itemized_deduction": 56199.59
   }
 }

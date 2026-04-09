@@ -30,7 +30,7 @@
   "correct": {
     "line9_total_income": 1983.22,
     "line11_agi": 1983.22,
-    "standard_deduction": 15770,
+    "standard_deduction": 15750,
     "qbi_deduction": 0,
     "line15_taxable_income": 0,
     "ordinary_taxable": 0,
@@ -50,6 +50,7 @@
     "line24_total_tax": 0,
     "line33_total_payments": 0,
     "line35a_refund": 0,
-    "line37_amount_owed": 0
+    "line37_amount_owed": 0,
+    "itemized_deduction": 15621.26
   }
 }

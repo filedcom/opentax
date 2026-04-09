@@ -10,10 +10,18 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../types.ts";
+import {
+  SALT_CAP_2025,
+  SALT_FLOOR_2025,
+  SALT_FLOOR_MFS_2025,
+  SALT_PHASEOUT_RATE_2025,
+  SALT_PHASEOUT_THRESHOLD_2025,
+  SALT_PHASEOUT_THRESHOLD_MFS_2025,
+} from "../../config/2025.ts";
 
-// SALT cap per IRC §164(b)(6) (TCJA 2017): $10,000 single/MFJ, $5,000 MFS
-const SALT_CAP = 10_000;
-const SALT_CAP_MFS = 5_000;
+// OBBBA §70002 (TY2025): $40,000 cap (Single/MFJ/HOH/QSS), $20,000 for MFS
+// Phase-out: 30% of excess MAGI over $500K ($250K MFS), floor $10K ($5K MFS)
+const SALT_CAP_MFS = SALT_CAP_2025 / 2; // $20,000 for MFS (half of standard cap)
 
 // 60% AGI limit for cash charitable contributions to public charities (IRC §170(b)(1)(A))
 const CASH_CONTRIBUTION_AGI_PCT = 0.60;
@@ -25,7 +33,7 @@ const NONCASH_CAPITAL_GAIN_AGI_PCT = 0.30;
 const MEDICAL_AGI_FLOOR_PCT = 0.075;
 
 export const inputSchema = z.object({
-  // MFS filers receive $5,000 SALT cap (half of $10,000) per IRC §164(b)(6)
+  // MFS filers receive $20,000 SALT cap (half of $40,000) per OBBBA §70002
   filing_status: z.nativeEnum(FilingStatus).optional(),
   force_itemized: z.boolean().optional(),
   force_standard: z.boolean().optional(),
@@ -77,7 +85,14 @@ function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
 }
 
 function effectiveSaltCap(input: ScheduleAInput): number {
-  return input.filing_status === FilingStatus.MFS ? SALT_CAP_MFS : SALT_CAP;
+  const isMfs = input.filing_status === FilingStatus.MFS;
+  const baseCap = isMfs ? SALT_CAP_MFS : SALT_CAP_2025;
+  const floor = isMfs ? SALT_FLOOR_MFS_2025 : SALT_FLOOR_2025;
+  const threshold = isMfs ? SALT_PHASEOUT_THRESHOLD_MFS_2025 : SALT_PHASEOUT_THRESHOLD_2025;
+  const magi = input.agi ?? 0;
+  if (magi <= threshold) return baseCap;
+  const reduction = (magi - threshold) * SALT_PHASEOUT_RATE_2025;
+  return Math.max(floor, baseCap - reduction);
 }
 
 function computeSALT(input: ScheduleAInput): number {

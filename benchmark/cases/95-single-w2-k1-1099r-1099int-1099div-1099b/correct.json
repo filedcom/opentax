@@ -55,6 +55,7 @@
     "line24_total_tax": 284716.35,
     "line33_total_payments": 300080.49,
     "line35a_refund": 15364.14,
-    "line37_amount_owed": 0
+    "line37_amount_owed": 0,
+    "itemized_deduction": 6.0
   }
 }
