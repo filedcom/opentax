@@ -17,10 +17,7 @@ import { form461 } from "../../intermediate/forms/form461/index.ts";
 import { eitc } from "../../intermediate/forms/eitc/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import {
-  EBL_THRESHOLD_SINGLE_2025,
-  EBL_THRESHOLD_MFJ_2025,
-} from "../../config/2025.ts";
+import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 // ── TY2025 Constants ────────────────────────────────────────────────────────
 
@@ -31,8 +28,6 @@ const MEALS_DOT_PCT = 0.80;                 // DOT hours-of-service workers
 const MEALS_WAGES_PCT = 1.00;              // Meals treated as employee wages
 const HOME_OFFICE_SIMPLIFIED_RATE = 5.00;  // $5.00 per sq ft (simplified method)
 const HOME_OFFICE_MAX_SQ_FT = 300;         // 300 sq ft maximum
-const EBL_THRESHOLD_SINGLE = EBL_THRESHOLD_SINGLE_2025;      // Excess business loss — single
-const EBL_THRESHOLD_MFJ = EBL_THRESHOLD_MFJ_2025;         // Excess business loss — MFJ
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -282,7 +277,9 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     f8812,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
+    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     // Validate schema — throws on invalid data (negative amounts, bad enums)
     inputSchema.parse(input);
 
@@ -315,8 +312,8 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     if (totalNetProfit < 0) {
       const loss = Math.abs(totalNetProfit);
       const threshold = input.filing_status === "mfj"
-        ? EBL_THRESHOLD_MFJ
-        : EBL_THRESHOLD_SINGLE;
+        ? cfg.eblThresholdMfj
+        : cfg.eblThresholdSingle;
       if (loss > threshold) {
         outputs.push(this.outputNodes.output(form461, { excess_business_loss: loss - threshold }));
       }
