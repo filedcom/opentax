@@ -18,7 +18,7 @@ import { assertEquals, assertMatch } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { ALL_PDF_FORMS } from "./index.ts";
 
-const VALID_KINDS = new Set(["text", "checkbox", "radio"]);
+const VALID_KINDS = new Set(["text", "checkbox", "checkboxWhen", "radio"]);
 
 for (const descriptor of ALL_PDF_FORMS) {
   const label = descriptor.pendingKey;
@@ -67,6 +67,9 @@ for (const descriptor of ALL_PDF_FORMS) {
   Deno.test(`${label}: no duplicate domainKeys in fields`, () => {
     const seen = new Set<string>();
     for (const entry of descriptor.fields) {
+      // checkboxWhen entries intentionally share a domainKey (e.g. filing_status
+      // maps to multiple checkboxes); skip duplicate check for them.
+      if (entry.kind === "checkboxWhen") continue;
       assertEquals(
         seen.has(entry.domainKey),
         false,

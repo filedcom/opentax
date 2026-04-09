@@ -9,6 +9,10 @@ import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 import {
   STANDARD_DEDUCTION_BASE_2025,
   STANDARD_DEDUCTION_ADDITIONAL_2025,
+  SENIOR_DEDUCTION_MAX_2025,
+  SENIOR_DEDUCTION_PHASEOUT_SINGLE_2025,
+  SENIOR_DEDUCTION_PHASEOUT_MFJ_2025,
+  SENIOR_DEDUCTION_PHASEOUT_RATE_2025,
 } from "../../../config/2025.ts";
 
 // ─── Constants — TY2025 Standard Deduction Amounts ───────────────────────────
@@ -53,6 +57,46 @@ const SPOUSE_STATUSES = new Set<FilingStatus>([
   FilingStatus.MFS,
   FilingStatus.QSS,
 ]);
+
+// ─── Senior Deduction (OBBBA §70302) ──────────────────────────────────────────
+
+// Returns the AGI phase-out threshold for the Senior Deduction.
+function seniorPhaseoutThreshold(status: FilingStatus): number {
+  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
+    return SENIOR_DEDUCTION_PHASEOUT_MFJ_2025;
+  }
+  return SENIOR_DEDUCTION_PHASEOUT_SINGLE_2025;
+}
+
+// Counts the number of qualifying seniors (age 65+) on the return.
+// Spouse factors only apply for MFJ, MFS, QSS.
+function seniorCount(input: StandardDeductionInput): number {
+  let count = 0;
+  if (input.taxpayer_age_65_or_older) count += 1;
+  if (SPOUSE_STATUSES.has(input.filing_status)) {
+    if (input.spouse_age_65_or_older) count += 1;
+  }
+  return count;
+}
+
+// Computes the per-person Senior Deduction after phase-out.
+// = max(0, $6,000 − 6% × max(0, AGI − threshold))
+function perPersonSeniorDeduction(agi: number, status: FilingStatus): number {
+  const threshold = seniorPhaseoutThreshold(status);
+  const excess = Math.max(0, agi - threshold);
+  const phaseout = Math.round(excess * SENIOR_DEDUCTION_PHASEOUT_RATE_2025);
+  return Math.max(0, SENIOR_DEDUCTION_MAX_2025 - phaseout);
+}
+
+// Computes total Senior Deduction for all qualifying seniors on the return.
+function computeSeniorDeduction(input: StandardDeductionInput): number {
+  const count = seniorCount(input);
+  if (count === 0) return 0;
+  const perPerson = perPersonSeniorDeduction(input.agi, input.filing_status);
+  return count * perPerson;
+}
+
+// ─── Standard Deduction helpers ───────────────────────────────────────────────
 
 // Count the total number of additional-deduction factors for age/blindness.
 // Each factor is $1,600 (MFJ/MFS/QSS) or $2,000 (Single/HOH) for TY2025 per OBBBA.
@@ -107,8 +151,12 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
 
     const { deduction, takingStandard } = resolveDeduction(input);
     const qbi = input.qbi_deduction ?? 0;
+    // OBBBA §70302: Senior Deduction for taxpayers age 65+ (Schedule 1-A).
+    // Applied after the standard/itemized deduction and QBI deduction.
+    const seniorDeduction = computeSeniorDeduction(input);
     const preQbiTaxable = Math.max(0, input.agi - deduction);
-    const taxableIncome = Math.max(0, preQbiTaxable - qbi);
+    const preSeniorTaxable = Math.max(0, preQbiTaxable - qbi);
+    const taxableIncome = Math.max(0, preSeniorTaxable - seniorDeduction);
 
     const outputs: NodeOutput[] = [];
 

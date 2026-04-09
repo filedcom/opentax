@@ -77,11 +77,11 @@ Deno.test("schema: rejects negative box1a", () => {
   assertThrows(() => compute([minimalItem({ box1a: -1 })]), Error);
 });
 
-Deno.test("schema: normalizes box1b exceeding box1a — promotes box1a to box1b", () => {
-  // When box1b > box1a, box1a is promoted to box1b so no income is lost.
+Deno.test("schema: normalizes box1b exceeding box1a — box1a unchanged, box1b flows as reported", () => {
+  // box1a is authoritative for ordinary dividends — never inflate it.
+  // box1b (qualified dividends) flows as reported even when it exceeds box1a.
   const result = compute([minimalItem({ box1a: 400, box1b: 500 })]);
-  // Promoted box1a = 500, routed below Schedule B threshold → f1040 line3b
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 500);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 400);
   assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, 500);
 });
 
@@ -539,10 +539,10 @@ Deno.test("form_1116 required when box7 exceeds $600 MFJ threshold", () => {
 // 8. Normalization Rules (clamp/promote instead of throw)
 // ---------------------------------------------------------------------------
 
-Deno.test("V1: box1b exceeding box1a — promotes box1a to box1b, does not throw", () => {
-  // Produces outputs with promoted ordinary dividend amount.
+Deno.test("V1: box1b exceeding box1a — box1a unchanged, box1b flows as reported, does not throw", () => {
+  // box1a is authoritative — ordinary dividends not inflated.
   const result = compute([minimalItem({ box1a: 400, box1b: 500 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 500);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 400);
 });
 
 Deno.test("V2: box2f exceeding box2a — clamps box2f to box2a, does not throw", () => {

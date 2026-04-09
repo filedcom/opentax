@@ -85,6 +85,24 @@ export const STANDARD_DEDUCTION_ADDITIONAL_2025: Record<FilingStatus, number> = 
   [FilingStatus.QSS]:    1_600,
 } as const;
 
+// ─── Senior Deduction (Schedule 1-A, OBBBA §70302) ───────────────────────────
+// P.L. 119-21 (OBBBA), §70302; IRC §62(a)(22) (new)
+// Above-the-line deduction for taxpayers age 65+ (not eligible if dependent of another).
+// Maximum $6,000 per qualifying person; phases out at 6% of AGI above threshold.
+// MFJ/QSS threshold doubles the Single threshold.
+
+/** Senior Deduction maximum amount per qualifying person (TY2025, OBBBA §70302). */
+export const SENIOR_DEDUCTION_MAX_2025 = 6_000;
+
+/** Senior Deduction AGI phase-out start — Single/MFS/HOH (TY2025). */
+export const SENIOR_DEDUCTION_PHASEOUT_SINGLE_2025 = 75_000;
+
+/** Senior Deduction AGI phase-out start — MFJ/QSS (TY2025). */
+export const SENIOR_DEDUCTION_PHASEOUT_MFJ_2025 = 150_000;
+
+/** Senior Deduction phase-out rate: 6% of excess AGI above threshold. */
+export const SENIOR_DEDUCTION_PHASEOUT_RATE_2025 = 0.06;
+
 // ─── QDCGT / Capital Gains Rate Thresholds ────────────────────────────────────
 // Rev. Proc. 2024-40, §3.02; IRC §1(h)
 
