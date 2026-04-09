@@ -13,6 +13,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -353,7 +354,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc, f8812, agi_aggregator, form8959, form8960, form8995]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc, f8812, agi_aggregator, form8959, form8960, form8995, scheduleA]);
 
   compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -385,6 +386,8 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8959, { filing_status: parsed.filing_status }),
       // Pass filing_status to form8960 so NIIT MAGI threshold is known
       this.outputNodes.output(form8960, { filing_status: parsed.filing_status }),
+      // Pass filing_status to schedule_a for OBBBA SALT phase-out threshold
+      this.outputNodes.output(scheduleA, { filing_status: parsed.filing_status }),
       // Pass filing_status and age/blindness flags to form8995 so the income limit uses
       // the same standard deduction amount as the standard_deduction worksheet.
       this.outputNodes.output(form8995, {
