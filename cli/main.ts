@@ -14,7 +14,7 @@ import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import { exportMefCommand, exportPdfCommand } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
 
-const RETURNS_DIR = "./returns";
+const RETURNS_DIR = "./.state/returns";
 
 async function run(fn: () => Promise<unknown>): Promise<void> {
   try {

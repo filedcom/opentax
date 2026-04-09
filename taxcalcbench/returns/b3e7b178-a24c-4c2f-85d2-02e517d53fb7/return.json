@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "returnId": "b3e7b178-a24c-4c2f-85d2-02e517d53fb7",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:06:36.646Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "mfj",
+            "taxpayer_first_name": "Harold",
+            "taxpayer_last_name": "Garner",
+            "taxpayer_dob": "1957-06-15",
+            "taxpayer_age_65_or_older": true,
+            "spouse_first_name": "Beverly",
+            "spouse_last_name": "Garner",
+            "spouse_dob": "1958-01-20",
+            "spouse_age_65_or_older": true,
+            "address_city": "Boca Raton",
+            "address_state": "FL",
+            "address_zip": "33431"
+          }
+        }
+      }
+    ],
+    "f1099r": [
+      {
+        "id": "f1099r_01",
+        "fields": {
+          "payer_name": "Federal Pension",
+          "payer_ein": "52-0000001",
+          "box1_gross_distribution": 30000,
+          "box2a_taxable_amount": 30000,
+          "box4_federal_withheld": 2500,
+          "box7_distribution_code": "7"
+        }
+      }
+    ],
+    "ssa1099": [
+      {
+        "id": "ssa1099_01",
+        "fields": {
+          "payer_name": "Social Security Administration",
+          "box3_gross_benefits": 24000,
+          "box6_federal_withheld": 0
+        }
+      }
+    ]
+  }
+}

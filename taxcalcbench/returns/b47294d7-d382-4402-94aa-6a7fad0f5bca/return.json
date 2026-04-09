@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "returnId": "b47294d7-d382-4402-94aa-6a7fad0f5bca",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:20:43.578Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "mfj",
+            "taxpayer_first_name": "John",
+            "taxpayer_last_name": "James",
+            "address_city": "Springfield",
+            "address_zip": "62701",
+            "spouse_first_name": "Sarah",
+            "spouse_last_name": "James",
+            "address_state": "IL"
+          }
+        }
+      }
+    ],
+    "f1099int": [
+      {
+        "id": "f1099int_01",
+        "fields": {
+          "payer_name": "FIRST NATIONAL BANK",
+          "box1": 52.1,
+          "payer_tin": "30-1000020"
+        }
+      },
+      {
+        "id": "f1099int_02",
+        "fields": {
+          "payer_name": "LIBERTY INVESTMENTS LLC",
+          "box1": 19.13,
+          "payer_tin": "30-1000020"
+        }
+      }
+    ],
+    "f1099r": [
+      {
+        "id": "f1099r_01",
+        "fields": {
+          "payer_name": "HERITAGE FINANCIAL SERVICES",
+          "payer_ein": "31-1000021",
+          "box1_gross_distribution": 22222.25,
+          "box2a_taxable_amount": 22222.25,
+          "box4_federal_withheld": 2222.23,
+          "box7_distribution_code": "7",
+          "box7_ira_simple_indicator": true
+        }
+      },
+      {
+        "id": "f1099r_02",
+        "fields": {
+          "payer_name": "PIONEER TRUST COMPANY",
+          "payer_ein": "32-1000022",
+          "box1_gross_distribution": 171176.64,
+          "box2a_taxable_amount": 171176.64,
+          "box4_federal_withheld": 17058.9,
+          "box7_distribution_code": "7",
+          "box7_ira_simple_indicator": true
+        }
+      }
+    ],
+    "k1_partnership": [
+      {
+        "id": "k1_partnership_01",
+        "fields": {
+          "partnership_name": "OAK VENTURES LLP",
+          "partnership_ein": "33-1000023"
+        }
+      }
+    ],
+    "ssa1099": [
+      {
+        "id": "ssa1099_01",
+        "fields": {
+          "box3_gross_benefits": 23652,
+          "box6_federal_withheld": 0
+        }
+      },
+      {
+        "id": "ssa1099_02",
+        "fields": {
+          "box3_gross_benefits": 31632,
+          "box6_federal_withheld": 0
+        }
+      }
+    ],
+    "f1040es": [
+      {
+        "id": "f1040es_01",
+        "fields": {
+          "payment_q1": 0,
+          "payment_q2": 2700,
+          "payment_q3": 2700,
+          "payment_q4": 2700
+        }
+      }
+    ]
+  }
+}

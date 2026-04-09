@@ -1,0 +1,157 @@
+{
+  "meta": {
+    "returnId": "feaad6f5-81b8-4bf3-b645-978175d55147",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:41:46.763Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "John",
+            "taxpayer_last_name": "James",
+            "address_city": "Springfield",
+            "address_zip": "62701",
+            "address_state": "IL"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 67.5,
+          "box2_fed_withheld": 0,
+          "box3_ss_wages": 67.5,
+          "box4_ss_withheld": 4.19,
+          "box5_medicare_wages": 67.5,
+          "box6_medicare_withheld": 0.98,
+          "employer_name": "ACME INDUSTRIES INC",
+          "employer_ein": "11-1000001"
+        }
+      }
+    ],
+    "f1099int": [
+      {
+        "id": "f1099int_01",
+        "fields": {
+          "payer_name": "FIRST NATIONAL BANK",
+          "box1": 1.32,
+          "payer_tin": "12-1000002"
+        }
+      }
+    ],
+    "f1099div": [
+      {
+        "id": "f1099div_01",
+        "fields": {
+          "payerName": "LIBERTY INVESTMENTS LLC",
+          "isNominee": false,
+          "box11": false,
+          "box1a": 782.63,
+          "box1b": 358.9,
+          "box7": 18.87
+        }
+      }
+    ],
+    "f1099b": [
+      {
+        "id": "f1099b_01",
+        "fields": {
+          "description": "Schwab x4464 ST Covered",
+          "part": "A",
+          "date_acquired": "various",
+          "date_sold": "12/31/25",
+          "proceeds": 25009.05,
+          "cost_basis": 25165.85,
+          "adjustment_amount": 0.05,
+          "adjustment_codes": "MW"
+        }
+      },
+      {
+        "id": "f1099b_02",
+        "fields": {
+          "description": "Schwab x4464 ST Noncovered",
+          "part": "A",
+          "date_acquired": "various",
+          "date_sold": "12/31/25",
+          "proceeds": 2.64,
+          "cost_basis": 0
+        }
+      },
+      {
+        "id": "f1099b_03",
+        "fields": {
+          "description": "Schwab x4464 LT Covered",
+          "part": "D",
+          "date_acquired": "various",
+          "date_sold": "12/31/25",
+          "proceeds": 18612.61,
+          "cost_basis": 16743.43,
+          "adjustment_amount": 0.72,
+          "adjustment_codes": "MW"
+        }
+      }
+    ],
+    "f1099r": [
+      {
+        "id": "f1099r_01",
+        "fields": {
+          "payer_name": "HERITAGE FINANCIAL SERVICES",
+          "payer_ein": "12-1000002",
+          "box1_gross_distribution": 124157.17,
+          "box2a_taxable_amount": 124157.17,
+          "box4_federal_withheld": 18623.58,
+          "box7_distribution_code": "7",
+          "box7_ira_simple_indicator": true
+        }
+      },
+      {
+        "id": "f1099r_02",
+        "fields": {
+          "payer_name": "PIONEER TRUST COMPANY",
+          "payer_ein": "13-1000003",
+          "box1_gross_distribution": 70375,
+          "box2a_taxable_amount": 70375,
+          "box4_federal_withheld": 14075.04,
+          "box7_distribution_code": "7",
+          "box7_ira_simple_indicator": true
+        }
+      },
+      {
+        "id": "f1099r_03",
+        "fields": {
+          "payer_name": "GATEWAY SECURITIES INC",
+          "payer_ein": "14-1000004",
+          "box1_gross_distribution": 112844,
+          "box2a_taxable_amount": 3279,
+          "box4_federal_withheld": 0,
+          "box7_distribution_code": "7"
+        }
+      }
+    ],
+    "ssa1099": [
+      {
+        "id": "ssa1099_01",
+        "fields": {
+          "box3_gross_benefits": 12923.6,
+          "box6_federal_withheld": 0
+        }
+      }
+    ],
+    "schedule_a": [
+      {
+        "id": "schedule_a_01",
+        "fields": {
+          "line_8a_mortgage_interest_1098": 21764.38,
+          "line_5b_real_estate_tax": 9612.39
+        }
+      }
+    ]
+  }
+}

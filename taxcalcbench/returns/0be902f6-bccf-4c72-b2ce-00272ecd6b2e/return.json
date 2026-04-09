@@ -1,0 +1,50 @@
+{
+  "meta": {
+    "returnId": "0be902f6-bccf-4c72-b2ce-00272ecd6b2e",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:08:21.367Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Natalie",
+            "taxpayer_last_name": "Brooks",
+            "taxpayer_dob": "1991-10-25",
+            "address_city": "Louisville",
+            "address_state": "KY",
+            "address_zip": "40201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 40000,
+          "box2_fed_withheld": 4000,
+          "box3_ss_wages": 40000,
+          "box4_ss_withheld": 2480,
+          "box5_medicare_wages": 40000,
+          "box6_medicare_withheld": 580
+        }
+      }
+    ],
+    "f1095a": [
+      {
+        "id": "f1095a_01",
+        "fields": {
+          "issuer_name": "BlueCross Marketplace",
+          "annual_premium": 5400,
+          "annual_slcsp": 5700,
+          "annual_aptc": 0
+        }
+      }
+    ]
+  }
+}

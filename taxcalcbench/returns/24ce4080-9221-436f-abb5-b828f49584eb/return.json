@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "returnId": "24ce4080-9221-436f-abb5-b828f49584eb",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:06:00.545Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Harold",
+            "taxpayer_last_name": "Jensen",
+            "taxpayer_dob": "1955-01-30",
+            "taxpayer_age_65_or_older": true,
+            "address_city": "Omaha",
+            "address_state": "NE",
+            "address_zip": "68101"
+          }
+        }
+      }
+    ],
+    "f1099r": [
+      {
+        "id": "f1099r_01",
+        "fields": {
+          "payer_name": "Nebraska Public Employees Retirement",
+          "payer_ein": "47-0000001",
+          "box1_gross_distribution": 20000,
+          "box2a_taxable_amount": 18000,
+          "box4_federal_withheld": 1800,
+          "box7_distribution_code": "7"
+        }
+      },
+      {
+        "id": "f1099r_02",
+        "fields": {
+          "payer_name": "Fidelity Investments IRA",
+          "payer_ein": "04-3523567",
+          "box1_gross_distribution": 15000,
+          "box2a_taxable_amount": 13000,
+          "box4_federal_withheld": 1300,
+          "box7_distribution_code": "7"
+        }
+      }
+    ]
+  }
+}

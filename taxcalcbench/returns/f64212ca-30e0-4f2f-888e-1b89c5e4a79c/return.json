@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "returnId": "f64212ca-30e0-4f2f-888e-1b89c5e4a79c",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:41:33.292Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Jordan",
+            "taxpayer_last_name": "Patel",
+            "taxpayer_dob": "1982-11-05",
+            "address_city": "San Francisco",
+            "address_state": "CA",
+            "address_zip": "94105"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 120000,
+          "box2_fed_withheld": 22000,
+          "box3_ss_wages": 120000,
+          "box4_ss_withheld": 7440,
+          "box5_medicare_wages": 120000,
+          "box6_medicare_withheld": 1740
+        }
+      }
+    ]
+  }
+}

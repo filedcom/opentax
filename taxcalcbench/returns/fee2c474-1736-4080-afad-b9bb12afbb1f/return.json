@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "returnId": "fee2c474-1736-4080-afad-b9bb12afbb1f",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:51:04.103Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Alex",
+            "taxpayer_last_name": "Martinez",
+            "taxpayer_dob": "1993-08-25",
+            "address_city": "Chicago",
+            "address_state": "IL",
+            "address_zip": "60601"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 55000,
+          "box2_fed_withheld": 6000,
+          "box3_ss_wages": 55000,
+          "box4_ss_withheld": 3410,
+          "box5_medicare_wages": 55000,
+          "box6_medicare_withheld": 798
+        }
+      }
+    ],
+    "f1098e": [
+      {
+        "id": "f1098e_01",
+        "fields": {
+          "box1_student_loan_interest": 2500,
+          "lender_name": "Sallie Mae"
+        }
+      }
+    ]
+  }
+}

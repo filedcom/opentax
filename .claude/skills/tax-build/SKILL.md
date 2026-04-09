@@ -9,11 +9,13 @@ description: Autonomous form builder. Given a form number (e.g. 1120), researche
 
 ## Overview
 
-This skill autonomously builds a new tax form from scratch. It runs in phases, tracking progress in `taxcalcbench/harness/state.json` so it can resume if interrupted.
+This skill autonomously builds a new tax form from scratch. It runs in phases, tracking progress in the harness state file so it can resume if interrupted.
 
-## Phase 0 — Load State
+## Phase 0 — Read STRUCTURE.md + Load State
 
-Read `taxcalcbench/harness/state.json`. Check `tasks.tax-build-$ARGUMENTS.phase`:
+Read `docs/architecture/STRUCTURE.md`. All paths used in this skill (harness state, cases dir, node-specs dir, progress log) are defined there. Use those paths — do not rely on hardcoded values below if STRUCTURE.md differs.
+
+Read `.state/bench/state.json`. Check `tasks.tax-build-$ARGUMENTS.phase`:
 - `null` or missing → start from Phase 1
 - `"research"` → skip to Phase 2
 - `"ground_truth"` → skip to Phase 3
@@ -26,13 +28,13 @@ Set `status` to `"running"` and write state.json.
 
 Spawn one researcher agent (see `agents/researcher.md`). Pass:
 - Form number: $ARGUMENTS
-- Output path: `taxcalcbench/harness/node-specs/$ARGUMENTS-nodes.json`
+- Output path: `.state/bench/node-specs/$ARGUMENTS-nodes.json`
 
 Wait for completion. Verify the file exists and is valid JSON with a `nodes` array.
 
 Update state.json: `phase → "research"`, `node_specs_path` set.
 
-Append to `taxcalcbench/harness/progress.md`:
+Append to `.state/bench/progress.md`:
 ```
 ## [Form $ARGUMENTS] Phase 1 Complete — Research
 - Nodes identified: N
@@ -58,7 +60,7 @@ Append to progress.md:
 
 ## Phase 3 — Build
 
-Read `taxcalcbench/harness/node-specs/$ARGUMENTS-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
+Read `.state/bench/node-specs/$ARGUMENTS-nodes.json`. Group nodes into sections (income, deductions, tax_computation, credits, payments, other).
 
 For each section, spawn one node-builder agent in parallel (see `agents/node-builder.md`). Pass:
 - The node specs for that section (JSON subset)

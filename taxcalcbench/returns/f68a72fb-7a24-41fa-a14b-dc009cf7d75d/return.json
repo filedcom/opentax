@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "returnId": "f68a72fb-7a24-41fa-a14b-dc009cf7d75d",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:04:27.667Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "mfj",
+            "taxpayer_first_name": "Morgan",
+            "taxpayer_last_name": "Rivera",
+            "taxpayer_dob": "1975-04-12",
+            "spouse_first_name": "Jordan",
+            "spouse_last_name": "Rivera",
+            "spouse_dob": "1977-09-22",
+            "address_city": "Nashville",
+            "address_state": "TN",
+            "address_zip": "37201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 80000,
+          "box2_fed_withheld": 9500,
+          "box3_ss_wages": 80000,
+          "box4_ss_withheld": 4960,
+          "box5_medicare_wages": 80000,
+          "box6_medicare_withheld": 1160
+        }
+      }
+    ],
+    "f1099div": [
+      {
+        "id": "f1099div_01",
+        "fields": {
+          "payerName": "Brokerage Co",
+          "isNominee": false,
+          "box11": false,
+          "box1a": 3000,
+          "box1b": 2500,
+          "box2a": 15000
+        }
+      }
+    ]
+  }
+}

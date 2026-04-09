@@ -1,0 +1,52 @@
+{
+  "meta": {
+    "returnId": "0057f742-38cd-4a19-82a7-3cb55704afe0",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:37:20.287Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Avery",
+            "taxpayer_last_name": "Kim",
+            "taxpayer_dob": "1987-06-30",
+            "address_city": "Seattle",
+            "address_state": "WA",
+            "address_zip": "98101"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 40000,
+          "box2_fed_withheld": 3500,
+          "box3_ss_wages": 40000,
+          "box4_ss_withheld": 2480,
+          "box5_medicare_wages": 40000,
+          "box6_medicare_withheld": 580
+        }
+      }
+    ],
+    "f1099b": [
+      {
+        "id": "f1099b_01",
+        "fields": {
+          "part": "D",
+          "description": "AAPL 100 shares",
+          "date_acquired": "2022-03-15",
+          "date_sold": "2025-08-20",
+          "proceeds": 8500,
+          "cost_basis": 3500
+        }
+      }
+    ]
+  }
+}

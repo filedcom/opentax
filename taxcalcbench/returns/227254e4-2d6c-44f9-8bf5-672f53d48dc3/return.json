@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "returnId": "227254e4-2d6c-44f9-8bf5-672f53d48dc3",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:16:17.422Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Ryan",
+            "taxpayer_last_name": "Foster",
+            "taxpayer_dob": "1989-02-28",
+            "address_city": "Charlotte",
+            "address_state": "NC",
+            "address_zip": "28201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 52000,
+          "box2_fed_withheld": 5500,
+          "box3_ss_wages": 52000,
+          "box4_ss_withheld": 3224,
+          "box5_medicare_wages": 52000,
+          "box6_medicare_withheld": 754
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "returnId": "aec9184f-0782-45ca-b6b8-2682ee3fbcea",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T15:19:21.515Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Priya",
+            "taxpayer_last_name": "Sharma",
+            "taxpayer_dob": "1992-05-30",
+            "address_city": "Minneapolis",
+            "address_state": "MN",
+            "address_zip": "55401"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 48000,
+          "box2_fed_withheld": 4800,
+          "box3_ss_wages": 48000,
+          "box4_ss_withheld": 2976,
+          "box5_medicare_wages": 48000,
+          "box6_medicare_withheld": 696
+        }
+      }
+    ],
+    "educator_expenses": [
+      {
+        "id": "educator_expenses_01",
+        "fields": {
+          "educator1_expenses": 450,
+          "filing_status": "single"
+        }
+      }
+    ]
+  }
+}

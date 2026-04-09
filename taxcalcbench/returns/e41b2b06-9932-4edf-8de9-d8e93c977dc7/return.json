@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "returnId": "e41b2b06-9932-4edf-8de9-d8e93c977dc7",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:41:34.409Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Pat",
+            "taxpayer_last_name": "Wilson",
+            "taxpayer_dob": "1954-10-10",
+            "taxpayer_age_65_or_older": true,
+            "address_city": "Phoenix",
+            "address_state": "AZ",
+            "address_zip": "85001"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 28000,
+          "box2_fed_withheld": 1500,
+          "box3_ss_wages": 28000,
+          "box4_ss_withheld": 1736,
+          "box5_medicare_wages": 28000,
+          "box6_medicare_withheld": 406,
+          "taxpayer_age": 70
+        }
+      }
+    ]
+  }
+}

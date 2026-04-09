@@ -1,0 +1,39 @@
+{
+  "meta": {
+    "returnId": "573c9a6e-ea2c-4954-8999-ae8b071804ce",
+    "year": 2025,
+    "formType": "f1040",
+    "createdAt": "2026-04-09T13:41:33.292Z"
+  },
+  "inputs": {
+    "start": [
+      {
+        "id": "start_01",
+        "fields": {
+          "general": {
+            "filing_status": "single",
+            "taxpayer_first_name": "Morgan",
+            "taxpayer_last_name": "Lee",
+            "taxpayer_dob": "1988-07-22",
+            "address_city": "Denver",
+            "address_state": "CO",
+            "address_zip": "80201"
+          }
+        }
+      }
+    ],
+    "w2": [
+      {
+        "id": "w2_01",
+        "fields": {
+          "box1_wages": 50000,
+          "box2_fed_withheld": 5000,
+          "box3_ss_wages": 50000,
+          "box4_ss_withheld": 3100,
+          "box5_medicare_wages": 50000,
+          "box6_medicare_withheld": 725
+        }
+      }
+    ]
+  }
+}
