@@ -28,7 +28,7 @@
     "eitc_children": 0,
     "dep_care_expenses": 0,
     "estimated_tax_payments": 0,
-    "fed_withheld": 90385.24,
+    "fed_withheld": 93082.94,
     "foreign_tax_paid": 38.72,
     "itemized_deductions": 18904.64
   },
@@ -41,8 +41,8 @@
     "ordinary_taxable": 393248.14999999997,
     "income_tax": 113982.76,
     "se_tax": 0,
-    "add_medicare_tax": 1893.5,
-    "line18_tax_before_credits": 117665.62,
+    "add_medicare_tax": 2698.32,
+    "line18_tax_before_credits": 118470.44,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -52,10 +52,10 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0.0,
-    "line24_total_tax": 117626.9,
+    "line24_total_tax": 118431.72,
     "line33_total_payments": 93082.94,
     "line35a_refund": 0,
-    "line37_amount_owed": 24543.96,
+    "line37_amount_owed": 25348.78,
     "itemized_deduction": 18904.64
   }
 }

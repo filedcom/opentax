@@ -25,7 +25,8 @@
     "eitc_children": 0,
     "dep_care_expenses": 0,
     "estimated_tax_payments": 9080,
-    "fed_withheld": 10625
+    "fed_withheld": 10625,
+    "foreign_tax_paid": 61.54
   },
   "correct": {
     "line9_total_income": 206071.89,
