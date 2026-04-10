@@ -227,11 +227,13 @@ function isQualifyingChildForODC(dep: DependentItem): boolean {
 // IRS qualifying-relative test for ODC: taxpayer provided over half of support AND
 // gross income is below the exemption amount (or dependent is a qualifying child of
 // another taxpayer). Requires TIN per Pub 972.
-// When gross_income or support flag are absent, we cannot confirm the tests pass.
+// When taxpayer_provided_over_half_support is absent, assume the taxpayer meets the
+// support test (they are asserting this by claiming the dependent). Only disqualify
+// when explicitly set to false.
 function isQualifyingRelativeForODC(dep: DependentItem): boolean {
   if (!hasTin(dep)) return false;
-  // taxpayer_provided_over_half_support must be explicitly true
-  if (dep.taxpayer_provided_over_half_support !== true) return false;
+  // Disqualify only if taxpayer explicitly states they do NOT provide over half support
+  if (dep.taxpayer_provided_over_half_support === false) return false;
   // gross_income must be absent (no income reported) or below the exemption amount.
   // When not provided we treat it as 0 (no income) which passes.
   // The IRS exemption amount for 2025 is $5,050; if gross_income exceeds it, disqualify.

@@ -30,13 +30,9 @@
     {
       "node_type": "sep_retirement",
       "data": {
-        "sep_retirements": [
-          {
-            "plan_type": "SEP",
-            "net_self_employment_compensation": 69696,
-            "sep_contribution": 13758
-          }
-        ]
+        "plan_type": "SEP",
+        "net_self_employment_compensation": 69696,
+        "sep_contribution": 13758
       }
     }
   ]

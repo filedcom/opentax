@@ -12,6 +12,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
+import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ---------------------------------------------------------------------------
@@ -47,6 +48,10 @@ export const itemSchema = z.object({
   // Box 3 — Other income
   box3_other_income: z.number().nonnegative().optional(),
   box3_other_income_routing: z.enum(OTHER_INCOME_ROUTING).optional(),
+  // When true, box3_other_income is also investment income subject to NIIT (IRC §1411).
+  // Use for brokerage-sourced income (e.g., income from terminated investment accounts).
+  // Defaults false — prizes, settlements, and other non-investment income are not NII.
+  box3_niit_applicable: z.boolean().optional(),
   // Box 4 — Federal withholding
   box4_federal_withheld: z.number().nonnegative().optional(),
   // Box 5 — Fishing boat proceeds → Schedule C
@@ -165,6 +170,12 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
   return output(schedule_e, schedEInput as unknown as AtLeastOne<z.infer<typeof schedule_e["inputSchema"]>>);
 }
 
+function niitIncomeTotal(items: M99Item[]): number {
+  return items
+    .filter((i) => i.box3_niit_applicable === true)
+    .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
+}
+
 function schedule1Output(items: M99Item[]): NodeOutput | null {
   const prizes = prizesAwardsTotal(items);
   const other = otherIncomeTotal(items);
@@ -197,6 +208,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     schedule2,
     agi_aggregator,
     f1040,
+    form8960,
   ]);
 
   compute(_ctx: NodeContext, input: M99Input): NodeResult {
@@ -246,6 +258,13 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     const totalNqdc = totalOf(m99s, "box15_nqdc");
     if (totalNqdc > 0) {
       outputs.push(this.outputNodes.output(schedule2, { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE }));
+    }
+
+    // form8960 — NIIT: box3_other_income that is investment income (box3_niit_applicable = true)
+    // Routed to line7_other_modifications (additional investment income per IRC §1411).
+    const totalNiit = niitIncomeTotal(m99s);
+    if (totalNiit > 0) {
+      outputs.push(this.outputNodes.output(form8960, { line7_other_modifications: totalNiit }));
     }
 
     return { outputs };

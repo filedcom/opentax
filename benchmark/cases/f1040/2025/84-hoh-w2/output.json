@@ -1,5 +1,5 @@
 {
-  "returnId": "36dda4f8-3daf-4246-9553-5548e9017019",
+  "returnId": "b1ae9bed-fc15-4c20-83a0-d4b9d85c642b",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 78082.73000000001,
@@ -7,8 +7,8 @@
     "line11_agi": 77128.77,
     "line15_taxable_income": 53503.770000000004,
     "line24_total_tax": 5080.4524,
-    "line33_total_payments": 5514.2,
-    "line35a_refund": 433.7475999999997
+    "line33_total_payments": 5514.21,
+    "line35a_refund": 433.7575999999999
   },
   "forms": [
     "agi_aggregator",
@@ -18,6 +18,7 @@
     "f2441",
     "f8812",
     "form6251",
+    "form8880",
     "form8959",
     "form8960",
     "form8962",
@@ -49,6 +50,7 @@
     "address_city": "Springfield",
     "address_state": "IL",
     "address_zip": "62701",
+    "line25c_additional_medicare_withheld": 0.01,
     "line11_agi": [
       77128.77,
       77128.77
@@ -80,12 +82,12 @@
     "line21_credits_total": 1000,
     "line22_tax_after_credits": 5080.4524,
     "line24_total_tax": 5080.4524,
-    "line25d_total_withholding": 5514.2,
-    "line33_total_payments": 5514.2,
+    "line25d_total_withholding": 5514.21,
+    "line33_total_payments": 5514.21,
     "line14_deductions_qbi_total": 16946.370000000003,
     "line32_refundable_credits_total": 0,
-    "line34_overpayment": 433.7475999999997,
-    "line35a_refund": 433.7475999999997
+    "line34_overpayment": 433.7575999999999,
+    "line35a_refund": 433.7575999999999
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

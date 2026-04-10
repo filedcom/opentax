@@ -3,8 +3,8 @@
   "forms": {
     "f1040:2025": {
       "fix": {
-        "status": "done",
-        "benchmark_baseline": { "pass": 107, "fail": 0 },
+        "status": "running",
+        "benchmark_baseline": { "pass": 105, "fail": 6, "total": 111 },
         "no_improvement_count": 0,
         "root_causes": {
           "ssa_niit_mismatch": {
@@ -36,6 +36,42 @@
             "cases": [106],
             "description": "correct.json was missing EITC ($415); engine was correct",
             "node_path": "benchmark/cases/f1040/2025/106-hoh-w2-child-dep-care-credit/correct.json"
+          },
+          "odc_regression": {
+            "status": "fixed",
+            "cases": [93, 96],
+            "description": "Fixed by adding full_time_student=true (case 93 dependents) and taxpayer_provided_over_half_support=true (case 96 parent) to input.json files so the new ODC qualifying tests pass.",
+            "node_path": "forms/f1040/nodes/inputs/general/index.ts"
+          },
+          "f1099m_other_income_residual": {
+            "status": "pending",
+            "cases": [72, 95],
+            "description": "f1099m box3_other_income is now flowing into AGI (AGI correct for both cases). Residual tax discrepancies remain: case 72 engine $10,961 vs expected $10,927 (delta $34, likely SSA taxable amount affected by extra $225.75); case 95 engine $309,967 vs expected $312,560 (delta $2,593, likely K1/LTCG rate or NIIT interaction with extra $68,245).",
+            "node_path": "forms/f1040/nodes/inputs/f1099m/index.ts"
+          },
+          "self_employed_health_insurance": {
+            "status": "pending",
+            "cases": [108],
+            "description": "self_employed_health_insurance node ($1,000 premium) deduction not reducing AGI. Engine computes AGI ~$124,258 vs expected lower value; total_tax is $21,240 vs correct $14,444 (delta $6,796 overpay). Deduction should flow to Schedule 1 line 17 (self-employed health insurance).",
+            "node_path": "forms/f1040/nodes/inputs/self_employed_health_insurance/index.ts"
+          },
+          "ira_deduction_missing": {
+            "status": "pending",
+            "cases": [109],
+            "description": "ira_deduction_worksheet node not routing IRA deduction to AGI reduction. Engine shows taxable=$38,500 (no IRA deduction applied) instead of correct $31,500 (after $7,000 IRA deduction). Also affects savers credit calculation.",
+            "node_path": "forms/f1040/nodes/inputs/ira_deduction_worksheet/index.ts"
+          },
+          "excess_aptc_repayment": {
+            "status": "pending",
+            "cases": [110],
+            "description": "f1095a excess APTC repayment not being added to tax liability. Engine tax $2,054 vs correct $2,500 (delta $447). Excess APTC repayment should flow to Schedule 2 line 2 and add to total tax.",
+            "node_path": "forms/f1040/nodes/inputs/f1095a/index.ts"
+          },
+          "sep_ira_qbi_missing": {
+            "status": "pending",
+            "cases": [111],
+            "description": "sep_retirement node ($13,758 SEP-IRA) and QBI deduction not reducing taxable income. Engine tax $15,538 vs correct $0 (amount owed scenario). SEP deduction reduces AGI; QBI deduction (20% of QBI after SE/SEP adjustments) further reduces taxable income.",
+            "node_path": "forms/f1040/nodes/inputs/sep_retirement/index.ts"
           }
         }
       },

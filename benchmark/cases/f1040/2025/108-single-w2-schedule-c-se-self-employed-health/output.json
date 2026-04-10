@@ -1,0 +1,105 @@
+{
+  "returnId": "a8c8bdd6-3376-4433-97f1-9fbed44c58ba",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 100836,
+    "line9_total_income": 126039,
+    "line11_agi": 123258.46475675,
+    "line15_taxable_income": 102467.86475675,
+    "line24_total_tax": 21018.000732985,
+    "line33_total_payments": 14444,
+    "line37_amount_owed": 6574.000732985001
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8880",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "ira_deduction_worksheet",
+    "schedule1",
+    "schedule2",
+    "schedule_a",
+    "schedule_c",
+    "schedule_se",
+    "self_employed_health_insurance",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      14444,
+      14444
+    ],
+    "line1a_wages": [
+      100836,
+      100836
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Sam",
+    "taxpayer_last_name": "Gardenia",
+    "taxpayer_dob": "1980-01-01",
+    "address_city": "Anytown",
+    "address_state": "CA",
+    "address_zip": "90001",
+    "line11_agi": [
+      123258.46475675,
+      123258.46475675
+    ],
+    "line8_additional_income": 25203,
+    "line10_adjustments": [
+      2780.53524325,
+      2780.53524325
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line13_qbi_deduction": [
+      5040.6,
+      5040.6
+    ],
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      102467.86475675,
+      102467.86475675
+    ],
+    "line16_income_tax": [
+      17456.930246485,
+      17456.930246485
+    ],
+    "line17_additional_taxes": [
+      3561.0704865,
+      3561.0704865
+    ],
+    "line1z_total_wages": 100836,
+    "line9_total_income": 126039,
+    "line18_total_tax_before_credits": 21018.000732985,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 21018.000732985,
+    "line24_total_tax": 21018.000732985,
+    "line25d_total_withholding": 14444,
+    "line33_total_payments": 14444,
+    "line14_deductions_qbi_total": 20790.6,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 6574.000732985001
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] ira_deduction_worksheet: Zod validation failed for node \"ira_deduction_worksheet\": [\n  {\n    \"expected\": \"'single' | 'mfs' | 'mfj' | 'hoh' | 'qss'\",\n    \"received\": \"undefined\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"filing_status\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"magi\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"number\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"ira_contribution\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"boolean\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"active_participant\"\n    ],\n    \"message\": \"Required\"\n  }\n]",
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

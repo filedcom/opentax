@@ -126,7 +126,9 @@ import { f59e, itemSchema as f59eItemSchema } from "../nodes/inputs/f59e/index.t
 import { f1040es, inputSchema as f1040esInputSchema } from "../nodes/inputs/f1040es/index.ts";
 import { educator_expenses, inputSchema as educatorExpensesInputSchema } from "../nodes/inputs/educator_expenses/index.ts";
 import { form8889, inputSchema as form8889InputSchema } from "../nodes/intermediate/forms/form8889/index.ts";
+import { ira_deduction_worksheet, inputSchema as iraDeductionWorksheetInputSchema } from "../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { preparer, inputSchema as preparerInputSchema } from "../nodes/inputs/preparer/index.ts";
+import { self_employed_health_insurance, itemSchema as sehiItemSchema } from "../nodes/inputs/self_employed_health_insurance/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
@@ -258,4 +260,6 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: educator_expenses, inputSchema: educatorExpensesInputSchema, isArray: false },
   { node: preparer, inputSchema: preparerInputSchema, isArray: false },
   { node: form8889, inputSchema: form8889InputSchema, isArray: false },
+  { node: ira_deduction_worksheet, inputSchema: iraDeductionWorksheetInputSchema, isArray: false },
+  { node: self_employed_health_insurance, itemSchema: sehiItemSchema, isArray: true },
 ];

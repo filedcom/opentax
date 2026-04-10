@@ -296,7 +296,8 @@
         "payer_tin": "232384840",
         "recipient_tin": "018500048",
         "box3_other_income": 68245.0,
-        "box3_other_income_routing": "other_income"
+        "box3_other_income_routing": "other_income",
+        "box3_niit_applicable": true
       }
     },
     {

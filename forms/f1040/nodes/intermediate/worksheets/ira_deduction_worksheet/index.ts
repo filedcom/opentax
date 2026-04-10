@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8606 } from "../../forms/form8606/index.ts";
+import { form8880 } from "../../forms/form8880/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
@@ -116,7 +117,7 @@ function schedule1Output(deductible: number): NodeOutput[] {
 class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ira_deduction_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8606]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8606, form8880]);
 
   compute(ctx: NodeContext, rawInput: IraDeductionInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -151,6 +152,12 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [...schedule1Output(deductible)];
     if (deductible > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, { line20_ira_deduction: deductible }));
+    }
+
+    // Route IRA contribution to Form 8880 (Saver's Credit) — IRC §25B
+    // The full contribution (not just the deductible portion) counts toward the credit.
+    if (capped > 0) {
+      outputs.push(this.outputNodes.output(form8880, { ira_contributions_taxpayer: capped }));
     }
 
     // Non-deductible excess → Form 8606 for IRA basis tracking (IRC §408(o))

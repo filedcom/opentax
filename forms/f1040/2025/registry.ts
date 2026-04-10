@@ -129,6 +129,7 @@ import { f8866 } from "../nodes/inputs/f8866/index.ts";
 import { f1098e } from "../nodes/inputs/f1098e/index.ts";
 import { educator_expenses } from "../nodes/inputs/educator_expenses/index.ts";
 import { preparer } from "../nodes/inputs/preparer/index.ts";
+import { self_employed_health_insurance } from "../nodes/inputs/self_employed_health_insurance/index.ts";
 
 // ── Intermediates ─────────────────────────────────────────────────────────────
 import { eitc } from "../nodes/intermediate/forms/eitc/index.ts";
@@ -324,6 +325,7 @@ export const registry: NodeRegistry = {
   f1098e,
   educator_expenses,
   preparer,
+  self_employed_health_insurance,
 
   // ── Intermediates ───────────────────────────────────────────────────────────
   eitc,

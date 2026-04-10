@@ -719,7 +719,7 @@ Deno.test("IRS4797 absent when form4797 missing from pending", () => {
 });
 
 Deno.test("IRS8880 present when form8880 has data", () => {
-  const xml = buildMefXml({ form8880: { ira_contributions_taxpayer: 3000 } });
+  const xml = buildMefXml({ form8880: { contributions_taxpayer: 3000 } });
   assertStringIncludes(xml, "<IRS8880 ");
 });
 
@@ -841,7 +841,7 @@ Deno.test("documentCnt=29 when all 29 forms have data", () => {
     schedule_f: { crop_insurance: 2000 },
     schedule_b: { taxable_interest_net: 1500 },
     form4797: { section_1231_gain: 12000 },
-    form8880: { ira_contributions_taxpayer: 3000 },
+    form8880: { contributions_taxpayer: 3000 },
     form8995: { qbi: 50000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
@@ -885,7 +885,7 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
     schedule_f: { crop_insurance: 2000 },
     schedule_b: { taxable_interest_net: 1500 },
     form4797: { section_1231_gain: 12000 },
-    form8880: { ira_contributions_taxpayer: 3000 },
+    form8880: { contributions_taxpayer: 3000 },
     form8995: { qbi: 50000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },

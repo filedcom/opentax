@@ -29,167 +29,99 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("ira_contributions_taxpayer at zero is emitted", () => {
-  const result = form8880.build({ ira_contributions_taxpayer: 0 });
+Deno.test("roth_contributions_taxpayer at zero is emitted", () => {
+  const result = form8880.build({ roth_contributions_taxpayer: 0 });
   assertStringIncludes(
     result,
-    "<TxpyrRetirePlanContriAmt>0</TxpyrRetirePlanContriAmt>",
+    "<PrimaryRothIRAForCurrentYrAmt>0</PrimaryRothIRAForCurrentYrAmt>",
   );
 });
 
 // ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 9 fields)
+// Section 4: Per-field mapping — key fields
 // ---------------------------------------------------------------------------
 
-Deno.test("ira_contributions_taxpayer maps to TxpyrRetirePlanContriAmt", () => {
-  const result = form8880.build({ ira_contributions_taxpayer: 2000 });
+Deno.test("roth_contributions_taxpayer maps to PrimaryRothIRAForCurrentYrAmt", () => {
+  const result = form8880.build({ roth_contributions_taxpayer: 2000 });
   assertStringIncludes(
     result,
-    "<TxpyrRetirePlanContriAmt>2000</TxpyrRetirePlanContriAmt>",
+    "<PrimaryRothIRAForCurrentYrAmt>2000</PrimaryRothIRAForCurrentYrAmt>",
   );
 });
 
-Deno.test("ira_contributions_spouse maps to SpouseRetirePlanContriAmt", () => {
-  const result = form8880.build({ ira_contributions_spouse: 1500 });
+Deno.test("roth_contributions_spouse maps to SpouseRothIRAForCurrentYrAmt", () => {
+  const result = form8880.build({ roth_contributions_spouse: 1500 });
   assertStringIncludes(
     result,
-    "<SpouseRetirePlanContriAmt>1500</SpouseRetirePlanContriAmt>",
+    "<SpouseRothIRAForCurrentYrAmt>1500</SpouseRothIRAForCurrentYrAmt>",
   );
 });
 
-Deno.test("elective_deferrals maps to ElectiveDeferralAmt", () => {
-  const result = form8880.build({ elective_deferrals: 19500 });
+Deno.test("contributions_taxpayer maps to PrimaryContributionsAmt", () => {
+  const result = form8880.build({ contributions_taxpayer: 3000 });
   assertStringIncludes(
     result,
-    "<ElectiveDeferralAmt>19500</ElectiveDeferralAmt>",
+    "<PrimaryContributionsAmt>3000</PrimaryContributionsAmt>",
   );
 });
 
-Deno.test("elective_deferrals_taxpayer maps to TxpyrElectiveDeferralAmt", () => {
-  const result = form8880.build({ elective_deferrals_taxpayer: 10000 });
+Deno.test("contributions_spouse maps to SpouseContributionsAmt", () => {
+  const result = form8880.build({ contributions_spouse: 2500 });
   assertStringIncludes(
     result,
-    "<TxpyrElectiveDeferralAmt>10000</TxpyrElectiveDeferralAmt>",
+    "<SpouseContributionsAmt>2500</SpouseContributionsAmt>",
   );
 });
 
-Deno.test("elective_deferrals_spouse maps to SpouseElectiveDeferralAmt", () => {
-  const result = form8880.build({ elective_deferrals_spouse: 9500 });
+Deno.test("distributions_taxpayer maps to PrimTaxableDistributionsAmt", () => {
+  const result = form8880.build({ distributions_taxpayer: 1000 });
   assertStringIncludes(
     result,
-    "<SpouseElectiveDeferralAmt>9500</SpouseElectiveDeferralAmt>",
+    "<PrimTaxableDistributionsAmt>1000</PrimTaxableDistributionsAmt>",
   );
 });
 
-Deno.test("distributions_taxpayer maps to TxpyrDistributionAmt", () => {
-  const result = form8880.build({ distributions_taxpayer: 3000 });
+Deno.test("distributions_spouse maps to SpsTaxableDistributionsAmt", () => {
+  const result = form8880.build({ distributions_spouse: 500 });
   assertStringIncludes(
     result,
-    "<TxpyrDistributionAmt>3000</TxpyrDistributionAmt>",
+    "<SpsTaxableDistributionsAmt>500</SpsTaxableDistributionsAmt>",
   );
 });
 
-Deno.test("distributions_spouse maps to SpouseDistributionAmt", () => {
-  const result = form8880.build({ distributions_spouse: 2500 });
-  assertStringIncludes(
-    result,
-    "<SpouseDistributionAmt>2500</SpouseDistributionAmt>",
-  );
-});
-
-Deno.test("agi maps to AGIAmt", () => {
+Deno.test("agi maps to TaxReturnAGIAmt", () => {
   const result = form8880.build({ agi: 60000 });
-  assertStringIncludes(result, "<AGIAmt>60000</AGIAmt>");
+  assertStringIncludes(result, "<TaxReturnAGIAmt>60000</TaxReturnAGIAmt>");
 });
 
-Deno.test("income_tax_liability maps to IncomeTaxLiabilityAmt", () => {
-  const result = form8880.build({ income_tax_liability: 8000 });
+Deno.test("credit maps to CrQualifiedRetirementSavAmt", () => {
+  const result = form8880.build({ credit: 400 });
   assertStringIncludes(
     result,
-    "<IncomeTaxLiabilityAmt>8000</IncomeTaxLiabilityAmt>",
+    "<CrQualifiedRetirementSavAmt>400</CrQualifiedRetirementSavAmt>",
   );
 });
 
 // ---------------------------------------------------------------------------
-// Section 5: Sparse output
+// Section 5: Sparse output — only agi (engine's typical flow)
 // ---------------------------------------------------------------------------
 
-Deno.test("single known field emits only that element, absent fields omitted", () => {
+Deno.test("only agi present: emits TaxReturnAGIAmt, no other elements", () => {
   const result = form8880.build({ agi: 60000 });
-  assertStringIncludes(result, "<AGIAmt>60000</AGIAmt>");
-  assertNotIncludes(result, "<TxpyrRetirePlanContriAmt>");
-  assertNotIncludes(result, "<SpouseRetirePlanContriAmt>");
-  assertNotIncludes(result, "<ElectiveDeferralAmt>");
-});
-
-Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8880.build({ agi: 60000, income_tax_liability: 8000 });
-  assertStringIncludes(result, "<AGIAmt>60000</AGIAmt>");
-  assertStringIncludes(
-    result,
-    "<IncomeTaxLiabilityAmt>8000</IncomeTaxLiabilityAmt>",
-  );
-  assertNotIncludes(result, "<TxpyrRetirePlanContriAmt>");
-  assertNotIncludes(result, "<ElectiveDeferralAmt>");
+  assertStringIncludes(result, "<TaxReturnAGIAmt>60000</TaxReturnAGIAmt>");
+  assertNotIncludes(result, "<PrimaryRothIRAForCurrentYrAmt>");
+  assertNotIncludes(result, "<PrimaryContributionsAmt>");
+  assertNotIncludes(result, "AGIAmt>60000</AGIAmt>");
 });
 
 // ---------------------------------------------------------------------------
-// Section 6: All fields present
+// Section 6: Wrapper tag
 // ---------------------------------------------------------------------------
 
-const allFields = {
-  ira_contributions_taxpayer: 2000,
-  ira_contributions_spouse: 1500,
-  elective_deferrals: 19500,
-  elective_deferrals_taxpayer: 10000,
-  elective_deferrals_spouse: 9500,
-  distributions_taxpayer: 3000,
-  distributions_spouse: 2500,
-  agi: 60000,
-  income_tax_liability: 8000,
-};
-
-Deno.test("all 9 fields present: output wrapped in IRS8880 tag", () => {
-  const result = form8880.build(allFields);
-  assertStringIncludes(result, "<IRS8880>");
+Deno.test("any field present: output wrapped in IRS8880 tag", () => {
+  const result = form8880.build({ agi: 60000 });
+  assertStringIncludes(result, "<IRS8880");
   assertStringIncludes(result, "</IRS8880>");
-});
-
-Deno.test("all 9 fields present: all elements emitted", () => {
-  const result = form8880.build(allFields);
-  assertStringIncludes(
-    result,
-    "<TxpyrRetirePlanContriAmt>2000</TxpyrRetirePlanContriAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<SpouseRetirePlanContriAmt>1500</SpouseRetirePlanContriAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<ElectiveDeferralAmt>19500</ElectiveDeferralAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TxpyrElectiveDeferralAmt>10000</TxpyrElectiveDeferralAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<SpouseElectiveDeferralAmt>9500</SpouseElectiveDeferralAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TxpyrDistributionAmt>3000</TxpyrDistributionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<SpouseDistributionAmt>2500</SpouseDistributionAmt>",
-  );
-  assertStringIncludes(result, "<AGIAmt>60000</AGIAmt>");
-  assertStringIncludes(
-    result,
-    "<IncomeTaxLiabilityAmt>8000</IncomeTaxLiabilityAmt>",
-  );
 });
 
 // ---------------------------------------------------------------------------
@@ -198,7 +130,7 @@ Deno.test("all 9 fields present: all elements emitted", () => {
 
 Deno.test("filing_status string field is silently ignored", () => {
   const result = form8880.build({ filing_status: "MFJ", agi: 60000 });
-  assertStringIncludes(result, "<AGIAmt>60000</AGIAmt>");
+  assertStringIncludes(result, "<TaxReturnAGIAmt>60000</TaxReturnAGIAmt>");
   assertNotIncludes(result, "filing_status");
   assertNotIncludes(result, "MFJ");
 });

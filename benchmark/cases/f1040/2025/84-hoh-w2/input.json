@@ -20,7 +20,8 @@
               "months_in_home": 12,
               "dob": "2006-05-25",
               "middle_initial": "T",
-              "ssn": "395272608"
+              "ssn": "395272608",
+              "gross_income": 10000
             },
             {
               "first_name": "Megan",
@@ -29,7 +30,8 @@
               "months_in_home": 12,
               "dob": "2002-04-15",
               "middle_initial": "E",
-              "ssn": "387238944"
+              "ssn": "387238944",
+              "gross_income": 12000
             }
           ],
           "address_state": "IL"

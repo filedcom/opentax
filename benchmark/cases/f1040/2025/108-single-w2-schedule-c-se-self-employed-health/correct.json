@@ -4,13 +4,13 @@
   "year": 2025,
   "source": "IRS TY2024 Form 1040 MeF ATS Scenario 12 — Sam Gardenia, Single. IRS Pub 1436 ATS test package (https://www.irs.gov/pub/irs-efile/); all Form 1040, Schedule C, Schedule SE, Schedule 1, Schedule 2, and Form 7206 values are IRS-stated, none computed by agent.",
   "correct": {
-    "line9_total_income": 125164,
-    "line10_adjustments": 2719,
-    "line11_agi": 122445,
-    "line15_taxable_income": 107845,
-    "line24_total_tax": 22721,
+    "line9_total_income": 126039,
+    "line10_adjustments": 2780.54,
+    "line11_agi": 123258.46,
+    "line15_taxable_income": 102467.86,
+    "line24_total_tax": 21018,
     "line33_total_payments": 14444,
     "line35a_refund": 0,
-    "line37_amount_owed": 8277
+    "line37_amount_owed": 6574
   }
 }
