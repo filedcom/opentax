@@ -1,0 +1,13 @@
+{
+  "case": "116-single-1099r-disability-pension",
+  "scenario": "Single filer age 42 with disability pension (1099-R code 3) — below minimum retirement age, treated as wages on line 1a",
+  "year": 2025,
+  "correct": {
+    "line11_agi": 28000,
+    "line15_taxable_income": 12250,
+    "line24_total_tax": 1231.50,
+    "line33_total_payments": 2000,
+    "line35a_refund": 768.50,
+    "line37_amount_owed": 0
+  }
+}

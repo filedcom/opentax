@@ -86,6 +86,8 @@ export const inputSchema = z.object({
   line17_schedule_e: z.number().optional(),
   // Line 6 — Net farm profit or (loss) (Schedule F)
   line6_schedule_f: z.number().optional(),
+  // Line 2a — Alimony received (divorce or separation instruments before 1/1/2019, IRC §71)
+  line2a_alimony_received: z.number().nonnegative().optional(),
   // Line 7 — Unemployment compensation (Form 1099-G)
   line7_unemployment: z.number().optional(),
   // Line 8c — Cancellation of debt income (Form 1099-C)
@@ -209,6 +211,7 @@ function nonSsaIncome(input: AgiInput): number {
     (input.line7_capital_gain ?? 0) +
     (input.line7a_cap_gain_distrib ?? 0) +
     (input.line1_state_refund ?? 0) +
+    (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     (input.line5_schedule_e ?? 0) +

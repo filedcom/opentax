@@ -1,0 +1,49 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages and Schedule E rental income — active participation rental property generates net income",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Kevin",
+          "taxpayer_last_name": "Ortega",
+          "taxpayer_dob": "1979-04-08",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55000,
+        "box2_fed_withheld": 5000,
+        "box3_ss_wages": 55000,
+        "box4_ss_withheld": 3410,
+        "box5_medicare_wages": 55000,
+        "box6_medicare_withheld": 798
+      }
+    },
+    {
+      "node_type": "schedule_e",
+      "data": {
+        "tsj": "T",
+        "property_description": "123 Oak Lane rental property",
+        "property_type": 1,
+        "activity_type": "A",
+        "fair_rental_days": 365,
+        "personal_use_days": 0,
+        "rent_income": 18000,
+        "form_1099_payments_made": false,
+        "expense_mortgage_interest": 5500,
+        "expense_taxes": 2400,
+        "expense_insurance": 900,
+        "expense_repairs": 600,
+        "expense_depreciation": 3000
+      }
+    }
+  ]
+}

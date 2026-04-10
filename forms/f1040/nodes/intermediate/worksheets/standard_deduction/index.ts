@@ -32,6 +32,10 @@ export const inputSchema = z.object({
 
   // From form8995 / form8995a — qualified business income deduction (Form 1040 Line 13)
   qbi_deduction: z.number().nonnegative().optional(),
+
+  // From nol_carryforward — NOL deduction (IRC §172) applied after standard/itemized deduction
+  // Post-2017 NOLs limited to 80% of pre-NOL taxable income; pre-2018 NOLs limited to 100%.
+  nol_deduction: z.number().nonnegative().optional(),
 });
 
 type StandardDeductionInput = z.infer<typeof inputSchema>;
@@ -108,7 +112,8 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
 
     const { deduction, takingStandard } = resolveDeduction(input, cfg);
     const qbi = input.qbi_deduction ?? 0;
-    const taxableIncome = Math.max(0, Math.max(0, input.agi - deduction) - qbi);
+    const nol = input.nol_deduction ?? 0;
+    const taxableIncome = Math.max(0, Math.max(0, input.agi - deduction) - qbi - nol);
 
     const outputs: NodeOutput[] = [];
 

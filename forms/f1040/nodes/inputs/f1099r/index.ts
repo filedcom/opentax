@@ -510,9 +510,11 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     // Route IRA/pension taxable amounts to AGI aggregator.
     // Only emit line4b_ira_taxable when > 0 to avoid accumulation conflicts with form8606,
     // which emits its own line4b_ira_taxable to agi_aggregator for items with prior_ira_basis.
+    // Also route disability-as-wages (line1a_wages) so AGI is computed correctly.
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
     if ((iraFields.line4b_ira_taxable ?? 0) > 0) agiFields.line4b_ira_taxable = iraFields.line4b_ira_taxable;
     if (pensionFields.line5b_pension_taxable !== undefined) agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
+    if ((disWagesFields.line1a_wages ?? 0) > 0) agiFields.line1a_wages = disWagesFields.line1a_wages;
     if (Object.keys(agiFields).length > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>));
     }

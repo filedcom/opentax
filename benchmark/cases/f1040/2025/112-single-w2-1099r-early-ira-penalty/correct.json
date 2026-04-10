@@ -1,0 +1,9 @@
+{
+  "case": "112-single-w2-1099r-early-ira-penalty",
+  "line11_agi": 43000,
+  "line15_taxable_income": 27250,
+  "line24_total_tax": 3831.5,
+  "line33_total_payments": 3300,
+  "line35a_refund": 0,
+  "line37_amount_owed": 531.5
+}

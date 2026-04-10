@@ -111,7 +111,7 @@ async function runCase(name: string): Promise<CaseResult | null> {
   const engRef = scalar(sm.line35a_refund ?? 0);
   const engOwe = scalar(sm.line37_amount_owed ?? 0);
 
-  const c   = correct.correct;
+  const c   = correct.correct ?? correct;
   const ok  = Math.abs(engTax - c.line24_total_tax)    <= 5 &&
               Math.abs(engRef - c.line35a_refund)       <= 5 &&
               Math.abs(engOwe - c.line37_amount_owed)   <= 5;

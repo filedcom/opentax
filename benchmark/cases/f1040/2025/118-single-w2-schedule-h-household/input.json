@@ -1,0 +1,40 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages and Schedule H household employment taxes — Patricia pays a nanny $12,000 in wages and owes employer FICA + FUTA on Schedule H",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Patricia",
+          "taxpayer_last_name": "Chang",
+          "taxpayer_dob": "1980-06-30",
+          "address_city": "Chicago",
+          "address_state": "IL",
+          "address_zip": "60601"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 60000,
+        "box2_fed_withheld": 6500,
+        "box3_ss_wages": 60000,
+        "box4_ss_withheld": 3720,
+        "box5_medicare_wages": 60000,
+        "box6_medicare_withheld": 870
+      }
+    },
+    {
+      "node_type": "schedule_h",
+      "data": {
+        "total_cash_wages": 12000,
+        "employee_ss_withheld": 744,
+        "employee_medicare_withheld": 174,
+        "futa_tax": 42
+      }
+    }
+  ]
+}

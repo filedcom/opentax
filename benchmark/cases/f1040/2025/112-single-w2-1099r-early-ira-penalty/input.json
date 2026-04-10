@@ -1,0 +1,44 @@
+{
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, Early Distributions lesson (ch. 11, p. 11-11); 10% penalty under IRC §72(t); distribution code 1 per IRS Pub 575; Form 5329 Part I",
+  "scenario": "Single filer with W-2 wages and early IRA distribution (code 1) — 10% penalty applies, no exception",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Marcus",
+          "taxpayer_last_name": "Reed",
+          "taxpayer_dob": "1990-07-15",
+          "address_city": "Nashville",
+          "address_state": "TN",
+          "address_zip": "37201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 35000,
+        "box2_fed_withheld": 2500,
+        "box3_ss_wages": 35000,
+        "box4_ss_withheld": 2170,
+        "box5_medicare_wages": 35000,
+        "box6_medicare_withheld": 508
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Heritage Retirement Trust",
+        "payer_ein": "00-0000001",
+        "box1_gross_distribution": 8000,
+        "box2a_taxable_amount": 8000,
+        "box4_federal_withheld": 800,
+        "box7_distribution_code": "1",
+        "box7_ira_simple_indicator": true
+      }
+    }
+  ]
+}

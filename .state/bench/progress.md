@@ -49,3 +49,25 @@ Append-only log of harness runs and outcomes.
 - IRS citations:
   - 108: IRS Pub 1436 ATS Scenario 12
   - 109-111: VITA Pub 4491 TY2025 illustrative (IRC §219, §25B, §36B, §199A)
+
+## Cases Added — 2026-04-10T21:30:00Z
+- Source: IRS VITA Pub 4491 TY2025 (supplemented by IRC §72, §86, §172, §469, §74)
+- Cases: 112–121
+
+| # | Name | Scenario | IRS Citation |
+|---|------|----------|--------------|
+| 112 | single-w2-1099r-early-ira-penalty | Single, W-2 + early IRA dist code 1, 10% penalty | VITA ch. 11, p. 11-11; IRC §72(t) |
+| 113 | single-1099r-rmd-ssa-senior | Single age 75, RMD code 7 + SSA taxability | VITA ch. 11, p. 11-11; IRC §86 |
+| 114 | single-w2-1099r-roth-conversion | Single, W-2 + Roth conversion code 2 (no penalty) | VITA ch. 11, p. 11-8; Pub 590-B |
+| 115 | single-w2-schedule-e-rental | Single, W-2 + Schedule E rental income | VITA ch. 12, p. 12-1; IRC §469 |
+| 116 | single-1099r-disability-pension | Single, disability pension code 3 (treated as wages) | VITA ch. 11, p. 11-9; IRC §105(d) |
+| 117 | single-w2-1099misc-prizes | Single, W-2 + 1099-MISC prizes/awards box 3 | VITA Other Income; IRC §74 |
+| 118 | single-w2-schedule-h-household | Single, W-2 + Schedule H nanny wages $12k | VITA; IRC §3101-§3111 |
+| 119 | single-w2-nol-carryforward | Single, W-2 + post-2017 NOL carryforward (80% limit) | VITA; IRC §172(a)(2) |
+| 120 | single-w2-alimony-received | Single, W-2 + alimony received (pre-2019 decree) | VITA ch. 17, p. 17-1; IRC §71 |
+| 121 | mfj-w2-1099r-early-401k-penalty | MFJ, two W-2s + early 401(k) dist code 1, penalty | VITA ch. 11, p. 11-11; IRC §72(t) |
+
+### Engine fixes made while writing cases:
+- **Case 116**: f1099r disability-as-wages was not routing to agi_aggregator — fixed
+- **Case 118**: schedule_h was not wired as a user-facing input node — registered in inputs.ts
+- **Case 120**: alimony_received input node did not exist — created new node + registered

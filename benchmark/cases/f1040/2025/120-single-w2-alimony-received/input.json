@@ -1,0 +1,39 @@
+{
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, Adjustments to Income lesson (ch. 17, p. 17-1)",
+  "scenario": "Single filer with W-2 wages and alimony received from a pre-2019 divorce decree — taxable to recipient under IRC §71",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Christine",
+          "taxpayer_last_name": "Baldwin",
+          "taxpayer_dob": "1977-08-22",
+          "address_city": "Atlanta",
+          "address_state": "GA",
+          "address_zip": "30301"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 32000,
+        "box2_fed_withheld": 2200,
+        "box3_ss_wages": 32000,
+        "box4_ss_withheld": 1984,
+        "box5_medicare_wages": 32000,
+        "box6_medicare_withheld": 464
+      }
+    },
+    {
+      "node_type": "alimony_received",
+      "data": {
+        "amount": 12000,
+        "divorce_agreement_date": "2017-06-15"
+      }
+    }
+  ]
+}

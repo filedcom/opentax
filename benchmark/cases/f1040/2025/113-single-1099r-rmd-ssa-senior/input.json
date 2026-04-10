@@ -1,0 +1,40 @@
+{
+  "year": 2025,
+  "scenario": "Single retiree age 75 with RMD (1099-R code 7) and Social Security — no early distribution penalty",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Dorothy",
+          "taxpayer_last_name": "Walsh",
+          "taxpayer_dob": "1950-03-12",
+          "taxpayer_age_65_or_older": true,
+          "address_city": "Phoenix",
+          "address_state": "AZ",
+          "address_zip": "85001"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Fidelity Retirement Services",
+        "payer_ein": "00-0000001",
+        "box1_gross_distribution": 22000,
+        "box2a_taxable_amount": 22000,
+        "box4_federal_withheld": 1500,
+        "box7_distribution_code": "7"
+      }
+    },
+    {
+      "node_type": "ssa1099",
+      "data": {
+        "payer_name": "Social Security Administration",
+        "box3_gross_benefits": 18000,
+        "box6_federal_withheld": 0
+      }
+    }
+  ]
+}

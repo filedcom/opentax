@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { nol_carryforward, NolType } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return {
@@ -233,6 +234,37 @@ Deno.test("nol_carryforward.compute: only one output to schedule1 regardless of 
   );
   const s1Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1");
   assertEquals(s1Outputs.length, 1);
+});
+
+Deno.test("nol_carryforward.compute: routes nol_deduction to standard_deduction when deduction > 0", () => {
+  // $10000 post-2017 NOL against $100000 income: 80% = 80000; NOL 10000 < 80000 → 10000
+  const result = compute(
+    [minimalItem({ nol_type: NolType.POST2017, nol_amount: 10000 })],
+    100000,
+  );
+  const fields = fieldsOf(result.outputs, standard_deduction)!;
+  assertEquals(fields.nol_deduction, 10000);
+});
+
+Deno.test("nol_carryforward.compute: standard_deduction receives same deduction as schedule1", () => {
+  // $20000 post-2017 NOL against $24250 income: 80% = 19400; deduction = 19400
+  const result = compute(
+    [minimalItem({ nol_type: NolType.POST2017, nol_amount: 20000 })],
+    24250,
+  );
+  const s1Fields = fieldsOf(result.outputs, schedule1)!;
+  const sdFields = fieldsOf(result.outputs, standard_deduction)!;
+  assertEquals(s1Fields.line8a_nol_deduction, 19400);
+  assertEquals(sdFields.nol_deduction, 19400);
+});
+
+Deno.test("nol_carryforward.compute: no standard_deduction output when deduction is zero", () => {
+  const result = compute(
+    [minimalItem({ nol_type: NolType.POST2017, nol_amount: 0 })],
+    100000,
+  );
+  const sdOutputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "standard_deduction");
+  assertEquals(sdOutputs.length, 0);
 });
 
 // =============================================================================

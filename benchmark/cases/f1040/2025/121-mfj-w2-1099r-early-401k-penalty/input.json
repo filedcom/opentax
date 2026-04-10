@@ -1,0 +1,57 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with early 401(k) distribution (code 1, non-IRA) — no penalty exception, 10% early withdrawal penalty assessed via Form 5329",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Robert",
+          "taxpayer_last_name": "Vasquez",
+          "taxpayer_dob": "1988-03-10",
+          "spouse_first_name": "Maria",
+          "spouse_last_name": "Vasquez",
+          "spouse_dob": "1990-05-17",
+          "address_city": "Houston",
+          "address_state": "TX",
+          "address_zip": "77001"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 65000,
+        "box2_fed_withheld": 6000,
+        "box3_ss_wages": 65000,
+        "box4_ss_withheld": 4030,
+        "box5_medicare_wages": 65000,
+        "box6_medicare_withheld": 943
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 28000,
+        "box2_fed_withheld": 1800,
+        "box3_ss_wages": 28000,
+        "box4_ss_withheld": 1736,
+        "box5_medicare_wages": 28000,
+        "box6_medicare_withheld": 406
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "National Retirement Plan Services",
+        "payer_ein": "XX-XXXXXXX",
+        "box1_gross_distribution": 12000,
+        "box2a_taxable_amount": 12000,
+        "box4_federal_withheld": 1200,
+        "box7_distribution_code": "1",
+        "box7_ira_simple_indicator": false
+      }
+    }
+  ]
+}

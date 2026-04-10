@@ -1,0 +1,19 @@
+{
+  "case": "114-single-w2-1099r-roth-conversion",
+  "scenario": "Single filer with W-2 wages and Roth IRA conversion (1099-R code 2) — taxable but no 10% early distribution penalty",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "single",
+    "wages": 45000,
+    "ira_taxable": 15000,
+    "fed_withheld": 5500
+  },
+  "correct": {
+    "line11_agi": 60000,
+    "line15_taxable_income": 44250,
+    "line24_total_tax": 5071.50,
+    "line33_total_payments": 5500,
+    "line35a_refund": 428.50,
+    "line37_amount_owed": 0
+  }
+}

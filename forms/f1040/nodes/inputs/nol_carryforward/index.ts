@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 — Net Operating Loss (NOL) carryforward deduction (IRC §172)
@@ -71,10 +72,13 @@ function computeNolDeduction(items: NolItems, taxableIncome: number): number {
   return pre2018Ded + post2017Ded;
 }
 
-function schedule1Output(items: NolItems, taxableIncome: number): NodeOutput[] {
+function nolOutputs(items: NolItems, taxableIncome: number): NodeOutput[] {
   const deduction = computeNolDeduction(items, taxableIncome);
   if (deduction === 0) return [];
-  return [output(schedule1, { line8a_nol_deduction: deduction })];
+  return [
+    output(schedule1, { line8a_nol_deduction: deduction }),
+    output(standard_deduction, { nol_deduction: deduction }),
+  ];
 }
 
 // ── Node class ────────────────────────────────────────────────────────────────
@@ -82,11 +86,11 @@ function schedule1Output(items: NolItems, taxableIncome: number): NodeOutput[] {
 class NolCarryforwardNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "nol_carryforward";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1]);
+  readonly outputNodes = new OutputNodes([schedule1, standard_deduction]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const outputs: NodeOutput[] = schedule1Output(
+    const outputs: NodeOutput[] = nolOutputs(
       parsed.nol_carryforwards,
       parsed.current_year_taxable_income,
     );

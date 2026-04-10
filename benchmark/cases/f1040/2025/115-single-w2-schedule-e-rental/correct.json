@@ -1,0 +1,19 @@
+{
+  "case": "115-single-w2-schedule-e-rental",
+  "scenario": "Single filer with W-2 wages and Schedule E rental income — active participation rental property generates net income",
+  "year": 2025,
+  "inputs": {
+    "filing_status": "single",
+    "wages": 55000,
+    "schedule_e_net": 5600,
+    "fed_withheld": 5000
+  },
+  "correct": {
+    "line11_agi": 60600,
+    "line15_taxable_income": 44850,
+    "line24_total_tax": 5143.50,
+    "line33_total_payments": 5000,
+    "line35a_refund": 0,
+    "line37_amount_owed": 143.50
+  }
+}

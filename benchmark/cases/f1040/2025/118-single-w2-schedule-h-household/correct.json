@@ -1,0 +1,13 @@
+{
+  "case": "118-single-w2-schedule-h-household",
+  "scenario": "Single filer with W-2 wages and Schedule H household employment taxes — Patricia pays a nanny $12,000; employer FICA + FUTA owed on Schedule H",
+  "year": 2025,
+  "correct": {
+    "line11_agi": 60000,
+    "line15_taxable_income": 44250,
+    "line24_total_tax": 6949.50,
+    "line33_total_payments": 6500,
+    "line35a_refund": 0,
+    "line37_amount_owed": 449.50
+  }
+}

@@ -187,6 +187,8 @@ import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_
 import { qdcgtw } from "../nodes/intermediate/worksheets/qdcgtw/index.ts";
 import { standard_deduction } from "../nodes/intermediate/worksheets/standard_deduction/index.ts";
 
+import { alimony_received } from "../nodes/inputs/alimony_received/index.ts";
+
 // ── Outputs ───────────────────────────────────────────────────────────────────
 import { f1040 } from "../nodes/outputs/f1040/index.ts";
 import { schedule1 } from "../nodes/outputs/schedule1/index.ts";
@@ -382,6 +384,8 @@ export const registry: NodeRegistry = {
   income_tax_calculation,
   qdcgtw,
   standard_deduction,
+
+  alimony_received,
 
   // ── Outputs ─────────────────────────────────────────────────────────────────
   f1040,

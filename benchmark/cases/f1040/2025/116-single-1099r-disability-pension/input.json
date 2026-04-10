@@ -1,0 +1,34 @@
+{
+  "year": 2025,
+  "scenario": "Single filer age 42 with disability pension (1099-R code 3) — below minimum retirement age, treated as wages on line 1a",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Annie",
+          "taxpayer_last_name": "Johansson",
+          "taxpayer_dob": "1983-09-25",
+          "address_city": "Milwaukee",
+          "address_state": "WI",
+          "address_zip": "53201"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Transport Workers Pension Fund",
+        "payer_ein": "39-0000001",
+        "box1_gross_distribution": 28000,
+        "box2a_taxable_amount": 28000,
+        "box4_federal_withheld": 2000,
+        "box7_distribution_code": "3",
+        "box7_ira_simple_indicator": false,
+        "disability_flag": true,
+        "disability_as_wages": true
+      }
+    }
+  ]
+}

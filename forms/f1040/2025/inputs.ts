@@ -129,6 +129,8 @@ import { form8889, inputSchema as form8889InputSchema } from "../nodes/intermedi
 import { ira_deduction_worksheet, inputSchema as iraDeductionWorksheetInputSchema } from "../nodes/intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { preparer, inputSchema as preparerInputSchema } from "../nodes/inputs/preparer/index.ts";
 import { self_employed_health_insurance, itemSchema as sehiItemSchema } from "../nodes/inputs/self_employed_health_insurance/index.ts";
+import { schedule_h, inputSchema as scheduleHInputSchema } from "../nodes/intermediate/forms/schedule_h/index.ts";
+import { alimony_received, itemSchema as alimonyReceivedItemSchema } from "../nodes/inputs/alimony_received/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
@@ -262,4 +264,6 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form8889, inputSchema: form8889InputSchema, isArray: false },
   { node: ira_deduction_worksheet, inputSchema: iraDeductionWorksheetInputSchema, isArray: false },
   { node: self_employed_health_insurance, itemSchema: sehiItemSchema, isArray: true },
+  { node: schedule_h, inputSchema: scheduleHInputSchema, isArray: false },
+  { node: alimony_received, itemSchema: alimonyReceivedItemSchema, isArray: true },
 ];

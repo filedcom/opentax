@@ -1,0 +1,44 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages and post-2017 NOL carryforward reducing taxable income (80% limit applies)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Brian",
+          "taxpayer_last_name": "Sullivan",
+          "taxpayer_dob": "1972-12-01",
+          "address_city": "Portland",
+          "address_state": "OR",
+          "address_zip": "97201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 40000,
+        "box2_fed_withheld": 3500,
+        "box3_ss_wages": 40000,
+        "box4_ss_withheld": 2480,
+        "box5_medicare_wages": 40000,
+        "box6_medicare_withheld": 580
+      }
+    },
+    {
+      "node_type": "nol_carryforward",
+      "data": {
+        "nol_carryforwards": [
+          {
+            "year": 2023,
+            "nol_amount": 20000,
+            "nol_type": "POST2017"
+          }
+        ],
+        "current_year_taxable_income": 24250
+      }
+    }
+  ]
+}
