@@ -18,3 +18,14 @@ Append-only log of harness runs and outcomes.
   - 106-hoh-w2-child-dep-care-credit — Form 2441 dep care + CTC → $0 tax
   - 107-mfj-w2-energy-efficient-home-improvement — Form 5695 §25C $2,600 credit
 - IRS citations: VITA Pub 4491 TY2025 modules: Saver's Credit, Other Income, Deductions, Energy Credits, Education Credits, Foreign Tax Credit, Child and Dep Care Credit
+
+---
+
+## [f1040:2025] Round 1 — 2026-04-10
+- Baseline: 102 pass / 5 fail (107 total cases after 10 new VITA cases added)
+- After fix: 107 pass / 0 fail
+- Fixed clusters:
+  - savers_credit_overcredit: agi_aggregator not routing AGI to form8880 → always 50% rate
+  - w2g_gambling_agi_missing: W-2G winnings not reaching agi_aggregator
+  - foreign_tax_credit_missing: schedule3 line1_foreign_tax_1099 not accumulable
+  - f2441_dep_care_routing: correct.json missing EITC $415 (engine was correct)
