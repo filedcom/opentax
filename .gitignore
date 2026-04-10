@@ -9,6 +9,9 @@ testcases/
 .state/pdf-cache/
 .state/research/
 
+# Benchmarking results
+benchmark/returns
+
 # Tracked state (committed)
 # .state/bench/       ← state.json + progress.md are tracked
 # .state/field-dumps/ ← IRS field extracts are tracked
