@@ -1,0 +1,53 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages $100,836 (plus 401k code D $10,315) plus Schedule C net profit $24,328 — SE tax $3,438, self-employed health insurance deduction $1,000, SE tax deduction $1,719",
+  "source": "IRS TY2024 Form 1040 MeF ATS Scenario 12 — Sam Gardenia, Single. IRS Pub 1436 ATS test package; all values IRS-stated, none computed by agent.",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Sam",
+          "taxpayer_last_name": "Gardenia",
+          "taxpayer_dob": "1980-01-01",
+          "address_city": "Anytown",
+          "address_state": "CA",
+          "address_zip": "90001"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 100836,
+        "box2_fed_withheld": 14444,
+        "box3_ss_wages": 105878,
+        "box4_ss_withheld": 6564,
+        "box5_medicare_wages": 105878,
+        "box6_medicare_withheld": 1535,
+        "box12_entries": [{"code": "D", "amount": 10315}],
+        "box13_retirement_plan": true
+      }
+    },
+    {
+      "node_type": "schedule_c",
+      "data": {
+        "line_a_principal_business": "Consulting",
+        "line_b_business_code": "541600",
+        "line_f_accounting_method": "cash",
+        "line_g_material_participation": true,
+        "line_1_gross_receipts": 35235,
+        "line_11_contract_labor": 2500,
+        "line_18_office_expense": 1000,
+        "line_22_supplies": 6532
+      }
+    },
+    {
+      "node_type": "self_employed_health_insurance",
+      "data": {
+        "premiums_paid": 1000
+      }
+    }
+  ]
+}

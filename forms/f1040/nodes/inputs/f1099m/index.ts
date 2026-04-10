@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { scheduleC as schedule_c } from "../schedule_c/index.ts";
 import { scheduleE as schedule_e } from "../schedule_e/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
@@ -194,6 +195,7 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     schedule_f,
     schedule1,
     schedule2,
+    agi_aggregator,
     f1040,
   ]);
 
@@ -222,6 +224,17 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // schedule1 — prizes, other income, substitute payments, attorney proceeds, NQDC ordinary income
     const sched1 = schedule1Output(m99s);
     if (sched1) outputs.push(sched1);
+
+    // agi_aggregator — schedule1 is a print-only sink; all line 8 income must also route here
+    const totalLine8Income =
+      prizesAwardsTotal(m99s) +
+      otherIncomeTotal(m99s) +
+      totalOf(m99s, "box8_substitute_payments") +
+      taxableAttorneyTotal(m99s) +
+      totalOf(m99s, "box15_nqdc");
+    if (totalLine8Income > 0) {
+      outputs.push(this.outputNodes.output(agi_aggregator, { line8z_other: totalLine8Income }));
+    }
 
     // schedule_f — crop insurance (non-deferred only)
     const totalCropInsurance = cropInsuranceTotal(m99s);

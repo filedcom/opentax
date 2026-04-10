@@ -1,0 +1,43 @@
+{
+  "year": 2025,
+  "scenario": "Self-employed single filer with Schedule C net profit ($75,000). Makes $13,758 SEP-IRA contribution. SE tax deduction and SEP deduction reduce AGI. QBI deduction applies (20% of qualified business income). No withholding — amount owed.",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Natalie",
+          "taxpayer_last_name": "Rivera",
+          "taxpayer_dob": "1982-09-28",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "schedule_c",
+      "data": {
+        "line_a_principal_business": "Rivera Consulting",
+        "line_b_business_code": "541600",
+        "line_f_accounting_method": "cash",
+        "line_g_material_participation": true,
+        "line_1_gross_receipts": 120000,
+        "line_27b_other_expenses": 45000
+      }
+    },
+    {
+      "node_type": "sep_retirement",
+      "data": {
+        "sep_retirements": [
+          {
+            "plan_type": "SEP",
+            "net_self_employment_compensation": 69696,
+            "sep_contribution": 13758
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "case": "109-mfj-w2-ira-deduction-savers-credit",
+  "scenario": "Married filing jointly with two W-2 incomes ($42,000 + $28,000 = $70,000). Taxpayer made $7,000 traditional IRA contribution (not covered by employer plan — fully deductible). Saver's Credit at 10% rate (MFJ AGI $63,000 in $50,001–$76,500 range). Credit = 10% × $2,000 = $200.",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case based on IRA deduction (Pub 590-A, Worksheet 1-2) and Saver's Credit (Form 8880) modules; IRC §219, §25B; Rev. Proc. 2024-40 IRA_CONTRIBUTION_LIMIT_2025 = $7,000; SAVERS_CREDIT_AGI_MFJ_2025 rate10 = $76,500",
+  "correct": {
+    "line9_total_income": 70000,
+    "line11_agi": 63000,
+    "line15_taxable_income": 31500,
+    "line24_total_tax": 3103,
+    "line33_total_payments": 4800,
+    "line35a_refund": 1697,
+    "line37_amount_owed": 0
+  }
+}

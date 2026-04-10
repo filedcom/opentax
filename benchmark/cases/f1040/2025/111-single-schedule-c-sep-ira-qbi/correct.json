@@ -1,0 +1,15 @@
+{
+  "case": "111-single-schedule-c-sep-ira-qbi",
+  "scenario": "Self-employed single filer with Schedule C net profit ($75,000). Makes $13,758 SEP-IRA contribution. SE tax deduction ($5,303.58) and SEP deduction reduce AGI. QBI deduction applies (20% of qualified business income, limited to 20% of taxable income). No withholding — amount owed.",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case based on Self-Employment module (SEP-IRA deduction Schedule 1 Line 16, QBI deduction Form 8995); IRC §404(a)(8), §408(k), §199A; IRS Pub 560; SE tax per IRC §1401; QBI deduction per Rev. Proc. 2024-40",
+  "correct": {
+    "line9_total_income": 75000,
+    "line11_agi": 55943.42,
+    "line15_taxable_income": 32154.73,
+    "line24_total_tax": 14217.23,
+    "line33_total_payments": 0,
+    "line35a_refund": 0,
+    "line37_amount_owed": 14217.23
+  }
+}

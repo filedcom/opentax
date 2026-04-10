@@ -23,7 +23,8 @@
               "months_in_home": 12,
               "dob": "1951-12-02",
               "middle_initial": "R",
-              "ssn": "462943466"
+              "ssn": "462943466",
+              "taxpayer_provided_over_half_support": true
             }
           ]
         }
