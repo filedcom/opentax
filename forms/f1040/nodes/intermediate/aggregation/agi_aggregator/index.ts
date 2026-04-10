@@ -182,8 +182,9 @@ function computeSsaTaxable(
   const maxTaxable = 0.85 * ssaGross;
 
   if (provisionalIncome <= upperThreshold) {
-    // Between base and upper threshold: 50% of excess over base threshold
-    return Math.min(maxTaxable, 0.5 * (provisionalIncome - baseThreshold));
+    // Between base and upper threshold: lesser of 50% of gross benefits or 50% of excess
+    // IRS Pub 915 Worksheet 1, Line 11: enter the smaller of line 9 or line 10
+    return Math.min(0.5 * ssaGross, 0.5 * (provisionalIncome - baseThreshold));
   }
 
   // Above upper threshold: tiered formula

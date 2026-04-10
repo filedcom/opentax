@@ -1,14 +1,14 @@
 {
   "case": "133-hoh-w2-ctc",
-  "scenario": "Head of household: standard deduction $23,625 with one qualifying child and Child Tax Credit reducing tax to $225",
+  "scenario": "Head of household: standard deduction $23,625 with one qualifying child — CTC $2,200 (OBBBA P.L. 119-21) reduces tax from $2,225 to $25; EITC applies at $45,000 HOH income with 1 qualifying child",
   "year": 2025,
-  "source": "IRS Pub 17 TY2025, Table 10-1 HOH standard deduction $23,625 (p. 95); Chapter 14 CTC $2,000 per child (p. 108); 2025 Tax Rate Schedule Z HOH (p. 125)",
+  "source": "IRS Pub 17 TY2025 (pre-OBBBA example); updated for OBBBA §70001 CTC increase to $2,200/child (P.L. 119-21, July 4, 2025); EITC per IRC §32 at $45,000 HOH earned income with 1 qualifying child",
   "correct": {
     "line11_agi": 45000,
     "line15_taxable_income": 21375,
-    "line24_total_tax": 225,
-    "line33_total_payments": 3500,
-    "line35a_refund": 3275,
+    "line24_total_tax": 25,
+    "line33_total_payments": 4395,
+    "line35a_refund": 4370,
     "line37_amount_owed": 0
   }
 }
