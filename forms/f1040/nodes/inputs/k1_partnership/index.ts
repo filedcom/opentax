@@ -14,6 +14,9 @@ import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrec
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
+import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
+import { form4797 } from "../../intermediate/forms/form4797/index.ts";
+import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -45,6 +48,9 @@ export const itemSchema = z.object({
   // Box 4b — Guaranteed payments for capital → Schedule E (not SE)
   box4b_guaranteed_capital: z.number().optional(),
 
+  // Box 4c — Total guaranteed payments (4a + 4b) — informational sum
+  box4c_total_guaranteed_payments: z.number().optional().describe("Box 4c — Total guaranteed payments (services + capital)"),
+
   // Box 5 — Interest income → Schedule B
   box5_interest: z.number().nonnegative().optional(),
 
@@ -53,6 +59,9 @@ export const itemSchema = z.object({
 
   // Box 6b — Qualified dividends → Form 1040 line 3a
   box6b_qualified_dividends: z.number().nonnegative().optional(),
+
+  // Box 6c — Dividend equivalents → Schedule B (§871(m) substitute dividends)
+  box6c_dividend_equivalents: z.number().nonnegative().optional().describe("Box 6c — Dividend equivalents"),
 
   // Box 7 — Royalties → Schedule E line 4
   box7_royalties: z.number().optional(),
@@ -63,9 +72,26 @@ export const itemSchema = z.object({
   // Box 9a — Net LTCG/loss → Schedule D line 12
   box9a_net_lt_cap_gain: z.number().optional(),
 
+  // Box 9b — Collectibles (28%) gain/loss → Schedule D 28% Rate Gain Worksheet
+  box9b_collectibles_gain: z.number().optional().describe("Box 9b — Collectibles (28%) gain/loss"),
+
+  // Box 9c — Unrecaptured §1250 gain → Unrecaptured §1250 Gain Worksheet
+  // Partner's share of §1250 gain from partnership property; taxed at 25% max rate.
+  box9c_unrecaptured_1250: z.number().nonnegative().optional().describe("Box 9c — Unrecaptured section 1250 gain"),
+
   // Box 9b — Unrecaptured §1250 gain → Unrecaptured §1250 Gain Worksheet
   // Partner's share of §1250 gain from partnership property; taxed at 25% max rate.
+  // LEGACY: IRS renumbered this box; use box9c_unrecaptured_1250 for 2023+ returns.
   box9b_unrecaptured_1250: z.number().nonnegative().optional(),
+
+  // Box 10 — Net §1231 gain/loss → Form 4797 Part I
+  box10_net_1231: z.number().optional().describe("Box 10 — Net section 1231 gain (loss)"),
+
+  // Box 11 — Other income (loss) → Schedule 1 line 8z (various codes A–J)
+  box11_other_income: z.number().optional().describe("Box 11 — Other income (loss)"),
+
+  // Box 12 — Section 179 deduction → Form 4562
+  box12_section_179: z.number().nonnegative().optional().describe("Box 12 — Section 179 deduction"),
 
   // Box 14a — Net SE earnings → Schedule SE
   // This is the definitive SE income figure from the partnership
@@ -74,6 +100,13 @@ export const itemSchema = z.object({
   // Box 16 — Foreign taxes paid → Form 1116
   box16_foreign_tax: z.number().nonnegative().optional(),
   box16_foreign_income: z.number().nonnegative().optional(),
+
+  // Box 18 — Tax-exempt income and nondeductible expenses (various codes A–C)
+  // Code A: tax-exempt interest income; Code B: other tax-exempt income
+  box18_tax_exempt_income: z.number().nonnegative().optional().describe("Box 18 — Tax-exempt income and nondeductible expenses"),
+
+  // Box 19 — Distributions (cash and marketable securities, code A; property, code B)
+  box19_distributions: z.number().nonnegative().optional().describe("Box 19 — Distributions"),
 
   // Box 20 code Z — Section 199A QBI information → Form 8995
   box20z_qbi: z.number().optional(),
@@ -218,6 +251,19 @@ function scheduleBDividendOutputs(items: K1PartnershipItems): NodeOutput[] {
     );
 }
 
+// Box 6c — Dividend equivalents (§871(m) substitute dividends) → Schedule B
+// Treated as ordinary dividends; routed per-payer same as box6a.
+function scheduleBDividendEquivalentOutputs(items: K1PartnershipItems): NodeOutput[] {
+  return items
+    .filter((item) => (item.box6c_dividend_equivalents ?? 0) > 0)
+    .map((item) =>
+      output(schedule_b, {
+        payerName: item.partnership_name,
+        ordinaryDividends: item.box6c_dividend_equivalents!,
+      })
+    );
+}
+
 // Aggregate qualified dividends (Box 6b) → f1040 line3a + income_tax_calculation QDCGT worksheet
 // IRC §1(h): qualified dividends from partnerships receive preferential 0%/15%/20% rates.
 // Both outputs carry the same aggregated total; income_tax_calculation uses it for QDCGT.
@@ -316,11 +362,54 @@ function form8995Output(items: K1PartnershipItems): NodeOutput[] {
   return [output(form8995, { w2_wages: totalW2 })];
 }
 
-// Box 9b — Unrecaptured §1250 gain → unrecaptured_1250_worksheet
+// Box 9b (legacy) + Box 9c — Unrecaptured §1250 gain → unrecaptured_1250_worksheet
+// box9b_unrecaptured_1250: pre-2023 field name (IRS renumbered to 9c for 2023+)
+// box9c_unrecaptured_1250: current field name for partner's share of §1250 gain (25% max rate)
 function unrecaptured1250Outputs(items: K1PartnershipItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box9b_unrecaptured_1250 ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) =>
+      sum + (item.box9b_unrecaptured_1250 ?? 0) + (item.box9c_unrecaptured_1250 ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total })];
+}
+
+// Box 9b — Collectibles (28%) gain/loss → rate_28_gain_worksheet
+// Partner's share of collectibles gain taxed at the 28% rate per IRC §1(h)(4).
+function box9bCollectiblesOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box9b_collectibles_gain ?? 0), 0);
+  if (total === 0) return [];
+  return [output(rate_28_gain_worksheet, { collectibles_gain: total })];
+}
+
+// Box 10 — Net §1231 gain/loss → Form 4797 Part I
+// §1231 gains/losses flow to Form 4797 Part I, which then determines ordinary vs. capital treatment.
+function box10Net1231Outputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box10_net_1231 ?? 0), 0);
+  if (total === 0) return [];
+  return [output(form4797, { section_1231_gain: total })];
+}
+
+// Box 11 — Other income (loss) → Schedule 1 line 8z + agi_aggregator
+// Various codes A–J (e.g., code A: other portfolio income, code C: §1256 contracts).
+// Routed to the generic line8z_other bucket on Schedule 1 and the AGI aggregator.
+function box11OtherIncomeOutputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box11_other_income ?? 0), 0);
+  if (total === 0) return [];
+  return [
+    output(schedule1, { line8z_other: total }),
+    output(agi_aggregator, { line8z_other: total }),
+  ];
+}
+
+// Box 12 — Section 179 deduction → Form 4562
+// §179 deductions pass through to the partner and are subject to the partner's own §179
+// limitation on Form 4562. Aggregate across all K-1s and emit as a single input.
+function box12Section179Outputs(items: K1PartnershipItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box12_section_179 ?? 0), 0);
+  if (total === 0) return [];
+  return [output(form4562, { section_179_deduction: total })];
 }
 
 // Box 13 deductions — K-1 box 13 covers various codes (A–Z+):
@@ -372,6 +461,9 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     form6251,
     income_tax_calculation,
     form8960,
+    rate_28_gain_worksheet,
+    form4797,
+    form4562,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -381,15 +473,27 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       ...schedule1Output(k1_partnerships),
       ...scheduleBInterestOutputs(k1_partnerships),
       ...scheduleBDividendOutputs(k1_partnerships),
+      // Box 6c — dividend equivalents treated as ordinary dividends on Schedule B
+      ...scheduleBDividendEquivalentOutputs(k1_partnerships),
       ...f1040QualDivOutput(k1_partnerships),
       ...scheduleDOutput(k1_partnerships),
+      ...box9bCollectiblesOutputs(k1_partnerships),
       ...scheduleSEOutputs(k1_partnerships),
       ...form8995Output(k1_partnerships),
       ...form1116Outputs(k1_partnerships),
+      // box9c_unrecaptured_1250 (and legacy box9b_unrecaptured_1250) routed here
       ...unrecaptured1250Outputs(k1_partnerships),
+      // box10_net_1231 → form4797 Part I (§1231 gain/loss)
+      ...box10Net1231Outputs(k1_partnerships),
+      // box11_other_income → Schedule 1 line 8z + agi_aggregator
+      ...box11OtherIncomeOutputs(k1_partnerships),
+      // box12_section_179 → form4562 (partner-level §179 limitation applies)
+      ...box12Section179Outputs(k1_partnerships),
       ...box13DeductionOutputs(k1_partnerships),
       ...form6251Outputs(k1_partnerships),
       ...form8960Output(k1_partnerships),
+      // box18_tax_exempt_income: excluded from taxable income — no routing needed.
+      // box19_distributions: not taxable within basis — no routing needed (basis tracking not yet implemented).
     ];
 
     return { outputs };

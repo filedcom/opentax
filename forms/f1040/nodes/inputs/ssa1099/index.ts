@@ -20,6 +20,11 @@ export const itemSchema = z.object({
   // Box 4 — Total benefits repaid to SSA/RRB in 2025
   box4_repaid: z.number().nonnegative().optional(),
 
+  // Box 5 — Net benefits for 2025 (Box 3 minus Box 4, as precomputed by SSA)
+  // When provided, used directly instead of computing box3 - box4.
+  // IRS Form 1040 instructions, Line 6a: "box 5 of all your Forms SSA-1099 and RRB-1099"
+  box5_net_benefits: z.number().nonnegative().optional().describe("Net benefits for 2025 (Box 3 minus Box 4)"),
+
   // Box 6 — Voluntary federal income tax withheld (W-4V)
   // Source: IRS Form 1040 instructions, Line 25b — "box 6, of Form SSA-1099"
   box6_federal_withheld: z.number().nonnegative().optional(),
@@ -38,7 +43,9 @@ type SsaItem = z.infer<typeof itemSchema>;
 
 // Compute net benefit for a single item: Box 5 = max(0, Box 3 - Box 4)
 // IRS Form 1040 instructions, Line 6a: "box 5 of all your Forms SSA-1099 and RRB-1099"
+// When box5_net_benefits is provided by the SSA, use it directly (authoritative precomputed value).
 function netBenefit(item: SsaItem): number {
+  if (item.box5_net_benefits !== undefined) return item.box5_net_benefits;
   const gross = item.box3_gross_benefits;
   const repaid = item.box4_repaid ?? 0;
   return Math.max(0, gross - repaid);

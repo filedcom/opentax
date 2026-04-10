@@ -10,6 +10,11 @@ import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
+import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
+import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
+import { form4562 } from "../../intermediate/forms/form4562/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1120-S) — Shareholder's Share of Income, Deductions, Credits
@@ -52,8 +57,32 @@ export const itemSchema = z.object({
   // Box 8a — Net LTCG/loss → Schedule D line 12
   box8a_net_lt_cap_gain: z.number().optional(),
 
+  // Box 8b — Collectibles (28%) gain/loss → Schedule D 28% Rate Gain Worksheet
+  box8b_collectibles_gain: z.number().optional().describe("Box 8b — Collectibles (28%) gain/loss"),
+
+  // Box 8c — Unrecaptured §1250 gain → Unrecaptured §1250 Gain Worksheet
+  box8c_unrecaptured_1250: z.number().nonnegative().optional().describe("Box 8c — Unrecaptured section 1250 gain"),
+
   // Box 9 — Net §1231 gain/loss (informational; full computation requires Form 4797)
   box9_net_1231: z.number().optional(),
+
+  // Box 10 — Other income (loss) → Schedule 1 line 8z (various codes A–E)
+  box10_other_income: z.number().optional().describe("Box 10 — Other income (loss)"),
+
+  // Box 11 — Section 179 deduction → Form 4562
+  box11_section_179: z.number().nonnegative().optional().describe("Box 11 — Section 179 deduction"),
+
+  // Box 12 — Other deductions (various codes A–S)
+  box12_other_deductions: z.number().nonnegative().optional().describe("Box 12 — Other deductions"),
+
+  // Box 15 — Alternative minimum tax (AMT) items (codes A–C) → Form 6251
+  box15_amt_adjustment: z.number().optional().describe("Box 15 — Alternative minimum tax (AMT) items"),
+
+  // Box 16 — Tax-exempt income and nondeductible expenses (codes A–C)
+  box16_tax_exempt_income: z.number().nonnegative().optional().describe("Box 16 — Tax-exempt income and nondeductible expenses"),
+
+  // Box 17 — Distributions (code A: cash/property; code B: dividend distributions)
+  box17_distributions: z.number().nonnegative().optional().describe("Box 17 — Distributions"),
 
   // Box 14 — Foreign taxes → Form 1116
   box14_foreign_tax: z.number().nonnegative().optional(),
@@ -198,6 +227,13 @@ function form4797Outputs(items: K1SCorpItems): NodeOutput[] {
   return [output(form4797, { section_1231_gain: total })];
 }
 
+// Route Box 10 other income/loss → schedule1 line 8z (catch-all "other income" line)
+function schedule1OtherIncomeOutput(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box10_other_income ?? 0), 0);
+  if (total === 0) return [];
+  return [output(schedule1, { line8z_other_income: total })];
+}
+
 // Route Form 7203 basis data when stock or debt basis fields are provided
 function hasBasisData(item: K1SCorpItem): boolean {
   return (
@@ -239,10 +275,45 @@ function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
     );
 }
 
+// Aggregate box8b collectibles (28%) gain → rate_28_gain_worksheet
+function collectiblesGainOutput(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box8b_collectibles_gain ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(rate_28_gain_worksheet, { collectibles_gain: total })];
+}
+
+// Aggregate box8c unrecaptured §1250 gain → unrecaptured_1250_worksheet
+function unrecaptured1250Output(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box8c_unrecaptured_1250 ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total })];
+}
+
+// Aggregate box11 §179 deduction → form4562
+function section179Output(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box11_section_179 ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(form4562, { section_179_deduction: total })];
+}
+
+// Aggregate box12 other deductions → schedule_a line 16 (other deductions)
+function otherDeductionsOutput(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box12_other_deductions ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(schedule_a, { line_16_other_deductions: total })];
+}
+
+// Aggregate box15 AMT adjustment → form6251 other_adjustments
+function amtAdjustmentOutput(items: K1SCorpItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box15_amt_adjustment ?? 0), 0);
+  if (total === 0) return [];
+  return [output(form6251, { other_adjustments: total })];
+}
+
 class K1SCorpNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_s_corp";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116, form7203, form4797]);
+  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116, form7203, form4797, rate_28_gain_worksheet, unrecaptured_1250_worksheet, form4562, form6251, schedule_a]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
@@ -257,6 +328,14 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       ...form1116Outputs(k1_s_corps),
       ...form7203Outputs(k1_s_corps),
       ...form4797Outputs(k1_s_corps),
+      ...schedule1OtherIncomeOutput(k1_s_corps),
+      ...collectiblesGainOutput(k1_s_corps),
+      ...unrecaptured1250Output(k1_s_corps),
+      ...section179Output(k1_s_corps),
+      ...otherDeductionsOutput(k1_s_corps),
+      ...amtAdjustmentOutput(k1_s_corps),
+      // box16_tax_exempt_income: intentionally not routed — tax-exempt income does not flow to taxable income
+      // box17_distributions: intentionally not routed — not taxable within basis; no basis-tracking node declared
     ];
 
     return { outputs };

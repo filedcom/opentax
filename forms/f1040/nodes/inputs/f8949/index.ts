@@ -3,11 +3,12 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { schedule1 } from "../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Part I short-term: A (1099-B basis reported), B (1099-B no basis), C (no 1099-B)
@@ -40,6 +41,15 @@ export const itemSchema = z.object({
   wash_sale_loss: z.number().nonnegative().optional(),
   loss_not_allowed: z.boolean().optional(),
   state_tax_withheld: z.number().nonnegative().optional(),
+  // Accrued market discount (adjustment code D) — taxable as ordinary income,
+  // not capital gain; reduces the capital gain reported on the transaction
+  accrued_market_discount: z.number().nonnegative().optional()
+    .describe("Accrued market discount included in ordinary income (Form 8949 column (g), code D)"),
+  // Ordinary income portion of gain subject to recapture (IRC §1245/§1250) —
+  // reduces the capital gain and routes to other income; relevant for depreciable
+  // property and real estate sold at a gain
+  ordinary_income_portion: z.number().nonnegative().optional()
+    .describe("Portion of gain taxable as ordinary income due to depreciation recapture (IRC §1245/§1250)"),
 });
 
 export const inputSchema = z.object({
@@ -79,7 +89,14 @@ function resolvedAdjustmentAmount(item: F8949Item): number | undefined {
 function processItem(item: F8949Item): NodeOutput[] {
   const adjustmentCodes = resolvedAdjustmentCodes(item);
   const adjustmentAmount = resolvedAdjustmentAmount(item);
-  const gainLoss = item.proceeds - item.cost_basis + (adjustmentAmount ?? 0);
+
+  // Ordinary income reductions: accrued market discount (code D) and depreciation
+  // recapture (§1245/§1250) both reduce the capital gain and are taxed as ordinary income.
+  const amd = item.accrued_market_discount ?? 0;
+  const recapture = item.ordinary_income_portion ?? 0;
+  const ordinaryIncome = amd + recapture;
+
+  const gainLoss = item.proceeds - item.cost_basis + (adjustmentAmount ?? 0) - ordinaryIncome;
 
   const outputs: NodeOutput[] = [
     output(schedule_d, {
@@ -107,13 +124,20 @@ function processItem(item: F8949Item): NodeOutput[] {
     outputs.push(output(form6251, { other_adjustments: item.amt_cost_basis - item.cost_basis }));
   }
 
+  // Route accrued market discount and §1245/§1250 recapture as ordinary income
+  // to Schedule 1 line 8z (other income). Both amounts are already taxed at ordinary
+  // rates and are excluded from the capital gain sent to Schedule D above.
+  if (ordinaryIncome > 0) {
+    outputs.push(output(schedule1, { line8z_other_income: ordinaryIncome } as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>));
+  }
+
   return outputs;
 }
 
 class F8949Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8949";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_d, f1040, form6251]);
+  readonly outputNodes = new OutputNodes([schedule_d, f1040, form6251, schedule1]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

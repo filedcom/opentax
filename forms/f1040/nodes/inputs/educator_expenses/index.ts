@@ -31,19 +31,50 @@ export const inputSchema = z.object({
   // Optional here because it is deposited by the general node at execution time
   // via mergePending; users only provide expense amounts when adding this form.
   filing_status: z.nativeEnum(FilingStatus).optional(),
+  // Hours worked by educator 1 during the school year — must be 900+ hours in a
+  // K-12 school for the educator to be eligible (IRC §62(a)(2)(D)(i))
+  educator1_hours_worked: z.number().nonnegative().optional()
+    .describe("Hours educator 1 worked as a K-12 teacher/instructor during the school year (must be ≥900 to qualify)"),
+  // Hours worked by educator 2 during the school year (MFJ only)
+  educator2_hours_worked: z.number().nonnegative().optional()
+    .describe("Hours educator 2 worked as a K-12 teacher/instructor during the school year (must be ≥900 to qualify)"),
+  // Qualified professional development expenses for educator 1 — courses related to
+  // curriculum or students; included in the $300 per-educator cap (Rev Proc 2024-40)
+  educator1_professional_development: z.number().nonnegative().optional()
+    .describe("Educator 1 qualified professional development expenses (included in $300 cap)"),
+  // Qualified professional development expenses for educator 2 (MFJ only)
+  educator2_professional_development: z.number().nonnegative().optional()
+    .describe("Educator 2 qualified professional development expenses (included in $300 cap)"),
 });
 
 export type EducatorExpensesInput = z.infer<typeof inputSchema>;
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
+// IRC §62(a)(2)(D)(i): educator must have worked ≥900 hours in a K-12 school.
+// If hours_worked is provided and < 900, the educator is ineligible (zero deduction).
+// If hours_worked is absent (undefined), assume eligible — benefit of the doubt.
+function educator1Eligible(input: EducatorExpensesInput): boolean {
+  return input.educator1_hours_worked === undefined || input.educator1_hours_worked >= 900;
+}
+
+function educator2Eligible(input: EducatorExpensesInput): boolean {
+  return input.educator2_hours_worked === undefined || input.educator2_hours_worked >= 900;
+}
+
+// Professional development expenses count toward the $300 per-educator cap
+// alongside unreimbursed supplies/books (Rev Proc 2024-40 §3.12).
 function educator1Deduction(input: EducatorExpensesInput): number {
-  return Math.min(input.educator1_expenses, PER_EDUCATOR_CAP);
+  if (!educator1Eligible(input)) return 0;
+  const total = input.educator1_expenses + (input.educator1_professional_development ?? 0);
+  return Math.min(total, PER_EDUCATOR_CAP);
 }
 
 function educator2Deduction(input: EducatorExpensesInput): number {
   if (input.filing_status !== FilingStatus.MFJ) return 0;
-  return Math.min(input.educator2_expenses ?? 0, PER_EDUCATOR_CAP);
+  if (!educator2Eligible(input)) return 0;
+  const total = (input.educator2_expenses ?? 0) + (input.educator2_professional_development ?? 0);
+  return Math.min(total, PER_EDUCATOR_CAP);
 }
 
 function totalDeduction(input: EducatorExpensesInput): number {

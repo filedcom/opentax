@@ -21,6 +21,7 @@ export * from "./form8606/index.ts";
 export * from "./form8615/index.ts";
 export * from "./form8815/index.ts";
 export * from "./form8824/index.ts";
+export * from "./form8997/index.ts";
 export * from "./form8839/index.ts";
 export * from "./form8853/index.ts";
 export * from "./form8880/index.ts";

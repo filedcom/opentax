@@ -28,6 +28,10 @@ export const itemSchema = z.object({
   amount_previously_reported_2021: z.number().nonnegative().optional(),
   // Repayments made to the retirement plan in 2025
   repayments_in_2025: z.number().nonnegative().optional(),
+  // Whether the distribution was from a Roth IRA — Roth qualified distributions are
+  // tax-free (basis already taxed); affects whether any remaining income applies
+  is_roth_ira: z.boolean().optional()
+    .describe("Distribution was from a Roth IRA (tax-free if qualified; Form 8915-D Part I)"),
 });
 
 export const inputSchema = z.object({
@@ -47,7 +51,10 @@ function previouslyReported(item: F8915DItem): number {
   );
 }
 
+// When is_roth_ira is true, the distribution is from a qualified Roth IRA and
+// is tax-free — no income is recognized regardless of repayments or spreading.
 function remainingIncome(item: F8915DItem): number {
+  if (item.is_roth_ira === true) return 0;
   const total = item.total_2019_distribution ?? 0;
   return Math.max(0, total - previouslyReported(item));
 }
