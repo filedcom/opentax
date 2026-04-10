@@ -1,0 +1,40 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages ($32,000) enrolled in ACA marketplace plan; SLCSP $5,800, annual premium $5,400, APTC advanced $3,600; computed PTC ~$3,384 (FPL ~204%); excess APTC repayment $216 added to tax liability",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Heather",
+          "taxpayer_last_name": "Collins",
+          "taxpayer_dob": "1983-06-18",
+          "address_city": "Columbus",
+          "address_state": "OH",
+          "address_zip": "43201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 32000,
+        "box2_fed_withheld": 2500,
+        "box3_ss_wages": 32000,
+        "box4_ss_withheld": 1984,
+        "box5_medicare_wages": 32000,
+        "box6_medicare_withheld": 464
+      }
+    },
+    {
+      "node_type": "f1095a",
+      "data": {
+        "issuer_name": "HealthConnect",
+        "annual_premium": 5400,
+        "annual_slcsp": 5800,
+        "annual_aptc": 3600
+      }
+    }
+  ]
+}

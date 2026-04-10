@@ -29,16 +29,16 @@
     "foreign_tax_paid": 71.71
   },
   "correct": {
-    "line9_total_income": 128998.62,
-    "line11_agi": 128998.62,
+    "line9_total_income": 129224.37,
+    "line11_agi": 129224.37,
     "standard_deduction": 31500,
     "qbi_deduction": 0,
-    "line15_taxable_income": 97498.62,
-    "ordinary_taxable": 94406.17000000001,
-    "income_tax": 10971.53,
+    "line15_taxable_income": 97724.37,
+    "ordinary_taxable": 94631.92,
+    "income_tax": 10998.62,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 10971.53,
+    "line18_tax_before_credits": 10998.62,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -48,9 +48,9 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 10899.82,
+    "line24_total_tax": 10926.91,
     "line33_total_payments": 20035.13,
-    "line35a_refund": 9135.31,
+    "line35a_refund": 9108.22,
     "line37_amount_owed": 0
   }
 }

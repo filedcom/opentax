@@ -1,0 +1,15 @@
+{
+  "case": "110-single-marketplace-excess-aptc-repayment",
+  "scenario": "Single filer with W-2 wages ($32,000) enrolled in ACA marketplace plan; SLCSP $5,800, annual premium $5,400, APTC advanced $3,600; computed PTC ~$3,384 (FPL ~204%); excess APTC repayment $216 added to tax liability",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case based on Health Care Coverage module (Form 8962 — excess advance Premium Tax Credit repayment); IRC §36B; Rev. Proc. 2025-15 (PTC applicable percentages TY2025)",
+  "correct": {
+    "line9_total_income": 32000,
+    "line11_agi": 32000,
+    "line15_taxable_income": 16250,
+    "line24_total_tax": 1927.50,
+    "line33_total_payments": 2500,
+    "line35a_refund": 572.50,
+    "line37_amount_owed": 0
+  }
+}

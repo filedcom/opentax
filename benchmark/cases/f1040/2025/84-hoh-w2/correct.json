@@ -52,10 +52,10 @@
     "eitc": 0.0,
     "actc": 0,
     "excess_ss_credit": 0.0,
-    "line24_total_tax": 5080.45,
+    "line24_total_tax": 6080.45,
     "line33_total_payments": 5514.21,
-    "line35a_refund": 433.76,
-    "line37_amount_owed": 0,
+    "line35a_refund": 0,
+    "line37_amount_owed": 566.24,
     "itemized_deduction": 16946.37
   }
 }

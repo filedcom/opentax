@@ -21,6 +21,15 @@ Append-only log of harness runs and outcomes.
 
 ---
 
+## Cases Added — 2026-04-10T02:30:00
+- Source: IRS TY2024 MeF ATS (Modernized e-File Assurance Testing System) — IRS Pub 1436
+- Cases:
+  - 108-single-w2-schedule-c-se-self-employed-health — Scenario 12 (Sam Gardenia): W-2 $100,836 + Sch C $24,328 + SE tax $3,438 + SEHI $1,000 deduction; all values IRS-stated
+- IRS citation: IRS TY2024 Form 1040 MeF ATS Scenario 12, Pub 1436 ATS Guidelines (https://www.irs.gov/pub/irs-efile/)
+- Notes: Scenarios 1-4, 7, 8, SR1 had blank 1040 computation lines (DO NOT FILE drafts). Only Scenario 12 had fully filled-in 1040 with IRS-confirmed computed values. VITA Pub 4491 checked as fallback — training guide only, no computed answer key.
+
+---
+
 ## [f1040:2025] Round 1 — 2026-04-10
 - Baseline: 102 pass / 5 fail (107 total cases after 10 new VITA cases added)
 - After fix: 107 pass / 0 fail
@@ -29,3 +38,14 @@ Append-only log of harness runs and outcomes.
   - w2g_gambling_agi_missing: W-2G winnings not reaching agi_aggregator
   - foreign_tax_credit_missing: schedule3 line1_foreign_tax_1099 not accumulable
   - f2441_dep_care_routing: correct.json missing EITC $415 (engine was correct)
+
+## Cases Added — 2026-04-10T01:55:00Z (mef run)
+- Source: IRS MeF ATS (Scenario 12) + VITA Pub 4491 TY2025 illustrative
+- Cases:
+  - 108-single-w2-schedule-c-se-self-employed-health — W-2 + Sch C + SE tax + self-employed health insurance; IRS MeF ATS Scenario 12 (Sam Gardenia)
+  - 109-mfj-w2-ira-deduction-savers-credit — MFJ + IRA deduction + 10% Saver's Credit
+  - 110-single-marketplace-excess-aptc-repayment — Single + ACA marketplace + excess APTC repayment (Form 8962)
+  - 111-single-schedule-c-sep-ira-qbi — Self-employed + SEP-IRA + QBI deduction
+- IRS citations:
+  - 108: IRS Pub 1436 ATS Scenario 12
+  - 109-111: VITA Pub 4491 TY2025 illustrative (IRC §219, §25B, §36B, §199A)

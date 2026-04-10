@@ -211,6 +211,34 @@ function hasTin(dep: DependentItem): boolean {
   return Boolean(dep.ssn) || Boolean(dep.itin) || Boolean(dep.atin);
 }
 
+// IRS ODC qualifying-child test: passes relationship, residency, AND the broader
+// qualifying-child age test (under 19, full-time student under 24, or disabled).
+// This matches the EITC age test — broader than CTC (< 17) but narrower than hasTin alone.
+// IRC §152(c): a qualifying child who is too old for CTC but under 19 (or student < 24)
+// still qualifies as a "qualifying child" and therefore qualifies for ODC.
+function isQualifyingChildForODC(dep: DependentItem): boolean {
+  return (
+    passesResidencyTest(dep) &&
+    passesRelationshipTest(dep) &&
+    passesEitcAgeTest(dep)
+  );
+}
+
+// IRS qualifying-relative test for ODC: taxpayer provided over half of support AND
+// gross income is below the exemption amount (or dependent is a qualifying child of
+// another taxpayer). Requires TIN per Pub 972.
+// When gross_income or support flag are absent, we cannot confirm the tests pass.
+function isQualifyingRelativeForODC(dep: DependentItem): boolean {
+  if (!hasTin(dep)) return false;
+  // taxpayer_provided_over_half_support must be explicitly true
+  if (dep.taxpayer_provided_over_half_support !== true) return false;
+  // gross_income must be absent (no income reported) or below the exemption amount.
+  // When not provided we treat it as 0 (no income) which passes.
+  // The IRS exemption amount for 2025 is $5,050; if gross_income exceeds it, disqualify.
+  const grossIncome = dep.gross_income ?? 0;
+  return grossIncome < 5050;
+}
+
 // Count dependents in each category, excluding those claimed on another return.
 function dependentCounts(deps: DependentItem[]): {
   qualifying_child_tax_credit_count: number;
@@ -223,8 +251,12 @@ function dependentCounts(deps: DependentItem[]): {
   for (const dep of claimable) {
     if (isQualifyingChildForCTC(dep)) {
       ctcCount += 1;
-    } else if (hasTin(dep)) {
-      // ODC ($500) requires TIN (SSN, ITIN, or ATIN) per IRS Pub 972.
+    } else if (isQualifyingChildForODC(dep) && hasTin(dep)) {
+      // Qualifying child (age < 19, student < 24, or disabled) who is too old for CTC
+      // but still qualifies as a qualifying child under IRC §152(c) → ODC applies.
+      odcCount += 1;
+    } else if (isQualifyingRelativeForODC(dep)) {
+      // Qualifying relative under IRC §152(d): TIN + support + gross income test.
       odcCount += 1;
     }
   }

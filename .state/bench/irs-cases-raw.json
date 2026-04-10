@@ -570,6 +570,71 @@
         "line35a_refund": 0,
         "line37_amount_owed": 14217.23
       }
+    },
+    {
+      "name": "single-w2-schedule-c-se-self-employed-health-insurance",
+      "scenario": "Single filer with W-2 wages ($100,836) from employer plus Schedule C net profit ($24,328) from self-employment. W-2 box 12 code D (401k) $10,315 offsets SS wages so SS wages ($105,878) exceed box 1. Self-employed health insurance deduction $1,000 (Form 7206). SE tax deduction $1,719 (half of $3,438 SE tax). AGI adjustments = $2,719. Standard deduction $14,600. Total tax = income tax $19,283 + SE tax $3,438 = $22,721. Amount owed $8,277.",
+      "source_citation": "IRS TY2024 Form 1040 MeF ATS Scenario 12 — Sam Gardenia, Single. IRS Pub 1436 ATS Guidelines; source PDFs at https://www.irs.gov/pub/irs-efile/; all Form 1040, Schedule C, Schedule SE, Schedule 1, Schedule 2, Form 7206, and W-2 values are IRS-stated — no values were computed by this agent.",
+      "source_type": "mef",
+      "tax_year": "TY2024",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Sam",
+          "taxpayer_last_name": "Gardenia",
+          "address_state": "unknown"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 100836,
+            "box2_fed_withheld": 14444,
+            "box3_ss_wages": 105878,
+            "box4_ss_withheld": 6564,
+            "box5_medicare_wages": 105878,
+            "box6_medicare_withheld": 1535,
+            "box12_code": "D",
+            "box12_amount": 10315
+          }
+        ],
+        "schedule_c_items": [
+          {
+            "gross_receipts": 35235,
+            "office_expenses": 1000,
+            "contract_labor": 2500,
+            "supplies": 6532,
+            "total_expenses": 10907,
+            "net_profit": 24328
+          }
+        ],
+        "self_employed_health_insurance": {
+          "deduction": 1000
+        }
+      },
+      "correct": {
+        "schedule_c_net_profit": 24328,
+        "schedule_se_net_se_income": 24328,
+        "schedule_se_92pct_amount": 22467,
+        "schedule_se_tax": 3438,
+        "schedule_se_deductible_half": 1719,
+        "schedule1_additional_income": 24328,
+        "schedule1_adjustments": 2719,
+        "schedule2_other_taxes": 3438,
+        "line1a_wages": 100836,
+        "line8_other_income": 24328,
+        "line9_total_income": 125164,
+        "line10_adjustments": 2719,
+        "line11_agi": 122445,
+        "line12_standard_deduction": 14600,
+        "line15_taxable_income": 107845,
+        "line16_income_tax": 19283,
+        "line18_tax": 19283,
+        "line23_other_taxes": 3438,
+        "line24_total_tax": 22721,
+        "line25a_w2_withholding": 14444,
+        "line33_total_payments": 14444,
+        "line37_amount_owed": 8277
+      }
     }
   ]
 }
