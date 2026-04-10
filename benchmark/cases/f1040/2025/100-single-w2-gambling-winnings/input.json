@@ -1,0 +1,39 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages $38,000 plus W-2G gambling winnings $5,000 (no withholding) — Schedule 1 Line 8b",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Derek",
+          "taxpayer_last_name": "Olson",
+          "taxpayer_dob": "1985-11-08",
+          "address_city": "Las Vegas",
+          "address_state": "NV",
+          "address_zip": "89101"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 38000,
+        "box2_fed_withheld": 3800,
+        "box3_ss_wages": 38000,
+        "box4_ss_withheld": 2356,
+        "box5_medicare_wages": 38000,
+        "box6_medicare_withheld": 551
+      }
+    },
+    {
+      "node_type": "w2g",
+      "data": {
+        "box1_winnings": 5000,
+        "box4_federal_withheld": 0,
+        "payer_name": "Golden Nugget Casino"
+      }
+    }
+  ]
+}

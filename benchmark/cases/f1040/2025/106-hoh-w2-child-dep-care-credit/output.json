@@ -1,0 +1,91 @@
+{
+  "returnId": "759d85d2-0999-4401-a2d9-627b62c0dae0",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 48000,
+    "line9_total_income": 48000,
+    "line11_agi": 48000,
+    "line15_taxable_income": 24375,
+    "line24_total_tax": 0,
+    "line33_total_payments": 4215,
+    "line35a_refund": 4215
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8880",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule3",
+    "schedule_a",
+    "schedule_se",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      3800,
+      3800
+    ],
+    "line1a_wages": [
+      48000,
+      48000
+    ],
+    "filing_status": "hoh",
+    "dependent_count": 1,
+    "qualifying_child_tax_credit_count": 1,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Keisha",
+    "taxpayer_last_name": "Washington",
+    "taxpayer_dob": "1990-05-22",
+    "address_city": "Atlanta",
+    "address_state": "GA",
+    "address_zip": "30301",
+    "hoh_paid_more_than_half_home_costs": true,
+    "line11_agi": [
+      48000,
+      48000
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line27_eitc": 415,
+    "line12a_standard_deduction": [
+      23625,
+      23625
+    ],
+    "line15_taxable_income": [
+      24375,
+      24375
+    ],
+    "line16_income_tax": [
+      2585,
+      2585
+    ],
+    "line20_nonrefundable_credits": 2800,
+    "line1z_total_wages": 48000,
+    "line9_total_income": 48000,
+    "line18_total_tax_before_credits": 2585,
+    "line21_credits_total": 2800,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line25d_total_withholding": 3800,
+    "line33_total_payments": 4215,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 23625,
+    "line32_refundable_credits_total": 415,
+    "line34_overpayment": 4215,
+    "line35a_refund": 4215
+  },
+  "warnings": []
+}

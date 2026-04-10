@@ -1,0 +1,14 @@
+{
+  "case": "102-single-w2-residential-clean-energy-solar",
+  "scenario": "Single filer with W-2 wages $72,000 and solar panel installation $20,000 — Form 5695 Part I §25D 30% Residential Clean Energy Credit ($6,000)",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Energy Credits module (Form 5695 Part I §25D Residential Clean Energy Credit); 30% rate TY2025",
+  "correct": {
+    "line11_agi": 72000,
+    "line15_taxable_income": 56250,
+    "line24_total_tax": 1289,
+    "line33_total_payments": 7200,
+    "line35a_refund": 5911,
+    "line37_amount_owed": 0
+  }
+}

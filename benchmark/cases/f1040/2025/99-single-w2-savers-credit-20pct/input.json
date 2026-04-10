@@ -1,0 +1,33 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages $24,000 and 401k deferral $2,000 — Saver's Credit at 20% rate (AGI $23,001–$25,000)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Jordan",
+          "taxpayer_last_name": "Patel",
+          "taxpayer_dob": "1996-07-15",
+          "address_city": "Memphis",
+          "address_state": "TN",
+          "address_zip": "38103"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 24000,
+        "box2_fed_withheld": 1200,
+        "box3_ss_wages": 26000,
+        "box4_ss_withheld": 1612,
+        "box5_medicare_wages": 26000,
+        "box6_medicare_withheld": 377,
+        "box12_entries": [{"code": "D", "amount": 2000}],
+        "box13_retirement_plan": true
+      }
+    }
+  ]
+}

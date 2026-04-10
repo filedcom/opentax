@@ -1,0 +1,15 @@
+{
+  "case": "101-mfj-w2-itemized-mortgage-salt-charity",
+  "scenario": "Married filing jointly with two W-2s ($95k + $55k) and Schedule A itemized deductions exceeding MFJ standard — SALT $14k + mortgage $14.5k + charity $5k",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Deductions module (Schedule A); IRC §163(h), §164, §170; SALT cap $40,000 per OBBBA §70002",
+  "correct": {
+    "line11_agi": 150000,
+    "itemized_deduction": 33500,
+    "line15_taxable_income": 116500,
+    "line24_total_tax": 15458,
+    "line33_total_payments": 15000,
+    "line35a_refund": 0,
+    "line37_amount_owed": 458
+  }
+}

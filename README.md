@@ -442,14 +442,91 @@ Benchmark state is tracked in `.state/bench/` (see `docs/architecture/STRUCTURE.
 
 #### Claude Code skills (in-repo)
 
-If you're using Claude Code, four skills automate benchmark and development work:
+If you're using Claude Code, four skills automate benchmark and development work. Invoke them with `/skill-name [args]` in the chat.
 
-| Skill | Purpose |
-|-------|---------|
-| `/tax-status` | Print current pass/fail counts, root causes, and recent activity |
-| `/tax-fix` | Autonomous bug-fixing loop: runs benchmark, diagnoses failures, patches nodes, iterates |
-| `/tax-cases` | Source new real-world test cases and write them to `benchmark/cases/` |
-| `/tax-build` | Build a new form end-to-end: research → ground truth → nodes → benchmark |
+**`/tax-status`**
+
+Print the current health of every form in the harness — pass/fail counts, pending root causes, build phase, and the last five progress entries.
+
+```
+/tax-status
+```
+
+No arguments. Run this first to orient yourself before fixing or building anything.
+
+---
+
+**`/tax-fix [form:year]`**
+
+Autonomous bug-fixing loop for a specific form and tax year. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates, commits any net-positive improvements, and loops until all cases pass or the loop stalls after three fruitless rounds.
+
+```
+/tax-fix f1040:2025
+```
+
+Only commit if pass count goes up and no previously passing cases break. If it stalls, check `/tax-status` for the root cause list and investigate manually.
+
+---
+
+**`/tax-cases [source]`**
+
+Generate new benchmark cases from IRS-published sources. Correct values come directly from IRS publications — no computed ground truth.
+
+```
+/tax-cases vita              # VITA Pub 4491 training exercises (default, best coverage)
+/tax-cases pub17             # Publication 17 worked examples
+/tax-cases mef               # IRS MeF software developer test cases
+/tax-cases "senior with SSA and 1099-R"   # free-form scenario description
+```
+
+After cases are written, run `/tax-fix` to see how the engine performs on them.
+
+---
+
+**`/tax-build [form-number]`**
+
+Autonomous end-to-end form builder. Researches IRS instructions, extracts ground truth from IRS sample returns, builds all nodes section by section, then runs a validate + fix loop until ≥ 95% of benchmark cases pass. Resumes automatically if interrupted.
+
+```
+/tax-build 1120
+```
+
+Phases: research → ground truth → build → validate+fix. Check `/tax-status` to see where a build left off.
+
+---
+
+#### Workflows
+
+**Adding a new form**
+
+```
+# 1. Source IRS ground-truth cases for the form
+/tax-cases f1120:2025 vita
+
+# 2. Build nodes end-to-end — researches IRS instructions, implements nodes,
+#    runs validate+fix loop until ≥95% of cases pass
+/tax-build 1120
+
+# 3. Confirm it's green
+/tax-status
+```
+
+**Fixing or updating an existing form**
+
+```
+# 1. See what's failing and why
+/tax-status
+
+# 2. Run the autonomous fix loop — it clusters failures, patches nodes,
+#    and commits only when pass count improves
+/tax-fix f1040:2025
+
+# 3. Optionally add more IRS cases to stress-test the fix
+/tax-cases pub17
+/tax-fix f1040:2025
+```
+
+---
 
 ### Adding a node
 

@@ -1,0 +1,14 @@
+{
+  "case": "107-mfj-w2-energy-efficient-home-improvement",
+  "scenario": "Married filing jointly with W-2s ($85k + $62k) and Form 5695 Part II §25C: heat pump $8,000 (cap $2,000) + windows $2,500 (cap $600) = $2,600 credit",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Energy Credits module (Form 5695 Part II §25C); heat pump cap $2,000, windows cap $600",
+  "correct": {
+    "line11_agi": 147000,
+    "line15_taxable_income": 115500,
+    "line24_total_tax": 12638,
+    "line33_total_payments": 14700,
+    "line35a_refund": 2062,
+    "line37_amount_owed": 0
+  }
+}

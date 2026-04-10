@@ -179,3 +179,67 @@ Every node file follows this order:
 6. Pure helper functions
 7. Node class
 8. Singleton export (`export const w2 = new W2Node()`)
+
+---
+
+## Claude Code Skills
+
+Four skills cover the full development lifecycle. Invoke with `/skill-name [args]`.
+
+### Check what's broken — `/tax-status`
+
+Always run this first. Shows pass/fail counts, pending root causes, and build phase for every form.
+
+```
+/tax-status
+```
+
+### Fix a broken form — `/tax-fix [form:year]`
+
+Runs the benchmark, clusters failures by root cause, spawns parallel fixer agents, and commits net-positive improvements. Loops until all pass or it stalls.
+
+```
+/tax-fix f1040:2025
+```
+
+Use this after any node change to confirm nothing regressed.
+
+### Add new test cases — `/tax-cases [source]`
+
+Sources benchmark cases from IRS publications (VITA exercises, Pub 17, MeF test packages). Correct values are IRS-provided — no computed ground truth.
+
+```
+/tax-cases vita                            # default: VITA Pub 4491
+/tax-cases "senior with SSA and 1099-R"   # free-form scenario
+```
+
+Run `/tax-fix` after to see how the engine performs on the new cases.
+
+### Build a new form from scratch — `/tax-build [form-number]`
+
+Research → ground truth → build nodes → validate + fix loop. Reaches ≥ 95% pass rate autonomously. Resumes from the last completed phase if interrupted.
+
+```
+/tax-build 1120
+```
+
+### Typical workflows
+
+**Adding a new form:**
+```
+/tax-cases f1120:2025 vita    # source IRS ground-truth cases first
+/tax-build 1120               # build nodes and iterate until ≥95% pass
+/tax-status                   # confirm it's green
+```
+
+**Fixing a regression or known bug:**
+```
+/tax-status                   # find which form:year is failing and why
+/tax-fix f1040:2025           # run the autonomous fix loop
+```
+
+**Adding cases for an existing form:**
+```
+/tax-cases pub17              # pull new IRS examples
+/tax-fix f1040:2025           # run fix loop against the expanded case set
+```

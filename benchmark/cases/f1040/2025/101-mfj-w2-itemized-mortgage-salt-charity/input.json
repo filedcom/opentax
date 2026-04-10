@@ -1,0 +1,54 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with two W-2s ($95k + $55k) and Schedule A itemized deductions exceeding MFJ standard — SALT $14k + mortgage $14.5k + charity $5k",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Michael",
+          "taxpayer_last_name": "Torres",
+          "taxpayer_dob": "1979-06-12",
+          "spouse_first_name": "Angela",
+          "spouse_last_name": "Torres",
+          "spouse_dob": "1981-09-25",
+          "address_city": "Charlotte",
+          "address_state": "NC",
+          "address_zip": "28201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 95000,
+        "box2_fed_withheld": 9500,
+        "box3_ss_wages": 95000,
+        "box4_ss_withheld": 5890,
+        "box5_medicare_wages": 95000,
+        "box6_medicare_withheld": 1378
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55000,
+        "box2_fed_withheld": 5500,
+        "box3_ss_wages": 55000,
+        "box4_ss_withheld": 3410,
+        "box5_medicare_wages": 55000,
+        "box6_medicare_withheld": 798
+      }
+    },
+    {
+      "node_type": "schedule_a",
+      "data": {
+        "line_5a_state_income_tax": 8000,
+        "line_5b_real_estate_tax": 6000,
+        "line_8a_mortgage_interest_1098": 14500,
+        "line_11_cash_contributions": 5000
+      }
+    }
+  ]
+}

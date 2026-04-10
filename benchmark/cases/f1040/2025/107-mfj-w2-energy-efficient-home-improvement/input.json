@@ -1,0 +1,52 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with W-2s ($85k + $62k) and Form 5695 Part II §25C: heat pump $8,000 (cap $2,000) + windows $2,500 (cap $600) = $2,600 credit",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Nathan",
+          "taxpayer_last_name": "Sullivan",
+          "taxpayer_dob": "1977-03-18",
+          "spouse_first_name": "Rachel",
+          "spouse_last_name": "Sullivan",
+          "spouse_dob": "1979-11-04",
+          "address_city": "Columbus",
+          "address_state": "OH",
+          "address_zip": "43201"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 85000,
+        "box2_fed_withheld": 8500,
+        "box3_ss_wages": 85000,
+        "box4_ss_withheld": 5270,
+        "box5_medicare_wages": 85000,
+        "box6_medicare_withheld": 1233
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 62000,
+        "box2_fed_withheld": 6200,
+        "box3_ss_wages": 62000,
+        "box4_ss_withheld": 3844,
+        "box5_medicare_wages": 62000,
+        "box6_medicare_withheld": 899
+      }
+    },
+    {
+      "node_type": "f5695",
+      "data": {
+        "heat_pump_cost": 8000,
+        "windows_cost": 2500
+      }
+    }
+  ]
+}

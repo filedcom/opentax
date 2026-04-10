@@ -1,0 +1,14 @@
+{
+  "case": "99-single-w2-savers-credit-20pct",
+  "scenario": "Single filer with W-2 wages $24,000 and 401k deferral $2,000 — Saver's Credit at 20% rate (AGI $23,001–$25,000)",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Saver's Credit module (Form 8880); IRC §25B; Rev. Proc. 2024-40 §3.43; 20% rate for single AGI $23,001–$25,000",
+  "correct": {
+    "line11_agi": 24000,
+    "line15_taxable_income": 8250,
+    "line24_total_tax": 425,
+    "line33_total_payments": 1200,
+    "line35a_refund": 775,
+    "line37_amount_owed": 0
+  }
+}

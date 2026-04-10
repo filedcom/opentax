@@ -1,0 +1,56 @@
+{
+  "year": 2025,
+  "scenario": "Head of household with W-2 wages $48,000, one qualifying child age 5, childcare $3,000 — CTC $2,200 + dep care credit absorbs all tax; zero tax",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "hoh",
+          "taxpayer_first_name": "Keisha",
+          "taxpayer_last_name": "Washington",
+          "taxpayer_dob": "1990-05-22",
+          "address_city": "Atlanta",
+          "address_state": "GA",
+          "address_zip": "30301",
+          "hoh_qualifying_person_name": "Aaliyah Washington",
+          "hoh_qualifying_person_relationship": "daughter",
+          "hoh_paid_more_than_half_home_costs": true,
+          "dependents": [
+            {
+              "first_name": "Aaliyah",
+              "last_name": "Washington",
+              "dob": "2020-05-15",
+              "relationship": "daughter",
+              "months_in_home": 12,
+              "qualifying_child_for_ctc": true,
+              "ssn": "123-45-6789",
+              "child_care_months": 12
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 48000,
+        "box2_fed_withheld": 3800,
+        "box3_ss_wages": 48000,
+        "box4_ss_withheld": 2976,
+        "box5_medicare_wages": 48000,
+        "box6_medicare_withheld": 696
+      }
+    },
+    {
+      "node_type": "f2441",
+      "data": {
+        "qualifying_person_count": 1,
+        "qualifying_expenses_paid": 3000,
+        "employer_dep_care_benefits": 0,
+        "filing_status": "hoh",
+        "earned_income_taxpayer": 48000
+      }
+    }
+  ]
+}

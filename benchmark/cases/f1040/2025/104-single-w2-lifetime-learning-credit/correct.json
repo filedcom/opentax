@@ -1,0 +1,14 @@
+{
+  "case": "104-single-w2-lifetime-learning-credit",
+  "scenario": "Single filer with W-2 wages $55,000 and LLC qualified expenses $10,000 — Form 8863 Part II Lifetime Learning Credit 20% × $10,000 = $2,000",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Education Credits module (Form 8863 Part II LLC); IRC §25A(c); 20% × $10,000; AGI below $80,000 phase-out",
+  "correct": {
+    "line11_agi": 55000,
+    "line15_taxable_income": 39250,
+    "line24_total_tax": 2471.50,
+    "line33_total_payments": 5500,
+    "line35a_refund": 3028.50,
+    "line37_amount_owed": 0
+  }
+}

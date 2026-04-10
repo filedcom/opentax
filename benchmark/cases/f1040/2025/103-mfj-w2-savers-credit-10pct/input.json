@@ -1,0 +1,47 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with W-2s ($42k + $28k), taxpayer has 401k deferral $7,000 — Saver's Credit at 10% rate (AGI $50,001–$76,500 MFJ)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Carlos",
+          "taxpayer_last_name": "Reyes",
+          "taxpayer_dob": "1988-02-14",
+          "spouse_first_name": "Diana",
+          "spouse_last_name": "Reyes",
+          "spouse_dob": "1990-10-07",
+          "address_city": "El Paso",
+          "address_state": "TX",
+          "address_zip": "79901"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 42000,
+        "box2_fed_withheld": 3000,
+        "box3_ss_wages": 49000,
+        "box4_ss_withheld": 3038,
+        "box5_medicare_wages": 49000,
+        "box6_medicare_withheld": 711,
+        "box12_entries": [{"code": "D", "amount": 7000}],
+        "box13_retirement_plan": true
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 28000,
+        "box2_fed_withheld": 1800,
+        "box3_ss_wages": 28000,
+        "box4_ss_withheld": 1736,
+        "box5_medicare_wages": 28000,
+        "box6_medicare_withheld": 406
+      }
+    }
+  ]
+}

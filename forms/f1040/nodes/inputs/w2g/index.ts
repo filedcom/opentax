@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Per-entry schema — one W-2G from one payer
@@ -55,6 +56,12 @@ function schedule1Output(items: W2GItems): NodeOutput[] {
   return [output(schedule1, { line8z_other_income: winnings })];
 }
 
+function agiAggregatorOutput(items: W2GItems): NodeOutput[] {
+  const winnings = totalWinnings(items);
+  if (winnings === 0) return [];
+  return [output(agi_aggregator, { line8z_other: winnings })];
+}
+
 function f1040Output(items: W2GItems): NodeOutput[] {
   const withheld = totalFederalWithheld(items);
   if (withheld === 0) return [];
@@ -64,7 +71,7 @@ function f1040Output(items: W2GItems): NodeOutput[] {
 class W2GNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "w2g";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, f1040]);
+  readonly outputNodes = new OutputNodes([schedule1, f1040, agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -73,6 +80,7 @@ class W2GNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       ...schedule1Output(w2gs),
       ...f1040Output(w2gs),
+      ...agiAggregatorOutput(w2gs),
     ];
 
     return { outputs };

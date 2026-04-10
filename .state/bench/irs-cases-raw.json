@@ -1,0 +1,575 @@
+{
+  "source": "IRS VITA Pub 4491 TY2025",
+  "cases": [
+    {
+      "name": "single-w2-savers-credit-50pct",
+      "scenario": "Single filer with modest W-2 income ($19,500) and $2,000 traditional IRA contribution. Qualifies for the 50% Saver's Credit rate (AGI ≤ $23,000 for single). Credit = 50% × $2,000 = $1,000, capped at income tax liability $375. Total tax = $0.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Retirement Savings Contributions Credit (Form 8880) module; credit rates per Rev. Proc. 2024-40, §3.43 (IRC §25B); SAVERS_CREDIT_AGI_SINGLE_2025 rate50 = $23,000",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Rosa",
+          "taxpayer_last_name": "Espinoza",
+          "taxpayer_dob": "1995-06-10",
+          "address_city": "San Antonio",
+          "address_state": "TX",
+          "address_zip": "78201"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 19500,
+            "box2_fed_withheld": 780,
+            "box3_ss_wages": 19500,
+            "box4_ss_withheld": 1209,
+            "box5_medicare_wages": 19500,
+            "box6_medicare_withheld": 283
+          }
+        ],
+        "form8880": {
+          "ira_contributions_taxpayer": 2000,
+          "agi": 19500,
+          "filing_status": "single"
+        }
+      },
+      "correct": {
+        "line11_agi": 19500,
+        "line15_taxable_income": 3750,
+        "line24_total_tax": 0,
+        "line33_total_payments": 780,
+        "line35a_refund": 780,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "single-w2-savers-credit-20pct",
+      "scenario": "Single filer with W-2 income ($24,000) and $2,000 IRA contribution qualifying for the 20% Saver's Credit rate (AGI $23,001–$25,000 for single). Credit = 20% × $2,000 = $400. Net tax = $425.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Retirement Savings Contributions Credit (Form 8880) module; credit rates per Rev. Proc. 2024-40, §3.43 (IRC §25B); SAVERS_CREDIT_AGI_SINGLE_2025 rate20 = $25,000",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Damien",
+          "taxpayer_last_name": "Brooks",
+          "taxpayer_dob": "1992-03-15",
+          "address_city": "Memphis",
+          "address_state": "TN",
+          "address_zip": "38101"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 24000,
+            "box2_fed_withheld": 1200,
+            "box3_ss_wages": 24000,
+            "box4_ss_withheld": 1488,
+            "box5_medicare_wages": 24000,
+            "box6_medicare_withheld": 348
+          }
+        ],
+        "form8880": {
+          "ira_contributions_taxpayer": 2000,
+          "agi": 24000,
+          "filing_status": "single"
+        }
+      },
+      "correct": {
+        "line11_agi": 24000,
+        "line15_taxable_income": 8250,
+        "line24_total_tax": 425,
+        "line33_total_payments": 1200,
+        "line35a_refund": 775,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "single-w2-gambling-winnings",
+      "scenario": "Single filer with W-2 wages ($38,000) and W-2G gambling winnings ($5,000) from a casino, no federal withholding on winnings. Winnings reported on Schedule 1 Line 8b. Total income $43,000.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Other Income module (gambling winnings, W-2G); IRC §61(a)(14); IRS Pub 525; Schedule 1 Line 8b",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Calvin",
+          "taxpayer_last_name": "Nguyen",
+          "taxpayer_dob": "1980-11-22",
+          "address_city": "Las Vegas",
+          "address_state": "NV",
+          "address_zip": "89101"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 38000,
+            "box2_fed_withheld": 3800,
+            "box3_ss_wages": 38000,
+            "box4_ss_withheld": 2356,
+            "box5_medicare_wages": 38000,
+            "box6_medicare_withheld": 551
+          }
+        ],
+        "w2g_items": [
+          {
+            "box1_winnings": 5000,
+            "box4_federal_withheld": 0,
+            "payer_name": "Golden Nugget Casino"
+          }
+        ]
+      },
+      "correct": {
+        "line9_total_income": 43000,
+        "line11_agi": 43000,
+        "line15_taxable_income": 27250,
+        "line24_total_tax": 3031.50,
+        "line33_total_payments": 3800,
+        "line35a_refund": 768.50,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "mfj-w2-itemized-mortgage-salt-charity",
+      "scenario": "Married filing jointly with two W-2 incomes ($95,000 + $55,000 = $150,000). Itemized deductions — mortgage interest $14,500, SALT $14,000 (state income tax $8,000 + real estate $6,000), cash charity $5,000. Total itemized $33,500 exceeds MFJ standard deduction $31,500.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Deductions module (Schedule A — mortgage interest Form 1098, SALT, charitable contributions); IRC §163(h), §164, §170; SALT cap = $40,000 per OBBBA §70002 (TY2025)",
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "James",
+          "taxpayer_last_name": "Patterson",
+          "spouse_first_name": "Linda",
+          "spouse_last_name": "Patterson",
+          "taxpayer_dob": "1978-04-12",
+          "spouse_dob": "1980-09-03",
+          "address_city": "Charlotte",
+          "address_state": "NC",
+          "address_zip": "28201"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 95000,
+            "box2_fed_withheld": 9500,
+            "box3_ss_wages": 95000,
+            "box4_ss_withheld": 5890,
+            "box5_medicare_wages": 95000,
+            "box6_medicare_withheld": 1378
+          },
+          {
+            "box1_wages": 55000,
+            "box2_fed_withheld": 5500,
+            "box3_ss_wages": 55000,
+            "box4_ss_withheld": 3410,
+            "box5_medicare_wages": 55000,
+            "box6_medicare_withheld": 798
+          }
+        ],
+        "f1098_items": [
+          {
+            "box1_mortgage_interest": 14500,
+            "lender_name": "First National Bank",
+            "for_routing": "A"
+          }
+        ],
+        "schedule_a": {
+          "filing_status": "mfj",
+          "agi": 150000,
+          "line_5a_state_income_tax": 8000,
+          "line_5b_real_estate_tax": 6000,
+          "line_8a_mortgage_interest_1098": 14500,
+          "line_11_cash_contributions": 5000
+        }
+      },
+      "correct": {
+        "line9_total_income": 150000,
+        "line11_agi": 150000,
+        "line15_taxable_income": 116500,
+        "line24_total_tax": 15458,
+        "line33_total_payments": 15000,
+        "line35a_refund": 0,
+        "line37_amount_owed": 458
+      }
+    },
+    {
+      "name": "single-w2-residential-clean-energy-solar",
+      "scenario": "Single homeowner with W-2 income ($72,000) who installed solar panels costing $20,000. Residential Clean Energy Credit (Form 5695 Part I) = 30% × $20,000 = $6,000 (nonrefundable). Excess credit carries forward.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Energy Credits module (Form 5695 Part I — Residential Clean Energy Credit, IRC §25D); IRS Pub 17 Ch. 37; 30% rate applicable TY2025",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Marcus",
+          "taxpayer_last_name": "Williams",
+          "taxpayer_dob": "1985-07-04",
+          "address_city": "Phoenix",
+          "address_state": "AZ",
+          "address_zip": "85001"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 72000,
+            "box2_fed_withheld": 7200,
+            "box3_ss_wages": 72000,
+            "box4_ss_withheld": 4464,
+            "box5_medicare_wages": 72000,
+            "box6_medicare_withheld": 1044
+          }
+        ],
+        "f5695": {
+          "solar_electric_cost": 20000
+        }
+      },
+      "correct": {
+        "line9_total_income": 72000,
+        "line11_agi": 72000,
+        "line15_taxable_income": 56250,
+        "line24_total_tax": 1289,
+        "line33_total_payments": 7200,
+        "line35a_refund": 5911,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "mfj-w2-ira-deduction-savers-credit",
+      "scenario": "Married filing jointly with two W-2 incomes ($42,000 + $28,000 = $70,000). Taxpayer made $7,000 traditional IRA contribution (not covered by employer plan — fully deductible). Saver's Credit at 10% rate (MFJ AGI $63,000 in $50,001–$76,500 range). Credit = 10% × $2,000 = $200.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on IRA deduction (Pub 590-A, Worksheet 1-2) and Saver's Credit (Form 8880) modules; IRC §219, §25B; Rev. Proc. 2024-40 IRA_CONTRIBUTION_LIMIT_2025 = $7,000; SAVERS_CREDIT_AGI_MFJ_2025 rate10 = $76,500",
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Michael",
+          "taxpayer_last_name": "Turner",
+          "spouse_first_name": "Angela",
+          "spouse_last_name": "Turner",
+          "taxpayer_dob": "1990-02-14",
+          "spouse_dob": "1991-08-30",
+          "address_city": "Indianapolis",
+          "address_state": "IN",
+          "address_zip": "46201"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 42000,
+            "box2_fed_withheld": 3000,
+            "box3_ss_wages": 42000,
+            "box4_ss_withheld": 2604,
+            "box5_medicare_wages": 42000,
+            "box6_medicare_withheld": 609,
+            "box13_retirement_plan": false
+          },
+          {
+            "box1_wages": 28000,
+            "box2_fed_withheld": 1800,
+            "box3_ss_wages": 28000,
+            "box4_ss_withheld": 1736,
+            "box5_medicare_wages": 28000,
+            "box6_medicare_withheld": 406,
+            "box13_retirement_plan": false
+          }
+        ],
+        "ira_deduction_worksheet": {
+          "filing_status": "mfj",
+          "magi": 70000,
+          "ira_contribution": 7000,
+          "active_participant": false,
+          "spouse_active_participant": false
+        },
+        "form8880": {
+          "ira_contributions_taxpayer": 7000,
+          "agi": 63000,
+          "filing_status": "mfj"
+        }
+      },
+      "correct": {
+        "line9_total_income": 70000,
+        "line11_agi": 63000,
+        "line15_taxable_income": 31500,
+        "line24_total_tax": 3103,
+        "line33_total_payments": 4800,
+        "line35a_refund": 1697,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "single-w2-lifetime-learning-credit",
+      "scenario": "Single graduate student with W-2 income ($55,000) and $10,000 qualified education expenses at an eligible institution. Lifetime Learning Credit (Form 8863) = 20% × min($10,000, $10,000) = $2,000 (nonrefundable). AGI below phase-out range ($80,000–$90,000 for single).",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Education Credits module (Form 8863 Part II — Lifetime Learning Credit); IRC §25A(c); IRS Pub 970 Ch. 3; phase-out single $80,000–$90,000 per F8863Node constants",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Priya",
+          "taxpayer_last_name": "Kapoor",
+          "taxpayer_dob": "1988-10-15",
+          "address_city": "Boston",
+          "address_state": "MA",
+          "address_zip": "02101"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 55000,
+            "box2_fed_withheld": 5500,
+            "box3_ss_wages": 55000,
+            "box4_ss_withheld": 3410,
+            "box5_medicare_wages": 55000,
+            "box6_medicare_withheld": 798
+          }
+        ],
+        "f8863_items": [
+          {
+            "credit_type": "llc",
+            "student_name": "Priya Kapoor",
+            "llc_adjusted_expenses": 10000,
+            "filer_magi": 55000,
+            "filing_status": "single"
+          }
+        ]
+      },
+      "correct": {
+        "line9_total_income": 55000,
+        "line11_agi": 55000,
+        "line15_taxable_income": 39250,
+        "line24_total_tax": 2471.50,
+        "line33_total_payments": 5500,
+        "line35a_refund": 3028.50,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "single-w2-foreign-tax-credit-de-minimis",
+      "scenario": "Single filer with W-2 wages ($68,000), foreign interest income $500 (foreign tax paid $75), and foreign qualified dividends $300 (foreign tax paid $45). Total foreign tax $120 ≤ $300 de minimis threshold for single — claimed directly on Schedule 3 Line 1 without filing Form 1116.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Foreign Tax Credit module (Schedule 3 Line 1, Form 1116 de minimis exception); IRC §901; IRS Pub 514; Form 1040 Instructions for Schedule 3, Line 1 (de minimis: $300 single / $600 MFJ)",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Stefan",
+          "taxpayer_last_name": "Mueller",
+          "taxpayer_dob": "1975-12-01",
+          "address_city": "Seattle",
+          "address_state": "WA",
+          "address_zip": "98101"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 68000,
+            "box2_fed_withheld": 6800,
+            "box3_ss_wages": 68000,
+            "box4_ss_withheld": 4216,
+            "box5_medicare_wages": 68000,
+            "box6_medicare_withheld": 986
+          }
+        ],
+        "f1099int_items": [
+          {
+            "box1_interest": 500,
+            "box6_foreign_tax_paid": 75,
+            "payer_name": "Deutsche Bank"
+          }
+        ],
+        "f1099div_items": [
+          {
+            "box1a_total_dividends": 300,
+            "box1b_qualified_dividends": 300,
+            "box7_foreign_tax_paid": 45,
+            "payer_name": "European Equity ETF"
+          }
+        ]
+      },
+      "correct": {
+        "line9_total_income": 68800,
+        "line11_agi": 68800,
+        "line15_taxable_income": 53050,
+        "line24_total_tax": 6444,
+        "line33_total_payments": 6800,
+        "line35a_refund": 356,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "hoh-w2-child-dep-care-credit",
+      "scenario": "Head of household filer with W-2 income ($48,000) and one qualifying child age 4. Paid $3,000 in childcare to enable work. Child and Dependent Care Credit (Form 2441) = 20% × $3,000 = $600 (nonrefundable, AGI > $43,000). CTC $2,200 and dep care credit absorb all tax. ACTC = $0 (full CTC applied nonrefundably).",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Child and Dependent Care Credit module (Form 2441); IRC §21; IRS Pub 503; applicable percentage = 20% for AGI > $43,000; HOH standard deduction = $23,625 (Rev. Proc. 2024-40, OBBBA §70001)",
+      "filing_status": "hoh",
+      "inputs": {
+        "general": {
+          "filing_status": "hoh",
+          "taxpayer_first_name": "Sandra",
+          "taxpayer_last_name": "Jackson",
+          "taxpayer_dob": "1987-03-25",
+          "address_city": "Atlanta",
+          "address_state": "GA",
+          "address_zip": "30301"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 48000,
+            "box2_fed_withheld": 3800,
+            "box3_ss_wages": 48000,
+            "box4_ss_withheld": 2976,
+            "box5_medicare_wages": 48000,
+            "box6_medicare_withheld": 696
+          }
+        ],
+        "f2441_items": [
+          {
+            "provider_name": "Sunny Days Childcare",
+            "provider_tin": "85-1234567",
+            "qualifying_person_name": "Jaylen Jackson",
+            "qualifying_person_dob": "2020-05-10",
+            "expenses_paid": 3000
+          }
+        ],
+        "f8812_items": [
+          {
+            "qualifying_children": 1,
+            "qualifying_children_under17": 1
+          }
+        ]
+      },
+      "correct": {
+        "line9_total_income": 48000,
+        "line11_agi": 48000,
+        "line15_taxable_income": 24375,
+        "line24_total_tax": 0,
+        "line33_total_payments": 3800,
+        "line35a_refund": 3800,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "single-marketplace-excess-aptc-repayment",
+      "scenario": "Single filer with W-2 wages ($32,000) enrolled in ACA marketplace plan. SLCSP = $5,800, annual premium = $5,400, APTC advanced = $3,600. Computed PTC ≈ $3,384 (FPL ~204%, contribution ~6.3%). Excess APTC repayment = $216 added to tax liability.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Health Care Coverage module (Form 8962 — excess advance Premium Tax Credit repayment); IRC §36B; Rev. Proc. 2025-15 (PTC applicable percentages TY2025)",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Heather",
+          "taxpayer_last_name": "Collins",
+          "taxpayer_dob": "1983-06-18",
+          "address_city": "Columbus",
+          "address_state": "OH",
+          "address_zip": "43201"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 32000,
+            "box2_fed_withheld": 2500,
+            "box3_ss_wages": 32000,
+            "box4_ss_withheld": 1984,
+            "box5_medicare_wages": 32000,
+            "box6_medicare_withheld": 464
+          }
+        ],
+        "f1095a_items": [
+          {
+            "issuer_name": "HealthConnect",
+            "annual_premium": 5400,
+            "annual_slcsp": 5800,
+            "annual_aptc": 3600
+          }
+        ]
+      },
+      "correct": {
+        "line9_total_income": 32000,
+        "line11_agi": 32000,
+        "line15_taxable_income": 16250,
+        "line24_total_tax": 1927.50,
+        "line33_total_payments": 2500,
+        "line35a_refund": 572.50,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "mfj-w2-energy-efficient-home-improvement",
+      "scenario": "Married filing jointly homeowners ($85,000 + $62,000 = $147,000 wages) who installed an electric heat pump ($8,000) and new exterior windows ($2,500). Form 5695 Part II §25C: heat pump credit = $2,000 (separate §25C cap); windows credit = $600 (capped). Total §25C credit = $2,600.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Energy Credits module (Form 5695 Part II — Energy Efficient Home Improvement Credit); IRC §25C; §25C caps: windows/skylights $600, heat pumps $2,000 separate cap, overall §25C general cap $1,200/yr (heat pump is outside general cap)",
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Robert",
+          "taxpayer_last_name": "Chen",
+          "spouse_first_name": "Lisa",
+          "spouse_last_name": "Chen",
+          "taxpayer_dob": "1972-08-20",
+          "spouse_dob": "1974-11-15",
+          "address_city": "Denver",
+          "address_state": "CO",
+          "address_zip": "80201"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 85000,
+            "box2_fed_withheld": 8500,
+            "box3_ss_wages": 85000,
+            "box4_ss_withheld": 5270,
+            "box5_medicare_wages": 85000,
+            "box6_medicare_withheld": 1233
+          },
+          {
+            "box1_wages": 62000,
+            "box2_fed_withheld": 6200,
+            "box3_ss_wages": 62000,
+            "box4_ss_withheld": 3844,
+            "box5_medicare_wages": 62000,
+            "box6_medicare_withheld": 899
+          }
+        ],
+        "f5695": {
+          "heat_pump_cost": 8000,
+          "windows_cost": 2500
+        }
+      },
+      "correct": {
+        "line9_total_income": 147000,
+        "line11_agi": 147000,
+        "line15_taxable_income": 115500,
+        "line24_total_tax": 12638,
+        "line33_total_payments": 14700,
+        "line35a_refund": 2062,
+        "line37_amount_owed": 0
+      }
+    },
+    {
+      "name": "single-schedule-c-sep-ira-qbi",
+      "scenario": "Self-employed single filer with Schedule C net profit ($75,000). Makes $13,758 SEP-IRA contribution. SE tax deduction ($5,303.58) and SEP deduction reduce AGI. QBI deduction applies (20% of qualified business income, limited to 20% of taxable income). No withholding — amount owed.",
+      "source_citation": "IRS VITA Pub 4491 TY2025, illustrative case based on Self-Employment module (SEP-IRA deduction Schedule 1 Line 16, QBI deduction Form 8995); IRC §404(a)(8), §408(k), §199A; IRS Pub 560; SE tax per IRC §1401; QBI deduction per Rev. Proc. 2024-40",
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Natalie",
+          "taxpayer_last_name": "Rivera",
+          "taxpayer_dob": "1982-09-28",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        },
+        "schedule_c_items": [
+          {
+            "business_name": "Rivera Consulting",
+            "business_code": "541600",
+            "gross_receipts": 120000,
+            "total_expenses": 45000,
+            "net_profit": 75000,
+            "needs_form_8829": false
+          }
+        ],
+        "sep_retirement_items": [
+          {
+            "plan_type": "SEP",
+            "net_self_employment_compensation": 69696,
+            "sep_contribution": 13758
+          }
+        ]
+      },
+      "correct": {
+        "line9_total_income": 75000,
+        "line11_agi": 55943.42,
+        "line15_taxable_income": 32154.73,
+        "line24_total_tax": 14217.23,
+        "line33_total_payments": 0,
+        "line35a_refund": 0,
+        "line37_amount_owed": 14217.23
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "case": "103-mfj-w2-savers-credit-10pct",
+  "scenario": "Married filing jointly with W-2s ($42k + $28k), taxpayer has 401k deferral $7,000 — Saver's Credit at 10% rate (AGI $50,001–$76,500 MFJ)",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Saver's Credit module (Form 8880); IRC §25B; 10% rate MFJ AGI $50,001–$76,500; Rev. Proc. 2024-40 §3.43",
+  "correct": {
+    "line11_agi": 70000,
+    "line15_taxable_income": 38500,
+    "line24_total_tax": 3943,
+    "line33_total_payments": 4800,
+    "line35a_refund": 857,
+    "line37_amount_owed": 0
+  }
+}

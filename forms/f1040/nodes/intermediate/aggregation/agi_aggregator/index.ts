@@ -12,6 +12,8 @@ import { f2441 } from "../../../inputs/f2441/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
+import { form8880 } from "../../forms/form8880/index.ts";
+import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // AGI Aggregator — Form 1040 Line 11
@@ -350,7 +352,7 @@ function computeAgi(input: AgiInput, cfg: import("../../../config/index.ts").F10
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962, form8880]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -384,6 +386,11 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8960, { magi: agi }),
       // Pass AGI as household_income to form8962 for PTC eligibility and reconciliation
       this.outputNodes.output(form8962, { household_income: agi }),
+      // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
+      this.outputNodes.output(form8880, {
+        agi,
+        ...(input.filing_status !== undefined && { filing_status: input.filing_status as FilingStatus }),
+      } as AtLeastOne<z.infer<typeof form8880["inputSchema"]>>),
     ];
 
     // Pass SSA taxable amount to f1040 for line 6b.

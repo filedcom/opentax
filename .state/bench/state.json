@@ -3,15 +3,39 @@
   "forms": {
     "f1040:2025": {
       "fix": {
-        "status": "idle",
-        "benchmark_baseline": { "pass": 94, "fail": 3 },
+        "status": "running",
+        "benchmark_baseline": { "pass": 102, "fail": 5 },
         "no_improvement_count": 0,
         "root_causes": {
           "ssa_niit_mismatch": {
-            "status": "pending",
+            "status": "fixed",
             "cases": [67, 91, 95],
             "description": "3 remaining failures: cases 67, 91, 95 — all involve SSA + 1099-B combinations. Likely SSA taxability calculation or NIIT/Additional Medicare Tax mismatch vs gen_correct.ts reference",
             "node_path": "forms/f1040/nodes/intermediate/forms/form8959/index.ts"
+          },
+          "savers_credit_overcredit": {
+            "status": "pending",
+            "cases": [99, 103],
+            "description": "Saver's Credit (Form 8880) over-reduces tax. Case 99: tax should be $425 (engine gives $0, overcredits by $425). Case 103: tax should be $3943 (engine gives $3143, overcredits by $800). Case 98 (50% rate) passes. Bug is in credit calculation or nonrefundable cap logic.",
+            "node_path": "forms/f1040/nodes/intermediate/forms/form8880/index.ts"
+          },
+          "w2g_gambling_agi_missing": {
+            "status": "pending",
+            "cases": [100],
+            "description": "W-2G gambling winnings ($5,000) not flowing to AGI. Engine shows AGI=$38,000 (wages only) instead of $43,000 (wages + gambling). W-2G input node likely not routing box1_winnings to Schedule 1 Line 8b.",
+            "node_path": "forms/f1040/nodes/inputs/w2g/index.ts"
+          },
+          "foreign_tax_credit_missing": {
+            "status": "pending",
+            "cases": [105],
+            "description": "De minimis FTC ($75 from 1099-INT box6 + $45 from 1099-DIV box7 = $120) not being applied. Tax is $6,564 vs $6,444 (off by exactly $120). FTC should flow to Schedule 3 Line 1 without Form 1116.",
+            "node_path": "forms/f1040/nodes/intermediate/forms/form_1116/index.ts"
+          },
+          "f2441_dep_care_routing": {
+            "status": "pending",
+            "cases": [106],
+            "description": "Form 2441 dep care credit routing error. Engine shows total_payments=$4,215 vs correct $3,800 (overcounting by $415). Tax correctly 0. Extra $415 likely being added to payments instead of just reducing tax. Also involves CTC + Form 2441 interaction.",
+            "node_path": "forms/f1040/nodes/intermediate/forms/form2441/index.ts"
           }
         }
       },

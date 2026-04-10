@@ -1,0 +1,14 @@
+{
+  "case": "105-single-w2-foreign-tax-credit-de-minimis",
+  "scenario": "Single filer with W-2 wages $68,000, 1099-INT $500 with $75 foreign tax, 1099-DIV $300 QD with $45 foreign tax — FTC $120 de minimis (Schedule 3 Line 1)",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Foreign Tax Credit module (Schedule 3 Line 1 de minimis); IRC §901; $120 total FTC ≤ $300 single threshold",
+  "correct": {
+    "line11_agi": 68800,
+    "line15_taxable_income": 53050,
+    "line24_total_tax": 6444,
+    "line33_total_payments": 6800,
+    "line35a_refund": 356,
+    "line37_amount_owed": 0
+  }
+}

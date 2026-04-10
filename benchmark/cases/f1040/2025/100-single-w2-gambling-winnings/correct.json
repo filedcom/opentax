@@ -1,0 +1,14 @@
+{
+  "case": "100-single-w2-gambling-winnings",
+  "scenario": "Single filer with W-2 wages $38,000 plus W-2G gambling winnings $5,000 (no withholding) — Schedule 1 Line 8b",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Other Income module (W-2G gambling winnings, Schedule 1 Line 8b); IRC §61(a)(14)",
+  "correct": {
+    "line11_agi": 43000,
+    "line15_taxable_income": 27250,
+    "line24_total_tax": 3031.50,
+    "line33_total_payments": 3800,
+    "line35a_refund": 768.50,
+    "line37_amount_owed": 0
+  }
+}

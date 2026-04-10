@@ -1,0 +1,15 @@
+{
+  "case": "106-hoh-w2-child-dep-care-credit",
+  "scenario": "Head of household with W-2 wages $48,000, one qualifying child age 5, childcare $3,000 — CTC $2,200 + dep care credit absorbs all tax; zero tax",
+  "year": 2025,
+  "source": "IRS VITA Pub 4491 TY2025, illustrative case — Child and Dep Care Credit (Form 2441) + CTC; IRC §21, §24; 20% rate for AGI > $43,000",
+  "correct": {
+    "line11_agi": 48000,
+    "line15_taxable_income": 24375,
+    "line24_total_tax": 0,
+    "line27_eitc": 415,
+    "line33_total_payments": 4215,
+    "line35a_refund": 4215,
+    "line37_amount_owed": 0
+  }
+}

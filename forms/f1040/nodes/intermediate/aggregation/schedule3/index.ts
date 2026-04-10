@@ -8,6 +8,17 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
+// Executor accumulation pattern: multiple upstream nodes (f1099int, f1099div) may
+// each deposit line1_foreign_tax_1099, causing it to accumulate as an array.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumAccumulable(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s, n) => s + n, 0);
+  return value;
+}
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 // Schedule 3 aggregates nonrefundable credits (Part I → line 8 → f1040 line 20)
@@ -23,8 +34,10 @@ export const inputSchema = z.object({
   // Line 1 — Foreign tax credit reported directly from 1099-DIV/1099-INT (de minimis)
   // When total foreign taxes ≤ $300 ($600 MFJ), Form 1116 is not required.
   // Both line1 fields are summed into Part I line 1.
+  // Accumulable: f1099int and f1099div each route here, so the executor may
+  // deposit multiple values (e.g. [75, 45]) that must be summed.
   // IRC §901; Treas. Reg. §1.901-1
-  line1_foreign_tax_1099: z.number().nonnegative().optional(),
+  line1_foreign_tax_1099: accumulable(z.number().nonnegative()).optional(),
 
   // Line 2 — Child and dependent care credit (from Form 2441 line 11)
   // IRC §21; Form 2441 line 11 → Schedule 3 line 2
@@ -100,9 +113,12 @@ type Schedule3Input = z.infer<typeof inputSchema>;
 
 // Part I, Line 1 — total foreign tax credit.
 // Combines Form 1116 allowed credit and de minimis 1099 foreign taxes.
+// line1_foreign_tax_1099 may arrive as an array when multiple 1099 forms
+// (e.g. f1099int + f1099div) each route their foreign tax to schedule3.
 // IRC §901, Treas. Reg. §1.901-1
 function line1(input: Schedule3Input): number {
-  return (input.line1_foreign_tax_credit ?? 0) + (input.line1_foreign_tax_1099 ?? 0);
+  return (input.line1_foreign_tax_credit ?? 0) +
+    sumAccumulable(input.line1_foreign_tax_1099 as number | number[] | undefined);
 }
 
 // Part I, Line 8 — total nonrefundable credits.
