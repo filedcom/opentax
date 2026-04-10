@@ -3,8 +3,8 @@
   "forms": {
     "f1040:2025": {
       "fix": {
-        "status": "running",
-        "benchmark_baseline": { "pass": 131, "fail": 2, "total": 133 },
+        "status": "done",
+        "benchmark_baseline": { "pass": 133, "fail": 0, "total": 133 },
         "no_improvement_count": 0,
         "root_causes": {
           "ssa_niit_mismatch": {
@@ -78,6 +78,18 @@
             "cases": [123, 124, 125, 126, 127, 128, 129, 130, 132, 133, 134],
             "description": "Added payer_ein to f1099r nodes; flattened rrb1099r and f1099c from array-wrapper format to flat itemSchema format; fixed f1099int box1_interest→box1; corrected case 128 std deduction math ($33100→$34700, 2 age factors × $1600); updated case 124 correct.json with engine-computed SSA taxability",
             "node_path": "benchmark/cases/f1040/2025/"
+          },
+          "ssa_50pct_zone_formula": {
+            "status": "fixed",
+            "cases": [122],
+            "description": "computeSsaTaxable used 0.85*ssaGross cap in 50% zone instead of 0.5*ssaGross; for case 122 this produced taxable SSA=$3490 instead of correct $2990, inflating AGI by $500",
+            "node_path": "forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts"
+          },
+          "case_133_obbba_ctc_eitc": {
+            "status": "fixed",
+            "cases": [133],
+            "description": "correct.json used pre-OBBBA CTC $2,000/child; updated to $2,200 (P.L. 119-21, July 4 2025) and added EITC for HOH/1-child at $45k income",
+            "node_path": "benchmark/cases/f1040/2025/133-hoh-w2-ctc/correct.json"
           }
         }
       },

@@ -87,6 +87,13 @@ Append-only log of harness runs and outcomes.
 | 133 | hoh-w2-ctc | HOH std deduction $23,625 + 1 qualifying child + CTC | Pub 17 Table 10-1 & Ch. 14, p. 95 & 108 |
 | 134 | mfs-w2 | MFS, IRS-stated $40,100 taxable income → $4,577 tax | Pub 17 Table 10-1 & Ch. 4, p. 95 & 41 |
 
+## [f1040:2025] Round 2 — 2026-04-11
+- Baseline: 131 pass / 2 fail (133 total)
+- After fix: 133 pass / 0 fail
+- Fixed clusters:
+  - ssa_50pct_zone_formula: computeSsaTaxable used 0.85*ssaGross cap in 50% zone (should be 0.5*ssaGross); case 122 AGI was $500 high
+  - case_133_obbba_ctc_eitc: correct.json used pre-OBBBA CTC $2,000; updated to $2,200 (P.L. 119-21) + added EITC for HOH/1-child at $45k income
+
 ### Engine fixes made while writing cases:
 - **Case 116**: f1099r disability-as-wages was not routing to agi_aggregator — fixed
 - **Case 118**: schedule_h was not wired as a user-facing input node — registered in inputs.ts
