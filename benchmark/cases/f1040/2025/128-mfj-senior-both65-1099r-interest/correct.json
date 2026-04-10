@@ -1,0 +1,14 @@
+{
+  "case": "128-mfj-senior-both65-1099r-interest",
+  "scenario": "Married filing jointly both spouses age 65+ with pension and interest income — tests dual senior standard deduction ($34,700 = $31,500 base + $1,600 × 2 age factors)",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction MFJ with 2 boxes checked; Rev. Proc. 2024-40 §3.14: $1,600 per age/blindness factor for MFJ (p. 95)",
+  "correct": {
+    "line11_agi": 43500,
+    "line15_taxable_income": 8800,
+    "line24_total_tax": 880,
+    "line33_total_payments": 3000,
+    "line35a_refund": 2120,
+    "line37_amount_owed": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "case": "125-mfj-w2-tax-table",
+  "scenario": "Married filing jointly: tax table worked example — IRS explicitly states taxable income $25,300 yields tax of $2,562",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, 2025 Tax Table sample example, p. 111",
+  "correct": {
+    "line11_agi": 56800,
+    "line15_taxable_income": 25300,
+    "line24_total_tax": 2562,
+    "line33_total_payments": 4000,
+    "line35a_refund": 1438,
+    "line37_amount_owed": 0
+  }
+}

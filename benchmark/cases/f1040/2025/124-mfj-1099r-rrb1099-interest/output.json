@@ -1,0 +1,107 @@
+{
+  "returnId": "b5b791f3-8f61-449c-93c5-012984da3710",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 46775,
+    "line11_agi": 46775,
+    "line15_taxable_income": 12075,
+    "line24_total_tax": 1207.5,
+    "line33_total_payments": 0,
+    "line37_amount_owed": 1207.5
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099int",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8880",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "rrb1099r",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      38000,
+      38000
+    ],
+    "line5b_pension_taxable": [
+      38000,
+      38000
+    ],
+    "line6a_ss_gross": [
+      10000,
+      10000
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Gerald",
+    "taxpayer_last_name": "Hartwell",
+    "taxpayer_dob": "1956-04-22",
+    "taxpayer_age_65_or_older": true,
+    "spouse_first_name": "Pauline",
+    "spouse_last_name": "Hartwell",
+    "spouse_dob": "1958-11-09",
+    "spouse_age_65_or_older": true,
+    "address_city": "Cheyenne",
+    "address_state": "WY",
+    "address_zip": "82001",
+    "line2b_taxable_interest": [
+      2500,
+      2500
+    ],
+    "line11_agi": [
+      46775,
+      46775
+    ],
+    "line6b_ss_taxable": [
+      6275,
+      6275
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      34700,
+      34700
+    ],
+    "line15_taxable_income": [
+      12075,
+      12075
+    ],
+    "line16_income_tax": [
+      1207.5,
+      1207.5
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 46775,
+    "line18_total_tax_before_credits": 1207.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1207.5,
+    "line24_total_tax": 1207.5,
+    "line25d_total_withholding": 0,
+    "line33_total_payments": 0,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 34700,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 1207.5
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

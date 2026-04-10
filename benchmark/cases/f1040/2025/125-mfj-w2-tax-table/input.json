@@ -1,0 +1,34 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with single W-2 — IRS Pub 17 tax table worked example, taxable income $25,300 yields tax $2,562",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Marcus",
+          "taxpayer_last_name": "Rivera",
+          "taxpayer_dob": "1979-06-12",
+          "spouse_first_name": "Elena",
+          "spouse_last_name": "Rivera",
+          "spouse_dob": "1981-11-28",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 56800,
+        "box2_fed_withheld": 4000,
+        "box3_ss_wages": 56800,
+        "box4_ss_withheld": 3522,
+        "box5_medicare_wages": 56800,
+        "box6_medicare_withheld": 824
+      }
+    }
+  ]
+}

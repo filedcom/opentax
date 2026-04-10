@@ -1,0 +1,14 @@
+{
+  "case": "129-mfj-w2-installment-sale-ltcg",
+  "scenario": "Married filing jointly: installment sale gain at 0% LTCG rate — gain from sale of investment property held over 1 year, recognized pro-rata in year of receipt",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 8: Other Income (p. 67–68, installment sales); 2025 LTCG rates (0% for MFJ taxable income ≤ $96,700); 2025 Tax Table",
+  "correct": {
+    "line11_agi": 63000,
+    "line15_taxable_income": 31500,
+    "line24_total_tax": 2350,
+    "line33_total_payments": 5000,
+    "line35a_refund": 2650,
+    "line37_amount_owed": 0
+  }
+}

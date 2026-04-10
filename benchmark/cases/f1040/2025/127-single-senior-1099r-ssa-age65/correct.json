@@ -1,0 +1,15 @@
+{
+  "case": "127-single-senior-1099r-ssa-age65",
+  "scenario": "Single filer over 65 — age-enhanced standard deduction $17,750; pension income with small Social Security partially taxable",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction age 65+ single = $17,750 (p. 95); SSA taxable portion rules Chapter 7 p. 63",
+  "correct": {
+    "line6b_taxable_ssa": 500,
+    "line11_agi": 20500,
+    "line15_taxable_income": 2750,
+    "line24_total_tax": 275,
+    "line33_total_payments": 1500,
+    "line35a_refund": 1225,
+    "line37_amount_owed": 0
+  }
+}

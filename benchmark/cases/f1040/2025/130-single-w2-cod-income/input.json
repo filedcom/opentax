@@ -1,0 +1,41 @@
+{
+  "year": 2025,
+  "scenario": "Single filer with W-2 wages $38,000 and 1099-C cancellation of debt income $6,000 (taxable student loan forgiveness outside education exclusion)",
+  "source": "IRS Pub 17 TY2025, Chapter 8: Other Income, Canceled Debts section p. 68–70; Form 1099-C",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "single",
+          "taxpayer_first_name": "Morgan",
+          "taxpayer_last_name": "Ellis",
+          "taxpayer_dob": "1990-06-15",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 38000,
+        "box2_fed_withheld": 3200,
+        "box3_ss_wages": 38000,
+        "box4_ss_withheld": 2356,
+        "box5_medicare_wages": 38000,
+        "box6_medicare_withheld": 551
+      }
+    },
+    {
+      "node_type": "f1099c",
+      "data": {
+        "creditor_name": "Student Loan Servicer",
+        "box2_cod_amount": 6000,
+        "box4_debt_description": "Student loan forgiveness",
+        "routing": "taxable"
+      }
+    }
+  ]
+}

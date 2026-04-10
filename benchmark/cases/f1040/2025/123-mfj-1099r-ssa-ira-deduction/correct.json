@@ -1,0 +1,14 @@
+{
+  "case": "123-mfj-1099r-ssa-ira-deduction",
+  "scenario": "Married filing jointly: retired taxpayer with fully taxable pension and Social Security benefits — no SSA taxable because provisional income below MFJ threshold",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 2, p. 64",
+  "correct": {
+    "line6b_taxable_ssa": 0,
+    "line11_agi": 14750,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line35a_refund": 0,
+    "line37_amount_owed": 0
+  }
+}

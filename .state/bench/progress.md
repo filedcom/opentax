@@ -67,6 +67,26 @@ Append-only log of harness runs and outcomes.
 | 120 | single-w2-alimony-received | Single, W-2 + alimony received (pre-2019 decree) | VITA ch. 17, p. 17-1; IRC §71 |
 | 121 | mfj-w2-1099r-early-401k-penalty | MFJ, two W-2s + early 401(k) dist code 1, penalty | VITA ch. 11, p. 11-11; IRC §72(t) |
 
+## Cases Added — 2026-04-10T22:00:00Z
+- Source: IRS Publication 17 TY2025 "Your Federal Income Tax"
+- Cases: 122–134 (131 skipped — alimony_paid node not yet built)
+
+| # | Name | Scenario | IRS Citation |
+|---|------|----------|--------------|
+| 122 | single-1099r-w2-ssa | Single, pension + W-2 + interest + SSA partially taxable | Pub 17 Ch. 7 Example 1, p. 63–64 |
+| 123 | mfj-1099r-ssa-ira-deduction | MFJ, pension + SSA (none taxable) + IRA deduction → $0 tax | Pub 17 Ch. 7 Example 2, p. 64 |
+| 124 | mfj-1099r-rrb1099-interest | MFJ, pension + RRB-1099 SSEB (none taxable) + interest | Pub 17 Ch. 7 Example 3, p. 64–65 |
+| 125 | mfj-w2-tax-table | MFJ W-2, IRS Tax Table: $25,300 → $2,562 | Pub 17 Tax Table example, p. 111 |
+| 126 | mfj-w2-breakeven | MFJ W-2, IRS-stated $48,500 taxable income → $5,346 tax | Pub 17 Ch. 4, p. 41 |
+| 127 | single-senior-1099r-ssa-age65 | Single 65+, pension + SSA, enhanced std deduction $17,750 | Pub 17 Table 10-2, p. 95; Ch. 7 |
+| 128 | mfj-senior-both65-1099r-interest | MFJ both 65+, std deduction $33,100 (2 age boxes) | Pub 17 Table 10-2, p. 95 |
+| 129 | mfj-w2-installment-sale-ltcg | MFJ W-2 + installment sale LTCG at 0% rate | Pub 17 Ch. 8, p. 67–68 |
+| 130 | single-w2-cod-income | Single W-2 + 1099-C cancellation of debt income | Pub 17 Ch. 8, p. 68–70 |
+| 131 | SKIPPED | Alimony paid deduction — no alimony_paid node exists | Pub 17 Schedule 1 line 19a |
+| 132 | single-w2-hobby-income | Single W-2 + hobby income (post-TCJA, fully includible) | Pub 17 Ch. 12, p. 102 |
+| 133 | hoh-w2-ctc | HOH std deduction $23,625 + 1 qualifying child + CTC | Pub 17 Table 10-1 & Ch. 14, p. 95 & 108 |
+| 134 | mfs-w2 | MFS, IRS-stated $40,100 taxable income → $4,577 tax | Pub 17 Table 10-1 & Ch. 4, p. 95 & 41 |
+
 ### Engine fixes made while writing cases:
 - **Case 116**: f1099r disability-as-wages was not routing to agi_aggregator — fixed
 - **Case 118**: schedule_h was not wired as a user-facing input node — registered in inputs.ts

@@ -1,0 +1,45 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly with W-2 wages plus installment sale LTCG — gain from investment property held over 1 year taxed at 0% LTCG rate",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Daniel",
+          "taxpayer_last_name": "Hargrove",
+          "taxpayer_dob": "1972-03-18",
+          "spouse_first_name": "Sandra",
+          "spouse_last_name": "Hargrove",
+          "spouse_dob": "1974-11-05",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55000,
+        "box2_fed_withheld": 5000,
+        "box3_ss_wages": 55000,
+        "box4_ss_withheld": 3410,
+        "box5_medicare_wages": 55000,
+        "box6_medicare_withheld": 798
+      }
+    },
+    {
+      "node_type": "f1099b",
+      "data": {
+        "part": "D",
+        "description": "Installment sale — investment property (held >1 year)",
+        "date_acquired": "2021-06-10",
+        "date_sold": "2025-03-15",
+        "proceeds": 8000,
+        "cost_basis": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "case": "134-mfs-w2",
+  "scenario": "Married filing separately: Owen's separate return — IRS explicitly provides taxable income $40,100 and tax $4,577",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Table 10-1 MFS standard deduction = $15,750 (p. 95); Chapter 4 estimated tax example (Owen filing separately), p. 41",
+  "correct": {
+    "line11_agi": 55850,
+    "line15_taxable_income": 40100,
+    "line24_total_tax": 4577,
+    "line33_total_payments": 5000,
+    "line35a_refund": 423,
+    "line37_amount_owed": 0
+  }
+}

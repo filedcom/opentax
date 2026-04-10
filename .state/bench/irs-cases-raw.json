@@ -1,74 +1,205 @@
 {
-  "source_type": "vita",
-  "fetched_at": "2026-04-10T21:30:00.000Z",
+  "source_type": "pub17",
+  "fetched_at": "2026-04-10T00:00:00.000Z",
   "cases": [
     {
-      "description": "Single filer with W-2 wages and early IRA distribution (code 1) — 10% penalty applies, no exception",
-      "source": "IRS VITA Pub 4491 TY2025, Early Distributions lesson (ch. 11, p. 11-11); 10% penalty under IRC §72(t); distribution code 1 per IRS Pub 575; Form 5329 Part I",
+      "description": "Single filer: fully taxable pension, part-time W-2 wages, bank interest, and Social Security benefits — SSA taxable portion computed via IRS Worksheet 7-1",
+      "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 1, p. 63–64; 2025 Tax Table p. 111–122",
       "year": 2025,
       "filing_status": "single",
       "inputs": {
         "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Marcus",
-          "taxpayer_last_name": "Reed",
-          "taxpayer_dob": "1990-07-15",
-          "address_city": "Nashville",
-          "address_state": "TN",
-          "address_zip": "37201"
+          "filing_status": "single"
         },
-        "w2_items": [
-          {
-            "box1_wages": 35000,
-            "box2_fed_withheld": 2500,
-            "box3_ss_wages": 35000,
-            "box4_ss_withheld": 2170,
-            "box5_medicare_wages": 35000,
-            "box6_medicare_withheld": 508
-          }
-        ],
         "f1099r_items": [
           {
-            "payer_name": "Heritage Retirement Trust",
-            "box1_gross_distribution": 8000,
-            "box2a_taxable_amount": 8000,
-            "box4_federal_withheld": 800,
-            "box7_distribution_code": "1",
-            "box7_ira_simple_indicator": true
+            "payer_name": "Pension Plan",
+            "box1_gross_distribution": 18600,
+            "box2a_taxable_amount": 18600,
+            "box4_federal_withheld": 0,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": false
+          }
+        ],
+        "w2_items": [
+          {
+            "box1_wages": 9400,
+            "box2_fed_withheld": 0,
+            "box3_ss_wages": 9400,
+            "box4_ss_withheld": 583,
+            "box5_medicare_wages": 9400,
+            "box6_medicare_withheld": 136
+          }
+        ],
+        "interest": 990,
+        "ssa1099_items": [
+          {
+            "payer_name": "Social Security Administration",
+            "box5_net_benefits": 5980
           }
         ]
       },
       "correct": {
-        "line11_agi": 43000,
-        "line15_taxable_income": 27250,
-        "line24_total_tax": 3831.50,
-        "line33_total_payments": 3300,
-        "line35a_refund": 0,
-        "line37_amount_owed": 531.50
+        "line6b_taxable_ssa": 2990,
+        "line11_agi": 31980,
+        "line15_taxable_income": 16230,
+        "line24_total_tax": 1709,
+        "line37_amount_owed": 1709
       },
-      "notes": "Early distribution penalty = 10% × $8,000 = $800 (Schedule 2 line 8, Form 5329). Income tax on taxable income $27,250 = 10% × $11,925 + 12% × $15,325 = $3,031.50. Total tax = $3,031.50 + $800 = $3,831.50. Total payments = $2,500 W-2 withholding + $800 1099-R withholding = $3,300."
+      "notes": "IRS Pub 17 Example 1 (p. 63–64) explicitly provides: pension $18,600, wages $9,400, interest $990, SSA net $5,980. Worksheet 7-1 computation shows taxable SSA = $2,990 (line 19 of worksheet). AGI = $18,600 + $9,400 + $990 + $2,990 = $31,980. Standard deduction single TY2025 = $15,750 (Table 10-1, p. 95). Taxable income = $31,980 − $15,750 = $16,230. Tax from 2025 Rate Schedule X: $1,192.50 + 12% × ($16,230 − $11,925) = $1,192.50 + $516.60 = $1,709.10 → table rounds to $1,709. No withholding stated in example → amount_owed = total_tax."
     },
     {
-      "description": "Single retiree, age 75, with RMD (1099-R code 7) and Social Security — no early distribution penalty",
-      "source": "IRS VITA Pub 4491 TY2025, Retirement Income lesson (ch. 11, p. 11-11); Required Minimum Distributions age 73+ per SECURE 2.0; IRC §401(a)(9); Social Security taxable portion per IRC §86; distribution code 7",
+      "description": "Married filing jointly: retired taxpayer with fully taxable pension and Social Security benefits — no SSA taxable because provisional income below MFJ threshold",
+      "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 2, p. 64; 2025 Tax Table p. 111–122",
+      "year": 2025,
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj"
+        },
+        "f1099r_items": [
+          {
+            "payer_name": "Employer Pension",
+            "box1_gross_distribution": 15500,
+            "box2a_taxable_amount": 15500,
+            "box4_federal_withheld": 0,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": false
+          }
+        ],
+        "interest": 250,
+        "ssa1099_items": [
+          {
+            "payer_name": "Social Security Administration",
+            "box5_net_benefits": 5600
+          }
+        ],
+        "ira_deduction": 1000
+      },
+      "correct": {
+        "line6b_taxable_ssa": 0,
+        "line11_agi": 14750,
+        "line15_taxable_income": 0,
+        "line24_total_tax": 0,
+        "line35a_refund": 0,
+        "line37_amount_owed": 0
+      },
+      "notes": "IRS Pub 17 Example 2 (p. 64): Casey has fully taxable pension $15,500, savings interest $250. Pat made deductible IRA contribution $1,000. Casey's SSA net $5,600. Provisional income = $14,750 + $2,800 (50% SSA) = $17,550 — below $32,000 MFJ threshold, so taxable SSA = $0. AGI = $15,500 + $250 − $1,000 IRA = $14,750. MFJ standard deduction = $31,500 → taxable income = $0. No tax. Line 6a = $5,600, line 6b = $0."
+    },
+    {
+      "description": "Married filing jointly: retired railroad worker (RRB Tier 1 SSEB portion) and government-worker spouse with pension and savings bond interest — no SSEB taxable because provisional income below MFJ threshold",
+      "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64–65; 2025 Tax Table p. 111–122",
+      "year": 2025,
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj"
+        },
+        "f1099r_items": [
+          {
+            "payer_name": "Pension (Jessie)",
+            "box1_gross_distribution": 38000,
+            "box2a_taxable_amount": 38000,
+            "box4_federal_withheld": 0,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": false
+          }
+        ],
+        "interest": 2500,
+        "rrb1099_items": [
+          {
+            "payer_name": "Railroad Retirement Board",
+            "box5_sseb_portion": 10000,
+            "box10_withheld": 0
+          }
+        ]
+      },
+      "correct": {
+        "line6b_taxable_ssa": 0,
+        "line11_agi": 40500,
+        "line15_taxable_income": 9000,
+        "line24_total_tax": 900,
+        "line37_amount_owed": 900
+      },
+      "notes": "IRS Pub 17 Example 3 (p. 64–65): Jamie received RRB-1099 with $10,000 SSEB. Jessie has fully taxable pension $38,000. Interest $2,500. Pub 17 example states none of their SSEB is taxable. AGI = $38,000 + $2,500 = $40,500 (SSEB excluded). MFJ standard deduction = $31,500. Taxable income = $40,500 − $31,500 = $9,000. Tax from 2025 Tax Table (MFJ, $9,000): $900 (10% × $9,000, entirely in 10% bracket). No withholding stated → amount_owed = total_tax."
+    },
+    {
+      "description": "Married filing jointly: tax table worked example — IRS explicitly states taxable income $25,300 yields tax of $2,562",
+      "source": "IRS Pub 17 TY2025, 2025 Tax Table sample example, p. 111 (Tax Table chapter)",
+      "year": 2025,
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 56800,
+            "box2_fed_withheld": 4000,
+            "box3_ss_wages": 56800,
+            "box4_ss_withheld": 3522,
+            "box5_medicare_wages": 56800,
+            "box6_medicare_withheld": 824
+          }
+        ]
+      },
+      "correct": {
+        "line11_agi": 56800,
+        "line15_taxable_income": 25300,
+        "line16_tax": 2562,
+        "line24_total_tax": 2562,
+        "line33_total_payments": 4000,
+        "line35a_refund": 1438,
+        "line37_amount_owed": 0
+      },
+      "notes": "IRS Pub 17 p. 111 Tax Table explicitly states: 'A married couple... taxable income on Form 1040, line 15, is $25,300. Next, they find the $25,300–$25,350 taxable income line... the tax is $2,562.' This is IRS-provided ground truth for line 16 tax. MFJ standard deduction = $31,500, so AGI = $25,300 + $31,500 = $56,800. Wages set to $56,800 to produce this AGI exactly. Withholding $4,000 assumed for refund illustration. Refund = $4,000 − $2,562 = $1,438."
+    },
+    {
+      "description": "Married filing jointly: Owen and Sophia joint return — IRS explicitly provides joint taxable income $48,500 and joint tax $5,346",
+      "source": "IRS Pub 17 TY2025, Chapter 4: Tax Withholding and Estimated Tax, estimated tax example, p. 41",
+      "year": 2025,
+      "filing_status": "mfj",
+      "inputs": {
+        "general": {
+          "filing_status": "mfj"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 80000,
+            "box2_fed_withheld": 5346,
+            "box3_ss_wages": 80000,
+            "box4_ss_withheld": 4960,
+            "box5_medicare_wages": 80000,
+            "box6_medicare_withheld": 1160
+          }
+        ]
+      },
+      "correct": {
+        "line11_agi": 80000,
+        "line15_taxable_income": 48500,
+        "line16_tax": 5346,
+        "line24_total_tax": 5346,
+        "line33_total_payments": 5346,
+        "line35a_refund": 0,
+        "line37_amount_owed": 0
+      },
+      "notes": "IRS Pub 17 p. 41 explicitly states Owen and Sophia's joint return shows 'taxable income of $48,500 and tax of $5,346' for 2025. This is IRS-provided ground truth for line 15 and line 16/24. MFJ standard deduction $31,500 → AGI = $48,500 + $31,500 = $80,000. Wages set to $80,000. Withholding set equal to tax for break-even illustration. Tax from IRS Rate Schedule Y-1: $2,385 + 12% × ($48,500 − $23,850) = $2,385 + $2,958 = $5,343 → IRS Tax Table rounds to $5,346."
+    },
+    {
+      "description": "Single filer over 65 — age-enhanced standard deduction; pension income with small Social Security partially taxable",
+      "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction age 65+ single = $17,750 (p. 95); SSA taxable portion rules Chapter 7 p. 63; base amount $25,000 single",
       "year": 2025,
       "filing_status": "single",
       "inputs": {
         "general": {
           "filing_status": "single",
-          "taxpayer_first_name": "Dorothy",
-          "taxpayer_last_name": "Walsh",
-          "taxpayer_dob": "1950-03-12",
-          "taxpayer_age_65_or_older": true,
-          "address_city": "Phoenix",
-          "address_state": "AZ",
-          "address_zip": "85001"
+          "taxpayer_age_65_or_older": true
         },
         "f1099r_items": [
           {
-            "payer_name": "Fidelity Retirement Services",
-            "box1_gross_distribution": 22000,
-            "box2a_taxable_amount": 22000,
+            "payer_name": "Pension Fund",
+            "box1_gross_distribution": 20000,
+            "box2a_taxable_amount": 20000,
             "box4_federal_withheld": 1500,
             "box7_distribution_code": "7",
             "box7_ira_simple_indicator": false
@@ -77,80 +208,62 @@
         "ssa1099_items": [
           {
             "payer_name": "Social Security Administration",
-            "box5_net_benefits": 18000
+            "box5_net_benefits": 12000
           }
         ]
       },
       "correct": {
-        "line11_agi": 25000,
-        "line15_taxable_income": 7250,
-        "line24_total_tax": 725,
+        "line6b_taxable_ssa": 500,
+        "line11_agi": 20500,
+        "line15_taxable_income": 2750,
+        "line24_total_tax": 275,
         "line33_total_payments": 1500,
-        "line35a_refund": 775,
+        "line35a_refund": 1225,
         "line37_amount_owed": 0
       },
-      "notes": "Provisional income = $22,000 pension + $9,000 (50% of SSA) = $31,000. Between $25,000–$34,000 thresholds: taxable SSA = 50% × ($31,000 − $25,000) = $3,000. AGI = $22,000 + $3,000 = $25,000. Age 65+ single standard deduction = $15,750 + $2,000 = $17,750. Taxable income = $7,250. Tax = 10% × $7,250 = $725. No 10% penalty (code 7)."
+      "notes": "Single, age 65+. Standard deduction from Pub 17 Table 10-2 (p. 95): 1 box checked (born before Jan 2, 1961) → $17,750. Provisional income = $20,000 + $6,000 (50% of $12,000 SSA) = $26,000. Single base amount = $25,000. $26,000 > $25,000 → Worksheet 7-1: taxable SSA = 50% × ($26,000 − $25,000) = $500. AGI = $20,000 + $500 = $20,500. Taxable income = $20,500 − $17,750 = $2,750. Tax = 10% × $2,750 = $275 (from Tax Table, single, $2,750 range). Withholding $1,500. Refund = $1,500 − $275 = $1,225."
     },
     {
-      "description": "Single filer with W-2 wages and Roth IRA conversion (1099-R code 2) — taxable but no 10% early distribution penalty",
-      "source": "IRS VITA Pub 4491 TY2025, Retirement Income lesson (ch. 11, p. 11-8 to 11-11); Roth conversion taxable per IRC §408A(d)(3); distribution code 2 exempts §72(t) penalty; IRS Pub 590-B",
+      "description": "Married filing jointly both over 65 — standard deduction with two age boxes checked; pension and interest income only",
+      "source": "IRS Pub 17 TY2025, Table 10-2 standard deduction MFJ with 2 boxes checked = $33,100 (p. 95); 2025 Tax Table p. 111",
       "year": 2025,
-      "filing_status": "single",
+      "filing_status": "mfj",
       "inputs": {
         "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Janet",
-          "taxpayer_last_name": "Flores",
-          "taxpayer_dob": "1985-11-20",
-          "address_city": "Denver",
-          "address_state": "CO",
-          "address_zip": "80201"
+          "filing_status": "mfj",
+          "taxpayer_age_65_or_older": true,
+          "spouse_age_65_or_older": true
         },
-        "w2_items": [
-          {
-            "box1_wages": 45000,
-            "box2_fed_withheld": 4000,
-            "box3_ss_wages": 45000,
-            "box4_ss_withheld": 2790,
-            "box5_medicare_wages": 45000,
-            "box6_medicare_withheld": 653
-          }
-        ],
         "f1099r_items": [
           {
-            "payer_name": "Vanguard Financial",
-            "box1_gross_distribution": 15000,
-            "box2a_taxable_amount": 15000,
-            "box4_federal_withheld": 1500,
-            "box7_distribution_code": "2",
-            "box7_ira_simple_indicator": true
+            "payer_name": "Pension Fund",
+            "box1_gross_distribution": 42000,
+            "box2a_taxable_amount": 42000,
+            "box4_federal_withheld": 3000,
+            "box7_distribution_code": "7",
+            "box7_ira_simple_indicator": false
           }
-        ]
+        ],
+        "interest": 1500
       },
       "correct": {
-        "line11_agi": 60000,
-        "line15_taxable_income": 44250,
-        "line24_total_tax": 5071.50,
-        "line33_total_payments": 5500,
-        "line35a_refund": 428.50,
+        "line11_agi": 43500,
+        "line15_taxable_income": 10400,
+        "line24_total_tax": 1040,
+        "line33_total_payments": 3000,
+        "line35a_refund": 1960,
         "line37_amount_owed": 0
       },
-      "notes": "Roth conversion: $15,000 fully taxable (no basis), no 10% penalty because distribution code 2 (early distribution exception applies). AGI = $45,000 + $15,000 = $60,000. Standard deduction = $15,750. Taxable income = $44,250. Tax = 10% × $11,925 + 12% × $32,325 = $1,192.50 + $3,879 = $5,071.50. Total payments = $4,000 + $1,500 = $5,500."
+      "notes": "MFJ both age 65+. Standard deduction from Pub 17 Table 10-2 (p. 95): 2 boxes checked, MFJ → $31,500 base + $1,600 × 2 = $33,100. AGI = $42,000 + $1,500 = $43,500. Taxable income = $43,500 − $33,100 = $10,400. Tax = 10% × $10,400 = $1,040 (all taxable income in 10% bracket since $10,400 < $23,850 MFJ 10% ceiling). Withholding $3,000. Refund = $3,000 − $1,040 = $1,960."
     },
     {
-      "description": "Single filer with W-2 wages and Schedule E rental income (net profit, activity type A active participation)",
-      "source": "IRS VITA Pub 4491 TY2025, Schedule K-1 and Rental Income lesson (ch. 12, p. 12-1 to 12-9); rental income on Schedule E per IRC §61, §212, §469; passive activity — active participation allows up to $25,000 loss allowance (income positive here so no limitation applies)",
+      "description": "Married filing jointly: installment sale gain at 0% LTCG rate — gain from sale of investment property held over 1 year, recognized pro-rata in year of receipt",
+      "source": "IRS Pub 17 TY2025, Chapter 8: Other Income (p. 67–68, installment sales); Form 6252; 2025 LTCG rates (0% for MFJ taxable income ≤ $96,700); 2025 Tax Table",
       "year": 2025,
-      "filing_status": "single",
+      "filing_status": "mfj",
       "inputs": {
         "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Kevin",
-          "taxpayer_last_name": "Ortega",
-          "taxpayer_dob": "1979-04-08",
-          "address_city": "Austin",
-          "address_state": "TX",
-          "address_zip": "78701"
+          "filing_status": "mfj"
         },
         "w2_items": [
           {
@@ -162,301 +275,181 @@
             "box6_medicare_withheld": 798
           }
         ],
-        "schedule_e_items": [
-          {
-            "tsj": "taxpayer",
-            "property_description": "123 Oak Lane rental property",
-            "property_type": 1,
-            "activity_type": "A",
-            "fair_rental_days": 365,
-            "personal_use_days": 0,
-            "rent_income": 18000,
-            "form_1099_payments_made": false,
-            "expense_mortgage_interest": 5500,
-            "expense_taxes": 2400,
-            "expense_insurance": 900,
-            "expense_repairs": 600,
-            "expense_depreciation": 3000
-          }
-        ]
+        "other_income": {
+          "installment_sale_ltcg": 8000
+        }
       },
       "correct": {
-        "line11_agi": 60600,
-        "line15_taxable_income": 44850,
-        "line24_total_tax": 5143.50,
+        "line11_agi": 63000,
+        "line15_taxable_income": 31500,
+        "line24_total_tax": 2350,
         "line33_total_payments": 5000,
-        "line35a_refund": 0,
-        "line37_amount_owed": 143.50
-      },
-      "notes": "Schedule E net income = $18,000 − ($5,500 + $2,400 + $900 + $600 + $3,000) = $18,000 − $12,400 = $5,600. AGI = $55,000 + $5,600 = $60,600. Standard deduction = $15,750. Taxable income = $44,850. Tax = 10% × $11,925 + 12% × $32,925 = $1,192.50 + $3,951 = $5,143.50. No SE tax (rental income not self-employment)."
-    },
-    {
-      "description": "Single filer with disability pension income (1099-R code 3) — treated as wages because taxpayer is below minimum retirement age",
-      "source": "IRS VITA Pub 4491 TY2025, Retirement Income lesson (ch. 11, p. 11-9 to 11-10); disability pension below minimum retirement age treated as wages per IRC §105(d) transition; distribution code 3 = disability; reported on Form 1040 line 1a as wages",
-      "year": 2025,
-      "filing_status": "single",
-      "inputs": {
-        "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Annie",
-          "taxpayer_last_name": "Johansson",
-          "taxpayer_dob": "1983-09-25",
-          "address_city": "Milwaukee",
-          "address_state": "WI",
-          "address_zip": "53201"
-        },
-        "f1099r_items": [
-          {
-            "payer_name": "Transport Workers Pension Fund",
-            "box1_gross_distribution": 28000,
-            "box2a_taxable_amount": 28000,
-            "box4_federal_withheld": 2000,
-            "box7_distribution_code": "3",
-            "box7_ira_simple_indicator": false
-          }
-        ]
-      },
-      "correct": {
-        "line11_agi": 28000,
-        "line15_taxable_income": 12250,
-        "line24_total_tax": 1231.50,
-        "line33_total_payments": 2000,
-        "line35a_refund": 768.50,
+        "line35a_refund": 2650,
         "line37_amount_owed": 0
       },
-      "notes": "Disability pension code 3: taxpayer age 42, below employer minimum retirement age — disability income treated as wages on Form 1040 line 1a (not pension line). AGI = $28,000. Standard deduction = $15,750. Taxable income = $12,250. Tax = 10% × $11,925 + 12% × $325 = $1,192.50 + $39 = $1,231.50."
+      "notes": "Installment sale on property held >1 year → LTCG $8,000. MFJ 2025: 0% LTCG rate applies when total taxable income ≤ $96,700. Taxable income $31,500 < $96,700, so LTCG taxed at 0%. AGI = $55,000 + $8,000 = $63,000. Standard deduction MFJ = $31,500. Taxable income = $31,500. Ordinary income portion = $31,500 − $8,000 LTCG = $23,500. MFJ 10% bracket ceiling $23,850. Tax on $23,500 ordinary = 10% × $23,500 = $2,350. LTCG tax = $0. Total tax = $2,350. Withholding $5,000. Refund = $2,650. Pub 17 p. 67–68 discusses installment sale rules; gain character from original asset."
     },
     {
-      "description": "Single filer with W-2 wages and 1099-MISC box 3 prizes and awards (game show winnings)",
-      "source": "IRS VITA Pub 4491 TY2025, Other Income lesson; prizes and awards taxable under IRC §74; Form 1099-MISC box 3 other income reported on Schedule 1 line 8z; IRS Pub 525",
+      "description": "Single filer: cancellation of debt income — creditor forgives $6,000 student loan outside education exclusion, amount is taxable income",
+      "source": "IRS Pub 17 TY2025, Chapter 8: Other Income, Canceled Debts section p. 68–70; Form 1099-C; taxable COD income under IRC §61(a)(12); student loan cancellation NOT exempt if not for service/qualifying program per IRC §108(f)",
       "year": 2025,
       "filing_status": "single",
       "inputs": {
         "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Sandra",
-          "taxpayer_last_name": "Kim",
-          "taxpayer_dob": "1987-02-14",
-          "address_city": "Los Angeles",
-          "address_state": "CA",
-          "address_zip": "90001"
+          "filing_status": "single"
         },
         "w2_items": [
           {
-            "box1_wages": 48000,
-            "box2_fed_withheld": 4800,
-            "box3_ss_wages": 48000,
-            "box4_ss_withheld": 2976,
-            "box5_medicare_wages": 48000,
-            "box6_medicare_withheld": 696
+            "box1_wages": 38000,
+            "box2_fed_withheld": 3200,
+            "box3_ss_wages": 38000,
+            "box4_ss_withheld": 2356,
+            "box5_medicare_wages": 38000,
+            "box6_medicare_withheld": 551
           }
         ],
-        "f1099m_items": [
-          {
-            "payer_name": "Sunshine Game Show Productions",
-            "payer_tin": "951234567",
-            "recipient_tin": "987654321",
-            "box3_other_income": 5000,
-            "box3_other_income_routing": "agi_aggregator"
-          }
-        ]
-      },
-      "correct": {
-        "line11_agi": 53000,
-        "line15_taxable_income": 37250,
-        "line24_total_tax": 4231.50,
-        "line33_total_payments": 4800,
-        "line35a_refund": 568.50,
-        "line37_amount_owed": 0
-      },
-      "notes": "1099-MISC box 3 prizes/awards $5,000 added to income via Schedule 1 line 8z. No federal withholding on prizes. AGI = $48,000 + $5,000 = $53,000. Standard deduction = $15,750. Taxable income = $37,250. Tax = 10% × $11,925 + 12% × $25,325 = $1,192.50 + $3,039 = $4,231.50."
-    },
-    {
-      "description": "Single filer with W-2 wages and Schedule H household employment taxes — nanny wages of $12,000",
-      "source": "IRS VITA Pub 4491 TY2025; Schedule H household employment taxes per IRC §3101–§3111; FUTA §3301; household employee threshold $2,700 for TY2025; employer and employee FICA each 7.65% × $12,000 = $918; FUTA net 0.6% × $7,000 = $42",
-      "year": 2025,
-      "filing_status": "single",
-      "inputs": {
-        "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Patricia",
-          "taxpayer_last_name": "Chang",
-          "taxpayer_dob": "1980-06-30",
-          "address_city": "Chicago",
-          "address_state": "IL",
-          "address_zip": "60601"
-        },
-        "w2_items": [
-          {
-            "box1_wages": 60000,
-            "box2_fed_withheld": 6500,
-            "box3_ss_wages": 60000,
-            "box4_ss_withheld": 3720,
-            "box5_medicare_wages": 60000,
-            "box6_medicare_withheld": 870
-          }
-        ],
-        "household_wages_items": [
-          {
-            "wages_received": 12000,
-            "federal_income_tax_withheld": 0,
-            "social_security_wages": 12000,
-            "medicare_wages": 12000,
-            "employer_name": "Patricia Chang",
-            "ss_tax_withheld": 744,
-            "medicare_tax_withheld": 174
-          }
-        ]
-      },
-      "correct": {
-        "line11_agi": 60000,
-        "line15_taxable_income": 44250,
-        "line24_total_tax": 6949.50,
-        "line33_total_payments": 6500,
-        "line35a_refund": 0,
-        "line37_amount_owed": 449.50
-      },
-      "notes": "Schedule H: employer SS = 6.2% × $12,000 = $744; employer Medicare = 1.45% × $12,000 = $174; employee SS = $744; employee Medicare = $174; FUTA = 0.6% × $7,000 = $42. Schedule H total = $1,878. Income tax on $44,250 taxable income = $1,192.50 + 12% × $32,325 = $5,071.50. Total tax = $5,071.50 + $1,878 = $6,949.50."
-    },
-    {
-      "description": "Single filer with W-2 wages and post-2017 NOL carryforward reducing taxable income (80% limit applies)",
-      "source": "IRS VITA Pub 4491 TY2025; NOL carryforward per IRC §172(a)(2); post-2017 NOLs limited to 80% of taxable income (before NOL deduction); carried forward indefinitely with no expiration; Schedule 1 line 8a",
-      "year": 2025,
-      "filing_status": "single",
-      "inputs": {
-        "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Brian",
-          "taxpayer_last_name": "Sullivan",
-          "taxpayer_dob": "1972-12-01",
-          "address_city": "Portland",
-          "address_state": "OR",
-          "address_zip": "97201"
-        },
-        "w2_items": [
-          {
-            "box1_wages": 40000,
-            "box2_fed_withheld": 3500,
-            "box3_ss_wages": 40000,
-            "box4_ss_withheld": 2480,
-            "box5_medicare_wages": 40000,
-            "box6_medicare_withheld": 580
-          }
-        ],
-        "nol_carryforward_items": [
-          {
-            "year": 2023,
-            "nol_amount": 20000,
-            "nol_type": "post2017"
-          }
-        ]
-      },
-      "correct": {
-        "line11_agi": 40000,
-        "line15_taxable_income": 4850,
-        "line24_total_tax": 485,
-        "line33_total_payments": 3500,
-        "line35a_refund": 3015,
-        "line37_amount_owed": 0
-      },
-      "notes": "AGI = $40,000. Standard deduction = $15,750. Taxable income before NOL = $24,250. Post-2017 NOL 80% limit = 0.80 × $24,250 = $19,400. NOL deduction = min($20,000, $19,400) = $19,400. Taxable income after NOL = $24,250 − $19,400 = $4,850. Tax = 10% × $4,850 = $485. Remaining NOL carryforward = $600."
-    },
-    {
-      "description": "Single filer with W-2 wages and alimony received as income (pre-2019 divorce decree — taxable to recipient)",
-      "source": "IRS VITA Pub 4491 TY2025, Adjustments to Income lesson (ch. 17, p. 17-1); alimony received under pre-2019 decrees taxable to recipient per IRC §71 (as in effect before TCJA); reported on Schedule 1 line 2a; divorce instrument executed before Jan. 1, 2019",
-      "year": 2025,
-      "filing_status": "single",
-      "inputs": {
-        "general": {
-          "filing_status": "single",
-          "taxpayer_first_name": "Christine",
-          "taxpayer_last_name": "Baldwin",
-          "taxpayer_dob": "1977-08-22",
-          "address_city": "Atlanta",
-          "address_state": "GA",
-          "address_zip": "30301"
-        },
-        "w2_items": [
-          {
-            "box1_wages": 32000,
-            "box2_fed_withheld": 2200,
-            "box3_ss_wages": 32000,
-            "box4_ss_withheld": 1984,
-            "box5_medicare_wages": 32000,
-            "box6_medicare_withheld": 464
-          }
-        ],
-        "schedule1_other_income": {
-          "line2a_alimony_received": 12000,
-          "alimony_divorce_agreement_date": "2017-06-15"
+        "other_income": {
+          "cancellation_of_debt": 6000,
+          "cod_form": "1099-C"
         }
       },
       "correct": {
         "line11_agi": 44000,
         "line15_taxable_income": 28250,
         "line24_total_tax": 3151.50,
-        "line33_total_payments": 2200,
-        "line35a_refund": 0,
-        "line37_amount_owed": 951.50
+        "line33_total_payments": 3200,
+        "line35a_refund": 48.50,
+        "line37_amount_owed": 0
       },
-      "notes": "Alimony received $12,000 from pre-2019 divorce instrument — fully taxable to recipient (Schedule 1 line 2a). AGI = $32,000 + $12,000 = $44,000. Standard deduction = $15,750. Taxable income = $28,250. Tax = 10% × $11,925 + 12% × $16,325 = $1,192.50 + $1,959 = $3,151.50."
+      "notes": "Pub 17 Chapter 8, Canceled Debts (p. 68–70): canceled debt is generally includible in gross income (Form 1099-C box 2). The $6,000 is added on Schedule 1 line 8c. AGI = $38,000 + $6,000 = $44,000. Standard deduction single = $15,750. Taxable income = $28,250. Tax from 2025 Rate Schedule X: 10% × $11,925 = $1,192.50; 12% × ($28,250 − $11,925) = 12% × $16,325 = $1,959. Total = $3,151.50. Withholding $3,200. Refund = $48.50."
     },
     {
-      "description": "Married filing jointly with early IRA distribution (code 1) from non-IRA qualified plan — lower income spouse, exception does NOT apply, penalty assessed",
-      "source": "IRS VITA Pub 4491 TY2025, Retirement Income lesson (ch. 11, p. 11-11); Form 5329 Part I; IRC §72(t); distribution code 1 from 401(k) employer plan; no qualified exception; Pub 575",
+      "description": "Single filer: alimony paid deduction pre-2019 divorce decree reduces AGI — deduction on Schedule 1 line 19a",
+      "source": "IRS Pub 17 TY2025, alimony paid adjustment Schedule 1 line 19a; pre-2019 instruments; IRC §215; 2025 Tax Rate Schedule X (p. 125); standard deduction $15,750 (p. 95)",
       "year": 2025,
-      "filing_status": "mfj",
+      "filing_status": "single",
       "inputs": {
         "general": {
-          "filing_status": "mfj",
-          "taxpayer_first_name": "Robert",
-          "taxpayer_last_name": "Vasquez",
-          "spouse_first_name": "Maria",
-          "spouse_last_name": "Vasquez",
-          "taxpayer_dob": "1988-03-10",
-          "spouse_dob": "1990-05-17",
-          "address_city": "Houston",
-          "address_state": "TX",
-          "address_zip": "77001"
+          "filing_status": "single"
         },
         "w2_items": [
           {
-            "box1_wages": 65000,
-            "box2_fed_withheld": 6000,
-            "box3_ss_wages": 65000,
-            "box4_ss_withheld": 4030,
-            "box5_medicare_wages": 65000,
-            "box6_medicare_withheld": 943
-          },
-          {
-            "box1_wages": 28000,
-            "box2_fed_withheld": 1800,
-            "box3_ss_wages": 28000,
-            "box4_ss_withheld": 1736,
-            "box5_medicare_wages": 28000,
-            "box6_medicare_withheld": 406
+            "box1_wages": 75000,
+            "box2_fed_withheld": 8000,
+            "box3_ss_wages": 75000,
+            "box4_ss_withheld": 4650,
+            "box5_medicare_wages": 75000,
+            "box6_medicare_withheld": 1088
           }
         ],
-        "f1099r_items": [
+        "alimony_paid": {
+          "amount": 18000,
+          "divorce_agreement_date": "2016-08-01"
+        }
+      },
+      "correct": {
+        "line11_agi": 57000,
+        "line15_taxable_income": 41250,
+        "line24_total_tax": 4711.50,
+        "line33_total_payments": 8000,
+        "line35a_refund": 3288.50,
+        "line37_amount_owed": 0
+      },
+      "notes": "Alimony paid $18,000 deduction (pre-2019 divorce, Schedule 1 line 19a). AGI = $75,000 − $18,000 = $57,000. Single standard deduction (Pub 17 Table 10-1, p. 95) = $15,750. Taxable income = $41,250. Tax using 2025 Rate Schedule X (Pub 17 p. 125): 10% × $11,925 = $1,192.50; 12% × ($41,250 − $11,925) = 12% × $29,325 = $3,519. Total = $4,711.50. Withholding = $8,000. Refund = $3,288.50."
+    },
+    {
+      "description": "Single filer: hobby loss limitation — income from hobby fully includible, but related expenses not deductible (post-TCJA no misc itemized deductions)",
+      "source": "IRS Pub 17 TY2025, Chapter 12: Other Itemized Deductions, Hobby Expenses section p. 102; hobby loss rules IRC §183; post-TCJA: hobby expenses not deductible as misc itemized deduction; all hobby income taxable",
+      "year": 2025,
+      "filing_status": "single",
+      "inputs": {
+        "general": {
+          "filing_status": "single"
+        },
+        "w2_items": [
           {
-            "payer_name": "National Retirement Plan Services",
-            "box1_gross_distribution": 12000,
-            "box2a_taxable_amount": 12000,
-            "box4_federal_withheld": 1200,
-            "box7_distribution_code": "1",
-            "box7_ira_simple_indicator": false
+            "box1_wages": 42000,
+            "box2_fed_withheld": 4000,
+            "box3_ss_wages": 42000,
+            "box4_ss_withheld": 2604,
+            "box5_medicare_wages": 42000,
+            "box6_medicare_withheld": 609
+          }
+        ],
+        "other_income": {
+          "hobby_income": 3500
+        }
+      },
+      "correct": {
+        "line11_agi": 45500,
+        "line15_taxable_income": 29750,
+        "line24_total_tax": 3331.50,
+        "line33_total_payments": 4000,
+        "line35a_refund": 668.50,
+        "line37_amount_owed": 0
+      },
+      "notes": "Pub 17 p. 102: hobby expenses are miscellaneous itemized deductions no longer allowed post-TCJA. All hobby income must be reported in full (Schedule 1 line 8j). Hobby income $3,500 added to income; zero offset for expenses. AGI = $42,000 + $3,500 = $45,500. Standard deduction = $15,750. Taxable income = $29,750. Tax from Rate Schedule X: $1,192.50 + 12% × ($29,750 − $11,925) = $1,192.50 + 12% × $17,825 = $1,192.50 + $2,139 = $3,331.50. Withholding $4,000. Refund = $668.50."
+    },
+    {
+      "description": "Head of household: standard deduction $23,625 with one qualifying child and Child Tax Credit",
+      "source": "IRS Pub 17 TY2025, Table 10-1 HOH standard deduction $23,625 (p. 95); Chapter 14 CTC $2,000 per child (p. 108); 2025 Tax Rate Schedule Z HOH (p. 125)",
+      "year": 2025,
+      "filing_status": "hoh",
+      "inputs": {
+        "general": {
+          "filing_status": "hoh",
+          "qualifying_children": 1
+        },
+        "w2_items": [
+          {
+            "box1_wages": 45000,
+            "box2_fed_withheld": 3500,
+            "box3_ss_wages": 45000,
+            "box4_ss_withheld": 2790,
+            "box5_medicare_wages": 45000,
+            "box6_medicare_withheld": 653
           }
         ]
       },
       "correct": {
-        "line11_agi": 105000,
-        "line15_taxable_income": 73500,
-        "line24_total_tax": 9543,
-        "line33_total_payments": 9000,
-        "line35a_refund": 0,
-        "line37_amount_owed": 543
+        "line11_agi": 45000,
+        "line15_taxable_income": 21375,
+        "line24_total_tax": 225,
+        "line33_total_payments": 3500,
+        "line35a_refund": 3275,
+        "line37_amount_owed": 0
       },
-      "notes": "AGI = $65,000 + $28,000 + $12,000 = $105,000. MFJ standard deduction = $31,500. Taxable income = $73,500. MFJ income tax: 10% × $23,850 = $2,385 + 12% × $49,650 = $5,958; total income tax = $8,343. Early distribution penalty (code 1, 401k non-IRA, no exception) = 10% × $12,000 = $1,200. Total tax = $8,343 + $1,200 = $9,543. Total payments = $6,000 + $1,800 + $1,200 = $9,000. Amount owed = $543."
+      "notes": "HOH standard deduction = $23,625 (Pub 17 Table 10-1, p. 95). Taxable income = $45,000 − $23,625 = $21,375. 2025 HOH Tax Rate Schedule Z (Pub 17 p. 125): 10% × $17,000 = $1,700; 12% × ($21,375 − $17,000) = 12% × $4,375 = $525. Income tax = $2,225. Child Tax Credit: $2,000 per qualifying child (Chapter 14, p. 108) — nonrefundable. $2,225 − $2,000 = $225. No ACTC (CTC fully absorbed into regular tax). Total tax = $225. Withholding $3,500. Refund = $3,275."
+    },
+    {
+      "description": "Married filing separately: Owen's separate return — IRS explicitly provides taxable income $40,100 and tax $4,577",
+      "source": "IRS Pub 17 TY2025, Table 10-1: MFS standard deduction = $15,750 (p. 95); MFS filing restrictions; Owen filing separately: taxable income $40,100, tax confirmed per p. 41",
+      "year": 2025,
+      "filing_status": "mfs",
+      "inputs": {
+        "general": {
+          "filing_status": "mfs"
+        },
+        "w2_items": [
+          {
+            "box1_wages": 55850,
+            "box2_fed_withheld": 5000,
+            "box3_ss_wages": 55850,
+            "box4_ss_withheld": 3463,
+            "box5_medicare_wages": 55850,
+            "box6_medicare_withheld": 810
+          }
+        ]
+      },
+      "correct": {
+        "line11_agi": 55850,
+        "line15_taxable_income": 40100,
+        "line24_total_tax": 4577,
+        "line33_total_payments": 5000,
+        "line35a_refund": 423,
+        "line37_amount_owed": 0
+      },
+      "notes": "Pub 17 p. 41 explicitly states Owen files separately with taxable income $40,100 and tax of $4,577. MFS standard deduction = $15,750 (Table 10-1, p. 95). AGI = $40,100 + $15,750 = $55,850. Tax from 2025 Rate Schedule Y-2 (MFS, Pub 17 p. 125): 10% × $11,925 = $1,192.50; 12% × ($40,100 − $11,925) = 12% × $28,175 = $3,381; total = $4,573.50 → IRS Tax Table rounds to $4,577. IRS explicitly provides $4,577 for Owen's separate return — ground truth from Pub 17 p. 41."
     }
   ]
 }

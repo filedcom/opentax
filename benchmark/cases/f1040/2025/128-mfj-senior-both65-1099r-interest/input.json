@@ -1,0 +1,44 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly both spouses age 65+ with pension and interest income — tests dual senior standard deduction ($33,100 with 2 age boxes checked)",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Raymond",
+          "taxpayer_last_name": "Castillo",
+          "taxpayer_dob": "1948-05-20",
+          "taxpayer_age_65_or_older": true,
+          "spouse_first_name": "Gloria",
+          "spouse_last_name": "Castillo",
+          "spouse_dob": "1950-08-14",
+          "spouse_age_65_or_older": true,
+          "address_city": "Cheyenne",
+          "address_state": "WY",
+          "address_zip": "82001"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Pension Fund",
+        "payer_ein": "56-7890123",
+        "box1_gross_distribution": 42000,
+        "box2a_taxable_amount": 42000,
+        "box4_federal_withheld": 3000,
+        "box7_distribution_code": "7",
+        "box7_ira_simple_indicator": false
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "First National Bank",
+        "box1": 1500
+      }
+    }
+  ]
+}

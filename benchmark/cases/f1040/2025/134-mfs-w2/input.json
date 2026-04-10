@@ -1,0 +1,31 @@
+{
+  "year": 2025,
+  "scenario": "Married filing separately — Owen's separate return with W-2 wages, MFS standard deduction $15,750, taxable income $40,100, tax $4,577",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfs",
+          "taxpayer_first_name": "Owen",
+          "taxpayer_last_name": "Smith",
+          "taxpayer_dob": "1975-06-15",
+          "address_city": "Austin",
+          "address_state": "TX",
+          "address_zip": "78701"
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 55850,
+        "box2_fed_withheld": 5000,
+        "box3_ss_wages": 55850,
+        "box4_ss_withheld": 3463,
+        "box5_medicare_wages": 55850,
+        "box6_medicare_withheld": 810
+      }
+    }
+  ]
+}

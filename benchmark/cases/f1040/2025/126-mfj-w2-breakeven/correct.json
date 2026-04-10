@@ -1,0 +1,14 @@
+{
+  "case": "126-mfj-w2-breakeven",
+  "scenario": "Married filing jointly: Owen and Sophia joint return — IRS explicitly provides joint taxable income $48,500 and joint tax $5,346",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 4: Tax Withholding and Estimated Tax, estimated tax example, p. 41",
+  "correct": {
+    "line11_agi": 80000,
+    "line15_taxable_income": 48500,
+    "line24_total_tax": 5346,
+    "line33_total_payments": 5346,
+    "line35a_refund": 0,
+    "line37_amount_owed": 0
+  }
+}

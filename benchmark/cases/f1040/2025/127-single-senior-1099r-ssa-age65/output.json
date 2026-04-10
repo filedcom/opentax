@@ -1,0 +1,79 @@
+{
+  "returnId": "c04f13f6-0539-4ef5-878a-ae23a51b2636",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 0,
+    "line11_agi": 0,
+    "line15_taxable_income": 0,
+    "line24_total_tax": 0,
+    "line33_total_payments": 0
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f2441",
+    "f8812",
+    "form8880",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "ssa1099",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line6a_ss_gross": [
+      12000,
+      12000
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Ruth",
+    "taxpayer_last_name": "Malone",
+    "taxpayer_dob": "1948-03-15",
+    "taxpayer_age_65_or_older": true,
+    "address_city": "Juneau",
+    "address_state": "AK",
+    "address_zip": "99801",
+    "line11_agi": [
+      0,
+      0
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      17750,
+      17750
+    ],
+    "line15_taxable_income": [
+      0,
+      0
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 0,
+    "line18_total_tax_before_credits": 0,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 0,
+    "line24_total_tax": 0,
+    "line25d_total_withholding": 0,
+    "line33_total_payments": 0,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 17750,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 0,
+    "line35a_refund": 0
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

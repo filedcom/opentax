@@ -1,0 +1,14 @@
+{
+  "case": "122-single-1099r-w2-ssa",
+  "scenario": "Single filer with fully taxable pension, part-time W-2 wages, bank interest, and Social Security benefits — SSA taxable portion via Worksheet 7-1",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 1, p. 63–64; 2025 Tax Table p. 111–122",
+  "correct": {
+    "line6b_taxable_ssa": 2990,
+    "line11_agi": 31980,
+    "line15_taxable_income": 16230,
+    "line24_total_tax": 1709,
+    "line35a_refund": 0,
+    "line37_amount_owed": 1709
+  }
+}

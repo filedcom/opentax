@@ -1,0 +1,112 @@
+{
+  "returnId": "3923d763-33a1-402c-a5c4-68c2ab42b3c2",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 9400,
+    "line9_total_income": 32480,
+    "line11_agi": 32480,
+    "line15_taxable_income": 16730,
+    "line24_total_tax": 1769.1,
+    "line33_total_payments": 0,
+    "line37_amount_owed": 1769.1
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099int",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8880",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "schedule_se",
+    "ssa1099",
+    "standard_deduction",
+    "w2"
+  ],
+  "lines": {
+    "line25a_w2_withheld": [
+      0,
+      0
+    ],
+    "line1a_wages": [
+      9400,
+      9400
+    ],
+    "line5a_pension_gross": [
+      18600,
+      18600
+    ],
+    "line5b_pension_taxable": [
+      18600,
+      18600
+    ],
+    "line6a_ss_gross": [
+      5980,
+      5980
+    ],
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Patricia",
+    "taxpayer_last_name": "Flores",
+    "taxpayer_dob": "1958-07-22",
+    "address_city": "Houston",
+    "address_state": "TX",
+    "address_zip": "77001",
+    "line2b_taxable_interest": [
+      990,
+      990
+    ],
+    "line11_agi": [
+      32480,
+      32480
+    ],
+    "line6b_ss_taxable": [
+      3490,
+      3490
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      15750,
+      15750
+    ],
+    "line15_taxable_income": [
+      16730,
+      16730
+    ],
+    "line16_income_tax": [
+      1769.1,
+      1769.1
+    ],
+    "line1z_total_wages": 9400,
+    "line9_total_income": 32480,
+    "line18_total_tax_before_credits": 1769.1,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 1769.1,
+    "line24_total_tax": 1769.1,
+    "line25d_total_withholding": 0,
+    "line33_total_payments": 0,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line37_amount_owed": 1769.1
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

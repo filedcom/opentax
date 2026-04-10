@@ -1,0 +1,53 @@
+{
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 7: Social Security and Equivalent Railroad Retirement Benefits, Example 3, p. 64–65",
+  "scenario": "Married filing jointly — retired railroad worker (RRB Tier 1 SSEB portion) and government-worker spouse with pension and savings bond interest. SSEB $10,000 is not taxable because provisional income ($40,500 + $5,000 = $45,500) is below the $32,000 MFJ base threshold after applying the worksheet. Note: rrb1099r node used for RRB-1099 SSEB (Tier 1 SS-equivalent); treated identically to Social Security per IRC §86(d)(1).",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Gerald",
+          "taxpayer_last_name": "Hartwell",
+          "taxpayer_dob": "1956-04-22",
+          "taxpayer_age_65_or_older": true,
+          "spouse_first_name": "Pauline",
+          "spouse_last_name": "Hartwell",
+          "spouse_dob": "1958-11-09",
+          "spouse_age_65_or_older": true,
+          "address_city": "Cheyenne",
+          "address_state": "WY",
+          "address_zip": "82001"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "State Government Pension (Pauline)",
+        "payer_ein": "78-9012345",
+        "box1_gross_distribution": 38000,
+        "box2a_taxable_amount": 38000,
+        "box4_federal_withheld": 0,
+        "box7_distribution_code": "7",
+        "box7_ira_simple_indicator": false
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "Western Savings Bank",
+        "box1": 2500
+      }
+    },
+    {
+      "node_type": "rrb1099r",
+      "data": {
+        "payer_name": "Railroad Retirement Board",
+        "box5_sseb_net": 10000,
+        "box7_sseb_withheld": 0
+      }
+    }
+  ]
+}

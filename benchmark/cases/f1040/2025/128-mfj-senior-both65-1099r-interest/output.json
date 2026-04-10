@@ -1,0 +1,103 @@
+{
+  "returnId": "9865b0eb-371f-48d6-8df6-bb1529cf9f3c",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 0,
+    "line9_total_income": 43500,
+    "line11_agi": 43500,
+    "line15_taxable_income": 8800,
+    "line24_total_tax": 880,
+    "line33_total_payments": 3000,
+    "line35a_refund": 2120
+  },
+  "forms": [
+    "agi_aggregator",
+    "eitc",
+    "f1040",
+    "f1099int",
+    "f1099r",
+    "f2441",
+    "f8812",
+    "form6251",
+    "form8880",
+    "form8959",
+    "form8960",
+    "form8962",
+    "form8995",
+    "general",
+    "income_tax_calculation",
+    "schedule1",
+    "schedule_a",
+    "schedule_b",
+    "standard_deduction"
+  ],
+  "lines": {
+    "line5a_pension_gross": [
+      42000,
+      42000
+    ],
+    "line5b_pension_taxable": [
+      42000,
+      42000
+    ],
+    "line25b_withheld_1099": [
+      3000,
+      3000
+    ],
+    "filing_status": "mfj",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
+    "other_dependent_count": 0,
+    "taxpayer_first_name": "Raymond",
+    "taxpayer_last_name": "Castillo",
+    "taxpayer_dob": "1948-05-20",
+    "taxpayer_age_65_or_older": true,
+    "spouse_first_name": "Gloria",
+    "spouse_last_name": "Castillo",
+    "spouse_dob": "1950-08-14",
+    "spouse_age_65_or_older": true,
+    "address_city": "Cheyenne",
+    "address_state": "WY",
+    "address_zip": "82001",
+    "line2b_taxable_interest": [
+      1500,
+      1500
+    ],
+    "line11_agi": [
+      43500,
+      43500
+    ],
+    "line12e_itemized_deductions": [
+      0,
+      0
+    ],
+    "line12a_standard_deduction": [
+      34700,
+      34700
+    ],
+    "line15_taxable_income": [
+      8800,
+      8800
+    ],
+    "line16_income_tax": [
+      880,
+      880
+    ],
+    "line1z_total_wages": 0,
+    "line9_total_income": 43500,
+    "line18_total_tax_before_credits": 880,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 880,
+    "line24_total_tax": 880,
+    "line25d_total_withholding": 3000,
+    "line33_total_payments": 3000,
+    "line10_adjustments": 0,
+    "line14_deductions_qbi_total": 34700,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 2120,
+    "line35a_refund": 2120
+  },
+  "warnings": [
+    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  ]
+}

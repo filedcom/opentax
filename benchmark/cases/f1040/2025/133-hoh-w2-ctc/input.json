@@ -1,0 +1,44 @@
+{
+  "year": 2025,
+  "scenario": "Head of household with one qualifying child — tests HOH standard deduction ($23,625) and Child Tax Credit ($2,000) reducing tax to $225",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "hoh",
+          "taxpayer_first_name": "Morgan",
+          "taxpayer_last_name": "Hayes",
+          "taxpayer_dob": "1985-04-10",
+          "address_city": "Reno",
+          "address_state": "NV",
+          "address_zip": "89501",
+          "hoh_qualifying_person_name": "Lily Hayes",
+          "hoh_qualifying_person_relationship": "daughter",
+          "hoh_paid_more_than_half_home_costs": true,
+          "dependents": [
+            {
+              "first_name": "Lily",
+              "last_name": "Hayes",
+              "dob": "2015-07-22",
+              "relationship": "daughter",
+              "months_in_home": 12,
+              "qualifying_child_for_ctc": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "node_type": "w2",
+      "data": {
+        "box1_wages": 45000,
+        "box2_fed_withheld": 3500,
+        "box3_ss_wages": 45000,
+        "box4_ss_withheld": 2790,
+        "box5_medicare_wages": 45000,
+        "box6_medicare_withheld": 653
+      }
+    }
+  ]
+}

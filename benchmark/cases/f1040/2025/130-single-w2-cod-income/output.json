@@ -1,14 +1,14 @@
 {
-  "returnId": "cd360cb7-50c3-49d4-887b-183c37596fde",
+  "returnId": "50ce8298-debd-47f6-be0f-73f3c5ee5312",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 38000,
     "line9_total_income": 38000,
     "line11_agi": 38000,
-    "line15_taxable_income": 14375,
-    "line24_total_tax": 0,
-    "line33_total_payments": 5775.5,
-    "line35a_refund": 5775.5
+    "line15_taxable_income": 22250,
+    "line24_total_tax": 2431.5,
+    "line33_total_payments": 3200,
+    "line35a_refund": 768.5
   },
   "forms": [
     "agi_aggregator",
@@ -25,7 +25,6 @@
     "general",
     "income_tax_calculation",
     "schedule1",
-    "schedule3",
     "schedule_a",
     "schedule_se",
     "standard_deduction",
@@ -33,24 +32,23 @@
   ],
   "lines": {
     "line25a_w2_withheld": [
-      3000,
-      3000
+      3200,
+      3200
     ],
     "line1a_wages": [
       38000,
       38000
     ],
-    "filing_status": "hoh",
-    "dependent_count": 1,
-    "qualifying_child_tax_credit_count": 1,
+    "filing_status": "single",
+    "dependent_count": 0,
+    "qualifying_child_tax_credit_count": 0,
     "other_dependent_count": 0,
-    "taxpayer_first_name": "River",
-    "taxpayer_last_name": "Brown",
-    "taxpayer_dob": "1989-07-04",
-    "address_city": "Las Vegas",
-    "address_state": "NV",
-    "address_zip": "89101",
-    "hoh_paid_more_than_half_home_costs": true,
+    "taxpayer_first_name": "Morgan",
+    "taxpayer_last_name": "Ellis",
+    "taxpayer_dob": "1990-06-15",
+    "address_city": "Austin",
+    "address_state": "TX",
+    "address_zip": "78701",
     "line11_agi": [
       38000,
       38000
@@ -59,34 +57,31 @@
       0,
       0
     ],
-    "line27_eitc": 2013,
     "line12a_standard_deduction": [
-      23625,
-      23625
+      15750,
+      15750
     ],
     "line15_taxable_income": [
-      14375,
-      14375
+      22250,
+      22250
     ],
     "line16_income_tax": [
-      1437.5,
-      1437.5
+      2431.5,
+      2431.5
     ],
-    "line28_actc": 762.5,
-    "line20_nonrefundable_credits": 1437.5,
     "line1z_total_wages": 38000,
     "line9_total_income": 38000,
-    "line18_total_tax_before_credits": 1437.5,
-    "line21_credits_total": 1437.5,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
-    "line25d_total_withholding": 3000,
-    "line33_total_payments": 5775.5,
+    "line18_total_tax_before_credits": 2431.5,
+    "line21_credits_total": 0,
+    "line22_tax_after_credits": 2431.5,
+    "line24_total_tax": 2431.5,
+    "line25d_total_withholding": 3200,
+    "line33_total_payments": 3200,
     "line10_adjustments": 0,
-    "line14_deductions_qbi_total": 23625,
-    "line32_refundable_credits_total": 2775.5,
-    "line34_overpayment": 5775.5,
-    "line35a_refund": 5775.5
+    "line14_deductions_qbi_total": 15750,
+    "line32_refundable_credits_total": 0,
+    "line34_overpayment": 768.5,
+    "line35a_refund": 768.5
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

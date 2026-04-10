@@ -1,0 +1,14 @@
+{
+  "case": "132-single-w2-hobby-income",
+  "scenario": "Single filer: hobby income fully includible, no deduction for hobby expenses (post-TCJA IRC §183 limitation)",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 12: Other Itemized Deductions, Hobby Expenses section p. 102; hobby loss rules IRC §183; post-TCJA: hobby expenses not deductible as misc itemized deduction",
+  "correct": {
+    "line11_agi": 45500,
+    "line15_taxable_income": 29750,
+    "line24_total_tax": 3331.50,
+    "line33_total_payments": 4000,
+    "line35a_refund": 668.50,
+    "line37_amount_owed": 0
+  }
+}

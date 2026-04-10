@@ -1,0 +1,14 @@
+{
+  "case": "130-single-w2-cod-income",
+  "scenario": "Single filer with W-2 wages $38,000 and 1099-C cancellation of debt income $6,000 (taxable student loan forgiveness outside education exclusion)",
+  "year": 2025,
+  "source": "IRS Pub 17 TY2025, Chapter 8: Other Income, Canceled Debts section p. 68–70; Form 1099-C. All values IRS-stated, none computed by agent.",
+  "correct": {
+    "line11_agi": 44000,
+    "line15_taxable_income": 28250,
+    "line24_total_tax": 3151.50,
+    "line33_total_payments": 3200,
+    "line35a_refund": 48.50,
+    "line37_amount_owed": 0
+  }
+}

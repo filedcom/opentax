@@ -1,0 +1,60 @@
+{
+  "year": 2025,
+  "scenario": "Married filing jointly — retired taxpayer with fully taxable pension and Social Security benefits. SSA none taxable because provisional income below $32,000 MFJ threshold. IRA deduction reduces AGI to $14,750. MFJ standard deduction exceeds AGI, so taxable income and total tax are zero.",
+  "forms": [
+    {
+      "node_type": "start",
+      "data": {
+        "general": {
+          "filing_status": "mfj",
+          "taxpayer_first_name": "Gerald",
+          "taxpayer_last_name": "Watkins",
+          "taxpayer_dob": "1952-04-22",
+          "taxpayer_age_65_or_older": true,
+          "spouse_first_name": "Patricia",
+          "spouse_last_name": "Watkins",
+          "spouse_dob": "1954-09-11",
+          "spouse_age_65_or_older": true,
+          "address_city": "Houston",
+          "address_state": "TX",
+          "address_zip": "77002"
+        }
+      }
+    },
+    {
+      "node_type": "f1099r",
+      "data": {
+        "payer_name": "Employer Pension",
+        "box1_gross_distribution": 15500,
+        "box2a_taxable_amount": 15500,
+        "box4_federal_withheld": 0,
+        "box7_distribution_code": "7"
+      }
+    },
+    {
+      "node_type": "f1099int",
+      "data": {
+        "payer_name": "First Community Bank",
+        "box1": 250
+      }
+    },
+    {
+      "node_type": "ssa1099",
+      "data": {
+        "payer_name": "Social Security Administration",
+        "box3_gross_benefits": 5600,
+        "box6_federal_withheld": 0
+      }
+    },
+    {
+      "node_type": "ira_deduction_worksheet",
+      "data": {
+        "filing_status": "mfj",
+        "magi": 15750,
+        "ira_contribution": 1000,
+        "active_participant": false,
+        "spouse_active_participant": false
+      }
+    }
+  ]
+}
