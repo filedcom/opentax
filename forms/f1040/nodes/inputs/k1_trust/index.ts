@@ -61,6 +61,11 @@ export const itemSchema = z.object({
   // Box 8 — Other rental income/loss → Schedule E → Schedule 1 line 5
   box8_other_rental: z.number().optional(),
 
+  // Box 9 — Directly apportioned deductions (codes A–B)
+  // Deductions allocated directly to the beneficiary (e.g. depreciation, depletion).
+  // Reduce gross income of the same character; typically Schedule E or Schedule A.
+  box9_directly_apportioned_deductions: z.number().nonnegative().optional().describe("Box 9 — Directly apportioned deductions"),
+
   // Box 10 — Estate tax deduction (IRD) — informational; Schedule A line 16
   box10_estate_tax_deduction: z.number().nonnegative().optional(),
 
@@ -69,6 +74,10 @@ export const itemSchema = z.object({
 
   // Box 12 — Alternative minimum tax items (informational; Form 6251)
   box12_amt: z.number().optional(),
+
+  // Box 13 — Credits and credit recapture → applicable credit form
+  // Beneficiary's share of credits passed through from the trust (e.g. foreign tax credit).
+  box13_credits: z.number().nonnegative().optional().describe("Box 13 — Credits and credit recapture"),
 
   // Box 14 — Foreign taxes → Form 1116
   box14_foreign_tax: z.number().nonnegative().optional(),
@@ -222,6 +231,30 @@ function form1116Outputs(items: K1TrustItems): NodeOutput[] {
     );
 }
 
+// box9_directly_apportioned_deductions: deductions allocated directly to the beneficiary
+// (depreciation, depletion, etc.) that reduce income of the same character per IRC §1041.
+// Routed to schedule1 line8z_other_income as a negative adjustment to offset passthrough
+// income, which is the closest available sink until a dedicated schedule_e sink is wired.
+function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
+  const total = items.reduce((sum, item) => sum + (item.box9_directly_apportioned_deductions ?? 0), 0);
+  if (total <= 0) return [];
+  return [output(schedule1, { line8z_other_income: -total })];
+}
+
+// box13_credits: beneficiary's share of trust credits (e.g. foreign tax credit, rehab credit).
+// The most common credit is foreign tax credit (code A). Routed to form_1116.foreign_tax_paid
+// as a simplification — not all box13 credits are foreign tax, but form_1116 is the only
+// credit node currently available in outputNodes.
+function box13CreditsOutputs(items: K1TrustItems): NodeOutput[] {
+  return items
+    .filter((item) => (item.box13_credits ?? 0) > 0)
+    .map((item) =>
+      output(form_1116, {
+        foreign_tax_paid: item.box13_credits!,
+      })
+    );
+}
+
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
@@ -240,6 +273,8 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...scheduleDOutput(limitedItems),
       ...schedule1Output(limitedItems),
       ...form1116Outputs(limitedItems),
+      ...apportionedDeductionOutputs(limitedItems),
+      ...box13CreditsOutputs(limitedItems),
     ];
 
     return { outputs };

@@ -23,6 +23,10 @@ const STUDENT_LOAN_INTEREST_CAP = 2_500; // IRC §221(b)(1)
 export const itemSchema = z.object({
   // Box 1 — Student loan interest received by lender
   box1_student_loan_interest: z.number().nonnegative(),
+  // Box 2 — If checked, box 1 does NOT include loan origination fees paid before September 1, 2004
+  // IRC §221(d)(2): origination fees paid before 9/1/2004 are separately deductible as interest
+  // when this box is checked, taxpayer may have additional deductible interest not captured in box1
+  box2_origination_fees_excluded: z.boolean().optional().describe("If checked, box 1 does not include loan origination fees paid before September 1, 2004"),
   // Optional lender name for identification
   lender_name: z.string().optional(),
 });
@@ -36,6 +40,12 @@ type F1098EItems = F1098EItem[];
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
+// Note: box2_origination_fees_excluded is schema-only — no compute adjustment needed.
+// When box 2 is checked, box1 already EXCLUDES pre-2004 origination fees, meaning
+// the taxpayer may have additional deductible interest the engine cannot recover
+// (the fee amount is not reported anywhere on the form). The field is captured in
+// the schema for user awareness and potential future enrichment; the deduction here
+// is correctly based solely on box1_student_loan_interest as reported.
 function totalInterest(items: F1098EItems): number {
   return items.reduce((sum, item) => sum + item.box1_student_loan_interest, 0);
 }

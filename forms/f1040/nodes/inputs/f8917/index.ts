@@ -12,10 +12,23 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 export const itemSchema = z.object({
   // Total qualified tuition and fees paid to eligible institutions
-  tuition_and_fees_paid: z.number().nonnegative().optional(),
+  tuition_and_fees_paid: z.number().nonnegative().optional()
+    .describe("Total qualified tuition and fees paid (Form 8917 Line 1)"),
   // Student identification (informational only)
-  student_name: z.string().optional(),
-  student_ssn: z.string().optional(),
+  student_name: z.string().optional()
+    .describe("Student name (Form 8917 Column (a))"),
+  student_ssn: z.string().optional()
+    .describe("Student SSN (Form 8917 Column (b))"),
+  // EIN of eligible institution — required to confirm the institution is an eligible
+  // educational institution under IRC §25A(f)(2); relevant for state returns that
+  // still allow the deduction
+  institution_ein: z.string().optional()
+    .describe("Employer identification number of eligible educational institution"),
+  // Academic period during which the student was enrolled — affects whether
+  // payments qualify (must be for an academic period beginning in the tax year
+  // or the first 3 months of the following year; IRC §25A(g)(4))
+  academic_period: z.string().optional()
+    .describe("Academic period for which tuition/fees were paid (e.g., 'Fall 2020', 'Spring 2021')"),
 });
 
 export const inputSchema = z.object({

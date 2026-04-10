@@ -32,6 +32,14 @@ export const itemSchema = z.object({
   repayments_this_year: z.number().nonnegative().optional(),
   // Elect to include all remaining income in current year (instead of 1/3 spreading)
   elect_full_inclusion: z.boolean().optional(),
+  // Whether the distribution was from a Roth IRA — Roth qualified distributions are
+  // tax-free (basis already taxed); affects whether the spreading income applies
+  is_roth_ira: z.boolean().optional()
+    .describe("Distribution was from a Roth IRA (tax-free if qualified; Form 8915-F Part I)"),
+  // Total repayments made in prior tax years (not current year) — reduces the
+  // remaining income balance to avoid double-counting already-repaid amounts
+  repayments_prior_years: z.number().nonnegative().optional()
+    .describe("Total repayments made in all prior tax years (Form 8915-F Part II cumulative)"),
 });
 
 export const inputSchema = z.object({
@@ -43,13 +51,22 @@ type F8915FItems = F8915FItem[];
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Compute the reportable amount for the current year for one item
+// Compute the reportable amount for the current year for one item.
+// When is_roth_ira is true, the distribution is from a qualified Roth IRA and
+// is tax-free — no income is recognized regardless of spreading or repayments.
+// repayments_prior_years reduces the remaining balance so that prior repayments
+// already counted in prior years are not double-counted here.
 function reportableThisYear(item: F8915FItem): number {
+  // Roth IRA qualified distributions are entirely tax-free
+  if (item.is_roth_ira === true) return 0;
+
   const total = item.total_distribution ?? 0;
   const alreadyReported =
     (item.amount_reported_prior_year1 ?? 0) +
     (item.amount_reported_prior_year2 ?? 0);
-  const remaining = Math.max(0, total - alreadyReported);
+  const priorRepayments = item.repayments_prior_years ?? 0;
+  // Remaining income = total less what was already reported and less prior repayments
+  const remaining = Math.max(0, total - alreadyReported - priorRepayments);
 
   if (item.elect_full_inclusion === true) {
     return remaining;

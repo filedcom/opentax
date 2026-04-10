@@ -60,44 +60,45 @@ export enum Box12Code {
 }
 
 const box12EntrySchema = z.object({
-  code: z.nativeEnum(Box12Code),
-  amount: z.number().nonnegative(),
+  code: z.nativeEnum(Box12Code).describe("Box 12 code (see enum for descriptions)"),
+  amount: z.number().nonnegative().describe("Dollar amount for this code"),
 });
 
 const box14EntrySchema = z.object({
-  description: z.string(),
-  amount: z.number().nonnegative(),
-  is_state_sdi_pfml: z.boolean(),
+  description: z.string().describe("Label printed by employer"),
+  amount: z.number().nonnegative().describe("Dollar amount"),
+  is_state_sdi_pfml: z.boolean().describe("True if this entry is state SDI or PFML (deductible on Sch A)"),
 });
 
 // Per-entry schema — one W-2 from one employer. Used by the CLI for per-entry validation.
 export const w2ItemSchema = z.object({
-  box1_wages: z.number().nonnegative(),
-  box2_fed_withheld: z.number().nonnegative(),
-  box3_ss_wages: z.number().nonnegative().optional(),
-  box4_ss_withheld: z.number().nonnegative().optional(),
-  box5_medicare_wages: z.number().nonnegative().optional(),
-  box6_medicare_withheld: z.number().nonnegative().optional(),
-  box7_ss_tips: z.number().nonnegative().optional(),
-  box8_allocated_tips: z.number().nonnegative().optional(),
-  box10_dep_care: z.number().nonnegative().optional(),
-  box11_nonqual_plans: z.number().nonnegative().optional(),
-  box12_entries: z.array(box12EntrySchema).optional(),
-  box13_statutory_employee: z.boolean().optional(),
-  box13_retirement_plan: z.boolean().optional(),
-  box13_third_party_sick: z.boolean().optional(),
-  box14_entries: z.array(box14EntrySchema).optional(),
-  box14b_tipped_code: z.string().optional(),
-  box15_state: z.string().optional(),
-  box16_state_wages: z.number().nonnegative().optional(),
-  box17_state_withheld: z.number().nonnegative().optional(),
-  box19_local_withheld: z.number().nonnegative().optional(),
-  taxpayer_age: z.number().nonnegative().optional(),
+  box1_wages: z.number().nonnegative().describe("Wages, tips, other compensation"),
+  box2_fed_withheld: z.number().nonnegative().describe("Federal income tax withheld"),
+  box3_ss_wages: z.number().nonnegative().optional().describe("Social security wages"),
+  box4_ss_withheld: z.number().nonnegative().optional().describe("Social security tax withheld"),
+  box5_medicare_wages: z.number().nonnegative().optional().describe("Medicare wages and tips"),
+  box6_medicare_withheld: z.number().nonnegative().optional().describe("Medicare tax withheld"),
+  box7_ss_tips: z.number().nonnegative().optional().describe("Social security tips"),
+  box8_allocated_tips: z.number().nonnegative().optional().describe("Allocated tips — routes to Form 4137"),
+  box10_dep_care: z.number().nonnegative().optional().describe("Dependent care benefits — routes to Form 2441"),
+  box11_nonqual_plans: z.number().nonnegative().optional().describe("Nonqualified plans — included in box 1 wages"),
+  box12_entries: z.array(box12EntrySchema).optional().describe("Coded benefit/deferral entries (up to 4 per W-2)"),
+  box13_statutory_employee: z.boolean().optional().describe("Statutory employee — wages go to Schedule C, not line 1a"),
+  box13_retirement_plan: z.boolean().optional().describe("Retirement plan participant — affects IRA deduction phaseout"),
+  box13_third_party_sick: z.boolean().optional().describe("Third-party sick pay — excluded from SE tax"),
+  box14_entries: z.array(box14EntrySchema).optional().describe("Other — employer-labeled items; SDI/PFML deductible on Sch A"),
+  box14b_tipped_code: z.string().optional().describe("Tipped employee code (state use)"),
+  box15_state: z.string().optional().describe("State abbreviation"),
+  box16_state_wages: z.number().nonnegative().optional().describe("State wages, tips, etc."),
+  box17_state_withheld: z.number().nonnegative().optional().describe("State income tax withheld"),
+  box18_local_wages: z.number().nonnegative().optional().describe("Local wages, tips, etc."),
+  box19_local_withheld: z.number().nonnegative().optional().describe("Local income tax withheld"),
+  taxpayer_age: z.number().nonnegative().optional().describe("Taxpayer age — used for retirement contribution limit (catch-up)"),
 });
 
 // Node inputSchema — receives all W-2s for this return as a single array.
 export const inputSchema = z.object({
-  w2s: z.array(w2ItemSchema).min(1),
+  w2s: z.array(w2ItemSchema).min(1).describe("All W-2 forms for this return"),
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;

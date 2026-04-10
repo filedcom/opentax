@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../../aggregation/schedule_d/index.ts";
+import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
@@ -44,6 +45,9 @@ export const transactionSchema = z.object({
   adjustment_amount: z.number().optional(),
   gain_loss: z.number(),
   is_long_term: z.boolean(),
+  // Collectibles flag (IRC §1(h)(5)) — gain is taxable at 28% max rate.
+  // Set when the upstream 1099-B has box3_collectibles=true.
+  collectibles: z.boolean().optional(),
 });
 
 // Executor accumulation pattern: the engine merges repeated NodeOutputs targeting
@@ -65,6 +69,7 @@ export const inputSchema = z.object({
   adjustment_amount: z.number().optional(),
   gain_loss: z.number().optional(),
   is_long_term: z.boolean().optional(),
+  collectibles: z.boolean().optional(),
 });
 
 type Form8949Input = z.infer<typeof inputSchema>;
@@ -101,6 +106,7 @@ function flatFieldsToTransaction(input: Form8949Input): Transaction[] {
       adjustment_amount: input.adjustment_amount,
       gain_loss: input.gain_loss,
       is_long_term: input.is_long_term,
+      collectibles: input.collectibles,
     }];
   }
   return [];
@@ -116,12 +122,22 @@ function routeTransaction(tx: Transaction): NodeOutput {
   return output(schedule_d, { transaction: tx });
 }
 
+// Routes long-term collectibles gains to the 28% Rate Gain Worksheet.
+// Only positive gains are routed (losses don't affect the 28% rate gain worksheet).
+function collectiblesGainOutputs(transactions: Transaction[]): NodeOutput[] {
+  const total = transactions
+    .filter((tx) => tx.collectibles === true && tx.is_long_term && tx.gain_loss > 0)
+    .reduce((sum, tx) => sum + tx.gain_loss, 0);
+  if (total <= 0) return [];
+  return [output(rate_28_gain_worksheet, { collectibles_gain_from_8949: total })];
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form8949IntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8949";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_d]);
+  readonly outputNodes = new OutputNodes([schedule_d, rate_28_gain_worksheet]);
 
   compute(_ctx: NodeContext, rawInput: Form8949Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -134,7 +150,12 @@ class Form8949IntermediateNode extends TaxNode<typeof inputSchema> {
       ...normalizeTransactions(input.transaction),
       ...flatFieldsToTransaction(input),
     ];
-    return { outputs: transactions.map(routeTransaction) };
+    return {
+      outputs: [
+        ...transactions.map(routeTransaction),
+        ...collectiblesGainOutputs(transactions),
+      ],
+    };
   }
 }
 
