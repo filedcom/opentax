@@ -30,7 +30,7 @@
     "estimated_tax_payments": 0,
     "fed_withheld": 40398.22,
     "foreign_tax_paid": 0,
-    "itemized_deductions": 45915.15
+    "itemized_deductions": 56199.59
   },
   "correct": {
     "line9_total_income": 295230.09,

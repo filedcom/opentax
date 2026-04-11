@@ -28,7 +28,7 @@
     "eitc_children": 0,
     "dep_care_expenses": 0,
     "estimated_tax_payments": 0,
-    "fed_withheld": 18381.87,
+    "fed_withheld": 17590,
     "foreign_tax_paid": 56.0,
     "itemized_deductions": 0
   },
@@ -53,8 +53,8 @@
     "actc": 0,
     "excess_ss_credit": 0.0,
     "line24_total_tax": 36278.82,
-    "line33_total_payments": 18381.87,
+    "line33_total_payments": 17590,
     "line35a_refund": 0,
-    "line37_amount_owed": 17896.95
+    "line37_amount_owed": 18688.82
   }
 }

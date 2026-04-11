@@ -30,10 +30,22 @@
       "goal": "Ensure all benchmark test cases in benchmark/cases/f1040/2025/ are correct — inputs and expected outputs represent accurate 2025 tax year 1040 calculations. Verify via web search and manual calculation.",
       "status": "running",
       "created_at": "2026-04-12T00:00:00Z",
-      "global_cycle": 0,
+      "global_cycle": 1,
       "global_clean_count": 0,
-      "checkpoint_commit": null,
-      "work_packages": [],
+      "checkpoint_commit": "58b4196",
+      "work_packages": [
+        {"id":"wp-01","area":"Simple Single W-2","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-02","area":"Single + Unemployment/Interest/Dividends/CapGains","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-03","area":"MFJ Basic W-2/Children/CTC/EITC","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-04","area":"HOH Filing Status","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-05","area":"Schedule C/SE/QBI","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-06","area":"Senior/Retirement (1099-R/SSA)","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-07","area":"Education/Marketplace/HSA/Saver","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-08","area":"CCH Complex Multi-Form (54-70)","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-09","area":"CCH Complex Multi-Form (71-97)","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-10","area":"Specialty Cases","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-11","area":"W-2 + Investment Simple","status":"in_progress","clean_count":0,"findings":[]}
+      ],
       "cycles": []
     }
   }
