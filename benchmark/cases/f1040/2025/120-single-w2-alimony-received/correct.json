@@ -1,8 +1,12 @@
 {
-  "line11_agi": 44000,
-  "line15_taxable_income": 28250,
-  "line24_total_tax": 3151.50,
-  "line33_total_payments": 2200,
-  "line35a_refund": 0,
-  "line37_amount_owed": 951.50
+  "case": "120-single-w2-alimony-received",
+  "year": 2025,
+  "correct": {
+    "line11_agi": 44000,
+    "line15_taxable_income": 28250,
+    "line24_total_tax": 3151.50,
+    "line33_total_payments": 2200,
+    "line35a_refund": 0,
+    "line37_amount_owed": 951.50
+  }
 }

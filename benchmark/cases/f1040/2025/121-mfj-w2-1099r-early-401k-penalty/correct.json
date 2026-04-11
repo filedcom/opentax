@@ -1,8 +1,12 @@
 {
-  "line11_agi": 105000,
-  "line15_taxable_income": 73500,
-  "line24_total_tax": 9543,
-  "line33_total_payments": 9000,
-  "line35a_refund": 0,
-  "line37_amount_owed": 543
+  "case": "121-mfj-w2-1099r-early-401k-penalty",
+  "year": 2025,
+  "correct": {
+    "line11_agi": 105000,
+    "line15_taxable_income": 73500,
+    "line24_total_tax": 9543,
+    "line33_total_payments": 9000,
+    "line35a_refund": 0,
+    "line37_amount_owed": 543
+  }
 }

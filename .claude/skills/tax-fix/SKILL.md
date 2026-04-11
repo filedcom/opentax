@@ -30,11 +30,13 @@ From `forms.{form}:{year}.fix.root_causes`, collect all entries where `status ==
 
 ## Step 3 — Spawn Parallel Bug-Fixer Agents
 
-For each pending root cause, spawn one agent in parallel using the Agent tool:
-- Agent file: `.claude/skills/tax-fix/agents/bug-fixer.md`
-- Pass as context: root cause object + FORM.md contents + cases dir
+Group pending root causes by `node_path`. If multiple root causes touch the **same node file**, they must be handled by a **single agent** (pass all their root cause objects together). Different node files can be fixed in parallel.
 
-Spawn all in a single message.
+For each group, spawn one agent in parallel using the Agent tool:
+- Agent file: `.claude/skills/tax-fix/agents/bug-fixer.md`
+- Pass as context: root cause object(s) + FORM.md contents + cases dir
+
+Spawn all groups in a single message.
 
 ## Step 4 — Run Validator
 
@@ -46,12 +48,16 @@ Parse JSON output: `{ total, pass, fail, failing }`.
 ## Step 5 — Evaluate Results
 
 Compare current pass count to `forms.{form}:{year}.fix.benchmark_baseline`:
-- **Net positive**: commit. Update baseline. Mark fixed root causes as `"done"`.
+- **Net positive**: commit. Update baseline. Mark fixed root causes as `"done"`. Reset `no_improvement_count` to 0.
   ```bash
   git add -A
   git commit -m "fix: {form} {year} benchmark — X→Y passing cases"
   ```
-- **No improvement**: increment `no_improvement_count`. If 3 → set `status: "stalled"`, stop.
+- **No improvement or regression**: revert all uncommitted changes to prevent bad patches from accumulating:
+  ```bash
+  git checkout .
+  ```
+  Increment `no_improvement_count`. If ≥ 2 → set `status: "stalled"`, stop.
 
 ## Step 6 — Log and Loop
 

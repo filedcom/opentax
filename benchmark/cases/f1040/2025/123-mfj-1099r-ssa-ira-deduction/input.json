@@ -25,6 +25,7 @@
       "node_type": "f1099r",
       "data": {
         "payer_name": "Employer Pension",
+        "payer_ein": "74-1234567",
         "box1_gross_distribution": 15500,
         "box2a_taxable_amount": 15500,
         "box4_federal_withheld": 0,
