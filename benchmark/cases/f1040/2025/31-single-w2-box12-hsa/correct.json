@@ -1,6 +1,6 @@
 {
   "case": "31-single-w2-box12-hsa",
-  "scenario": "Single filer with W-2 Box 12 Code W HSA employer contribution of $2,000 — reduces AGI above the line",
+  "scenario": "Single filer with W-2 Box 12 Code W HSA employer contribution of $2,000 — already excluded from Box 1 wages, no above-the-line deduction",
   "year": 2025,
   "inputs": {
     "filing_status": "single",
@@ -29,15 +29,15 @@
   },
   "correct": {
     "line9_total_income": 58000,
-    "line11_agi": 56000,
+    "line11_agi": 58000,
     "standard_deduction": 15750,
     "qbi_deduction": 0,
-    "line15_taxable_income": 40250,
-    "ordinary_taxable": 40250,
-    "income_tax": 4591.5,
+    "line15_taxable_income": 42250,
+    "ordinary_taxable": 42250,
+    "income_tax": 4831.5,
     "se_tax": 0,
     "add_medicare_tax": 0,
-    "line18_tax_before_credits": 4591.5,
+    "line18_tax_before_credits": 4831.5,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -47,9 +47,9 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0,
-    "line24_total_tax": 4591.5,
+    "line24_total_tax": 4831.5,
     "line33_total_payments": 7000,
-    "line35a_refund": 2408.5,
+    "line35a_refund": 2168.5,
     "line37_amount_owed": 0
   }
 }

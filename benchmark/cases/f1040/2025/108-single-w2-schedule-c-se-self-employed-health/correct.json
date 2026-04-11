@@ -1,6 +1,6 @@
 {
   "case": "108-single-w2-schedule-c-se-self-employed-health",
-  "scenario": "Single filer with W-2 wages $100,836 (plus 401k code D $10,315) plus Schedule C net profit $24,328 — SE tax $3,438, self-employed health insurance deduction $1,000, SE tax deduction $1,719",
+  "scenario": "Single filer with W-2 wages $100,836 (plus 401k code D $10,315) plus Schedule C net profit $25,203 — SE tax $3,561.07, self-employed health insurance deduction $1,000, SE tax deduction $1,719",
   "year": 2025,
   "source": "IRS TY2024 Form 1040 MeF ATS Scenario 12 — Sam Gardenia, Single. IRS Pub 1436 ATS test package (https://www.irs.gov/pub/irs-efile/); all Form 1040, Schedule C, Schedule SE, Schedule 1, Schedule 2, and Form 7206 values are IRS-stated, none computed by agent.",
   "correct": {

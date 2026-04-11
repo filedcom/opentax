@@ -8,8 +8,9 @@
     "line15_taxable_income": 24375,
     "line24_total_tax": 0,
     "line27_eitc": 415,
-    "line33_total_payments": 4215,
-    "line35a_refund": 4215,
+    "actc": 215,
+    "line33_total_payments": 4430,
+    "line35a_refund": 4430,
     "line37_amount_owed": 0
   }
 }
