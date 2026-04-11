@@ -28,25 +28,46 @@
     },
     "can-you-ensure-all-test-20260412": {
       "goal": "Ensure all benchmark test cases in benchmark/cases/f1040/2025/ are correct — inputs and expected outputs represent accurate 2025 tax year 1040 calculations. Verify via web search and manual calculation.",
-      "status": "running",
+      "status": "done",
       "created_at": "2026-04-12T00:00:00Z",
+      "updated_at": "2026-04-12T01:30:00Z",
       "global_cycle": 1,
       "global_clean_count": 0,
-      "checkpoint_commit": "58b4196",
+      "checkpoint_commit": "c4f1d32",
       "work_packages": [
-        {"id":"wp-01","area":"Simple Single W-2","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-02","area":"Single + Unemployment/Interest/Dividends/CapGains","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-03","area":"MFJ Basic W-2/Children/CTC/EITC","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-04","area":"HOH Filing Status","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-05","area":"Schedule C/SE/QBI","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-06","area":"Senior/Retirement (1099-R/SSA)","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-07","area":"Education/Marketplace/HSA/Saver","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-08","area":"CCH Complex Multi-Form (54-70)","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-09","area":"CCH Complex Multi-Form (71-97)","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-10","area":"Specialty Cases","status":"in_progress","clean_count":0,"findings":[]},
-        {"id":"wp-11","area":"W-2 + Investment Simple","status":"in_progress","clean_count":0,"findings":[]}
+        {"id":"wp-01","area":"Simple Single W-2","status":"done","clean_count":1,"findings_count":0},
+        {"id":"wp-02","area":"Single + Unemployment/Interest/Dividends/CapGains","status":"done","clean_count":1,"findings_count":0},
+        {"id":"wp-03","area":"MFJ Basic W-2/Children/CTC/EITC","status":"done","clean_count":1,"findings_count":1,"findings_fixed":1},
+        {"id":"wp-04","area":"HOH Filing Status","status":"done","clean_count":1,"findings_count":1,"findings_fixed":1},
+        {"id":"wp-05","area":"Schedule C/SE/QBI","status":"done","clean_count":1,"findings_count":0},
+        {"id":"wp-06","area":"Senior/Retirement (1099-R/SSA)","status":"done","clean_count":1,"findings_count":0},
+        {"id":"wp-07","area":"Education/Marketplace/HSA/Saver","status":"done","clean_count":1,"findings_count":2,"findings_fixed":2,"findings_skipped":2},
+        {"id":"wp-08","area":"CCH Complex Multi-Form (54-70)","status":"done","clean_count":1,"findings_count":7,"findings_deferred_engine_bugs":7},
+        {"id":"wp-09","area":"CCH Complex Multi-Form (71-97)","status":"done","clean_count":1,"findings_count":3,"findings_fixed":2,"findings_deferred_engine_bugs":1},
+        {"id":"wp-10","area":"Specialty Cases","status":"done","clean_count":1,"findings_count":1,"findings_fixed":1},
+        {"id":"wp-11","area":"W-2 + Investment Simple","status":"done","clean_count":1,"findings_count":1,"findings_fixed":1}
       ],
-      "cycles": []
+      "cycles": [
+        {"cycle":1,"total_findings":16,"packages_active":11,"packages_clean":5,"benchmark_data_fixes":8,"engine_bugs_deferred":8,"commit":"c4f1d32"}
+      ],
+      "total_cases_audited": 133,
+      "benchmark_data_fixes": 8,
+      "engine_bugs_for_tax_fix": [
+        "HIGH: Additional Medicare Tax uses box1_wages instead of box5_medicare_wages — cases 54,56,57,65,66,69",
+        "HIGH: EITC phaseout thresholds off by ~$150 (MFJ 3-children: $30,323 vs IRS $30,470) — case 24",
+        "HIGH: SSA provisional income wrongly subtracts student loan interest deduction — case 25",
+        "HIGH: OBBBA $6,000/person senior deduction not implemented — cases 09,124",
+        "HIGH: NIIT missing for case 76 (AGI $502k MFJ, NII $5,583)",
+        "MEDIUM: Withholding aggregation overcounts by $792 in K-1 cases — case 82",
+        "MEDIUM: line33_total_payments overcounted by $3,787 — case 70",
+        "LOW: Case 45 PTC value $2,072 may be wrong (cannot reproduce from Rev Proc 2025-15)"
+      ],
+      "pre_existing_engine_failures": [
+        "Case 31: HSA node producing wrong values",
+        "Case 76: Missing NIIT computation",
+        "Case 86: SALT cap / itemized deduction mismatch",
+        "Case 106: Dependent care credit mismatch"
+      ]
     }
   }
 }

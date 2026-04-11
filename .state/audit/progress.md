@@ -23,3 +23,32 @@
 - MEDIUM: Saver's Credit thresholds use 2024 values
 - MEDIUM: OBBB senior deduction not implemented (case 09)
 - LOW: PTC repayment caps use prior-year values
+
+## [can-you-ensure-all-test-20260412] Complete — 2026-04-12
+
+- **Goal**: Verify all 133 benchmark cases are IRS-correct for TY2025 via web search and manual calculation
+- **Cases Audited**: 133 across 11 work packages
+- **Cycles**: 1
+- **Benchmark Data Fixes**: 8 correct.json files corrected
+- **Engine Bugs Identified**: 8 (deferred to /tax-fix)
+- **Pre-existing Engine Failures**: 4 (cases 31, 76, 86, 106)
+- **Commit**: c4f1d32
+
+### Benchmark Ground Truth Corrections
+- Case 24: EITC $5,692→$5,723 (MFJ phaseout start $30,470 per Rev Proc 2024-40)
+- Case 25: SSA taxable $1,945→$2,119 (provisional income must not subtract student loan interest per Pub 915)
+- Case 36: PTC $2,169.74→$2,170.24 (internal consistency fix)
+- Case 48: line33 $14,001→$14,000 ($1 rounding fix)
+- Case 67: add_medicare_tax 0→$94.99 (NIIT display field)
+- Case 82: fed_withheld $18,382→$17,590 (reconciled to input W-2+1099 withholding)
+- Case 86: inputs.itemized_deductions $45,915→$56,200 (OBBBA $40k SALT cap)
+- Case 124: OBBBA senior deduction 2×$6,000 applied (taxable $12,075→$75)
+
+### Engine Bugs Deferred to /tax-fix
+- HIGH: Additional Medicare Tax uses box1_wages instead of box5_medicare_wages — cases 54,56,57,65,66,69
+- HIGH: EITC phaseout thresholds off by ~$150 — case 24
+- HIGH: SSA provisional income wrongly subtracts student loan interest — case 25
+- HIGH: OBBBA $6,000/person senior deduction not implemented — cases 09,124
+- HIGH: NIIT missing for case 76 (AGI $502k MFJ)
+- MEDIUM: Withholding aggregation overcounts — cases 70, 82
+- LOW: Case 45 PTC value may be wrong (cannot reproduce from Rev Proc 2025-15)
