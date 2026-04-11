@@ -41,7 +41,7 @@
     "ordinary_taxable": 177912.01,
     "income_tax": 35857.09,
     "se_tax": 0,
-    "add_medicare_tax": 0.0,
+    "add_medicare_tax": 94.99,
     "line18_tax_before_credits": 35952.08,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
