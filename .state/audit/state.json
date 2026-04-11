@@ -25,6 +25,16 @@
         "MEDIUM: OBBB senior deduction ($6000 Schedule 1-A) not implemented — case 09",
         "LOW: PTC repayment caps use prior-year values"
       ]
+    },
+    "can-you-ensure-all-test-20260412": {
+      "goal": "Ensure all benchmark test cases in benchmark/cases/f1040/2025/ are correct — inputs and expected outputs represent accurate 2025 tax year 1040 calculations. Verify via web search and manual calculation.",
+      "status": "running",
+      "created_at": "2026-04-12T00:00:00Z",
+      "global_cycle": 0,
+      "global_clean_count": 0,
+      "checkpoint_commit": null,
+      "work_packages": [],
+      "cycles": []
     }
   }
 }
