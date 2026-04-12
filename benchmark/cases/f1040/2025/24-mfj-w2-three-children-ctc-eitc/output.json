@@ -1,5 +1,5 @@
 {
-  "returnId": "4f4a5b28-ab4b-417f-8862-52281a9d3581",
+  "returnId": "58a35d81-3ac9-4545-b3d5-b0a22b5fb6c6",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 41500,
@@ -7,8 +7,8 @@
     "line11_agi": 41500,
     "line15_taxable_income": 10000,
     "line24_total_tax": 0,
-    "line33_total_payments": 12892,
-    "line35a_refund": 12892
+    "line33_total_payments": 12892.25,
+    "line35a_refund": 12892.25
   },
   "forms": [
     "agi_aggregator",
@@ -17,6 +17,7 @@
     "f2441",
     "f8812",
     "form6251",
+    "form8880",
     "form8959",
     "form8960",
     "form8962",
@@ -52,6 +53,7 @@
     "address_city": "Juneau",
     "address_state": "AK",
     "address_zip": "99801",
+    "line25c_additional_medicare_withheld": 0.25,
     "line11_agi": [
       41500,
       41500
@@ -81,13 +83,13 @@
     "line21_credits_total": 1000,
     "line22_tax_after_credits": 0,
     "line24_total_tax": 0,
-    "line25d_total_withholding": 2100,
-    "line33_total_payments": 12892,
+    "line25d_total_withholding": 2100.25,
+    "line33_total_payments": 12892.25,
     "line10_adjustments": 0,
     "line14_deductions_qbi_total": 31500,
     "line32_refundable_credits_total": 10792,
-    "line34_overpayment": 12892,
-    "line35a_refund": 12892
+    "line34_overpayment": 12892.25,
+    "line35a_refund": 12892.25
   },
   "warnings": [
     "Refund is more than double total withholding — verify refundable credits.",
