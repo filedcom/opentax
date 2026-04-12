@@ -11,7 +11,10 @@
   "plugins": [
     {
       "name": "opentax",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "filedcom/opentax"
+      },
       "description": "Open-source federal tax preparation. Includes a tax preparer that walks you through filing, and a tax reviewer that audits completed returns against source documents.",
       "version": "1.0.2",
       "author": {
