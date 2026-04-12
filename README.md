@@ -65,69 +65,71 @@ opentax version
 
 ---
 
-## Usage
-
-### Prepare a tax return
+## Example: single W-2 filer
 
 ```bash
-# 1. Create a return
-opentax return create --year 2025
-# → { "returnId": "abc-123" }
+$ opentax return create --year 2025
+{ "returnId": "a1b2c3" }
 
-# 2. Set filing status
-opentax form add --returnId abc-123 --node_type general \
-  '{"filing_status": "single"}'
+$ opentax form add --returnId a1b2c3 --node_type general '{"filing_status": "single"}'
+{ "id": "general_01", "nodeType": "general" }
 
-# 3. Add your W-2
-opentax form add --returnId abc-123 --node_type w2 \
-  '{"box1_wages": 85000, "box2_fed_withheld": 12000}'
+$ opentax form add --returnId a1b2c3 --node_type w2 '{"box1_wages": 55000, "box2_fed_withheld": 5200}'
+{ "id": "w2_01", "nodeType": "w2" }
 
-# 4. Add a 1099
-opentax form add --returnId abc-123 --node_type f1099int \
-  '{"payer_name": "Chase Bank", "box1_interest": 420}'
-
-# 5. Compute -- prints every line of the 1040
-opentax return get --returnId abc-123
+$ opentax return get --returnId a1b2c3
 ```
 
-### Validate and export
+```json
+{
+  "returnId": "a1b2c3",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 55000,
+    "line9_total_income": 55000,
+    "line11_agi": 55000,
+    "line15_taxable_income": 39250,
+    "line24_total_tax": 4471.50,
+    "line33_total_payments": 5200,
+    "line35a_refund": 728.50
+  },
+  "lines": {
+    "filing_status": "single",
+    "line1a_wages": 55000,
+    "line12a_standard_deduction": 15750,
+    "line15_taxable_income": 39250,
+    "line16_income_tax": 4471.50,
+    "line24_total_tax": 4471.50,
+    "line25a_w2_withheld": 5200,
+    "line33_total_payments": 5200,
+    "line34_overpayment": 728.50,
+    "line35a_refund": 728.50
+  }
+}
+```
+
+$55,000 in wages, $15,750 standard deduction, $39,250 taxable income, $4,471.50 tax, $728.50 refund. Every line traces back to the IRS instructions.
+
+---
+
+## More commands
 
 ```bash
-# Check against IRS MeF business rules
-opentax return validate --returnId abc-123
+# Validate against IRS MeF business rules
+opentax return validate --returnId a1b2c3
 
 # Export as IRS MeF XML (ready for e-file)
-opentax return export --returnId abc-123 --type mef > return.xml
+opentax return export --returnId a1b2c3 --type mef > return.xml
 
-# Export as filled PDF
-opentax return export --returnId abc-123 --type pdf
-```
+# List entries in a return
+opentax form list --returnId a1b2c3
 
-### Manage form entries
+# Update or delete a form entry
+opentax form update --returnId a1b2c3 --entryId w2_01 '{"box1_wages": 60000, "box2_fed_withheld": 5800}'
+opentax form delete --returnId a1b2c3 --entryId w2_01
 
-```bash
-# List everything in a return
-opentax form list --returnId abc-123
-
-# List just W-2s
-opentax form list --returnId abc-123 --node_type w2
-
-# Update a form entry
-opentax form update --returnId abc-123 --entryId w2_01 \
-  '{"box1_wages": 90000, "box2_fed_withheld": 13000}'
-
-# Delete a form entry
-opentax form delete --returnId abc-123 --entryId w2_01
-```
-
-### Inspect the engine
-
-```bash
-# What fields does a W-2 expect?
+# Inspect what fields a node expects
 opentax node inspect --node_type w2
-
-# Full dependency graph from any node
-opentax node graph --node_type f1040
 
 # List all registered nodes
 opentax node list
