@@ -44,33 +44,6 @@ Or download manually:
 
 ---
 
-## Staying up to date
-
-OpenTax tells you when a new version is available:
-
-```
-$ opentax return get --returnId abc-123
-{ ... }
-
-Update available: 0.1.0 → 0.2.0. Run `opentax update` to upgrade.
-```
-
-To update:
-
-```bash
-opentax update
-```
-
-That's it. The binary replaces itself with the latest release.
-
-Check your current version anytime:
-
-```bash
-opentax version
-```
-
----
-
 ## Example: single W-2 filer
 
 ```bash
@@ -147,21 +120,56 @@ opentax node list
 
 The binary works as a tool for any AI assistant. Hand it your W-2s and 1099s in plain English -- the AI calls the engine, runs the IRS math, and shows you a finished 1040.
 
-[`SKILL.md`](SKILL.md) is a self-contained instruction file that teaches any AI agent how to install and use the CLI. Add it to your agent's context and you're ready to go.
+### Claude Code plugin
 
-Fetch the skill and save it to your agent's rules:
+Install directly as a Claude Code plugin:
+
+```
+/plugin install https://github.com/filedcom/opentax
+```
+
+This adds the `opentax:tax-preparer` agent. Just ask:
+
+> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
+
+### Other AI agents
+
+Fetch the agent instructions and add them to your agent's context:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/SKILL.md -o opentax-skill.md
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/agents/tax-preparer.md -o opentax-agent.md
 ```
 
 Then ask your agent:
 
-> Copy opentax-skill.md to my local rules so you can use it.
+> Copy opentax-agent.md to my local rules so you can use it.
 
-Once loaded, just ask:
+---
 
-> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
+## Staying up to date
+
+OpenTax tells you when a new version is available:
+
+```
+$ opentax return get --returnId abc-123
+{ ... }
+
+Update available: 0.1.0 → 0.2.0. Run `opentax update` to upgrade.
+```
+
+To update:
+
+```bash
+opentax update
+```
+
+That's it. The binary replaces itself with the latest release.
+
+Check your current version anytime:
+
+```bash
+opentax version
+```
 
 ---
 
