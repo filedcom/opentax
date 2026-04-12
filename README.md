@@ -125,10 +125,10 @@ Hand your W-2s and 1099s to an AI assistant in plain English. It calls the engin
 Download the skill file, then upload it to Claude, ChatGPT, Gemini, or any AI assistant:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md -o opentax-skill.md
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md -o opentax-preparer-skill.md
 ```
 
-Upload `opentax-skill.md` to your AI's chat and tell it to follow those instructions.
+Upload `opentax-preparer-skill.md` to your AI's chat and tell it to follow those instructions.
 
 ### Step 2: Ask it to prepare your return
 
