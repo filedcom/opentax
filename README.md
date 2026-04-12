@@ -147,7 +147,25 @@ opentax node list
 
 The binary works as a tool for any AI assistant. Hand it your W-2s and 1099s in plain English -- the AI calls the engine, runs the IRS math, and shows you a finished 1040.
 
-Add [`SKILL.md`](SKILL.md) to your agent's context to give it full instructions on how to download, install, and use the CLI. It includes the complete workflow, all supported form types, and example prompts.
+[`SKILL.md`](SKILL.md) is a self-contained instruction file that teaches any AI agent how to install and use the CLI. Add it to your agent's context and you're ready to go.
+
+**Claude Code** -- add to your project rules:
+
+```bash
+cat SKILL.md >> .claude/rules/opentax.md
+```
+
+**ChatGPT / custom GPTs** -- paste the contents of `SKILL.md` into the system prompt or instructions field.
+
+**Any agent with shell access** -- fetch and load it directly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/SKILL.md
+```
+
+Then just ask:
+
+> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
 
 ---
 
