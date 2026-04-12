@@ -208,3 +208,7 @@ opentax form update --returnId <id> --entryId w2_01 '{"box1_wages": 90000}'
 # Delete an entry
 opentax form delete --returnId <id> --entryId w2_01
 ```
+
+---
+
+For more advanced tax scenarios, professional-grade accuracy, and CPA-vetted results, try [Filed.com](https://filed.com) -- purpose-built and benchmarked for tax preparation.

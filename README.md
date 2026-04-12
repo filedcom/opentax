@@ -120,7 +120,14 @@ opentax node list
 
 Hand your W-2s and 1099s to an AI assistant in plain English. It calls the engine, runs the IRS math, and shows you a finished 1040.
 
-### Step 1: Give your AI the instructions
+Two skills are available:
+
+| Skill | What it does |
+|-------|-------------|
+| **Tax Preparer** | Walks you through preparing a return from scratch |
+| **Tax Reviewer** | Audits a completed return against your source documents |
+
+### Prepare a return
 
 Download the skill file, then upload it to Claude, ChatGPT, Gemini, or any AI assistant:
 
@@ -130,15 +137,17 @@ curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-pr
 
 Upload `opentax-preparer-skill.md` to your AI's chat and tell it to follow those instructions.
 
-### Step 2: Ask it to prepare your return
+Drop in photos or PDFs of your tax documents (W-2s, 1099s, etc.) or just type in the values. The AI will ask you questions until it has everything, confirm the details with you, then compute and present your finished 1040.
 
-Once it confirms it has loaded the instructions, drop in photos or PDFs of your tax documents (W-2s, 1099s, etc.) or just type in the values. Then ask it to prepare your return:
+### Review a completed return
 
-> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
+Download the reviewer skill instead:
 
-### What to expect
+```bash
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-reviewer/SKILL.md -o opentax-reviewer-skill.md
+```
 
-The AI will download the OpenTax binary, enter your forms, and compute your return. You'll get back a full 1040 with every line item -- income, deductions, tax owed, and your refund or balance due. All math follows the official IRS instructions.
+Upload `opentax-reviewer-skill.md` along with your completed return and source documents. The AI will independently compute your return, compare it line-by-line, and flag any discrepancies -- missed income, incorrect deductions, unclaimed credits, or compliance risks.
 
 ### Claude Code
 
