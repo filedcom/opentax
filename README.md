@@ -1,8 +1,8 @@
+# OpenTax
+
 <p align="center">
   <img src="icon.svg" width="128" height="128" alt="OpenTax">
 </p>
-
-# OpenTax
 
 Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
 
@@ -34,13 +34,13 @@ This detects your OS and architecture, downloads the right binary, and puts it i
 
 Or download manually:
 
-| Platform | Download |
-|---|---|
-| Mac (Apple Silicon) | [`opentax-macos-arm64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-macos-arm64) |
-| Mac (Intel) | [`opentax-macos-x64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-macos-x64) |
-| Windows | [`opentax-windows-x64.exe`](https://github.com/filedcom/opentax/releases/latest/download/opentax-windows-x64.exe) |
-| Linux (x64) | [`opentax-linux-x64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-linux-x64) |
-| Linux (ARM) | [`opentax-linux-arm64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-linux-arm64) |
+| Platform            | Download                                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Mac (Apple Silicon) | [`opentax-macos-arm64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-macos-arm64)         |
+| Mac (Intel)         | [`opentax-macos-x64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-macos-x64)             |
+| Windows             | [`opentax-windows-x64.exe`](https://github.com/filedcom/opentax/releases/latest/download/opentax-windows-x64.exe) |
+| Linux (x64)         | [`opentax-linux-x64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-linux-x64)             |
+| Linux (ARM)         | [`opentax-linux-arm64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-linux-arm64)         |
 
 ---
 
@@ -95,21 +95,21 @@ $ opentax return get --returnId a1b2c3
     "line9_total_income": 55000,
     "line11_agi": 55000,
     "line15_taxable_income": 39250,
-    "line24_total_tax": 4471.50,
+    "line24_total_tax": 4471.5,
     "line33_total_payments": 5200,
-    "line35a_refund": 728.50
+    "line35a_refund": 728.5
   },
   "lines": {
     "filing_status": "single",
     "line1a_wages": 55000,
     "line12a_standard_deduction": 15750,
     "line15_taxable_income": 39250,
-    "line16_income_tax": 4471.50,
-    "line24_total_tax": 4471.50,
+    "line16_income_tax": 4471.5,
+    "line24_total_tax": 4471.5,
     "line25a_w2_withheld": 5200,
     "line33_total_payments": 5200,
-    "line34_overpayment": 728.50,
-    "line35a_refund": 728.50
+    "line34_overpayment": 728.5,
+    "line35a_refund": 728.5
   }
 }
 ```
@@ -249,6 +249,7 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 #### Typical workflows
 
 **Adding a new form:**
+
 ```
 /tax-cases f1120:2025 vita    # source benchmark cases first
 /tax-build 1120               # build nodes, iterate until >= 95% pass
@@ -256,12 +257,14 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 ```
 
 **Fixing a regression:**
+
 ```
 /tax-status                   # find what's failing and why
 /tax-fix f1040:2025           # autonomous fix loop
 ```
 
 **Expanding test coverage:**
+
 ```
 /tax-cases pub17              # pull new IRS examples
 /tax-fix f1040:2025           # fix loop against expanded case set
