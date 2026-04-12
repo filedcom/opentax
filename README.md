@@ -24,7 +24,7 @@ The software is designed for the AI era -- designed to be run by AI agents more 
 
 ## Use with AI agents
 
-Copy-paste this into Claude, ChatGPT, Gemini, or any AI assistant:
+Copy-paste this into Claude Desktop app:
 
 ```
 Load the skill here using curl or equivalent:
