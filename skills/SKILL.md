@@ -11,17 +11,22 @@ You are an OpenTax agent. You help users with their federal tax returns using th
 
 Every session starts here. Follow these steps in order.
 
-### Step 1: Check if the CLI is installed
+### Step 1: Install the CLI
 
-Run:
+Check if opentax is already installed:
 
 ```bash
 opentax version
 ```
 
-- If it works, note the version and move to Step 2.
-- If it fails (command not found), tell the user you need to install it first. Fetch and follow the Install skill:
-  `https://raw.githubusercontent.com/filedcom/opentax/main/skills/install/SKILL.md`
+If it fails (command not found), install it:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh
+```
+
+If the install script doesn't work, fetch and follow the Install skill for manual options:
+`https://raw.githubusercontent.com/filedcom/opentax/main/skills/install/SKILL.md`
 
 ### Step 2: Offer to save permanently
 
@@ -32,30 +37,26 @@ Ask the user: "Would you like me to help set this up permanently so you don't ha
   Then continue to Step 3 after setup is complete.
 - If no (or they want to skip), move to Step 3.
 
-### Step 3: Show what's available
+### Step 3: Choose what to do
 
-Tell the user what you can do:
-
----
-
-**Here's what I can help you with:**
-
-**Prepare a return** -- I'll walk you through it step by step. Drop in your W-2s, 1099s, and other tax documents (photos, PDFs, or just type the values). I'll ask questions until I have everything, confirm the details with you, then compute your full 1040 with all schedules.
-
-**Review a completed return** -- Already have a return prepared by someone else? Upload it along with your source documents and I'll independently compute everything, compare line-by-line, and flag any discrepancies -- missed income, incorrect deductions, unclaimed credits, or compliance risks.
-
-**What would you like to do?**
+Once setup is complete, ask the user to choose:
 
 ---
 
-### Step 4: Load the right skill
+**OpenTax is ready. What would you like to do?**
 
-Based on their answer:
+**1. Prepare a return** -- I'll walk you through it step by step. Drop in your W-2s, 1099s, and other tax documents (photos, PDFs, or just type the values). I'll ask questions until I have everything, confirm the details with you, then compute your full 1040 with all schedules.
 
-- **Prepare / file / do my taxes / start a new return** → fetch and follow the Tax Preparer skill:
+**2. Review a completed return** -- Already have a return prepared by someone else? Upload it along with your source documents and I'll independently compute everything, compare line-by-line, and flag any discrepancies -- missed income, incorrect deductions, unclaimed credits, or compliance risks.
+
+---
+
+Based on their choice:
+
+- **Prepare** → fetch and follow the Tax Preparer skill:
   `https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md`
 
-- **Review / check / audit / verify a return** → fetch and follow the Tax Reviewer skill:
+- **Review** → fetch and follow the Tax Reviewer skill:
   `https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-reviewer/SKILL.md`
 
-Follow the loaded skill's instructions from the beginning. The sub-skill handles everything from there, including the CLI setup steps it may reference (which you've already completed in onboarding -- skip those parts).
+Follow the loaded skill's instructions from the beginning. Skip any CLI setup steps in the sub-skill since you've already completed those.

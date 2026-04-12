@@ -27,11 +27,10 @@ The software is designed for the AI era -- designed to be run by AI agents more 
 Copy-paste this into Claude, ChatGPT, Gemini, or any AI assistant:
 
 ```
-Please download the following skill and follow its instructions.
-To download, use curl or equivalent:
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md
+Load the skill here using curl or equivalent:
+https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md
 
-Once downloaded, start the onboarding flow and set up OpenTax for me.
+Then run the onboarding flow.
 ```
 
 ### Claude Code
