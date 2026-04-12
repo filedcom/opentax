@@ -119,14 +119,12 @@ function scheduleFOutput(g99s: G99Items): NodeOutput[] {
   const agriculture = totalAgriculture(g99s);
   const marketGain = totalMarketGain(g99s);
 
-  const fields: Record<string, number> = {};
+  const fields: Partial<z.infer<typeof schedule_f["inputSchema"]>> = {};
   if (agriculture > 0) fields.line4a_gov_payments = agriculture;
   if (marketGain > 0) fields.line5_ccc_gain = marketGain;
 
   if (Object.keys(fields).length === 0) return [];
-  // line4a_gov_payments and line5_ccc_gain are not in schedule_f's inputSchema;
-  // these fields were silently dropped before — preserving prior behavior via cast.
-  return [output(schedule_f, fields as unknown as AtLeastOne<z.infer<typeof schedule_f["inputSchema"]>>)];
+  return [output(schedule_f, fields as AtLeastOne<z.infer<typeof schedule_f["inputSchema"]>>)];
 }
 
 class F1099gNode extends TaxNode<typeof inputSchema> {

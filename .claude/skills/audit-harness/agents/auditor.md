@@ -84,9 +84,41 @@ AUDITOR_RESULT: {"package_id":"wp-01","mode":"verify","findings":[...],"clean":t
 
 ---
 
+## Common Issues Checklist
+
+In addition to the stated goal, **always** check for these known bug patterns in node code:
+
+### 1. Silent Field Drops (`as unknown as` casts)
+Output fields cast via `as unknown as` to bypass TypeScript — the target node's inputSchema doesn't have the field, so Zod strips it silently during `inputSchema.parse()`. Look for:
+- `as unknown as AtLeastOne<...>` in `output()` calls
+- `Record<string, number>` built dynamically then cast to a schema type
+- Comments mentioning "silently dropped", "not in schema", "preserving prior behavior"
+**Fix:** Add the missing fields to the target node's inputSchema and use them in compute().
+
+### 2. Double-Counting on Passthrough
+When a source node (e.g., f1099m) sends income to an intermediate node (e.g., schedule_e), and the user also provides a direct entry with the same amount, the income gets counted twice. Look for:
+- Passthrough fields that add to property/item totals unconditionally
+- No guard checking whether `schedule_*` items already capture the same income
+**Fix:** Only use passthrough income when no items exist, or deduplicate.
+
+### 3. Missing Passthrough in Target Schema
+When a node routes to another via `output()`, verify every field name in the output actually exists in the target's `inputSchema`. Zod's default `.parse()` strips unknown keys silently.
+
+### 4. Self-Referential Output Without Guard
+Some output nodes (e.g., schedule1) write back to their own `nodeType` for MeF assembly. If upstream also writes the same field, `mergePending` promotes it to an array. Downstream consumers must handle both scalar and array values.
+
+### 5. Dead Output Routes
+A node declares `outputNodes` but never actually calls `output()` for some of them. Or calls `output()` to a target that is never registered in the execution plan. The data goes nowhere.
+
+### 6. Passthrough Skipped When Items Array Empty
+Nodes with `schedule_*` patterns often early-return `{ outputs: [] }` when their items array is empty — but passthrough fields from upstream may still need routing. Check that passthrough income is handled even when the primary items array has zero entries.
+
+---
+
 ## Key Rules
 
 - **Stay in scope**: Only flag issues relevant to the stated goal. Do not scope-creep into unrelated concerns.
+- **Always check the common issues list above** — these are known, recurring bugs in this codebase.
 - **Be precise**: File path, line number, what's wrong, how to fix. Vague findings waste the fixer's time.
 - **Be fair**: If code is correct but unconventional, that's `"info"` severity, not `"error"`.
 - **In verify mode**: Focus ONLY on whether fixes are correct. Do not re-audit unmodified code.

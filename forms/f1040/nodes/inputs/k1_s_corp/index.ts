@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -211,12 +211,12 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
 
   if (totalQbi <= 0 && totalW2 <= 0 && totalUbia <= 0) return [];
 
-  const fields: Record<string, number> = {};
+  const fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
   if (totalQbi > 0) fields.qbi = totalQbi;
   if (totalW2 > 0) fields.w2_wages = totalW2;
   if (totalUbia > 0) fields.unadjusted_basis = totalUbia;
 
-  return [output(form8995, fields as unknown as Parameters<typeof output<typeof form8995>>[1])];
+  return [output(form8995, fields as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>)];
 }
 
 // Route K-1 Box 9 §1231 gain/loss → Form 4797 (Part I)

@@ -137,7 +137,7 @@ export const itemSchema = z.object({
 });
 
 export const inputSchema = z.object({
-  schedule_es: z.array(itemSchema),
+  schedule_es: z.array(itemSchema).optional().default([]),
   // Passthrough mortgage interest from 1098 Box 1 routed to Schedule E
   mortgage_interest: z.number().nonnegative().optional(),
   // Auto/travel expense from auto_expense worksheet (AUTO screen)
@@ -145,6 +145,10 @@ export const inputSchema = z.object({
   // Depletion deduction from the depletion worksheet (DEPL screen)
   // Routes depletion node output into Schedule E depletion expense
   expense_depletion: z.number().nonnegative().optional(),
+  // Passthrough rental income from f1099m box1_rents routed to schedule_e
+  rental_income: z.number().nonnegative().optional(),
+  // Passthrough royalty income from f1099m box2_royalties routed to schedule_e
+  royalty_income: z.number().nonnegative().optional(),
 });
 
 type EItem = z.infer<typeof itemSchema>;
@@ -227,11 +231,6 @@ function isPassive(item: EItem): boolean {
 }
 
 // ─── Routing helpers ─────────────────────────────────────────────────────────
-
-function schedule1Output(items: EItems): NodeOutput[] {
-  const totalNet = items.reduce((sum, item) => sum + computePropertyNet(item), 0);
-  return [output(schedule1, { line5_schedule_e: totalNet })];
-}
 
 function form8582Outputs(items: EItems): NodeOutput[] {
   // Route to form8582 when any item is passive (A/B) AND has a net loss OR prior unallowed losses
@@ -349,9 +348,6 @@ function form8995Outputs(items: EItems): NodeOutput[] {
   const totalUbia = qbiItems.reduce((sum, item) => sum + (item.qbi_unadjusted_basis ?? 0), 0);
   if (totalUbia > 0) f8995Input.unadjusted_basis = totalUbia;
 
-  // safe_harbor is not in form8995's inputSchema — field was silently dropped before.
-  // Preserving prior behavior by omitting it from the typed output.
-
   return [output(form8995, f8995Input as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>)];
 }
 
@@ -394,14 +390,11 @@ function form8990Outputs(items: EItems): NodeOutput[] {
   );
   if (totalMortgage === 0 && totalOther === 0) return [];
 
-  // disallowed_mortgage_interest_carryforward and disallowed_other_interest_carryforward
-  // are not in form8990's inputSchema — these fields were silently dropped before.
-  // Preserving prior behavior via cast.
-  const input: Record<string, number> = {};
+  const input: Partial<z.infer<typeof form8990["inputSchema"]>> = {};
   if (totalMortgage > 0) input.disallowed_mortgage_interest_carryforward = totalMortgage;
   if (totalOther > 0) input.disallowed_other_interest_carryforward = totalOther;
 
-  return [output(form8990, input as unknown as AtLeastOne<z.infer<typeof form8990["inputSchema"]>>)];
+  return [output(form8990, input as AtLeastOne<z.infer<typeof form8990["inputSchema"]>>)];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -425,9 +418,15 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const { schedule_es } = parsed;
+    const { schedule_es, rental_income, royalty_income } = parsed;
 
-    if (schedule_es.length === 0) {
+    // Passthrough rental/royalty from f1099m — only used when no property items exist.
+    // When schedule_es items are present, rent_income on the property already captures
+    // the 1099-MISC amount (same income, just reported on both documents).
+    const passthroughRental = schedule_es.length === 0 ? (rental_income ?? 0) : 0;
+    const passthroughRoyalty = schedule_es.length === 0 ? (royalty_income ?? 0) : 0;
+
+    if (schedule_es.length === 0 && passthroughRental === 0 && passthroughRoyalty === 0) {
       return { outputs: [] };
     }
 
@@ -435,9 +434,10 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       validateItem(item);
     }
 
-    const totalNet = schedule_es.reduce((sum, item) => sum + computePropertyNet(item), 0);
+    const propertyNet = schedule_es.reduce((sum, item) => sum + computePropertyNet(item), 0);
+    const totalNet = propertyNet + passthroughRental + passthroughRoyalty;
     const outputs: NodeOutput[] = [
-      ...schedule1Output(schedule_es),
+      output(schedule1, { line5_schedule_e: totalNet }),
       this.outputNodes.output(agi_aggregator, { line5_schedule_e: totalNet }),
       ...form8582Outputs(schedule_es),
       ...form6198Outputs(schedule_es),

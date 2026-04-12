@@ -162,12 +162,10 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
   const rental = rentalIncomeForScheduleE(items);
   const royalty = royaltiesForScheduleE(items);
   if (rental <= 0 && royalty <= 0) return null;
-  const schedEInput: Record<string, number> = {};
+  const schedEInput: Partial<z.infer<typeof schedule_e["inputSchema"]>> = {};
   if (rental > 0) schedEInput.rental_income = rental;
   if (royalty > 0) schedEInput.royalty_income = royalty;
-  // rental_income and royalty_income are not in schedule_e's inputSchema;
-  // these fields were silently dropped before — preserving prior behavior via cast.
-  return output(schedule_e, schedEInput as unknown as AtLeastOne<z.infer<typeof schedule_e["inputSchema"]>>);
+  return output(schedule_e, schedEInput as AtLeastOne<z.infer<typeof schedule_e["inputSchema"]>>);
 }
 
 function niitIncomeTotal(items: M99Item[]): number {
