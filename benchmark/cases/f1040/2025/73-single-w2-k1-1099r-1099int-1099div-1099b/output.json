@@ -6,9 +6,9 @@
     "line9_total_income": 11373543,
     "line11_agi": 11248263.433676,
     "line15_taxable_income": 10177476.433676,
-    "line24_total_tax": 4391418.60310812,
+    "line24_total_tax": 4057418.929516,
     "line33_total_payments": 11186,
-    "line37_amount_owed": 4380232.60310812
+    "line37_amount_owed": 4046232.929516
   },
   "forms": [
     "agi_aggregator",
@@ -108,20 +108,20 @@
       3646999.30046012
     ],
     "line17_additional_taxes": [
-      744419.3026480001,
-      744419.3026480001
+      410419.629056,
+      410419.629056
     ],
     "line1z_total_wages": 102200,
     "line9_total_income": 11373543,
-    "line18_total_tax_before_credits": 4391418.60310812,
+    "line18_total_tax_before_credits": 4057418.929516,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 4391418.60310812,
-    "line24_total_tax": 4391418.60310812,
+    "line22_tax_after_credits": 4057418.929516,
+    "line24_total_tax": 4057418.929516,
     "line25d_total_withholding": 11186,
     "line33_total_payments": 11186,
     "line14_deductions_qbi_total": 1070787,
     "line32_refundable_credits_total": 0,
-    "line37_amount_owed": 4380232.60310812
+    "line37_amount_owed": 4046232.929516
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

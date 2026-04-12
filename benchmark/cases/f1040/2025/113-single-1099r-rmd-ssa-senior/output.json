@@ -3,12 +3,12 @@
   "year": 2025,
   "summary": {
     "line1z_total_wages": 0,
-    "line9_total_income": 22000,
-    "line11_agi": 22000,
-    "line15_taxable_income": 4250,
-    "line24_total_tax": 425,
+    "line9_total_income": 25000,
+    "line11_agi": 25000,
+    "line15_taxable_income": 7250,
+    "line24_total_tax": 725,
     "line33_total_payments": 1500,
-    "line35a_refund": 1075
+    "line35a_refund": 775
   },
   "forms": [
     "agi_aggregator",
@@ -53,9 +53,17 @@
     "address_city": "Phoenix",
     "address_state": "AZ",
     "address_zip": "85001",
+    "line6a_ssa_gross": [
+      18000,
+      18000
+    ],
+    "line6b_ssa_taxable": [
+      3000,
+      3000
+    ],
     "line11_agi": [
-      22000,
-      22000
+      25000,
+      25000
     ],
     "line12e_itemized_deductions": [
       0,
@@ -66,26 +74,26 @@
       17750
     ],
     "line15_taxable_income": [
-      4250,
-      4250
+      7250,
+      7250
     ],
     "line16_income_tax": [
-      425,
-      425
+      725,
+      725
     ],
     "line1z_total_wages": 0,
-    "line9_total_income": 22000,
-    "line18_total_tax_before_credits": 425,
+    "line9_total_income": 25000,
+    "line18_total_tax_before_credits": 725,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 425,
-    "line24_total_tax": 425,
+    "line22_tax_after_credits": 725,
+    "line24_total_tax": 725,
     "line25d_total_withholding": 1500,
     "line33_total_payments": 1500,
     "line10_adjustments": 0,
     "line14_deductions_qbi_total": 17750,
     "line32_refundable_credits_total": 0,
-    "line34_overpayment": 1075,
-    "line35a_refund": 1075
+    "line34_overpayment": 775,
+    "line35a_refund": 775
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
