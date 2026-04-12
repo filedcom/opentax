@@ -118,7 +118,13 @@ opentax node list
 
 ## Use with AI agents
 
-Copy and paste [this skill file](https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md) into Claude, ChatGPT, Gemini, or any AI assistant. This gives your AI the OpenTax skill -- it will install the CLI, ask for your documents, and prepare or review your return.
+Paste this into Claude, ChatGPT, Gemini, or any AI assistant that can run commands:
+
+```
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md
+```
+
+This gives your AI the OpenTax skill. It will install the CLI, ask for your tax documents, and prepare or review your return.
 
 ### Claude Code
 
