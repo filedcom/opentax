@@ -46,7 +46,7 @@ If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so
 2. Install the plugin:
 
 ```
-/plugin install tax-preparer@filedcom-opentax
+/plugin install opentax@opentax
 ```
 
 3. Load the skill and ask:
