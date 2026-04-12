@@ -22,6 +22,44 @@ The software is designed for the AI era -- designed to be run by AI agents more 
 
 ---
 
+## Use with AI agents
+
+Copy-paste this into Claude, ChatGPT, Gemini, or any AI assistant:
+
+```
+Please download the following skill and follow its instructions.
+To download, use curl or equivalent:
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md
+
+Once downloaded, start the onboarding flow and set up OpenTax for me.
+```
+
+### Claude Code
+
+If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so the skill is always available:
+
+1. Add the marketplace:
+
+```
+/plugin marketplace add filedcom/opentax
+```
+
+2. Install the plugin:
+
+```
+/plugin install tax-preparer@filedcom-opentax
+```
+
+3. Load the skill and ask:
+
+```
+/opentax:tax-preparer
+```
+
+> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
+
+---
+
 ## Install
 
 One command. No runtime, no installer, no dependencies.
@@ -113,44 +151,6 @@ opentax node inspect --node_type w2
 # List all registered nodes
 opentax node list
 ```
-
----
-
-## Use with AI agents
-
-Copy-paste this into Claude, ChatGPT, Gemini, or any AI assistant:
-
-```
-Please download the following skill and follow its instructions.
-To download, use curl or equivalent:
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md
-
-Once downloaded, start the onboarding flow and set up OpenTax for me.
-```
-
-### Claude Code
-
-If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so the skill is always available:
-
-1. Add the marketplace:
-
-```
-/plugin marketplace add filedcom/opentax
-```
-
-2. Install the plugin:
-
-```
-/plugin install tax-preparer@filedcom-opentax
-```
-
-3. Load the skill and ask:
-
-```
-/opentax:tax-preparer
-```
-
-> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
 
 ---
 
