@@ -49,7 +49,7 @@ export function printHelp(
   const maxUsageLen = Math.max(...visible.map((c) => c.usage.length));
 
   const lines: string[] = [
-    "OpenTax CLI",
+    "Filed OpenTax CLI",
     "",
     "Usage: opentax <command> <subcommand> [options]",
     "",

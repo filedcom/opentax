@@ -1,7 +1,7 @@
 # Filed OpenTax
 
 <p align="center">
-  <img src="icon.svg" width="128" height="128" alt="OpenTax">
+  <img src="icon.svg" width="128" height="128" alt="Filed OpenTax">
 </p>
 
 Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
