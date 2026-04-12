@@ -92,6 +92,10 @@ export const inputSchema = z.object({
   line8_other_income: z.number().nonnegative().optional(),
   // Car and truck expenses from auto_expense worksheet (AUTO screen) — Schedule F Line 10
   line10_car_truck: z.number().nonnegative().optional(),
+  // Passthrough from f1099g: government agricultural program payments (Box 6)
+  line4a_gov_payments: z.number().nonnegative().optional(),
+  // Passthrough from f1099g: CCC loan market gain (Box 7/10a)
+  line5_ccc_gain: z.number().nonnegative().optional(),
 });
 
 type ScheduleFItem = z.infer<typeof itemSchema>;
@@ -210,16 +214,23 @@ class ScheduleFNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    if (input.schedule_fs.length === 0) {
+    // Passthrough income from f1099g (gov ag payments, CCC market gain)
+    const passthroughGovPayments = input.line4a_gov_payments ?? 0;
+    const passthroughCccGain = input.line5_ccc_gain ?? 0;
+    const passthroughIncome = passthroughGovPayments + passthroughCccGain;
+
+    if (input.schedule_fs.length === 0 && passthroughIncome === 0) {
       return { outputs: [] };
     }
 
     const netProfits = input.schedule_fs.map(computeNetProfit);
-    const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
+    const propertyNet = netProfits.reduce((sum, p) => sum + p, 0);
+    const totalNetProfit = propertyNet + passthroughIncome;
 
     // Only emit outputs when there is actual activity (non-zero result)
     const hasActivity = netProfits.some((p) => p !== 0) ||
-      input.schedule_fs.some((item) => computeGrossIncome(item) !== 0);
+      input.schedule_fs.some((item) => computeGrossIncome(item) !== 0) ||
+      passthroughIncome !== 0;
 
     if (!hasActivity) {
       return { outputs: [] };

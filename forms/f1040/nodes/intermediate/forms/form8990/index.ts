@@ -54,6 +54,11 @@ const inputSchema = z.object({
   // Whether the taxpayer is a tax shelter as defined in §448(d)(3)
   // Tax shelters cannot use the small business exemption
   is_tax_shelter: z.boolean().optional(),
+
+  // Passthrough from schedule_e: disallowed §163(j) interest carryforwards from rental properties
+  // IRC §163(j)(4)(B)(ii): disallowed BIE allocated to rental real estate activities
+  disallowed_mortgage_interest_carryforward: z.number().nonnegative().optional(),
+  disallowed_other_interest_carryforward: z.number().nonnegative().optional(),
 });
 
 type Form8990Input = z.infer<typeof inputSchema>;
@@ -70,9 +75,12 @@ function isSmallBusinessExempt(input: Form8990Input, smallBizThreshold: number):
 }
 
 // Part I, Line 5: Total BIE subject to limitation
-// = current year BIE + prior year disallowed carryforward
+// = current year BIE + prior year disallowed carryforward + rental property disallowed interest
 function totalBie(input: Form8990Input): number {
-  return (input.business_interest_expense ?? 0) + (input.prior_disallowed_carryforward ?? 0);
+  return (input.business_interest_expense ?? 0) +
+    (input.prior_disallowed_carryforward ?? 0) +
+    (input.disallowed_mortgage_interest_carryforward ?? 0) +
+    (input.disallowed_other_interest_carryforward ?? 0);
 }
 
 // Part II, Line 22: Adjusted Taxable Income (ATI)
