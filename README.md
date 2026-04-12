@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icon.svg" width="128" height="128" alt="OpenTax">
+</p>
+
 # OpenTax
 
 Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
