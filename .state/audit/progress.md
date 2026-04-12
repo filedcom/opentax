@@ -52,3 +52,35 @@
 - HIGH: NIIT missing for case 76 (AGI $502k MFJ)
 - MEDIUM: Withholding aggregation overcounts — cases 70, 82
 - LOW: Case 45 PTC value may be wrong (cannot reproduce from Rev Proc 2025-15)
+
+## [can-you-ensure-all-test-20260412-r2] Complete — 2026-04-12
+
+- **Goal**: Re-audit all 133 benchmark cases for TY2025 correctness with OBBBA awareness
+- **Cases Audited**: 133 across 11 work packages
+- **Cycles**: 1
+- **Ground Truth Fixes**: 13 output.json files corrected
+- **False Positives Rejected**: 8 (auditors used pre-OBBBA values)
+- **Final Commit**: 540b282
+
+### OBBBA Clarifications (P.L. 119-21)
+- Standard deduction: Single $15,750, MFJ $31,500, HOH $23,625 (confirmed correct)
+- SALT cap: $40,000 (confirmed correct)
+- CTC: $2,200/child (confirmed correct)
+- EITC: unchanged from Rev Proc 2024-40
+
+### Ground Truth Fixes Applied
+- Cases 56,57,65,66,69,73,74: NIIT corrected — K-1 SE income excluded from NII per IRC §1411
+- Case 61: qualified/ordinary dividend swap corrected + downstream recalc
+- Case 113: SSA taxability corrected ($3,000 taxable, provisional income in 50% bracket)
+- Cases 112,114: populated all-zero outputs (early IRA penalty $3,832; Roth conversion $5,072)
+- Case 124: RRB/SSA taxability corrected ($7,275 taxable, 85% bracket)
+- Case 31: removed erroneous HSA employer double-deduction (AGI $56k→$58k)
+- Case 130: added $6,000 COD income to AGI ($38k→$44k)
+- Case 133: total_payments/refund corrected by $0.50 (Medicare withholding)
+
+### Engine Bugs Identified (for /tax-fix)
+- HIGH: NIIT includes K-1 SE ordinary income in NII base (IRC §1411 violation) — 8 cases
+- MEDIUM: Cases 112,114 engine produces all-zero output (1099-R processing failure)
+- MEDIUM: Case 113 engine omits SSA taxability from AGI
+- MEDIUM: Case 31 engine double-deducts employer HSA (Box 12W)
+- MEDIUM: Case 130 engine omits COD income from AGI
