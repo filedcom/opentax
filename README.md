@@ -28,7 +28,7 @@ Copy-paste this into Claude Desktop app:
 
 ```
 Load the skill here using curl or equivalent:
-https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md
+https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md
 
 Then run the onboarding flow.
 ```
