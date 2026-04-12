@@ -57,11 +57,25 @@ export const inputSchema = z.object({
   auto_se_earned_income: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
   auto_other_dependents: z.number().int().nonnegative().optional(),
+  // Prior nonrefundable credits (Schedule 3 lines 1-6a) that reduce the tax
+  // liability available for CTC — per IRS Form 8812 Line 14 instructions.
+  // Accumulated from multiple credit nodes, so may arrive as scalar or array.
+  auto_prior_nonrefundable_credits: z.union([
+    z.number().nonnegative(),
+    z.array(z.number().nonnegative()),
+  ]).optional(),
 });
 
 const PHASE_OUT_STEP = 50;
 const PHASE_OUT_INCREMENT = 1000;
 const ACTC_EARNED_INCOME_RATE = 0.15;
+
+// Sum a value that may have been accumulated from multiple upstream nodes.
+function sumAccumulable(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s, n) => s + n, 0);
+  return value;
+}
 
 type F8812Item = z.infer<typeof itemSchema>;
 type F8812Input = z.infer<typeof inputSchema>;
@@ -215,8 +229,15 @@ class F8812Node extends TaxNode<typeof inputSchema> {
     if (creditAfterPhaseOut === 0) return { outputs: [] };
 
     // Line 14: non-refundable CTC+ODC limited by income tax liability
-    const nonrefundableCTC = combinedTaxLiability !== undefined
-      ? Math.min(creditAfterPhaseOut, combinedTaxLiability)
+    // Per IRS Form 8812 instructions, Line 14 = Line 18 tax minus
+    // Schedule 3 lines 1-6a (prior nonrefundable credits: foreign tax,
+    // dep care, education, retirement savings, residential energy).
+    const priorCredits = sumAccumulable(input.auto_prior_nonrefundable_credits);
+    const adjustedTaxLiability = combinedTaxLiability !== undefined
+      ? Math.max(0, combinedTaxLiability - priorCredits)
+      : undefined;
+    const nonrefundableCTC = adjustedTaxLiability !== undefined
+      ? Math.min(creditAfterPhaseOut, adjustedTaxLiability)
       : creditAfterPhaseOut;
 
     const outputs: NodeOutput[] = [];

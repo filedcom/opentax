@@ -288,9 +288,9 @@ export const EITC_PHASE_IN_END_2025: Record<number, number> = {
  */
 export const EITC_PHASEOUT_START_2025: Record<number, [number, number]> = {
   0: [10_620, 17_850],
-  1: [23_511, 30_323],
-  2: [23_511, 30_323],
-  3: [23_511, 30_323],
+  1: [23_511, 30_470],
+  2: [23_511, 30_470],
+  3: [23_511, 30_470],
 } as const;
 
 /**
