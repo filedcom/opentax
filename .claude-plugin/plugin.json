@@ -1,7 +1,7 @@
 {
   "name": "opentax",
   "description": "Open-source federal tax preparation. Includes a tax preparer agent that walks you through filing, and a tax reviewer that audits completed returns against source documents.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": {
     "name": "Filed"
   },
