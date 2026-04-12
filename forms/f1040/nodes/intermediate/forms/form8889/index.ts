@@ -88,13 +88,13 @@ function annualLimit(
 }
 
 // Part I, Line 13: Deductible HSA contributions for AGI purposes.
-// Includes both taxpayer and employer contributions (Box 12 Code W), capped
-// at the annual limit. Employer contributions (§106(d)) are excluded from
-// income via Box 1 in standard payroll, but in this engine model they are
-// explicitly routed here from the W-2 node and deducted on Schedule 1 to
-// correctly reduce AGI when present. Total is capped at the annual limit to
-// prevent over-deduction.
-// IRC §223(a), §106(d)
+// Only the taxpayer's own contributions (not through payroll) are deductible.
+// Employer contributions (Box 12 Code W, §106(d)) are already excluded from
+// W-2 Box 1 wages by standard payroll — they are NOT an above-the-line
+// deduction. They appear on Form 8889 for informational and excess-contribution
+// purposes only. The deductible amount is capped at the annual limit minus
+// employer contributions (since employer contributions consume part of the limit).
+// IRC §223(a), §223(b)(4)
 function deductibleContributions(
   input: Form8889Input,
   selfOnlyLimit: number,
@@ -102,11 +102,12 @@ function deductibleContributions(
   catchupLimit: number,
 ): number {
   const taxpayer = input.taxpayer_hsa_contributions ?? 0;
+  if (taxpayer <= 0) return 0;
   const employer = input.employer_hsa_contributions ?? 0;
-  const total = taxpayer + employer;
-  if (total <= 0) return 0;
   const limit = annualLimit(input, selfOnlyLimit, familyLimit, catchupLimit);
-  return Math.min(total, limit);
+  // Employer contributions reduce the remaining limit available for the taxpayer
+  const remainingLimit = Math.max(0, limit - employer);
+  return Math.min(taxpayer, remainingLimit);
 }
 
 // Part I: Total contributions (taxpayer + employer) for excess calculation

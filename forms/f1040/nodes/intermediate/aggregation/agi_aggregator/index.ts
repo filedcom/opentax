@@ -246,6 +246,10 @@ function resolveSsaTaxable(input: AgiInput, cfg: import("../../../config/index.t
 
   const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
   const taxExemptInterest = input.tax_exempt_interest ?? 0;
+  // IRS SSA Worksheet (Form 1040 instructions, Lines 6a–6b):
+  // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
+  // Line 6 = Schedule 1, lines 11–20 (ATL deductions). So provisional income
+  // is computed AFTER above-the-line deductions and exclusions.
   const otherAgi = Math.max(0, nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg));
   return computeSsaTaxable(ssaGross, otherAgi, taxExemptInterest, isMfj);
 }
