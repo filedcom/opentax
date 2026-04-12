@@ -49,13 +49,13 @@ If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so
 /plugin install opentax@opentax
 ```
 
-3. Load the skill and ask:
+3. Use the skills:
 
 ```
-/opentax:tax-preparer
+/opentax:opentax         # guided onboarding -- picks the right skill for you
+/opentax:tax-preparer    # prepare a return from scratch
+/opentax:tax-reviewer    # audit a completed return against source docs
 ```
-
-> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
 
 ---
 
