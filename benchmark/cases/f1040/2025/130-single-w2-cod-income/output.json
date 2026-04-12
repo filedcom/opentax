@@ -3,12 +3,12 @@
   "year": 2025,
   "summary": {
     "line1z_total_wages": 38000,
-    "line9_total_income": 38000,
-    "line11_agi": 38000,
-    "line15_taxable_income": 22250,
-    "line24_total_tax": 2431.5,
+    "line9_total_income": 44000,
+    "line11_agi": 44000,
+    "line15_taxable_income": 28250,
+    "line24_total_tax": 3151.5,
     "line33_total_payments": 3200,
-    "line35a_refund": 768.5
+    "line35a_refund": 48.5
   },
   "forms": [
     "agi_aggregator",
@@ -50,8 +50,8 @@
     "address_state": "TX",
     "address_zip": "78701",
     "line11_agi": [
-      38000,
-      38000
+      44000,
+      44000
     ],
     "line12e_itemized_deductions": [
       0,
@@ -62,26 +62,26 @@
       15750
     ],
     "line15_taxable_income": [
-      22250,
-      22250
+      28250,
+      28250
     ],
     "line16_income_tax": [
-      2431.5,
-      2431.5
+      3151.5,
+      3151.5
     ],
     "line1z_total_wages": 38000,
-    "line9_total_income": 38000,
-    "line18_total_tax_before_credits": 2431.5,
+    "line9_total_income": 44000,
+    "line18_total_tax_before_credits": 3151.5,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 2431.5,
-    "line24_total_tax": 2431.5,
+    "line22_tax_after_credits": 3151.5,
+    "line24_total_tax": 3151.5,
     "line25d_total_withholding": 3200,
     "line33_total_payments": 3200,
     "line10_adjustments": 0,
     "line14_deductions_qbi_total": 15750,
     "line32_refundable_credits_total": 0,
-    "line34_overpayment": 768.5,
-    "line35a_refund": 768.5
+    "line34_overpayment": 48.5,
+    "line35a_refund": 48.5
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

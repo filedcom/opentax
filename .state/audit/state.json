@@ -68,6 +68,29 @@
         "Case 86: SALT cap / itemized deduction mismatch",
         "Case 106: Dependent care credit mismatch"
       ]
+    },
+    "can-you-ensure-all-test-20260412-r2": {
+      "goal": "Ensure all benchmark test cases in benchmark/cases/f1040/2025/ are correct — inputs and expected outputs represent accurate 2025 tax year 1040 calculations. Verify via web search and manual calculation.",
+      "status": "running",
+      "created_at": "2026-04-12T03:00:00Z",
+      "global_cycle": 0,
+      "global_clean_count": 0,
+      "checkpoint_commit": "b0d33bf",
+      "global_cycle": 1,
+      "work_packages": [
+        {"id":"wp-01","area":"Simple Single W2","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-02","area":"MFJ Basic","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-03","area":"HOH/EITC/CTC","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-04","area":"Schedule C/SE/QBI","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-05","area":"Retirement/SSA/1099-R","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-06","area":"Education/Marketplace/Credits","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-07","area":"Complex Multi-Form A (54-62)","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-08","area":"Complex Multi-Form B (65-78)","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-09","area":"Complex Multi-Form C (80-95)","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-10","area":"Complex MFJ Investment","status":"in_progress","clean_count":0,"findings":[]},
+        {"id":"wp-11","area":"Special Scenarios","status":"in_progress","clean_count":0,"findings":[]}
+      ],
+      "cycles": []
     }
   }
 }

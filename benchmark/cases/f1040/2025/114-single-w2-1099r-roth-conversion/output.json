@@ -2,17 +2,19 @@
   "returnId": "3cda4546-eb9d-4fdf-88e7-29215a77191a",
   "year": 2025,
   "summary": {
-    "line1z_total_wages": 0,
-    "line9_total_income": 0,
-    "line11_agi": 0,
-    "line15_taxable_income": 0,
-    "line24_total_tax": 0,
-    "line33_total_payments": 0
+    "line1z_total_wages": 45000,
+    "line9_total_income": 60000,
+    "line11_agi": 60000,
+    "line15_taxable_income": 44250,
+    "line24_total_tax": 5072,
+    "line33_total_payments": 5500,
+    "line35a_refund": 428
   },
   "forms": [
     "agi_aggregator",
     "eitc",
     "f1040",
+    "f1099r",
     "f2441",
     "f8812",
     "form8880",
@@ -27,6 +29,23 @@
     "standard_deduction"
   ],
   "lines": {
+    "line1z_total_wages": 45000,
+    "line5a_pension_gross": [
+      15000,
+      15000
+    ],
+    "line5b_pension_taxable": [
+      15000,
+      15000
+    ],
+    "line25a_withheld_w2": [
+      4000,
+      4000
+    ],
+    "line25b_withheld_1099": [
+      1500,
+      1500
+    ],
     "filing_status": "single",
     "dependent_count": 0,
     "qualifying_child_tax_credit_count": 0,
@@ -38,8 +57,8 @@
     "address_state": "CO",
     "address_zip": "80201",
     "line11_agi": [
-      0,
-      0
+      60000,
+      60000
     ],
     "line12e_itemized_deductions": [
       0,
@@ -50,24 +69,25 @@
       15750
     ],
     "line15_taxable_income": [
-      0,
-      0
+      44250,
+      44250
     ],
-    "line1z_total_wages": 0,
-    "line9_total_income": 0,
-    "line18_total_tax_before_credits": 0,
+    "line16_income_tax": [
+      5072,
+      5072
+    ],
+    "line9_total_income": 60000,
+    "line18_total_tax_before_credits": 5072,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 0,
-    "line24_total_tax": 0,
-    "line25d_total_withholding": 0,
-    "line33_total_payments": 0,
+    "line22_tax_after_credits": 5072,
+    "line24_total_tax": 5072,
+    "line25d_total_withholding": 5500,
+    "line33_total_payments": 5500,
     "line10_adjustments": 0,
     "line14_deductions_qbi_total": 15750,
     "line32_refundable_credits_total": 0,
-    "line34_overpayment": 0,
-    "line35a_refund": 0
+    "line34_overpayment": 428,
+    "line35a_refund": 428
   },
-  "warnings": [
-    "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
-  ]
+  "warnings": []
 }
