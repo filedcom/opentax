@@ -30,19 +30,19 @@
     "estimated_tax_payments": 0,
     "fed_withheld": 95462.95999999999,
     "foreign_tax_paid": 0,
-    "itemized_deductions": 37558.86
+    "itemized_deductions": 43915.52
   },
   "correct": {
     "line9_total_income": 502287.3,
     "line11_agi": 502287.3,
     "standard_deduction": 31500,
     "qbi_deduction": 0,
-    "line15_taxable_income": 464728.44,
-    "ordinary_taxable": 462861.43,
-    "income_tax": 102521.71,
+    "line15_taxable_income": 458371.78,
+    "ordinary_taxable": 456504.77,
+    "income_tax": 100699.73,
     "se_tax": 0,
     "add_medicare_tax": 2580.34,
-    "line18_tax_before_credits": 105102.05,
+    "line18_tax_before_credits": 103280.07,
     "nonref_ctc": 0.0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -52,10 +52,10 @@
     "eitc": 0.0,
     "actc": 0.0,
     "excess_ss_credit": 8198.73,
-    "line24_total_tax": 105102.05,
-    "line33_total_payments": 103661.69,
-    "line35a_refund": 0,
-    "line37_amount_owed": 1440.36,
-    "itemized_deduction": 37558.86
+    "line24_total_tax": 103280.07,
+    "line33_total_payments": 105501.89,
+    "line35a_refund": 2221.82,
+    "line37_amount_owed": 0,
+    "itemized_deduction": 43915.52
   }
 }
