@@ -118,31 +118,47 @@ opentax node list
 
 ## Use with AI agents
 
-The binary works as a tool for any AI assistant. Hand it your W-2s and 1099s in plain English -- the AI calls the engine, runs the IRS math, and shows you a finished 1040.
+Hand your W-2s and 1099s to an AI assistant in plain English. It calls the engine, runs the IRS math, and shows you a finished 1040.
 
-### Claude Code plugin
+### Step 1: Give your AI the instructions
 
-Install directly as a Claude Code plugin:
+Copy-paste this into Claude, ChatGPT, Gemini, or any AI assistant:
 
-```
-/plugin install https://github.com/filedcom/opentax
-```
+> Read this file and follow its instructions: https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md
 
-This adds the `/opentax:tax-preparer` skill. Just ask:
+### Step 2: Ask it to prepare your return
+
+Once it confirms it has loaded the instructions, drop in photos or PDFs of your tax documents (W-2s, 1099s, etc.) or just type in the values. Then ask it to prepare your return:
 
 > I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
 
-### Other AI agents
+### What to expect
 
-Fetch the skill instructions and add them to your agent's context:
+The AI will download the OpenTax binary, enter your forms, and compute your return. You'll get back a full 1040 with every line item -- income, deductions, tax owed, and your refund or balance due. All math follows the official IRS instructions.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md -o opentax-skill.md
+### Claude Code
+
+If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so the skill is always available:
+
+1. Add the marketplace:
+
+```
+/plugin marketplace add filedcom/opentax
 ```
 
-Then ask your agent:
+2. Install the plugin:
 
-> Copy opentax-agent.md to my local rules so you can use it.
+```
+/plugin install tax-preparer@filedcom-opentax
+```
+
+3. Load the skill and ask:
+
+```
+/opentax:tax-preparer
+```
+
+> I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
 
 ---
 
