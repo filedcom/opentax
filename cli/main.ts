@@ -13,6 +13,7 @@ import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import { exportMefCommand, exportPdfCommand } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
+import { checkForUpdate, updateCommand, versionCommand } from "./commands/version.ts";
 
 const RETURNS_DIR = "./.state/returns";
 
@@ -261,6 +262,12 @@ const COMMANDS: readonly CommandDef[] = [
   },
 ];
 
+/** Top-level commands that don't use the cmd/sub pattern */
+const TOP_LEVEL: Record<string, () => Promise<void> | void> = {
+  version: versionCommand,
+  update: updateCommand,
+};
+
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
     string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format", "output"],
@@ -271,10 +278,18 @@ async function main(): Promise<void> {
   const cmd = args._[0] as string | undefined;
   const sub = args._[1] as string | undefined;
 
+  // Top-level commands: opentax version, opentax update
+  if (cmd && cmd in TOP_LEVEL) {
+    await TOP_LEVEL[cmd]();
+    return;
+  }
+
   if (!cmd || args.help) {
     printHelp(COMMANDS, cmd);
     Deno.exit(args.help ? 0 : 1);
   }
+
+  await checkForUpdate();
 
   if (!sub) {
     printHelp(COMMANDS, cmd);
@@ -283,7 +298,7 @@ async function main(): Promise<void> {
 
   const def = COMMANDS.find((c) => c.cmd === cmd && c.sub === sub);
   if (!def) {
-    console.error(`Unknown command: tax ${cmd} ${sub}\n`);
+    console.error(`Unknown command: opentax ${cmd} ${sub}\n`);
     printHelp(COMMANDS);
     Deno.exit(1);
   }

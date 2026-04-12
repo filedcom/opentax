@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            asset: opentax-linux-x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            asset: opentax-linux-arm64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            asset: opentax-macos-x64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            asset: opentax-macos-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            asset: opentax-windows-x64.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Inject the git tag as the version
+      - name: Set version
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i.bak "s/export const VERSION = \"dev\"/export const VERSION = \"${VERSION}\"/" cli/version.ts
+          rm -f cli/version.ts.bak
+          echo "Building version ${VERSION}"
+          cat cli/version.ts
+
+      - name: Compile
+        run: >
+          deno compile
+          --allow-read --allow-write --allow-net --allow-env
+          --target ${{ matrix.target }}
+          --output ${{ matrix.asset }}
+          cli/main.ts
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ matrix.asset }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true

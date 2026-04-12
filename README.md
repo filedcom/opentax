@@ -1,416 +1,187 @@
-# Filed OpenTax
+# OpenTax
 
-Open-source IRS Form 1040 tax engine built for AI agents.
+Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
 
-Works with the AI apps you already use — **Claude, ChatGPT, Gemini** — desktop or web. Download one file, wire it in, and just ask the AI to do your taxes. It feeds in your W-2s and 1099s and hands back a finished 1040.
+Built and maintained by AI agents using official IRS publications as the sole source of truth.
 
 > Covers Form 1040 (TY2025) today. Additional forms and state returns coming.
 
 ---
 
-## Install (5 minutes, no technical knowledge needed)
+## Why
 
-**Step 1 — Download the file for your computer:**
+Tax software shouldn't require an account, an internet connection, or trust in a black box. OpenTax is a single executable you download and run. The tax logic is open for anyone to read, audit, and verify against IRS instructions.
 
-| My computer is... | Download |
-|---|---|
-| Mac with Apple chip (M1/M2/M3/M4) | [`tax-macos-arm64`](https://github.com/filed-app/tax-engine/releases/latest/download/tax-macos-arm64) |
-| Mac with Intel chip | [`tax-macos-x64`](https://github.com/filed-app/tax-engine/releases/latest/download/tax-macos-x64) |
-| Windows PC | [`tax-windows-x64.exe`](https://github.com/filed-app/tax-engine/releases/latest/download/tax-windows-x64.exe) |
-| Linux | [`tax-linux-x64`](https://github.com/filed-app/tax-engine/releases/latest/download/tax-linux-x64) |
+The entire codebase -- every form, every calculation, every validation rule -- is built and maintained by AI agents working directly from IRS publications (Pub 17, Pub 4491, MeF schemas, form instructions). No human-transcribed tax tables. No proprietary rule engines. Just code you can read, traced to the IRS source it implements.
 
-Not sure which Mac you have? Apple menu → About This Mac. If it says "Apple M..." you want the Apple chip version.
+---
 
-**Step 2 — On Mac/Linux, make it runnable.** Open Terminal and run:
+## Install
+
+One command. No runtime, no installer, no dependencies.
 
 ```bash
-chmod +x ~/Downloads/tax-macos-arm64
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh
 ```
 
-**Step 3 — Wire it into your AI app** (see below).
+This detects your OS and architecture, downloads the right binary, and puts it in your PATH.
 
-That's it. No other software to install.
+Or download manually:
+
+| Platform | Download |
+|---|---|
+| Mac (Apple Silicon) | [`opentax-macos-arm64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-macos-arm64) |
+| Mac (Intel) | [`opentax-macos-x64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-macos-x64) |
+| Windows | [`opentax-windows-x64.exe`](https://github.com/filedcom/opentax/releases/latest/download/opentax-windows-x64.exe) |
+| Linux (x64) | [`opentax-linux-x64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-linux-x64) |
+| Linux (ARM) | [`opentax-linux-arm64`](https://github.com/filedcom/opentax/releases/latest/download/opentax-linux-arm64) |
 
 ---
 
-## How it works
+## Staying up to date
 
-You tell the AI what's on your tax documents. The AI calls the tax engine in the background, runs the IRS math, and shows you the finished return — refund or amount owed, every line filled in.
-
-```
-W-2 → wages, withholding
-1099-INT → interest income        ↘
-1099-DIV → dividends               → Form 1040 → Schedule 1 → … → refund / amount owed
-Schedule C → self-employment       ↗
-```
-
----
-
-## Use with AI assistants
-
-Once the binary is downloaded, connect it to your AI app of choice.
-
----
-
-### Claude Desktop (via MCP)
-
-MCP lets Claude call the tax engine as a built-in tool — Claude just handles everything, no copy-pasting required.
-
-**1.** Download the binary (step 1 above) and move it somewhere easy, like `/usr/local/bin/tax`.
-
-**2.** Open Claude Desktop → Settings → Developer → Edit Config. Add:
-
-```json
-{
-  "mcpServers": {
-    "tax": {
-      "command": "/usr/local/bin/tax",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-**3.** Save and restart Claude Desktop. You'll see a hammer icon in the chat — the tax engine is live.
-
-**4.** Just ask:
-
-> **"I have a W-2 with $95,000 in wages and $14,200 withheld. I also have a 1099-INT for $380 in interest. Single filer, no dependents. Prepare my 2025 federal return."**
-
-Claude creates the return, adds all the forms, runs the math, validates it, and shows you the finished 1040 — no commands, no copying.
-
----
-
-### Claude.ai (web) or Claude Code
-
-Paste this into the chat — Claude will download and run the binary itself:
+OpenTax tells you when a new version is available:
 
 ```
-Download the tax engine from:
-https://github.com/filed-app/tax-engine/releases/latest/download/tax-macos-arm64
+$ opentax return get --returnId abc-123
+{ ... }
 
-Then prepare a 2025 federal tax return. I'm single.
-My W-2: $85,000 wages, $12,000 withheld.
-1099-INT: $420 interest from Chase.
-Show me the finished 1040.
+Update available: 0.1.0 → 0.2.0. Run `opentax update` to upgrade.
 ```
 
-Claude Code handles the download, permissions, and all the CLI calls. You just read the result.
+To update:
 
----
+```bash
+opentax update
+```
 
-### ChatGPT (web or desktop)
+That's it. The binary replaces itself with the latest release.
 
-ChatGPT can use the tax engine via its computer use or code interpreter capabilities. Or wire it up programmatically:
+Check your current version anytime:
 
-```python
-import subprocess, json
-
-TAX_BIN = "/usr/local/bin/tax"  # path to the downloaded binary
-
-def call_tax(args: list[str]) -> dict:
-    result = subprocess.run([TAX_BIN] + args, capture_output=True, text=True)
-    return json.loads(result.stdout)
-
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "tax_return_create",
-            "description": "Create a new tax return for a given year",
-            "parameters": {
-                "type": "object",
-                "properties": {"year": {"type": "integer"}},
-                "required": ["year"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "tax_form_add",
-            "description": "Add a tax document (W-2, 1099, etc.) to a return",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "returnId": {"type": "string"},
-                    "node_type": {"type": "string"},
-                    "data": {"type": "object"}
-                },
-                "required": ["returnId", "node_type", "data"]
-            }
-        }
-    }
-]
+```bash
+opentax version
 ```
 
 ---
 
-### Gemini (web or API)
+## Usage
 
-Same pattern — download the binary, point Gemini at it:
-
-```python
-import google.generativeai as genai
-import subprocess, json
-
-TAX_BIN = "/usr/local/bin/tax"
-
-def run_tax(args: list) -> str:
-    result = subprocess.run([TAX_BIN] + args, capture_output=True, text=True)
-    return result.stdout
-
-model = genai.GenerativeModel(model_name="gemini-1.5-pro", tools=[run_tax])
-
-response = model.generate_content(
-    "I have a W-2 for $78,000 wages and $11,000 withheld. "
-    "I'm single. Compute my 2025 federal tax return."
-)
-```
-
-Or open Gemini in a browser, paste the binary download URL, and ask it to run your taxes using it — Gemini's code execution sandbox can fetch and run the binary directly.
-
----
-
-## Example prompts
-
-These work with any AI assistant wired to the engine:
-
-**Simple W-2 filer**
-
-> "Prepare a 2025 federal tax return. I'm single. My W-2 shows $72,000 in box 1 and $9,800 in box 2. No other income or deductions."
-
-**Married filing jointly with children**
-
-> "MFJ return for 2025. Two W-2s: $105,000/$15,000 withheld and $38,000/$4,500 withheld. Two kids ages 6 and 10. Compute the return and tell me the refund."
-
-**Self-employed**
-
-> "I'm single and self-employed. Schedule C shows $92,000 gross and $31,000 in business expenses. I paid $4,000 in estimated taxes. What do I owe?"
-
-**Retirement income**
-
-> "I'm 68, filing single. SSA-1099 shows $24,000 in social security benefits. 1099-R shows a $15,000 distribution from my IRA (distribution code 7). Compute my taxable income and total tax."
-
-**Investment income**
-
-> "MFJ, AGI around $180,000 before investments. 1099-DIV: $4,200 qualified dividends, $800 ordinary. 1099-B: $12,000 long-term capital gains. One W-2 each: $90k and $85k. Run the full return."
-
-**After the return is computed, ask:**
-
-> "What is my effective tax rate?"
-> "Am I subject to the net investment income tax?"
-> "Validate the return and tell me if there are any errors."
-> "Export the return as IRS MeF XML."
-
----
-
-## Manual CLI usage
-
-Requires [Deno](https://deno.land).
+### Prepare a tax return
 
 ```bash
 # 1. Create a return
-deno task tax return create --year 2025
+opentax return create --year 2025
 # → { "returnId": "abc-123" }
 
-# 2. Add taxpayer info (filing status, dependents)
-deno task tax form add --returnId abc-123 --node_type general \
+# 2. Set filing status
+opentax form add --returnId abc-123 --node_type general \
   '{"filing_status": "single"}'
 
-# 3. Add income documents
-deno task tax form add --returnId abc-123 --node_type w2 \
+# 3. Add your W-2
+opentax form add --returnId abc-123 --node_type w2 \
   '{"box1_wages": 85000, "box2_fed_withheld": 12000}'
 
-deno task tax form add --returnId abc-123 --node_type f1099int \
+# 4. Add a 1099
+opentax form add --returnId abc-123 --node_type f1099int \
   '{"payer_name": "Chase Bank", "box1_interest": 420}'
 
-# 4. Compute the return — prints every line of the 1040
-deno task tax return get --returnId abc-123
-
-# 5. Validate against MeF business rules
-deno task tax return validate --returnId abc-123
-
-# 6. Export as IRS MeF XML (ready for e-file)
-deno task tax return export --returnId abc-123 --type mef > return.xml
+# 5. Compute -- prints every line of the 1040
+opentax return get --returnId abc-123
 ```
 
-### Introspection
+### Validate and export
 
 ```bash
-# What fields does a node expect?
-deno task tax node inspect --node_type w2
+# Check against IRS MeF business rules
+opentax return validate --returnId abc-123
 
-# See the full dependency graph from any node
-deno task tax node graph --node_type start
+# Export as IRS MeF XML (ready for e-file)
+opentax return export --returnId abc-123 --type mef > return.xml
+
+# Export as filled PDF
+opentax return export --returnId abc-123 --type pdf
+```
+
+### Manage form entries
+
+```bash
+# List everything in a return
+opentax form list --returnId abc-123
+
+# List just W-2s
+opentax form list --returnId abc-123 --node_type w2
+
+# Update a form entry
+opentax form update --returnId abc-123 --entryId w2_01 \
+  '{"box1_wages": 90000, "box2_fed_withheld": 13000}'
+
+# Delete a form entry
+opentax form delete --returnId abc-123 --entryId w2_01
+```
+
+### Inspect the engine
+
+```bash
+# What fields does a W-2 expect?
+opentax node inspect --node_type w2
+
+# Full dependency graph from any node
+opentax node graph --node_type f1040
 
 # List all registered nodes
-deno task tax node list
+opentax node list
 ```
 
 ---
 
-## CLI reference
+## Use with AI agents
 
-### Returns
-
-| Command                                               | Description                           |
-| ----------------------------------------------------- | ------------------------------------- |
-| `return create --year N`                              | Create a new return, returns UUID     |
-| `return get --returnId ID`                            | Execute and print all computed values |
-| `return validate --returnId ID [--format text\|json]` | Run MeF business rules validation     |
-| `return export --returnId ID --type mef [--force]`    | Generate IRS MeF XML to stdout        |
-
-### Forms
-
-| Command                                          | Description                              |
-| ------------------------------------------------ | ---------------------------------------- |
-| `form add --returnId ID --node_type TYPE 'JSON'` | Add an input (W-2, 1099, schedule, etc.) |
-| `form list --returnId ID [--node_type TYPE]`     | List all entries in a return             |
-| `form get --returnId ID --entryId ID`            | Get a specific entry                     |
-| `form update --returnId ID --entryId ID 'JSON'`  | Update an entry                          |
-| `form delete --returnId ID --entryId ID`         | Delete an entry                          |
-
-### Nodes
-
-| Command                                            | Description                        |
-| -------------------------------------------------- | ---------------------------------- |
-| `node list`                                        | List all registered nodes          |
-| `node inspect --node_type TYPE`                    | Show input schema and output nodes |
-| `node inspect --node_type TYPE --json`             | Same, as JSON                      |
-| `node graph --node_type TYPE [--depth N] [--json]` | Mermaid or JSON dependency graph   |
-
----
-
-## Supported input nodes (TY2025)
-
-131 input nodes covering the full range of 1040 source documents.
-
-### Income
-
-| Node type   | Form                                      |
-| ----------- | ----------------------------------------- |
-| `w2`        | W-2 Wage & Tax Statement                  |
-| `w2g`       | W-2G Gambling Winnings                    |
-| `ssa1099`   | SSA-1099 Social Security Benefits         |
-| `rrb1099r`  | RRB-1099-R Railroad Retirement            |
-| `f1099int`  | 1099-INT Interest Income                  |
-| `f1099div`  | 1099-DIV Dividends                        |
-| `f1099nec`  | 1099-NEC Non-Employee Compensation        |
-| `f1099g`    | 1099-G Government Payments / Unemployment |
-| `f1099b`    | 1099-B Broker Proceeds                    |
-| `f1099r`    | 1099-R Pensions & Distributions           |
-| `f1099oid`  | 1099-OID Original Issue Discount          |
-| `f1099patr` | 1099-PATR Patronage Dividends             |
-| `f1099m`    | 1099-MOD Mortgage Debt Cancellation       |
-| `f1099c`    | 1099-C Cancellation of Debt               |
-| `f1099k`    | 1099-K Payment Settlements                |
-| `f1095a`    | 1095-A Marketplace Insurance              |
-| `fec`       | Foreign Employer Compensation             |
-
-### Schedules
-
-| Node type        | Form                                   |
-| ---------------- | -------------------------------------- |
-| `schedule_a`     | Schedule A Itemized Deductions         |
-| `schedule_c`     | Schedule C Business Income             |
-| `schedule_e`     | Schedule E Rental/Royalty/Partnership  |
-| `schedule_f`     | Schedule F Farm Income                 |
-| `schedule_h`     | Schedule H Household Employment        |
-| `schedule_j`     | Schedule J Farm Income Averaging       |
-| `schedule_r`     | Schedule R Credit for Elderly/Disabled |
-| `k1_partnership` | Schedule K-1 (Form 1065)               |
-| `k1_s_corp`      | Schedule K-1 (Form 1120-S)             |
-| `k1_trust`       | Schedule K-1 (Form 1041)               |
-
-### Deductions & Adjustments
-
-| Node type                 | Form                                 |
-| ------------------------- | ------------------------------------ |
-| `f1098`                   | 1098 Mortgage Interest               |
-| `f1098e`                  | 1098-E Student Loan Interest         |
-| `f2106`                   | Form 2106 Employee Business Expenses |
-| `educator_expenses`       | Educator Expenses                    |
-| `sep_retirement`          | SEP/SIMPLE/Keogh Contributions       |
-| `ira_deduction_worksheet` | IRA Deduction Worksheet              |
-| `sales_tax_deduction`     | State/Local Sales Tax Deduction      |
-| `ltc_premium`             | Long-Term Care Premium               |
-| `qsehra`                  | QSEHRA Reimbursements                |
-| `depletion`               | Depletion Deduction                  |
-| `nol_carryforward`        | Net Operating Loss Carryforward      |
-| `ppp_forgiveness`         | PPP Loan Forgiveness                 |
-| `clergy`                  | Clergy Housing Allowance             |
-
-### Credits
-
-| Node type | Form                                   |
-| --------- | -------------------------------------- |
-| `f2441`   | Form 2441 Dependent Care Credit        |
-| `f8812`   | Form 8812 Child Tax Credit / ACTC      |
-| `f8863`   | Form 8863 Education Credits            |
-| `f5695`   | Form 5695 Residential Energy Credit    |
-| `f8396`   | Form 8396 Mortgage Interest Credit     |
-| `f3800`   | Form 3800 General Business Credit      |
-| `f8936`   | Form 8936 Clean Vehicle Credit         |
-| `f8941`   | Form 8941 Small Employer Health Credit |
-
-### Capital Transactions
-
-| Node type  | Form                                   |
-| ---------- | -------------------------------------- |
-| `f8949`    | Form 8949 Capital Gains/Losses         |
-| `f4835`    | Form 4835 Farm Rental Income           |
-| `form4797` | Form 4797 Sale of Business Property    |
-| `form6252` | Form 6252 Installment Sale             |
-| `form6781` | Form 6781 Gains/Losses §1256 Contracts |
-| `form8824` | Form 8824 Like-Kind Exchange           |
-
-### Other
-
-| Node type         | Form                                          |
-| ----------------- | --------------------------------------------- |
-| `general`         | Taxpayer identity, filing status & dependents |
-| `preparer`        | Paid Preparer Information                     |
-| `f1040es`         | Form 1040-ES Estimated Tax Payments           |
-| `f2210`           | Form 2210 Underpayment Penalty                |
-| `f8283`           | Form 8283 Non-Cash Charitable Contributions   |
-| `f8332`           | Form 8332 Release of Dependency Claim         |
-| `f8379`           | Form 8379 Injured Spouse Allocation           |
-| `f8621`           | Form 8621 PFIC Annual Report                  |
-| `f8938`           | Form 8938 Foreign Financial Assets            |
-| `f8958`           | Form 8958 Community Property Allocation       |
-| `f9465`           | Form 9465 Installment Agreement               |
-| `f114`            | FinCEN 114 (FBAR)                             |
-| `f1310`           | Form 1310 Deceased Taxpayer Refund            |
-| `household_wages` | Household Employee Wages                      |
-| `auto_expense`    | Vehicle/Auto Business Expense                 |
-| `lump_sum_ss`     | Lump-Sum Social Security Election             |
-| `qbi_aggregation` | QBI Aggregation Election                      |
-
----
-
-## Validation
-
-`return validate` runs the MeF business rules engine and reports:
-
-- **Error** — must be corrected before filing
-- **Warning** — likely mistake, confirm before filing
-- **Info** — informational diagnostic
+AI agents are good at using CLIs. Here's how an agent can use OpenTax to prepare a return:
 
 ```bash
-deno task tax return validate --returnId abc-123
-deno task tax return validate --returnId abc-123 --format json
+# 1. Create a return
+opentax return create --year 2025
+# → { "returnId": "abc-123" }
+
+# 2. Add taxpayer info and documents
+opentax form add --returnId abc-123 --node_type general '{"filing_status": "single"}'
+opentax form add --returnId abc-123 --node_type w2 '{"box1_wages": 95000, "box2_fed_withheld": 14200}'
+
+# 3. Compute the return
+opentax return get --returnId abc-123
+
+# 4. Validate and export
+opentax return validate --returnId abc-123
+opentax return export --returnId abc-123 --type mef > return.xml
+```
+
+Every command reads and writes JSON. An agent can inspect any node's expected input schema with `opentax node inspect --node_type w2 --json`, so it knows exactly what fields to provide. No special integration needed -- just shell access to the binary.
+
+---
+
+## Supported forms (TY2025)
+
+131 input nodes covering the full range of 1040 source documents -- W-2s, 1099s, all major schedules, credits, capital transactions, and more.
+
+See [`catalog.ts`](catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
+
+```bash
+opentax node list
 ```
 
 ---
 
-## Export
+## How it's built
 
-MeF XML export conforms to IRS 2025v5.2 schema.
+The engine is a directed graph of **nodes**. Each node is a pure function: validated input in, typed output out. No state, no side effects.
 
-```bash
-deno task tax return export --returnId abc-123 --type mef
-```
+- Schemas defined with Zod, types inferred (never duplicated)
+- Immutable data throughout -- no mutation anywhere
+- Type-safe output routing between nodes enforced at compile time
+- 133 real-world benchmark scenarios
+
+AI agents maintain the codebase: reading IRS instructions, writing node implementations, generating test cases from official IRS exercises, and fixing regressions -- all traced back to the authoritative IRS source.
 
 ---
 
@@ -419,123 +190,74 @@ deno task tax return export --returnId abc-123 --type mef
 Requires [Deno](https://deno.land).
 
 ```bash
-# Run all tests
+# Run tests
 deno task test
-
-# Run a single directory
-deno task test forms/f1040/nodes/inputs/w2/
 
 # Run accuracy benchmark
 deno task bench
 
-# Filter to a specific form
-deno task bench --form 1040
+# Run the CLI in dev mode
+deno task tax return create --year 2025
 ```
 
-### Filed OpenTax Bench
+### Contributing with Claude Code
 
-97 real-world TY2025 scenarios covering single, MFJ, and HOH filers across W-2, 1099-R, SSA, Schedule C, K-1, capital gains, credits, and estimated tax payments.
+The repo includes four skills that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.
 
-Pass criterion: engine within ±$5 of correct value for `line24_total_tax`, `line35a_refund`, and `line37_amount_owed`.
+#### `/tax-status` -- See what's passing and what's broken
 
-Benchmark state is tracked in `.state/bench/` (see `docs/architecture/STRUCTURE.md` for the full layout).
-
-#### Claude Code skills (in-repo)
-
-If you're using Claude Code, four skills automate benchmark and development work. Invoke them with `/skill-name [args]` in the chat.
-
-**`/tax-status`**
-
-Print the current health of every form in the harness — pass/fail counts, pending root causes, build phase, and the last five progress entries.
+Run this first. Shows pass/fail counts, pending root causes, and build phase for every form.
 
 ```
 /tax-status
 ```
 
-No arguments. Run this first to orient yourself before fixing or building anything.
+#### `/tax-fix [form:year]` -- Fix a broken form
 
----
-
-**`/tax-fix [form:year]`**
-
-Autonomous bug-fixing loop for a specific form and tax year. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates, commits any net-positive improvements, and loops until all cases pass or the loop stalls after three fruitless rounds.
+Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates, and commits any net-positive improvements. Loops until all cases pass or progress stalls.
 
 ```
 /tax-fix f1040:2025
 ```
 
-Only commit if pass count goes up and no previously passing cases break. If it stalls, check `/tax-status` for the root cause list and investigate manually.
+#### `/tax-cases [source]` -- Add new benchmark cases
 
----
-
-**`/tax-cases [source]`**
-
-Generate new benchmark cases from IRS-published sources. Correct values come directly from IRS publications — no computed ground truth.
+Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages). Run `/tax-fix` after to see how the engine performs on the new cases.
 
 ```
-/tax-cases vita              # VITA Pub 4491 training exercises (default, best coverage)
-/tax-cases pub17             # Publication 17 worked examples
-/tax-cases mef               # IRS MeF software developer test cases
-/tax-cases "senior with SSA and 1099-R"   # free-form scenario description
+/tax-cases vita                            # VITA Pub 4491 training exercises
+/tax-cases pub17                           # Publication 17 worked examples
+/tax-cases "senior with SSA and 1099-R"    # free-form scenario
 ```
 
-After cases are written, run `/tax-fix` to see how the engine performs on them.
+#### `/tax-build [form-number]` -- Build a new form from scratch
 
----
-
-**`/tax-build [form-number]`**
-
-Autonomous end-to-end form builder. Researches IRS instructions, extracts ground truth from IRS sample returns, builds all nodes section by section, then runs a validate + fix loop until ≥ 95% of benchmark cases pass. Resumes automatically if interrupted.
+End-to-end form builder. Researches IRS instructions, extracts ground truth, builds all nodes section by section, then runs a validate + fix loop until >= 95% of benchmark cases pass. Resumes if interrupted.
 
 ```
 /tax-build 1120
 ```
 
-Phases: research → ground truth → build → validate+fix. Check `/tax-status` to see where a build left off.
+#### Typical workflows
 
----
-
-#### Workflows
-
-**Adding a new form**
-
+**Adding a new form:**
 ```
-# 1. Source IRS ground-truth cases for the form
-/tax-cases f1120:2025 vita
-
-# 2. Build nodes end-to-end — researches IRS instructions, implements nodes,
-#    runs validate+fix loop until ≥95% of cases pass
-/tax-build 1120
-
-# 3. Confirm it's green
-/tax-status
+/tax-cases f1120:2025 vita    # source benchmark cases first
+/tax-build 1120               # build nodes, iterate until >= 95% pass
+/tax-status                   # confirm it's green
 ```
 
-**Fixing or updating an existing form**
-
+**Fixing a regression:**
 ```
-# 1. See what's failing and why
-/tax-status
-
-# 2. Run the autonomous fix loop — it clusters failures, patches nodes,
-#    and commits only when pass count improves
-/tax-fix f1040:2025
-
-# 3. Optionally add more IRS cases to stress-test the fix
-/tax-cases pub17
-/tax-fix f1040:2025
+/tax-status                   # find what's failing and why
+/tax-fix f1040:2025           # autonomous fix loop
 ```
 
----
-
-### Adding a node
-
-- Define a Zod schema, infer types from it — never duplicate
-- `compute()` is a pure function: no state, no mutations
-- Use `OutputNodes` for type-safe routing to downstream nodes
-- Break logic into small named pure helpers, compose in `compute()`
-
-See `CLAUDE.md` for full conventions.
+**Expanding test coverage:**
+```
+/tax-cases pub17              # pull new IRS examples
+/tax-fix f1040:2025           # fix loop against expanded case set
+```
 
 ---
 
