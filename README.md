@@ -1,4 +1,4 @@
-# OpenTax
+# Filed OpenTax
 
 <p align="center">
   <img src="icon.svg" width="128" height="128" alt="OpenTax">
