@@ -128,16 +128,16 @@ Install directly as a Claude Code plugin:
 /plugin install https://github.com/filedcom/opentax
 ```
 
-This adds the `opentax:tax-preparer` agent. Just ask:
+This adds the `/opentax:tax-preparer` skill. Just ask:
 
 > I'm single. My W-2 shows $72,000 in wages and $9,800 withheld. Prepare my 2025 federal return.
 
 ### Other AI agents
 
-Fetch the agent instructions and add them to your agent's context:
+Fetch the skill instructions and add them to your agent's context:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/agents/tax-preparer.md -o opentax-agent.md
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md -o opentax-skill.md
 ```
 
 Then ask your agent:
