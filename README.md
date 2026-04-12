@@ -10,9 +10,13 @@ Built and maintained by AI agents using official IRS publications as the sole so
 
 ## Why
 
-Tax software shouldn't require an account, an internet connection, or trust in a black box. OpenTax is a single executable you download and run. The tax logic is open for anyone to read, audit, and verify against IRS instructions.
+Professional tax software is closed source, expensive, and a black box -- yet it's the most critical piece of software for taxpayers and tax professionals. It was expensive to build because every rule change required manual updates to the codebase. AI agents have dropped that cost drastically, so it only makes sense that we use them to build and maintain tax software in the open.
 
-The entire codebase -- every form, every calculation, every validation rule -- is built and maintained by AI agents working directly from IRS publications (Pub 17, Pub 4491, MeF schemas, form instructions). No human-transcribed tax tables. No proprietary rule engines. Just code you can read, traced to the IRS source it implements.
+OpenTax aims to be the first truly open-source, up-to-date tax engine that works for everyone. No account, no internet connection, no trust in a proprietary rule engine. Just a single binary you download and run. Every form, every calculation, every validation rule is open for anyone to read, audit, and verify against IRS instructions.
+
+The entire codebase is built and maintained by AI agents working directly from IRS publications (Pub 17, Pub 4491, MeF schemas, form instructions). No human-transcribed tax tables. Just code you can read, traced to the IRS source it implements.
+
+The software is designed for the AI era. AI agents are proficient with CLI tools -- this tax engine is a single binary CLI that any agent can download and run. Everything is stored locally, keeping the software truly open, secure, and accessible.
 
 ---
 
