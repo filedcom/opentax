@@ -145,26 +145,9 @@ opentax node list
 
 ## Use with AI agents
 
-AI agents are good at using CLIs. Here's how an agent can use OpenTax to prepare a return:
+The binary works as a tool for any AI assistant. Hand it your W-2s and 1099s in plain English -- the AI calls the engine, runs the IRS math, and shows you a finished 1040.
 
-```bash
-# 1. Create a return
-opentax return create --year 2025
-# → { "returnId": "abc-123" }
-
-# 2. Add taxpayer info and documents
-opentax form add --returnId abc-123 --node_type general '{"filing_status": "single"}'
-opentax form add --returnId abc-123 --node_type w2 '{"box1_wages": 95000, "box2_fed_withheld": 14200}'
-
-# 3. Compute the return
-opentax return get --returnId abc-123
-
-# 4. Validate and export
-opentax return validate --returnId abc-123
-opentax return export --returnId abc-123 --type mef > return.xml
-```
-
-Every command reads and writes JSON. An agent can inspect any node's expected input schema with `opentax node inspect --node_type w2 --json`, so it knows exactly what fields to provide. No special integration needed -- just shell access to the binary.
+Add [`SKILL.md`](SKILL.md) to your agent's context to give it full instructions on how to download, install, and use the CLI. It includes the complete workflow, all supported form types, and example prompts.
 
 ---
 
