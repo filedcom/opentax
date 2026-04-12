@@ -32,9 +32,9 @@ URL="https://github.com/${REPO}/releases/latest/download/${ASSET}"
 
 echo "Downloading ${ASSET}..."
 if command -v curl >/dev/null 2>&1; then
-  curl -fsSL -o "/tmp/${ASSET}" "$URL"
+  curl -fL --progress-bar -o "/tmp/${ASSET}" "$URL"
 elif command -v wget >/dev/null 2>&1; then
-  wget -qO "/tmp/${ASSET}" "$URL"
+  wget --show-progress -qO "/tmp/${ASSET}" "$URL"
 else
   echo "Error: curl or wget required" >&2
   exit 1

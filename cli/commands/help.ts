@@ -64,8 +64,8 @@ export function printHelp(
     "  --json        Output as JSON",
     "",
     filter
-      ? `Run 'tax ${filter} <subcommand> --help' for subcommand options.`
-      : "Run 'tax <command> --help' for command-group help.",
+      ? `Run 'opentax ${filter} <subcommand> --help' for subcommand options.`
+      : "Run 'opentax <command> --help' for command-group help.",
     "",
   ];
 

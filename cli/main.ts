@@ -45,7 +45,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "node",
     sub: "list",
     description: "List all registered nodes",
-    usage: "tax node list",
+    usage: "opentax node list",
     handler: async (_args) => {
       await run(() => Promise.resolve(nodeListCommand()));
     },
@@ -54,7 +54,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "node",
     sub: "inspect",
     description: "Inspect a node's input schema and output nodes",
-    usage: "tax node inspect --node_type <type>",
+    usage: "opentax node inspect --node_type <type>",
     options: [
       { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
       { flag: "--json", description: "Output as JSON" },
@@ -68,7 +68,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "create",
     description: "Create a new tax return",
-    usage: "tax return create --year <year>",
+    usage: "opentax return create --year <year>",
     options: [
       { flag: "--year", description: "Tax year (e.g. 2025)", required: true },
       { flag: "--form", description: "Form type (default: f1040)" },
@@ -87,7 +87,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "get",
     description: "Get a return's computed line items",
-    usage: "tax return get --returnId <id>",
+    usage: "opentax return get --returnId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
     ],
@@ -100,7 +100,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "export",
     description: "Export a return as MEF XML or filled IRS PDF",
-    usage: "tax return export --returnId <id> --type mef|pdf [--force] [--output <path>]",
+    usage: "opentax return export --returnId <id> --type mef|pdf [--force] [--output <path>]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--type", description: "Export format: mef or pdf", required: true },
@@ -131,7 +131,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "form",
     sub: "add",
     description: "Add a form entry to a return",
-    usage: "tax form add --returnId <id> --node_type <type> '{...}'",
+    usage: "opentax form add --returnId <id> --node_type <type> '{...}'",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
@@ -151,7 +151,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "form",
     sub: "list",
     description: "List all form entries in a return",
-    usage: "tax form list --returnId <id> [--node_type <type>]",
+    usage: "opentax form list --returnId <id> [--node_type <type>]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--node_type", description: "Filter by node type (optional)" },
@@ -166,7 +166,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "form",
     sub: "get",
     description: "Get a specific form entry by ID",
-    usage: "tax form get --returnId <id> --entryId <id>",
+    usage: "opentax form get --returnId <id> --entryId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
@@ -181,7 +181,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "form",
     sub: "update",
     description: "Update a form entry's data",
-    usage: "tax form update --returnId <id> --entryId <id> '{...}'",
+    usage: "opentax form update --returnId <id> --entryId <id> '{...}'",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
@@ -201,7 +201,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "form",
     sub: "delete",
     description: "Delete a form entry",
-    usage: "tax form delete --returnId <id> --entryId <id>",
+    usage: "opentax form delete --returnId <id> --entryId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
@@ -216,7 +216,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "validate",
     description: "Validate a return against MeF business rules",
-    usage: "tax return validate --returnId <id> [--format text|json]",
+    usage: "opentax return validate --returnId <id> [--format text|json]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
       { flag: "--format", description: "Output format: text or json (default: json)" },
@@ -242,7 +242,7 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "node",
     sub: "graph",
     description: "View node dependency graph (Mermaid or JSON)",
-    usage: "tax node graph --node_type <type> [--depth <n>] [--json]",
+    usage: "opentax node graph --node_type start [--depth <n>] [--json]",
     options: [
       { flag: "--node_type", description: "Root node type", required: true },
       { flag: "--depth", description: "Max traversal depth (default: unlimited)" },
