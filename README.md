@@ -118,17 +118,7 @@ opentax node list
 
 ## Use with AI agents
 
-Works with Claude, ChatGPT, Gemini, or any AI assistant that can run commands.
-
-**1.** Download the skill file:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md -o opentax-skill.md
-```
-
-**2.** Upload `opentax-skill.md` to your AI's chat.
-
-**3.** Say "Follow those instructions" and then ask it to prepare or review your return. Drop in photos or PDFs of your W-2s, 1099s, and other documents, or just type in the values.
+Copy and paste [this skill file](https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md) into Claude, ChatGPT, Gemini, or any AI assistant. This gives your AI the OpenTax skill -- it will install the CLI, ask for your documents, and prepare or review your return.
 
 ### Claude Code
 
