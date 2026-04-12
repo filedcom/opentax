@@ -1,0 +1,11 @@
+{
+  "name": "opentax",
+  "description": "Open-source federal tax preparation. Installs the opentax CLI and provides a tax preparer agent that handles W-2s, 1099s, all major schedules, credits, and e-file export.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Filed"
+  },
+  "homepage": "https://github.com/filedcom/opentax",
+  "repository": "https://github.com/filedcom/opentax",
+  "license": "MIT"
+}
