@@ -120,34 +120,24 @@ opentax node list
 
 Hand your W-2s and 1099s to an AI assistant in plain English. It calls the engine, runs the IRS math, and shows you a finished 1040.
 
-Two skills are available:
-
-| Skill | What it does |
-|-------|-------------|
-| **Tax Preparer** | Walks you through preparing a return from scratch |
-| **Tax Reviewer** | Audits a completed return against your source documents |
-
-### Prepare a return
+### Step 1: Give your AI the instructions
 
 Download the skill file, then upload it to Claude, ChatGPT, Gemini, or any AI assistant:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md -o opentax-preparer-skill.md
+curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/SKILL.md -o opentax-skill.md
 ```
 
-Upload `opentax-preparer-skill.md` to your AI's chat and tell it to follow those instructions.
+Upload `opentax-skill.md` to your AI's chat and tell it to follow those instructions.
 
-Drop in photos or PDFs of your tax documents (W-2s, 1099s, etc.) or just type in the values. The AI will ask you questions until it has everything, confirm the details with you, then compute and present your finished 1040.
+### Step 2: Tell it what you need
 
-### Review a completed return
+The AI will figure out the right workflow based on what you ask:
 
-Download the reviewer skill instead:
+- **"Prepare my 2025 return"** -- walks you through gathering documents, entering forms, and computing the finished 1040
+- **"Review this return"** -- audits a completed return against your source documents, finds discrepancies line-by-line
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-reviewer/SKILL.md -o opentax-reviewer-skill.md
-```
-
-Upload `opentax-reviewer-skill.md` along with your completed return and source documents. The AI will independently compute your return, compare it line-by-line, and flag any discrepancies -- missed income, incorrect deductions, unclaimed credits, or compliance risks.
+Drop in photos or PDFs of your tax documents (W-2s, 1099s, etc.) or just type in the values.
 
 ### Claude Code
 
