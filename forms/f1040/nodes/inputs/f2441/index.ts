@@ -6,6 +6,7 @@ import type {
 import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { f8812 } from "../f8812/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -159,6 +160,9 @@ function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
 
   if (credit > 0) {
     outputs.push(output(schedule3, { line2_childcare_credit: credit }));
+    // Feed f8812 so CTC nonrefundable limit accounts for this prior credit
+    // per IRS Form 8812 Line 14 (tax minus Schedule 3 lines 1-6a).
+    outputs.push(output(f8812, { auto_prior_nonrefundable_credits: credit }));
   }
 
   return outputs;
@@ -167,7 +171,7 @@ function itemOutputs(item: F2441Item, fallbackAgi?: number): NodeOutput[] {
 class F2441Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f2441";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, schedule3]);
+  readonly outputNodes = new OutputNodes([f1040, schedule3, f8812]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
