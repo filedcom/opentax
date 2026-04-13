@@ -59,7 +59,7 @@ If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so
 
 ---
 
-## Install
+## Install CLI
 
 One command. No runtime, no installer, no dependencies.
 
