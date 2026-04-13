@@ -14,11 +14,17 @@ Built and maintained by AI agents using official IRS publications as the sole so
 
 ## Why
 
-Professional tax software is closed source and is a critical piece of software for taxpayers and professionals. It was expensive to build and keep updated since it required manual updates to the codebase every time the rules changed.
+- Professional tax software is closed source and expensive to maintain. Every rule change required manual updates to the codebase
+- AI agents have drastically reduced the cost of building and maintaining tax software. It only makes sense to do it in the open
+- This project aims to be the first truly open-source, up-to-date tax software that works for everyone
 
-With AI agents, the cost of building and maintaining tax software has dropped drastically. It only makes sense that we use them to build and maintain our tax software in the open. This project aims to be the first truly open-source and up-to-date tax software that can work for everyone.
+**Designed for the AI era:**
 
-The software is designed for the AI era -- designed to be run by AI agents more than humans. AI agents are proficient with CLI tools. This tax software is a single binary CLI that an AI agent can download and run. Everything is stored locally, keeping the software truly open, secure, and accessible.
+- Built to be run by AI agents more than humans
+- Single binary CLI that AI agents can download and run instantly
+- Everything stored locally. Open, secure, and accessible
+
+Inspired by Andrej Karpathy's [autoresearch](https://github.com/karpathy/autoresearch), an autonomous loop where AI agents modify code, measure results, and keep only improvements. OpenTax applies the same idea to tax software: agents read IRS instructions, write implementations, generate test cases, and fix regressions in a continuous loop.
 
 ---
 
@@ -52,7 +58,7 @@ If you use [Claude Code](https://claude.ai/code), install OpenTax as a plugin so
 3. Use the skills:
 
 ```
-/opentax:opentax         # guided onboarding -- picks the right skill for you
+/opentax:opentax         # guided onboarding, picks the right skill for you
 /opentax:tax-preparer    # prepare a return from scratch
 /opentax:tax-reviewer    # audit a completed return against source docs
 ```
@@ -67,7 +73,8 @@ One command. No runtime, no installer, no dependencies.
 curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh
 ```
 
-This detects your OS and architecture, downloads the right binary, and puts it in your PATH.
+- Detects your OS and architecture automatically
+- Downloads the right binary and puts it in your PATH
 
 Or download manually:
 
@@ -182,7 +189,7 @@ opentax version
 
 ## Supported forms (TY2025)
 
-131 input nodes covering the full range of 1040 source documents -- W-2s, 1099s, all major schedules, credits, capital transactions, and more.
+131 input nodes covering the full range of 1040 source documents: W-2s, 1099s, all major schedules, credits, capital transactions, and more.
 
 See [`catalog.ts`](catalog.ts) for the complete list of supported nodes and their schemas. Or from the CLI:
 
@@ -197,11 +204,18 @@ opentax node list
 The engine is a directed graph of **nodes**. Each node is a pure function: validated input in, typed output out. No state, no side effects.
 
 - Schemas defined with Zod, types inferred (never duplicated)
-- Immutable data throughout -- no mutation anywhere
+- Immutable data throughout, no mutation anywhere
 - Type-safe output routing between nodes enforced at compile time
 - 133 real-world benchmark scenarios
 
-AI agents maintain the codebase: reading IRS instructions, writing node implementations, generating test cases from official IRS exercises, and fixing regressions -- all traced back to the authoritative IRS source.
+AI agents maintain the codebase:
+
+- Read IRS instructions
+- Write node implementations
+- Generate test cases from official IRS exercises
+- Fix regressions
+
+All traced back to the authoritative IRS source.
 
 ---
 
@@ -224,7 +238,7 @@ deno task tax return create --year 2025
 
 The repo includes four skills that automate the full development lifecycle. Open the project in [Claude Code](https://claude.ai/code) and invoke them with `/skill-name`.
 
-#### `/tax-status` -- See what's passing and what's broken
+#### `/tax-status`
 
 Run this first. Shows pass/fail counts, pending root causes, and build phase for every form.
 
@@ -232,7 +246,7 @@ Run this first. Shows pass/fail counts, pending root causes, and build phase for
 /tax-status
 ```
 
-#### `/tax-fix [form:year]` -- Fix a broken form
+#### `/tax-fix [form:year]`
 
 Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root cause, spawns parallel fixer agents, validates, and commits any net-positive improvements. Loops until all cases pass or progress stalls.
 
@@ -240,7 +254,7 @@ Autonomous bug-fixing loop. Reads failing benchmark cases, clusters them by root
 /tax-fix f1040:2025
 ```
 
-#### `/tax-cases [source]` -- Add new benchmark cases
+#### `/tax-cases [source]`
 
 Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packages). Run `/tax-fix` after to see how the engine performs on the new cases.
 
@@ -250,7 +264,7 @@ Sources test cases from IRS publications (VITA exercises, Pub 17, MeF test packa
 /tax-cases "senior with SSA and 1099-R"    # free-form scenario
 ```
 
-#### `/tax-build [form-number]` -- Build a new form from scratch
+#### `/tax-build [form-number]`
 
 End-to-end form builder. Researches IRS instructions, extracts ground truth, builds all nodes section by section, then runs a validate + fix loop until >= 95% of benchmark cases pass. Resumes if interrupted.
 
