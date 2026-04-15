@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filed OpenTax - Open source 1040 tax software for AI agents</title>
+  <meta name="description" content="Give your AI a deterministic tax engine. Open source 1040 tax software for AI agents. Runs locally. MIT licensed." />
+  <link rel="icon" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: "Editorial New";
+      src: url("fonts/PPEditorialNew-Light.otf") format("opentype");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-background: #0a0a0a;
+      --color-foreground: #ededed;
+      --color-card: #111111;
+      --color-secondary: #161616;
+      --color-muted: #1f1f1f;
+      --color-primary: #ededed;
+      --color-primary-foreground: #0a0a0a;
+      --color-muted-foreground: #888888;
+      --color-border: #2a2a2a;
+      --color-border-secondary: #222222;
+      --color-success: #0d2b12;
+      --color-success-border: #1a4a22;
+      --color-success-foreground: #4ade80;
+      --beige-400: #555555;
+      --beige-600: #888888;
+      --stone-400: #666666;
+      --stone-600: #999999;
+
+      --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Geist Mono', 'SF Mono', monospace;
+      --radius: 8px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: #0a0a0a;
+      color: var(--color-foreground);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      line-height: 1.6;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+
+    /* ── nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      height: 56px;
+      border-bottom: 1px solid var(--color-border);
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-inner {
+      max-width: 100%; margin: 0 auto;
+      height: 100%;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--color-foreground);
+      font-size: 16px; font-weight: 600;
+      font-family: var(--font-sans);
+      letter-spacing: -0.01em;
+    }
+
+    .nav-right {
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      color: var(--color-muted-foreground); text-decoration: none;
+      transition: color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--color-foreground); background: var(--color-secondary); }
+
+    .nav-sep { width: 1px; height: 16px; background: var(--color-border); margin: 0 8px; }
+
+    /* ── hero ── */
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero {
+      max-width: 960px; margin: 0 auto;
+      padding: 100px 24px 80px;
+      display: flex; flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+
+    h1 {
+      font-family: "Editorial New", Georgia, serif;
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(15px, 2vw, 18px);
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 40px;
+      font-weight: 400;
+      max-width: 680px;
+      line-height: 1.7;
+    }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      background: transparent; color: #fff;
+      border: 1px solid rgba(255,255,255,0.25); border-radius: 10px;
+      font-family: var(--font-sans); font-size: 15px; font-weight: 500;
+      text-decoration: none;
+      transition: border-color .15s, background .15s, transform .1s;
+    }
+    .btn-secondary:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+
+    .copy-btn {
+      background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+      padding: 3px 8px; font-size: 12px; font-family: var(--font-sans);
+      color: rgba(255,255,255,0.4); cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .copy-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.3); }
+    .copy-btn.ok { color: #4ade80; border-color: #4ade80; background: rgba(74,222,128,0.1); }
+
+    /* ── terminal ── */
+    .terminal {
+      background: var(--color-card);
+      border: 1px solid var(--color-border); border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      display: flex; align-items: center; gap: 6px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border-secondary);
+      background: var(--color-secondary);
+    }
+
+    .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .terminal-title {
+      margin-left: 8px;
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--color-muted-foreground);
+    }
+
+    .terminal-body {
+      padding: 24px;
+      font-family: var(--font-mono); font-size: 13px;
+      line-height: 1.8; color: var(--color-muted-foreground);
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 420px;
+      overflow-y: scroll;
+      scrollbar-width: thin;
+      scrollbar-color: #333 transparent;
+    }
+
+    .terminal-body .prompt { color: var(--stone-400); user-select: none; }
+    .terminal-body .cmd    { color: var(--color-foreground); font-weight: 500; }
+    .terminal-body .out    { color: var(--color-muted-foreground); }
+    .term-mobile-overlay {
+      display: none;
+      position: absolute; inset: 0; z-index: 10;
+      background: linear-gradient(to bottom, transparent 30%, rgba(10,10,10,0.92) 70%);
+      align-items: flex-end; justify-content: center; padding-bottom: 24px;
+      border-radius: 8px;
+    }
+    .term-mobile-btn {
+      font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+      color: #fff; background: #2a2a2a; border: 1px solid #3a3a3a;
+      border-radius: 10px; padding: 12px 28px; cursor: pointer;
+    }
+    @media (max-width: 639px) {
+      .term-mobile-overlay { display: flex; }
+      .terminal-body { max-height: 220px; overflow-y: hidden; scrollbar-width: none; }
+    }
+
+    /* ── footer ── */
+    footer {
+      border-top: 1px solid var(--color-border);
+      padding: 24px;
+      background: var(--color-secondary);
+    }
+
+    .footer-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+
+    .footer-left {
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .footer-link {
+      font-size: 13px; color: var(--color-muted-foreground);
+      text-decoration: none; transition: color .15s;
+    }
+    .footer-link:hover { color: var(--color-foreground); }
+
+    @media (max-width: 600px) {
+      .hero { padding: 60px 20px 48px; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- nav -->
+<nav>
+  <div class="nav-inner">
+    <a href="https://filed.com" class="nav-logo" target="_blank" rel="noopener">
+      <img src="filed-logo.png" height="28" alt="Filed" style="display:block;filter:invert(1);" />
+    </a>
+    <div class="nav-right">
+      <a href="https://github.com/filedcom/opentax" class="nav-link" target="_blank" rel="noopener">⭐ Star on GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- hero -->
+<div class="hero-wrap">
+<div class="hero">
+    <img src="../icon.svg" width="88" height="88" alt="Filed OpenTax" style="border:1px solid rgba(255,255,255,0.8);margin-bottom:32px;" />
+    <h1 style="margin-bottom:32px;">Filed OpenTax</h1>
+    <p class="hero-subtitle">First fully free and open source 1040 tax software for AI agents and developers.<br>Runs locally as a CLI. No cloud, no login, no payments.</p>
+    <div style="display:flex;gap:12px;margin-bottom:40px;flex-wrap:wrap;justify-content:center;">
+      <a href="https://github.com/filedcom/opentax" class="btn-secondary" target="_blank" rel="noopener">
+        ⭐ Star on GitHub
+      </a>
+      <a href="https://filed.com" class="btn-secondary" target="_blank" rel="noopener">
+        <img src="favicon.png" width="18" height="18" alt="" style="border-radius:3px;"> Visit Filed
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- claude section -->
+<div style="max-width:960px;margin:0 auto;padding:0 32px 96px;" id="claude-section">
+  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:8px;line-height:1.2;">Give your Claude a tax engine it would love to use</h2>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:40px;line-height:1.7;">Claude does the thinking. OpenTax does the calculations.</p>
+
+  <!-- Skill prompt -->
+  <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;color:rgba(255,255,255,0.35);margin-bottom:10px;">Paste the following prompt in your Claude chat</p>
+  <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:16px 20px;margin-bottom:10px;">
+    <span style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.7);word-break:break-all;display:block;margin-bottom:12px;">Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
+    <button class="copy-btn" onclick="copySkill(this)">copy</button>
+  </div>
+  <p style="font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,0.3);margin-bottom:48px;">Once added Claude will install the tax software automatically and will get the powers to do taxes.</p>
+
+  <!-- Chat example -->
+  <p style="font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:0.05em;color:#fff;margin-bottom:10px;">Example 1</p>
+  <h3 style="font-family:var(--font-sans);font-size:clamp(18px,2.2vw,24px);font-weight:600;letter-spacing:-0.01em;color:rgba(255,255,255,0.75);margin-bottom:8px;line-height:1.3;">Let Claude do the taxes</h3>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.45);margin-bottom:28px;line-height:1.7;">Calculate my 2025 taxes — drop your W-2s and 1099s, Claude handles the rest.</p>
+  <div id="chat-wrap" style="position:relative;background:#1c1c1c;border:1px solid #2e2e2e;border-radius:12px;overflow:hidden;font-family:var(--font-sans);">
+    <!-- mobile overlay -->
+    <div id="chat-mobile-overlay" style="display:none;position:absolute;inset:0;z-index:10;background:linear-gradient(to bottom,transparent 30%,rgba(10,10,10,0.92) 70%);align-items:flex-end;justify-content:center;padding-bottom:32px;">
+      <button onclick="openExample()" style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:#fff;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:10px;padding:12px 28px;cursor:pointer;">See the example →</button>
+    </div>
+    <!-- header bar -->
+    <div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #252525;background:#202020;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:13px;color:#ccc;">Claude doing taxes</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <!-- messages -->
+    <div id="chat-messages" style="padding:24px 32px;display:flex;flex-direction:column;gap:24px;max-height:420px;overflow-y:scroll;scrollbar-width:thin;scrollbar-color:#333 transparent;">
+
+      <!-- E1 user: sends skill URL -->
+      <div style="display:flex;justify-content:flex-end;">
+        <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:12px 18px;max-width:72%;min-width:0;overflow:hidden;">
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.65;margin:0;word-break:break-word;overflow-wrap:anywhere;">Fetch and follow the OpenTax skill: <span style="color:#6eb5f8;text-decoration:underline;">https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span></p>
+        </div>
+      </div>
+
+      <!-- E1 claude: installs CLI -->
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;word-break:break-all;">Fetched: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Skill loaded. Following it now.</p>
+        <p style="font-size:14px;color:#e0e0e0;font-weight:700;line-height:1.7;margin:0;">Step 1: Checking for the CLI</p>
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;">Check if opentax CLI is installed</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Not installed. Installing now:</p>
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;">Ran 2 commands</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">opentax 1.0.2 installed and ready.</p>
+      </div>
+
+      <!-- Claude: prompt to upload docs -->
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Please upload some source docs and let's talk tax.</p>
+      </div>
+
+      <!-- E2 user: uploads PDFs -->
+      <div style="display:flex;justify-content:flex-end;">
+        <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:14px 18px;max-width:72%;">
+          <div style="display:flex;gap:10px;margin-bottom:11px;">
+            <div style="width:62px;height:78px;background:#ebebeb;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
+              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div>
+              <div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent #bbb transparent transparent;"></div>
+              <span style="font-family:var(--font-mono);font-size:8px;color:#666;font-weight:700;position:relative;">PDF</span>
+            </div>
+            <div style="width:62px;height:78px;background:#ebebeb;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
+              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div>
+              <div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent #bbb transparent transparent;"></div>
+              <span style="font-family:var(--font-mono);font-size:8px;color:#666;font-weight:700;position:relative;">PDF</span>
+            </div>
+          </div>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.6;margin:0;">Calculate my taxes for 2025. Here are my W2 and 1099MISC</p>
+        </div>
+      </div>
+
+
+        <!-- E2 claude: extracts data -->
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">The documents came through as blank templates — the actual values (wages, withholding, SSN, employer info, etc.) aren't filled in. Let me read the raw files directly.</p>
+          <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+            <span style="font-size:12px;color:#555;">Viewed 2 files</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">These are form PDFs — let me extract the form field data directly.</p>
+          <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+            <span style="font-size:12px;color:#555;">Ran 2 commands</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Got all the data. Now let me fetch the Tax Preparer skill and run the CLI.</p>
+          <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+            <span style="font-size:12px;color:#555;word-break:break-all;">Fetched: https://raw.githubusercontent.com/filedcom/opentax/main/skills/tax-preparer/SKILL.md</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Good. I have everything I need. Let me parse the docs and proceed through the phases.</p>
+          <p style="font-size:14px;color:#e0e0e0;font-weight:700;line-height:1.7;margin:4px 0 0;">Extracted from documents:</p>
+          <ul style="margin:2px 0 0 18px;display:flex;flex-direction:column;gap:5px;padding:0;">
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>W-2</strong> (Quick Stop Convenience Store): Wages $72,000 | Fed withheld $7,454.04 | SS withheld $4,464.00 | Medicare withheld $1,044.00 | NJ state wages $72,000 | NJ state tax $2,747.04</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>1099-MISC</strong> (Jay's Rental Collection Company): Box 1 Rents $24,000</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>SSN:</strong> 333-44-5555</li>
+          </ul>
+        </div>
+
+        <!-- Claude: asks questions -->
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Before I proceed to compute, I need a few more things per the skill:</p>
+          <ol style="margin:4px 0 0 18px;display:flex;flex-direction:column;gap:5px;padding:0;">
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Filing status</strong> — single, MFJ, MFS, head of household?</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Age</strong> (born in what year)?</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Dependents</strong> — any?</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Any other income or documents</strong> — 1099-INT, 1099-DIV, IRA/HSA contributions, mortgage interest, charitable donations, estimated tax payments, etc.?</li>
+          </ol>
+        </div>
+
+        <!-- User: answers -->
+        <div style="display:flex;justify-content:flex-end;">
+          <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:10px 16px;max-width:75%;">
+            <p style="font-size:14px;color:#e0e0e0;line-height:1.6;margin:0;">1. Single, Age - 30, Dependents - No, no other docs</p>
+          </div>
+        </div>
+
+        <!-- Claude: pre-compute summary -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Got it. Here's the full picture before I compute:</p>
+          <p style="font-size:15px;color:#fff;font-weight:700;margin:2px 0 0;">Dante Hicks — 2025 Federal Tax Return</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin:4px 0;">
+            <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#777;width:42%;">Filing status</td><td style="padding:8px 0;color:#e0e0e0;">Single</td></tr>
+            <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#777;">Age</td><td style="padding:8px 0;color:#e0e0e0;">30</td></tr>
+            <tr><td style="padding:8px 0;color:#777;">Dependents</td><td style="padding:8px 0;color:#e0e0e0;">None</td></tr>
+          </table>
+          <p style="font-size:14px;color:#e0e0e0;font-weight:700;margin:2px 0 0;">Income:</p>
+          <ul style="margin:2px 0 0 18px;display:flex;flex-direction:column;gap:4px;padding:0;">
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;">W-2 (Quick Stop Convenience Store): $72,000 wages, $7,454.04 federal withheld</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;">1099-MISC (Jay's Rental Collection Co.): $24,000 rents</li>
+          </ul>
+          <p style="font-size:14px;color:#777;font-weight:600;margin:4px 0 0;">No additional deductions or credits noted.</p>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:4px 0 0;">Does this look complete and correct?</p>
+        </div>
+
+        <!-- User: yes -->
+        <div style="display:flex;justify-content:flex-end;">
+          <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:10px 16px;">
+            <p style="font-size:14px;color:#e0e0e0;margin:0;">yes</p>
+          </div>
+        </div>
+
+        <!-- Claude: full results -->
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+            <span style="font-size:12px;color:#555;">Ran 8 commands</span>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Clean result. Here's Dante's full return:</p>
+          <p style="font-size:15px;color:#fff;font-weight:700;margin:2px 0 0;">Form 1040 — Dante Hicks — 2025</p>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px;">
+            <thead><tr style="border-bottom:1px solid #2e2e2e;"><th style="text-align:left;padding:8px 0;color:#555;font-weight:500;width:56px;">Line</th><th style="text-align:left;padding:8px 0;color:#555;font-weight:500;">Description</th><th style="text-align:right;padding:8px 0;color:#555;font-weight:500;">Amount</th></tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid #252525;"><td style="padding:8px 0;color:#555;">1a</td><td style="padding:8px 0;color:#bbb;">Wages (Quick Stop W-2)</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;">$72,000</td></tr>
+              <tr style="border-bottom:1px solid #252525;"><td style="padding:8px 0;color:#555;">8</td><td style="padding:8px 0;color:#bbb;">Additional income (rental, Sch. E)</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;">$24,000</td></tr>
+              <tr style="border-bottom:1px solid #2e2e2e;"><td style="padding:8px 0;color:#555;">9</td><td style="padding:8px 0;color:#bbb;">Total income</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;font-weight:600;">$96,000</td></tr>
+              <tr style="border-bottom:1px solid #252525;"><td style="padding:8px 0;color:#555;">11</td><td style="padding:8px 0;color:#bbb;">Adjusted gross income</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;">$96,000</td></tr>
+              <tr style="border-bottom:1px solid #252525;"><td style="padding:8px 0;color:#555;">12a</td><td style="padding:8px 0;color:#bbb;">Standard deduction (single)</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;">$15,750</td></tr>
+              <tr style="border-bottom:1px solid #2e2e2e;"><td style="padding:8px 0;color:#555;">15</td><td style="padding:8px 0;color:#bbb;">Taxable income</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;font-weight:600;">$80,250</td></tr>
+              <tr style="border-bottom:1px solid #252525;"><td style="padding:8px 0;color:#555;">16</td><td style="padding:8px 0;color:#bbb;">Income tax</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;">$12,569</td></tr>
+              <tr style="border-bottom:1px solid #2e2e2e;"><td style="padding:8px 0;color:#555;">24</td><td style="padding:8px 0;color:#bbb;">Total tax</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;font-weight:600;">$12,569</td></tr>
+              <tr style="border-bottom:1px solid #252525;"><td style="padding:8px 0;color:#555;">25a</td><td style="padding:8px 0;color:#bbb;">W-2 federal withholding</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;">$7,454</td></tr>
+              <tr style="border-bottom:1px solid #2e2e2e;"><td style="padding:8px 0;color:#555;">33</td><td style="padding:8px 0;color:#bbb;">Total payments</td><td style="padding:8px 0;color:#e0e0e0;text-align:right;font-weight:600;">$7,454</td></tr>
+              <tr style="border-top:2px solid #333;"><td style="padding:10px 0;color:#e0e0e0;font-weight:700;">37</td><td style="padding:10px 0;color:#e0e0e0;font-weight:700;">Amount owed</td><td style="padding:10px 0;color:#e0e0e0;text-align:right;font-weight:700;">$5,114.96</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:15px;color:#fff;font-weight:700;margin:8px 0 4px;">Plain summary:</p>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Dante owes <strong>$5,114.96</strong> by April 15, 2026. His W-2 withholding covered the wage income reasonably well, but the $24,000 in rental income had <strong>zero withholding</strong> applied — that's the main driver of the balance due.</p>
+          <ul style="margin:6px 0 6px 18px;display:flex;flex-direction:column;gap:3px;padding:0;">
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Effective tax rate:</strong> 13.1% ($12,569 / $96,000)</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Marginal rate:</strong> 22% bracket</li>
+          </ul>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;"><strong>Worth noting:</strong> Since Dante has rental income with no withholding, he may be subject to an underpayment penalty (Form 2210). To avoid this next year, he should consider making quarterly estimated tax payments (Form 1040-ES) on the rental income.</p>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:8px 0 0;">Would you like me to:</p>
+          <ol style="margin:4px 0 0 18px;display:flex;flex-direction:column;gap:3px;padding:0;">
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Validate</strong> against IRS business rules?</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Export</strong> as MeF XML for e-filing or as a filled PDF?</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Model a what-if</strong> — e.g. what if he contributed to a traditional IRA to reduce AGI?</li>
+          </ol>
+        </div>
+
+    </div><!-- /messages -->
+    <!-- input bar -->
+    <div style="padding:12px 14px 4px;background:#1c1c1c;">
+      <div style="background:#2a2a2a;border-radius:14px;padding:12px 16px 10px;">
+        <div style="font-size:14px;color:#555;margin-bottom:10px;">Reply...</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="color:#666;font-size:20px;line-height:1;cursor:pointer;">+</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:3px;font-size:13px;color:#888;cursor:pointer;">Sonnet 4.6 <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#888" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#888" stroke-width="1.5"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3M8 22h8" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#444;text-align:center;padding:10px 0 8px;">Claude is AI and can make mistakes. Please double-check responses.</p>
+    </div>
+  </div><!-- /chat window -->
+</div>
+
+<!-- example 2 section -->
+<div style="max-width:960px;margin:0 auto;padding:0 32px 96px;">
+  <p style="font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:0.05em;color:#fff;margin-bottom:10px;">Example 2</p>
+  <h3 style="font-family:var(--font-sans);font-size:clamp(18px,2.2vw,24px);font-weight:600;letter-spacing:-0.01em;color:rgba(255,255,255,0.75);margin-bottom:8px;line-height:1.3;">Let Claude review your return</h3>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.45);margin-bottom:28px;line-height:1.7;">Already have a draft return? Drop your source docs and the finished 1040 — Claude audits it line by line and flags what's wrong.</p>
+
+  <div id="chat2-wrap" style="position:relative;background:#1c1c1c;border:1px solid #2e2e2e;border-radius:12px;overflow:hidden;font-family:var(--font-sans);">
+    <!-- mobile overlay -->
+    <div id="chat2-mobile-overlay" style="display:none;position:absolute;inset:0;z-index:10;background:linear-gradient(to bottom,transparent 30%,rgba(10,10,10,0.92) 70%);align-items:flex-end;justify-content:center;padding-bottom:32px;">
+      <button onclick="openChat2()" style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:#fff;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:10px;padding:12px 28px;cursor:pointer;">See the example →</button>
+    </div>
+    <!-- header bar -->
+    <div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #252525;background:#202020;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:13px;color:#ccc;">Claude reviewing taxes</span>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+    <!-- messages -->
+    <div id="chat2-messages" style="padding:24px 32px;display:flex;flex-direction:column;gap:24px;max-height:420px;overflow-y:scroll;scrollbar-width:thin;scrollbar-color:#333 transparent;">
+
+      <!-- Claude: skill loaded + what would you like to do -->
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;word-break:break-all;">Fetched: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="font-size:14px;color:#e0e0e0;font-weight:700;line-height:1.7;margin:0;">Step 3: What would you like to do?</p>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">OpenTax is ready. What would you like to do?</p>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:4px 0 0;"><strong>1. Prepare a return</strong> — I'll walk you through it step by step. Drop in your W-2s, 1099s, and other tax documents (photos, PDFs, or just type the values). I'll ask questions until I have everything, confirm the details with you, then compute your full 1040 with all schedules.</p>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:4px 0 0;"><strong>2. Review a completed return</strong> — Already have a return prepared by someone else? Upload it along with your source documents and I'll independently compute everything, compare line-by-line, and flag any discrepancies — missed income, incorrect deductions, unclaimed credits, or compliance risks.</p>
+      </div>
+
+      <!-- User: uploads 6 PDFs + message -->
+      <div style="display:flex;justify-content:flex-end;">
+        <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:14px 18px;max-width:80%;min-width:0;overflow:hidden;">
+          <div style="display:flex;gap:8px;margin-bottom:11px;flex-wrap:wrap;">
+            <!-- 5 source doc PDFs -->
+            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
+            <!-- finished 1040 - slightly different shade -->
+            <div style="width:54px;height:68px;background:#e0e8f0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#e8f0f8,#c8d8e8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #a8c0d8 transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#4a6a8a;font-weight:700;position:relative;">PDF</span></div>
+          </div>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.6;margin:0;word-break:break-word;">Review my completed tax return. Here are my source docs and the finished 1040</p>
+        </div>
+      </div>
+
+      <!-- Claude: fetches reviewer skill + running -->
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Now fetching the Tax Reviewer skill before diving in.</p>
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;">Fetch the Tax Reviewer skill</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Good. Now let me work through the review systematically. I have all the source documents and the draft return. Let me extract and compute everything.</p>
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;">Fix Schedule A node</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;cursor:pointer;">
+          <span style="font-size:12px;color:#555;">Ran 19 commands</span>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Based on my independent read of all source documents vs. the draft return, here's a <strong>phase-by-phase audit</strong>:</p>
+
+        <!-- Phase 1 -->
+        <p style="font-size:14px;color:#fff;font-weight:700;margin:6px 0 2px;">Phase 1 — Source Document Extraction ✅</p>
+        <p style="font-size:13px;color:#888;margin:0 0 8px;">Oliver K. Filed | SSN: 576-54-3211 | Single | DOB 1/1/1986 | Denton, MD 21629</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">
+          <thead><tr style="border-bottom:1px solid #2e2e2e;"><th style="text-align:left;padding:6px 0;color:#555;font-weight:500;">Source</th><th style="text-align:left;padding:6px 8px;color:#555;font-weight:500;">Key Values</th></tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">W-2 (False Landscape Supply)</td><td style="padding:6px 8px;color:#bbb;">$102,000 wages, $8,786 fed withheld, $5,280 state withheld</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">K-1 FOJ Ventures (50%)</td><td style="padding:6px 8px;color:#bbb;">$434,800 ordinary, $80,000 rental, $14,200 interest, $24,330 dividends, $44,000 §179, $26,000 charitable</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">K-1 MHJB Investments (50%)</td><td style="padding:6px 8px;color:#bbb;">$191,584 ordinary, $24,000 rental, $2,637 interest, $8,413 dividends, $70,000 distributions</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1099-INT Fidelity</td><td style="padding:6px 8px;color:#bbb;">$2,400 interest</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1099-DIV Fidelity</td><td style="padding:6px 8px;color:#bbb;">$22,475 ordinary, $21,874 qualified, $8,800 §199A</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1099-B</td><td style="padding:6px 8px;color:#bbb;">ST noncovered RSUs: $4,747/+$276 adj gain; LT covered: $8,449/$111; LT noncovered: $158</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1098 XYZ Bank</td><td style="padding:6px 8px;color:#bbb;">$13,045 mortgage interest, $7,292 property taxes</td></tr>
+            <tr><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1098-SA / §498-SA</td><td style="padding:6px 8px;color:#bbb;">HSA contributions $3,200, distributions $3,871 (all qualified)</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Phase 2 -->
+        <p style="font-size:14px;color:#fff;font-weight:700;margin:8px 0 2px;">Phase 2 — Line-by-Line Comparison & Findings</p>
+        <p style="font-size:13px;color:#888;margin:0 0 8px;">Here's what my independent calculation shows vs. the draft return:</p>
+        <p style="font-size:13px;color:#4ade80;font-weight:600;margin:0 0 6px;">✅ Items that check out</p>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;">
+          <thead><tr style="border-bottom:1px solid #2e2e2e;"><th style="text-align:left;padding:6px 0;color:#555;font-weight:500;width:48px;">Line</th><th style="text-align:left;padding:6px 8px;color:#555;font-weight:500;">Description</th><th style="text-align:right;padding:6px 8px;color:#555;font-weight:500;">Draft</th><th style="text-align:right;padding:6px 8px;color:#555;font-weight:500;">My Calc</th><th style="padding:6px 8px;color:#555;font-weight:500;text-align:center;"></th></tr></thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">1a</td><td style="padding:6px 8px;color:#bbb;">W-2 wages</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$102,000</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$102,000</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">2b</td><td style="padding:6px 8px;color:#bbb;">Taxable interest</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$19,237</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$19,237</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">3b</td><td style="padding:6px 8px;color:#bbb;">Ordinary dividends</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$55,218</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$55,218</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">3a</td><td style="padding:6px 8px;color:#bbb;">Qualified dividends</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$51,089</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$51,089</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">7a</td><td style="padding:6px 8px;color:#bbb;">Capital gain</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$772</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$772</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">Sch A L8a</td><td style="padding:6px 8px;color:#bbb;">Mortgage interest</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$13,045</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$13,045</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">Sch A L8b</td><td style="padding:6px 8px;color:#bbb;">Real estate taxes</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$7,292</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$7,292</td><td style="text-align:center;">✅</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#555;">Sch SE</td><td style="padding:6px 8px;color:#bbb;">Self-employment tax</td><td style="padding:6px 8px;color:#bbb;text-align:right;">~$24,785</td><td style="padding:6px 8px;color:#bbb;text-align:right;">~$24,785</td><td style="text-align:center;">✅</td></tr>
+            <tr><td style="padding:6px 0;color:#555;">Form 8960</td><td style="padding:6px 8px;color:#bbb;">NIIT</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$2,850</td><td style="padding:6px 8px;color:#bbb;text-align:right;">$2,850</td><td style="text-align:center;">✅</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Findings -->
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px 16px;margin-top:4px;">
+          <p style="font-size:13px;color:#f87171;font-weight:700;margin:0 0 6px;">🔴 FINDING 1 — HSA Deduction Not Taken (Missing $4,300)</p>
+          <p style="font-size:13px;color:#bbb;line-height:1.6;margin:0 0 6px;">Draft return Schedule 1, line 13 (HSA deduction) = $0. Your §498-SA shows $3,200 in contributions. Form 8889 correctly computes a $4,300 deduction limit — but line 13 shows $0. The deduction was computed but not linked to Schedule 1.</p>
+          <p style="font-size:13px;color:#f87171;margin:0;"><strong>Impact:</strong> ~$1,600–$1,700 in overpaid tax at ~37% marginal rate on $4,300.</p>
+        </div>
+        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px 16px;margin-top:8px;">
+          <p style="font-size:13px;color:#f87171;font-weight:700;margin:0 0 6px;">🔴 FINDING 2 — §199A REIT Dividends Not Captured ($800)</p>
+          <p style="font-size:13px;color:#bbb;line-height:1.6;margin:0;">The Fidelity 1099-DIV shows $800 in Section 199A dividends (box 5). The return's Form 8995-A shows the MHJB/FOJ QBI but the $800 REIT dividend is not appearing on Form 8995-A Part IV (line 28). Potential $160 additional deduction.</p>
+        </div>
+        <div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);border-radius:8px;padding:14px 16px;margin-top:8px;">
+          <p style="font-size:13px;color:#fbbf24;font-weight:700;margin:0 0 6px;">🟡 FINDING 3 — Qualified Dividends Classification (FOJ K-1)</p>
+          <p style="font-size:13px;color:#bbb;line-height:1.6;margin:0;">The FOJ K-1 shows $24,330 in ordinary dividends (box 6a). The return picks these up on Schedule B. However, there's no qualified dividends breakdown from FOJ — the Statement A doesn't indicate any are qualified. The return treats all K-1 dividends as ordinary (non-qualified), which is the conservative correct approach absent additional information. No error, but worth confirming with the partnership.</p>
+        </div>
+      </div>
+
+    </div><!-- /messages -->
+    <!-- input bar -->
+    <div style="padding:12px 14px 4px;background:#1c1c1c;">
+      <div style="background:#2a2a2a;border-radius:14px;padding:12px 16px 10px;">
+        <div style="font-size:14px;color:#555;margin-bottom:10px;">Reply...</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="color:#666;font-size:20px;line-height:1;cursor:pointer;">+</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;align-items:center;gap:3px;font-size:13px;color:#888;cursor:pointer;">Sonnet 4.6 <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#888" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#888" stroke-width="1.5"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3M8 22h8" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#444;text-align:center;padding:10px 0 8px;">Claude is AI and can make mistakes. Please double-check responses.</p>
+    </div>
+  </div><!-- /chat2 window -->
+</div>
+
+
+<!-- installation -->
+<div style="max-width:960px;margin:0 auto;padding:72px 32px;display:flex;gap:64px;align-items:flex-start;flex-wrap:wrap;">
+  <!-- left -->
+  <div style="flex:1;min-width:280px;">
+    <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:16px;line-height:1.2;">CLI Installation and Usage</h2>
+    <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.7;">Install the CLI for macOS, Linux, or Windows. Runs locally. No cloud, no signup required.</p>
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.7);"><span style="color:rgba(255,255,255,0.3);">$</span> curl -fsSL https://opentax.filed.com/install.sh | sh</span>
+      <button class="copy-btn" onclick="copyInstall(this)">copy</button>
+    </div>
+  </div>
+  <!-- right -->
+  <div style="width:220px;display:flex;flex-direction:column;gap:32px;">
+    <div>
+      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">GitHub Repo</p>
+      <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.2);">filedcom/opentax</a>
+    </div>
+    <div>
+      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">License</p>
+      <span style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.7);">MIT</span>
+    </div>
+    <div>
+      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">Platforms</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:3px 10px;">macOS</span>
+        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:3px 10px;">Linux</span>
+        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:3px 10px;">Windows</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- cli example -->
+<div style="max-width:960px;margin:0 auto;padding:0 32px 96px;">
+  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:8px;line-height:1.2;">Entire tax software as a CLI</h2>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:32px;line-height:1.7;">186 registered nodes. Every IRS form piped as JSON. Inspect schemas, create returns, compute taxes — all from your terminal.</p>
+
+  <!-- Terminal 1: --help -->
+  <div style="position:relative;margin-bottom:24px;">
+    <div id="term1-overlay" class="term-mobile-overlay">
+      <button onclick="openTerm('term1-overlay','term1-body')" class="term-mobile-btn">See the example →</button>
+    </div>
+  <div class="terminal" style="margin-bottom:0;">
+    <div class="terminal-header">
+      <div class="chrome-dot" style="background:#ff5f57"></div>
+      <div class="chrome-dot" style="background:#ffbd2e"></div>
+      <div class="chrome-dot" style="background:#28c840"></div>
+      <span class="terminal-title">opentax --help</span>
+    </div>
+    <div id="term1-body" class="terminal-body"><span class="prompt">$</span> <span class="cmd">opentax --help</span>
+Filed OpenTax CLI
+
+Usage: opentax &lt;command&gt; &lt;subcommand&gt; [options]
+
+Commands:
+
+  • opentax node list
+    List all registered nodes
+
+  • opentax node inspect --node_type &lt;type&gt;
+    Inspect a node's input schema and output nodes
+
+  • opentax return create --year &lt;year&gt;
+    Create a new tax return
+
+  • opentax return get --returnId &lt;id&gt;
+    Get a return's computed line items
+
+  • opentax return export --returnId &lt;id&gt; --type mef|pdf [--force] [--output &lt;path&gt;]
+    Export a return as MEF XML or filled IRS PDF
+
+  • opentax form add --returnId &lt;id&gt; --node_type &lt;type&gt; '{...}'
+    Add a form entry to a return
+
+  • opentax form list --returnId &lt;id&gt; [--node_type &lt;type&gt;]
+    List all form entries in a return
+
+  • opentax form get --returnId &lt;id&gt; --entryId &lt;id&gt;
+    Get a specific form entry by ID
+
+  • opentax form update --returnId &lt;id&gt; --entryId &lt;id&gt; '{...}'
+    Update a form entry's data
+
+  • opentax form delete --returnId &lt;id&gt; --entryId &lt;id&gt;
+    Delete a form entry
+
+  • opentax return validate --returnId &lt;id&gt; [--format text|json]
+    Validate a return against MeF business rules
+
+  • opentax node graph --node_type start [--depth &lt;n&gt;] [--json]
+    View node dependency graph (Mermaid or JSON)
+
+Global flags:
+  --help, -h    Show help
+  --json        Output as JSON</div>
+  </div>
+  </div><!-- /term1 wrapper -->
+
+  <!-- Terminal 2: full workflow -->
+  <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;color:rgba(255,255,255,0.35);margin-bottom:12px;">Create a full return using the CLI</p>
+  <div style="position:relative;">
+    <div id="term2-overlay" class="term-mobile-overlay">
+      <button onclick="openTerm('term2-overlay','term2-body')" class="term-mobile-btn">See the example →</button>
+    </div>
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="chrome-dot" style="background:#ff5f57"></div>
+      <div class="chrome-dot" style="background:#ffbd2e"></div>
+      <div class="chrome-dot" style="background:#28c840"></div>
+      <span class="terminal-title">node inspect · return create · form add · return get</span>
+    </div>
+    <div id="term2-body" class="terminal-body"><span class="prompt">$</span> <span class="cmd">opentax node inspect --node_type w2</span>
+Node: w2
+
+Input Schema:
+  w2s  array (min 1)  — All W-2 forms for this return
+    items:
+      box1_wages              number  ≥0  — Wages, tips, other compensation
+      box2_fed_withheld       number  ≥0  — Federal income tax withheld
+      box3_ss_wages           number  ≥0  — Social security wages  (optional)
+      box4_ss_withheld        number  ≥0  — Social security tax withheld  (optional)
+      box5_medicare_wages     number  ≥0  — Medicare wages and tips  (optional)
+      box6_medicare_withheld  number  ≥0  — Medicare tax withheld  (optional)
+      box7_ss_tips            number  ≥0  — Social security tips  (optional)
+      box8_allocated_tips     number  ≥0  — Allocated tips — routes to Form 4137  (optional)
+      box10_dep_care          number  ≥0  — Dependent care benefits — routes to Form 2441  (optional)
+      box11_nonqual_plans     number  ≥0  — Nonqualified plans — included in box 1 wages  (optional)
+      box12_entries           array       — Coded benefit/deferral entries (up to 4 per W-2)  (optional)
+        items:
+          code    enum  A | AA | B | BB | C | D | DD | E | ...  — Box 12 code
+          amount  number  ≥0  — Dollar amount for this code
+      box13_statutory_employee  boolean  — Statutory employee — wages go to Schedule C  (optional)
+      box13_retirement_plan     boolean  — Retirement plan participant — affects IRA phaseout  (optional)
+      box13_third_party_sick    boolean  — Third-party sick pay — excluded from SE tax  (optional)
+      box14_entries  array  — Other — employer-labeled items; SDI/PFML deductible on Sch A  (optional)
+      box15_state             string    — State abbreviation  (optional)
+      box16_state_wages       number  ≥0  — State wages, tips, etc.  (optional)
+      box17_state_withheld    number  ≥0  — State income tax withheld  (optional)
+      taxpayer_age            number  ≥0  — Taxpayer age — used for catch-up contribution limit  (optional)
+
+Output Nodes (19):
+  f1040  agi_aggregator  eitc  schedule1  schedule2
+  schedule3  schedule_a  schedule_c  schedule_se  form4137
+  form2441  form8959  form8889  form8853  form8839
+  form8880  form8962  ira_deduction_worksheet  f8812
+
+<span class="prompt">$</span> <span class="cmd">opentax node inspect --node_type f1099int</span>
+Node: f1099int
+
+Input Schema:
+  f1099ints  array (min 1)
+    items:
+      payer_name                      string
+      payer_tin                       string   (optional)
+      seller_financed                 boolean  (optional)
+      payer_ssn                       string   (optional)
+      payer_address                   string   (optional)
+      payer_city_state_zip            string   (optional)
+      box1                            number  ≥0  (optional)  — Taxable interest
+      box2                            number  ≥0  (optional)  — Early withdrawal penalty
+      box3                            number  ≥0  (optional)  — US savings bond / Treasury interest
+      box4                            number  ≥0  (optional)  — Federal income tax withheld
+      box5                            number  ≥0  (optional)
+      box6                            number  ≥0  (optional)  — Foreign tax paid
+      box7                            string   (optional)  — Foreign country name
+      box8                            number  ≥0  (optional)  — Tax-exempt interest
+      box9                            number  ≥0  (optional)  — Specified private activity bond interest
+      box10                           number  ≥0  (optional)  — Market discount
+      box11                           number  ≥0  (optional)  — Bond premium
+      elect_bond_premium_amortization boolean  (optional)
+      box12                           number  ≥0  (optional)  — Bond premium on Treasury obligations
+      box13                           number  ≥0  (optional)  — Bond premium on tax-exempt bond
+      box14                           string   (optional)
+      box15                           string   (optional)
+      box16                           string   (optional)
+      box17                           number  ≥0  (optional)
+      nominee_interest                number  ≥0  (optional)
+      accrued_interest_paid           number  ≥0  (optional)
+      non_taxable_oid_adjustment      number  ≥0  (optional)
+  filing_status  string  (optional)
+
+Output Nodes (6):
+  schedule_b  schedule1  f1040  form6251  form_1116  schedule3
+
+<span class="prompt">$</span> <span class="cmd">opentax return create --year 2025</span>
+{
+  "returnId": "8b94910c-c9d2-4cb1-b78d-a2677705c7c6"
+}
+
+<span class="prompt">$</span> <span class="cmd">opentax form add --returnId 8b94910c-c9d2-4cb1-b78d-a2677705c7c6 --node_type general '{"filing_status":"single"}'</span>
+{
+  "id": "general_01",
+  "nodeType": "general"
+}
+
+<span class="prompt">$</span> <span class="cmd">opentax form add --returnId 8b94910c-c9d2-4cb1-b78d-a2677705c7c6 --node_type w2 '{"box1_wages":85000,"box2_fed_withheld":14200,"box4_ss_withheld":5270,"box6_medicare_withheld":1232.50}'</span>
+{
+  "id": "w2_01",
+  "nodeType": "w2"
+}
+
+<span class="prompt">$</span> <span class="cmd">opentax form add --returnId 8b94910c-c9d2-4cb1-b78d-a2677705c7c6 --node_type f1099int '{"payer_name":"First National Bank","box1":1850,"box4":185}'</span>
+{
+  "id": "f1099int_01",
+  "nodeType": "f1099int"
+}
+
+<span class="prompt">$</span> <span class="cmd">opentax return get --returnId 8b94910c-c9d2-4cb1-b78d-a2677705c7c6</span>
+{
+  "returnId": "8b94910c-c9d2-4cb1-b78d-a2677705c7c6",
+  "year": 2025,
+  "summary": {
+    "line1z_total_wages": 85000,
+    "line9_total_income": 86850,
+    "line11_agi": 86850,
+    "line15_taxable_income": 71100,
+    "line24_total_tax": 10556,
+    "line33_total_payments": 14385,
+    "line35a_refund": 3829
+  },
+  "forms": [
+    "agi_aggregator", "eitc", "f1040", "f1099int", "f2441",
+    "f8812", "form6251", "form8880", "form8959", "form8960",
+    "form8962", "form8995", "general", "income_tax_calculation",
+    "schedule1", "schedule_a", "schedule_b", "standard_deduction", "w2"
+  ],
+  "lines": {
+    "filing_status": "single",
+    "line1a_wages": [ 85000, 85000 ],
+    "line2b_taxable_interest": [ 1850, 1850 ],
+    "line1z_total_wages": 85000,
+    "line9_total_income": 86850,
+    "line11_agi": [ 86850, 86850 ],
+    "line12a_standard_deduction": [ 15750, 15750 ],
+    "line15_taxable_income": [ 71100, 71100 ],
+    "line16_income_tax": [ 10556, 10556 ],
+    "line18_total_tax_before_credits": 10556,
+    "line22_tax_after_credits": 10556,
+    "line24_total_tax": 10556,
+    "line25a_w2_withheld": [ 14200, 14200 ],
+    "line25b_withheld_1099": [ 185, 185 ],
+    "line25d_total_withholding": 14385,
+    "line33_total_payments": 14385,
+    "line34_overpayment": 3829,
+    "line35a_refund": 3829
+  },
+  "warnings": []
+}</div>
+  </div>
+  </div><!-- /term2 wrapper -->
+</div>
+
+<script>
+  function copyInstall(btn) {
+    navigator.clipboard.writeText('curl -fsSL https://opentax.filed.com/install.sh | sh').then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+    });
+  }
+  function copySkill(btn) {
+    navigator.clipboard.writeText('Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md').then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+    });
+  }
+  function expandChat() {
+    var msgs = document.getElementById('chat-messages');
+    setTimeout(function() { msgs.scrollTop = msgs.scrollHeight; }, 50);
+  }
+  function openChat2() {
+    document.getElementById('chat2-mobile-overlay').style.display = 'none';
+    var msgs = document.getElementById('chat2-messages');
+    msgs.style.maxHeight = '80vh';
+    msgs.style.overflowY = 'scroll';
+  }
+  function openTerm(overlayId, bodyId) {
+    document.getElementById(overlayId).style.display = 'none';
+    var body = document.getElementById(bodyId);
+    body.style.maxHeight = '70vh';
+    body.style.overflowY = 'scroll';
+  }
+  function openExample() {
+    var overlay = document.getElementById('chat-mobile-overlay');
+    var msgs = document.getElementById('chat-messages');
+    overlay.style.display = 'none';
+    msgs.style.maxHeight = '80vh';
+    msgs.style.overflowY = 'scroll';
+  }
+  // mobile overlay init + scroll-to-next-section
+  (function() {
+    function initMobile() {
+      var overlay = document.getElementById('chat-mobile-overlay');
+      var msgs = document.getElementById('chat-messages');
+      if (window.innerWidth < 640) {
+        // chat2 overlay
+        var overlay2 = document.getElementById('chat2-mobile-overlay');
+        var msgs2 = document.getElementById('chat2-messages');
+        if (overlay2) {
+          overlay2.style.display = 'flex';
+          msgs2.style.maxHeight = '260px';
+          msgs2.style.overflowY = 'hidden';
+        }
+        overlay.style.display = 'flex';
+        msgs.style.maxHeight = '260px';
+        msgs.style.overflowY = 'hidden';
+        msgs.addEventListener('scroll', function() {
+          if (msgs.scrollTop + msgs.clientHeight >= msgs.scrollHeight - 10) {
+            var section = document.getElementById('claude-section');
+            var bottom = section.getBoundingClientRect().bottom + window.scrollY;
+            window.scrollTo({ top: bottom, behavior: 'smooth' });
+          }
+        });
+      }
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMobile);
+    } else {
+      initMobile();
+    }
+  })();
+</script>
+</body>
+</html>
