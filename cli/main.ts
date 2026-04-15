@@ -1,5 +1,5 @@
 import { parseArgs } from "@std/cli";
-import type { CommandDef, ParsedArgs } from "./commands/help.ts";
+import type { CommandDef, ParsedArgs, TopLevelDef } from "./commands/help.ts";
 import { printHelp } from "./commands/help.ts";
 import {
   formAddCommand,
@@ -268,6 +268,11 @@ const TOP_LEVEL: Record<string, () => Promise<void> | void> = {
   update: updateCommand,
 };
 
+const TOP_LEVEL_DEFS: readonly TopLevelDef[] = [
+  { usage: "opentax version", description: "Show the current version" },
+  { usage: "opentax update", description: "Download and install the latest release" },
+];
+
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
     string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format", "output"],
@@ -285,7 +290,7 @@ async function main(): Promise<void> {
   }
 
   if (!cmd || args.help) {
-    printHelp(COMMANDS, cmd);
+    printHelp(COMMANDS, cmd, TOP_LEVEL_DEFS);
     Deno.exit(args.help ? 0 : 1);
   }
 
