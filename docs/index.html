@@ -622,7 +622,7 @@
     <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:16px;line-height:1.2;">CLI Installation and Usage</h2>
     <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.7;">Install the CLI for macOS, Linux, or Windows. Runs locally. No cloud, no signup required.</p>
     <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
-      <span style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.7);"><span style="color:rgba(255,255,255,0.3);">$</span> curl -fsSL https://opentax.filed.com/install.sh | sh</span>
+      <span style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.7);"><span style="color:rgba(255,255,255,0.3);">$</span> curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh</span>
       <button class="copy-btn" onclick="copyInstall(this)">copy</button>
     </div>
   </div>
@@ -869,7 +869,7 @@ Output Nodes (6):
 
 <script>
   function copyInstall(btn) {
-    navigator.clipboard.writeText('curl -fsSL https://opentax.filed.com/install.sh | sh').then(() => {
+    navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh').then(() => {
       btn.textContent = 'copied!';
       btn.classList.add('ok');
       setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
