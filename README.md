@@ -300,4 +300,6 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 
 ## License
 
-MIT
+[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+
+Contact: atul@filed.com (Atul R), lk@filed.com (Leroy Kerry)
