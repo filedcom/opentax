@@ -301,4 +301,4 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 ## License
 
 Dual-licensed under [AGPL v3](./LICENSE) and the [Filed Commercial License](./LICENSE.commercial).
-For commercial licensing inquiries: lk@filed.com
+For commercial licensing inquiries: OTTA@filed.com
