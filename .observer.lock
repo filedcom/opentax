@@ -1,0 +1,1 @@
+observer paused: confirmation or permission prompt detected; rerun start-observer.sh --reset after reviewing observer.log
