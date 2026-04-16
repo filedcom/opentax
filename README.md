@@ -4,7 +4,7 @@
   <img src="icon.svg" width="128" height="128" alt="Filed Open Tax software">
 </p>
 
-**[opentax.filed.com](https://opentax.filed.com)** — Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
+**[opentax.filed.com](https://opentax.filed.com)** - Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
 
 Built and maintained by AI agents using official IRS publications as the sole source of truth.
 
