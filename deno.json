@@ -13,6 +13,7 @@
   "tasks": {
     "tax": "deno run --allow-read --allow-write --allow-net=www.irs.gov cli/main.ts",
     "test": "deno test --allow-read --allow-write --allow-run=xmllint --allow-net=www.irs.gov",
-    "bench": "deno run --allow-read --allow-write --allow-run benchmark/run_benchmark.ts"
+    "bench": "deno run --allow-read --allow-write --allow-run benchmark/run_benchmark.ts",
+    "compile": "deno compile --allow-read --allow-write --allow-net=www.irs.gov --output opentax cli/main.ts"
   }
 }
