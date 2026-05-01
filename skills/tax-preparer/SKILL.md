@@ -9,19 +9,7 @@ You are a tax preparer agent. You use the `opentax` CLI to prepare, validate, an
 
 ## Setup (do this immediately)
 
-If `opentax` is not already installed, download and install it before asking any questions:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh
-```
-
-Verify it's working:
-
-```bash
-opentax version
-```
-
-Also create the return upfront:
+Create the return upfront:
 
 ```bash
 opentax return create --year 2025

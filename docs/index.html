@@ -240,6 +240,7 @@
     @media (max-width: 600px) {
       .hero { padding: 60px 20px 48px; }
       .footer-inner { flex-direction: column; align-items: flex-start; }
+      .install-cards { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>
@@ -276,18 +277,65 @@
 
 <!-- claude section -->
 <div style="max-width:960px;margin:0 auto;padding:0 32px 96px;" id="claude-section">
-  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:8px;line-height:1.2;">Give your Claude a tax engine it would love to use</h2>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:40px;line-height:1.7;">Claude does the thinking. Open Tax does the calculations.</p>
+  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:8px;line-height:1.2;">Give your AI assistant a tax engine it would love to use</h2>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:40px;line-height:1.7;">Your AI does the thinking. Open Tax does the calculations.</p>
 
-  <!-- Skill prompt -->
-  <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;color:rgba(255,255,255,0.35);margin-bottom:10px;">Paste the following prompt in your Claude chat</p>
-  <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:16px 20px;margin-bottom:10px;">
-    <span style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.7);word-break:break-all;display:block;margin-bottom:12px;">Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
-    <button class="copy-btn" onclick="copySkill(this)">copy</button>
+  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:16px;line-height:1.2;">Installation</h2>
+
+  <!-- Split panel -->
+  <div class="install-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:56px;background:#111;border:1px solid #2e2e2e;border-radius:8px;overflow:hidden;">
+
+    <!-- Option 1: MCP -->
+    <div style="padding:24px;display:flex;flex-direction:column;gap:8px;border-right:1px solid #2e2e2e;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.55);">
+          <img src="https://www.google.com/s2/favicons?domain=chat.openai.com&sz=32" width="13" height="13" alt="" style="border-radius:3px;vertical-align:middle;">
+          ChatGPT
+        </span>
+        <span style="color:rgba(255,255,255,0.2);font-size:11px;">·</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.55);">
+          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius:3px;vertical-align:middle;">
+          Claude
+        </span>
+      </div>
+      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:#ededed;letter-spacing:-0.01em;">Install Connector</p>
+      <p style="font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,0.55);line-height:1.65;">Add our official MCP server to your AI assistant. Works once, across all sessions.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">Free</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">No credit card</span>
+      </div>
+      <div style="margin-top:16px;">
+        <a href="https://opentax-mcp.filed.com/" target="_blank" rel="noopener" class="btn-secondary" style="font-size:14px;">Add connector →</a>
+      </div>
+    </div>
+
+    <!-- Option 2: Skill (Claude only) -->
+    <div style="padding:24px;display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.55);">
+          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius:3px;vertical-align:middle;">
+          Claude
+        </span>
+        <span style="color:rgba(255,255,255,0.2);font-family:var(--font-mono);font-size:11px;">· no install</span>
+      </div>
+      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:#ededed;letter-spacing:-0.01em;">Try without install</p>
+      <p style="font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,0.55);line-height:1.65;">Paste this in any Claude chat — it fetches and installs everything automatically.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">Open source</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">No accounts</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">Free</span>
+      </div>
+      <div style="margin-top:12px;background:#1a1a1a;border:1px solid #2e2e2e;border-radius:6px;padding:10px 14px;">
+        <span style="font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,0.55);display:block;margin-bottom:10px;word-break:break-all;line-height:1.6;">Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
+        <button class="copy-btn" onclick="copySkill(this)">copy</button>
+      </div>
+    </div>
+
   </div>
-  <p style="font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,0.3);margin-bottom:48px;">Once added Claude will install the tax software automatically and will get the powers to do taxes.</p>
 
-  <!-- Chat example -->
+  <!-- Chat examples -->
+  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:32px;line-height:1.2;">Examples</h2>
+
   <p style="font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:0.05em;color:#fff;margin-bottom:10px;">Example 1</p>
   <h3 style="font-family:var(--font-sans);font-size:clamp(18px,2.2vw,24px);font-weight:600;letter-spacing:-0.01em;color:rgba(255,255,255,0.75);margin-bottom:8px;line-height:1.3;">Let Claude do the taxes</h3>
   <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.45);margin-bottom:28px;line-height:1.7;">Calculate my 2025 taxes — drop your W-2s and 1099s, Claude handles the rest.</p>
@@ -878,6 +926,13 @@ Output Nodes (6):
 <script>
   function copyInstall(btn) {
     navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh').then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+    });
+  }
+  function copyMCP(btn) {
+    navigator.clipboard.writeText('https://opentax-mcp.filed.com/').then(() => {
       btn.textContent = 'copied!';
       btn.classList.add('ok');
       setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
