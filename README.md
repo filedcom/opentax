@@ -4,7 +4,9 @@
   <img src="icon.svg" width="128" height="128" alt="Filed Open Tax Engine">
 </p>
 
-**[opentax.filed.com](https://opentax.filed.com)** - Fully open-source federal tax software. Single binary. Runs on macOS, Linux, and Windows.
+**[opentax.filed.com](https://opentax.filed.com)** - Fully open-source federal tax calculation engine. Single binary. Runs on macOS, Linux, and Windows.
+
+> **Note:** This engine calculates taxes accurately for use by AI agents and developers. For filing your taxes, visit [irs.gov](https://irs.gov).
 
 Built and maintained by AI agents using official IRS publications as the sole source of truth.
 
@@ -16,7 +18,7 @@ Built and maintained by AI agents using official IRS publications as the sole so
 
 - Professional tax software is closed source and expensive to maintain. Every rule change required manual updates to the codebase
 - AI agents have drastically reduced the cost of building and maintaining tax software. It only makes sense to do it in the open
-- This project aims to be the first truly open-source, up-to-date tax software that works for everyone
+- This project aims to be the first truly open-source, up-to-date tax calculation engine that works for everyone
 
 **Designed for the AI era:**
 
@@ -24,7 +26,7 @@ Built and maintained by AI agents using official IRS publications as the sole so
 - Single binary CLI that AI agents can download and run instantly
 - Everything stored locally. Open, secure, and accessible
 
-Inspired by Andrej Karpathy's [autoresearch](https://github.com/karpathy/autoresearch), an autonomous loop where AI agents modify code, measure results, and keep only improvements. OpenTax applies the same idea to tax software: agents read IRS instructions, write implementations, generate test cases, and fix regressions in a continuous loop.
+Inspired by Andrej Karpathy's [autoresearch](https://github.com/karpathy/autoresearch), an autonomous loop where AI agents modify code, measure results, and keep only improvements. OpenTax applies the same idea to tax calculation: agents read IRS instructions, write implementations, generate test cases, and fix regressions in a continuous loop.
 
 ---
 
