@@ -16,8 +16,8 @@ Built and maintained by AI agents using official IRS publications as the sole so
 
 ## Why
 
-- Professional tax software is closed source and expensive to maintain. Every rule change required manual updates to the codebase
-- AI agents have drastically reduced the cost of building and maintaining tax software. It only makes sense to do it in the open
+- Professional tax calculation engines are closed source, expensive, and built for humans — making it hard for AI agents to reliably use one as a calculator
+- AI agents have drastically reduced the cost of building and maintaining a tax engine. It only makes sense to do it in the open
 - This project aims to be the first truly open-source, up-to-date tax calculation engine that works for everyone
 
 **Designed for the AI era:**
