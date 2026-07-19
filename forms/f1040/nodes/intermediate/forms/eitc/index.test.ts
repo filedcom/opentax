@@ -303,13 +303,14 @@ Deno.test("MFJ_vs_single_1_child — $45,000 income: single phased out, MFJ stil
     filing_status: FilingStatus.Single,
   }), 894);
 
-  // MFJ: phase-out start=$30,323; reduction = 0.1598 × (45000-30323) = 0.1598 × 14677 = 2345.38…
-  // credit = Math.round(4328 - 2345.38) = Math.round(1982.62) = 1983
+  // MFJ: phase-out start=$30,470 (Rev. Proc. 2024-40 §3.11);
+  // reduction = 0.1598 × (45000-30470) = 0.1598 × 14530 = 2321.894
+  // credit = Math.round(4328 - 2321.894) = Math.round(2006.106) = 2006
   assertEquals(getCredit({
     earned_income: 45_000,
     qualifying_children: 1,
     filing_status: FilingStatus.MFJ,
-  }), 1_983);
+  }), 2_006);
 });
 
 // ─── AGI vs Earned Income ─────────────────────────────────────────────────────
