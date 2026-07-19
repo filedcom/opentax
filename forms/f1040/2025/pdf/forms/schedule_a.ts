@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule A (2025) AcroForm field names.
-// Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sa.pdf
+// Verified layout from https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf
 //
 // Text fields (approx 24 total), personal info fields first (skip):
 //   Medical and Dental Expenses (lines 1–4):
@@ -58,6 +58,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const scheduleAPdf: PdfFormDescriptor = {
   pendingKey: "schedule_a",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sa.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sa--2025.pdf",
   fields,
+  // Schedule A is filed only when the return actually itemizes (1040 line 12
+  // carries an itemized amount) — not merely because AGI was deposited here.
+  includeWhen: (_fields, all) =>
+    (((all?.["f1040"]?.["line12e_itemized_deductions"]) as number | undefined) ?? 0) > 0,
 };

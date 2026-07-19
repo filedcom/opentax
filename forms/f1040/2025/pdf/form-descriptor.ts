@@ -1,5 +1,7 @@
 export type PdfFieldEntry =
-  | { readonly kind: "text";         readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
+  /** `printZero` prints an explicit "0" instead of the default blank-when-zero convention
+   *  (used for lines like Form 8606 line 2 where 0 is a meaningful declared value). */
+  | { readonly kind: "text";         readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[]; readonly printZero?: boolean }
   | { readonly kind: "checkbox";     readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
   /** Checks the box only when the domain value equals `whenValue` (string comparison). */
   | { readonly kind: "checkboxWhen"; readonly domainKey: string; readonly pdfField: string; readonly whenValue: string }
@@ -39,4 +41,18 @@ export interface PdfFormDescriptor {
   readonly fields: ReadonlyArray<PdfFieldEntry>;
   readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
   readonly rows?: PdfRowDescriptor;
+  /**
+   * Inclusion gate evaluated against the form's pending fields. When provided,
+   * the form is only emitted if this returns true. Used for forms that are
+   * only filed when a condition is met (e.g. Schedule B only above $1,500,
+   * Form 8880 only when the credit is nonzero).
+   *
+   * The second argument is the full normalized pending dict, for gates that
+   * depend on a downstream computed value (e.g. Schedule SE only when
+   * Schedule 2 carries SE tax; Form 6251 only when AMT is actually due).
+   */
+  readonly includeWhen?: (
+    fields: Record<string, unknown>,
+    allPending?: Record<string, Record<string, unknown>>,
+  ) => boolean;
 }

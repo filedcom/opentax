@@ -12,7 +12,7 @@ Deno.test("irs1040Pdf: pendingKey is 'f1040'", () => {
 Deno.test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
   assertEquals(
     irs1040Pdf.pdfUrl,
-    "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+    "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   );
 });
 
@@ -81,7 +81,7 @@ Deno.test("irs1040Pdf.filerFields: present and contains expected keys", () => {
   const filerFields = irs1040Pdf.filerFields ?? [];
   const domainKeys = new Set(filerFields.map((e) => e.domainKey));
   const expected = [
-    "firstName",
+    "firstNameWithInitial",
     "lastName",
     "primarySSN",
     "address.line1",

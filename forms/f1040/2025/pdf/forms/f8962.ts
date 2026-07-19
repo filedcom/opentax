@@ -32,6 +32,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const form8962Pdf: PdfFormDescriptor = {
   pendingKey: "form8962",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8962.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8962--2025.pdf",
   fields,
+  // Form 8962 reconciles marketplace premium tax credit — it requires 1095-A
+  // premium data; household income alone (deposited from AGI) must not print it.
+  includeWhen: (fields) =>
+    fields["annual_premium"] !== undefined || fields["annual_aptc"] !== undefined ||
+    fields["annual_slcsp"] !== undefined,
 };
