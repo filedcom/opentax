@@ -108,6 +108,31 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(form8960, { line1_taxable_interest: line4 }));
     }
 
+    // ── Self-emit print-layer values for the PDF builder ─────────────────────
+    // Per-payer rows (up to the form's row counts: 14 interest, 15 dividend)
+    // plus the Part I/II totals. Part III (foreign accounts/trusts) has no
+    // engine data source and is left for the taxpayer to complete when the
+    // schedule is filed.
+    const printFields: Record<string, number | string> = {};
+    const intAmounts = normalizeArray(input.taxable_interest_net);
+    const intNames = normalizeArray(input.payer_name as string | string[] | undefined);
+    for (let i = 0; i < Math.min(intAmounts.length, 14); i++) {
+      printFields[`print_int_payer_${i + 1}`] = intNames[i] ?? "";
+      printFields[`print_int_amount_${i + 1}`] = intAmounts[i];
+    }
+    const divAmounts = normalizeArray(input.ordinaryDividends);
+    const divNames = normalizeArray(input.payerName as string | string[] | undefined);
+    for (let i = 0; i < Math.min(divAmounts.length, 15); i++) {
+      printFields[`print_div_payer_${i + 1}`] = divNames[i] ?? "";
+      printFields[`print_div_amount_${i + 1}`] = divAmounts[i];
+    }
+    if (line4 > 0 || intAmounts.length > 0) {
+      printFields.print_line2_total = totalTaxableInterest(input);
+      printFields.print_line4_total = line4;
+    }
+    if (line6 > 0) printFields.print_line6_total = line6;
+    outputs.push({ nodeType: this.nodeType, fields: printFields });
+
     return { outputs };
   }
 }

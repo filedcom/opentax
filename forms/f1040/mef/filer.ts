@@ -160,6 +160,8 @@ export function extractFilerIdentity(
     firstName,
     lastName,
     middleInitial,
+    firstNameWithInitial: [firstName, middleInitial].filter(Boolean).join(" ") || undefined,
+    fullName: [firstName, middleInitial, lastName].filter(Boolean).join(" ") || undefined,
     suffix: str(f1040["taxpayer_suffix"]),
     address: {
       line1: str(f1040["address_line1"]) ?? "",

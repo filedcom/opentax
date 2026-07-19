@@ -331,7 +331,8 @@ Deno.test("form8880: income_tax_liability >= credit → full credit passes throu
 
 Deno.test("form8880: output nodeType is 'schedule3'", () => {
   const result = compute({ ira_contributions_taxpayer: 2000, agi: 20000, filing_status: "single" });
-  assertEquals(result.outputs.length, 1);
+  // schedule3 routing output + self-emitted print-line output for the PDF builder
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "schedule3");
 });
 
@@ -392,7 +393,8 @@ Deno.test("form8880 smoke test: MFJ both contributing, 50% rate → $2,000 credi
     filing_status: "mfj",
   });
 
-  assertEquals(result.outputs.length, 1);
+  // schedule3 routing output + self-emitted print-line output for the PDF builder
+  assertEquals(result.outputs.length, 2);
 
   const s3Out = findOutput(result, "schedule3");
   assertEquals(s3Out !== undefined, true);

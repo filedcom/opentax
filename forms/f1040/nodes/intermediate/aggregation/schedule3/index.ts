@@ -173,6 +173,18 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
     ];
 
+    // Self-emit computed line values into this node's own pending dict so the
+    // PDF/MeF builders can print the schedule (same pattern as the f1040 node).
+    // Keys are distinct from inputSchema keys to avoid executor merge-accumulation.
+    const printFields: Record<string, number> = {};
+    const line1Total = line1(input);
+    if (line1Total > 0) printFields.line1_total = line1Total;
+    if (credits > 0) printFields.line8_total = credits;
+    if (payments > 0) printFields.line15_total = payments;
+    if (Object.keys(printFields).length > 0) {
+      outputs.push({ nodeType: this.nodeType, fields: printFields });
+    }
+
     return { outputs };
   }
 }

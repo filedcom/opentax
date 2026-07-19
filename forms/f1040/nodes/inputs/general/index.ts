@@ -329,6 +329,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 
   // Taxpayer personal info pass-throughs
   addIfDefined(fields, "taxpayer_first_name", input.taxpayer_first_name);
+  addIfDefined(fields, "taxpayer_middle_initial", input.taxpayer_middle_initial);
   addIfDefined(fields, "taxpayer_last_name", input.taxpayer_last_name);
   addIfDefined(fields, "taxpayer_ssn", input.taxpayer_ssn);
   addIfDefined(fields, "taxpayer_dob", input.taxpayer_dob);

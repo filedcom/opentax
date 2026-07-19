@@ -81,6 +81,10 @@ export interface FilerIdentity {
   readonly firstName?: string;
   readonly lastName?: string;
   readonly middleInitial?: string;
+  /** "First M" — for PDF fields that combine first name and middle initial. */
+  readonly firstNameWithInitial?: string;
+  /** "First M Last" — for schedule headers ("Name(s) shown on Form 1040"). */
+  readonly fullName?: string;
   readonly suffix?: string;
   readonly address: FilerAddress;
   readonly filingStatus: FilingStatus;
