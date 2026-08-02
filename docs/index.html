@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Filed Open Tax Engine - Open source 1040 tax calculation engine for AI agents</title>
-  <meta name="description" content="Give your AI a deterministic tax calculation engine. Accurately calculates federal 1040 taxes. For filing your taxes, visit irs.gov. Runs locally. AGPL v3 / Commercial dual-licensed." />
+  <title>Filed Open Tax Engine — free, open source federal 1040 calculation engine</title>
+  <meta name="description" content="A free, open source federal 1040 calculation engine from the Open Tax Technology Alliance. 186 nodes, 131 input types, MeF XML export. Runs on your own hardware with no account and no cloud. AGPL v3 / commercial dual-licensed. For filing your taxes, visit irs.gov." />
   <link rel="icon" href="favicon.png" />
+  <link rel="canonical" href="https://opentax.filed.com/" />
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQWCVMYT6K"></script>
   <script>
@@ -18,51 +19,102 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
+    /* Freight Display Pro — brand headline serif. Roman only; brand rule: never italics. */
     @font-face {
-      font-family: "Editorial New";
-      src: url("fonts/PPEditorialNew-Light.otf") format("opentype");
-      font-weight: 100 900;
+      font-family: "Freight Display Pro";
+      src: url("fonts/FreightDispProLight-Regular.woff2") format("woff2");
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Freight Display Pro";
+      src: url("fonts/FreightDispProBook-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Freight Display Pro";
+      src: url("fonts/FreightDispProMedium-Regular.woff2") format("woff2");
+      font-weight: 500;
       font-style: normal;
       font-display: swap;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --color-background: #0a0a0a;
-      --color-foreground: #ededed;
-      --color-card: #111111;
-      --color-secondary: #161616;
-      --color-muted: #1f1f1f;
-      --color-primary: #ededed;
-      --color-primary-foreground: #0a0a0a;
-      --color-muted-foreground: #888888;
-      --color-border: #2a2a2a;
-      --color-border-secondary: #222222;
-      --color-success: #0d2b12;
-      --color-success-border: #1a4a22;
-      --color-success-foreground: #4ade80;
-      --beige-400: #555555;
-      --beige-600: #888888;
-      --stone-400: #666666;
-      --stone-600: #999999;
+      /* ── Filed brand palette — warm brown scale. Never #000, never #FFF. ── */
+      --ink:            #1E150E;
+      --ink-deep:       #150E09;
+      --charcoal:       #4A3C2E;
+      --flint:          #736759;
+      --ash:            #A89C8E;
+      --pebble:         #D4CABC;
+      --stone:          #EBE3D5;
+      --cream:          #F4ECDE;
 
+      /* Espresso — the signature. CTA fill and accent. */
+      --espresso:       #704B30;
+      --espresso-dark:  #5D3C24;
+      --espresso-deep:  #492D19;
+      --espresso-light: #BAA698;
+      --espresso-tint:  #D9D3CF;
+
+      /* Timber — warm earth, used for dark surfaces */
+      --timber:         #5C4A32;
+      --timber-dark:    #493A25;
+      --timber-deep:    #362A1A;
+
+      /* ── semantic mapping onto the dark theme ── */
+      --color-background:         var(--ink);
+      --color-foreground:         var(--cream);
+      --color-card:               #241A11;
+      --color-secondary:          #2A1F14;
+      --color-muted:              #30251A;
+      --color-primary:            var(--cream);
+      --color-primary-foreground: var(--ink);
+      --color-muted-foreground:   var(--ash);
+      --color-border:             #3B2E1F;
+      --color-border-secondary:   #312619;
+      --beige-400: var(--flint);
+      --beige-600: var(--ash);
+      --stone-400: var(--flint);
+      --stone-600: var(--ash);
+
+      /* ── terminal / transcript semantics ──
+         Functional syntax colours inside code and chat UI, warmed to sit on Ink.
+         Change these four values to retune every status marker on the page. */
+      --term-ok:        #9DB07F;
+      --term-ok-bg:     #232B1C;
+      --term-ok-border: #3B4A2E;
+      --term-warn:      #C99A5B;
+      --term-err:       #BA8C6E;
+      --color-success:            var(--term-ok-bg);
+      --color-success-border:     var(--term-ok-border);
+      --color-success-foreground: var(--term-ok);
+
+      --font-serif: "Freight Display Pro", Georgia, serif;
       --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'Geist Mono', 'SF Mono', monospace;
-      --radius: 8px;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+      --radius: var(--radius-md);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
       font-family: var(--font-sans);
-      background: #0a0a0a;
+      background: #1E150E;
       color: var(--color-foreground);
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
       line-height: 1.6;
       background-image:
-        linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+        linear-gradient(rgba(244,236,222,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(244,236,222,0.06) 1px, transparent 1px);
       background-size: 80px 80px;
     }
 
@@ -71,7 +123,7 @@
       position: sticky; top: 0; z-index: 100;
       height: 56px;
       border-bottom: 1px solid var(--color-border);
-      background: rgba(10,10,10,0.95);
+      background: rgba(30,21,14,0.95);
       backdrop-filter: blur(12px);
     }
 
@@ -122,18 +174,18 @@
     }
 
     h1 {
-      font-family: "Editorial New", Georgia, serif;
+      font-family: var(--font-serif);
       font-size: clamp(36px, 6vw, 64px);
       font-weight: 300;
       line-height: 1.05;
       letter-spacing: -0.02em;
-      color: #fff;
+      color: #F4ECDE;
       margin-bottom: 20px;
     }
 
     .hero-subtitle {
       font-size: clamp(15px, 2vw, 18px);
-      color: rgba(255,255,255,0.55);
+      color: rgba(244,236,222,0.55);
       margin-bottom: 40px;
       font-weight: 400;
       max-width: 680px;
@@ -143,27 +195,27 @@
     .btn-secondary {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 12px 24px;
-      background: transparent; color: #fff;
-      border: 1px solid rgba(255,255,255,0.25); border-radius: 10px;
+      background: transparent; color: #F4ECDE;
+      border: 1px solid rgba(244,236,222,0.25); border-radius: 2px;
       font-family: var(--font-sans); font-size: 15px; font-weight: 500;
       text-decoration: none;
       transition: border-color .15s, background .15s, transform .1s;
     }
-    .btn-secondary:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+    .btn-secondary:hover { border-color: rgba(244,236,222,0.5); background: rgba(244,236,222,0.06); transform: translateY(-1px); }
 
     .copy-btn {
-      background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px;
+      background: none; border: 1px solid rgba(244,236,222,0.15); border-radius: 2px;
       padding: 3px 8px; font-size: 12px; font-family: var(--font-sans);
-      color: rgba(255,255,255,0.4); cursor: pointer;
+      color: rgba(244,236,222,0.4); cursor: pointer;
       transition: color .15s, border-color .15s;
     }
-    .copy-btn:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.3); }
-    .copy-btn.ok { color: #4ade80; border-color: #4ade80; background: rgba(74,222,128,0.1); }
+    .copy-btn:hover { color: rgba(244,236,222,0.8); border-color: rgba(244,236,222,0.3); }
+    .copy-btn.ok { color: var(--term-ok); border-color: var(--term-ok); background: rgba(157,176,127,0.1); }
 
     /* ── terminal ── */
     .terminal {
       background: var(--color-card);
-      border: 1px solid var(--color-border); border-radius: 12px;
+      border: 1px solid var(--color-border); border-radius: 6px;
       overflow: hidden;
     }
 
@@ -191,7 +243,7 @@
       max-height: 420px;
       overflow-y: scroll;
       scrollbar-width: thin;
-      scrollbar-color: #333 transparent;
+      scrollbar-color: #493A25 transparent;
     }
 
     .terminal-body .prompt { color: var(--stone-400); user-select: none; }
@@ -200,25 +252,221 @@
     .term-mobile-overlay {
       display: none;
       position: absolute; inset: 0; z-index: 10;
-      background: linear-gradient(to bottom, transparent 30%, rgba(10,10,10,0.92) 70%);
+      background: linear-gradient(to bottom, transparent 30%, rgba(30,21,14,0.92) 70%);
       align-items: flex-end; justify-content: center; padding-bottom: 24px;
-      border-radius: 8px;
+      border-radius: 4px;
     }
     .term-mobile-btn {
       font-family: var(--font-sans); font-size: 14px; font-weight: 600;
-      color: #fff; background: #2a2a2a; border: 1px solid #3a3a3a;
-      border-radius: 10px; padding: 12px 28px; cursor: pointer;
+      color: #F4ECDE; background: #3B2E1F; border: 1px solid #4A3C2E;
+      border-radius: 2px; padding: 12px 28px; cursor: pointer;
     }
     @media (max-width: 639px) {
       .term-mobile-overlay { display: flex; }
       .terminal-body { max-height: 220px; overflow-y: hidden; scrollbar-width: none; }
     }
 
+    /* ── section primitives (replaces repeated inline styles) ── */
+    .section { max-width: 960px; margin: 0 auto; padding: 0 32px 96px; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--ash);
+      margin-bottom: 14px;
+    }
+
+    h2.sec {
+      font-family: var(--font-serif);
+      font-size: clamp(28px, 3.4vw, 42px);
+      font-weight: 300;
+      letter-spacing: -0.015em;
+      line-height: 1.15;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    h3.sub {
+      font-family: var(--font-sans);
+      font-size: clamp(17px, 2vw, 21px);
+      font-weight: 600; letter-spacing: -0.01em;
+      color: var(--stone);
+      line-height: 1.35; margin-bottom: 8px;
+    }
+
+    .sec-sub {
+      font-size: 15px; color: var(--ash);
+      line-height: 1.75; max-width: 660px;
+      margin-bottom: 40px;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      background: var(--espresso); color: var(--cream);
+      border: 1px solid var(--espresso); border-radius: 2px;
+      font-family: var(--font-sans); font-size: 15px; font-weight: 500;
+      text-decoration: none;
+      transition: background .15s, border-color .15s, transform .1s;
+    }
+    .btn-primary:hover {
+      background: var(--espresso-dark); border-color: var(--espresso-light);
+      transform: translateY(-1px);
+    }
+
+    /* visible keyboard focus — was missing entirely */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--espresso-light);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* ── hero status strip ── */
+    .fact-strip {
+      display: flex; flex-wrap: wrap;
+      align-items: center; justify-content: center;
+      gap: 0 20px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--ash);
+      letter-spacing: 0.02em;
+    }
+    .fact-strip span { display: inline-flex; align-items: center; gap: 20px; }
+    .fact-strip span::after {
+      content: "";
+      width: 1px; height: 11px;
+      background: var(--timber-dark);
+    }
+    .fact-strip span:last-child::after { display: none; }
+    .fact-strip b { color: var(--cream); font-weight: 500; }
+
+    /* ── initiative cards ── */
+    .init-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .init-card {
+      display: flex; flex-direction: column;
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 28px;
+      transition: border-color .18s, transform .18s;
+    }
+    .init-card:hover { border-color: var(--timber); transform: translateY(-2px); }
+    .init-card .init-name {
+      font-family: var(--font-serif); font-size: 26px; font-weight: 400;
+      color: var(--cream); letter-spacing: -0.01em; margin-bottom: 10px;
+    }
+    .init-card p {
+      font-size: 14px; color: var(--ash); line-height: 1.7; margin-bottom: 18px;
+    }
+    .init-card .init-foot { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .pill {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--pebble);
+      background: rgba(244,236,222,0.05);
+      border: 1px solid var(--color-border);
+      border-radius: 2px; padding: 3px 10px;
+    }
+    .pill-accent {
+      color: var(--espresso-tint);
+      background: rgba(112,75,48,0.28);
+      border-color: var(--espresso);
+    }
+
+    /* ── alliance band ── */
+    .band {
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      background: rgba(54,42,26,0.45);
+    }
+    .member-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;
+    }
+    .member {
+      background: var(--color-card); border: 1px solid var(--color-border);
+      border-radius: 2px; padding: 20px;
+    }
+    .member .m-name {
+      font-family: var(--font-sans); font-size: 15px; font-weight: 600;
+      color: var(--cream); margin-bottom: 6px; letter-spacing: -0.01em;
+    }
+    .member .m-desc { font-size: 13px; color: var(--ash); line-height: 1.7; }
+
+    .note {
+      background: var(--color-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+    }
+    .note-label {
+      display: block;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--espresso-light);
+      margin-bottom: 7px;
+    }
+    .note-body {
+      font-size: 13px; color: var(--ash); line-height: 1.7;
+    }
+
+    .footer-col-link {
+      font-family: var(--font-sans); font-size: 14px;
+      color: var(--pebble); text-decoration: none;
+      transition: color .15s;
+    }
+    .footer-col-link:hover { color: var(--cream); }
+
+    /* ── FAQ ── */
+    .faq-list {
+      border-top: 1px solid var(--color-border);
+    }
+    .faq {
+      border-bottom: 1px solid var(--color-border);
+    }
+    .faq summary {
+      list-style: none; cursor: pointer;
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 18px 0;
+      font-family: var(--font-sans); font-size: 16px; font-weight: 500;
+      letter-spacing: -0.01em; color: var(--stone);
+      transition: color .15s;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after {
+      content: "+";
+      margin-left: auto; flex-shrink: 0;
+      font-family: var(--font-mono); font-size: 17px; font-weight: 400;
+      color: var(--flint); line-height: 1;
+      transition: color .15s;
+    }
+    .faq[open] summary::after { content: "\2212"; color: var(--espresso-light); }
+    .faq summary:hover { color: var(--cream); }
+    .faq summary:hover::after { color: var(--espresso-light); }
+    .faq[open] summary { color: var(--cream); }
+    .faq-a { padding: 0 0 22px; max-width: 720px; }
+    .faq-a p {
+      font-size: 14px; color: var(--ash); line-height: 1.8; margin: 0;
+    }
+    .faq-a a { color: var(--espresso-light); text-decoration: underline; text-underline-offset: 3px; }
+    .faq-a a:hover { color: var(--cream); }
+    .faq-a code {
+      font-family: var(--font-mono); font-size: 12.5px;
+      color: var(--pebble);
+      background: rgba(244,236,222,0.05);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 1px 6px;
+      word-break: break-all;
+    }
+
     /* ── footer ── */
     footer {
-      border-top: 1px solid rgba(255,255,255,0.1);
+      border-top: 1px solid rgba(244,236,222,0.1);
       padding: 24px;
-      background: #000;
+      background: #150E09;
     }
 
     .footer-inner {
@@ -241,8 +489,154 @@
       .hero { padding: 60px 20px 48px; }
       .footer-inner { flex-direction: column; align-items: flex-start; }
       .install-cards { grid-template-columns: 1fr !important; }
+      .init-grid, .member-row { grid-template-columns: 1fr; }
+      .section { padding-left: 20px; padding-right: 20px; padding-bottom: 64px; }
+      .fact-strip { gap: 0 14px; font-size: 11px; }
+      .fact-strip span { gap: 14px; }
+      .init-card { padding: 22px; }
     }
   </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the Filed Open Tax Engine?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OpenTax is a free, open source federal tax calculation engine. It computes Form 1040 and its schedules from source-document inputs, checks the result against the IRS Modernized e-File business rule set, and exports MeF XML or a filled IRS PDF. It ships as a single binary for macOS, Linux and Windows, and it is built to be driven by AI agents as much as by people."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is OpenTax really free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The engine is licensed under AGPL v3 at no cost. A separate commercial licence is available for organisations whose policies prohibit AGPL. Both founding members of the Open Tax Technology Alliance have committed that neither OpenTax nor the Open Tax Document standard will be monetised."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I file my tax return with OpenTax?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. OpenTax calculates and validates returns, and it can export e-file-ready MeF XML, but it is not a filing service and it does not transmit anything to the IRS. To file your taxes, go to irs.gov. An application to the IRS Modernized e-File system is pending; if it is accepted, the Alliance intends to operate a free e-filing route."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which forms and tax years does OpenTax support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Form 1040 for tax year 2025, across 186 registered nodes and 131 input types. That covers W-2s, the 1099 series, K-1s, and Schedules A, C and E, along with the major credits and capital transactions. Additional forms and state returns are planned but not implemented. Run opentax node list to see everything currently registered."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does my tax data leave my computer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. The binary runs locally and stores returns as files on your own disk. There is no account to create, no cloud service in the path, and no telemetry on your return data. A firm can run OpenTax on its own hardware and re-check returns it has already filed without any client data leaving the building."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is the engine tested for accuracy?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The repository includes 133 benchmark scenarios drawn from official IRS material, including VITA Publication 4491 training exercises, Publication 17 worked examples, and MeF test packages. Each case pairs inputs with expected output so regressions surface immediately. Returns are also validated against the IRS MeF business rules, with hard failures separated from softer warnings. The benchmark suite and the tests are public, so you can run them yourself with deno task bench."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I use OpenTax with Claude or ChatGPT?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Three ways. Add the MCP connector, which works across all sessions in either assistant. Paste the skill URL into a Claude chat, which fetches and installs everything for you with no prior setup. Or, in Claude Code, install it as a plugin with /plugin marketplace add filedcom/opentax followed by /plugin install opentax@opentax."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Open Tax Document?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Open Tax Document is a free YAML standard for creating and reading Schedule K-1 data, published as a public draft at opentaxdocument/otd-spec. It is the second Alliance initiative, separate from the engine. Anyone can read and implement it, with no licence to acquire and no vendor to go through."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Who builds and maintains OpenTax?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Filed and Crimson Tree Software founded the Open Tax Technology Alliance and co-develop both initiatives. The engine's day-to-day maintenance runs largely through AI agents that read IRS instructions, write node implementations, generate test cases from official IRS exercises, and fix regressions, with IRS publications as the source of truth and a human reviewing changes before merge."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I contribute or build on it?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, and the Alliance is open to any firm, developer or individual. You can extend the K-1 standard or build additional IRS forms into the engine. One restriction: the right to apply for IRS MeF Software Developer or Transmitter authorisation using this codebase is reserved to Filed and its authorised partners, so contact Filed in writing first if that is your plan."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I install and update the CLI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "One command installs it: curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh. It detects your OS and architecture and puts the right binary on your PATH. Signed release binaries for Apple Silicon, Intel Mac, Windows x64, Linux x64 and Linux ARM are also on the GitHub releases page. The CLI tells you when a new version exists, and opentax update replaces the binary in place."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does OpenTax differ from Filed's commercial products?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "OpenTax is the calculation layer on its own: deterministic arithmetic, no interface, no document reading. Filed is the commercial product that reads source documents the way a preparer does and then prepares and reviews returns inside a firm's existing tax software. OpenTax gives an AI assistant a calculator it can trust; Filed does the professional work around it."
+      }
+    }
+  ]
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Filed Open Tax Engine",
+  "alternateName": "OpenTax",
+  "url": "https://opentax.filed.com/",
+  "applicationCategory": "FinanceApplication",
+  "applicationSubCategory": "Tax calculation engine",
+  "operatingSystem": "macOS, Linux, Windows",
+  "license": "https://github.com/filedcom/opentax/blob/main/LICENSE",
+  "codeRepository": "https://github.com/filedcom/opentax",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Free, open source federal 1040 tax calculation engine. 186 registered nodes and 131 input types for tax year 2025, MeF business-rule validation and MeF XML export. Runs locally as a single binary with no account and no cloud dependency.",
+  "author": {
+    "@type": "Organization",
+    "name": "Open Tax Technology Alliance",
+    "member": [
+      {
+        "@type": "Organization",
+        "name": "Filed",
+        "url": "https://filed.com"
+      },
+      {
+        "@type": "Organization",
+        "name": "Crimson Tree Software",
+        "url": "https://crimsontreesoftware.com"
+      }
+    ]
+  }
+}
+  </script>
 </head>
 <body>
 
@@ -253,6 +647,11 @@
       <img src="filed-logo.png" height="28" alt="Filed" style="display:block;filter:invert(1);" />
     </a>
     <div class="nav-right">
+      <a href="#initiatives" class="nav-link">Initiatives</a>
+      <a href="#install" class="nav-link">Install</a>
+      <a href="#faq" class="nav-link">FAQ</a>
+      <a href="#alliance" class="nav-link">Alliance</a>
+      <div class="nav-sep"></div>
       <a href="https://github.com/filedcom/opentax" class="nav-link" target="_blank" rel="noopener">⭐ Star on GitHub</a>
     </div>
   </div>
@@ -261,48 +660,88 @@
 <!-- hero -->
 <div class="hero-wrap">
 <div class="hero">
-    <img src="icon.svg" width="88" height="88" alt="Filed Open Tax Engine" style="border:1px solid rgba(255,255,255,0.8);margin-bottom:32px;" />
-    <h1 style="margin-bottom:32px;">Filed Open Tax Engine</h1>
-    <p class="hero-subtitle">Open source 1040 tax calculation engine for AI agents and developers.<br>Accurately calculates federal taxes. For filing your taxes, visit <a href="https://irs.gov" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">irs.gov</a>.</p>
-    <div style="display:flex;gap:12px;margin-bottom:40px;flex-wrap:wrap;justify-content:center;">
-      <a href="https://github.com/filedcom/opentax" class="btn-secondary" target="_blank" rel="noopener">
+    <img src="icon.svg" width="88" height="88" alt="Filed Open Tax Engine" style="border:1px solid rgba(244,236,222,0.8);margin-bottom:28px;" />
+    <p class="eyebrow" style="margin-bottom:18px;">An Open Tax Technology Alliance project</p>
+    <h1 style="margin-bottom:24px;">Filed Open Tax Engine</h1>
+    <p class="hero-subtitle">Open source 1040 tax calculation engine for AI agents and developers. Runs on your own hardware, with no account and no cloud dependency. For filing your taxes, visit <a href="https://irs.gov" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">irs.gov</a>.</p>
+    <div style="display:flex;gap:12px;margin-bottom:36px;flex-wrap:wrap;justify-content:center;">
+      <a href="https://github.com/filedcom/opentax" class="btn-primary" target="_blank" rel="noopener">
         ⭐ Star on GitHub
       </a>
-      <a href="https://filed.com" class="btn-secondary" target="_blank" rel="noopener">
-        <img src="favicon.png" width="18" height="18" alt="" style="border-radius:3px;"> Visit Filed
-      </a>
+      <a href="#install" class="btn-secondary">Install the CLI</a>
     </div>
+    <div class="fact-strip">
+      <span><b>186</b> registered nodes</span>
+      <span><b>131</b> input types</span>
+      <span>Tax year <b>2025</b></span>
+      <span>macOS, Linux, Windows</span>
+      <span>AGPL v3</span>
+    </div>
+  </div>
+</div>
+
+<!-- two initiatives -->
+<div class="section" id="initiatives" style="padding-top:8px;">
+  <p class="eyebrow">Open Tax Technology Alliance</p>
+  <h2 class="sec">Two open initiatives</h2>
+  <p class="sec-sub">Filed and Crimson Tree Software founded the Alliance and co-develop both projects. Neither will be monetised.</p>
+
+  <div class="init-grid">
+    <div class="init-card">
+      <p class="init-name">OpenTax</p>
+      <p>A complete federal 1040 calculation engine, free under AGPL v3. One binary, 186 registered nodes and 131 input types, covering W-2s, the 1099 series, K-1s and Schedules A, C and E. It checks returns against the IRS MeF business rule set and exports Modernized e-File XML.</p>
+      <div class="init-foot">
+        <span class="pill">AGPL v3 + commercial</span>
+        <span class="pill">Tax year 2025</span>
+        <a href="https://github.com/filedcom/opentax" class="pill pill-accent" target="_blank" rel="noopener" style="text-decoration:none;">filedcom/opentax →</a>
+      </div>
+    </div>
+
+    <div class="init-card">
+      <p class="init-name">Open Tax Document</p>
+      <p>A free YAML standard for creating and reading Schedule K-1 data, published as a public draft. Readable and implementable by anyone. There is no licence to acquire and no vendor to go through.</p>
+      <div class="init-foot">
+        <span class="pill">Public draft</span>
+        <span class="pill">Free standard</span>
+        <a href="https://github.com/opentaxdocument/otd-spec" class="pill pill-accent" target="_blank" rel="noopener" style="text-decoration:none;">otd-spec →</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="margin-top:20px;">
+    <span class="note-label">Status &middot; pending</span>
+    <p class="note-body">OpenTax has an application in with the IRS Modernized e-File system. On acceptance, the Alliance intends to run it as a free e-filing route open to individuals, firms, developers and AI agents.</p>
   </div>
 </div>
 
 <!-- claude section -->
 <div style="max-width:960px;margin:0 auto;padding:0 32px 96px;" id="claude-section">
-  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:8px;line-height:1.2;">Give your AI assistant a tax engine it would love to use</h2>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:40px;line-height:1.7;">Your AI does the thinking. Open Tax does the calculations.</p>
+  <h2 class="sec" style="margin-bottom:8px;">Give your AI assistant a tax engine it would love to use</h2>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:40px;line-height:1.7;">Your AI does the thinking. Open Tax does the calculations.</p>
 
-  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:16px;line-height:1.2;">Installation</h2>
+  <h2 class="sec" style="margin-bottom:16px;">Installation</h2>
 
   <!-- Split panel -->
-  <div class="install-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:56px;background:#111;border:1px solid #2e2e2e;border-radius:8px;overflow:hidden;">
+  <div class="install-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:0;margin-bottom:56px;background:#241A11;border:1px solid #40321F;border-radius: 4px;overflow:hidden;">
 
     <!-- Option 1: MCP -->
-    <div style="padding:24px;display:flex;flex-direction:column;gap:8px;border-right:1px solid #2e2e2e;">
+    <div style="padding:24px;display:flex;flex-direction:column;gap:8px;border-right:1px solid #40321F;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.55);">
-          <img src="https://www.google.com/s2/favicons?domain=chat.openai.com&sz=32" width="13" height="13" alt="" style="border-radius:3px;vertical-align:middle;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(244,236,222,0.55);">
+          <img src="https://www.google.com/s2/favicons?domain=chat.openai.com&sz=32" width="13" height="13" alt="" style="border-radius: 2px;vertical-align:middle;">
           ChatGPT
         </span>
-        <span style="color:rgba(255,255,255,0.2);font-size:11px;">·</span>
-        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.55);">
-          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius:3px;vertical-align:middle;">
+        <span style="color:rgba(244,236,222,0.2);font-size:11px;">·</span>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(244,236,222,0.55);">
+          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius: 2px;vertical-align:middle;">
           Claude
         </span>
       </div>
-      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:#ededed;letter-spacing:-0.01em;">Install Connector</p>
-      <p style="font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,0.55);line-height:1.65;">Add our official MCP server to your AI assistant. Works once, across all sessions.</p>
+      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:#F4ECDE;letter-spacing:-0.01em;">Install Connector</p>
+      <p style="font-family:var(--font-sans);font-size:13px;color:rgba(244,236,222,0.55);line-height:1.65;">Add our official MCP server to your AI assistant. Works once, across all sessions.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">Free</span>
-        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">No credit card</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(244,236,222,0.5);background:rgba(244,236,222,0.06);border:1px solid rgba(244,236,222,0.1);border-radius: 2px;padding:2px 8px;">Free</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(244,236,222,0.5);background:rgba(244,236,222,0.06);border:1px solid rgba(244,236,222,0.1);border-radius: 2px;padding:2px 8px;">No credit card</span>
       </div>
       <div style="margin-top:16px;">
         <a href="https://opentax-mcp.filed.com/" target="_blank" rel="noopener" class="btn-secondary" style="font-size:14px;">Add connector →</a>
@@ -312,37 +751,56 @@
     <!-- Option 2: Skill (Claude only) -->
     <div style="padding:24px;display:flex;flex-direction:column;gap:8px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(255,255,255,0.55);">
-          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius:3px;vertical-align:middle;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:rgba(244,236,222,0.55);">
+          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius: 2px;vertical-align:middle;">
           Claude
         </span>
-        <span style="color:rgba(255,255,255,0.2);font-family:var(--font-mono);font-size:11px;">· no install</span>
+        <span style="color:rgba(244,236,222,0.2);font-family:var(--font-mono);font-size:11px;">· no install</span>
       </div>
-      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:#ededed;letter-spacing:-0.01em;">Try without install</p>
-      <p style="font-family:var(--font-sans);font-size:13px;color:rgba(255,255,255,0.55);line-height:1.65;">Paste this in any Claude chat — it fetches and installs everything automatically.</p>
+      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:#F4ECDE;letter-spacing:-0.01em;">Try without install</p>
+      <p style="font-family:var(--font-sans);font-size:13px;color:rgba(244,236,222,0.55);line-height:1.65;">Paste this in any Claude chat — it fetches and installs everything automatically.</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">Open source</span>
-        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">No accounts</span>
-        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(255,255,255,0.5);background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;padding:2px 8px;">Free</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(244,236,222,0.5);background:rgba(244,236,222,0.06);border:1px solid rgba(244,236,222,0.1);border-radius: 2px;padding:2px 8px;">Open source</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(244,236,222,0.5);background:rgba(244,236,222,0.06);border:1px solid rgba(244,236,222,0.1);border-radius: 2px;padding:2px 8px;">No accounts</span>
+        <span style="font-family:var(--font-sans);font-size:11px;color:rgba(244,236,222,0.5);background:rgba(244,236,222,0.06);border:1px solid rgba(244,236,222,0.1);border-radius: 2px;padding:2px 8px;">Free</span>
       </div>
-      <div style="margin-top:12px;background:#1a1a1a;border:1px solid #2e2e2e;border-radius:6px;padding:10px 14px;">
-        <span style="font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,0.55);display:block;margin-bottom:10px;word-break:break-all;line-height:1.6;">Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
+      <div style="margin-top:12px;background:#2A1F14;border:1px solid #40321F;border-radius: 4px;padding:10px 14px;">
+        <span style="font-family:var(--font-mono);font-size:12px;color:rgba(244,236,222,0.55);display:block;margin-bottom:10px;word-break:break-all;line-height:1.6;">Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span>
         <button class="copy-btn" onclick="copySkill(this)">copy</button>
       </div>
     </div>
 
   </div>
 
-  <!-- Chat examples -->
-  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:32px;line-height:1.2;">Examples</h2>
+  <!-- Option 3: Claude Code plugin -->
+  <div style="background:var(--color-card);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:20px 24px;margin-top:-40px;margin-bottom:56px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;">
+    <div style="flex:1;min-width:220px;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:var(--ash);">
+          <img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" width="13" height="13" alt="" style="border-radius:var(--radius-sm);vertical-align:middle;">
+          Claude Code
+        </span>
+      </div>
+      <p style="font-family:var(--font-sans);font-size:15px;font-weight:600;color:var(--cream);letter-spacing:-0.01em;margin-bottom:4px;">Install as a plugin</p>
+      <p style="font-family:var(--font-sans);font-size:13px;color:var(--ash);line-height:1.65;">Keeps the skills always available, including <code style="font-family:var(--font-mono);font-size:12px;color:var(--pebble);">/opentax:tax-preparer</code> and <code style="font-family:var(--font-mono);font-size:12px;color:var(--pebble);">/opentax:tax-reviewer</code>.</p>
+    </div>
+    <div style="background:var(--color-secondary);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:12px 14px;min-width:300px;flex:1;">
+      <span id="cc-cmds" style="font-family:var(--font-mono);font-size:12px;color:var(--pebble);display:block;line-height:1.9;white-space:pre;overflow-x:auto;"><span style="color:var(--flint);">/</span>plugin marketplace add filedcom/opentax
+<span style="color:var(--flint);">/</span>plugin install opentax@opentax</span>
+      <button class="copy-btn" style="margin-top:10px;" onclick="copyCC(this)">copy</button>
+    </div>
+  </div>
 
-  <p style="font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:0.05em;color:#fff;margin-bottom:10px;">Example 1</p>
-  <h3 style="font-family:var(--font-sans);font-size:clamp(18px,2.2vw,24px);font-weight:600;letter-spacing:-0.01em;color:rgba(255,255,255,0.75);margin-bottom:8px;line-height:1.3;">Let Claude do the taxes</h3>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.45);margin-bottom:28px;line-height:1.7;">Calculate my 2025 taxes — drop your W-2s and 1099s, Claude handles the rest.</p>
+  <!-- Chat examples -->
+  <h2 class="sec" style="margin-bottom:32px;">Examples</h2>
+
+  <p class="eyebrow">Example 1</p>
+  <h3 class="sub">Let Claude do the taxes</h3>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.45);margin-bottom:28px;line-height:1.7;">Calculate my 2025 taxes — drop your W-2s and 1099s, Claude handles the rest.</p>
   <div id="chat-wrap" style="position:relative;background:#1c1c1c;border:1px solid #2e2e2e;border-radius:12px;overflow:hidden;font-family:var(--font-sans);">
     <!-- mobile overlay -->
     <div id="chat-mobile-overlay" style="display:none;position:absolute;inset:0;z-index:10;background:linear-gradient(to bottom,transparent 30%,rgba(10,10,10,0.92) 70%);align-items:flex-end;justify-content:center;padding-bottom:32px;">
-      <button onclick="openExample()" style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:#fff;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:10px;padding:12px 28px;cursor:pointer;">See the example →</button>
+      <button onclick="openExample()" style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:#F7F7F7;background:#2a2a2a;border:1px solid #4A3C2E;border-radius:10px;padding:12px 28px;cursor:pointer;">See the example →</button>
     </div>
     <!-- header bar -->
     <div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #252525;background:#202020;">
@@ -357,7 +815,7 @@
       <!-- E1 user: sends skill URL -->
       <div style="display:flex;justify-content:flex-end;">
         <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:12px 18px;max-width:72%;min-width:0;overflow:hidden;">
-          <p style="font-size:14px;color:#e0e0e0;line-height:1.65;margin:0;word-break:break-word;overflow-wrap:anywhere;">Fetch and follow the OpenTax skill: <span style="color:#6eb5f8;text-decoration:underline;">https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span></p>
+          <p style="font-size:14px;color:#e0e0e0;line-height:1.65;margin:0;word-break:break-word;overflow-wrap:anywhere;">Fetch and follow the OpenTax skill: <span style="color:#a8c0d8;text-decoration:underline;">https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</span></p>
         </div>
       </div>
 
@@ -390,15 +848,15 @@
       <div style="display:flex;justify-content:flex-end;">
         <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:14px 18px;max-width:72%;">
           <div style="display:flex;gap:10px;margin-bottom:11px;">
-            <div style="width:62px;height:78px;background:#ebebeb;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
-              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div>
+            <div style="width:62px;height:78px;background:#e0e0e0;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
+              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div>
               <div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent #bbb transparent transparent;"></div>
-              <span style="font-family:var(--font-mono);font-size:8px;color:#666;font-weight:700;position:relative;">PDF</span>
+              <span style="font-family:var(--font-mono);font-size:8px;color:#555;font-weight:700;position:relative;">PDF</span>
             </div>
-            <div style="width:62px;height:78px;background:#ebebeb;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
-              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div>
+            <div style="width:62px;height:78px;background:#e0e0e0;border-radius:6px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;">
+              <div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div>
               <div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 9px 9px 0;border-color:transparent #bbb transparent transparent;"></div>
-              <span style="font-family:var(--font-mono);font-size:8px;color:#666;font-weight:700;position:relative;">PDF</span>
+              <span style="font-family:var(--font-mono);font-size:8px;color:#555;font-weight:700;position:relative;">PDF</span>
             </div>
           </div>
           <p style="font-size:14px;color:#e0e0e0;line-height:1.6;margin:0;">Calculate my taxes for 2025. Here are my W2 and 1099MISC</p>
@@ -453,7 +911,7 @@
         <!-- Claude: pre-compute summary -->
         <div style="display:flex;flex-direction:column;gap:8px;">
           <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Got it. Here's the full picture before I compute:</p>
-          <p style="font-size:15px;color:#fff;font-weight:700;margin:2px 0 0;">Dante Hicks — 2025 Federal Tax Return</p>
+          <p style="font-size:15px;color:#F7F7F7;font-weight:700;margin:2px 0 0;">Dante Hicks — 2025 Federal Tax Return</p>
           <table style="width:100%;border-collapse:collapse;font-size:13px;margin:4px 0;">
             <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#777;width:42%;">Filing status</td><td style="padding:8px 0;color:#e0e0e0;">Single</td></tr>
             <tr style="border-bottom:1px solid #2a2a2a;"><td style="padding:8px 0;color:#777;">Age</td><td style="padding:8px 0;color:#e0e0e0;">30</td></tr>
@@ -482,7 +940,7 @@
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
           <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Clean result. Here's Dante's full return:</p>
-          <p style="font-size:15px;color:#fff;font-weight:700;margin:2px 0 0;">Form 1040 — Dante Hicks — 2025</p>
+          <p style="font-size:15px;color:#F7F7F7;font-weight:700;margin:2px 0 0;">Form 1040 — Dante Hicks — 2025</p>
           <table style="width:100%;border-collapse:collapse;font-size:13px;margin:4px 0 8px;">
             <thead><tr style="border-bottom:1px solid #2e2e2e;"><th style="text-align:left;padding:8px 0;color:#555;font-weight:500;width:56px;">Line</th><th style="text-align:left;padding:8px 0;color:#555;font-weight:500;">Description</th><th style="text-align:right;padding:8px 0;color:#555;font-weight:500;">Amount</th></tr></thead>
             <tbody>
@@ -499,7 +957,7 @@
               <tr style="border-top:2px solid #333;"><td style="padding:10px 0;color:#e0e0e0;font-weight:700;">37</td><td style="padding:10px 0;color:#e0e0e0;font-weight:700;">Amount owed</td><td style="padding:10px 0;color:#e0e0e0;text-align:right;font-weight:700;">$5,114.96</td></tr>
             </tbody>
           </table>
-          <p style="font-size:15px;color:#fff;font-weight:700;margin:8px 0 4px;">Plain summary:</p>
+          <p style="font-size:15px;color:#F7F7F7;font-weight:700;margin:8px 0 4px;">Plain summary:</p>
           <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Dante owes <strong>$5,114.96</strong> by April 15, 2026. His W-2 withholding covered the wage income reasonably well, but the $24,000 in rental income had <strong>zero withholding</strong> applied — that's the main driver of the balance due.</p>
           <ul style="margin:6px 0 6px 18px;display:flex;flex-direction:column;gap:3px;padding:0;">
             <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Effective tax rate:</strong> 13.1% ($12,569 / $96,000)</li>
@@ -520,10 +978,10 @@
       <div style="background:#2a2a2a;border-radius:14px;padding:12px 16px 10px;">
         <div style="font-size:14px;color:#555;margin-bottom:10px;">Reply...</div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="color:#666;font-size:20px;line-height:1;cursor:pointer;">+</div>
+          <div style="color:#555;font-size:20px;line-height:1;cursor:pointer;">+</div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="display:flex;align-items:center;gap:3px;font-size:13px;color:#888;cursor:pointer;">Sonnet 4.6 <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#888" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#888" stroke-width="1.5"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3M8 22h8" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div style="display:flex;align-items:center;gap:3px;font-size:13px;color:#bbb;cursor:pointer;">Opus 5 <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#bbb" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#bbb" stroke-width="1.5"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3M8 22h8" stroke="#bbb" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
         </div>
       </div>
@@ -534,14 +992,14 @@
 
 <!-- example 2 section -->
 <div style="max-width:960px;margin:0 auto;padding:0 32px 96px;">
-  <p style="font-family:var(--font-mono);font-size:13px;font-weight:600;letter-spacing:0.05em;color:#fff;margin-bottom:10px;">Example 2</p>
-  <h3 style="font-family:var(--font-sans);font-size:clamp(18px,2.2vw,24px);font-weight:600;letter-spacing:-0.01em;color:rgba(255,255,255,0.75);margin-bottom:8px;line-height:1.3;">Let Claude review your return</h3>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.45);margin-bottom:28px;line-height:1.7;">Already have a draft return? Drop your source docs and the finished 1040 — Claude audits it line by line and flags what's wrong.</p>
+  <p class="eyebrow">Example 2</p>
+  <h3 class="sub">Let Claude review your return</h3>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.45);margin-bottom:28px;line-height:1.7;">Already have a draft return? Drop your source docs and the finished 1040 — Claude audits it line by line and flags what's wrong.</p>
 
   <div id="chat2-wrap" style="position:relative;background:#1c1c1c;border:1px solid #2e2e2e;border-radius:12px;overflow:hidden;font-family:var(--font-sans);">
     <!-- mobile overlay -->
     <div id="chat2-mobile-overlay" style="display:none;position:absolute;inset:0;z-index:10;background:linear-gradient(to bottom,transparent 30%,rgba(10,10,10,0.92) 70%);align-items:flex-end;justify-content:center;padding-bottom:32px;">
-      <button onclick="openChat2()" style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:#fff;background:#2a2a2a;border:1px solid #3a3a3a;border-radius:10px;padding:12px 28px;cursor:pointer;">See the example →</button>
+      <button onclick="openChat2()" style="font-family:var(--font-sans);font-size:14px;font-weight:600;color:#F7F7F7;background:#2a2a2a;border:1px solid #4A3C2E;border-radius:10px;padding:12px 28px;cursor:pointer;">See the example →</button>
     </div>
     <!-- header bar -->
     <div style="display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #252525;background:#202020;">
@@ -570,13 +1028,13 @@
         <div style="background:#2a2a2a;border-radius:16px 16px 4px 16px;padding:14px 18px;max-width:80%;min-width:0;overflow:hidden;">
           <div style="display:flex;gap:8px;margin-bottom:11px;flex-wrap:wrap;">
             <!-- 5 source doc PDFs -->
-            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
-            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
-            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
-            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
-            <div style="width:54px;height:68px;background:#ebebeb;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#f5f5f5,#d8d8d8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#666;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#e0e0e0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#555;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#e0e0e0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#555;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#e0e0e0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#555;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#e0e0e0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#555;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#e0e0e0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#F7F7F7,#ccc);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #bbb transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#555;font-weight:700;position:relative;">PDF</span></div>
             <!-- finished 1040 - slightly different shade -->
-            <div style="width:54px;height:68px;background:#e0e8f0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#e8f0f8,#c8d8e8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #a8c0d8 transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#4a6a8a;font-weight:700;position:relative;">PDF</span></div>
+            <div style="width:54px;height:68px;background:#e0e8f0;border-radius:5px;position:relative;overflow:hidden;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;"><div style="position:absolute;inset:0;background:linear-gradient(160deg,#e8f0f8,#c8d8e8);"></div><div style="position:absolute;top:3px;right:0;border-style:solid;border-width:0 8px 8px 0;border-color:transparent #a8c0d8 transparent transparent;"></div><span style="font-family:var(--font-mono);font-size:7px;color:#444;font-weight:700;position:relative;">PDF</span></div>
           </div>
           <p style="font-size:14px;color:#e0e0e0;line-height:1.6;margin:0;word-break:break-word;">Review my completed tax return. Here are my source docs and the finished 1040</p>
         </div>
@@ -601,26 +1059,26 @@
         <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Based on my independent read of all source documents vs. the draft return, here's a <strong>phase-by-phase audit</strong>:</p>
 
         <!-- Phase 1 -->
-        <p style="font-size:14px;color:#fff;font-weight:700;margin:6px 0 2px;">Phase 1 — Source Document Extraction ✅</p>
-        <p style="font-size:13px;color:#888;margin:0 0 8px;">Oliver K. Filed | SSN: 576-54-3211 | Single | DOB 1/1/1986 | Denton, MD 21629</p>
+        <p style="font-size:14px;color:#F7F7F7;font-weight:700;margin:6px 0 2px;">Phase 1 — Source Document Extraction ✅</p>
+        <p style="font-size:13px;color:#bbb;margin:0 0 8px;">Oliver K. Filed | SSN: 576-54-3211 | Single | DOB 1/1/1986 | Denton, MD 21629</p>
         <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px;">
           <thead><tr style="border-bottom:1px solid #2e2e2e;"><th style="text-align:left;padding:6px 0;color:#555;font-weight:500;">Source</th><th style="text-align:left;padding:6px 8px;color:#555;font-weight:500;">Key Values</th></tr></thead>
           <tbody>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">W-2 (False Landscape Supply)</td><td style="padding:6px 8px;color:#bbb;">$102,000 wages, $8,786 fed withheld, $5,280 state withheld</td></tr>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">K-1 FOJ Ventures (50%)</td><td style="padding:6px 8px;color:#bbb;">$434,800 ordinary, $80,000 rental, $14,200 interest, $24,330 dividends, $44,000 §179, $26,000 charitable</td></tr>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">K-1 MHJB Investments (50%)</td><td style="padding:6px 8px;color:#bbb;">$191,584 ordinary, $24,000 rental, $2,637 interest, $8,413 dividends, $70,000 distributions</td></tr>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1099-INT Fidelity</td><td style="padding:6px 8px;color:#bbb;">$2,400 interest</td></tr>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1099-DIV Fidelity</td><td style="padding:6px 8px;color:#bbb;">$22,475 ordinary, $21,874 qualified, $8,800 §199A</td></tr>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1099-B</td><td style="padding:6px 8px;color:#bbb;">ST noncovered RSUs: $4,747/+$276 adj gain; LT covered: $8,449/$111; LT noncovered: $158</td></tr>
-            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1098 XYZ Bank</td><td style="padding:6px 8px;color:#bbb;">$13,045 mortgage interest, $7,292 property taxes</td></tr>
-            <tr><td style="padding:6px 0;color:#888;white-space:nowrap;padding-right:12px;">1098-SA / §498-SA</td><td style="padding:6px 8px;color:#bbb;">HSA contributions $3,200, distributions $3,871 (all qualified)</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">W-2 (False Landscape Supply)</td><td style="padding:6px 8px;color:#bbb;">$102,000 wages, $8,786 fed withheld, $5,280 state withheld</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">K-1 FOJ Ventures (50%)</td><td style="padding:6px 8px;color:#bbb;">$434,800 ordinary, $80,000 rental, $14,200 interest, $24,330 dividends, $44,000 §179, $26,000 charitable</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">K-1 MHJB Investments (50%)</td><td style="padding:6px 8px;color:#bbb;">$191,584 ordinary, $24,000 rental, $2,637 interest, $8,413 dividends, $70,000 distributions</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">1099-INT Fidelity</td><td style="padding:6px 8px;color:#bbb;">$2,400 interest</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">1099-DIV Fidelity</td><td style="padding:6px 8px;color:#bbb;">$22,475 ordinary, $21,874 qualified, $8,800 §199A</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">1099-B</td><td style="padding:6px 8px;color:#bbb;">ST noncovered RSUs: $4,747/+$276 adj gain; LT covered: $8,449/$111; LT noncovered: $158</td></tr>
+            <tr style="border-bottom:1px solid #252525;"><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">1098 XYZ Bank</td><td style="padding:6px 8px;color:#bbb;">$13,045 mortgage interest, $7,292 property taxes</td></tr>
+            <tr><td style="padding:6px 0;color:#bbb;white-space:nowrap;padding-right:12px;">1098-SA / §498-SA</td><td style="padding:6px 8px;color:#bbb;">HSA contributions $3,200, distributions $3,871 (all qualified)</td></tr>
           </tbody>
         </table>
 
         <!-- Phase 2 -->
-        <p style="font-size:14px;color:#fff;font-weight:700;margin:8px 0 2px;">Phase 2 — Line-by-Line Comparison & Findings</p>
-        <p style="font-size:13px;color:#888;margin:0 0 8px;">Here's what my independent calculation shows vs. the draft return:</p>
-        <p style="font-size:13px;color:#4ade80;font-weight:600;margin:0 0 6px;">✅ Items that check out</p>
+        <p style="font-size:14px;color:#F7F7F7;font-weight:700;margin:8px 0 2px;">Phase 2 — Line-by-Line Comparison & Findings</p>
+        <p style="font-size:13px;color:#bbb;margin:0 0 8px;">Here's what my independent calculation shows vs. the draft return:</p>
+        <p style="font-size:13px;color:var(--term-ok);font-weight:600;margin:0 0 6px;">✅ Items that check out</p>
         <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px;">
           <thead><tr style="border-bottom:1px solid #2e2e2e;"><th style="text-align:left;padding:6px 0;color:#555;font-weight:500;width:48px;">Line</th><th style="text-align:left;padding:6px 8px;color:#555;font-weight:500;">Description</th><th style="text-align:right;padding:6px 8px;color:#555;font-weight:500;">Draft</th><th style="text-align:right;padding:6px 8px;color:#555;font-weight:500;">My Calc</th><th style="padding:6px 8px;color:#555;font-weight:500;text-align:center;"></th></tr></thead>
           <tbody>
@@ -637,17 +1095,17 @@
         </table>
 
         <!-- Findings -->
-        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px 16px;margin-top:4px;">
-          <p style="font-size:13px;color:#f87171;font-weight:700;margin:0 0 6px;">🔴 FINDING 1 — HSA Deduction Not Taken (Missing $4,300)</p>
+        <div style="background:rgba(186,140,110,0.08);border:1px solid rgba(186,140,110,0.2);border-radius:8px;padding:14px 16px;margin-top:4px;">
+          <p style="font-size:13px;color:var(--term-err);font-weight:700;margin:0 0 6px;">🔴 FINDING 1 — HSA Deduction Not Taken (Missing $4,300)</p>
           <p style="font-size:13px;color:#bbb;line-height:1.6;margin:0 0 6px;">Draft return Schedule 1, line 13 (HSA deduction) = $0. Your §498-SA shows $3,200 in contributions. Form 8889 correctly computes a $4,300 deduction limit — but line 13 shows $0. The deduction was computed but not linked to Schedule 1.</p>
-          <p style="font-size:13px;color:#f87171;margin:0;"><strong>Impact:</strong> ~$1,600–$1,700 in overpaid tax at ~37% marginal rate on $4,300.</p>
+          <p style="font-size:13px;color:var(--term-err);margin:0;"><strong>Impact:</strong> ~$1,600–$1,700 in overpaid tax at ~37% marginal rate on $4,300.</p>
         </div>
-        <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:14px 16px;margin-top:8px;">
-          <p style="font-size:13px;color:#f87171;font-weight:700;margin:0 0 6px;">🔴 FINDING 2 — §199A REIT Dividends Not Captured ($800)</p>
+        <div style="background:rgba(186,140,110,0.08);border:1px solid rgba(186,140,110,0.2);border-radius:8px;padding:14px 16px;margin-top:8px;">
+          <p style="font-size:13px;color:var(--term-err);font-weight:700;margin:0 0 6px;">🔴 FINDING 2 — §199A REIT Dividends Not Captured ($800)</p>
           <p style="font-size:13px;color:#bbb;line-height:1.6;margin:0;">The Fidelity 1099-DIV shows $800 in Section 199A dividends (box 5). The return's Form 8995-A shows the MHJB/FOJ QBI but the $800 REIT dividend is not appearing on Form 8995-A Part IV (line 28). Potential $160 additional deduction.</p>
         </div>
-        <div style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);border-radius:8px;padding:14px 16px;margin-top:8px;">
-          <p style="font-size:13px;color:#fbbf24;font-weight:700;margin:0 0 6px;">🟡 FINDING 3 — Qualified Dividends Classification (FOJ K-1)</p>
+        <div style="background:rgba(201,154,91,0.08);border:1px solid rgba(201,154,91,0.2);border-radius:8px;padding:14px 16px;margin-top:8px;">
+          <p style="font-size:13px;color:var(--term-warn);font-weight:700;margin:0 0 6px;">🟡 FINDING 3 — Qualified Dividends Classification (FOJ K-1)</p>
           <p style="font-size:13px;color:#bbb;line-height:1.6;margin:0;">The FOJ K-1 shows $24,330 in ordinary dividends (box 6a). The return picks these up on Schedule B. However, there's no qualified dividends breakdown from FOJ — the Statement A doesn't indicate any are qualified. The return treats all K-1 dividends as ordinary (non-qualified), which is the conservative correct approach absent additional information. No error, but worth confirming with the partnership.</p>
         </div>
       </div>
@@ -658,10 +1116,10 @@
       <div style="background:#2a2a2a;border-radius:14px;padding:12px 16px 10px;">
         <div style="font-size:14px;color:#555;margin-bottom:10px;">Reply...</div>
         <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div style="color:#666;font-size:20px;line-height:1;cursor:pointer;">+</div>
+          <div style="color:#555;font-size:20px;line-height:1;cursor:pointer;">+</div>
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="display:flex;align-items:center;gap:3px;font-size:13px;color:#888;cursor:pointer;">Sonnet 4.6 <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#888" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#888" stroke-width="1.5"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3M8 22h8" stroke="#888" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <div style="display:flex;align-items:center;gap:3px;font-size:13px;color:#bbb;cursor:pointer;">Opus 5 <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M3 4.5L6 7.5L9 4.5" stroke="#bbb" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 013 3v7a3 3 0 01-6 0V5a3 3 0 013-3z" stroke="#bbb" stroke-width="1.5"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v3M8 22h8" stroke="#bbb" stroke-width="1.5" stroke-linecap="round"/></svg>
           </div>
         </div>
       </div>
@@ -672,32 +1130,32 @@
 
 
 <!-- installation -->
-<div style="max-width:960px;margin:0 auto;padding:72px 32px;display:flex;gap:64px;align-items:flex-start;flex-wrap:wrap;">
+<div id="install" style="max-width:960px;margin:0 auto;padding:72px 32px;display:flex;gap:64px;align-items:flex-start;flex-wrap:wrap;">
   <!-- left -->
   <div style="flex:1;min-width:280px;">
-    <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:16px;line-height:1.2;">CLI Installation and Usage</h2>
-    <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.7;">Install the CLI for macOS, Linux, or Windows. Runs locally. No cloud, no signup required.</p>
-    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-      <span style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.7);word-break:break-all;"><span style="color:rgba(255,255,255,0.3);">$</span> curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh</span>
+    <h2 class="sec" style="margin-bottom:16px;">CLI Installation and Usage</h2>
+    <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:24px;line-height:1.7;">Install the CLI for macOS, Linux, or Windows. Runs locally. No cloud, no signup required.</p>
+    <div style="background:rgba(244,236,222,0.05);border:1px solid rgba(244,236,222,0.1);border-radius: 4px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+      <span style="font-family:var(--font-mono);font-size:13px;color:rgba(244,236,222,0.7);word-break:break-all;"><span style="color:rgba(244,236,222,0.3);">$</span> curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh</span>
       <button class="copy-btn" onclick="copyInstall(this)">copy</button>
     </div>
   </div>
   <!-- right -->
   <div style="width:220px;display:flex;flex-direction:column;gap:32px;">
     <div>
-      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">GitHub Repo</p>
-      <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.7);text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.2);">filedcom/opentax</a>
+      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.35);margin-bottom:10px;">GitHub Repo</p>
+      <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(244,236,222,0.7);text-decoration:none;border-bottom:1px solid rgba(244,236,222,0.2);">filedcom/opentax</a>
     </div>
     <div>
-      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">License</p>
-      <span style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.7);">AGPL v3 / Commercial</span>
+      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.35);margin-bottom:10px;">License</p>
+      <span style="font-family:var(--font-sans);font-size:14px;color:rgba(244,236,222,0.7);">AGPL v3 / Commercial</span>
     </div>
     <div>
-      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px;">Platforms</p>
+      <p style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.35);margin-bottom:10px;">Platforms</p>
       <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:3px 10px;">macOS</span>
-        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:3px 10px;">Linux</span>
-        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:4px;padding:3px 10px;">Windows</span>
+        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.6);background:rgba(244,236,222,0.07);border:1px solid rgba(244,236,222,0.12);border-radius: 2px;padding:3px 10px;">macOS</span>
+        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.6);background:rgba(244,236,222,0.07);border:1px solid rgba(244,236,222,0.12);border-radius: 2px;padding:3px 10px;">Linux</span>
+        <span style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.6);background:rgba(244,236,222,0.07);border:1px solid rgba(244,236,222,0.12);border-radius: 2px;padding:3px 10px;">Windows</span>
       </div>
     </div>
   </div>
@@ -705,8 +1163,8 @@
 
 <!-- cli example -->
 <div style="max-width:960px;margin:0 auto;padding:0 32px 96px;">
-  <h2 style="font-family:var(--font-sans);font-size:clamp(24px,3vw,36px);font-weight:700;letter-spacing:-0.02em;color:#fff;margin-bottom:8px;line-height:1.2;">Entire tax calculation engine as a CLI</h2>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(255,255,255,0.55);margin-bottom:32px;line-height:1.7;">186 registered nodes. Every IRS form piped as JSON. Inspect schemas, create returns, compute taxes — all from your terminal.</p>
+  <h2 class="sec" style="margin-bottom:8px;">Entire tax calculation engine as a CLI</h2>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:32px;line-height:1.7;">186 registered nodes. Every IRS form piped as JSON. Inspect schemas, create returns, compute taxes — all from your terminal.</p>
 
   <!-- Terminal 1: --help -->
   <div style="position:relative;margin-bottom:24px;">
@@ -770,7 +1228,7 @@ Global flags:
   </div><!-- /term1 wrapper -->
 
   <!-- Terminal 2: full workflow -->
-  <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;color:rgba(255,255,255,0.35);margin-bottom:12px;">Create a full return using the CLI</p>
+  <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;color:rgba(244,236,222,0.35);margin-bottom:12px;">Create a full return using the CLI</p>
   <div style="position:relative;">
     <div id="term2-overlay" class="term-mobile-overlay">
       <button onclick="openTerm('term2-overlay','term2-body')" class="term-mobile-btn">See the example →</button>
@@ -945,6 +1403,13 @@ Output Nodes (6):
       setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
     });
   }
+  function copyCC(btn) {
+    navigator.clipboard.writeText('/plugin marketplace add filedcom/opentax\n/plugin install opentax@opentax').then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('ok');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 2000);
+    });
+  }
   function expandChat() {
     var msgs = document.getElementById('chat-messages');
     setTimeout(function() { msgs.scrollTop = msgs.scrollHeight; }, 50);
@@ -1002,35 +1467,140 @@ Output Nodes (6):
   })();
 </script>
 
+<!-- FAQ -->
+<div class="section" id="faq" style="padding-top:24px;">
+  <p class="eyebrow">FAQ</p>
+  <h2 class="sec">Questions about the engine</h2>
+  <p class="sec-sub">If something here is wrong or missing, open an issue on GitHub.</p>
+
+  <div class="faq-list">
+    <details class="faq">
+      <summary>What is the Filed Open Tax Engine?</summary>
+      <div class="faq-a"><p>OpenTax is a free, open source federal tax calculation engine. It computes Form 1040 and its schedules from source-document inputs, checks the result against the IRS Modernized e-File business rule set, and exports MeF XML or a filled IRS PDF. It ships as a single binary for macOS, Linux and Windows, and it is built to be driven by AI agents as much as by people.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Is OpenTax really free?</summary>
+      <div class="faq-a"><p>Yes. The engine is licensed under AGPL v3 at no cost. A separate commercial licence is available for organisations whose policies prohibit AGPL. Both founding members of the Open Tax Technology Alliance have committed that neither OpenTax nor the Open Tax Document standard will be monetised.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Can I file my tax return with OpenTax?</summary>
+      <div class="faq-a"><p>No. OpenTax calculates and validates returns, and it can export e-file-ready MeF XML, but it is not a filing service and it does not transmit anything to the IRS. To file your taxes, go to <a href="https://irs.gov" target="_blank" rel="noopener">irs.gov</a>. An application to the IRS Modernized e-File system is pending; if it is accepted, the Alliance intends to operate a free e-filing route.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Which forms and tax years does OpenTax support?</summary>
+      <div class="faq-a"><p>Form 1040 for tax year 2025, across 186 registered nodes and 131 input types. That covers W-2s, the 1099 series, K-1s, and Schedules A, C and E, along with the major credits and capital transactions. Additional forms and state returns are planned but not implemented. Run <code>opentax node list</code> to see everything currently registered.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Does my tax data leave my computer?</summary>
+      <div class="faq-a"><p>No. The binary runs locally and stores returns as files on your own disk. There is no account to create, no cloud service in the path, and no telemetry on your return data. A firm can run OpenTax on its own hardware and re-check returns it has already filed without any client data leaving the building.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>How is the engine tested for accuracy?</summary>
+      <div class="faq-a"><p>The repository includes 133 benchmark scenarios drawn from official IRS material, including VITA Publication 4491 training exercises, Publication 17 worked examples, and MeF test packages. Each case pairs inputs with expected output so regressions surface immediately. Returns are also validated against the IRS MeF business rules, with hard failures separated from softer warnings. The benchmark suite and the tests are public, so you can run them yourself with <code>deno task bench</code>.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>How do I use OpenTax with Claude or ChatGPT?</summary>
+      <div class="faq-a"><p>Three ways. Add the MCP connector, which works across all sessions in either assistant. Paste the skill URL into a Claude chat, which fetches and installs everything for you with no prior setup. Or, in Claude Code, install it as a plugin with <code>/plugin marketplace add filedcom/opentax</code> followed by <code>/plugin install opentax@opentax</code>.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>What is Open Tax Document?</summary>
+      <div class="faq-a"><p>Open Tax Document is a free YAML standard for creating and reading Schedule K-1 data, published as a public draft at <a href="https://github.com/opentaxdocument/otd-spec" target="_blank" rel="noopener">opentaxdocument/otd-spec</a>. It is the second Alliance initiative, separate from the engine. Anyone can read and implement it, with no licence to acquire and no vendor to go through.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Who builds and maintains OpenTax?</summary>
+      <div class="faq-a"><p>Filed and Crimson Tree Software founded the Open Tax Technology Alliance and co-develop both initiatives. The engine's day-to-day maintenance runs largely through AI agents that read IRS instructions, write node implementations, generate test cases from official IRS exercises, and fix regressions, with IRS publications as the source of truth and a human reviewing changes before merge.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>Can I contribute or build on it?</summary>
+      <div class="faq-a"><p>Yes, and the Alliance is open to any firm, developer or individual. You can extend the K-1 standard or build additional IRS forms into the engine. One restriction: the right to apply for IRS MeF Software Developer or Transmitter authorisation using this codebase is reserved to Filed and its authorised partners, so contact Filed in writing first if that is your plan.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>How do I install and update the CLI?</summary>
+      <div class="faq-a"><p>One command installs it: <code>curl -fsSL https://raw.githubusercontent.com/filedcom/opentax/main/install.sh | sh</code>. It detects your OS and architecture and puts the right binary on your PATH. Signed release binaries for Apple Silicon, Intel Mac, Windows x64, Linux x64 and Linux ARM are also on the GitHub releases page. The CLI tells you when a new version exists, and <code>opentax update</code> replaces the binary in place.</p></div>
+    </details>
+
+    <details class="faq">
+      <summary>How does OpenTax differ from Filed's commercial products?</summary>
+      <div class="faq-a"><p>OpenTax is the calculation layer on its own: deterministic arithmetic, no interface, no document reading. Filed is the commercial product that reads source documents the way a preparer does and then prepares and reviews returns inside a firm's existing tax software. OpenTax gives an AI assistant a calculator it can trust; Filed does the professional work around it.</p></div>
+    </details>
+  </div>
+</div>
+
+<!-- alliance -->
+<div class="band" id="alliance" style="margin-top:32px;">
+  <div class="section" style="padding-top:80px;padding-bottom:80px;">
+    <p class="eyebrow">The Alliance</p>
+    <h2 class="sec">Open to any firm, developer or individual</h2>
+    <p class="sec-sub">Federal tax calculation has been closed software since the 1990s, sold on annual licences by a small number of vendors. The arithmetic is no longer the hard part of tax work, and keeping it proprietary holds back everyone building on top of it.</p>
+
+    <p class="eyebrow" style="margin-bottom:12px;">Founding members</p>
+    <div class="member-row">
+      <div class="member">
+        <p class="m-name">Filed</p>
+        <p class="m-desc">AI that works inside a tax firm's existing software. Reads the same source documents a preparer reads, then prepares and reviews returns. Supports 1040, 1041, 1065, 1120, 1120-S and 990, and works with CCH Axcess, UltraTax, Lacerte, Drake and ProConnect.</p>
+      </div>
+      <div class="member">
+        <p class="m-name">Crimson Tree Software</p>
+        <p class="m-desc">Partnership tax automation for large public accounting firms, covering federal, state and international compliance for complex allocations and tiered structures. Joins as co-founding member and co-develops both initiatives.</p>
+      </div>
+    </div>
+
+    <p class="sec-sub" style="margin-bottom:20px;">Contributors can extend the K-1 standard or build additional IRS forms into the engine. Both founders have committed that neither initiative will be monetised.</p>
+
+    <div class="note">
+      <span class="note-label">Commercial use</span>
+      <p class="note-body">Firms intending to build an MeF transmitter on the codebase should contact Filed for written authorisation first.</p>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:28px;flex-wrap:wrap;">
+      <a href="https://github.com/filedcom/opentax" class="btn-primary" target="_blank" rel="noopener">Contribute to the engine</a>
+      <a href="https://github.com/opentaxdocument/otd-spec" class="btn-secondary" target="_blank" rel="noopener">Read the K-1 spec</a>
+    </div>
+  </div>
+</div>
+
 <!-- footer -->
-<footer style="border-top:1px solid rgba(255,255,255,0.12);margin-top:32px;">
+<footer style="border-top:1px solid rgba(244,236,222,0.12);">
   <div style="max-width:960px;margin:0 auto;padding:64px 32px 48px;display:flex;gap:64px;flex-wrap:wrap;align-items:flex-start;">
     <!-- left: branding -->
     <div style="flex:1;min-width:200px;">
-      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:14px;">Open Tax</p>
-      <p style="font-family:var(--font-sans);font-size:14px;color:#fff;line-height:1.6;margin:0;">Fully free and open source<br>1040 tax calculation engine.<br><a href="https://irs.gov" target="_blank" rel="noopener" style="color:rgba(255,255,255,0.6);font-size:12px;text-decoration:none;">For filing, visit irs.gov →</a></p>
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Open Tax</p>
+      <p style="font-family:var(--font-sans);font-size:14px;color:#F4ECDE;line-height:1.6;margin:0;">Fully free and open source<br>1040 tax calculation engine.</p>
     </div>
     <!-- product: filed.com products -->
     <div style="min-width:160px;">
-      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:14px;">Filed</p>
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Filed</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <a href="https://filed.com" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.8);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">Filed.com</a>
-        <a href="https://filed.com/taxprep" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.8);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">Tax Preparation</a>
-        <a href="https://filed.com/reviewer" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.8);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">Reviewer</a>
-        <a href="https://filed.com/tax-planner" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.8);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">Tax Planner</a>
+        <a href="https://filed.com" target="_blank" rel="noopener" class="footer-col-link">Filed.com</a>
+        <a href="https://filed.com/taxprep" target="_blank" rel="noopener" class="footer-col-link">Tax Preparation</a>
+        <a href="https://filed.com/reviewer" target="_blank" rel="noopener" class="footer-col-link">Reviewer</a>
+        <a href="https://filed.com/tax-planner" target="_blank" rel="noopener" class="footer-col-link">Tax Planner</a>
+        <a href="https://www.filed.com/prowork" target="_blank" rel="noopener" class="footer-col-link">Prowork</a>
       </div>
     </div>
-    <!-- links -->
+    <!-- alliance links -->
     <div style="min-width:160px;">
-      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:14px;">Links</p>
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Alliance</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.8);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">GitHub</a>
-        <a href="https://github.com/filedcom/opentax/blob/main/LICENSE" target="_blank" rel="noopener" style="font-family:var(--font-sans);font-size:14px;color:rgba(255,255,255,0.8);text-decoration:none;transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='rgba(255,255,255,0.8)'">AGPL v3 + Commercial License</a>
+        <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" class="footer-col-link">OpenTax engine</a>
+        <a href="https://github.com/opentaxdocument/otd-spec" target="_blank" rel="noopener" class="footer-col-link">Open Tax Document spec</a>
+        <a href="https://github.com/filedcom/opentax/blob/main/LICENSE" target="_blank" rel="noopener" class="footer-col-link">AGPL v3 + Commercial licence</a>
+        <a href="https://crimsontreesoftware.com" target="_blank" rel="noopener" class="footer-col-link">Crimson Tree Software</a>
       </div>
     </div>
   </div>
   <div style="max-width:960px;margin:0 auto;padding:0 32px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <p style="font-family:var(--font-sans);font-size:12px;color:rgba(255,255,255,0.5);margin:0;">© 2025 Filed. All rights reserved.</p>
+    <p style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.5);margin:0;">© 2026 Filed. All rights reserved.</p>
     <a href="https://filed.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="filed-logo.png" height="18" alt="Filed" style="filter:invert(1);opacity:0.6;" />
     </a>
