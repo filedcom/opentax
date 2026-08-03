@@ -3,10 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Filed Open Tax Engine — free, open source federal 1040 calculation engine</title>
-  <meta name="description" content="A free, open source federal 1040 calculation engine from the Open Tax Technology Alliance. 186 nodes, 131 input types, MeF XML export. Runs on your own hardware with no account and no cloud. AGPL v3 / commercial dual-licensed. For filing your taxes, visit irs.gov." />
+  <title>OpenTax Engine — free, open source federal 1040 calculation engine</title>
+  <meta name="description" content="A free, open source federal 1040 calculation engine from the Open Tax Technology Alliance. Validates against IRS MeF business rules and exports MeF XML. Runs on your own hardware with no account and no cloud. AGPL v3 / commercial dual-licensed. For filing your taxes, visit irs.gov." />
   <link rel="icon" href="favicon.png" />
   <link rel="canonical" href="https://opentax.filed.com/" />
+
+  <!-- Open Graph / social previews -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="OpenTax" />
+  <meta property="og:url" content="https://opentax.filed.com/" />
+  <meta property="og:title" content="OpenTax Engine — free, open source federal 1040 calculation engine" />
+  <meta property="og:description" content="A free, open source federal 1040 calculation engine from the Open Tax Technology Alliance. Validates against IRS MeF business rules and exports MeF XML. Runs on your own hardware with no account and no cloud." />
+  <meta property="og:image" content="https://opentax.filed.com/opentax-og.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="OpenTax Engine — free, open source federal 1040 calculation engine. Runs on your own hardware. AGPL v3." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="OpenTax Engine — free, open source federal 1040 calculation engine" />
+  <meta name="twitter:description" content="A free, open source federal 1040 calculation engine from the Open Tax Technology Alliance. Validates against IRS MeF business rules and exports MeF XML. Runs on your own hardware with no account and no cloud." />
+  <meta name="twitter:image" content="https://opentax.filed.com/opentax-og.png" />
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQWCVMYT6K"></script>
   <script>
@@ -503,7 +519,7 @@
   "mainEntity": [
     {
       "@type": "Question",
-      "name": "What is the Filed Open Tax Engine?",
+      "name": "What is OpenTax?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "OpenTax is a free, open source federal tax calculation engine. It computes Form 1040 and its schedules from source-document inputs, checks the result against the IRS Modernized e-File business rule set, and exports MeF XML or a filled IRS PDF. It ships as a single binary for macOS, Linux and Windows, and it is built to be driven by AI agents as much as by people."
@@ -604,7 +620,7 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "Filed Open Tax Engine",
+  "name": "OpenTax Engine",
   "alternateName": "OpenTax",
   "url": "https://opentax.filed.com/",
   "applicationCategory": "FinanceApplication",
@@ -660,9 +676,9 @@
 <!-- hero -->
 <div class="hero-wrap">
 <div class="hero">
-    <img src="icon.svg" width="88" height="88" alt="Filed Open Tax Engine" style="border:1px solid rgba(244,236,222,0.8);margin-bottom:28px;" />
+    <img src="icon.svg" width="88" height="88" alt="OpenTax Engine" style="border:1px solid rgba(244,236,222,0.8);margin-bottom:28px;" />
     <p class="eyebrow" style="margin-bottom:18px;">An Open Tax Technology Alliance project</p>
-    <h1 style="margin-bottom:24px;">Filed Open Tax Engine</h1>
+    <h1 style="margin-bottom:24px;">OpenTax Engine</h1>
     <p class="hero-subtitle">Open source 1040 tax calculation engine for AI agents and developers. Runs on your own hardware, with no account and no cloud dependency. For filing your taxes, visit <a href="https://irs.gov" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">irs.gov</a>.</p>
     <div style="display:flex;gap:12px;margin-bottom:36px;flex-wrap:wrap;justify-content:center;">
       <a href="https://github.com/filedcom/opentax" class="btn-primary" target="_blank" rel="noopener">
@@ -670,6 +686,7 @@
       </a>
       <a href="#install" class="btn-secondary">Install the CLI</a>
     </div>
+    <p style="font-family:var(--font-mono);font-size:12px;color:var(--flint);margin-bottom:18px;letter-spacing:0.02em;">Built and maintained by <a href="https://filed.com" target="_blank" rel="noopener" style="color:var(--ash);text-decoration:none;border-bottom:1px solid var(--timber-dark);">Filed</a></p>
     <div class="fact-strip">
       <span><b>186</b> registered nodes</span>
       <span><b>131</b> input types</span>
@@ -710,14 +727,14 @@
 
   <div class="note" style="margin-top:20px;">
     <span class="note-label">Status &middot; pending</span>
-    <p class="note-body">OpenTax has an application in with the IRS Modernized e-File system. On acceptance, the Alliance intends to run it as a free e-filing route open to individuals, firms, developers and AI agents.</p>
+    <p class="note-body">OpenTax has an application in with the IRS Modernized e-File system. On acceptance it would be the first open-source route into federal e-filing, and the Alliance intends to run it as a free one, open to individuals, firms, developers and AI agents.</p>
   </div>
 </div>
 
 <!-- claude section -->
 <div style="max-width:960px;margin:0 auto;padding:0 32px 96px;" id="claude-section">
   <h2 class="sec" style="margin-bottom:8px;">Give your AI assistant a tax engine it would love to use</h2>
-  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:40px;line-height:1.7;">Your AI does the thinking. Open Tax does the calculations.</p>
+  <p style="font-family:var(--font-sans);font-size:15px;color:rgba(244,236,222,0.55);margin-bottom:40px;line-height:1.7;">Your AI does the thinking. OpenTax does the calculations.</p>
 
   <h2 class="sec" style="margin-bottom:16px;">Installation</h2>
 
@@ -1018,7 +1035,7 @@
           <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M4.5 3L7.5 6L4.5 9" stroke="#555" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
         <p style="font-size:14px;color:#e0e0e0;font-weight:700;line-height:1.7;margin:0;">Step 3: What would you like to do?</p>
-        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">Open Tax is ready. What would you like to do?</p>
+        <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:0;">OpenTax is ready. What would you like to do?</p>
         <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:4px 0 0;"><strong>1. Prepare a return</strong> — I'll walk you through it step by step. Drop in your W-2s, 1099s, and other tax documents (photos, PDFs, or just type the values). I'll ask questions until I have everything, confirm the details with you, then compute your full 1040 with all schedules.</p>
         <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:4px 0 0;"><strong>2. Review a completed return</strong> — Already have a return prepared by someone else? Upload it along with your source documents and I'll independently compute everything, compare line-by-line, and flag any discrepancies — missed income, incorrect deductions, unclaimed credits, or compliance risks.</p>
       </div>
@@ -1179,7 +1196,7 @@
       <span class="terminal-title">opentax --help</span>
     </div>
     <div id="term1-body" class="terminal-body"><span class="prompt">$</span> <span class="cmd">opentax --help</span>
-Filed Open Tax Engine CLI
+Filed OpenTax CLI
 
 Usage: opentax &lt;command&gt; &lt;subcommand&gt; [options]
 
@@ -1475,7 +1492,7 @@ Output Nodes (6):
 
   <div class="faq-list">
     <details class="faq">
-      <summary>What is the Filed Open Tax Engine?</summary>
+      <summary>What is OpenTax?</summary>
       <div class="faq-a"><p>OpenTax is a free, open source federal tax calculation engine. It computes Form 1040 and its schedules from source-document inputs, checks the result against the IRS Modernized e-File business rule set, and exports MeF XML or a filled IRS PDF. It ships as a single binary for macOS, Linux and Windows, and it is built to be driven by AI agents as much as by people.</p></div>
     </details>
 
@@ -1574,7 +1591,7 @@ Output Nodes (6):
   <div style="max-width:960px;margin:0 auto;padding:64px 32px 48px;display:flex;gap:64px;flex-wrap:wrap;align-items:flex-start;">
     <!-- left: branding -->
     <div style="flex:1;min-width:200px;">
-      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Open Tax</p>
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">OpenTax</p>
       <p style="font-family:var(--font-sans);font-size:14px;color:#F4ECDE;line-height:1.6;margin:0;">Fully free and open source<br>1040 tax calculation engine.</p>
     </div>
     <!-- product: filed.com products -->
@@ -1582,17 +1599,14 @@ Output Nodes (6):
       <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Filed</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <a href="https://filed.com" target="_blank" rel="noopener" class="footer-col-link">Filed.com</a>
-        <a href="https://filed.com/taxprep" target="_blank" rel="noopener" class="footer-col-link">Tax Preparation</a>
-        <a href="https://filed.com/reviewer" target="_blank" rel="noopener" class="footer-col-link">Reviewer</a>
-        <a href="https://filed.com/tax-planner" target="_blank" rel="noopener" class="footer-col-link">Tax Planner</a>
-        <a href="https://www.filed.com/prowork" target="_blank" rel="noopener" class="footer-col-link">Prowork</a>
       </div>
     </div>
     <!-- alliance links -->
     <div style="min-width:160px;">
       <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Alliance</p>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" class="footer-col-link">OpenTax engine</a>
+        <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" class="footer-col-link">OpenTax Engine</a>
+        <a href="https://opentax-mcp.filed.com" target="_blank" rel="noopener" class="footer-col-link">OpenTax Connector</a>
         <a href="https://github.com/opentaxdocument/otd-spec" target="_blank" rel="noopener" class="footer-col-link">Open Tax Document spec</a>
         <a href="https://github.com/filedcom/opentax/blob/main/LICENSE" target="_blank" rel="noopener" class="footer-col-link">AGPL v3 + Commercial licence</a>
         <a href="https://crimsontreesoftware.com" target="_blank" rel="noopener" class="footer-col-link">Crimson Tree Software</a>
