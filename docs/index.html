@@ -1600,11 +1600,18 @@ Output Nodes (6):
     </div>
   </div>
   <div style="max-width:960px;margin:0 auto;padding:0 32px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-    <p style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.5);margin:0;">© 2026 Filed. All rights reserved.</p>
+    <p style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.5);margin:0;">© <span id="yr">2026</span> Filed. All rights reserved.</p>
     <a href="https://filed.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
       <img src="filed-logo.png" height="18" alt="Filed" style="filter:invert(1);opacity:0.6;" />
     </a>
   </div>
 </footer>
+<script>
+  /* Keeps the footer year current. 2026 stays in the HTML as the no-JS fallback. */
+  (function () {
+    var el = document.getElementById("yr");
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+</script>
 </body>
 </html>
