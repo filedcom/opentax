@@ -1,6 +1,6 @@
 # benchmark
 
-Accuracy benchmark for the `tax` engine — 97 TY2025 scenarios with IRS-authoritative
+Accuracy benchmark for the `tax` engine — 133 TY2025 scenarios with IRS-authoritative
 correct values. Passes when every engine output is within $5 of the correct value for
 total tax, refund, and amount owed.
 
@@ -8,7 +8,7 @@ For folder layout and file formats, see [STRUCTURE.md](../docs/architecture/STRU
 
 ## Cases
 
-97 scenarios covering the common return types:
+133 scenarios covering the common return types:
 
 | Range | Filing status | Key features tested |
 |-------|--------------|---------------------|
@@ -57,3 +57,4 @@ formats in [STRUCTURE.md](../docs/architecture/STRUCTURE.md).
 | LTCG 0% threshold — Single / MFJ | $48,350 / $96,700 |
 | QBI deduction | 20% of lesser of (QBI, taxable income before QBI) |
 | Additional Medicare Tax | 0.9% on wages/SE over $200k (Single) / $250k (MFJ) |
+| 98–134 | Extended | Gambling winnings, itemized mortgage/SALT/charity, residential clean energy, saver's credit, lifetime learning credit, foreign tax credit, child and dependent care, energy efficient home improvement, self-employed health, SEP-IRA, Roth conversion, Schedule E rental, Schedule H household, NOL carryforward, alimony, RRB-1099, installment sale, COD income, hobby income, MFS |
