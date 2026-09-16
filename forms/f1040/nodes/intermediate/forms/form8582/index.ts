@@ -14,6 +14,18 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 // IRC §469(i)(3)(B): 50% phase-out rate
 const PHASE_OUT_RATE = 0.50;
 
+// IRC §469(i)(2): maximum special allowance for rental real estate (TY2025)
+const RENTAL_ALLOWANCE_MAX = 25_000;
+
+// IRC §469(i)(3)(A): MAGI thresholds for phase-out (TY2025)
+const MAGI_LOWER_THRESHOLD = 100_000;
+const MAGI_UPPER_THRESHOLD = 150_000;
+
+// IRC §469(i)(5)(B): MFS (lived apart all year) reduced thresholds (TY2025)
+const MFS_ALLOWANCE_MAX = 12_500;
+const MFS_MAGI_LOWER = 50_000;
+const MFS_MAGI_UPPER = 75_000;
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
@@ -61,6 +73,28 @@ type Form8582Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
+// The passive activity picture IRC §469 acts on, independent of which node holds it.
+// agi_aggregator applies the same limit to reach AGI: Form 8582 needs modified AGI,
+// so it runs after the aggregator that produces it and cannot feed AGI itself.
+export type PassiveActivity = {
+  readonly currentIncome: number;
+  readonly currentLoss: number;
+  readonly priorUnallowed: number;
+  // Current-year loss from rental real estate only — the §469(i) allowance reaches
+  // no other passive activity. Omitted means the whole loss is rental.
+  readonly rentalLoss?: number;
+  readonly activeParticipation: boolean;
+  readonly modifiedAgi?: number;
+  readonly filingStatus?: FilingStatus;
+};
+
+export type PassiveLossLimit = {
+  // Loss deductible this year (Form 8582 line 11, total losses allowed)
+  readonly allowed: number;
+  // Loss carried to next year
+  readonly suspended: number;
+};
+
 function totalPassiveIncome(input: Form8582Input): number {
   return input.current_income ?? 0;
 }
@@ -69,14 +103,92 @@ function totalPassiveLoss(input: Form8582Input): number {
   return (input.current_loss ?? 0) + (input.prior_unallowed ?? 0);
 }
 
-// Overall passive activity loss (positive = net loss, negative = net gain)
-function overallPal(input: Form8582Input): number {
-  return totalPassiveLoss(input) - totalPassiveIncome(input);
+// MFS filer who lived with spouse any time during the year cannot use Part II
+function isMfsIneligible(activity: PassiveActivity): boolean {
+  return activity.filingStatus === FilingStatus.MFS;
 }
 
-// MFS filer who lived with spouse any time during the year cannot use Part II
-function isMfsIneligible(input: Form8582Input): boolean {
-  return input.filing_status === FilingStatus.MFS;
+function allowanceThresholds(activity: PassiveActivity): {
+  lower: number;
+  upper: number;
+  max: number;
+} {
+  if (isMfsIneligible(activity)) {
+    // MFS lived apart uses halved thresholds per IRC §469(i)(5)(B)
+    // Note: MFS who lived with spouse at ANY time gets $0 — that's handled
+    // by isMfsIneligible check before calling this. If we reach here, MFS
+    // already returned $0. This is only for documentation clarity.
+    return { lower: MFS_MAGI_LOWER, upper: MFS_MAGI_UPPER, max: MFS_ALLOWANCE_MAX };
+  }
+  return {
+    lower: MAGI_LOWER_THRESHOLD,
+    upper: MAGI_UPPER_THRESHOLD,
+    max: RENTAL_ALLOWANCE_MAX,
+  };
+}
+
+// IRC §469(i): the special $25k allowance for rental real estate.
+// Returns $0 if conditions are not met.
+function specialAllowance(activity: PassiveActivity, rentalNetLoss: number): number {
+  // Must be an active rental real estate activity the taxpayer participated in
+  if (!activity.activeParticipation) return 0;
+
+  // MFS filers who lived with spouse at any time are ineligible (§469(i)(5)(A))
+  // We treat filing_status=mfs as ineligible (conservative — actual determination
+  // requires lived-apart determination which would require additional input).
+  if (isMfsIneligible(activity)) return 0;
+
+  // Modified AGI must be provided to apply the phase-out
+  const magi = activity.modifiedAgi;
+  if (magi === undefined) return 0;
+
+  const { lower, upper, max } = allowanceThresholds(activity);
+
+  // MAGI at or above upper threshold → $0 allowance
+  if (magi >= upper) return 0;
+
+  // Cap at max allowance or the actual rental net loss (can't exceed the loss)
+  const baseAllowance = Math.min(rentalNetLoss, max);
+
+  // MAGI at or below lower threshold → full allowance
+  if (magi <= lower) return baseAllowance;
+
+  // Phase-out: reduce by 50% of excess MAGI over lower threshold
+  const phaseOutReduction = PHASE_OUT_RATE * (magi - lower);
+  const phasedAllowance = Math.max(0, max - phaseOutReduction);
+
+  return Math.min(rentalNetLoss, phasedAllowance);
+}
+
+// IRC §469(a): a passive loss is deductible only against passive income, plus the
+// §469(i) special allowance. The rest is suspended, not deducted.
+export function passiveLossLimit(activity: PassiveActivity): PassiveLossLimit {
+  const income = activity.currentIncome;
+  const loss = activity.currentLoss + activity.priorUnallowed;
+
+  // No passive activity at all, or no overall PAL (income >= total losses) →
+  // nothing for §469 to limit.
+  const pal = loss - income;
+  if (pal <= 0) return { allowed: 0, suspended: 0 };
+
+  // Fallback to the total loss only when no rental/non-rental split is available.
+  const rentalNetLoss = activity.rentalLoss ?? loss;
+  const allowed = Math.min(pal, income + specialAllowance(activity, rentalNetLoss));
+
+  return { allowed, suspended: pal - allowed };
+}
+
+function passiveActivity(input: Form8582Input): PassiveActivity {
+  return {
+    currentIncome: totalPassiveIncome(input),
+    currentLoss: input.current_loss ?? 0,
+    priorUnallowed: input.prior_unallowed ?? 0,
+    rentalLoss: input.rental_current_loss,
+    // Part II needs both an active rental activity and actual participation
+    activeParticipation: (input.has_active_rental ?? false) && (input.active_participation ?? false),
+    modifiedAgi: input.modified_agi,
+    filingStatus: input.filing_status,
+  };
 }
 
 function schedule1Output(allowedLoss: number): NodeOutput[] {
@@ -91,105 +203,19 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule1]);
 
-  // IRC §469(i)(2): maximum special allowance for rental real estate (TY2025)
-  protected readonly rentalAllowanceMax = 25_000;
-
-  // IRC §469(i)(3)(A): MAGI thresholds for phase-out (TY2025)
-  protected readonly magiLowerThreshold = 100_000;
-  protected readonly magiUpperThreshold = 150_000;
-
-  // IRC §469(i)(5)(B): MFS (lived apart all year) reduced thresholds (TY2025)
-  protected readonly mfsAllowanceMax = 12_500;
-  protected readonly mfsMagiLower = 50_000;
-  protected readonly mfsMagiUpper = 75_000;
-
-  private allowanceThresholds(input: Form8582Input): {
-    lower: number;
-    upper: number;
-    max: number;
-  } {
-    if (isMfsIneligible(input)) {
-      // MFS lived apart uses halved thresholds per IRC §469(i)(5)(B)
-      // Note: MFS who lived with spouse at ANY time gets $0 — that's handled
-      // by isMfsIneligible check before calling this. If we reach here, MFS
-      // already returned $0. This is only for documentation clarity.
-      return { lower: this.mfsMagiLower, upper: this.mfsMagiUpper, max: this.mfsAllowanceMax };
-    }
-    return {
-      lower: this.magiLowerThreshold,
-      upper: this.magiUpperThreshold,
-      max: this.rentalAllowanceMax,
-    };
-  }
-
-  // IRC §469(i): compute the special $25k allowance for rental real estate
-  // Returns $0 if conditions are not met.
-  private specialAllowance(input: Form8582Input, rentalNetLoss: number): number {
-    // Must have active rental real estate activity
-    if (!input.has_active_rental) return 0;
-
-    // Must have actively participated
-    if (!input.active_participation) return 0;
-
-    // MFS filers who lived with spouse at any time are ineligible (§469(i)(5)(A))
-    // We treat filing_status=mfs as ineligible (conservative — actual determination
-    // requires lived-apart determination which would require additional input).
-    if (isMfsIneligible(input)) return 0;
-
-    // Modified AGI must be provided to apply the phase-out
-    const magi = input.modified_agi;
-    if (magi === undefined) return 0;
-
-    const { lower, upper, max } = this.allowanceThresholds(input);
-
-    // MAGI at or above upper threshold → $0 allowance
-    if (magi >= upper) return 0;
-
-    // Cap at max allowance or the actual rental net loss (can't exceed the loss)
-    const baseAllowance = Math.min(rentalNetLoss, max);
-
-    // MAGI at or below lower threshold → full allowance
-    if (magi <= lower) return baseAllowance;
-
-    // Phase-out: reduce by 50% of excess MAGI over lower threshold
-    const phaseOutReduction = PHASE_OUT_RATE * (magi - lower);
-    const phasedAllowance = Math.max(0, max - phaseOutReduction);
-
-    return Math.min(rentalNetLoss, phasedAllowance);
-  }
-
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const income = totalPassiveIncome(input);
-    const loss = totalPassiveLoss(input);
-
     // No passive activity at all → nothing to do
-    if (income === 0 && loss === 0) {
+    if (totalPassiveIncome(input) === 0 && totalPassiveLoss(input) === 0) {
       return { outputs: [] };
     }
 
-    const pal = overallPal(input);
+    const { allowed, suspended } = passiveLossLimit(passiveActivity(input));
 
-    // No overall PAL (income >= total losses) → all losses already allowed upstream
-    if (pal <= 0) {
-      return { outputs: [] };
-    }
-
-    // We have an overall PAL. Determine how much is allowed.
-    // Allowed = passive income + special rental allowance (Part II)
-    // IRC §469(i): only rental real estate losses qualify for the $25K allowance.
-    // When rental_current_loss is provided, use it to isolate rental losses from
-    // other passive activity losses (e.g., limited partnership, passive Schedule C).
-    // Fallback to total loss only when no distinction is available (single-activity case).
-    const rentalNetLoss = input.rental_current_loss ?? loss;
-    const allowance = this.specialAllowance(input, rentalNetLoss);
-    const allowedLoss = Math.min(pal, income + allowance);
-
-    const suspendedPal = pal - allowedLoss;
     return {
-      outputs: schedule1Output(allowedLoss),
-      ...(suspendedPal > 0 ? { carryforwards: { suspended_pal_8582: suspendedPal } } : {}),
+      outputs: schedule1Output(allowed),
+      ...(suspended > 0 ? { carryforwards: { suspended_pal_8582: suspended } } : {}),
     };
   }
 }
