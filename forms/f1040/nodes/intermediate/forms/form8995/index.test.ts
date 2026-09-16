@@ -94,6 +94,43 @@ Deno.test("calc: QBI is reduced by the deductible part of self-employment tax", 
   assertEquals(out?.fields.line13_qbi_deduction, 18600);
 });
 
+Deno.test("calc: QBI is reduced by the self-employed health insurance deduction", () => {
+  // Same i8995 sentence names the "self-employment health insurance deduction".
+  // Line 2 = 100000 − 4000 = 96000; Line 5 = 19200; limit = 20% × 200000 = 40000
+  const result = compute({
+    qbi_from_schedule_c: 100000,
+    se_health_insurance_deduction: 4000,
+    taxable_income: 200000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 19200);
+});
+
+Deno.test("calc: QBI is reduced by contributions to a qualified retirement plan", () => {
+  // Same i8995 sentence names "contributions to qualified retirement plans".
+  // Line 2 = 100000 − 10000 = 90000; Line 5 = 18000; limit = 20% × 200000 = 40000
+  const result = compute({
+    qbi_from_schedule_c: 100000,
+    retirement_plan_deduction: 10000,
+    taxable_income: 200000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 18000);
+});
+
+Deno.test("calc: all three attributable deductions stack on Line 1(c)", () => {
+  // Line 2 = 100000 − 7000 − 4000 − 10000 = 79000; Line 5 = 15800
+  const result = compute({
+    qbi_from_schedule_c: 100000,
+    se_tax_deduction: 7000,
+    se_health_insurance_deduction: 4000,
+    retirement_plan_deduction: 10000,
+    taxable_income: 200000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 15800);
+});
+
 Deno.test("calc: SE tax deduction larger than QBI — net loss, no deduction", () => {
   const result = compute({
     qbi_from_schedule_c: 5000,

@@ -15,9 +15,10 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 const QBI_RATE = 0.20; // IRC §199A(a) — 20% of net QBI
 
-// Line 12 is assembled from more than one upstream node (qualified dividends from
-// f1099div, net capital gain from schedule_d). Declaring it accumulable prevents a Zod
-// parse failure when both deposit; sumField collapses the array.
+// Several lines are assembled from more than one upstream node: line 12 from f1099div
+// (qualified dividends) and schedule_d (net capital gain), and the Line 1(c) deductions
+// from schedule_se, form7206 and sep_retirement. Declaring those fields accumulable
+// prevents a Zod parse failure when two deposit; sumField collapses the array.
 const accumulable = <T extends z.ZodTypeAny>(schema: T) => z.union([schema, z.array(schema)]);
 
 function sumField(value: number | number[] | undefined): number {
@@ -48,7 +49,12 @@ export const inputSchema = z.object({
   net_capital_gain: accumulable(z.number().nonnegative()).optional(),
   // Deductible part of self-employment tax (Schedule SE line 13) attributable to the
   // trade or business — reduces QBI on Line 1(c)
-  se_tax_deduction: z.number().nonnegative().optional(),
+  se_tax_deduction: accumulable(z.number().nonnegative()).optional(),
+  // Self-employed health insurance deduction (Schedule 1 line 17) — reduces QBI
+  se_health_insurance_deduction: accumulable(z.number().nonnegative()).optional(),
+  // Deduction for contributions to a qualified retirement plan (Schedule 1 line 16)
+  // — reduces QBI
+  retirement_plan_deduction: accumulable(z.number().nonnegative()).optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
   // Prior-year REIT/PTP net loss carryforward (must be zero or negative)
@@ -71,10 +77,18 @@ type Form8995Input = z.infer<typeof inputSchema>;
 
 // Line 1(c)/Line 2: the net QBI or (loss) of every trade or business, reduced by the
 // deductions attributable to them. i8995, Determining Your Qualified Business Income:
-// the items to consider include the "deductible part of self-employment tax".
+// the items to consider include the "deductible part of self-employment tax,
+// self-employment health insurance deduction, and contributions to qualified
+// retirement plans".
+function businessDeductions(input: Form8995Input): number {
+  return sumField(input.se_tax_deduction as number | number[] | undefined) +
+    sumField(input.se_health_insurance_deduction as number | number[] | undefined) +
+    sumField(input.retirement_plan_deduction as number | number[] | undefined);
+}
+
 function totalQbi(input: Form8995Input): number {
   return (input.qbi_from_schedule_c ?? 0) + (input.qbi_from_schedule_f ?? 0) + (input.qbi ?? 0) -
-    (input.se_tax_deduction ?? 0);
+    businessDeductions(input);
 }
 
 function netQbi(input: Form8995Input): number {

@@ -30,7 +30,15 @@ Deno.test("returns empty outputs when premiums_paid is zero", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("returns two outputs (schedule1 and agi_aggregator) for nonzero premiums", () => {
+Deno.test("routes premiums_paid to form8995 as se_health_insurance_deduction", () => {
+  // i8995, Determining Your Qualified Business Income: the items attributable to the
+  // trade or business include the "self-employment health insurance deduction".
+  const result = compute([{ premiums_paid: 1_000 }]);
+  const qbi = result.outputs.find((o) => o.nodeType === "form8995");
+  assertEquals(qbi?.fields.se_health_insurance_deduction, 1_000);
+});
+
+Deno.test("returns three outputs (schedule1, agi_aggregator and form8995) for nonzero premiums", () => {
   const result = compute([{ premiums_paid: 500 }]);
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 3);
 });
