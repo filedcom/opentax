@@ -307,6 +307,44 @@ Deno.test("agg_multiple_instances_to_schedule1: two businesses → schedule1 sho
   assertEquals(input.line3_schedule_c, 100000);
 });
 
+Deno.test("agg_se_nets_loss_against_profit: profit 50000 + loss 20000 \u2192 one schedule_se for 30000", () => {
+  // i1040sse, More Than One Business: "If you had two or more businesses subject to SE
+  // tax, your net earnings from self-employment are the combined net earnings from all of
+  // your businesses. If you had a loss in one business, it reduces the income from another.
+  // Figure the combined SE tax on one Schedule SE."
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000 }),
+    minimalItem({ line_1_gross_receipts: 1000, line_11_contract_labor: 21000 }),
+  ]);
+  const ses = result.outputs.filter((o) => o.nodeType === "schedule_se");
+  assertEquals(ses.length, 1);
+  assertEquals((ses[0].fields as Record<string, number>).net_profit_schedule_c, 30000);
+});
+
+Deno.test("agg_qbi_nets_loss_against_profit: profit 50000 + loss 20000 \u2192 one form8995 for 30000", () => {
+  // i8995, Determining Your Qualified Business Income: a qualified trade or business loss
+  // nets against income from the other businesses before the deduction is figured.
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000 }),
+    minimalItem({ line_1_gross_receipts: 1000, line_11_contract_labor: 21000 }),
+  ]);
+  const qbis = result.outputs.filter((o) => o.nodeType === "form8995");
+  assertEquals(qbis.length, 1);
+  assertEquals((qbis[0].fields as Record<string, number>).qbi_from_schedule_c, 30000);
+});
+
+Deno.test("agg_se_two_profits_one_output: profit 50000 + profit 10000 \u2192 one schedule_se for 60000", () => {
+  // Two scalar outputs to the same node merge into an array, which schedule_se cannot parse.
+  // i1040sse: "Figure the combined SE tax on one Schedule SE."
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000 }),
+    minimalItem({ line_1_gross_receipts: 10000 }),
+  ]);
+  const ses = result.outputs.filter((o) => o.nodeType === "schedule_se");
+  assertEquals(ses.length, 1);
+  assertEquals((ses[0].fields as Record<string, number>).net_profit_schedule_c, 60000);
+});
+
 Deno.test("agg_cogs_reduces_gross_profit: COGS=800, line_1=5000 → net_profit=4200", () => {
   // COGS = 35+36+37+38+39 - line_41
   // line35=100, line36=500, line37=100, line38=50, line39=50 → line40=800; line41=0 → COGS=800
@@ -368,6 +406,25 @@ Deno.test("threshold_se_at_400: net_profit=400 → triggers schedule_se", () => 
 Deno.test("threshold_se_above_400: net_profit=500 → triggers schedule_se", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 500 })]);
   assertEquals(findOutput(result, "schedule_se") !== undefined, true);
+});
+
+Deno.test("threshold_se_combined_below_400: profit 500 + loss 200 \u2192 no schedule_se", () => {
+  // i1040sse, Who Must File Schedule SE: "The amount on line 4c of Schedule SE is $400 or
+  // more" \u2014 the test is on the combined figure, not on each business separately.
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 500 }),
+    minimalItem({ line_1_gross_receipts: 100, line_11_contract_labor: 300 }),
+  ]);
+  assertEquals(findOutput(result, "schedule_se"), undefined);
+});
+
+Deno.test("threshold_se_combined_at_400_from_two_businesses: 300 + 100 \u2192 schedule_se for 400", () => {
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 300 }),
+    minimalItem({ line_1_gross_receipts: 100 }),
+  ]);
+  const se = findOutput(result, "schedule_se");
+  assertEquals((se!.fields as Record<string, number>).net_profit_schedule_c, 400);
 });
 
 Deno.test("threshold_clergy_se_below_108_28: clergy=true, net_profit=108 → no schedule_se", () => {
