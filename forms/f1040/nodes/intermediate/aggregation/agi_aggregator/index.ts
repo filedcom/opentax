@@ -16,6 +16,17 @@ import { form8880 } from "../../forms/form8880/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
+// Fields that may arrive from multiple upstream nodes accumulate as arrays in the
+// executor pending dict. Declaring them accumulable prevents Zod parse failure.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumField(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s, n) => s + n, 0);
+  return value;
+}
+
 // AGI Aggregator — Form 1040 Line 11
 //
 // Collects all income, exclusion, and above-the-line deduction fields from
@@ -35,8 +46,8 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 export const inputSchema = z.object({
   // ── Form 1040 income lines ─────────────────────────────────────────────────
-  // Line 1a — Wages (W-2 Box 1, regular employees)
-  line1a_wages: z.number().optional(),
+  // Line 1a — Wages (accumulable: w2, fec and f1099r all route here)
+  line1a_wages: accumulable(z.number()).optional(),
   // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
   line1b_allocated_tips: z.number().nonnegative().optional(),
   // Line 1c — Unreported tips (Form 4137)
@@ -199,7 +210,7 @@ function computeSsaTaxable(
 // Sum all non-SSA income items (used as "other income" for provisional income calculation).
 function nonSsaIncome(input: AgiInput): number {
   return (
-    (input.line1a_wages ?? 0) +
+    sumField(input.line1a_wages as number | number[] | undefined) +
     (input.line1b_allocated_tips ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +

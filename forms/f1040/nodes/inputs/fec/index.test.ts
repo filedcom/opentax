@@ -74,7 +74,7 @@ Deno.test("fec.compute: two employers — compensation_usd summed into single f1
     minimalItem({ compensation_usd: 45000, country_code: "DE" }),
     minimalItem({ compensation_usd: 30000, country_code: "FR" }),
   ]);
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
   assertEquals(result.outputs[0].fields.line1a_wages, 75000);
 });
@@ -171,7 +171,33 @@ Deno.test("fec.compute: smoke test — three foreign employers, total USD wages 
   ]);
 
   // Total = 87500 + 65400 + 33000 = 185900
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
   assertEquals(result.outputs[0].fields.line1a_wages, 185900);
+});
+
+// =============================================================================
+// 7. AGI Routing
+// =============================================================================
+
+Deno.test("fec.compute: compensation_usd also routes to agi_aggregator line1a_wages", () => {
+  const result = compute([minimalItem({ compensation_usd: 20000 })]);
+  const agg = result.outputs.find((o) => o.nodeType === "agi_aggregator");
+  assertEquals(agg?.fields.line1a_wages, 20000);
+});
+
+Deno.test("fec.compute: f1040 and agi_aggregator receive the same total", () => {
+  const result = compute([
+    minimalItem({ compensation_usd: 45000, country_code: "DE" }),
+    minimalItem({ compensation_usd: 30000, country_code: "FR" }),
+  ]);
+  const f = result.outputs.find((o) => o.nodeType === "f1040");
+  const agg = result.outputs.find((o) => o.nodeType === "agi_aggregator");
+  assertEquals(f?.fields.line1a_wages, 75000);
+  assertEquals(agg?.fields.line1a_wages, 75000);
+});
+
+Deno.test("fec.compute: compensation_usd = 0 → no agi_aggregator output", () => {
+  const result = compute([minimalItem({ compensation_usd: 0 })]);
+  assertEquals(result.outputs.find((o) => o.nodeType === "agi_aggregator"), undefined);
 });

@@ -25,8 +25,8 @@ function sumField(value: number | number[] | undefined): number {
 
 const inputSchema = z.object({
   // ── Part I — Income ───────────────────────────────────────────────────────
-  // Line 1a — Wages (W-2 Box 1, regular employees)
-  line1a_wages: z.number().optional(),
+  // Line 1a — Wages (accumulable: w2, fec, f4852, f1099r and qsehra all route here)
+  line1a_wages: accumulable(z.number()).optional(),
   // Line 1b — Household employee wages
   line1b_household_wages: z.number().nonnegative().optional(),
   // Line 1c — Unreported tips (Form 4137)
@@ -150,7 +150,7 @@ type F1040Input = z.infer<typeof inputSchema>;
 
 function totalWages(input: F1040Input): number {
   return (
-    (input.line1a_wages ?? 0) +
+    sumField(input.line1a_wages as number | number[] | undefined) +
     (input.line1b_household_wages ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1d_medicaid_waiver ?? 0) +
@@ -282,7 +282,9 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   if (input.line31_additional_payments !== undefined) result.line31_additional_payments = input.line31_additional_payments;
 
   // Conditionally include optional pass-through fields
-  if (input.line1a_wages !== undefined) result.line1a_wages = input.line1a_wages;
+  if (input.line1a_wages !== undefined) {
+    result.line1a_wages = sumField(input.line1a_wages as number | number[] | undefined);
+  }
   if (input.line2a_tax_exempt !== undefined) result.line2a_tax_exempt = input.line2a_tax_exempt;
   if (input.line2b_taxable_interest !== undefined) result.line2b_taxable_interest = input.line2b_taxable_interest;
   const line3a = sumField(input.line3a_qualified_dividends as number | number[] | undefined);
