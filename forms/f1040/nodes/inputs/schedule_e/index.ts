@@ -232,31 +232,38 @@ function isPassive(item: EItem): boolean {
 
 // ─── Routing helpers ─────────────────────────────────────────────────────────
 
-function form8582Outputs(items: EItems): NodeOutput[] {
-  // Route to form8582 when any item is passive (A/B) AND has a net loss OR prior unallowed losses
-  const passiveItems = items.filter(isPassive);
-  if (passiveItems.length === 0) return [];
+function passiveItems(items: EItems): EItems {
+  return items.filter(isPassive);
+}
 
-  const hasTrigger = passiveItems.some((item) => {
-    const net = computePropertyNet(item);
-    return net < 0 ||
-      (item.prior_unallowed_passive_operating ?? 0) > 0 ||
-      (item.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
-      (item.prior_unallowed_passive_4797_part2 ?? 0) > 0;
-  });
-
-  if (!hasTrigger) return [];
-
-  const f8582Input: Partial<z.infer<typeof form8582["inputSchema"]>> = {};
-  const currentNetLoss = passiveItems
+// Current-year net loss from passive activities (positive amount).
+function passiveCurrentLoss(items: EItems): number {
+  return passiveItems(items)
     .map(computePropertyNet)
     .filter((n) => n < 0)
     .reduce((sum, n) => sum + Math.abs(n), 0);
-  const currentNetIncome = passiveItems
+}
+
+// Current-year net income from passive activities.
+function passiveCurrentIncome(items: EItems): number {
+  return passiveItems(items)
     .map(computePropertyNet)
     .filter((n) => n > 0)
     .reduce((sum, n) => sum + n, 0);
-  const priorUnallowed = passiveItems.reduce(
+}
+
+// IRC §469(i) reaches rental real estate only, so the type A loss is tracked apart
+// from other passive losses (limited partnerships, type B activities).
+function activeRentalCurrentLoss(items: EItems): number {
+  return items
+    .filter((item) => item.activity_type === "A")
+    .map(computePropertyNet)
+    .filter((n) => n < 0)
+    .reduce((sum, n) => sum + Math.abs(n), 0);
+}
+
+function priorUnallowedPassive(items: EItems): number {
+  return passiveItems(items).reduce(
     (sum, item) =>
       sum +
       (item.prior_unallowed_passive_operating ?? 0) +
@@ -264,18 +271,61 @@ function form8582Outputs(items: EItems): NodeOutput[] {
       (item.prior_unallowed_passive_4797_part2 ?? 0),
     0,
   );
+}
+
+// Form 8582 is needed when a passive activity has a net loss or a prior unallowed loss.
+function hasPassiveLoss(items: EItems): boolean {
+  return passiveCurrentLoss(items) > 0 || priorUnallowedPassive(items) > 0;
+}
+
+function form8582Outputs(items: EItems): NodeOutput[] {
+  if (!hasPassiveLoss(items)) return [];
+
+  const f8582Input: Partial<z.infer<typeof form8582["inputSchema"]>> = {};
+  const currentNetLoss = passiveCurrentLoss(items);
+  const currentNetIncome = passiveCurrentIncome(items);
+  const priorUnallowed = priorUnallowedPassive(items);
+  const rentalLoss = activeRentalCurrentLoss(items);
 
   if (currentNetIncome > 0) f8582Input.current_income = currentNetIncome;
   if (currentNetLoss > 0) f8582Input.current_loss = currentNetLoss;
   if (priorUnallowed > 0) f8582Input.prior_unallowed = priorUnallowed;
+  if (rentalLoss > 0) f8582Input.rental_current_loss = rentalLoss;
 
   // Activity type breakdown
-  const hasTypeA = passiveItems.some((i) => i.activity_type === "A");
-  const hasTypeB = passiveItems.some((i) => i.activity_type === "B");
-  if (hasTypeA) f8582Input.has_active_rental = true;
+  const hasTypeA = passiveItems(items).some((i) => i.activity_type === "A");
+  const hasTypeB = passiveItems(items).some((i) => i.activity_type === "B");
+  if (hasTypeA) {
+    f8582Input.has_active_rental = true;
+    // Activity type A is active rental real estate — the taxpayer participated.
+    f8582Input.active_participation = true;
+  }
   if (hasTypeB) f8582Input.has_other_passive = true;
 
   return [output(form8582, f8582Input as AtLeastOne<z.infer<typeof form8582["inputSchema"]>>)];
+}
+
+// The same passive figures go to agi_aggregator, which owns modified AGI and so is
+// the only node that can apply the §469 limit before AGI is read downstream.
+function palFields(items: EItems): Partial<z.infer<typeof agi_aggregator["inputSchema"]>> {
+  if (!hasPassiveLoss(items)) return {};
+
+  const fields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {
+    pal_current_loss: passiveCurrentLoss(items),
+  };
+
+  const currentIncome = passiveCurrentIncome(items);
+  const priorUnallowed = priorUnallowedPassive(items);
+  const rentalLoss = activeRentalCurrentLoss(items);
+
+  if (currentIncome > 0) fields.pal_current_income = currentIncome;
+  if (priorUnallowed > 0) fields.pal_prior_unallowed = priorUnallowed;
+  if (rentalLoss > 0) fields.pal_rental_loss = rentalLoss;
+  if (passiveItems(items).some((i) => i.activity_type === "A")) {
+    fields.pal_active_participation = true;
+  }
+
+  return fields;
 }
 
 function form6198Outputs(items: EItems): NodeOutput[] {
@@ -436,9 +486,15 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
 
     const propertyNet = schedule_es.reduce((sum, item) => sum + computePropertyNet(item), 0);
     const totalNet = propertyNet + passthroughRental + passthroughRoyalty;
+    // Schedule E line 26 carries income plus DEDUCTIBLE losses: a passive loss is held
+    // back here and the part Form 8582 allows comes back on Schedule 1 (IRC §469(a)).
+    const deductibleNet = totalNet + passiveCurrentLoss(schedule_es);
     const outputs: NodeOutput[] = [
-      output(schedule1, { line5_schedule_e: totalNet }),
-      this.outputNodes.output(agi_aggregator, { line5_schedule_e: totalNet }),
+      output(schedule1, { line5_schedule_e: deductibleNet }),
+      this.outputNodes.output(agi_aggregator, {
+        line5_schedule_e: deductibleNet,
+        ...palFields(schedule_es),
+      }),
       ...form8582Outputs(schedule_es),
       ...form6198Outputs(schedule_es),
       ...form8960Outputs(schedule_es),

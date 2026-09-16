@@ -523,9 +523,11 @@ Deno.test("threshold §280A: personal_use_days=14 with fair_rental_days=200 — 
       expense_repairs: 10_000,
     }),
   ]);
-  // Loss flows through unrestricted by §280A expense cap
+  // Loss survives the §280A expense cap, then goes to Form 8582 for the §469 limit
+  // instead of straight onto Schedule 1 line 5.
   const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
-  assertEquals(input.line5_schedule_e, -2_000);
+  assertEquals(input.line5_schedule_e, 0);
+  assertEquals((findOutput(result, "form8582")!.fields as Record<string, number>).current_loss, 2_000);
 });
 
 Deno.test("threshold §280A: personal_use_days=15 with fair_rental_days=140 — vacation home caps loss at zero", () => {
@@ -1002,10 +1004,10 @@ Deno.test("smoke: comprehensive test with all major boxes populated", () => {
     },
   ]);
 
-  // schedule1 output must exist with exact net
+  // schedule1 output must exist; the passive loss is held for Form 8582, not line 5
   const input = findOutput(result, "schedule1")!.fields as Record<string, number>;
   // net = 24000 - (600+800+1200+1800+9000+2400+3000+1200+5500+600) = 24000 - 26100 = -2100
-  assertEquals(input.line5_schedule_e, -2_100);
+  assertEquals(input.line5_schedule_e, 0);
 
   // form8582 required: activity_type=A, net loss
   assertEquals((findOutput(result, "form8582")!.fields as Record<string, number>).current_loss, 2_100);
@@ -1035,11 +1037,12 @@ Deno.test("edge case self-rental (property_type=7): net loss is passive — rout
       expense_repairs: 8_000, // net = -3,000
     }),
   ]);
-  // Net loss → passive → must route to form8582
+  // Net loss → passive → must route to form8582, not onto Schedule 1 line 5
   const f8582 = findOutput(result, "form8582");
   assertEquals(f8582 !== undefined, true);
+  assertEquals((f8582!.fields as Record<string, number>).current_loss, 3_000);
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1 !== undefined, true);
   const input = s1!.fields as Record<string, number>;
-  assertEquals(input.line5_schedule_e, -3_000);
+  assertEquals(input.line5_schedule_e, 0);
 });
