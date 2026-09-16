@@ -40,15 +40,24 @@ export enum FilingStatus {
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+// Several feeders (f1099int, f1099div, the K-1 nodes, fec) can each deposit their
+// own share, which the executor accumulates as an array. Declaring those fields
+// accumulable keeps the Zod parse alive; sumField collapses them to a scalar.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
 export const inputSchema = z.object({
   // Foreign taxes paid or accrued (Part II) — routed here from f1099div/f1099int
-  // when total exceeds the de minimis threshold ($300 single / $600 MFJ)
+  // when total exceeds the de minimis threshold ($300 single / $600 MFJ), and
+  // from fec at any amount (§904(j) covers only 1099-reported passive income).
+  // Optional because the §904 limitation inputs below reach this node on every
+  // return; absent foreign tax there is simply no credit.
   // IRC §901; Form 1116 Part II
-  foreign_tax_paid: z.number().nonnegative(),
+  foreign_tax_paid: accumulable(z.number().nonnegative()).optional(),
 
   // Gross foreign source income in the applicable category (Part I, Line 1a)
   // IRC §904(d). When absent, full-credit simplified mode is used (fraction = 1).
-  foreign_income: z.number().nonnegative().optional(),
+  foreign_income: accumulable(z.number().nonnegative()).optional(),
 
   // Worldwide gross income from all sources (Part I, Line 3e)
   // Used as the denominator of the FTC limitation fraction.
@@ -77,13 +86,38 @@ export const inputSchema = z.object({
 
 type Form1116Input = z.infer<typeof inputSchema>;
 
+// Accumulated fields collapsed to scalars, so the helpers below stay arithmetic.
+type ResolvedInput = {
+  foreign_tax_paid: number;
+  foreign_income?: number;
+  total_income?: number;
+  us_tax_before_credits?: number;
+  tentative_minimum_tax?: number;
+};
+
 // ─── Pure Helper Functions ────────────────────────────────────────────────────
+
+function sumField(value: number | number[] | undefined): number | undefined {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) return value.reduce((sum: number, n: number) => sum + n, 0);
+  return value;
+}
+
+function resolve(input: Form1116Input): ResolvedInput {
+  return {
+    foreign_tax_paid: sumField(input.foreign_tax_paid) ?? 0,
+    foreign_income: sumField(input.foreign_income),
+    total_income: input.total_income,
+    us_tax_before_credits: input.us_tax_before_credits,
+    tentative_minimum_tax: input.tentative_minimum_tax,
+  };
+}
 
 // Part I, Line 3f — limitation fraction = foreign_income / total_income
 // When inputs are absent (simplified mode), returns 1.0 (full credit, no limitation).
 // Capped at 1.0 per IRC §904(a).
 // IRC §904(a)
-function limitationFraction(input: Form1116Input): number {
+function limitationFraction(input: ResolvedInput): number {
   const foreignIncome = input.foreign_income;
   const totalIncome = input.total_income;
   if (foreignIncome === undefined || totalIncome === undefined) return 1.0;
@@ -94,7 +128,7 @@ function limitationFraction(input: Form1116Input): number {
 // Part III, Line 21 — FTC limitation = us_tax × fraction
 // When us_tax_before_credits is absent, no limitation is applied.
 // IRC §904(a)
-function ftcLimit(input: Form1116Input): number {
+function ftcLimit(input: ResolvedInput): number {
   const usTax = input.us_tax_before_credits;
   if (usTax === undefined) return input.foreign_tax_paid; // no limitation → full credit
   return usTax * limitationFraction(input);
@@ -102,7 +136,7 @@ function ftcLimit(input: Form1116Input): number {
 
 // Part III, Line 24 — allowed credit = min(foreign_taxes_paid, ftc_limit)
 // IRC §904(a)
-function allowedCredit(input: Form1116Input): number {
+function allowedCredit(input: ResolvedInput): number {
   return Math.min(input.foreign_tax_paid, ftcLimit(input));
 }
 
@@ -123,7 +157,7 @@ function amtFtcLimit(tmt: number, fraction: number): number {
 
 // AMT FTC allowed = min(foreign_taxes_paid, amtFtcLimit)
 // Cannot reduce TMT below zero (enforced in form6251 computeNetTmt).
-function allowedAmtFtc(input: Form1116Input): number {
+function allowedAmtFtc(input: ResolvedInput): number {
   const tmt = input.tentative_minimum_tax;
   if (tmt === undefined || tmt <= 0) return 0;
   const fraction = limitationFraction(input);
@@ -146,7 +180,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([schedule3, form6251]);
 
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
-    const input = inputSchema.parse(rawInput);
+    const input = resolve(inputSchema.parse(rawInput));
 
     // No taxes paid → no credit possible
     if (input.foreign_tax_paid <= 0) {

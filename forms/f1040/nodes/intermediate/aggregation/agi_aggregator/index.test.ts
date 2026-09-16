@@ -176,11 +176,11 @@ Deno.test("agi_aggregator: routes agi to schedule_a", () => {
   assertEquals((schA!.fields as Record<string, number>).agi, 75_000);
 });
 
-Deno.test("agi_aggregator: wages-only produces exactly 10 outputs (no Schedule 1 items)", () => {
+Deno.test("agi_aggregator: wages-only produces exactly 11 outputs (no Schedule 1 items)", () => {
   // With wages only, line8=0 and line10=0 so no extra f1040 fields beyond line11_agi
-  // Outputs: f1040 + standard_deduction + schedule_a + eitc + f8812 + f2441 + form8995 + form8960 + form8962 + form8880
+  // Outputs: f1040 + standard_deduction + schedule_a + eitc + f8812 + f2441 + form8995 + form8960 + form8962 + form8880 + form_1116
   const result = compute({ line1a_wages: 50_000 });
-  assertEquals(result.outputs.length, 10);
+  assertEquals(result.outputs.length, 11);
 });
 
 Deno.test("agi_aggregator: cap gain distributions included in AGI", () => {
@@ -409,4 +409,21 @@ Deno.test("agi_aggregator: large schedule_c loss can produce negative AGI", () =
   // Large business loss exceeds wages → negative AGI allowed
   const result = compute({ line1a_wages: 50_000, line3_schedule_c: -150_000 });
   assertEquals(agi(result), -100_000);
+});
+
+// ─── Form 1116 Part I line 3e — gross income from all sources ────────────────
+// The §904(a) limitation denominator. Gross income is figured here, before
+// exclusions and above-the-line deductions.
+
+Deno.test("agi_aggregator: gross income routes to form_1116 as total_income", () => {
+  const result = compute({ line1a_wages: 100_000, line2b_taxable_interest: 1_000 });
+  const out = result.outputs.find((o) => o.nodeType === "form_1116");
+  assertEquals((out!.fields as Record<string, number>).total_income, 101_000);
+});
+
+Deno.test("agi_aggregator: negative gross income → no form_1116 denominator", () => {
+  // Form 1116 rejects a negative line 3e; sending none leaves the fraction at 1.0
+  // so the credit is still capped by US tax.
+  const result = compute({ line1a_wages: 50_000, line3_schedule_c: -150_000 });
+  assertEquals(result.outputs.find((o) => o.nodeType === "form_1116"), undefined);
 });

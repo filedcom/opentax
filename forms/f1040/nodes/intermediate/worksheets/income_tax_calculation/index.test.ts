@@ -3,6 +3,7 @@ import { assertThrows } from "@std/assert";
 import { income_tax_calculation, inputSchema } from "./index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
+import { form_1116 } from "../../forms/form_1116/index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { FilingStatus } from "../../../types.ts";
 
@@ -24,10 +25,10 @@ Deno.test("smoke — missing required fields throws", () => {
   assertThrows(() => inputSchema.parse({}));
 });
 
-Deno.test("smoke — zero taxable income returns f8812 liability output only", () => {
+Deno.test("smoke — zero taxable income returns the two zero-liability outputs", () => {
   const result = compute({ taxable_income: 0, filing_status: FilingStatus.Single });
-  // Even at zero income, notify f8812 of zero liability for ACTC computation
-  assertEquals(result.outputs.length, 1);
+  // Even at zero income, notify f8812 for ACTC and form_1116 for the §904 limit
+  assertEquals(result.outputs.length, 2);
 });
 
 // ─── Bracket Computation ─────────────────────────────────────────────────────
@@ -238,4 +239,21 @@ Deno.test("QDCGT: HOH filing status uses HOH thresholds", () => {
   // ordinary_tax = $1,700 + ($57,000 - $17,000) × 12% = $1,700 + $4,800 = $6,500
   const result = compute({ taxable_income: 60_000, filing_status: FilingStatus.HOH, qualified_dividends: 3_000 });
   assertAlmostEquals(f1040Fields(result)?.line16_income_tax as number, 6_500, 1);
+});
+
+// ─── Form 1116 Part III line 20 (IRC §904(a)) ────────────────────────────────
+// "Individuals: Enter the total of Form 1040, 1040-SR, or 1040-NR, line 16, and
+// Schedule 2 (Form 1040), line 1z." Line 16 is figured here, so the FTC
+// limitation base is routed from here.
+
+Deno.test("form_1116: line 16 routes as us_tax_before_credits", () => {
+  // taxable $85,250 single = $5,578.50 + ($85,250 − $48,475) × 22% = $13,669
+  const result = compute({ taxable_income: 85_250, filing_status: FilingStatus.Single });
+  assertEquals(fieldsOf(result.outputs, form_1116)?.us_tax_before_credits, 13_669);
+});
+
+Deno.test("form_1116: zero taxable income routes a zero limitation base", () => {
+  // No US tax → line 21 is zero → no credit, the taxes carry over instead.
+  const result = compute({ taxable_income: 0, filing_status: FilingStatus.Single });
+  assertEquals(fieldsOf(result.outputs, form_1116)?.us_tax_before_credits, 0);
 });

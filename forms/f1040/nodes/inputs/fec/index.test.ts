@@ -175,3 +175,40 @@ Deno.test("fec.compute: smoke test — three foreign employers, total USD wages 
   assertEquals(result.outputs[0].nodeType, "f1040");
   assertEquals(result.outputs[0].fields.line1a_wages, 185900);
 });
+
+// =============================================================================
+// 7. Foreign Tax on Wages → Form 1116 (general category)
+// =============================================================================
+// Compensation for personal services as an employee is general category income
+// (Form 1116 Part I box d; line 1b). The §904(j) de minimis election covers only
+// passive income shown on a payee statement, so wage tax files Form 1116 at any
+// amount.
+
+Deno.test("fec.compute: foreign_tax_paid_usd routes to form_1116 as general category", () => {
+  const result = compute([minimalItem({ compensation_usd: 80000, foreign_tax_paid_usd: 9000 })]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  assertEquals(f1116?.fields.foreign_tax_paid, 9000);
+  assertEquals(f1116?.fields.foreign_income, 80000);
+  assertEquals(f1116?.fields.income_category, "general");
+});
+
+Deno.test("fec.compute: no foreign_tax_paid_usd → no form_1116 output", () => {
+  const result = compute([minimalItem({ compensation_usd: 80000 })]);
+  assertEquals(result.outputs.find((o) => o.nodeType === "form_1116"), undefined);
+});
+
+Deno.test("fec.compute: wage tax below the $300 de minimis still files form_1116", () => {
+  const result = compute([minimalItem({ compensation_usd: 20000, foreign_tax_paid_usd: 200 })]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  assertEquals(f1116?.fields.foreign_tax_paid, 200);
+});
+
+Deno.test("fec.compute: two employers — only the taxed employer's pay is foreign source income", () => {
+  const result = compute([
+    minimalItem({ compensation_usd: 45000, foreign_tax_paid_usd: 5000, country_code: "DE" }),
+    minimalItem({ compensation_usd: 30000, country_code: "FR" }),
+  ]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  assertEquals(f1116?.fields.foreign_tax_paid, 5000);
+  assertEquals(f1116?.fields.foreign_income, 45000);
+});

@@ -301,3 +301,32 @@ Deno.test("amt ftc: emits both schedule3 and form6251 outputs when both credits 
   assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 300);
   assertEquals(fieldsOf(result.outputs, form6251)!.amtftc, 300);
 });
+
+// ─── Accumulated deposits (IRC §904(a) numerator) ────────────────────────────
+// Several feeders (1099-INT, 1099-DIV, K-1s, foreign wages) can each deposit
+// their share, which the executor accumulates into an array. Collapsing the
+// array keeps the whole credit alive instead of failing the Zod parse.
+
+Deno.test("accumulation: two feeders → taxes and foreign income are summed", () => {
+  // taxes 400 + 600 = 1000; foreign income 1000 + 4000 = 5000
+  // FTC limit = 10000 × (5000 / 100000) = 500
+  // credit = min(1000, 500) = 500 (capped)
+  const result = compute({
+    foreign_tax_paid: [400, 600],
+    foreign_income: [1_000, 4_000],
+    total_income: 100_000,
+    us_tax_before_credits: 10_000,
+    income_category: IncomeCategory.Passive,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule3)!.line1_foreign_tax_credit, 500);
+});
+
+Deno.test("accumulation: array of zero taxes → no credit output", () => {
+  const result = compute({
+    foreign_tax_paid: [0, 0],
+    total_income: 100_000,
+    us_tax_before_credits: 10_000,
+  });
+  assertEquals(result.outputs.length, 0);
+});

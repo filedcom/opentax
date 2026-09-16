@@ -53,7 +53,7 @@ Deno.test("f1116: foreign_tax_paid maps to ForeignTaxesPaidOrAccruedAmt", () => 
 });
 
 Deno.test("f1116: foreign_income maps to ForeignSourceIncomeAmt", () => {
-  const result = form1116.build({ foreign_income: 8000 });
+  const result = form1116.build({ foreign_tax_paid: 1500, foreign_income: 8000 });
   assertStringIncludes(
     result,
     "<ForeignSourceIncomeAmt>8000</ForeignSourceIncomeAmt>",
@@ -61,7 +61,7 @@ Deno.test("f1116: foreign_income maps to ForeignSourceIncomeAmt", () => {
 });
 
 Deno.test("f1116: total_income maps to TotalIncomeAmt", () => {
-  const result = form1116.build({ total_income: 75000 });
+  const result = form1116.build({ foreign_tax_paid: 1500, total_income: 75000 });
   assertStringIncludes(
     result,
     "<TotalIncomeAmt>75000</TotalIncomeAmt>",
@@ -69,7 +69,7 @@ Deno.test("f1116: total_income maps to TotalIncomeAmt", () => {
 });
 
 Deno.test("f1116: us_tax_before_credits maps to USTaxBeforeCreditsAmt", () => {
-  const result = form1116.build({ us_tax_before_credits: 12000 });
+  const result = form1116.build({ foreign_tax_paid: 1500, us_tax_before_credits: 12000 });
   assertStringIncludes(
     result,
     "<USTaxBeforeCreditsAmt>12000</USTaxBeforeCreditsAmt>",
@@ -146,11 +146,25 @@ Deno.test("f1116: income_category enum field is silently ignored", () => {
 });
 
 Deno.test("f1116: filing_status string field is silently ignored", () => {
-  const result = form1116.build({ filing_status: "MFJ", foreign_income: 8000 });
+  const result = form1116.build({ foreign_tax_paid: 1500, filing_status: "MFJ", foreign_income: 8000 });
   assertStringIncludes(
     result,
     "<ForeignSourceIncomeAmt>8000</ForeignSourceIncomeAmt>",
   );
   assertNotIncludes(result, "filing_status");
   assertNotIncludes(result, "MFJ");
+});
+
+// ---------------------------------------------------------------------------
+// Section 8: §904 limitation inputs alone are not a Form 1116
+// ---------------------------------------------------------------------------
+// income_tax_calculation and agi_aggregator deposit lines 20 and 3e on every
+// return so the limitation can be figured. Without a foreign tax figure there
+// is no credit and no form.
+
+Deno.test("f1116: limitation inputs without foreign tax emit nothing", () => {
+  assertEquals(
+    form1116.build({ total_income: 101_000, us_tax_before_credits: 13_669 }),
+    "",
+  );
 });
