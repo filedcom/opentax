@@ -161,6 +161,38 @@ Deno.test("f1099r.compute: distribution code 1 routes to form5329 with exact amo
   assertEquals(input.line4b_ira_taxable, 15000);
 });
 
+Deno.test("f1099r.compute: code 1 IRA with basis sends the Form 8606 taxable amount to form5329", () => {
+  const result = compute([minimalIraItem({
+    box1_gross_distribution: 20000,
+    box2a_taxable_amount: 20000,
+    box7_distribution_code: DistributionCode.Code1,
+    prior_ira_basis: 20000,
+    year_end_ira_value: 60000,
+  })]);
+  // Form 8606 Part I: basis 20,000 over (60,000 + 20,000) is a 0.25 nontaxable ratio,
+  // so line 15c taxable = 20,000 - 5,000 = 15,000. Form 5329 line 1 takes the amount
+  // "includible in income", which is that 15,000, not the 20,000 gross.
+  const form5329Out = result.outputs.find((o) => o.nodeType === "form5329");
+  const f5329Fields = form5329Out!.fields as Record<string, unknown>;
+  assertEquals(f5329Fields.early_distribution, 15000);
+  assertEquals(f5329Fields.distribution_code, "1");
+});
+
+Deno.test("f1099r.compute: code 1 IRA fully covered by basis sends 0 to form5329", () => {
+  const result = compute([minimalIraItem({
+    box1_gross_distribution: 20000,
+    box2a_taxable_amount: 20000,
+    box7_distribution_code: DistributionCode.Code1,
+    prior_ira_basis: 20000,
+    year_end_ira_value: 0,
+  })]);
+  // Basis covers the whole distribution, so Form 8606 line 15c is 0 and nothing is
+  // includible in income for the 10% additional tax.
+  const form5329Out = result.outputs.find((o) => o.nodeType === "form5329");
+  const f5329Fields = form5329Out!.fields as Record<string, unknown>;
+  assertEquals(f5329Fields.early_distribution, 0);
+});
+
 Deno.test("f1099r.compute: distribution code 2 does not route to form5329 automatically", () => {
   const result = compute([minimalIraItem({ box7_distribution_code: DistributionCode.Code2 })]);
   const form5329 = result.outputs.find((o) => o.nodeType === "form5329");
