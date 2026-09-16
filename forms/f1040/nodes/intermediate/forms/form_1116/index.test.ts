@@ -303,7 +303,7 @@ Deno.test("amt ftc: emits both schedule3 and form6251 outputs when both credits 
 });
 
 // ─── Accumulated deposits (IRC §904(a) numerator) ────────────────────────────
-// Several feeders (1099-INT, 1099-DIV, K-1s) can each deposit
+// Several feeders (1099-INT, 1099-DIV, K-1s, foreign wages) can each deposit
 // their share, which the executor accumulates into an array. Collapsing the
 // array keeps the whole credit alive instead of failing the Zod parse.
 

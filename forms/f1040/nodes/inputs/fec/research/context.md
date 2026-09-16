@@ -27,6 +27,7 @@ separate node. This node captures the gross foreign compensation only.
 | currency | string? | No | Currency code | ISO 4217 currency code (e.g., "EUR", "GBP") | IRS Pub 54 | https://www.irs.gov/publications/p54 |
 | compensation_usd | number (nonneg) | Yes | Compensation (USD) | Amount converted to US dollars at average exchange rate | IRC §61; IRS Pub 54; Rev Rul 78-281 | https://www.irs.gov/publications/p54 |
 | description | string? | No | Description | Optional description of the position/employment | IRS Pub 54 | https://www.irs.gov/publications/p54 |
+| foreign_tax_paid_usd | number (nonneg)? | No | Foreign tax paid (USD) | Foreign income tax paid or accrued on this compensation | IRC §901; §904(d)(1)(B) | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
 
 ---
 
@@ -51,6 +52,7 @@ captures gross compensation.
 | Output Field | Destination Node | Condition | IRS Reference | URL |
 | ------------ | ---------------- | --------- | ------------- | --- |
 | line1a_wages | f1040 | compensation_usd > 0 (sum) | IRC §61; Form 1040 instructions line 1a | https://www.irs.gov/pub/irs-pdf/i1040gi.pdf |
+| foreign_tax_paid, foreign_income, income_category=general | form_1116 | foreign_tax_paid_usd > 0 (sum). No de minimis test: §904(j) covers only passive income on a payee statement | IRC §904(d)(1)(B); Form 1116 Part I box d, line 1b | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
 
 ---
 

@@ -40,7 +40,7 @@ export enum FilingStatus {
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-// Several feeders (f1099int, f1099div, the K-1 nodes) can each deposit their
+// Several feeders (f1099int, f1099div, the K-1 nodes, fec) can each deposit their
 // own share, which the executor accumulates as an array. Declaring those fields
 // accumulable keeps the Zod parse alive; sumField collapses them to a scalar.
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
@@ -48,7 +48,8 @@ const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
 
 export const inputSchema = z.object({
   // Foreign taxes paid or accrued (Part II) — routed here from f1099div/f1099int
-  // when total exceeds the de minimis threshold ($300 single / $600 MFJ).
+  // when total exceeds the de minimis threshold ($300 single / $600 MFJ), and
+  // from fec at any amount (§904(j) covers only 1099-reported passive income).
   // Optional because the §904 limitation inputs below reach this node on every
   // return; absent foreign tax there is simply no credit.
   // IRC §901; Form 1116 Part II

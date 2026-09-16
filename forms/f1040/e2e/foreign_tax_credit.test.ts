@@ -82,3 +82,29 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   const f = result.pending["f1040"] ?? {};
   assertEquals(r2(f["line24_total_tax"] as number), 13_533.66, "total tax = 13,669 − 135.34");
 });
+
+// ── General category: foreign tax on wages reaches Form 1116 ─────────────────
+//
+// Compensation for personal services as an employee is general category income
+// (Form 1116 Part I box d; line 1b). The §904(j) de minimis election covers only
+// passive income reported on a payee statement, so wage tax files Form 1116 at
+// any amount.
+
+Deno.test("Form 1116: foreign tax on foreign-employer wages routes as general category", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    fec: [{
+      foreign_employer_name: "Foreign Employer GmbH",
+      country_code: "DE",
+      compensation_amount: 80_000,
+      currency: "EUR",
+      compensation_usd: 80_000,
+      foreign_tax_paid_usd: 9_000,
+    }],
+  });
+
+  const f1116 = result.pending["form_1116"] ?? {};
+  assertEquals(f1116["foreign_tax_paid"], 9_000, "Part II line 8 — foreign tax on wages");
+  assertEquals(f1116["foreign_income"], 80_000, "Part I line 1a — the wages themselves");
+  assertEquals(f1116["income_category"], "general", "Part I box d — general category");
+});
