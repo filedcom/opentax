@@ -733,3 +733,21 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
     "AMT PAB preference",
   );
 });
+
+// ---------------------------------------------------------------------------
+// Foreign source income for the §904 limitation (Form 1116 Part I line 1a)
+// ---------------------------------------------------------------------------
+
+Deno.test("box7 above threshold also routes box1a as foreign_income", () => {
+  const result = compute([minimalItem({ box1a: 5000, box7: 400 })]);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_income, 5000);
+});
+
+Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
+  const result = compute([
+    minimalItem({ payerName: "Foreign Fund", box1a: 5000, box7: 400 }),
+    minimalItem({ payerName: "Domestic Fund", box1a: 20000 }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 400);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_income, 5000);
+});

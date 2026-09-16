@@ -158,7 +158,15 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
         ? FOREIGN_TAX_MFJ_THRESHOLD
         : FOREIGN_TAX_SINGLE_THRESHOLD;
       if (totalBox6 > threshold) {
-        outputs.push(this.outputNodes.output(form_1116, { foreign_tax_paid: totalBox6 }));
+        // Form 1116 Part I line 1a — gross income from the payer that withheld.
+        // Box 3 (US obligations) is US source by definition, so only box 1 counts.
+        const foreignSourceInterest = int1099s
+          .filter((item) => (item.box6 ?? 0) > 0)
+          .reduce((sum, item) => sum + (item.box1 ?? 0), 0);
+        outputs.push(this.outputNodes.output(form_1116, {
+          foreign_tax_paid: totalBox6,
+          ...(foreignSourceInterest > 0 ? { foreign_income: foreignSourceInterest } : {}),
+        }));
       } else {
         outputs.push(this.outputNodes.output(schedule3, { line1_foreign_tax_1099: totalBox6 }));
       }

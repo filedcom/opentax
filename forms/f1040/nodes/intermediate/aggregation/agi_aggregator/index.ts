@@ -13,6 +13,7 @@ import { form8995 } from "../../forms/form8995/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
+import { form_1116 } from "../../forms/form_1116/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
@@ -360,7 +361,7 @@ function computeAgi(input: AgiInput, cfg: import("../../../config/index.ts").F10
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962, form8880]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962, form8880, form_1116]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -400,6 +401,14 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         ...(input.filing_status !== undefined && { filing_status: input.filing_status as FilingStatus }),
       } as AtLeastOne<z.infer<typeof form8880["inputSchema"]>>),
     ];
+
+    // Form 1116 Part I line 3e — gross income from all sources, the denominator
+    // of the §904(a) limitation fraction. A negative total has no meaning there,
+    // so it is left unsent and the fraction stays at 1.0 (US tax is still the cap).
+    const gross = grossIncome(input, cfg);
+    if (gross > 0) {
+      outputs.push(this.outputNodes.output(form_1116, { total_income: gross }));
+    }
 
     // Pass SSA taxable amount to f1040 for line 6b.
     // line6a_ss_gross is routed directly by ssa1099 node to avoid double-counting.

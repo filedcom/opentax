@@ -527,3 +527,21 @@ Deno.test("smoke: two payers with multiple boxes — all expected outputs presen
     "tax-exempt interest",
   );
 });
+
+// ---------------------------------------------------------------------------
+// Foreign source income for the §904 limitation (Form 1116 Part I line 1a)
+// ---------------------------------------------------------------------------
+
+Deno.test("box6 above threshold also routes box1 as foreign_income", () => {
+  const result = compute([minimalItem({ box1: 1000, box6: 500 })]);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_income, 1000);
+});
+
+Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
+  const result = compute([
+    minimalItem({ payer_name: "FOREIGN BANK", box1: 1000, box6: 500 }),
+    minimalItem({ payer_name: "DOMESTIC BANK", box1: 4000 }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 500);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_income, 1000);
+});

@@ -15,5 +15,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 export const form1116Pdf: PdfFormDescriptor = {
   pendingKey: "form_1116",
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1116.pdf",
+  // The §904 limitation inputs land here on every return; only a claimed credit
+  // puts the form on the return.
+  presenceKey: "foreign_tax_paid",
   fields,
 };

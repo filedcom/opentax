@@ -300,7 +300,18 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         ? FOREIGN_TAX_MFJ_THRESHOLD
         : FOREIGN_TAX_SINGLE_THRESHOLD;
       if (totalBox7 > threshold) {
-        outputs.push(this.outputNodes.output(form_1116, { foreign_tax_paid: eligibleBox7 }));
+        // Form 1116 Part I line 1a — ordinary dividends from the payers that
+        // withheld, the same items whose tax passed the holding-period test.
+        const foreignSourceDividends = div1099s
+          .filter((item) =>
+            (item.box7 ?? 0) > 0 &&
+            (item.holdingPeriodDays === undefined || item.holdingPeriodDays >= HOLDING_PERIOD_FOREIGN_DAYS)
+          )
+          .reduce((sum, item) => sum + item.box1a, 0);
+        outputs.push(this.outputNodes.output(form_1116, {
+          foreign_tax_paid: eligibleBox7,
+          ...(foreignSourceDividends > 0 ? { foreign_income: foreignSourceDividends } : {}),
+        }));
       } else {
         outputs.push(this.outputNodes.output(schedule3, { line1_foreign_tax_1099: eligibleBox7 }));
       }

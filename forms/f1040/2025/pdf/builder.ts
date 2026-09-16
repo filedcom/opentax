@@ -87,6 +87,11 @@ async function fillFormPdf(
   filer: FilerIdentity | undefined,
   cacheDir: string,
 ): Promise<Uint8Array | undefined> {
+  if (descriptor.presenceKey !== undefined) {
+    const gate = fields[descriptor.presenceKey];
+    if (gate === undefined || gate === null) return undefined;
+  }
+
   const hasData =
     descriptor.fields.some(({ domainKey }) => {
       const v = fields[domainKey];

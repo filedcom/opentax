@@ -9,10 +9,10 @@
 ## Input Fields
 | Field | Type | Source Node | Description | IRS Reference | URL |
 | ----- | ---- | ----------- | ----------- | ------------- | --- |
-| foreign_tax_paid | number | f1099div (box7), f1099int (box6) | Total creditable foreign taxes paid/accrued | IRC §901 | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
-| foreign_income | number | f1099div, f1099int | Gross foreign source income (Line 1a) | Form 1116 Part I | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
-| total_income | number | upstream aggregation | Worldwide gross income from all sources (Line 3e) | Form 1116 Part I Line 3e | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
-| us_tax_before_credits | number | f1040 (line 16) | Regular tax liability before credits (Line 20) | Form 1116 Part III Line 20 | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
+| foreign_tax_paid | number \| number[] | f1099div (box7), f1099int (box6), k1_s_corp, k1_trust | Total creditable foreign taxes paid/accrued. Accumulated across feeders, then summed | IRC §901 | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
+| foreign_income | number \| number[] | f1099div (box1a), f1099int (box1) | Gross foreign source income (Line 1a). Accumulated across feeders, then summed | Form 1116 Part I | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
+| total_income | number | agi_aggregator (gross income) | Worldwide gross income from all sources (Line 3e) | Form 1116 Part I Line 3e | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
+| us_tax_before_credits | number | income_tax_calculation (f1040 line 16) | Regular tax liability before credits (Line 20) | Form 1116 Part III Line 20 | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
 | income_category | IncomeCategory enum | upstream | Category of foreign income (passive, general, etc.) | Form 1116 Part I checkbox | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
 | filing_status | FilingStatus enum | start node | Determines de minimis threshold | IRS instructions p.1 | https://www.irs.gov/pub/irs-pdf/i1116.pdf |
 
