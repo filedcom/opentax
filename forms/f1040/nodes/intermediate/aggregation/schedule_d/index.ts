@@ -12,6 +12,7 @@ import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
+import { form8995 } from "../../forms/form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -251,7 +252,7 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet, form8960]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet, form8960, form8995]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -320,6 +321,10 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       } else {
         outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: netCapGain }));
       }
+
+      // Form 8995 line 12 is Form 1040 line 3a plus net capital gain, and i8995 Line 12
+      // defines that gain as the smaller of Schedule D line 15 or 16.
+      outputs.push(this.outputNodes.output(form8995, { net_capital_gain: netCapGain }));
 
       // Line 18: 28% Rate Gain Worksheet (collectibles/1202 gains from f8949 + Form 2439)
       const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs);

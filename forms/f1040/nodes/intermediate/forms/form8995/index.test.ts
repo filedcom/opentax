@@ -11,10 +11,11 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-Deno.test("validation: rejects negative qbi_from_schedule_c", () => {
-  assertThrows(() =>
-    compute({ qbi_from_schedule_c: -1000, taxable_income: 50000 })
-  );
+Deno.test("validation: accepts negative qbi_from_schedule_c — Line 1(c) holds net QBI or (loss)", () => {
+  // i8995, Line 1: "Enter on line 1(c) the net QBI or (loss) for the trade, business,
+  // or aggregation reported in the corresponding row."
+  const result = compute({ qbi_from_schedule_c: -1000, taxable_income: 50000 });
+  assertEquals(findOutput(result, "f1040"), undefined);
 });
 
 Deno.test("validation: rejects negative line6_sec199a_dividends", () => {
@@ -76,6 +77,43 @@ Deno.test("calc: zero qbi — no f1040 output", () => {
 Deno.test("calc: absent qbi fields — no f1040 output", () => {
   const result = compute({ taxable_income: 50000 });
   assertEquals(findOutput(result, "f1040"), undefined);
+});
+
+// ── Deductions attributable to the trade or business (Line 1c) ───────────────
+
+Deno.test("calc: QBI is reduced by the deductible part of self-employment tax", () => {
+  // i8995, Determining Your Qualified Business Income: the items attributable to the
+  // trade or business include the "deductible part of self-employment tax".
+  // Line 2 = 100000 − 7000 = 93000; Line 5 = 18600; limit = 20% × 200000 = 40000
+  const result = compute({
+    qbi_from_schedule_c: 100000,
+    se_tax_deduction: 7000,
+    taxable_income: 200000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 18600);
+});
+
+Deno.test("calc: SE tax deduction larger than QBI — net loss, no deduction", () => {
+  const result = compute({
+    qbi_from_schedule_c: 5000,
+    se_tax_deduction: 8000,
+    taxable_income: 100000,
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
+});
+
+Deno.test("calc: net Schedule C loss kills the QBI component but not the REIT component", () => {
+  // i8995, Line 4: a qualified business net loss allows no QBI deduction "unless you have
+  // qualified REIT dividends or qualified PTP income".
+  // Line 4 = −20000 → Line 5 = 0; Line 8 = 5000 → Line 9 = 1000
+  const result = compute({
+    qbi_from_schedule_c: -20000,
+    line6_sec199a_dividends: 5000,
+    taxable_income: 100000,
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 1000);
 });
 
 // ── Per-field calculation — REIT/PTP component ───────────────────────────────
@@ -180,6 +218,19 @@ Deno.test("threshold: net capital gain reduces income limitation base", () => {
   });
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line13_qbi_deduction, 8000);
+});
+
+Deno.test("threshold: net capital gain accumulates from several upstream nodes", () => {
+  // i8995, Line 12: Form 1040 line 3a (qualified dividends) PLUS net capital gain, so the
+  // qualified-dividend and Schedule D portions are deposited separately and summed here.
+  // base = 150000 − (30000 + 20000) = 100000; limit = 20000; QBI component = 40000
+  const result = compute({
+    qbi_from_schedule_c: 200000,
+    taxable_income: 150000,
+    net_capital_gain: [30000, 20000],
+  });
+  const out = findOutput(result, "f1040");
+  assertEquals(out?.fields.line13_qbi_deduction, 20000);
 });
 
 Deno.test("threshold: when taxable_income equals net_capital_gain — income limit is zero, no deduction", () => {

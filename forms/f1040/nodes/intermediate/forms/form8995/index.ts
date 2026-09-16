@@ -15,13 +15,24 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 const QBI_RATE = 0.20; // IRC §199A(a) — 20% of net QBI
 
+// Line 12 is assembled from more than one upstream node (qualified dividends from
+// f1099div, net capital gain from schedule_d). Declaring it accumulable prevents a Zod
+// parse failure when both deposit; sumField collapses the array.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) => z.union([schema, z.array(schema)]);
+
+function sumField(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s: number, n: number) => s + n, 0);
+  return value;
+}
+
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
-  // QBI from sole proprietorships (Schedule C)
-  qbi_from_schedule_c: z.number().nonnegative().optional(),
-  // QBI from farming (Schedule F)
-  qbi_from_schedule_f: z.number().nonnegative().optional(),
+  // Net QBI or (loss) from sole proprietorships (Schedule C), netted across businesses
+  qbi_from_schedule_c: z.number().optional(),
+  // Net QBI or (loss) from farming (Schedule F)
+  qbi_from_schedule_f: z.number().optional(),
   // QBI from pass-through rentals/partnerships (Schedule E)
   qbi: z.number().optional(),
   // W-2 wages from pass-through (informational; not used in simplified form)
@@ -33,8 +44,11 @@ export const inputSchema = z.object({
   // Taxable income before QBI deduction (AGI minus deductions).
   // When provided, caps QBI deduction at 20% of this amount (IRC §199A(a)).
   taxable_income: z.number().nonnegative().optional(),
-  // Net capital gain (Form 1040 line 7 / Schedule D) — reduces income limitation base
-  net_capital_gain: z.number().nonnegative().optional(),
+  // Net capital gain (Form 1040 line 3a plus Schedule D) — reduces income limitation base
+  net_capital_gain: accumulable(z.number().nonnegative()).optional(),
+  // Deductible part of self-employment tax (Schedule SE line 13) attributable to the
+  // trade or business — reduces QBI on Line 1(c)
+  se_tax_deduction: z.number().nonnegative().optional(),
   // Prior-year QBI net loss carryforward (must be zero or negative)
   qbi_loss_carryforward: z.number().nonpositive().optional(),
   // Prior-year REIT/PTP net loss carryforward (must be zero or negative)
@@ -55,8 +69,12 @@ type Form8995Input = z.infer<typeof inputSchema>;
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
+// Line 1(c)/Line 2: the net QBI or (loss) of every trade or business, reduced by the
+// deductions attributable to them. i8995, Determining Your Qualified Business Income:
+// the items to consider include the "deductible part of self-employment tax".
 function totalQbi(input: Form8995Input): number {
-  return (input.qbi_from_schedule_c ?? 0) + (input.qbi_from_schedule_f ?? 0) + (input.qbi ?? 0);
+  return (input.qbi_from_schedule_c ?? 0) + (input.qbi_from_schedule_f ?? 0) + (input.qbi ?? 0) -
+    (input.se_tax_deduction ?? 0);
 }
 
 function netQbi(input: Form8995Input): number {
@@ -111,7 +129,7 @@ function incomeLimitBase(
   input: Form8995Input,
   cfg: import("../../../config/index.ts").F1040Config,
 ): number {
-  const capGain = input.net_capital_gain ?? 0;
+  const capGain = sumField(input.net_capital_gain as number | number[] | undefined);
 
   // Preferred: use explicit taxable_income (pre-QBI) when available
   if (input.taxable_income !== undefined) {
@@ -154,7 +172,8 @@ function qbiDeduction(
 
 function hasQbiActivity(input: Form8995Input): boolean {
   return (
-    (input.qbi_from_schedule_c ?? 0) > 0 ||
+    (input.qbi_from_schedule_c ?? 0) !== 0 ||
+    (input.qbi_from_schedule_f ?? 0) !== 0 ||
     (input.qbi ?? 0) !== 0 ||
     (input.line6_sec199a_dividends ?? 0) > 0 ||
     (input.qbi_loss_carryforward ?? 0) !== 0 ||
