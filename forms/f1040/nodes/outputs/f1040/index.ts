@@ -282,9 +282,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   if (input.line31_additional_payments !== undefined) result.line31_additional_payments = input.line31_additional_payments;
 
   // Conditionally include optional pass-through fields
-  if (input.line1a_wages !== undefined) {
-    result.line1a_wages = sumField(input.line1a_wages as number | number[] | undefined);
-  }
+  // Wage lines are already in f1040 pending. Re-emitting them here would turn
+  // each value into an array when the executor merges this node's own output.
   if (input.line2a_tax_exempt !== undefined) result.line2a_tax_exempt = input.line2a_tax_exempt;
   if (input.line2b_taxable_interest !== undefined) result.line2b_taxable_interest = input.line2b_taxable_interest;
   const line3a = sumField(input.line3a_qualified_dividends as number | number[] | undefined);

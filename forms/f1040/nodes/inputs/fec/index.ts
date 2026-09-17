@@ -10,6 +10,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // US citizens and residents must report worldwide income including wages
 // from foreign employers who did not issue a US W-2 and did not withhold
 // US taxes. The taxpayer self-reports these amounts and converts to USD.
+// TY2025 Form 1040 reports FEC on line 1h (IRS Publication 4164).
 // The Foreign Earned Income Exclusion (Form 2555) is handled separately.
 
 // Per-employer schema — one entry per foreign employer
@@ -45,8 +46,8 @@ function wageOutputs(items: FecItems): NodeOutput[] {
   const total = totalCompensationUsd(items);
   if (total === 0) return [];
   return [
-    { nodeType: f1040.nodeType, fields: { line1a_wages: total } },
-    { nodeType: agi_aggregator.nodeType, fields: { line1a_wages: total } },
+    { nodeType: f1040.nodeType, fields: { line1h_other_earned: total } },
+    { nodeType: agi_aggregator.nodeType, fields: { line1h_other_earned: total } },
   ];
 }
 

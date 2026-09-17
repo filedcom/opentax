@@ -46,8 +46,10 @@ function sumField(value: number | number[] | undefined): number {
 
 export const inputSchema = z.object({
   // ── Form 1040 income lines ─────────────────────────────────────────────────
-  // Line 1a — Wages (accumulable: w2, fec and f1099r all route here)
+  // Line 1a — Wages (accumulable: w2 and f1099r can both route here)
   line1a_wages: accumulable(z.number()).optional(),
+  // Line 1h — Other earned income, including foreign employer compensation
+  line1h_other_earned: z.number().optional(),
   // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
   line1b_allocated_tips: z.number().nonnegative().optional(),
   // Line 1c — Unreported tips (Form 4137)
@@ -211,6 +213,7 @@ function computeSsaTaxable(
 function nonSsaIncome(input: AgiInput): number {
   return (
     sumField(input.line1a_wages as number | number[] | undefined) +
+    (input.line1h_other_earned ?? 0) +
     (input.line1b_allocated_tips ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +

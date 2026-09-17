@@ -278,8 +278,8 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
 //
 // Compensation from a foreign employer that issued no Form W-2 is gross income
 // under IRC §61(a)(1) ("Compensation for services"), so it belongs in AGI just
-// like W-2 wages. It also has to coexist with a W-2: both wage sources deposit
-// line1a_wages, and the f1040 node must total them rather than fail.
+// like W-2 wages. IRS Publication 4164 places FEC on line 1h, and the f1040
+// node must total lines 1a and 1h when both wage sources are present.
 //
 // 3a — Single, foreign compensation $20,000, no W-2, no withholding:
 //   line11_agi                          = $20,000
@@ -322,9 +322,9 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
   });
 
   assertEquals(
-    result.pending["agi_aggregator"]?.["line1a_wages"],
+    result.pending["agi_aggregator"]?.["line1h_other_earned"],
     20_000,
-    "agi_aggregator should receive line1a_wages = $20,000 from the fec node",
+    "agi_aggregator should receive line1h_other_earned = $20,000 from the fec node",
   );
 
   assertEquals(
@@ -338,7 +338,7 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
   assertEquals(f1040["line37_amount_owed"], 425, "amount owed (no withholding)");
 });
 
-Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — both wage sources total on line 1a", () => {
+Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {
   const result = runReturn({
     general: singleGeneral(),
     w2: [
@@ -371,6 +371,8 @@ Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — both 
   );
 
   const f1040 = result.pending["f1040"] ?? {};
+  assertEquals(f1040["line1a_wages"], 80_000, "W-2 wages stay on line 1a");
+  assertEquals(f1040["line1h_other_earned"], 20_000, "foreign wages go on line 1h");
   assertEquals(f1040["line24_total_tax"], 13_449, "total tax on $84,250");
   assertEquals(f1040["line33_total_payments"], 10_000, "W-2 withholding");
   assertEquals(f1040["line37_amount_owed"], 3_449, "amount owed = $13,449 − $10,000");
