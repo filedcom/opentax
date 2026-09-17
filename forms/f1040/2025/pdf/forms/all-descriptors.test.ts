@@ -3,7 +3,8 @@
  *
  * These tests verify that each descriptor:
  *   1. Has a non-empty pendingKey string.
- *   2. Has a pdfUrl pinned to the 2025 revision on IRS pub/irs-prior.
+ *   2. Has a pdfUrl pinned to the 2025 revision, or the latest applicable
+ *      revision where the IRS has not issued a 2025 form.
  *   3. Has non-empty fields OR a rows descriptor.
  *   4. Every field entry has a valid kind ("text" | "checkbox" | "radio").
  *   5. Every field entry has non-empty domainKey and pdfField.
@@ -28,10 +29,11 @@ for (const descriptor of ALL_PDF_FORMS) {
     assertEquals(descriptor.pendingKey.length > 0, true);
   });
 
-  Deno.test(`${label}: pdfUrl is year-pinned to irs-prior 2025`, () => {
+  Deno.test(`${label}: pdfUrl is pinned to the applicable IRS revision`, () => {
+    const revision = label === "form982" ? "2018" : "2025";
     assertMatch(
       descriptor.pdfUrl,
-      /^https:\/\/www\.irs\.gov\/pub\/irs-prior\/.+--2025\.pdf$/,
+      new RegExp(`^https://www\\.irs\\.gov/pub/irs-prior/.+--${revision}\\.pdf$`),
       `Expected IRS PDF URL, got: ${descriptor.pdfUrl}`,
     );
   });

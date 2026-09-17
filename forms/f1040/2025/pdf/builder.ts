@@ -134,9 +134,8 @@ async function fillFormPdf(
       fillEntry(form, entry, value, descriptor.pendingKey);
     }
 
-    // Note: Filing status checkboxes on Form 1040 are XFA-only fields.
-    // The 2025 IRS PDF uses XFA (LiveCycle) for those, which pdf-lib strips.
-    // They cannot be checked via AcroForm and will remain blank on the output.
+    // pdf-lib strips the IRS XFA layer, but the 2025 filing-status checkboxes
+    // also exist in AcroForm and are filled by the Form 1040 descriptor.
   }
 
   // Fill row arrays (Form 8949-style)
