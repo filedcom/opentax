@@ -310,7 +310,7 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(f8812, { auto_se_earned_income: totalNetProfit }));
     }
 
-    // Schedule SE and QBI: combine the businesses first, then test the total.
+    // Schedule SE: combine the businesses first, then test the total.
     // i1040sse, More Than One Business: "If you had a loss in one business, it reduces the
     // income from another. Figure the combined SE tax on one Schedule SE." The $400 test is
     // on the combined line 4c, not on each business on its own.
@@ -321,7 +321,6 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     );
     if (seNetProfit >= seThreshold(seItems)) {
       outputs.push(this.outputNodes.output(schedule_se, { net_profit_schedule_c: seNetProfit }));
-      outputs.push(this.outputNodes.output(form8995, { qbi_from_schedule_c: seNetProfit }));
     }
 
     // Per-item downstream routing (passive, at-risk, depletion, interest)
