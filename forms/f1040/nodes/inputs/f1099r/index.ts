@@ -9,7 +9,11 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form5329 } from "../../intermediate/forms/form5329/index.ts";
 import { form4972 } from "../../intermediate/forms/form4972/index.ts";
-import { form8606 } from "../../intermediate/forms/form8606/index.ts";
+import {
+  form8606,
+  type Form8606Input,
+  taxableTraditionalDistribution,
+} from "../../intermediate/forms/form8606/index.ts";
 import { tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -339,6 +343,18 @@ function routedThrough8606PartI(item: R1099Item): boolean {
   return item.box7_ira_simple_indicator === true && (item.prior_ira_basis ?? 0) > 0;
 }
 
+// Form 8606 Part I payload for a traditional IRA distribution carrying that basis.
+// prior_ira_basis is the total nondeductible basis carried into this year (line 2).
+// year_end_ira_value is the FMV of remaining traditional IRAs on 12/31 (line 6; 0 if fully distributed).
+function form8606PartIInput(item: R1099Item): Form8606Input {
+  return {
+    nondeductible_contributions: 0,
+    prior_basis: item.prior_ira_basis!,
+    traditional_distributions: item.box1_gross_distribution,
+    year_end_ira_value: item.year_end_ira_value ?? 0,
+  };
+}
+
 // Build f1040 output for IRA distributions
 function iraF1040Fields(
   items: R1099Items,
@@ -425,7 +441,11 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
     (item) => EARLY_DIST_CODES.has(item.box7_distribution_code),
   );
   return earlyItems.map((item) => {
-    const taxable = item.box2a_taxable_amount ?? item.box1_gross_distribution;
+    // Form 5329 line 1 takes the early distribution "includible in income". With
+    // nondeductible basis that is the Form 8606 line 15c taxable amount, not box 2a.
+    const taxable = routedThrough8606PartI(item)
+      ? taxableTraditionalDistribution(form8606PartIInput(item))
+      : item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return output(form5329, {
         early_distribution: taxable,
         distribution_code: item.box7_distribution_code as string,
@@ -456,14 +476,7 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
         }));
     } else if (routedThrough8606PartI(item)) {
       // Traditional IRA with nondeductible basis: Form 8606 Part I computes the taxable amount.
-      // prior_ira_basis is the total nondeductible basis carried into this year (line 2).
-      // year_end_ira_value is the FMV of remaining traditional IRAs on 12/31 (line 6; 0 if fully distributed).
-      outputs.push(output(form8606, {
-          nondeductible_contributions: 0,
-          prior_basis: item.prior_ira_basis!,
-          traditional_distributions: item.box1_gross_distribution,
-          year_end_ira_value: item.year_end_ira_value ?? 0,
-        }));
+      outputs.push(output(form8606, form8606PartIInput(item)));
     }
   }
   return outputs;

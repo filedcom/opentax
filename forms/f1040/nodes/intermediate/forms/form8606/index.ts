@@ -43,7 +43,7 @@ export const inputSchema = z.object({
   roth_basis_conversions: z.number().nonnegative().optional(),
 });
 
-type Form8606Input = z.infer<typeof inputSchema>;
+export type Form8606Input = z.infer<typeof inputSchema>;
 
 // ─── Part I Helpers ───────────────────────────────────────────────────────────
 
@@ -141,6 +141,12 @@ function computePartI(input: Form8606Input): PartIResult {
     taxableConversionAmt: taxableConversion(conversions, nontaxableConv),
     line14RemainingBasis: remainingBasis(basis, nontaxableAmt),
   };
+}
+
+// Line 15c: taxable part of the traditional IRA distributions, after basis.
+// Exported so Form 5329 line 1 uses the same figure Part I puts on Form 1040 line 4b.
+export function taxableTraditionalDistribution(input: Form8606Input): number {
+  return computePartI(inputSchema.parse(input)).taxableTraditionalDist;
 }
 
 // ─── Part III Computation ─────────────────────────────────────────────────────

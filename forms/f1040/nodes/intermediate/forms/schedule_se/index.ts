@@ -125,10 +125,10 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule2, { line4_se_tax: line12 }),
       this.outputNodes.output(schedule1, { line15_se_deduction: line13 }),
       this.outputNodes.output(agi_aggregator, { line15_se_deduction: line13 }),
-      // Route raw SE earnings (line3) to Form 8959 Part II for Additional Medicare Tax.
-      // Form 8959 line 8 = Schedule SE Part I line 3 (net profit before 92.35% multiplier).
-      // IRC §3101(b)(2); Form 8959 instructions Part II line 8.
-      this.outputNodes.output(form8959, { se_income: line3 }),
+      // Route net earnings (line 6) to Form 8959 Part II for Additional Medicare Tax.
+      // i8959 line 8: "Enter your self-employment income from Schedule SE (Form 1040),
+      // Part I, line 6." That is after the 92.35% multiplier. IRC §3101(b)(2).
+      this.outputNodes.output(form8959, { se_income: line6 }),
     ];
 
     return { outputs };

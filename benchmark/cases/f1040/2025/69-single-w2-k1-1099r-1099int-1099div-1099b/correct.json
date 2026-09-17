@@ -41,8 +41,8 @@
     "ordinary_taxable": 764457.05,
     "income_tax": 250087.16,
     "se_tax": 25963.9,
-    "add_medicare_tax": 4757.26,
-    "line18_tax_before_credits": 288800.1,
+    "add_medicare_tax": 4325.99,
+    "line18_tax_before_credits": 288368.83,
     "nonref_ctc": 0,
     "dependent_care_credit": 0,
     "aotc_nonref": 0,
@@ -52,10 +52,10 @@
     "eitc": 0,
     "actc": 0,
     "excess_ss_credit": 0.0,
-    "line24_total_tax": 288800.1,
+    "line24_total_tax": 288368.83,
     "line33_total_payments": 11186.0,
     "line35a_refund": 0,
-    "line37_amount_owed": 277614.1,
+    "line37_amount_owed": 277182.83,
     "itemized_deduction": 90787.0
   }
 }
