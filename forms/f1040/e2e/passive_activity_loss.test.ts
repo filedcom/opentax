@@ -161,3 +161,19 @@ Deno.test("§469: rental net income is not limited", () => {
   assertEquals(agi(result), 95_000, "rental income is added in full");
   assertEquals(suspendedPal(result), 0, "no suspended loss");
 });
+
+Deno.test("§469: passive income releases part of a rental loss above the allowance cutoff", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    f1099int: [{ payer_name: "Bank", box1: 200_000 }],
+    schedule_e: [
+      rental(20_000, 5_000),
+      { ...rental(10_000, 30_000), property_description: "Rental Two" },
+    ],
+  });
+
+  // $15,000 of passive income offsets $20,000 of passive loss. MAGI is above
+  // $150,000, so the remaining $5,000 is suspended.
+  assertEquals(agi(result), 200_000);
+  assertEquals(suspendedPal(result), 5_000);
+});

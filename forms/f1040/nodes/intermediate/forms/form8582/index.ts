@@ -165,17 +165,21 @@ function specialAllowance(activity: PassiveActivity, rentalNetLoss: number): num
 export function passiveLossLimit(activity: PassiveActivity): PassiveLossLimit {
   const income = activity.currentIncome;
   const loss = activity.currentLoss + activity.priorUnallowed;
+  if (loss <= 0) return { allowed: 0, suspended: 0 };
 
-  // No passive activity at all, or no overall PAL (income >= total losses) →
-  // nothing for §469 to limit.
-  const pal = loss - income;
-  if (pal <= 0) return { allowed: 0, suspended: 0 };
+  // Passive income first releases an equal amount of loss. Schedule E has held
+  // those losses back, so the allowed figure must include this amount even when
+  // income equals or exceeds all losses.
+  const allowedAgainstIncome = Math.min(loss, income);
+  const remainingLoss = loss - allowedAgainstIncome;
+  if (remainingLoss <= 0) return { allowed: loss, suspended: 0 };
 
-  // Fallback to the total loss only when no rental/non-rental split is available.
-  const rentalNetLoss = activity.rentalLoss ?? loss;
-  const allowed = Math.min(pal, income + specialAllowance(activity, rentalNetLoss));
+  // Only rental real estate loss can use the additional §469(i) allowance.
+  const rentalNetLoss = Math.min(remainingLoss, activity.rentalLoss ?? loss);
+  const allowance = specialAllowance(activity, rentalNetLoss);
+  const allowed = allowedAgainstIncome + Math.min(remainingLoss, allowance);
 
-  return { allowed, suspended: pal - allowed };
+  return { allowed, suspended: loss - allowed };
 }
 
 function passiveActivity(input: Form8582Input): PassiveActivity {
