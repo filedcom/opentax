@@ -229,18 +229,18 @@ function isSeExempt(item: ScheduleCItem): boolean {
     item.paper_route === true;
 }
 
-function seThreshold(item: ScheduleCItem): number {
-  return item.clergy_schedule_c === true ? CLERGY_SE_THRESHOLD : SE_TAX_THRESHOLD;
+// Schedule SE line 4c threshold for the combined businesses. Clergy Schedule C income
+// carries the lower church-employee threshold, so it sets the test for the whole return.
+function seThreshold(items: readonly ScheduleCItem[]): number {
+  return items.some((item) => item.clergy_schedule_c === true)
+    ? CLERGY_SE_THRESHOLD
+    : SE_TAX_THRESHOLD;
 }
 
 function deductionOutputs(item: ScheduleCItem, netProfit: number): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (item.line_12_depletion && item.line_12_depletion > 0) {
     outputs.push(output(form6251, { other_adjustments: item.line_12_depletion }));
-  }
-  if (!isSeExempt(item) && netProfit >= seThreshold(item)) {
-    outputs.push(output(schedule_se, { net_profit_schedule_c: netProfit }));
-    outputs.push(output(form8995, { qbi_from_schedule_c: netProfit }));
   }
   if (item.line_g_material_participation === false) {
     outputs.push(output(form8582, { passive_schedule_c: netProfit }));
@@ -303,7 +303,21 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(f8812, { auto_se_earned_income: totalNetProfit }));
     }
 
-    // Per-item downstream routing (SE, QBI, passive, at-risk, depletion, interest)
+    // Schedule SE and QBI: combine the businesses first, then test the total.
+    // i1040sse, More Than One Business: "If you had a loss in one business, it reduces the
+    // income from another. Figure the combined SE tax on one Schedule SE." The $400 test is
+    // on the combined line 4c, not on each business on its own.
+    const seItems = input.schedule_cs.filter((item) => !isSeExempt(item));
+    const seNetProfit = input.schedule_cs.reduce(
+      (sum, item, i) => isSeExempt(item) ? sum : sum + netProfits[i],
+      0,
+    );
+    if (seNetProfit >= seThreshold(seItems)) {
+      outputs.push(this.outputNodes.output(schedule_se, { net_profit_schedule_c: seNetProfit }));
+      outputs.push(this.outputNodes.output(form8995, { qbi_from_schedule_c: seNetProfit }));
+    }
+
+    // Per-item downstream routing (passive, at-risk, depletion, interest)
     for (let i = 0; i < input.schedule_cs.length; i++) {
       outputs.push(...deductionOutputs(input.schedule_cs[i], netProfits[i]));
     }
