@@ -35,9 +35,9 @@ Deno.test("fec.inputSchema: negative compensation_usd fails", () => {
 // 2. Per-Field Routing
 // =============================================================================
 
-Deno.test("fec.compute: compensation_usd routes to f1040 line1a_wages with exact value", () => {
+Deno.test("fec.compute: compensation_usd routes to f1040 line1h_other_earned with exact value", () => {
   const result = compute([minimalItem({ compensation_usd: 75000 })]);
-  assertEquals(result.outputs[0].fields.line1a_wages, 75000);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 75000);
 });
 
 Deno.test("fec.compute: compensation_usd = 0 → no output", () => {
@@ -51,7 +51,7 @@ Deno.test("fec.compute: compensation_amount > 0 but compensation_usd = 0 → no 
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("fec.compute: informational fields do not affect line1a_wages amount", () => {
+Deno.test("fec.compute: informational fields do not affect line1h_other_earned amount", () => {
   // same compensation_usd, different employer/country/currency/description
   const result1 = compute([minimalItem({
     foreign_employer_name: "Corp A", country_code: "FR", currency: "EUR",
@@ -61,8 +61,8 @@ Deno.test("fec.compute: informational fields do not affect line1a_wages amount",
     foreign_employer_name: "Corp B", country_code: "JP", currency: "JPY",
     description: "Analyst", compensation_usd: 60000,
   })]);
-  assertEquals(result1.outputs[0].fields.line1a_wages, 60000);
-  assertEquals(result2.outputs[0].fields.line1a_wages, 60000);
+  assertEquals(result1.outputs[0].fields.line1h_other_earned, 60000);
+  assertEquals(result2.outputs[0].fields.line1h_other_earned, 60000);
 });
 
 // =============================================================================
@@ -74,9 +74,9 @@ Deno.test("fec.compute: two employers — compensation_usd summed into single f1
     minimalItem({ compensation_usd: 45000, country_code: "DE" }),
     minimalItem({ compensation_usd: 30000, country_code: "FR" }),
   ]);
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
-  assertEquals(result.outputs[0].fields.line1a_wages, 75000);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 75000);
 });
 
 Deno.test("fec.compute: three employers — all compensation_usd summed correctly", () => {
@@ -85,7 +85,7 @@ Deno.test("fec.compute: three employers — all compensation_usd summed correctl
     minimalItem({ compensation_usd: 35000, foreign_employer_name: "Corp B" }),
     minimalItem({ compensation_usd: 15000, foreign_employer_name: "Corp C" }),
   ]);
-  assertEquals(result.outputs[0].fields.line1a_wages, 70000);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 70000);
 });
 
 Deno.test("fec.compute: one item zero USD, one positive — only positive counted", () => {
@@ -93,7 +93,7 @@ Deno.test("fec.compute: one item zero USD, one positive — only positive counte
     minimalItem({ compensation_usd: 0 }),
     minimalItem({ compensation_usd: 40000 }),
   ]);
-  assertEquals(result.outputs[0].fields.line1a_wages, 40000);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 40000);
 });
 
 Deno.test("fec.compute: all items zero compensation_usd → no output", () => {
@@ -114,7 +114,7 @@ Deno.test("fec.compute: EUR compensation — converted USD value used exactly (8
     currency: "EUR",
     compensation_usd: 87500,
   })]);
-  assertEquals(result.outputs[0].fields.line1a_wages, 87500);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 87500);
 });
 
 Deno.test("fec.compute: JPY compensation — large foreign amount converts to small USD value", () => {
@@ -124,7 +124,7 @@ Deno.test("fec.compute: JPY compensation — large foreign amount converts to sm
     currency: "JPY",
     compensation_usd: 33000,
   })]);
-  assertEquals(result.outputs[0].fields.line1a_wages, 33000);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 33000);
 });
 
 // =============================================================================
@@ -171,7 +171,33 @@ Deno.test("fec.compute: smoke test — three foreign employers, total USD wages 
   ]);
 
   // Total = 87500 + 65400 + 33000 = 185900
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
-  assertEquals(result.outputs[0].fields.line1a_wages, 185900);
+  assertEquals(result.outputs[0].fields.line1h_other_earned, 185900);
+});
+
+// =============================================================================
+// 7. AGI Routing
+// =============================================================================
+
+Deno.test("fec.compute: compensation_usd also routes to agi_aggregator line1h_other_earned", () => {
+  const result = compute([minimalItem({ compensation_usd: 20000 })]);
+  const agg = result.outputs.find((o) => o.nodeType === "agi_aggregator");
+  assertEquals(agg?.fields.line1h_other_earned, 20000);
+});
+
+Deno.test("fec.compute: f1040 and agi_aggregator receive the same total", () => {
+  const result = compute([
+    minimalItem({ compensation_usd: 45000, country_code: "DE" }),
+    minimalItem({ compensation_usd: 30000, country_code: "FR" }),
+  ]);
+  const f = result.outputs.find((o) => o.nodeType === "f1040");
+  const agg = result.outputs.find((o) => o.nodeType === "agi_aggregator");
+  assertEquals(f?.fields.line1h_other_earned, 75000);
+  assertEquals(agg?.fields.line1h_other_earned, 75000);
+});
+
+Deno.test("fec.compute: compensation_usd = 0 → no agi_aggregator output", () => {
+  const result = compute([minimalItem({ compensation_usd: 0 })]);
+  assertEquals(result.outputs.find((o) => o.nodeType === "agi_aggregator"), undefined);
 });

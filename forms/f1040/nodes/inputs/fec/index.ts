@@ -3,12 +3,14 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Foreign Employer Compensation (IRC §61; IRS Pub 54)
 // US citizens and residents must report worldwide income including wages
 // from foreign employers who did not issue a US W-2 and did not withhold
 // US taxes. The taxpayer self-reports these amounts and converts to USD.
+// TY2025 Form 1040 reports FEC on line 1h (IRS Publication 4164).
 // The Foreign Earned Income Exclusion (Form 2555) is handled separately.
 
 // Per-employer schema — one entry per foreign employer
@@ -38,23 +40,25 @@ function totalCompensationUsd(items: FecItems): number {
   return items.reduce((sum: number, item: FecItem) => sum + item.compensation_usd, 0);
 }
 
-function f1040Output(items: FecItems): NodeOutput[] {
+// Foreign compensation is gross income under IRC §61(a)(1), so it must also
+// reach the AGI aggregator; routing it to f1040 alone leaves it out of line 11.
+function wageOutputs(items: FecItems): NodeOutput[] {
   const total = totalCompensationUsd(items);
   if (total === 0) return [];
-  return [{
-    nodeType: f1040.nodeType,
-    fields: { line1a_wages: total },
-  }];
+  return [
+    { nodeType: f1040.nodeType, fields: { line1h_other_earned: total } },
+    { nodeType: agi_aggregator.nodeType, fields: { line1h_other_earned: total } },
+  ];
 }
 
 class FecNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "fec";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: f1040Output(parsed.fecs) };
+    return { outputs: wageOutputs(parsed.fecs) };
   }
 }
 
