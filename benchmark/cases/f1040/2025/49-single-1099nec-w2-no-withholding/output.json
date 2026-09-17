@@ -1,14 +1,14 @@
 {
-  "returnId": "4937a0c3-a108-4204-af0c-cae768187ecf",
+  "returnId": "810ace58-1193-4670-aaaa-3e6b9177a287",
   "year": 2025,
   "summary": {
     "line1z_total_wages": 30000,
     "line9_total_income": 45000,
     "line11_agi": 43940.28375,
-    "line15_taxable_income": 25190.283750000002,
-    "line24_total_tax": 4903.76655,
+    "line15_taxable_income": 25402.227000000003,
+    "line24_total_tax": 4929.19974,
     "line33_total_payments": 3000,
-    "line37_amount_owed": 1903.7665500000003
+    "line37_amount_owed": 1929.19974
   },
   "forms": [
     "agi_aggregator",
@@ -18,6 +18,7 @@
     "f2441",
     "f8812",
     "form6251",
+    "form8880",
     "form8959",
     "form8960",
     "form8962",
@@ -65,20 +66,20 @@
       0
     ],
     "line13_qbi_deduction": [
-      3000,
-      3000
+      2788.05675,
+      2788.05675
     ],
     "line12a_standard_deduction": [
       15750,
       15750
     ],
     "line15_taxable_income": [
-      25190.283750000002,
-      25190.283750000002
+      25402.227000000003,
+      25402.227000000003
     ],
     "line16_income_tax": [
-      2784.3340500000004,
-      2784.3340500000004
+      2809.76724,
+      2809.76724
     ],
     "line17_additional_taxes": [
       2119.4325,
@@ -86,15 +87,15 @@
     ],
     "line1z_total_wages": 30000,
     "line9_total_income": 45000,
-    "line18_total_tax_before_credits": 4903.76655,
+    "line18_total_tax_before_credits": 4929.19974,
     "line21_credits_total": 0,
-    "line22_tax_after_credits": 4903.76655,
-    "line24_total_tax": 4903.76655,
+    "line22_tax_after_credits": 4929.19974,
+    "line24_total_tax": 4929.19974,
     "line25d_total_withholding": 3000,
     "line33_total_payments": 3000,
-    "line14_deductions_qbi_total": 18750,
+    "line14_deductions_qbi_total": 18538.05675,
     "line32_refundable_credits_total": 0,
-    "line37_amount_owed": 1903.7665500000003
+    "line37_amount_owed": 1929.19974
   },
   "warnings": [
     "[EXECUTOR_NODE_FAILURE] f2441: Zod validation failed for node \"f2441\": [\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"f2441s\"\n    ],\n    \"message\": \"Required\"\n  }\n]"

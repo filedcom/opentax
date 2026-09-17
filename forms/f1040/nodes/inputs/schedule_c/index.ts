@@ -297,13 +297,20 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     outputs.push(this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }));
     outputs.push(this.outputNodes.output(agi_aggregator, { line3_schedule_c: totalNetProfit }));
 
+    // Form 8995 Line 1(c) carries the net QBI or (loss) of each trade or business and
+    // Line 2 totals them, so a loss in one Schedule C reduces the income from another.
+    // The $400 Schedule SE gate is not a QBI test (i8995, Lines 1 and 2).
+    if (totalNetProfit !== 0) {
+      outputs.push(this.outputNodes.output(form8995, { qbi_from_schedule_c: totalNetProfit }));
+    }
+
     // SE net profit counts as earned income for EITC (IRC §32(c)(2)(A)(ii)) and ACTC
     if (totalNetProfit > 0) {
       outputs.push(this.outputNodes.output(eitc, { se_net_profit: totalNetProfit }));
       outputs.push(this.outputNodes.output(f8812, { auto_se_earned_income: totalNetProfit }));
     }
 
-    // Schedule SE and QBI: combine the businesses first, then test the total.
+    // Schedule SE: combine the businesses first, then test the total.
     // i1040sse, More Than One Business: "If you had a loss in one business, it reduces the
     // income from another. Figure the combined SE tax on one Schedule SE." The $400 test is
     // on the combined line 4c, not on each business on its own.
@@ -314,7 +321,6 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     );
     if (seNetProfit >= seThreshold(seItems)) {
       outputs.push(this.outputNodes.output(schedule_se, { net_profit_schedule_c: seNetProfit }));
-      outputs.push(this.outputNodes.output(form8995, { qbi_from_schedule_c: seNetProfit }));
     }
 
     // Per-item downstream routing (passive, at-risk, depletion, interest)

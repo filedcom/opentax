@@ -240,6 +240,12 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(income_tax_calculation, { qualified_dividends: totalQualDiv }));
     }
 
+    // Aggregate every Form 8995 field into one output.
+    // Line 12 is Form 1040 line 3a plus net capital gain (i8995, Line 12), so the
+    // qualified dividends reduce the 20%-of-taxable-income limit on line 13.
+    const form8995Fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
+    if (totalQualDiv > 0) form8995Fields.net_capital_gain = totalQualDiv;
+
     // NII: ordinary dividends subject to NIIT (IRC §1411(c)(1)(A)) → form8960 line 2
     const totalOrdinaryForNiit = div1099s.reduce((sum, item) => sum + item.box1a, 0);
     if (totalOrdinaryForNiit > 0) {
@@ -276,10 +282,14 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       .reduce((sum, item) => sum + (item.box5 ?? 0), 0);
     if (totalBox5 > 0) {
       const useForm8995a = isAbove199AThreshold(taxableIncome, filingStatus, cfg.sec199aSingleThreshold, cfg.sec199aMfjThreshold);
-      outputs.push({
-        nodeType: useForm8995a ? form8995a.nodeType : form8995.nodeType,
-        fields: { line6_sec199a_dividends: totalBox5 },
-      });
+      if (useForm8995a) {
+        outputs.push({ nodeType: form8995a.nodeType, fields: { line6_sec199a_dividends: totalBox5 } });
+      } else {
+        form8995Fields.line6_sec199a_dividends = totalBox5;
+      }
+    }
+    if (Object.keys(form8995Fields).length > 0) {
+      outputs.push(this.outputNodes.output(form8995, form8995Fields as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>));
     }
 
     // PAB interest from exempt-interest dividends (form6251)

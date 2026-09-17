@@ -9,6 +9,7 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8959 } from "../form8959/index.ts";
+import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
@@ -85,7 +86,7 @@ function medicareTax(line6: number): number {
 class ScheduleSENode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_se";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator, form8959]);
+  readonly outputNodes = new OutputNodes([schedule2, schedule1, agi_aggregator, form8959, form8995]);
 
   compute(ctx: NodeContext, rawInput: ScheduleSEInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -129,6 +130,10 @@ class ScheduleSENode extends TaxNode<typeof inputSchema> {
       // i8959 line 8: "Enter your self-employment income from Schedule SE (Form 1040),
       // Part I, line 6." That is after the 92.35% multiplier. IRC §3101(b)(2).
       this.outputNodes.output(form8959, { se_income: line6 }),
+      // Line 13 is a deduction attributable to the trade or business, so it reduces QBI.
+      // i8995, Determining Your Qualified Business Income: the items to consider include
+      // the "deductible part of self-employment tax".
+      this.outputNodes.output(form8995, { se_tax_deduction: line13 }),
     ];
 
     return { outputs };

@@ -239,6 +239,25 @@ Deno.test("routing_profit_routes_form8995: net_profit > 0 → form8995 with exac
   assertEquals((qbi!.fields as Record<string, number>).qbi_from_schedule_c, 50000);
 });
 
+Deno.test("routing_qbi_nets_loss_business: a loss in one Schedule C reduces the QBI from another", () => {
+  // i8995, Line 1(c) carries "the net QBI or (loss)" of each trade or business and Line 2
+  // totals them, so business B's $30,000 loss reduces business A's $150,000 of QBI.
+  // The $400 Schedule SE gate is not a QBI test.
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 150000 }),
+    minimalItem({ line_1_gross_receipts: 1000, line_11_contract_labor: 31000 }),
+  ]);
+  const qbiOutputs = result.outputs.filter((o) => o.nodeType === "form8995");
+  assertEquals(qbiOutputs.length, 1);
+  assertEquals((qbiOutputs[0].fields as Record<string, number>).qbi_from_schedule_c, 120000);
+});
+
+Deno.test("routing_qbi_net_loss: all businesses at a loss → negative QBI routed to form8995", () => {
+  const result = compute([minimalItem({ line_1_gross_receipts: 1000, line_11_contract_labor: 21000 })]);
+  const qbi = findOutput(result, "form8995");
+  assertEquals((qbi!.fields as Record<string, number>).qbi_from_schedule_c, -20000);
+});
+
 Deno.test("routing_gambler_loss_capped_at_zero: professional_gambler with loss → line31=0", () => {
   const result = compute([minimalItem({
     line_1_gross_receipts: 5000,

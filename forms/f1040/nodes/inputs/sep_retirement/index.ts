@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
+import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
@@ -106,12 +107,21 @@ function agiOutput(items: SepRetirementItems, sepMax: number, sepRate: number): 
   return [output(agi_aggregator, { line16_sep_simple: deduction })];
 }
 
+// This deduction is attributable to the trade or business, so it reduces QBI.
+// i8995, Determining Your Qualified Business Income: the items to consider include
+// "contributions to qualified retirement plans".
+function form8995Output(items: SepRetirementItems, sepMax: number, sepRate: number): NodeOutput[] {
+  const deduction = totalDeduction(items, sepMax, sepRate);
+  if (deduction === 0) return [];
+  return [output(form8995, { retirement_plan_deduction: deduction })];
+}
+
 // ── Node class ────────────────────────────────────────────────────────────────
 
 class SepRetirementNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "sep_retirement";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8995]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -120,6 +130,7 @@ class SepRetirementNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [
       ...schedule1Output(parsed.sep_retirements, cfg.sepMaxContribution, cfg.sepContributionRate),
       ...agiOutput(parsed.sep_retirements, cfg.sepMaxContribution, cfg.sepContributionRate),
+      ...form8995Output(parsed.sep_retirements, cfg.sepMaxContribution, cfg.sepContributionRate),
     ];
     return { outputs };
   }
