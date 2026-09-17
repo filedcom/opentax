@@ -259,11 +259,12 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
     "line24_total_tax should be positive for a self-employed filer",
   );
 
-  // Amount owed equals total tax (payments = 0)
+  // Amount owed equals total tax (payments = 0) — line 37 is computed from
+  // the rounded filed lines, so compare against the whole-dollar total.
   assertEquals(
     f1040["line37_amount_owed"],
-    totalTax,
-    "line37_amount_owed should equal line24_total_tax when no payments made",
+    Math.round(totalTax as number),
+    "line37_amount_owed should equal rounded line24_total_tax when no payments made",
   );
 
   // No refund

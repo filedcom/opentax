@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule EIC (2025) AcroForm field names.
-// Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sei.pdf
+// Verified layout from https://www.irs.gov/pub/irs-prior/f1040sei--2025.pdf
 //
 // The Schedule EIC PDF primarily contains qualifying child information tables
 // (names, SSNs, birthdates, relationship) which are not computed engine fields.
@@ -19,6 +19,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const eitcPdf: PdfFormDescriptor = {
   pendingKey: "eitc",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sei.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sei--2025.pdf",
   fields,
+  // Schedule EIC accompanies a claimed Earned Income Credit with qualifying
+  // children; without a computed credit on 1040 line 27 it must not print.
+  includeWhen: (_fields, all) =>
+    (((all?.["f1040"]?.["line27_eitc"]) as number | undefined) ?? 0) > 0,
 };

@@ -335,6 +335,75 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       }
     }
 
+    // ── Self-emit print-layer line values for the PDF/MeF builders ───────────
+    // (same pattern as the f1040 output node; keys are distinct from
+    // inputSchema keys to avoid executor merge-accumulation).
+    //
+    // Covered transactions with basis reported and no adjustments (Parts A/D)
+    // qualify for direct reporting on lines 1a/8a without Form 8949
+    // (Schedule D instructions, "Exception 1"). All other transactions remain
+    // on the Form 8949 path and aggregate into lines 1b/2/3 and 8b/9/10.
+    const isDirect = (part: string, codes: string | undefined): boolean =>
+      (part === "A" || part === "D") && !(codes ?? "").length;
+
+    const direct = { stP: 0, stC: 0, stG: 0, ltP: 0, ltC: 0, ltG: 0 };
+    for (const tx of dScreenTxs) {
+      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      const gl = dScreenGainLoss(tx);
+      if (LONG_TERM_PARTS.has(tx.part)) {
+        direct.ltP += tx.proceeds; direct.ltC += tx.cost_basis; direct.ltG += gl;
+      } else {
+        direct.stP += tx.proceeds; direct.stC += tx.cost_basis; direct.stG += gl;
+      }
+    }
+    for (const tx of f8949Txs) {
+      if (!isDirect(tx.part, tx.adjustment_codes)) continue;
+      if (tx.is_long_term) {
+        direct.ltP += tx.proceeds; direct.ltC += tx.cost_basis; direct.ltG += tx.gain_loss;
+      } else {
+        direct.stP += tx.proceeds; direct.stC += tx.cost_basis; direct.stG += tx.gain_loss;
+      }
+    }
+
+    const printFields: Record<string, number | boolean> = {
+      print_line7_st_total: line7,
+      print_line15_lt_total: line15,
+      print_line16_combined: line16,
+      // QOF disposition question at the top of Schedule D — not modeled by the
+      // engine, so it is always answered "No".
+      print_qof_disposition: false,
+    };
+    // Line 17 is only answered when line 16 is a gain (a loss skips to
+    // line 21; zero skips to line 22 — both leave lines 17–20 blank).
+    if (line16 > 0) {
+      printFields.print_line17_both_gains = line17Yes;
+    }
+    if (direct.stP > 0 || direct.stC > 0) {
+      printFields.print_line1a_proceeds = direct.stP;
+      printFields.print_line1a_cost = direct.stC;
+      printFields.print_line1a_gain = direct.stG;
+    }
+    if (direct.ltP > 0 || direct.ltC > 0) {
+      printFields.print_line8a_proceeds = direct.ltP;
+      printFields.print_line8a_cost = direct.ltC;
+      printFields.print_line8a_gain = direct.ltG;
+    }
+    if (line13F1099div > 0 || (input.line_12_cap_gain_dist ?? 0) > 0) {
+      printFields.print_line13_cap_gain_distrib = line13F1099div + (input.line_12_cap_gain_dist ?? 0);
+    }
+    if (line17Yes) {
+      const unrecaptured1250 = input.line19_unrecaptured_1250 ?? 0;
+      const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs) + (input.collectibles_gain_form2439 ?? 0);
+      printFields.print_line18_28pct = gain28Pct;
+      printFields.print_line19_unrecaptured_1250 = unrecaptured1250;
+      // Line 20: both 18 and 19 zero/blank → use the QDCGT worksheet.
+      printFields.print_line20_qdcgt = gain28Pct === 0 && unrecaptured1250 === 0;
+    }
+    if (line16 < 0) {
+      printFields.print_line21_loss = capitalGainForReturn;
+    }
+    outputs.push({ nodeType: this.nodeType, fields: printFields });
+
     return { outputs };
   }
 }

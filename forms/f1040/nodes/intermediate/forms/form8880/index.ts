@@ -133,6 +133,37 @@ class Form8880Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule3, { line4_retirement_savings_credit: credit }),
     ];
 
+    // ── Self-emit Form 8880 line values for the PDF builder ──────────────────
+    // Only reached when a nonzero credit exists — ineligible returns (rate 0,
+    // no eligible contributions) emit nothing, which keeps the form out of the
+    // PDF entirely. Line 9 is a decimal rate and must print as a string (the
+    // builder rounds numeric values to whole dollars).
+    const printFields: Record<string, number | string> = {
+      print_line1a_ira: parsed.ira_contributions_taxpayer ?? 0,
+      print_line2a_deferrals: taxpayerDeferrals(parsed),
+      print_line3a_total: tContributions,
+      print_line4a_distributions: parsed.distributions_taxpayer ?? 0,
+      print_line5a: Math.max(0, tContributions - (parsed.distributions_taxpayer ?? 0)),
+      print_line6a_eligible: tEligible,
+      print_line7_total_eligible: totalEligible,
+      print_line8_agi: agi,
+      print_line9_rate: rate.toFixed(1),
+      print_line10_raw_credit: rawCredit,
+      print_line12_credit: credit,
+    };
+    if (parsed.income_tax_liability !== undefined) {
+      printFields.print_line11_tax_liability = parsed.income_tax_liability;
+    }
+    if (sEligible > 0 || (parsed.ira_contributions_spouse ?? 0) > 0 || spouseDeferrals(parsed) > 0) {
+      printFields.print_line1b_ira = parsed.ira_contributions_spouse ?? 0;
+      printFields.print_line2b_deferrals = spouseDeferrals(parsed);
+      printFields.print_line3b_total = sContributions;
+      printFields.print_line4b_distributions = parsed.distributions_spouse ?? 0;
+      printFields.print_line5b = Math.max(0, sContributions - (parsed.distributions_spouse ?? 0));
+      printFields.print_line6b_eligible = sEligible;
+    }
+    outputs.push({ nodeType: this.nodeType, fields: printFields });
+
     return { outputs };
   }
 }

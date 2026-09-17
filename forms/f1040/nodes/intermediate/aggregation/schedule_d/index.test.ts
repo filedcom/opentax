@@ -415,9 +415,10 @@ Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () =
 // 8. Output counts
 // ---------------------------------------------------------------------------
 
-Deno.test("output count: gain only → exactly 5 outputs (f1040 + agi_aggregator + income_tax_calculation + form8960 + form8995)", () => {
+// Every activity case also self-emits one print-line output for the PDF builder.
+Deno.test("output count: gain only → 6 outputs including form8995 and print lines", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
-  assertEquals(result.outputs.length, 5);
+  assertEquals(result.outputs.length, 6);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
   assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
   assert(result.outputs.some((o) => o.nodeType === "income_tax_calculation"));
@@ -425,16 +426,16 @@ Deno.test("output count: gain only → exactly 5 outputs (f1040 + agi_aggregator
   assert(result.outputs.some((o) => o.nodeType === "form8995"));
 });
 
-Deno.test("output count: gain + 28pct → exactly 6 outputs", () => {
+Deno.test("output count: gain + 28pct → exactly 7 outputs", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
-  assertEquals(result.outputs.length, 6);
+  assertEquals(result.outputs.length, 7);
 });
 
 Deno.test("output count: pure loss → exactly 2 outputs (f1040 + agi_aggregator, capped)", () => {
   const result = compute({ transaction: mkTx({ gain_loss: -5000, is_long_term: false }) });
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 3);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
   assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
 });
@@ -491,8 +492,9 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
 
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 600);
 
-  // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet + form8960 + form8995
-  assertEquals(result.outputs.length, 6);
+  // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet
+  // + form8960 + form8995 + the Schedule D print lines.
+  assertEquals(result.outputs.length, 7);
 });
 
 // ===========================================================================
@@ -723,8 +725,9 @@ Deno.test("threshold: loss exactly -$2,500 (< $3,000) — fully deductible, no c
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -2_500);
-  const carryover = findOutput(result, "schedule_d");
-  assertEquals(carryover, undefined);
+  // The schedule_d self-output holds only print-line fields — no carryforward.
+  const selfOut = findOutput(result, "schedule_d");
+  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
 });
 
 Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward", () => {
@@ -735,8 +738,9 @@ Deno.test("threshold: loss exactly -$3,000 — fully deductible, no carryforward
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -3_000);
-  const carryover = findOutput(result, "schedule_d");
-  assertEquals(carryover, undefined);
+  // The schedule_d self-output holds only print-line fields — no carryforward.
+  const selfOut = findOutput(result, "schedule_d");
+  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
 });
 
 // REMOVED: "threshold: loss -$3,001 (just above $3,000) — capped at -$3,000, carryforward = $1"
@@ -753,8 +757,9 @@ Deno.test("threshold (MFS): loss -$1,500 — fully deductible at $1,500 limit, n
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   assertEquals(input.line7_capital_gain, -1_500);
-  const carryover = findOutput(result, "schedule_d");
-  assertEquals(carryover, undefined);
+  // The schedule_d self-output holds only print-line fields — no carryforward.
+  const selfOut = findOutput(result, "schedule_d");
+  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
 });
 
 // REMOVED: "threshold (MFS): loss -$1,501 — capped at -$1,500, carryforward = $1"
@@ -1462,8 +1467,9 @@ Deno.test("smoke: all D2 fields + 8949 transactions from multiple parts → corr
   assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 23_800);
 
   // Net gain is positive — no carryforward
-  const carryover = findOutput(result, "schedule_d");
-  assertEquals(carryover, undefined);
+  // The schedule_d self-output holds only print-line fields — no carryforward.
+  const selfOut = findOutput(result, "schedule_d");
+  assert(Object.keys(selfOut!.fields).every((k) => k.startsWith("print_")));
 });
 
 Deno.test("28pct: collectibles_gain_form2439 routes to rate_28_gain_worksheet", () => {

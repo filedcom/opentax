@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule F (2025) AcroForm field names.
-// Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sf.pdf
+// Verified layout from https://www.irs.gov/pub/irs-prior/f1040sf--2025.pdf
 //
 // Part I Farm Income – Cash Method:
 //   f1_01–f1_NN: personal info / EIN (skip)
@@ -15,6 +15,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const scheduleFPdf: PdfFormDescriptor = {
   pendingKey: "schedule_f",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sf.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sf--2025.pdf",
   fields,
 };

@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule 1 (2025) AcroForm field names.
-// Verified layout from https://www.irs.gov/pub/irs-pdf/f1040s1.pdf
+// Verified layout from https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf
 //
 // Page 1 (f1_01–f1_38):
 //   f1_01–f1_10: personal info, SSN, state/local refund detail (skip header)
@@ -51,6 +51,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const schedule1Pdf: PdfFormDescriptor = {
   pendingKey: "schedule1",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s1.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
   fields,
 };

@@ -29,6 +29,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const form6251Pdf: PdfFormDescriptor = {
   pendingKey: "form6251",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6251.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f6251--2025.pdf",
   fields,
+  // Form 6251 attaches only when AMT is due (Schedule 2 line 1). The engine
+  // always runs the worksheet; a zero result means the form is not filed.
+  includeWhen: (_fields, all) =>
+    (((all?.["schedule2"]?.["line1_amt"]) as number | undefined) ?? 0) > 0,
 };

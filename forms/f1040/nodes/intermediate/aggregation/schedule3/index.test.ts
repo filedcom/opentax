@@ -119,7 +119,8 @@ Deno.test("routing: Part I → line20, Part II → line31, both present in same 
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits, 400);
   assertEquals(fieldsOf(result.outputs, f1040)!.line31_additional_payments, 600);
-  assertEquals(result.outputs.length, 1);
+  // f1040 routing output + self-emitted print-line output for the PDF builder
+  assertEquals(result.outputs.length, 2);
 });
 
 Deno.test("routing: only line20 emitted when Part II is zero", () => {
@@ -187,7 +188,8 @@ Deno.test("smoke: all fields populated — correct totals emitted to f1040", () 
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits, 9650);
   assertEquals(fieldsOf(result.outputs, f1040)!.line31_additional_payments, 1540);
-  assertEquals(result.outputs.length, 1);
+  // f1040 routing output + self-emitted print-line output for the PDF builder
+  assertEquals(result.outputs.length, 2);
 });
 
 // ── Previously untested Part I credits ───────────────────────────────────────

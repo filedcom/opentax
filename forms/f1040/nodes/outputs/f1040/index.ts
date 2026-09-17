@@ -253,7 +253,12 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line25d = totalWithholding(input);
   const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
-  const balance = computed_line33 - computed_line24;
+  // Lines 34/37 are the difference of two *filed* (whole-dollar) lines, so they
+  // must be computed from the rounded operands. Rounding the cents-level
+  // difference instead can disagree by $1 with the printed line 24 − line 33
+  // (e.g. 26,357.62 − 25,751.28: rounded-operand result 607 vs naive 606),
+  // which fails IRS arithmetic cross-checks on the filed return.
+  const balance = Math.round(computed_line33) - Math.round(computed_line24);
 
   const result: Record<string, number> = {
     line1z_total_wages: computed_line1z,

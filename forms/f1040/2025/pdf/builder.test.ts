@@ -36,7 +36,7 @@ function cacheSlug(url: string): string {
   return url.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_") + ".pdf";
 }
 
-const F1040_PDF_URL = "https://www.irs.gov/pub/irs-pdf/f1040.pdf";
+const F1040_PDF_URL = "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf";
 
 /**
  * Create a minimal AcroForm PDF that contains the subset of f1040 AcroForm

@@ -26,12 +26,24 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 //   f2_32:        line 37 amount owed
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  // ── Page 1: Filing Status (Line 1 checkboxes) ─────────────────────────────
-  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_1[0]", whenValue: "single" },
-  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_2[0]", whenValue: "mfj" },
-  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_3[0]", whenValue: "mfs" },
-  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_4[0]", whenValue: "hoh" },
-  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_5[0]", whenValue: "qss" },
+  // ── Page 1: Filing Status checkboxes ──────────────────────────────────────
+  // Verified against the 2025 f1040 AcroForm field dump (rects at y≈578–554):
+  // the left column (Single/MFJ/MFS) lives under Checkbox_ReadOrder[0] with
+  // export values /1 /2 /3; the right column (HOH/QSS) is the bare c1_8 group
+  // with export values /4 /5. The previous c1_1–c1_5 mappings pointed at the
+  // header row (c1_1 = "Filed pursuant to section 301.9100-2", c1_2 = combat
+  // zone, c1_3 = deceased, c1_4 = "Other", c1_5 = main-home-in-US), which
+  // wrongly stamped a §301.9100-2 late-election mark on single-filer returns.
+  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_8[0]", whenValue: "single" },
+  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_8[1]", whenValue: "mfj" },
+  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].Checkbox_ReadOrder[0].c1_8[2]", whenValue: "mfs" },
+  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_8[0]", whenValue: "hoh" },
+  { kind: "checkboxWhen", domainKey: "filing_status", pdfField: "topmostSubform[0].Page1[0].c1_8[1]", whenValue: "qss" },
+
+  // ── Page 1: Digital assets question (Yes = c1_10[0], No = c1_10[1]) ───────
+  // Required answer on every 2025 return; previously unmapped (left blank).
+  { kind: "checkboxWhen", domainKey: "digital_assets", pdfField: "topmostSubform[0].Page1[0].c1_10[0]", whenValue: "true" },
+  { kind: "checkboxWhen", domainKey: "digital_assets", pdfField: "topmostSubform[0].Page1[0].c1_10[1]", whenValue: "false" },
 
   // ── Page 1: Wages (Lines 1a–1z) ───────────────────────────────────────────
   { kind: "text", domainKey: "line1a_wages",                    pdfField: "topmostSubform[0].Page1[0].f1_47[0]" },
@@ -118,16 +130,21 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const irs1040Pdf: PdfFormDescriptor = {
   pendingKey: "f1040",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+  // Year-pinned: /pub/irs-pdf/f1040.pdf silently changes revision each filing
+  // season; this module is the 2025 form and must always fetch the 2025 PDF.
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
   fields,
   filerFields: [
     // domainKey uses dot-notation to traverse FilerIdentity (resolved in builder).
     // ── Primary taxpayer ────────────────────────────────────────────────────
     // Field numbers verified against 2025 IRS f1040.pdf AcroForm layer.
     // f1_14 = "Your first name and middle initial", f1_15 = "Last name", f1_16 = SSN (maxLen=9)
-    { kind: "text", domainKey: "firstName",      pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
+    { kind: "text", domainKey: "firstNameWithInitial", pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
     { kind: "text", domainKey: "lastName",       pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
     { kind: "text", domainKey: "primarySSN",     pdfField: "topmostSubform[0].Page1[0].f1_16[0]" },
+    // ── Sign Here block (page 2): occupation ───────────────────────────────
+    { kind: "text", domainKey: "occupation",     pdfField: "topmostSubform[0].Page2[0].f2_40[0]" },
+    { kind: "text", domainKey: "spouse.occupation", pdfField: "topmostSubform[0].Page2[0].f2_42[0]" },
     // ── Spouse ──────────────────────────────────────────────────────────────
     // f1_17 = "Spouse's first name and middle initial", f1_18 = "Last name", f1_19 = spouse SSN
     { kind: "text", domainKey: "spouse.firstName", pdfField: "topmostSubform[0].Page1[0].f1_17[0]" },

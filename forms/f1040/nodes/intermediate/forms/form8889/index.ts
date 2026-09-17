@@ -209,6 +209,49 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       ...penaltyOutput(penalty),
     ];
 
+    // ── Self-emit Form 8889 Part I/II line values for the PDF builder ────────
+    // (same pattern as the f1040 output node). Only when the form is actually
+    // required — some contribution or distribution activity exists. The engine
+    // does not model spouse HSAs, Archer MSA employer amounts, line 10
+    // qualified funding distributions, or line 14b rollovers — those lines
+    // print blank.
+    if (totalContributions(input) <= 0 && (input.hsa_distributions ?? 0) <= 0) {
+      return { outputs };
+    }
+    const months = input.months_of_hdhp_coverage ?? 12;
+    const base = input.coverage_type === CoverageType.Family
+      ? cfg.hsaFamilyLimit
+      : cfg.hsaSelfOnlyLimit;
+    const withCatchup = input.age_55_or_older === true ? base + cfg.hsaCatchup : base;
+    // Line 3 — annual limit prorated by HDHP coverage months (before the
+    // Archer MSA offset, which the form applies on lines 4–5).
+    const line3 = months < 12 ? Math.floor((withCatchup * months) / 12) : withCatchup;
+    const line4 = input.archer_msa_distributions ?? 0;
+    const line5 = Math.max(0, line3 - line4);
+    const line9 = input.employer_hsa_contributions ?? 0;
+    const line12 = Math.max(0, line5 - line9);
+    const printFields: Record<string, number | string> = {
+      print_line1_coverage: input.coverage_type,
+      print_line2_taxpayer_contributions: input.taxpayer_hsa_contributions ?? 0,
+      print_line3_limit: line3,
+      print_line4_archer: line4,
+      print_line5: line5,
+      print_line6: line5,
+      print_line8: line5,
+      print_line9_employer: line9,
+      print_line11: line9,
+      print_line12: line12,
+      print_line13_deduction: deductible,
+    };
+    const distributions = input.hsa_distributions ?? 0;
+    if (distributions > 0) {
+      printFields.print_line14a_distributions = distributions;
+      printFields.print_line14c = distributions;
+      printFields.print_line15_qualified = input.qualified_medical_expenses ?? 0;
+      printFields.print_line16_taxable = taxable;
+    }
+    outputs.push({ nodeType: this.nodeType, fields: printFields });
+
     // Route HSA deduction and taxable distribution to AGI aggregator
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
     if (deductible > 0) agiFields.line13_hsa_deduction = deductible;

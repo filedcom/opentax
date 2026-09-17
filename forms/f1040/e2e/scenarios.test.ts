@@ -343,7 +343,8 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691",
   const f = result.pending["f1040"] ?? {};
   assertEquals(r2(f["line24_total_tax"] as number), 16_690.57, "total tax");
   assertEquals(f["line33_total_payments"], 0, "no payments");
-  assertEquals(r2(f["line37_amount_owed"] as number), 16_690.57, "amount owed");
+  // line 37 = round(line24) − round(line33): whole-dollar per filed-form arithmetic
+  assertEquals(f["line37_amount_owed"], 16_691, "amount owed");
   assertEquals(f["line35a_refund"], undefined, "no refund");
 });
 

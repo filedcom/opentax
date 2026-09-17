@@ -33,6 +33,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const form8960Pdf: PdfFormDescriptor = {
   pendingKey: "form8960",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8960.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8960--2025.pdf",
   fields,
+  // Form 8960 is filed only when NIIT is due (Schedule 2 line 12) — investment
+  // income below the MAGI threshold computes to zero and files nothing.
+  includeWhen: (_fields, all) =>
+    (((all?.["schedule2"]?.["line12_niit"]) as number | undefined) ?? 0) > 0,
 };

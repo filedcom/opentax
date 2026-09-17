@@ -204,6 +204,32 @@ class Form8606Node extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(agi_aggregator, { line4b_ira_taxable: totalTaxable }));
     }
 
+    // ── Self-emit Form 8606 Part I line values for the PDF builder ───────────
+    // (same pattern as the f1040 output node). Lines 4–13 only apply when a
+    // distribution or conversion occurred; with none, line 3 carries directly
+    // to line 14 and the intermediate lines print blank (per form flow).
+    const basis = totalBasis(input);
+    const distributions = input.traditional_distributions ?? 0;
+    const conversions = input.roth_conversion ?? 0;
+    const printFields: Record<string, number> = {
+      print_line1_nondeductible: input.nondeductible_contributions,
+      print_line2_prior_basis: input.prior_basis ?? 0,
+      print_line3_total_basis: basis,
+      print_line14_remaining_basis: line14RemainingBasis,
+    };
+    if (distributions + conversions > 0) {
+      printFields.print_line6_year_end_value = input.year_end_ira_value ?? 0;
+      printFields.print_line7_distributions = distributions;
+      printFields.print_line8_conversions = conversions;
+      printFields.print_line13_nontaxable = Math.max(0, basis - line14RemainingBasis);
+      printFields.print_line15c_taxable = taxableTraditionalDist;
+      if (conversions > 0) {
+        printFields.print_line16_converted = conversions;
+        printFields.print_line18_taxable_conversion = taxableConversionAmt;
+      }
+    }
+    outputs.push({ nodeType: this.nodeType, fields: printFields });
+
     return {
       outputs,
       ...(line14RemainingBasis > 0 ? { carryforwards: { ira_remaining_basis_8606: line14RemainingBasis } } : {}),
