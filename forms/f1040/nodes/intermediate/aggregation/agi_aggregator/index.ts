@@ -11,6 +11,7 @@ import { f8812 } from "../../../inputs/f8812/index.ts";
 import { f2441 } from "../../../inputs/f2441/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
+import { form8582, passiveLossLimit, type PassiveActivity } from "../../forms/form8582/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
 import { FilingStatus } from "../../../types.ts";
@@ -97,6 +98,19 @@ export const inputSchema = z.object({
   line5_schedule_e: z.number().optional(),
   // Line 17 — Rental real estate passive loss allowed (Form 8582 negative output)
   line17_schedule_e: z.number().optional(),
+  // ── IRC §469 passive activity loss limit (Schedule E) ─────────────────────
+  // Schedule E holds its passive loss back and sends the figures here, because only
+  // this node knows modified AGI — the number Form 8582 Part II sizes the allowance by.
+  // Current-year passive loss withheld from line5_schedule_e (positive amount)
+  pal_current_loss: z.number().nonnegative().optional(),
+  // Current-year net income from passive activities
+  pal_current_income: z.number().nonnegative().optional(),
+  // Prior-year unallowed passive loss carryforward
+  pal_prior_unallowed: z.number().nonnegative().optional(),
+  // Current-year loss from active rental real estate only (§469(i) allowance)
+  pal_rental_loss: z.number().nonnegative().optional(),
+  // Taxpayer actively participated in the rental real estate activity
+  pal_active_participation: z.boolean().optional(),
   // Line 6 — Net farm profit or (loss) (Schedule F)
   line6_schedule_f: z.number().optional(),
   // Line 2a — Alimony received (divorce or separation instruments before 1/1/2019, IRC §71)
@@ -209,8 +223,8 @@ function computeSsaTaxable(
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Sum all non-SSA income items (used as "other income" for provisional income calculation).
-function nonSsaIncome(input: AgiInput): number {
+// Sum all non-SSA income items before the IRC §469 limit is applied.
+function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     sumField(input.line1a_wages as number | number[] | undefined) +
     (input.line1h_other_earned ?? 0) +
@@ -338,6 +352,41 @@ function aboveLineDeductions(input: AgiInput, cfg: import("../../../config/index
   return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input, cfg);
 }
 
+// Form 8582 line 6 — modified adjusted gross income: AGI figured without any passive
+// activity loss, taxable social security, the IRA deduction, or the student loan
+// interest deduction. Not less than zero.
+function modifiedAgiFor8582(input: AgiInput): number {
+  const magi = nonSsaIncomeBeforePal(input) -
+    aboveLineDeductionsExceptSli(input) +
+    (input.line20_ira_deduction ?? 0);
+  return Math.max(0, magi);
+}
+
+// IRC §469(a): the part of the withheld passive loss that is deductible this year.
+function allowedPassiveLoss(input: AgiInput): number {
+  const currentLoss = input.pal_current_loss ?? 0;
+  const priorUnallowed = input.pal_prior_unallowed ?? 0;
+  if (currentLoss === 0 && priorUnallowed === 0) return 0;
+
+  const activity: PassiveActivity = {
+    currentIncome: input.pal_current_income ?? 0,
+    currentLoss,
+    priorUnallowed,
+    rentalLoss: input.pal_rental_loss,
+    activeParticipation: input.pal_active_participation ?? false,
+    modifiedAgi: modifiedAgiFor8582(input),
+    filingStatus: input.filing_status as FilingStatus | undefined,
+  };
+
+  return passiveLossLimit(activity).allowed;
+}
+
+// Sum all non-SSA income items, net of the passive loss §469 allows.
+// This is what "other income" means for the provisional income calculation.
+function nonSsaIncome(input: AgiInput): number {
+  return nonSsaIncomeBeforePal(input) - allowedPassiveLoss(input);
+}
+
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
 // This is what appears on Form 1040 line 8.
 function scheduleOnePartI(input: AgiInput): number {
@@ -358,6 +407,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0) -
+    allowedPassiveLoss(input) -
     (input.line8d_foreign_earned_income_exclusion ?? 0) -
     (input.line8d_foreign_housing_deduction ?? 0) -
     (input.line8b_savings_bond_exclusion ?? 0)
@@ -374,7 +424,7 @@ function computeAgi(input: AgiInput, cfg: import("../../../config/index.ts").F10
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962, form8880]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962, form8880, form8582]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -414,6 +464,14 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         ...(input.filing_status !== undefined && { filing_status: input.filing_status as FilingStatus }),
       } as AtLeastOne<z.infer<typeof form8880["inputSchema"]>>),
     ];
+
+    // Form 8582 Part II sizes the $25,000 special allowance by modified AGI, which
+    // only this node can compute — so it is handed down rather than recomputed there.
+    if (input.pal_current_loss !== undefined || input.pal_prior_unallowed !== undefined) {
+      outputs.push(this.outputNodes.output(form8582, {
+        modified_agi: modifiedAgiFor8582(input),
+      }));
+    }
 
     // Pass SSA taxable amount to f1040 for line 6b.
     // line6a_ss_gross is routed directly by ssa1099 node to avoid double-counting.
