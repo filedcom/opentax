@@ -91,6 +91,8 @@ const inputSchema = z.object({
   line12e_itemized_deductions: z.number().optional(),
   // Line 13 — QBI deduction (Form 8995 / 8995-A)
   line13_qbi_deduction: z.number().nonnegative().optional(),
+  // Line 13b — Additional deductions from Schedule 1-A
+  line13b_additional_deductions: z.number().nonnegative().optional(),
   // Line 14 — Sum of 12c (or 12e) + 13
   line14_deductions_qbi_total: z.number().nonnegative().optional(),
   // Line 15 — Taxable income (line 11 - line 14)
@@ -209,7 +211,8 @@ function taxableIncome(input: F1040Input): number {
   const agi = input.line11_agi ?? 0;
   const deduction = deductionAmount(input);
   const qbi = input.line13_qbi_deduction ?? 0;
-  return Math.max(0, agi - deduction - qbi);
+  const additionalDeductions = input.line13b_additional_deductions ?? 0;
+  return Math.max(0, agi - deduction - qbi - additionalDeductions);
 }
 
 function totalTaxBeforeCredits(input: F1040Input): number {
@@ -263,7 +266,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line10 = input.line10_adjustments ?? 0;
   const computed_line11 = input.line11_agi ?? computed_line9 - computed_line10;
   const computed_line14 = (deductionAmount(input)) +
-    (input.line13_qbi_deduction ?? 0);
+    (input.line13_qbi_deduction ?? 0) +
+    (input.line13b_additional_deductions ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
   const computed_line20 = input.line20_nonrefundable_credits ?? 0;

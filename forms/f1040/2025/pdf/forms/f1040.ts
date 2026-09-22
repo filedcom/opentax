@@ -89,7 +89,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line12e_itemized_deductions",     pdfField: "topmostSubform[0].Page2[0].f2_02[0]" },
   // f2_03 = line 13a QBI deduction
   { kind: "text", domainKey: "line13_qbi_deduction",            pdfField: "topmostSubform[0].Page2[0].f2_03[0]" },
-  // f2_04 = line 13b (new 2025 — additional deductions from Schedule A-1 line 38); no domain key yet
+  { kind: "text", domainKey: "line13b_additional_deductions", pdfField: "topmostSubform[0].Page2[0].f2_04[0]" },
   { kind: "text", domainKey: "line14_deductions_qbi_total",     pdfField: "topmostSubform[0].Page2[0].f2_05[0]" },
   { kind: "text", domainKey: "line15_taxable_income",           pdfField: "topmostSubform[0].Page2[0].f2_06[0]" },
 

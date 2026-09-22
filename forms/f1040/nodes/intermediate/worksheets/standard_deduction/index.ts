@@ -34,6 +34,9 @@ export const inputSchema = z.object({
   // From form8995 / form8995a — qualified business income deduction (Form 1040 Line 13)
   qbi_deduction: z.number().nonnegative().optional(),
 
+  // From Schedule 1-A: qualified tips and other additional deductions (Form 1040 Line 13b)
+  additional_deductions: z.number().nonnegative().optional(),
+
   // From nol_carryforward — NOL deduction (IRC §172) applied after standard/itemized deduction
   // Post-2017 NOLs limited to 80% of pre-NOL taxable income; pre-2018 NOLs limited to 100%.
   nol_deduction: z.number().nonnegative().optional(),
@@ -113,8 +116,9 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
 
     const { deduction, takingStandard } = resolveDeduction(input, cfg);
     const qbi = input.qbi_deduction ?? 0;
+    const additionalDeductions = input.additional_deductions ?? 0;
     const nol = input.nol_deduction ?? 0;
-    const taxableIncome = Math.max(0, Math.max(0, input.agi - deduction) - qbi - nol);
+    const taxableIncome = Math.max(0, Math.max(0, input.agi - deduction) - qbi - additionalDeductions - nol);
 
     const outputs: NodeOutput[] = [];
 
@@ -131,7 +135,7 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         filing_status: input.filing_status,
       }),
       this.outputNodes.output(form_1116, {
-        general_deductions: deduction + qbi + nol,
+        general_deductions: deduction + qbi + additionalDeductions + nol,
       }),
     );
 
