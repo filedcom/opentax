@@ -13,7 +13,11 @@ import { nodeInspectCommand, nodeListCommand } from "./commands/node.ts";
 import { createReturnCommand, getReturnCommand } from "./commands/return.ts";
 import { exportMefCommand, exportPdfCommand } from "./commands/export.ts";
 import { validateReturnCommand } from "./commands/validate.ts";
-import { checkForUpdate, updateCommand, versionCommand } from "./commands/version.ts";
+import {
+  checkForUpdate,
+  updateCommand,
+  versionCommand,
+} from "./commands/version.ts";
 
 const RETURNS_DIR = "./.state/returns";
 
@@ -56,12 +60,20 @@ const COMMANDS: readonly CommandDef[] = [
     description: "Inspect a node's input schema and output nodes",
     usage: "opentax node inspect --node_type <type>",
     options: [
-      { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
+      {
+        flag: "--node_type",
+        description: "Node type identifier (e.g. w2)",
+        required: true,
+      },
       { flag: "--json", description: "Output as JSON" },
     ],
     handler: async (args) => {
       const nodeType = requireArg("node_type", args.node_type);
-      await run(() => Promise.resolve(nodeInspectCommand({ nodeType, json: args.json === true })));
+      await run(() =>
+        Promise.resolve(
+          nodeInspectCommand({ nodeType, json: args.json === true }),
+        )
+      );
     },
   },
   {
@@ -80,7 +92,9 @@ const COMMANDS: readonly CommandDef[] = [
         Deno.exit(1);
       }
       const formType = args.form ?? "f1040";
-      await run(() => createReturnCommand({ year, formType, baseDir: RETURNS_DIR }));
+      await run(() =>
+        createReturnCommand({ year, formType, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -100,25 +114,57 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "return",
     sub: "export",
     description: "Export a return as MEF XML or filled IRS PDF",
-    usage: "opentax return export --returnId <id> --type mef|pdf [--force] [--output <path>]",
+    usage:
+      "opentax return export --returnId <id> --type mef|pdf [--force] [--draft] [--output <path>]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--type", description: "Export format: mef or pdf", required: true },
-      { flag: "--force", description: "Bypass reject-severity validation gate", required: false },
-      { flag: "--output", description: "Output file path (pdf only; default: returns/<id>/export.pdf)", required: false },
+      {
+        flag: "--type",
+        description: "Export format: mef or pdf",
+        required: true,
+      },
+      {
+        flag: "--force",
+        description: "Bypass reject-severity validation gate",
+        required: false,
+      },
+      {
+        flag: "--draft",
+        description:
+          "Always label output as draft; allow incomplete calculations for review",
+        required: false,
+      },
+      {
+        flag: "--output",
+        description:
+          "Output file path (pdf only; default: returns/<id>/export.pdf)",
+        required: false,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const force = args.force === true || args.force === "true";
+      const draft = args.draft === true || args.draft === "true";
       if (args.type === "mef") {
         await run(async () => {
-          const xml = await exportMefCommand({ returnId, baseDir: RETURNS_DIR, force });
+          const xml = await exportMefCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+          });
           console.log(xml);
         });
       } else if (args.type === "pdf") {
         await run(async () => {
           const outputPath = args.output as string | undefined;
-          const writtenPath = await exportPdfCommand({ returnId, baseDir: RETURNS_DIR, force, outputPath });
+          const writtenPath = await exportPdfCommand({
+            returnId,
+            baseDir: RETURNS_DIR,
+            force,
+            draft,
+            outputPath,
+          });
           console.log(`PDF written to ${writtenPath}`);
         });
       } else {
@@ -134,7 +180,11 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form add --returnId <id> --node_type <type> '{...}'",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--node_type", description: "Node type identifier (e.g. w2)", required: true },
+      {
+        flag: "--node_type",
+        description: "Node type identifier (e.g. w2)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
@@ -144,7 +194,9 @@ const COMMANDS: readonly CommandDef[] = [
         console.error("Error: JSON data argument is required");
         Deno.exit(1);
       }
-      await run(() => formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formAddCommand({ returnId, nodeType, dataJson, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -159,7 +211,9 @@ const COMMANDS: readonly CommandDef[] = [
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const nodeType = args.node_type as string | undefined;
-      await run(() => formListCommand({ returnId, baseDir: RETURNS_DIR, nodeType }));
+      await run(() =>
+        formListCommand({ returnId, baseDir: RETURNS_DIR, nodeType })
+      );
     },
   },
   {
@@ -169,12 +223,18 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form get --returnId <id> --entryId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+      {
+        flag: "--entryId",
+        description: "Entry identifier (e.g. w2_01)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const entryId = requireArg("entryId", args.entryId);
-      await run(() => formGetCommand({ returnId, entryId, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formGetCommand({ returnId, entryId, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -184,7 +244,11 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form update --returnId <id> --entryId <id> '{...}'",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+      {
+        flag: "--entryId",
+        description: "Entry identifier (e.g. w2_01)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
@@ -194,7 +258,9 @@ const COMMANDS: readonly CommandDef[] = [
         console.error("Error: JSON data argument is required");
         Deno.exit(1);
       }
-      await run(() => formUpdateCommand({ returnId, entryId, dataJson, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formUpdateCommand({ returnId, entryId, dataJson, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -204,12 +270,18 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax form delete --returnId <id> --entryId <id>",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--entryId", description: "Entry identifier (e.g. w2_01)", required: true },
+      {
+        flag: "--entryId",
+        description: "Entry identifier (e.g. w2_01)",
+        required: true,
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
       const entryId = requireArg("entryId", args.entryId);
-      await run(() => formDeleteCommand({ returnId, entryId, baseDir: RETURNS_DIR }));
+      await run(() =>
+        formDeleteCommand({ returnId, entryId, baseDir: RETURNS_DIR })
+      );
     },
   },
   {
@@ -219,11 +291,16 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax return validate --returnId <id> [--format text|json]",
     options: [
       { flag: "--returnId", description: "Return identifier", required: true },
-      { flag: "--format", description: "Output format: text or json (default: json)" },
+      {
+        flag: "--format",
+        description: "Output format: text or json (default: json)",
+      },
     ],
     handler: async (args) => {
       const returnId = requireArg("returnId", args.returnId);
-      const format = (args.format === "text" ? "text" : "json") as "text" | "json";
+      const format = (args.format === "text" ? "text" : "json") as
+        | "text"
+        | "json";
       await run(async () => {
         const { report, formatted } = await validateReturnCommand({
           returnId,
@@ -245,7 +322,10 @@ const COMMANDS: readonly CommandDef[] = [
     usage: "opentax node graph --node_type start [--depth <n>] [--json]",
     options: [
       { flag: "--node_type", description: "Root node type", required: true },
-      { flag: "--depth", description: "Max traversal depth (default: unlimited)" },
+      {
+        flag: "--depth",
+        description: "Max traversal depth (default: unlimited)",
+      },
       { flag: "--json", description: "Output as JSON instead of Mermaid" },
     ],
     handler: async (args) => {
@@ -256,7 +336,9 @@ const COMMANDS: readonly CommandDef[] = [
         Deno.exit(1);
       }
       await run(() =>
-        Promise.resolve(graphViewCommand({ nodeType, depth, json: args.json === true }))
+        Promise.resolve(
+          graphViewCommand({ nodeType, depth, json: args.json === true }),
+        )
       );
     },
   },
@@ -270,13 +352,26 @@ const TOP_LEVEL: Record<string, () => Promise<void> | void> = {
 
 const TOP_LEVEL_DEFS: readonly TopLevelDef[] = [
   { usage: "opentax version", description: "Show the current version" },
-  { usage: "opentax update", description: "Download and install the latest release" },
+  {
+    usage: "opentax update",
+    description: "Download and install the latest release",
+  },
 ];
 
 async function main(): Promise<void> {
   const args = parseArgs(Deno.args, {
-    string: ["year", "returnId", "node_type", "depth", "type", "form", "entryId", "format", "output"],
-    boolean: ["json", "help"],
+    string: [
+      "year",
+      "returnId",
+      "node_type",
+      "depth",
+      "type",
+      "form",
+      "entryId",
+      "format",
+      "output",
+    ],
+    boolean: ["json", "help", "draft"],
     alias: { h: "help" },
   }) as unknown as ParsedArgs;
 
