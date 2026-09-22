@@ -1,5 +1,6 @@
 import { join } from "@std/path";
 import { catalog } from "../../catalog.ts";
+import type { FormDefinition } from "../../core/types/form-definition.ts";
 import {
   appendInput,
   deleteInput,
@@ -14,6 +15,18 @@ function getCatalogEntry(formType: string, year: number) {
   const def = catalog[key];
   if (!def) throw new Error(`Unsupported form: ${key}`);
   return def;
+}
+
+function getUserInputSchema(def: FormDefinition, nodeType: string) {
+  const entry = def.inputNodes.find((candidate) => candidate.node.nodeType === nodeType);
+  if (entry) return entry.isArray ? entry.itemSchema : entry.inputSchema;
+
+  // The start node is the graph's composite input and is routed directly.
+  if (nodeType === "start") return def.registry.start.inputSchema;
+
+  throw new Error(
+    `Node type ${nodeType} is not a valid input for ${def.formType}/${def.taxYear}`,
+  );
 }
 
 // ─── form add ─────────────────────────────────────────────────────────────────
@@ -44,18 +57,12 @@ export async function formAddCommand(
   const meta = await loadMeta(returnPath);
   const def = getCatalogEntry(meta.formType ?? "f1040", meta.year);
 
-  const entrySchemas = Object.fromEntries(
-    def.inputNodes
-      .filter((e): e is Extract<typeof e, { isArray: true }> => e.isArray)
-      .map((e) => [e.node.nodeType, e.itemSchema]),
-  );
-
   const node = def.registry[args.nodeType];
   if (!node) {
     throw new Error(`Unknown node type: ${args.nodeType}`);
   }
 
-  const schema = entrySchemas[args.nodeType] ?? node.inputSchema;
+  const schema = getUserInputSchema(def, args.nodeType);
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
@@ -137,18 +144,12 @@ export async function formUpdateCommand(
   // Find the existing entry to determine its nodeType for validation
   const existing = await getInput(returnPath, args.entryId);
 
-  const entrySchemas = Object.fromEntries(
-    def.inputNodes
-      .filter((e): e is Extract<typeof e, { isArray: true }> => e.isArray)
-      .map((e) => [e.node.nodeType, e.itemSchema]),
-  );
-
   const node = def.registry[existing.nodeType];
   if (!node) {
     throw new Error(`Unknown node type: ${existing.nodeType}`);
   }
 
-  const schema = entrySchemas[existing.nodeType] ?? node.inputSchema;
+  const schema = getUserInputSchema(def, existing.nodeType);
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);

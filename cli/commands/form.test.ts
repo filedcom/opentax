@@ -128,6 +128,29 @@ Deno.test("formAddCommand unknown nodeType rejects with Unknown node type", asyn
   }
 });
 
+Deno.test("formAddCommand rejects registered intermediate nodes that cannot run as inputs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "form2555",
+          dataJson: '{"foreign_wages":100000,"bona_fide_resident":true}',
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Node type form2555 is not a valid input for f1040/2025",
+    );
+
+    const inputs = await loadInputs(`${tmpDir}/${returnId}`);
+    assertEquals(inputs["form2555"], undefined);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 // ─── form list ───────────────────────────────────────────────────────────────
 
 Deno.test("formListCommand returns empty array for fresh return", async () => {
@@ -278,6 +301,32 @@ Deno.test("formUpdateCommand validates against schema", async () => {
         }),
       Error,
       "Validation error",
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("formUpdateCommand rejects legacy stored intermediate nodes", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "form2555", {
+      foreign_wages: 100000,
+      bona_fide_resident: true,
+    });
+
+    await assertRejects(
+      () =>
+        formUpdateCommand({
+          returnId,
+          entryId: "form2555_01",
+          dataJson: '{"foreign_wages":90000,"bona_fide_resident":true}',
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Node type form2555 is not a valid input for f1040/2025",
     );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });

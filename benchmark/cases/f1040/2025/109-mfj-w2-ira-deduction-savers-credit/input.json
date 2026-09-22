@@ -52,14 +52,6 @@
         "active_participant": false,
         "spouse_active_participant": false
       }
-    },
-    {
-      "node_type": "form8880",
-      "data": {
-        "ira_contributions_taxpayer": 7000,
-        "agi": 63000,
-        "filing_status": "mfj"
-      }
     }
   ]
 }
