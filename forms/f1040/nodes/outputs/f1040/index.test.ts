@@ -184,6 +184,13 @@ Deno.test("f1040: total income includes capital gains and interest", () => {
   assertEquals(f.line9_total_income, 56_500);
 });
 
+Deno.test("f1040: ordinary dividends from multiple sources are summed", () => {
+  const f = fields({ line3b_ordinary_dividends: [400, 300, 125] });
+  assertEquals(f.line3b_ordinary_dividends, 825);
+  assertEquals(f.line9_total_income, 825);
+  assertEquals(f.line11_agi, 825);
+});
+
 Deno.test("f1040: QBI deduction reduces taxable income", () => {
   const f = fields({
     line11_agi: 100_000,

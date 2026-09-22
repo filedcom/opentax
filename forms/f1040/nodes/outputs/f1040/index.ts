@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { TaxNode, type NodeResult } from "../../../../../core/types/tax-node.ts";
+import {
+  type NodeResult,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -51,8 +54,8 @@ const inputSchema = z.object({
   line2b_taxable_interest: z.number().optional(),
   // Line 3a — Qualified dividends (accumulable: k1_partnership + f1099div both route here)
   line3a_qualified_dividends: accumulable(z.number().nonnegative()).optional(),
-  // Line 3b — Ordinary dividends
-  line3b_ordinary_dividends: z.number().optional(),
+  // Line 3b — Ordinary dividends (accumulable: direct 1099-DIV and Schedule B)
+  line3b_ordinary_dividends: accumulable(z.number()).optional(),
   // Line 4a — IRA distributions, gross
   line4a_ira_gross: z.number().nonnegative().optional(),
   // Line 4b — IRA distributions, taxable amount
@@ -168,7 +171,7 @@ function totalIncome(input: F1040Input): number {
   return (
     wages +
     (input.line2b_taxable_interest ?? 0) +
-    (input.line3b_ordinary_dividends ?? 0) +
+    sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
     (input.line5b_pension_taxable ?? 0) +
     (input.line6b_ss_taxable ?? 0) +
@@ -181,12 +184,16 @@ function totalIncome(input: F1040Input): number {
 function deductionAmount(input: F1040Input): number {
   // Itemized deductions take precedence only when they are non-zero.
   // A value of 0 means no itemized deductions were provided, not that itemized = $0.
-  if ((input.line12e_itemized_deductions ?? 0) > 0) return input.line12e_itemized_deductions!;
+  if ((input.line12e_itemized_deductions ?? 0) > 0) {
+    return input.line12e_itemized_deductions!;
+  }
   return input.line12a_standard_deduction ?? 0;
 }
 
 function taxableIncome(input: F1040Input): number {
-  if (input.line15_taxable_income !== undefined) return input.line15_taxable_income;
+  if (input.line15_taxable_income !== undefined) {
+    return input.line15_taxable_income;
+  }
   const agi = input.line11_agi ?? 0;
   const deduction = deductionAmount(input);
   const qbi = input.line13_qbi_deduction ?? 0;
@@ -198,7 +205,8 @@ function totalTaxBeforeCredits(input: F1040Input): number {
 }
 
 function creditsTotal(input: F1040Input): number {
-  return (input.line19_child_tax_credit ?? 0) + (input.line20_nonrefundable_credits ?? 0);
+  return (input.line19_child_tax_credit ?? 0) +
+    (input.line20_nonrefundable_credits ?? 0);
 }
 
 function taxAfterCredits(input: F1040Input): number {
@@ -242,7 +250,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line9 = totalIncome(input);
   const computed_line10 = input.line10_adjustments ?? 0;
   const computed_line11 = input.line11_agi ?? computed_line9 - computed_line10;
-  const computed_line14 = (deductionAmount(input)) + (input.line13_qbi_deduction ?? 0);
+  const computed_line14 = (deductionAmount(input)) +
+    (input.line13_qbi_deduction ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
   const computed_line20 = input.line20_nonrefundable_credits ?? 0;
@@ -282,34 +291,79 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   // f1040 pending dict by upstream nodes (schedule3, etc.) before this node runs.
   // Re-emitting them here would cause the executor to merge-accumulate duplicates.
   // They are used above for line21/line22/line24 computation — no re-emission needed.
-  if (input.line26_estimated_tax !== undefined) result.line26_estimated_tax = input.line26_estimated_tax;
-  if (input.line30_refundable_adoption !== undefined) result.line30_refundable_adoption = input.line30_refundable_adoption;
-  if (input.line31_additional_payments !== undefined) result.line31_additional_payments = input.line31_additional_payments;
+  if (input.line26_estimated_tax !== undefined) {
+    result.line26_estimated_tax = input.line26_estimated_tax;
+  }
+  if (input.line30_refundable_adoption !== undefined) {
+    result.line30_refundable_adoption = input.line30_refundable_adoption;
+  }
+  if (input.line31_additional_payments !== undefined) {
+    result.line31_additional_payments = input.line31_additional_payments;
+  }
 
   // Conditionally include optional pass-through fields
   // Wage lines are already in f1040 pending. Re-emitting them here would turn
   // each value into an array when the executor merges this node's own output.
-  if (input.line2a_tax_exempt !== undefined) result.line2a_tax_exempt = input.line2a_tax_exempt;
-  if (input.line2b_taxable_interest !== undefined) result.line2b_taxable_interest = input.line2b_taxable_interest;
-  const line3a = sumField(input.line3a_qualified_dividends as number | number[] | undefined);
+  if (input.line2a_tax_exempt !== undefined) {
+    result.line2a_tax_exempt = input.line2a_tax_exempt;
+  }
+  if (input.line2b_taxable_interest !== undefined) {
+    result.line2b_taxable_interest = input.line2b_taxable_interest;
+  }
+  const line3a = sumField(
+    input.line3a_qualified_dividends as number | number[] | undefined,
+  );
   if (line3a > 0) result.line3a_qualified_dividends = line3a;
-  if (input.line3b_ordinary_dividends !== undefined) result.line3b_ordinary_dividends = input.line3b_ordinary_dividends;
-  if (input.line4a_ira_gross !== undefined) result.line4a_ira_gross = input.line4a_ira_gross;
-  if (input.line4b_ira_taxable !== undefined) result.line4b_ira_taxable = input.line4b_ira_taxable;
-  if (input.line5a_pension_gross !== undefined) result.line5a_pension_gross = input.line5a_pension_gross;
-  if (input.line5b_pension_taxable !== undefined) result.line5b_pension_taxable = input.line5b_pension_taxable;
-  if (input.line6a_ss_gross !== undefined) result.line6a_ss_gross = input.line6a_ss_gross;
-  if (input.line6b_ss_taxable !== undefined) result.line6b_ss_taxable = input.line6b_ss_taxable;
-  if (input.line7_capital_gain !== undefined) result.line7_capital_gain = input.line7_capital_gain;
-  if (input.line7a_cap_gain_distrib !== undefined) result.line7a_cap_gain_distrib = input.line7a_cap_gain_distrib;
-  if (input.line12a_standard_deduction !== undefined) result.line12a_standard_deduction = input.line12a_standard_deduction;
-  if (input.line12e_itemized_deductions !== undefined) result.line12e_itemized_deductions = input.line12e_itemized_deductions;
-  if (input.line13_qbi_deduction !== undefined) result.line13_qbi_deduction = input.line13_qbi_deduction;
-  if (input.line16_income_tax !== undefined) result.line16_income_tax = input.line16_income_tax;
-  if (input.line17_additional_taxes !== undefined) result.line17_additional_taxes = input.line17_additional_taxes;
-  if (input.line19_child_tax_credit !== undefined) result.line19_child_tax_credit = input.line19_child_tax_credit;
-  if (input.line25a_w2_withheld !== undefined) result.line25a_w2_withheld = input.line25a_w2_withheld;
-  const line25b = sumField(input.line25b_withheld_1099 as number | number[] | undefined);
+  const line3b = sumField(input.line3b_ordinary_dividends);
+  if (line3b > 0) result.line3b_ordinary_dividends = line3b;
+  if (input.line4a_ira_gross !== undefined) {
+    result.line4a_ira_gross = input.line4a_ira_gross;
+  }
+  if (input.line4b_ira_taxable !== undefined) {
+    result.line4b_ira_taxable = input.line4b_ira_taxable;
+  }
+  if (input.line5a_pension_gross !== undefined) {
+    result.line5a_pension_gross = input.line5a_pension_gross;
+  }
+  if (input.line5b_pension_taxable !== undefined) {
+    result.line5b_pension_taxable = input.line5b_pension_taxable;
+  }
+  if (input.line6a_ss_gross !== undefined) {
+    result.line6a_ss_gross = input.line6a_ss_gross;
+  }
+  if (input.line6b_ss_taxable !== undefined) {
+    result.line6b_ss_taxable = input.line6b_ss_taxable;
+  }
+  if (input.line7_capital_gain !== undefined) {
+    result.line7_capital_gain = input.line7_capital_gain;
+  }
+  if (input.line7a_cap_gain_distrib !== undefined) {
+    result.line7a_cap_gain_distrib = input.line7a_cap_gain_distrib;
+  }
+  if (input.line12a_standard_deduction !== undefined) {
+    result.line12a_standard_deduction = input.line12a_standard_deduction;
+  }
+  if (input.line12e_itemized_deductions !== undefined) {
+    result.line12e_itemized_deductions = input.line12e_itemized_deductions;
+  }
+  if (input.line13_qbi_deduction !== undefined) {
+    result.line13_qbi_deduction = input.line13_qbi_deduction;
+  }
+  if (input.line16_income_tax !== undefined) {
+    result.line16_income_tax = input.line16_income_tax;
+  }
+  if (input.line17_additional_taxes !== undefined) {
+    result.line17_additional_taxes = input.line17_additional_taxes;
+  }
+  if (input.line19_child_tax_credit !== undefined) {
+    result.line19_child_tax_credit = input.line19_child_tax_credit;
+  }
+  if (input.line25a_w2_withheld !== undefined) {
+    result.line25a_w2_withheld = input.line25a_w2_withheld;
+  }
+  const line25b = sumField(
+    input.line25b_withheld_1099 as number | number[] | undefined,
+  );
   if (line25b > 0) result.line25b_withheld_1099 = line25b;
 
   if (balance >= 0) {
