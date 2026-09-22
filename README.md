@@ -332,6 +332,14 @@ End-to-end form builder. Researches IRS instructions, extracts ground truth, bui
 
 ---
 
+## Contributors
+
+Thanks to everyone who has contributed!
+
+[![Contributors](https://contrib.rocks/image?repo=filedcom/opentax)](https://github.com/filedcom/opentax/graphs/contributors)
+
+---
+
 ## License
 
 Dual-licensed under [AGPL v3](./LICENSE) and the [Filed Commercial License](./LICENSE.commercial).
