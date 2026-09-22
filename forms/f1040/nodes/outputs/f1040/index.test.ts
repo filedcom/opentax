@@ -88,6 +88,36 @@ Deno.test("f1040: computes amount owed when tax exceeds payments", () => {
   assertEquals(f.line37_amount_owed, 5_000);
 });
 
+Deno.test("f1040: adds an underpayment penalty to amount owed", () => {
+  const f = fields({
+    line16_income_tax: 10_000,
+    line25a_w2_withheld: 5_000,
+    line38_underpayment_penalty: 250,
+  });
+  assertEquals(f.line37_amount_owed, 5_250);
+});
+
+Deno.test("f1040: subtracts an underpayment penalty from a refund", () => {
+  const f = fields({
+    line16_income_tax: 5_000,
+    line25a_w2_withheld: 7_000,
+    line38_underpayment_penalty: 250,
+  });
+  assertEquals(f.line34_overpayment, 2_000);
+  assertEquals(f.line35a_refund, 1_750);
+});
+
+Deno.test("f1040: penalty above overpayment becomes amount owed", () => {
+  const f = fields({
+    line16_income_tax: 5_000,
+    line25a_w2_withheld: 5_100,
+    line38_underpayment_penalty: 250,
+  });
+  assertEquals(f.line34_overpayment, 100);
+  assertEquals(f.line35a_refund, 0);
+  assertEquals(f.line37_amount_owed, 150);
+});
+
 Deno.test("f1040: AMT added to line16 for total tax before credits", () => {
   const f = fields({
     line16_income_tax: 10_000,
