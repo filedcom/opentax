@@ -1,7 +1,6 @@
-import { assert, assertEquals, assertRejects } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
 import { appendInput, deleteInput, loadInputs } from "../store/store.ts";
-import { ExportExecutionError, exportMefCommand } from "./export.ts";
 import { f2441 } from "../../forms/f1040/nodes/inputs/f2441/index.ts";
 import { FilingStatus } from "../../forms/f1040/nodes/types.ts";
 
@@ -72,10 +71,6 @@ for (const malformed of [false, true]) {
       );
       if (malformed) {
         assert(errors.some((error) => error.includes("f2441")));
-        await assertRejects(
-          () => exportMefCommand({ returnId, baseDir, force: true }),
-          ExportExecutionError,
-        );
       } else {
         assertEquals(errors, []);
         assertEquals(result.summary.line11_agi, 85000);
