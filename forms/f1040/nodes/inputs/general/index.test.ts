@@ -460,7 +460,7 @@ Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all ou
     ],
   });
 
-  assertEquals(result.outputs.length, 10, "ten outputs (f1040 + standard_deduction + eitc + agi_aggregator + form8959 + form8960 + form8582 + scheduleA + form8995 + f8812)");
+  assertEquals(result.outputs.length, 11, "eleven outputs including Schedule 1-A eligibility context");
 
   const out = findOutput(result, "f1040");
   const input = out?.fields as Record<string, unknown>;
@@ -644,7 +644,7 @@ Deno.test("smoke: all new major fields populated → routes correctly to f1040",
     ],
   });
 
-  assertEquals(result.outputs.length, 10);
+  assertEquals(result.outputs.length, 11);
   const input = findOutput(result, "f1040")?.fields as Record<string, unknown>;
   assertEquals(input?.filing_status, FilingStatus.MFJ);
   // First child (age 15) qualifies for CTC; second (age 23, student) does not

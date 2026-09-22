@@ -230,6 +230,16 @@ Deno.test("f1040: QBI deduction reduces taxable income", () => {
   assertEquals(f.line15_taxable_income, 80_000);
 });
 
+Deno.test("f1040: Schedule 1-A deduction reduces taxable income and increases line 14", () => {
+  const f = fields({
+    line11_agi: 30_000,
+    line12a_standard_deduction: 15_750,
+    line13b_additional_deductions: 5_000,
+  });
+  assertEquals(f.line14_deductions_qbi_total, 20_750);
+  assertEquals(f.line15_taxable_income, 9_250);
+});
+
 Deno.test("f1040: accepts explicit line9 total income override", () => {
   const f = fields({
     line9_total_income: 200_000,

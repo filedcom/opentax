@@ -149,6 +149,16 @@ Deno.test("f1040 line15_taxable_income matches income_tax_calculation taxable_in
   assertEquals(line15, (incTax!.fields as Record<string, number>).taxable_income);
 });
 
+Deno.test("Schedule 1-A additional deductions reduce taxable income", () => {
+  const result = compute({ filing_status: FilingStatus.Single, agi: 30_000, additional_deductions: 5_000 });
+  const f1040Output = result.outputs.find((output) =>
+    output.nodeType === "f1040" && output.fields.line15_taxable_income !== undefined
+  );
+  const taxOutput = findOutput(result, "income_tax_calculation");
+  assertEquals(f1040Output?.fields.line15_taxable_income, 9_250);
+  assertEquals(taxOutput?.fields.taxable_income, 9_250);
+});
+
 Deno.test("income_tax_calculation receives filing_status", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const incTax = findOutput(result, "income_tax_calculation");

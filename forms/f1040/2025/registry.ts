@@ -186,6 +186,7 @@ import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator
 import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { qdcgtw } from "../nodes/intermediate/worksheets/qdcgtw/index.ts";
 import { standard_deduction } from "../nodes/intermediate/worksheets/standard_deduction/index.ts";
+import { schedule1a } from "../nodes/intermediate/forms/schedule1a/index.ts";
 
 import { alimony_received } from "../nodes/inputs/alimony_received/index.ts";
 
@@ -384,6 +385,7 @@ export const registry: NodeRegistry = {
   income_tax_calculation,
   qdcgtw,
   standard_deduction,
+  schedule1a,
 
   alimony_received,
 

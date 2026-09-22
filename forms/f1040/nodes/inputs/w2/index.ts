@@ -26,6 +26,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { f8812 } from "../f8812/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 
 export enum Box12Code {
   A = "A",     // Uncollected SS tax on tips
@@ -87,7 +88,7 @@ export const w2ItemSchema = z.object({
   box13_retirement_plan: z.boolean().optional().describe("Retirement plan participant — affects IRA deduction phaseout"),
   box13_third_party_sick: z.boolean().optional().describe("Third-party sick pay — excluded from SE tax"),
   box14_entries: z.array(box14EntrySchema).optional().describe("Other — employer-labeled items; SDI/PFML deductible on Sch A"),
-  box14b_tipped_code: z.string().optional().describe("Tipped employee code (state use)"),
+  box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe("Treasury Tipped Occupation Code"),
   box15_state: z.string().optional().describe("State abbreviation"),
   box16_state_wages: z.number().nonnegative().optional().describe("State wages, tips, etc."),
   box17_state_withheld: z.number().nonnegative().optional().describe("State income tax withheld"),
@@ -298,6 +299,15 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
   return [output(schedule_se, { w2_ss_wages: totalSsWages })];
 }
 
+function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
+  const total = regularItems(w2s)
+    .filter((item) => item.box14b_tipped_code !== undefined)
+    .reduce((sum, item) => sum + (item.box7_ss_tips ?? 0), 0);
+  return total > 0
+    ? [output(schedule1a, { qualified_employee_tips: total })]
+    : [];
+}
+
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
   const sum = (...codes: Box12Code[]) =>
@@ -363,6 +373,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     form8962,
     ira_deduction_worksheet,
     f8812,
+    schedule1a,
   ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -387,6 +398,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
       ...scheduleSEOutput(input.w2s),
+      ...qualifiedTipsOutput(input.w2s),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];

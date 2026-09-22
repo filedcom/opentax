@@ -15,6 +15,7 @@ import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { scheduleC } from "../schedule_c/index.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 
 // ============================================================
 // Helpers
@@ -74,6 +75,32 @@ Deno.test("box8_allocated_tips_routes_to_form4137: $2,000 allocated tips appear 
 Deno.test("box10_dep_care_routes_to_form2441: $3,000 dep care appears exactly on form2441", () => {
   const result = compute([minimalItem({ box1_wages: 70000, box10_dep_care: 3000 })]);
   assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 3000);
+});
+
+Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () => {
+  const result = compute([minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000, box14b_tipped_code: "102" })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, 5_000);
+});
+
+Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1-A", () => {
+  const result = compute([minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000 })]);
+  assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
+});
+
+Deno.test("qualified tips are summed across eligible W-2s only", () => {
+  const result = compute([
+    minimalItem({ box1_wages: 20_000, box7_ss_tips: 2_000, box14b_tipped_code: "102" }),
+    minimalItem({ box1_wages: 20_000, box7_ss_tips: 3_000, box14b_tipped_code: "203" }),
+    minimalItem({ box1_wages: 20_000, box7_ss_tips: 4_000 }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, 5_000);
+});
+
+Deno.test("invalid tipped occupation code is rejected", () => {
+  const parsed = w2.inputSchema.safeParse({
+    w2s: [minimalItem({ box7_ss_tips: 1_000, box14b_tipped_code: "restaurant" })],
+  });
+  assertEquals(parsed.success, false);
 });
 
 Deno.test("box13_retirement_plan_routes_ira_worksheet: covered_by_retirement_plan = true", () => {
