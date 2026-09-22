@@ -27,6 +27,7 @@ import { form8880 } from "../../forms/form8880/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { schedule1a } from "../../forms/schedule1a/index.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -474,6 +475,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     form8880,
     form8582,
     form_1116,
+    schedule1a,
   ]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
@@ -513,6 +515,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8960, { magi: agi }),
       // Pass AGI as household_income to form8962 for PTC eligibility and reconciliation
       this.outputNodes.output(form8962, { household_income: agi }),
+      this.outputNodes.output(schedule1a, { magi: agi }),
       // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
       this.outputNodes.output(form8880, {
         agi,

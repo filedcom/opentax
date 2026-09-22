@@ -17,6 +17,7 @@ import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { FilingStatus } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
@@ -390,7 +391,7 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
 class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "general";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc, f8812, agi_aggregator, form8959, form8960, form8995, form8582, scheduleA]);
+  readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc, f8812, agi_aggregator, form8959, form8960, form8995, form8582, scheduleA, schedule1a]);
 
   compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -426,6 +427,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8582, { filing_status: parsed.filing_status }),
       // Pass filing_status to schedule_a for OBBBA SALT phase-out threshold
       this.outputNodes.output(scheduleA, { filing_status: parsed.filing_status }),
+      this.outputNodes.output(schedule1a, {
+        filing_status: parsed.filing_status,
+        has_valid_ssn: Boolean(parsed.taxpayer_ssn),
+      }),
       // Pass filing_status and age/blindness flags to form8995 so the income limit uses
       // the same standard deduction amount as the standard_deduction worksheet.
       this.outputNodes.output(form8995, {
