@@ -139,3 +139,11 @@ for (const descriptor of ALL_PDF_FORMS) {
     },
   );
 }
+
+// Form 1116's pending slot also collects the §904 limitation inputs, which are
+// deposited on every return. presenceKey keeps the form off returns with no
+// foreign tax.
+Deno.test("form_1116: gated on a foreign tax figure via presenceKey", () => {
+  const f1116 = ALL_PDF_FORMS.find((d) => d.pendingKey === "form_1116");
+  assertEquals(f1116?.presenceKey, "foreign_tax_paid");
+});

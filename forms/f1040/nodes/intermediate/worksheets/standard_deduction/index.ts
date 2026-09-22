@@ -6,6 +6,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
+import { form_1116 } from "../../forms/form_1116/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -103,7 +104,7 @@ function resolveDeduction(
 class StandardDeductionNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "standard_deduction";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation]);
+  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation, form_1116]);
 
   compute(ctx: NodeContext, rawInput: StandardDeductionInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -128,6 +129,9 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(income_tax_calculation, {
         taxable_income: taxableIncome,
         filing_status: input.filing_status,
+      }),
+      this.outputNodes.output(form_1116, {
+        general_deductions: deduction + qbi + nol,
       }),
     );
 

@@ -6,7 +6,7 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
-import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1041) — Beneficiary's Share of Income, Deductions, Credits
@@ -82,6 +82,8 @@ export const itemSchema = z.object({
   // Box 14 — Foreign taxes → Form 1116
   box14_foreign_tax: z.number().nonnegative().optional(),
   box14_foreign_income: z.number().nonnegative().optional(),
+  box14_foreign_income_category: z.nativeEnum(IncomeCategory).optional(),
+  box14_foreign_deductions: z.number().nonnegative().optional(),
 });
 
 export const inputSchema = z.object({
@@ -223,10 +225,19 @@ function schedule1Output(items: K1TrustItems): NodeOutput[] {
 // Route foreign taxes → form_1116 (one output per K-1 with foreign taxes)
 function form1116Outputs(items: K1TrustItems): NodeOutput[] {
   return items
-    .filter((item) => (item.box14_foreign_tax ?? 0) > 0)
+    .filter((item) =>
+      (item.box14_foreign_tax ?? 0) > 0 &&
+      (item.box14_foreign_income ?? 0) > 0 &&
+      item.box14_foreign_income_category !== undefined
+    )
     .map((item) =>
       output(form_1116, {
-        foreign_tax_paid: item.box14_foreign_tax!,
+        foreign_tax_items: [{
+          foreign_tax_paid: item.box14_foreign_tax!,
+          foreign_gross_income: item.box14_foreign_income!,
+          income_category: item.box14_foreign_income_category!,
+          directly_allocable_deductions: item.box14_foreign_deductions,
+        }],
       })
     );
 }
@@ -239,20 +250,6 @@ function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
   const total = items.reduce((sum, item) => sum + (item.box9_directly_apportioned_deductions ?? 0), 0);
   if (total <= 0) return [];
   return [output(schedule1, { line8z_other_income: -total })];
-}
-
-// box13_credits: beneficiary's share of trust credits (e.g. foreign tax credit, rehab credit).
-// The most common credit is foreign tax credit (code A). Routed to form_1116.foreign_tax_paid
-// as a simplification — not all box13 credits are foreign tax, but form_1116 is the only
-// credit node currently available in outputNodes.
-function box13CreditsOutputs(items: K1TrustItems): NodeOutput[] {
-  return items
-    .filter((item) => (item.box13_credits ?? 0) > 0)
-    .map((item) =>
-      output(form_1116, {
-        foreign_tax_paid: item.box13_credits!,
-      })
-    );
 }
 
 class K1TrustNode extends TaxNode<typeof inputSchema> {
@@ -274,7 +271,6 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...schedule1Output(limitedItems),
       ...form1116Outputs(limitedItems),
       ...apportionedDeductionOutputs(limitedItems),
-      ...box13CreditsOutputs(limitedItems),
     ];
 
     return { outputs };

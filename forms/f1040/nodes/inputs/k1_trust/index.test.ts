@@ -134,9 +134,9 @@ Deno.test("box8_other_rental routes to schedule1 line5_schedule_e", () => {
 });
 
 Deno.test("box14_foreign_tax routes to form_1116", () => {
-  const result = compute([minimalItem({ box14_foreign_tax: 150 })]);
+  const result = compute([minimalItem({ box14_foreign_tax: 150, box14_foreign_income: 750, box14_foreign_income_category: "passive" })]);
   const out = findOutput(result, "form_1116");
-  assertEquals(out?.fields.foreign_tax_paid, 150);
+  assertEquals((out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 150);
 });
 
 Deno.test("zero box14 does not route to form_1116", () => {
@@ -268,6 +268,8 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
       box6_ordinary_business: 5000,
       box7_rental_real_estate: 1500,
       box14_foreign_tax: 100,
+      box14_foreign_income: 500,
+      box14_foreign_income_category: "passive",
     }),
   ]);
   const sb = findOutput(result, "schedule_b");
@@ -282,7 +284,7 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   assertEquals(sch1?.fields.line5_schedule_e, 6500);
   assertEquals(sch1?.fields.line8z_other_income, 300);
   const f1116 = findOutput(result, "form_1116");
-  assertEquals(f1116?.fields.foreign_tax_paid, 100);
+  assertEquals((f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 100);
 });
 
 // ── 10. DNI limitation (IRC §662) ─────────────────────────────────────────────

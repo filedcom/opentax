@@ -9,7 +9,7 @@ import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form8995a } from "../../intermediate/forms/form8995a/index.ts";
-import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -310,7 +310,21 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         ? FOREIGN_TAX_MFJ_THRESHOLD
         : FOREIGN_TAX_SINGLE_THRESHOLD;
       if (totalBox7 > threshold) {
-        outputs.push(this.outputNodes.output(form_1116, { foreign_tax_paid: eligibleBox7 }));
+        // Form 1116 Part I line 1a — ordinary dividends from the payers that
+        // withheld, the same items whose tax passed the holding-period test.
+        const foreignSourceDividends = div1099s
+          .filter((item) =>
+            (item.box7 ?? 0) > 0 &&
+            (item.holdingPeriodDays === undefined || item.holdingPeriodDays >= HOLDING_PERIOD_FOREIGN_DAYS)
+          )
+          .reduce((sum, item) => sum + item.box1a, 0);
+        outputs.push(this.outputNodes.output(form_1116, {
+          foreign_tax_items: [{
+            foreign_tax_paid: eligibleBox7,
+            foreign_gross_income: foreignSourceDividends,
+            income_category: IncomeCategory.Passive,
+          }],
+        }));
       } else {
         outputs.push(this.outputNodes.output(schedule3, { line1_foreign_tax_1099: eligibleBox7 }));
       }

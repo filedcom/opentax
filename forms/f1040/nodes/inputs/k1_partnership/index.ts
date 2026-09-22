@@ -8,7 +8,7 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
-import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
@@ -100,6 +100,8 @@ export const itemSchema = z.object({
   // Box 16 — Foreign taxes paid → Form 1116
   box16_foreign_tax: z.number().nonnegative().optional(),
   box16_foreign_income: z.number().nonnegative().optional(),
+  box16_foreign_income_category: z.nativeEnum(IncomeCategory).optional(),
+  box16_foreign_deductions: z.number().nonnegative().optional(),
 
   // Box 18 — Tax-exempt income and nondeductible expenses (various codes A–C)
   // Code A: tax-exempt interest income; Code B: other tax-exempt income
@@ -437,10 +439,19 @@ function form6251Outputs(items: K1PartnershipItems): NodeOutput[] {
 // Route foreign taxes → form_1116
 function form1116Outputs(items: K1PartnershipItems): NodeOutput[] {
   return items
-    .filter((item) => (item.box16_foreign_tax ?? 0) > 0)
+    .filter((item) =>
+      (item.box16_foreign_tax ?? 0) > 0 &&
+      (item.box16_foreign_income ?? 0) > 0 &&
+      item.box16_foreign_income_category !== undefined
+    )
     .map((item) =>
       output(form_1116, {
-        foreign_tax_paid: item.box16_foreign_tax!,
+        foreign_tax_items: [{
+          foreign_tax_paid: item.box16_foreign_tax!,
+          foreign_gross_income: item.box16_foreign_income!,
+          income_category: item.box16_foreign_income_category!,
+          directly_allocable_deductions: item.box16_foreign_deductions,
+        }],
       })
     );
 }

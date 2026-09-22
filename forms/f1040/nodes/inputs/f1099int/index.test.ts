@@ -364,7 +364,7 @@ Deno.test("box6 exactly at $300 single threshold routes to schedule3", () => {
 
 Deno.test("box6 above $300 single threshold routes to form_1116", () => {
   const result = compute([minimalItem({ box1: 500, box6: 350 })]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 350);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 350);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
@@ -376,7 +376,7 @@ Deno.test("box6 exactly at $600 MFJ threshold routes to schedule3", () => {
 
 Deno.test("box6 above $600 MFJ threshold routes to form_1116", () => {
   const result = compute([minimalItem({ box1: 1000, box6: 650 })], "mfj");
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 650);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 650);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
@@ -526,4 +526,22 @@ Deno.test("smoke: two payers with multiple boxes — all expected outputs presen
     350,
     "tax-exempt interest",
   );
+});
+
+// ---------------------------------------------------------------------------
+// Foreign source income for the §904 limitation (Form 1116 Part I line 1a)
+// ---------------------------------------------------------------------------
+
+Deno.test("box6 above threshold also routes box1 as foreign_income", () => {
+  const result = compute([minimalItem({ box1: 1000, box6: 500 })]);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 1000);
+});
+
+Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
+  const result = compute([
+    minimalItem({ payer_name: "FOREIGN BANK", box1: 1000, box6: 500 }),
+    minimalItem({ payer_name: "DOMESTIC BANK", box1: 4000 }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 500);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 1000);
 });

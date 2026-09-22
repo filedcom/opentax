@@ -37,6 +37,7 @@ function cacheSlug(url: string): string {
 }
 
 const F1040_PDF_URL = "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf";
+const F1116_PDF_URL = "https://www.irs.gov/pub/irs-prior/f1116--2025.pdf";
 
 /**
  * Create a minimal AcroForm PDF that contains the subset of f1040 AcroForm
@@ -218,6 +219,36 @@ Deno.test("buildPdfBytes: unknown field names produce a logged error, not silent
     assertEquals(combined.includes("[PDF]"), true);
   } finally {
     console.error = originalError;
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("buildPdfBytes: emits one Form 1116 copy per income category", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const stubPdf = await makeMinimalF1040Pdf([
+      "topmostSubform[0].Page1[0].Table_Part1_LinesI-1a[0].Line1a[0].Line1a_Text[0].f1_07[0]",
+      "topmostSubform[0].Page1[0].Table_Part1_Lines2-6[0].Line6[0].f1_47[0]",
+      "topmostSubform[0].Page1[0].f1_50[0]",
+      "topmostSubform[0].Page2[0].f2_02[0]",
+    ]);
+    await seedCache(tmpDir, F1116_PDF_URL, stubPdf);
+
+    const result = await buildPdfBytes({
+      form_1116: {
+        foreign_tax_paid: 1_400,
+        total_income: 85_000,
+        us_tax_before_credits: 13_000,
+        category_summaries: [
+          { category: "passive", foreignTaxPaid: 500, foreignGrossIncome: 1_000 },
+          { category: "general", foreignTaxPaid: 900, foreignGrossIncome: 8_000 },
+        ],
+      },
+    }, mockFiler, tmpDir);
+
+    const pdf = await PDFDocument.load(result);
+    assertEquals(pdf.getPageCount(), 2);
+  } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
 });
