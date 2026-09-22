@@ -9,7 +9,9 @@ function compute(input: Parameters<typeof f1040.compute>[1]) {
   return f1040.compute(ctx, input);
 }
 
-function fields(input: Parameters<typeof f1040.compute>[1]): Record<string, unknown> {
+function fields(
+  input: Parameters<typeof f1040.compute>[1],
+): Record<string, unknown> {
   const result = compute(input);
   return result.outputs[0].fields as Record<string, unknown>;
 }
@@ -87,13 +89,19 @@ Deno.test("f1040: computes amount owed when tax exceeds payments", () => {
 });
 
 Deno.test("f1040: AMT added to line16 for total tax before credits", () => {
-  const f = fields({ line16_income_tax: 10_000, line17_additional_taxes: 2_000 });
+  const f = fields({
+    line16_income_tax: 10_000,
+    line17_additional_taxes: 2_000,
+  });
   assertEquals(f.line18_total_tax_before_credits, 12_000);
   assertEquals(f.line24_total_tax, 12_000);
 });
 
 Deno.test("f1040: child tax credit reduces tax", () => {
-  const f = fields({ line16_income_tax: 5_000, line19_child_tax_credit: 2_000 });
+  const f = fields({
+    line16_income_tax: 5_000,
+    line19_child_tax_credit: 2_000,
+  });
   assertEquals(f.line22_tax_after_credits, 3_000);
   assertEquals(f.line24_total_tax, 3_000);
 });
@@ -106,6 +114,29 @@ Deno.test("f1040: credits cannot make tax negative", () => {
   });
   assertEquals(f.line22_tax_after_credits, 0);
   assertEquals(f.line24_total_tax, 0);
+});
+
+Deno.test("f1040: nonrefundable credits cannot offset Schedule 2 Part II taxes", () => {
+  const f = fields({
+    line16_income_tax: 300,
+    line20_nonrefundable_credits: 2_000,
+    line23_other_taxes: 2_800,
+  });
+  assertEquals(f.line18_total_tax_before_credits, 300);
+  assertEquals(f.line22_tax_after_credits, 0);
+  assertEquals(f.line24_total_tax, 2_800);
+});
+
+Deno.test("f1040: credits reduce Part I tax before Part II tax is added", () => {
+  const f = fields({
+    line16_income_tax: 1_000,
+    line17_additional_taxes: 500,
+    line19_child_tax_credit: 750,
+    line23_other_taxes: 2_000,
+  });
+  assertEquals(f.line18_total_tax_before_credits, 1_500);
+  assertEquals(f.line22_tax_after_credits, 750);
+  assertEquals(f.line24_total_tax, 2_750);
 });
 
 Deno.test("f1040: EITC included in total payments", () => {
@@ -151,6 +182,13 @@ Deno.test("f1040: total income includes capital gains and interest", () => {
     line7_capital_gain: 5_000,
   });
   assertEquals(f.line9_total_income, 56_500);
+});
+
+Deno.test("f1040: ordinary dividends from multiple sources are summed", () => {
+  const f = fields({ line3b_ordinary_dividends: [400, 300, 125] });
+  assertEquals(f.line3b_ordinary_dividends, 825);
+  assertEquals(f.line9_total_income, 825);
+  assertEquals(f.line11_agi, 825);
 });
 
 Deno.test("f1040: QBI deduction reduces taxable income", () => {

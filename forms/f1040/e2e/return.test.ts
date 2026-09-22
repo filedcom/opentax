@@ -336,7 +336,11 @@ Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reache
 
   const f1040 = result.pending["f1040"] ?? {};
   assertEquals(f1040["line24_total_tax"], 425, "total tax = 10% × $4,250");
-  assertEquals(f1040["line37_amount_owed"], 425, "amount owed (no withholding)");
+  assertEquals(
+    f1040["line37_amount_owed"],
+    425,
+    "amount owed (no withholding)",
+  );
 });
 
 Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {
@@ -373,8 +377,72 @@ Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines
 
   const f1040 = result.pending["f1040"] ?? {};
   assertEquals(f1040["line1a_wages"], 80_000, "W-2 wages stay on line 1a");
-  assertEquals(f1040["line1h_other_earned"], 20_000, "foreign wages go on line 1h");
+  assertEquals(
+    f1040["line1h_other_earned"],
+    20_000,
+    "foreign wages go on line 1h",
+  );
   assertEquals(f1040["line24_total_tax"], 13_449, "total tax on $84,250");
   assertEquals(f1040["line33_total_payments"], 10_000, "W-2 withholding");
-  assertEquals(f1040["line37_amount_owed"], 3_449, "amount owed = $13,449 − $10,000");
+  assertEquals(
+    f1040["line37_amount_owed"],
+    3_449,
+    "amount owed = $13,449 − $10,000",
+  );
+});
+
+Deno.test("E2E Scenario 4a: 1099-DIV and trust K-1 dividends combine without node failures", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [{
+      box1_wages: 30_000,
+      box2_fed_withheld: 2_000,
+    }],
+    f1099div: [{
+      payerName: "Broker",
+      isNominee: false,
+      box11: false,
+      box1a: 400,
+    }],
+    k1_trust: [{
+      estate_trust_name: "Trust",
+      box2a_ordinary_dividends: 300,
+    }],
+  });
+
+  assertEquals(
+    result.diagnostics.filter((d) =>
+      d.nodeType === "agi_aggregator" || d.nodeType === "f1040"
+    ),
+    [],
+  );
+  assertEquals(result.pending["standard_deduction"]?.["agi"], 30_700);
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    14_950,
+  );
+  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 1_555.5);
+});
+
+Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AGI", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    f1099div: [
+      { payerName: "Broker A", isNominee: false, box11: false, box1a: 100 },
+      { payerName: "Broker B", isNominee: false, box11: false, box1a: 200 },
+    ],
+    k1_trust: [
+      { estate_trust_name: "Trust A", box2a_ordinary_dividends: 300 },
+      { estate_trust_name: "Trust B", box2a_ordinary_dividends: 400 },
+    ],
+  });
+
+  assertEquals(
+    result.diagnostics.filter((d) =>
+      d.nodeType === "agi_aggregator" || d.nodeType === "f1040"
+    ),
+    [],
+  );
+  assertEquals(result.pending["standard_deduction"]?.["agi"], 1_000);
+  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 0);
 });
