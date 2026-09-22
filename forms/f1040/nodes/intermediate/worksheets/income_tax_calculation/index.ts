@@ -6,6 +6,7 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
+import { form_1116 } from "../../forms/form_1116/index.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import type { Bracket } from "../../../config/2025.ts";
@@ -153,7 +154,7 @@ function qdcgtTax(
 class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "income_tax_calculation";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form6251, f8812]);
+  readonly outputNodes = new OutputNodes([f1040, form6251, f8812, form_1116]);
 
   compute(ctx: NodeContext, rawInput: IncomeTaxCalcInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -162,9 +163,16 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
 
     if (input.taxable_income === 0) {
-      // Still notify f8812 of zero tax liability so ACTC can be computed.
+      // Still notify f8812 of zero tax liability so ACTC can be computed, and
+      // form_1116 so the §904 limitation is zero rather than absent.
       return {
-        outputs: [this.outputNodes.output(f8812, { auto_income_tax_liability: 0 })],
+        outputs: [
+          this.outputNodes.output(f8812, { auto_income_tax_liability: 0 }),
+          this.outputNodes.output(form_1116, {
+            us_tax_before_credits: 0,
+            worldwide_taxable_income: 0,
+          }),
+        ],
       };
     }
 
@@ -213,6 +221,11 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       }),
       // Feed f8812 the income tax liability for CTC nonrefundable limit calculation.
       this.outputNodes.output(f8812, { auto_income_tax_liability: tax }),
+      // Form 1116 Part III line 20 — the base the §904(a) limitation multiplies.
+      this.outputNodes.output(form_1116, {
+        us_tax_before_credits: tax,
+        worldwide_taxable_income: input.taxable_income,
+      }),
     ];
 
     return { outputs };

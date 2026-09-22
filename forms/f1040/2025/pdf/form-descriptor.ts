@@ -38,6 +38,19 @@ export interface PdfRowDescriptor {
 export interface PdfFormDescriptor {
   readonly pendingKey: string;
   readonly pdfUrl: string;
+  /**
+   * Optional gate: render the form only when this domain key holds a value.
+   * For forms whose pending slot also collects context deposited on every
+   * return (e.g. Form 1116's §904 limitation inputs).
+   */
+  readonly presenceKey?: string;
+  /**
+   * Optional instance expansion for forms that must be filed once per item or
+   * category. Each returned object is rendered as a separate copy of the PDF.
+   */
+  readonly instances?: (
+    fields: Record<string, unknown>,
+  ) => ReadonlyArray<Record<string, unknown>>;
   readonly fields: ReadonlyArray<PdfFieldEntry>;
   readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
   readonly rows?: PdfRowDescriptor;

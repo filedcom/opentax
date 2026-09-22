@@ -92,6 +92,11 @@ async function fillFormPdf(
   cacheDir: string,
   allPending?: Record<string, Record<string, unknown>>,
 ): Promise<Uint8Array | undefined> {
+  if (descriptor.presenceKey !== undefined) {
+    const gate = fields[descriptor.presenceKey];
+    if (gate === undefined || gate === null) return undefined;
+  }
+
   // A form is only emitted when it carries at least one *meaningful* value:
   // a number that doesn't round to zero, a true boolean, or a nonempty string.
   // Merely-defined zeros previously caused blank Schedule A / EIC / SE / 6251 /
@@ -208,14 +213,17 @@ export async function buildPdfBytes(
       }
       : fields;
 
-    const filledBytes = await fillFormPdf(descriptor, effectiveFields, filer, cacheDir, normalized);
-    if (!filledBytes) continue;
+    const instances = descriptor.instances?.(effectiveFields) ?? [effectiveFields];
+    for (const instance of instances) {
+      const filledBytes = await fillFormPdf(descriptor, instance, filer, cacheDir, normalized);
+      if (!filledBytes) continue;
 
-    const filledDoc = await PDFDocument.load(filledBytes);
-    const pageIndices = filledDoc.getPageIndices();
-    const copiedPages = await merged.copyPages(filledDoc, pageIndices);
-    for (const page of copiedPages) {
-      merged.addPage(page);
+      const filledDoc = await PDFDocument.load(filledBytes);
+      const pageIndices = filledDoc.getPageIndices();
+      const copiedPages = await merged.copyPages(filledDoc, pageIndices);
+      for (const page of copiedPages) {
+        merged.addPage(page);
+      }
     }
   }
 

@@ -24,6 +24,7 @@ import {
 } from "../../forms/form8582/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
+import { form_1116 } from "../../forms/form_1116/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
@@ -472,6 +473,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     form8962,
     form8880,
     form8582,
+    form_1116,
   ]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
@@ -518,6 +520,13 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
           { filing_status: input.filing_status as FilingStatus }),
       } as AtLeastOne<z.infer<typeof form8880["inputSchema"]>>),
     ];
+
+    const gross = grossIncome(input, cfg);
+    if (gross > 0) {
+      outputs.push(this.outputNodes.output(form_1116, {
+        worldwide_gross_income: gross,
+      }));
+    }
 
     // Form 8582 Part II sizes the $25,000 special allowance by modified AGI, which
     // only this node can compute — so it is handed down rather than recomputed there.

@@ -201,3 +201,63 @@ Deno.test("fec.compute: compensation_usd = 0 → no agi_aggregator output", () =
   const result = compute([minimalItem({ compensation_usd: 0 })]);
   assertEquals(result.outputs.find((o) => o.nodeType === "agi_aggregator"), undefined);
 });
+
+// =============================================================================
+// 7. Foreign Tax on Wages → Form 1116 (general category)
+// =============================================================================
+// Compensation for personal services as an employee is general category income
+// (Form 1116 Part I box d; line 1b). The §904(j) de minimis election covers only
+// passive income shown on a payee statement, so wage tax files Form 1116 at any
+// amount.
+
+Deno.test("fec.compute: foreign_tax_paid_usd routes to form_1116 as general category", () => {
+  const result = compute([minimalItem({ compensation_usd: 80000, foreign_service_compensation_usd: 80000, foreign_tax_paid_usd: 9000 })]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  const item = (f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0];
+  assertEquals(item.foreign_tax_paid, 9000);
+  assertEquals(item.foreign_gross_income, 80000);
+  assertEquals(item.income_category, "general");
+});
+
+Deno.test("fec.compute: no foreign_tax_paid_usd → no form_1116 output", () => {
+  const result = compute([minimalItem({ compensation_usd: 80000 })]);
+  assertEquals(result.outputs.find((o) => o.nodeType === "form_1116"), undefined);
+});
+
+Deno.test("fec.compute: a foreign employer alone does not make wages foreign source", () => {
+  const result = compute([minimalItem({
+    compensation_usd: 80_000,
+    foreign_tax_paid_usd: 9_000,
+  })]);
+  assertEquals(result.outputs.find((o) => o.nodeType === "form_1116"), undefined);
+});
+
+Deno.test("fec.compute: excluded foreign wages reduce the eligible foreign tax", () => {
+  const result = compute([minimalItem({
+    compensation_usd: 80_000,
+    foreign_service_compensation_usd: 80_000,
+    foreign_earned_income_exclusion_usd: 20_000,
+    foreign_tax_paid_usd: 8_000,
+  })]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  const item = (f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0];
+  assertEquals(item.foreign_tax_paid, 6_000);
+  assertEquals(item.excluded_income, 20_000);
+});
+
+Deno.test("fec.compute: wage tax below the $300 de minimis still files form_1116", () => {
+  const result = compute([minimalItem({ compensation_usd: 20000, foreign_service_compensation_usd: 20000, foreign_tax_paid_usd: 200 })]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  assertEquals((f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 200);
+});
+
+Deno.test("fec.compute: two employers — only the taxed employer's pay is foreign source income", () => {
+  const result = compute([
+    minimalItem({ compensation_usd: 45000, foreign_service_compensation_usd: 45000, foreign_tax_paid_usd: 5000, country_code: "DE" }),
+    minimalItem({ compensation_usd: 30000, country_code: "FR" }),
+  ]);
+  const f1116 = result.outputs.find((o) => o.nodeType === "form_1116");
+  const item = (f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0];
+  assertEquals(item.foreign_tax_paid, 5000);
+  assertEquals(item.foreign_gross_income, 45000);
+});

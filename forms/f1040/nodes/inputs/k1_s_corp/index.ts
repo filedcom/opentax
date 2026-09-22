@@ -7,7 +7,7 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
-import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
@@ -87,6 +87,8 @@ export const itemSchema = z.object({
   // Box 14 — Foreign taxes → Form 1116
   box14_foreign_tax: z.number().nonnegative().optional(),
   box14_foreign_income: z.number().nonnegative().optional(),
+  box14_foreign_income_category: z.nativeEnum(IncomeCategory).optional(),
+  box14_foreign_deductions: z.number().nonnegative().optional(),
 
   // Box 17 — QBI/W-2 wages/UBIA for §199A deduction (legacy fields retained for compat)
   box17_w2_wages: z.number().nonnegative().optional(),
@@ -267,10 +269,19 @@ function form7203Outputs(items: K1SCorpItems): NodeOutput[] {
 // Route foreign taxes → form_1116
 function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
   return items
-    .filter((item) => (item.box14_foreign_tax ?? 0) > 0)
+    .filter((item) =>
+      (item.box14_foreign_tax ?? 0) > 0 &&
+      (item.box14_foreign_income ?? 0) > 0 &&
+      item.box14_foreign_income_category !== undefined
+    )
     .map((item) =>
       output(form_1116, {
-        foreign_tax_paid: item.box14_foreign_tax!,
+        foreign_tax_items: [{
+          foreign_tax_paid: item.box14_foreign_tax!,
+          foreign_gross_income: item.box14_foreign_income!,
+          income_category: item.box14_foreign_income_category!,
+          directly_allocable_deductions: item.box14_foreign_deductions,
+        }],
       })
     );
 }
