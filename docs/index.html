@@ -538,7 +538,7 @@
       "name": "Can I file my tax return with OpenTax?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. OpenTax calculates and validates returns, and it can export e-file-ready MeF XML, but it is not a filing service and it does not transmit anything to the IRS. To file your taxes, go to irs.gov. An application to the IRS Modernized e-File system is pending; if it is accepted, the Alliance intends to operate a free e-filing route."
+        "text": "No. OpenTax calculates returns, checks implemented MeF business rules, and exports MeF XML or a filled IRS PDF. CLI export does not run XSD validation. Optional developer XSD tests require a separate IRS schema bundle and may be skipped when it is absent. The CLI does not transmit returns, retrieve acknowledgements, or establish IRS acceptance. Any transmission path, required authorization, testing, signatures and acceptance/rejection handling must be established separately."
       }
     },
     {
@@ -554,7 +554,7 @@
       "name": "Does my tax data leave my computer?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. The binary runs locally and stores returns as files on your own disk. There is no account to create, no cloud service in the path, and no telemetry on your return data. A firm can run OpenTax on its own hardware and re-check returns it has already filed without any client data leaving the building."
+        "text": "The CLI stores return files locally. This is not a guarantee that your whole workflow is local-only: documents uploaded into a hosted assistant or cloud chat are handled by that assistant provider. Review your tools, storage and data-handling arrangements before supplying taxpayer documents."
       }
     },
     {
@@ -727,7 +727,7 @@
 
   <div class="note" style="margin-top:20px;">
     <span class="note-label">Status &middot; pending</span>
-    <p class="note-body">OpenTax has an application in with the IRS Modernized e-File system. On acceptance it would be the first open-source route into federal e-filing, and the Alliance intends to run it as a free one, open to individuals, firms, developers and AI agents.</p>
+    <p class="note-body">The <a href="https://www.filed.com/newsroom/open-tax-technology-alliance">Alliance announcement of September 22, 2026</a> describes an IRS MeF application as pending and an intended free e-filing route on acceptance. That announcement is not proof of IRS approval. The CLI exports MeF XML but does not transmit returns or retrieve acknowledgements; export does not establish filing or acceptance.</p>
   </div>
 </div>
 
@@ -984,7 +984,7 @@
           <p style="font-size:14px;color:#e0e0e0;line-height:1.7;margin:8px 0 0;">Would you like me to:</p>
           <ol style="margin:4px 0 0 18px;display:flex;flex-direction:column;gap:3px;padding:0;">
             <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Validate</strong> against IRS business rules?</li>
-            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Export</strong> as MeF XML for e-filing or as a filled PDF?</li>
+            <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Export</strong> as MeF XML for downstream review or as a filled PDF?</li>
             <li style="font-size:14px;color:#e0e0e0;line-height:1.6;"><strong>Model a what-if</strong> — e.g. what if he contributed to a traditional IRA to reduce AGI?</li>
           </ol>
         </div>
@@ -1214,7 +1214,7 @@ Commands:
   • opentax return get --returnId &lt;id&gt;
     Get a return's computed line items
 
-  • opentax return export --returnId &lt;id&gt; --type mef|pdf [--force] [--output &lt;path&gt;]
+  • opentax return export --returnId &lt;id&gt; --type mef|pdf [--force] [--draft] [--output &lt;path&gt;]
     Export a return as MEF XML or filled IRS PDF
 
   • opentax form add --returnId &lt;id&gt; --node_type &lt;type&gt; '{...}'
@@ -1503,7 +1503,7 @@ Output Nodes (6):
 
     <details class="faq">
       <summary>Can I file my tax return with OpenTax?</summary>
-      <div class="faq-a"><p>No. OpenTax calculates and validates returns, and it can export e-file-ready MeF XML, but it is not a filing service and it does not transmit anything to the IRS. To file your taxes, go to <a href="https://irs.gov" target="_blank" rel="noopener">irs.gov</a>. An application to the IRS Modernized e-File system is pending; if it is accepted, the Alliance intends to operate a free e-filing route.</p></div>
+      <div class="faq-a"><p>No. OpenTax calculates returns, checks implemented MeF business rules, and exports MeF XML or a filled IRS PDF. CLI export does not run XSD validation. Optional developer XSD tests require a separate IRS schema bundle and may be skipped when it is absent. The CLI does not transmit returns, retrieve acknowledgements, or establish IRS acceptance. Any transmission path, required authorization, testing, signatures and acceptance/rejection handling must be established separately.</p></div>
     </details>
 
     <details class="faq">
@@ -1513,7 +1513,7 @@ Output Nodes (6):
 
     <details class="faq">
       <summary>Does my tax data leave my computer?</summary>
-      <div class="faq-a"><p>No. The binary runs locally and stores returns as files on your own disk. There is no account to create, no cloud service in the path, and no telemetry on your return data. A firm can run OpenTax on its own hardware and re-check returns it has already filed without any client data leaving the building.</p></div>
+      <div class="faq-a"><p>The CLI stores return files locally. This is not a guarantee that your whole workflow is local-only: documents uploaded into a hosted assistant or cloud chat are handled by that assistant provider. Review your tools, storage and data-handling arrangements before supplying taxpayer documents.</p></div>
     </details>
 
     <details class="faq">
