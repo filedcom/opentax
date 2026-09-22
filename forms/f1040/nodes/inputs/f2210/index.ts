@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type {
+  AtLeastOne,
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
@@ -7,13 +8,7 @@ import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-
-// TY2025 safe harbor thresholds (IRC §6654)
-const SAFE_HARBOR_CURRENT_YEAR_PCT = 0.90;   // 90% of current year tax
-const SAFE_HARBOR_PRIOR_YEAR_PCT = 1.00;      // 100% of prior year tax
-// 110% rule applies when prior-year AGI > $150,000 (or $75,000 MFS)
-const HIGH_INCOME_AGI_THRESHOLD = 150000;
-const HIGH_INCOME_PRIOR_YEAR_PCT = 1.10;      // 110% of prior year tax
+import { computeRegularMethodPenalty } from "./calculation.ts";
 
 export const inputSchema = z.object({
   // Required annual payment — IRS computes this; user may override
@@ -41,45 +36,15 @@ export const inputSchema = z.object({
 
 type F2210Input = z.infer<typeof inputSchema>;
 
-function totalEstimatedPayments(input: F2210Input): number {
-  return (input.q1_estimated_payment ?? 0) +
-    (input.q2_estimated_payment ?? 0) +
-    (input.q3_estimated_payment ?? 0) +
-    (input.q4_estimated_payment ?? 0);
-}
-
-function totalPayments(input: F2210Input): number {
-  return (input.withholding ?? 0) + totalEstimatedPayments(input);
-}
-
-// Minimum required payment per safe harbor rules
-function safeHarborAmount(input: F2210Input): number {
-  const currentYear90 = (input.current_year_tax ?? 0) * SAFE_HARBOR_CURRENT_YEAR_PCT;
-  const priorYearAgi = input.prior_year_agi ?? 0;
-  const priorYearPct = priorYearAgi > HIGH_INCOME_AGI_THRESHOLD
-    ? HIGH_INCOME_PRIOR_YEAR_PCT
-    : SAFE_HARBOR_PRIOR_YEAR_PCT;
-  const priorYearThreshold = (input.prior_year_tax ?? 0) * priorYearPct;
-  return Math.min(currentYear90, priorYearThreshold);
-}
-
-function hasSafeHarbor(input: F2210Input): boolean {
-  if (input.waiver_requested === true) return true;
-  const payments = totalPayments(input);
-  return payments >= safeHarborAmount(input);
-}
-
 function computePenalty(input: F2210Input): number {
-  // Waiver requested — no penalty regardless of other fields
-  if (input.waiver_requested === true) return 0;
-  // If a pre-computed penalty is provided, use it directly
-  if (input.underpayment_penalty !== undefined) {
-    return input.underpayment_penalty;
-  }
-  // If safe harbor met, no penalty
-  if (hasSafeHarbor(input)) return 0;
-  // Without full 2210 calculation, no penalty computed here
-  return 0;
+  if (
+    input.current_year_tax === undefined &&
+    input.underpayment_penalty === undefined
+  ) return 0;
+  return computeRegularMethodPenalty({
+    ...input,
+    current_year_tax: input.current_year_tax ?? 0,
+  });
 }
 
 class F2210Node extends TaxNode<typeof inputSchema> {
@@ -89,12 +54,35 @@ class F2210Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    const penalty = computePenalty(parsed);
+    if (Object.keys(parsed).length === 0) return { outputs: [] };
+    if (parsed.waiver_requested === true) return { outputs: [] };
+    if (parsed.underpayment_penalty !== undefined) {
+      if (parsed.underpayment_penalty === 0) return { outputs: [] };
+      return {
+        outputs: [output(f1040, {
+          line38_underpayment_penalty: parsed.underpayment_penalty,
+        })],
+      };
+    }
+    if (parsed.annualized_method === true) return { outputs: [] };
 
-    if (penalty === 0) return { outputs: [] };
+    if (parsed.current_year_tax !== undefined) {
+      const penalty = computePenalty(parsed);
+      if (penalty === 0) return { outputs: [] };
+      return {
+        outputs: [output(f1040, { line38_underpayment_penalty: penalty })],
+      };
+    }
 
+    const fields: Record<string, number | boolean> = { f2210_active: true };
+    for (const [key, value] of Object.entries(parsed)) {
+      if (value !== undefined) fields[`f2210_${key}`] = value;
+    }
     const outputs: NodeOutput[] = [
-      output(f1040, { line38_underpayment_penalty: penalty }),
+      output(
+        f1040,
+        fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+      ),
     ];
 
     return { outputs };

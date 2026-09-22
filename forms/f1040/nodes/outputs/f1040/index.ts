@@ -5,6 +5,7 @@ import {
 } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { computeRegularMethodPenalty } from "../../inputs/f2210/calculation.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -145,6 +146,17 @@ const inputSchema = z.object({
   // Line 38 — Estimated tax penalty (Form 2210) / amount paid with extension
   line38_amount_paid_extension: z.number().nonnegative().optional(),
   line38_underpayment_penalty: z.number().nonnegative().optional(),
+  // Form 2210 regular-method inputs are carried here so the final return can
+  // use its computed tax and withholding without creating a graph cycle.
+  f2210_active: z.boolean().optional(),
+  f2210_required_annual_payment: z.number().nonnegative().optional(),
+  f2210_withholding: z.number().nonnegative().optional(),
+  f2210_q1_estimated_payment: z.number().nonnegative().optional(),
+  f2210_q2_estimated_payment: z.number().nonnegative().optional(),
+  f2210_q3_estimated_payment: z.number().nonnegative().optional(),
+  f2210_q4_estimated_payment: z.number().nonnegative().optional(),
+  f2210_prior_year_tax: z.number().nonnegative().optional(),
+  f2210_prior_year_agi: z.number().nonnegative().optional(),
 });
 
 type F1040Input = z.infer<typeof inputSchema>;
@@ -262,6 +274,20 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line25d = totalWithholding(input);
   const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
+  const computed_line38 = input.line38_underpayment_penalty ??
+    (input.f2210_active === true
+      ? computeRegularMethodPenalty({
+        current_year_tax: computed_line24,
+        required_annual_payment: input.f2210_required_annual_payment,
+        withholding: input.f2210_withholding ?? computed_line25d,
+        q1_estimated_payment: input.f2210_q1_estimated_payment,
+        q2_estimated_payment: input.f2210_q2_estimated_payment,
+        q3_estimated_payment: input.f2210_q3_estimated_payment,
+        q4_estimated_payment: input.f2210_q4_estimated_payment,
+        prior_year_tax: input.f2210_prior_year_tax,
+        prior_year_agi: input.f2210_prior_year_agi,
+      })
+      : 0);
   // Lines 34/37 are the difference of two *filed* (whole-dollar) lines, so they
   // must be computed from the rounded operands. Rounding the cents-level
   // difference instead can disagree by $1 with the printed line 24 − line 33
@@ -366,11 +392,21 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   );
   if (line25b > 0) result.line25b_withheld_1099 = line25b;
 
+  if (
+    computed_line38 > 0 &&
+    input.line38_underpayment_penalty === undefined
+  ) {
+    result.line38_underpayment_penalty = computed_line38;
+  }
+
   if (balance >= 0) {
     result.line34_overpayment = balance;
-    result.line35a_refund = balance;
+    result.line35a_refund = Math.max(0, balance - computed_line38);
+    if (computed_line38 > balance) {
+      result.line37_amount_owed = computed_line38 - balance;
+    }
   } else {
-    result.line37_amount_owed = Math.abs(balance);
+    result.line37_amount_owed = Math.abs(balance) + computed_line38;
   }
 
   return result;
