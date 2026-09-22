@@ -66,18 +66,12 @@ MFS filers use $75,000 instead of $150,000 — not yet modeled (no `filing_statu
 safe_harbor_amount = min(thresholdA, thresholdB)
 ```
 
-### Step 4 — Safe Harbor Test
-```
-if totalPayments >= safe_harbor_amount → safe harbor met → no penalty
-if waiver_requested == true → waiver → no penalty
-```
-
-### Step 5 — Penalty Determination
+### Step 4 — Penalty Determination
 ```
 if waiver_requested → penalty = 0
 else if underpayment_penalty provided → penalty = underpayment_penalty
-else if safe harbor met → penalty = 0
-else → penalty = 0  (full per-quarter calc not implemented; use underpayment_penalty field)
+else if annualized_method → penalty = 0 (provide a pre-computed penalty)
+else → compute each regular-method installment through April 15, 2026
 ```
 
 ### Step 6 — Output Routing
@@ -88,9 +82,9 @@ else → no outputs
 
 ---
 
-### Full Per-Quarter Penalty (Not Yet Implemented — Form 2210 Part III)
+### Full Per-Quarter Penalty (Form 2210 Part III)
 
-Form 2210 Part III computes the penalty period-by-period using the IRS underpayment rate (8% for TY2025 = federal short-term rate + 3pp). For each installment period:
+Form 2210 Part III computes the penalty period-by-period. The 2025 worksheet uses 7% for all four rate periods. Estimated payments are treated as paid on their quarterly due dates, and withholding is treated as paid evenly unless the taxpayer supplies a pre-computed result.
 
 ```
 required_installment_per_period = required_annual_payment × 25%
@@ -185,7 +179,7 @@ flowchart LR
 ## Edge Cases & Special Rules
 
 ### 1. De Minimis Exception (IRC §6654(e)(1))
-No penalty if the tax shown on the return after subtracting withholding is less than **$1,000**. This should be checked before other calculations. Not explicitly modeled — the calling code should set `waiver_requested = true` or provide `underpayment_penalty = 0` in this scenario.
+No penalty if the tax shown on the return after subtracting withholding is less than **$1,000**. This is checked before the installment calculation.
 
 ### 2. Prior-Year Zero Tax (IRC §6654(e)(2))
 No penalty if the prior year's return showed zero tax liability and the prior year was a full 12-month period. When `prior_year_tax = 0`, `safeHarborAmount = min(0.9 × CYT, 0) = 0`, so the safe harbor is always met naturally.
@@ -205,14 +199,14 @@ Available in the first year a taxpayer reaches age 62 or becomes disabled, if th
 ### 7. Waiver — Casualty or Unusual Circumstances (IRC §6654(e)(3)(B))
 Waiver available when underpayment resulted from casualty, disaster, or unusual circumstances. Modeled via `waiver_requested = true`.
 
-### 8. required_annual_payment Override Gap
-The `required_annual_payment` field exists in the schema but the current `safeHarborAmount()` function does not use it — it always recomputes from `current_year_tax` and `prior_year_tax`. A future implementation should check whether `required_annual_payment` is provided and use it directly instead of recomputing.
+### 8. required_annual_payment Override
+When supplied, `required_annual_payment` overrides the safe-harbor calculation and is divided into four regular-method installments.
 
-### 9. Short Method Eligibility
-The Short Method (Part II) may only be used when (a) all withholding is treated as paid ratably, or (b) equal estimated payments were made on the four due dates. The node does not distinguish short vs. long method — it relies on a pre-computed `underpayment_penalty` for the actual penalty amount.
+### 9. Payment Timing
+The regular method treats each quarterly amount as paid on its due date. Use `underpayment_penalty` when actual payment dates or a different withholding allocation are required.
 
 ### 10. Interest Rate Changes Mid-Year
-The IRS underpayment rate can change quarterly (set each quarter by the Secretary of Treasury). For TY2025, the rate has been 8% throughout (Rev Proc 2024-40). If the rate changes mid-year, the Part III per-quarter calculation must use the rate in effect for each period. This is not yet modeled.
+The 2025 penalty worksheet specifies 7% for each of its four rate periods. Other tax years need their own rate table.
 
 ---
 

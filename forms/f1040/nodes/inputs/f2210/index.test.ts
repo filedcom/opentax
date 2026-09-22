@@ -94,7 +94,7 @@ Deno.test("f2210.compute: AGI > $150k triggers 110% rule — safe harbor needs 1
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f2210.compute: AGI > $150k, payments below both 90% and 110% thresholds — safe harbor not met", () => {
+Deno.test("f2210.compute: AGI > $150k and insufficient payments computes a penalty", () => {
   // current 90% = $9,000; prior 110% = $11,000; safe harbor = min = $9,000
   // withholding = $8,000 < $9,000 → not met; no penalty provided → no output
   const result = compute({
@@ -103,7 +103,7 @@ Deno.test("f2210.compute: AGI > $150k, payments below both 90% and 110% threshol
     prior_year_tax: 10000,
     prior_year_agi: 200000,
   });
-  assertEquals(result.outputs, []);
+  assertEquals(penaltyOutput(result)?.line38_underpayment_penalty, 47);
 });
 
 Deno.test("f2210.compute: AGI exactly at $150k uses 100% rule (not 110%)", () => {
@@ -161,8 +161,10 @@ Deno.test("f2210.compute: annualized_method flag alone — no outputs", () => {
   assertEquals(compute({ annualized_method: true }).outputs, []);
 });
 
-Deno.test("f2210.compute: required_annual_payment alone — no outputs", () => {
-  assertEquals(compute({ required_annual_payment: 5000 }).outputs, []);
+Deno.test("f2210.compute: required annual payment routes to final calculation", () => {
+  const fields = penaltyOutput(compute({ required_annual_payment: 5000 }));
+  assertEquals(fields?.f2210_active, true);
+  assertEquals(fields?.f2210_required_annual_payment, 5000);
 });
 
 // =============================================================================
