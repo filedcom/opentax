@@ -168,7 +168,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       return {
         outputs: [
           this.outputNodes.output(f8812, { auto_income_tax_liability: 0 }),
-          this.outputNodes.output(form_1116, { us_tax_before_credits: 0 }),
+          this.outputNodes.output(form_1116, {
+            us_tax_before_credits: 0,
+            worldwide_taxable_income: 0,
+          }),
         ],
       };
     }
@@ -219,7 +222,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       // Feed f8812 the income tax liability for CTC nonrefundable limit calculation.
       this.outputNodes.output(f8812, { auto_income_tax_liability: tax }),
       // Form 1116 Part III line 20 — the base the §904(a) limitation multiplies.
-      this.outputNodes.output(form_1116, { us_tax_before_credits: tax }),
+      this.outputNodes.output(form_1116, {
+        us_tax_before_credits: tax,
+        worldwide_taxable_income: input.taxable_income,
+      }),
     ];
 
     return { outputs };

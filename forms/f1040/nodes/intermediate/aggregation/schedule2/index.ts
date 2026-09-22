@@ -119,6 +119,35 @@ function line17k(input: Schedule2Input): number {
     (input.line17k_golden_parachute_excise ?? 0);
 }
 
+function part1Total(input: Schedule2Input): number {
+  return (input.line1_amt ?? 0) + (input.line2_excess_advance_premium ?? 0);
+}
+
+function part2Total(input: Schedule2Input): number {
+  return (input.line4_se_tax ?? 0) +
+    (input.line5_unreported_tip_tax ?? 0) +
+    line8(input) +
+    line13(input) +
+    line17h(input) +
+    line17k(input) +
+    (input.lump_sum_tax ?? 0) +
+    (input.line17e_archer_msa_tax ?? 0) +
+    (input.line17f_medicare_advantage_msa_tax ?? 0) +
+    (input.line6_uncollected_8919 ?? 0) +
+    (input.line17b_hsa_penalty ?? 0) +
+    (input.line11_additional_medicare ?? 0) +
+    (input.line12_niit ?? 0) +
+    (input.line7a_household_employment ?? 0) +
+    (input.line17d_kiddie_tax ?? 0) +
+    (input.line17a_investment_credit_recapture ?? 0) +
+    (input.line10_homebuyer_credit_repayment ?? 0) +
+    (input.line10_recapture_tax ?? 0) +
+    (input.line10_lihtc_recapture ?? 0) +
+    (input.line17z_other_additional_taxes ?? 0) +
+    (input.line17_exit_tax ?? 0) +
+    (input.line9_965_net_tax_liability ?? 0);
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Schedule2Node extends TaxNode<typeof inputSchema> {
@@ -129,35 +158,19 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
-    const total = (input.line4_se_tax ?? 0) +
-      (input.line5_unreported_tip_tax ?? 0) +
-      line8(input) +
-      (input.line1_amt ?? 0) +
-      line13(input) +
-      line17h(input) +
-      line17k(input) +
-      (input.lump_sum_tax ?? 0) +
-      (input.line17e_archer_msa_tax ?? 0) +
-      (input.line17f_medicare_advantage_msa_tax ?? 0) +
-      (input.line6_uncollected_8919 ?? 0) +
-      (input.line17b_hsa_penalty ?? 0) +
-      (input.line11_additional_medicare ?? 0) +
-      (input.line12_niit ?? 0) +
-      (input.line2_excess_advance_premium ?? 0) +
-      (input.line7a_household_employment ?? 0) +
-      (input.line17d_kiddie_tax ?? 0) +
-      (input.line17a_investment_credit_recapture ?? 0) +
-      (input.line10_homebuyer_credit_repayment ?? 0) +
-      (input.line10_recapture_tax ?? 0) +
-      (input.line10_lihtc_recapture ?? 0) +
-      (input.line17z_other_additional_taxes ?? 0) +
-      (input.line17_exit_tax ?? 0) +
-      (input.line9_965_net_tax_liability ?? 0);
-    if (total === 0) return { outputs: [] };
+    const part1 = part1Total(input);
+    const part2 = part2Total(input);
+    if (part1 === 0 && part2 === 0) return { outputs: [] };
 
-    const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, { line17_additional_taxes: total }),
-    ];
+    const output = part1 > 0 && part2 > 0
+      ? this.outputNodes.output(f1040, {
+        line17_additional_taxes: part1,
+        line23_other_taxes: part2,
+      })
+      : part1 > 0
+      ? this.outputNodes.output(f1040, { line17_additional_taxes: part1 })
+      : this.outputNodes.output(f1040, { line23_other_taxes: part2 });
+    const outputs: NodeOutput[] = [output];
 
     return { outputs };
   }

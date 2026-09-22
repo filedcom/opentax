@@ -39,26 +39,29 @@ Deno.test("part1: family personal contribution → schedule1 line13_hsa_deductio
 });
 
 Deno.test("part1: total contributions capped at annual limit (self_only 4300)", () => {
-  // employer 2000 + taxpayer 2500 = total 4500 > limit 4300 → deductible = 4300, excess = 200
-  // The full combined deduction is capped at the annual limit.
+  // employer 2000 + taxpayer 2500 = total 4500 > limit 4300 → excess = 200.
+  // Line 13 deduction covers only the taxpayer's own contributions, capped at
+  // the limit remaining after employer contributions: min(2500, 4300-2000) = 2300.
+  // (IRC §223(a); employer contributions are already excluded from W-2 box 1.)
   const result = compute({
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 2500,
     employer_hsa_contributions: 2000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 4300);
+  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 2300);
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 200);
 });
 
-Deno.test("part1: employer fills entire limit → full limit deductible, taxpayer excess to form5329", () => {
-  // employer 4300 fills the self_only limit entirely; taxpayer adds 500 on top → excess = 500
-  // Employer contribution itself IS deductible (capped at limit).
+Deno.test("part1: employer fills entire limit → no taxpayer deduction, taxpayer excess to form5329", () => {
+  // employer 4300 fills the self_only limit entirely; taxpayer adds 500 on top → excess = 500.
+  // No limit remains for the taxpayer's own contributions → line 13 deduction = 0.
+  // (Employer contributions are excluded from W-2 box 1, not deducted again.)
   const result = compute({
     coverage_type: CoverageType.SelfOnly,
     taxpayer_hsa_contributions: 500,
     employer_hsa_contributions: 4300,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 4300);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 500);
 });
 

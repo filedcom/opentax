@@ -19,6 +19,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const form6252Pdf: PdfFormDescriptor = {
   pendingKey: "form6252",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f6252.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f6252--2025.pdf",
   fields,
 };

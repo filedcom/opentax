@@ -172,9 +172,9 @@ Deno.test("box20_w2_wages routes to form8995 w2_wages", () => {
 });
 
 Deno.test("box16_foreign_tax routes to form_1116", () => {
-  const result = compute([minimalItem({ box16_foreign_tax: 180 })]);
+  const result = compute([minimalItem({ box16_foreign_tax: 180, box16_foreign_income: 900, box16_foreign_income_category: "passive" })]);
   const out = findOutput(result, "form_1116");
-  assertEquals(out?.fields.foreign_tax_paid, 180);
+  assertEquals((out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 180);
 });
 
 Deno.test("zero box16_foreign_tax does not route to form_1116", () => {
@@ -470,6 +470,8 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
       box9a_net_lt_cap_gain: 3000,
       box14a_se_earnings: 25000,
       box16_foreign_tax: 200,
+      box16_foreign_income: 1_000,
+      box16_foreign_income_category: "passive",
       box20z_qbi: 20000,
       box20_w2_wages: 10000,
     }),
@@ -488,5 +490,5 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   assertEquals(f8995?.fields.qbi, 20000);
   assertEquals(f8995?.fields.w2_wages, 10000);
   const f1116 = findOutput(result, "form_1116");
-  assertEquals(f1116?.fields.foreign_tax_paid, 200);
+  assertEquals((f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 200);
 });

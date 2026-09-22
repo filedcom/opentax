@@ -73,7 +73,7 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   const f1116 = result.pending["form_1116"] ?? {};
   assertEquals(f1116["foreign_tax_paid"], 500, "Part II line 8 — foreign tax paid");
   assertEquals(f1116["foreign_income"], 1_000, "Part I line 1a — gross foreign source income");
-  assertEquals(f1116["total_income"], 101_000, "Part I line 3e — gross income from all sources");
+  assertEquals(f1116["total_income"], 85_250, "Part III line 18, worldwide taxable income");
   assertEquals(f1116["us_tax_before_credits"], 13_669, "Part III line 20 — Form 1040 line 16");
 
   const credit = result.pending["schedule3"]?.["line1_foreign_tax_credit"] as number;
@@ -99,6 +99,7 @@ Deno.test("Form 1116: foreign tax on foreign-employer wages routes as general ca
       compensation_amount: 80_000,
       currency: "EUR",
       compensation_usd: 80_000,
+      foreign_service_compensation_usd: 80_000,
       foreign_tax_paid_usd: 9_000,
     }],
   });
@@ -106,5 +107,46 @@ Deno.test("Form 1116: foreign tax on foreign-employer wages routes as general ca
   const f1116 = result.pending["form_1116"] ?? {};
   assertEquals(f1116["foreign_tax_paid"], 9_000, "Part II line 8 — foreign tax on wages");
   assertEquals(f1116["foreign_income"], 80_000, "Part I line 1a — the wages themselves");
-  assertEquals(f1116["income_category"], "general", "Part I box d — general category");
+  const categories = f1116["category_summaries"] as Array<Record<string, unknown>>;
+  assertEquals(categories[0].category, "general", "Part I box d, general category");
+});
+
+Deno.test("Form 1116: passive and general income remain separate through the full return", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(100_000, 12_000)],
+    f1099int: [{ payer_name: "FOREIGN BANK", box1: 1_000, box6: 500 }],
+    fec: [{
+      foreign_employer_name: "Foreign Employer GmbH",
+      country_code: "DE",
+      compensation_amount: 10_000,
+      compensation_usd: 10_000,
+      foreign_service_compensation_usd: 10_000,
+      foreign_tax_paid_usd: 900,
+    }],
+  });
+
+  const categories = result.pending["form_1116"]?.["category_summaries"] as Array<Record<string, unknown>>;
+  assertEquals(categories.map((category) => category.category).sort(), ["general", "passive"]);
+  assertEquals(categories.map((category) => category.foreignTaxPaid).sort((a, b) => Number(a) - Number(b)), [500, 900]);
+});
+
+Deno.test("Form 1116: K-1 foreign tax requires and preserves its income category", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [w2Item(100_000, 12_000)],
+    k1_trust: [{
+      estate_trust_name: "Foreign Income Trust",
+      box1_interest: 5_000,
+      box14_foreign_tax: 800,
+      box14_foreign_income: 5_000,
+      box14_foreign_income_category: "passive",
+    }],
+  });
+
+  const categories = result.pending["form_1116"]?.["category_summaries"] as Array<Record<string, unknown>>;
+  assertEquals(categories.length, 1);
+  assertEquals(categories[0].category, "passive");
+  assertEquals(categories[0].foreignTaxPaid, 800);
+  assertEquals(categories[0].foreignGrossIncome, 5_000);
 });

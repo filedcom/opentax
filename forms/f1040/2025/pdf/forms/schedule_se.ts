@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule SE (2025) AcroForm field names.
-// Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sse.pdf
+// Verified layout from https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf
 //
 // Section A – Short Schedule SE:
 //   f1_01 = Line 2 net profit from Schedule C
@@ -21,6 +21,10 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const scheduleSePdf: PdfFormDescriptor = {
   pendingKey: "schedule_se",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sse.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sse--2025.pdf",
   fields,
+  // Schedule SE is filed only when self-employment tax was actually computed
+  // (Schedule 2 line 4); W-2 social security wages alone do not require it.
+  includeWhen: (_fields, all) =>
+    (((all?.["schedule2"]?.["line4_se_tax"]) as number | undefined) ?? 0) > 0,
 };

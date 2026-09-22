@@ -28,7 +28,7 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 
 export const form8949Pdf: PdfFormDescriptor = {
   pendingKey: "f8949",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8949.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f8949--2025.pdf",
 
   // Scalar fields: Part I totals (line 2) and Part II totals (line 4)
   fields: [

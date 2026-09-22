@@ -8,7 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
-import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -164,8 +164,11 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
           .filter((item) => (item.box6 ?? 0) > 0)
           .reduce((sum, item) => sum + (item.box1 ?? 0), 0);
         outputs.push(this.outputNodes.output(form_1116, {
-          foreign_tax_paid: totalBox6,
-          ...(foreignSourceInterest > 0 ? { foreign_income: foreignSourceInterest } : {}),
+          foreign_tax_items: [{
+            foreign_tax_paid: totalBox6,
+            foreign_gross_income: foreignSourceInterest,
+            income_category: IncomeCategory.Passive,
+          }],
         }));
       } else {
         outputs.push(this.outputNodes.output(schedule3, { line1_foreign_tax_1099: totalBox6 }));

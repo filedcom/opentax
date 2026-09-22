@@ -343,7 +343,8 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691",
   const f = result.pending["f1040"] ?? {};
   assertEquals(r2(f["line24_total_tax"] as number), 16_690.57, "total tax");
   assertEquals(f["line33_total_payments"], 0, "no payments");
-  assertEquals(r2(f["line37_amount_owed"] as number), 16_690.57, "amount owed");
+  // line 37 = round(line24) − round(line33): whole-dollar per filed-form arithmetic
+  assertEquals(f["line37_amount_owed"], 16_691, "amount owed");
   assertEquals(f["line35a_refund"], undefined, "no refund");
 });
 
@@ -685,4 +686,101 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,657", ()
   assertEquals(f["line33_total_payments"], 8_657, "total payments = $8,657");
   assertEquals(f["line35a_refund"], 8_657, "refund = $8,657");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
+});
+
+// ── Scenario 15: MFJ, Schedule C $150K + $100K interest — QBI net of SE tax ─
+//
+// Form 8995 line 1(c) carries the net QBI of the trade or business, and i8995
+// ("Determining Your Qualified Business Income") counts the "deductible part of
+// self-employment tax" among the items attributable to it. So QBI is Schedule C
+// line 31 minus Schedule SE line 13, not line 31 alone.
+//
+// SE earnings: $150,000 × 0.9235 = $138,525 (below the $176,100 SS wage base)
+// SE tax: $138,525 × (0.124 + 0.029) = $21,194.325  |  SE deduction: $10,597.1625
+//
+// QBI: $150,000 − $10,597.1625 = $139,402.8375  |  20% = $27,880.5675
+// AGI: $100,000 + $150,000 − $10,597.1625 = $239,402.8375
+// Pre-QBI taxable: $239,402.8375 − $31,500 = $207,902.8375
+// Income limit: 20% × $207,902.8375 = $41,580.5675 — does not bind
+// QBI deduction: $27,880.5675  |  Taxable income: $180,022.27
+
+Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the SE deduction", () => {
+  const result = runReturn({
+    general: mfjGeneral(),
+    f1099int: [{ payer_name: "Test Bank", box1: 100_000 }],
+    schedule_c: [
+      {
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541600",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 150_000,
+      },
+    ],
+  });
+
+  assertEquals(
+    r2(result.pending["form8995"]?.["se_tax_deduction"] as number), 10_597.16,
+    "deductible part of SE tax reaches Form 8995",
+  );
+  assertEquals(
+    r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number), 27_880.57,
+    "QBI deduction = 20% × ($150,000 − $10,597.16)",
+  );
+  assertEquals(
+    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 180_022.27,
+    "taxable income = $207,902.84 pre-QBI − $27,880.57",
+  );
+});
+
+// ── Scenario 16: MFJ, Schedule C $100K + $100K qualified dividends ──────────
+//
+// i8995 line 12 is Form 1040 line 3a plus net capital gain, and line 13 limits the
+// deduction to 20% of taxable income MINUS that amount. With every dividend qualified,
+// the limit binds well below 20% of QBI.
+//
+// SE earnings: $100,000 × 0.9235 = $92,350
+// SE tax: $92,350 × 0.153 = $14,129.55  |  SE deduction: $7,064.775
+//
+// QBI: $100,000 − $7,064.775 = $92,935.225  |  20% = $18,587.045
+// AGI: $100,000 + $100,000 − $7,064.775 = $192,935.225
+// Pre-QBI taxable: $192,935.225 − $31,500 = $161,435.225
+// Income limit: 20% × ($161,435.225 − $100,000) = $12,287.045 — binds
+// QBI deduction: $12,287.045  |  Taxable income: $149,148.18
+
+Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit binds net of cap gain", () => {
+  const result = runReturn({
+    general: mfjGeneral(),
+    f1099div: [
+      {
+        payerName: "Vanguard",
+        isNominee: false,
+        box11: false,
+        box1a: 100_000,
+        box1b: 100_000,
+      },
+    ],
+    schedule_c: [
+      {
+        line_a_principal_business: "Consulting",
+        line_b_business_code: "541600",
+        line_f_accounting_method: "cash",
+        line_g_material_participation: true,
+        line_1_gross_receipts: 100_000,
+      },
+    ],
+  });
+
+  assertEquals(
+    result.pending["form8995"]?.["net_capital_gain"], 100_000,
+    "qualified dividends reach Form 8995 line 12",
+  );
+  assertEquals(
+    r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number), 12_287.05,
+    "QBI deduction = 20% × ($161,435.23 − $100,000)",
+  );
+  assertEquals(
+    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 149_148.18,
+    "taxable income = $161,435.23 pre-QBI − $12,287.05",
+  );
 });

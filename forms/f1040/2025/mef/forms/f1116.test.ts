@@ -168,3 +168,26 @@ Deno.test("f1116: limitation inputs without foreign tax emit nothing", () => {
     "",
   );
 });
+
+Deno.test("f1116: emits a separate form for each income category", () => {
+  const result = form1116.build({
+    total_income: 85_000,
+    us_tax_before_credits: 13_000,
+    category_summaries: [
+      {
+        category: "passive",
+        foreignTaxPaid: 500,
+        foreignGrossIncome: 1_000,
+      },
+      {
+        category: "general",
+        foreignTaxPaid: 900,
+        foreignGrossIncome: 8_000,
+      },
+    ],
+  });
+
+  assertEquals(result.match(/<IRS1116>/g)?.length, 2);
+  assertStringIncludes(result, "<ForeignIncomeCategoryCd>PAS</ForeignIncomeCategoryCd>");
+  assertStringIncludes(result, "<ForeignIncomeCategoryCd>GEN</ForeignIncomeCategoryCd>");
+});

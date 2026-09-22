@@ -1,6 +1,12 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, type AtLeastOne } from "../../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  TaxNode,
+} from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
@@ -11,11 +17,27 @@ import { f8812 } from "../../../inputs/f8812/index.ts";
 import { f2441 } from "../../../inputs/f2441/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
+import {
+  form8582,
+  type PassiveActivity,
+  passiveLossLimit,
+} from "../../forms/form8582/index.ts";
 import { form8962 } from "../../forms/form8962/index.ts";
 import { form8880 } from "../../forms/form8880/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+
+// Fields that may arrive from multiple upstream nodes accumulate as arrays in the
+// executor pending dict. Declaring them accumulable prevents Zod parse failure.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumField(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  if (Array.isArray(value)) return value.reduce((s, n) => s + n, 0);
+  return value;
+}
 
 // AGI Aggregator — Form 1040 Line 11
 //
@@ -36,8 +58,10 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 export const inputSchema = z.object({
   // ── Form 1040 income lines ─────────────────────────────────────────────────
-  // Line 1a — Wages (W-2 Box 1, regular employees)
-  line1a_wages: z.number().optional(),
+  // Line 1a — Wages (accumulable: w2 and f1099r can both route here)
+  line1a_wages: accumulable(z.number()).optional(),
+  // Line 1h — Other earned income, including foreign employer compensation
+  line1h_other_earned: z.number().optional(),
   // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
   line1b_allocated_tips: z.number().nonnegative().optional(),
   // Line 1c — Unreported tips (Form 4137)
@@ -50,8 +74,8 @@ export const inputSchema = z.object({
   line1g_wages_8919: z.number().nonnegative().optional(),
   // Line 2b — Taxable interest (Schedule B Part I)
   line2b_taxable_interest: z.number().optional(),
-  // Line 3b — Ordinary dividends (Schedule B Part II)
-  line3b_ordinary_dividends: z.number().optional(),
+  // Line 3b — Ordinary dividends (accumulable: direct 1099-DIV and Schedule B)
+  line3b_ordinary_dividends: accumulable(z.number()).optional(),
   // Line 4b — IRA distributions, taxable amount (Form 1099-R)
   line4b_ira_taxable: z.number().optional(),
   // Line 5b — Pensions and annuities, taxable amount (Form 1099-R)
@@ -85,6 +109,19 @@ export const inputSchema = z.object({
   line5_schedule_e: z.number().optional(),
   // Line 17 — Rental real estate passive loss allowed (Form 8582 negative output)
   line17_schedule_e: z.number().optional(),
+  // ── IRC §469 passive activity loss limit (Schedule E) ─────────────────────
+  // Schedule E holds its passive loss back and sends the figures here, because only
+  // this node knows modified AGI — the number Form 8582 Part II sizes the allowance by.
+  // Current-year passive loss withheld from line5_schedule_e (positive amount)
+  pal_current_loss: z.number().nonnegative().optional(),
+  // Current-year net income from passive activities
+  pal_current_income: z.number().nonnegative().optional(),
+  // Prior-year unallowed passive loss carryforward
+  pal_prior_unallowed: z.number().nonnegative().optional(),
+  // Current-year loss from active rental real estate only (§469(i) allowance)
+  pal_rental_loss: z.number().nonnegative().optional(),
+  // Taxpayer actively participated in the rental real estate activity
+  pal_active_participation: z.boolean().optional(),
   // Line 6 — Net farm profit or (loss) (Schedule F)
   line6_schedule_f: z.number().optional(),
   // Line 2a — Alimony received (divorce or separation instruments before 1/1/2019, IRC §71)
@@ -170,8 +207,12 @@ function computeSsaTaxable(
 ): number {
   if (ssaGross <= 0) return 0;
 
-  const baseThreshold = isMfj ? SSA_BASE_THRESHOLD_MFJ : SSA_BASE_THRESHOLD_OTHER;
-  const upperThreshold = isMfj ? SSA_UPPER_THRESHOLD_MFJ : SSA_UPPER_THRESHOLD_OTHER;
+  const baseThreshold = isMfj
+    ? SSA_BASE_THRESHOLD_MFJ
+    : SSA_BASE_THRESHOLD_OTHER;
+  const upperThreshold = isMfj
+    ? SSA_UPPER_THRESHOLD_MFJ
+    : SSA_UPPER_THRESHOLD_OTHER;
 
   // Provisional income = other AGI items + tax-exempt interest + 50% × SSA gross benefits
   // IRC §86(b)(1): tax-exempt interest is included in provisional income
@@ -197,17 +238,18 @@ function computeSsaTaxable(
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// Sum all non-SSA income items (used as "other income" for provisional income calculation).
-function nonSsaIncome(input: AgiInput): number {
+// Sum all non-SSA income items before the IRC §469 limit is applied.
+function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
-    (input.line1a_wages ?? 0) +
+    sumField(input.line1a_wages as number | number[] | undefined) +
+    (input.line1h_other_earned ?? 0) +
     (input.line1b_allocated_tips ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +
     (input.line1f_taxable_adoption_benefits ?? 0) +
     (input.line1g_wages_8919 ?? 0) +
     (input.line2b_taxable_interest ?? 0) +
-    (input.line3b_ordinary_dividends ?? 0) +
+    sumField(input.line3b_ordinary_dividends) +
     (input.line4b_ira_taxable ?? 0) +
     (input.line5b_pension_taxable ?? 0) +
     (input.line7_capital_gain ?? 0) +
@@ -234,7 +276,10 @@ function nonSsaIncome(input: AgiInput): number {
 
 // Compute taxable SSA: prefer pre-computed line6b_ss_taxable; otherwise run the worksheet.
 // "Other income" for provisional income = AGI from non-SSA sources (after exclusions/deductions).
-function resolveSsaTaxable(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+function resolveSsaTaxable(
+  input: AgiInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   if (input.line6b_ss_taxable !== undefined) return input.line6b_ss_taxable;
   const ssaGross = input.line6a_ss_gross ?? 0;
   if (ssaGross === 0) return 0;
@@ -251,13 +296,19 @@ function resolveSsaTaxable(input: AgiInput, cfg: import("../../../config/index.t
   // Line 7 = Line 5 − Line 6.  Line 5 = 50% benefits + income items + tax-exempt interest.
   // Line 6 = Schedule 1, lines 11–20 (ATL deductions). So provisional income
   // is computed AFTER above-the-line deductions and exclusions.
-  const otherAgi = Math.max(0, nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg));
+  const otherAgi = Math.max(
+    0,
+    nonSsaIncome(input) - exclusions(input) - aboveLineDeductions(input, cfg),
+  );
   return computeSsaTaxable(ssaGross, otherAgi, taxExemptInterest, isMfj);
 }
 
 // Sum all income and addition items (before exclusions/deductions).
 // Fields can be negative (e.g., capital loss, schedule C net loss).
-function grossIncome(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+function grossIncome(
+  input: AgiInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   const ssaTaxable = resolveSsaTaxable(input, cfg);
   return (
     nonSsaIncome(input) +
@@ -295,21 +346,27 @@ function aboveLineDeductionsExceptSli(input: AgiInput): number {
 // Compute phase-out adjusted student loan interest deduction (IRC §221(b)(2)).
 // MAGI = provisional AGI without SLI = gross income - exclusions - other above-line deductions.
 // Phase-out: single/HOH $85k–$100k; MFJ $175k–$205k; MFS not eligible.
-function computeAdjustedSli(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+function computeAdjustedSli(
+  input: AgiInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   const raw = input.line19_student_loan_interest ?? 0;
   if (raw <= 0) return 0;
   // MFS cannot deduct student loan interest (IRC §221(b)(2)(B))
   if (input.filing_status === "mfs") return 0;
 
   const isMfj = input.filing_status === "mfj" || input.filing_status === "qss";
-  const phaseOutStart = isMfj ? cfg.sliPhaseOutStartMfj : cfg.sliPhaseOutStartSingle;
+  const phaseOutStart = isMfj
+    ? cfg.sliPhaseOutStartMfj
+    : cfg.sliPhaseOutStartSingle;
   const phaseOutEnd = isMfj ? cfg.sliPhaseOutEndMfj : cfg.sliPhaseOutEndSingle;
 
   // MAGI for SLI = AGI before SLI deduction.
   // Use SSA gross from input (line6b_ss_taxable if pre-computed, else 0 for MAGI purposes)
   // to avoid circular dependency with resolveSsaTaxable.
   const ssaTaxable = input.line6b_ss_taxable ?? 0;
-  const magi = nonSsaIncome(input) + ssaTaxable - exclusions(input) - aboveLineDeductionsExceptSli(input);
+  const magi = nonSsaIncome(input) + ssaTaxable - exclusions(input) -
+    aboveLineDeductionsExceptSli(input);
 
   if (magi <= phaseOutStart) return raw;
   if (magi >= phaseOutEnd) return 0;
@@ -321,8 +378,46 @@ function computeAdjustedSli(input: AgiInput, cfg: import("../../../config/index.
 
 // Sum above-the-line deductions (Schedule 1 Part II).
 // IRC §62 allows these before arriving at AGI.
-function aboveLineDeductions(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
+function aboveLineDeductions(
+  input: AgiInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   return aboveLineDeductionsExceptSli(input) + computeAdjustedSli(input, cfg);
+}
+
+// Form 8582 line 6 — modified adjusted gross income: AGI figured without any passive
+// activity loss, taxable social security, the IRA deduction, or the student loan
+// interest deduction. Not less than zero.
+function modifiedAgiFor8582(input: AgiInput): number {
+  const magi = nonSsaIncomeBeforePal(input) -
+    aboveLineDeductionsExceptSli(input) +
+    (input.line20_ira_deduction ?? 0);
+  return Math.max(0, magi);
+}
+
+// IRC §469(a): the part of the withheld passive loss that is deductible this year.
+function allowedPassiveLoss(input: AgiInput): number {
+  const currentLoss = input.pal_current_loss ?? 0;
+  const priorUnallowed = input.pal_prior_unallowed ?? 0;
+  if (currentLoss === 0 && priorUnallowed === 0) return 0;
+
+  const activity: PassiveActivity = {
+    currentIncome: input.pal_current_income ?? 0,
+    currentLoss,
+    priorUnallowed,
+    rentalLoss: input.pal_rental_loss,
+    activeParticipation: input.pal_active_participation ?? false,
+    modifiedAgi: modifiedAgiFor8582(input),
+    filingStatus: input.filing_status as FilingStatus | undefined,
+  };
+
+  return passiveLossLimit(activity).allowed;
+}
+
+// Sum all non-SSA income items, net of the passive loss §469 allows.
+// This is what "other income" means for the provisional income calculation.
+function nonSsaIncome(input: AgiInput): number {
+  return nonSsaIncomeBeforePal(input) - allowedPassiveLoss(input);
 }
 
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
@@ -345,6 +440,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0) -
+    allowedPassiveLoss(input) -
     (input.line8d_foreign_earned_income_exclusion ?? 0) -
     (input.line8d_foreign_housing_deduction ?? 0) -
     (input.line8b_savings_bond_exclusion ?? 0)
@@ -352,8 +448,12 @@ function scheduleOnePartI(input: AgiInput): number {
 }
 
 // AGI can be negative in large NOL scenarios (IRC §172); do not floor at 0.
-function computeAgi(input: AgiInput, cfg: import("../../../config/index.ts").F1040Config): number {
-  return grossIncome(input, cfg) - exclusions(input) - aboveLineDeductions(input, cfg);
+function computeAgi(
+  input: AgiInput,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
+  return grossIncome(input, cfg) - exclusions(input) -
+    aboveLineDeductions(input, cfg);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -361,7 +461,20 @@ function computeAgi(input: AgiInput, cfg: import("../../../config/index.ts").F10
 class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "agi_aggregator";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, standard_deduction, scheduleA, eitc, f8812, f2441, form8995, form8960, form8962, form8880, form_1116]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    standard_deduction,
+    scheduleA,
+    eitc,
+    f8812,
+    f2441,
+    form8995,
+    form8960,
+    form8962,
+    form8880,
+    form8582,
+    form_1116,
+  ]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -376,12 +489,17 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     const line8 = scheduleOnePartI(input);
     const line10 = aboveLineDeductions(input, cfg);
 
-    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = { line11_agi: agi };
+    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
+      line11_agi: agi,
+    };
     if (line8 !== 0) f1040Fields.line8_additional_income = line8;
     if (line10 > 0) f1040Fields.line10_adjustments = line10;
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(
+        f1040,
+        f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+      ),
       this.outputNodes.output(standard_deduction, { agi }),
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),
@@ -398,16 +516,27 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
       this.outputNodes.output(form8880, {
         agi,
-        ...(input.filing_status !== undefined && { filing_status: input.filing_status as FilingStatus }),
+        ...(input.filing_status !== undefined &&
+          { filing_status: input.filing_status as FilingStatus }),
       } as AtLeastOne<z.infer<typeof form8880["inputSchema"]>>),
     ];
 
-    // Form 1116 Part I line 3e — gross income from all sources, the denominator
-    // of the §904(a) limitation fraction. A negative total has no meaning there,
-    // so it is left unsent and the fraction stays at 1.0 (US tax is still the cap).
     const gross = grossIncome(input, cfg);
     if (gross > 0) {
-      outputs.push(this.outputNodes.output(form_1116, { total_income: gross }));
+      outputs.push(this.outputNodes.output(form_1116, {
+        worldwide_gross_income: gross,
+      }));
+    }
+
+    // Form 8582 Part II sizes the $25,000 special allowance by modified AGI, which
+    // only this node can compute — so it is handed down rather than recomputed there.
+    if (
+      input.pal_current_loss !== undefined ||
+      input.pal_prior_unallowed !== undefined
+    ) {
+      outputs.push(this.outputNodes.output(form8582, {
+        modified_agi: modifiedAgiFor8582(input),
+      }));
     }
 
     // Pass SSA taxable amount to f1040 for line 6b.

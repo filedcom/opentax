@@ -258,9 +258,34 @@ Deno.test("routing_schedule1: SE deduction routes to schedule1 with field line15
   assertEquals(typeof s1!.fields.line15_se_deduction, "number");
 });
 
-Deno.test("routing_exactly_two_outputs: exactly schedule2, schedule1, agi_aggregator, and form8959 for standard case", () => {
+Deno.test("routing_form8959_se_income: form8959 line 8 gets Part I line 6, not line 3", () => {
+  const result = compute({ net_profit_schedule_c: 100_000 });
+  const f8959 = findOutput(result, "form8959");
+  // Sch SE line 3 = 100,000; line 4a = line 4c = line 6 = 100,000 x 0.9235 = 92,350.
+  // i8959 line 8: "Enter your self-employment income from Schedule SE (Form 1040),
+  // Part I, line 6."
+  assertEquals(f8959!.fields.se_income, 92_350);
+});
+
+Deno.test("routing_form8959_se_income_with_farm: line 6 nets farm and nonfarm profit", () => {
+  const result = compute({ net_profit_schedule_c: 60_000, net_profit_schedule_f: 40_000 });
+  const f8959 = findOutput(result, "form8959");
+  assertEquals(f8959!.fields.se_income, 92_350);
+});
+
+Deno.test("routing_form8995: deductible half of SE tax routes to form8995 as se_tax_deduction", () => {
+  // i8995, Determining Your Qualified Business Income: the items attributable to the trade
+  // or business include the "deductible part of self-employment tax", so Line 13 reduces QBI.
   const result = compute({ net_profit_schedule_c: 10_000 });
-  assertEquals(result.outputs.length, 4);
+  const { seDeduction } = computeExpectedSeTax(10_000);
+  const qbi = findOutput(result, "form8995");
+  assertEquals(qbi !== undefined, true);
+  assertEquals(round2(qbi!.fields.se_tax_deduction as number), round2(seDeduction));
+});
+
+Deno.test("routing_exactly_two_outputs: exactly schedule2, schedule1, agi_aggregator, form8959, and form8995 for standard case", () => {
+  const result = compute({ net_profit_schedule_c: 10_000 });
+  assertEquals(result.outputs.length, 5);
 });
 
 // ── Edge cases ───────────────────────────────────────────────────────────────
@@ -323,5 +348,5 @@ Deno.test("smoke_all_fields: full scenario with C+F profit, tips, 8919, and w2_s
   assertEquals(s1 !== undefined, true);
   assertEquals(round2(s2!.fields.line4_se_tax as number), round2(expectedSeTax));
   assertEquals(round2(s1!.fields.line15_se_deduction as number), round2(expectedDeduction));
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 5);
 });

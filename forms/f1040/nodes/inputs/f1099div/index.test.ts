@@ -234,7 +234,7 @@ Deno.test("box7 routes to form_1116 when exceeds $300 single threshold", () => {
   const result = compute([minimalItem({ box7: 400, holdingPeriodDays: 20 })], {
     filingStatus: "single",
   });
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 400);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 400);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
@@ -515,7 +515,7 @@ Deno.test("form_1116 required when box7 exceeds $300 single threshold", () => {
   const result = compute([minimalItem({ box7: 301, holdingPeriodDays: 20 })], {
     filingStatus: "single",
   });
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 301);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 301);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
@@ -531,7 +531,7 @@ Deno.test("form_1116 required when box7 exceeds $600 MFJ threshold", () => {
   const result = compute([minimalItem({ box7: 601, holdingPeriodDays: 20 })], {
     filingStatus: "mfj",
   });
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 601);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 601);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
@@ -740,7 +740,7 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
 
 Deno.test("box7 above threshold also routes box1a as foreign_income", () => {
   const result = compute([minimalItem({ box1a: 5000, box7: 400 })]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_income, 5000);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 5000);
 });
 
 Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
@@ -748,6 +748,6 @@ Deno.test("only payers that withheld foreign tax contribute foreign_income", () 
     minimalItem({ payerName: "Foreign Fund", box1a: 5000, box7: 400 }),
     minimalItem({ payerName: "Domestic Fund", box1a: 20000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_paid, 400);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_income, 5000);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 400);
+  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 5000);
 });

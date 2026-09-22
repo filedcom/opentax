@@ -7,6 +7,7 @@ import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
+import { form8995 } from "../form8995/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
@@ -93,6 +94,10 @@ function buildOutput(deduction: number): NodeOutput[] {
   return [
     output(schedule1, { line17_se_health_insurance: deduction }),
     output(agi_aggregator, { line17_se_health_insurance: deduction }),
+    // This deduction is attributable to the trade or business, so it reduces QBI.
+    // i8995, Determining Your Qualified Business Income: the items to consider include
+    // the "self-employment health insurance deduction".
+    output(form8995, { se_health_insurance_deduction: deduction }),
   ];
 }
 
@@ -101,7 +106,7 @@ function buildOutput(deduction: number): NodeOutput[] {
 class Form7206Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form7206";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8995]);
 
   compute(ctx: NodeContext, rawInput: Form7206Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];

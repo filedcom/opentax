@@ -376,3 +376,14 @@ Deno.test("sep_retirement.compute: smoke test — all three plan types, limits c
   const s1Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule1");
   assertEquals(s1Outputs.length, 1);
 });
+
+Deno.test("routes the deduction to form8995 as retirement_plan_deduction", () => {
+  // i8995, Determining Your Qualified Business Income: the items attributable to the
+  // trade or business include "contributions to qualified retirement plans".
+  const result = compute([minimalItem({
+    net_self_employment_compensation: 100_000,
+    sep_contribution: 10_000,
+  })]);
+  const qbi = result.outputs.find((o) => o.nodeType === "form8995");
+  assertEquals(qbi?.fields.retirement_plan_deduction, 10_000);
+});

@@ -38,8 +38,12 @@ function fillEntry(
 ): void {
   try {
     if (entry.kind === "text") {
-      // IRS convention: leave numeric fields blank when value is zero.
-      if (typeof value === "number" && Math.round(value) === 0) return;
+      // IRS convention: leave numeric fields blank when value is zero —
+      // unless the descriptor marks the line as printZero (explicit "0").
+      if (
+        typeof value === "number" && Math.round(value) === 0 &&
+        !("printZero" in entry && entry.printZero)
+      ) return;
       const text = typeof value === "number"
         ? Math.round(value).toString()
         : String(value);
@@ -86,22 +90,34 @@ async function fillFormPdf(
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,
   cacheDir: string,
+  allPending?: Record<string, Record<string, unknown>>,
 ): Promise<Uint8Array | undefined> {
   if (descriptor.presenceKey !== undefined) {
     const gate = fields[descriptor.presenceKey];
     if (gate === undefined || gate === null) return undefined;
   }
 
+  // A form is only emitted when it carries at least one *meaningful* value:
+  // a number that doesn't round to zero, a true boolean, or a nonempty string.
+  // Merely-defined zeros previously caused blank Schedule A / EIC / SE / 6251 /
+  // 8959 / 8960 / 8962 pages to be included in the export.
+  const isMeaningful = (v: unknown): boolean => {
+    if (v === undefined || v === null) return false;
+    if (typeof v === "number") return Math.round(v) !== 0;
+    if (typeof v === "boolean") return v;
+    if (typeof v === "string") return v.length > 0;
+    return false;
+  };
   const hasData =
-    descriptor.fields.some(({ domainKey }) => {
-      const v = fields[domainKey];
-      return v !== undefined && v !== null;
-    }) ||
+    descriptor.fields.some(({ domainKey }) => isMeaningful(fields[domainKey])) ||
     (descriptor.rows !== undefined &&
       Array.isArray(fields[descriptor.rows.domainKey]) &&
       (fields[descriptor.rows.domainKey] as unknown[]).length > 0);
 
   if (!hasData) return undefined;
+  if (descriptor.includeWhen !== undefined && !descriptor.includeWhen(fields, allPending)) {
+    return undefined;
+  }
 
   const pdfBytes = await fetchWithCache(descriptor.pdfUrl, cacheDir);
   const doc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -123,9 +139,8 @@ async function fillFormPdf(
       fillEntry(form, entry, value, descriptor.pendingKey);
     }
 
-    // Note: Filing status checkboxes on Form 1040 are XFA-only fields.
-    // The 2025 IRS PDF uses XFA (LiveCycle) for those, which pdf-lib strips.
-    // They cannot be checked via AcroForm and will remain blank on the output.
+    // pdf-lib strips the IRS XFA layer, but the 2025 filing-status checkboxes
+    // also exist in AcroForm and are filled by the Form 1040 descriptor.
   }
 
   // Fill row arrays (Form 8949-style)
@@ -198,14 +213,17 @@ export async function buildPdfBytes(
       }
       : fields;
 
-    const filledBytes = await fillFormPdf(descriptor, effectiveFields, filer, cacheDir);
-    if (!filledBytes) continue;
+    const instances = descriptor.instances?.(effectiveFields) ?? [effectiveFields];
+    for (const instance of instances) {
+      const filledBytes = await fillFormPdf(descriptor, instance, filer, cacheDir, normalized);
+      if (!filledBytes) continue;
 
-    const filledDoc = await PDFDocument.load(filledBytes);
-    const pageIndices = filledDoc.getPageIndices();
-    const copiedPages = await merged.copyPages(filledDoc, pageIndices);
-    for (const page of copiedPages) {
-      merged.addPage(page);
+      const filledDoc = await PDFDocument.load(filledBytes);
+      const pageIndices = filledDoc.getPageIndices();
+      const copiedPages = await merged.copyPages(filledDoc, pageIndices);
+      for (const page of copiedPages) {
+        merged.addPage(page);
+      }
     }
   }
 

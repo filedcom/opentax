@@ -1,7 +1,7 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 // IRS Schedule H (2025) AcroForm field names.
-// Verified layout from https://www.irs.gov/pub/irs-pdf/f1040sh.pdf
+// Verified layout from https://www.irs.gov/pub/irs-prior/f1040sh--2025.pdf
 //
 // Part I Social Security, Medicare, and FUTA Taxes:
 //   f1_01 = Line 1 total cash wages paid
@@ -26,6 +26,6 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const scheduleHPdf: PdfFormDescriptor = {
   pendingKey: "schedule_h",
-  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sh.pdf",
+  pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sh--2025.pdf",
   fields,
 };

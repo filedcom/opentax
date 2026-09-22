@@ -230,8 +230,8 @@ Deno.test("form8606: only produces f1040 output (correct nodeType routing)", () 
     traditional_distributions: 5_000,
   });
 
-  // f1040 + agi_aggregator
-  assertEquals(result.outputs.length, 2);
+  // f1040 + agi_aggregator + self-emitted print-line output for the PDF builder
+  assertEquals(result.outputs.length, 3);
   assertEquals(result.outputs[0].nodeType, "f1040");
 });
 

@@ -259,11 +259,12 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
     "line24_total_tax should be positive for a self-employed filer",
   );
 
-  // Amount owed equals total tax (payments = 0)
+  // Amount owed equals total tax (payments = 0) — line 37 is computed from
+  // the rounded filed lines, so compare against the whole-dollar total.
   assertEquals(
     f1040["line37_amount_owed"],
-    totalTax,
-    "line37_amount_owed should equal line24_total_tax when no payments made",
+    Math.round(totalTax as number),
+    "line37_amount_owed should equal rounded line24_total_tax when no payments made",
   );
 
   // No refund
@@ -272,4 +273,176 @@ Deno.test("E2E Scenario 2: self-employed Schedule C — SE income and SE deducti
     undefined,
     "line35a_refund should be absent when there is an amount owed",
   );
+});
+
+// ── Scenario 3: Foreign employer compensation, alone and beside a W-2 ─────────
+//
+// Compensation from a foreign employer that issued no Form W-2 is gross income
+// under IRC §61(a)(1) ("Compensation for services"), so it belongs in AGI just
+// like W-2 wages. IRS Publication 4164 places FEC on line 1h, and the f1040
+// node must total lines 1a and 1h when both wage sources are present.
+//
+// 3a — Single, foreign compensation $20,000, no W-2, no withholding:
+//   line11_agi                          = $20,000
+//   taxable_income                      = $20,000 − $15,750 = $4,250
+//   tax: 10% × $4,250                   = $425
+//   line37_amount_owed                  = $425
+//
+// 3b — Single, W-2 $80,000 (withheld $10,000) + foreign compensation $20,000:
+//   line11_agi                          = $100,000
+//   taxable_income                      = $100,000 − $15,750 = $84,250
+//   tax: 10% × $11,925                  = $1,192.50
+//        12% × ($48,475 − $11,925)      = $4,386.00
+//        22% × ($84,250 − $48,475)      = $7,870.50
+//   line24_total_tax                    = $13,449
+//   line37_amount_owed                  = $13,449 − $10,000 = $3,449
+
+function fecItem(compensationUsd: number) {
+  return {
+    foreign_employer_name: "Example Foreign Employer",
+    country_code: "FR",
+    compensation_amount: compensationUsd,
+    compensation_usd: compensationUsd,
+  };
+}
+
+function singleGeneral() {
+  return {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Jane",
+    taxpayer_last_name: "Doe",
+    taxpayer_ssn: "123-45-6789",
+    taxpayer_dob: "1985-06-15",
+  };
+}
+
+Deno.test("E2E Scenario 3a: foreign employer compensation with no W-2 — reaches AGI (IRC §61(a)(1))", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    fec: [fecItem(20_000)],
+  });
+
+  assertEquals(
+    result.pending["agi_aggregator"]?.["line1h_other_earned"],
+    20_000,
+    "agi_aggregator should receive line1h_other_earned = $20,000 from the fec node",
+  );
+
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    4_250,
+    "taxable income = $20,000 AGI − $15,750 standard deduction",
+  );
+
+  const f1040 = result.pending["f1040"] ?? {};
+  assertEquals(f1040["line24_total_tax"], 425, "total tax = 10% × $4,250");
+  assertEquals(
+    f1040["line37_amount_owed"],
+    425,
+    "amount owed (no withholding)",
+  );
+});
+
+Deno.test("E2E Scenario 3b: foreign employer compensation beside a W-2 — lines 1a and 1h total", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [
+      {
+        box1_wages: 80_000,
+        box2_fed_withheld: 10_000,
+        box3_ss_wages: 80_000,
+        box4_ss_withheld: 4_960,
+        box5_medicare_wages: 80_000,
+        box6_medicare_withheld: 1_160,
+        employer_ein: "12-3456789",
+        employer_name: "ACME Corp",
+        box12_entries: [],
+      },
+    ],
+    fec: [fecItem(20_000)],
+  });
+
+  // Two wage sources must not fail the f1040 node.
+  assertEquals(
+    result.diagnostics.filter((d) => d.nodeType === "f1040"),
+    [],
+    "f1040 should compute with both a W-2 and foreign employer compensation",
+  );
+
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    84_250,
+    "taxable income = $100,000 AGI − $15,750 standard deduction",
+  );
+
+  const f1040 = result.pending["f1040"] ?? {};
+  assertEquals(f1040["line1a_wages"], 80_000, "W-2 wages stay on line 1a");
+  assertEquals(
+    f1040["line1h_other_earned"],
+    20_000,
+    "foreign wages go on line 1h",
+  );
+  assertEquals(f1040["line24_total_tax"], 13_449, "total tax on $84,250");
+  assertEquals(f1040["line33_total_payments"], 10_000, "W-2 withholding");
+  assertEquals(
+    f1040["line37_amount_owed"],
+    3_449,
+    "amount owed = $13,449 − $10,000",
+  );
+});
+
+Deno.test("E2E Scenario 4a: 1099-DIV and trust K-1 dividends combine without node failures", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [{
+      box1_wages: 30_000,
+      box2_fed_withheld: 2_000,
+    }],
+    f1099div: [{
+      payerName: "Broker",
+      isNominee: false,
+      box11: false,
+      box1a: 400,
+    }],
+    k1_trust: [{
+      estate_trust_name: "Trust",
+      box2a_ordinary_dividends: 300,
+    }],
+  });
+
+  assertEquals(
+    result.diagnostics.filter((d) =>
+      d.nodeType === "agi_aggregator" || d.nodeType === "f1040"
+    ),
+    [],
+  );
+  assertEquals(result.pending["standard_deduction"]?.["agi"], 30_700);
+  assertEquals(
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    14_950,
+  );
+  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 1_555.5);
+});
+
+Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AGI", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    f1099div: [
+      { payerName: "Broker A", isNominee: false, box11: false, box1a: 100 },
+      { payerName: "Broker B", isNominee: false, box11: false, box1a: 200 },
+    ],
+    k1_trust: [
+      { estate_trust_name: "Trust A", box2a_ordinary_dividends: 300 },
+      { estate_trust_name: "Trust B", box2a_ordinary_dividends: 400 },
+    ],
+  });
+
+  assertEquals(
+    result.diagnostics.filter((d) =>
+      d.nodeType === "agi_aggregator" || d.nodeType === "f1040"
+    ),
+    [],
+  );
+  assertEquals(result.pending["standard_deduction"]?.["agi"], 1_000);
+  assertEquals(result.pending["f1040"]?.["line24_total_tax"], 0);
 });
