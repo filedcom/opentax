@@ -29,9 +29,9 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("regular_tax_income at zero is emitted", () => {
+Deno.test("regular_tax_income at zero does not file Form 6251 by itself", () => {
   const result = form6251.build({ regular_tax_income: 0 });
-  assertStringIncludes(result, "<AGIOrAGILessDeductionAmt>0</AGIOrAGILessDeductionAmt>");
+  assertEquals(result, "");
 });
 
 // ---------------------------------------------------------------------------
@@ -39,7 +39,7 @@ Deno.test("regular_tax_income at zero is emitted", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("regular_tax_income maps to AGIOrAGILessDeductionAmt", () => {
-  const result = form6251.build({ regular_tax_income: 75000 });
+  const result = form6251.build({ regular_tax_income: 75000, iso_adjustment: 1 });
   assertStringIncludes(
     result,
     "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
@@ -47,7 +47,7 @@ Deno.test("regular_tax_income maps to AGIOrAGILessDeductionAmt", () => {
 });
 
 Deno.test("regular_tax maps to AdjustedRegularTaxAmt", () => {
-  const result = form6251.build({ regular_tax: 12000 });
+  const result = form6251.build({ regular_tax: 12000, iso_adjustment: 1 });
   assertStringIncludes(result, "<AdjustedRegularTaxAmt>12000</AdjustedRegularTaxAmt>");
 });
 
@@ -110,29 +110,17 @@ Deno.test("amtftc maps to AMTForeignTaxCreditAmt", () => {
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------
 
-Deno.test("single known field emits only that element, absent fields omitted", () => {
+Deno.test("context-only income does not file Form 6251", () => {
   const result = form6251.build({ regular_tax_income: 75000 });
-  assertStringIncludes(
-    result,
-    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
-  );
-  assertNotIncludes(result, "<AdjustedRegularTaxAmt>");
-  assertNotIncludes(result, "<IncentiveStockOptionsAmt>");
-  assertNotIncludes(result, "<ScheduleATaxesAmt>");
+  assertEquals(result, "");
 });
 
-Deno.test("two fields present: only those two elements emitted", () => {
+Deno.test("context-only income and regular tax do not file Form 6251", () => {
   const result = form6251.build({
     regular_tax_income: 75000,
     regular_tax: 12000,
   });
-  assertStringIncludes(
-    result,
-    "<AGIOrAGILessDeductionAmt>75000</AGIOrAGILessDeductionAmt>",
-  );
-  assertStringIncludes(result, "<AdjustedRegularTaxAmt>12000</AdjustedRegularTaxAmt>");
-  assertNotIncludes(result, "<IncentiveStockOptionsAmt>");
-  assertNotIncludes(result, "<AltTaxNetOperatingLossDedAmt>");
+  assertEquals(result, "");
 });
 
 // ---------------------------------------------------------------------------
@@ -198,6 +186,7 @@ Deno.test("filing_status string field is silently ignored", () => {
   const result = form6251.build({
     filing_status: "MFJ",
     regular_tax_income: 75000,
+    iso_adjustment: 1,
   });
   assertStringIncludes(
     result,

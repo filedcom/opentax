@@ -42,6 +42,11 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 ];
 
 function buildIRS6251(fields: Input): string {
+  const hasAmtReason = FIELD_MAP.some(([key]) =>
+    key !== "regular_tax_income" && key !== "regular_tax" &&
+    typeof fields[key] === "number" && fields[key] !== 0
+  );
+  if (!hasAmtReason) return "";
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";

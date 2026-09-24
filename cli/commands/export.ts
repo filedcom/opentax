@@ -61,11 +61,112 @@ export class ExportExecutionError extends Error {
 }
 
 type PipelineResult = {
-  readonly pending: Record<string, unknown>;
+  readonly pending: Readonly<Record<string, Record<string, unknown>>>;
   readonly def: ReturnType<typeof getCatalogEntry>;
   readonly filer: ReturnType<typeof extractFilerIdentity>;
   readonly executorDiagnostics: readonly ExecutorDiagnosticEntry[];
 };
+
+const ALWAYS_APPLICABLE_RULE_PREFIXES = [
+  "IND",
+  "R0000",
+  "T0000",
+  "X0000",
+] as const;
+
+function rulePrefixForDocumentTag(tag: string): string | undefined {
+  if (tag === "IRS1040") return "F1040";
+  if (tag === "IRSW2") return "FW2";
+  const schedule = /^IRS1040Schedule(.+)$/.exec(tag)?.[1];
+  if (schedule) return `S${schedule}`;
+  const form = /^IRS(.+)$/.exec(tag)?.[1];
+  return form ? `F${form}` : undefined;
+}
+
+function pendingFormIdsForPrefix(prefix: string): readonly string[] {
+  if (prefix === "F1040") return ["f1040"];
+  if (prefix === "FW2") return ["w2"];
+  if (prefix === "SEIC") return ["eitc"];
+  if (prefix === "SSE") return ["schedule_se"];
+  if (/^S[123]$/.test(prefix)) return [`schedule${prefix.slice(1)}`];
+  if (/^S[A-Z]$/.test(prefix)) {
+    return [`schedule_${prefix.slice(1).toLowerCase()}`];
+  }
+  if (prefix.startsWith("F")) {
+    const suffix = prefix.slice(1).toLowerCase();
+    return [`form${suffix}`, `form_${suffix}`];
+  }
+  return [];
+}
+
+interface EmittedValidationScope {
+  readonly rulePrefixes: ReadonlySet<string>;
+  readonly formCounts: ReadonlyMap<string, number>;
+}
+
+function emittedValidationScope(xml: string): EmittedValidationScope {
+  const prefixes = new Set<string>(ALWAYS_APPLICABLE_RULE_PREFIXES);
+  const formCounts = new Map<string, number>();
+  for (const match of xml.matchAll(/<(IRS[A-Za-z0-9]+) documentId=/g)) {
+    const prefix = rulePrefixForDocumentTag(match[1]);
+    if (!prefix) continue;
+    prefixes.add(prefix);
+    for (const formId of pendingFormIdsForPrefix(prefix)) {
+      formCounts.set(formId, (formCounts.get(formId) ?? 0) + 1);
+    }
+  }
+  return { rulePrefixes: prefixes, formCounts };
+}
+
+function validateBusinessRules(
+  pending: Readonly<Record<string, Record<string, unknown>>>,
+  filer: PipelineResult["filer"],
+  force: boolean | undefined,
+  emittedScope?: EmittedValidationScope,
+): void {
+  const f1040 = pending["f1040"] ?? {};
+  const filerInfo = {
+    primarySSN: filer?.primarySSN ?? "",
+    spouseSSN: filer?.spouse?.ssn,
+    filingStatus: typeof f1040["filing_status"] === "number"
+      ? f1040["filing_status"] as number
+      : 0,
+    ...filer,
+  };
+  const ctx = createReturnContext(
+    pending,
+    filerInfo,
+    FIELD_REGISTRY,
+    emittedScope?.formCounts,
+  );
+  const report = evaluateRules(
+    ALL_RULES,
+    ctx,
+    emittedScope?.rulePrefixes,
+  );
+  const rejectEntries = report.entries.filter(
+    (entry) =>
+      entry.severity === "reject" || entry.severity === "reject_and_stop",
+  );
+
+  if (rejectEntries.length > 0 && !force) {
+    throw new ExportRejectedError(rejectEntries);
+  }
+
+  for (
+    const entry of report.entries.filter((item) => item.severity === "alert")
+  ) {
+    console.warn(`[ALERT] [${entry.ruleNumber}] ${entry.message}`);
+  }
+  if (rejectEntries.length > 0 && force) {
+    console.warn(
+      `[WARNING] Exporting with ${rejectEntries.length} reject-level rule failure(s) (--force override active).`,
+    );
+    for (const entry of rejectEntries) {
+      console.warn(`  [${entry.ruleNumber}] ${entry.message}`);
+    }
+  }
+}
 
 /** Shared: execute nodes, warn on failures, run validation gate. */
 async function runReturnPipeline(
@@ -97,42 +198,9 @@ async function runReturnPipeline(
     }
   }
 
-  // Extract filer identity for header field access
+  // Extract filer identity for output builders and validation.
   const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
   const filer = extractFilerIdentity(f1040);
-
-  // Run validation gate
-  const filerInfo = {
-    primarySSN: filer?.primarySSN ?? "",
-    spouseSSN: filer?.spouse?.ssn,
-    filingStatus: typeof f1040["filing_status"] === "number"
-      ? f1040["filing_status"] as number
-      : 0,
-    ...filer,
-  };
-  const ctx = createReturnContext(result.pending, filerInfo, FIELD_REGISTRY);
-  const report = evaluateRules(ALL_RULES, ctx);
-
-  const rejectEntries = report.entries.filter(
-    (e) => e.severity === "reject" || e.severity === "reject_and_stop",
-  );
-
-  if (rejectEntries.length > 0 && !args.force) {
-    throw new ExportRejectedError(rejectEntries);
-  }
-
-  const alertEntries = report.entries.filter((e) => e.severity === "alert");
-  for (const entry of alertEntries) {
-    console.warn(`[ALERT] [${entry.ruleNumber}] ${entry.message}`);
-  }
-  if (rejectEntries.length > 0 && args.force) {
-    console.warn(
-      `[WARNING] Exporting with ${rejectEntries.length} reject-level rule failure(s) (--force override active).`,
-    );
-    for (const entry of rejectEntries) {
-      console.warn(`  [${entry.ruleNumber}] ${entry.message}`);
-    }
-  }
 
   return {
     pending: result.pending,
@@ -181,6 +249,12 @@ export async function exportMefCommand(
   );
   const normalized = def.buildPending(pending);
   const xml = def.buildMefXml(normalized, filer);
+  validateBusinessRules(
+    pending,
+    filer,
+    args.force,
+    emittedValidationScope(xml),
+  );
   return args.draft ? draftXmlNotice(executorDiagnostics) + xml : xml;
 }
 
@@ -195,6 +269,7 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
+  validateBusinessRules(pending, filer, args.force);
   const pdfBytes = await def.buildPdfBytes(pending, filer);
   const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
   const outPath = args.outputPath ??

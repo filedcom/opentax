@@ -9,19 +9,21 @@ export function buildMefXml(
   year = 2025,
   returnType = "1040",
 ): string {
-  // Build each form and inject the required documentId attribute into the root element.
-  // documentId must be unique per return; using the element tag name satisfies this
-  // for single-occurrence forms (the common case).
   const forms = ALL_MEF_FORMS
-    .map((form, idx) => {
-      const xml = form.build(
+    .flatMap((form) => {
+      const built = form.build(
         (pending[form.pendingKey as keyof MefFormsPending] ?? []) as never,
+        { filer },
       );
-      if (xml === "") return "";
-      // Inject documentId into the root element opening tag
-      return xml.replace(/^<([A-Za-z0-9]+)>/, (_, tag) => `<${tag} documentId="${tag}${idx}">`);
+      return typeof built === "string" ? [built] : built;
     })
-    .filter((s) => s !== "");
+    .filter((xml) => xml !== "")
+    .map((xml, index) =>
+      xml.replace(
+        /^<([A-Za-z0-9]+)>/,
+        (_, tag) => `<${tag} documentId="${tag}${index}">`,
+      )
+    );
   const documentCnt = forms.length;
 
   const innerForms = forms.join("");

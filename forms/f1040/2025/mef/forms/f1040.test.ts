@@ -53,15 +53,14 @@ Deno.test("line1a_wages zero emits WagesAmt zero", () => {
   assertStringIncludes(result, "<WagesAmt>0</WagesAmt>");
 });
 
-Deno.test("line25a_w2_withheld zero emits WithholdingTaxAmt zero", () => {
+Deno.test("line25a_w2_withheld zero emits FormW2WithheldTaxAmt zero", () => {
   const result = irs1040.build({ line25a_w2_withheld: 0 });
-  assertStringIncludes(result, "<WithholdingTaxAmt>0</WithholdingTaxAmt>");
+  assertStringIncludes(result, "<FormW2WithheldTaxAmt>0</FormW2WithheldTaxAmt>");
 });
 
-// line12e_itemized_deductions=0 is suppressed (means standard deduction was taken, not $0 deduction)
-Deno.test("line12e_itemized_deductions zero is suppressed", () => {
-  const result = irs1040.build({ line12e_itemized_deductions: 0 });
-  assertNotIncludes(result, "<TotalItemizedOrStandardDedAmt>");
+Deno.test("line12c_deduction_total zero is emitted", () => {
+  const result = irs1040.build({ line12c_deduction_total: 0 });
+  assertStringIncludes(result, "<TotalItemizedOrStandardDedAmt>0</TotalItemizedOrStandardDedAmt>");
 });
 
 // ─── Section 3: Per-field mapping ────────────────────────────────────────────
@@ -115,9 +114,9 @@ Deno.test("line5b_pension_taxable maps to TotalTaxablePensionsAmt", () => {
   assertStringIncludes(result, "<TotalTaxablePensionsAmt>22000</TotalTaxablePensionsAmt>");
 });
 
-Deno.test("line25a_w2_withheld maps to WithholdingTaxAmt", () => {
+Deno.test("line25a_w2_withheld maps to FormW2WithheldTaxAmt", () => {
   const result = irs1040.build({ line25a_w2_withheld: 8000 });
-  assertStringIncludes(result, "<WithholdingTaxAmt>8000</WithholdingTaxAmt>");
+  assertStringIncludes(result, "<FormW2WithheldTaxAmt>8000</FormW2WithheldTaxAmt>");
 });
 
 Deno.test("line25b_withheld_1099 maps to Form1099WithheldTaxAmt", () => {
@@ -125,8 +124,8 @@ Deno.test("line25b_withheld_1099 maps to Form1099WithheldTaxAmt", () => {
   assertStringIncludes(result, "<Form1099WithheldTaxAmt>450</Form1099WithheldTaxAmt>");
 });
 
-Deno.test("line12e_itemized_deductions maps to TotalItemizedOrStandardDedAmt", () => {
-  const result = irs1040.build({ line12e_itemized_deductions: 27700 });
+Deno.test("line12c_deduction_total maps to TotalItemizedOrStandardDedAmt", () => {
+  const result = irs1040.build({ line12c_deduction_total: 27700 });
   assertStringIncludes(
     result,
     "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>",
@@ -214,9 +213,9 @@ Deno.test("all fields ordering matches field map sequence", () => {
     line4b_ira_taxable: 7,
     line5a_pension_gross: 8,
     line5b_pension_taxable: 9,
-    line25a_w2_withheld: 10,
-    line25b_withheld_1099: 11,
-    line12e_itemized_deductions: 12,
+    line12c_deduction_total: 10,
+    line25a_w2_withheld: 11,
+    line25b_withheld_1099: 12,
     line28_actc: 13,
     line29_refundable_aoc: 14,
     line33_total_payments: 15,
@@ -233,7 +232,7 @@ Deno.test("all fields ordering matches field map sequence", () => {
     "<PensionsAnnuitiesAmt>",
     "<TotalTaxablePensionsAmt>",
     "<TotalItemizedOrStandardDedAmt>",
-    "<WithholdingTaxAmt>",
+    "<FormW2WithheldTaxAmt>",
     "<Form1099WithheldTaxAmt>",
     "<AdditionalChildTaxCreditAmt>",
     "<RefundableAmerOppCreditAmt>",
@@ -310,9 +309,9 @@ Deno.test("line13_qbi_deduction maps to QualifiedBusinessIncomeDedAmt", () => {
   );
 });
 
-Deno.test("line30_refundable_adoption maps to RefundableCreditsAmt", () => {
+Deno.test("line30_refundable_adoption maps to RefundableAdoptionCreditAmt", () => {
   const result = irs1040.build({ line30_refundable_adoption: 2000 });
-  assertStringIncludes(result, "<RefundableCreditsAmt>2000</RefundableCreditsAmt>");
+  assertStringIncludes(result, "<RefundableAdoptionCreditAmt>2000</RefundableAdoptionCreditAmt>");
 });
 
 Deno.test("line20_nonrefundable_credits maps to TotalNonrefundableCreditsAmt", () => {
@@ -352,18 +351,33 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     line6a_ss_gross: 24000,
     line6b_ss_taxable: 20400,
     line7_capital_gain: -3000,
+    line9_total_income: 90000,
+    line10_adjustments: 1000,
+    line11_agi: 89000,
+    line12c_deduction_total: 27700,
     line13_qbi_deduction: 5000,
+    line14_deductions_qbi_total: 32700,
+    line15_taxable_income: 56300,
+    line16_income_tax: 7000,
     line17_additional_taxes: 3200,
+    line18_total_tax_before_credits: 10200,
     line20_nonrefundable_credits: 4500,
+    line21_credits_total: 4500,
+    line22_tax_after_credits: 5700,
+    line23_other_taxes: 300,
+    line24_total_tax: 6000,
     line25a_w2_withheld: 8000,
     line25b_withheld_1099: 450,
     line25c_additional_medicare_withheld: 900,
+    line25d_total_withholding: 9350,
     line28_actc: 1600,
     line29_refundable_aoc: 2500,
     line30_refundable_adoption: 2000,
     line31_additional_payments: 1100,
-    line12e_itemized_deductions: 27700,
+    line32_refundable_credits_total: 5200,
     line33_total_payments: 12000,
+    line34_overpayment: 6000,
+    line35a_refund: 6000,
   });
 
   assertStringIncludes(result, "<IRS1040>");
@@ -384,17 +398,25 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
   assertStringIncludes(result, "<SocSecBnftAmt>24000</SocSecBnftAmt>");
   assertStringIncludes(result, "<TaxableSocSecAmt>20400</TaxableSocSecAmt>");
   assertStringIncludes(result, "<CapitalGainLossAmt>-3000</CapitalGainLossAmt>");
+  assertStringIncludes(result, "<TotalIncomeAmt>90000</TotalIncomeAmt>");
+  assertStringIncludes(result, "<AdjustedGrossIncomeAmt>89000</AdjustedGrossIncomeAmt>");
+  assertStringIncludes(result, "<TaxableIncomeAmt>56300</TaxableIncomeAmt>");
   assertStringIncludes(result, "<QualifiedBusinessIncomeDedAmt>5000</QualifiedBusinessIncomeDedAmt>");
   assertStringIncludes(result, "<AdditionalTaxAmt>3200</AdditionalTaxAmt>");
   assertStringIncludes(result, "<TotalNonrefundableCreditsAmt>4500</TotalNonrefundableCreditsAmt>");
-  assertStringIncludes(result, "<WithholdingTaxAmt>8000</WithholdingTaxAmt>");
+  assertStringIncludes(result, "<TotalTaxAmt>6000</TotalTaxAmt>");
+  assertStringIncludes(result, "<FormW2WithheldTaxAmt>8000</FormW2WithheldTaxAmt>");
+  assertStringIncludes(result, "<WithholdingTaxAmt>9350</WithholdingTaxAmt>");
   assertStringIncludes(result, "<Form1099WithheldTaxAmt>450</Form1099WithheldTaxAmt>");
   assertStringIncludes(result, "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>");
   assertStringIncludes(result, "<AdditionalChildTaxCreditAmt>1600</AdditionalChildTaxCreditAmt>");
   assertStringIncludes(result, "<RefundableAmerOppCreditAmt>2500</RefundableAmerOppCreditAmt>");
-  assertStringIncludes(result, "<RefundableCreditsAmt>2000</RefundableCreditsAmt>");
+  assertStringIncludes(result, "<RefundableAdoptionCreditAmt>2000</RefundableAdoptionCreditAmt>");
+  assertStringIncludes(result, "<RefundableCreditsAmt>5200</RefundableCreditsAmt>");
   assertStringIncludes(result, "<TotalOtherPaymentsRfdblCrAmt>1100</TotalOtherPaymentsRfdblCrAmt>");
   assertStringIncludes(result, "<TotalItemizedOrStandardDedAmt>27700</TotalItemizedOrStandardDedAmt>");
   assertStringIncludes(result, "<TotalPaymentsAmt>12000</TotalPaymentsAmt>");
+  assertStringIncludes(result, "<OverpaidAmt>6000</OverpaidAmt>");
+  assertStringIncludes(result, "<RefundAmt>6000</RefundAmt>");
   assertStringIncludes(result, "<RefundProductCd>NO FINANCIAL PRODUCT</RefundProductCd>");
 });

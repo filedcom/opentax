@@ -15,6 +15,7 @@ import { buildMefXml } from "./builder.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
+import { extractFilerIdentity } from "../../mef/filer.ts";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -47,6 +48,10 @@ function singleGeneral() {
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",
     taxpayer_dob: "1985-06-15",
+    address_line1: "1 Test Way",
+    address_city: "Austin",
+    address_state: "TX",
+    address_zip: "78701",
   };
 }
 
@@ -62,6 +67,10 @@ function w2Item(wages: number, withheld: number) {
     box6_medicare_withheld: wages * 0.0145,
     employer_ein: "12-3456789",
     employer_name: "ACME Corp",
+    employer_address_line1: "2 Payroll Road",
+    employer_address_city: "Austin",
+    employer_address_state: "TX",
+    employer_address_zip: "78702",
     box12_entries: [],
   };
 }
@@ -106,7 +115,10 @@ Deno.test(
       general: singleGeneral(),
       w2: [w2Item(75_000, 11_000)],
     });
-    const xml = buildMefXml(result.pending as MefFormsPending);
+    const xml = buildMefXml(
+      result.pending as MefFormsPending,
+      extractFilerIdentity(singleGeneral()),
+    );
     await validateXsd(xml, "Single W-2 $75K");
   },
 );
@@ -134,7 +146,10 @@ Deno.test(
         },
       ],
     });
-    const xml = buildMefXml(result.pending as MefFormsPending);
+    const xml = buildMefXml(
+      result.pending as MefFormsPending,
+      extractFilerIdentity(singleGeneral()),
+    );
     await validateXsd(xml, "Self-employed Schedule C $80K");
   },
 );
@@ -158,7 +173,10 @@ Deno.test(
         line_11_cash_contributions: 5_000,
       },
     });
-    const xml = buildMefXml(result.pending as MefFormsPending);
+    const xml = buildMefXml(
+      result.pending as MefFormsPending,
+      extractFilerIdentity(singleGeneral()),
+    );
     await validateXsd(xml, "Itemized deductions Schedule A");
   },
 );
@@ -170,6 +188,9 @@ Deno.test("XSD: returnVersion matches 2025v3.0", () => {
     general: singleGeneral(),
     w2: [w2Item(50_000, 8_000)],
   });
-  const xml = buildMefXml(result.pending as MefFormsPending);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(singleGeneral()),
+  );
   assertStringIncludes(xml, 'returnVersion="2025v3.0"');
 });

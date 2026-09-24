@@ -73,6 +73,14 @@ const box14EntrySchema = z.object({
 
 // Per-entry schema — one W-2 from one employer. Used by the CLI for per-entry validation.
 export const w2ItemSchema = z.object({
+  employer_ein: z.string().optional().describe("Employer identification number"),
+  employer_name: z.string().optional().describe("Employer legal name"),
+  employer_address_line1: z.string().optional().describe("Employer street address"),
+  employer_address_line2: z.string().optional().describe("Employer address line 2"),
+  employer_address_city: z.string().optional().describe("Employer city"),
+  employer_address_state: z.string().optional().describe("Employer state abbreviation"),
+  employer_address_zip: z.string().optional().describe("Employer ZIP code"),
+  employee_ssn: z.string().optional().describe("Employee SSN when this W-2 belongs to the spouse"),
   box1_wages: z.number().nonnegative().describe("Wages, tips, other compensation"),
   box2_fed_withheld: z.number().nonnegative().describe("Federal income tax withheld"),
   box3_ss_wages: z.number().nonnegative().optional().describe("Social security wages"),
@@ -103,7 +111,7 @@ export const inputSchema = z.object({
 });
 
 type F1040Input = z.infer<typeof f1040.inputSchema>;
-type W2Item = z.infer<typeof w2ItemSchema>;
+export type W2Item = z.infer<typeof w2ItemSchema>;
 type W2Items = W2Item[];
 
 function retirementLimit(

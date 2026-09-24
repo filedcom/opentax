@@ -6,6 +6,7 @@ export interface Fields {
   filing_status?: string | null;
   // Part I (inside AdditionalTaxGrp > AdditionalMedicareTaxGrp)
   medicare_wages?: number | null;
+  medicare_wages_box5?: number | null;
   unreported_tips?: number | null;
   wages_8919?: number | null;
   // Part II (inside AdditionalTaxGrp > AddnlSelfEmploymentTaxGrp)
@@ -119,6 +120,21 @@ function buildAdditionalTaxGrp(fields: Input): string {
 }
 
 function buildIRS8959(fields: Input): string {
+  const threshold = thresholdAmount(fields.filing_status);
+  const wages = fields.medicare_wages_box5 ?? fields.medicare_wages ?? 0;
+  const tips = fields.unreported_tips ?? 0;
+  const wages8919 = fields.wages_8919 ?? 0;
+  const line4 = wages + tips + wages8919;
+  const wageTax = Math.max(0, line4 - threshold) * AMT_RATE;
+  const remainingThreshold = Math.max(0, threshold - line4);
+  const seTax = Math.max(0, (fields.se_income ?? 0) - remainingThreshold) * AMT_RATE;
+  const rrtaTax = Math.max(0, (fields.rrta_wages ?? 0) - threshold) * AMT_RATE;
+  const additionalWithheld = Math.max(
+    0,
+    (fields.medicare_withheld ?? 0) - wages * 0.0145,
+  ) + (fields.rrta_medicare_withheld ?? 0);
+  if (wageTax + seTax + rrtaTax === 0 && additionalWithheld === 0) return "";
+
   const additionalTaxGrp = buildAdditionalTaxGrp(fields);
   const withheldParts: string[] = [];
   if (typeof fields.medicare_withheld === "number") {
