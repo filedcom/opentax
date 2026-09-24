@@ -68,7 +68,7 @@ export async function formAddCommand(
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
 
-  const { id } = await appendInput(returnPath, args.nodeType, data);
+  const { id } = await appendInput(returnPath, args.nodeType, parsed.data);
 
   return { id, nodeType: args.nodeType };
 }
@@ -155,7 +155,7 @@ export async function formUpdateCommand(
     throw new Error(`Validation error: ${parsed.error.message}`);
   }
 
-  return updateInput(returnPath, args.entryId, data);
+  return updateInput(returnPath, args.entryId, parsed.data);
 }
 
 // ─── form delete ──────────────────────────────────────────────────────────────

@@ -31,11 +31,18 @@ type OtherIncomeRouting = typeof OTHER_INCOME_ROUTING[number];
 // Schemas
 // ---------------------------------------------------------------------------
 
+const tinSchema = z.string()
+  .regex(
+    /^(?:\d{9}|\d{2}-\d{7}|\d{3}-\d{2}-\d{4})$/,
+    "TIN must be 9 digits, XX-XXXXXXX, or XXX-XX-XXXX",
+  )
+  .transform((tin) => tin.replaceAll("-", ""));
+
 export const itemSchema = z.object({
   // Required identifiers
   payer_name: z.string().min(1).max(40),
-  payer_tin: z.string().regex(/^\d{9}$/),
-  recipient_tin: z.string().regex(/^\d{9}$/),
+  payer_tin: tinSchema,
+  recipient_tin: tinSchema,
   // Optional identifiers
   account_number: z.string().max(20).optional(),
   multi_form_code: z.number().int().min(1).optional(),
