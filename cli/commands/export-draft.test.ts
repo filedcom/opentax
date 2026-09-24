@@ -20,11 +20,22 @@ Deno.test("explicit draft XML remains labeled after clean calculation", async ()
       filing_status: FilingStatus.Single,
       taxpayer_first_name: "Synthetic",
       taxpayer_last_name: "Example",
+      taxpayer_ssn: "111-22-3333",
+      address_line1: "1 Test Way",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
     });
     await appendInput(`${baseDir}/${returnId}`, "f2441", {});
     await appendInput(`${baseDir}/${returnId}`, "w2", {
       box1_wages: 85000,
       box2_fed_withheld: 10000,
+      employer_ein: "12-3456789",
+      employer_name: "Example Employer",
+      employer_address_line1: "2 Payroll Road",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78702",
     });
     const xml = await exportMefCommand({
       returnId,

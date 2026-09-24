@@ -20,19 +20,39 @@ export interface Fields {
   line6b_ss_taxable?: number | null;
   line7_capital_gain?: number | null;
   line7a_cap_gain_distrib?: number | null;
-  line12e_itemized_deductions?: number | null;
+  line9_total_income?: number | null;
+  line10_adjustments?: number | null;
+  line11_agi?: number | null;
+  line12c_deduction_total?: number | null;
   line13_qbi_deduction?: number | null;
+  line13b_additional_deductions?: number | null;
+  line14_deductions_qbi_total?: number | null;
+  line15_taxable_income?: number | null;
+  line16_income_tax?: number | null;
   line17_additional_taxes?: number | null;
+  line18_total_tax_before_credits?: number | null;
+  line19_child_tax_credit?: number | null;
   line20_nonrefundable_credits?: number | null;
+  line21_credits_total?: number | null;
+  line22_tax_after_credits?: number | null;
+  line23_other_taxes?: number | null;
+  line24_total_tax?: number | null;
   line25a_w2_withheld?: number | null;
   line25b_withheld_1099?: number | null;
   line25c_additional_medicare_withheld?: number | null;
+  line25d_total_withholding?: number | null;
+  line26_estimated_tax?: number | null;
+  line27_eitc?: number | null;
   line28_actc?: number | null;
   line29_refundable_aoc?: number | null;
   line30_refundable_adoption?: number | null;
   line31_additional_payments?: number | null;
+  line32_refundable_credits_total?: number | null;
   line33_total_payments?: number | null;
-  line38_amount_paid_extension?: number | null;
+  line34_overpayment?: number | null;
+  line35a_refund?: number | null;
+  line37_amount_owed?: number | null;
+  line38_underpayment_penalty?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -46,9 +66,8 @@ type Input = Partial<Fields> & Record<string, unknown>;
 //   line5a_pension_gross → PensionsAnnuitiesAmt (was TotalPensionsAndAnnuitiesAmt)
 //   line5b_pension_taxable → TotalTaxablePensionsAmt (was TaxablePensionsAndAnnuitiesAmt)
 //   line17_additional_taxes → AdditionalTaxAmt (was OtherTaxAmt, which is inside OtherTaxAmtGrp)
+//   line25a_w2_withheld → FormW2WithheldTaxAmt (WithholdingTaxAmt is line 25d)
 //   line25b_withheld_1099 → Form1099WithheldTaxAmt (was Form1099WithholdingAmt)
-//   line33_total_payments → TotalPaymentsAmt (new — required for valid sequence)
-//   line38_amount_paid_extension → EsPenaltyAmt (closest match; AmountPaidWithExtensionAmt is not in XSD)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line1a_wages", "WagesAmt"],
   ["line1c_unreported_tips", "TipIncomeAmt"],
@@ -68,18 +87,39 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line6b_ss_taxable", "TaxableSocSecAmt"],
   ["line7_capital_gain", "CapitalGainLossAmt"],
   ["line7a_cap_gain_distrib", "CapitalGainLossAmt"],
-  ["line12e_itemized_deductions", "TotalItemizedOrStandardDedAmt"],
+  ["line9_total_income", "TotalIncomeAmt"],
+  ["line10_adjustments", "TotalAdjustmentsAmt"],
+  ["line11_agi", "AdjustedGrossIncomeAmt"],
+  ["line12c_deduction_total", "TotalItemizedOrStandardDedAmt"],
   ["line13_qbi_deduction", "QualifiedBusinessIncomeDedAmt"],
+  ["line13b_additional_deductions", "TotalAdditionalDeductionsAmt"],
+  ["line14_deductions_qbi_total", "TotalDeductionsAmt"],
+  ["line15_taxable_income", "TaxableIncomeAmt"],
+  ["line16_income_tax", "TaxAmt"],
   ["line17_additional_taxes", "AdditionalTaxAmt"],
+  ["line18_total_tax_before_credits", "TotalTaxBeforeCrAndOthTaxesAmt"],
+  ["line19_child_tax_credit", "CTCODCAmt"],
   ["line20_nonrefundable_credits", "TotalNonrefundableCreditsAmt"],
-  ["line25a_w2_withheld", "WithholdingTaxAmt"],
+  ["line21_credits_total", "TotalCreditsAmt"],
+  ["line22_tax_after_credits", "TaxLessCreditsAmt"],
+  ["line23_other_taxes", "TotalOtherTaxesAmt"],
+  ["line24_total_tax", "TotalTaxAmt"],
+  ["line25a_w2_withheld", "FormW2WithheldTaxAmt"],
   ["line25b_withheld_1099", "Form1099WithheldTaxAmt"],
   ["line25c_additional_medicare_withheld", "TaxWithheldOtherAmt"],
+  ["line25d_total_withholding", "WithholdingTaxAmt"],
+  ["line26_estimated_tax", "EstimatedTaxPaymentsAmt"],
+  ["line27_eitc", "EarnedIncomeCreditAmt"],
   ["line28_actc", "AdditionalChildTaxCreditAmt"],
   ["line29_refundable_aoc", "RefundableAmerOppCreditAmt"],
-  ["line30_refundable_adoption", "RefundableCreditsAmt"],
+  ["line30_refundable_adoption", "RefundableAdoptionCreditAmt"],
   ["line31_additional_payments", "TotalOtherPaymentsRfdblCrAmt"],
+  ["line32_refundable_credits_total", "RefundableCreditsAmt"],
   ["line33_total_payments", "TotalPaymentsAmt"],
+  ["line34_overpayment", "OverpaidAmt"],
+  ["line35a_refund", "RefundAmt"],
+  ["line37_amount_owed", "OwedAmt"],
+  ["line38_underpayment_penalty", "EsPenaltyAmt"],
 ];
 
 /**
@@ -127,9 +167,6 @@ function buildIRS1040(fields: Input): string {
   const incomeChildren = FIELD_MAP.map(([key, tag]) => {
     const value = resolveNumber(fields[key]);
     if (value === undefined) return "";
-    // Don't emit zero-value optional fields for itemized deductions — a value
-    // of 0 means the standard deduction was taken, not $0 itemized.
-    if (key === "line12e_itemized_deductions" && value === 0) return "";
     return element(tag, value);
   });
 

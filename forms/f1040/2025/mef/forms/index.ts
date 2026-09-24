@@ -46,6 +46,7 @@ import { scheduleD } from "./schedule_d.ts";
 import { scheduleF } from "./schedule_f.ts";
 import { scheduleH } from "./schedule_h.ts";
 import { scheduleSE } from "./schedule_se.ts";
+import { w2 } from "./w2.ts";
 
 // XSD-required element sequence from ReturnData1040.xsd.
 // Any reordering here must stay in sync with the sequence in that XSD or
@@ -144,4 +145,6 @@ export const ALL_MEF_FORMS = [
   form8995,
   // Form 8995A
   form8995a,
+  // Form W-2 wage statements (one document per employer)
+  w2,
 ] as const;

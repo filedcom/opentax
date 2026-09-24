@@ -314,6 +314,7 @@ function assembleReturn(input: F1040Input): Record<string, number> {
 
   // Emit computed subtotals — always include these aggregates regardless of value
   result.line10_adjustments = computed_line10;
+  result.line12c_deduction_total = deductionAmount(input);
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
 

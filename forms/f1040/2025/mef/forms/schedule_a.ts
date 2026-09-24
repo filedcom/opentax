@@ -52,6 +52,10 @@ function buildIRS1040ScheduleA(fields: Input): string {
   // Combine the mutually exclusive line 5a fields into a single XSD element.
   // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
   const line5a = (fields.line_5a_state_income_tax ?? 0) + (fields.line_5a_sales_tax ?? 0);
+  const hasDeduction = FIELD_MAP.some(([key]) =>
+    key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
+  ) || line5a !== 0;
+  if (!hasDeduction) return "";
 
   // Elements must follow the XSD sequence order defined in IRS1040ScheduleA.xsd:
   //   MedicalAndDentalExpensesAmt → TaxReturnAGIAmt → ... → StateAndLocalTaxAmt → RealEstateTaxesAmt → ...

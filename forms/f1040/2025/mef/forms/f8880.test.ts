@@ -29,12 +29,9 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("roth_contributions_taxpayer at zero is emitted", () => {
+Deno.test("zero contribution alone does not file Form 8880", () => {
   const result = form8880.build({ roth_contributions_taxpayer: 0 });
-  assertStringIncludes(
-    result,
-    "<PrimaryRothIRAForCurrentYrAmt>0</PrimaryRothIRAForCurrentYrAmt>",
-  );
+  assertEquals(result, "");
 });
 
 // ---------------------------------------------------------------------------
@@ -90,7 +87,7 @@ Deno.test("distributions_spouse maps to SpsTaxableDistributionsAmt", () => {
 });
 
 Deno.test("agi maps to TaxReturnAGIAmt", () => {
-  const result = form8880.build({ agi: 60000 });
+  const result = form8880.build({ agi: 60000, contributions_taxpayer: 1 });
   assertStringIncludes(result, "<TaxReturnAGIAmt>60000</TaxReturnAGIAmt>");
 });
 
@@ -106,20 +103,17 @@ Deno.test("credit maps to CrQualifiedRetirementSavAmt", () => {
 // Section 5: Sparse output — only agi (engine's typical flow)
 // ---------------------------------------------------------------------------
 
-Deno.test("only agi present: emits TaxReturnAGIAmt, no other elements", () => {
+Deno.test("only agi present: does not file Form 8880", () => {
   const result = form8880.build({ agi: 60000 });
-  assertStringIncludes(result, "<TaxReturnAGIAmt>60000</TaxReturnAGIAmt>");
-  assertNotIncludes(result, "<PrimaryRothIRAForCurrentYrAmt>");
-  assertNotIncludes(result, "<PrimaryContributionsAmt>");
-  assertNotIncludes(result, "AGIAmt>60000</AGIAmt>");
+  assertEquals(result, "");
 });
 
 // ---------------------------------------------------------------------------
 // Section 6: Wrapper tag
 // ---------------------------------------------------------------------------
 
-Deno.test("any field present: output wrapped in IRS8880 tag", () => {
-  const result = form8880.build({ agi: 60000 });
+Deno.test("a contribution emits the IRS8880 wrapper", () => {
+  const result = form8880.build({ contributions_taxpayer: 1 });
   assertStringIncludes(result, "<IRS8880");
   assertStringIncludes(result, "</IRS8880>");
 });
@@ -129,7 +123,11 @@ Deno.test("any field present: output wrapped in IRS8880 tag", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("filing_status string field is silently ignored", () => {
-  const result = form8880.build({ filing_status: "MFJ", agi: 60000 });
+  const result = form8880.build({
+    filing_status: "MFJ",
+    agi: 60000,
+    contributions_taxpayer: 1,
+  });
   assertStringIncludes(result, "<TaxReturnAGIAmt>60000</TaxReturnAGIAmt>");
   assertNotIncludes(result, "filing_status");
   assertNotIncludes(result, "MFJ");
