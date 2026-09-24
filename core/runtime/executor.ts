@@ -20,6 +20,8 @@ export type ExecuteResult = {
  * Merges output.fields into pending[targetId].
  *
  * Rules:
+ * - A computed field replaces the same field deposited directly by the start node.
+ *   Derived context is authoritative for nodes that are both user inputs and output targets.
  * - If the target field already holds an array, append incoming scalar or concat incoming array.
  * - If the target field does not exist, set directly.
  * - If target is a scalar and incoming is scalar, promote both to an array (accumulation pattern:
@@ -28,8 +30,10 @@ export type ExecuteResult = {
  */
 function mergePending(
   pending: Record<string, Record<string, unknown>>,
+  directInputFields: Record<string, Set<string>>,
   targetId: string,
   input: Readonly<Record<string, unknown>>,
+  isDirectInput: boolean,
 ): void {
   if (pending[targetId] === undefined) {
     pending[targetId] = {};
@@ -40,6 +44,13 @@ function mergePending(
   for (const key of Object.keys(input)) {
     const incoming = input[key];
     const existing = target[key];
+
+    if (isDirectInput) {
+      (directInputFields[targetId] ??= new Set()).add(key);
+    } else if (directInputFields[targetId]?.delete(key)) {
+      target[key] = incoming;
+      continue;
+    }
 
     if (Array.isArray(existing)) {
       target[key] = Array.isArray(incoming)
@@ -70,6 +81,7 @@ export function execute(
   ctx: NodeContext,
 ): ExecuteResult {
   const pending: Record<string, Record<string, unknown>> = {};
+  const directInputFields: Record<string, Set<string>> = {};
   pending["start"] = { ...inputs };
 
   const diagnostics: ExecutorDiagnosticEntry[] = [];
@@ -91,7 +103,8 @@ export function execute(
           code: "EXECUTOR_NODE_FAILURE",
           nodeType: step.nodeType,
           nodeId: step.id,
-          message: `Zod validation failed for node "${step.nodeType}": ${parsed.error.message}`,
+          message:
+            `Zod validation failed for node "${step.nodeType}": ${parsed.error.message}`,
         });
       }
       continue;
@@ -100,7 +113,13 @@ export function execute(
     try {
       const result = node.compute(ctx, parsed.data);
       for (const output of result.outputs) {
-        mergePending(pending, output.nodeType, output.fields);
+        mergePending(
+          pending,
+          directInputFields,
+          output.nodeType,
+          output.fields,
+          step.nodeType === "start",
+        );
       }
       if (result.carryforwards) {
         Object.assign(carryforwards, result.carryforwards);
