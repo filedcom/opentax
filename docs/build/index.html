@@ -605,7 +605,7 @@
       </div>
       <p>The quickest way to understand the engine is to watch it work. Open a new chat in Claude and paste this:</p>
       <div class="prompt-box"><code>Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</code><button class="copy-btn" type="button">copy</button></div>
-      <p>Claude sets everything up, then asks whether you want to <b>prepare</b> a return or <b>review</b> one. Give it a W-2 and a 1099 and watch it work through the 1040. Or give it a finished return and its source documents and it will check the return line by line.</p>
+      <p>Claude sets everything up, then asks whether you want to <b>prepare</b> a return or <b>review</b> one. Give it a made-up W-2 and 1099 and watch it work through the 1040. Or give it a finished practice return and its source documents and it will check the return line by line.</p>
       <p>Prefer a permanent setup? <a href="https://opentax-mcp.filed.com/" class="inline-link" target="_blank" rel="noopener">Add the OpenTax connector</a> to Claude or ChatGPT once and it's there in every chat.</p>
       <div class="note"><span class="note-label">Client data</span><p class="note-body">Practice with a made-up return. Before putting real client data into any hosted AI tool, check it against your firm's section 7216 policy. The <a href="../#install" class="inline-link">command-line version</a> runs entirely on your own machine.</p></div>
     </article>
@@ -620,7 +620,7 @@
       </div>
       <p>This is the single most valuable thing a tax professional can do. If OpenTax gets a number wrong, <a href="https://github.com/filedcom/opentax/issues/new" class="inline-link" target="_blank" rel="noopener">open an issue on GitHub</a> (you'll need a free account). A good report has four parts:</p>
       <div class="prompt-box prompt-block"><code>Tax year and filing status:
-What went in (made-up or fully anonymised figures):
+What went in (made-up figures only):
 What OpenTax produced (form, line, amount):
 What it should be, and the IRS source (form instructions, publication, line):</code><button class="copy-btn" type="button">copy</button></div>
       <p>The source matters most. "Form 8995 instructions, line 3" is what lets someone fix it quickly. You don't need to know why the engine got it wrong, only what the right answer is.</p>
@@ -630,14 +630,16 @@ What it should be, and the IRS source (form instructions, publication, line):</c
       <div class="step-head">
         <span class="step-num">3</span>
         <div>
-          <h3 class="step-title">Turn a return you trust into a test case</h3>
+          <h3 class="step-title">Turn a tricky scenario into a test case</h3>
           <p class="step-time">30 minutes · needs setup</p>
         </div>
       </div>
-      <p>OpenTax is checked against a public set of 133 benchmark returns, each with values from IRS materials. A scenario only counts as passing when total tax, refund and amount owed all land within $5 of the right answer. Every return you add makes the engine harder to break.</p>
-      <p>The best candidates are the tricky ones you know cold: an education credit phase-out, a K-1 with a passive loss, a senior with Social Security and a pension. In Claude Code, inside the project, type:</p>
+      <p>A test case is a <b>made-up return</b>: invented names and numbers that recreate a situation you know how to handle. It is never a client's actual return, and nothing about a real taxpayer goes into it.</p>
+      <p>OpenTax is checked against a public set of 133 of these fictional returns, each with values from IRS materials. A scenario only counts as passing when total tax, refund and amount owed all land within $5 of the right answer. Every case you add makes the engine harder to break.</p>
+      <p>The best candidates are the tricky situations you know cold: an education credit phase-out, a K-1 with a passive loss, a senior with Social Security and a pension. Describe the situation and Claude Code invents the taxpayer. Inside the project, type:</p>
       <div class="prompt-box"><code>/tax-cases "MFJ, two W-2s, one child in college claiming the AOTC, 1098-T with scholarship"</code><button class="copy-btn" type="button">copy</button></div>
-      <p>Or paste a worked example of your own and say "turn this into a benchmark case. The correct total tax is $X." Then do the part only you can do: <b>check the correct values against your own calculation</b>. When they match, ask Claude Code to open a pull request.</p>
+      <p>You can also use a worked example from an IRS publication or VITA training exercise. Then do the part only you can do: <b>check the correct values against your own calculation</b>. When they match, ask Claude Code to open a pull request.</p>
+      <div class="note"><span class="note-label">Made-up returns only</span><p class="note-body">Never use a real client's return, even with the names removed. Test cases are public, and real return information is protected by section 7216. Build the scenario from scratch instead.</p></div>
     </article>
 
     <article class="step" id="fix">
@@ -692,7 +694,7 @@ What it should be, and the IRS source (form instructions, publication, line):</c
   <p class="eyebrow">Ground rules</p>
   <h2 class="sec">Five things to keep in mind</h2>
   <div class="rules">
-    <div class="rule"><p class="rule-t">Never put real taxpayer data in anything public</p><p class="rule-b">Issues, test cases and pull requests are visible to everyone. Use made-up names, SSNs and figures.</p></div>
+    <div class="rule"><p class="rule-t">Never use a real client's return</p><p class="rule-b">Not even with the names removed. Issues, test cases and pull requests are public. Every name, SSN and figure should be made up.</p></div>
     <div class="rule"><p class="rule-t">Always cite the source</p><p class="rule-b">Form instructions, publication and line. It's what makes a change reviewable.</p></div>
     <div class="rule"><p class="rule-t">One change at a time</p><p class="rule-b">A small, focused change gets reviewed and merged far faster than a big one.</p></div>
     <div class="rule"><p class="rule-t">You own the numbers, not the code</p><p class="rule-b">Your job is to confirm the answer is right. The maintainers review the code itself.</p></div>
@@ -725,8 +727,8 @@ What it should be, and the IRS source (form instructions, publication, line):</c
 </div>
 
 <div class="section" style="padding-top:8px;text-align:center;">
-  <h2 class="sec" style="margin-bottom:14px;">Start with one return</h2>
-  <p class="sec-sub" style="margin:0 auto 28px;">Run a return you know well through the engine. If anything's off, tell us.</p>
+  <h2 class="sec" style="margin-bottom:14px;">Start with a made-up return</h2>
+  <p class="sec-sub" style="margin:0 auto 28px;">Invent a return around a situation you know well and run it through the engine. If anything's off, tell us.</p>
   <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
     <a href="#try" class="btn-primary">Try it now</a>
     <a href="https://github.com/filedcom/opentax/issues/new" class="btn-secondary" target="_blank" rel="noopener">Report an error</a>
