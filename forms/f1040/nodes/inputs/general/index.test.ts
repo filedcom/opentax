@@ -412,6 +412,30 @@ Deno.test("override: qualifying_child_for_ctc=false forces ODC even if child wou
 // 11. Smoke Test — MFJ return, 2 qualifying children, 1 qualifying relative
 // ============================================================
 
+Deno.test("date of birth derives age-65 eligibility for standard and senior deductions", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1955-06-01",
+  });
+
+  assertEquals(findOutput(result, "f1040")?.fields.taxpayer_age_65_or_older, true);
+  assertEquals(findOutput(result, "standard_deduction")?.fields.taxpayer_age_65_or_older, true);
+  assertEquals(findOutput(result, "schedule1a")?.fields.taxpayer_age_65_or_older, true);
+});
+
+Deno.test("explicit age-65 flag takes precedence over the derived date-of-birth value", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_dob: "1955-06-01",
+    taxpayer_age_65_or_older: false,
+  });
+
+  assertEquals(findOutput(result, "standard_deduction")?.fields.taxpayer_age_65_or_older, false);
+  assertEquals(findOutput(result, "schedule1a")?.fields.taxpayer_age_65_or_older, false);
+});
+
 Deno.test("smoke: MFJ + 2 qualifying children + 1 qualifying relative → all outputs correct", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
