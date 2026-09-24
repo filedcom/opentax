@@ -239,6 +239,23 @@ Deno.test("routing_profit_routes_form8995: net_profit > 0 → form8995 with exac
   assertEquals((qbi!.fields as Record<string, number>).qbi_from_schedule_c, 50000);
 });
 
+Deno.test("routing_qbi_limitation_fields: Schedule C preserves SSTB, W-2 wage, and UBIA amounts", () => {
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 50_000,
+      qbi_specified_service: true,
+      qbi_w2_wages: 12_000,
+      qbi_unadjusted_basis: 80_000,
+    }),
+  ]);
+  const qbi = findOutput(result, "form8995");
+
+  assertEquals(qbi?.fields.qbi_from_schedule_c, 0);
+  assertEquals(qbi?.fields.sstb_qbi, 50_000);
+  assertEquals(qbi?.fields.sstb_w2_wages, 12_000);
+  assertEquals(qbi?.fields.sstb_unadjusted_basis, 80_000);
+});
+
 Deno.test("routing_qbi_nets_loss_business: a loss in one Schedule C reduces the QBI from another", () => {
   // i8995, Line 1(c) carries "the net QBI or (loss)" of each trade or business and Line 2
   // totals them, so business B's $30,000 loss reduces business A's $150,000 of QBI.

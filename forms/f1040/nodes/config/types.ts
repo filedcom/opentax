@@ -63,6 +63,7 @@ export interface F1040Config {
   // ── QBI ───────────────────────────────────────────────────────────────────
   qbiThresholdSingle: number;
   qbiThresholdMfj: number;
+  /** Section 199A phase-in range for joint returns; other statuses use half. */
   qbiPhaseInRange: number;
 
   // ── EITC ──────────────────────────────────────────────────────────────────

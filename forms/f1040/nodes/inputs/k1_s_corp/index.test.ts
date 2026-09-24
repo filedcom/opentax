@@ -249,21 +249,28 @@ Deno.test("ubia_qualified_property routes to form8995 unadjusted_basis", () => {
   assertEquals(out?.fields.unadjusted_basis, 50000);
 });
 
-Deno.test("sstb_indicator true excludes item from form8995 non-SSTB pool", () => {
-  // SSTB item should not contribute to form8995 (would go to form8995a instead)
-  const result = compute([minimalItem({ qbi_amount: 10000, sstb_indicator: true })]);
+Deno.test("sstb_indicator keeps QBI and limitation amounts in the SSTB pool", () => {
+  const result = compute([minimalItem({
+    qbi_amount: 10000,
+    sstb_indicator: true,
+    w2_wages: 2000,
+    ubia_qualified_property: 50_000,
+  })]);
   const out = findOutput(result, "form8995");
-  assertEquals(out, undefined);
+  assertEquals(out?.fields.qbi, undefined);
+  assertEquals(out?.fields.sstb_qbi, 10_000);
+  assertEquals(out?.fields.sstb_w2_wages, 2_000);
+  assertEquals(out?.fields.sstb_unadjusted_basis, 50_000);
 });
 
-Deno.test("mixed SSTB and non-SSTB: only non-SSTB routes to form8995", () => {
+Deno.test("mixed SSTB and non-SSTB amounts remain separate for Form 8995-A", () => {
   const result = compute([
     minimalItem({ corporation_name: "Corp A", qbi_amount: 8000, sstb_indicator: false }),
     minimalItem({ corporation_name: "Corp B", qbi_amount: 5000, sstb_indicator: true }),
   ]);
   const out = findOutput(result, "form8995");
-  // Only Corp A's 8000 should appear
   assertEquals(out?.fields.qbi, 8000);
+  assertEquals(out?.fields.sstb_qbi, 5000);
 });
 
 Deno.test("negative qbi_amount does not route to form8995", () => {

@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form8995 } from "./index.ts";
+import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
   return form8995.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -430,4 +431,22 @@ Deno.test("smoke: full scenario — Schedule C + Schedule E + REIT dividends + c
   assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line13_qbi_deduction, 10600);
   assertEquals(result.outputs.length, 2); // f1040 + standard_deduction
+});
+
+Deno.test("above-threshold Schedule C QBI is handed to Form 8995-A after business deductions", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 229_330.4625,
+    qbi_from_schedule_c: 50_000,
+    se_tax_deduction: 669.5375,
+    w2_wages: 0,
+    unadjusted_basis: 0,
+  });
+  const advanced = findOutput(result, "form8995a");
+
+  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(advanced?.fields.taxable_income, 213_580.4625);
+  assertEquals(advanced?.fields.qbi, 49_330.4625);
+  assertEquals(advanced?.fields.w2_wages, 0);
+  assertEquals(advanced?.fields.unadjusted_basis, 0);
 });

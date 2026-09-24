@@ -89,10 +89,15 @@ function reductionRatio(
   cfg: import("../../../config/index.ts").F1040Config,
 ): number {
   const base = threshold(filingStatus, cfg);
+  // The configured range is the joint-return amount. IRC §199A(e)(2)(B)
+  // uses half that range for every other filing status.
+  const phaseInRange = filingStatus === FilingStatus.MFJ
+    ? cfg.qbiPhaseInRange
+    : cfg.qbiPhaseInRange / 2;
   const excess = taxableIncome - base;
   if (excess <= 0) return 0;
-  if (excess >= cfg.qbiPhaseInRange) return 1;
-  return excess / cfg.qbiPhaseInRange;
+  if (excess >= phaseInRange) return 1;
+  return excess / phaseInRange;
 }
 
 // ── SSTB adjustment ───────────────────────────────────────────────────────────

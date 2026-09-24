@@ -205,18 +205,27 @@ function resolveUbia(item: K1SCorpItem): number {
 }
 
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
-  // Non-SSTB items → form8995
   const nonSstb = items.filter((item) => item.sstb_indicator !== true);
+  const sstb = items.filter((item) => item.sstb_indicator === true);
   const totalQbi = nonSstb.reduce((sum, item) => sum + resolveQbiAmount(item), 0);
   const totalW2 = nonSstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
   const totalUbia = nonSstb.reduce((sum, item) => sum + resolveUbia(item), 0);
+  const totalSstbQbi = sstb.reduce((sum, item) => sum + resolveQbiAmount(item), 0);
+  const totalSstbW2 = sstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
+  const totalSstbUbia = sstb.reduce((sum, item) => sum + resolveUbia(item), 0);
 
-  if (totalQbi <= 0 && totalW2 <= 0 && totalUbia <= 0) return [];
+  if (
+    totalQbi <= 0 && totalW2 <= 0 && totalUbia <= 0 &&
+    totalSstbQbi <= 0 && totalSstbW2 <= 0 && totalSstbUbia <= 0
+  ) return [];
 
   const fields: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
   if (totalQbi > 0) fields.qbi = totalQbi;
   if (totalW2 > 0) fields.w2_wages = totalW2;
   if (totalUbia > 0) fields.unadjusted_basis = totalUbia;
+  if (totalSstbQbi > 0) fields.sstb_qbi = totalSstbQbi;
+  if (totalSstbW2 > 0) fields.sstb_w2_wages = totalSstbW2;
+  if (totalSstbUbia > 0) fields.sstb_unadjusted_basis = totalSstbUbia;
 
   return [output(form8995, fields as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>)];
 }

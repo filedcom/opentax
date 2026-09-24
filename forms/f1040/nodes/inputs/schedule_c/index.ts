@@ -60,6 +60,11 @@ export const itemSchema = z.object({
   llc_number: z.number().int().min(1).max(999).optional(),
   subject_to_163j: z.boolean().optional(),  // §163(j) business interest limitation
 
+  // Section 199A information used when taxable income exceeds the QBI threshold.
+  qbi_specified_service: z.boolean().optional(),
+  qbi_w2_wages: z.number().nonnegative().optional(),
+  qbi_unadjusted_basis: z.number().nonnegative().optional(),
+
   // Part I: Income
   line_1_gross_receipts: z.number().nonnegative(),
   line_2_returns_allowances: z.number().nonnegative().optional(),
@@ -297,11 +302,44 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     outputs.push(this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }));
     outputs.push(this.outputNodes.output(agi_aggregator, { line3_schedule_c: totalNetProfit }));
 
-    // Form 8995 Line 1(c) carries the net QBI or (loss) of each trade or business and
-    // Line 2 totals them, so a loss in one Schedule C reduces the income from another.
-    // The $400 Schedule SE gate is not a QBI test (i8995, Lines 1 and 2).
-    if (totalNetProfit !== 0) {
-      outputs.push(this.outputNodes.output(form8995, { qbi_from_schedule_c: totalNetProfit }));
+    // Preserve the Schedule C business classification and limitation inputs so the
+    // QBI node can select Form 8995 or 8995-A after taxable income is known.
+    const nonSstbQbi = input.schedule_cs.reduce(
+      (sum, item, index) => item.qbi_specified_service === true ? sum : sum + netProfits[index],
+      0,
+    );
+    const sstbQbi = input.schedule_cs.reduce(
+      (sum, item, index) => item.qbi_specified_service === true ? sum + netProfits[index] : sum,
+      0,
+    );
+    const nonSstbWages = input.schedule_cs.reduce(
+      (sum, item) => item.qbi_specified_service === true ? sum : sum + (item.qbi_w2_wages ?? 0),
+      0,
+    );
+    const sstbWages = input.schedule_cs.reduce(
+      (sum, item) => item.qbi_specified_service === true ? sum + (item.qbi_w2_wages ?? 0) : sum,
+      0,
+    );
+    const nonSstbUbia = input.schedule_cs.reduce(
+      (sum, item) => item.qbi_specified_service === true ? sum : sum + (item.qbi_unadjusted_basis ?? 0),
+      0,
+    );
+    const sstbUbia = input.schedule_cs.reduce(
+      (sum, item) => item.qbi_specified_service === true ? sum + (item.qbi_unadjusted_basis ?? 0) : sum,
+      0,
+    );
+    if (
+      nonSstbQbi !== 0 || sstbQbi !== 0 || nonSstbWages > 0 ||
+      sstbWages > 0 || nonSstbUbia > 0 || sstbUbia > 0
+    ) {
+      outputs.push(this.outputNodes.output(form8995, {
+        qbi_from_schedule_c: nonSstbQbi,
+        sstb_qbi: sstbQbi,
+        w2_wages: nonSstbWages,
+        sstb_w2_wages: sstbWages,
+        unadjusted_basis: nonSstbUbia,
+        sstb_unadjusted_basis: sstbUbia,
+      }));
     }
 
     // SE net profit counts as earned income for EITC (IRC §32(c)(2)(A)(ii)) and ACTC

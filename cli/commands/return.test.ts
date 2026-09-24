@@ -106,6 +106,41 @@ Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
   }
 });
 
+Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", {
+      filing_status: "single",
+      taxpayer_dob: "1985-06-01",
+    });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 180_000,
+      box2_fed_withheld: 30_000,
+      box3_ss_wages: 176_100,
+      box4_ss_withheld: 10_918.20,
+      box5_medicare_wages: 180_000,
+      box6_medicare_withheld: 2_610,
+    });
+    await appendInput(returnPath, "schedule_c", {
+      line_a_principal_business: "Consulting",
+      line_b_business_code: "541990",
+      line_f_accounting_method: "cash",
+      line_g_material_participation: true,
+      line_1_gross_receipts: 50_000,
+    });
+
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+
+    assertEquals(result.forms.includes("form8995a"), true);
+    assertEquals(Math.round(result.summary.line15_taxable_income * 100) / 100, 206_926.86);
+    assertEquals(Math.round(result.summary.line24_total_tax * 100) / 100, 44_854.25);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("getReturnCommand nonexistent returnId throws descriptive error", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
