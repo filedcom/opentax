@@ -40,3 +40,29 @@ Deno.test("singleton general entry routes to general node", () => {
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "general");
 });
+
+Deno.test("singleton Schedule 1-A claim routes taxpayer-entered deductions", () => {
+  const startNode = buildStartNode(inputNodes);
+  const result = startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      schedule1a: {
+        taxpayer_qualified_overtime_compensation: 3_000,
+        vehicle_loans: [{
+          vin: "1HGCM82633A004352",
+          qualified_interest_paid: 1_200,
+        }],
+      },
+    },
+  );
+  assertEquals(result.outputs, [{
+    nodeType: "schedule1a",
+    fields: {
+      taxpayer_qualified_overtime_compensation: 3_000,
+      vehicle_loans: [{
+        vin: "1HGCM82633A004352",
+        qualified_interest_paid: 1_200,
+      }],
+    },
+  }]);
+});
