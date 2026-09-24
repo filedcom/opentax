@@ -127,16 +127,16 @@ Deno.test("W-2 limit: zero wages, zero UBIA → deduction is zero above threshol
 // ── Phase-in of limitation (partial) ─────────────────────────────────────────
 
 Deno.test("phase-in: 50% through range — partial wage limitation applied", () => {
-  // Single threshold $197,300; TI = $247,300 → excess = $50,000 → ratio = 0.5
+  // Single threshold $197,300; TI = $222,300 → excess = $25,000 → ratio = 0.5
   // QBI = 200,000 → 20% = 40,000
   // W-2 wages = 30,000 → 50% = 15,000; UBIA = 0 → limit = 15,000
   // phase_in_amount = 0.5 × (40,000 - 15,000) = 12,500
   // qbi_component = 40,000 - 12,500 = 27,500
-  // income cap = 20% × 247,300 = 49,460 → not binding
+  // income cap = 20% × 222,300 = 44,460 → not binding
   // deduction = 27,500
   const result = compute({
     filing_status: FilingStatus.Single,
-    taxable_income: 247_300,
+    taxable_income: 222_300,
     qbi: 200_000,
     w2_wages: 30_000,
     unadjusted_basis: 0,
@@ -177,8 +177,8 @@ Deno.test("phase-in: MFJ 50% through range ($444,600) — partial limitation", (
 
 // ── SSTB phase-out ────────────────────────────────────────────────────────────
 
-Deno.test("SSTB: fully phased out above range (single > $297,300)", () => {
-  // TI = $350,000 (above $297,300) → SSTB entirely excluded
+Deno.test("SSTB: fully phased out above range (single > $247,300)", () => {
+  // TI = $350,000 (above $247,300) → SSTB entirely excluded
   // Only SSTB income provided → no QBI deduction
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -190,7 +190,7 @@ Deno.test("SSTB: fully phased out above range (single > $297,300)", () => {
   assertEquals(findOutput(result, "f1040"), undefined);
 });
 
-Deno.test("SSTB: partially phased out in range (single at $247,300 — 50% through)", () => {
+Deno.test("SSTB: partially phased out in range (single at $222,300 — 50% through)", () => {
   // ratio = 0.5 → adjusted_sstb_qbi = 100,000 × 0.5 = 50,000
   // adjusted_sstb_w2 = 30,000 × 0.5 = 15,000
   // net_qbi = 50,000; 20% = 10,000
@@ -198,10 +198,10 @@ Deno.test("SSTB: partially phased out in range (single at $247,300 — 50% throu
   // ratio=0.5, wage_limit = 50% × 15,000 = 7,500
   // phase_in_amount = 0.5 × (10,000 - 7,500) = 1,250
   // qbi_component = 10,000 - 1,250 = 8,750
-  // income cap = 20% × 247,300 = 49,460 → not binding
+  // income cap = 20% × 222,300 = 44,460 → not binding
   const result = compute({
     filing_status: FilingStatus.Single,
-    taxable_income: 247_300,
+    taxable_income: 222_300,
     sstb_qbi: 100_000,
     sstb_w2_wages: 30_000,
     sstb_unadjusted_basis: 0,
@@ -226,7 +226,7 @@ Deno.test("SSTB: below threshold — not phased out, treated like regular QBI", 
 // ── Non-SSTB not affected by SSTB rules ──────────────────────────────────────
 
 Deno.test("non-SSTB unaffected: SSTB fully phased out but non-SSTB QBI remains", () => {
-  // TI = $350,000 (above single $297,300) → SSTB phased out entirely
+  // TI = $350,000 (above single $247,300) → SSTB phased out entirely
   // Non-SSTB QBI = 100,000 → 20% = 20,000
   // W-2 wages (non-SSTB) = 50,000 → 50% = 25,000; full limit applies
   // deduction = min(20,000, 25,000) = 20,000

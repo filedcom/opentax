@@ -252,7 +252,7 @@ export const IRA_PHASEOUT_MFS_LOWER_2025 = 0;
 export const IRA_PHASEOUT_MFS_UPPER_2025 = 10_000;
 
 // ─── QBI Deduction Thresholds (Form 8995A) ────────────────────────────────────
-// Rev. Proc. 2024-40, §3.24; IRC §199A(b)(3)(B)(ii)
+// Rev. Proc. 2024-40, §3.27; IRC §199A(b)(3)(B)(ii)
 
 /** QBI wage limitation phase-in threshold — Single/MFS/HOH/QSS (TY2025). */
 export const QBI_THRESHOLD_SINGLE_2025 = 197_300;
@@ -260,7 +260,7 @@ export const QBI_THRESHOLD_SINGLE_2025 = 197_300;
 /** QBI wage limitation phase-in threshold — MFJ (TY2025). */
 export const QBI_THRESHOLD_MFJ_2025 = 394_600;
 
-/** QBI phase-in range width (same for all filing statuses). IRC §199A(b)(3)(B)(ii) */
+/** QBI phase-in range width for MFJ; other statuses use half. IRC §199A(b)(3)(B)(ii) */
 export const QBI_PHASE_IN_RANGE_2025 = 100_000;
 
 // ─── EITC (Earned Income Tax Credit) ─────────────────────────────────────────

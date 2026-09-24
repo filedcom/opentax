@@ -425,6 +425,24 @@ Deno.test("routing: qbi_unadjusted_basis routes to form8995 when qbi_trade_or_bu
   assertEquals(input.unadjusted_basis, 200_000);
 });
 
+Deno.test("routing: specified service rental keeps QBI, wages, and UBIA in the SSTB pool", () => {
+  const result = compute([
+    minimalItem({
+      rent_income: 30_000,
+      qbi_trade_or_business: "Y",
+      qbi_specified_service: true,
+      qbi_w2_wages: 10_000,
+      qbi_unadjusted_basis: 200_000,
+    }),
+  ]);
+  const input = findOutput(result, "form8995")!.fields as Record<string, number>;
+
+  assertEquals(input.qbi, 0);
+  assertEquals(input.sstb_qbi, 30_000);
+  assertEquals(input.sstb_w2_wages, 10_000);
+  assertEquals(input.sstb_unadjusted_basis, 200_000);
+});
+
 Deno.test("routing: qbi_override routes to form8995 using override amount, ignoring computed net", () => {
   const result = compute([
     minimalItem({

@@ -383,20 +383,28 @@ function form8995Outputs(items: EItems): NodeOutput[] {
 
   const f8995Input: Partial<z.infer<typeof form8995["inputSchema"]>> = {};
 
-  // If any item has override, use the first override found; otherwise compute QBI
-  const overrideItem = qbiItems.find((item) => item.qbi_override !== undefined);
-  if (overrideItem?.qbi_override !== undefined) {
-    f8995Input.qbi = overrideItem.qbi_override;
-  } else {
-    const totalQbi = qbiItems.reduce((sum, item) => sum + computePropertyNet(item), 0);
-    f8995Input.qbi = totalQbi;
-  }
+  const qbiAmount = (item: EItem) => item.qbi_override ?? computePropertyNet(item);
+  const nonSstbItems = qbiItems.filter((item) => item.qbi_specified_service !== true);
+  const sstbItems = qbiItems.filter((item) => item.qbi_specified_service === true);
 
-  const totalW2Wages = qbiItems.reduce((sum, item) => sum + (item.qbi_w2_wages ?? 0), 0);
-  if (totalW2Wages > 0) f8995Input.w2_wages = totalW2Wages;
-
-  const totalUbia = qbiItems.reduce((sum, item) => sum + (item.qbi_unadjusted_basis ?? 0), 0);
-  if (totalUbia > 0) f8995Input.unadjusted_basis = totalUbia;
+  f8995Input.qbi = nonSstbItems.reduce((sum, item) => sum + qbiAmount(item), 0);
+  f8995Input.sstb_qbi = sstbItems.reduce((sum, item) => sum + qbiAmount(item), 0);
+  f8995Input.w2_wages = nonSstbItems.reduce(
+    (sum, item) => sum + (item.qbi_w2_wages ?? 0),
+    0,
+  );
+  f8995Input.sstb_w2_wages = sstbItems.reduce(
+    (sum, item) => sum + (item.qbi_w2_wages ?? 0),
+    0,
+  );
+  f8995Input.unadjusted_basis = nonSstbItems.reduce(
+    (sum, item) => sum + (item.qbi_unadjusted_basis ?? 0),
+    0,
+  );
+  f8995Input.sstb_unadjusted_basis = sstbItems.reduce(
+    (sum, item) => sum + (item.qbi_unadjusted_basis ?? 0),
+    0,
+  );
 
   return [output(form8995, f8995Input as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>)];
 }
