@@ -3,31 +3,20 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // IRS Schedule 2 (2025) AcroForm field names.
 // Verified layout from https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf
 //
-// Page 1 (f1_01–f1_NN):
-//   Personal info fields at top (skip)
-//   Part I: Alternative Minimum Tax and Excess Premium Tax Credit Repayment
-//     f1_01 = Line 1 AMT
-//     f1_02 = Line 2 excess premium repayment (Form 8962)
-//   Part II: Other Taxes
-//     f1_04 = Line 4 SE tax
-//     f1_05 = Line 5 unreported SS/Medicare from tips (Form 4137)
-//     f1_06 = Line 6 wages not subject to withholding (Form 8919)
-//     f1_08 = Line 8 Form 5329 additional taxes on IRAs
-//     f1_10 = Line 11 additional Medicare tax (Form 8959)
-//     f1_11 = Line 12 net investment income tax (Form 8960)
-//     f1_17 = Line 17 other taxes (catch-all)
+// Personal information occupies f1_01 and f1_02. The 2025 redesign then uses
+// f1_03 through f1_13 for Part I and f1_15 onward for Part II amounts.
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: AMT ──────────────────────────────────────────────────────────────
-  { kind: "text", domainKey: "line1_amt", pdfField: "form1[0].Page1[0].f1_01[0]" },
+  { kind: "text", domainKey: "line1_amt", pdfField: "form1[0].Page1[0].f1_12[0]" },
 
   // ── Part II: Other Taxes ─────────────────────────────────────────────────────
-  { kind: "text", domainKey: "line4_se_tax", pdfField: "form1[0].Page1[0].f1_04[0]" },
-  { kind: "text", domainKey: "line5_unreported_tip_tax", pdfField: "form1[0].Page1[0].f1_05[0]" },
-  { kind: "text", domainKey: "line6_uncollected_8919", pdfField: "form1[0].Page1[0].f1_06[0]" },
-  { kind: "text", domainKey: "line8_form5329_tax", pdfField: "form1[0].Page1[0].f1_08[0]" },
-  { kind: "text", domainKey: "line11_additional_medicare", pdfField: "form1[0].Page1[0].f1_10[0]" },
-  { kind: "text", domainKey: "line12_niit", pdfField: "form1[0].Page1[0].f1_11[0]" },
+  { kind: "text", domainKey: "line4_se_tax", pdfField: "form1[0].Page1[0].f1_15[0]" },
+  { kind: "text", domainKey: "line5_unreported_tip_tax", pdfField: "form1[0].Page1[0].f1_16[0]" },
+  { kind: "text", domainKey: "line6_uncollected_8919", pdfField: "form1[0].Page1[0].f1_17[0]" },
+  { kind: "text", domainKey: "line8_form5329_tax", pdfField: "form1[0].Page1[0].f1_19[0]" },
+  { kind: "text", domainKey: "line11_additional_medicare", pdfField: "form1[0].Page1[0].f1_22[0]" },
+  { kind: "text", domainKey: "line12_niit", pdfField: "form1[0].Page1[0].f1_23[0]" },
 ];
 
 export const schedule2Pdf: PdfFormDescriptor = {
