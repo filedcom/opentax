@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { f1099m, type itemSchema } from "./index.ts";
+import { f1099m, itemSchema } from "./index.ts";
 import type { z } from "zod";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
@@ -596,12 +596,32 @@ Deno.test("f1099m.inputSchema: payer_name longer than 40 chars fails validation"
   assertEquals(parsed.success, false);
 });
 
-// payer_tin not 9 digits fails schema
-Deno.test("f1099m.inputSchema: payer_tin with non-9-digit format fails validation", () => {
-  const parsed = f1099m.inputSchema.safeParse({
-    f1099ms: [{ payer_name: "Test", payer_tin: "12-3456789", recipient_tin: "987654321" }],
+Deno.test("f1099m.inputSchema: standard EIN and SSN formatting is normalized", () => {
+  const parsed = itemSchema.safeParse({
+    payer_name: "Test",
+    payer_tin: "13-3863700",
+    recipient_tin: "000-00-0000",
   });
+
+  assertEquals(parsed.success, true);
+  if (parsed.success) {
+    assertEquals(parsed.data.payer_tin, "133863700");
+    assertEquals(parsed.data.recipient_tin, "000000000");
+  }
+});
+
+Deno.test("f1099m.inputSchema: malformed TIN reports the accepted formats", () => {
+  const parsed = f1099m.inputSchema.safeParse({
+    f1099ms: [{ payer_name: "Test", payer_tin: "1-23-456789", recipient_tin: "987654321" }],
+  });
+
   assertEquals(parsed.success, false);
+  if (!parsed.success) {
+    assertEquals(
+      parsed.error.issues[0].message,
+      "TIN must be 9 digits, XX-XXXXXXX, or XXX-XX-XXXX",
+    );
+  }
 });
 
 // ---------------------------------------------------------------------------

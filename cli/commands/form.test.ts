@@ -68,6 +68,34 @@ Deno.test("formAddCommand two W-2 appends produce w2_01 and w2_02", async () => 
   }
 });
 
+Deno.test("formAddCommand accepts and persists normalized 1099-MISC TINs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await formAddCommand({
+      returnId,
+      nodeType: "f1099m",
+      dataJson: JSON.stringify({
+        payer_name: "Example Broker",
+        payer_tin: "13-3863700",
+        recipient_tin: "000-00-0000",
+        box8_substitute_payments: 608.60,
+      }),
+      baseDir: tmpDir,
+    });
+
+    const entry = await formGetCommand({
+      returnId,
+      entryId: "f1099m_01",
+      baseDir: tmpDir,
+    });
+    assertEquals(entry.fields.payer_tin, "133863700");
+    assertEquals(entry.fields.recipient_tin, "000000000");
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validation error", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -279,6 +307,41 @@ Deno.test("formUpdateCommand replaces entry data", async () => {
     const entry = await formGetCommand({ returnId, entryId: "w2_01", baseDir: tmpDir });
     assertEquals(entry.fields["box1_wages"], 75000);
     assertEquals(entry.fields["box2_fed_withheld"], 8000);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("formUpdateCommand persists normalized 1099-MISC TINs", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "f1099m", {
+      payer_name: "Example Broker",
+      payer_tin: "133863700",
+      recipient_tin: "000000000",
+    });
+
+    await formUpdateCommand({
+      returnId,
+      entryId: "f1099m_01",
+      dataJson: JSON.stringify({
+        payer_name: "Example Broker",
+        payer_tin: "13-3863700",
+        recipient_tin: "000-00-0000",
+        box8_substitute_payments: 608.60,
+      }),
+      baseDir: tmpDir,
+    });
+
+    const entry = await formGetCommand({
+      returnId,
+      entryId: "f1099m_01",
+      baseDir: tmpDir,
+    });
+    assertEquals(entry.fields.payer_tin, "133863700");
+    assertEquals(entry.fields.recipient_tin, "000000000");
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
