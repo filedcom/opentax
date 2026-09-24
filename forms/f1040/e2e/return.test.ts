@@ -446,3 +446,33 @@ Deno.test("E2E Scenario 4b: multiple 1099-DIV and trust K-1 entries all reach AG
   assertEquals(result.pending["standard_deduction"]?.["agi"], 1_000);
   assertEquals(result.pending["f1040"]?.["line24_total_tax"], 0);
 });
+
+Deno.test("E2E Schedule A: computed context replaces duplicate direct inputs", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    w2: [{
+      box1_wages: 349_154.37,
+      box2_fed_withheld: 78_278.44,
+    }],
+    schedule_a: {
+      filing_status: FilingStatus.Single,
+      agi: 349_154,
+      line_8a_mortgage_interest_1098: 46_984.65,
+    },
+  });
+
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending["schedule_a"]?.["filing_status"],
+    FilingStatus.Single,
+  );
+  assertEquals(result.pending["schedule_a"]?.["agi"], 349_154.37);
+  assertEquals(
+    result.pending["schedule_a"]?.["line_8a_mortgage_interest_1098"],
+    46_984.65,
+  );
+  assertEquals(
+    result.pending["standard_deduction"]?.["itemized_deductions"],
+    46_984.65,
+  );
+});
