@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Build on OpenTax: a guide for tax professionals</title>
+  <meta name="description" content="How tax professionals can improve and build on OpenTax, the free open source tax engine, without writing code. Report errors, add test cases, fix rules." />
+  <link rel="icon" href="../favicon.png" />
+  <link rel="canonical" href="https://opentax.filed.com/build/" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="OpenTax" />
+  <meta property="og:url" content="https://opentax.filed.com/build/" />
+  <meta property="og:title" content="Build on OpenTax: a guide for tax professionals" />
+  <meta property="og:description" content="How tax professionals can improve and build on OpenTax, the free open source tax engine, without writing code. Report errors, add test cases, fix rules." />
+  <meta property="og:image" content="https://opentax.filed.com/opentax-og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Build on OpenTax: a guide for tax professionals" />
+  <meta name="twitter:description" content="How tax professionals can improve and build on OpenTax, the free open source tax engine, without writing code. Report errors, add test cases, fix rules." />
+  <meta name="twitter:image" content="https://opentax.filed.com/opentax-og.png" />
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BQWCVMYT6K"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-BQWCVMYT6K');
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* Freight Display Pro — brand headline serif. Roman only; brand rule: never italics. */
+    @font-face {
+      font-family: "Freight Display Pro";
+      src: url("../fonts/FreightDispProLight-Regular.woff2") format("woff2");
+      font-weight: 300;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Freight Display Pro";
+      src: url("../fonts/FreightDispProBook-Regular.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Freight Display Pro";
+      src: url("../fonts/FreightDispProMedium-Regular.woff2") format("woff2");
+      font-weight: 500;
+      font-style: normal;
+      font-display: swap;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* ── Filed brand palette — warm brown scale. Never #000, never #FFF. ── */
+      --ink:            #1E150E;
+      --ink-deep:       #150E09;
+      --charcoal:       #4A3C2E;
+      --flint:          #736759;
+      --ash:            #A89C8E;
+      --pebble:         #D4CABC;
+      --stone:          #EBE3D5;
+      --cream:          #F4ECDE;
+
+      /* Espresso — the signature. CTA fill and accent. */
+      --espresso:       #704B30;
+      --espresso-dark:  #5D3C24;
+      --espresso-deep:  #492D19;
+      --espresso-light: #BAA698;
+      --espresso-tint:  #D9D3CF;
+
+      /* Timber — warm earth, used for dark surfaces */
+      --timber:         #5C4A32;
+      --timber-dark:    #493A25;
+      --timber-deep:    #362A1A;
+
+      /* ── semantic mapping onto the dark theme ── */
+      --color-background:         var(--ink);
+      --color-foreground:         var(--cream);
+      --color-card:               #241A11;
+      --color-secondary:          #2A1F14;
+      --color-muted:              #30251A;
+      --color-primary:            var(--cream);
+      --color-primary-foreground: var(--ink);
+      --color-muted-foreground:   var(--ash);
+      --color-border:             #3B2E1F;
+      --color-border-secondary:   #312619;
+      --beige-400: var(--flint);
+      --beige-600: var(--ash);
+      --stone-400: var(--flint);
+      --stone-600: var(--ash);
+
+      /* ── terminal / transcript semantics ──
+         Functional syntax colours inside code and chat UI, warmed to sit on Ink.
+         Change these four values to retune every status marker on the page. */
+      --term-ok:        #9DB07F;
+      --term-ok-bg:     #232B1C;
+      --term-ok-border: #3B4A2E;
+      --term-warn:      #C99A5B;
+      --term-err:       #BA8C6E;
+      --color-success:            var(--term-ok-bg);
+      --color-success-border:     var(--term-ok-border);
+      --color-success-foreground: var(--term-ok);
+
+      --font-serif: "Freight Display Pro", Georgia, serif;
+      --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Geist Mono', 'SF Mono', monospace;
+      --radius-sm: 2px;
+      --radius-md: 4px;
+      --radius-lg: 6px;
+      --radius: var(--radius-md);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-sans);
+      background: #1E150E;
+      color: var(--color-foreground);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      line-height: 1.6;
+      background-image:
+        linear-gradient(rgba(244,236,222,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(244,236,222,0.06) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+
+    /* ── nav ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      height: 56px;
+      border-bottom: 1px solid var(--color-border);
+      background: rgba(30,21,14,0.95);
+      backdrop-filter: blur(12px);
+    }
+
+    .nav-inner {
+      max-width: 100%; margin: 0 auto;
+      height: 100%;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--color-foreground);
+      font-size: 16px; font-weight: 600;
+      font-family: var(--font-sans);
+      letter-spacing: -0.01em;
+    }
+
+    .nav-right {
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .nav-link {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500;
+      color: var(--color-muted-foreground); text-decoration: none;
+      transition: color .15s, background .15s;
+    }
+    .nav-link:hover { color: var(--color-foreground); background: var(--color-secondary); }
+
+    .nav-sep { width: 1px; height: 16px; background: var(--color-border); margin: 0 8px; }
+
+    /* ── hero ── */
+    .hero-wrap {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero {
+      max-width: 960px; margin: 0 auto;
+      padding: 100px 24px 80px;
+      display: flex; flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative; z-index: 1;
+    }
+
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 300;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: #F4ECDE;
+      margin-bottom: 20px;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(15px, 2vw, 18px);
+      color: rgba(244,236,222,0.55);
+      margin-bottom: 40px;
+      font-weight: 400;
+      max-width: 680px;
+      line-height: 1.7;
+    }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      background: transparent; color: #F4ECDE;
+      border: 1px solid rgba(244,236,222,0.25); border-radius: 2px;
+      font-family: var(--font-sans); font-size: 15px; font-weight: 500;
+      text-decoration: none;
+      transition: border-color .15s, background .15s, transform .1s;
+    }
+    .btn-secondary:hover { border-color: rgba(244,236,222,0.5); background: rgba(244,236,222,0.06); transform: translateY(-1px); }
+
+    .copy-btn {
+      background: none; border: 1px solid rgba(244,236,222,0.15); border-radius: 2px;
+      padding: 3px 8px; font-size: 12px; font-family: var(--font-sans);
+      color: rgba(244,236,222,0.4); cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .copy-btn:hover { color: rgba(244,236,222,0.8); border-color: rgba(244,236,222,0.3); }
+    .copy-btn.ok { color: var(--term-ok); border-color: var(--term-ok); background: rgba(157,176,127,0.1); }
+
+    /* ── terminal ── */
+    .terminal {
+      background: var(--color-card);
+      border: 1px solid var(--color-border); border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      display: flex; align-items: center; gap: 6px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--color-border-secondary);
+      background: var(--color-secondary);
+    }
+
+    .chrome-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .terminal-title {
+      margin-left: 8px;
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--color-muted-foreground);
+    }
+
+    .terminal-body {
+      padding: 24px;
+      font-family: var(--font-mono); font-size: 13px;
+      line-height: 1.8; color: var(--color-muted-foreground);
+      white-space: pre-wrap;
+      overflow-x: auto;
+      max-height: 420px;
+      overflow-y: scroll;
+      scrollbar-width: thin;
+      scrollbar-color: #493A25 transparent;
+    }
+
+    .terminal-body .prompt { color: var(--stone-400); user-select: none; }
+    .terminal-body .cmd    { color: var(--color-foreground); font-weight: 500; }
+    .terminal-body .out    { color: var(--color-muted-foreground); }
+    .term-mobile-overlay {
+      display: none;
+      position: absolute; inset: 0; z-index: 10;
+      background: linear-gradient(to bottom, transparent 30%, rgba(30,21,14,0.92) 70%);
+      align-items: flex-end; justify-content: center; padding-bottom: 24px;
+      border-radius: 4px;
+    }
+    .term-mobile-btn {
+      font-family: var(--font-sans); font-size: 14px; font-weight: 600;
+      color: #F4ECDE; background: #3B2E1F; border: 1px solid #4A3C2E;
+      border-radius: 2px; padding: 12px 28px; cursor: pointer;
+    }
+    @media (max-width: 639px) {
+      .term-mobile-overlay { display: flex; }
+      .terminal-body { max-height: 220px; overflow-y: hidden; scrollbar-width: none; }
+    }
+
+    /* ── section primitives (replaces repeated inline styles) ── */
+    .section { max-width: 960px; margin: 0 auto; padding: 0 32px 96px; }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--ash);
+      margin-bottom: 14px;
+    }
+
+    h2.sec {
+      font-family: var(--font-serif);
+      font-size: clamp(28px, 3.4vw, 42px);
+      font-weight: 300;
+      letter-spacing: -0.015em;
+      line-height: 1.15;
+      color: var(--cream);
+      margin-bottom: 12px;
+    }
+
+    h3.sub {
+      font-family: var(--font-sans);
+      font-size: clamp(17px, 2vw, 21px);
+      font-weight: 600; letter-spacing: -0.01em;
+      color: var(--stone);
+      line-height: 1.35; margin-bottom: 8px;
+    }
+
+    .sec-sub {
+      font-size: 15px; color: var(--ash);
+      line-height: 1.75; max-width: 660px;
+      margin-bottom: 40px;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 24px;
+      background: var(--espresso); color: var(--cream);
+      border: 1px solid var(--espresso); border-radius: 2px;
+      font-family: var(--font-sans); font-size: 15px; font-weight: 500;
+      text-decoration: none;
+      transition: background .15s, border-color .15s, transform .1s;
+    }
+    .btn-primary:hover {
+      background: var(--espresso-dark); border-color: var(--espresso-light);
+      transform: translateY(-1px);
+    }
+
+    /* visible keyboard focus — was missing entirely */
+    a:focus-visible, button:focus-visible {
+      outline: 2px solid var(--espresso-light);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    /* ── hero status strip ── */
+    .fact-strip {
+      display: flex; flex-wrap: wrap;
+      align-items: center; justify-content: center;
+      gap: 0 20px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--ash);
+      letter-spacing: 0.02em;
+    }
+    .fact-strip span { display: inline-flex; align-items: center; gap: 20px; }
+    .fact-strip span::after {
+      content: "";
+      width: 1px; height: 11px;
+      background: var(--timber-dark);
+    }
+    .fact-strip span:last-child::after { display: none; }
+    .fact-strip b { color: var(--cream); font-weight: 500; }
+
+    /* ── initiative cards ── */
+    .init-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    }
+    .init-card {
+      display: flex; flex-direction: column;
+      background: var(--color-card);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      padding: 28px;
+      transition: border-color .18s, transform .18s;
+    }
+    .init-card:hover { border-color: var(--timber); transform: translateY(-2px); }
+    .init-card .init-name {
+      font-family: var(--font-serif); font-size: 26px; font-weight: 400;
+      color: var(--cream); letter-spacing: -0.01em; margin-bottom: 10px;
+    }
+    .init-card p {
+      font-size: 14px; color: var(--ash); line-height: 1.7; margin-bottom: 18px;
+    }
+    .init-card .init-foot { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .pill {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.04em;
+      color: var(--pebble);
+      background: rgba(244,236,222,0.05);
+      border: 1px solid var(--color-border);
+      border-radius: 2px; padding: 3px 10px;
+    }
+    .pill-accent {
+      color: var(--espresso-tint);
+      background: rgba(112,75,48,0.28);
+      border-color: var(--espresso);
+    }
+
+    /* ── alliance band ── */
+    .band {
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      background: rgba(54,42,26,0.45);
+    }
+    .member-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;
+    }
+    .member {
+      background: var(--color-card); border: 1px solid var(--color-border);
+      border-radius: 2px; padding: 20px;
+    }
+    .member .m-name {
+      font-family: var(--font-sans); font-size: 15px; font-weight: 600;
+      color: var(--cream); margin-bottom: 6px; letter-spacing: -0.01em;
+    }
+    .member .m-desc { font-size: 13px; color: var(--ash); line-height: 1.7; }
+
+    .note {
+      background: var(--color-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 16px 18px;
+    }
+    .note-label {
+      display: block;
+      font-family: var(--font-mono); font-size: 10px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--espresso-light);
+      margin-bottom: 7px;
+    }
+    .note-body {
+      font-size: 13px; color: var(--ash); line-height: 1.7;
+    }
+
+    .footer-col-link {
+      font-family: var(--font-sans); font-size: 14px;
+      color: var(--pebble); text-decoration: none;
+      transition: color .15s;
+    }
+    .footer-col-link:hover { color: var(--cream); }
+
+    /* ── FAQ ── */
+    .faq-list {
+      border-top: 1px solid var(--color-border);
+    }
+    .faq {
+      border-bottom: 1px solid var(--color-border);
+    }
+    .faq summary {
+      list-style: none; cursor: pointer;
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 18px 0;
+      font-family: var(--font-sans); font-size: 16px; font-weight: 500;
+      letter-spacing: -0.01em; color: var(--stone);
+      transition: color .15s;
+    }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after {
+      content: "+";
+      margin-left: auto; flex-shrink: 0;
+      font-family: var(--font-mono); font-size: 17px; font-weight: 400;
+      color: var(--flint); line-height: 1;
+      transition: color .15s;
+    }
+    .faq[open] summary::after { content: "\2212"; color: var(--espresso-light); }
+    .faq summary:hover { color: var(--cream); }
+    .faq summary:hover::after { color: var(--espresso-light); }
+    .faq[open] summary { color: var(--cream); }
+    .faq-a { padding: 0 0 22px; max-width: 720px; }
+    .faq-a p {
+      font-size: 14px; color: var(--ash); line-height: 1.8; margin: 0;
+    }
+    .faq-a a { color: var(--espresso-light); text-decoration: underline; text-underline-offset: 3px; }
+    .faq-a a:hover { color: var(--cream); }
+    .faq-a code {
+      font-family: var(--font-mono); font-size: 12.5px;
+      color: var(--pebble);
+      background: rgba(244,236,222,0.05);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: 1px 6px;
+      word-break: break-all;
+    }
+
+    /* ── footer ── */
+    footer {
+      border-top: 1px solid rgba(244,236,222,0.1);
+      padding: 24px;
+      background: #150E09;
+    }
+
+    .footer-inner {
+      max-width: 960px; margin: 0 auto;
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px; flex-wrap: wrap;
+    }
+
+    .footer-left {
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .footer-link {
+      font-size: 13px; color: var(--color-muted-foreground);
+      text-decoration: none; transition: color .15s;
+    }
+    .footer-link:hover { color: var(--color-foreground); }
+
+    @media (max-width: 600px) {
+      .hero { padding: 60px 20px 48px; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      .install-cards { grid-template-columns: 1fr !important; }
+      .init-grid, .member-row { grid-template-columns: 1fr; }
+      .section { padding-left: 20px; padding-right: 20px; padding-bottom: 64px; }
+      .fact-strip { gap: 0 14px; font-size: 11px; }
+      .fact-strip span { gap: 14px; }
+      .init-card { padding: 22px; }
+    }
+  
+    /* ── build guide ── */
+    .inline-link { color: var(--espresso-light); text-decoration: underline; text-underline-offset: 3px; }
+    .inline-link:hover { color: var(--cream); }
+    .inline-code { font-family: var(--font-mono); font-size: 12.5px; color: var(--pebble); background: rgba(244,236,222,0.05); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 1px 6px; }
+    .steps { display: flex; flex-direction: column; gap: 20px; }
+    .step { background: var(--color-card); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 28px 28px 24px; scroll-margin-top: 80px; }
+    .step > p { font-size: 15px; color: var(--pebble); line-height: 1.75; margin-bottom: 14px; max-width: 720px; }
+    .step > p b { color: var(--cream); font-weight: 500; }
+    .step .note { margin-top: 6px; }
+    .step-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+    .step-num { flex-shrink: 0; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--espresso); background: rgba(112,75,48,0.28); color: var(--espresso-tint); font-family: var(--font-mono); font-size: 14px; border-radius: 2px; }
+    .step-title { font-family: var(--font-serif); font-weight: 400; font-size: 26px; line-height: 1.15; color: var(--cream); letter-spacing: -0.01em; }
+    .step-time { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--flint); margin-top: 6px; }
+    .prompt-box { position: relative; display: flex; align-items: flex-start; gap: 12px; background: var(--ink-deep); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px 16px; margin: 4px 0 16px; max-width: 760px; }
+    .prompt-box code { flex: 1; font-family: var(--font-mono); font-size: 13px; color: var(--stone); line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
+    .prompt-box .copy-btn { flex-shrink: 0; }
+    .setup-list { list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 18px; max-width: 760px; }
+    .setup-list li { counter-increment: s; position: relative; padding-left: 44px; font-size: 15px; color: var(--pebble); line-height: 1.75; }
+    .setup-list li b { color: var(--cream); font-weight: 500; }
+    .setup-list li::before { content: counter(s); position: absolute; left: 0; top: 1px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); font-family: var(--font-mono); font-size: 12px; color: var(--ash); border-radius: 2px; }
+    .rules { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--color-border); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; margin-top: 28px; }
+    .rule { background: var(--color-background); padding: 20px 22px; }
+    .rule:last-child { grid-column: 1 / -1; }
+    .rule-t { font-size: 15px; font-weight: 500; color: var(--cream); margin-bottom: 6px; line-height: 1.4; }
+    .rule-b { font-size: 14px; color: var(--ash); line-height: 1.7; }
+    .licence-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 28px; }
+    .fine { font-size: 13px; color: var(--flint); margin-top: 18px; line-height: 1.7; }
+    @media (max-width: 639px) {
+      .step { padding: 22px 18px 18px; }
+      .step-title { font-size: 22px; }
+      .nav-right .nav-link:nth-child(2), .nav-right .nav-link:nth-child(4), .nav-right .nav-sep, .nav-right .nav-link:last-child { display: none; }
+      .rules { grid-template-columns: 1fr; }
+      .prompt-box { flex-direction: column; }
+    }
+  </style>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Build on OpenTax: a guide for tax professionals",
+  "description": "How tax professionals can improve and build on OpenTax, the free open source tax engine, without writing code.",
+  "url": "https://opentax.filed.com/build/",
+  "image": "https://opentax.filed.com/opentax-og.png",
+  "datePublished": "2026-09-24",
+  "author": { "@type": "Organization", "name": "Filed", "url": "https://www.filed.com" },
+  "publisher": { "@type": "Organization", "name": "Open Tax Technology Alliance", "url": "https://opentaxalliance.org" },
+  "isPartOf": { "@type": "WebSite", "name": "OpenTax", "url": "https://opentax.filed.com/" }
+}
+  </script>
+</head>
+<body>
+<nav>
+  <div class="nav-inner">
+    <a href="https://filed.com" class="nav-logo" target="_blank" rel="noopener">
+      <img src="../filed-logo.png" height="28" alt="Filed" style="display:block;filter:invert(1);" />
+    </a>
+    <div class="nav-right">
+      <a href="../" class="nav-link">OpenTax</a>
+      <a href="../#install" class="nav-link">Install</a>
+      <a href="./" class="nav-link" aria-current="page" style="color:var(--cream);">Build</a>
+      <a href="../#faq" class="nav-link">FAQ</a>
+      <div class="nav-sep"></div>
+      <a href="https://github.com/filedcom/opentax" class="nav-link" target="_blank" rel="noopener">⭐ Star on GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<div class="hero-wrap">
+  <div class="hero" style="padding-bottom:56px;">
+    <p class="eyebrow" style="margin-bottom:18px;">A guide for tax professionals</p>
+    <h1 style="margin-bottom:24px;">Build on OpenTax</h1>
+    <p class="hero-subtitle" style="margin-bottom:28px;">You don't need to write code to make OpenTax better. The most useful contributions come from knowing tax. An AI assistant writes the code. You bring the judgment.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <span class="pill pill-accent">No coding required</span>
+      <span class="pill">Free</span>
+      <span class="pill">Start in 5 minutes</span>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="padding-bottom:56px;">
+  <p class="eyebrow">Five ways in</p>
+  <h2 class="sec">From five minutes to an afternoon</h2>
+  <p class="sec-sub">Start at the top. Each step builds on the one before, and every one of them helps. Steps 3 and 4 need a one-time setup, <a href="#setup" class="inline-link">covered below</a>.</p>
+
+  <div class="steps">
+
+    <article class="step" id="try">
+      <div class="step-head">
+        <span class="step-num">1</span>
+        <div>
+          <h3 class="step-title">Run a return through it</h3>
+          <p class="step-time">5 minutes</p>
+        </div>
+      </div>
+      <p>The quickest way to understand the engine is to watch it work. Open a new chat in Claude and paste this:</p>
+      <div class="prompt-box"><code>Fetch and follow the OpenTax skill: https://raw.githubusercontent.com/filedcom/opentax/main/skills/opentax/SKILL.md</code><button class="copy-btn" type="button">copy</button></div>
+      <p>Claude sets everything up, then asks whether you want to <b>prepare</b> a return or <b>review</b> one. Give it a made-up W-2 and 1099 and watch it work through the 1040. Or give it a finished practice return and its source documents and it will check the return line by line.</p>
+      <p>Prefer a permanent setup? <a href="https://opentax-mcp.filed.com/" class="inline-link" target="_blank" rel="noopener">Add the OpenTax connector</a> to Claude or ChatGPT once and it's there in every chat.</p>
+      <div class="note"><span class="note-label">Client data</span><p class="note-body">Practice with a made-up return. Before putting real client data into any hosted AI tool, check it against your firm's section 7216 policy. The <a href="../#install" class="inline-link">command-line version</a> runs entirely on your own machine.</p></div>
+    </article>
+
+    <article class="step" id="report">
+      <div class="step-head">
+        <span class="step-num">2</span>
+        <div>
+          <h3 class="step-title">Tell us where it's wrong</h3>
+          <p class="step-time">10 minutes</p>
+        </div>
+      </div>
+      <p>This is the single most valuable thing a tax professional can do. If OpenTax gets a number wrong, <a href="https://github.com/filedcom/opentax/issues/new" class="inline-link" target="_blank" rel="noopener">open an issue on GitHub</a> (you'll need a free account). A good report has four parts:</p>
+      <div class="prompt-box prompt-block"><code>Tax year and filing status:
+What went in (made-up figures only):
+What OpenTax produced (form, line, amount):
+What it should be, and the IRS source (form instructions, publication, line):</code><button class="copy-btn" type="button">copy</button></div>
+      <p>The source matters most. "Form 8995 instructions, line 3" is what lets someone fix it quickly. You don't need to know why the engine got it wrong, only what the right answer is.</p>
+    </article>
+
+    <article class="step" id="test-case">
+      <div class="step-head">
+        <span class="step-num">3</span>
+        <div>
+          <h3 class="step-title">Turn a tricky scenario into a test case</h3>
+          <p class="step-time">30 minutes · needs setup</p>
+        </div>
+      </div>
+      <p>A test case is a <b>made-up return</b>: invented names and numbers that recreate a situation you know how to handle. It is never a client's actual return, and nothing about a real taxpayer goes into it.</p>
+      <p>OpenTax is checked against a public set of 133 of these fictional returns, each with values from IRS materials. A scenario only counts as passing when total tax, refund and amount owed all land within $5 of the right answer. Every case you add makes the engine harder to break.</p>
+      <p>The best candidates are the tricky situations you know cold: an education credit phase-out, a K-1 with a passive loss, a senior with Social Security and a pension. Describe the situation and Claude Code invents the taxpayer. Inside the project, type:</p>
+      <div class="prompt-box"><code>/tax-cases "MFJ, two W-2s, one child in college claiming the AOTC, 1098-T with scholarship"</code><button class="copy-btn" type="button">copy</button></div>
+      <p>You can also use a worked example from an IRS publication or VITA training exercise. Then do the part only you can do: <b>check the correct values against your own calculation</b>. When they match, ask Claude Code to open a pull request.</p>
+      <div class="note"><span class="note-label">Made-up returns only</span><p class="note-body">Never use a real client's return, even with the names removed. Test cases are public, and real return information is protected by section 7216. Build the scenario from scratch instead.</p></div>
+    </article>
+
+    <article class="step" id="fix">
+      <div class="step-head">
+        <span class="step-num">4</span>
+        <div>
+          <h3 class="step-title">Fix a rule or add a form</h3>
+          <p class="step-time">An afternoon · needs setup</p>
+        </div>
+      </div>
+      <p>The project comes with tools that let Claude Code do the engineering. Start by asking where things stand:</p>
+      <div class="prompt-box"><code>/tax-status</code><button class="copy-btn" type="button">copy</button></div>
+      <p>Then either let it work through failing cases on its own with <code class="inline-code">/tax-fix f1040:2025</code>, or describe the rule in plain English. For example:</p>
+      <div class="prompt-box prompt-block"><code>The engine isn't limiting the student loan interest deduction for MFJ filers above the phase-out range. Per the Schedule 1 line 21 worksheet in the 2025 Form 1040 instructions, it should phase out between $170,000 and $200,000 of modified AGI. Find where this is calculated, fix it, add a benchmark case that proves it, and run the tests.</code><button class="copy-btn" type="button">copy</button></div>
+      <p>You check the numbers. The maintainers check the code. Every change is tested and reviewed before it's merged, so you can't break the engine by trying.</p>
+    </article>
+
+    <article class="step" id="own-tools">
+      <div class="step-head">
+        <span class="step-num">5</span>
+        <div>
+          <h3 class="step-title">Build your own tools on top</h3>
+          <p class="step-time">Whenever you're ready</p>
+        </div>
+      </div>
+      <p>The engine is a foundation for your own tools: a review checklist in your firm's style, a planning what-if tool, an intake step that feeds your existing software. The <a href="https://github.com/filedcom/opentax/tree/main/skills/tax-reviewer" class="inline-link" target="_blank" rel="noopener">tax-reviewer skill</a> is a good starting point:</p>
+      <div class="prompt-box prompt-block"><code>Using the OpenTax tax-reviewer skill as a base, write a skill for our firm that also checks: estimated payments against last year's safe harbor, missing 1099-Bs when the prior year had them, and HSA contributions over the limit.</code><button class="copy-btn" type="button">copy</button></div>
+      <p>If you build something other firms could use, consider contributing it back. See <a href="#licence" class="inline-link">the licence in plain English</a> before you share or sell anything built on the engine.</p>
+    </article>
+
+  </div>
+</div>
+
+<div class="band">
+  <div class="section" id="setup" style="padding-top:72px;padding-bottom:72px;">
+    <p class="eyebrow">One-time setup</p>
+    <h2 class="sec">Set up for steps 3 and 4</h2>
+    <p class="sec-sub">About fifteen minutes, once. After that, everything happens in plain-English conversation with Claude Code.</p>
+    <ol class="setup-list">
+      <li><b>Create a free GitHub account</b> at <a href="https://github.com/signup" class="inline-link" target="_blank" rel="noopener">github.com/signup</a>. This is where the code lives and where your changes get reviewed.</li>
+      <li><b>Install Claude Code.</b> It's included with paid Claude plans and runs in the Claude desktop app or your terminal. <a href="https://claude.ai/code" class="inline-link" target="_blank" rel="noopener">claude.ai/code</a></li>
+      <li><b>Make your own copy of the project.</b> Open <a href="https://github.com/filedcom/opentax" class="inline-link" target="_blank" rel="noopener">github.com/filedcom/opentax</a> and click <b>Fork</b>. That gives you a copy you can change freely.</li>
+      <li><b>Let Claude Code do the rest.</b> Start it and paste this, with your GitHub username:
+        <div class="prompt-box" style="margin-top:12px;"><code>Clone github.com/YOUR-USERNAME/opentax into a folder called opentax, install Deno and anything else it needs, and run the tests to confirm it works.</code><button class="copy-btn" type="button">copy</button></div>
+      </li>
+      <li><b>Open Claude Code in that opentax folder</b> and type <code class="inline-code">/tax-status</code>. If you see a table of forms and pass rates, you're ready.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="section" style="padding-top:72px;padding-bottom:56px;">
+  <p class="eyebrow">Ground rules</p>
+  <h2 class="sec">Five things to keep in mind</h2>
+  <div class="rules">
+    <div class="rule"><p class="rule-t">Never use a real client's return</p><p class="rule-b">Not even with the names removed. Issues, test cases and pull requests are public. Every name, SSN and figure should be made up.</p></div>
+    <div class="rule"><p class="rule-t">Always cite the source</p><p class="rule-b">Form instructions, publication and line. It's what makes a change reviewable.</p></div>
+    <div class="rule"><p class="rule-t">One change at a time</p><p class="rule-b">A small, focused change gets reviewed and merged far faster than a big one.</p></div>
+    <div class="rule"><p class="rule-t">You own the numbers, not the code</p><p class="rule-b">Your job is to confirm the answer is right. The maintainers review the code itself.</p></div>
+    <div class="rule"><p class="rule-t">It calculates. It doesn't file.</p><p class="rule-b">OpenTax isn't IRS approved and doesn't submit returns. The preparer who signs a return is responsible for it, as with any software.</p></div>
+  </div>
+</div>
+
+<div class="section" id="licence" style="padding-top:24px;padding-bottom:56px;">
+  <p class="eyebrow">The licence in plain English</p>
+  <h2 class="sec">What you can do with it</h2>
+  <div class="licence-grid">
+    <div class="note"><span class="note-label">Free to</span><p class="note-body">Use it, study it, run it on your own machines and change it for your own work, at no cost, permanently.</p></div>
+    <div class="note"><span class="note-label">If you share it</span><p class="note-body">If you give a modified version to others, or let other people use it over a network, the AGPL v3 licence requires you to publish your source under the same licence.</p></div>
+    <div class="note"><span class="note-label">Other options</span><p class="note-body">A commercial licence is available if the AGPL doesn't suit you. Anyone planning to build an IRS e-file transmitter on the code needs written permission from Filed first.</p></div>
+  </div>
+  <p class="fine">This is a summary, not legal advice. The <a href="https://github.com/filedcom/opentax/blob/main/LICENSE" class="inline-link" target="_blank" rel="noopener">LICENSE</a> and <a href="https://github.com/filedcom/opentax/blob/main/LICENSE.commercial" class="inline-link" target="_blank" rel="noopener">LICENSE.commercial</a> files are what count.</p>
+</div>
+
+<div class="section" id="faq" style="padding-top:24px;">
+  <p class="eyebrow">FAQ</p>
+  <h2 class="sec">Questions from tax professionals</h2>
+  <div class="faq-list" style="margin-top:28px;">
+    <details class="faq"><summary>Do I really not need to code?</summary><div class="faq-a"><p>For steps 1 and 2, no technical skills at all. For steps 3 and 4 you'll type instructions to Claude Code in plain English and it does the programming. Being comfortable installing an app is enough.</p></div></details>
+    <details class="faq"><summary>What if my change is wrong?</summary><div class="faq-a"><p>It won't go live. Every change is tested against the benchmark and reviewed by a maintainer before it's merged. A wrong change gets a comment, not a mistake in the engine.</p></div></details>
+    <details class="faq"><summary>Will I be credited?</summary><div class="faq-a"><p>Yes. Every contributor appears on the <a href="https://github.com/filedcom/opentax/graphs/contributors" target="_blank" rel="noopener">GitHub contributors page</a> and by username in the release notes for the version their change ships in.</p></div></details>
+    <details class="faq"><summary>Can my firm use it with client data?</summary><div class="faq-a"><p>The command-line version runs on your own hardware and sends no return data anywhere. The only network call it makes is a daily check for new versions. Using a hosted AI assistant or the hosted connector with client data is a decision for your firm's section 7216 policy.</p></div></details>
+    <details class="faq"><summary>Which returns does it cover?</summary><div class="faq-a"><p>The federal Form 1040 for tax year 2025, with its schedules and common supporting forms. No state returns yet. Other return types are welcome contributions, and <code>/tax-build</code> is built for exactly that.</p></div></details>
+    <details class="faq"><summary>Who reviews what I send?</summary><div class="faq-a"><p>The OpenTax maintainers at Filed, as part of the <a href="https://opentaxalliance.org" target="_blank" rel="noopener">Open Tax Technology Alliance</a> with Crimson Tree Software. Questions that aren't bug reports can go in a GitHub issue too.</p></div></details>
+  </div>
+</div>
+
+<div class="section" style="padding-top:8px;text-align:center;">
+  <h2 class="sec" style="margin-bottom:14px;">Start with a made-up return</h2>
+  <p class="sec-sub" style="margin:0 auto 28px;">Invent a return around a situation you know well and run it through the engine. If anything's off, tell us.</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <a href="#try" class="btn-primary">Try it now</a>
+    <a href="https://github.com/filedcom/opentax/issues/new" class="btn-secondary" target="_blank" rel="noopener">Report an error</a>
+  </div>
+</div>
+
+<footer style="border-top:1px solid rgba(244,236,222,0.12);">
+  <div style="max-width:960px;margin:0 auto;padding:64px 32px 48px;display:flex;gap:64px;flex-wrap:wrap;align-items:flex-start;">
+    <!-- left: branding -->
+    <div style="flex:1;min-width:200px;">
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">OpenTax</p>
+      <p style="font-family:var(--font-sans);font-size:14px;color:#F4ECDE;line-height:1.6;margin:0;">Fully free and open source<br>1040 tax calculation engine.</p>
+    </div>
+    <!-- product: filed.com products -->
+    <div style="min-width:160px;">
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Filed</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="https://filed.com" target="_blank" rel="noopener" class="footer-col-link">Filed.com</a>
+      </div>
+    </div>
+    <!-- alliance links -->
+    <div style="min-width:160px;">
+      <p style="font-family:var(--font-mono);font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:rgba(244,236,222,0.5);margin-bottom:14px;">Alliance</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="https://github.com/filedcom/opentax" target="_blank" rel="noopener" class="footer-col-link">OpenTax Engine</a>
+        <a href="https://opentax.filed.com/build/" class="footer-col-link">Build on OpenTax</a>
+        <a href="https://opentax-mcp.filed.com" target="_blank" rel="noopener" class="footer-col-link">OpenTax Connector</a>
+        <a href="https://github.com/opentaxdocument/otd-spec" target="_blank" rel="noopener" class="footer-col-link">Open Tax Document spec</a>
+        <a href="https://github.com/filedcom/opentax/blob/main/LICENSE" target="_blank" rel="noopener" class="footer-col-link">AGPL v3 + Commercial licence</a>
+        <a href="https://crimsontreesoftware.com" target="_blank" rel="noopener" class="footer-col-link">Crimson Tree Software</a>
+      </div>
+    </div>
+  </div>
+  <div style="max-width:960px;margin:0 auto;padding:0 32px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <p style="font-family:var(--font-sans);font-size:12px;color:rgba(244,236,222,0.5);margin:0;">© <span id="yr">2026</span> Filed. All rights reserved.</p>
+    <a href="https://filed.com" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+      <img src="../filed-logo.png" height="18" alt="Filed" style="filter:invert(1);opacity:0.6;" />
+    </a>
+  </div>
+</footer>
+<script>
+  document.querySelectorAll('.prompt-box .copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.parentElement.querySelector('code').innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'copied'; btn.classList.add('ok');
+        setTimeout(function () { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1600);
+      });
+    });
+  });
+  var yr = document.getElementById('yr'); if (yr) yr.textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
