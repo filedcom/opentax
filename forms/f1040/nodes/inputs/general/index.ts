@@ -171,6 +171,25 @@ function ageAtYearEnd(dob: string): number {
   return TAX_YEAR_END < birthdayThisYear ? yearDiff - 1 : yearDiff;
 }
 
+// For federal tax purposes, a person reaches age 65 on the day before their
+// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use
+// a birth date before January 2, 1961.
+function isAge65ByEndOfTaxYear(
+  dob: string | undefined,
+  taxYear: number,
+): boolean | undefined {
+  if (dob === undefined) return undefined;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dob);
+  if (match === null) return undefined;
+  const birthDate = Date.UTC(
+    Number(match[1]),
+    Number(match[2]) - 1,
+    Number(match[3]),
+  );
+  const cutoff = Date.UTC(taxYear - 64, 0, 2);
+  return birthDate < cutoff;
+}
+
 // IRS CTC SSN test: must have SSN (ITIN or ATIN disqualifies CTC).
 function passesSSNTest(dep: DependentItem): boolean {
   return Boolean(dep.ssn) && !dep.itin && !dep.atin;
@@ -393,16 +412,25 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([f1040, standard_deduction, eitc, f8812, agi_aggregator, form8959, form8960, form8995, form8582, scheduleA, schedule1a]);
 
-  compute(_ctx: NodeContext, input: GeneralInput): NodeResult {
+  compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
-    const f1040Input = buildF1040Input(parsed);
+    const taxpayerAge65 = parsed.taxpayer_age_65_or_older ??
+      isAge65ByEndOfTaxYear(parsed.taxpayer_dob, ctx.taxYear);
+    const spouseAge65 = parsed.spouse_age_65_or_older ??
+      isAge65ByEndOfTaxYear(parsed.spouse_dob, ctx.taxYear);
+    const effectiveInput: GeneralInput = {
+      ...parsed,
+      ...(taxpayerAge65 !== undefined && { taxpayer_age_65_or_older: taxpayerAge65 }),
+      ...(spouseAge65 !== undefined && { spouse_age_65_or_older: spouseAge65 }),
+    };
+    const f1040Input = buildF1040Input(effectiveInput);
 
     const sdInput: Record<string, unknown> = {
       filing_status: parsed.filing_status,
     };
-    if (parsed.taxpayer_age_65_or_older !== undefined) sdInput["taxpayer_age_65_or_older"] = parsed.taxpayer_age_65_or_older;
+    if (taxpayerAge65 !== undefined) sdInput["taxpayer_age_65_or_older"] = taxpayerAge65;
     if (parsed.taxpayer_blind !== undefined) sdInput["taxpayer_blind"] = parsed.taxpayer_blind;
-    if (parsed.spouse_age_65_or_older !== undefined) sdInput["spouse_age_65_or_older"] = parsed.spouse_age_65_or_older;
+    if (spouseAge65 !== undefined) sdInput["spouse_age_65_or_older"] = spouseAge65;
     if (parsed.spouse_blind !== undefined) sdInput["spouse_blind"] = parsed.spouse_blind;
     if (parsed.mfs_spouse_itemizing !== undefined) sdInput["mfs_spouse_itemizing"] = parsed.mfs_spouse_itemizing;
 
@@ -430,6 +458,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(schedule1a, {
         filing_status: parsed.filing_status,
         has_valid_ssn: Boolean(parsed.taxpayer_ssn),
+        taxpayer_has_valid_ssn: Boolean(parsed.taxpayer_ssn),
+        spouse_has_valid_ssn: Boolean(parsed.spouse_ssn),
+        ...(taxpayerAge65 !== undefined && { taxpayer_age_65_or_older: taxpayerAge65 }),
+        ...(spouseAge65 !== undefined && { spouse_age_65_or_older: spouseAge65 }),
       }),
       // Pass filing_status and age/blindness flags to form8995 so the income limit uses
       // the same standard deduction amount as the standard_deduction worksheet.

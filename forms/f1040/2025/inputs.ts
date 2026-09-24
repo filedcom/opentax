@@ -131,6 +131,7 @@ import { preparer, inputSchema as preparerInputSchema } from "../nodes/inputs/pr
 import { self_employed_health_insurance, itemSchema as sehiItemSchema } from "../nodes/inputs/self_employed_health_insurance/index.ts";
 import { schedule_h, inputSchema as scheduleHInputSchema } from "../nodes/intermediate/forms/schedule_h/index.ts";
 import { alimony_received, itemSchema as alimonyReceivedItemSchema } from "../nodes/inputs/alimony_received/index.ts";
+import { claimInputSchema as schedule1AClaimInputSchema, schedule1a } from "../nodes/intermediate/forms/schedule1a/index.ts";
 
 export const inputNodes: readonly InputNodeEntry[] = [
   // Array inputs (22): each item represents a single form instance
@@ -175,6 +176,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },
   { node: ext, inputSchema: extInputSchema, isArray: false },
   { node: general, inputSchema: generalInputSchema, isArray: false },
+  { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
   { node: f8283, inputSchema: f8283InputSchema, isArray: false },
   { node: f9465, inputSchema: f9465InputSchema, isArray: false },
   { node: f8888, inputSchema: f8888InputSchema, isArray: false },
