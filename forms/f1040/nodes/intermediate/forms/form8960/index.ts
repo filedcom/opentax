@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { FilingStatus } from "../../../types.ts";
@@ -36,7 +36,8 @@ export const inputSchema = z.object({
   // Line 2 — Ordinary dividends (Form 1040 line 3b / Schedule B + K-1 box 6a)
   // IRC §1411(c)(1)(A); Form 8960 line 2
   // Accumulable: f1099div and k1_partnership both route here; executor merges to array.
-  line2_ordinary_dividends: z.union([z.number(), z.array(z.number())]).optional(),
+  line2_ordinary_dividends: z.union([z.number(), z.array(z.number())])
+    .optional(),
 
   // Line 3 — Annuities subject to NIIT (non-qualified retirement plan annuities)
   // IRC §1411(c)(1)(A); Form 8960 line 3
@@ -80,7 +81,33 @@ export const inputSchema = z.object({
   line10_additional_modifications: z.number().nonnegative().optional(),
 });
 
+const printFieldsSchema = z.object({
+  line1_taxable_interest: z.number(),
+  line2_ordinary_dividends: z.number(),
+  line3_annuities: z.number(),
+  line4a_passive_income: z.number(),
+  line4b_rental_net: z.number(),
+  line4c_combined: z.number(),
+  line5a_net_gain: z.number(),
+  line5b_net_gain_adjustment: z.number(),
+  line5d_combined: z.number(),
+  line7_other_modifications: z.number(),
+  line8_total_investment_income: z.number(),
+  line9a_investment_interest_expense: z.number(),
+  line9b_state_local_tax: z.number(),
+  line9d_total_expenses: z.number(),
+  line10_additional_modifications: z.number(),
+  line11_total_deductions: z.number(),
+  line12_net_investment_income: z.number(),
+  line13_magi: z.number(),
+  line14_threshold: z.number(),
+  line15_magi_excess: z.number(),
+  line16_taxable_base: z.number(),
+  line17_niit: z.number(),
+});
+
 type Form8960Input = z.infer<typeof inputSchema>;
+type Form8960PrintFields = z.infer<typeof printFieldsSchema>;
 
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -95,7 +122,10 @@ function threshold(status: FilingStatus, cfg: F1040Config): number {
 
 // Sum ordinary dividends from potentially-array field (f1099div + k1_partnership both route here)
 function sumDividends(input: Form8960Input): number {
-  return normalizeArray(input.line2_ordinary_dividends).reduce((s, n) => s + n, 0);
+  return normalizeArray(input.line2_ordinary_dividends).reduce(
+    (s, n) => s + n,
+    0,
+  );
 }
 
 // Part I, Line 8: Total NII gross (sum of lines 1–7)
@@ -159,6 +189,10 @@ function schedule2Output(niit: number): NodeOutput[] {
   return [output(schedule2, { line12_niit: niit })];
 }
 
+function formOutput(fields: Form8960PrintFields): NodeOutput {
+  return { nodeType: "form8960", fields: printFieldsSchema.parse(fields) };
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form8960Node extends TaxNode<typeof inputSchema> {
@@ -192,7 +226,43 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
     const base = taxableBase(nii, excess);
     const niit = niitTax(base);
 
-    return { outputs: schedule2Output(niit) };
+    const line4a = input.line4a_passive_income ?? 0;
+    const line4b = input.line4b_rental_net ?? 0;
+    const line5a = input.line5a_net_gain ?? 0;
+    const line5b = input.line5b_net_gain_adjustment ?? 0;
+    const line9a = input.line9a_investment_interest_expense ?? 0;
+    const line9b = input.line9b_state_local_tax ?? 0;
+    const line10 = input.line10_additional_modifications ?? 0;
+
+    return {
+      outputs: [
+        ...schedule2Output(niit),
+        formOutput({
+          line1_taxable_interest: input.line1_taxable_interest ?? 0,
+          line2_ordinary_dividends: sumDividends(input),
+          line3_annuities: input.line3_annuities ?? 0,
+          line4a_passive_income: line4a,
+          line4b_rental_net: line4b,
+          line4c_combined: line4a + line4b,
+          line5a_net_gain: line5a,
+          line5b_net_gain_adjustment: line5b,
+          line5d_combined: line5a + line5b,
+          line7_other_modifications: input.line7_other_modifications ?? 0,
+          line8_total_investment_income: gross,
+          line9a_investment_interest_expense: line9a,
+          line9b_state_local_tax: line9b,
+          line9d_total_expenses: line9a + line9b,
+          line10_additional_modifications: line10,
+          line11_total_deductions: deductions,
+          line12_net_investment_income: nii,
+          line13_magi: input.magi,
+          line14_threshold: limit,
+          line15_magi_excess: excess,
+          line16_taxable_base: base,
+          line17_niit: niit,
+        }),
+      ],
+    };
   }
 }
 

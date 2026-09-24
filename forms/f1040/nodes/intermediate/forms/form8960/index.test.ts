@@ -246,8 +246,33 @@ Deno.test("output routes to schedule2 with correct nodeType", () => {
     magi: 300_000,
     line1_taxable_interest: 10_000,
   });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "schedule2");
+  assertEquals(result.outputs.map((output) => output.nodeType), [
+    "schedule2",
+    "form8960",
+  ]);
+});
+
+Deno.test("computed form lines expose the NIIT calculation through line 17", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    magi: 300_000,
+    line1_taxable_interest: 10_000,
+    line2_ordinary_dividends: 5_000,
+    line5a_net_gain: 20_000,
+    line5b_net_gain_adjustment: -5_000,
+    line9a_investment_interest_expense: 3_000,
+  });
+  const form = findOutput(result, "form8960");
+
+  assertEquals(form?.fields.line5d_combined, 15_000);
+  assertEquals(form?.fields.line8_total_investment_income, 30_000);
+  assertEquals(form?.fields.line11_total_deductions, 3_000);
+  assertEquals(form?.fields.line12_net_investment_income, 27_000);
+  assertEquals(form?.fields.line13_magi, 300_000);
+  assertEquals(form?.fields.line14_threshold, 200_000);
+  assertEquals(form?.fields.line15_magi_excess, 100_000);
+  assertEquals(form?.fields.line16_taxable_base, 27_000);
+  assertEquals(form?.fields.line17_niit, 1_026);
 });
 
 // ─── Rounding ──────────────────────────────────────────────────────────────────

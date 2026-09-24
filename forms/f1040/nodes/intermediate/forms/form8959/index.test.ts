@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertAlmostEquals, assertEquals } from "@std/assert";
 import { form8959, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
@@ -59,6 +59,25 @@ Deno.test("part1_single_above: Single $220k wages → 0.9% on $20k = $180", () =
     medicare_wages: 220_000,
   });
   assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
+});
+
+Deno.test("computed form lines use W-2 box 5 and expose the full Part I calculation", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    medicare_wages: 349_154.37,
+    medicare_wages_box5: 367_934.84,
+    medicare_withheld: 6_846.47,
+  });
+  const form = findOutput(result, "form8959");
+
+  assertEquals(form?.fields.line1_medicare_wages, 367_934.84);
+  assertEquals(form?.fields.line4_total_medicare_wages, 367_934.84);
+  assertEquals(form?.fields.line5_threshold, 200_000);
+  assertAlmostEquals(form?.fields.line6_wage_excess as number, 167_934.84);
+  assertAlmostEquals(form?.fields.line7_wage_tax as number, 1_511.41356);
+  assertEquals(form?.fields.line18_total_tax, 1_511.41);
+  assertEquals(form?.fields.line21_regular_medicare_tax, 5_335.06);
+  assertEquals(form?.fields.line22_additional_withheld, 1_511.41);
 });
 
 Deno.test("part1_mfj_above: MFJ $325k wages → 0.9% on $75k = $675", () => {
