@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
@@ -63,7 +63,35 @@ export const inputSchema = z.object({
   rrta_medicare_withheld: z.number().nonnegative().optional(),
 });
 
+const printFieldsSchema = z.object({
+  line1_medicare_wages: z.number(),
+  line2_unreported_tips: z.number(),
+  line3_wages_8919: z.number(),
+  line4_total_medicare_wages: z.number(),
+  line5_threshold: z.number(),
+  line6_wage_excess: z.number(),
+  line7_wage_tax: z.number(),
+  line8_se_income: z.number(),
+  line9_threshold: z.number(),
+  line10_medicare_wages: z.number(),
+  line11_reduced_se_threshold: z.number(),
+  line12_se_excess: z.number(),
+  line13_se_tax: z.number(),
+  line14_rrta_wages: z.number(),
+  line15_threshold: z.number(),
+  line16_rrta_excess: z.number(),
+  line17_rrta_tax: z.number(),
+  line18_total_tax: z.number(),
+  line19_medicare_withheld: z.number(),
+  line20_medicare_wages: z.number(),
+  line21_regular_medicare_tax: z.number(),
+  line22_additional_withheld: z.number(),
+  line23_rrta_withheld: z.number(),
+  line24_total_withheld: z.number(),
+});
+
 type Form8959Input = z.infer<typeof inputSchema>;
+type Form8959PrintFields = z.infer<typeof printFieldsSchema>;
 
 // ─── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -157,8 +185,13 @@ function regularMedicareOnWages(line4: number): number {
 // Form 8959 line 21
 // wagesForLine20: use box5 when available (for accurate regular Medicare subtraction),
 // otherwise fall back to line4 (box1-based).
-function additionalMedicareFromWages(medicareWithheld: number, wagesForLine20: number): number {
-  return Math.max(0, medicareWithheld - regularMedicareOnWages(wagesForLine20));
+function additionalMedicareFromWages(
+  medicareWithheld: number,
+  wagesForLine20: number,
+): number {
+  return toCents(
+    Math.max(0, medicareWithheld - regularMedicareOnWages(wagesForLine20)),
+  );
 }
 
 // Part V, Line 24: total Additional Medicare Tax withheld
@@ -167,7 +200,10 @@ function additionalMedicareFromWages(medicareWithheld: number, wagesForLine20: n
 function totalAdditionalWithheld(input: Form8959Input, line4: number): number {
   // Use box5 wages for line20 when provided; otherwise fall back to line4 (box1-based)
   const wagesForLine20 = input.medicare_wages_box5 ?? line4;
-  const line21 = additionalMedicareFromWages(input.medicare_withheld ?? 0, wagesForLine20);
+  const line21 = additionalMedicareFromWages(
+    input.medicare_withheld ?? 0,
+    wagesForLine20,
+  );
   const line22 = input.rrta_medicare_withheld ?? 0;
   return toCents(line21 + line22);
 }
@@ -182,6 +218,10 @@ function schedule2Output(amtTotal: number): NodeOutput[] {
 function f1040Output(withheld: number): NodeOutput[] {
   if (withheld <= 0) return [];
   return [output(f1040, { line25c_additional_medicare_withheld: withheld })];
+}
+
+function formOutput(fields: Form8959PrintFields): NodeOutput {
+  return { nodeType: "form8959", fields: printFieldsSchema.parse(fields) };
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -199,23 +239,33 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
     const limit = threshold(input.filing_status, cfg);
 
     // Part I
+    const line1 = input.medicare_wages_box5 ?? input.medicare_wages ?? 0;
+    const line2 = input.unreported_tips ?? 0;
+    const line3 = input.wages_8919 ?? 0;
     const line4 = totalMedicareWages(input);
     const line6 = medicareWageExcess(line4, limit);
     const line7 = partITax(line6);
 
     // Part II
+    const line8 = Math.max(0, input.se_income ?? 0);
     const line10 = reducedSeThreshold(limit, line4);
-    const seExcess = seIncomeExcess(input.se_income ?? 0, line10);
-    const line13 = partIITax(seExcess);
+    const line12 = seIncomeExcess(line8, line10);
+    const line13 = partIITax(line12);
 
     // Part III
-    const line16 = rrtaExcess(input.rrta_wages ?? 0, limit);
+    const line14 = input.rrta_wages ?? 0;
+    const line16 = rrtaExcess(line14, limit);
     const line17 = partIIITax(line16);
 
     // Part IV
     const line18 = totalAmtTax(line7, line13, line17);
 
     // Part V
+    const line19 = input.medicare_withheld ?? 0;
+    const line20 = line1;
+    const line21 = regularMedicareOnWages(line20);
+    const line22 = additionalMedicareFromWages(line19, line20);
+    const line23 = input.rrta_medicare_withheld ?? 0;
     const line24 = totalAdditionalWithheld(input, line4);
 
     const outputs: NodeOutput[] = [
@@ -224,6 +274,34 @@ class Form8959Node extends TaxNode<typeof inputSchema> {
       // Employers may withhold the additional 0.9% Medicare rate before wages hit
       // the $200k threshold; that excess is always creditable (IRC §31; Form 8959 Part V).
       ...f1040Output(line24),
+      ...(line18 > 0 || line24 > 0
+        ? [formOutput({
+          line1_medicare_wages: line1,
+          line2_unreported_tips: line2,
+          line3_wages_8919: line3,
+          line4_total_medicare_wages: line4,
+          line5_threshold: limit,
+          line6_wage_excess: line6,
+          line7_wage_tax: line7,
+          line8_se_income: line8,
+          line9_threshold: limit,
+          line10_medicare_wages: line4,
+          line11_reduced_se_threshold: line10,
+          line12_se_excess: line12,
+          line13_se_tax: line13,
+          line14_rrta_wages: line14,
+          line15_threshold: limit,
+          line16_rrta_excess: line16,
+          line17_rrta_tax: line17,
+          line18_total_tax: line18,
+          line19_medicare_withheld: line19,
+          line20_medicare_wages: line20,
+          line21_regular_medicare_tax: line21,
+          line22_additional_withheld: line22,
+          line23_rrta_withheld: line23,
+          line24_total_withheld: line24,
+        })]
+        : []),
     ];
 
     return { outputs };
