@@ -22,6 +22,7 @@ export function createReturnContext(
   pending: Readonly<Record<string, Record<string, unknown>>>,
   filer: FilerInfo,
   fieldRegistry: FieldRegistry,
+  emittedFormCounts?: ReadonlyMap<string, number>,
 ): ReturnContext {
   // Pre-compute form presence set
   const formSet = new Set<string>();
@@ -31,6 +32,15 @@ export function createReturnContext(
     if (Object.keys(fields).length > 0) {
       formSet.add(nodeType);
       formCounts.set(nodeType, (formCounts.get(nodeType) ?? 0) + 1);
+    }
+  }
+  if (emittedFormCounts) {
+    formSet.clear();
+    formCounts.clear();
+    for (const [formId, count] of emittedFormCounts) {
+      if (count <= 0) continue;
+      formSet.add(formId);
+      formCounts.set(formId, count);
     }
   }
 

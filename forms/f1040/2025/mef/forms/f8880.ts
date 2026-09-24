@@ -47,6 +47,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 ];
 
 function buildIRS8880(fields: Input): string {
+  const hasSaverCreditReason = FIELD_MAP.some(([key]) =>
+    key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
+  );
+  if (!hasSaverCreditReason) return "";
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";

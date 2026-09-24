@@ -759,7 +759,7 @@ Deno.test("IRS8995A absent when form8995a missing from pending", () => {
 });
 
 Deno.test("IRS6251 present when form6251 has data", () => {
-  const xml = buildMefXml({ form6251: { regular_tax_income: 80000 } });
+  const xml = buildMefXml({ form6251: { regular_tax_income: 80000, iso_adjustment: 5000 } });
   assertStringIncludes(xml, "<IRS6251 ");
 });
 
@@ -845,7 +845,7 @@ Deno.test("documentCnt=29 when all 29 forms have data", () => {
     form8995: { qbi: 50000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
-    form6251: { regular_tax_income: 80000 },
+    form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
     form5329: { early_distribution: 5000 },
     form8853: { employer_archer_msa: 3650 },
     form_8829: { mortgage_interest: 12000 },
@@ -889,7 +889,7 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
     form8995: { qbi: 50000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
-    form6251: { regular_tax_income: 80000 },
+    form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
     form5329: { early_distribution: 5000 },
     form8853: { employer_archer_msa: 3650 },
     form_8829: { mortgage_interest: 12000 },
@@ -949,4 +949,40 @@ Deno.test("empty MefFormsPending: IRS1040 still emits, no other form tags presen
   assertNotIncludes(xml, "<IRS8853>");
   assertNotIncludes(xml, "<IRS8829>");
   assertNotIncludes(xml, "<IRS8839>");
+});
+
+Deno.test("multiple W-2s become separate documents with unique IDs and an exact document count", () => {
+  const filerIdentity = sampleFiler();
+  const baseW2 = {
+    employer_ein: "12-3456789",
+    employer_name: "ACME CORP",
+    employer_address_line1: "500 MARKET ST",
+    employer_address_city: "SPRINGFIELD",
+    employer_address_state: "IL",
+    employer_address_zip: "62701",
+    box1_wages: 30_000,
+    box2_fed_withheld: 3_000,
+  };
+  const xml = buildMefXml({
+    w2: {
+      w2s: [baseW2, { ...baseW2, employer_ein: "98-7654321" }],
+    },
+  }, filerIdentity);
+
+  assertStringIncludes(xml, 'documentCnt="3"');
+  assertStringIncludes(xml, '<IRSW2 documentId="IRSW21">');
+  assertStringIncludes(xml, '<IRSW2 documentId="IRSW22">');
+});
+
+Deno.test("context-only supporting forms are not emitted", () => {
+  const xml = buildMefXml({
+    schedule_a: { agi: 30_000 },
+    form6251: { regular_tax_income: 14_250, regular_tax: 1_472 },
+    form8880: { agi: 30_000 },
+  });
+
+  assertStringIncludes(xml, 'documentCnt="1"');
+  assertNotIncludes(xml, "<IRS1040ScheduleA ");
+  assertNotIncludes(xml, "<IRS6251 ");
+  assertNotIncludes(xml, "<IRS8880 ");
 });

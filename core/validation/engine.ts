@@ -24,6 +24,7 @@ const SERVER_SIDE_CATEGORIES = new Set(["database", "duplicate"]);
 export function evaluateRules(
   rules: readonly RuleDef[],
   ctx: ReturnContext,
+  applicableFormPrefixes?: ReadonlySet<string>,
 ): DiagnosticsReport {
   const entries: DiagnosticEntry[] = [];
   let passed = 0;
@@ -35,6 +36,12 @@ export function evaluateRules(
   for (const rule of rules) {
     // Skip if we hit a "reject and stop"
     if (stopped) {
+      skipped++;
+      continue;
+    }
+
+    const prefix = ruleFormPrefix(rule.ruleNumber);
+    if (applicableFormPrefixes && !applicableFormPrefixes.has(prefix)) {
       skipped++;
       continue;
     }
@@ -60,7 +67,6 @@ export function evaluateRules(
     }
 
     // Rule failed — create diagnostic entry
-    const prefix = ruleFormPrefix(rule.ruleNumber);
     const entry: DiagnosticEntry = {
       ruleNumber: rule.ruleNumber,
       severity: rule.severity,
@@ -71,7 +77,10 @@ export function evaluateRules(
 
     entries.push(entry);
 
-    if (rule.severity === "alert" || rule.severity === "reject" && rule.category === "information") {
+    if (
+      rule.severity === "alert" ||
+      rule.severity === "reject" && rule.category === "information"
+    ) {
       alerts++;
     } else {
       rejected++;

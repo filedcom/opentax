@@ -23,6 +23,19 @@ async function makeReturn(tmpDir: string): Promise<string> {
   return returnId;
 }
 
+function w2Data(box1Wages: number, box2FedWithheld: number) {
+  return {
+    employer_ein: "12-3456789",
+    employer_name: "ACME CORP",
+    employer_address_line1: "500 Market St",
+    employer_address_city: "Springfield",
+    employer_address_state: "IL",
+    employer_address_zip: "62701",
+    box1_wages: box1Wages,
+    box2_fed_withheld: box2FedWithheld,
+  };
+}
+
 Deno.test("exportMefCommand blocks empty finalized return with --force", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -47,13 +60,15 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
+      taxpayer_dob: "1985-06-01",
+      address_line1: "123 Main St",
+      address_city: "Springfield",
+      address_state: "IL",
+      address_zip: "62701",
     });
     await appendInput(returnPath, "f2441", {});
 
-    await appendInput(returnPath, "w2", {
-      box1_wages: 85000,
-      box2_fed_withheld: 10000,
-    });
+    await appendInput(returnPath, "w2", w2Data(85000, 10000));
 
     const xml = await exportMefCommand({
       returnId,
@@ -61,7 +76,73 @@ Deno.test("exportMefCommand with W-2 includes wages in f1040 XML (force)", async
       force: true,
     });
     assertStringIncludes(xml, "<IRS1040");
+    assertStringIncludes(xml, "<TotalIncomeAmt>85000</TotalIncomeAmt>");
+    assertStringIncludes(
+      xml,
+      "<AdjustedGrossIncomeAmt>85000</AdjustedGrossIncomeAmt>",
+    );
+    assertStringIncludes(xml, "<TaxableIncomeAmt>");
+    assertStringIncludes(xml, "<TotalTaxAmt>");
+    assertStringIncludes(xml, "<IRSW2 ");
+    assertStringIncludes(xml, "<WagesAmt>85000</WagesAmt>");
     assertMatch(xml, /85000/);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("plain W-2 MeF validation does not report missing 1040 totals or Form 8959", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "111-22-3333",
+      taxpayer_dob: "1985-06-01",
+      address_line1: "123 Main St",
+      address_city: "Springfield",
+      address_state: "IL",
+      address_zip: "62701",
+    });
+    await appendInput(returnPath, "w2", {
+      ...w2Data(30_000, 3_000),
+      box3_ss_wages: 30_000,
+      box4_ss_withheld: 1_860,
+      box5_medicare_wages: 30_000,
+      box6_medicare_withheld: 435,
+    });
+
+    const error = await assertRejects(
+      () => exportMefCommand({ returnId, baseDir: tmpDir }),
+      ExportRejectedError,
+    );
+    const falseRejects = error.entries.filter((entry) =>
+      entry.ruleNumber === "F1040-066-09" ||
+      entry.ruleNumber.startsWith("F8959-")
+    );
+    assertEquals(falseRejects, []);
+
+    const xml = await exportMefCommand({
+      returnId,
+      baseDir: tmpDir,
+      force: true,
+    });
+    assertStringIncludes(xml, "<TotalIncomeAmt>30000</TotalIncomeAmt>");
+    assertStringIncludes(
+      xml,
+      "<AdjustedGrossIncomeAmt>30000</AdjustedGrossIncomeAmt>",
+    );
+    assertStringIncludes(xml, "<TaxableIncomeAmt>14250</TaxableIncomeAmt>");
+    assertStringIncludes(xml, "<TotalTaxAmt>1472</TotalTaxAmt>");
+    assertStringIncludes(xml, "<RefundAmt>1528</RefundAmt>");
+    assertStringIncludes(xml, "<IRSW2 ");
+    assertEquals(xml.includes("<IRS1040ScheduleA "), false);
+    assertEquals(xml.includes("<IRS6251 "), false);
+    assertEquals(xml.includes("<IRS8880 "), false);
+    assertEquals(xml.includes("<IRS8959 "), false);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }
@@ -125,10 +206,7 @@ Deno.test("exportMefCommand blocks missing filing status diagnostics instead of 
     const returnId = await makeReturn(tmpDir);
     const returnPath = `${tmpDir}/${returnId}`;
 
-    await appendInput(returnPath, "w2", {
-      box1_wages: 85000,
-      box2_fed_withheld: 10000,
-    });
+    await appendInput(returnPath, "w2", w2Data(85000, 10000));
 
     await assertRejects(
       () => exportMefCommand({ returnId, baseDir: tmpDir, force: true }),
@@ -194,12 +272,13 @@ Deno.test("exportMefCommand preserves business-rule force override after clean c
       taxpayer_first_name: "Test",
       taxpayer_last_name: "Taxpayer",
       taxpayer_ssn: "111-22-3333",
+      address_line1: "123 Main St",
+      address_city: "Springfield",
+      address_state: "IL",
+      address_zip: "62701",
     });
     await appendInput(returnPath, "f2441", {});
-    await appendInput(returnPath, "w2", {
-      box1_wages: 85000,
-      box2_fed_withheld: 10000,
-    });
+    await appendInput(returnPath, "w2", w2Data(85000, 10000));
 
     await assertRejects(
       () => exportMefCommand({ returnId, baseDir: tmpDir }),
