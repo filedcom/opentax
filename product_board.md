@@ -124,7 +124,10 @@ Schedule 3 line 6a and require a common limitation pass. The
 [Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) source now requires both
 preceding-year receipts and full-time employee headcount instead of treating
 missing facts as eligibility; its cases are written but unrun, and its gross
-credit still needs Form 3800. The
+credit still needs Form 3800. A native `IRS8826` XML draft now shares the source
+calculation for lines 1, 3, 5, 6, and 8, with direct schema and reconciliation
+cases written but unrun. It remains unregistered until the Form 3800
+allowed-credit and source-document path is complete. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line

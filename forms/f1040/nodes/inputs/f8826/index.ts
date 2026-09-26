@@ -34,6 +34,14 @@ export const inputSchema = z.object({
 
 type F8826Input = z.infer<typeof inputSchema>;
 
+export type F8826Lines = {
+  readonly line1: number;
+  readonly line3: number;
+  readonly line5: number;
+  readonly line6: number;
+  readonly line8: number;
+};
+
 function isEligible(input: F8826Input): boolean {
   const receiptsOk = input.prior_year_gross_receipts <= GROSS_RECEIPTS_LIMIT;
   const employeesOk = input.prior_year_full_time_employee_count <=
@@ -42,16 +50,19 @@ function isEligible(input: F8826Input): boolean {
   return receiptsOk || employeesOk;
 }
 
-function computeCredit(input: F8826Input): number {
-  if (!isEligible(input)) return 0;
-  if (input.eligible_expenditures <= EXPENDITURE_FLOOR) return 0;
-
-  const cappedExpenditures = Math.min(
-    input.eligible_expenditures,
-    EXPENDITURE_CAP,
-  );
-  const creditableAmount = cappedExpenditures - EXPENDITURE_FLOOR;
-  return Math.min(creditableAmount * CREDIT_RATE, MAX_CREDIT);
+/** Form 8826 lines 1, 3, 5, 6, and 8 for a self-earned credit. */
+export function calculateForm8826(input: F8826Input): F8826Lines {
+  const line1 = input.eligible_expenditures;
+  const line3 = Math.max(0, line1 - EXPENDITURE_FLOOR);
+  const line5 = Math.min(line3, EXPENDITURE_CAP - EXPENDITURE_FLOOR);
+  const line6 = line5 * CREDIT_RATE;
+  return {
+    line1,
+    line3,
+    line5,
+    line6,
+    line8: isEligible(input) ? Math.min(line6, MAX_CREDIT) : 0,
+  };
 }
 
 function buildOutputs(credit: number): NodeOutput[] {
@@ -69,8 +80,8 @@ class F8826Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F8826Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const credit = computeCredit(input);
-    return { outputs: buildOutputs(credit) };
+    const lines = calculateForm8826(input);
+    return { outputs: buildOutputs(lines.line8) };
   }
 }
 
