@@ -1,8 +1,8 @@
 # benchmark
 
-Accuracy benchmark for the `tax` engine — 133 TY2025 scenarios with IRS-authoritative
-correct values. Passes when every engine output is within $5 of the correct value for
-total tax, refund, and amount owed.
+Accuracy benchmark for the `tax` engine — 133 checked-in TY2025 scenarios.
+Expected values are regression fixtures, not proof of IRS certification or universal
+tax correctness; independently verify their provenance before treating them as authority.
 
 For folder layout and file formats, see [STRUCTURE.md](../docs/architecture/STRUCTURE.md).
 
@@ -18,10 +18,38 @@ For folder layout and file formats, see [STRUCTURE.md](../docs/architecture/STRU
 | 21–31 | Mixed | Additional Medicare Tax, ACTC, LTCG 0% bracket, blind filer, senior + SE income |
 | 32–97 | Extended | Schedule C loss, 1099-R, AOTC, marketplace/1095-A, educator expense, estimated tax, EITC no children, 401(k), tips, QBI, K-1, SSA, NIIT, multiple 1099-R |
 
-**Pass criteria:** engine value within $5 of the correct value for:
-- `line24_total_tax`
-- `line35a_refund`
-- `line37_amount_owed`
+**WIP contract — not ready for a standalone accuracy claim:** distinguish public
+summary outputs, exact raw output fields, intermediate oracles and fixture metadata.
+`run_benchmark.ts` lists supported exact keys traced to `ReturnSummary` in
+`cli/commands/return.ts` and the F1040 output schema in
+`forms/f1040/nodes/outputs/f1040/index.ts`. No aliases or intermediate mappings have
+been approved. Numeric expectations outside that supported contract become explicit
+`unsupportedChecks` and prevent success, rather than being called engine defects.
+Envelope metadata (`case`, `scenario`, `year`, `inputs`, sources/notes) is not scored.
+The `correct` object is the oracle namespace; only explicitly named metadata
+fields may be nonnumeric. Malformed oracles, including unmapped ones, fail.
+
+**Pass criteria:** compare supported expected output keys, including AGI and payments,
+not only tax/refund/owed; no unsupported oracles, command failures or diagnostics.
+Each must have a finite numeric actual value within an inclusive absolute $5
+legacy tolerance. This inherited tolerance accommodates existing fixture rounding;
+it is not an IRS-approved discrepancy allowance. Missing values never become zero.
+Singleton numeric arrays are accepted; empty, multi-entry, nonnumeric and nonfinite
+actuals fail. Nonfinite expectations, invalid tolerances and no numeric expectations
+fail rather than silently passing. Descriptive nonnumeric metadata is not scored.
+
+Raw `lines` values take precedence over normalized summary values. Executor diagnostics
+and failed CLI subprocesses fail the case. Any failing case, skipped/incomplete case
+directory or empty case set makes the command exit nonzero. The trailing JSON keeps
+`failing` as case-name strings and adds `failures` with `lineFailures`,
+`unsupportedChecks` and `errors`.
+
+Some fixtures expect intermediate names not exposed by `return get`. These are
+reported as unsupported checks, not missing filed lines. Supported zero-valued
+output fields omitted by the CLI remain missing; there is no zero substitution.
+Resolving mappings/output coverage needs independent review,
+not changes to expected values or relaxed tolerances. A red benchmark is not by itself
+proof that every reported discrepancy is a tax-engine arithmetic error.
 
 ## How to run
 
@@ -42,19 +70,10 @@ Use `/tax-cases` (Claude Code skill) to generate IRS-sourced cases automatically
 create `cases/NN-description/input.json` and `correct.json` manually following the
 formats in [STRUCTURE.md](../docs/architecture/STRUCTURE.md).
 
-## 2025 tax parameters
+## Tax-year references
 
-| Parameter | Value |
-|-----------|-------|
-| Standard deduction — Single / HOH | $15,000 / $22,500 |
-| Standard deduction — MFJ | $30,000 |
-| Senior/blind add-on — Single/HOH | +$2,000 per factor |
-| Senior/blind add-on — MFJ | +$1,600 per factor |
-| SS wage base | $176,100 |
-| EITC max (0 / 1 / 2 / 3+ children) | $649 / $4,328 / $7,152 / $8,046 |
-| CTC per child | $2,000 |
-| ACTC rate | 15% of earned income over $2,500, up to $1,700/child |
-| LTCG 0% threshold — Single / MFJ | $48,350 / $96,700 |
-| QBI deduction | 20% of lesser of (QBI, taxable income before QBI) |
-| Additional Medicare Tax | 0.9% on wages/SE over $200k (Single) / $250k (MFJ) |
-| 98–134 | Extended | Gambling winnings, itemized mortgage/SALT/charity, residential clean energy, saver's credit, lifetime learning credit, foreign tax credit, child and dependent care, energy efficient home improvement, self-employed health, SEP-IRA, Roth conversion, Schedule E rental, Schedule H household, NOL carryforward, alimony, RRB-1099, installment sale, COD income, hobby income, MFS |
+Use the [2025 Form 1040 instructions](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf)
+and the [2025 Schedule A instructions](https://www.irs.gov/pub/irs-prior/i1040sca--2025.pdf),
+plus the applicable form-specific instructions. The former abbreviated parameter
+table was stale and is not retained as a second, competing source of tax rules.
+This documentation change does not modify engine tax parameters or gold fixtures.
