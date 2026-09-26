@@ -27,6 +27,10 @@ export const inputSchema = z.object({
   // Spouse factors only apply for MFJ, MFS, QSS
   spouse_age_65_or_older: z.boolean().optional(),
   spouse_blind: z.boolean().optional(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  dependent_earned_income: z.number().nonnegative().optional(),
+  form8615_total_income: z.number().optional(),
+  form8615_early_withdrawal_penalty: z.number().nonnegative().optional(),
 
   // MFS: if spouse is itemizing, taxpayer MUST itemize too (IRC §63(c)(6)(A))
   mfs_spouse_itemizing: z.boolean().optional(),
@@ -84,6 +88,16 @@ function computeStandardAmount(
   const base = cfg.standardDeductionBase[input.filing_status];
   const additionalPerFactor =
     cfg.standardDeductionAdditional[input.filing_status];
+  if (input.taxpayer_can_be_claimed_as_dependent === true) {
+    if (input.dependent_earned_income === undefined) {
+      throw new Error("Dependent standard deduction needs earned income");
+    }
+    const dependentBase = Math.min(
+      base,
+      Math.max(1_350, input.dependent_earned_income + 450),
+    );
+    return dependentBase + additionalFactorCount(input) * additionalPerFactor;
+  }
   return base + additionalFactorCount(input) * additionalPerFactor;
 }
 
@@ -174,6 +188,18 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
         form6251_line1b: form6251Line1b,
         form6251_line2a: form6251Line2a,
         filing_status: input.filing_status,
+        taking_standard_deduction: takingStandard,
+        ...(input.taxpayer_can_be_claimed_as_dependent === true &&
+            input.dependent_earned_income !== undefined &&
+            input.form8615_total_income !== undefined
+          ? {
+            form8615_computed_unearned_income: Math.max(
+              0,
+              input.form8615_total_income - input.dependent_earned_income -
+                (input.form8615_early_withdrawal_penalty ?? 0),
+            ),
+          }
+          : {}),
       }),
       this.outputNodes.output(form_1116, {
         general_deductions: deduction + qbi + additionalDeductions + nol,

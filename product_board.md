@@ -110,17 +110,23 @@ native XML and attachments, then source-to-XSD and business-rule evidence.
 
 ### GAP-8615: Child's unearned-income tax
 
-**Known in-scope correctness gap.** The existing Form 8615 node computes only
-an incremental parental-rate amount from precomputed child and parent inputs,
-then posts it to Schedule 2 line 17d. The
+**Build pass, untested; whole-form gap remains.** The old node computed only
+an incremental parental-rate amount and posted it to Schedule 2 line 17d.
+That route has been removed. The current build pass takes explicit parent
+identity, income-tax, filing-status, sibling line 5, and eligibility facts;
+applies the dependent standard deduction to the child's return; checks the
+child's stated unearned income against the return sources in a dependent
+case; computes ordinary-rate Form 8615 lines 1-18; and uses line 18 as the
+child's Form 1040 line 16 tax. The MeF serializer now emits the 2025 native
+amount fields, and the PDF descriptor maps the numbered amount lines and
+parent identity/status. Calculation,
+source-to-return, local XSD, and PDF-field cases are written but unrun. The
 [2025 Form 8615 instructions](https://www.irs.gov/instructions/i8615)
-instead require the complete line 1 through line 18 calculation, including
-other children sharing parental information, preferential-rate or Schedule J
-tax where applicable, and the child's own tax comparison. Form 8615 line 18
-replaces the child's Form 1040 line 16 tax; it is not Schedule 2 line 17d.
-The current route must not be treated as verified support. Exit requires
-source facts for the child and parent, correct line 16 integration, native
-`IRS8615` reconciliation, and source-to-XSD/business-rule cases.
+also require preferential-rate and Schedule J worksheets, and a Form 2555
+route, when those facts apply; these still stop explicitly. Parent and child
+eligibility proof, dependent earned-income source derivation beyond the stated
+amount, exact Tax Table behavior, visual PDF verification, and IRS business
+rules remain open. Do not treat the ordinary slice as whole-form support.
 
 ## Registered Form 1040 MeF documents to audit
 

@@ -53,6 +53,7 @@ export interface Fields {
   line10_adjustments?: number | null;
   line11_agi?: number | null;
   mfs_spouse_itemizing?: boolean;
+  taxpayer_can_be_claimed_as_dependent?: boolean;
   taxpayer_age_65_or_older?: boolean;
   taxpayer_blind?: boolean;
   spouse_age_65_or_older?: boolean;
@@ -538,7 +539,9 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     if ((resolveNumber(fields.line16_income_tax) ?? 0) < form8978Tax) {
       throw new Error("Form 1040 line 16 omits Form 8978 tax");
     }
-    const taxIndex = FIELD_MAP.findIndex(([key]) => key === "line16_income_tax");
+    const taxIndex = FIELD_MAP.findIndex(([key]) =>
+      key === "line16_income_tax"
+    );
     const offset = (fields.form8814_tax ? 1 : 0) + (form4972Tax ? 1 : 0);
     incomeChildren.splice(
       taxIndex + 1 + offset,
@@ -554,6 +557,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   function checked(
     key:
       | "mfs_spouse_itemizing"
+      | "taxpayer_can_be_claimed_as_dependent"
       | "taxpayer_age_65_or_older"
       | "taxpayer_blind"
       | "spouse_age_65_or_older"
@@ -577,6 +581,9 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   ] as const;
   const checkedAgeBoxes = ageBoxes.filter(([key]) => checked(key));
   const deductionIndicators = [
+    checked("taxpayer_can_be_claimed_as_dependent")
+      ? element("PrimaryClaimAsDependentInd", "X")
+      : "",
     mustItemize ? element("MustItemizeInd", "X") : "",
     ...ageBoxes.map(([key, tag]) => checked(key) ? element(tag, "X") : ""),
     checkedAgeBoxes.length > 0

@@ -374,6 +374,10 @@ import {
   inputSchema as f8978InputSchema,
 } from "../nodes/inputs/f8978/index.ts";
 import {
+  f8615,
+  inputSchema as f8615InputSchema,
+} from "../nodes/inputs/f8615/index.ts";
+import {
   f8611,
   itemSchema as f8611ItemSchema,
 } from "../nodes/inputs/f8611/index.ts";
@@ -679,6 +683,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8896, itemSchema: f8896ItemSchema, isArray: true },
   { node: f8912, itemSchema: f8912ItemSchema, isArray: true },
   { node: f8978, inputSchema: f8978InputSchema, isArray: false },
+  { node: f8615, inputSchema: f8615InputSchema, isArray: false },
   { node: f8611, itemSchema: f8611ItemSchema, isArray: true },
   {
     node: household_wages,

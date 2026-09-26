@@ -67,9 +67,6 @@ export const inputSchema = z.object({
   // Line 7a — Household employment taxes (Schedule H line 26)
   // IRC §3510; Schedule H line 26 → Schedule 2 line 7a
   line9_household_employment: z.number().nonnegative().optional(),
-  // Line 17d — Section 965 net tax liability (Form 8615 — Kiddie Tax)
-  // IRC §1(g); Form 8615 line 18 → Schedule 2 line 17d
-  line17d_kiddie_tax: z.number().nonnegative().optional(),
   // Line 17a — Recapture of investment credit (Form 4255)
   // IRC §50(a); Form 4255 → Schedule 2 line 17a
   line17a_investment_credit_recapture: z.number().nonnegative().optional(),
@@ -141,7 +138,6 @@ function part2Total(input: Schedule2Input): number {
     (input.line11_additional_medicare ?? 0) +
     (input.line12_niit ?? 0) +
     (input.line9_household_employment ?? 0) +
-    (input.line17d_kiddie_tax ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
     (input.line10_homebuyer_credit_repayment ?? 0) +
     (input.line10_recapture_tax ?? 0) +
@@ -154,7 +150,9 @@ function part2Total(input: Schedule2Input): number {
 function part2Chapter1Tax(input: Schedule2Input): number {
   const form5329Chapter1 = input.line8_form5329_chapter1_tax ?? 0;
   if (form5329Chapter1 > (input.line8_form5329_tax ?? 0)) {
-    throw new Error("Form 5329 chapter 1 amount exceeds its Schedule 2 line 8 tax");
+    throw new Error(
+      "Form 5329 chapter 1 amount exceeds its Schedule 2 line 8 tax",
+    );
   }
   return form5329Chapter1 +
     (input.section409a_excise ?? 0) +
@@ -170,12 +168,12 @@ function part2Chapter1Tax(input: Schedule2Input): number {
 }
 
 function part2UnclassifiedTax(input: Schedule2Input): number {
-  const form5329WithoutBreakdown = input.line8_form5329_chapter1_tax === undefined
-    ? input.line8_form5329_tax ?? 0
-    : 0;
+  const form5329WithoutBreakdown =
+    input.line8_form5329_chapter1_tax === undefined
+      ? input.line8_form5329_tax ?? 0
+      : 0;
   return form5329WithoutBreakdown +
-    (input.line17z_other_additional_taxes ?? 0) +
-    (input.line17d_kiddie_tax ?? 0);
+    (input.line17z_other_additional_taxes ?? 0);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
