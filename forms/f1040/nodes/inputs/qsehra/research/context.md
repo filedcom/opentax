@@ -24,6 +24,7 @@ If NOT excluded (no MEC), QSEHRA amounts received are included in gross income.
 | qsehra_amount_received | number (nonneg) | Yes | QSEHRA amount received | Actual amount reimbursed/received during 2025 | IRC §9831(d); Notice 2017-67 | https://www.irs.gov/pub/irs-drop/n-17-67.pdf |
 | has_minimum_essential_coverage | boolean | Yes | Has MEC | True if the employee had Minimum Essential Coverage for the year | IRC §5000A(f); IRC §9831(d)(2)(B) | https://www.irs.gov/pub/irs-drop/n-17-67.pdf |
 | is_self_only_coverage | boolean | Yes | Self-only coverage | True if the QSEHRA is for self-only (vs. family) — determines contribution limit | IRC §9831(d)(3)(A); Rev Proc 2024-40 | https://www.irs.gov/pub/irs-drop/rp-24-40.pdf |
+| qsehra_monthly_facts | 12 objects or nulls | No | Employer notice and Marketplace SLCSP | Per provided month: self-only SLCSP, self-only permitted benefit, and actual permitted benefit; null when no QSEHRA was provided | Pub. 974 Worksheets N and Q | https://www.irs.gov/publications/p974 |
 
 ---
 

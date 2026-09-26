@@ -469,7 +469,9 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
 
   // Code FF: QSEHRA benefits reduce Form 8962 PTC per IRC §36B(c)(4)
   const ff = sum(Box12Code.FF);
-  if (ff > 0) outputs.push(output(form8962, { qsehra_amount_offered: ff }));
+  if (ff > 0) {
+    outputs.push(output(form8962, { qsehra_w2_reported_benefit: ff }));
+  }
 
   return outputs;
 }

@@ -1,8 +1,14 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { form8962 } from "../../intermediate/forms/form8962/index.ts";
+import {
+  form8962,
+  inputSchema as form8962InputSchema,
+} from "../../intermediate/forms/form8962/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -32,6 +38,9 @@ export const inputSchema = z.object({
   has_minimum_essential_coverage: z.boolean(),
   // True if self-only coverage (vs. family) — determines annual limit
   is_self_only_coverage: z.boolean(),
+  // Written-notice self-only amounts and actual permitted benefit by month.
+  // Null means no QSEHRA was provided in that month.
+  qsehra_monthly_facts: form8962InputSchema.shape.qsehra_monthly_facts,
 });
 
 type QsehraInput = z.infer<typeof inputSchema>;
@@ -45,7 +54,12 @@ function buildOutputs(input: QsehraInput): NodeOutput[] {
     if (offered === 0) return [];
     return [{
       nodeType: form8962.nodeType,
-      fields: { qsehra_amount_offered: offered },
+      fields: {
+        qsehra_amount_offered: offered,
+        ...(input.qsehra_monthly_facts
+          ? { qsehra_monthly_facts: input.qsehra_monthly_facts }
+          : {}),
+      },
     }];
   } else {
     // No MEC: QSEHRA received is included in gross income (taxable)

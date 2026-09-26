@@ -10,6 +10,7 @@ import { form8853 } from "../../intermediate/forms/form8853/index.ts";
 import { form8880 } from "../../intermediate/forms/form8880/index.ts";
 import { form8889 } from "../../intermediate/forms/form8889/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
+import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
@@ -220,6 +221,16 @@ Deno.test("non_statutory_wages_stay_on_f1040_not_schedule_c: regular W2 does not
 // ============================================================
 // 4. Box 12 code routing — exact field values
 // ============================================================
+
+Deno.test("box12_code_ff_preserves_the_W2_reported_QSEHRA_benefit", () => {
+  const result = compute([minimalItem({
+    box12_entries: [{ code: Box12Code.FF, amount: 1_200 }],
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form8962)?.qsehra_w2_reported_benefit,
+    1_200,
+  );
+});
 
 Deno.test("box12_code_w_routes_to_form8889: Code W = $2,000 → employer_hsa_contributions = 2000", () => {
   const result = compute([

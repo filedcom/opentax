@@ -477,6 +477,98 @@ Deno.test("monthly QSEHRA is refused until monthly affordability can be checked"
   );
 });
 
+Deno.test("QSEHRA monthly Worksheet N/Q uses self-only affordability and the actual benefit", () => {
+  const qsehraMonths = Array(12).fill(null);
+  qsehraMonths[0] = {
+    self_only_slcsp: 500,
+    self_only_permitted_benefit: 100,
+    permitted_benefit: 100,
+  };
+  qsehraMonths[1] = {
+    self_only_slcsp: 350,
+    self_only_permitted_benefit: 100,
+    permitted_benefit: 100,
+  };
+  const result = compute({
+    household_size: 2,
+    taxpayer_modified_agi: 40_880,
+    monthly_premiums: Array(12).fill(500),
+    monthly_slcsps: Array(12).fill(600),
+    monthly_aptcs: Array(12).fill(100),
+    qsehra_amount_offered: 200,
+    qsehra_w2_reported_benefit: 200,
+    qsehra_monthly_facts: qsehraMonths,
+  });
+  const form = fields(result, "form8962");
+  const rows = form?.monthly_ptc_rows as { allowed_credit: number }[];
+  assertEquals(rows[0].allowed_credit, 400);
+  assertEquals(rows[1].allowed_credit, 0);
+  assertEquals(rows[2].allowed_credit, 500);
+  assertEquals(form?.total_premium_tax_credit, 5_400);
+  assertEquals(form?.qsehra_ind, true);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 4_200);
+});
+
+Deno.test("QSEHRA monthly benefits must match the reported annual permitted benefit", () => {
+  const qsehraMonths = Array(12).fill(null);
+  qsehraMonths[0] = {
+    self_only_slcsp: 500,
+    self_only_permitted_benefit: 100,
+    permitted_benefit: 100,
+  };
+  assertThrows(
+    () =>
+      compute({
+        household_size: 2,
+        taxpayer_modified_agi: 40_880,
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(100),
+        qsehra_amount_offered: 200,
+        qsehra_monthly_facts: qsehraMonths,
+      }),
+    Error,
+    "must reconcile to the annual permitted benefit",
+  );
+});
+
+Deno.test("QSEHRA employer facts must reconcile with W-2 code FF", () => {
+  assertThrows(
+    () =>
+      compute({
+        household_size: 2,
+        taxpayer_modified_agi: 40_880,
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(100),
+        qsehra_amount_offered: 200,
+        qsehra_w2_reported_benefit: 300,
+      }),
+    Error,
+    "benefit disagrees with W-2 code FF",
+  );
+});
+
+Deno.test("QSEHRA monthly notice facts cannot use Form 8962 annual line 11", () => {
+  assertThrows(
+    () =>
+      annual(40_880, 6_000, 7_200, 0, {
+        household_size: 2,
+        qsehra_amount_offered: 100,
+        qsehra_monthly_facts: [
+          {
+            self_only_slcsp: 500,
+            self_only_permitted_benefit: 100,
+            permitted_benefit: 100,
+          },
+          ...Array(11).fill(null),
+        ],
+      }),
+    Error,
+    "monthly facts need monthly Form 1095-A calculation",
+  );
+});
+
 Deno.test("MFS cannot claim PTC without verified exception and allocation facts", () => {
   assertThrows(
     () =>

@@ -29,12 +29,16 @@ Deno.test("qsehra.inputSchema: valid minimal item passes", () => {
 });
 
 Deno.test("qsehra.inputSchema: negative qsehra_amount_offered fails", () => {
-  const parsed = qsehra.inputSchema.safeParse(minimalItem({ qsehra_amount_offered: -100 }));
+  const parsed = qsehra.inputSchema.safeParse(
+    minimalItem({ qsehra_amount_offered: -100 }),
+  );
   assertEquals(parsed.success, false);
 });
 
 Deno.test("qsehra.inputSchema: negative qsehra_amount_received fails", () => {
-  const parsed = qsehra.inputSchema.safeParse(minimalItem({ qsehra_amount_received: -50 }));
+  const parsed = qsehra.inputSchema.safeParse(
+    minimalItem({ qsehra_amount_received: -50 }),
+  );
   assertEquals(parsed.success, false);
 });
 
@@ -70,6 +74,25 @@ Deno.test("qsehra.compute: has_mec=true + qsehra_offered > 0 → routes offered 
   }));
   const out = findOutput(result, "form8962");
   assertEquals(out!.fields.qsehra_amount_offered, 5000);
+});
+
+Deno.test("qsehra.compute: forwards written-notice monthly facts for Form 8962", () => {
+  const monthlyFacts = [
+    {
+      self_only_slcsp: 500,
+      self_only_permitted_benefit: 100,
+      permitted_benefit: 100,
+    },
+    ...Array(11).fill(null),
+  ];
+  const result = compute(minimalItem({
+    qsehra_amount_offered: 100,
+    qsehra_monthly_facts: monthlyFacts,
+  }));
+  assertEquals(
+    findOutput(result, "form8962")?.fields.qsehra_monthly_facts,
+    monthlyFacts,
+  );
 });
 
 Deno.test("qsehra.compute: has_mec=true → does NOT route to f1040 as income", () => {
@@ -168,11 +191,19 @@ Deno.test("qsehra.compute: family at limit ($12,800) with MEC → routes full am
 // =============================================================================
 
 Deno.test("qsehra.compute: throws on negative qsehra_amount_offered", () => {
-  assertThrows(() => compute(minimalItem({ qsehra_amount_offered: -500 })), Error);
+  assertThrows(
+    () => compute(minimalItem({ qsehra_amount_offered: -500 })),
+    Error,
+  );
 });
 
 Deno.test("qsehra.compute: zero qsehra_amount_offered with mec — no output", () => {
-  const result = compute(minimalItem({ qsehra_amount_offered: 0, has_minimum_essential_coverage: true }));
+  const result = compute(
+    minimalItem({
+      qsehra_amount_offered: 0,
+      has_minimum_essential_coverage: true,
+    }),
+  );
   assertEquals(result.outputs.length, 0);
 });
 
