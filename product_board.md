@@ -74,22 +74,27 @@ release gate or ATS acceptance.
 
 ### GAP-8978: Partner's additional reporting year tax
 
-The current Form 8978 input node estimates tax from a default 37% rate and sends
-a positive amount to Schedule 2. The
-[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi) put a
-positive Form 8978 line 14 amount on Form 1040 line 16, and direct a negative
-amount through the Schedule 3 line 6l worksheet. Form 6251 line 10 separately
-subtracts the absolute value of a negative Form 8978 line 14. The estimate is
-not an authoritative substitute for the signed Form 8978 line 14 calculation.
-This path needs source facts, complete form computation and XML, and both
-positive/negative return-routing cases before release.
+**Build pass, untested.** The old default-37% estimate and Schedule 2 positive
+route are removed. The node now calculates each affected-year Form 8978 column
+from original and corrected income-tax liability, sums signed line 13 amounts
+into line 14, and routes a positive result to Form 1040 line 16. It emits one
+native `IRS8978` and linked `IRS8978ScheduleA` per filing, and the bundle
+builder creates a tax-computation statement PDF per filing. The statement and
+positive source-to-XSD case are written but unrun. Input requires the actual
+affected-year tax recomputation and explanation; this engine does not infer it
+from a marginal rate. A negative line 14 still fails explicitly until the
+[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
+Schedule 3 line 6l cap, possible Schedule 2 line 17z chapter-1-tax offset, and
+Form 6251 line 10 adjustment are built. Interest and penalties need further
+calculation/source review, and all required attachment and IRS business rules
+remain unverified.
 
 ## Registered Form 1040 MeF documents to audit
 
 Build-pass addendum for GAP-6251 (unrun): line 10 now receives the Form 4972
 subtraction, Form 8962's Schedule 2 line 1a amount as part of line 1z, and
-Schedule 3 line 1 foreign tax credit. The signed Form 8978 adjustment, Schedule
-J refigure, and other Schedule 2 line 1z sources remain open.
+Schedule 3 line 1 foreign tax credit. The negative Form 8978 adjustment,
+Schedule J refigure, and other Schedule 2 line 1z sources remain open.
 
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
@@ -103,11 +108,13 @@ dependencies, required statements, and tests.
 - Forms 461, 982, 1116, 2441, 2555, 4137, 4562, 4684, 4797, 4835, 4952, 4972,
   5329, 5695, 6198, 6251, 6252, 6781, 7206, 7217, 8283, 8396, 8582, 8606, 8615,
   8814, 8815, 8824, 8829, 8839, 8853, 8862, 8863, 8880, 8889, 8911, 8919, 8949,
-  8959, 8960, 8962, 8990, 8995, and 8995-A.
+  8959, 8960, 8962, 8978, 8990, 8995, and 8995-A.
 - Supporting documents: Form 4835 at-risk and passive-loss documents, Schedule A
   for Form 8911, cash/accrual CCC-loan statements, crop-insurance deferral
   statement, Form 1116 foreign-income-related-expense statement, joint-occupancy
-  statement, and the Form 8283 vehicle sale acknowledgment statement.
+  statement, Form 8978 Schedule A and tax-computation statement PDF,
+  joint-occupancy statement, and the Form 8283 vehicle sale acknowledgment
+  statement.
 
 ## Release checklist
 

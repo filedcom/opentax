@@ -1,8 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8978, Form8978Source } from "./index.ts";
+import { f8978, type Form8978Input, Form8978Source } from "./index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 
-function filing(originalTaxLiability = 1_000, correctedIncomeTax = 1_500) {
+function filing(
+  originalTaxLiability = 1_000,
+  correctedIncomeTax = 1_500,
+): Form8978Input["filings"][number] {
   return {
     source: Form8978Source.BbaAudit,
     columns: [{
@@ -16,7 +19,8 @@ function filing(originalTaxLiability = 1_000, correctedIncomeTax = 1_500) {
       original_credits: 0,
       credit_adjustments: [],
       original_tax_liability: originalTaxLiability,
-      tax_calculation_explanation: "Recomputed using the affected-year return and rules.",
+      tax_calculation_explanation:
+        "Recomputed using the affected-year return and rules.",
     }],
   };
 }
@@ -33,20 +37,32 @@ Deno.test("f8978 routes the positive tax-liability difference to line 16 calcula
   );
   assertEquals(form?.fields.line14, 500);
   assertEquals(tax?.fields.form8978_tax, 500);
-  assertEquals(result.outputs.some((output) => output.nodeType === "schedule2"), false);
+  assertEquals(
+    result.outputs.some((output) => output.nodeType === "schedule2"),
+    false,
+  );
 });
 
 Deno.test("f8978 sums signed affected-year differences across filings", () => {
   const result = compute({ filings: [filing(), filing(1_200, 900)] });
-  assertEquals(result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14, 200);
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14,
+    200,
+  );
 });
 
 Deno.test("f8978 does not invent a tax rate from an adjustment amount", () => {
   const result = compute({ filings: [filing(1_500, 1_500)] });
-  assertEquals(result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14, 0);
-  assertEquals(result.outputs.some((output) =>
-    output.nodeType === income_tax_calculation.nodeType
-  ), false);
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14,
+    0,
+  );
+  assertEquals(
+    result.outputs.some((output) =>
+      output.nodeType === income_tax_calculation.nodeType
+    ),
+    false,
+  );
 });
 
 Deno.test("f8978 rejects negative line 14 until the limitation worksheets exist", () => {
@@ -60,16 +76,81 @@ Deno.test("f8978 rejects negative line 14 until the limitation worksheets exist"
 Deno.test("f8978 requires source adjustment detail and a prior affected year", () => {
   const noRows = filing();
   noRows.columns[0].income_adjustments = [];
-  assertThrows(() => compute({ filings: [noRows] }), Error, "Schedule A adjustment rows");
+  assertThrows(
+    () => compute({ filings: [noRows] }),
+    Error,
+    "Schedule A adjustment rows",
+  );
 
   const currentYear = filing();
   currentYear.columns[0].tax_year_end = "2025-12-31";
-  assertThrows(() => compute({ filings: [currentYear] }), Error, "precede the reporting year");
+  assertThrows(
+    () => compute({ filings: [currentYear] }),
+    Error,
+    "precede the reporting year",
+  );
 });
 
 Deno.test("f8978 schema limits each filing to four affected years", () => {
   const one = filing();
-  assertEquals(f8978.inputSchema.safeParse({
-    filings: [{ ...one, columns: Array(5).fill(one.columns[0]) }],
-  }).success, false);
+  assertEquals(
+    f8978.inputSchema.safeParse({
+      filings: [{ ...one, columns: Array(5).fill(one.columns[0]) }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("f8978 uses explicitly recomputed taxable income and tax liability", () => {
+  const adjusted = filing();
+  adjusted.columns[0].corrected_taxable_income = 14_500;
+  adjusted.columns[0].corrected_income_tax_liability = 1_650;
+  const result = compute({ filings: [adjusted] });
+  const computed = result.outputs.find((output) => output.nodeType === "f8978")
+    ?.fields.calculated_filings as Array<
+      { years: Array<{ line5: number; line11: number }> }
+    >;
+  assertEquals(computed[0].years[0].line5, 14_500);
+  assertEquals(computed[0].years[0].line11, 1_650);
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14,
+    650,
+  );
+});
+
+Deno.test("f8978 requires explanations for penalties and interest", () => {
+  const withPenalty = filing();
+  withPenalty.columns[0].penalty = 10;
+  assertEquals(
+    f8978.inputSchema.safeParse({ filings: [withPenalty] }).success,
+    false,
+  );
+  withPenalty.columns[0].penalty_calculation_explanation =
+    "Affected-year penalty calculation.";
+  withPenalty.columns[0].interest = 20;
+  assertEquals(
+    f8978.inputSchema.safeParse({ filings: [withPenalty] }).success,
+    false,
+  );
+  withPenalty.columns[0].interest_calculation_explanation =
+    "Affected-year interest calculation.";
+  assertEquals(
+    f8978.inputSchema.safeParse({ filings: [withPenalty] }).success,
+    true,
+  );
+});
+
+Deno.test("f8978 orders AAR forms before BBA audit forms", () => {
+  const aar = filing();
+  aar.source = Form8978Source.Aar;
+  assertThrows(
+    () => compute({ filings: [filing(), aar] }),
+    Error,
+    "AAR filings must precede BBA audit filings",
+  );
+  const result = compute({ filings: [aar, filing()] });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f8978")?.fields.line14,
+    1_000,
+  );
 });
