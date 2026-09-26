@@ -400,6 +400,15 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
 export const irs1040Pdf: PdfFormDescriptor = {
   pendingKey: "f1040",
+  projectFields(fields) {
+    const bondCredit = fields.form8912_tentative_credit;
+    if (typeof bondCredit === "number" && bondCredit > 0) {
+      throw new Error(
+        "Form 8912 positive credit cannot be printed until the Part II tax limit and source document are integrated",
+      );
+    }
+    return fields;
+  },
   // Year-pinned: /pub/irs-pdf/f1040.pdf silently changes revision each filing
   // season; this module is the 2025 form and must always fetch the 2025 PDF.
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",

@@ -37,6 +37,14 @@ Deno.test("empty object still emits required IRS1040 fields", () => {
   );
 });
 
+Deno.test("Form 1040 MeF refuses an unresolved Form 8912 credit", () => {
+  assertThrows(
+    () => irs1040.build({ form8912_tentative_credit: 100 }),
+    Error,
+    "Part II tax limit and source document",
+  );
+});
+
 Deno.test("Form 1040 line 16 labels and references the Form 8814 tax", () => {
   const xml = irs1040.build(
     { line16_income_tax: 2_135, form8814_tax: 135 },

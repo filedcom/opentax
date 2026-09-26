@@ -12,6 +12,7 @@ const source = {
     credit_amount: 100,
     purchase_accrued_interest: 0,
     sale_accrued_interest: 0,
+    taxable_interest_reported_elsewhere: 0,
     issuer_elected_direct_payment: false,
     is_pass_through_creb_credit: false,
   }],
@@ -25,6 +26,7 @@ const source = {
     maturity_date: "2030-12-31",
     purchase_accrued_interest: 0,
     sale_accrued_interest: 0,
+    taxable_interest_reported_elsewhere: 0,
     line18_rows: [{
       cusip: "123456789",
       outstanding_principal: 10_000,

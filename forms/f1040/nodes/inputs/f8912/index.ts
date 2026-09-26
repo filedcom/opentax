@@ -1,8 +1,13 @@
 import { z } from "zod";
-import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 import {
   calculateForm8912BondInterest,
   calculateForm8912PartIVBond,
@@ -71,6 +76,7 @@ const reportedBondSchema = z.object({
   disposition_date: isoDate.optional(),
   purchase_accrued_interest: z.number().finite().nonnegative(),
   sale_accrued_interest: z.number().finite().nonnegative(),
+  taxable_interest_reported_elsewhere: z.number().finite().nonnegative(),
   issuer_elected_direct_payment: z.boolean(),
   is_pass_through_creb_credit: z.boolean(),
 }).superRefine((bond, ctx) => {
@@ -104,6 +110,7 @@ const unreportedBondSchema = z.object({
   disposition_date: isoDate.optional(),
   purchase_accrued_interest: z.number().finite().nonnegative(),
   sale_accrued_interest: z.number().finite().nonnegative(),
+  taxable_interest_reported_elsewhere: z.number().finite().nonnegative(),
   line18_rows: z.array(partIVRowSchema).min(1).max(50),
   issuer_elected_direct_payment: z.boolean(),
   is_pass_through_creb_credit: z.boolean(),
@@ -250,10 +257,15 @@ export function interestFromItem(item: F8912Item): Form8912BondInterest {
 export function interestRowsFromItem(
   item: F8912Item,
 ): ReadonlyArray<
-  { readonly payerName: string; readonly interest: Form8912BondInterest }
+  {
+    readonly payerName: string;
+    readonly interest: Form8912BondInterest;
+    readonly taxableInterestReportedElsewhere: number;
+  }
 > {
   const reported = item.reported_bonds.map((bond) => ({
     payerName: bond.issuer_name,
+    taxableInterestReportedElsewhere: bond.taxable_interest_reported_elsewhere,
     interest: calculateForm8912BondInterest(
       bond.credit_amount,
       bond.purchase_accrued_interest,
@@ -269,6 +281,8 @@ export function interestRowsFromItem(
     );
     return {
       payerName: bond.issuer_name,
+      taxableInterestReportedElsewhere:
+        bond.taxable_interest_reported_elsewhere,
       interest: calculateForm8912BondInterest(
         credit,
         bond.purchase_accrued_interest,
@@ -276,39 +290,55 @@ export function interestRowsFromItem(
       ),
     };
   });
-  return [...reported, ...unreported];
+  const rows = [...reported, ...unreported];
+  for (const row of rows) {
+    if (row.taxableInterestReportedElsewhere > row.interest.taxableInterest) {
+      throw new Error(
+        "Form 8912 interest reported elsewhere exceeds this bond's taxable interest",
+      );
+    }
+  }
+  return rows;
 }
 
 class F8912Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8912";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([schedule_b, f1040]);
 
   compute(
     _ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const outputs: NodeOutput[] = [];
+    let tentativeCredit = 0;
     for (const item of input.f8912s) {
       const lines = sourceLinesFromItem(item);
-      const interest = interestFromItem(item);
+      const interestRows = interestRowsFromItem(item);
       if (lines.hasPassThroughCrebCredit) {
         throw new Error(
           "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
         );
       }
-      if (lines.line4 > 0) {
-        throw new Error(
-          "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
-        );
-      }
-      if (interest.taxableInterest > 0) {
-        throw new Error(
-          "Form 8912 accrued interest cannot be filed until it is routed to taxable interest income",
-        );
+      tentativeCredit += lines.line4;
+      for (const row of interestRows) {
+        const unreportedInterest = row.interest.taxableInterest -
+          row.taxableInterestReportedElsewhere;
+        if (unreportedInterest > 0) {
+          outputs.push(this.outputNodes.output(schedule_b, {
+            payer_name: row.payerName,
+            taxable_interest_net: unreportedInterest,
+          }));
+        }
       }
     }
-    return { outputs: [] };
+    if (tentativeCredit > 0) {
+      outputs.push(this.outputNodes.output(f1040, {
+        form8912_tentative_credit: tentativeCredit,
+      }));
+    }
+    return { outputs };
   }
 }
 

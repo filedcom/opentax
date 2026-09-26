@@ -143,29 +143,34 @@ output with separate Parts I through IV and a Part II input reconciliation.
 Direct XML and local schema cases are written but unrun. The builder is not
 registered, since the return graph does not yet supply final tax, AMT, prior
 credits, and allowed Form 3800 in the required order. Positive Form 8912 claims
-remain blocked at the input node; this XML draft is not a filing path. Its
-displayed whole-dollar row and aggregate rounding, as well as pass-through CREB
-taxable-income limits, still need end-to-end reconciliation. The draft now
-derives Part II from explicit finalized Form 1040, Schedule 2, Schedule 3, Form
-6251, and allowed Form 3800 lines. It removes Schedule 3 lines 1, 6a, 6b, and 6k
-from line 8 when computing Form 8912 line 10b, checks the Form 3800 amount
-against line 6a, and requires Form 8912 line 12 to match Schedule 3 line 6k.
-These bridge and XML cases are written but unrun. No graph node currently
-supplies that finalized snapshot, so the builder stays unregistered and positive
-claims remain blocked. Form 8912 source items now capture bond-level
-purchase-price accrued interest and accrued interest on disposition. An unrun
-pure calculation separates current-year deemed interest from prior-year credit
-carryforwards and the purchase-price basis recovery. The return graph still
-needs to route the resulting taxable interest through Schedule B and AGI before
-it computes tax, and reconcile any interest already represented by another
-source document. Schedule B's MeF builder now emits source-backed interest-payer
-rows and its line 1/4 totals when paired payer names and amounts are available;
-source-to-XSD cases are written but unrun. The Schedule B node now self-emits
-paired interest rows so numeric-array pending normalization does not discard
-payer amounts before XML/PDF export. The PDF path now appends paginated
-interest-payer detail after the 14 printed rows, with cases written but unrun.
-This does not yet route Form 8912 interest or cover all Schedule B adjustment
-rows. The PDF statement still needs filled-render verification.
+remain blocked at final Form 1040 assembly and export; this XML draft is not a
+filing path. Its displayed whole-dollar row and aggregate rounding, as well as
+pass-through CREB taxable-income limits, still need end-to-end reconciliation.
+The draft now derives Part II from explicit finalized Form 1040, Schedule 2,
+Schedule 3, Form 6251, and allowed Form 3800 lines. It removes Schedule 3 lines
+1, 6a, 6b, and 6k from line 8 when computing Form 8912 line 10b, checks the Form
+3800 amount against line 6a, and requires Form 8912 line 12 to match Schedule 3
+line 6k. These bridge and XML cases are written but unrun. No graph node
+currently supplies that finalized snapshot, so the builder stays unregistered
+and positive claims remain blocked. Form 8912 source items now capture
+bond-level purchase-price accrued interest and accrued interest on disposition.
+An unrun pure calculation separates current-year deemed interest from prior-year
+credit carryforwards and the purchase-price basis recovery. Schedule B's MeF
+builder now emits source-backed interest-payer rows and its line 1/4 totals when
+paired payer names and amounts are available; source-to-XSD cases are written
+but unrun. The Schedule B node now self-emits paired interest rows so
+numeric-array pending normalization does not discard payer amounts before
+XML/PDF export. The PDF path now appends paginated interest-payer detail after
+the 14 printed rows, with cases written but unrun. This does not yet cover all
+Schedule B adjustment rows. The PDF statement still needs filled-render
+verification. The next Form 8912 graph pass requires each bond's taxable
+interest already reported by another input, validates that amount against
+computed bond interest, and routes only the unreported balance to Schedule B.
+Positive credit still stops final Form 1040 assembly until Part II and the
+native document are registered; the fail-closed check moved to that sink and to
+Form 1040 XML/PDF export so taxable interest can reach AGI first without
+yielding an unfinished return. These graph and duplicate-interest cases are
+written but unrun. Source-document identity reconciliation remains open.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on

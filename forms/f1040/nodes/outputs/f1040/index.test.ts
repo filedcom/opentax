@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f1040 } from "./index.ts";
 
 const ctx = {} as Parameters<typeof f1040.compute>[0];
@@ -42,6 +42,18 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line24_total_tax, 0);
   assertEquals(f.line33_total_payments, 0);
   assertEquals(f.line35a_refund, 0);
+});
+
+Deno.test("f1040: unresolved Form 8912 credit stops final return assembly", () => {
+  assertThrows(
+    () =>
+      compute({
+        form8912_tentative_credit: 100,
+        line2b_taxable_interest: 100,
+      }),
+    Error,
+    "Part II tax limit and source document",
+  );
 });
 
 // ─── Line computations ────────────────────────────────────────────────────────
