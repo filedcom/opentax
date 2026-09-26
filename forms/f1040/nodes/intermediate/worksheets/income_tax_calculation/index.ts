@@ -69,6 +69,9 @@ export const inputSchema = z.object({
   qualified_dividends: accumulable(z.number().nonnegative()).optional(),
   form4952_election: z.number().nonnegative().optional(),
   form4952_elected_capital_gain: z.number().nonnegative().optional(),
+  form4952_amt_election: z.number().nonnegative().optional(),
+  form4952_amt_elected_capital_gain: z.number().nonnegative().optional(),
+  form4952_amt_line2c_difference: z.number().optional(),
   form8814_tax: z.number().nonnegative().optional(),
   form4972_tax: accumulable(z.number().nonnegative()).optional(),
   form8978_tax: accumulable(z.number().nonnegative()).optional(),
@@ -384,11 +387,23 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           ? { unrecaptured_1250_gain: unrecaptured1250 }
           : {}),
         ...(rate28 > 0 ? { rate_28_gain: rate28 } : {}),
-        ...(form4952Election > 0
+        ...(input.form4952_amt_election !== undefined
+          ? { form4952_amt_election: input.form4952_amt_election }
+          : {}),
+        ...(input.form4952_amt_elected_capital_gain !== undefined
           ? {
-            form4952_election: form4952Election,
-            form4952_elected_capital_gain: electedCapitalGain,
+            form4952_amt_elected_capital_gain:
+              input.form4952_amt_elected_capital_gain,
           }
+          : {}),
+        ...(input.form4952_amt_line2c_difference !== undefined
+          ? {
+            form4952_amt_line2c_difference:
+              input.form4952_amt_line2c_difference,
+          }
+          : {}),
+        ...(input.taking_standard_deduction !== undefined
+          ? { taking_standard_deduction: input.taking_standard_deduction }
           : {}),
         ...(floor > 0 ? { foreign_earned_income_exclusion: floor } : {}),
       }),

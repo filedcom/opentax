@@ -164,6 +164,11 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
           source_1099_interest: interest,
         }));
       }
+      if ((item.box9 ?? 0) > 0) {
+        outputs.push(this.outputNodes.output(form4952, {
+          source_private_activity_bond_interest: item.box9!,
+        }));
+      }
     }
 
     if (totalBox2 > 0) {

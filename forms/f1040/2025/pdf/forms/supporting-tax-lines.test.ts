@@ -2,13 +2,15 @@ import { assertEquals } from "@std/assert";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
+import { form6251Pdf } from "./f6251.ts";
 import { schedule2Pdf } from "./schedule2.ts";
 
 function mappedField(
   descriptor: PdfFormDescriptor,
   domainKey: string,
 ): string | undefined {
-  return descriptor.fields.find((entry) => entry.domainKey === domainKey)?.pdfField;
+  return descriptor.fields.find((entry) => entry.domainKey === domainKey)
+    ?.pdfField;
 }
 
 Deno.test("Form 8959 maps resolved box 5 wages and computed totals to lines 1 through 24", () => {
@@ -49,5 +51,12 @@ Deno.test("Form 8960 maps computed NIIT through line 17", () => {
   assertEquals(
     mappedField(form8960Pdf, "line17_niit"),
     "topmostSubform[0].Page1[0].f1_27[0]",
+  );
+});
+
+Deno.test("Form 6251 maps the AMT investment-interest difference to line 2c", () => {
+  assertEquals(
+    mappedField(form6251Pdf, "line2c_investment_interest"),
+    "topmostSubform[0].Page1[0].f1_4[0]",
   );
 });

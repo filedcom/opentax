@@ -106,6 +106,20 @@ Deno.test("1099-DIV routes investment-property dividends and capital gain to For
   });
 });
 
+Deno.test("1099-DIV routes affirmed private-activity-bond dividends to AMT Form 4952", () => {
+  const result = compute([minimalItem({
+    box1a: 0,
+    box12: 500,
+    box13: 200,
+    investment_property_for_form4952: true,
+  })]);
+  assertEquals(
+    findOutput(result, "form4952")?.fields
+      .source_private_activity_bond_interest,
+    200,
+  );
+});
+
 Deno.test("1099-DIV flagged for Form 4952 cannot have qualified dividends above ordinary dividends", () => {
   assertThrows(
     () =>
