@@ -84,6 +84,22 @@ Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
   assertEquals(result.outputs, [{ nodeType: "form8824", fields: exchange }]);
 });
 
+Deno.test("singleton Form 8936 keeps one MAGI record with its vehicle array", () => {
+  const startNode = buildStartNode(inputNodes);
+  const form = {
+    current_year_magi: { adjusted_gross_income: 90_000 },
+    prior_year_magi: { adjusted_gross_income: 85_000 },
+    filing_status: "single" as const,
+    prior_year_filing_status: "single" as const,
+    f8936s: [{ is_new_vehicle: true, vin: "1HGCM82633A004352" }],
+  };
+  const result = startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { f8936: form },
+  );
+  assertEquals(result.outputs, [{ nodeType: "f8936", fields: form }]);
+});
+
 Deno.test("singleton Schedule 1-A claim routes taxpayer-entered deductions", () => {
   const startNode = buildStartNode(inputNodes);
   const result = startNode.compute(

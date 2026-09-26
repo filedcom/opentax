@@ -13,12 +13,18 @@ const vehicle = {
   transferred_to_dealer: false,
   resold_within_30_days: false,
   acquired_for_use_not_resale: true,
-  modified_agi: 100_000,
+};
+
+const taxpayer = {
+  current_year_magi: { adjusted_gross_income: 50_000 },
+  prior_year_magi: { adjusted_gross_income: 50_000 },
   filing_status: FilingStatus.Single,
+  prior_year_filing_status: FilingStatus.Single,
 };
 
 Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service date, and personal amount", () => {
   const xml = form8936ScheduleA.build({
+    ...taxpayer,
     f8936s: [{
       ...vehicle,
       is_new_vehicle: true,
@@ -51,12 +57,12 @@ Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service d
 
 Deno.test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", () => {
   const xml = form8936ScheduleA.build({
+    ...taxpayer,
     f8936s: [{
       ...vehicle,
       vehicle_year: 2022,
       is_new_vehicle: false,
       sale_price: 15_000,
-      modified_agi: 50_000,
       claimed_as_dependent: false,
       claimed_prev_owned_credit_last_3_years: false,
       purchased_from_dealer: true,
@@ -74,6 +80,7 @@ Deno.test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", (
 
 Deno.test("Form 8936 Schedule A: dealer transfer retains filing document", () => {
   const xml = form8936ScheduleA.build({
+    ...taxpayer,
     f8936s: [{
       ...vehicle,
       is_new_vehicle: true,
@@ -91,6 +98,7 @@ Deno.test("Form 8936 Schedule A: dealer transfer retains filing document", () =>
 
 Deno.test("Form 8936 Schedule A: post-cutoff acquisition with no transfer emits no document", () => {
   const xml = form8936ScheduleA.build({
+    ...taxpayer,
     f8936s: [{
       ...vehicle,
       is_new_vehicle: true,

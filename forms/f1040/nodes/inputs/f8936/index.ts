@@ -58,17 +58,35 @@ export const itemSchema = z.object({
   msrp: z.number().nonnegative().optional(),
   vehicle_type: z.enum(["suv_van_truck", "other"]).optional(),
   business_use_pct: z.number().min(0).max(1).optional(),
-  modified_agi: z.number().nonnegative().optional(),
-  prior_year_modified_agi: z.number().nonnegative().optional(),
-  filing_status: filingStatusSchema.optional(),
-  prior_year_filing_status: filingStatusSchema.optional(),
+});
+
+export const magiYearSchema = z.object({
+  adjusted_gross_income: z.number(),
+  excluded_puerto_rico_income: z.number().nonnegative().optional(),
+  foreign_earned_income_exclusion: z.number().nonnegative().optional(),
+  foreign_housing_deduction: z.number().nonnegative().optional(),
+  excluded_american_samoa_income: z.number().nonnegative().optional(),
 });
 
 export const inputSchema = z.object({
+  current_year_magi: magiYearSchema,
+  prior_year_magi: magiYearSchema,
+  filing_status: filingStatusSchema,
+  prior_year_filing_status: filingStatusSchema,
   f8936s: z.array(itemSchema),
 });
 
 export type F8936Item = z.infer<typeof itemSchema>;
+export type F8936Input = z.infer<typeof inputSchema>;
+export type F8936MagiYear = z.infer<typeof magiYearSchema>;
+
+export function modifiedAgi(year: F8936MagiYear): number {
+  return year.adjusted_gross_income +
+    (year.excluded_puerto_rico_income ?? 0) +
+    (year.foreign_earned_income_exclusion ?? 0) +
+    (year.foreign_housing_deduction ?? 0) +
+    (year.excluded_american_samoa_income ?? 0);
+}
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
@@ -82,21 +100,11 @@ function incomeLimit(status: FilingStatus, used: boolean): number {
   return used ? USED_INCOME_LIMIT_SINGLE : NEW_INCOME_LIMIT_SINGLE;
 }
 
-function exceedsIncomeLimit(item: F8936Item, used: boolean): boolean {
-  if (item.modified_agi === undefined || item.filing_status === undefined) {
-    throw new Error("f8936: current-year MAGI and filing status are required");
-  }
-  if (item.modified_agi <= incomeLimit(item.filing_status, used)) return false;
-  if (
-    item.prior_year_modified_agi === undefined ||
-    item.prior_year_filing_status === undefined
-  ) {
-    throw new Error(
-      "f8936: prior-year MAGI and filing status are required when current-year MAGI exceeds the limit",
-    );
-  }
-  return item.prior_year_modified_agi >
-    incomeLimit(item.prior_year_filing_status, used);
+function exceedsIncomeLimit(input: F8936Input, used: boolean): boolean {
+  return modifiedAgi(input.current_year_magi) >
+      incomeLimit(input.filing_status, used) &&
+    modifiedAgi(input.prior_year_magi) >
+      incomeLimit(input.prior_year_filing_status, used);
 }
 
 function acquiredAfterCreditCutoff(item: F8936Item): boolean {
@@ -158,11 +166,11 @@ function newVehicleExceedsMsrpCap(item: F8936Item): boolean {
   return item.msrp > msrpCap(item.vehicle_type);
 }
 
-function computeNewVehicleCredit(item: F8936Item): number {
+function computeNewVehicleCredit(item: F8936Item, input: F8936Input): number {
   if (acquiredAfterCreditCutoff(item)) return 0;
   requireVehicleFacts(item);
   if (item.resold_within_30_days || !item.acquired_for_use_not_resale) return 0;
-  if (exceedsIncomeLimit(item, false)) return 0;
+  if (exceedsIncomeLimit(input, false)) return 0;
   if (item.msrp === undefined || item.vehicle_type === undefined) {
     throw new Error("f8936: new vehicle MSRP and vehicle type are required");
   }
@@ -172,7 +180,7 @@ function computeNewVehicleCredit(item: F8936Item): number {
   return Math.round(credit * personalPct);
 }
 
-function computeUsedVehicleCredit(item: F8936Item): number {
+function computeUsedVehicleCredit(item: F8936Item, input: F8936Input): number {
   if (acquiredAfterCreditCutoff(item)) return 0;
   requireVehicleFacts(item);
   if (item.resold_within_30_days || !item.acquired_for_use_not_resale) return 0;
@@ -203,24 +211,29 @@ function computeUsedVehicleCredit(item: F8936Item): number {
     item.vehicle_year !== undefined && item.acquisition_date !== undefined &&
     item.vehicle_year > Number(item.acquisition_date.slice(0, 4)) - 2
   ) return 0;
-  if (exceedsIncomeLimit(item, true)) return 0;
+  if (exceedsIncomeLimit(input, true)) return 0;
   const price = item.sale_price ?? 0;
   if (price > USED_VEHICLE_PRICE_CAP) return 0;
   const credit = Math.min(price * USED_VEHICLE_RATE, USED_VEHICLE_MAX_CREDIT);
   return Math.round(credit);
 }
 
-export function computeVehiclePersonalCredit(item: F8936Item): number {
+export function computeVehiclePersonalCredit(
+  item: F8936Item,
+  input: F8936Input,
+): number {
   if (item.is_new_vehicle === undefined) {
     throw new Error(
       "f8936: vehicle must be classified as new or previously owned",
     );
   }
   const used = item.is_new_vehicle === false;
-  return used ? computeUsedVehicleCredit(item) : computeNewVehicleCredit(item);
+  return used
+    ? computeUsedVehicleCredit(item, input)
+    : computeNewVehicleCredit(item, input);
 }
 
-function vehicleOutput(item: F8936Item): NodeOutput[] {
+function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
   if (item.transferred_to_dealer === undefined) {
     throw new Error("f8936: dealer-transfer answer is required");
   }
@@ -235,7 +248,7 @@ function vehicleOutput(item: F8936Item): NodeOutput[] {
     );
   }
   const used = item.is_new_vehicle === false;
-  const credit = computeVehiclePersonalCredit(item);
+  const credit = computeVehiclePersonalCredit(item, input);
   // A dealer transfer is reconciled on Form 8936/Schedule A, not claimed
   // again as a personal credit on Schedule 3.
   if (item.transferred_to_dealer) return [];
@@ -263,7 +276,9 @@ class F8936Node extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     if (input.f8936s.length === 0) return { outputs: [] };
-    return { outputs: input.f8936s.flatMap(vehicleOutput) };
+    return {
+      outputs: input.f8936s.flatMap((item) => vehicleOutput(item, input)),
+    };
   }
 }
 
