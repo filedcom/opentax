@@ -145,7 +145,14 @@ registered, since the return graph does not yet supply final tax, AMT, prior
 credits, and allowed Form 3800 in the required order. Positive Form 8912 claims
 remain blocked at the input node; this XML draft is not a filing path. Its
 displayed whole-dollar row and aggregate rounding, as well as pass-through CREB
-taxable-income limits, still need end-to-end reconciliation.
+taxable-income limits, still need end-to-end reconciliation. The draft now
+derives Part II from explicit finalized Form 1040, Schedule 2, Schedule 3, Form
+6251, and allowed Form 3800 lines. It removes Schedule 3 lines 1, 6a, 6b, and 6k
+from line 8 when computing Form 8912 line 10b, checks the Form 3800 amount
+against line 6a, and requires Form 8912 line 12 to match Schedule 3 line 6k.
+These bridge and XML cases are written but unrun. No graph node currently
+supplies that finalized snapshot, so the builder stays unregistered and positive
+claims remain blocked.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on

@@ -2,7 +2,8 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8912IndividualLimit,
   calculateForm8912PartIVBond,
-  type Form8912IndividualLimitInput,
+  deriveForm8912IndividualLimitInput,
+  type Form8912FinalizedReturnLines,
 } from "../../../nodes/inputs/f8912/calculation.ts";
 import {
   type F8912UnreportedBond,
@@ -15,7 +16,7 @@ import {
 // finalized return credits and attach this document before it may file.
 export function buildForm8912Document(
   rawItem: unknown,
-  limitInput: Form8912IndividualLimitInput,
+  finalizedReturn: Form8912FinalizedReturnLines,
 ): string {
   const item = itemSchema.parse(rawItem);
   if (item.reported_bonds.length > 99 || item.unreported_bonds.length > 99) {
@@ -24,23 +25,17 @@ export function buildForm8912Document(
     );
   }
   const source = sourceLinesFromItem(item);
-  for (
-    const [name, calculated, supplied] of [
-      ["line 1", source.line1, limitInput.line1Form1097BtcCredit],
-      ["line 2", source.line2, limitInput.line2PartIVCredit],
-      ["line 3", source.line3, limitInput.line3QualifiedBondCarryforward],
-    ] as const
-  ) {
-    if (Math.abs(calculated - supplied) > 0.000001) {
-      throw new Error(
-        `Form 8912 ${name} does not reconcile to its bond sources`,
-      );
-    }
-  }
-  const limit = calculateForm8912IndividualLimit(limitInput);
+  const limit = calculateForm8912IndividualLimit(
+    deriveForm8912IndividualLimitInput(source, finalizedReturn),
+  );
   if (source.hasPassThroughCrebCredit) {
     throw new Error(
       "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
+    );
+  }
+  if (Math.abs(finalizedReturn.schedule3Line6k - limit.line12) > 0.000001) {
+    throw new Error(
+      "Form 8912 line 12 must reconcile to finalized Schedule 3 line 6k",
     );
   }
 

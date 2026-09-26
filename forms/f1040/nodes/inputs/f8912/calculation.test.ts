@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateForm8912IndividualLimit,
+  deriveForm8912IndividualLimitInput,
   type Form8912IndividualLimitInput,
 } from "./calculation.ts";
 
@@ -46,5 +47,65 @@ Deno.test("Form 8912: pass-through CREB credit stops without its separate limit"
       }),
     Error,
     "pass-through CREB",
+  );
+});
+
+const source = {
+  line1: 2_000,
+  line2: 1_000,
+  line3: 500,
+  line4: 3_500,
+  hasPassThroughCrebCredit: false,
+};
+
+const finalized = {
+  form1040Line16: 10_000,
+  form1040Line19: 400,
+  schedule2Line1z: 200,
+  form6251Line11: 100,
+  schedule3Line1: 1_000,
+  schedule3Line6a: 3_000,
+  schedule3Line6b: 500,
+  schedule3Line6k: 0,
+  schedule3Line8: 6_100,
+  form3800AllowedCredit: 3_000,
+};
+
+Deno.test("Form 8912: finalized return bridge excludes FTC, GBC, prior AMT, and itself", () => {
+  const input = deriveForm8912IndividualLimitInput(source, finalized);
+  assertEquals(input.foreignTaxCredit, 1_000);
+  assertEquals(input.priorAllowableCredits, 2_000);
+  assertEquals(input.form3800AllowedCredit, 3_000);
+  assertEquals(input.priorYearMinimumTaxCredit, 500);
+  assertEquals(input.schedule2Line1z, 200);
+  assertEquals(input.form6251Line11, 100);
+  assertEquals(calculateForm8912IndividualLimit(input).line12, 3_500);
+
+  const withOwnCredit = deriveForm8912IndividualLimitInput(source, {
+    ...finalized,
+    schedule3Line6k: 500,
+    schedule3Line8: 6_600,
+  });
+  assertEquals(withOwnCredit.priorAllowableCredits, 2_000);
+});
+
+Deno.test("Form 8912: finalized return bridge rejects unproven Form 3800 amounts", () => {
+  assertThrows(
+    () =>
+      deriveForm8912IndividualLimitInput(source, {
+        ...finalized,
+        form3800AllowedCredit: 2_000,
+      }),
+    Error,
+    "reconcile to allowed Form 3800",
+  );
+  assertThrows(
+    () =>
+      deriveForm8912IndividualLimitInput(source, {
+        ...finalized,
+        schedule3Line8: 4_000,
+      }),
+    Error,
+    "smaller than its excluded credits",
   );
 });

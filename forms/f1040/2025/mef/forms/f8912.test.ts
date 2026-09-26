@@ -39,22 +39,21 @@ const source = {
   }],
 };
 
-const limit = {
-  line1Form1097BtcCredit: 100,
-  line2PartIVCredit: 175,
-  line3QualifiedBondCarryforward: 25,
+const finalized = {
   form1040Line16: 1_000,
+  form1040Line19: 0,
   schedule2Line1z: 0,
   form6251Line11: 0,
-  foreignTaxCredit: 0,
-  priorAllowableCredits: 0,
+  schedule3Line1: 0,
+  schedule3Line6a: 0,
+  schedule3Line6b: 0,
+  schedule3Line6k: 300,
+  schedule3Line8: 300,
   form3800AllowedCredit: 0,
-  priorYearMinimumTaxCredit: 0,
-  hasPassThroughCrebCredit: false,
 };
 
 Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", () => {
-  const xml = buildForm8912Document(source, limit);
+  const xml = buildForm8912Document(source, finalized);
   assertStringIncludes(
     xml,
     "<TotalAllForm1097BTCAmt>100</TotalAllForm1097BTCAmt>",
@@ -81,11 +80,16 @@ Deno.test("Form 8912 MeF draft keeps source rows and allowed credit distinct", (
   );
 });
 
-Deno.test("Form 8912 MeF draft rejects a limit disconnected from its sources", () => {
+Deno.test("Form 8912 MeF draft rejects a Schedule 3 line 6k mismatch", () => {
   assertThrows(
-    () => buildForm8912Document(source, { ...limit, line2PartIVCredit: 500 }),
+    () =>
+      buildForm8912Document(source, {
+        ...finalized,
+        schedule3Line6k: 500,
+        schedule3Line8: 500,
+      }),
     Error,
-    "line 2 does not reconcile",
+    "reconcile to finalized Schedule 3 line 6k",
   );
 });
 
@@ -104,8 +108,9 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
     }],
   };
   const xml = buildForm8912Document(twoRows, {
-    ...limit,
-    line2PartIVCredit: 262.5,
+    ...finalized,
+    schedule3Line6k: 387.5,
+    schedule3Line8: 387.5,
   });
   assertEquals(xml.split("<BondNotRptOn1097BTCDetail>").length - 1, 2);
   assertStringIncludes(
@@ -120,15 +125,31 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
 
 Deno.test("Form 8912 MeF draft limits line 12 after prior credits", () => {
   const xml = buildForm8912Document(source, {
-    ...limit,
+    ...finalized,
     form1040Line16: 250,
-    foreignTaxCredit: 50,
+    schedule3Line1: 50,
+    schedule3Line6a: 100,
+    schedule3Line6k: 100,
+    schedule3Line8: 250,
     form3800AllowedCredit: 100,
   });
   assertStringIncludes(xml, "<NetIncomeTaxAmt>100</NetIncomeTaxAmt>");
   assertStringIncludes(
     xml,
     "<CurrentYearAllowableCreditAmt>100</CurrentYearAllowableCreditAmt>",
+  );
+});
+
+Deno.test("Form 8912 MeF draft rejects unmatched allowed Form 3800 credit", () => {
+  assertThrows(
+    () =>
+      buildForm8912Document(source, {
+        ...finalized,
+        schedule3Line6a: 100,
+        schedule3Line8: 400,
+      }),
+    Error,
+    "reconcile to allowed Form 3800",
   );
 });
 
@@ -142,7 +163,7 @@ Deno.test("Form 8912 MeF draft validates its IRS source schema", async () => {
   } catch {
     return;
   }
-  const xml = buildForm8912Document(source, limit).replace(
+  const xml = buildForm8912Document(source, finalized).replace(
     "<IRS8912>",
     '<IRS8912 xmlns="http://www.irs.gov/efile">',
   );
