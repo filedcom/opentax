@@ -4,6 +4,101 @@
  * separately to Forms 1097-BTC and bond-level rows.
  * https://www.irs.gov/pub/irs-pdf/f8912.pdf
  */
+export type Form8912BondType =
+  | "CREB"
+  | "NEW_CREB"
+  | "QECB"
+  | "QZAB"
+  | "QSCB"
+  | "BAB";
+
+export type Form8912ReportedBond = {
+  readonly bondType: Form8912BondType;
+  readonly creditAmount: number;
+  readonly issuerElectedDirectPayment: boolean;
+  readonly isPassThroughCrebCredit: boolean;
+};
+
+export type Form8912UnreportedBond = {
+  readonly bondType: Form8912BondType;
+  readonly outstandingPrincipal: number;
+  readonly creditRate: number;
+  readonly ownershipPercentage: number;
+  readonly issuerElectedDirectPayment: boolean;
+};
+
+export type Form8912SourceLines = {
+  readonly line1: number;
+  readonly line2: number;
+  readonly line3: number;
+  readonly line4: number;
+  readonly hasPassThroughCrebCredit: boolean;
+};
+
+export function calculateForm8912SourceLines(
+  reportedBonds: readonly Form8912ReportedBond[],
+  unreportedBonds: readonly Form8912UnreportedBond[],
+  carryforward: number,
+): Form8912SourceLines {
+  if (!Number.isFinite(carryforward) || carryforward < 0) {
+    throw new Error(
+      "Form 8912 carryforward must be a nonnegative finite amount",
+    );
+  }
+  let line1 = 0;
+  let line2 = 0;
+  let hasPassThroughCrebCredit = false;
+  for (const bond of reportedBonds) {
+    if (bond.issuerElectedDirectPayment) {
+      throw new Error(
+        "Form 8912 holder cannot claim an issuer direct-payment bond",
+      );
+    }
+    if (!Number.isFinite(bond.creditAmount) || bond.creditAmount < 0) {
+      throw new Error(
+        "Form 8912 reported credit must be a nonnegative finite amount",
+      );
+    }
+    line1 += bond.creditAmount;
+    hasPassThroughCrebCredit ||= bond.isPassThroughCrebCredit;
+  }
+  for (const bond of unreportedBonds) {
+    if (bond.issuerElectedDirectPayment) {
+      throw new Error(
+        "Form 8912 holder cannot claim an issuer direct-payment bond",
+      );
+    }
+    for (
+      const amount of [
+        bond.outstandingPrincipal,
+        bond.creditRate,
+        bond.ownershipPercentage,
+      ]
+    ) {
+      if (!Number.isFinite(amount) || amount < 0) {
+        throw new Error(
+          "Form 8912 bond inputs must be nonnegative finite amounts",
+        );
+      }
+    }
+    if (bond.ownershipPercentage > 1) {
+      throw new Error("Form 8912 ownership percentage cannot exceed 100%");
+    }
+    const credit = bond.outstandingPrincipal * bond.creditRate *
+      bond.ownershipPercentage;
+    line2 += bond.bondType === "NEW_CREB" || bond.bondType === "QECB"
+      ? credit * 0.7
+      : credit;
+  }
+  return {
+    line1,
+    line2,
+    line3: carryforward,
+    line4: line1 + line2 + carryforward,
+    hasPassThroughCrebCredit,
+  };
+}
+
 export type Form8912IndividualLimitInput = {
   readonly line1Form1097BtcCredit: number;
   readonly line2PartIVCredit: number;

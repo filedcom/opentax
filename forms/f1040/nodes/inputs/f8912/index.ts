@@ -1,90 +1,100 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { calculateForm8912SourceLines } from "./calculation.ts";
 
-// Form 8912 — Credit to Holders of Tax Credit Bonds (IRC §54A–54F, §1397E)
-// Holders of specified tax credit bonds claim a credit equal to:
-//   face_amount × credit_rate × (holding_period_days / total_days_in_period)
-//
-// Bond programs were repealed by TCJA (P.L. 115-97) for bonds issued after 12/31/2017.
-// Existing bonds (issued before 2018) continue to generate credits.
-// The credit is includible in gross income (IRC §54A(f)).
-
-// ─── Enum — Bond Types ────────────────────────────────────────────────────────
-
+// Form 8912 (Rev. December 2024): Part III uses Form 1097-BTC amounts;
+// Part IV computes credits where no Form 1097-BTC was received. This node
+// does not file the tentative credit. Part II must first limit it against tax.
 export enum BondType {
-  // Clean Renewable Energy Bonds (IRC §54C) — original program
   CREB = "CREB",
-  // New Clean Renewable Energy Bonds (IRC §54D) — successor program
   NEW_CREB = "NEW_CREB",
-  // Qualified Energy Conservation Bonds (IRC §54D / §54E)
   QECB = "QECB",
-  // Qualified Zone Academy Bonds (IRC §1397E)
   QZAB = "QZAB",
-  // Qualified School Construction Bonds (IRC §54F)
   QSCB = "QSCB",
-  // Build America Bonds — Direct Payment type (IRC §54AA)
-  BAB_DIRECT = "BAB_DIRECT",
+  BAB = "BAB",
 }
 
-// ─── Per-item schema ──────────────────────────────────────────────────────────
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const pre2018IssueDate = isoDate.refine(
+  (date) => date <= "2017-12-31",
+  "Tax credit bonds issued after 2017 are ineligible",
+);
 
-// One entry per bond position held during the tax year
-export const itemSchema = z.object({
-  // Type of qualified tax credit bond (IRC §54A-54F, §1397E)
+const reportedBondSchema = z.object({
   bond_type: z.nativeEnum(BondType),
-  // Face amount of the bond held (IRC §54A(b)(2))
-  face_amount: z.number().nonnegative(),
-  // Applicable credit rate as set by IRS at issuance (IRC §54A(b)(3))
-  credit_rate: z.number().nonnegative(),
-  // Number of days the taxpayer held the bond during the tax year (IRC §54A(b)(4))
-  holding_period_days: z.number().nonnegative(),
-  // Total days in the tax year — 365 or 366 (leap year) (IRC §54A(b)(4))
-  total_days_in_period: z.number().positive(),
+  issue_date: pre2018IssueDate,
+  issuer_ein: z.string().regex(/^\d{9}$/),
+  unique_identifier: z.string().min(1),
+  credit_amount: z.number().finite().nonnegative(),
+  issuer_elected_direct_payment: z.boolean(),
+  is_pass_through_creb_credit: z.boolean(),
+});
+
+const unreportedBondSchema = z.object({
+  bond_type: z.nativeEnum(BondType),
+  issue_date: pre2018IssueDate,
+  issuer_name: z.string().min(1),
+  issuer_ein: z.string().regex(/^\d{9}$/),
+  maturity_date: isoDate,
+  outstanding_principal: z.number().finite().nonnegative(),
+  credit_rate: z.number().finite().nonnegative(),
+  ownership_percentage: z.number().finite().min(0).max(1),
+  issuer_elected_direct_payment: z.boolean(),
+});
+
+export const itemSchema = z.object({
+  reported_bonds: z.array(reportedBondSchema),
+  unreported_bonds: z.array(unreportedBondSchema),
+  qualified_bond_carryforward: z.number().finite().nonnegative(),
 });
 
 export const inputSchema = z.object({
   f8912s: z.array(itemSchema).min(1),
 });
 
-type F8912Item = z.infer<typeof itemSchema>;
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function bondCredit(item: F8912Item): number {
-  if (item.face_amount === 0 || item.credit_rate === 0 || item.holding_period_days === 0) {
-    return 0;
-  }
-  return item.face_amount * item.credit_rate * (item.holding_period_days / item.total_days_in_period);
-}
-
-function totalCredit(items: F8912Item[]): number {
-  return items.reduce((sum, item) => sum + bondCredit(item), 0);
-}
-
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
-}
-
-// ─── Node class ───────────────────────────────────────────────────────────────
-
 class F8912Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8912";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
-    // Validate total_days_in_period > 0 (already enforced by schema .positive())
-    const credit = totalCredit(input.f8912s);
-    return { outputs: buildOutputs(credit) };
+    for (const item of input.f8912s) {
+      const lines = calculateForm8912SourceLines(
+        item.reported_bonds.map((bond) => ({
+          bondType: bond.bond_type,
+          creditAmount: bond.credit_amount,
+          issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
+          isPassThroughCrebCredit: bond.is_pass_through_creb_credit,
+        })),
+        item.unreported_bonds.map((bond) => ({
+          bondType: bond.bond_type,
+          outstandingPrincipal: bond.outstanding_principal,
+          creditRate: bond.credit_rate,
+          ownershipPercentage: bond.ownership_percentage,
+          issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
+        })),
+        item.qualified_bond_carryforward,
+      );
+      if (lines.hasPassThroughCrebCredit) {
+        throw new Error(
+          "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
+        );
+      }
+      if (lines.line4 > 0) {
+        throw new Error(
+          "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
+        );
+      }
+    }
+    return { outputs: [] };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const f8912 = new F8912Node();
