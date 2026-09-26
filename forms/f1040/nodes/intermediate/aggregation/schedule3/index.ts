@@ -85,6 +85,9 @@ export const inputSchema = z.object({
   // Line 6g — Mortgage interest credit (Form 8396 line 11)
   // IRC §25; Form 8396 line 11 → Schedule 3 line 6g
   line6g_mortgage_interest_credit: z.number().nonnegative().optional(),
+  // Line 6i — qualified electric vehicle credit that precedes Form 8936
+  // personal clean-vehicle credits in the Form 8936 tax-liability worksheet.
+  line6i_qualified_electric_vehicle_credit: z.number().nonnegative().optional(),
 
   // Line 6j — allowed personal-use alternative fuel refueling property credit
   // from Form 8911 line 10, after the regular-tax / AMT limitation.
@@ -107,7 +110,6 @@ export const inputSchema = z.object({
   // A separate producer until Form 3800 combines all source credits.
   line6a_low_income_housing_credit: accumulable(z.number().nonnegative())
     .optional(),
-
 });
 
 type Schedule3Input = z.infer<typeof inputSchema>;
@@ -139,6 +141,7 @@ function line7(input: Schedule3Input): number {
     (input.line6d_elderly_disabled_credit ?? 0) +
     sumAccumulable(input.line6f_clean_vehicle_credit) +
     (input.line6g_mortgage_interest_credit ?? 0) +
+    (input.line6i_qualified_electric_vehicle_credit ?? 0) +
     (input.line6j_alt_fuel_vehicle_refueling ?? 0) +
     (input.line6l_form8978_credit ?? 0) +
     sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit);
@@ -183,6 +186,22 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
+    const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
+    const cleanUsed = sumAccumulable(
+      input.line6m_prev_owned_clean_vehicle_credit,
+    );
+    if (cleanNew > 0 || cleanUsed > 0) {
+      f1040Input.form8936_tentative_new_credit = cleanNew;
+      f1040Input.form8936_tentative_used_credit = cleanUsed;
+      f1040Input.form8936_schedule3_line7_tentative = line7(input);
+      f1040Input.form8936_priority_personal_credits = line1(input) +
+        (input.line2_childcare_credit ?? 0) +
+        (input.line3_education_credit ?? 0) +
+        (input.line4_retirement_savings_credit ?? 0) +
+        (input.line5b_energy_efficient_home ?? 0) +
+        (input.line6d_elderly_disabled_credit ?? 0) +
+        (input.line6i_qualified_electric_vehicle_credit ?? 0);
+    }
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(
@@ -197,8 +216,6 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     const line1Total = line1(input);
     if (line1Total > 0) printFields.line1_total = line1Total;
     if (line6a(input) > 0) printFields.line6a_total = line6a(input);
-    const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
-    const cleanUsed = sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit);
     if (cleanNew > 0) printFields.line6f_total = cleanNew;
     if (cleanUsed > 0) printFields.line6m_total = cleanUsed;
     if (line7(input) > 0) printFields.line7_total = line7(input);

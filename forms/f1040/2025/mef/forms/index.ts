@@ -46,6 +46,8 @@ import { form8880 } from "./f8880.ts";
 import { form8889 } from "./f8889.ts";
 import { form8911 } from "./f8911.ts";
 import { form8911ScheduleA } from "./f8911_schedule_a.ts";
+import { form8936 } from "./f8936.ts";
+import { form8936ScheduleA } from "./f8936_schedule_a.ts";
 import { form8919 } from "./f8919.ts";
 import { form8949 } from "./f8949.ts";
 import { form8959 } from "./f8959.ts";
@@ -180,6 +182,9 @@ export const ALL_MEF_FORMS = [
   form8919,
   // Form 8911 Schedule A follows Form 8919 in ReturnData1040.xsd.
   form8911ScheduleA,
+  // Form 8936 and one Schedule A per clean vehicle follow Form 8911 Schedule A.
+  form8936,
+  form8936ScheduleA,
   // Form 8949
   form8949,
   // Form 8959 (must come after 8949 per XSD sequence)

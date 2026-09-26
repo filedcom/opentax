@@ -32,7 +32,7 @@ const pendingLimitSchema = z.object({
     line4_retirement_savings_credit: z.number().optional(),
     line5b_energy_efficient_home: z.number().optional(),
     line6d_elderly_disabled_credit: z.number().optional(),
-    line6i_clean_energy_credit: z.number().optional(),
+    line6i_qualified_electric_vehicle_credit: z.number().optional(),
     line6f_total: z.number().optional(),
     line6m_total: z.number().optional(),
   }),
@@ -82,18 +82,15 @@ function buildIRS8936(input: F8936Input, context?: MefBuildContext): string {
     (schedule3.line4_retirement_savings_credit ?? 0) +
     (schedule3.line5b_energy_efficient_home ?? 0) +
     (schedule3.line6d_elderly_disabled_credit ?? 0) +
-    (schedule3.line6i_clean_energy_credit ?? 0);
-  const newCredit = active.filter((item) => item.is_new_vehicle === true)
+    (schedule3.line6i_qualified_electric_vehicle_credit ?? 0);
+  const tentativeNew = active.filter((item) => item.is_new_vehicle === true)
     .reduce((sum, item) => sum + computeVehiclePersonalCredit(item, input), 0);
-  const usedCredit = active.filter((item) => item.is_new_vehicle === false)
+  const tentativeUsed = active.filter((item) => item.is_new_vehicle === false)
     .reduce((sum, item) => sum + computeVehiclePersonalCredit(item, input), 0);
   const usedAvailable = Math.max(0, line18 - otherCredits);
+  const usedCredit = Math.min(tentativeUsed, usedAvailable);
   const newAvailable = Math.max(0, line18 - otherCredits - usedCredit);
-  if (usedCredit > usedAvailable || newCredit > newAvailable) {
-    throw new Error(
-      "Form 8936 personal credit exceeds the Form 1040 tax-liability limit",
-    );
-  }
+  const newCredit = Math.min(tentativeNew, newAvailable);
   if (
     (schedule3.line6f_total ?? 0) !== newCredit ||
     (schedule3.line6m_total ?? 0) !== usedCredit
@@ -110,18 +107,18 @@ function buildIRS8936(input: F8936Input, context?: MefBuildContext): string {
       "PYIndivReturnFilingStatusCd",
       priorStatusCode[input.prior_year_filing_status],
     ),
-    newCredit > 0
+    tentativeNew > 0
       ? elements("CrPrsnlUsePartNewCleanVehGrp", [
-        element("PrsnlUseNewCleanVehicleCrAmt", newCredit),
+        element("PrsnlUseNewCleanVehicleCrAmt", tentativeNew),
         element("TotalTaxBeforeCrAndOthTaxesAmt", line18),
         element("PersonalTaxCreditsAmt", otherCredits + usedCredit),
         element("AdjustedPersonalTaxCreditsAmt", newAvailable),
         element("CleanVehPrsnlUsePartCrAmt", newCredit),
       ])
       : "",
-    usedCredit > 0
+    tentativeUsed > 0
       ? elements("CrPreviouslyOwnedCleanVehGrp", [
-        element("PrevOwnedCleanVehCreditAmt", usedCredit),
+        element("PrevOwnedCleanVehCreditAmt", tentativeUsed),
         element("TotalTaxBeforeCrAndOthTaxesAmt", line18),
         element("PersonalTaxCreditsAmt", otherCredits),
         element("AdjustedPersonalTaxCreditsAmt", usedAvailable),

@@ -106,11 +106,19 @@ Deno.test("Form 8936: empty vehicle input emits no document", () => {
   assertEquals(form8936.build({ ...source, f8936s: [] }), "");
 });
 
-Deno.test("Form 8936: tax-liability shortage stops XML until calculation graph caps credit", () => {
-  assertThrows(
-    () => form8936.build(source, context(5_000)),
-    Error,
-    "tax-liability limit",
+Deno.test("Form 8936: tax-liability shortage caps line 13 but preserves tentative line 9", () => {
+  const xml = form8936.build(source, context(5_000, 5_000));
+  assertStringIncludes(
+    xml,
+    "<PrsnlUseNewCleanVehicleCrAmt>7500</PrsnlUseNewCleanVehicleCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AdjustedPersonalTaxCreditsAmt>5000</AdjustedPersonalTaxCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CleanVehPrsnlUsePartCrAmt>5000</CleanVehPrsnlUsePartCrAmt>",
   );
 });
 
