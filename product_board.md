@@ -61,7 +61,7 @@ release gate or ATS acceptance.
 | -------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | GAP-1116       | Form 1116                                    | Passive and general basket MeF builders exist. The current build pass adds source explanations and linked native `ForeignIncmRelatedExpensesStmt` documents for Part I line 2 direct expenses from Form 1116 inputs and K-1 feeders; its local XSD case is written but unrun. Section 951A, foreign branch, section 901(j), treaty-resourced, and lump-sum categories need category-specific source facts and rules, not just indicator tags. Carryovers, other-deduction statements, and special tax adjustments remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Build category-specific rules and remaining statements, then verify full-batch calculation, XSD, and IRS business rules.                                           |
 | GAP-6251       | Form 6251                                    | The build pass now calculates TY2025 Part III lines 12–40 and MeF fields from both the Qualified Dividends and Capital Gain Tax Worksheet and the Schedule D Tax Worksheet source amounts, and replaces the simplified Form 1040 line 16 special-gain tax path with the 2025 Schedule D Tax Worksheet line order; these paths are unrun. The line 10 comparison now receives Form 1040 line 16, including preferential-rate tax. The build pass also routes signed 2025 line 1b, moves Form 1040 line 12 to the selected deduction branch and suppresses Schedule A XML when standard deduction wins, and applies the matching standard-versus-itemized line 2a addback, keeps evaluating AMT when regular taxable income is zero, and serializes calculated Part I/II amounts when AMT is due or a personal Form 8911 credit requires filing; cases are written but unrun. AMT-basis capital-gain refiguring, Form 4952 election effects, Form 2555, other line 10 adjustments, and other credit-driven filing triggers remain open. | Part III is calculated from source facts and reconciled with AMT and MeF XML for capital-gain cases.                                                               |
-| GAP-S2         | 2025 Schedule 2 line structure               | The code previously labeled AMT as line 1 and Form 8962 excess APTC repayment as line 2, and omitted the latter from MeF. The current worktree now uses line 2 for AMT and line 1a for excess APTC, with a field-map/XSD test.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Pass end-to-end Form 8962 and AMT source-to-return-to-MeF cases, audit every remaining 2025 Schedule 2 line against the form and schema, and rerun the full suite. |
+| GAP-S2         | 2025 Schedule 2 line structure               | The code previously labeled AMT as line 1 and Form 8962 excess APTC repayment as line 2, and omitted the latter from MeF. The current worktree uses line 2 for AMT and line 1a for excess APTC. The negative Form 8978 build pass also computes a chapter-1-tax offset, emits signed line 17z with a linked `AnyOtherTaxesStatement`, and adjusts line 21 and Form 1040 line 23. Those new cases are written but unrun. The remaining Schedule 2 line map, chapter 1 classification, and source-specific statements are not audited. | Pass source-to-return-to-MeF cases for Form 8962, AMT, and Form 8978; audit every other 2025 Schedule 2 line and chapter 1 classification against IRS instructions and schema, then run the full suite. |
 | GAP-8962       | Form 8962 2025 MeF and calculation           | **Verified slices, whole form open.** Earlier source-backed Table 2/Table 5 and source-to-XSD cases cover named annual, monthly, MAGI, and same-state SLCSP flows. The current build pass adds separate taxpayer/dependent modified AGI, required-filing facts for dependents, a line 3 household total, and multi-policy line 10 eligibility; these additions await the user-requested full-batch test. QSEHRA, MFS marketplace cases, mixed monthly/annual-only policy inputs, and Marketplace coverage below 100% FPL still fail explicitly. Form 8814 dependent income, shared-policy allocation, MFS exception/allocation rules, alternative marriage calculation, below-100%-FPL exceptions, coverage-family changes/SLCSP accuracy, and self-employed insurance interactions remain open. PDF field mapping and broader IRS business rules also remain open.                                                                                                                                                                   | Continue building the remaining Form 8962 branches and source facts, then verify calculation, XML, PDF, business rules, and the full suite as one batch.           |
 | GAP-8283       | Form 8283                                    | Build pass replaced the automatic capital-gain-property basis cap with an explicit Section B claimed deduction, added separate MeF documents for ordinary Section B gifts, and added VIN plus a linked native MeF vehicle statement for Section A claims above $500 on the donee-certified unrelated-party sale-proceeds route. These calculation, multi-document, and local XSD cases are written but unrun. Whether the actual donee-issued Form 1098-C/copy must also be attached remains unverified. Other vehicle routes, Section B appraisal/image attachments, pass-through documents, AGI limits, and PDF rendering remain open.                                                                                                                                                                                                                                                                                                                                                                                              | Build the remaining attachment and limit paths, then run the full batch and verify IRS rules.                                                                      |
 | GAP-8582       | Form 8582                                    | Prior-year active-participation facts already existed. The current build pass now splits an active rental's ineligible prior operating loss into Part V, excludes it from the Part II special allowance and Part VI ratios, and shares the revised per-activity allocation with Schedule E and Form 4835. Cases are written but unrun. Prior Form 4797 losses, durable per-activity carryforward identities, and full business-rule verification remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Verify split Part IV/V XML, Schedule E and Form 4835 routing, current-worktree tests and IRS rules; finish remaining prior-loss forms.                             |
@@ -79,17 +79,18 @@ route are removed. The node now calculates each affected-year Form 8978 column
 from original and corrected income-tax liability, sums signed line 13 amounts
 into line 14, and routes a positive result to Form 1040 line 16. It emits one
 native `IRS8978` and linked `IRS8978ScheduleA` per filing, and the bundle
-builder creates a tax-computation statement PDF per filing. The statement and
-positive source-to-XSD case are written but unrun. Input requires the actual
-affected-year tax recomputation and explanation; this engine does not infer it
-from a marginal rate. The negative worksheet's Schedule 3 cap and eligible
-Schedule 2 offset calculation is written as a pure function with cases but is
-not yet integrated or run. A negative line 14 still fails explicitly until the
-[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
-Schedule 3 line 6l cap, possible Schedule 2 line 17z chapter-1-tax offset, and
-Form 6251 line 10 adjustment are built. Interest and penalties need further
-calculation/source review, and all required attachment and IRS business rules
-remain unverified.
+builder creates a tax-computation statement PDF per filing. Input requires the
+actual affected-year tax recomputation and explanation; this engine does not
+infer it from a marginal rate. The negative route now feeds Form 6251 line 10,
+caps the Schedule 3 line 6l credit at Form 1040 line 18, and applies any
+remaining amount only to classified chapter 1 Schedule 2 Part II tax through
+signed line 17z, a linked `AnyOtherTaxesStatement`, and finalized line 21 / Form
+1040 line 23. PDF Schedules 2 and 3 project the same worksheet amounts.
+Positive and negative source-to-XSD and calculation cases are written but have
+not run. The chapter 1 source classification and tax-form PDF layout still need
+an instructions audit and visual verification; interest, penalties, all required
+attachments, and IRS business rules remain unverified. See the
+[2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi).
 
 ### GAP-8621: PFIC and QEF reporting
 
@@ -107,12 +108,26 @@ The current estimated route must not be treated as verified support. Exit
 requires affected-year source facts and computation, corrected return routing,
 native XML and attachments, then source-to-XSD and business-rule evidence.
 
+### GAP-8615: Child's unearned-income tax
+
+**Known in-scope correctness gap.** The existing Form 8615 node computes only
+an incremental parental-rate amount from precomputed child and parent inputs,
+then posts it to Schedule 2 line 17d. The
+[2025 Form 8615 instructions](https://www.irs.gov/instructions/i8615)
+instead require the complete line 1 through line 18 calculation, including
+other children sharing parental information, preferential-rate or Schedule J
+tax where applicable, and the child's own tax comparison. Form 8615 line 18
+replaces the child's Form 1040 line 16 tax; it is not Schedule 2 line 17d.
+The current route must not be treated as verified support. Exit requires
+source facts for the child and parent, correct line 16 integration, native
+`IRS8615` reconciliation, and source-to-XSD/business-rule cases.
+
 ## Registered Form 1040 MeF documents to audit
 
 Build-pass addendum for GAP-6251 (unrun): line 10 now receives the Form 4972
-subtraction, Form 8962's Schedule 2 line 1a amount as part of line 1z, and
-Schedule 3 line 1 foreign tax credit. The negative Form 8978 adjustment,
-Schedule J refigure, and other Schedule 2 line 1z sources remain open.
+subtraction, Form 8962's Schedule 2 line 1a amount as part of line 1z, Schedule
+3 line 1 foreign tax credit, and the negative Form 8978 adjustment. Schedule J
+refigure and other Schedule 2 line 1z sources remain open.
 
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
@@ -130,9 +145,9 @@ dependencies, required statements, and tests.
 - Supporting documents: Form 4835 at-risk and passive-loss documents, Schedule A
   for Form 8911, cash/accrual CCC-loan statements, crop-insurance deferral
   statement, Form 1116 foreign-income-related-expense statement, joint-occupancy
-  statement, Form 8978 Schedule A and tax-computation statement PDF,
-  joint-occupancy statement, and the Form 8283 vehicle sale acknowledgment
-  statement.
+  statement, Form 8978 Schedule A and tax-computation statement PDF, Schedule 2
+  line 17z `AnyOtherTaxesStatement`, and the Form 8283 vehicle sale
+  acknowledgment statement.
 
 ## Release checklist
 

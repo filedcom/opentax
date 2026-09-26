@@ -86,6 +86,10 @@ Deno.test("part1: 10% penalty on full early distribution (no exception)", () => 
   const sch2Out = findOutput(result, "schedule2");
   assertEquals(sch2Out !== undefined, true);
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line8_form5329_chapter1_tax,
+    1_000,
+  );
 });
 
 Deno.test("part1: 10% penalty reduced by exception", () => {
@@ -332,6 +336,10 @@ Deno.test("routing: all penalties aggregate to single schedule2 output", () => {
   const sch2Outputs = result.outputs.filter((o) => o.nodeType === "schedule2");
   assertEquals(sch2Outputs.length, 1);
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_150);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line8_form5329_chapter1_tax,
+    1_000,
+  );
 });
 
 Deno.test("routing: output reaches schedule2 and prints the aggregated form amount", () => {

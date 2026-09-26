@@ -1,7 +1,10 @@
 import { z } from "zod";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
@@ -38,9 +41,9 @@ class Form8978ReportingYearNode extends TaxNode<typeof inputSchema> {
       Math.round((input.regular_tax ?? 0) + part1),
       Math.round(chapter1),
     );
-    if (worksheet.amountAfterSchedule3 > 0 && unclassified > 0) {
+    if (worksheet.remainingUnapplied > 0 && unclassified > 0) {
       throw new Error(
-        "Form 8978 Schedule 2 offset needs a chapter 1 classification for all Part II source taxes",
+        "Form 8978 Schedule 2 offset needs a chapter 1 classification for remaining unclassified Part II source taxes",
       );
     }
     const adjustedPart2 = part2 - worksheet.schedule2Line17zReduction;
@@ -51,7 +54,8 @@ class Form8978ReportingYearNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
     if (worksheet.schedule2Line17zReduction > 0) {
       outputs.push(this.outputNodes.output(f1040, {
-        form8978_schedule2_line17z_reduction: worksheet.schedule2Line17zReduction,
+        form8978_schedule2_line17z_reduction:
+          worksheet.schedule2Line17zReduction,
       }));
     }
     if (worksheet.schedule3Line6l > 0) {

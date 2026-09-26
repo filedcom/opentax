@@ -92,31 +92,108 @@ Deno.test({
       }],
     }],
   };
-  const bundle = await buildMefBundle(buildPending({
-    f1040: {
-      filing_status: "single",
-      line16_income_tax: 7_949,
-      line18_total_tax_before_credits: 7_949,
-      line20_nonrefundable_credits: 500,
-      line21_credits_total: 500,
-      line22_tax_after_credits: 7_449,
-      line24_total_tax: 7_449,
-    },
-    schedule3: { line6l_form8978_credit: 500, line8_total: 500 },
-    f8978: {
-      ...negativeInput,
-      calculated_filings: negativeInput.filings.map(calculateFiling),
-      line14: -500,
-    },
-    form8978_reporting_year: {
-      negative_form8978_line14: 500,
-      schedule3_line6l: 500,
-      schedule2_line17z_reduction: 0,
-      remaining_unapplied: 0,
-    },
-  }), { filer, attachments: [] });
-  assertStringIncludes(bundle.xml, "<TotRptgYrTxIncreaseDecreaseAmt referenceDocumentId=");
-  assertStringIncludes(bundle.xml, "referenceDocumentName=\"IRS8978\">500</TotRptgYrTxIncreaseDecreaseAmt>");
+  const bundle = await buildMefBundle(
+    buildPending({
+      f1040: {
+        filing_status: "single",
+        line16_income_tax: 7_949,
+        line18_total_tax_before_credits: 7_949,
+        line20_nonrefundable_credits: 500,
+        line21_credits_total: 500,
+        line22_tax_after_credits: 7_449,
+        line24_total_tax: 7_449,
+      },
+      schedule3: { line6l_form8978_credit: 500, line8_total: 500 },
+      f8978: {
+        ...negativeInput,
+        calculated_filings: negativeInput.filings.map(calculateFiling),
+        line14: -500,
+      },
+      form8978_reporting_year: {
+        negative_form8978_line14: 500,
+        schedule3_line6l: 500,
+        schedule2_line17z_reduction: 0,
+        remaining_unapplied: 0,
+      },
+    }),
+    { filer, attachments: [] },
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<TotRptgYrTxIncreaseDecreaseAmt referenceDocumentId=",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    'referenceDocumentName="IRS8978">500</TotRptgYrTxIncreaseDecreaseAmt>',
+  );
+  assertEquals(bundle.xml.includes("<IRS1040Schedule2 documentId="), false);
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, bundle.xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name:
+    "XSD: negative Form 8978 excess links Schedule 2 line 17z to its statement",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const negativeInput: Form8978Input = {
+    filings: [{
+      ...input.filings[0],
+      columns: [{
+        ...input.filings[0].columns[0],
+        corrected_income_tax: 1_000,
+        original_tax_liability: 1_500,
+      }],
+    }],
+  };
+  const bundle = await buildMefBundle(
+    buildPending({
+      f1040: {
+        filing_status: "single",
+        line16_income_tax: 0,
+        line18_total_tax_before_credits: 0,
+        line23_other_taxes: 0,
+        line24_total_tax: 0,
+      },
+      schedule2: { section409a_excise: 100 },
+      f8978: {
+        ...negativeInput,
+        calculated_filings: negativeInput.filings.map(calculateFiling),
+        line14: -500,
+      },
+      form8978_reporting_year: {
+        negative_form8978_line14: 500,
+        schedule3_line6l: 0,
+        schedule2_line17z_reduction: 100,
+        schedule2_line21: 0,
+        remaining_unapplied: 400,
+      },
+    }),
+    { filer, attachments: [] },
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<TotalAnyOtherTaxesAmt referenceDocumentId=",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    'referenceDocumentName="AnyOtherTaxesStatement">-100</TotalAnyOtherTaxesAmt>',
+  );
+  assertStringIncludes(bundle.xml, "<AnyOtherTaxesStatement documentId=");
+  assertStringIncludes(bundle.xml, "<OtherTaxTxt>Form 8978 ADJ</OtherTaxTxt>");
+  assertStringIncludes(bundle.xml, "<OtherTaxAmt>-100</OtherTaxAmt>");
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, bundle.xml);

@@ -53,7 +53,10 @@ const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Fields)[]]> = [
   ],
 ];
 
-function buildIRS1040Schedule2(fields: Input, context?: MefBuildContext): string {
+function buildIRS1040Schedule2(
+  fields: Input,
+  context?: MefBuildContext,
+): string {
   const children: string[] = [];
 
   // Direct mappings
@@ -85,17 +88,24 @@ function buildIRS1040Schedule2(fields: Input, context?: MefBuildContext): string
     if (context?.documentIdsByPendingKey && !statementId) {
       throw new Error("Schedule 2 line 17z needs its other-taxes statement");
     }
-    children.push(element("TotalAnyOtherTaxesAmt", line17z, statementId
-      ? {
-        referenceDocumentId: statementId,
-        referenceDocumentName: "AnyOtherTaxesStatement",
-      }
-      : undefined));
+    children.push(element(
+      "TotalAnyOtherTaxesAmt",
+      line17z,
+      statementId
+        ? {
+          referenceDocumentId: statementId,
+          referenceDocumentName: "AnyOtherTaxesStatement",
+        }
+        : undefined,
+    ));
   }
   const adjustedPart2 = adjustment && typeof adjustment === "object"
     ? (adjustment as Record<string, unknown>).schedule2_line21
     : undefined;
-  if (typeof adjustedPart2 === "number") {
+  if (
+    typeof adjustedPart2 === "number" &&
+    (adjustedPart2 > 0 || (typeof reduction === "number" && reduction > 0))
+  ) {
     children.push(element("TotalOtherTaxesAmt", adjustedPart2));
   }
 
