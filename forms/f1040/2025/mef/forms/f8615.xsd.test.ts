@@ -91,3 +91,64 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name: "XSD: Form 8615 stops at line 3 and leaves later fields blank",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const calculation = calculateForm8615({
+    eligibility_confirmed: true,
+    parent_name: "Jane Parent",
+    parent_name_control: "PARE",
+    parent_ssn: "987-65-4321",
+    parent_filing_status: FilingStatus.MFJ,
+    parent_taxable_income: 80_000,
+    parent_income_tax: 9_123,
+    parent_tax_method: "schedule_d",
+    child_unearned_income: 2_000,
+    other_children_line5: [],
+  }, {
+    childTaxableIncome: 650,
+    childFilingStatus: FilingStatus.Single,
+    childRegularTax: 65,
+    takingStandardDeduction: true,
+    childHasPreferentialIncome: false,
+    childForeignEarnedIncomeExclusion: 0,
+    brackets: CONFIG_BY_YEAR[2025]!,
+  });
+  const xml = buildMefXml({
+    f1040: {
+      filing_status: "single",
+      taxpayer_can_be_claimed_as_dependent: true,
+      line2b_taxable_interest: 2_000,
+      line9_total_income: 2_000,
+      line11_agi: 2_000,
+      line12c_deduction_total: 1_350,
+      line15_taxable_income: 650,
+      line16_income_tax: 65,
+      line18_total_tax_before_credits: 65,
+      line24_total_tax: 65,
+    },
+    form8615: calculation.fields,
+  }, filer);
+  assertStringIncludes(
+    xml,
+    "<ChildUnearnedIncomeAdjustedAmt>-700</ChildUnearnedIncomeAdjustedAmt>",
+  );
+  assertEquals(xml.includes("ChildTaxableIncomeAmt"), false);
+  assertEquals(xml.includes("ChildNetInvestmentIncomeAmt"), false);
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

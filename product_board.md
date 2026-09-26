@@ -117,14 +117,17 @@ identity, income-tax, filing-status, sibling line 5, and eligibility facts;
 applies the dependent standard deduction to the child's return; checks the
 child's stated unearned income against the return sources in a dependent
 case; computes ordinary-rate Form 8615 lines 1-18; and uses line 18 as the
-child's Form 1040 line 16 tax. The MeF serializer now emits the 2025 native
-amount fields, and the PDF descriptor maps the numbered amount lines and
-parent identity/status. Calculation,
-source-to-return, local XSD, and PDF-field cases are written but unrun. The
+child's Form 1040 line 16 tax. A nonpositive line 3 stops before line 4, and a
+zero line 5 stops before the family-tax worksheets. Both retain the child's
+already-computed regular tax, even when that tax used preferential rates or
+Form 2555. The MeF serializer emits the 2025 native amount fields, and the PDF
+descriptor maps the numbered amount lines and parent identity/status.
+Calculation, source-to-return, local XSD, and PDF-field cases are written but
+unrun. The
 [2025 Form 8615 instructions](https://www.irs.gov/instructions/i8615)
 also require preferential-rate and Schedule J worksheets, and a Form 2555
-route, when those facts apply; these still stop explicitly. Parent and child
-eligibility proof, dependent earned-income source derivation beyond the stated
+route, when those facts affect a positive line 5; these still stop explicitly.
+Parent and child eligibility proof, dependent earned-income source derivation beyond the stated
 amount, exact Tax Table behavior, visual PDF verification, and IRS business
 rules remain open. Do not treat the ordinary slice as whole-form support.
 

@@ -56,6 +56,11 @@ Deno.test("E2E: Form 8615 still attaches below its line 3 threshold", () => {
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f1040?.line15_taxable_income, 650);
   assertEquals(result.pending.form8615?.line3_adjusted_unearned_income, -700);
+  assertEquals(result.pending.form8615?.line4_child_taxable_income, undefined);
+  assertEquals(
+    result.pending.form8615?.line5_child_net_unearned_income,
+    undefined,
+  );
   assertEquals(result.pending.form8615?.line18_child_tax, undefined);
   assertEquals(result.pending.f1040?.line16_income_tax, 65);
 });

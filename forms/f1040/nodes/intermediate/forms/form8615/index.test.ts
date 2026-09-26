@@ -59,9 +59,38 @@ Deno.test("Form 8615 still attaches when line 3 is zero or less", () => {
     child_unearned_income: 2_600,
   }, context);
   assertEquals(result.fields.line3_adjusted_unearned_income, -100);
-  assertEquals(result.fields.line5_child_net_unearned_income, 0);
+  assertEquals(result.fields.line4_child_taxable_income, undefined);
+  assertEquals(result.fields.line5_child_net_unearned_income, undefined);
   assertEquals("line9_family_tax" in result.fields, false);
   assertEquals(result.line18Tax, 365);
+});
+
+Deno.test("Form 8615 stop case keeps the child's regular tax without unused special worksheets", () => {
+  const result = calculateForm8615({
+    ...source,
+    child_unearned_income: 2_600,
+    parent_tax_method: "schedule_d",
+  }, {
+    ...context,
+    childHasPreferentialIncome: true,
+    childForeignEarnedIncomeExclusion: 1_000,
+  });
+  assertEquals(result.fields.line5_child_net_unearned_income, undefined);
+  assertEquals(result.line18Tax, 365);
+});
+
+Deno.test("Form 8615 stops after line 5 when taxable income is zero", () => {
+  const result = calculateForm8615(source, {
+    ...context,
+    childTaxableIncome: 0,
+    childRegularTax: 0,
+    childHasPreferentialIncome: true,
+  });
+  assertEquals(result.fields.line3_adjusted_unearned_income, 2_300);
+  assertEquals(result.fields.line4_child_taxable_income, 0);
+  assertEquals(result.fields.line5_child_net_unearned_income, 0);
+  assertEquals(result.fields.line6_parent_taxable_income, undefined);
+  assertEquals(result.line18Tax, 0);
 });
 
 Deno.test("Form 8615 line 2 includes directly connected itemized deductions", () => {
