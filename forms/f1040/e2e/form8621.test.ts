@@ -28,33 +28,20 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
         excess_events: [{
           kind: ExcessEventKind.Distribution,
           amount_usd: 10_000,
-          holding_period_explanation:
-            "Held from January 1 2017 through December 31 2025; allocated by days",
-          allocations: [
-            {
-              tax_year: 2017,
-              allocated_amount: 2_000,
-              pfic_year: true,
-              interest_charge: 150,
-            },
-            {
-              tax_year: 2022,
-              allocated_amount: 3_000,
-              pfic_year: true,
-              interest_charge: 80,
-            },
-            { tax_year: 2025, allocated_amount: 5_000, pfic_year: true },
-          ],
+          holding_period_start: "2024-01-01",
+          event_date: "2025-12-31",
+          first_pfic_tax_year: 2024,
+          year_charges: [{ tax_year: 2024, interest_charge: 150 }],
         }],
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.schedule1?.line8z_other, 5_000);
-  assertEquals(result.pending.f1040?.line16_income_tax, 1_902);
-  assertEquals(result.pending.f1040?.form8621_tax, 1_902);
-  assertEquals(result.pending.schedule2?.line17p_form8621_interest, 230);
-  assertEquals(result.pending.f1040?.line23_other_taxes, 230);
-  assertEquals(result.pending.f1040?.line24_total_tax, 2_132);
+  assertEquals(result.pending.schedule1?.line8z_other, 4_993);
+  assertEquals(result.pending.f1040?.line16_income_tax, 1_853);
+  assertEquals(result.pending.f1040?.form8621_tax, 1_853);
+  assertEquals(result.pending.schedule2?.line17p_form8621_interest, 150);
+  assertEquals(result.pending.f1040?.line23_other_taxes, 150);
+  assertEquals(result.pending.f1040?.line24_total_tax, 2_003);
   assertEquals((result.pending.form8621?.items ?? []).length, 1);
 });

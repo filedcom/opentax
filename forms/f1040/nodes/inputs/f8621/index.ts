@@ -42,8 +42,8 @@ export const itemSchema = z.object({
   shares_owned: z.number().nonnegative(),
   // Fair market value of shares at end of tax year (Form 8621 Part I line 1b)
   fmv_at_year_end: z.number().nonnegative(),
-  // One Part V computation per excess distribution or disposition. A
-  // year-by-year allocation and its supporting explanation are required.
+  // One Part V computation per excess distribution or disposition. The
+  // year-by-year allocation is derived from the dated holding period.
   excess_events: z.array(excessEventSchema).optional(),
   // QEF: pro-rata share of ordinary income (Form 8621 Part III line 6a; IRC §1293(a)(1)(A))
   qef_ordinary_income: z.number().nonnegative().optional(),

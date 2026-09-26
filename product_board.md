@@ -96,7 +96,8 @@ attachments, and IRS business rules remain unverified. See the
 
 **Build pass, untested; whole-form gap remains.** The flat 37% estimate and
 Schedule 2 line 17z tax route have been removed. Section 1291 events now take
-per-year holding-period allocations, calculate prior PFIC-year tax with each
+dated holding periods and derive per-year allocations from actual days,
+including leap years and cent balancing. They calculate prior PFIC-year tax with each
 year's [IRS-published highest rate](https://www.irs.gov/instructions/i8621),
 apply per-year foreign-tax-credit limits, and send Form 8621 line 16e to Form
 1040 line 16 with `1291TAX`. Supplied section 6621 interest goes to Schedule 2
@@ -105,7 +106,8 @@ routes to Schedule D, and mark-to-market loss is limited by unreversed prior
 inclusions. QEF section 951/1293(g) reductions are separate source facts.
 Native `IRS8621` and a holding-period statement builder are
 registered; calculation and source-to-XSD cases are written but unrun. The
-engine still needs dated per-share distributions and day-level allocation,
+engine still needs dated per-share distributions and the 125% historical
+threshold to derive each excess amount,
 historical interest computation, complete QEF/MTM elections and supporting
 facts, PDF verification, XSD/business-rule evidence, and ATS acceptance.
 

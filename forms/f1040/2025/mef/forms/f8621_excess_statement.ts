@@ -6,8 +6,14 @@ type Input = { items?: readonly Form8621Lines[] };
 
 function explain(line: Form8621Lines): string {
   return (line.item.excess_events ?? []).map((event, index) => {
-    const years = event.allocations.map((year) =>
-      `${year.tax_year}: ${year.allocated_amount} USD; PFIC year ${
+    const result = line.excessEvents[index];
+    if (!result) {
+      throw new Error(
+        "Form 8621 event is missing its holding-period allocation",
+      );
+    }
+    const years = result.allocations.map((year) =>
+      `${year.tax_year}: ${year.holding_days} days, ${year.allocated_amount} USD; PFIC year ${
         year.pfic_year ? "yes" : "no"
       }; foreign tax credit ${
         year.foreign_tax_credit ?? 0
@@ -15,7 +21,7 @@ function explain(line: Form8621Lines): string {
     ).join(". ");
     return `${event.kind} ${
       index + 1
-    }, ${event.amount_usd} USD. ${event.holding_period_explanation}. Holding-period allocation: ${years}.`;
+    }, ${event.amount_usd} USD. Holding period ${event.holding_period_start} through ${event.event_date}; first PFIC tax year ${event.first_pfic_tax_year}. Holding-period allocation: ${years}.`;
   }).join(" ");
 }
 

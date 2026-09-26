@@ -40,23 +40,10 @@ Deno.test({
   const event = {
     kind: ExcessEventKind.Distribution,
     amount_usd: 10_000,
-    holding_period_explanation:
-      "Held from January 1 2017 through December 31 2025; allocated by days",
-    allocations: [
-      {
-        tax_year: 2017,
-        allocated_amount: 2_000,
-        pfic_year: true,
-        interest_charge: 150,
-      },
-      {
-        tax_year: 2022,
-        allocated_amount: 3_000,
-        pfic_year: true,
-        interest_charge: 80,
-      },
-      { tax_year: 2025, allocated_amount: 5_000, pfic_year: true },
-    ],
+    holding_period_start: "2024-01-01",
+    event_date: "2025-12-31",
+    first_pfic_tax_year: 2024,
+    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
   };
   const item = itemSchema.parse({
     company_name: "Offshore Fund Ltd",
@@ -70,16 +57,16 @@ Deno.test({
   const xml = buildMefXml({
     f1040: {
       filing_status: "single",
-      line9_total_income: 5_000,
-      line11_agi: 5_000,
-      line15_taxable_income: 5_000,
-      line16_income_tax: 1_902,
-      form8621_tax: 1_902,
-      line18_total_tax_before_credits: 1_902,
-      line23_other_taxes: 230,
-      line24_total_tax: 2_132,
+      line9_total_income: 4_993,
+      line11_agi: 4_993,
+      line15_taxable_income: 4_993,
+      line16_income_tax: 1_853,
+      form8621_tax: 1_853,
+      line18_total_tax_before_credits: 1_853,
+      line23_other_taxes: 150,
+      line24_total_tax: 2_003,
     },
-    schedule2: { line17p_form8621_interest: 230 },
+    schedule2: { line17p_form8621_interest: 150 },
     form8621: {
       items: [{ item, excessEvents: [calculateExcessEvent(event)] }],
     },
@@ -92,7 +79,7 @@ Deno.test({
   assertStringIncludes(xml, "<OtherTaxAmtCd>1291TAX</OtherTaxAmtCd>");
   assertStringIncludes(
     xml,
-    "<AggregateIncrLessFrgnTxCrAmt>1902</AggregateIncrLessFrgnTxCrAmt>",
+    "<AggregateIncrLessFrgnTxCrAmt>1853</AggregateIncrLessFrgnTxCrAmt>",
   );
   assertStringIncludes(
     xml,
