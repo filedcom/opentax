@@ -104,6 +104,15 @@ cases written but unrun. Fiscal-year production still stops, and the linked Form
 3800 document, transfer election statement, Form 7220 source validation, PDF
 output, and complete ATS scenario remain open.
 
+The Form 3800 nonpassive XML draft now maps Form 8835 ordinary and specified
+credits to Part III, requires bundled transfer-election statement IDs, and
+breaks multiple same-line facilities into Part V rows. The per-facility Part II
+applied amounts must be explicit and reconcile to the calculated limit. Direct
+builder cases are written but unrun. This builder is not registered in return
+assembly, has not passed local XSD or business-rule validation, and does not
+cover passive credits, other business-credit sources, or carryovers. The
+Schedule 3 allowed-credit route is still blocked for positive Form 8835 credit.
+
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
 per-vehicle MAGI and status fields were removed without an alias. This makes all
