@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, standard_deduction } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -57,6 +57,55 @@ Deno.test("QSS: base standard deduction $31,500", () => {
   assertEquals(
     (f1040!.fields as Record<string, number>).line12a_standard_deduction,
     31_500,
+  );
+});
+
+Deno.test("Dependent with no earned income uses the $1,350 floor", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 5_000,
+    taxpayer_can_be_claimed_as_dependent: true,
+    dependent_earned_income: 0,
+  });
+  assertEquals(
+    findOutput(result, "f1040")?.fields.line12a_standard_deduction,
+    1_350,
+  );
+});
+
+Deno.test("Dependent earned income plus $450 is capped at the filing-status amount", () => {
+  const belowCap = compute({
+    filing_status: FilingStatus.Single,
+    agi: 5_000,
+    taxpayer_can_be_claimed_as_dependent: true,
+    dependent_earned_income: 1_000,
+  });
+  assertEquals(
+    findOutput(belowCap, "f1040")?.fields.line12a_standard_deduction,
+    1_450,
+  );
+  const capped = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    taxpayer_can_be_claimed_as_dependent: true,
+    dependent_earned_income: 20_000,
+  });
+  assertEquals(
+    findOutput(capped, "f1040")?.fields.line12a_standard_deduction,
+    15_750,
+  );
+});
+
+Deno.test("Dependent standard deduction requires an earned-income amount", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.Single,
+        agi: 5_000,
+        taxpayer_can_be_claimed_as_dependent: true,
+      }),
+    Error,
+    "earned income",
   );
 });
 

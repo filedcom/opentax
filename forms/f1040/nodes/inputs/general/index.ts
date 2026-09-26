@@ -139,6 +139,8 @@ export const inputSchema = z.object({
   taxpayer_dob: z.string().optional(),
   taxpayer_blind: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
+  dependent_earned_income: z.number().nonnegative().optional(),
   taxpayer_occupation: z.string().optional(),
   taxpayer_daytime_phone: z.string().optional(),
   taxpayer_email: z.string().optional(),
@@ -620,6 +622,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "mfs_spouse_itemizing", input.mfs_spouse_itemizing);
   addIfDefined(
     fields,
+    "taxpayer_can_be_claimed_as_dependent",
+    input.taxpayer_can_be_claimed_as_dependent,
+  );
+  addIfDefined(
+    fields,
     "hoh_paid_more_than_half_home_costs",
     input.hoh_paid_more_than_half_home_costs,
   );
@@ -659,6 +666,22 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
+    if (
+      parsed.taxpayer_can_be_claimed_as_dependent === true &&
+      parsed.dependent_earned_income === undefined
+    ) {
+      throw new Error(
+        "Dependent standard deduction needs earned income from the return sources",
+      );
+    }
+    if (
+      parsed.taxpayer_can_be_claimed_as_dependent !== true &&
+      parsed.dependent_earned_income !== undefined
+    ) {
+      throw new Error(
+        "Dependent earned income requires the can-be-claimed-as-dependent answer",
+      );
+    }
     const taxpayerAge65 = parsed.taxpayer_age_65_or_older ??
       isAge65ByEndOfTaxYear(parsed.taxpayer_dob, ctx.taxYear);
     const spouseAge65 = parsed.spouse_age_65_or_older ??
@@ -688,6 +711,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     }
     if (parsed.mfs_spouse_itemizing !== undefined) {
       sdInput["mfs_spouse_itemizing"] = parsed.mfs_spouse_itemizing;
+    }
+    if (parsed.taxpayer_can_be_claimed_as_dependent === true) {
+      sdInput["taxpayer_can_be_claimed_as_dependent"] = true;
+      sdInput["dependent_earned_income"] = parsed.dependent_earned_income;
     }
 
     const deps = parsed.dependents ?? [];

@@ -224,6 +224,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
 
   // ── Page 2: Deductions (Lines 12–15) ─────────────────────────────────────
   // Lines 12–15 are page 2 only in the 2025 form.
+  {
+    kind: "checkbox",
+    domainKey: "taxpayer_can_be_claimed_as_dependent",
+    pdfField: "topmostSubform[0].Page2[0].c2_1[0]",
+  },
   // Line 12a: standard deduction written first; itemized overwrites if non-zero.
   {
     kind: "text",

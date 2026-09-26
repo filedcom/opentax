@@ -93,6 +93,7 @@ import { f8820 } from "../nodes/inputs/f8820/index.ts";
 import { f8896 } from "../nodes/inputs/f8896/index.ts";
 import { f8912 } from "../nodes/inputs/f8912/index.ts";
 import { f8978 } from "../nodes/inputs/f8978/index.ts";
+import { f8615 } from "../nodes/inputs/f8615/index.ts";
 import { f8611 } from "../nodes/inputs/f8611/index.ts";
 import { household_wages } from "../nodes/inputs/household_wages/index.ts";
 import { f8828 } from "../nodes/inputs/f8828/index.ts";
@@ -291,6 +292,7 @@ export const registry: NodeRegistry = {
   f8896,
   f8912,
   f8978,
+  f8615,
   f8611,
   f8082,
   f8873,

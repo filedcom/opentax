@@ -197,11 +197,6 @@ Deno.test("calc: line9_household_employment alone routes to f1040 line23", () =>
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 2_400);
 });
 
-Deno.test("calc: line17d_kiddie_tax alone routes to f1040 line23", () => {
-  const result = compute({ line17d_kiddie_tax: 500 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 500);
-});
-
 Deno.test("calc: line17a_investment_credit_recapture alone routes to f1040 line23", () => {
   const result = compute({ line17a_investment_credit_recapture: 3_000 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 3_000);
@@ -273,14 +268,13 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
     line17e_archer_msa_tax: 2_000,
     line17f_medicare_advantage_msa_tax: 2_100,
     line17b_hsa_penalty: 2_300,
-    line17d_kiddie_tax: 2_400,
     line17a_investment_credit_recapture: 2_500,
     line17z_other_additional_taxes: 2_600,
     line17_exit_tax: 2_700,
   });
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line17_additional_taxes, 1_200);
-  assertEquals(fields.line23_other_taxes, 35_300);
+  assertEquals(fields.line23_other_taxes, 32_900);
 });
 
 // ── Previously untested fields ───────────────────────────────────────────────

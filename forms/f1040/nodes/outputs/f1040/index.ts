@@ -116,6 +116,7 @@ const inputSchema = z.object({
   line22_tax_after_credits: z.number().nonnegative().optional(),
   // Line 23 — Other taxes from Schedule 2 Part II
   line23_other_taxes: z.number().nonnegative().optional(),
+  taxpayer_can_be_claimed_as_dependent: z.boolean().optional(),
   form8978_schedule2_line17z_reduction: z.number().int().nonnegative()
     .optional(),
   // Line 24 — Total tax (22 + 23)

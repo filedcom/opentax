@@ -1,39 +1,20 @@
-# Form 8615 — Tax for Certain Children Who Have Unearned Income (Kiddie Tax)
+# Form 8615 (TY2025)
 
-## Purpose
-The "kiddie tax" — applies the parent's marginal rate to a child's net unearned income above $2,600 (TY2025). Routes additional tax to **Schedule 2 line 17d**.
+The [2025 form](https://www.irs.gov/pub/irs-prior/f8615--2025.pdf) and
+[instructions](https://www.irs.gov/instructions/i8615) require Form 8615 line
+18 to replace the child's Form 1040 line 16 income tax. It does not post to
+Schedule 2 line 17d. The earlier incremental-tax-only implementation and its
+Schedule 2 route were wrong.
 
-## IRS References
-- Form 8615 and Instructions (TY2025)
-- IRC §1(g) — Certain Unearned Income of Minor Children Taxed as if Parent's Income
-- Rev. Proc. 2024-40
+The `f8615` input supplies facts from the parent's return and an explicit
+eligibility confirmation. The child's taxable income, filing status, chosen
+deduction, and regular tax come from the child return graph. The calculation
+now follows lines 1-18 for ordinary-rate cases, including other children's
+line 5 allocations, the child's own-tax comparison, the $2,700 Form 8615
+deduction, and the separate dependent standard deduction worksheet.
 
-## TY2025 Constants
-- **NUI threshold:** $2,600 (net unearned income above which kiddie tax applies; IRC §1(g)(4)(A)(ii)(I))
-- **Standard deduction floor:** $1,300 (IRC §1(g)(4)(A)(ii)(II))
-- TY2025 tax brackets for MFJ, Single/HOH, MFS — full 7-bracket tables embedded
-
-## Applicability
-Child must be: under 19, OR under 24 and full-time student, AND at least one parent alive. The caller determines eligibility — this node computes the tax amount only.
-
-## Input Schema
-- `net_unearned_income` — child's NUI (pre-computed; engine does not derive the $1,300 floors)
-- `parent_taxable_income` — parent's taxable income (Form 8615 line 7)
-- `parent_filing_status` — determines bracket table for parent
-- `parent_tax` — parent's regular tax on their income alone (line 8)
-
-## Compute Logic
-1. `taxableNUI = max(0, net_unearned_income - $2,600)`
-2. If `taxableNUI = 0` → `{ outputs: [] }`
-3. Select bracket table based on `parent_filing_status`
-4. `combinedTax = taxFromBrackets(parent_income + taxableNUI, brackets)`
-5. `kiddieTax = max(0, combinedTax - parent_tax)`
-6. Routes to `schedule2.line17d_kiddie_tax`
-
-## Output Nodes
-- `schedule2` (line 17d)
-
-## Key Design Notes
-- `net_unearned_income` is provided pre-computed (caller handles the two $1,300 deduction floors).
-- Tax brackets are the parent's brackets — the computation adds child's NUI on top of parent's income to find the incremental tax.
-- MFJ and QSS use the same bracket table.
+The parent qualified-dividend, Schedule D, Schedule J, and Form 2555 tax
+methods, and the child's preferential-rate or Form 2555 paths, still need
+their IRS worksheets. Those paths throw rather than silently using ordinary
+brackets. Parent and child eligibility, line 1 source reconciliation, exact
+Tax Table behavior, and all IRS business rules remain to be audited.

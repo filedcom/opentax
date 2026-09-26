@@ -494,6 +494,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
     const agi = computeAgi(input, cfg);
+    const totalIncome = grossIncome(input, cfg) - exclusions(input);
 
     // Compute SSA taxable amount for f1040 line 6b pass-through
     const ssaGross = input.line6a_ss_gross ?? 0;
@@ -513,7 +514,14 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         f1040,
         f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
       ),
-      this.outputNodes.output(standard_deduction, { agi }),
+      this.outputNodes.output(standard_deduction, {
+        agi,
+        form8615_total_income: totalIncome,
+        form8615_early_withdrawal_penalty: Math.max(
+          0,
+          input.line18_early_withdrawal ?? 0,
+        ),
+      }),
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation

@@ -11,9 +11,13 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
 import { form8978_reporting_year } from "../form8978_reporting_year/index.ts";
+import { form8615 } from "../../forms/form8615/index.ts";
+import { calculateForm8615 } from "../../forms/form8615/calculation.ts";
+import { inputSchema as form8615SourceSchema } from "../../../inputs/f8615/schema.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import type { Bracket } from "../../../config/2025.ts";
+import { bracketsForStatus, taxFromBrackets } from "../tax_brackets.ts";
 
 // ─── Accumulable helper ───────────────────────────────────────────────────────
 
@@ -54,6 +58,9 @@ export const inputSchema = z.object({
 
   // Determines which bracket table to apply.
   filing_status: z.nativeEnum(FilingStatus),
+  taking_standard_deduction: z.boolean().optional(),
+  form8615_source: form8615SourceSchema.optional(),
+  form8615_computed_unearned_income: z.number().nonnegative().optional(),
 
   // ── QDCGT Worksheet inputs (optional) ────────────────────────────────────
   // Form 1040 Line 3a — Qualified dividends (from f1099div, k1_partnership, k1_s_corp, etc.).
@@ -87,35 +94,6 @@ export const inputSchema = z.object({
 type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-function bracketsForStatus(
-  status: FilingStatus,
-  cfg: {
-    bracketsMfj: ReadonlyArray<Bracket>;
-    bracketsSingle: ReadonlyArray<Bracket>;
-    bracketsHoh: ReadonlyArray<Bracket>;
-    bracketsMfs: ReadonlyArray<Bracket>;
-  },
-): ReadonlyArray<Bracket> {
-  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
-    return cfg.bracketsMfj;
-  }
-  if (status === FilingStatus.HOH) return cfg.bracketsHoh;
-  if (status === FilingStatus.MFS) return cfg.bracketsMfs;
-  return cfg.bracketsSingle;
-}
-
-// Compute tax using the pre-computed base amounts stored in each bracket.
-// Equivalent to summing tax across every rate band the income passes through.
-function taxFromBrackets(
-  income: number,
-  brackets: ReadonlyArray<Bracket>,
-): number {
-  if (income <= 0) return 0;
-  const bracket = [...brackets].reverse().find((b) => income > b.over);
-  if (!bracket) return 0;
-  return bracket.base + (income - bracket.over) * bracket.rate;
-}
 
 // 2025 Schedule D Tax Worksheet, lines 1–47, for positive Schedule D lines
 // 18/19 and a positive net capital gain. Form 4952 line 4g elections are
@@ -257,6 +235,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     f8812,
     form_1116,
     form8978_reporting_year,
+    form8615,
   ]);
 
   compute(ctx: NodeContext, rawInput: IncomeTaxCalcInput): NodeResult {
@@ -316,6 +295,34 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       tax = taxFromBrackets(input.taxable_income, brackets);
     }
 
+    let form8615Result: ReturnType<typeof calculateForm8615> | undefined;
+    if (input.form8615_source !== undefined) {
+      if (
+        input.form8615_computed_unearned_income !== undefined &&
+        Math.abs(
+            input.form8615_computed_unearned_income -
+              input.form8615_source.child_unearned_income,
+          ) > 0.01
+      ) {
+        throw new Error(
+          "Form 8615 child unearned income does not match the return sources",
+        );
+      }
+      if (input.taking_standard_deduction === undefined) {
+        throw new Error("Form 8615 needs the selected deduction method");
+      }
+      form8615Result = calculateForm8615(input.form8615_source, {
+        childTaxableIncome: input.taxable_income,
+        childFilingStatus: input.filing_status,
+        childRegularTax: tax,
+        takingStandardDeduction: input.taking_standard_deduction,
+        childHasPreferentialIncome: hasPrefIncome,
+        childForeignEarnedIncomeExclusion: floor,
+        brackets: cfg,
+      });
+    }
+    if (form8615Result) tax = form8615Result.line18Tax;
+
     const childElectionTax = input.form8814_tax ?? 0;
     const lumpSumTax = sumField(input.form4972_tax);
     const additionalReportingYearTax = sumField(input.form8978_tax);
@@ -356,6 +363,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         worldwide_taxable_income: input.taxable_income,
       }),
     ];
+
+    if (form8615Result) {
+      outputs.push(this.outputNodes.output(form8615, form8615Result.fields));
+    }
 
     return { outputs };
   }
