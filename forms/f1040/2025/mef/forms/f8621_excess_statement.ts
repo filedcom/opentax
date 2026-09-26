@@ -5,13 +5,7 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 type Input = { items?: readonly Form8621Lines[] };
 
 function explain(line: Form8621Lines): string {
-  return (line.item.excess_events ?? []).map((event, index) => {
-    const result = line.excessEvents[index];
-    if (!result) {
-      throw new Error(
-        "Form 8621 event is missing its holding-period allocation",
-      );
-    }
+  return line.excessEvents.map((result, index) => {
     const years = result.allocations.map((year) =>
       `${year.tax_year}: ${year.holding_days} days, ${year.allocated_amount} USD; PFIC year ${
         year.pfic_year ? "yes" : "no"
@@ -19,9 +13,9 @@ function explain(line: Form8621Lines): string {
         year.foreign_tax_credit ?? 0
       }; section 6621 interest ${year.interest_charge ?? 0}`
     ).join(". ");
-    return `${event.kind} ${
+    return `${result.kind} ${
       index + 1
-    }, ${event.amount_usd} USD. Holding period ${event.holding_period_start} through ${event.event_date}; first PFIC tax year ${event.first_pfic_tax_year}. Holding-period allocation: ${years}.`;
+    }, ${result.amount_usd} USD on ${result.event_date}. Holding period ${result.holding_period_start} through ${result.event_date}; first PFIC tax year ${result.first_pfic_tax_year}. Holding-period allocation: ${years}.`;
   }).join(" ");
 }
 
@@ -36,7 +30,7 @@ export const form8621ExcessStatement: MefFormDescriptor<
   build(_fields, context) {
     const pending = context?.pending?.form8621 as Input | undefined;
     return (pending?.items ?? [])
-      .filter((line) => (line.item.excess_events?.length ?? 0) > 0)
+      .filter((line) => line.excessEvents.some((event) => event.amount_usd > 0))
       .map((line) =>
         elements("TaxationOfExcessDistriStmt", [
           element("ExplanationTxt", explain(line)),

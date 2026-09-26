@@ -17,14 +17,42 @@ export enum ExcessEventKind {
   Disposition = "disposition",
 }
 
-export const excessEventSchema = z.object({
-  kind: z.nativeEnum(ExcessEventKind),
+const dispositionSchema = z.object({
+  kind: z.literal(ExcessEventKind.Disposition),
   amount_usd: z.number().positive(),
   holding_period_start: dateSchema,
   event_date: dateSchema,
   first_pfic_tax_year: z.number().int().min(1987).max(2025),
   year_charges: z.array(yearChargeSchema),
 }).strict();
+
+const distributionSchema = z.object({
+  kind: z.literal(ExcessEventKind.Distribution),
+  holding_period_start: dateSchema,
+  first_pfic_tax_year: z.number().int().min(1987).max(2025),
+  shares_in_block: z.number().positive(),
+  prior_year_distributions: z.array(
+    z.object({
+      tax_year: z.number().int().min(2022).max(2024),
+      amount_usd: z.number().nonnegative(),
+    }).strict(),
+  ),
+  current_year_distributions: z.array(
+    z.object({
+      date: dateSchema,
+      amount_usd: z.number().positive(),
+      year_charges: z.array(yearChargeSchema),
+    }).strict(),
+  ).min(1),
+  // Section 301 classification is a separate corporate earnings-and-profits
+  // fact. It cannot exceed the calculated nonexcess portion.
+  taxable_nonexcess_dividend_usd: z.number().nonnegative(),
+}).strict();
+
+export const excessEventSchema = z.discriminatedUnion("kind", [
+  distributionSchema,
+  dispositionSchema,
+]);
 
 export type ExcessEvent = z.infer<typeof excessEventSchema>;
 
@@ -38,6 +66,17 @@ export interface ExcessYearAllocation {
 }
 
 export interface ExcessEventResult {
+  kind: ExcessEventKind;
+  holding_period_start: string;
+  event_date: string;
+  first_pfic_tax_year: number;
+  amount_usd: number;
+  first_holding_year?: boolean;
+  line15a_current_distributions?: number;
+  line15b_prior_distributions?: number;
+  line15c_prior_average?: number;
+  line15d_threshold?: number;
+  nonexcess_distribution?: number;
   allocations: ExcessYearAllocation[];
   line16b_current_and_pre_pfic_income: number;
   line16c_prior_year_tax_before_credit: number;
@@ -81,18 +120,17 @@ function highestIndividualRate(year: number): number {
   );
 }
 
-function allocateByHoldingDays(event: ExcessEvent): ExcessYearAllocation[] {
+type TaxableExcess = Omit<z.infer<typeof dispositionSchema>, "kind"> & {
+  kind: ExcessEventKind;
+};
+
+function allocateByHoldingDays(event: TaxableExcess): ExcessYearAllocation[] {
   const start = parseDate(event.holding_period_start);
   const end = parseDate(event.event_date);
   const startYear = new Date(start).getUTCFullYear();
   if (end < start || new Date(end).getUTCFullYear() !== 2025) {
     throw new Error(
       "Form 8621 Part V needs a valid holding period ending on a 2025 event date",
-    );
-  }
-  if (event.kind === ExcessEventKind.Distribution && startYear === 2025) {
-    throw new Error(
-      "Form 8621 cannot have an excess distribution in the first tax year of the holding period",
     );
   }
   const totalDays = holdingDays(start, end);
@@ -138,10 +176,9 @@ function allocateByHoldingDays(event: ExcessEvent): ExcessYearAllocation[] {
   }));
 }
 
-export function calculateExcessEvent(rawEvent: ExcessEvent): ExcessEventResult {
-  const event = excessEventSchema.parse(rawEvent);
+function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
   const allocations = allocateByHoldingDays(event);
-  const charges = new Map<number, ExcessEvent["year_charges"][number]>();
+  const charges = new Map<number, z.infer<typeof yearChargeSchema>>();
   for (const charge of event.year_charges) {
     if (charges.has(charge.tax_year)) {
       throw new Error("Form 8621 has duplicate charges for a tax year");
@@ -198,6 +235,11 @@ export function calculateExcessEvent(rawEvent: ExcessEvent): ExcessEventResult {
   const line16c = Math.round(priorYearTax);
   const line16d = Math.round(priorYearCredit);
   return {
+    kind: event.kind,
+    holding_period_start: event.holding_period_start,
+    event_date: event.event_date,
+    first_pfic_tax_year: event.first_pfic_tax_year,
+    amount_usd: event.amount_usd,
     allocations,
     line16b_current_and_pre_pfic_income: Math.round(currentAndPrePfic),
     line16c_prior_year_tax_before_credit: line16c,
@@ -205,4 +247,160 @@ export function calculateExcessEvent(rawEvent: ExcessEvent): ExcessEventResult {
     line16e_additional_tax: Math.max(0, line16c - line16d),
     line16f_interest: Math.round(interest),
   };
+}
+
+function validatePriorHistory(
+  event: z.infer<typeof distributionSchema>,
+): number {
+  const startYear = new Date(parseDate(event.holding_period_start))
+    .getUTCFullYear();
+  if (startYear > 2025) {
+    throw new Error(
+      "Form 8621 holding period cannot begin after tax year 2025",
+    );
+  }
+  const requiredYears = Array.from(
+    { length: Math.min(3, 2025 - startYear) },
+    (_, index) => 2024 - index,
+  );
+  const suppliedYears = event.prior_year_distributions.map((year) =>
+    year.tax_year
+  );
+  if (
+    requiredYears.length !== suppliedYears.length ||
+    new Set(suppliedYears).size !== suppliedYears.length ||
+    requiredYears.some((year) => !suppliedYears.includes(year))
+  ) {
+    throw new Error(
+      "Form 8621 needs the distribution history for every prior holding year, up to three years, including zero-distribution years",
+    );
+  }
+  return requiredYears.length;
+}
+
+function distributeCents(totalCents: number, weights: number[]): number[] {
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  const amounts = weights.map((weight, index) => {
+    const exact = totalCents * weight / totalWeight;
+    return { index, cents: Math.floor(exact), remainder: exact % 1 };
+  });
+  const unallocated = totalCents - amounts.reduce(
+    (sum, amount) => sum + amount.cents,
+    0,
+  );
+  const byRemainder = [...amounts].sort((a, b) =>
+    b.remainder - a.remainder || a.index - b.index
+  );
+  for (let index = 0; index < unallocated; index++) {
+    byRemainder[index].cents++;
+  }
+  return amounts.map((amount) => amount.cents);
+}
+
+function calculateDistributionBlock(
+  event: z.infer<typeof distributionSchema>,
+): ExcessEventResult[] {
+  const priorYears = validatePriorHistory(event);
+  const start = parseDate(event.holding_period_start);
+  const dates = event.current_year_distributions.map((distribution) => {
+    const date = parseDate(distribution.date);
+    if (date < start || new Date(date).getUTCFullYear() !== 2025) {
+      throw new Error(
+        "Form 8621 distribution must occur during the 2025 holding period",
+      );
+    }
+    return date;
+  });
+  if (new Set(dates).size !== dates.length) {
+    throw new Error(
+      "Form 8621 stock block must combine same-day distributions",
+    );
+  }
+  const currentTotal = event.current_year_distributions.reduce(
+    (sum, distribution) => sum + distribution.amount_usd,
+    0,
+  );
+  const priorTotal = event.prior_year_distributions.reduce(
+    (sum, distribution) => sum + distribution.amount_usd,
+    0,
+  );
+  const priorPerShare = priorTotal / event.shares_in_block;
+  const averagePerShare = priorYears === 0 ? 0 : priorPerShare / priorYears;
+  const average = averagePerShare * event.shares_in_block;
+  const threshold = averagePerShare * 1.25 * event.shares_in_block;
+  const totalExcess = priorYears === 0
+    ? 0
+    : Math.round(Math.max(0, currentTotal - threshold) * 100) / 100;
+  const nonexcess = currentTotal - totalExcess;
+  if (event.taxable_nonexcess_dividend_usd > nonexcess + 0.01) {
+    throw new Error(
+      "Form 8621 taxable section 301 dividend exceeds nonexcess distributions",
+    );
+  }
+  const cents = distributeCents(
+    Math.round(totalExcess * 100),
+    event.current_year_distributions.map((distribution) =>
+      distribution.amount_usd
+    ),
+  );
+  const results = event.current_year_distributions.map(
+    (distribution, index) => {
+      const amount = cents[index] / 100;
+      if (amount === 0) {
+        if (distribution.year_charges.length > 0) {
+          throw new Error(
+            "Form 8621 cannot apply charges when a distribution has no excess",
+          );
+        }
+        return {
+          kind: ExcessEventKind.Distribution,
+          holding_period_start: event.holding_period_start,
+          event_date: distribution.date,
+          first_pfic_tax_year: event.first_pfic_tax_year,
+          amount_usd: 0,
+          first_holding_year: priorYears === 0,
+          line15a_current_distributions: currentTotal,
+          line15b_prior_distributions: priorTotal,
+          line15c_prior_average: average,
+          line15d_threshold: threshold,
+          nonexcess_distribution: nonexcess,
+          allocations: [],
+          line16b_current_and_pre_pfic_income: 0,
+          line16c_prior_year_tax_before_credit: 0,
+          line16d_prior_year_foreign_tax_credit: 0,
+          line16e_additional_tax: 0,
+          line16f_interest: 0,
+        };
+      }
+      const calculated = calculateTaxableExcess({
+        kind: ExcessEventKind.Distribution,
+        amount_usd: amount,
+        holding_period_start: event.holding_period_start,
+        event_date: distribution.date,
+        first_pfic_tax_year: event.first_pfic_tax_year,
+        year_charges: distribution.year_charges,
+      });
+      return {
+        ...calculated,
+        kind: ExcessEventKind.Distribution,
+        first_holding_year: false,
+        line15a_current_distributions: currentTotal,
+        line15b_prior_distributions: priorTotal,
+        line15c_prior_average: average,
+        line15d_threshold: threshold,
+        nonexcess_distribution: nonexcess,
+      };
+    },
+  );
+  return totalExcess === 0 ? [results[0]] : results;
+}
+
+export function calculateExcessEvents(
+  rawEvent: ExcessEvent,
+): ExcessEventResult[] {
+  const event = excessEventSchema.parse(rawEvent);
+  if (event.kind === ExcessEventKind.Distribution) {
+    return calculateDistributionBlock(event);
+  }
+  return [calculateTaxableExcess(event)];
 }

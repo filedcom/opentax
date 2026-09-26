@@ -27,11 +27,16 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
         fmv_at_year_end: 10_000,
         excess_events: [{
           kind: ExcessEventKind.Distribution,
-          amount_usd: 10_000,
           holding_period_start: "2024-01-01",
-          event_date: "2025-12-31",
           first_pfic_tax_year: 2024,
-          year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+          shares_in_block: 100,
+          prior_year_distributions: [{ tax_year: 2024, amount_usd: 0 }],
+          current_year_distributions: [{
+            date: "2025-12-31",
+            amount_usd: 10_000,
+            year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+          }],
+          taxable_nonexcess_dividend_usd: 0,
         }],
       }],
     },
@@ -44,4 +49,43 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
   assertEquals(result.pending.f1040?.line23_other_taxes, 150);
   assertEquals(result.pending.f1040?.line24_total_tax, 2_003);
   assertEquals((result.pending.form8621?.items ?? []).length, 1);
+});
+
+Deno.test("E2E: Form 8621 separates excess income from section 301 nonexcess dividends", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1980-06-15",
+    },
+    f8621: {
+      f8621s: [{
+        company_name: "Offshore Fund Ltd",
+        company_ein_or_ref: "FUND001",
+        country_of_incorporation: "Ireland",
+        regime: PficRegime.EXCESS_DISTRIBUTION,
+        shares_owned: 100,
+        fmv_at_year_end: 10_000,
+        excess_events: [{
+          kind: ExcessEventKind.Distribution,
+          holding_period_start: "2024-01-01",
+          first_pfic_tax_year: 2024,
+          shares_in_block: 100,
+          prior_year_distributions: [{ tax_year: 2024, amount_usd: 4_000 }],
+          current_year_distributions: [{
+            date: "2025-12-31",
+            amount_usd: 10_000,
+            year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+          }],
+          taxable_nonexcess_dividend_usd: 5_000,
+        }],
+      }],
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line3b_ordinary_dividends, 5_000);
+  assertEquals(result.pending.schedule1?.line8z_other, 2_497);
+  assertEquals(result.pending.form8960?.line2_ordinary_dividends, 5_000);
 });
