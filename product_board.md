@@ -129,8 +129,13 @@ CREB cases until their separate taxable-income limit is modeled. The Form 8912
 input now separates Form 1097-BTC reported amounts, unreported-bond
 calculations, and carryforward; positive credit explicitly stops rather than
 depositing an unbounded amount on Schedule 3 line 6a. This source model and its
-cases are unrun and still need complete Part II integration, source-document
-serialization, and IRS business-rule review.
+cases are unrun. A subsequent IRS-instructions review corrected Part IV column
+(e) to credit-allowance-date percentage, not ownership percentage, and separates
+BAB interest payable from other bonds' outstanding principal with the required
+35% BAB rate. These source facts still need complete Part II integration,
+source-document serialization, allowance-date verification against the holding
+period, bond-specific carryforward identity, taxable-interest reconciliation,
+and IRS business-rule review.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on

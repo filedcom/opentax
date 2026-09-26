@@ -17,32 +17,122 @@ export enum BondType {
   BAB = "BAB",
 }
 
-const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+const isoDate = z.string().refine(isCalendarDate, "Invalid calendar date");
 const pre2018IssueDate = isoDate.refine(
   (date) => date <= "2017-12-31",
   "Tax credit bonds issued after 2017 are ineligible",
 );
 
+const issueWindow: Readonly<Record<BondType, readonly [string, string]>> = {
+  [BondType.CREB]: ["2006-01-01", "2009-12-31"],
+  [BondType.NEW_CREB]: ["2008-10-04", "2017-12-31"],
+  [BondType.QECB]: ["2008-10-04", "2017-12-31"],
+  [BondType.QZAB]: ["1998-01-01", "2017-12-31"],
+  [BondType.QSCB]: ["2009-02-18", "2017-12-31"],
+  [BondType.BAB]: ["2009-02-18", "2010-12-31"],
+};
+
+function checkIssueWindow(
+  bondType: BondType,
+  issueDate: string,
+  ctx: z.RefinementCtx,
+): void {
+  const [first, last] = issueWindow[bondType];
+  if (issueDate < first || issueDate > last) {
+    ctx.addIssue({
+      code: "custom",
+      message: `${bondType} issue date must be between ${first} and ${last}`,
+      path: ["issue_date"],
+    });
+  }
+}
+
 const reportedBondSchema = z.object({
   bond_type: z.nativeEnum(BondType),
   issue_date: pre2018IssueDate,
+  issuer_name: z.string().min(1),
   issuer_ein: z.string().regex(/^\d{9}$/),
   unique_identifier: z.string().min(1),
   credit_amount: z.number().finite().nonnegative(),
   issuer_elected_direct_payment: z.boolean(),
   is_pass_through_creb_credit: z.boolean(),
+}).superRefine((bond, ctx) => {
+  checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
 });
 
 const unreportedBondSchema = z.object({
   bond_type: z.nativeEnum(BondType),
   issue_date: pre2018IssueDate,
   issuer_name: z.string().min(1),
+  issuer_city: z.string().min(1),
+  issuer_state: z.string().length(2),
   issuer_ein: z.string().regex(/^\d{9}$/),
   maturity_date: isoDate,
-  outstanding_principal: z.number().finite().nonnegative(),
+  disposition_date: isoDate.optional(),
+  cusip: z.string().min(1).optional(),
+  principal_payment_dates: z.array(isoDate),
+  interest_payment_dates: z.array(isoDate),
+  outstanding_principal: z.number().finite().nonnegative().optional(),
+  interest_payable: z.number().finite().nonnegative().optional(),
   credit_rate: z.number().finite().nonnegative(),
-  ownership_percentage: z.number().finite().min(0).max(1),
+  credit_allowance_percentage: z.number().finite().min(0).max(1),
   issuer_elected_direct_payment: z.boolean(),
+}).superRefine((bond, ctx) => {
+  checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
+  if (bond.bond_type === BondType.BAB) {
+    if (
+      bond.interest_payable === undefined ||
+      bond.outstanding_principal !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "BAB needs interest payable, not outstanding principal",
+      });
+    }
+    if (bond.credit_rate !== 0.35 || bond.credit_allowance_percentage !== 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: "BAB needs a 35% rate and 100% allowance percentage",
+      });
+    }
+    if (!bond.cusip || bond.interest_payment_dates.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "BAB needs a CUSIP and interest payment dates",
+      });
+    }
+  } else {
+    if (
+      bond.outstanding_principal === undefined ||
+      bond.interest_payable !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Non-BAB bond needs outstanding principal, not interest payable",
+      });
+    }
+  }
+  if (bond.bond_type === BondType.CREB) {
+    if (!bond.cusip || bond.principal_payment_dates.length === 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "CREB needs a CUSIP and principal payment dates",
+      });
+    }
+  } else if (!bond.cusip && bond.principal_payment_dates.length === 0) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Bond needs a CUSIP or principal payment dates",
+    });
+  }
 });
 
 export const itemSchema = z.object({
@@ -75,9 +165,11 @@ class F8912Node extends TaxNode<typeof inputSchema> {
         })),
         item.unreported_bonds.map((bond) => ({
           bondType: bond.bond_type,
-          outstandingPrincipal: bond.outstanding_principal,
+          creditBaseAmount: bond.bond_type === BondType.BAB
+            ? bond.interest_payable!
+            : bond.outstanding_principal!,
           creditRate: bond.credit_rate,
-          ownershipPercentage: bond.ownership_percentage,
+          creditAllowancePercentage: bond.credit_allowance_percentage,
           issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
         })),
         item.qualified_bond_carryforward,

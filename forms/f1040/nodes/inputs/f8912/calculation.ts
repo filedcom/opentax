@@ -21,9 +21,9 @@ export type Form8912ReportedBond = {
 
 export type Form8912UnreportedBond = {
   readonly bondType: Form8912BondType;
-  readonly outstandingPrincipal: number;
+  readonly creditBaseAmount: number;
   readonly creditRate: number;
-  readonly ownershipPercentage: number;
+  readonly creditAllowancePercentage: number;
   readonly issuerElectedDirectPayment: boolean;
 };
 
@@ -70,9 +70,9 @@ export function calculateForm8912SourceLines(
     }
     for (
       const amount of [
-        bond.outstandingPrincipal,
+        bond.creditBaseAmount,
         bond.creditRate,
-        bond.ownershipPercentage,
+        bond.creditAllowancePercentage,
       ]
     ) {
       if (!Number.isFinite(amount) || amount < 0) {
@@ -81,11 +81,21 @@ export function calculateForm8912SourceLines(
         );
       }
     }
-    if (bond.ownershipPercentage > 1) {
-      throw new Error("Form 8912 ownership percentage cannot exceed 100%");
+    if (bond.creditAllowancePercentage > 1) {
+      throw new Error(
+        "Form 8912 credit-allowance percentage cannot exceed 100%",
+      );
     }
-    const credit = bond.outstandingPrincipal * bond.creditRate *
-      bond.ownershipPercentage;
+    if (bond.bondType === "BAB" && bond.creditRate !== 0.35) {
+      throw new Error("Form 8912 build America bond credit rate must be 35%");
+    }
+    if (bond.bondType === "BAB" && bond.creditAllowancePercentage !== 1) {
+      throw new Error(
+        "Form 8912 build America bond uses a 100% allowance percentage",
+      );
+    }
+    const credit = bond.creditBaseAmount * bond.creditRate *
+      bond.creditAllowancePercentage;
     line2 += bond.bondType === "NEW_CREB" || bond.bondType === "QECB"
       ? credit * 0.7
       : credit;
