@@ -217,9 +217,12 @@ function totalTax(input: Form5329Input): number {
 }
 
 // Route total Form 5329 tax to Schedule 2 line 8 when > 0
-function schedule2Output(total: number): NodeOutput[] {
+function schedule2Output(total: number, chapter1Tax: number): NodeOutput[] {
   if (total <= 0) return [];
-  return [output(schedule2, { line8_form5329_tax: total })];
+  return [output(schedule2, {
+    line8_form5329_tax: total,
+    line8_form5329_chapter1_tax: chapter1Tax,
+  })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -253,6 +256,8 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
       );
     }
     const total = totalTax(input);
+    const chapter1Tax = partI_regularTax(input) + partI_simpleTax(input) +
+      partII_tax(input);
     // Preserve the full taxable distribution total for MeF/PDF. The generic
     // pending normalizer treats numeric arrays as successive snapshots, while
     // these arrays are independent 1099-R distributions that must be summed.
@@ -265,7 +270,7 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
     };
     return {
       outputs: [
-        ...schedule2Output(total),
+        ...schedule2Output(total, chapter1Tax),
         ...(Object.keys(printFields).length > 0
           ? [{ nodeType: this.nodeType, fields: printFields }]
           : []),

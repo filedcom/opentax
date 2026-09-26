@@ -1,5 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   line1a_excess_advance_premium?: number | null;
@@ -20,6 +20,7 @@ export interface Fields {
   line17b_hsa_penalty?: number | null;
   line17e_archer_msa_tax?: number | null;
   line17f_medicare_advantage_msa_tax?: number | null;
+  line17z_other_additional_taxes?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -52,7 +53,7 @@ const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Fields)[]]> = [
   ],
 ];
 
-function buildIRS1040Schedule2(fields: Input): string {
+function buildIRS1040Schedule2(fields: Input, context?: MefBuildContext): string {
   const children: string[] = [];
 
   // Direct mappings
@@ -72,6 +73,32 @@ function buildIRS1040Schedule2(fields: Input): string {
     children.push(element(tag, sum));
   }
 
+  const adjustment = context?.pending?.form8978_reporting_year;
+  const reduction = adjustment && typeof adjustment === "object"
+    ? (adjustment as Record<string, unknown>).schedule2_line17z_reduction
+    : undefined;
+  const line17z = (fields.line17z_other_additional_taxes ?? 0) -
+    (typeof reduction === "number" ? reduction : 0);
+  if (line17z !== 0) {
+    const statementId = context?.documentIdsByPendingKey
+      ?.any_other_taxes_statement?.[0];
+    if (context?.documentIdsByPendingKey && !statementId) {
+      throw new Error("Schedule 2 line 17z needs its other-taxes statement");
+    }
+    children.push(element("TotalAnyOtherTaxesAmt", line17z, statementId
+      ? {
+        referenceDocumentId: statementId,
+        referenceDocumentName: "AnyOtherTaxesStatement",
+      }
+      : undefined));
+  }
+  const adjustedPart2 = adjustment && typeof adjustment === "object"
+    ? (adjustment as Record<string, unknown>).schedule2_line21
+    : undefined;
+  if (typeof adjustedPart2 === "number") {
+    children.push(element("TotalOtherTaxesAmt", adjustedPart2));
+  }
+
   return elements("IRS1040Schedule2", children);
 }
 
@@ -79,7 +106,7 @@ export const schedule2: MefFormDescriptor<"schedule2", Input> = {
   pendingKey: "schedule2",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s2.pdf",
-  build(fields) {
-    return buildIRS1040Schedule2(fields);
+  build(fields, context) {
+    return buildIRS1040Schedule2(fields, context);
   },
 };

@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefBundle, buildMefXml } from "../builder.ts";
+import { buildPending } from "../pending.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import {
   calculateFiling,
@@ -73,6 +74,61 @@ Deno.test("Form 8978 XML-only export rejects a missing tax-computation PDF", () 
     Error,
     "tax-computation statement PDF",
   );
+});
+
+Deno.test({
+  name: "XSD: negative Form 8978 credit links to Schedule 3 line 6l",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const negativeInput: Form8978Input = {
+    filings: [{
+      ...input.filings[0],
+      columns: [{
+        ...input.filings[0].columns[0],
+        corrected_income_tax: 1_000,
+        original_tax_liability: 1_500,
+      }],
+    }],
+  };
+  const bundle = await buildMefBundle(buildPending({
+    f1040: {
+      filing_status: "single",
+      line16_income_tax: 7_949,
+      line18_total_tax_before_credits: 7_949,
+      line20_nonrefundable_credits: 500,
+      line21_credits_total: 500,
+      line22_tax_after_credits: 7_449,
+      line24_total_tax: 7_449,
+    },
+    schedule3: { line6l_form8978_credit: 500, line8_total: 500 },
+    f8978: {
+      ...negativeInput,
+      calculated_filings: negativeInput.filings.map(calculateFiling),
+      line14: -500,
+    },
+    form8978_reporting_year: {
+      negative_form8978_line14: 500,
+      schedule3_line6l: 500,
+      schedule2_line17z_reduction: 0,
+      remaining_unapplied: 0,
+    },
+  }), { filer, attachments: [] });
+  assertStringIncludes(bundle.xml, "<TotRptgYrTxIncreaseDecreaseAmt referenceDocumentId=");
+  assertStringIncludes(bundle.xml, "referenceDocumentName=\"IRS8978\">500</TotRptgYrTxIncreaseDecreaseAmt>");
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, bundle.xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test("Form 8978 MeF export rejects calculated values that disagree with source facts", () => {

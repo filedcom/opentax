@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import { IncomeCategory, form1116 } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { form6251 } from "../form6251/index.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 
@@ -35,6 +36,24 @@ Deno.test("form1116: applies taxable-income ratio", () => {
     worldwide_taxable_income: 85_250,
     us_tax_before_credits: 13_669,
   }), 135);
+});
+
+Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line 10", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 500,
+      foreign_gross_income: 1_000,
+      income_category: IncomeCategory.Passive,
+      apportioned_deductions: 155.94,
+    }],
+    worldwide_taxable_income: 85_250,
+    us_tax_before_credits: 13_669,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit, 135);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)?.schedule3_line1_foreign_tax_credit,
+    135,
+  );
 });
 
 Deno.test("form1116: directly allocable deductions reduce the limit", () => {

@@ -2,7 +2,6 @@ import { assertEquals } from "@std/assert";
 import { schedule3 } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
-import { form6251 } from "../../forms/form6251/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return schedule3.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -52,15 +51,21 @@ Deno.test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {
   );
 });
 
-Deno.test("Schedule 3 line 1 reaches Form 6251 without other credits", () => {
+Deno.test("Schedule 3 line 1 is included once in nonrefundable credits", () => {
   const result = compute({
     line1_foreign_tax_credit: 300,
     line1_foreign_tax_1099: [75, 45],
   });
   assertEquals(
-    fieldsOf(result.outputs, form6251)?.schedule3_line1_foreign_tax_credit,
+    fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
     420,
   );
+});
+
+Deno.test("Schedule 3 line 6l includes the capped Form 8978 credit", () => {
+  const result = compute({ line6l_form8978_credit: 500 });
+  assertEquals(fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits, 500);
+  assertEquals(findOutput(result, "schedule3")?.fields.line8_total, 500);
 });
 
 Deno.test("calc: line2_childcare_credit alone → f1040 line20", () => {

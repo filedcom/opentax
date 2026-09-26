@@ -218,6 +218,9 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
     if (credit > 0) {
       outputs.push(output(schedule3, { line1_foreign_tax_credit: credit }));
+      outputs.push(output(form6251, {
+        schedule3_line1_foreign_tax_credit: credit,
+      }));
     }
     if (amtCredit > 0) outputs.push(output(form6251, { amtftc: amtCredit }));
     outputs.push({

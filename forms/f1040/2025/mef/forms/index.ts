@@ -51,6 +51,7 @@ import { form8960 } from "./f8960.ts";
 import { form8962 } from "./f8962.ts";
 import { form8978 } from "./f8978.ts";
 import { form8978ScheduleA } from "./f8978_schedule_a.ts";
+import { anyOtherTaxesStatement } from "./any_other_taxes_statement.ts";
 import { form8990 } from "./f8990.ts";
 import { form8995 } from "./f8995.ts";
 import { form8995a } from "./f8995a.ts";
@@ -195,6 +196,8 @@ export const ALL_MEF_FORMS = [
   // Form W-2 wage statements (one document per employer)
   w2,
   fecRecord,
+  // Schedule 2 line 17z statement precedes WagesNotShownSchedule in ReturnData.
+  anyOtherTaxesStatement,
   wagesNotShownSchedule,
   // Form 4835 line 4a statement follows wage statements in ReturnData1040.xsd.
   cccLoanAccrualStatement,
