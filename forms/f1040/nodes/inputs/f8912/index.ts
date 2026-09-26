@@ -266,6 +266,52 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f8912s: z.array(itemSchema).min(1),
+}).superRefine((input, ctx) => {
+  const reportedIdentifiers = new Set<string>();
+  const reportedCusips = new Set<string>();
+  input.f8912s.forEach((item, itemIndex) => {
+    item.reported_bonds.forEach((bond, bondIndex) => {
+      const identifier = `${bond.issuer_ein}:${bond.unique_identifier}`;
+      if (reportedIdentifiers.has(identifier)) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 1097-BTC issuer and unique identifier appear in multiple Form 8912 items",
+          path: ["f8912s", itemIndex, "reported_bonds", bondIndex],
+        });
+      }
+      reportedIdentifiers.add(identifier);
+      if (bond.unique_identifier_code === "C") {
+        reportedCusips.add(
+          `${bond.issuer_ein}:${bond.unique_identifier.slice(0, 9)}`,
+        );
+      }
+    });
+  });
+  input.f8912s.forEach((item, itemIndex) => {
+    item.unreported_bonds.forEach((bond, bondIndex) => {
+      bond.line18_rows.forEach((row, rowIndex) => {
+        if (
+          row.cusip && reportedCusips.has(`${bond.issuer_ein}:${row.cusip}`)
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Form 8912 bond credit is already reported on Form 1097-BTC",
+            path: [
+              "f8912s",
+              itemIndex,
+              "unreported_bonds",
+              bondIndex,
+              "line18_rows",
+              rowIndex,
+              "cusip",
+            ],
+          });
+        }
+      });
+    });
+  });
 });
 
 export type F8912Item = z.infer<typeof itemSchema>;
@@ -401,17 +447,7 @@ class F8912Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const outputs: NodeOutput[] = [];
     let tentativeCredit = 0;
-    const reportedIdentifiers = new Set<string>();
     for (const item of input.f8912s) {
-      for (const bond of item.reported_bonds) {
-        const identifier = `${bond.issuer_ein}:${bond.unique_identifier}`;
-        if (reportedIdentifiers.has(identifier)) {
-          throw new Error(
-            "Form 1097-BTC issuer and unique identifier appear in multiple Form 8912 items",
-          );
-        }
-        reportedIdentifiers.add(identifier);
-      }
       const lines = sourceLinesFromItem(item);
       const interestRows = interestRowsFromItem(item);
       if (lines.hasPassThroughCrebCredit) {
