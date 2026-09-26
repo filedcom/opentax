@@ -204,14 +204,15 @@ export async function buildPdfBytes(
 
   for (const descriptor of ALL_PDF_FORMS) {
     const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<string, unknown>;
+    const projectedFields = descriptor.projectFields?.(fields, normalized) ?? fields;
 
     const effectiveFields = descriptor.rows
       ? {
-        ...fields,
+        ...projectedFields,
         [descriptor.rows.domainKey]: pending[descriptor.rows.domainKey] ??
-          fields[descriptor.rows.domainKey],
+          projectedFields[descriptor.rows.domainKey],
       }
-      : fields;
+      : projectedFields;
 
     const instances = descriptor.instances?.(effectiveFields) ?? [effectiveFields];
     for (const instance of instances) {

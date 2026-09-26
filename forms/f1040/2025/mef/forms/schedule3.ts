@@ -12,6 +12,7 @@ export interface Fields {
   line6b_child_tax_credit?: number | null;
   line6c_adoption_credit?: number | null;
   line6j_alt_fuel_vehicle_refueling?: number | null;
+  line6l_form8978_credit?: number | null;
   line10_amount_paid_extension?: number | null;
   line11_excess_ss?: number | null;
 }
@@ -30,6 +31,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line5b_energy_efficient_home", "EgyEffcntHmImprvCrAmt"],
   ["line6c_adoption_credit", "AdoptionCreditAmt"],
   ["line6j_alt_fuel_vehicle_refueling", "TotalPersonalUsePartOfCrAmt"],
+  ["line6l_form8978_credit", "TotRptgYrTxIncreaseDecreaseAmt"],
   ["line10_amount_paid_extension", "RequestForExtensionAmt"],
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
 ];
@@ -63,6 +65,19 @@ function buildIRS1040Schedule3(fields: Input, context?: MefBuildContext): string
   for (const [key, tag] of FIELD_MAP) {
     const value = fields[key];
     if (typeof value !== "number") continue;
+    if (key === "line6l_form8978_credit") {
+      const formIds = context?.documentIdsByPendingKey?.f8978 ?? [];
+      if (context?.documentIdsByPendingKey && formIds.length === 0) {
+        throw new Error("Schedule 3 line 6l needs attached Forms 8978");
+      }
+      children.push(element(tag, value, formIds.length > 0
+        ? {
+          referenceDocumentId: formIds.join(" "),
+          referenceDocumentName: "IRS8978",
+        }
+        : undefined));
+      continue;
+    }
     children.push(element(tag, value));
   }
 

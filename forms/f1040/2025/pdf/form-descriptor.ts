@@ -38,6 +38,11 @@ export interface PdfRowDescriptor {
 export interface PdfFormDescriptor {
   readonly pendingKey: string;
   readonly pdfUrl: string;
+  /** Project finalized cross-document worksheet values onto this form's fields. */
+  readonly projectFields?: (
+    fields: Record<string, unknown>,
+    allPending: Record<string, Record<string, unknown>>,
+  ) => Record<string, unknown>;
   /**
    * Optional gate: render the form only when this domain key holds a value.
    * For forms whose pending slot also collects context deposited on every

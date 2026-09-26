@@ -7,6 +7,7 @@ import type {
 } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form8978_reporting_year } from "../../worksheets/form8978_reporting_year/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -19,6 +20,9 @@ export const inputSchema = z.object({
   // Line 8 — Additional taxes from Form 5329 (early dist, excess contributions)
   // IRC §72(t), §4973; Form 5329 all parts → Schedule 2 line 8
   line8_form5329_tax: z.number().nonnegative().optional(),
+  // Only Forms 5329 Parts I/II are chapter 1 taxes. Parts III-VIII are
+  // section 4973 excise taxes and cannot be offset by Form 8978.
+  line8_form5329_chapter1_tax: z.number().nonnegative().optional(),
   // Line 13 — Uncollected SS/Medicare on tips (W-2 Box12 codes A+B)
   uncollected_fica: z.number().nonnegative().optional(),
   // Line 13 — Uncollected SS/Medicare on group-term life ins >$50k (W-2 Box12 codes M+N)
@@ -147,12 +151,39 @@ function part2Total(input: Schedule2Input): number {
     (input.line9_965_net_tax_liability ?? 0);
 }
 
+function part2Chapter1Tax(input: Schedule2Input): number {
+  const form5329Chapter1 = input.line8_form5329_chapter1_tax ?? 0;
+  if (form5329Chapter1 > (input.line8_form5329_tax ?? 0)) {
+    throw new Error("Form 5329 chapter 1 amount exceeds its Schedule 2 line 8 tax");
+  }
+  return form5329Chapter1 +
+    (input.section409a_excise ?? 0) +
+    (input.line17h_nqdc_tax ?? 0) +
+    (input.line17e_archer_msa_tax ?? 0) +
+    (input.line17f_medicare_advantage_msa_tax ?? 0) +
+    (input.line17b_hsa_penalty ?? 0) +
+    (input.line17a_investment_credit_recapture ?? 0) +
+    (input.line10_homebuyer_credit_repayment ?? 0) +
+    (input.line10_recapture_tax ?? 0) +
+    (input.line10_lihtc_recapture ?? 0) +
+    (input.line17_exit_tax ?? 0);
+}
+
+function part2UnclassifiedTax(input: Schedule2Input): number {
+  const form5329WithoutBreakdown = input.line8_form5329_chapter1_tax === undefined
+    ? input.line8_form5329_tax ?? 0
+    : 0;
+  return form5329WithoutBreakdown +
+    (input.line17z_other_additional_taxes ?? 0) +
+    (input.line17d_kiddie_tax ?? 0);
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Schedule2Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule2";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, form8978_reporting_year]);
 
   compute(_ctx: NodeContext, rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -169,7 +200,15 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
       : part1 > 0
       ? this.outputNodes.output(f1040, { line17_additional_taxes: part1 })
       : this.outputNodes.output(f1040, { line23_other_taxes: part2 });
-    const outputs: NodeOutput[] = [output];
+    const outputs: NodeOutput[] = [
+      output,
+      this.outputNodes.output(form8978_reporting_year, {
+        schedule2_part1_tax: part1,
+        schedule2_part2_tax: part2,
+        schedule2_chapter1_part2_tax: part2Chapter1Tax(input),
+        schedule2_unclassified_part2_tax: part2UnclassifiedTax(input),
+      }),
+    ];
 
     return { outputs };
   }

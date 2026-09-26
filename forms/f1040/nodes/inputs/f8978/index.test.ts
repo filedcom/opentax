@@ -65,12 +65,21 @@ Deno.test("f8978 does not invent a tax rate from an adjustment amount", () => {
   );
 });
 
-Deno.test("f8978 rejects negative line 14 until the limitation worksheets exist", () => {
-  assertThrows(
-    () => compute({ filings: [filing(1_500, 1_000)] }),
-    Error,
-    "Schedule 3 line 6l and Schedule 2 line 17z limitation worksheets",
+Deno.test("f8978 sends negative line 14 to the reporting-year and AMT worksheets", () => {
+  const result = compute({ filings: [filing(1_500, 1_000)] });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "form8978_reporting_year")
+      ?.fields.negative_form8978_line14,
+    500,
   );
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "form6251")
+      ?.fields.form8978_negative_line14,
+    500,
+  );
+  assertEquals(result.outputs.some((output) =>
+    output.nodeType === income_tax_calculation.nodeType
+  ), false);
 });
 
 Deno.test("f8978 requires source adjustment detail and a prior affected year", () => {

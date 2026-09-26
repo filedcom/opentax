@@ -116,6 +116,8 @@ const inputSchema = z.object({
   line22_tax_after_credits: z.number().nonnegative().optional(),
   // Line 23 — Other taxes from Schedule 2 Part II
   line23_other_taxes: z.number().nonnegative().optional(),
+  form8978_schedule2_line17z_reduction: z.number().int().nonnegative()
+    .optional(),
   // Line 24 — Total tax (22 + 23)
   line24_total_tax: z.number().nonnegative().optional(),
   // ── Part III — Payments ───────────────────────────────────────────────────
@@ -264,7 +266,11 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line18 = totalTaxBeforeCredits(input);
   const computed_line21 = creditsTotal(input);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
-  const computed_line23 = input.line23_other_taxes ?? 0;
+  const computed_line23 = (input.line23_other_taxes ?? 0) -
+    (input.form8978_schedule2_line17z_reduction ?? 0);
+  if (computed_line23 < -0.000001) {
+    throw new Error("Form 8978 reduction exceeds Form 1040 line 23 other taxes");
+  }
   const computed_line24 = computed_line22 + computed_line23;
   const computed_line25d = totalWithholding(input);
   const computed_line32 = refundableCreditsTotal(input);
@@ -308,6 +314,10 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   result.line12c_deduction_total = deductionAmount(input);
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
+  if ((input.form8978_schedule2_line17z_reduction ?? 0) > 0) {
+    // The finalized return line replaces the unadjusted Schedule 2 deposit.
+    result.line23_other_taxes = Math.max(0, computed_line23);
+  }
 
   // line20_nonrefundable_credits and line23_other_taxes are deposited into the
   // f1040 pending dict by upstream nodes (schedule3, etc.) before this node runs.

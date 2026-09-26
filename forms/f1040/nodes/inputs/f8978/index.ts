@@ -4,6 +4,8 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { form8978_reporting_year } from "../../intermediate/worksheets/form8978_reporting_year/index.ts";
 
 // Form 8978 (Rev. January 2023, still used in TY2025) is a comparison of
 // corrected and originally reported tax liabilities for up to four affected
@@ -138,7 +140,11 @@ export type Form8978Lines = ReturnType<typeof calculateFiling>;
 class F8978Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8978";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([income_tax_calculation]);
+  readonly outputNodes = new OutputNodes([
+    income_tax_calculation,
+    form6251,
+    form8978_reporting_year,
+  ]);
 
   compute(ctx: NodeContext, rawInput: Form8978Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -177,11 +183,6 @@ class F8978Node extends TaxNode<typeof inputSchema> {
       return calculateFiling(filing);
     });
     const line14 = filings.reduce((sum, filing) => sum + filing.line14, 0);
-    if (line14 < 0) {
-      throw new Error(
-        "Form 8978 negative line 14 requires the Schedule 3 line 6l and Schedule 2 line 17z limitation worksheets",
-      );
-    }
     return {
       outputs: [
         {
@@ -196,6 +197,16 @@ class F8978Node extends TaxNode<typeof inputSchema> {
           ? [this.outputNodes.output(income_tax_calculation, {
             form8978_tax: line14,
           })]
+          : []),
+        ...(line14 < 0
+          ? [
+            this.outputNodes.output(form6251, {
+              form8978_negative_line14: -line14,
+            }),
+            this.outputNodes.output(form8978_reporting_year, {
+              negative_form8978_line14: -line14,
+            }),
+          ]
           : []),
       ],
     };

@@ -42,6 +42,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line6d_elderly_disabled_credit", pdfField: "topmostSubform[0].Page1[0].f1_12[0]" },
   { kind: "text", domainKey: "line6d_clean_vehicle_credit", pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
   { kind: "text", domainKey: "line6f_mortgage_interest_credit", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
+  { kind: "text", domainKey: "line6l_form8978_credit", pdfField: "topmostSubform[0].Page1[0].f1_20[0]" },
   { kind: "text", domainKey: "line8_total", pdfField: "topmostSubform[0].Page1[0].f1_25[0]" },
 
   // ── Part II: Other Payments and Refundable Credits ───────────────────────────
@@ -56,6 +57,13 @@ export const schedule3Pdf: PdfFormDescriptor = {
   pendingKey: "schedule3",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s3--2025.pdf",
   fields,
+  projectFields(fields, allPending) {
+    const worksheet = allPending.form8978_reporting_year;
+    const line6l = worksheet?.schedule3_line6l;
+    return typeof line6l === "number" && line6l > 0
+      ? { ...fields, line6l_form8978_credit: line6l }
+      : fields;
+  },
   filerFields: [
     { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
     { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },

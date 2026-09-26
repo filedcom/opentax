@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import { schedule2 } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form8978_reporting_year } from "../../worksheets/form8978_reporting_year/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return schedule2.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -170,8 +171,8 @@ Deno.test("smoke: all input fields populated — correct total emitted to f1040"
     line17h_nqdc_tax: 2000,
   });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 8100);
-  // Only one output
-  assertEquals(result.outputs.length, 1);
+  // Return tax and classification worksheet each receive one output.
+  assertEquals(result.outputs.length, 2);
 });
 
 // ── Previously untested major fields ─────────────────────────────────────────
@@ -322,6 +323,19 @@ Deno.test("calc: line11_additional_medicare alone routes to f1040 line23", () =>
 Deno.test("calc: line12_niit alone routes to f1040 line23", () => {
   const result = compute({ line12_niit: 900 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 900);
+});
+
+Deno.test("Schedule 2 keeps Chapter 1, non-Chapter-1, and unclassified tax distinct", () => {
+  const result = compute({
+    line8_form5329_tax: 100,
+    line8_form5329_chapter1_tax: 40,
+    line4_se_tax: 200,
+    line17z_other_additional_taxes: 30,
+  });
+  const classified = fieldsOf(result.outputs, form8978_reporting_year)!;
+  assertEquals(classified.schedule2_part2_tax, 330);
+  assertEquals(classified.schedule2_chapter1_part2_tax, 40);
+  assertEquals(classified.schedule2_unclassified_part2_tax, 30);
 });
 
 Deno.test("routing: Part I AMT stays separate from eight Part II tax fields", () => {

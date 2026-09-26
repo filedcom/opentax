@@ -29,6 +29,7 @@ export const inputSchema = z.object({
   // Form 8978 and Schedule J refigure still need separate source routing.
   regular_tax: z.number().nonnegative(),
   form4972_tax: z.number().nonnegative().optional(),
+  form8978_negative_line14: z.number().int().nonnegative().optional(),
   schedule2_line1z_tax: z.number().nonnegative().optional(),
   schedule3_line1_foreign_tax_credit: z.number().nonnegative().optional(),
 
@@ -389,7 +390,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       0,
       input.regular_tax - (input.form4972_tax ?? 0) +
         (input.schedule2_line1z_tax ?? 0) -
-        (input.schedule3_line1_foreign_tax_credit ?? 0),
+        (input.schedule3_line1_foreign_tax_credit ?? 0) -
+        (input.form8978_negative_line14 ?? 0),
     );
     const amt = computeAmt(netTmt, adjustedRegularTax);
 

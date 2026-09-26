@@ -9,7 +9,6 @@ import {
 } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
-import { form6251 } from "../../forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // Executor accumulation pattern: multiple upstream nodes (f1099int, f1099div) may
@@ -92,6 +91,8 @@ export const inputSchema = z.object({
   // Line 6j — allowed personal-use alternative fuel refueling property credit
   // from Form 8911 line 10, after the regular-tax / AMT limitation.
   line6j_alt_fuel_vehicle_refueling: z.number().nonnegative().optional(),
+  // Line 6l — negative Form 8978 adjustment after the Form 1040 line 18 cap.
+  line6l_form8978_credit: z.number().int().nonnegative().optional(),
 
   // Line 9 — Net premium tax credit (Form 8962 line 26)
   // IRC §36B; Form 8962 line 26 → Schedule 3 line 9 (Part II refundable credit)
@@ -147,6 +148,7 @@ function partITotal(input: Schedule3Input): number {
     (input.line6e_prior_year_min_tax_credit ?? 0) +
     (input.line6f_mortgage_interest_credit ?? 0) +
     (input.line6j_alt_fuel_vehicle_refueling ?? 0) +
+    (input.line6l_form8978_credit ?? 0) +
     (input.line6z_general_business_credit ?? 0) +
     (input.line6b_low_income_housing_credit ?? 0)
   );
@@ -167,7 +169,7 @@ function partIITotal(input: Schedule3Input): number {
 class Schedule3Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule3";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form6251]);
+  readonly outputNodes = new OutputNodes([f1040]);
 
   compute(_ctx: NodeContext, rawInput: Schedule3Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -187,12 +189,6 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
       ),
     ];
-    if (line1(input) > 0) {
-      outputs.push(this.outputNodes.output(form6251, {
-        schedule3_line1_foreign_tax_credit: line1(input),
-      }));
-    }
-
     // Self-emit computed line values into this node's own pending dict so the
     // PDF/MeF builders can print the schedule (same pattern as the f1040 node).
     // Keys are distinct from inputSchema keys to avoid executor merge-accumulation.

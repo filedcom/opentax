@@ -186,6 +186,7 @@ import { schedule_se } from "../nodes/intermediate/forms/schedule_se/index.ts";
 import { unrecaptured_1250_worksheet } from "../nodes/intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { agi_aggregator } from "../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
+import { form8978_reporting_year } from "../nodes/intermediate/worksheets/form8978_reporting_year/index.ts";
 import { qdcgtw } from "../nodes/intermediate/worksheets/qdcgtw/index.ts";
 import { standard_deduction } from "../nodes/intermediate/worksheets/standard_deduction/index.ts";
 import { schedule1a } from "../nodes/intermediate/forms/schedule1a/index.ts";
@@ -387,6 +388,7 @@ export const registry: NodeRegistry = {
   unrecaptured_1250_worksheet,
   agi_aggregator,
   income_tax_calculation,
+  form8978_reporting_year,
   qdcgtw,
   standard_deduction,
   schedule1a,

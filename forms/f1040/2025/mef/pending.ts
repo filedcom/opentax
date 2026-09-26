@@ -1,5 +1,4 @@
 import { normalizePendingDict } from "../pending.ts";
-import { ALL_MEF_FORMS } from "./forms/index.ts";
 import type { F8949Transaction, MefFormsPending } from "./types.ts";
 
 function extractForm8949Transactions(
@@ -15,8 +14,12 @@ export function buildPending(
   pending: Record<string, unknown>,
 ): MefFormsPending {
   const result: Record<string, unknown> = {};
-  for (const form of ALL_MEF_FORMS) {
-    result[form.pendingKey] = normalizePendingDict(pending[form.pendingKey]);
+  // Keep calculation-only node results available to serializers that must
+  // reconcile a filed schedule with a finalized reporting-year worksheet.
+  // Only ALL_MEF_FORMS controls which keys are emitted as XML documents.
+  for (const [nodeType, raw] of Object.entries(pending)) {
+    const normalized = normalizePendingDict(raw);
+    if (normalized !== undefined) result[nodeType] = normalized;
   }
   // form8949 has a non-standard transaction-array structure
   result["form8949"] = extractForm8949Transactions(

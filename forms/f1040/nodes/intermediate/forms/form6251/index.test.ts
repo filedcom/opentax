@@ -77,6 +77,18 @@ Deno.test("form6251: line 10 combines Form 4972, Schedule 2 line 1z, and Schedul
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_194);
 });
 
+Deno.test("form6251: line 10 subtracts a negative Form 8978 line 14", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 15_000,
+    form8978_negative_line14: 500,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.regular_tax, 14_500);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 14_594);
+});
+
 Deno.test("form6251: AMT owed with ISO adjustment", () => {
   // Single: regular income $150,000, ISO adjustment $100,000
   // AMTI = $250,000; exemption = $88,100; line6 = $161,900

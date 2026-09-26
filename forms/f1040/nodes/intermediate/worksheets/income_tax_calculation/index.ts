@@ -10,6 +10,7 @@ import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { form6251 } from "../../forms/form6251/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
+import { form8978_reporting_year } from "../form8978_reporting_year/index.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import type { Bracket } from "../../../config/2025.ts";
@@ -248,7 +249,13 @@ function qdcgtTax(
 class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "income_tax_calculation";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form6251, f8812, form_1116]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    form6251,
+    f8812,
+    form_1116,
+    form8978_reporting_year,
+  ]);
 
   compute(ctx: NodeContext, rawInput: IncomeTaxCalcInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -320,6 +327,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           ? { form8978_tax: additionalReportingYearTax }
           : {}),
       }),
+      this.outputNodes.output(form8978_reporting_year, { regular_tax: tax }),
       // Form 6251 line 10 starts with Form 1040 line 16, including the
       // qualified-dividend/capital-gain rate calculation. Other line 10
       // adjustments still require their own source routing and audit.
