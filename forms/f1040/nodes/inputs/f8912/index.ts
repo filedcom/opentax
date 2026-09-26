@@ -4,7 +4,10 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
+  calculateForm8912BondInterest,
+  calculateForm8912PartIVBond,
   calculateForm8912SourceLines,
+  type Form8912BondInterest,
   type Form8912SourceLines,
   type Form8912UnreportedBond,
 } from "./calculation.ts";
@@ -65,10 +68,19 @@ const reportedBondSchema = z.object({
   issuer_ein: z.string().regex(/^\d{9}$/),
   unique_identifier: z.string().min(1).max(40),
   credit_amount: z.number().finite().nonnegative(),
+  disposition_date: isoDate.optional(),
+  purchase_accrued_interest: z.number().finite().nonnegative(),
+  sale_accrued_interest: z.number().finite().nonnegative(),
   issuer_elected_direct_payment: z.boolean(),
   is_pass_through_creb_credit: z.boolean(),
 }).superRefine((bond, ctx) => {
   checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
+  if (bond.sale_accrued_interest > 0 && !bond.disposition_date) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Sale accrued interest needs a disposition date",
+    });
+  }
 });
 
 const partIVRowSchema = z.object({
@@ -90,11 +102,19 @@ const unreportedBondSchema = z.object({
   issuer_ein: z.string().regex(/^\d{9}$/),
   maturity_date: isoDate,
   disposition_date: isoDate.optional(),
+  purchase_accrued_interest: z.number().finite().nonnegative(),
+  sale_accrued_interest: z.number().finite().nonnegative(),
   line18_rows: z.array(partIVRowSchema).min(1).max(50),
   issuer_elected_direct_payment: z.boolean(),
   is_pass_through_creb_credit: z.boolean(),
 }).superRefine((bond, ctx) => {
   checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
+  if (bond.sale_accrued_interest > 0 && !bond.disposition_date) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Sale accrued interest needs a disposition date",
+    });
+  }
   for (const [index, row] of bond.line18_rows.entries()) {
     const issue = (message: string) =>
       ctx.addIssue({
@@ -207,6 +227,45 @@ export function sourceLinesFromItem(
   );
 }
 
+export function interestFromItem(item: F8912Item): Form8912BondInterest {
+  const reported = item.reported_bonds.map((bond) =>
+    calculateForm8912BondInterest(
+      bond.credit_amount,
+      bond.purchase_accrued_interest,
+      bond.sale_accrued_interest,
+    )
+  );
+  const unreported = item.unreported_bonds.map((bond) => {
+    const credit = bond.line18_rows.reduce(
+      (sum, row) =>
+        sum +
+        calculateForm8912PartIVBond(partIVRowInput(bond, row)).line20,
+      0,
+    );
+    return calculateForm8912BondInterest(
+      credit,
+      bond.purchase_accrued_interest,
+      bond.sale_accrued_interest,
+    );
+  });
+  return [...reported, ...unreported].reduce(
+    (sum, bond) => ({
+      creditInterest: sum.creditInterest + bond.creditInterest,
+      purchaseAccruedInterestRecoveredAsBasis:
+        sum.purchaseAccruedInterestRecoveredAsBasis +
+        bond.purchaseAccruedInterestRecoveredAsBasis,
+      saleAccruedInterest: sum.saleAccruedInterest + bond.saleAccruedInterest,
+      taxableInterest: sum.taxableInterest + bond.taxableInterest,
+    }),
+    {
+      creditInterest: 0,
+      purchaseAccruedInterestRecoveredAsBasis: 0,
+      saleAccruedInterest: 0,
+      taxableInterest: 0,
+    },
+  );
+}
+
 class F8912Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8912";
   readonly inputSchema = inputSchema;
@@ -219,6 +278,7 @@ class F8912Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     for (const item of input.f8912s) {
       const lines = sourceLinesFromItem(item);
+      const interest = interestFromItem(item);
       if (lines.hasPassThroughCrebCredit) {
         throw new Error(
           "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
@@ -227,6 +287,11 @@ class F8912Node extends TaxNode<typeof inputSchema> {
       if (lines.line4 > 0) {
         throw new Error(
           "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
+        );
+      }
+      if (interest.taxableInterest > 0) {
+        throw new Error(
+          "Form 8912 accrued interest cannot be filed until it is routed to taxable interest income",
         );
       }
     }

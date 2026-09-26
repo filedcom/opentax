@@ -152,7 +152,13 @@ from line 8 when computing Form 8912 line 10b, checks the Form 3800 amount
 against line 6a, and requires Form 8912 line 12 to match Schedule 3 line 6k.
 These bridge and XML cases are written but unrun. No graph node currently
 supplies that finalized snapshot, so the builder stays unregistered and positive
-claims remain blocked.
+claims remain blocked. Form 8912 source items now capture bond-level
+purchase-price accrued interest and accrued interest on disposition. An unrun
+pure calculation separates current-year deemed interest from prior-year credit
+carryforwards and the purchase-price basis recovery. The return graph still
+needs to route the resulting taxable interest through Schedule B and AGI before
+it computes tax, and reconcile any interest already represented by another
+source document.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on
