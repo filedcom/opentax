@@ -17,6 +17,7 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
@@ -184,6 +185,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
     unrecaptured_1250_worksheet,
     rate_28_gain_worksheet,
     form8960,
+    scheduleA,
   ]);
 
   compute(ctx: NodeContext, input: DIVInput): NodeResult {
@@ -248,6 +250,16 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
 
     // NII: ordinary dividends subject to NIIT (IRC §1411(c)(1)(A)) → form8960 line 2
     const totalOrdinaryForNiit = div1099s.reduce((sum, item) => sum + item.box1a, 0);
+    if (totalOrdinaryForNiit > 0) {
+      outputs.push(this.outputNodes.output(scheduleA, {
+        investment_interest_ordinary_dividends: totalOrdinaryForNiit,
+      }));
+    }
+    if (totalQualDiv > 0) {
+      outputs.push(this.outputNodes.output(scheduleA, {
+        investment_interest_qualified_dividends: totalQualDiv,
+      }));
+    }
     if (totalOrdinaryForNiit > 0) {
       outputs.push(this.outputNodes.output(form8960, { line2_ordinary_dividends: totalOrdinaryForNiit }));
     }

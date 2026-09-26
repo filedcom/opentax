@@ -7,6 +7,7 @@ import { FilingStatus } from "../../../types.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { income_tax_calculation } from "../income_tax_calculation/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
+import { form8960 } from "../../forms/form8960/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -30,6 +31,8 @@ export const inputSchema = z.object({
 
   // From schedule_a — total itemized deductions (Schedule A line 17)
   itemized_deductions: z.number().nonnegative().optional(),
+  investment_interest_for_niit: z.number().nonnegative().optional(),
+  niit_allocable_state_local_tax: z.number().nonnegative().optional(),
 
   // From form8995 / form8995a — qualified business income deduction (Form 1040 Line 13)
   qbi_deduction: z.number().nonnegative().optional(),
@@ -107,7 +110,7 @@ function resolveDeduction(
 class StandardDeductionNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "standard_deduction";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation, form_1116]);
+  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation, form_1116, form8960]);
 
   compute(ctx: NodeContext, rawInput: StandardDeductionInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -126,6 +129,18 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
       outputs.push(
         this.outputNodes.output(f1040, { line12a_standard_deduction: deduction }),
       );
+    }
+    if (!takingStandard) {
+      if ((input.investment_interest_for_niit ?? 0) > 0) {
+        outputs.push(this.outputNodes.output(form8960, {
+          line9a_investment_interest_expense: input.investment_interest_for_niit!,
+        }));
+      }
+      if ((input.niit_allocable_state_local_tax ?? 0) > 0) {
+        outputs.push(this.outputNodes.output(form8960, {
+          line9b_state_local_tax: input.niit_allocable_state_local_tax!,
+        }));
+      }
     }
 
     outputs.push(

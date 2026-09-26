@@ -34,6 +34,7 @@ function mergePending(
   targetId: string,
   input: Readonly<Record<string, unknown>>,
   isDirectInput: boolean,
+  isSelfOutput = false,
 ): void {
   if (pending[targetId] === undefined) {
     pending[targetId] = {};
@@ -44,6 +45,12 @@ function mergePending(
   for (const key of Object.keys(input)) {
     const incoming = input[key];
     const existing = target[key];
+
+    if (isSelfOutput) {
+      target[key] = incoming;
+      directInputFields[targetId]?.delete(key);
+      continue;
+    }
 
     if (isDirectInput) {
       (directInputFields[targetId] ??= new Set()).add(key);
@@ -119,6 +126,7 @@ export function execute(
           output.nodeType,
           output.fields,
           step.nodeType === "start",
+          output.nodeType === step.nodeType,
         );
       }
       if (result.carryforwards) {

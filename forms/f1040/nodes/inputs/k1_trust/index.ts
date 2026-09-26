@@ -5,6 +5,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -255,13 +256,15 @@ function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_b, f1040, schedule_d, schedule1, form_1116]);
+  readonly outputNodes = new OutputNodes([schedule_b, f1040, schedule_d, schedule1, form_1116, scheduleA]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_trusts } = inputSchema.parse(input);
 
     // Apply DNI limitation per IRC §662 before routing any income
     const limitedItems = k1_trusts.map(applyDniLimit);
+    const ordinaryDividends = limitedItems.reduce((sum, item) => sum + (item.box2a_ordinary_dividends ?? 0), 0);
+    const qualifiedDividends = limitedItems.reduce((sum, item) => sum + (item.box2b_qualified_dividends ?? 0), 0);
 
     const outputs: NodeOutput[] = [
       ...scheduleBInterestOutputs(limitedItems),
@@ -272,6 +275,13 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...form1116Outputs(limitedItems),
       ...apportionedDeductionOutputs(limitedItems),
     ];
+
+    if (ordinaryDividends > 0 || qualifiedDividends > 0) {
+      outputs.push(this.outputNodes.output(scheduleA, {
+        investment_interest_ordinary_dividends: ordinaryDividends,
+        investment_interest_qualified_dividends: qualifiedDividends,
+      }));
+    }
 
     return { outputs };
   }

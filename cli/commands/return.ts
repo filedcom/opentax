@@ -47,6 +47,7 @@ export type GetReturnResult = {
   readonly forms: readonly string[];
   readonly lines: Record<string, unknown>;
   readonly warnings: readonly string[];
+  readonly carryforwards: Readonly<Record<string, number>>;
 };
 
 function num(value: unknown): number {
@@ -168,5 +169,6 @@ export async function getReturnCommand(
     forms: collectForms(result.pending),
     lines: f1040,
     warnings,
+    carryforwards: result.carryforwards,
   };
 }

@@ -337,6 +337,8 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
+    const ordinaryDividends = k1_s_corps.reduce((sum, item) => sum + (item.box5a_ordinary_dividends ?? 0), 0);
+    const qualifiedDividends = k1_s_corps.reduce((sum, item) => sum + (item.box5b_qualified_dividends ?? 0), 0);
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(k1_s_corps),
@@ -357,6 +359,13 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       // box16_tax_exempt_income: intentionally not routed — tax-exempt income does not flow to taxable income
       // box17_distributions: intentionally not routed — not taxable within basis; no basis-tracking node declared
     ];
+
+    if (ordinaryDividends > 0 || qualifiedDividends > 0) {
+      outputs.push(this.outputNodes.output(schedule_a, {
+        investment_interest_ordinary_dividends: ordinaryDividends,
+        investment_interest_qualified_dividends: qualifiedDividends,
+      }));
+    }
 
     return { outputs };
   }

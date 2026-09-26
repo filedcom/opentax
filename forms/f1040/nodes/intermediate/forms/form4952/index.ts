@@ -1,11 +1,7 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
@@ -30,6 +26,14 @@ export const inputSchema = z.object({
   // to treat as investment income (Form 4952 line 4g election).
   // IRC §163(d)(4)
   net_investment_income: z.number().nonnegative().optional(),
+  gross_investment_income: z.number().nonnegative().optional(),
+  qualified_dividends: z.number().nonnegative().optional(),
+  investment_net_gain: z.number().nonnegative().optional(),
+  investment_net_capital_gain: z.number().nonnegative().optional(),
+  elected_qualified_dividends: z.number().nonnegative().optional(),
+  elected_net_capital_gain: z.number().nonnegative().optional(),
+  investment_expenses: z.number().nonnegative().optional(),
+  investment_income: z.number().nonnegative().optional(),
 
   // Prior-year investment interest expense carryforward (Form 4952 line 2).
   // IRC §163(d)(2)
@@ -37,6 +41,16 @@ export const inputSchema = z.object({
 });
 
 type Form4952Input = z.infer<typeof inputSchema>;
+
+export function calculateInvestmentInterest(
+  expense: number,
+  netInvestmentIncome: number,
+  priorYearCarryforward: number,
+): { allowed: number; carryforward: number } {
+  const total = expense + priorYearCarryforward;
+  const allowed = Math.min(total, Math.max(0, netInvestmentIncome));
+  return { allowed, carryforward: total - allowed };
+}
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -53,19 +67,12 @@ function netInvestmentIncome(input: Form4952Input): number {
   return input.net_investment_income ?? 0;
 }
 
-// Deductible investment interest: lesser of total interest or net investment income.
-// Form 4952 line 6.
-// IRC §163(d)(1)
-function deductibleInterest(total: number, nii: number): number {
-  return Math.min(total, nii);
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form4952Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4952";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([scheduleA]);
+  readonly outputNodes = new OutputNodes([]);
 
   compute(_ctx: NodeContext, rawInput: Form4952Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -76,24 +83,31 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
     }
 
     const nii = netInvestmentIncome(input);
-    const deductible = deductibleInterest(total, nii);
-
-    const excess = total - Math.min(total, nii === 0 ? 0 : deductible);
-
-    if (deductible === 0) {
-      return {
-        outputs: [],
-        ...(excess > 0 ? { carryforwards: { investment_interest_excess_4952: excess } } : {}),
-      };
-    }
-
-    const outputs: NodeOutput[] = [
-      output(scheduleA, { line_9_investment_interest: deductible }),
-    ];
+    const { allowed, carryforward } = calculateInvestmentInterest(
+      input.investment_interest_expense ?? 0,
+      nii,
+      input.prior_year_carryforward ?? 0,
+    );
 
     return {
-      outputs,
-      ...(excess > 0 ? { carryforwards: { investment_interest_excess_4952: excess } } : {}),
+      outputs: [{ nodeType: this.nodeType, fields: {
+        investment_interest_expense: input.investment_interest_expense ?? 0,
+        prior_year_carryforward: input.prior_year_carryforward ?? 0,
+        total_investment_interest: total,
+        gross_investment_income: input.gross_investment_income ?? 0,
+        qualified_dividends: input.qualified_dividends ?? 0,
+        nonqualified_investment_income: (input.gross_investment_income ?? 0) - (input.qualified_dividends ?? 0),
+        investment_net_gain: input.investment_net_gain ?? 0,
+        investment_net_capital_gain: input.investment_net_capital_gain ?? 0,
+        noncapital_investment_gain: (input.investment_net_gain ?? 0) - (input.investment_net_capital_gain ?? 0),
+        elected_investment_income: (input.elected_qualified_dividends ?? 0) + (input.elected_net_capital_gain ?? 0),
+        investment_income: input.investment_income ?? nii + (input.investment_expenses ?? 0),
+        investment_expenses: input.investment_expenses ?? 0,
+        net_investment_income: nii,
+        allowed_interest: allowed,
+        disallowed_interest_carryforward: carryforward,
+      } }],
+      ...(carryforward > 0 ? { carryforwards: { investment_interest_excess_4952: carryforward } } : {}),
     };
   }
 }
