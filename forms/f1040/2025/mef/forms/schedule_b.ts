@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
+  interest_rows?: readonly { payerName: string; amount: number }[] | null;
   payer_name?: string | readonly string[] | null;
   taxable_interest_net?: number | readonly number[] | null;
   ee_bond_exclusion?: number | null;
@@ -35,13 +36,19 @@ function buildIRS1040ScheduleB(fields: Input): string {
       : undefined;
   const interest = typeof fields.print_line2_total === "number"
     ? fields.print_line2_total
+    : fields.interest_rows
+    ? fields.interest_rows.reduce((total, row) => total + row.amount, 0)
     : sum(fields.taxable_interest_net);
-  const interestAmounts = typeof fields.taxable_interest_net === "number"
+  const interestAmounts = fields.interest_rows
+    ? fields.interest_rows.map((row) => row.amount)
+    : typeof fields.taxable_interest_net === "number"
     ? [fields.taxable_interest_net]
     : Array.isArray(fields.taxable_interest_net)
     ? [...fields.taxable_interest_net]
     : [];
-  const interestPayers = typeof fields.payer_name === "string"
+  const interestPayers = fields.interest_rows
+    ? fields.interest_rows.map((row) => row.payerName)
+    : typeof fields.payer_name === "string"
     ? [fields.payer_name]
     : Array.isArray(fields.payer_name)
     ? [...fields.payer_name]
@@ -56,6 +63,13 @@ function buildIRS1040ScheduleB(fields: Input): string {
   }
   if (interestPayers.some((name) => !name.trim())) {
     throw new Error("Schedule B needs a name for each interest payer");
+  }
+  if (
+    interestAmounts.some((amount) => !Number.isFinite(amount) || amount < 0)
+  ) {
+    throw new Error(
+      "Schedule B interest payer rows need nonnegative finite amounts",
+    );
   }
   const interestRows = (interestAmounts.length > 0 ? interestPayers : []).map((
     name,
@@ -86,6 +100,7 @@ function buildIRS1040ScheduleB(fields: Input): string {
       fields["form8814_dividends"] !== undefined) &&
     fields.ordinaryDividends === undefined &&
     fields.taxable_interest_net === undefined &&
+    fields.interest_rows === undefined &&
     (dividends ?? 0) <= 1500
   ) return "";
   const rows = Array.from({ length: 15 }, (_, index) => {

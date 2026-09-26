@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
 
 // IRS Schedule B (2025) AcroForm field names.
 // Verified against the f1040sb--2025.pdf AcroForm field dump (one page):
@@ -94,4 +95,5 @@ export const scheduleBPdf: PdfFormDescriptor = {
     ((fields["print_line4_total"] as number | undefined) ?? 0) > 1500 ||
     ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500 ||
     fields["ordinaryDividends"] !== undefined,
+  appendSupplementalPages: appendScheduleBInterestStatement,
 };

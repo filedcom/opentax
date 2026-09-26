@@ -1,4 +1,5 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { buildPending } from "../pending.ts";
 import { scheduleB } from "./schedule_b.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -194,6 +195,25 @@ Deno.test("schedule_b: multiple source interest rows reconcile to line 2", () =>
     Error,
     "pair one-to-one",
   );
+});
+
+Deno.test("schedule_b: normalized graph output keeps every source interest row", () => {
+  const pending = buildPending({
+    schedule_b: {
+      payer_name: ["Bank A", "Bond issuer"],
+      taxable_interest_net: [100, 275],
+      interest_rows: [
+        { payerName: "Bank A", amount: 100 },
+        { payerName: "Bond issuer", amount: 275 },
+      ],
+      print_line2_total: 375,
+      print_line4_total: 375,
+    },
+  });
+  const xml = scheduleB.build(pending.schedule_b ?? {});
+  assertEquals(xml.split("<Form1040SchBPartIGroup2>").length - 1, 2);
+  assertStringIncludes(xml, "<InterestAmt>100</InterestAmt>");
+  assertStringIncludes(xml, "<InterestAmt>275</InterestAmt>");
 });
 
 Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", async () => {
