@@ -7,7 +7,7 @@ function compute(input: Parameters<typeof f8994.compute>[1]) {
 
 function schedule3Credit(result: ReturnType<typeof compute>): number | undefined {
   const out = result.outputs.find((o) => o.nodeType === "schedule3");
-  return out ? (out.fields as Record<string, number>).line6z_general_business_credit : undefined;
+  return out ? (out.fields as Record<string, number>).line6a_general_business_credit : undefined;
 }
 
 // =============================================================================

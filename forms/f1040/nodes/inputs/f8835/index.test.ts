@@ -83,7 +83,7 @@ Deno.test("f8835.compute: kwh_sold equals kwh_produced — does not throw", () =
   })]);
   // Wind full rate: 1,000,000 × $0.028 = $28,000
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 28_000);
+  assertEquals(fields.line6a_general_business_credit, 28_000);
 });
 
 // =============================================================================
@@ -99,7 +99,7 @@ Deno.test("f8835.compute: WIND full rate (wage+apprenticeship met) = $0.028/kWh"
     meets_apprenticeship: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 28_000);
+  assertEquals(fields.line6a_general_business_credit, 28_000);
 });
 
 Deno.test("f8835.compute: SOLAR full rate = $0.028/kWh", () => {
@@ -110,7 +110,7 @@ Deno.test("f8835.compute: SOLAR full rate = $0.028/kWh", () => {
     meets_apprenticeship: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 28_000);
+  assertEquals(fields.line6a_general_business_credit, 28_000);
 });
 
 Deno.test("f8835.compute: GEOTHERMAL full rate = $0.028/kWh", () => {
@@ -121,7 +121,7 @@ Deno.test("f8835.compute: GEOTHERMAL full rate = $0.028/kWh", () => {
     meets_apprenticeship: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 28_000);
+  assertEquals(fields.line6a_general_business_credit, 28_000);
 });
 
 Deno.test("f8835.compute: BIOMASS_CLOSED full rate = $0.028/kWh", () => {
@@ -132,7 +132,7 @@ Deno.test("f8835.compute: BIOMASS_CLOSED full rate = $0.028/kWh", () => {
     meets_apprenticeship: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 28_000);
+  assertEquals(fields.line6a_general_business_credit, 28_000);
 });
 
 Deno.test("f8835.compute: BIOMASS_OPEN half rate = $0.014/kWh", () => {
@@ -144,7 +144,7 @@ Deno.test("f8835.compute: BIOMASS_OPEN half rate = $0.014/kWh", () => {
     meets_apprenticeship: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 14_000);
+  assertEquals(fields.line6a_general_business_credit, 14_000);
 });
 
 // =============================================================================
@@ -160,7 +160,7 @@ Deno.test("f8835.compute: WIND without wage/apprenticeship — reduced rate $0.0
     meets_apprenticeship: false,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5_600);
+  assertEquals(fields.line6a_general_business_credit, 5_600);
 });
 
 Deno.test("f8835.compute: WIND with wage only (no apprenticeship) — reduced rate", () => {
@@ -171,7 +171,7 @@ Deno.test("f8835.compute: WIND with wage only (no apprenticeship) — reduced ra
     meets_apprenticeship: false,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5_600);
+  assertEquals(fields.line6a_general_business_credit, 5_600);
 });
 
 Deno.test("f8835.compute: BIOMASS_OPEN without requirements — reduced rate $0.0028/kWh", () => {
@@ -183,7 +183,7 @@ Deno.test("f8835.compute: BIOMASS_OPEN without requirements — reduced rate $0.
     meets_apprenticeship: false,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2_800);
+  assertEquals(fields.line6a_general_business_credit, 2_800);
 });
 
 Deno.test("f8835.compute: no wage/apprenticeship flags (omitted) — reduced rate", () => {
@@ -193,7 +193,7 @@ Deno.test("f8835.compute: no wage/apprenticeship flags (omitted) — reduced rat
     kwh_sold: 1_000_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5_600);
+  assertEquals(fields.line6a_general_business_credit, 5_600);
 });
 
 // =============================================================================
@@ -228,7 +228,7 @@ Deno.test("f8835.compute: multiple facilities — credits summed", () => {
     }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 42_000);
+  assertEquals(fields.line6a_general_business_credit, 42_000);
 });
 
 Deno.test("f8835.compute: one facility with zero kWh and one with kWh — only one contributes", () => {
@@ -242,21 +242,21 @@ Deno.test("f8835.compute: one facility with zero kWh and one with kWh — only o
     }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 14_000); // 500000 × $0.028
+  assertEquals(fields.line6a_general_business_credit, 14_000); // 500000 × $0.028
 });
 
 // =============================================================================
 // 7. Output Routing
 // =============================================================================
 
-Deno.test("f8835.compute: routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8835.compute: routes to schedule3 line6a_general_business_credit", () => {
   // Wind full rate: 1,000,000 × $0.028 = $28,000
   const result = compute([minimalItem({
     meets_prevailing_wage: true,
     meets_apprenticeship: true,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 28_000);
+  assertEquals(fields.line6a_general_business_credit, 28_000);
 });
 
 Deno.test("f8835.compute: does not route to schedule2", () => {
@@ -292,5 +292,5 @@ Deno.test("f8835.compute: smoke test — multiple energy types, mixed requiremen
   // BiomassOpen no-req: 1,500,000 × $0.0028 = $4,200
   // Total: $116,200
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 116_200);
+  assertEquals(fields.line6a_general_business_credit, 116_200);
 });

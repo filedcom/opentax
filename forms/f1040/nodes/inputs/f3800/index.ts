@@ -92,7 +92,7 @@ function totalGbc(items: F3800Items): number {
 function schedule3Output(items: F3800Items): NodeOutput[] {
   const total = totalGbc(items);
   if (total === 0) return [];
-  return [output(schedule3, { line6z_general_business_credit: total })];
+  return [output(schedule3, { line6a_general_business_credit: total })];
 }
 
 class F3800Node extends TaxNode<typeof inputSchema> {

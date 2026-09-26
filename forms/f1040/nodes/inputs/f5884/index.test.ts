@@ -64,21 +64,21 @@ Deno.test("120_to_399_hours_yields_25pct_rate", () => {
   // $6,000 × 25% = $1,500
   const result = compute([minimalItem({ first_year_wages: 6000, hours_worked: 200 })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 1500);
+  assertEquals(out?.fields.line6a_general_business_credit, 1500);
 });
 
 Deno.test("400_plus_hours_yields_40pct_rate", () => {
   // $6,000 × 40% = $2,400
   const result = compute([minimalItem({ first_year_wages: 6000, hours_worked: 400 })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2400);
+  assertEquals(out?.fields.line6a_general_business_credit, 2400);
 });
 
 Deno.test("exactly_120_hours_yields_25pct_rate", () => {
   // $3,000 × 25% = $750
   const result = compute([minimalItem({ first_year_wages: 3000, hours_worked: 120 })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 750);
+  assertEquals(out?.fields.line6a_general_business_credit, 750);
 });
 
 // ── Wage Cap ──────────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ Deno.test("wages_capped_at_6000_for_standard_groups", () => {
   // $10,000 wages, 400+ hours → capped at $6,000 × 40% = $2,400
   const result = compute([minimalItem({ first_year_wages: 10000, hours_worked: 400 })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2400);
+  assertEquals(out?.fields.line6a_general_business_credit, 2400);
 });
 
 Deno.test("summer_youth_capped_at_3000", () => {
@@ -98,7 +98,7 @@ Deno.test("summer_youth_capped_at_3000", () => {
     hours_worked: 400,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 1200);
+  assertEquals(out?.fields.line6a_general_business_credit, 1200);
 });
 
 // ── Long-Term Family Assistance (Group 9) ────────────────────────────────────
@@ -111,7 +111,7 @@ Deno.test("ltfa_uses_first_and_second_year_wages", () => {
     second_year_wages: 10000,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 9000);
+  assertEquals(out?.fields.line6a_general_business_credit, 9000);
 });
 
 Deno.test("ltfa_first_year_only_no_second_year", () => {
@@ -121,7 +121,7 @@ Deno.test("ltfa_first_year_only_no_second_year", () => {
     first_year_wages: 8000,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3200);
+  assertEquals(out?.fields.line6a_general_business_credit, 3200);
 });
 
 Deno.test("ltfa_ignores_hours_worked", () => {
@@ -136,8 +136,8 @@ Deno.test("ltfa_ignores_hours_worked", () => {
     first_year_wages: 5000,
   })]);
   assertEquals(
-    findSchedule3(withHours)?.fields.line6z_general_business_credit,
-    findSchedule3(withoutHours)?.fields.line6z_general_business_credit,
+    findSchedule3(withHours)?.fields.line6a_general_business_credit,
+    findSchedule3(withoutHours)?.fields.line6a_general_business_credit,
   );
 });
 
@@ -149,7 +149,7 @@ Deno.test("ltfa_wage_cap_10000_per_tier", () => {
     second_year_wages: 15000,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 9000); // 4000 + 5000
+  assertEquals(out?.fields.line6a_general_business_credit, 9000); // 4000 + 5000
 });
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
@@ -161,7 +161,7 @@ Deno.test("multiple_employees_aggregate", () => {
     minimalItem({ target_group: TargetGroup.ExFelon, first_year_wages: 4000, hours_worked: 400 }),
   ]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 4000);
+  assertEquals(out?.fields.line6a_general_business_credit, 4000);
 });
 
 Deno.test("routes_to_schedule3", () => {
@@ -180,7 +180,7 @@ Deno.test("disabled_veteran_cap_12000", () => {
     is_disabled_veteran: true,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 4800);
+  assertEquals(out?.fields.line6a_general_business_credit, 4800);
 });
 
 Deno.test("disabled_veteran_long_term_cap_14000", () => {
@@ -192,5 +192,5 @@ Deno.test("disabled_veteran_long_term_cap_14000", () => {
     is_disabled_veteran_long_term: true,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5600);
+  assertEquals(out?.fields.line6a_general_business_credit, 5600);
 });

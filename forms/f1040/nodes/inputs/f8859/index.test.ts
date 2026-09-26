@@ -31,10 +31,10 @@ Deno.test("f8859.inputSchema: negative carryforward_amount fails", () => {
 // 2. Credit Passthrough to Schedule 3
 // =============================================================================
 
-Deno.test("f8859.compute: carryforward amount routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8859.compute: carryforward amount routes to schedule3 line6a_general_business_credit", () => {
   const result = compute([minimalItem({ carryforward_amount: 2500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2500);
+  assertEquals(fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("f8859.compute: zero carryforward — no output", () => {
@@ -57,7 +57,7 @@ Deno.test("f8859.compute: multiple carryforward items summed to schedule3", () =
     minimalItem({ carryforward_amount: 1500 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2500);
+  assertEquals(fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("f8859.compute: one zero + one nonzero — only nonzero credited", () => {
@@ -66,7 +66,7 @@ Deno.test("f8859.compute: one zero + one nonzero — only nonzero credited", () 
     minimalItem({ carryforward_amount: 800 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 800);
+  assertEquals(fields.line6a_general_business_credit, 800);
 });
 
 // =============================================================================
@@ -84,6 +84,6 @@ Deno.test("f8859.compute: throws on negative carryforward_amount", () => {
 Deno.test("f8859.compute: smoke test — carryforward from prior year", () => {
   const result = compute([minimalItem({ carryforward_amount: 3000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3000);
+  assertEquals(fields.line6a_general_business_credit, 3000);
   assertEquals(result.outputs.length, 1);
 });

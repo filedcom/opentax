@@ -86,7 +86,7 @@ Deno.test("form8582cr: allowed credit = min(credits, tax_attributable_to_passive
     regular_tax_without_passive: 7_000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2_000);
+  assertEquals(fields.line6a_general_business_credit, 2_000);
 });
 
 Deno.test("form8582cr: credits capped by tax attributable to passive", () => {
@@ -97,7 +97,7 @@ Deno.test("form8582cr: credits capped by tax attributable to passive", () => {
     regular_tax_without_passive: 9_000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1_000);
+  assertEquals(fields.line6a_general_business_credit, 1_000);
 });
 
 Deno.test("form8582cr: zero tax attributable → no base credit allowed", () => {
@@ -123,7 +123,7 @@ Deno.test("form8582cr: prior_unallowed_credits added to total available", () => 
     regular_tax_without_passive: 8_000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1_500);
+  assertEquals(fields.line6a_general_business_credit, 1_500);
 });
 
 // =============================================================================
@@ -144,7 +144,7 @@ Deno.test("form8582cr: rental RE special allowance — MAGI below threshold → 
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3_000);
+  assertEquals(fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("form8582cr: rental RE special allowance — MAGI above upper threshold → no special allowance", () => {
@@ -174,7 +174,7 @@ Deno.test("form8582cr: rental RE special allowance — MAGI in phase-out range",
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3_000);
+  assertEquals(fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("form8582cr: rental RE special allowance — MAGI at lower threshold → full max", () => {
@@ -189,7 +189,7 @@ Deno.test("form8582cr: rental RE special allowance — MAGI at lower threshold �
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5_000);
+  assertEquals(fields.line6a_general_business_credit, 5_000);
 });
 
 // =============================================================================
@@ -224,14 +224,14 @@ Deno.test("form8582cr: real estate professional → credits not limited by passi
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 4_000);
+  assertEquals(fields.line6a_general_business_credit, 4_000);
 });
 
 // =============================================================================
 // 8. Output Routing
 // =============================================================================
 
-Deno.test("form8582cr: allowed credit routes to schedule3.line6z_general_business_credit", () => {
+Deno.test("form8582cr: allowed credit routes to schedule3.line6a_general_business_credit", () => {
   // tax_attributable = 15000 - 12000 = 3000; credits = 2000; allowed = 2000
   const result = compute({
     total_passive_credits: 2_000,
@@ -239,7 +239,7 @@ Deno.test("form8582cr: allowed credit routes to schedule3.line6z_general_busines
     regular_tax_without_passive: 12_000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2_000);
+  assertEquals(fields.line6a_general_business_credit, 2_000);
 });
 
 Deno.test("form8582cr: no credit allowed → no schedule3 output", () => {
@@ -275,5 +275,5 @@ Deno.test("form8582cr: smoke test — active rental participation, MAGI at 12500
     filing_status: FilingStatus.MFJ,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 7_000);
+  assertEquals(fields.line6a_general_business_credit, 7_000);
 });

@@ -41,34 +41,34 @@ Deno.test("biodiesel_mixture_rate_1_per_gal", () => {
   // 1000 gal × $1.00 = $1,000
   const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: 1000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 1000);
+  assertEquals(out?.fields.line6a_general_business_credit, 1000);
 });
 
 Deno.test("alcohol_mixture_rate_045_per_gal", () => {
   // 1000 gal × $0.45 = $450
   const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.AlcoholMixture, gallons: 1000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 450);
+  assertEquals(out?.fields.line6a_general_business_credit, 450);
 });
 
 Deno.test("cellulosic_biofuel_rate_101_per_gal", () => {
   // 1000 gal × $1.01 = $1,010
   const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.CellulosicBiofuel, gallons: 1000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 1010);
+  assertEquals(out?.fields.line6a_general_business_credit, 1010);
 });
 
 Deno.test("second_generation_biofuel_rate_101_per_gal", () => {
   const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.SecondGenerationBiofuel, gallons: 500 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 505);
+  assertEquals(out?.fields.line6a_general_business_credit, 505);
 });
 
 Deno.test("small_agri_producer_rate_010_per_gal", () => {
   // 1000 gal × $0.10 = $100
   const result = compute({ fuel_entries: [{ fuel_type: BiofuelType.SmallAgriProducer, gallons: 1000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 100);
+  assertEquals(out?.fields.line6a_general_business_credit, 100);
 });
 
 // ── Override Rate ─────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ Deno.test("credit_rate_override_used_when_provided", () => {
     fuel_entries: [{ fuel_type: BiofuelType.BiodieselMixture, gallons: 1000, credit_rate_override: 0.50 }],
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 500);
+  assertEquals(out?.fields.line6a_general_business_credit, 500);
 });
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ Deno.test("multiple_fuel_types_aggregate", () => {
     ],
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 1450);
+  assertEquals(out?.fields.line6a_general_business_credit, 1450);
 });
 
 Deno.test("routes_to_schedule3", () => {

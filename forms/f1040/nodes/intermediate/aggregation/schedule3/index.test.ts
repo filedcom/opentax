@@ -25,7 +25,6 @@ Deno.test("validation: all-zero fields produce no output", () => {
     line2_childcare_credit: 0,
     line3_education_credit: 0,
     line4_retirement_savings_credit: 0,
-    line6b_child_tax_credit: 0,
     line6c_adoption_credit: 0,
     line10_amount_paid_extension: 0,
     line11_excess_ss: 0,
@@ -100,14 +99,6 @@ Deno.test("calc: Form 8911 Schedule 3 line 6j reaches Form 1040 line 20", () => 
   );
 });
 
-Deno.test("calc: line6b_child_tax_credit alone → f1040 line20", () => {
-  const result = compute({ line6b_child_tax_credit: 2000 });
-  assertEquals(
-    fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
-    2000,
-  );
-});
-
 Deno.test("calc: line6c_adoption_credit alone → f1040 line20", () => {
   const result = compute({ line6c_adoption_credit: 5000 });
   assertEquals(
@@ -154,13 +145,12 @@ Deno.test("agg: partITotal sums all Part I credits", () => {
     line2_childcare_credit: 600, // line2
     line3_education_credit: 1500, // line3
     line4_retirement_savings_credit: 200, // line4
-    line6b_child_tax_credit: 2000, // line6b
     line6c_adoption_credit: 5000, // line6c
-    // total = 300 + 600 + 1500 + 200 + 2000 + 5000 = 9600
+    // total = 300 + 600 + 1500 + 200 + 5000 = 7600
   });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
-    9600,
+    7600,
   );
 });
 
@@ -192,8 +182,7 @@ Deno.test("routing: Part I → line20, Part II → line31, both present in same 
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     600,
   );
-  // Form 6251 also receives the foreign tax credit from line 1.
-  assertEquals(result.outputs.length, 3);
+  assertEquals(result.outputs.length, 2);
 });
 
 Deno.test("routing: only line20 emitted when Part II is zero", () => {
@@ -238,7 +227,7 @@ Deno.test("edge: only partial fields provided", () => {
 
 Deno.test("edge: large values route correctly", () => {
   const result = compute({
-    line6b_child_tax_credit: 10_000,
+    line6a_general_business_credit: 10_000,
     line10_amount_paid_extension: 50_000,
   });
   assertEquals(
@@ -259,9 +248,8 @@ Deno.test("smoke: all fields populated — correct totals emitted to f1040", () 
   // - Childcare credit: $600
   // - Education credit (LLC): $1,500
   // - Saver's credit: $200
-  // - Child tax credit (nonrefundable): $2,000
   // - Adoption credit: $5,000
-  // → Part I total (line 20) = 350 + 600 + 1500 + 200 + 2000 + 5000 = 9650
+  // → Part I total (line 20) = 350 + 600 + 1500 + 200 + 5000 = 7650
   //
   // - Extension payment: $1,200
   // - Excess SS: $340 (two employers, both withheld max)
@@ -272,20 +260,19 @@ Deno.test("smoke: all fields populated — correct totals emitted to f1040", () 
     line2_childcare_credit: 600,
     line3_education_credit: 1500,
     line4_retirement_savings_credit: 200,
-    line6b_child_tax_credit: 2000,
     line6c_adoption_credit: 5000,
     line10_amount_paid_extension: 1200,
     line11_excess_ss: 340,
   });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
-    9650,
+    7650,
   );
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     1540,
   );
-  assertEquals(result.outputs.length, 3);
+  assertEquals(result.outputs.length, 2);
 });
 
 // ── Previously untested Part I credits ───────────────────────────────────────
@@ -298,12 +285,34 @@ Deno.test("calc: line5b energy efficient home alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line6d_clean_vehicle_credit alone → f1040 line20", () => {
-  const result = compute({ line6d_clean_vehicle_credit: 7_500 });
+Deno.test("calc: line6f_clean_vehicle_credit alone → f1040 line20", () => {
+  const result = compute({ line6f_clean_vehicle_credit: 7_500 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     7_500,
   );
+});
+
+Deno.test("Schedule 3 keeps new and previously owned clean vehicle credits on lines 6f and 6m", () => {
+  const result = compute({
+    line6f_clean_vehicle_credit: [3_750, 1_250],
+    line6m_prev_owned_clean_vehicle_credit: [4_000, 1_000],
+  });
+  const schedule = findOutput(result, "schedule3")?.fields;
+  assertEquals(schedule?.line6f_total, 5_000);
+  assertEquals(schedule?.line6m_total, 5_000);
+  assertEquals(schedule?.line7_total, 10_000);
+  assertEquals(schedule?.line8_total, 10_000);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits, 10_000);
+});
+
+Deno.test("Schedule 3 sums GBC producers into a single line 6a", () => {
+  const result = compute({
+    line6a_general_business_credit: [1_000, 2_000],
+    line6a_low_income_housing_credit: 500,
+  });
+  assertEquals(findOutput(result, "schedule3")?.fields.line6a_total, 3_500);
+  assertEquals(findOutput(result, "schedule3")?.fields.line7_total, 3_500);
 });
 
 Deno.test("calc: line6d_elderly_disabled_credit alone → f1040 line20", () => {
@@ -314,32 +323,32 @@ Deno.test("calc: line6d_elderly_disabled_credit alone → f1040 line20", () => {
   );
 });
 
-Deno.test("calc: line6e_prior_year_min_tax_credit alone → f1040 line20", () => {
-  const result = compute({ line6e_prior_year_min_tax_credit: 800 });
+Deno.test("calc: line6b_prior_year_min_tax_credit alone → f1040 line20", () => {
+  const result = compute({ line6b_prior_year_min_tax_credit: 800 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     800,
   );
 });
 
-Deno.test("calc: line6f_mortgage_interest_credit alone → f1040 line20", () => {
-  const result = compute({ line6f_mortgage_interest_credit: 2_000 });
+Deno.test("calc: line6g_mortgage_interest_credit alone → f1040 line20", () => {
+  const result = compute({ line6g_mortgage_interest_credit: 2_000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     2_000,
   );
 });
 
-Deno.test("calc: line6z_general_business_credit alone → f1040 line20", () => {
-  const result = compute({ line6z_general_business_credit: 5_000 });
+Deno.test("calc: line6a_general_business_credit alone → f1040 line20", () => {
+  const result = compute({ line6a_general_business_credit: 5_000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     5_000,
   );
 });
 
-Deno.test("calc: line6b_low_income_housing_credit alone → f1040 line20", () => {
-  const result = compute({ line6b_low_income_housing_credit: 3_000 });
+Deno.test("calc: line6a_low_income_housing_credit alone → f1040 line20", () => {
+  const result = compute({ line6a_low_income_housing_credit: 3_000 });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     3_000,
@@ -353,14 +362,6 @@ Deno.test("calc: line9_premium_tax_credit alone → f1040 line31", () => {
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     2_400,
-  );
-});
-
-Deno.test("calc: line13_1446_withholding alone → f1040 line31", () => {
-  const result = compute({ line13_1446_withholding: 1_500 });
-  assertEquals(
-    fieldsOf(result.outputs, f1040)!.line31_additional_payments,
-    1_500,
   );
 });
 
@@ -378,24 +379,23 @@ Deno.test("agg: 3 Part I credits each $500 → total $1,500 on line20", () => {
   );
 });
 
-Deno.test("agg: partIITotal = line9 + line10 + line11 + line13", () => {
+Deno.test("agg: partIITotal = line9 + line10 + line11", () => {
   const result = compute({
     line9_premium_tax_credit: 2_400,
     line10_amount_paid_extension: 1_200,
     line11_excess_ss: 340,
-    line13_1446_withholding: 1_500,
   });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
-    5_440,
+    3_940,
   );
 });
 
 Deno.test("agg: clean vehicle + residential energy + mortgage interest credit sum correctly", () => {
   const result = compute({
-    line6d_clean_vehicle_credit: 7_500,
+    line6f_clean_vehicle_credit: 7_500,
     line5b_energy_efficient_home: 1_200,
-    line6f_mortgage_interest_credit: 2_000,
+    line6g_mortgage_interest_credit: 2_000,
   });
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,

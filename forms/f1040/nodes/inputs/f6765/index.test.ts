@@ -53,7 +53,7 @@ Deno.test("regular_method_wages_only_20pct_of_excess", () => {
     regular_base_amount: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 20000);
+  assertEquals(out?.fields.line6a_general_business_credit, 20000);
 });
 
 Deno.test("regular_method_contract_research_at_65pct", () => {
@@ -64,7 +64,7 @@ Deno.test("regular_method_contract_research_at_65pct", () => {
     regular_base_amount: 0,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 13000);
+  assertEquals(out?.fields.line6a_general_business_credit, 13000);
 });
 
 Deno.test("regular_method_supplies_count_as_qre", () => {
@@ -76,7 +76,7 @@ Deno.test("regular_method_supplies_count_as_qre", () => {
     regular_base_amount: 40000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 12000);
+  assertEquals(out?.fields.line6a_general_business_credit, 12000);
 });
 
 Deno.test("regular_method_energy_consortium_100pct", () => {
@@ -87,7 +87,7 @@ Deno.test("regular_method_energy_consortium_100pct", () => {
     regular_base_amount: 0,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 10000);
+  assertEquals(out?.fields.line6a_general_business_credit, 10000);
 });
 
 Deno.test("regular_method_no_negative_credit_when_base_exceeds_qre", () => {
@@ -109,7 +109,7 @@ Deno.test("asc_method_14pct_of_excess_over_half_prior_avg", () => {
     asc_prior_avg_qre: 60000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 9800);
+  assertEquals(out?.fields.line6a_general_business_credit, 9800);
 });
 
 Deno.test("asc_method_current_less_than_half_prior_gives_zero", () => {
@@ -130,7 +130,7 @@ Deno.test("asc_method_zero_prior_avg_14pct_of_current", () => {
     asc_prior_avg_qre: 0,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 14000);
+  assertEquals(out?.fields.line6a_general_business_credit, 14000);
 });
 
 // ── Payroll Tax Election ──────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ Deno.test("payroll_election_reduces_schedule3_amount", () => {
     payroll_tax_credit_elected: 10000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 10000);
+  assertEquals(out?.fields.line6a_general_business_credit, 10000);
 });
 
 Deno.test("payroll_election_all_elected_no_schedule3_output", () => {
@@ -171,7 +171,7 @@ Deno.test("payroll_election_capped_at_500k", () => {
   });
   // Full credit = $3M × 20% = $600k. Elected limited to $500k → remainder = $100k
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 100000);
+  assertEquals(out?.fields.line6a_general_business_credit, 100000);
 });
 
 Deno.test("no_payroll_election_full_credit_to_schedule3", () => {
@@ -181,7 +181,7 @@ Deno.test("no_payroll_election_full_credit_to_schedule3", () => {
     regular_base_amount: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 20000);
+  assertEquals(out?.fields.line6a_general_business_credit, 20000);
 });
 
 Deno.test("routes_to_schedule3", () => {

@@ -99,7 +99,7 @@ class Form8396Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      output(schedule3, { line6f_mortgage_interest_credit: total }),
+      output(schedule3, { line6g_mortgage_interest_credit: total }),
     ];
 
     return { outputs };

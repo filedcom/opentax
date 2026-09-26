@@ -52,7 +52,7 @@ Deno.test("exactly_100_employees_qualifies", () => {
     startup_costs: 5000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2500);
+  assertEquals(out?.fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("zero_non_hce_count_no_credit", () => {
@@ -86,7 +86,7 @@ Deno.test("small_employer_50_or_fewer_100pct_rate", () => {
     startup_costs: 4000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 4000);
+  assertEquals(out?.fields.line6a_general_business_credit, 4000);
 });
 
 Deno.test("small_employer_exactly_50_employees_100pct_rate", () => {
@@ -97,7 +97,7 @@ Deno.test("small_employer_exactly_50_employees_100pct_rate", () => {
     startup_costs: 3000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3000);
+  assertEquals(out?.fields.line6a_general_business_credit, 3000);
 });
 
 Deno.test("startup_costs_capped_at_5000", () => {
@@ -109,7 +109,7 @@ Deno.test("startup_costs_capped_at_5000", () => {
     startup_costs: 8000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 // ── Larger Employer (51–100) — 50% Rate ──────────────────────────────────────
@@ -123,7 +123,7 @@ Deno.test("employer_51_to_100_employees_50pct_rate", () => {
     startup_costs: 4000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2000);
+  assertEquals(out?.fields.line6a_general_business_credit, 2000);
 });
 
 Deno.test("51_employee_limit_50pct_rate_cap_at_5000", () => {
@@ -135,7 +135,7 @@ Deno.test("51_employee_limit_50pct_rate_cap_at_5000", () => {
     startup_costs: 12000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 // ── Auto-Enrollment Credit ────────────────────────────────────────────────────
@@ -150,7 +150,7 @@ Deno.test("auto_enrollment_adds_500_to_credit", () => {
     has_auto_enrollment: true,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3500);
+  assertEquals(out?.fields.line6a_general_business_credit, 3500);
 });
 
 Deno.test("no_auto_enrollment_no_extra_credit", () => {
@@ -161,7 +161,7 @@ Deno.test("no_auto_enrollment_no_extra_credit", () => {
     startup_costs: 3000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3000);
+  assertEquals(out?.fields.line6a_general_business_credit, 3000);
 });
 
 Deno.test("auto_enrollment_only_qualifies_when_startup_eligible", () => {
@@ -176,7 +176,7 @@ Deno.test("auto_enrollment_only_qualifies_when_startup_eligible", () => {
   // startup credit = 0, but auto-enrollment alone adds $500
   // The auto-enrollment credit ($500) is still added
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 500);
+  assertEquals(out?.fields.line6a_general_business_credit, 500);
 });
 
 Deno.test("routes_to_schedule3", () => {

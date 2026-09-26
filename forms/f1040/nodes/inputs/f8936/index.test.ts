@@ -46,7 +46,7 @@ Deno.test("f8936: new vehicle — full $7,500 credit", () => {
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: new vehicle — partial $3,750 credit honored exactly", () => {
@@ -58,7 +58,7 @@ Deno.test("f8936: new vehicle — partial $3,750 credit honored exactly", () => 
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 3_750);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 3_750);
 });
 
 Deno.test("f8936: new vehicle — credit_amount above $7,500 capped at $7,500", () => {
@@ -70,7 +70,7 @@ Deno.test("f8936: new vehicle — credit_amount above $7,500 capped at $7,500", 
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 // =============================================================================
@@ -93,7 +93,7 @@ Deno.test("f8936: single at exactly $150k → credit allowed", () => {
     modified_agi: 150_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: MFJ exceeds $300k → no credit", () => {
@@ -112,7 +112,7 @@ Deno.test("f8936: MFJ within $300k → credit allowed", () => {
     modified_agi: 250_000,
     filing_status: FilingStatus.MFJ,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: HOH exceeds $225k → no credit", () => {
@@ -131,7 +131,7 @@ Deno.test("f8936: HOH at exactly $225k → credit allowed", () => {
     modified_agi: 225_000,
     filing_status: FilingStatus.HOH,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 // =============================================================================
@@ -158,7 +158,7 @@ Deno.test("f8936: other type at exactly $55k MSRP → credit allowed", () => {
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: SUV/van/truck allows up to $80k MSRP", () => {
@@ -170,7 +170,7 @@ Deno.test("f8936: SUV/van/truck allows up to $80k MSRP", () => {
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 Deno.test("f8936: SUV exceeds $80k MSRP → no credit", () => {
@@ -199,7 +199,7 @@ Deno.test("f8936: 50% business use reduces credit by 50%", () => {
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 3_750);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 3_750);
 });
 
 Deno.test("f8936: 100% business use → no personal credit (zero output)", () => {
@@ -223,7 +223,7 @@ Deno.test("f8936: 25% business use → 75% personal credit", () => {
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 5_625);
+  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 5_625);
 });
 
 // =============================================================================
@@ -238,7 +238,7 @@ Deno.test("f8936: used vehicle — 30% of price, capped at $4,000", () => {
     modified_agi: 50_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 4_000);
+  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 4_000);
 });
 
 Deno.test("f8936: used vehicle — $10,000 price × 30% = $3,000 (under cap)", () => {
@@ -248,7 +248,7 @@ Deno.test("f8936: used vehicle — $10,000 price × 30% = $3,000 (under cap)", (
     modified_agi: 50_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 3_000);
+  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 3_000);
 });
 
 Deno.test("f8936: used vehicle — price exceeds $25,000 → no credit", () => {
@@ -268,7 +268,7 @@ Deno.test("f8936: used vehicle — price at exactly $25,000 → credit allowed",
     modified_agi: 50_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 4_000);
+  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 4_000);
 });
 
 Deno.test("f8936: used vehicle — single exceeds $150k income → no credit", () => {
@@ -289,14 +289,14 @@ Deno.test("f8936: used vehicle — business use reduces personal credit", () => 
     modified_agi: 50_000,
     filing_status: FilingStatus.Single,
   }]), "schedule3");
-  assertEquals(s3?.fields.line6d_clean_vehicle_credit, 3_000);
+  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 3_000);
 });
 
 // =============================================================================
 // Routing
 // =============================================================================
 
-Deno.test("f8936: credit routes to schedule3 line6d_clean_vehicle_credit", () => {
+Deno.test("f8936: credit routes to schedule3 line6f_clean_vehicle_credit", () => {
   const result = compute([{
     is_new_vehicle: true,
     credit_amount: 7_500,
@@ -306,7 +306,7 @@ Deno.test("f8936: credit routes to schedule3 line6d_clean_vehicle_credit", () =>
     filing_status: FilingStatus.Single,
   }]);
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertEquals(result.outputs[0]?.fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(result.outputs[0]?.fields.line6f_clean_vehicle_credit, 7_500);
 });
 
 // =============================================================================
@@ -319,8 +319,8 @@ Deno.test("f8936: two qualifying vehicles each produce a schedule3 output", () =
     { is_new_vehicle: false, sale_price: 20_000, modified_agi: 50_000, filing_status: FilingStatus.Single },
   ]);
   assertEquals(result.outputs.length, 2);
-  assertEquals(result.outputs[0].fields.line6d_clean_vehicle_credit, 7_500);
-  assertEquals(result.outputs[1].fields.line6d_clean_vehicle_credit, 4_000);
+  assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
+  assertEquals(result.outputs[1].fields.line6m_prev_owned_clean_vehicle_credit, 4_000);
 });
 
 Deno.test("f8936: vehicle over income limit excluded, qualifying vehicle retained", () => {
@@ -329,5 +329,5 @@ Deno.test("f8936: vehicle over income limit excluded, qualifying vehicle retaine
     { is_new_vehicle: true, credit_amount: 7_500, msrp: 45_000, vehicle_type: "other", modified_agi: 100_000, filing_status: FilingStatus.Single },
   ]);
   assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].fields.line6d_clean_vehicle_credit, 7_500);
+  assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
 });

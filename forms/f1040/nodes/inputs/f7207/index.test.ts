@@ -41,20 +41,20 @@ Deno.test("solar_module_007_per_watt", () => {
   // 1,000,000 W × $0.07 = $70,000
   const result = compute({ components: [{ component_type: ComponentType.SolarModule, quantity: 1_000_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 70000);
+  assertEquals(out?.fields.line6a_general_business_credit, 70000);
 });
 
 Deno.test("solar_cell_004_per_watt", () => {
   // 1,000,000 W × $0.04 = $40,000
   const result = compute({ components: [{ component_type: ComponentType.SolarCell, quantity: 1_000_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 40000);
+  assertEquals(out?.fields.line6a_general_business_credit, 40000);
 });
 
 Deno.test("thin_film_solar_cell_004_per_watt", () => {
   const result = compute({ components: [{ component_type: ComponentType.ThinFilmSolarCell, quantity: 500_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 20000);
+  assertEquals(out?.fields.line6a_general_business_credit, 20000);
 });
 
 // ── Wind Components ───────────────────────────────────────────────────────────
@@ -63,19 +63,19 @@ Deno.test("wind_nacelle_005_per_watt", () => {
   // 2,000,000 W × $0.05 = $100,000
   const result = compute({ components: [{ component_type: ComponentType.WindNacelle, quantity: 2_000_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 100000);
+  assertEquals(out?.fields.line6a_general_business_credit, 100000);
 });
 
 Deno.test("wind_blade_002_per_watt", () => {
   const result = compute({ components: [{ component_type: ComponentType.WindBlade, quantity: 1_000_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 20000);
+  assertEquals(out?.fields.line6a_general_business_credit, 20000);
 });
 
 Deno.test("wind_tower_003_per_watt", () => {
   const result = compute({ components: [{ component_type: ComponentType.WindTower, quantity: 1_000_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 30000);
+  assertEquals(out?.fields.line6a_general_business_credit, 30000);
 });
 
 // ── Battery Module ────────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ Deno.test("battery_module_00035_per_wh", () => {
   // 1,000,000 Wh × $0.0035 = $3,500
   const result = compute({ components: [{ component_type: ComponentType.BatteryModule, quantity: 1_000_000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3500);
+  assertEquals(out?.fields.line6a_general_business_credit, 3500);
 });
 
 // ── Critical Minerals ─────────────────────────────────────────────────────────
@@ -93,7 +93,7 @@ Deno.test("critical_mineral_10pct_of_production_cost", () => {
   // $100k production cost × 10% = $10,000
   const result = compute({ components: [{ component_type: ComponentType.CriticalMineralOther, quantity: 100000 }] });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 10000);
+  assertEquals(out?.fields.line6a_general_business_credit, 10000);
 });
 
 // ── Credit Rate Override ──────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ Deno.test("credit_rate_override_used_when_provided", () => {
     components: [{ component_type: ComponentType.SolarModule, quantity: 1_000_000, credit_rate_override: 0.05 }],
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 50000);
+  assertEquals(out?.fields.line6a_general_business_credit, 50000);
 });
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ Deno.test("multiple_component_types_aggregate", () => {
     ],
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 73500);
+  assertEquals(out?.fields.line6a_general_business_credit, 73500);
 });
 
 Deno.test("routes_to_schedule3", () => {

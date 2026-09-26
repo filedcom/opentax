@@ -330,7 +330,7 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
-    domainKey: "line25c_additional_medicare_withheld",
+    domainKey: "line25c_total",
     pdfField: "topmostSubform[0].Page2[0].f2_19[0]",
   },
   {

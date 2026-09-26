@@ -36,20 +36,21 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   { kind: "text", domainKey: "line4_retirement_savings_credit", pdfField: "topmostSubform[0].Page1[0].f1_06[0]" },
   { kind: "text", domainKey: "line5a_residential_clean_energy", pdfField: "topmostSubform[0].Page1[0].f1_07[0]" },
   { kind: "text", domainKey: "line5b_energy_efficient_home", pdfField: "topmostSubform[0].Page1[0].f1_08[0]" },
-  { kind: "text", domainKey: "line6z_general_business_credit", pdfField: "topmostSubform[0].Page1[0].Line6a_ReadOrder[0].f1_09[0]" },
-  { kind: "text", domainKey: "line6e_prior_year_min_tax_credit", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
+  { kind: "text", domainKey: "line6a_total", pdfField: "topmostSubform[0].Page1[0].Line6a_ReadOrder[0].f1_09[0]" },
+  { kind: "text", domainKey: "line6b_prior_year_min_tax_credit", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
   { kind: "text", domainKey: "line6c_adoption_credit", pdfField: "topmostSubform[0].Page1[0].f1_11[0]" },
   { kind: "text", domainKey: "line6d_elderly_disabled_credit", pdfField: "topmostSubform[0].Page1[0].f1_12[0]" },
-  { kind: "text", domainKey: "line6d_clean_vehicle_credit", pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
-  { kind: "text", domainKey: "line6f_mortgage_interest_credit", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
+  { kind: "text", domainKey: "line6f_total", pdfField: "topmostSubform[0].Page1[0].f1_14[0]" },
+  { kind: "text", domainKey: "line6g_mortgage_interest_credit", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
   { kind: "text", domainKey: "line6l_form8978_credit", pdfField: "topmostSubform[0].Page1[0].f1_20[0]" },
+  { kind: "text", domainKey: "line6m_total", pdfField: "topmostSubform[0].Page1[0].f1_21[0]" },
+  { kind: "text", domainKey: "line7_total", pdfField: "topmostSubform[0].Page1[0].f1_24[0]" },
   { kind: "text", domainKey: "line8_total", pdfField: "topmostSubform[0].Page1[0].f1_25[0]" },
 
   // ── Part II: Other Payments and Refundable Credits ───────────────────────────
   { kind: "text", domainKey: "line9_premium_tax_credit", pdfField: "topmostSubform[0].Page1[0].f1_26[0]" },
   { kind: "text", domainKey: "line10_amount_paid_extension", pdfField: "topmostSubform[0].Page1[0].f1_27[0]" },
   { kind: "text", domainKey: "line11_excess_ss", pdfField: "topmostSubform[0].Page1[0].f1_28[0]" },
-  { kind: "text", domainKey: "line13_1446_withholding", pdfField: "topmostSubform[0].Page1[0].f1_33[0]" },
   { kind: "text", domainKey: "line15_total", pdfField: "topmostSubform[0].Page1[0].f1_37[0]" },
 ];
 

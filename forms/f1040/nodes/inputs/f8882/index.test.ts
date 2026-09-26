@@ -42,14 +42,14 @@ Deno.test("childcare_expenses_at_25pct", () => {
   // $400,000 × 25% = $100,000
   const result = compute({ qualified_childcare_expenses: 400000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 100000);
+  assertEquals(out?.fields.line6a_general_business_credit, 100000);
 });
 
 Deno.test("resource_referral_at_10pct", () => {
   // $200,000 × 10% = $20,000
   const result = compute({ resource_referral_expenses: 200000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 20000);
+  assertEquals(out?.fields.line6a_general_business_credit, 20000);
 });
 
 Deno.test("combined_childcare_and_referral", () => {
@@ -59,7 +59,7 @@ Deno.test("combined_childcare_and_referral", () => {
     resource_referral_expenses: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 60000);
+  assertEquals(out?.fields.line6a_general_business_credit, 60000);
 });
 
 // ── Annual Cap $150,000 ────────────────────────────────────────────────────────
@@ -68,14 +68,14 @@ Deno.test("credit_capped_at_150000", () => {
   // $600,000 × 25% = $150,000 → exactly at cap
   const result = compute({ qualified_childcare_expenses: 600000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 150000);
+  assertEquals(out?.fields.line6a_general_business_credit, 150000);
 });
 
 Deno.test("credit_above_cap_clamped_to_150000", () => {
   // $800,000 × 25% = $200,000 → capped at $150,000
   const result = compute({ qualified_childcare_expenses: 800000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 150000);
+  assertEquals(out?.fields.line6a_general_business_credit, 150000);
 });
 
 Deno.test("combined_above_cap_clamped_to_150000", () => {
@@ -85,7 +85,7 @@ Deno.test("combined_above_cap_clamped_to_150000", () => {
     resource_referral_expenses: 200000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 145000);
+  assertEquals(out?.fields.line6a_general_business_credit, 145000);
 });
 
 Deno.test("combined_over_cap_clamped", () => {
@@ -95,7 +95,7 @@ Deno.test("combined_over_cap_clamped", () => {
     resource_referral_expenses: 400000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 150000);
+  assertEquals(out?.fields.line6a_general_business_credit, 150000);
 });
 
 Deno.test("routes_to_schedule3", () => {

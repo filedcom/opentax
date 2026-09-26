@@ -71,78 +71,78 @@ Deno.test("f3800.inputSchema: valid full item passes", () => {
 // 2. Per-Field Routing — Component Credits
 // =============================================================================
 
-Deno.test("f3800.compute: total_gbc routes to schedule3.line6z_general_business_credit", () => {
+Deno.test("f3800.compute: total_gbc routes to schedule3.line6a_general_business_credit", () => {
   const result = compute([minimalItem({ total_gbc: 3000 })]);
   const out = findOutput(result, "schedule3");
   assertEquals(out !== undefined, true);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3000);
+  assertEquals(fields.line6a_general_business_credit, 3000);
 });
 
 Deno.test("f3800.compute: work_opportunity_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ work_opportunity_credit: 1500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1500);
+  assertEquals(fields.line6a_general_business_credit, 1500);
 });
 
 Deno.test("f3800.compute: research_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ research_credit: 4000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 4000);
+  assertEquals(fields.line6a_general_business_credit, 4000);
 });
 
 Deno.test("f3800.compute: disabled_access_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ disabled_access_credit: 500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 500);
+  assertEquals(fields.line6a_general_business_credit, 500);
 });
 
 Deno.test("f3800.compute: employer_pension_startup_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ employer_pension_startup_credit: 750 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 750);
+  assertEquals(fields.line6a_general_business_credit, 750);
 });
 
 Deno.test("f3800.compute: employer_childcare_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ employer_childcare_credit: 600 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 600);
+  assertEquals(fields.line6a_general_business_credit, 600);
 });
 
 Deno.test("f3800.compute: small_employer_health_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ small_employer_health_credit: 2500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2500);
+  assertEquals(fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("f3800.compute: new_markets_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ new_markets_credit: 10000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 10000);
+  assertEquals(fields.line6a_general_business_credit, 10000);
 });
 
 Deno.test("f3800.compute: energy_efficient_home_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ energy_efficient_home_credit: 1000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1000);
+  assertEquals(fields.line6a_general_business_credit, 1000);
 });
 
 Deno.test("f3800.compute: advanced_manufacturing_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ advanced_manufacturing_credit: 3500 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3500);
+  assertEquals(fields.line6a_general_business_credit, 3500);
 });
 
 Deno.test("f3800.compute: carryforward_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ carryforward_credit: 800 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 800);
+  assertEquals(fields.line6a_general_business_credit, 800);
 });
 
 Deno.test("f3800.compute: carryback_credit alone routes to schedule3", () => {
   const result = compute([minimalItem({ carryback_credit: 400 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 400);
+  assertEquals(fields.line6a_general_business_credit, 400);
 });
 
 Deno.test("f3800.compute: empty item — no output", () => {
@@ -167,7 +167,7 @@ Deno.test("f3800.compute: total_gbc overrides sum of components", () => {
     research_credit: 2000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5000);
+  assertEquals(fields.line6a_general_business_credit, 5000);
 });
 
 Deno.test("f3800.compute: carryforward added to total_gbc override", () => {
@@ -177,7 +177,7 @@ Deno.test("f3800.compute: carryforward added to total_gbc override", () => {
     carryforward_credit: 1000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 6000);
+  assertEquals(fields.line6a_general_business_credit, 6000);
 });
 
 Deno.test("f3800.compute: carryback added to total_gbc override", () => {
@@ -187,7 +187,7 @@ Deno.test("f3800.compute: carryback added to total_gbc override", () => {
     carryback_credit: 500,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3500);
+  assertEquals(fields.line6a_general_business_credit, 3500);
 });
 
 Deno.test("f3800.compute: total_gbc zero with non-zero carryforward — routes carryforward only", () => {
@@ -196,7 +196,7 @@ Deno.test("f3800.compute: total_gbc zero with non-zero carryforward — routes c
     carryforward_credit: 1200,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1200);
+  assertEquals(fields.line6a_general_business_credit, 1200);
 });
 
 // =============================================================================
@@ -213,7 +213,7 @@ Deno.test("f3800.compute: multiple component credits summed", () => {
   })]);
   // 1000 + 2000 + 500 + 750 + 250 = 4500
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 4500);
+  assertEquals(fields.line6a_general_business_credit, 4500);
 });
 
 Deno.test("f3800.compute: all component credits plus carryovers summed", () => {
@@ -232,7 +232,7 @@ Deno.test("f3800.compute: all component credits plus carryovers summed", () => {
   })]);
   // 9 × 1000 + 500 + 500 = 10000
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 10000);
+  assertEquals(fields.line6a_general_business_credit, 10000);
 });
 
 // =============================================================================
@@ -245,7 +245,7 @@ Deno.test("f3800.compute: multiple items summed across entries", () => {
     minimalItem({ research_credit: 3000 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5000);
+  assertEquals(fields.line6a_general_business_credit, 5000);
 });
 
 Deno.test("f3800.compute: one empty item plus one with credit — only credit counts", () => {
@@ -254,7 +254,7 @@ Deno.test("f3800.compute: one empty item plus one with credit — only credit co
     minimalItem({ small_employer_health_credit: 1800 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1800);
+  assertEquals(fields.line6a_general_business_credit, 1800);
 });
 
 Deno.test("f3800.compute: multiple items produce exactly one schedule3 output", () => {
@@ -266,7 +266,7 @@ Deno.test("f3800.compute: multiple items produce exactly one schedule3 output", 
   const schedule3Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule3");
   assertEquals(schedule3Outputs.length, 1);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3500);
+  assertEquals(fields.line6a_general_business_credit, 3500);
 });
 
 // =============================================================================
@@ -297,7 +297,7 @@ Deno.test("f3800.compute: zero values do not throw", () => {
 Deno.test("f3800.compute: carryforward and carryback only (no current-year) — routes correctly", () => {
   const result = compute([minimalItem({ carryforward_credit: 1500, carryback_credit: 300 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1800);
+  assertEquals(fields.line6a_general_business_credit, 1800);
 });
 
 Deno.test("f3800.compute: single item zero with carryforward zero — no output", () => {
@@ -330,7 +330,7 @@ Deno.test("f3800.compute: smoke test — mixed override and carryovers across mu
   // Item 2: 1500 + 3500 + 500 + 2000 = 7500, + carryback 1000 = 8500
   // Grand total = 18500
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 18500);
+  assertEquals(fields.line6a_general_business_credit, 18500);
   // Only one schedule3 output
   assertEquals(result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule3").length, 1);
 });

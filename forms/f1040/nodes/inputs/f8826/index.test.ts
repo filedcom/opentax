@@ -63,7 +63,7 @@ Deno.test("over_1M_receipts_but_under_30_fte_is_eligible", () => {
     fte_count: 25,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2375);
+  assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 Deno.test("under_1M_receipts_but_over_30_fte_is_eligible", () => {
@@ -74,21 +74,21 @@ Deno.test("under_1M_receipts_but_over_30_fte_is_eligible", () => {
     fte_count: 35,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2375);
+  assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 Deno.test("exactly_1M_receipts_is_eligible", () => {
   // ($5,000 − $250) × 50% = $2,375
   const result = compute({ eligible_expenditures: 5000, gross_receipts: 1_000_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2375);
+  assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 Deno.test("exactly_30_fte_is_eligible", () => {
   // ($5,000 − $250) × 50% = $2,375
   const result = compute({ eligible_expenditures: 5000, fte_count: 30 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2375);
+  assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 // ── Credit Calculation ────────────────────────────────────────────────────────
@@ -97,35 +97,35 @@ Deno.test("basic_credit_50pct_of_expenditures_minus_250", () => {
   // ($5,000 − $250) × 50% = $2,375
   const result = compute({ eligible_expenditures: 5000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2375);
+  assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 Deno.test("expenditures_just_above_250_floor", () => {
   // ($251 − $250) × 50% = $0.50
   const result = compute({ eligible_expenditures: 251 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 0.5);
+  assertEquals(out?.fields.line6a_general_business_credit, 0.5);
 });
 
 Deno.test("max_credit_at_10250_expenditures", () => {
   // ($10,250 − $250) × 50% = $5,000
   const result = compute({ eligible_expenditures: 10250 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 Deno.test("expenditures_above_10250_still_capped_at_5000", () => {
   // $20,000 expenditures → cap at $10,250 → ($10,250 − $250) × 50% = $5,000
   const result = compute({ eligible_expenditures: 20000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 Deno.test("no_eligibility_fields_assumes_eligible", () => {
   // No gross_receipts or fte_count provided → both checks pass (undefined) → eligible
   const result = compute({ eligible_expenditures: 5000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2375);
+  assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 // ── Routing ───────────────────────────────────────────────────────────────────

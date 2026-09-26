@@ -27,21 +27,21 @@ Deno.test("basic credit — 20% MCC rate, no cap applies", () => {
   // $10,000 × 20% = $2,000 — rate is exactly 20%, cap does NOT apply (> 20% triggers cap)
   const result = compute({ mortgage_interest_paid: 10_000, mcc_rate: 0.20 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 2_000);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 2_000);
 });
 
 Deno.test("basic credit — 15% MCC rate, no cap", () => {
   // $12,000 × 15% = $1,800 (no cap since rate ≤ 20%)
   const result = compute({ mortgage_interest_paid: 12_000, mcc_rate: 0.15 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 1_800);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 1_800);
 });
 
 Deno.test("basic credit — 10% MCC rate", () => {
   // $8,000 × 10% = $800
   const result = compute({ mortgage_interest_paid: 8_000, mcc_rate: 0.10 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 800);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 800);
 });
 
 // ─── $2,000 Cap (Rate > 20%) ─────────────────────────────────────────────────
@@ -50,21 +50,21 @@ Deno.test("cap — MCC rate 25%, credit above $2,000 → capped at $2,000", () =
   // $15,000 × 25% = $3,750 → capped at $2,000
   const result = compute({ mortgage_interest_paid: 15_000, mcc_rate: 0.25 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 2_000);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 2_000);
 });
 
 Deno.test("cap — MCC rate 50%, credit above $2,000 → capped at $2,000", () => {
   // $6,000 × 50% = $3,000 → capped at $2,000
   const result = compute({ mortgage_interest_paid: 6_000, mcc_rate: 0.50 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 2_000);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 2_000);
 });
 
 Deno.test("cap — MCC rate 25%, credit below $2,000 → no cap needed", () => {
   // $5,000 × 25% = $1,250 → below cap, no limitation
   const result = compute({ mortgage_interest_paid: 5_000, mcc_rate: 0.25 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 1_250);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 1_250);
 });
 
 // ─── Carryforward ─────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ Deno.test("cap — MCC rate 25%, credit below $2,000 → no cap needed", () => {
 Deno.test("carryforward only — no current year interest", () => {
   const result = compute({ prior_year_credit_carryforward: 500 });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 500);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 500);
 });
 
 Deno.test("carryforward + current year credit combined", () => {
@@ -83,7 +83,7 @@ Deno.test("carryforward + current year credit combined", () => {
     prior_year_credit_carryforward: 600,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 1_800);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 1_800);
 });
 
 Deno.test("carryforward + current year, capped at $2,000 then carryforward added", () => {
@@ -94,15 +94,15 @@ Deno.test("carryforward + current year, capped at $2,000 then carryforward added
     prior_year_credit_carryforward: 300,
   });
   const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 2_300);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 2_300);
 });
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes to schedule3 line6f_mortgage_interest_credit", () => {
+Deno.test("output routes to schedule3 line6g_mortgage_interest_credit", () => {
   // $10,000 × 15% = $1,500
   const result = compute({ mortgage_interest_paid: 10_000, mcc_rate: 0.15 });
   const s3 = findOutput(result, "schedule3");
   assertEquals(s3?.nodeType, "schedule3");
-  assertEquals(s3?.fields.line6f_mortgage_interest_credit, 1_500);
+  assertEquals(s3?.fields.line6g_mortgage_interest_credit, 1_500);
 });

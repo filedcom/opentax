@@ -62,14 +62,14 @@ Deno.test("rehab_certified_historic_20pct", () => {
   // $100,000 × 20% = $20,000
   const result = compute({ rehab_certified_historic_qre: 100_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 20_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 20_000);
 });
 
 Deno.test("rehab_certified_historic_small_amount", () => {
   // $1,000 × 20% = $200
   const result = compute({ rehab_certified_historic_qre: 1_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 200);
+  assertEquals(out?.fields.line6a_general_business_credit, 200);
 });
 
 // ── §48 Energy Credit — Solar ─────────────────────────────────────────────────
@@ -78,14 +78,14 @@ Deno.test("solar_energy_property_30pct", () => {
   // $50,000 × 30% = $15,000
   const result = compute({ solar_energy_property_basis: 50_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 15_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 15_000);
 });
 
 Deno.test("fiber_optic_solar_30pct", () => {
   // $20,000 × 30% = $6,000
   const result = compute({ fiber_optic_solar_basis: 20_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 6_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 6_000);
 });
 
 // ── §48 Energy Credit — Fuel Cell ─────────────────────────────────────────────
@@ -94,7 +94,7 @@ Deno.test("fuel_cell_30pct_no_cap_when_no_capacity", () => {
   // $10,000 × 30% = $3,000 (no capacity → no cap)
   const result = compute({ fuel_cell_property_basis: 10_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("fuel_cell_rate_equals_cap_boundary", () => {
@@ -103,7 +103,7 @@ Deno.test("fuel_cell_rate_equals_cap_boundary", () => {
   // min($30,000, $30,000) = $30,000 — cap exactly meets rate (boundary case)
   const result = compute({ fuel_cell_property_basis: 100_000, fuel_cell_capacity_kw: 10 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 30_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 30_000);
 });
 
 Deno.test("fuel_cell_cap_lower_than_rate", () => {
@@ -112,7 +112,7 @@ Deno.test("fuel_cell_cap_lower_than_rate", () => {
   // min($60,000, $15,000) = $15,000
   const result = compute({ fuel_cell_property_basis: 200_000, fuel_cell_capacity_kw: 5 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 15_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 15_000);
 });
 
 // ── §48 Energy Credit — Microturbine ─────────────────────────────────────────
@@ -121,7 +121,7 @@ Deno.test("microturbine_10pct_no_cap_when_no_capacity", () => {
   // $50,000 × 10% = $5,000
   const result = compute({ microturbine_property_basis: 50_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5_000);
 });
 
 Deno.test("microturbine_capped_by_capacity", () => {
@@ -130,7 +130,7 @@ Deno.test("microturbine_capped_by_capacity", () => {
   // min($10,000, $6,000) = $6,000
   const result = compute({ microturbine_property_basis: 100_000, microturbine_capacity_kw: 30 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 6_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 6_000);
 });
 
 Deno.test("microturbine_rate_lower_than_cap", () => {
@@ -139,7 +139,7 @@ Deno.test("microturbine_rate_lower_than_cap", () => {
   // min($1,000, $20,000) = $1,000
   const result = compute({ microturbine_property_basis: 10_000, microturbine_capacity_kw: 100 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 1_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 1_000);
 });
 
 // ── §48 Energy Credit — Other Property Types ─────────────────────────────────
@@ -147,31 +147,31 @@ Deno.test("microturbine_rate_lower_than_cap", () => {
 Deno.test("small_wind_30pct", () => {
   const result = compute({ small_wind_property_basis: 40_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 12_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 12_000);
 });
 
 Deno.test("geothermal_heat_pump_10pct", () => {
   const result = compute({ geothermal_heat_pump_basis: 30_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("chp_property_10pct", () => {
   const result = compute({ chp_property_basis: 80_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 8_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 8_000);
 });
 
 Deno.test("waste_energy_recovery_20pct", () => {
   const result = compute({ waste_energy_recovery_basis: 60_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 12_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 12_000);
 });
 
 Deno.test("offshore_wind_30pct", () => {
   const result = compute({ offshore_wind_basis: 500_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 150_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 150_000);
 });
 
 // ── §48C Advanced Energy Project ─────────────────────────────────────────────
@@ -197,7 +197,7 @@ Deno.test("advanced_energy_with_doe_allocation_30pct", () => {
     advanced_energy_project_has_doe_allocation: true,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 60_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 60_000);
 });
 
 // ── §48E Clean Electricity ────────────────────────────────────────────────────
@@ -206,7 +206,7 @@ Deno.test("clean_electricity_30pct", () => {
   // $100,000 × 30% = $30,000
   const result = compute({ clean_electricity_basis: 100_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 30_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 30_000);
 });
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
@@ -222,7 +222,7 @@ Deno.test("multiple_components_sum_correctly", () => {
     geothermal_heat_pump_basis: 30_000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 38_000);
+  assertEquals(out?.fields.line6a_general_business_credit, 38_000);
 });
 
 Deno.test("all_components_aggregate_to_single_schedule3_output", () => {
@@ -237,7 +237,7 @@ Deno.test("all_components_aggregate_to_single_schedule3_output", () => {
   // total = 20,000 + 15,000 + 3,000 + 30,000 + 30,000 = 98,000
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertAlmostEquals(result.outputs[0]?.fields.line6z_general_business_credit as number, 98_000);
+  assertAlmostEquals(result.outputs[0]?.fields.line6a_general_business_credit as number, 98_000);
 });
 
 // ── Routing ───────────────────────────────────────────────────────────────────
@@ -250,7 +250,7 @@ Deno.test("routes_to_schedule3_node_type", () => {
 Deno.test("credit_uses_line6z_field", () => {
   // $10,000 × 30% = $3,000
   const result = compute({ solar_energy_property_basis: 10_000 });
-  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit, 3_000);
+  assertEquals(result.outputs[0]?.fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("produces_exactly_one_output_for_multiple_credits", () => {

@@ -46,6 +46,14 @@ verification. The MeF overflow design is an XML-schema inference, not IRS ATS
 acceptance.
 This does not change the historical full-test status above.
 
+The current untested Schedule 3 pass aligns credit fields with the 2025
+printed lines and MeF elements: general business credit 6a, prior-year minimum
+tax 6b, new clean vehicle 6f, mortgage interest 6g, and previously owned clean
+vehicle 6m. It also moves Form 8805 withholding from the incorrect Schedule 3
+line 13d route to Form 1040 line 25c. The Form 3800 and Form 8936 attachment,
+eligibility, and source-reconciliation paths remain open, and none of these
+changes has passed the deferred full test batch.
+
 ## Status definitions
 
 | Status                    | Meaning                                                                                                                     |
