@@ -243,6 +243,9 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
         ...((item.box2a ?? 0) > 0
           ? { source_1099_capital_gain_distributions: item.box2a }
           : {}),
+        ...((item.box13 ?? 0) > 0
+          ? { source_private_activity_bond_interest: item.box13 }
+          : {}),
       };
       if (Object.keys(sourceFields).length > 0) {
         outputs.push({ nodeType: form4952.nodeType, fields: sourceFields });

@@ -25,6 +25,15 @@ function filing(election: number) {
     form4952: {
       investment_interest_expense: 20_000,
       investment_income_election: election,
+      amt_refigure: {
+        prior_year_disallowed_interest: 0,
+        interest_on_private_activity_bonds: 0,
+        other_gross_income_adjustment: 0,
+        qualified_dividends_adjustment: 0,
+        net_disposition_gain_adjustment: 0,
+        net_capital_gain_adjustment: 0,
+        investment_expenses_adjustment: 0,
+      },
     },
   }, { taxYear: 2025, formType: "f1040" });
 }

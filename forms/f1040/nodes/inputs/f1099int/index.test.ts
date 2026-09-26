@@ -94,6 +94,21 @@ Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 on
   );
 });
 
+Deno.test("1099-INT routes affirmed private-activity-bond interest to AMT Form 4952", () => {
+  const result = compute([minimalItem({
+    box8: 500,
+    box9: 300,
+    investment_property_for_form4952: true,
+  })]);
+  assertEquals(
+    result.outputs.find((output) =>
+      output.nodeType === "form4952" &&
+      output.fields.source_private_activity_bond_interest === 300
+    )?.fields.source_private_activity_bond_interest,
+    300,
+  );
+});
+
 Deno.test("1099-INT rejects negative net interest for Form 4952", () => {
   assertThrows(
     () =>

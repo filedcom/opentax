@@ -6,6 +6,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // Field order follows the XSD sequence used in the MEF FIELD_MAP.
 // Line 1:  regular_tax_income (AGI or AGI less deductions).
 // Line 2a: line2a_taxes_paid (state/local taxes from Sch A).
+// Line 2c: line2c_investment_interest (regular minus AMT Form 4952 line 8).
 // Line 2f: nol_adjustment (alternative tax NOL deduction).
 // Line 2g: private_activity_bond_interest (tax-exempt PAB interest).
 // Line 2h: qsbs_adjustment (Section 1202 exclusion).
@@ -15,16 +16,61 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // Line 8:  amtftc (AMT foreign tax credit).
 // Line 10: regular_tax.
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "regular_tax_income", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
-  { kind: "text", domainKey: "line2a_taxes_paid", pdfField: "topmostSubform[0].Page1[0].f1_2[0]" },
-  { kind: "text", domainKey: "nol_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_7[0]" },
-  { kind: "text", domainKey: "private_activity_bond_interest", pdfField: "topmostSubform[0].Page1[0].f1_8[0]" },
-  { kind: "text", domainKey: "qsbs_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_9[0]" },
-  { kind: "text", domainKey: "iso_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
-  { kind: "text", domainKey: "depreciation_adjustment", pdfField: "topmostSubform[0].Page1[0].f1_13[0]" },
-  { kind: "text", domainKey: "other_adjustments", pdfField: "topmostSubform[0].Page1[0].f1_18[0]" },
-  { kind: "text", domainKey: "amtftc", pdfField: "topmostSubform[0].Page1[0].f1_25[0]" },
-  { kind: "text", domainKey: "regular_tax", pdfField: "topmostSubform[0].Page1[0].f1_27[0]" },
+  {
+    kind: "text",
+    domainKey: "regular_tax_income",
+    pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line2a_taxes_paid",
+    pdfField: "topmostSubform[0].Page1[0].f1_2[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line2c_investment_interest",
+    pdfField: "topmostSubform[0].Page1[0].f1_4[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "nol_adjustment",
+    pdfField: "topmostSubform[0].Page1[0].f1_7[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "private_activity_bond_interest",
+    pdfField: "topmostSubform[0].Page1[0].f1_8[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "qsbs_adjustment",
+    pdfField: "topmostSubform[0].Page1[0].f1_9[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "iso_adjustment",
+    pdfField: "topmostSubform[0].Page1[0].f1_10[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "depreciation_adjustment",
+    pdfField: "topmostSubform[0].Page1[0].f1_13[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "other_adjustments",
+    pdfField: "topmostSubform[0].Page1[0].f1_18[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "amtftc",
+    pdfField: "topmostSubform[0].Page1[0].f1_25[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "regular_tax",
+    pdfField: "topmostSubform[0].Page1[0].f1_27[0]",
+  },
 ];
 
 export const form6251Pdf: PdfFormDescriptor = {

@@ -10,6 +10,7 @@ export interface Fields {
   private_activity_bond_interest?: number | null;
   qsbs_adjustment?: number | null;
   line2a_taxes_paid?: number | null;
+  line2c_investment_interest?: number | null;
   other_adjustments?: number | null;
   amtftc?: number | null;
   amti?: number | null;
@@ -66,6 +67,7 @@ type Input = Partial<Fields> & Record<string, unknown>;
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["regular_tax_income", "AGILessTotDedLessEnhncSrDedAmt"],
   ["line2a_taxes_paid", "ScheduleATaxesAmt"],
+  ["line2c_investment_interest", "InvestmentInterestAmt"],
   ["nol_adjustment", "AltTaxNetOperatingLossDedAmt"],
   ["private_activity_bond_interest", "ExemptPrivateActivityBondsAmt"],
   ["qsbs_adjustment", "Section1202ExclusionAmt"],

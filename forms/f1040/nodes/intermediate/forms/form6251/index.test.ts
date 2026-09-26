@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { form6251, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
 
 function compute(input: Record<string, unknown>) {
   return form6251.compute(
@@ -152,14 +153,61 @@ Deno.test("form6251: Form 4952 election reduces preferential income in Part III"
     regular_taxable_income: 200_000,
     qualified_dividends: 10_000,
     net_capital_gain: 20_000,
-    form4952_election: 5_000,
-    form4952_elected_capital_gain: 5_000,
+    form4952_amt_election: 5_000,
+    form4952_amt_elected_capital_gain: 5_000,
     regular_tax: 10_000,
   });
   const filed = result.outputs.find((output) => output.nodeType === "form6251");
   assertEquals(filed?.fields.line13, 25_000);
   assertEquals(filed?.fields.line20, 175_000);
   assertEquals(filed?.fields.line27, 175_000);
+});
+
+Deno.test("form6251: AMT Form 4952 line 8 difference goes to signed line 2c", () => {
+  const itemized = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    regular_tax: 10_000,
+    taking_standard_deduction: false,
+    form4952_amt_line2c_difference: -300,
+  });
+  const filed = itemized.outputs.find((output) =>
+    output.nodeType === "form6251"
+  );
+  assertEquals(filed?.fields.amti, 199_700);
+  assertEquals(filed?.fields.line2c_investment_interest, -300);
+  assertEquals(
+    mef6251.build({ line11_amt: 1, line2c_investment_interest: -300 })
+      .includes("<InvestmentInterestAmt>-300</InvestmentInterestAmt>"),
+    true,
+  );
+  const standard = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    regular_tax: 10_000,
+    taking_standard_deduction: true,
+    form4952_amt_line2c_difference: -300,
+  });
+  const standardForm = standard.outputs.find((output) =>
+    output.nodeType === "form6251"
+  );
+  assertEquals(standardForm?.fields.amti, 200_000);
+  assertEquals(standardForm?.fields.line2c_investment_interest, undefined);
+});
+
+Deno.test("form6251: private-activity-bond interest from 1099-INT and 1099-DIV adds on line 2g", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_tax: 10_000,
+    line2g_pab_interest: 300,
+    private_activity_bond_interest: 200,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.private_activity_bond_interest, 500);
+  assertEquals(filed?.fields.amti, 200_500);
 });
 
 Deno.test("form6251: Form 2555 requires its AMT foreign-earned-income worksheet", () => {

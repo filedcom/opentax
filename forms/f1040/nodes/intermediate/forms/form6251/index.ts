@@ -84,8 +84,10 @@ export const inputSchema = z.object({
   // Routed from income_tax_calculation alongside regular_tax_income.
   qualified_dividends: z.number().nonnegative().optional(),
   net_capital_gain: z.number().nonnegative().optional(),
-  form4952_election: z.number().nonnegative().optional(),
-  form4952_elected_capital_gain: z.number().nonnegative().optional(),
+  form4952_amt_election: z.number().nonnegative().optional(),
+  form4952_amt_elected_capital_gain: z.number().nonnegative().optional(),
+  form4952_amt_line2c_difference: z.number().optional(),
+  taking_standard_deduction: z.boolean().optional(),
   unrecaptured_1250_gain: z.number().nonnegative().optional(),
   rate_28_gain: z.number().nonnegative().optional(),
   foreign_earned_income_exclusion: z.number().nonnegative().optional(),
@@ -102,13 +104,14 @@ function computeAmti(input: Form6251Input): number {
   return (
     input.regular_tax_income +
     (input.line2a_taxes_paid ?? 0) +
+    (input.taking_standard_deduction === true
+      ? 0
+      : (input.form4952_amt_line2c_difference ?? 0)) +
     (input.iso_adjustment ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
-    Math.max(
-      input.private_activity_bond_interest ?? 0,
-      input.line2g_pab_interest ?? 0,
-    ) +
+    (input.private_activity_bond_interest ?? 0) +
+    (input.line2g_pab_interest ?? 0) +
     (input.qsbs_adjustment ?? 0) +
     (input.other_adjustments ?? 0)
   );
@@ -331,6 +334,14 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
 
     const input = inputSchema.parse(rawInput);
+    if (
+      input.form4952_amt_line2c_difference !== undefined &&
+      input.taking_standard_deduction === undefined
+    ) {
+      throw new Error(
+        "Form 6251 line 2c needs the selected deduction method",
+      );
+    }
 
     // Part I — AMTI (Line 4)
     const amti = computeAmti(input);
@@ -372,8 +383,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           input.unrecaptured_1250_gain ?? 0,
           input.rate_28_gain ?? 0,
           input.filing_status,
-          input.form4952_election ?? 0,
-          input.form4952_elected_capital_gain ?? 0,
+          input.form4952_amt_election ?? 0,
+          input.form4952_amt_elected_capital_gain ?? 0,
         ),
         input.filing_status,
         cfg.qdcgtZeroCeiling,
@@ -419,10 +430,15 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         fields: {
           ...input,
           regular_tax: adjustedRegularTax,
-          private_activity_bond_interest: Math.max(
-            input.private_activity_bond_interest ?? 0,
-            input.line2g_pab_interest ?? 0,
-          ),
+          ...(input.form4952_amt_line2c_difference !== undefined &&
+              input.taking_standard_deduction !== true
+            ? {
+              line2c_investment_interest: input.form4952_amt_line2c_difference,
+            }
+            : {}),
+          private_activity_bond_interest:
+            (input.private_activity_bond_interest ?? 0) +
+            (input.line2g_pab_interest ?? 0),
           amti,
           exemption,
           taxable_excess: taxableExcess,

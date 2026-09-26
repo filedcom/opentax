@@ -432,13 +432,15 @@ Deno.test("Form 4952 election taxes elected qualified dividends at ordinary rate
     ...source,
     form4952_election: 1_000,
     form4952_elected_capital_gain: 0,
+    form4952_amt_election: 1_000,
+    form4952_amt_elected_capital_gain: 0,
   });
   assertAlmostEquals(
     (f1040Fields(elected)?.line16_income_tax as number) - withoutElection,
     120,
     0.01,
   );
-  assertEquals(f6251Fields(elected)?.form4952_election, 1_000);
+  assertEquals(f6251Fields(elected)?.form4952_amt_election, 1_000);
 });
 
 Deno.test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but changes its rate", () => {
@@ -453,13 +455,15 @@ Deno.test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but ch
     ...source,
     form4952_election: 2_000,
     form4952_elected_capital_gain: 2_000,
+    form4952_amt_election: 2_000,
+    form4952_amt_elected_capital_gain: 2_000,
   });
   assertAlmostEquals(
     (f1040Fields(elected)?.line16_income_tax as number) - withoutElection,
     140,
     0.01,
   );
-  assertEquals(f6251Fields(elected)?.form4952_elected_capital_gain, 2_000);
+  assertEquals(f6251Fields(elected)?.form4952_amt_elected_capital_gain, 2_000);
 });
 
 Deno.test("Form 6251 receives signed line 1b even when Form 1040 line 15 is zero", () => {

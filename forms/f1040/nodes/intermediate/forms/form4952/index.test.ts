@@ -1,9 +1,21 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { calculateForm4952, form4952 } from "./index.ts";
+import { calculateAmtForm4952, calculateForm4952, form4952 } from "./index.ts";
 import { form4952 as mef4952 } from "../../../../2025/mef/forms/f4952.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4952.compute({ taxYear: 2025, formType: "f1040" }, input);
+}
+
+function sameAmtFacts(priorYearDisallowedInterest = 0) {
+  return {
+    prior_year_disallowed_interest: priorYearDisallowedInterest,
+    interest_on_private_activity_bonds: 0,
+    other_gross_income_adjustment: 0,
+    qualified_dividends_adjustment: 0,
+    net_disposition_gain_adjustment: 0,
+    net_capital_gain_adjustment: 0,
+    investment_expenses_adjustment: 0,
+  };
 }
 
 Deno.test("Form 4952 has no attachment without interest expense", () => {
@@ -43,6 +55,7 @@ Deno.test("Form 4952 computes all lines, deduction, and carryforward", () => {
   const result = compute({
     investment_interest_expense: 7_000,
     prior_year_carryforward: 1_000,
+    amt_refigure: sameAmtFacts(1_000),
     other_investment_property_gross_income: 5_000,
     other_investment_property_qualified_dividends: 500,
     other_investment_property_net_disposition_gain: 1_000,
@@ -102,10 +115,89 @@ Deno.test("Form 4952 combines explicit other income with multiple affirmed 1099 
 });
 
 Deno.test("Form 4952 carries forward interest when net investment income is zero", () => {
-  const result = compute({ investment_interest_expense: 5_000 });
+  const result = compute({
+    investment_interest_expense: 5_000,
+    amt_refigure: sameAmtFacts(),
+  });
   assertEquals(result.outputs.some((o) => o.nodeType === "form4952"), true);
   assertEquals(result.outputs.some((o) => o.nodeType === "schedule_a"), false);
   assertEquals(result.carryforwards?.investment_interest_excess_4952, 5_000);
+});
+
+Deno.test("Form 4952 requires and calculates a separate AMT interest refigure", () => {
+  assertThrows(
+    () => compute({ investment_interest_expense: 1_000 }),
+    Error,
+    "explicit AMT refigure facts",
+  );
+  const input = {
+    investment_interest_expense: 1_000,
+    prior_year_carryforward: 500,
+    other_investment_property_gross_income: 100,
+    source_private_activity_bond_interest: 300,
+    amt_refigure: {
+      ...sameAmtFacts(800),
+      interest_on_private_activity_bonds: 200,
+    },
+  };
+  const amt = calculateAmtForm4952(input);
+  assertEquals(amt.lines.line1, 1_200);
+  assertEquals(amt.lines.line2, 800);
+  assertEquals(amt.lines.line4a, 400);
+  assertEquals(amt.lines.line8, 400);
+  const result = compute(input);
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "income_tax_calculation")?.fields,
+    {
+      form4952_election: 0,
+      form4952_elected_capital_gain: 0,
+      form4952_amt_election: 0,
+      form4952_amt_elected_capital_gain: 0,
+      form4952_amt_line2c_difference: -300,
+    },
+  );
+  assertEquals(result.carryforwards?.investment_interest_excess_4952, 1_400);
+  assertEquals(
+    result.carryforwards?.amt_investment_interest_excess_4952,
+    1_600,
+  );
+});
+
+Deno.test("AMT Form 4952 caps line 4g by refigured eligible investment income", () => {
+  const amt = calculateAmtForm4952({
+    investment_interest_expense: 100,
+    other_investment_property_gross_income: 1_000,
+    other_investment_property_qualified_dividends: 500,
+    investment_income_election: 500,
+    amt_refigure: {
+      ...sameAmtFacts(),
+      qualified_dividends_adjustment: -400,
+    },
+  });
+  assertEquals(amt.lines.line4b, 100);
+  assertEquals(amt.lines.line4g, 100);
+  assertEquals(amt.electedCapitalGain, 0);
+});
+
+Deno.test("AMT-only private-activity-bond interest reaches Form 6251 without a regular Form 4952", () => {
+  const result = compute({
+    source_private_activity_bond_interest: 500,
+    amt_refigure: {
+      ...sameAmtFacts(),
+      interest_on_private_activity_bonds: 200,
+    },
+  });
+  assertEquals(
+    result.outputs.some((output) => output.nodeType === "form4952"),
+    false,
+  );
+  assertEquals(
+    result.outputs.find((output) =>
+      output.nodeType === "income_tax_calculation"
+    )
+      ?.fields.form4952_amt_line2c_difference,
+    -200,
+  );
 });
 
 Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () => {
@@ -139,6 +231,7 @@ Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () 
   );
   const elected = compute({
     investment_interest_expense: 100,
+    amt_refigure: sameAmtFacts(),
     other_investment_property_gross_income: 300,
     other_investment_property_qualified_dividends: 100,
     other_investment_property_net_disposition_gain: 200,
@@ -148,7 +241,12 @@ Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () 
   assertEquals(
     elected.outputs.find((o) => o.nodeType === "income_tax_calculation")
       ?.fields,
-    { form4952_election: 150, form4952_elected_capital_gain: 150 },
+    {
+      form4952_election: 150,
+      form4952_elected_capital_gain: 150,
+      form4952_amt_election: 150,
+      form4952_amt_elected_capital_gain: 150,
+    },
   );
   assertThrows(
     () =>
@@ -165,6 +263,7 @@ Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () 
   );
   const alternate = compute({
     investment_interest_expense: 100,
+    amt_refigure: sameAmtFacts(),
     other_investment_property_gross_income: 300,
     other_investment_property_qualified_dividends: 100,
     other_investment_property_net_disposition_gain: 200,
@@ -175,7 +274,12 @@ Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () 
   assertEquals(
     alternate.outputs.find((o) => o.nodeType === "income_tax_calculation")
       ?.fields,
-    { form4952_election: 150, form4952_elected_capital_gain: 50 },
+    {
+      form4952_election: 150,
+      form4952_elected_capital_gain: 50,
+      form4952_amt_election: 150,
+      form4952_amt_elected_capital_gain: 150,
+    },
   );
 });
 
