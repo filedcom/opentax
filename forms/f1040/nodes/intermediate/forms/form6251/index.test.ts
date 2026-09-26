@@ -145,6 +145,23 @@ Deno.test("form6251: Part III Schedule D branch handles 25% and 28% gain", () =>
   assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_034);
 });
 
+Deno.test("form6251: Form 4952 election reduces preferential income in Part III", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    qualified_dividends: 10_000,
+    net_capital_gain: 20_000,
+    form4952_election: 5_000,
+    form4952_elected_capital_gain: 5_000,
+    regular_tax: 10_000,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.line13, 25_000);
+  assertEquals(filed?.fields.line20, 175_000);
+  assertEquals(filed?.fields.line27, 175_000);
+});
+
 Deno.test("form6251: Form 2555 requires its AMT foreign-earned-income worksheet", () => {
   assertThrows(
     () =>

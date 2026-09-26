@@ -420,6 +420,48 @@ Deno.test("Schedule D worksheet: 25% and 28% gains use line 21 ordinary-rate cap
   assertEquals(f6251Fields(result)?.rate_28_gain, 5_000);
 });
 
+Deno.test("Form 4952 election taxes elected qualified dividends at ordinary rates", () => {
+  const source = {
+    taxable_income: 40_000,
+    filing_status: FilingStatus.Single,
+    qualified_dividends: 1_000,
+  };
+  const withoutElection = f1040Fields(compute(source))
+    ?.line16_income_tax as number;
+  const elected = compute({
+    ...source,
+    form4952_election: 1_000,
+    form4952_elected_capital_gain: 0,
+  });
+  assertAlmostEquals(
+    (f1040Fields(elected)?.line16_income_tax as number) - withoutElection,
+    120,
+    0.01,
+  );
+  assertEquals(f6251Fields(elected)?.form4952_election, 1_000);
+});
+
+Deno.test("Form 4952 elected gain leaves Form 1040 capital gain unchanged but changes its rate", () => {
+  const source = {
+    taxable_income: 100_000,
+    filing_status: FilingStatus.Single,
+    net_capital_gain: 5_000,
+  };
+  const withoutElection = f1040Fields(compute(source))
+    ?.line16_income_tax as number;
+  const elected = compute({
+    ...source,
+    form4952_election: 2_000,
+    form4952_elected_capital_gain: 2_000,
+  });
+  assertAlmostEquals(
+    (f1040Fields(elected)?.line16_income_tax as number) - withoutElection,
+    140,
+    0.01,
+  );
+  assertEquals(f6251Fields(elected)?.form4952_elected_capital_gain, 2_000);
+});
+
 Deno.test("Form 6251 receives signed line 1b even when Form 1040 line 15 is zero", () => {
   const result = compute({
     taxable_income: 0,

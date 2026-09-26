@@ -67,6 +67,8 @@ export const inputSchema = z.object({
   // Accumulable: multiple upstream nodes may each deposit their portion; the executor
   // accumulates them as an array which sumField collapses to a single total.
   qualified_dividends: accumulable(z.number().nonnegative()).optional(),
+  form4952_election: z.number().nonnegative().optional(),
+  form4952_elected_capital_gain: z.number().nonnegative().optional(),
   form8814_tax: z.number().nonnegative().optional(),
   form4972_tax: accumulable(z.number().nonnegative()).optional(),
   form8978_tax: accumulable(z.number().nonnegative()).optional(),
@@ -95,8 +97,8 @@ type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // 2025 Schedule D Tax Worksheet, lines 1–47, for positive Schedule D lines
-// 18/19 and a positive net capital gain. Form 4952 line 4g elections are
-// rejected upstream until their source facts are incorporated.
+// 18/19 or a Form 4952 line 4g election. Worksheet lines 3–9 remove the
+// elected capital-gain and qualified-dividend portions from preferential tax.
 function scheduleDTax(
   taxableIncome: number,
   qualDividends: number,
@@ -107,10 +109,16 @@ function scheduleDTax(
   twentyFloor: Record<FilingStatus, number>,
   unrecaptured1250: number,
   rate28Gain: number,
+  form4952Election: number,
+  electedCapitalGain: number,
 ): number {
   const line1 = taxableIncome;
-  const line6 = qualDividends;
-  const line9 = netCapGain;
+  const line3 = form4952Election;
+  const line4 = electedCapitalGain;
+  const line5 = Math.max(0, line3 - line4);
+  const line6 = Math.max(0, qualDividends - line5);
+  const line8 = Math.min(line3, line4);
+  const line9 = Math.max(0, netCapGain - line8);
   const line10 = line6 + line9;
   const line11 = rate28Gain + unrecaptured1250;
   const line12 = Math.min(line9, line11);
@@ -174,8 +182,13 @@ function qdcgtTax(
   twentyFloor: Record<FilingStatus, number>,
   unrecaptured1250: number,
   rate28Gain: number,
+  form4952Election: number,
+  electedCapitalGain: number,
 ): number {
-  if (netCapGain > 0 && (unrecaptured1250 > 0 || rate28Gain > 0)) {
+  if (
+    form4952Election > 0 ||
+    (netCapGain > 0 && (unrecaptured1250 > 0 || rate28Gain > 0))
+  ) {
     return scheduleDTax(
       taxableIncome,
       qualDividends,
@@ -186,6 +199,8 @@ function qdcgtTax(
       twentyFloor,
       unrecaptured1250,
       rate28Gain,
+      form4952Election,
+      electedCapitalGain,
     );
   }
   const prefIncome = Math.min(qualDividends + netCapGain, taxableIncome);
@@ -255,6 +270,16 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const netCg = input.net_capital_gain ?? 0;
     const unrecaptured1250 = input.unrecaptured_1250_gain ?? 0;
     const rate28 = input.rate_28_gain ?? 0;
+    const form4952Election = input.form4952_election ?? 0;
+    const electedCapitalGain = input.form4952_elected_capital_gain ?? 0;
+    if (
+      electedCapitalGain > Math.min(form4952Election, netCg) ||
+      form4952Election - electedCapitalGain > qualDiv
+    ) {
+      throw new Error(
+        "Form 4952 election exceeds the return's qualified dividends or net capital gain",
+      );
+    }
     const hasPrefIncome = qualDiv > 0 || netCg > 0;
 
     // §911(f) stacking rule: tax on non-excluded income =
@@ -274,6 +299,8 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           cfg.qdcgtTwentyFloor,
           unrecaptured1250,
           rate28,
+          form4952Election,
+          electedCapitalGain,
         )
         : taxFromBrackets(stackedIncome, brackets);
       const floorTax = taxFromBrackets(floor, brackets);
@@ -289,6 +316,8 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         cfg.qdcgtTwentyFloor,
         unrecaptured1250,
         rate28,
+        form4952Election,
+        electedCapitalGain,
       );
     } else {
       tax = taxFromBrackets(input.taxable_income, brackets);
@@ -355,6 +384,12 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           ? { unrecaptured_1250_gain: unrecaptured1250 }
           : {}),
         ...(rate28 > 0 ? { rate_28_gain: rate28 } : {}),
+        ...(form4952Election > 0
+          ? {
+            form4952_election: form4952Election,
+            form4952_elected_capital_gain: electedCapitalGain,
+          }
+          : {}),
         ...(floor > 0 ? { foreign_earned_income_exclusion: floor } : {}),
       }),
       // Feed f8812 the income tax liability for CTC nonrefundable limit calculation.

@@ -108,7 +108,7 @@ Deno.test("Form 4952 carries forward interest when net investment income is zero
   assertEquals(result.carryforwards?.investment_interest_excess_4952, 5_000);
 });
 
-Deno.test("Form 4952 rejects impossible qualified-dividend and line 4g facts", () => {
+Deno.test("Form 4952 validates qualified dividends and line 4g attribution", () => {
   assertThrows(
     () =>
       calculateForm4952({
@@ -129,13 +129,53 @@ Deno.test("Form 4952 rejects impossible qualified-dividend and line 4g facts", (
   );
   assertThrows(
     () =>
-      calculateForm4952({
+      compute({
         other_investment_property_gross_income: 100,
         other_investment_property_qualified_dividends: 100,
-        investment_income_election: 1,
+        investment_income_election: 100,
       }),
     Error,
-    "Schedule D Tax Worksheet",
+    "without investment interest expense",
+  );
+  const elected = compute({
+    investment_interest_expense: 100,
+    other_investment_property_gross_income: 300,
+    other_investment_property_qualified_dividends: 100,
+    other_investment_property_net_disposition_gain: 200,
+    other_investment_property_net_capital_gain: 200,
+    investment_income_election: 150,
+  });
+  assertEquals(
+    elected.outputs.find((o) => o.nodeType === "income_tax_calculation")
+      ?.fields,
+    { form4952_election: 150, form4952_elected_capital_gain: 150 },
+  );
+  assertThrows(
+    () =>
+      calculateForm4952({
+        other_investment_property_gross_income: 300,
+        other_investment_property_qualified_dividends: 100,
+        other_investment_property_net_disposition_gain: 200,
+        other_investment_property_net_capital_gain: 200,
+        investment_income_election: 150,
+        elected_capital_gain_portion: 40,
+      }),
+    Error,
+    "must reconcile",
+  );
+  const alternate = compute({
+    investment_interest_expense: 100,
+    other_investment_property_gross_income: 300,
+    other_investment_property_qualified_dividends: 100,
+    other_investment_property_net_disposition_gain: 200,
+    other_investment_property_net_capital_gain: 200,
+    investment_income_election: 150,
+    elected_capital_gain_portion: 50,
+  });
+  assertEquals(
+    alternate.outputs.find((o) => o.nodeType === "income_tax_calculation")
+      ?.fields,
+    { form4952_election: 150, form4952_elected_capital_gain: 50 },
   );
 });
 
