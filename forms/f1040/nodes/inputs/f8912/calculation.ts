@@ -142,6 +142,75 @@ export type Form8912IndividualLimitInput = {
   readonly hasPassThroughCrebCredit: boolean;
 };
 
+export type Form8912FinalizedReturnLines = {
+  readonly form1040Line16: number;
+  readonly form1040Line19: number;
+  readonly schedule2Line1z: number;
+  readonly form6251Line11: number;
+  readonly schedule3Line1: number;
+  readonly schedule3Line6a: number;
+  readonly schedule3Line6b: number;
+  readonly schedule3Line6k: number;
+  readonly schedule3Line8: number;
+  readonly form3800AllowedCredit: number;
+};
+
+/**
+ * Build Form 8912 Part II from *finalized* filed return lines. Schedule 3 line 8
+ * includes every nonrefundable credit; remove lines 1, 6a, 6b, and 6k to get
+ * the specified line 10b group without counting this bond credit against itself.
+ * The caller must supply an independently finalized Form 3800 allowed amount.
+ */
+export function deriveForm8912IndividualLimitInput(
+  source: Form8912SourceLines,
+  lines: Form8912FinalizedReturnLines,
+): Form8912IndividualLimitInput {
+  if (
+    Math.abs(source.line4 - source.line1 - source.line2 - source.line3) >
+      0.000001
+  ) {
+    throw new Error(
+      "Form 8912 source line 4 must reconcile to lines 1 through 3",
+    );
+  }
+  for (const [name, value] of Object.entries(lines)) {
+    if (!Number.isFinite(value) || value < 0) {
+      throw new Error(
+        `Form 8912 finalized ${name} must be a nonnegative finite amount`,
+      );
+    }
+  }
+  if (
+    Math.abs(lines.schedule3Line6a - lines.form3800AllowedCredit) > 0.000001
+  ) {
+    throw new Error(
+      "Form 8912 Schedule 3 line 6a must reconcile to allowed Form 3800 credit",
+    );
+  }
+  const excluded = lines.schedule3Line1 + lines.schedule3Line6a +
+    lines.schedule3Line6b + lines.schedule3Line6k;
+  const otherSchedule3Credits = lines.schedule3Line8 - excluded;
+  if (otherSchedule3Credits < -0.000001) {
+    throw new Error(
+      "Form 8912 Schedule 3 line 8 is smaller than its excluded credits",
+    );
+  }
+  return {
+    line1Form1097BtcCredit: source.line1,
+    line2PartIVCredit: source.line2,
+    line3QualifiedBondCarryforward: source.line3,
+    form1040Line16: lines.form1040Line16,
+    schedule2Line1z: lines.schedule2Line1z,
+    form6251Line11: lines.form6251Line11,
+    foreignTaxCredit: lines.schedule3Line1,
+    priorAllowableCredits: lines.form1040Line19 +
+      Math.max(0, otherSchedule3Credits),
+    form3800AllowedCredit: lines.form3800AllowedCredit,
+    priorYearMinimumTaxCredit: lines.schedule3Line6b,
+    hasPassThroughCrebCredit: source.hasPassThroughCrebCredit,
+  };
+}
+
 export type Form8912IndividualLimitLines = {
   readonly line4: number;
   readonly line7: number;
