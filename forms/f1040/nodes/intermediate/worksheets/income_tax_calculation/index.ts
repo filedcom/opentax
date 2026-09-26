@@ -60,6 +60,7 @@ export const inputSchema = z.object({
   // accumulates them as an array which sumField collapses to a single total.
   qualified_dividends: accumulable(z.number().nonnegative()).optional(),
   form8814_tax: z.number().nonnegative().optional(),
+  form4972_tax: z.number().nonnegative().optional(),
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
@@ -308,15 +309,20 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     }
 
     const childElectionTax = input.form8814_tax ?? 0;
-    tax += childElectionTax;
+    const lumpSumTax = input.form4972_tax ?? 0;
+    tax += childElectionTax + lumpSumTax;
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, { line16_income_tax: tax }),
+      this.outputNodes.output(f1040, {
+        line16_income_tax: tax,
+        ...(lumpSumTax > 0 ? { form4972_tax: lumpSumTax } : {}),
+      }),
       // Form 6251 line 10 starts with Form 1040 line 16, including the
       // qualified-dividend/capital-gain rate calculation. Other line 10
       // adjustments still require their own source routing and audit.
       this.outputNodes.output(form6251, {
         regular_tax: tax,
+        ...(lumpSumTax > 0 ? { form4972_tax: lumpSumTax } : {}),
         regular_tax_income: input.form6251_line1b,
         regular_taxable_income: input.taxable_income,
         line2a_taxes_paid: input.form6251_line2a,

@@ -5,7 +5,7 @@ import type {
 } from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
@@ -142,7 +142,7 @@ function partIIITax(
 class Form4972Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4972";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2]);
+  readonly outputNodes = new OutputNodes([income_tax_calculation]);
 
   compute(ctx: NodeContext, rawInput: Form4972Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -184,7 +184,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     }
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(schedule2, { lump_sum_tax: totalTax }),
+      this.outputNodes.output(income_tax_calculation, { form4972_tax: totalTax }),
     ];
 
     return { outputs };
