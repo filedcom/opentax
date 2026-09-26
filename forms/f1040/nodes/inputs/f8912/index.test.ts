@@ -1,4 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { registry } from "../../../2025/registry.ts";
 import {
   BondType,
   f8912,
@@ -18,6 +21,7 @@ const reported = {
   credit_amount: 100,
   purchase_accrued_interest: 0,
   sale_accrued_interest: 0,
+  taxable_interest_reported_elsewhere: 0,
   issuer_elected_direct_payment: false,
   is_pass_through_creb_credit: false,
 };
@@ -32,6 +36,7 @@ const unreported = {
   maturity_date: "2030-12-31",
   purchase_accrued_interest: 0,
   sale_accrued_interest: 0,
+  taxable_interest_reported_elsewhere: 0,
   line18_rows: [{
     cusip: "123456789",
     outstanding_principal: 10_000,
@@ -313,11 +318,27 @@ Deno.test("Form 8912: issue date must exist and match the bond program", () => {
 });
 
 Deno.test("Form 8912: positive source credit does not bypass its Part II limit", () => {
-  assertThrows(
-    () =>
-      f8912.compute({ taxYear: 2025, formType: "f1040" }, { f8912s: [item()] }),
-    Error,
-    "Part II tax limit",
+  const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8912s: [item()],
+  });
+  assertEquals(
+    result.outputs.filter((output) => output.nodeType === "schedule_b"),
+    [
+      {
+        nodeType: "schedule_b",
+        fields: { payer_name: "Issuer", taxable_interest_net: 100 },
+      },
+      {
+        nodeType: "schedule_b",
+        fields: { payer_name: "Issuer", taxable_interest_net: 175 },
+      },
+    ],
+  );
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "f1040")?.fields,
+    {
+      form8912_tentative_credit: 275,
+    },
   );
 });
 
@@ -328,21 +349,90 @@ Deno.test("Form 8912: zero source credit contributes no Schedule 3 output", () =
   assertEquals(result.outputs, []);
 });
 
-Deno.test("Form 8912: sale accrued interest cannot disappear on a zero-credit return", () => {
+Deno.test("Form 8912: sale accrued interest reaches Schedule B on a zero-credit return", () => {
+  const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8912s: [item({
+      unreported_bonds: [],
+      reported_bonds: [{
+        ...reported,
+        credit_amount: 0,
+        disposition_date: "2025-10-01",
+        sale_accrued_interest: 5,
+      }],
+    })],
+  });
+  assertEquals(result.outputs, [{
+    nodeType: "schedule_b",
+    fields: { payer_name: "Issuer", taxable_interest_net: 5 },
+  }]);
+});
+
+Deno.test("Form 8912: interest already reported by another source is not deposited twice", () => {
+  const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8912s: [item({
+      unreported_bonds: [],
+      reported_bonds: [{
+        ...reported,
+        taxable_interest_reported_elsewhere: 40,
+      }],
+    })],
+  });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "schedule_b")?.fields,
+    {
+      payer_name: "Issuer",
+      taxable_interest_net: 60,
+    },
+  );
   assertThrows(
     () =>
-      f8912.compute({ taxYear: 2025, formType: "f1040" }, {
-        f8912s: [item({
-          unreported_bonds: [],
-          reported_bonds: [{
-            ...reported,
-            credit_amount: 0,
-            disposition_date: "2025-10-01",
-            sale_accrued_interest: 5,
-          }],
-        })],
-      }),
+      interestRowsFromItem(itemSchema.parse(item({
+        unreported_bonds: [],
+        reported_bonds: [{
+          ...reported,
+          taxable_interest_reported_elsewhere: 101,
+        }],
+      }))),
     Error,
-    "routed to taxable interest income",
+    "exceeds this bond's taxable interest",
   );
+});
+
+Deno.test("Form 8912: graph carries taxable interest but stops unresolved credit", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    f8912: [item({
+      unreported_bonds: [],
+      reported_bonds: [{
+        ...reported,
+        taxable_interest_reported_elsewhere: 40,
+      }],
+    })],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.schedule_b?.print_line4_total, 60);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 60);
+  assertEquals(
+    result.diagnostics.some((diagnostic) =>
+      diagnostic.nodeType === "f1040" &&
+      diagnostic.message.includes("Part II tax limit and source document")
+    ),
+    true,
+  );
+});
+
+Deno.test("Form 8912: zero-credit sale interest reaches finalized Form 1040 line 2b", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    f8912: [item({
+      unreported_bonds: [],
+      reported_bonds: [{
+        ...reported,
+        credit_amount: 0,
+        disposition_date: "2025-10-01",
+        sale_accrued_interest: 5,
+      }],
+    })],
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b?.print_line4_total, 5);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 5);
+  assertEquals(result.pending.f1040?.line9_total_income, 5);
 });

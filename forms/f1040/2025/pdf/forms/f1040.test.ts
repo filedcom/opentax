@@ -1,4 +1,4 @@
-import { assertEquals, assertMatch } from "@std/assert";
+import { assertEquals, assertMatch, assertThrows } from "@std/assert";
 import { irs1040Pdf } from "./f1040.ts";
 
 // ---------------------------------------------------------------------------
@@ -13,6 +13,14 @@ Deno.test("irs1040Pdf: pdfUrl points to IRS f1040", () => {
   assertEquals(
     irs1040Pdf.pdfUrl,
     "https://www.irs.gov/pub/irs-prior/f1040--2025.pdf",
+  );
+});
+
+Deno.test("irs1040Pdf: unresolved Form 8912 credit cannot print an unfinished return", () => {
+  assertThrows(
+    () => irs1040Pdf.projectFields?.({ form8912_tentative_credit: 100 }, {}),
+    Error,
+    "Part II tax limit and source document",
   );
 });
 

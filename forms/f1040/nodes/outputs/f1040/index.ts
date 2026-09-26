@@ -116,6 +116,9 @@ const inputSchema = z.object({
   form8936_tentative_used_credit: z.number().nonnegative().optional(),
   form8936_priority_personal_credits: z.number().nonnegative().optional(),
   form8936_schedule3_line7_tentative: z.number().nonnegative().optional(),
+  // Form 8912 income reaches AGI, but positive credit is not filed until its
+  // separate tax limit and source document are finalized.
+  form8912_tentative_credit: z.number().nonnegative().optional(),
   // Line 21 — Sum of 19 + 20
   line21_credits_total: z.number().nonnegative().optional(),
   // Line 22 — Tax after credits (18 - 21)
@@ -494,6 +497,11 @@ class F1040Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if ((input.form8912_tentative_credit ?? 0) > 0) {
+      throw new Error(
+        "Form 8912 positive credit cannot be filed until the Part II tax limit and source document are integrated",
+      );
+    }
     const assembled = assembleReturn(input);
     const cleanVehicles = cleanVehicleAllowance(input);
     return {
