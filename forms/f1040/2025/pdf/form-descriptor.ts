@@ -1,11 +1,35 @@
+import type { PDFDocument } from "pdf-lib";
+import type { FilerIdentity } from "../../mef/header.ts";
+
 export type PdfFieldEntry =
   /** `printZero` prints an explicit "0" instead of the default blank-when-zero convention
    *  (used for lines like Form 8606 line 2 where 0 is a meaningful declared value). */
-  | { readonly kind: "text";         readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[]; readonly printZero?: boolean }
-  | { readonly kind: "checkbox";     readonly domainKey: string; readonly pdfField: string; readonly extraPdfFields?: readonly string[] }
+  | {
+    readonly kind: "text";
+    readonly domainKey: string;
+    readonly pdfField: string;
+    readonly extraPdfFields?: readonly string[];
+    readonly printZero?: boolean;
+  }
+  | {
+    readonly kind: "checkbox";
+    readonly domainKey: string;
+    readonly pdfField: string;
+    readonly extraPdfFields?: readonly string[];
+  }
   /** Checks the box only when the domain value equals `whenValue` (string comparison). */
-  | { readonly kind: "checkboxWhen"; readonly domainKey: string; readonly pdfField: string; readonly whenValue: string }
-  | { readonly kind: "radio";        readonly domainKey: string; readonly pdfField: string; readonly valueMap: Readonly<Record<string, string>> };
+  | {
+    readonly kind: "checkboxWhen";
+    readonly domainKey: string;
+    readonly pdfField: string;
+    readonly whenValue: string;
+  }
+  | {
+    readonly kind: "radio";
+    readonly domainKey: string;
+    readonly pdfField: string;
+    readonly valueMap: Readonly<Record<string, string>>;
+  };
 
 export interface PdfRowDescriptor {
   readonly domainKey: string;
@@ -59,6 +83,12 @@ export interface PdfFormDescriptor {
   readonly fields: ReadonlyArray<PdfFieldEntry>;
   readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
   readonly rows?: PdfRowDescriptor;
+  /** Append form-specific supporting pages after the filled IRS form. */
+  readonly appendSupplementalPages?: (
+    document: PDFDocument,
+    fields: Record<string, unknown>,
+    filer: FilerIdentity | undefined,
+  ) => Promise<void> | void;
   /**
    * Inclusion gate evaluated against the form's pending fields. When provided,
    * the form is only emitted if this returns true. Used for forms that are

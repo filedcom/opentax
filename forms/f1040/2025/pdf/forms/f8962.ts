@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
 
 // TY2025 Form 8962 AcroForm fields, verified against the year-pinned IRS PDF.
 const PAGE1 = "topmostSubform[0].Page1[0]";
@@ -201,15 +202,11 @@ function projectFields(
   const allocationRows: unknown[] = Array.isArray(allocations)
     ? allocations
     : [];
-  if (allocationRows.length > 4) {
-    throw new Error(
-      "Form 8962 PDF needs an attached Part IV overflow statement after four allocations",
-    );
-  }
   projected.pdf_line9_yes = allocationRows.length > 0;
   projected.pdf_line9_no = allocationRows.length === 0;
-  projected.pdf_line34_yes = allocationRows.length > 0;
-  projected.pdf_line34_no = false;
+  projected.pdf_line34_yes = allocationRows.length > 0 &&
+    allocationRows.length <= 4;
+  projected.pdf_line34_no = allocationRows.length > 4;
 
   const monthlyRows = fields.monthly_ptc_rows;
   if (monthlyRows !== undefined && !Array.isArray(monthlyRows)) {
@@ -258,7 +255,7 @@ function projectFields(
     });
   }
 
-  allocationRows.forEach((row, index) => {
+  allocationRows.slice(0, 4).forEach((row, index) => {
     if (!isRecord(row)) {
       throw new Error("Form 8962 PDF allocation must be a row");
     }
@@ -296,6 +293,7 @@ export const form8962Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${PAGE1}.f1_2[0]` },
   ],
   projectFields,
+  appendSupplementalPages: appendForm8962AllocationStatement,
   includeWhen: (fields) =>
     fields.annual_premium !== undefined ||
     fields.annual_aptc !== undefined ||
