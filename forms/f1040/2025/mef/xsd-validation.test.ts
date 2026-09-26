@@ -42,6 +42,15 @@ try {
 // ── Shared helpers ───────────────────────────────────────────────────────────
 
 const plan = buildExecutionPlan(registry);
+const nonApplicableBelowFpl = {
+  basis: "not_applicable",
+  exception_routes_reviewed: true,
+  no_one_can_claim_taxpayer: true,
+  all_covered_individuals_lawfully_present: true,
+  no_shared_policy: true,
+  no_self_employed_health_insurance_deduction: true,
+  no_alternative_marriage_calculation: true,
+} as const;
 
 Deno.test({
   name: "XSD: 2025 Schedule 2 line 1a Form 8962 repayment precedes line 2 AMT",
@@ -165,7 +174,7 @@ Deno.test({
 }, async () => {
   const general = {
     ...singleGeneral(),
-    ptc_below_100_fpl_eligibility: {
+    ptc_below_100_fpl_status: {
       basis: "marketplace_estimate",
       no_one_can_claim_taxpayer: true,
       marketplace_coverage: true,
@@ -201,6 +210,80 @@ Deno.test({
     "<ReconciledPremiumTaxCreditAmt>1800</ReconciledPremiumTaxCreditAmt>",
   );
   await validateXsd(xml, "below-100%-FPL Marketplace exception");
+});
+
+Deno.test({
+  name:
+    "XSD: below-100%-FPL non-applicable taxpayer files APTC-only annual group",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    ptc_below_100_fpl_status: nonApplicableBelowFpl,
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(10_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      monthly_premiums: Array(12).fill(250),
+      monthly_slcsps: Array(12).fill(350),
+      monthly_aptcs: Array(12).fill(200),
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 0);
+  assertEquals(result.pending.schedule2?.line1a_excess_advance_premium, 375);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<AnnualAdvancedPTCAmt>2400</AnnualAdvancedPTCAmt>",
+  );
+  assertEquals(xml.includes("<AnnualPremiumAmt>"), false);
+  assertEquals(xml.includes("<ApplicableFigureRt>"), false);
+  await validateXsd(xml, "below-100%-FPL APTC-only annual repayment");
+});
+
+Deno.test({
+  name:
+    "XSD: below-100%-FPL non-applicable taxpayer files APTC-only monthly rows",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    ptc_below_100_fpl_status: nonApplicableBelowFpl,
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(10_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      monthly_premiums: Array(12).fill(250),
+      monthly_slcsps: [...Array(11).fill(350), 400],
+      monthly_aptcs: Array(12).fill(200),
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule2?.line1a_excess_advance_premium, 375);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertEquals(xml.match(/<MonthlyPTCCalculationGrp>/g)?.length, 12);
+  assertStringIncludes(
+    xml,
+    "<MonthlyAdvancedPTCAmt>200</MonthlyAdvancedPTCAmt>",
+  );
+  assertEquals(xml.includes("<MonthlyPremiumAmt>"), false);
+  assertEquals(xml.includes("<MonthlyPremiumSLCSPAmt>"), false);
+  await validateXsd(xml, "below-100%-FPL APTC-only monthly repayment");
 });
 
 Deno.test({

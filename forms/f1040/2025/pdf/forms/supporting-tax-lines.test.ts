@@ -3,6 +3,7 @@ import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
 import { form6251Pdf } from "./f6251.ts";
+import { form8962Pdf } from "./f8962.ts";
 import { schedule2Pdf } from "./schedule2.ts";
 
 function mappedField(
@@ -58,5 +59,19 @@ Deno.test("Form 6251 maps the AMT investment-interest difference to line 2c", ()
   assertEquals(
     mappedField(form6251Pdf, "line2c_investment_interest"),
     "topmostSubform[0].Page1[0].f1_4[0]",
+  );
+});
+
+Deno.test("Form 8962 PDF includes APTC-only monthly repayment", () => {
+  assertEquals(
+    form8962Pdf.includeWhen?.({
+      monthly_ptc_rows: [{ month_code: "JANUARY", aptc: 200 }],
+      total_advance_ptc: 200,
+    }),
+    true,
+  );
+  assertEquals(
+    form8962Pdf.includeWhen?.({ household_income: 10_000 }),
+    false,
   );
 });

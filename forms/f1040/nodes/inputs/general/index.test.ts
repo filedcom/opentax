@@ -92,10 +92,10 @@ Deno.test("general routes below-100%-FPL Marketplace eligibility to Form 8962", 
   };
   const result = compute({
     filing_status: FilingStatus.Single,
-    ptc_below_100_fpl_eligibility: eligibility,
+    ptc_below_100_fpl_status: eligibility,
   });
   assertEquals(
-    findOutput(result, "form8962")?.fields.below_100_fpl_eligibility,
+    findOutput(result, "form8962")?.fields.below_100_fpl_status,
     eligibility,
   );
 });

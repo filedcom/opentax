@@ -3,11 +3,11 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 interface MonthlyRow {
   month_code: string;
-  premium: number;
-  slcsp: number;
+  premium?: number;
+  slcsp?: number;
   contribution?: number;
-  max_assistance: number;
-  allowed_credit: number;
+  max_assistance?: number;
+  allowed_credit?: number;
   aptc: number;
 }
 
@@ -62,15 +62,17 @@ function numberElement(tag: string, value: unknown): string {
 }
 
 function monthlyXml(rows: readonly MonthlyRow[]): string[] {
-  return rows.filter((row) => row.premium > 0 || row.slcsp > 0 || row.aptc > 0)
+  return rows.filter((row) =>
+    (row.premium ?? 0) > 0 || (row.slcsp ?? 0) > 0 || row.aptc > 0
+  )
     .map((row) =>
       elements("MonthlyPTCCalculationGrp", [
         element("MonthCd", row.month_code),
-        element("MonthlyPremiumAmt", row.premium),
-        element("MonthlyPremiumSLCSPAmt", row.slcsp),
+        numberElement("MonthlyPremiumAmt", row.premium),
+        numberElement("MonthlyPremiumSLCSPAmt", row.slcsp),
         numberElement("MonthlyContributionAmt", row.contribution),
-        element("MonthlyMaxPremiumAssistanceAmt", row.max_assistance),
-        element("MonthlyPremiumTaxCreditAllwAmt", row.allowed_credit),
+        numberElement("MonthlyMaxPremiumAssistanceAmt", row.max_assistance),
+        numberElement("MonthlyPremiumTaxCreditAllwAmt", row.allowed_credit),
         element("MonthlyAdvancedPTCAmt", row.aptc),
       ])
     );
