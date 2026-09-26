@@ -83,6 +83,8 @@ export const inputSchema = z.object({
   // reduce eligible chapter 1 taxes here after its Schedule 3 line 6l cap;
   // a positive Form 8978 line 14 belongs on Form 1040 line 16, not here.
   line17z_other_additional_taxes: z.number().nonnegative().optional(),
+  // Form 8621 Part V line 16f interest on prior PFIC-year tax.
+  line17p_form8621_interest: z.number().nonnegative().optional(),
   // Line 17 — Mark-to-market exit tax on covered expatriation (Form 8854 Part IV)
   // IRC §877A(a); taxable gain above $866k exclusion → Schedule 2 line 17
   line17_exit_tax: z.number().nonnegative().optional(),
@@ -143,6 +145,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line10_recapture_tax ?? 0) +
     (input.line10_lihtc_recapture ?? 0) +
     (input.line17z_other_additional_taxes ?? 0) +
+    (input.line17p_form8621_interest ?? 0) +
     (input.line17_exit_tax ?? 0) +
     (input.line9_965_net_tax_liability ?? 0);
 }

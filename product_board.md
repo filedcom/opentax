@@ -94,19 +94,20 @@ attachments, and IRS business rules remain unverified. See the
 
 ### GAP-8621: PFIC and QEF reporting
 
-**Known in-scope gap.** The Form 8621 input node currently applies the 2025
-highest rate (37%) to an undifferentiated excess-distribution amount and sends
-that estimate to Schedule 2 line 17z. The
-[Form 8621 instructions](https://www.irs.gov/instructions/i8621) instead
-allocate an excess distribution across holding-period years, use each prior
-year's applicable highest rate and foreign-tax-credit adjustment, and put the
-resulting line 16e tax on Form 1040 line 16 with `1291TAX`; related interest
-belongs on Schedule 2 line 17p. The node also has QEF/mark-to-market paths,
-but there is no registered `IRS8621` MeF serializer despite the TY2025v5.4
-schema supporting that document and several required supporting statements.
-The current estimated route must not be treated as verified support. Exit
-requires affected-year source facts and computation, corrected return routing,
-native XML and attachments, then source-to-XSD and business-rule evidence.
+**Build pass, untested; whole-form gap remains.** The flat 37% estimate and
+Schedule 2 line 17z tax route have been removed. Section 1291 events now take
+per-year holding-period allocations, calculate prior PFIC-year tax with each
+year's [IRS-published highest rate](https://www.irs.gov/instructions/i8621),
+apply per-year foreign-tax-credit limits, and send Form 8621 line 16e to Form
+1040 line 16 with `1291TAX`. Supplied section 6621 interest goes to Schedule 2
+line 17p; current/pre-PFIC income goes to Schedule 1. QEF net capital gain now
+routes to Schedule D, and mark-to-market loss is limited by unreversed prior
+inclusions. QEF section 951/1293(g) reductions are separate source facts.
+Native `IRS8621` and a holding-period statement builder are
+registered; calculation and source-to-XSD cases are written but unrun. The
+engine still needs dated per-share distributions and day-level allocation,
+historical interest computation, complete QEF/MTM elections and supporting
+facts, PDF verification, XSD/business-rule evidence, and ATS acceptance.
 
 ### GAP-8615: Child's unearned-income tax
 
@@ -148,7 +149,7 @@ dependencies, required statements, and tests.
 - Income/source documents: W-2, 1099-R, foreign-employer compensation records,
   and wages-not-shown schedule.
 - Forms 461, 982, 1116, 2441, 2555, 4137, 4562, 4684, 4797, 4835, 4952, 4972,
-  5329, 5695, 6198, 6251, 6252, 6781, 7206, 7217, 8283, 8396, 8582, 8606, 8615,
+  5329, 5695, 6198, 6251, 6252, 6781, 7206, 7217, 8283, 8396, 8582, 8606, 8615, 8621,
   8814, 8815, 8824, 8829, 8839, 8853, 8862, 8863, 8880, 8889, 8911, 8919, 8949,
   8959, 8960, 8962, 8978, 8990, 8995, and 8995-A.
 - Supporting documents: Form 4835 at-risk and passive-loss documents, Schedule A
@@ -156,7 +157,7 @@ dependencies, required statements, and tests.
   statement, Form 1116 foreign-income-related-expense statement, joint-occupancy
   statement, Form 8978 Schedule A and tax-computation statement PDF, Schedule 2
   line 17z `AnyOtherTaxesStatement`, and the Form 8283 vehicle sale
-  acknowledgment statement.
+  acknowledgment statement, and Form 8621 Part V holding-period statement.
 
 ## Release checklist
 

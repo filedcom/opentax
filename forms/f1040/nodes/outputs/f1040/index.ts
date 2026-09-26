@@ -102,6 +102,7 @@ const inputSchema = z.object({
   line16_income_tax: z.number().nonnegative().optional(),
   form4972_tax: z.number().nonnegative().optional(),
   form8978_tax: z.number().nonnegative().optional(),
+  form8621_tax: z.number().nonnegative().optional(),
   // Line 17 — AMT (Form 6251) via Schedule 2 line 1
   line17_additional_taxes: z.number().nonnegative().optional(),
   // Line 18 — Total tax before credits (16 + 17)

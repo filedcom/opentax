@@ -103,6 +103,8 @@ export const inputSchema = z.object({
   line_5_k1_st: z.number().optional(),
   // K-1 long-term capital gains/losses — Line 12
   line_12_k1_lt: z.number().optional(),
+  // Form 8621 QEF net capital gain is long-term gain, not Schedule 1 income.
+  line_11_qef_lt: z.number().nonnegative().optional(),
   // d_screen-style individual transactions (proceeds/cost/adjustment; gain_loss computed here)
   transactions: z.array(dScreenTransactionSchema).optional(),
   // Unrecaptured §1250 Gain Worksheet line 19 — from unrecaptured_1250_worksheet node
@@ -142,7 +144,8 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     sumAmounts(input.line_11_form2439) !== 0 ||
     sumAmounts(input.line_4_other_st) !== 0 ||
     (input.line_5_k1_st ?? 0) !== 0 ||
-    (input.line_12_k1_lt ?? 0) !== 0;
+    (input.line_12_k1_lt ?? 0) !== 0 ||
+    (input.line_11_qef_lt ?? 0) !== 0;
 
   return (
     txs.length > 0 ||
@@ -178,6 +181,7 @@ function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
     sumAmounts(input.line_4_other_st),
     input.line_5_k1_st,
     input.line_12_k1_lt,
+    input.line_11_qef_lt,
     input.line19_unrecaptured_1250,
     input.collectibles_gain_form2439,
   ].every((value) => (value ?? 0) === 0);
@@ -249,8 +253,9 @@ function computeDScreenLtNet(input: ScheduleDInput): number {
     (input.line_8a_proceeds ?? 0) -
     (input.line_8a_cost ?? 0) +
     sumAmounts(input.line_11_form2439) +
+    (input.line_11_qef_lt ?? 0) +
     (input.line_12_cap_gain_dist ?? 0) +
-    (input.line_12_k1_lt ?? 0) -
+    (input.line_12_k1_lt ?? 0) +
     (input.line_14_carryover ?? 0)
   );
 }

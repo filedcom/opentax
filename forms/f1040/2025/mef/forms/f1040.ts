@@ -67,6 +67,7 @@ export interface Fields {
   form8814_tax?: number | null;
   form4972_tax?: number | null;
   form8978_tax?: number | null;
+  form8621_tax?: number | null;
   line17_additional_taxes?: number | null;
   line18_total_tax_before_credits?: number | null;
   line19_child_tax_credit?: number | null;
@@ -531,6 +532,8 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     );
   }
   const form8978Tax = resolveNumber(fields.form8978_tax);
+  const form8621Tax = resolveNumber(fields.form8621_tax);
+  const otherTaxGroups: string[] = [];
   if (form8978Tax !== undefined && form8978Tax > 0) {
     const formIds = context?.documentIdsByPendingKey?.f8978 ?? [];
     if (context?.documentIdsByPendingKey && formIds.length === 0) {
@@ -539,6 +542,25 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
     if ((resolveNumber(fields.line16_income_tax) ?? 0) < form8978Tax) {
       throw new Error("Form 1040 line 16 omits Form 8978 tax");
     }
+    otherTaxGroups.push(elements("OtherTaxAmtGrp", [
+      element("OtherTaxAmtCd", "FORM 8978"),
+      element("OtherTaxAmt", form8978Tax),
+    ]));
+  }
+  if (form8621Tax !== undefined && form8621Tax > 0) {
+    const formIds = context?.documentIdsByPendingKey?.form8621 ?? [];
+    if (context?.documentIdsByPendingKey && formIds.length === 0) {
+      throw new Error("Form 1040 line 16 needs an attached Form 8621");
+    }
+    if ((resolveNumber(fields.line16_income_tax) ?? 0) < form8621Tax) {
+      throw new Error("Form 1040 line 16 omits Form 8621 tax");
+    }
+    otherTaxGroups.push(elements("OtherTaxAmtGrp", [
+      element("OtherTaxAmtCd", "1291TAX"),
+      element("OtherTaxAmt", form8621Tax),
+    ]));
+  }
+  if (otherTaxGroups.length > 0) {
     const taxIndex = FIELD_MAP.findIndex(([key]) =>
       key === "line16_income_tax"
     );
@@ -547,10 +569,7 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
       taxIndex + 1 + offset,
       0,
       element("OtherTaxAmtInd", "X"),
-      elements("OtherTaxAmtGrp", [
-        element("OtherTaxAmtCd", "FORM 8978"),
-        element("OtherTaxAmt", form8978Tax),
-      ]),
+      ...otherTaxGroups,
     );
   }
 
