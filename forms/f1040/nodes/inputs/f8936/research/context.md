@@ -1,7 +1,7 @@
 # Form 8936 — Clean Vehicle Credits
 
 ## Overview
-Computes the Clean Vehicle Credit under IRC §30D (new vehicles, up to $7,500) and IRC §25E (used vehicles, up to $4,000 or 30% of sale price). Routes to Schedule 3 line 6d. Income limits apply. One item per qualifying vehicle.
+Computes provisional personal Clean Vehicle Credit amounts under IRC §30D (new vehicles, up to $7,500) and IRC §25E (previously owned vehicles, up to $4,000 or 30% of sale price). Routes to Schedule 3 line 6f or 6m. This is not a complete Form 8936 filing path: IRS8936, Schedule A, dealer transfers, tax-liability limits, and business-credit reconciliation remain open.
 
 **IRS Form:** 8936
 **Drake Screen:** 8936
@@ -18,7 +18,7 @@ Computes the Clean Vehicle Credit under IRC §30D (new vehicles, up to $7,500) a
 | f8936s | VehicleItem[] | Yes | Vehicles | Array of qualifying clean vehicle records | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vehicle_description | string | No | Vehicle description | Make, model, year | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vin | string | No | VIN | Vehicle Identification Number | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
-| purchase_date | string (ISO) | No | Purchase date | Date vehicle was purchased | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
+| acquisition_date | string (ISO) | Required to compute | Acquisition date | Date of binding contract and payment; no credit after 2025-09-30 | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
 | is_new_vehicle | boolean | No | New vehicle | True = new (§30D, $7,500 max); false = used (§25E, $4,000 max) | IRC §30D / §25E | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | credit_amount | number (≥0) | No | Credit amount | Pre-determined credit from IRS certification (new vehicles) | Form 8936 Line 4 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | sale_price | number (≥0) | No | Sale price | Sale price (used vehicles; must be ≤$25,000) | IRC §25E(b)(1) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
@@ -26,22 +26,26 @@ Computes the Clean Vehicle Credit under IRC §30D (new vehicles, up to $7,500) a
 | vehicle_type | "suv_van_truck" or "other" | No | Vehicle type | Determines MSRP cap: $80,000 (SUV/van/truck) or $55,000 (other) | IRC §30D(f)(1) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | business_use_pct | number (0–1) | No | Business use % | Business use fraction (reduces personal credit proportionally) | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | modified_agi | number (≥0) | No | Modified AGI | MAGI for income limit test | IRC §30D(f)(10); §25E(b)(2) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
+| prior_year_modified_agi | number (≥0) | When current-year MAGI is over limit | Prior-year MAGI | Alternate income-limit test | Form 8936 Part I | https://www.irs.gov/instructions/i8936 |
 | filing_status | FilingStatus enum | No | Filing status | Determines income limit: MFJ $300k, HOH $225k, Single $150k | IRC §30D(f)(10) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
+| prior_year_filing_status | FilingStatus enum | When current-year MAGI is over limit | Prior-year filing status | Uses the prior year's threshold for a status change | Form 8936 Part I | https://www.irs.gov/instructions/i8936 |
 
 ---
 
 ## Calculation Logic
 
 ### Step 1 — New vehicle credit (§30D)
-- If `modified_agi > income_limit`: credit = 0
+- If acquired after 2025-09-30: credit = 0
+- If both current-year and prior-year MAGI exceed their own filing-status limits: credit = 0
 - If `msrp > MSRP cap` ($80k SUV or $55k other): credit = 0
 - `credit = min(credit_amount, $7,500) × (1 − business_use_pct)`
 Source: IRC §30D(a),(f)(1),(f)(10) — https://www.irs.gov/pub/irs-pdf/i8936.pdf
 
 ### Step 2 — Used vehicle credit (§25E)
-- If `modified_agi > income_limit`: credit = 0
+- If acquired after 2025-09-30: credit = 0
+- If both current-year and prior-year MAGI exceed the lower used-vehicle limits: credit = 0
 - If `sale_price > $25,000`: credit = 0
-- `credit = min(sale_price × 30%, $4,000) × (1 − business_use_pct)`
+- `credit = min(sale_price × 30%, $4,000)`; 2025 Schedule A Part IV has no business-use percentage split
 Source: IRC §25E(a),(b) — https://www.irs.gov/pub/irs-pdf/i8936.pdf
 
 ---
@@ -50,7 +54,8 @@ Source: IRC §25E(a),(b) — https://www.irs.gov/pub/irs-pdf/i8936.pdf
 
 | Output Field | Destination Node | Condition | IRS Reference | URL |
 | ------------ | ---------------- | --------- | ------------- | --- |
-| line6d_clean_vehicle_credit | schedule3 | credit > 0 | Form 8936 → Schedule 3 Line 6d | https://www.irs.gov/pub/irs-pdf/f1040s3.pdf |
+| line6f_clean_vehicle_credit | schedule3 | New personal credit > 0 | Form 8936 line 13 → Schedule 3 line 6f | https://www.irs.gov/pub/irs-prior/f8936--2025.pdf |
+| line6m_prev_owned_clean_vehicle_credit | schedule3 | Previously owned credit > 0 | Form 8936 line 18 → Schedule 3 line 6m | https://www.irs.gov/pub/irs-prior/f8936--2025.pdf |
 
 ---
 
@@ -67,6 +72,10 @@ Source: IRC §25E(a),(b) — https://www.irs.gov/pub/irs-pdf/i8936.pdf
 | Income limit — MFJ / QSS | $300,000 | IRC §30D(f)(10)(A)(i); Rev Proc 2024-40 | https://www.law.cornell.edu/uscode/text/26/30D |
 | Income limit — HOH | $225,000 | IRC §30D(f)(10)(A)(ii) | https://www.law.cornell.edu/uscode/text/26/30D |
 | Income limit — Single / MFS | $150,000 | IRC §30D(f)(10)(A)(iii) | https://www.law.cornell.edu/uscode/text/26/30D |
+| Previously owned income limit — MFJ / QSS | $150,000 | 2025 Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
+| Previously owned income limit — HOH | $112,500 | 2025 Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
+| Previously owned income limit — Single / MFS | $75,000 | 2025 Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
+| Last eligible acquisition date | 2025-09-30 | 2025 Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
 
 ---
 
@@ -74,14 +83,14 @@ Source: IRC §25E(a),(b) — https://www.irs.gov/pub/irs-pdf/i8936.pdf
 
 flowchart LR
   subgraph inputs["Data Entry (per vehicle)"]
-    v["f8936s[]\nis_new_vehicle + credit_amount/sale_price\nmsrp + modified_agi + filing_status"]
+    v["f8936s[]\nacquisition date + current/prior MAGI\nis_new_vehicle + credit_amount/sale_price"]
   end
   subgraph node["f8936 (Clean Vehicle Credit)"]
     nc["computeNewVehicleCredit()"]
     uc["computeUsedVehicleCredit()"]
   end
   subgraph outputs["Downstream"]
-    s3["schedule3\nline6d_clean_vehicle_credit"]
+    s3["schedule3\nline6f or line6m"]
   end
   v --> nc & uc --> s3
 
@@ -89,8 +98,8 @@ flowchart LR
 
 ## Edge Cases & Special Rules
 
-1. **Income test uses prior OR current year MAGI**: Taxpayer may use either prior year or current year MAGI, whichever is lower. Node accepts `modified_agi` and tests against limit.
-2. **VIN required for IRS processing**: VIN is captured for IRS matching but not used in credit computation.
+1. **Income test uses prior OR current year MAGI**: Each year uses its own filing-status threshold. If current-year MAGI exceeds its threshold, the node requires prior-year MAGI and status instead of silently assuming ineligibility.
+2. **VIN required for IRS processing**: VIN is captured but not yet required or serialized. This is an open filing gap, not a verified return path.
 3. **Dealer transfer (point-of-sale)**: Starting TY2024, dealers can apply the credit at point-of-sale. This node handles the traditional tax-return credit path.
 4. **Used vehicle — once per vehicle**: A vehicle can only qualify for the §25E credit once in its lifetime.
 5. **Business use split**: Business use reduces the personal credit proportionally. Business portion should be claimed on Form 3800.
