@@ -82,12 +82,30 @@ native `IRS8978` and linked `IRS8978ScheduleA` per filing, and the bundle
 builder creates a tax-computation statement PDF per filing. The statement and
 positive source-to-XSD case are written but unrun. Input requires the actual
 affected-year tax recomputation and explanation; this engine does not infer it
-from a marginal rate. A negative line 14 still fails explicitly until the
+from a marginal rate. The negative worksheet's Schedule 3 cap and eligible
+Schedule 2 offset calculation is written as a pure function with cases but is
+not yet integrated or run. A negative line 14 still fails explicitly until the
 [2025 Form 1040 instructions](https://www.irs.gov/instructions/i1040gi)
 Schedule 3 line 6l cap, possible Schedule 2 line 17z chapter-1-tax offset, and
 Form 6251 line 10 adjustment are built. Interest and penalties need further
 calculation/source review, and all required attachment and IRS business rules
 remain unverified.
+
+### GAP-8621: PFIC and QEF reporting
+
+**Known in-scope gap.** The Form 8621 input node currently applies the 2025
+highest rate (37%) to an undifferentiated excess-distribution amount and sends
+that estimate to Schedule 2 line 17z. The
+[Form 8621 instructions](https://www.irs.gov/instructions/i8621) instead
+allocate an excess distribution across holding-period years, use each prior
+year's applicable highest rate and foreign-tax-credit adjustment, and put the
+resulting line 16e tax on Form 1040 line 16 with `1291TAX`; related interest
+belongs on Schedule 2 line 17p. The node also has QEF/mark-to-market paths,
+but there is no registered `IRS8621` MeF serializer despite the TY2025v5.4
+schema supporting that document and several required supporting statements.
+The current estimated route must not be treated as verified support. Exit
+requires affected-year source facts and computation, corrected return routing,
+native XML and attachments, then source-to-XSD and business-rule evidence.
 
 ## Registered Form 1040 MeF documents to audit
 
