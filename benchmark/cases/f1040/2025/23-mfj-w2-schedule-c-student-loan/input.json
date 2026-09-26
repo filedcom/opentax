@@ -38,7 +38,7 @@
         "line_f_accounting_method": "cash",
         "line_g_material_participation": true,
         "line_1_gross_receipts": 23210,
-        "line_30_home_office_deduction": 0
+        "line_30_home_office": 0
       }
     },
     {

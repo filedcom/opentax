@@ -1,4 +1,5 @@
 import { join } from "@std/path";
+import { z } from "zod";
 import { catalog } from "../../catalog.ts";
 import type { FormDefinition } from "../../core/types/form-definition.ts";
 import {
@@ -18,7 +19,9 @@ function getCatalogEntry(formType: string, year: number) {
 }
 
 function getUserInputSchema(def: FormDefinition, nodeType: string) {
-  const entry = def.inputNodes.find((candidate) => candidate.node.nodeType === nodeType);
+  const entry = def.inputNodes.find((candidate) =>
+    candidate.node.nodeType === nodeType
+  );
   if (entry) return entry.isArray ? entry.itemSchema : entry.inputSchema;
 
   // The start node is the graph's composite input and is routed directly.
@@ -27,6 +30,28 @@ function getUserInputSchema(def: FormDefinition, nodeType: string) {
   throw new Error(
     `Node type ${nodeType} is not a valid input for ${def.formType}/${def.taxYear}`,
   );
+}
+
+function rejectUnknownFields(schema: z.ZodTypeAny, data: unknown): void {
+  // Input schemas may wrap their object in superRefine. Inspect the original
+  // shape before Zod's default object parsing strips misspelled fields.
+  const objectSchema = schema instanceof z.ZodEffects
+    ? schema.innerType()
+    : schema;
+  if (
+    !(objectSchema instanceof z.ZodObject) ||
+    data === null || typeof data !== "object" || Array.isArray(data)
+  ) return;
+  const unknown = Object.keys(data).filter((key) =>
+    !(key in objectSchema.shape)
+  );
+  if (unknown.length > 0) {
+    throw new Error(
+      `Validation error: Unrecognized field${
+        unknown.length === 1 ? "" : "s"
+      }: ${unknown.join(", ")}`,
+    );
+  }
 }
 
 // ─── form add ─────────────────────────────────────────────────────────────────
@@ -63,6 +88,7 @@ export async function formAddCommand(
   }
 
   const schema = getUserInputSchema(def, args.nodeType);
+  rejectUnknownFields(schema, data);
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);
@@ -150,6 +176,7 @@ export async function formUpdateCommand(
   }
 
   const schema = getUserInputSchema(def, existing.nodeType);
+  rejectUnknownFields(schema, data);
   const parsed = schema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`Validation error: ${parsed.error.message}`);

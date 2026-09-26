@@ -176,7 +176,7 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
 }
 
 function niitIncomeTotal(items: M99Item[]): number {
-  return items
+  return totalOf(items, "box8_substitute_payments") + items
     .filter((i) => i.box3_niit_applicable === true)
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
@@ -265,8 +265,8 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
       outputs.push(this.outputNodes.output(schedule2, { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE }));
     }
 
-    // form8960 — NIIT: box3_other_income that is investment income (box3_niit_applicable = true)
-    // Routed to line7_other_modifications (additional investment income per IRC §1411).
+    // Form 8960 line 7 includes substitute payments and box 3 income explicitly
+    // classified as investment income (IRC §1411).
     const totalNiit = niitIncomeTotal(m99s);
     if (totalNiit > 0) {
       outputs.push(this.outputNodes.output(form8960, { line7_other_modifications: totalNiit }));
