@@ -78,8 +78,9 @@ export const inputSchema = z.object({
   // Line 10 — Recapture of low-income housing credit (Form 8611)
   // IRC §42(j); Form 8611 → Schedule 2 line 10
   line10_lihtc_recapture: z.number().nonnegative().optional(),
-  // Line 17z — Other additional taxes (Form 8978 — partner's BBA audit tax)
-  // IRC §6226; Form 8978 → Schedule 2 line 17z
+  // Line 17z — other additional taxes. A negative Form 8978 adjustment may
+  // reduce eligible chapter 1 taxes here after its Schedule 3 line 6l cap;
+  // a positive Form 8978 line 14 belongs on Form 1040 line 16, not here.
   line17z_other_additional_taxes: z.number().nonnegative().optional(),
   // Line 17 — Mark-to-market exit tax on covered expatriation (Form 8854 Part IV)
   // IRC §877A(a); taxable gain above $866k exclusion → Schedule 2 line 17

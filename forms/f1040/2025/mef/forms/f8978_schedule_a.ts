@@ -6,7 +6,9 @@ import {
 } from "../../../nodes/inputs/f8978/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-type Adjustment = ReturnType<typeof inputSchema.parse>["filings"][number]["columns"][number]["income_adjustments"][number];
+type Adjustment = ReturnType<
+  typeof inputSchema.parse
+>["filings"][number]["columns"][number]["income_adjustments"][number];
 
 function sourceIndicator(source: Form8978Source): string {
   return source === Form8978Source.BbaAudit
@@ -21,12 +23,16 @@ function adjustment(tag: string, row: Adjustment): string {
     element("AARTrackingNum", row.aar_tracking_number),
     element("AuditControlNum", row.audit_control_number),
     element("EIN", row.ein),
+    element("MissingEINReasonCd", row.missing_ein_reason),
+    element("SSN", row.ssn),
     element("AdjustmentAmt", row.amount),
   ]);
 }
 
 function yearGroup(
-  column: ReturnType<typeof inputSchema.parse>["filings"][number]["columns"][number],
+  column: ReturnType<
+    typeof inputSchema.parse
+  >["filings"][number]["columns"][number],
 ): string {
   const lines = calculateYearColumn(column);
   return elements("PartnerAdditionalRptgYrTxGrp", [
