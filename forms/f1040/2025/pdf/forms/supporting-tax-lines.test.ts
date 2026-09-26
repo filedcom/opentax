@@ -1,4 +1,4 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals } from "@std/assert";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
@@ -150,20 +150,19 @@ Deno.test("Form 8962 PDF projects shared policy percentages without dollar round
   );
 });
 
-Deno.test("Form 8962 PDF stops before dropping a fifth allocation row", () => {
-  assertThrows(
-    () =>
-      form8962Pdf.projectFields?.({
-        monthly_ptc_rows: [],
-        shared_policy_allocations: Array(5).fill({
-          policy_number: "POLICY-1",
-          other_taxpayer_ssn: "222334444",
-          start_month: 1,
-          end_month: 1,
-          premium_pct: 0.5,
-        }),
-      }, {}),
-    Error,
-    "Part IV overflow statement",
-  );
+Deno.test("Form 8962 PDF marks line 34 No for a fifth allocation row", () => {
+  const projected = form8962Pdf.projectFields?.({
+    monthly_ptc_rows: [],
+    shared_policy_allocations: Array.from({ length: 5 }, (_, index) => ({
+      policy_number: `POLICY-${index + 1}`,
+      other_taxpayer_ssn: "222334444",
+      start_month: index + 1,
+      end_month: index + 1,
+      premium_pct: 0.5,
+    })),
+  }, {});
+  assertEquals(projected?.pdf_line34_yes, false);
+  assertEquals(projected?.pdf_line34_no, true);
+  assertEquals(projected?.pdf_allocation_4_policy_number, "POLICY-4");
+  assertEquals(projected?.pdf_allocation_5_policy_number, undefined);
 });

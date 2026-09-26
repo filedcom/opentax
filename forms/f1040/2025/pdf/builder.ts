@@ -5,14 +5,19 @@ import { ALL_PDF_FORMS } from "./forms/index.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "./form-descriptor.ts";
 import type { FilerIdentity } from "../../mef/header.ts";
 
-async function fetchWithCache(url: string, cacheDir: string): Promise<Uint8Array> {
+async function fetchWithCache(
+  url: string,
+  cacheDir: string,
+): Promise<Uint8Array> {
   const slug = url.replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
   const cachePath = join(cacheDir, `${slug}.pdf`);
   try {
     return await Deno.readFile(cachePath);
   } catch {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`Failed to fetch IRS PDF: ${url} (${res.status})`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch IRS PDF: ${url} (${res.status})`);
+    }
     const bytes = new Uint8Array(await res.arrayBuffer());
     await Deno.mkdir(cacheDir, { recursive: true });
     await Deno.writeFile(cachePath, bytes);
@@ -52,7 +57,9 @@ function fillEntry(
       const box = form.getCheckBox(entry.pdfField);
       value ? box.check() : box.uncheck();
     } else if (entry.kind === "checkboxWhen") {
-      if (String(value) === entry.whenValue) form.getCheckBox(entry.pdfField).check();
+      if (String(value) === entry.whenValue) {
+        form.getCheckBox(entry.pdfField).check();
+      }
     } else if (entry.kind === "radio") {
       const mapped = entry.valueMap[String(value)];
       if (mapped) form.getRadioGroup(entry.pdfField).select(mapped);
@@ -109,13 +116,18 @@ async function fillFormPdf(
     return false;
   };
   const hasData =
-    descriptor.fields.some(({ domainKey }) => isMeaningful(fields[domainKey])) ||
+    descriptor.fields.some(({ domainKey }) =>
+      isMeaningful(fields[domainKey])
+    ) ||
     (descriptor.rows !== undefined &&
       Array.isArray(fields[descriptor.rows.domainKey]) &&
       (fields[descriptor.rows.domainKey] as unknown[]).length > 0);
 
   if (!hasData) return undefined;
-  if (descriptor.includeWhen !== undefined && !descriptor.includeWhen(fields, allPending)) {
+  if (
+    descriptor.includeWhen !== undefined &&
+    !descriptor.includeWhen(fields, allPending)
+  ) {
     return undefined;
   }
 
@@ -147,13 +159,23 @@ async function fillFormPdf(
   if (descriptor.rows) {
     const items = fields[descriptor.rows.domainKey];
     if (Array.isArray(items)) {
-      for (let i = 0; i < Math.min(items.length, descriptor.rows.maxRows); i++) {
+      for (
+        let i = 0;
+        i < Math.min(items.length, descriptor.rows.maxRows);
+        i++
+      ) {
         const row = items[i] as Record<string, unknown>;
         for (const rf of descriptor.rows.rowFields) {
           let pdfField = rf.pdfFieldPattern.replace("{row}", String(i + 1));
-          if (rf.fieldNumBase !== undefined && descriptor.rows.rowStride !== undefined) {
+          if (
+            rf.fieldNumBase !== undefined &&
+            descriptor.rows.rowStride !== undefined
+          ) {
             const fieldNum = rf.fieldNumBase + i * descriptor.rows.rowStride;
-            pdfField = pdfField.replace("{field_num}", String(fieldNum).padStart(2, "0"));
+            pdfField = pdfField.replace(
+              "{field_num}",
+              String(fieldNum).padStart(2, "0"),
+            );
           }
           const value = row[rf.domainKey];
           if (value === undefined || value === null) continue;
@@ -163,12 +185,16 @@ async function fillFormPdf(
               value ? box.check() : box.uncheck();
             } else {
               form.getTextField(pdfField).setText(
-                typeof value === "number" ? Math.round(value).toString() : String(value),
+                typeof value === "number"
+                  ? Math.round(value).toString()
+                  : String(value),
               );
             }
           } catch (err) {
             console.error(
-              `[PDF] ${descriptor.pendingKey}: row ${i + 1} field "${pdfField}" — ${err}`,
+              `[PDF] ${descriptor.pendingKey}: row ${
+                i + 1
+              } field "${pdfField}" — ${err}`,
             );
           }
         }
@@ -203,8 +229,12 @@ export async function buildPdfBytes(
   const merged = await PDFDocument.create();
 
   for (const descriptor of ALL_PDF_FORMS) {
-    const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<string, unknown>;
-    const projectedFields = descriptor.projectFields?.(fields, normalized) ?? fields;
+    const fields = (normalized[descriptor.pendingKey] ?? {}) as Record<
+      string,
+      unknown
+    >;
+    const projectedFields = descriptor.projectFields?.(fields, normalized) ??
+      fields;
 
     const effectiveFields = descriptor.rows
       ? {
@@ -214,9 +244,16 @@ export async function buildPdfBytes(
       }
       : projectedFields;
 
-    const instances = descriptor.instances?.(effectiveFields) ?? [effectiveFields];
+    const instances = descriptor.instances?.(effectiveFields) ??
+      [effectiveFields];
     for (const instance of instances) {
-      const filledBytes = await fillFormPdf(descriptor, instance, filer, cacheDir, normalized);
+      const filledBytes = await fillFormPdf(
+        descriptor,
+        instance,
+        filer,
+        cacheDir,
+        normalized,
+      );
       if (!filledBytes) continue;
 
       const filledDoc = await PDFDocument.load(filledBytes);
@@ -225,11 +262,14 @@ export async function buildPdfBytes(
       for (const page of copiedPages) {
         merged.addPage(page);
       }
+      await descriptor.appendSupplementalPages?.(merged, instance, filer);
     }
   }
 
   if (merged.getPageCount() === 0) {
-    throw new Error("No PDF forms were generated — return may have no computed data.");
+    throw new Error(
+      "No PDF forms were generated — return may have no computed data.",
+    );
   }
 
   return merged.save();
