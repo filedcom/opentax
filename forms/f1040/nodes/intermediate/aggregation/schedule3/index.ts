@@ -85,6 +85,8 @@ export const inputSchema = z.object({
   // Line 6g — Mortgage interest credit (Form 8396 line 11)
   // IRC §25; Form 8396 line 11 → Schedule 3 line 6g
   line6g_mortgage_interest_credit: z.number().nonnegative().optional(),
+  // Line 6h — District of Columbia first-time homebuyer credit (Form 8859).
+  line6h_dc_homebuyer_credit: z.number().nonnegative().optional(),
   // Line 6i — qualified electric vehicle credit that precedes Form 8936
   // personal clean-vehicle credits in the Form 8936 tax-liability worksheet.
   line6i_qualified_electric_vehicle_credit: z.number().nonnegative().optional(),
@@ -92,12 +94,16 @@ export const inputSchema = z.object({
   // Line 6j — allowed personal-use alternative fuel refueling property credit
   // from Form 8911 line 10, after the regular-tax / AMT limitation.
   line6j_alt_fuel_vehicle_refueling: z.number().nonnegative().optional(),
+  // Line 6k — credit to holders of tax credit bonds (Form 8912 line 12).
+  line6k_tax_credit_bonds: z.number().nonnegative().optional(),
   // Line 6l — negative Form 8978 adjustment after the Form 1040 line 18 cap.
   line6l_form8978_credit: z.number().int().nonnegative().optional(),
 
   // Line 9 — Net premium tax credit (Form 8962 line 26)
   // IRC §36B; Form 8962 line 26 → Schedule 3 line 9 (Part II refundable credit)
   line9_premium_tax_credit: z.number().nonnegative().optional(),
+  // Line 12 — refundable federal fuel tax credit (Form 4136 line 17).
+  line12_fuel_tax_credit: z.number().nonnegative().optional(),
 
   // Line 6a — General business credit (from Form 3800).
   line6a_general_business_credit: accumulable(z.number().nonnegative())
@@ -141,8 +147,10 @@ function line7(input: Schedule3Input): number {
     (input.line6d_elderly_disabled_credit ?? 0) +
     sumAccumulable(input.line6f_clean_vehicle_credit) +
     (input.line6g_mortgage_interest_credit ?? 0) +
+    (input.line6h_dc_homebuyer_credit ?? 0) +
     (input.line6i_qualified_electric_vehicle_credit ?? 0) +
     (input.line6j_alt_fuel_vehicle_refueling ?? 0) +
+    (input.line6k_tax_credit_bonds ?? 0) +
     (input.line6l_form8978_credit ?? 0) +
     sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit);
 }
@@ -164,7 +172,8 @@ function partIITotal(input: Schedule3Input): number {
   return (
     (input.line9_premium_tax_credit ?? 0) +
     (input.line10_amount_paid_extension ?? 0) +
-    (input.line11_excess_ss ?? 0)
+    (input.line11_excess_ss ?? 0) +
+    (input.line12_fuel_tax_credit ?? 0)
   );
 }
 

@@ -16,8 +16,10 @@ export interface Fields {
   line6d_elderly_disabled_credit?: number | null;
   line6f_total?: number | null;
   line6g_mortgage_interest_credit?: number | null;
+  line6h_dc_homebuyer_credit?: number | null;
   line6i_qualified_electric_vehicle_credit?: number | null;
   line6j_alt_fuel_vehicle_refueling?: number | null;
+  line6k_tax_credit_bonds?: number | null;
   line6l_form8978_credit?: number | null;
   line6m_total?: number | null;
   line7_total?: number | null;
@@ -25,10 +27,18 @@ export interface Fields {
   line9_premium_tax_credit?: number | null;
   line10_amount_paid_extension?: number | null;
   line11_excess_ss?: number | null;
+  line12_fuel_tax_credit?: number | null;
   line15_total?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
+
+const sourceForms: Partial<Record<keyof Fields, readonly [string, string]>> = {
+  line6h_dc_homebuyer_credit: ["f8859", "IRS8859"],
+  line6i_qualified_electric_vehicle_credit: ["f8834", "IRS8834"],
+  line6k_tax_credit_bonds: ["f8912", "IRS8912"],
+  line12_fuel_tax_credit: ["f4136", "IRS4136"],
+};
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name, in XSD line order)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
@@ -44,8 +54,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line6d_elderly_disabled_credit", "CreditForElderlyOrDisabledAmt"],
   ["line6f_total", "CleanVehPrsnlUsePartCrAmt"],
   ["line6g_mortgage_interest_credit", "MortgageInterestCreditAmt"],
+  ["line6h_dc_homebuyer_credit", "DCHmByrCurrentYearCreditAmt"],
   ["line6i_qualified_electric_vehicle_credit", "QlfyElecMotorVehCrAmt"],
   ["line6j_alt_fuel_vehicle_refueling", "TotalPersonalUsePartOfCrAmt"],
+  ["line6k_tax_credit_bonds", "CurrentYearAllowableCreditAmt"],
   ["line6l_form8978_credit", "TotRptgYrTxIncreaseDecreaseAmt"],
   ["line6m_total", "MaxPrevOwnedCleanVehCrAmt"],
   ["line7_total", "OtherCreditsAmt"],
@@ -53,6 +65,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line9_premium_tax_credit", "ReconciledPremiumTaxCreditAmt"],
   ["line10_amount_paid_extension", "RequestForExtensionAmt"],
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
+  ["line12_fuel_tax_credit", "TotalFuelTaxCreditAmt"],
   ["line15_total", "TotalOtherPaymentsRfdblCrAmt"],
 ];
 
@@ -92,6 +105,25 @@ function buildIRS1040Schedule3(
           ? {
             referenceDocumentId: formIds.join(" "),
             referenceDocumentName: "IRS8978",
+          }
+          : undefined,
+      ));
+      continue;
+    }
+    const sourceForm = sourceForms[key];
+    if (sourceForm) {
+      const [pendingKey, documentName] = sourceForm;
+      const formIds = context?.documentIdsByPendingKey?.[pendingKey] ?? [];
+      if (context?.documentIdsByPendingKey && formIds.length === 0) {
+        throw new Error(`Schedule 3 ${key} needs attached ${documentName}`);
+      }
+      children.push(element(
+        tag,
+        value,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: documentName,
           }
           : undefined,
       ));

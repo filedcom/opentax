@@ -92,8 +92,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line6h_dc_homebuyer_credit",
+    pdfField: "topmostSubform[0].Page1[0].f1_16[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line6i_qualified_electric_vehicle_credit",
     pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line6k_tax_credit_bonds",
+    pdfField: "topmostSubform[0].Page1[0].f1_19[0]",
   },
   {
     kind: "text",
@@ -131,6 +141,11 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     kind: "text",
     domainKey: "line11_excess_ss",
     pdfField: "topmostSubform[0].Page1[0].f1_28[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line12_fuel_tax_credit",
+    pdfField: "topmostSubform[0].Page1[0].f1_29[0]",
   },
   {
     kind: "text",

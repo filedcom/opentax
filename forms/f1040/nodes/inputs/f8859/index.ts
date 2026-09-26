@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
@@ -28,7 +31,10 @@ function totalCarryforward(items: F8859Items): number {
 
 function buildOutputs(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+  return [{
+    nodeType: schedule3.nodeType,
+    fields: { line6h_dc_homebuyer_credit: credit },
+  }];
 }
 
 class F8859Node extends TaxNode<typeof inputSchema> {

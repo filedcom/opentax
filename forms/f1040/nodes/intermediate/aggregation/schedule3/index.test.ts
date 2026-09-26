@@ -85,6 +85,32 @@ Deno.test("Schedule 3 line 6l includes the capped Form 8978 credit", () => {
   assertEquals(findOutput(result, "schedule3")?.fields.line8_total, 500);
 });
 
+Deno.test("Schedule 3 keeps DC homebuyer and bond credits out of line 6a", () => {
+  const result = compute({
+    line6h_dc_homebuyer_credit: 300,
+    line6k_tax_credit_bonds: 450,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
+    750,
+  );
+  assertEquals(findOutput(result, "schedule3")?.fields.line7_total, 750);
+  assertEquals(findOutput(result, "schedule3")?.fields.line6a_total, undefined);
+});
+
+Deno.test("Schedule 3 Form 4136 line 12 is a payment, not nonrefundable credit", () => {
+  const result = compute({ line12_fuel_tax_credit: 125 });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line31_additional_payments,
+    125,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
+    undefined,
+  );
+  assertEquals(findOutput(result, "schedule3")?.fields.line15_total, 125);
+});
+
 Deno.test("calc: line2_childcare_credit alone → f1040 line20", () => {
   const result = compute({ line2_childcare_credit: 600 });
   assertEquals(
