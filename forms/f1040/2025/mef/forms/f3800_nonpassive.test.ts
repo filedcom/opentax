@@ -84,6 +84,45 @@ Deno.test("Form 3800 XML: multiple facilities on one line have per-facility Part
   );
 });
 
+Deno.test("Form 3800 XML: repeated facility values keep separate applied amounts and document IDs", () => {
+  const facility = { ...ordinary, credit_amount: 18_000 };
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 36_000, specifiedCredit: 0 },
+    facilities: [facility, facility],
+    form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+    appliedCreditsByFacility: [15_000, 5_000],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    '<Form8835PartIICYCreditsGrp referenceDocumentId="IRS8835_1 IRS8835_2"',
+  );
+  assertStringIncludes(
+    xml,
+    '<Frm8835PartIICYAggrgtAmtGrp referenceDocumentId="IRS8835_1"',
+  );
+  assertStringIncludes(
+    xml,
+    '<Frm8835PartIICYAggrgtAmtGrp referenceDocumentId="IRS8835_2"',
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGBCLessGrossEPEAppTxAmt>15000</TotalGBCLessGrossEPEAppTxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGBCLessGrossEPEAppTxAmt>5000</TotalGBCLessGrossEPEAppTxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>3000</CarryforwardGeneralBusCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CarryforwardGeneralBusCrAmt>13000</CarryforwardGeneralBusCrAmt>",
+  );
+});
+
 Deno.test("Form 3800 XML: specified-credit facilities and transfers have Part V detail", () => {
   const xml = buildIRS3800Nonpassive({
     tax: { ...tax, standardCredit: 0, specifiedCredit: 19_000 },

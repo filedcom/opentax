@@ -108,16 +108,23 @@ The Form 3800 nonpassive XML draft now maps Form 8835 ordinary and specified
 credits to Part III, requires bundled transfer-election statement IDs, and
 breaks multiple same-line facilities into Part V rows. The per-facility Part II
 applied amounts must be explicit and reconcile to the calculated limit. Direct
-builder cases are written but unrun. This builder is not registered in return
-assembly, has not passed local XSD or business-rule validation, and does not
-cover passive credits, other business-credit sources, or carryovers. The
-Schedule 3 allowed-credit route is still blocked for positive Form 8835 credit.
-The current build pass also has an unrun pure bridge from finalized Form 1040,
-Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800 limit. It
-subtracts the specific Form 3800 line 7 and 10b exclusions instead of letting
-the general business credit count against itself. That bridge is not yet wired
-to graph finalization. Other GBC producers still send gross source credits
-straight to Schedule 3 line 6a and require a common limitation pass. The
+builder cases are written but unrun. The draft now indexes Part V facility
+allocations and linked source documents by entry position, so equal-valued or
+reused facility objects do not silently reuse the first allocation; that case is
+written but unrun. This builder is not registered in return assembly, has not
+passed local XSD or business-rule validation, and does not cover passive
+credits, other business-credit sources, or carryovers. The Schedule 3
+allowed-credit route is still blocked for positive Form 8835 credit. The current
+build pass also has an unrun pure bridge from finalized Form 1040, Schedules 2
+and 3, and Form 6251 lines into the nonpassive Form 3800 limit. It subtracts the
+specific Form 3800 line 7 and 10b exclusions instead of letting the general
+business credit count against itself. That bridge is not yet wired to graph
+finalization. Other GBC producers still send gross source credits straight to
+Schedule 3 line 6a and require a common limitation pass. The
+[Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) source now requires both
+preceding-year receipts and full-time employee headcount instead of treating
+missing facts as eligibility; its cases are written but unrun, and its gross
+credit still needs Form 3800. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line

@@ -1,6 +1,11 @@
 import { assertEquals } from "@std/assert";
 import { f8826 } from "./index.ts";
 
+const eligibleFacts = {
+  prior_year_gross_receipts: 500_000,
+  prior_year_full_time_employee_count: 20,
+};
+
 function compute(input: Parameters<typeof f8826.compute>[1]) {
   return f8826.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
@@ -12,66 +17,90 @@ function findSchedule3(result: ReturnType<typeof compute>) {
 // ── Schema Validation ─────────────────────────────────────────────────────────
 
 Deno.test("schema_rejects_negative_expenditures", () => {
-  const result = f8826.inputSchema.safeParse({ eligible_expenditures: -100 });
+  const result = f8826.inputSchema.safeParse({
+    eligible_expenditures: -100,
+    ...eligibleFacts,
+  });
   assertEquals(result.success, false);
 });
 
 Deno.test("schema_accepts_valid_input", () => {
   const result = f8826.inputSchema.safeParse({
     eligible_expenditures: 5000,
-    gross_receipts: 500000,
-    fte_count: 20,
+    ...eligibleFacts,
   });
   assertEquals(result.success, true);
+});
+
+Deno.test("schema_requires_prior_year_receipts_and_full-time headcount", () => {
+  assertEquals(
+    f8826.inputSchema.safeParse({ eligible_expenditures: 5_000 }).success,
+    false,
+  );
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 5_000,
+      prior_year_gross_receipts: 500_000,
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 5_000,
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count: 20.5,
+    }).success,
+    false,
+  );
 });
 
 // ── Zero / No Output Cases ────────────────────────────────────────────────────
 
 Deno.test("zero_expenditures_produces_no_output", () => {
-  const result = compute({ eligible_expenditures: 0 });
+  const result = compute({ eligible_expenditures: 0, ...eligibleFacts });
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("expenditures_at_250_floor_produces_no_output", () => {
   // $250 − $250 = $0 creditable → no output
-  const result = compute({ eligible_expenditures: 250 });
+  const result = compute({ eligible_expenditures: 250, ...eligibleFacts });
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("expenditures_below_250_produces_no_output", () => {
-  const result = compute({ eligible_expenditures: 100 });
+  const result = compute({ eligible_expenditures: 100, ...eligibleFacts });
   assertEquals(result.outputs.length, 0);
 });
 
 // ── Eligibility Gates ─────────────────────────────────────────────────────────
 
-Deno.test("over_1M_receipts_AND_over_30_fte_produces_no_output", () => {
+Deno.test("over_1M_receipts_AND_over_30_full_time_employees_produces_no_output", () => {
   // Both conditions fail → not eligible
   const result = compute({
     eligible_expenditures: 5000,
-    gross_receipts: 1_500_000,
-    fte_count: 35,
+    prior_year_gross_receipts: 1_500_000,
+    prior_year_full_time_employee_count: 35,
   });
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("over_1M_receipts_but_under_30_fte_is_eligible", () => {
-  // fte ≤30 qualifies even if receipts > $1M; ($5,000 − $250) × 50% = $2,375
+Deno.test("over_1M_receipts_but_under_30_full_time_employees_is_eligible", () => {
+  // Headcount ≤30 qualifies even if receipts > $1M.
   const result = compute({
     eligible_expenditures: 5000,
-    gross_receipts: 1_500_000,
-    fte_count: 25,
+    prior_year_gross_receipts: 1_500_000,
+    prior_year_full_time_employee_count: 25,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
-Deno.test("under_1M_receipts_but_over_30_fte_is_eligible", () => {
-  // receipts ≤$1M qualifies even if fte > 30; ($5,000 − $250) × 50% = $2,375
+Deno.test("under_1M_receipts_but_over_30_full_time_employees_is_eligible", () => {
+  // Receipts ≤$1M qualifies even if headcount >30.
   const result = compute({
     eligible_expenditures: 5000,
-    gross_receipts: 800_000,
-    fte_count: 35,
+    prior_year_gross_receipts: 800_000,
+    prior_year_full_time_employee_count: 35,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
@@ -79,14 +108,22 @@ Deno.test("under_1M_receipts_but_over_30_fte_is_eligible", () => {
 
 Deno.test("exactly_1M_receipts_is_eligible", () => {
   // ($5,000 − $250) × 50% = $2,375
-  const result = compute({ eligible_expenditures: 5000, gross_receipts: 1_000_000 });
+  const result = compute({
+    eligible_expenditures: 5000,
+    prior_year_gross_receipts: 1_000_000,
+    prior_year_full_time_employee_count: 31,
+  });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
-Deno.test("exactly_30_fte_is_eligible", () => {
+Deno.test("exactly_30_full_time_employees_is_eligible", () => {
   // ($5,000 − $250) × 50% = $2,375
-  const result = compute({ eligible_expenditures: 5000, fte_count: 30 });
+  const result = compute({
+    eligible_expenditures: 5000,
+    prior_year_gross_receipts: 1_000_001,
+    prior_year_full_time_employee_count: 30,
+  });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
@@ -95,35 +132,38 @@ Deno.test("exactly_30_fte_is_eligible", () => {
 
 Deno.test("basic_credit_50pct_of_expenditures_minus_250", () => {
   // ($5,000 − $250) × 50% = $2,375
-  const result = compute({ eligible_expenditures: 5000 });
+  const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
 
 Deno.test("expenditures_just_above_250_floor", () => {
   // ($251 − $250) × 50% = $0.50
-  const result = compute({ eligible_expenditures: 251 });
+  const result = compute({ eligible_expenditures: 251, ...eligibleFacts });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 0.5);
 });
 
 Deno.test("max_credit_at_10250_expenditures", () => {
   // ($10,250 − $250) × 50% = $5,000
-  const result = compute({ eligible_expenditures: 10250 });
+  const result = compute({ eligible_expenditures: 10250, ...eligibleFacts });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 Deno.test("expenditures_above_10250_still_capped_at_5000", () => {
   // $20,000 expenditures → cap at $10,250 → ($10,250 − $250) × 50% = $5,000
-  const result = compute({ eligible_expenditures: 20000 });
+  const result = compute({ eligible_expenditures: 20000, ...eligibleFacts });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
-Deno.test("no_eligibility_fields_assumes_eligible", () => {
-  // No gross_receipts or fte_count provided → both checks pass (undefined) → eligible
-  const result = compute({ eligible_expenditures: 5000 });
+Deno.test("first-year business with zero prior-year receipts and employees qualifies", () => {
+  const result = compute({
+    eligible_expenditures: 5000,
+    prior_year_gross_receipts: 0,
+    prior_year_full_time_employee_count: 0,
+  });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
 });
@@ -131,7 +171,6 @@ Deno.test("no_eligibility_fields_assumes_eligible", () => {
 // ── Routing ───────────────────────────────────────────────────────────────────
 
 Deno.test("routes_to_schedule3", () => {
-  const result = compute({ eligible_expenditures: 5000 });
+  const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
 });
-
