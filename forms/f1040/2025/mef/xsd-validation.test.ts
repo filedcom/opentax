@@ -689,6 +689,46 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: five Part IV allocations use repeated MeF groups and line 34 No",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 3_000)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "FIVE-PERIODS",
+      monthly_premiums: [...Array(5).fill(1_200), ...Array(7).fill(0)],
+      monthly_slcsps: [...Array(5).fill(1_500), ...Array(7).fill(0)],
+      monthly_aptcs: [...Array(5).fill(800), ...Array(7).fill(0)],
+      shared_policy_periods: Array.from({ length: 5 }, (_, index) => ({
+        basis: "other_agreed",
+        situations_1_to_3_reviewed_and_inapplicable: true,
+        other_taxpayer_ssn: "222-33-4444",
+        start_month: index + 1,
+        end_month: index + 1,
+        allocation_pct: (index + 1) / 10,
+      })),
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertEquals((xml.match(/<SharedPolicyAllocationGrp>/g) ?? []).length, 5);
+  assertStringIncludes(
+    xml,
+    "<SharedPolicyAllocationInfoInd>false</SharedPolicyAllocationInfoInd>",
+  );
+  assertStringIncludes(xml, "<StartMonthNumberCd>05</StartMonthNumberCd>");
+  await validateXsd(xml, "five Part IV allocation groups");
+});
+
+Deno.test({
   name: "XSD: two same-state Marketplace policies use one SLCSP benchmark",
   sanitizeOps: false,
   sanitizeResources: false,

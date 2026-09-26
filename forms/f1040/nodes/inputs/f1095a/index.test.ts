@@ -824,3 +824,24 @@ Deno.test("family-only periods cannot replace a required shared allocation", () 
     "at least one allocation period",
   );
 });
+
+Deno.test("five Part IV periods remain separate source allocations", () => {
+  const result = compute([minimalItem({
+    policy_number: "FIVE-PERIODS",
+    monthly_premiums: [...Array(5).fill(1_200), ...Array(7).fill(0)],
+    monthly_slcsps: [...Array(5).fill(1_500), ...Array(7).fill(0)],
+    monthly_aptcs: [...Array(5).fill(800), ...Array(7).fill(0)],
+    shared_policy_periods: Array.from({ length: 5 }, (_, index) => ({
+      basis: "other_agreed",
+      situations_1_to_3_reviewed_and_inapplicable: true,
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: index + 1,
+      end_month: index + 1,
+      allocation_pct: (index + 1) / 10,
+    })),
+  })]);
+  const rows = findOutput(result, "form8962")?.fields
+    .shared_policy_allocations as { premium_pct: number }[];
+  assertEquals(rows.length, 5);
+  assertEquals(rows.map((row) => row.premium_pct), [0.1, 0.2, 0.3, 0.4, 0.5]);
+});

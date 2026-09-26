@@ -122,11 +122,11 @@ function buildIRS8962(fields: Input): string {
     );
   }
   if (
-    allocations.length > 4 ||
+    allocations.length > 99 ||
     (allocations.length > 0 && !Array.isArray(monthlyRows))
   ) {
     throw new Error(
-      "Form 8962 shared policies need at most four allocations and monthly rows",
+      "Form 8962 shared policies need at most 99 MeF allocations and monthly rows",
     );
   }
   if (
@@ -222,7 +222,10 @@ function buildIRS8962(fields: Input): string {
       ])
     ),
     allocations.length > 0
-      ? element("SharedPolicyAllocationInfoInd", "true")
+      ? element(
+        "SharedPolicyAllocationInfoInd",
+        allocations.length <= 4 ? "true" : "false",
+      )
       : "",
   ]);
 }
