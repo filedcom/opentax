@@ -99,7 +99,7 @@ because the IRS XSD permits them.
 | -------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | 1040-04  | `IRS3800`                                   | M: no registered MeF serializer                                                                |
 | 1040-04  | `IRS8835`                                   | M: no registered MeF serializer                                                                |
-| 1040-04  | `IRS8936` and its Schedule A                | M: no registered MeF serializer                                                                |
+| 1040-04  | `IRS8936` and its Schedule A                | M: no registered MeF serializer. The current calculation pass adds the 2025 acquisition cutoff and prior/current MAGI checks, but its tests are unrun and the full eligibility, limit, and attachment path remains open. |
 | 1040-04  | Transfer Election Statement PDF             | M: source PDF identifies the attachment, but its content is not in the captured scenario facts |
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific

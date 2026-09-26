@@ -54,6 +54,16 @@ line 13d route to Form 1040 line 25c. The Form 3800 and Form 8936 attachment,
 eligibility, and source-reconciliation paths remain open, and none of these
 changes has passed the deferred full test batch.
 
+The Form 8936 calculation pass now distinguishes the $75,000/$112,500/$150,000
+previously owned vehicle MAGI limits from the new-vehicle limits, applies
+current-or-prior-year MAGI with each year's filing status, and refuses to award
+a credit without a valid acquisition date. It excludes acquisitions after
+September 30, 2025 and stops reducing the previously owned credit by a
+business-use percentage. These cases are written but unrun. VIN/seller
+verification, placed-in-service and transfer/recapture facts, Form 1040 tax
+liability limits, business-use routing, IRS8936 and Schedule A XML, and ATS
+evidence remain open.
+
 ## Status definitions
 
 | Status                    | Meaning                                                                                                                     |
