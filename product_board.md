@@ -127,7 +127,13 @@ missing facts as eligibility; its cases are written but unrun, and its gross
 credit still needs Form 3800. A native `IRS8826` XML draft now shares the source
 calculation for lines 1, 3, 5, 6, and 8, with direct schema and reconciliation
 cases written but unrun. It remains unregistered until the Form 3800
-allowed-credit and source-document path is complete. The
+allowed-credit and source-document path is complete. Form 8826 now requires a
+passive-activity answer and stops a positive passive credit pending Form
+8582-CR, with unrun cases. The unregistered Form 3800 nonpassive XML draft now
+includes Form 8826's distinct Part III line 1e group and reconciles its explicit
+applied credit with Form 8835's line 1f and 4e groups and the shared Part II
+limit. Solo, combined, and negative cases are written but unrun. Its source
+graph and document bundle remain unconnected. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line

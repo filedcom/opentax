@@ -30,9 +30,10 @@ export const inputSchema = z.object({
   // Count employees working at least 30 hours a week for 20 calendar weeks.
   // This is a headcount, not a full-time-equivalent calculation.
   prior_year_full_time_employee_count: z.number().int().nonnegative(),
+  subject_to_passive_activity_limit: z.boolean(),
 });
 
-type F8826Input = z.infer<typeof inputSchema>;
+export type F8826Input = z.infer<typeof inputSchema>;
 
 export type F8826Lines = {
   readonly line1: number;
@@ -81,6 +82,11 @@ class F8826Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: F8826Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const lines = calculateForm8826(input);
+    if (lines.line8 > 0 && input.subject_to_passive_activity_limit) {
+      throw new Error(
+        "Form 8826 passive credit needs Form 8582-CR before Form 3800",
+      );
+    }
     return { outputs: buildOutputs(lines.line8) };
   }
 }

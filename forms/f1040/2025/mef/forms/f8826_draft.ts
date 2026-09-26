@@ -11,6 +11,11 @@ import {
 export function buildForm8826Document(rawInput: unknown): string {
   const input = inputSchema.parse(rawInput);
   const lines = calculateForm8826(input);
+  if (lines.line8 > 0 && input.subject_to_passive_activity_limit) {
+    throw new Error(
+      "Form 8826 passive credit needs Form 8582-CR before Form 3800",
+    );
+  }
   if (lines.line8 <= 0) {
     throw new Error("Form 8826 has no eligible source credit to document");
   }

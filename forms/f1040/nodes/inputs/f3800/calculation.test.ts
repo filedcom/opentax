@@ -201,6 +201,13 @@ Deno.test("Form 3800: separates Form 8835 Part III lines 1f and 4e after transfe
   ]);
 });
 
+Deno.test("Form 3800: no Form 8835 facilities leave its credit classification empty", () => {
+  const result = classifyForm8835Credits([]);
+  assertEquals(result.standardCredit, 0);
+  assertEquals(result.specifiedCredit, 0);
+  assertEquals(result.rows, []);
+});
+
 Deno.test("Form 3800: multiple same-line facilities require Part V detail", () => {
   const result = classifyForm8835Credits([
     {

@@ -6,6 +6,7 @@ const source = {
   eligible_expenditures: 20_000,
   prior_year_gross_receipts: 900_000,
   prior_year_full_time_employee_count: 40,
+  subject_to_passive_activity_limit: false,
 };
 
 Deno.test("Form 8826 draft: source credit, numbered lines, and XML reconcile", () => {
@@ -59,6 +60,15 @@ Deno.test("Form 8826 draft: absent eligibility facts or non-creditable expenses 
       }),
     Error,
     "no eligible source credit",
+  );
+  assertThrows(
+    () =>
+      buildForm8826Document({
+        ...source,
+        subject_to_passive_activity_limit: true,
+      }),
+    Error,
+    "Form 8582-CR",
   );
 });
 

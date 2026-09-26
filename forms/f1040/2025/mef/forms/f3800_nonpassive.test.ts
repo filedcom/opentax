@@ -1,4 +1,4 @@
-import { assertStringIncludes, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { buildIRS3800Nonpassive } from "./f3800_nonpassive.ts";
 
@@ -16,6 +16,17 @@ const specified = {
   registration_number: "CAABC12ABCDE",
   subject_to_passive_activity_limit: false,
   transfer_election_statement_file_name: "Transfer Election Statement.pdf",
+};
+
+const disabledAccess = {
+  source: {
+    eligible_expenditures: 20_000,
+    prior_year_gross_receipts: 900_000,
+    prior_year_full_time_employee_count: 40,
+    subject_to_passive_activity_limit: false,
+  },
+  documentId: "IRS8826_1",
+  appliedCredit: 5_000,
 };
 
 const tax = {
@@ -59,6 +70,130 @@ Deno.test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to 
   assertStringIncludes(xml, "<GenBusCYCreditsSubTotGrp>");
   assertStringIncludes(xml, "<GenBusCYCreditsSubTot2Grp>");
   assertStringIncludes(xml, "<TotGenBusCYCreditAmtGrp>");
+});
+
+Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
+    form8826: disabledAccess,
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(
+    xml,
+    '<Form8826CYCreditsGrp referenceDocumentId="IRS8826_1" referenceDocumentName="IRS8826">',
+  );
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>5000</CurrentYearCreditAllowedAmt>",
+  );
+  assertStringIncludes(xml, "<GenBusCYCreditsSubTotGrp>");
+  assertStringIncludes(
+    xml,
+    "<GeneralBusCrFromNnPssvActyAmt>5000</GeneralBusCrFromNnPssvActyAmt>",
+  );
+});
+
+Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limit", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 23_000 },
+    form8826: disabledAccess,
+    facilities: [ordinary, specified],
+    form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+    appliedCreditsByFacility: [15_000, 15_000],
+    transferStatementIdsByFileName: {
+      "Transfer Election Statement.pdf": "BinaryAttachment1",
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>35000</CurrentYearCreditAllowedAmt>",
+  );
+  assertStringIncludes(xml, "<Form8826CYCreditsGrp");
+  assertStringIncludes(xml, "<Form8835PartIICYCreditsGrp");
+  assertThrows(() =>
+    buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 23_000 },
+      form8826: disabledAccess,
+      facilities: [ordinary, specified],
+      form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+      appliedCreditsByFacility: [18_000, 15_000],
+      transferStatementIdsByFileName: {
+        "Transfer Election Statement.pdf": "BinaryAttachment1",
+      },
+    })
+  );
+});
+
+Deno.test("Form 3800 XML: Form 8826 rejects passive, unmatched, and over-applied credit", () => {
+  const base = {
+    tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
+    form8826: disabledAccess,
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  };
+  assertThrows(() =>
+    buildIRS3800Nonpassive({
+      ...base,
+      form8826: {
+        ...disabledAccess,
+        source: {
+          ...disabledAccess.source,
+          subject_to_passive_activity_limit: true,
+        },
+      },
+    })
+  );
+  assertThrows(() =>
+    buildIRS3800Nonpassive({
+      ...base,
+      tax: { ...base.tax, standardCredit: 6_000 },
+    })
+  );
+  assertThrows(() =>
+    buildIRS3800Nonpassive({
+      ...base,
+      form8826: { ...disabledAccess, appliedCredit: 5_001 },
+    })
+  );
+});
+
+Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source schema", async () => {
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsd);
+  } catch {
+    return;
+  }
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 23_000 },
+    form8826: disabledAccess,
+    facilities: [ordinary, specified],
+    form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+    appliedCreditsByFacility: [15_000, 15_000],
+    transferStatementIdsByFileName: {
+      "Transfer Election Statement.pdf": "BinaryAttachment1",
+    },
+  }).replace("<IRS3800>", '<IRS3800 xmlns="http://www.irs.gov/efile">');
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });
 
 Deno.test("Form 3800 XML: multiple facilities on one line have per-facility Part V rows", () => {

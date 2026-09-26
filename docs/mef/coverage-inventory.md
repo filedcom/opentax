@@ -104,9 +104,11 @@ because a serializer exists or the IRS XSD permits them.
 
 Form 8826 is another in-scope source document, outside the Scenario 4 rows
 above. Its self-earned lines 1, 3, 5, 6, and 8 now have an unregistered
-`IRS8826` XML draft and unrun source-to-XSD case. No Form 3800 allowed-credit
-reconciliation, registered XML document, PDF, pass-through line 7, or ATS
-evidence exists yet.
+`IRS8826` XML draft and unrun source-to-XSD case. The unregistered Form 3800
+draft now has a linked Part III line 1e and a Part II nonpassive reconciliation,
+with solo and mixed-source cases written but unrun. No graph-level
+allowed-credit route, registered XML document, PDF, passive Form 8582-CR path,
+pass-through line 7, or ATS evidence exists yet.
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS

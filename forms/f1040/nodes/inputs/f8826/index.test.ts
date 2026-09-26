@@ -1,9 +1,10 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { f8826 } from "./index.ts";
 
 const eligibleFacts = {
   prior_year_gross_receipts: 500_000,
   prior_year_full_time_employee_count: 20,
+  subject_to_passive_activity_limit: false,
 };
 
 function compute(input: Parameters<typeof f8826.compute>[1]) {
@@ -80,6 +81,7 @@ Deno.test("over_1M_receipts_AND_over_30_full_time_employees_produces_no_output",
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 1_500_000,
     prior_year_full_time_employee_count: 35,
+    subject_to_passive_activity_limit: false,
   });
   assertEquals(result.outputs.length, 0);
 });
@@ -90,6 +92,7 @@ Deno.test("over_1M_receipts_but_under_30_full_time_employees_is_eligible", () =>
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 1_500_000,
     prior_year_full_time_employee_count: 25,
+    subject_to_passive_activity_limit: false,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
@@ -101,6 +104,7 @@ Deno.test("under_1M_receipts_but_over_30_full_time_employees_is_eligible", () =>
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 800_000,
     prior_year_full_time_employee_count: 35,
+    subject_to_passive_activity_limit: false,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
@@ -112,6 +116,7 @@ Deno.test("exactly_1M_receipts_is_eligible", () => {
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 1_000_000,
     prior_year_full_time_employee_count: 31,
+    subject_to_passive_activity_limit: false,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
@@ -123,6 +128,7 @@ Deno.test("exactly_30_full_time_employees_is_eligible", () => {
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 1_000_001,
     prior_year_full_time_employee_count: 30,
+    subject_to_passive_activity_limit: false,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
@@ -163,6 +169,7 @@ Deno.test("first-year business with zero prior-year receipts and employees quali
     eligible_expenditures: 5000,
     prior_year_gross_receipts: 0,
     prior_year_full_time_employee_count: 0,
+    subject_to_passive_activity_limit: false,
   });
   const out = findSchedule3(result);
   assertEquals(out?.fields.line6a_general_business_credit, 2375);
@@ -173,4 +180,25 @@ Deno.test("first-year business with zero prior-year receipts and employees quali
 Deno.test("routes_to_schedule3", () => {
   const result = compute({ eligible_expenditures: 5000, ...eligibleFacts });
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
+});
+
+Deno.test("passive credit stops before the Form 3800 source route", () => {
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 5_000,
+      prior_year_gross_receipts: 500_000,
+      prior_year_full_time_employee_count: 20,
+    }).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      compute({
+        eligible_expenditures: 5_000,
+        ...eligibleFacts,
+        subject_to_passive_activity_limit: true,
+      }),
+    Error,
+    "Form 8582-CR",
+  );
 });
