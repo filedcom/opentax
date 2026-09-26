@@ -1,3 +1,4 @@
+import { rgb, StandardFonts } from "pdf-lib";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendForm8962AllocationStatement } from "./f8962_allocation_statement.ts";
 
@@ -293,6 +294,19 @@ export const form8962Pdf: PdfFormDescriptor = {
     { kind: "text", domainKey: "primarySSN", pdfField: `${PAGE1}.f1_2[0]` },
   ],
   projectFields,
+  decoratePages: async (document, pages, formFields) => {
+    if (formFields.qsehra_ind !== true) return;
+    const page = pages[0];
+    if (!page) throw new Error("Form 8962 PDF is missing page 1");
+    const font = await document.embedFont(StandardFonts.HelveticaBold);
+    page.drawText("QSEHRA", {
+      x: 280,
+      y: 768,
+      size: 10,
+      font,
+      color: rgb(0, 0, 0),
+    });
+  },
   appendSupplementalPages: appendForm8962AllocationStatement,
   includeWhen: (fields) =>
     fields.annual_premium !== undefined ||

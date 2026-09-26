@@ -1,4 +1,4 @@
-import type { PDFDocument } from "pdf-lib";
+import type { PDFDocument, PDFPage } from "pdf-lib";
 import type { FilerIdentity } from "../../mef/header.ts";
 
 export type PdfFieldEntry =
@@ -83,6 +83,13 @@ export interface PdfFormDescriptor {
   readonly fields: ReadonlyArray<PdfFieldEntry>;
   readonly filerFields?: ReadonlyArray<PdfFieldEntry>;
   readonly rows?: PdfRowDescriptor;
+  /** Draw form-specific text on copied form pages before they are merged. */
+  readonly decoratePages?: (
+    document: PDFDocument,
+    pages: readonly PDFPage[],
+    fields: Record<string, unknown>,
+    filer: FilerIdentity | undefined,
+  ) => Promise<void> | void;
   /** Append form-specific supporting pages after the filled IRS form. */
   readonly appendSupplementalPages?: (
     document: PDFDocument,

@@ -68,6 +68,15 @@ Deno.test("Form 8962 has no output without marketplace premiums or APTC", () => 
   );
 });
 
+Deno.test("Form 8962 clears an all-zero 1095-A instead of exporting raw source fields", () => {
+  const result = compute({
+    annual_premium: 0,
+    annual_slcsp: 0,
+    annual_aptc: 0,
+  });
+  assertEquals(fields(result, "form8962")?.filing_required, false);
+});
+
 Deno.test("annual totals alone do not establish Form 8962 line 11 eligibility", () => {
   assertThrows(
     () =>
@@ -343,12 +352,11 @@ Deno.test("below 100% FPL non-applicable taxpayer repays APTC up to Table 5 cap"
   assertEquals(fields(result, "schedule3"), undefined);
   assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 375);
   assertEquals(fields(result, "form6251")?.schedule2_line1z_tax, 375);
-  assertEquals(
-    annual(10_000, 3_000, 4_000, 0, {
-      below_100_fpl_status: status,
-    }).outputs,
-    [],
-  );
+  const noFiling = annual(10_000, 3_000, 4_000, 0, {
+    below_100_fpl_status: status,
+  });
+  assertEquals(fields(noFiling, "form8962")?.filing_required, false);
+  assertEquals(noFiling.outputs.length, 1);
 });
 
 Deno.test("below 100% FPL repayment-only monthly rows contain APTC only", () => {
@@ -549,24 +557,70 @@ Deno.test("QSEHRA employer facts must reconcile with W-2 code FF", () => {
   );
 });
 
-Deno.test("QSEHRA monthly notice facts cannot use Form 8962 annual line 11", () => {
-  assertThrows(
-    () =>
-      annual(40_880, 6_000, 7_200, 0, {
-        household_size: 2,
-        qsehra_amount_offered: 100,
-        qsehra_monthly_facts: [
-          {
-            self_only_slcsp: 500,
-            self_only_permitted_benefit: 100,
-            permitted_benefit: 100,
-          },
-          ...Array(11).fill(null),
-        ],
-      }),
-    Error,
-    "monthly facts need monthly Form 1095-A calculation",
-  );
+Deno.test("annual line 11 QSEHRA omits Form 8962 when every month is affordable and APTC is zero", () => {
+  const facts = Array(12).fill({
+    self_only_slcsp: 350,
+    self_only_permitted_benefit: 100,
+    permitted_benefit: 100,
+  });
+  const result = annual(40_880, 6_000, 7_200, 0, {
+    household_size: 2,
+    qsehra_amount_offered: 1_200,
+    qsehra_monthly_facts: facts,
+  });
+  assertEquals(fields(result, "form8962")?.filing_required, false);
+  assertEquals(result.outputs.length, 1);
+});
+
+Deno.test("annual line 11 QSEHRA keeps APTC repayment when every month is affordable", () => {
+  const facts = Array(12).fill({
+    self_only_slcsp: 350,
+    self_only_permitted_benefit: 100,
+    permitted_benefit: 100,
+  });
+  const result = annual(40_880, 6_000, 7_200, 1_200, {
+    household_size: 2,
+    qsehra_amount_offered: 1_200,
+    qsehra_monthly_facts: facts,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.annual_ptc_allowed, 0);
+  assertEquals(form?.annual_aptc, 1_200);
+  assertEquals(form?.qsehra_ind, true);
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 975);
+});
+
+Deno.test("annual line 11 QSEHRA preserves the non-QSEHRA months", () => {
+  const facts = Array.from({ length: 12 }, (_, index) =>
+    index < 6
+      ? {
+        self_only_slcsp: 350,
+        self_only_permitted_benefit: 100,
+        permitted_benefit: 100,
+      }
+      : null);
+  const result = annual(40_880, 6_000, 7_200, 0, {
+    household_size: 2,
+    qsehra_amount_offered: 600,
+    qsehra_monthly_facts: facts,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.annual_ptc_allowed, 3_000);
+  assertEquals(form?.total_premium_tax_credit, 3_000);
+});
+
+Deno.test("annual line 11 QSEHRA reduces an unaffordable full-year benefit", () => {
+  const facts = Array(12).fill({
+    self_only_slcsp: 500,
+    self_only_permitted_benefit: 100,
+    permitted_benefit: 100,
+  });
+  const result = annual(40_880, 6_000, 7_200, 0, {
+    household_size: 2,
+    qsehra_amount_offered: 1_200,
+    qsehra_monthly_facts: facts,
+  });
+  assertEquals(fields(result, "form8962")?.annual_ptc_allowed, 4_800);
 });
 
 Deno.test("MFS cannot claim PTC without verified exception and allocation facts", () => {

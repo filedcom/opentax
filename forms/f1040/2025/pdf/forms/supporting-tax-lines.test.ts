@@ -1,4 +1,5 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
@@ -81,6 +82,20 @@ Deno.test("Form 8962 PDF maps MFS exception certification to line A", () => {
     mappedField(form8962Pdf, "mfs_exception_ind"),
     "topmostSubform[0].Page1[0].c1_1[0]",
   );
+});
+
+Deno.test("Form 8962 PDF adds the QSEHRA top-margin label to page 1", async () => {
+  const document = await PDFDocument.create();
+  const page = document.addPage([612, 792]);
+  const blankSize = (await document.save()).length;
+  await form8962Pdf.decoratePages?.(
+    document,
+    [page],
+    { qsehra_ind: true },
+    undefined,
+  );
+  const labeledSize = (await document.save()).length;
+  assert(labeledSize > blankSize);
 });
 
 Deno.test("Form 8962 PDF maps its calculated lines and monthly table to page 1", () => {
