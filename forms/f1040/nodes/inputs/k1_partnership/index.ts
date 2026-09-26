@@ -32,6 +32,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   // Identification
   partnership_name: z.string().min(1),
+  partnership_ein: z.string().regex(/^\d{2}-?\d{7}$/).optional(),
 
   // Box 1 — Ordinary business income/loss → Schedule E page 2
   box1_ordinary_business: z.number().optional(),

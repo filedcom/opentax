@@ -56,13 +56,24 @@ Deno.test("f1040: taxable income cannot go below zero", () => {
   assertEquals(f.line15_taxable_income, 0);
 });
 
-Deno.test("f1040: itemized deductions override standard deduction", () => {
+Deno.test("f1040: selected standard deduction wins over a smaller Schedule A amount", () => {
   const f = fields({
     line11_agi: 100_000,
-    line12a_standard_deduction: 15_000,
-    line12e_itemized_deductions: 25_000,
+    line12a_standard_deduction: 31_500,
+    line12e_itemized_deductions: 18_349,
   });
-  assertEquals(f.line15_taxable_income, 75_000);
+  assertEquals(f.line12c_deduction_total, 31_500);
+  assertEquals(f.line14_deductions_qbi_total, 31_500);
+  assertEquals(f.line15_taxable_income, 68_500);
+});
+
+Deno.test("f1040: itemized deduction is reported when standard was not selected", () => {
+  const f = fields({
+    line11_agi: 100_000,
+    line12e_itemized_deductions: 33_000,
+  });
+  assertEquals(f.line12c_deduction_total, 33_000);
+  assertEquals(f.line15_taxable_income, 67_000);
 });
 
 Deno.test("f1040: computes refund when payments exceed tax", () => {

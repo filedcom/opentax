@@ -87,6 +87,28 @@ Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
   }
 });
 
+Deno.test("getReturnCommand reports the standard deduction selected over Schedule A", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const returnPath = `${tmpDir}/${returnId}`;
+    await appendInput(returnPath, "general", { filing_status: "mfj" });
+    await appendInput(returnPath, "w2", {
+      box1_wages: 100_000,
+      box2_fed_withheld: 15_000,
+    });
+    await appendInput(returnPath, "schedule_a", {
+      line_8a_mortgage_interest_1098: 18_349,
+    });
+
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(result.lines.line12c_deduction_total, 31_500);
+    assertEquals(result.summary.line15_taxable_income, 68_500);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("getReturnCommand empty return returns line_1a = 0", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
@@ -134,8 +156,14 @@ Deno.test("getReturnCommand calculates above-threshold Schedule C QBI", async ()
     const result = await getReturnCommand({ returnId, baseDir: tmpDir });
 
     assertEquals(result.forms.includes("form8995a"), true);
-    assertEquals(Math.round(result.summary.line15_taxable_income * 100) / 100, 206_926.86);
-    assertEquals(Math.round(result.summary.line24_total_tax * 100) / 100, 44_854.25);
+    assertEquals(
+      Math.round(result.summary.line15_taxable_income * 100) / 100,
+      206_926.86,
+    );
+    assertEquals(
+      Math.round(result.summary.line24_total_tax * 100) / 100,
+      44_854.25,
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

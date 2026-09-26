@@ -257,6 +257,15 @@ Deno.test("f1099m.compute: box6_medical_payments = 0 produces no schedule_c outp
 Deno.test("f1099m.compute: box8_substitute_payments routes to schedule1 line8z_substitute_payments", () => {
   const result = compute([minimalItem({ box8_substitute_payments: 300 })]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_substitute_payments, 300);
+  assertEquals(findOutput(result, "form8960")?.fields.line7_other_modifications, 300);
+});
+
+Deno.test("f1099m.compute: box 8 and investment-related box 3 both reach Form 8960", () => {
+  const result = compute([
+    minimalItem({ box8_substitute_payments: 1000 }),
+    minimalItem({ box3_other_income: 250, box3_niit_applicable: true }),
+  ]);
+  assertEquals(findOutput(result, "form8960")?.fields.line7_other_modifications, 1250);
 });
 
 // Box 8 — zero value produces no schedule1 substitute_payments output

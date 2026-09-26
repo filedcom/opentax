@@ -196,8 +196,11 @@ function totalIncome(input: F1040Input): number {
 }
 
 function deductionAmount(input: F1040Input): number {
-  // Itemized deductions take precedence only when they are non-zero.
-  // A value of 0 means no itemized deductions were provided, not that itemized = $0.
+  // The standard-deduction node only emits line 12a when it selected that
+  // deduction. Schedule A can still emit a positive line 12e for comparison.
+  if (input.line12a_standard_deduction !== undefined) {
+    return input.line12a_standard_deduction;
+  }
   if ((input.line12e_itemized_deductions ?? 0) > 0) {
     return input.line12e_itemized_deductions!;
   }

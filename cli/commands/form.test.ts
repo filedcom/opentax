@@ -116,6 +116,65 @@ Deno.test("formAddCommand invalid data (missing box1_wages) rejects with validat
   }
 });
 
+Deno.test("form add rejects a misspelled W-2 field without storing the entry", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    await assertRejects(
+      () =>
+        formAddCommand({
+          returnId,
+          nodeType: "w2",
+          dataJson: JSON.stringify({
+            box1_wages: 300000,
+            box2_fed_withheld: 60000,
+            box17_state_income_tax: 25000,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Unrecognized field: box17_state_income_tax",
+    );
+    assertEquals((await loadInputs(`${tmpDir}/${returnId}`))["w2"], undefined);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("form update rejects unknown fields on a refined schema without changing stored data", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    const added = await formAddCommand({
+      returnId,
+      nodeType: "schedule_a",
+      dataJson: JSON.stringify({ line_8a_mortgage_interest_1098: 20000 }),
+      baseDir: tmpDir,
+    });
+    await assertRejects(
+      () =>
+        formUpdateCommand({
+          returnId,
+          entryId: added.id,
+          dataJson: JSON.stringify({
+            line_8a_mortgage_interest_1098: 20000,
+            line_9_investment_interst: 5000,
+          }),
+          baseDir: tmpDir,
+        }),
+      Error,
+      "Unrecognized field: line_9_investment_interst",
+    );
+    assertEquals(
+      (await formGetCommand({ returnId, entryId: added.id, baseDir: tmpDir }))
+        .fields,
+      { line_8a_mortgage_interest_1098: 20000 },
+    );
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
 Deno.test("formAddCommand malformed JSON string rejects with Invalid JSON", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
