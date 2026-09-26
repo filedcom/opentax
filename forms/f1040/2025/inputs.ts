@@ -147,7 +147,7 @@ import {
 } from "../nodes/inputs/f5695/index.ts";
 import {
   f8936,
-  itemSchema as f8936ItemSchema,
+  inputSchema as f8936InputSchema,
 } from "../nodes/inputs/f8936/index.ts";
 import {
   f8862,
@@ -600,7 +600,6 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: w2g, itemSchema: w2gItemSchema, isArray: true },
   { node: f1099patr, itemSchema: f1099patrItemSchema, isArray: true },
   { node: f3903, itemSchema: f3903ItemSchema, isArray: true },
-  { node: f8936, itemSchema: f8936ItemSchema, isArray: true },
   { node: f8814, itemSchema: f8814ItemSchema, isArray: true },
   { node: f5884, itemSchema: f5884ItemSchema, isArray: true },
   { node: f8908, itemSchema: f8908ItemSchema, isArray: true },
@@ -621,6 +620,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: form5329, inputSchema: form5329InputSchema, isArray: false },
   { node: form4952, inputSchema: form4952InputSchema, isArray: false },
   { node: f8283, inputSchema: f8283InputSchema, isArray: false },
+  { node: f8936, inputSchema: f8936InputSchema, isArray: false },
   { node: f9465, inputSchema: f9465InputSchema, isArray: false },
   { node: f8888, inputSchema: f8888InputSchema, isArray: false },
   { node: schedule_r, inputSchema: scheduleRInputSchema, isArray: false },

@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   computeVehiclePersonalCredit,
+  type F8936Input,
   type F8936Item,
   inputSchema,
 } from "../../../nodes/inputs/f8936/index.ts";
@@ -84,8 +85,8 @@ function previouslyOwnedGroup(item: F8936Item, personalCredit: number): string {
   ]);
 }
 
-function buildScheduleA(item: F8936Item): string {
-  const personalCredit = computeVehiclePersonalCredit(item);
+function buildScheduleA(item: F8936Item, input: F8936Input): string {
+  const personalCredit = computeVehiclePersonalCredit(item, input);
   if (personalCredit === 0 && item.transferred_to_dealer !== true) return "";
   const vehicle = requiredVehicleDetails(item);
   if (item.transferred_to_dealer === undefined) {
@@ -125,7 +126,8 @@ export const form8936ScheduleA: MefFormDescriptor<
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf",
   build(fields) {
     if (!fields.f8936s || fields.f8936s.length === 0) return [];
-    const items = inputSchema.parse(fields).f8936s;
-    return items.map(buildScheduleA).filter((xml) => xml !== "");
+    const input = inputSchema.parse(fields);
+    return input.f8936s.map((item) => buildScheduleA(item, input))
+      .filter((xml) => xml !== "");
   },
 };

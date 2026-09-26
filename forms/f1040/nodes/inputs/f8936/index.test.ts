@@ -1,755 +1,408 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8936 } from "./index.ts";
+import {
+  f8936,
+  type F8936Input,
+  type F8936Item,
+  modifiedAgi,
+} from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
-function compute(items: Parameters<typeof f8936.compute>[1]["f8936s"]) {
-  const datedItems = items.map((item) => ({
-    acquisition_date: "2025-09-30",
-    vin: "1HGCM82633A004352",
-    vehicle_year: item.is_new_vehicle === false ? 2022 : 2025,
-    vehicle_make: "Example",
-    vehicle_model: "EV",
-    placed_in_service_date: "2025-09-30",
-    seller_report_received: true,
-    transferred_to_dealer: false,
-    resold_within_30_days: false,
-    acquired_for_use_not_resale: true,
-    claimed_as_dependent: false,
-    claimed_prev_owned_credit_last_3_years: false,
-    previously_owned_first_eligible_transfer: true,
-    purchased_from_dealer: true,
-    msrp: item.is_new_vehicle === false ? undefined : 45_000,
-    vehicle_type: item.is_new_vehicle === false ? undefined : "other" as const,
-    prior_year_modified_agi: item.modified_agi,
-    prior_year_filing_status: item.filing_status,
-    ...item,
-  }));
-  return f8936.compute({ taxYear: 2025, formType: "f1040" }, {
-    f8936s: datedItems,
-  });
+const newVehicle: F8936Item = {
+  is_new_vehicle: true,
+  vin: "1HGCM82633A004352",
+  vehicle_year: 2025,
+  vehicle_make: "Example",
+  vehicle_model: "EV",
+  acquisition_date: "2025-09-30",
+  placed_in_service_date: "2025-09-30",
+  seller_report_received: true,
+  transferred_to_dealer: false,
+  resold_within_30_days: false,
+  acquired_for_use_not_resale: true,
+  credit_amount: 7_500,
+  msrp: 45_000,
+  vehicle_type: "other",
+};
+
+const usedVehicle: F8936Item = {
+  ...newVehicle,
+  is_new_vehicle: false,
+  vehicle_year: 2022,
+  credit_amount: undefined,
+  sale_price: 15_000,
+  msrp: undefined,
+  vehicle_type: undefined,
+  claimed_as_dependent: false,
+  claimed_prev_owned_credit_last_3_years: false,
+  purchased_from_dealer: true,
+  previously_owned_first_eligible_transfer: true,
+};
+
+function source(
+  vehicles: F8936Item[],
+  overrides: Partial<F8936Input> = {},
+): F8936Input {
+  return {
+    current_year_magi: { adjusted_gross_income: 50_000 },
+    prior_year_magi: { adjusted_gross_income: 50_000 },
+    filing_status: FilingStatus.Single,
+    prior_year_filing_status: FilingStatus.Single,
+    f8936s: vehicles,
+    ...overrides,
+  };
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
+function compute(input: F8936Input) {
+  return f8936.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-// =============================================================================
-// Schema Validation
-// =============================================================================
+function amount(input: F8936Input, field: string): number | undefined {
+  const outputs = compute(input).outputs.filter((row) =>
+    row.nodeType === "schedule3"
+  );
+  return outputs.reduce<number | undefined>((sum, row) => {
+    const value = row.fields[field];
+    if (typeof value !== "number") return sum;
+    return (sum ?? 0) + value;
+  }, undefined);
+}
 
-Deno.test("f8936: empty array produces no outputs", () => {
-  assertEquals(compute([]).outputs.length, 0);
-});
-
-Deno.test("f8936: negative credit_amount rejected", () => {
-  const parsed = f8936.inputSchema.safeParse({
-    f8936s: [{ credit_amount: -1 }],
+Deno.test("Form 8936: MAGI is a return-level current/prior-year breakdown", () => {
+  const input = source([newVehicle], {
+    current_year_magi: {
+      adjusted_gross_income: 140_000,
+      excluded_puerto_rico_income: 5_000,
+      foreign_earned_income_exclusion: 4_000,
+      foreign_housing_deduction: 3_000,
+      excluded_american_samoa_income: 2_000,
+    },
   });
-  assertEquals(parsed.success, false);
+  assertEquals(modifiedAgi(input.current_year_magi), 154_000);
+  assertEquals(amount(input, "line6f_clean_vehicle_credit"), 7_500);
 });
 
-Deno.test("f8936: business_use_pct > 1 rejected", () => {
-  const parsed = f8936.inputSchema.safeParse({
-    f8936s: [{ business_use_pct: 1.5 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8936: business_use_pct < 0 rejected", () => {
-  const parsed = f8936.inputSchema.safeParse({
-    f8936s: [{ business_use_pct: -0.1 }],
-  });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8936: missing acquisition date cannot award credit", () => {
-  assertThrows(
-    () =>
-      f8936.compute(
-        { taxYear: 2025, formType: "f1040" },
-        {
-          f8936s: [{
-            is_new_vehicle: true,
-            credit_amount: 7_500,
-            modified_agi: 100_000,
-            filing_status: FilingStatus.Single,
-          }],
-        },
-      ),
-    Error,
-    "acquisition date is required",
-  );
-});
-
-Deno.test("f8936: malformed acquisition date cannot award credit", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        acquisition_date: "2025-02-30",
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-    Error,
-    "valid ISO date",
-  );
-});
-
-Deno.test("f8936: missing current-year MAGI cannot award credit", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        filing_status: FilingStatus.Single,
-      }]),
-    Error,
-    "current-year MAGI",
-  );
-});
-
-Deno.test("f8936: prior-year MAGI is required if current-year MAGI is over the limit", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        modified_agi: 150_001,
-        filing_status: FilingStatus.Single,
-        prior_year_modified_agi: undefined,
-        prior_year_filing_status: undefined,
-      }]),
-    Error,
-    "prior-year MAGI",
-  );
-});
-
-Deno.test("f8936: VIN and vehicle identity are required before a credit is awarded", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        vin: undefined,
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-    Error,
-    "valid VIN",
-  );
-});
-
-Deno.test("f8936: a new vehicle needs MSRP and its vehicle type", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        msrp: undefined,
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-    Error,
-    "MSRP and vehicle type",
-  );
-});
-
-Deno.test("f8936: placed-in-service date must be in 2025", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        placed_in_service_date: "2024-12-31",
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-    Error,
-    "valid 2025 placed-in-service date",
-  );
-});
-
-Deno.test("f8936: seller report is required before a credit is awarded", () => {
-  assertThrows(
-    () =>
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        seller_report_received: false,
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-    Error,
-    "seller report",
-  );
-});
-
-Deno.test("f8936: a vehicle resold within 30 days has no credit", () => {
-  const result = compute([{
-    is_new_vehicle: true,
-    credit_amount: 7_500,
-    resold_within_30_days: true,
-    modified_agi: 100_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: dealer-transferred amount is not claimed again on Schedule 3", () => {
-  const result = compute([{
-    is_new_vehicle: true,
-    credit_amount: 7_500,
-    transferred_to_dealer: true,
-    transferred_amount: 7_500,
-    modified_agi: 100_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned credit is barred after another claim within three years", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    sale_price: 15_000,
-    claimed_prev_owned_credit_last_3_years: true,
-    modified_agi: 50_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned model year must be at least two years older", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    vehicle_year: 2024,
-    sale_price: 15_000,
-    modified_agi: 50_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned vehicle must be bought from a dealer", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    purchased_from_dealer: false,
-    sale_price: 15_000,
-    modified_agi: 50_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned vehicle requires first eligible transfer", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    previously_owned_first_eligible_transfer: false,
-    sale_price: 15_000,
-    modified_agi: 50_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: vehicles acquired October 1 are ineligible", () => {
-  const result = compute([{
-    is_new_vehicle: true,
-    credit_amount: 7_500,
-    acquisition_date: "2025-10-01",
-    modified_agi: 100_000,
-    filing_status: FilingStatus.Single,
-  }, {
-    is_new_vehicle: false,
-    sale_price: 15_000,
-    acquisition_date: "2025-10-01",
-    modified_agi: 50_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: prior-year MAGI can qualify a new vehicle", () => {
-  const result = compute([{
-    is_new_vehicle: true,
-    credit_amount: 7_500,
-    modified_agi: 180_000,
-    filing_status: FilingStatus.Single,
-    prior_year_modified_agi: 145_000,
-    prior_year_filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs[0]?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-Deno.test("f8936: prior-year filing status uses its own income limit", () => {
-  const result = compute([{
-    is_new_vehicle: true,
-    credit_amount: 7_500,
-    modified_agi: 180_000,
-    filing_status: FilingStatus.Single,
-    prior_year_modified_agi: 180_000,
-    prior_year_filing_status: FilingStatus.MFJ,
-  }]);
-  assertEquals(result.outputs[0]?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-Deno.test("f8936: previously owned vehicle uses the $75,000 single limit", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    sale_price: 15_000,
-    modified_agi: 75_001,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned vehicle uses the $112,500 HOH limit", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    sale_price: 15_000,
-    modified_agi: 112_501,
-    filing_status: FilingStatus.HOH,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned vehicle uses the $150,000 MFJ limit", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    sale_price: 15_000,
-    modified_agi: 150_001,
-    filing_status: FilingStatus.MFJ,
-  }]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8936: previously owned vehicle can use prior-year MAGI", () => {
-  const result = compute([{
-    is_new_vehicle: false,
-    sale_price: 15_000,
-    modified_agi: 80_000,
-    filing_status: FilingStatus.Single,
-    prior_year_modified_agi: 75_000,
-    prior_year_filing_status: FilingStatus.Single,
-  }]);
+Deno.test("Form 8936: both MAGI years and both filing statuses are required", () => {
+  const valid = source([newVehicle]);
+  assertEquals(f8936.inputSchema.safeParse(valid).success, true);
   assertEquals(
-    result.outputs[0]?.fields.line6m_prev_owned_clean_vehicle_credit,
+    f8936.inputSchema.safeParse({ ...valid, current_year_magi: undefined })
+      .success,
+    false,
+  );
+  assertEquals(
+    f8936.inputSchema.safeParse({ ...valid, prior_year_magi: undefined })
+      .success,
+    false,
+  );
+  assertEquals(
+    f8936.inputSchema.safeParse({
+      ...valid,
+      prior_year_filing_status: undefined,
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 8936: empty vehicle array has no outputs", () => {
+  assertEquals(compute(source([])).outputs, []);
+});
+
+for (
+  const [field, value] of [
+    ["credit_amount", -1],
+    ["business_use_pct", -0.01],
+    ["business_use_pct", 1.01],
+  ] as const
+) {
+  Deno.test(`Form 8936: invalid ${field} ${value} is rejected`, () => {
+    assertEquals(
+      f8936.inputSchema.safeParse(source([{ ...newVehicle, [field]: value }]))
+        .success,
+      false,
+    );
+  });
+}
+
+for (
+  const [name, changes, message] of [
+    [
+      "missing acquisition date",
+      { acquisition_date: undefined },
+      "acquisition date is required",
+    ],
+    [
+      "invalid acquisition date",
+      { acquisition_date: "2025-02-30" },
+      "valid ISO date",
+    ],
+    ["missing VIN", { vin: undefined }, "valid VIN"],
+    [
+      "missing service date",
+      { placed_in_service_date: undefined },
+      "valid 2025 placed-in-service date",
+    ],
+    [
+      "service outside 2025",
+      { placed_in_service_date: "2024-12-31" },
+      "valid 2025 placed-in-service date",
+    ],
+    [
+      "missing seller report",
+      { seller_report_received: false },
+      "seller report is required",
+    ],
+    ["missing MSRP", { msrp: undefined }, "MSRP and vehicle type"],
+    [
+      "missing dealer-transfer answer",
+      { transferred_to_dealer: undefined },
+      "dealer-transfer answer",
+    ],
+  ] as const
+) {
+  Deno.test(`Form 8936: ${name} cannot award a new credit`, () => {
+    assertThrows(
+      () => compute(source([{ ...newVehicle, ...changes }])),
+      Error,
+      message,
+    );
+  });
+}
+
+Deno.test("Form 8936: acquired after September 30 is ineligible", () => {
+  assertEquals(
+    compute(source([{ ...newVehicle, acquisition_date: "2025-10-01" }]))
+      .outputs,
+    [],
+  );
+  assertEquals(
+    compute(source([{ ...usedVehicle, acquisition_date: "2025-10-01" }]))
+      .outputs,
+    [],
+  );
+});
+
+for (
+  const [name, changes] of [
+    ["resold within 30 days", { resold_within_30_days: true }],
+    ["acquired for resale", { acquired_for_use_not_resale: false }],
+  ] as const
+) {
+  Deno.test(`Form 8936: ${name} is ineligible`, () => {
+    assertEquals(compute(source([{ ...newVehicle, ...changes }])).outputs, []);
+  });
+}
+
+for (
+  const [name, credit, expected] of [
+    ["full", 7_500, 7_500],
+    ["partial", 3_750, 3_750],
+    ["capped", 10_000, 7_500],
+  ] as const
+) {
+  Deno.test(`Form 8936: ${name} new-vehicle credit`, () => {
+    assertEquals(
+      amount(
+        source([{ ...newVehicle, credit_amount: credit }]),
+        "line6f_clean_vehicle_credit",
+      ),
+      expected,
+    );
+  });
+}
+
+for (
+  const [status, limit] of [
+    [FilingStatus.Single, 150_000],
+    [FilingStatus.HOH, 225_000],
+    [FilingStatus.MFJ, 300_000],
+  ] as const
+) {
+  Deno.test(`Form 8936: new-vehicle ${status} MAGI threshold`, () => {
+    assertEquals(
+      amount(
+        source([newVehicle], {
+          filing_status: status,
+          prior_year_filing_status: status,
+          current_year_magi: { adjusted_gross_income: limit },
+          prior_year_magi: { adjusted_gross_income: limit + 1 },
+        }),
+        "line6f_clean_vehicle_credit",
+      ),
+      7_500,
+    );
+    assertEquals(
+      amount(
+        source([newVehicle], {
+          filing_status: status,
+          prior_year_filing_status: status,
+          current_year_magi: { adjusted_gross_income: limit + 1 },
+          prior_year_magi: { adjusted_gross_income: limit + 1 },
+        }),
+        "line6f_clean_vehicle_credit",
+      ),
+      undefined,
+    );
+  });
+}
+
+Deno.test("Form 8936: prior-year status uses its own limit", () => {
+  assertEquals(
+    amount(
+      source([newVehicle], {
+        current_year_magi: { adjusted_gross_income: 180_000 },
+        prior_year_magi: { adjusted_gross_income: 180_000 },
+        filing_status: FilingStatus.Single,
+        prior_year_filing_status: FilingStatus.MFJ,
+      }),
+      "line6f_clean_vehicle_credit",
+    ),
+    7_500,
+  );
+});
+
+for (
+  const [type, msrp, expected] of [
+    ["other", 55_000, 7_500],
+    ["other", 55_001, undefined],
+    ["suv_van_truck", 80_000, 7_500],
+    ["suv_van_truck", 80_001, undefined],
+  ] as const
+) {
+  Deno.test(`Form 8936: ${type} MSRP ${msrp}`, () => {
+    assertEquals(
+      amount(
+        source([{ ...newVehicle, vehicle_type: type, msrp }]),
+        "line6f_clean_vehicle_credit",
+      ),
+      expected,
+    );
+  });
+}
+
+for (
+  const [businessUse, expected] of [[0.25, 5_625], [0.5, 3_750], [
+    1,
+    undefined,
+  ]] as const
+) {
+  Deno.test(`Form 8936: ${businessUse * 100}% business use`, () => {
+    assertEquals(
+      amount(
+        source([{ ...newVehicle, business_use_pct: businessUse }]),
+        "line6f_clean_vehicle_credit",
+      ),
+      expected,
+    );
+  });
+}
+
+for (
+  const [status, limit] of [
+    [FilingStatus.Single, 75_000],
+    [FilingStatus.HOH, 112_500],
+    [FilingStatus.MFJ, 150_000],
+  ] as const
+) {
+  Deno.test(`Form 8936: previously owned ${status} MAGI threshold`, () => {
+    assertEquals(
+      amount(
+        source([usedVehicle], {
+          filing_status: status,
+          prior_year_filing_status: status,
+          current_year_magi: { adjusted_gross_income: limit },
+          prior_year_magi: { adjusted_gross_income: limit + 1 },
+        }),
+        "line6m_prev_owned_clean_vehicle_credit",
+      ),
+      4_000,
+    );
+    assertEquals(
+      amount(
+        source([usedVehicle], {
+          filing_status: status,
+          prior_year_filing_status: status,
+          current_year_magi: { adjusted_gross_income: limit + 1 },
+          prior_year_magi: { adjusted_gross_income: limit + 1 },
+        }),
+        "line6m_prev_owned_clean_vehicle_credit",
+      ),
+      undefined,
+    );
+  });
+}
+
+for (
+  const [name, changes] of [
+    ["claimed as dependent", { claimed_as_dependent: true }],
+    ["prior credit within three years", {
+      claimed_prev_owned_credit_last_3_years: true,
+    }],
+    ["not purchased from dealer", { purchased_from_dealer: false }],
+    ["not first eligible transfer", {
+      previously_owned_first_eligible_transfer: false,
+    }],
+    ["model year too recent", { vehicle_year: 2024 }],
+    ["price over $25,000", { sale_price: 25_001 }],
+  ] as const
+) {
+  Deno.test(`Form 8936: previously owned ${name} is ineligible`, () => {
+    assertEquals(compute(source([{ ...usedVehicle, ...changes }])).outputs, []);
+  });
+}
+
+for (
+  const [price, expected] of [[10_000, 3_000], [15_000, 4_000], [
+    25_000,
+    4_000,
+  ]] as const
+) {
+  Deno.test(`Form 8936: previously owned price ${price} computes credit`, () => {
+    assertEquals(
+      amount(
+        source([{ ...usedVehicle, sale_price: price }]),
+        "line6m_prev_owned_clean_vehicle_credit",
+      ),
+      expected,
+    );
+  });
+}
+
+Deno.test("Form 8936: previously owned credit is not reduced by business-use percentage", () => {
+  assertEquals(
+    amount(
+      source([{ ...usedVehicle, business_use_pct: 0.25 }]),
+      "line6m_prev_owned_clean_vehicle_credit",
+    ),
     4_000,
   );
 });
 
-// =============================================================================
-// New Vehicle Credit — up to $7,500 (IRC §30D)
-// =============================================================================
-
-Deno.test("f8936: new vehicle — full $7,500 credit", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 45_000,
-      vehicle_type: "other",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-Deno.test("f8936: new vehicle — partial $3,750 credit honored exactly", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 3_750,
-      msrp: 45_000,
-      vehicle_type: "other",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 3_750);
-});
-
-Deno.test("f8936: new vehicle — credit_amount above $7,500 capped at $7,500", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 10_000,
-      msrp: 45_000,
-      vehicle_type: "other",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-// =============================================================================
-// Income Limits
-// =============================================================================
-
-Deno.test("f8936: single exceeds $150k → no credit", () => {
+Deno.test("Form 8936: transferred dealer amount is not claimed again on Schedule 3", () => {
   assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        modified_agi: 150_001,
-        filing_status: FilingStatus.Single,
-      }]),
-      "schedule3",
-    ),
-    undefined,
+    compute(source([{
+      ...newVehicle,
+      transferred_to_dealer: true,
+      transferred_amount: 7_500,
+    }])).outputs,
+    [],
   );
 });
 
-Deno.test("f8936: single at exactly $150k → credit allowed", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      modified_agi: 150_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
+Deno.test("Form 8936: multiple vehicles share one return-level MAGI test", () => {
+  const result = compute(source([newVehicle, usedVehicle], {
+    current_year_magi: { adjusted_gross_income: 100_000 },
+    prior_year_magi: { adjusted_gross_income: 100_000 },
+  }));
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
 });
 
-Deno.test("f8936: MFJ exceeds $300k → no credit", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        modified_agi: 300_001,
-        filing_status: FilingStatus.MFJ,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-Deno.test("f8936: MFJ within $300k → credit allowed", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      modified_agi: 250_000,
-      filing_status: FilingStatus.MFJ,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-Deno.test("f8936: HOH exceeds $225k → no credit", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        modified_agi: 225_001,
-        filing_status: FilingStatus.HOH,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-Deno.test("f8936: HOH at exactly $225k → credit allowed", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      modified_agi: 225_000,
-      filing_status: FilingStatus.HOH,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-// =============================================================================
-// MSRP Caps
-// =============================================================================
-
-Deno.test("f8936: other type exceeds $55k MSRP → no credit", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        msrp: 55_001,
-        vehicle_type: "other",
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-Deno.test("f8936: other type at exactly $55k MSRP → credit allowed", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 55_000,
-      vehicle_type: "other",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-Deno.test("f8936: SUV/van/truck allows up to $80k MSRP", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 75_000,
-      vehicle_type: "suv_van_truck",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-Deno.test("f8936: SUV exceeds $80k MSRP → no credit", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        msrp: 80_001,
-        vehicle_type: "suv_van_truck",
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-// =============================================================================
-// Business Use Reduction
-// =============================================================================
-
-Deno.test("f8936: 50% business use reduces credit by 50%", () => {
-  // $7,500 × 50% personal = $3,750
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 45_000,
-      vehicle_type: "other",
-      business_use_pct: 0.5,
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 3_750);
-});
-
-Deno.test("f8936: 100% business use → no personal credit (zero output)", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: true,
-        credit_amount: 7_500,
-        business_use_pct: 1.0,
-        modified_agi: 100_000,
-        filing_status: FilingStatus.Single,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-Deno.test("f8936: 25% business use → 75% personal credit", () => {
-  // $7,500 × 75% = $5,625
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 45_000,
-      vehicle_type: "other",
-      business_use_pct: 0.25,
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6f_clean_vehicle_credit, 5_625);
-});
-
-// =============================================================================
-// Used Vehicle Credit — 30% of sale price, max $4,000 (IRC §25E)
-// =============================================================================
-
-Deno.test("f8936: used vehicle — 30% of price, capped at $4,000", () => {
-  // $15,000 × 30% = $4,500 → capped at $4,000
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: false,
-      sale_price: 15_000,
-      modified_agi: 50_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 4_000);
-});
-
-Deno.test("f8936: used vehicle — $10,000 price × 30% = $3,000 (under cap)", () => {
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: false,
-      sale_price: 10_000,
-      modified_agi: 50_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 3_000);
-});
-
-Deno.test("f8936: used vehicle — price exceeds $25,000 → no credit", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: false,
-        sale_price: 25_001,
-        modified_agi: 50_000,
-        filing_status: FilingStatus.Single,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-Deno.test("f8936: used vehicle — price at exactly $25,000 → credit allowed", () => {
-  // $25,000 × 30% = $7,500 → capped at $4,000
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: false,
-      sale_price: 25_000,
-      modified_agi: 50_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 4_000);
-});
-
-Deno.test("f8936: used vehicle — single exceeds $150k income → no credit", () => {
-  assertEquals(
-    findOutput(
-      compute([{
-        is_new_vehicle: false,
-        sale_price: 20_000,
-        modified_agi: 151_000,
-        filing_status: FilingStatus.Single,
-      }]),
-      "schedule3",
-    ),
-    undefined,
-  );
-});
-
-Deno.test("f8936: used vehicle credit is not split by business-use percentage", () => {
-  // Schedule A Part IV has no business-use split: $4,500 caps at $4,000.
-  const s3 = findOutput(
-    compute([{
-      is_new_vehicle: false,
-      sale_price: 15_000,
-      business_use_pct: 0.25,
-      modified_agi: 50_000,
-      filing_status: FilingStatus.Single,
-    }]),
-    "schedule3",
-  );
-  assertEquals(s3?.fields.line6m_prev_owned_clean_vehicle_credit, 4_000);
-});
-
-// =============================================================================
-// Routing
-// =============================================================================
-
-Deno.test("f8936: credit routes to schedule3 line6f_clean_vehicle_credit", () => {
-  const result = compute([{
-    is_new_vehicle: true,
-    credit_amount: 7_500,
-    msrp: 45_000,
-    vehicle_type: "other",
-    modified_agi: 100_000,
-    filing_status: FilingStatus.Single,
-  }]);
-  assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertEquals(result.outputs[0]?.fields.line6f_clean_vehicle_credit, 7_500);
-});
-
-// =============================================================================
-// Multiple Vehicles
-// =============================================================================
-
-Deno.test("f8936: two qualifying vehicles each produce a schedule3 output", () => {
-  const result = compute([
-    {
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 45_000,
-      vehicle_type: "other",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    },
-    {
-      is_new_vehicle: false,
-      sale_price: 20_000,
-      modified_agi: 50_000,
-      filing_status: FilingStatus.Single,
-    },
-  ]);
+Deno.test("Form 8936: two qualifying vehicles route to their separate Schedule 3 lines", () => {
+  const result = compute(source([newVehicle, usedVehicle]));
   assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
   assertEquals(
     result.outputs[1].fields.line6m_prev_owned_clean_vehicle_credit,
     4_000,
   );
-});
-
-Deno.test("f8936: vehicle over income limit excluded, qualifying vehicle retained", () => {
-  const result = compute([
-    {
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      modified_agi: 200_000,
-      filing_status: FilingStatus.Single,
-    },
-    {
-      is_new_vehicle: true,
-      credit_amount: 7_500,
-      msrp: 45_000,
-      vehicle_type: "other",
-      modified_agi: 100_000,
-      filing_status: FilingStatus.Single,
-    },
-  ]);
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].fields.line6f_clean_vehicle_credit, 7_500);
 });

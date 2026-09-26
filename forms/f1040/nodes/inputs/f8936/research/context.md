@@ -15,7 +15,9 @@ Computes provisional personal Clean Vehicle Credit amounts under IRC §30D (new 
 
 | Field | Type | Required | Source / Label | Description | IRS Reference | URL |
 | ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
-| f8936s | VehicleItem[] | Yes | Vehicles | Array of qualifying clean vehicle records | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
+| f8936s | VehicleItem[] | Yes | Vehicles | Vehicle records within one Form 8936 input | Form 8936 | https://www.irs.gov/pub/irs-prior/f8936--2025.pdf |
+| current_year_magi, prior_year_magi | MAGI year groups | Yes | Form 8936 Part I | Each group has adjusted gross income and explicit Puerto Rico, Form 2555, housing-deduction, and Form 4563 amounts; one calculation per return, not per vehicle | Form 8936 lines 1a-4 | https://www.irs.gov/pub/irs-prior/f8936--2025.pdf |
+| filing_status, prior_year_filing_status | FilingStatus enum | Yes | Form 8936 Part I | Each MAGI year uses its own filing-status threshold | Form 8936 line 5 | https://www.irs.gov/pub/irs-prior/f8936--2025.pdf |
 | vehicle_description | string | No | Vehicle description | Make, model, year | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vin | string | No | VIN | Vehicle Identification Number | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vehicle_year, vehicle_make, vehicle_model | number, string, string | Required to compute | Vehicle identity | Schedule A line 1a-1c | 2025 Schedule A | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
@@ -32,10 +34,6 @@ Computes provisional personal Clean Vehicle Credit amounts under IRC §30D (new 
 | msrp | number (≥0) | No | MSRP | Manufacturer's suggested retail price (new vehicle cap check) | IRC §30D(f)(1) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vehicle_type | "suv_van_truck" or "other" | No | Vehicle type | Determines MSRP cap: $80,000 (SUV/van/truck) or $55,000 (other) | IRC §30D(f)(1) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | business_use_pct | number (0–1) | No | Business use % | Business use fraction (reduces personal credit proportionally) | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
-| modified_agi | number (≥0) | No | Modified AGI | MAGI for income limit test | IRC §30D(f)(10); §25E(b)(2) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
-| prior_year_modified_agi | number (≥0) | When current-year MAGI is over limit | Prior-year MAGI | Alternate income-limit test | Form 8936 Part I | https://www.irs.gov/instructions/i8936 |
-| filing_status | FilingStatus enum | No | Filing status | Determines income limit: MFJ $300k, HOH $225k, Single $150k | IRC §30D(f)(10) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
-| prior_year_filing_status | FilingStatus enum | When current-year MAGI is over limit | Prior-year filing status | Uses the prior year's threshold for a status change | Form 8936 Part I | https://www.irs.gov/instructions/i8936 |
 
 ---
 
@@ -90,7 +88,7 @@ Source: IRC §25E(a),(b) — https://www.irs.gov/pub/irs-pdf/i8936.pdf
 
 flowchart LR
   subgraph inputs["Data Entry (per vehicle)"]
-    v["f8936s[]\nacquisition date + current/prior MAGI\nis_new_vehicle + credit_amount/sale_price"]
+    v["f8936 singleton\ncurrent/prior MAGI + statuses\nf8936s[] vehicle details"]
   end
   subgraph node["f8936 (Clean Vehicle Credit)"]
     nc["computeNewVehicleCredit()"]

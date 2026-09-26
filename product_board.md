@@ -76,9 +76,24 @@ An unregistered `IRS8936ScheduleA` builder now writes one XML document per
 vehicle from the captured identity and credit facts, including new and
 previously owned groups and the dealer-transfer amount. The input node no
 longer routes dealer-transferred amounts to Schedule 3 as a second personal
-credit. The builder is intentionally not in `ALL_MEF_FORMS` until the parent
-`IRS8936` document, return-level MAGI consistency, tax-liability limitation,
-and transfer recapture routing are built. Its tests are written but unrun.
+credit. The builder is not yet in `ALL_MEF_FORMS`. Its tests are written but
+unrun.
+
+Form 8936 now enters the start graph as one singleton input containing both
+Part I MAGI breakdowns, both filing statuses, and its vehicle array. The old
+per-vehicle MAGI and status fields were removed without an alias. This makes
+all vehicles on one return use the same IRS Part I income test and provides
+the exact component amounts needed for the parent MeF document. Source,
+Schedule A, and start-node cases are written but unrun.
+
+An unregistered parent `IRS8936` builder now serializes the Part I MAGI
+components and personal-credit Part III/IV amounts for nontransferred,
+personal-use vehicles. It compares current AGI with Form 1040, credit amounts
+with Schedule 3, and the tentative amount against Form 1040 line 18 after the
+credits specified by IRS instructions. It stops on a liability shortage
+rather than exporting an overstated credit. Business-use Form 3800 routing,
+dealer-transfer repayment, source-to-XSD validation, and registration of both
+8936 documents remain open. Builder cases are written but unrun.
 
 ## Status definitions
 

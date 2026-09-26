@@ -99,7 +99,7 @@ because the IRS XSD permits them.
 | -------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | 1040-04  | `IRS3800`                                   | M: no registered MeF serializer                                                                |
 | 1040-04  | `IRS8835`                                   | M: no registered MeF serializer                                                                |
-| 1040-04  | `IRS8936` and its Schedule A                | M: no registered MeF serializer. An unregistered Schedule A XML builder and 2025 acquisition/MAGI checks are written but unrun; parent Form 8936, return-level MAGI, tax limit, and dealer-transfer recapture are still open. |
+| 1040-04  | `IRS8936` and its Schedule A                | M: neither MeF serializer is registered. Unregistered parent and Schedule A XML builders and return-level Part I MAGI input are written but unrun. Low-liability cases stop rather than overclaim; business Form 3800 routing and dealer-transfer recapture remain open. |
 | 1040-04  | Transfer Election Statement PDF             | M: source PDF identifies the attachment, but its content is not in the captured scenario facts |
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
