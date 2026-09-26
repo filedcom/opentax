@@ -5,10 +5,13 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import {
-  calculateExcessEvent,
+  calculateExcessEvents,
+  ExcessEventKind,
   excessEventSchema,
 } from "./excess_distribution.ts";
 import type { ExcessEventResult } from "./excess_distribution.ts";
@@ -42,8 +45,8 @@ export const itemSchema = z.object({
   shares_owned: z.number().nonnegative(),
   // Fair market value of shares at end of tax year (Form 8621 Part I line 1b)
   fmv_at_year_end: z.number().nonnegative(),
-  // One Part V computation per excess distribution or disposition. The
-  // year-by-year allocation is derived from the dated holding period.
+  // Each section 1291 distribution block supplies prior-year history and all
+  // current distributions; each disposition supplies its realized gain.
   excess_events: z.array(excessEventSchema).optional(),
   // QEF: pro-rata share of ordinary income (Form 8621 Part III line 6a; IRC §1293(a)(1)(A))
   qef_ordinary_income: z.number().nonnegative().optional(),
@@ -167,7 +170,7 @@ function validateHoldings(items: F8621Items): void {
 function calculatedLines(items: F8621Items): Form8621Lines[] {
   return items.map((item) => ({
     item,
-    excessEvents: (item.excess_events ?? []).map(calculateExcessEvent),
+    excessEvents: (item.excess_events ?? []).flatMap(calculateExcessEvents),
   }));
 }
 
@@ -187,7 +190,9 @@ class F8621Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     schedule1,
     schedule2,
+    schedule_b,
     schedule_d,
+    form8960,
     income_tax_calculation,
   ]);
 
@@ -216,10 +221,30 @@ class F8621Node extends TaxNode<typeof inputSchema> {
         (item.qef_capital_951_or_1293g_reduction ?? 0),
       0,
     );
+    const nonexcessDividends = f8621s.flatMap((item) =>
+      (item.excess_events ?? [])
+        .flatMap((event) =>
+          event.kind === ExcessEventKind.Distribution
+            ? [{
+              payerName: item.company_name,
+              ordinaryDividends: event.taxable_nonexcess_dividend_usd,
+            }]
+            : []
+        )
+    ).filter((dividend) => dividend.ordinaryDividends > 0);
 
     return {
       outputs: [
         { nodeType: "form8621", fields: { items: lines } },
+        ...nonexcessDividends.map((dividend) => output(schedule_b, dividend)),
+        ...(nonexcessDividends.length > 0
+          ? [output(form8960, {
+            line2_ordinary_dividends: nonexcessDividends.reduce(
+              (sum, dividend) => sum + dividend.ordinaryDividends,
+              0,
+            ),
+          })]
+          : []),
         ...(ordinaryIncome !== 0
           ? [output(schedule1, { line8z_other: ordinaryIncome })]
           : []),

@@ -16,28 +16,46 @@ function shareValue(item: Form8621Lines["item"]): string {
 }
 
 function buildEvent(
-  event: NonNullable<Form8621Lines["item"]["excess_events"]>[number],
   result: Form8621Lines["excessEvents"][number],
 ): string {
   return elements("DistriAndDisposOfStockTyp", [
-    event.kind === ExcessEventKind.Distribution
-      ? element("TotalExcessDistributionAmt", event.amount_usd) +
-        element("TotalExcessDistributionUSAmt", event.amount_usd)
-      : element("GainLossFromDisposOfStkAmt", event.amount_usd),
-    element(
-      "TotalAllcblCurrAndPrePFICTYAmt",
-      result.line16b_current_and_pre_pfic_income,
-    ),
-    element(
-      "AggregateIncreaseInTxEachTYAmt",
-      result.line16c_prior_year_tax_before_credit,
-    ),
-    element(
-      "ForeignTaxCreditAmt",
-      result.line16d_prior_year_foreign_tax_credit,
-    ),
-    element("AggregateIncrLessFrgnTxCrAmt", result.line16e_additional_tax),
-    element("InterestOnEachNetIncrInTaxAmt", result.line16f_interest),
+    result.kind === ExcessEventKind.Distribution
+      ? [
+        element(
+          "TotalPFICDistriDurCurrTYAmt",
+          result.line15a_current_distributions,
+        ),
+        ...(result.first_holding_year ? [] : [
+          element(
+            "DistributionsIn3PrecedingTYAmt",
+            result.line15b_prior_distributions,
+          ),
+          element(
+            "AverageDistribution3PrecTYAmt",
+            result.line15c_prior_average,
+          ),
+          element("AverageDistri3PrevTY125PctAmt", result.line15d_threshold),
+          element("TotalExcessDistributionAmt", result.amount_usd),
+          element("TotalExcessDistributionUSAmt", result.amount_usd),
+        ]),
+      ].join("")
+      : element("GainLossFromDisposOfStkAmt", result.amount_usd),
+    ...(result.first_holding_year ? [] : [
+      element(
+        "TotalAllcblCurrAndPrePFICTYAmt",
+        result.line16b_current_and_pre_pfic_income,
+      ),
+      element(
+        "AggregateIncreaseInTxEachTYAmt",
+        result.line16c_prior_year_tax_before_credit,
+      ),
+      element(
+        "ForeignTaxCreditAmt",
+        result.line16d_prior_year_foreign_tax_credit,
+      ),
+      element("AggregateIncrLessFrgnTxCrAmt", result.line16e_additional_tax),
+      element("InterestOnEachNetIncrInTaxAmt", result.line16f_interest),
+    ]),
   ]);
 }
 
@@ -129,15 +147,7 @@ function buildItem(
       ].join("")
       : "",
     element("FunctionalCurrencyCd", "USD"),
-    ...(item.excess_events ?? []).map((event, index) => {
-      const result = line.excessEvents[index];
-      if (!result) {
-        throw new Error(
-          "Form 8621 event is missing its calculated Part V lines",
-        );
-      }
-      return buildEvent(event, result);
-    }),
+    ...line.excessEvents.map(buildEvent),
   ];
   return elements(
     "IRS8621",
@@ -160,9 +170,9 @@ export const form8621: MefFormDescriptor<"form8621", Input, readonly string[]> =
     build(fields, context) {
       const items = fields.items ?? [];
       return items.map((line, itemIndex) => {
-        const index = line.item.excess_events?.length
+        const index = line.excessEvents.some((event) => event.amount_usd > 0)
           ? items.slice(0, itemIndex).filter((prior) =>
-            (prior.item.excess_events?.length ?? 0) > 0
+            prior.excessEvents.some((event) => event.amount_usd > 0)
           ).length
           : undefined;
         return buildItem(line, index, context);

@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import { calculateExcessEvent } from "../../../nodes/inputs/f8621/excess_distribution.ts";
+import { calculateExcessEvents } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { itemSchema, PficRegime } from "../../../nodes/inputs/f8621/index.ts";
 import type { FilerIdentity } from "../types.ts";
@@ -39,11 +39,16 @@ Deno.test({
 }, async () => {
   const event = {
     kind: ExcessEventKind.Distribution,
-    amount_usd: 10_000,
     holding_period_start: "2024-01-01",
-    event_date: "2025-12-31",
     first_pfic_tax_year: 2024,
-    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+    shares_in_block: 100,
+    prior_year_distributions: [{ tax_year: 2024, amount_usd: 0 }],
+    current_year_distributions: [{
+      date: "2025-12-31",
+      amount_usd: 10_000,
+      year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+    }],
+    taxable_nonexcess_dividend_usd: 0,
   };
   const item = itemSchema.parse({
     company_name: "Offshore Fund Ltd",
@@ -68,7 +73,7 @@ Deno.test({
     },
     schedule2: { line17p_form8621_interest: 150 },
     form8621: {
-      items: [{ item, excessEvents: [calculateExcessEvent(event)] }],
+      items: [{ item, excessEvents: calculateExcessEvents(event) }],
     },
   }, filer);
   assertStringIncludes(xml, "<IRS8621 documentId=");
@@ -77,6 +82,14 @@ Deno.test({
     "<ForeignEntityReferenceIdNum>FUND001</ForeignEntityReferenceIdNum>",
   );
   assertStringIncludes(xml, "<OtherTaxAmtCd>1291TAX</OtherTaxAmtCd>");
+  assertStringIncludes(
+    xml,
+    "<TotalPFICDistriDurCurrTYAmt>10000</TotalPFICDistriDurCurrTYAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<DistributionsIn3PrecedingTYAmt>0</DistributionsIn3PrecedingTYAmt>",
+  );
   assertStringIncludes(
     xml,
     "<AggregateIncrLessFrgnTxCrAmt>1853</AggregateIncrLessFrgnTxCrAmt>",

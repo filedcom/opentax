@@ -3,6 +3,8 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
+import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import { f8621, itemSchema, PficRegime } from "./index.ts";
 import type { F8621Item, Form8621Lines } from "./index.ts";
@@ -24,11 +26,16 @@ function minimalItem(overrides: Partial<F8621Item> = {}): F8621Item {
 function excessEvent(amount = 10_000): ExcessEvent {
   return {
     kind: ExcessEventKind.Distribution,
-    amount_usd: amount,
     holding_period_start: "2024-01-01",
-    event_date: "2025-12-31",
     first_pfic_tax_year: 2024,
-    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+    shares_in_block: 100,
+    prior_year_distributions: [{ tax_year: 2024, amount_usd: 0 }],
+    current_year_distributions: [{
+      date: "2025-12-31",
+      amount_usd: amount,
+      year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+    }],
+    taxable_nonexcess_dividend_usd: 0,
   };
 }
 
@@ -89,6 +96,26 @@ Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Sched
     result.outputs.filter((item) => item.nodeType === "form8621").length,
     1,
   );
+});
+
+Deno.test("Form 8621 routes taxable nonexcess distribution to dividends", () => {
+  const event = excessEvent();
+  if (event.kind !== ExcessEventKind.Distribution) {
+    throw new Error("distribution fixture required");
+  }
+  const result = compute([minimalItem({
+    excess_events: [{
+      ...event,
+      prior_year_distributions: [{ tax_year: 2024, amount_usd: 4_000 }],
+      taxable_nonexcess_dividend_usd: 5_000,
+    }],
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.ordinaryDividends, 5_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8960)?.line2_ordinary_dividends,
+    5_000,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 2_497);
 });
 
 Deno.test("Form 8621 combines separate holdings without losing their filed documents", () => {

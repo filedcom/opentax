@@ -13,11 +13,16 @@ The item schema is strict so those unsupported shapes cannot be silently
 ignored. Each item requires a PFIC EIN or alphanumeric foreign-entity
 reference ID, and identifiers cannot repeat across the filing.
 
-For each section 1291 excess distribution or disposition, `excess_events`
-contains the sourced excess amount or disposition gain in USD, the stock-block
-holding start date, the distribution or disposition date, and the first PFIC
-tax year. The engine derives each calendar year's allocation from the number
-of days held, including leap years, and balances cents across the years. Prior PFIC-year portions
+For each section 1291 stock block, `excess_events` contains the stock-block
+holding start date, the first PFIC tax year, the share count, every prior
+holding-year distribution up to three years (including explicit zero years),
+and each 2025 distribution date and gross USD amount. The engine calculates
+the 125% per-share threshold, apportions annual excess among actual current
+distributions, and then derives each calendar year's allocation from the number
+of days held, including leap years and balanced cents. The source separately
+provides the portion of the nonexcess amount taxable as a section 301 dividend,
+which routes through Schedule B and Form 8960. A disposition instead provides
+its realized gain as the section 1291 amount. Prior PFIC-year portions
 use that year's highest individual rate from the IRS instructions. Creditable
 foreign tax is capped within each affected year. The source must supply a
 supported section 6621 interest charge for every prior year with net tax.
@@ -39,10 +44,9 @@ and election B.
 
 ## Open correctness and acceptance work
 
-- Calculate the section 1291 excess amount from dated distributions,
-  per-share prior-year history, and the 125% threshold. Day-level allocation
-  of an already-sourced excess amount is now derived; annual distribution
-  history and the threshold are not yet modeled.
+- Reconcile mixed lots, partial dispositions, stock-block share counts, and
+  translated foreign-currency distributions. The USD stock-block threshold and
+  date-based allocation are now calculated, but these other paths are not.
 - Verify historical interest calculations against section 6621 rates and due
   dates rather than relying on a supplied charge.
 - Add section 1248 dividend attribution for foreign tax credits on PFIC stock
