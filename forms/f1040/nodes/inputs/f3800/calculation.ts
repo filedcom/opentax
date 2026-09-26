@@ -237,9 +237,6 @@ export type Form3800CreditClassification = {
 export function classifyForm8835Credits(
   entries: readonly Form8835CreditEntry[],
 ): Form3800CreditClassification {
-  if (entries.length === 0) {
-    throw new Error("Form 3800 needs at least one Form 8835 facility credit");
-  }
   const statementFiles = new Set<string>();
   for (const entry of entries) {
     if (entry.subject_to_passive_activity_limit) {

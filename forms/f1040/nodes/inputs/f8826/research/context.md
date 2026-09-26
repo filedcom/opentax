@@ -22,6 +22,7 @@ tax-liability limit before filing.
 | eligible_expenditures               | number (≥0)         | Yes      | Eligible expenditures                       | Amounts paid or incurred to comply with ADA (Line 1)                             | Form 8826 Line 1; IRC §44(c)                    | https://www.irs.gov/pub/irs-pdf/i8826.pdf |
 | prior_year_gross_receipts           | number (≥0)         | Yes      | Preceding-year gross receipts               | Include predecessor and common-control receipts; ≤$1M qualifies                  | Form 8826 instructions, Eligible Small Business | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
 | prior_year_full_time_employee_count | nonnegative integer | Yes      | Preceding-year full-time employee headcount | An employee is full-time at ≥30 hours/week for ≥20 calendar weeks; ≤30 qualifies | Form 8826 instructions, Eligible Small Business | https://www.irs.gov/pub/irs-pdf/f8826.pdf |
+| subject_to_passive_activity_limit   | boolean             | Yes      | Passive-activity answer                     | Positive passive credit stops until Form 8582-CR is integrated                   | Form 3800 Part III column (d)                   | https://www.irs.gov/instructions/i3800    |
 
 ---
 
@@ -93,6 +94,8 @@ limited)"] end gr & fte --> elig --> credit exp --> credit --> s3
 7. **IRC §190 interaction**: Some expenditures qualifying for §44 may also
    qualify for the §190 barrier removal deduction. Amounts used for the §44
    credit reduce the §190 deduction.
+8. **Passive activity**: A positive source credit marked passive currently
+   stops. It needs Form 8582-CR before the Form 3800 tax-liability limit.
 
 ---
 

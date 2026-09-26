@@ -5,10 +5,20 @@ import {
   type Form3800NonpassiveInput,
   type Form8835CreditEntry,
 } from "../../../nodes/inputs/f3800/calculation.ts";
+import {
+  calculateForm8826,
+  type F8826Input,
+  inputSchema as form8826InputSchema,
+} from "../../../nodes/inputs/f8826/index.ts";
 
-/** Source-backed Form 8835 credit rows, one facility per Part III line. */
+/** Source-backed nonpassive Form 8826 and Form 8835 Part III credit rows. */
 export type Form3800NonpassiveXmlInput = {
   readonly tax: Form3800NonpassiveInput;
+  readonly form8826?: {
+    readonly source: F8826Input;
+    readonly documentId: string;
+    readonly appliedCredit: number;
+  };
   readonly facilities: readonly Form8835CreditEntry[];
   readonly form8835DocumentIds: readonly string[];
   /** Part II credit allocated to each facility, in the same order. */
@@ -20,12 +30,30 @@ export function buildIRS3800Nonpassive(
   input: Form3800NonpassiveXmlInput,
 ): string {
   const credits = classifyForm8835Credits(input.facilities);
+  if (!input.form8826 && input.facilities.length === 0) {
+    throw new Error("Form 3800 needs a source credit document");
+  }
+  const form8826Credit = input.form8826
+    ? calculateForm8826(form8826InputSchema.parse(input.form8826.source)).line8
+    : 0;
+  if (input.form8826) {
+    if (input.form8826.source.subject_to_passive_activity_limit) {
+      throw new Error("Form 8826 passive credit needs Form 8582-CR");
+    }
+    if (!input.form8826.documentId || form8826Credit <= 0) {
+      throw new Error("Form 3800 needs an eligible Form 8826 source document");
+    }
+    const applied = input.form8826.appliedCredit;
+    if (!Number.isFinite(applied) || applied < 0 || applied > form8826Credit) {
+      throw new Error("Form 3800 has an invalid Form 8826 applied credit");
+    }
+  }
   if (
-    credits.standardCredit !== input.tax.standardCredit ||
+    credits.standardCredit + form8826Credit !== input.tax.standardCredit ||
     credits.specifiedCredit !== input.tax.specifiedCredit
   ) {
     throw new Error(
-      "Form 3800 Part II credit amounts do not reconcile with Form 8835 facilities",
+      "Form 3800 Part II credit amounts do not reconcile with source documents",
     );
   }
   if (
@@ -72,6 +100,22 @@ export function buildIRS3800Nonpassive(
       );
     }
   }
+  const form8826Applied = input.form8826?.appliedCredit ?? 0;
+  const standardApplied = input.facilities.reduce(
+    (sum, facility, index) =>
+      sum + (facility.form3800_line === "1f" ? appliedAt(index) : 0),
+    form8826Applied,
+  );
+  const specifiedApplied = input.facilities.reduce(
+    (sum, facility, index) =>
+      sum + (facility.form3800_line === "4e" ? appliedAt(index) : 0),
+    0,
+  );
+  if (standardApplied !== lines.line17 || specifiedApplied !== lines.line37) {
+    throw new Error(
+      "Form 3800 Part III applied credits do not reconcile to Part II",
+    );
+  }
   const partVGroups: string[] = [];
   const partIIIGroups = credits.rows.map((row) => {
     const facilityIndexes = input.facilities.flatMap((facility, index) =>
@@ -81,7 +125,9 @@ export function buildIRS3800Nonpassive(
       (sum, index) => sum + appliedAt(index),
       0,
     );
-    const expected = row.line === "1f" ? lines.line17 : lines.line37;
+    const expected = row.line === "1f"
+      ? lines.line17 - form8826Applied
+      : lines.line37;
     if (applied !== expected) {
       throw new Error(
         `Form 3800 Part III line ${row.line} does not reconcile to Part II`,
@@ -182,7 +228,8 @@ export function buildIRS3800Nonpassive(
     ]);
   const ordinaryRow = credits.rows.find((row) => row.line === "1f");
   const specifiedRow = credits.rows.find((row) => row.line === "4e");
-  const combinedSelfEarned = (ordinaryRow?.selfEarnedCredit ?? 0) +
+  const combinedSelfEarned = form8826Credit +
+    (ordinaryRow?.selfEarnedCredit ?? 0) +
     (specifiedRow?.selfEarnedCredit ?? 0);
   const combinedTransferred = (ordinaryRow?.transferOutAmount ?? 0) +
     (specifiedRow?.transferOutAmount ?? 0);
@@ -217,13 +264,23 @@ export function buildIRS3800Nonpassive(
     element("TotAllwGenAndEligSmllBusCrAmt", lines.line36),
     element("SmllrGenBusCrOrTotGenEligCrAmt", lines.line37),
     element("CurrentYearCreditAllowedAmt", lines.line38),
+    input.form8826
+      ? elements("Form8826CYCreditsGrp", [
+        element("GeneralBusCrFromNnPssvActyAmt", form8826Credit),
+        element("TotalGeneralBusCreditsAmt", form8826Credit),
+        element("TotalGeneralBusCreditsAppTxAmt", form8826Applied),
+      ], {
+        referenceDocumentId: input.form8826.documentId,
+        referenceDocumentName: "IRS8826",
+      })
+      : "",
     ordinaryGroup?.xml ?? "",
-    ordinaryRow
+    ordinaryRow || input.form8826
       ? totalRow(
         "GenBusCYCreditsSubTotGrp",
-        ordinaryRow.selfEarnedCredit,
-        ordinaryRow.transferOutAmount,
-        ordinaryRow.availableCredit,
+        form8826Credit + (ordinaryRow?.selfEarnedCredit ?? 0),
+        ordinaryRow?.transferOutAmount ?? 0,
+        form8826Credit + (ordinaryRow?.availableCredit ?? 0),
         lines.line17,
       )
       : "",
@@ -241,7 +298,7 @@ export function buildIRS3800Nonpassive(
       "TotGenBusCYCreditAmtGrp",
       combinedSelfEarned,
       combinedTransferred,
-      credits.standardCredit + credits.specifiedCredit,
+      form8826Credit + credits.standardCredit + credits.specifiedCredit,
       lines.line38,
     ),
     partVGroups.length > 0
