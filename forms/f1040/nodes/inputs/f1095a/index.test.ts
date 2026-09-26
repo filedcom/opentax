@@ -438,3 +438,97 @@ Deno.test("smoke test — full 1095-A with all major fields", () => {
   assertEquals(Array.isArray(out?.fields.monthly_aptcs), true);
   assertEquals((out?.fields.monthly_premiums as number[]).length, 12);
 });
+
+Deno.test("shared MFS exception allocates half premium and APTC but uses family SLCSP", () => {
+  const result = compute([minimalItem({
+    policy_number: "POLICY-2025-123456",
+    monthly_premiums: Array(12).fill(1_200),
+    monthly_slcsps: Array(12).fill(1_500),
+    monthly_aptcs: Array(12).fill(800),
+    shared_mfs_policy: {
+      basis: "exception",
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 12,
+      monthly_family_slcsps: Array(12).fill(700),
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, Array(12).fill(600));
+  assertEquals(fields?.monthly_slcsps, Array(12).fill(700));
+  assertEquals(fields?.monthly_aptcs, Array(12).fill(400));
+  assertEquals(fields?.annual_line11_eligible, undefined);
+  assertEquals(fields?.shared_policy_allocations, [{
+    basis: "mfs_exception",
+    policy_number: "ICY-2025-123456",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 12,
+    premium_pct: 0.5,
+    aptc_pct: 0.5,
+  }]);
+});
+
+Deno.test("shared MFS no-exception allocates only half APTC", () => {
+  const result = compute([minimalItem({
+    policy_number: "MFS-POLICY-1",
+    monthly_premiums: Array(12).fill(1_200),
+    monthly_slcsps: Array(12).fill(1_500),
+    monthly_aptcs: Array(12).fill(800),
+    shared_mfs_policy: {
+      basis: "no_exception",
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 12,
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, Array(12).fill(0));
+  assertEquals(fields?.monthly_slcsps, Array(12).fill(0));
+  assertEquals(fields?.monthly_aptcs, Array(12).fill(400));
+  assertEquals(fields?.shared_policy_allocations, [{
+    basis: "mfs_no_exception",
+    policy_number: "MFS-POLICY-1",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 12,
+    aptc_pct: 0.5,
+  }]);
+});
+
+Deno.test("shared MFS source rejects coverage outside allocation and missing family SLCSP", () => {
+  const base = {
+    policy_number: "MFS-POLICY-1",
+    monthly_premiums: Array(12).fill(1_200),
+    monthly_aptcs: Array(12).fill(800),
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...base,
+        shared_mfs_policy: {
+          basis: "no_exception",
+          other_taxpayer_ssn: "222-33-4444",
+          start_month: 1,
+          end_month: 6,
+        },
+      })]),
+    Error,
+    "coverage outside its allocation months",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...base,
+        shared_mfs_policy: {
+          basis: "exception",
+          other_taxpayer_ssn: "222-33-4444",
+          start_month: 1,
+          end_month: 12,
+          monthly_family_slcsps: Array(12).fill(0),
+        },
+      })]),
+    Error,
+    "coverage-family SLCSP",
+  );
+});

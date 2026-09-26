@@ -2,7 +2,10 @@ import { z } from "zod";
 import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { form8962 } from "../../intermediate/forms/form8962/index.ts";
+import {
+  form8962,
+  sharedPolicyAllocationSchema,
+} from "../../intermediate/forms/form8962/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 1095-A — Health Insurance Marketplace Statement
@@ -13,9 +16,25 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // (one per insurance policy), aggregates the premium data, and emits a single
 // output to form8962 for Premium Tax Credit reconciliation.
 //
-// IRS Form 8962 Instructions (2024): https://www.irs.gov/pub/irs-pdf/i8962.pdf
+// IRS Form 8962 Instructions (2025): https://www.irs.gov/instructions/i8962
 
 // Per-item schema — one 1095-A from one Marketplace policy
+const sharedMfsPolicySchema = z.discriminatedUnion("basis", [
+  z.object({
+    basis: z.literal("exception"),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+    monthly_family_slcsps: z.array(z.number().nonnegative()).length(12),
+  }).strict(),
+  z.object({
+    basis: z.literal("no_exception"),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+  }).strict(),
+]);
+
 export const itemSchema = z.object({
   // Part I — Issuer / Marketplace information
   issuer_name: z.string().min(1),
@@ -36,6 +55,7 @@ export const itemSchema = z.object({
   annual_premium: z.number().nonnegative().optional(),
   annual_slcsp: z.number().nonnegative().optional(),
   annual_aptc: z.number().nonnegative().optional(),
+  shared_mfs_policy: sharedMfsPolicySchema.optional(),
 });
 
 // Node inputSchema — all 1095-A forms for this return
@@ -134,11 +154,75 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         }
       }
     }
-    const hasMonthlyPolicy = f1095as.some((item) =>
+    const sharedAllocations: Array<
+      z.infer<typeof sharedPolicyAllocationSchema>
+    > = [];
+    const allocatedItems = f1095as.map((item) => {
+      const shared = item.shared_mfs_policy;
+      if (!shared) return item;
+      if (
+        !item.policy_number || !item.monthly_premiums ||
+        !item.monthly_aptcs
+      ) {
+        throw new Error(
+          "Shared MFS Form 1095-A needs policy number and monthly premiums and APTC",
+        );
+      }
+      if (shared.start_month > shared.end_month) {
+        throw new Error("Shared MFS policy allocation months are reversed");
+      }
+      for (let index = 0; index < 12; index++) {
+        const month = index + 1;
+        if (
+          (month < shared.start_month || month > shared.end_month) &&
+          (item.monthly_premiums[index] > 0 || item.monthly_aptcs[index] > 0)
+        ) {
+          throw new Error(
+            "Shared MFS policy has coverage outside its allocation months",
+          );
+        }
+        if (
+          shared.basis === "exception" &&
+          item.monthly_premiums[index] > 0 &&
+          shared.monthly_family_slcsps[index] <= 0
+        ) {
+          throw new Error(
+            "Shared MFS exception needs the coverage-family SLCSP for each covered month",
+          );
+        }
+      }
+      sharedAllocations.push(sharedPolicyAllocationSchema.parse({
+        basis: shared.basis === "exception"
+          ? "mfs_exception"
+          : "mfs_no_exception",
+        policy_number: item.policy_number.slice(-15),
+        other_taxpayer_ssn: shared.other_taxpayer_ssn.replaceAll("-", ""),
+        start_month: shared.start_month,
+        end_month: shared.end_month,
+        ...(shared.basis === "exception" ? { premium_pct: 0.5 } : {}),
+        aptc_pct: 0.5,
+      }));
+      return {
+        ...item,
+        monthly_premiums: item.monthly_premiums.map((amount) =>
+          shared.basis === "exception" ? Math.round(amount / 2) : 0
+        ),
+        monthly_slcsps: shared.basis === "exception"
+          ? shared.monthly_family_slcsps
+          : Array<number>(12).fill(0),
+        monthly_aptcs: item.monthly_aptcs.map((amount) =>
+          Math.round(amount / 2)
+        ),
+        annual_premium: undefined,
+        annual_slcsp: undefined,
+        annual_aptc: undefined,
+      };
+    });
+    const hasMonthlyPolicy = allocatedItems.some((item) =>
       item.monthly_premiums !== undefined ||
       item.monthly_slcsps !== undefined || item.monthly_aptcs !== undefined
     );
-    const hasAnnualOnlyPolicy = f1095as.some((item) =>
+    const hasAnnualOnlyPolicy = allocatedItems.some((item) =>
       item.monthly_premiums === undefined &&
       item.monthly_slcsps === undefined && item.monthly_aptcs === undefined &&
       ((item.annual_premium ?? 0) > 0 || (item.annual_slcsp ?? 0) > 0 ||
@@ -149,8 +233,8 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         "Form 1095-A policies need monthly columns for every policy when calculating Form 8962 monthly credit",
       );
     }
-    if (hasMonthlyPolicy && f1095as.length > 1) {
-      for (const item of f1095as) {
+    if (hasMonthlyPolicy && allocatedItems.length > 1) {
+      for (const item of allocatedItems) {
         const hasCoverage = item.monthly_premiums?.some((value) => value > 0) ||
           item.monthly_aptcs?.some((value) => value > 0);
         if (hasCoverage && (!item.monthly_slcsps || !item.coverage_state)) {
@@ -162,14 +246,17 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     }
 
     // Aggregate annual totals across all policies
-    const totalAnnualPremium = sumField(f1095as, "annual_premium");
-    const totalAnnualSlcsp = sumField(f1095as, "annual_slcsp");
-    const totalAnnualAptc = sumField(f1095as, "annual_aptc");
+    const totalAnnualPremium = sumField(allocatedItems, "annual_premium");
+    const totalAnnualSlcsp = sumField(allocatedItems, "annual_slcsp");
+    const totalAnnualAptc = sumField(allocatedItems, "annual_aptc");
 
     // Merge monthly arrays across all policies
-    const mergedPremiums = mergeMonthlyArrays(f1095as, "monthly_premiums");
-    const mergedSlcsps = mergeMonthlySlcsps(f1095as);
-    const mergedAptcs = mergeMonthlyArrays(f1095as, "monthly_aptcs");
+    const mergedPremiums = mergeMonthlyArrays(
+      allocatedItems,
+      "monthly_premiums",
+    );
+    const mergedSlcsps = mergeMonthlySlcsps(allocatedItems);
+    const mergedAptcs = mergeMonthlyArrays(allocatedItems, "monthly_aptcs");
 
     // Preserve an explicit all-zero column C. It is still a real 1095-A monthly
     // column when the premium and SLCSP columns contain coverage amounts.
@@ -201,7 +288,8 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     if (activeSlcsps !== null) form8962Fields.monthly_slcsps = activeSlcsps;
     if (activeAptcs !== null) form8962Fields.monthly_aptcs = activeAptcs;
     if (
-      f1095as.every((item) =>
+      allocatedItems.every((item) =>
+        !item.shared_mfs_policy &&
         item.monthly_premiums && item.monthly_slcsps && item.monthly_aptcs &&
         item.monthly_premiums[0] > 0 && item.monthly_slcsps[0] > 0 &&
         item.monthly_premiums.every((amount) =>
@@ -213,6 +301,9 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       )
     ) {
       form8962Fields.annual_line11_eligible = true;
+    }
+    if (sharedAllocations.length > 0) {
+      form8962Fields.shared_policy_allocations = sharedAllocations;
     }
 
     return {

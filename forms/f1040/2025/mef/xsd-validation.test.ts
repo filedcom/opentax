@@ -303,7 +303,7 @@ Deno.test({
       basis: "no_exception",
       exception_reviewed: true,
       no_one_can_claim_taxpayer: true,
-      no_shared_policy: true,
+      policy_scope: "family_only",
       all_covered_individuals_lawfully_present: true,
       no_self_employed_health_insurance_deduction: true,
     },
@@ -352,7 +352,7 @@ Deno.test({
       unable_to_file_joint_due_to_exception: true,
       prior_consecutive_exception_years: 0,
       no_one_can_claim_taxpayer: true,
-      no_shared_policy: true,
+      policy_scope: "family_only",
     },
   };
   const result = runReturn({
@@ -377,6 +377,127 @@ Deno.test({
     "<MarriedFilingSeparatelyExcInd>X</MarriedFilingSeparatelyExcInd>",
   );
   await validateXsd(xml, "MFS Form 8962 abuse exception");
+});
+
+Deno.test({
+  name:
+    "XSD: shared MFS policy without exception allocates only APTC in Part IV",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFS,
+    spouse_first_name: "Other",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "222-33-4444",
+    mfs_spouse_itemizing: false,
+    ptc_mfs_status: {
+      basis: "no_exception",
+      exception_reviewed: true,
+      no_one_can_claim_taxpayer: true,
+      policy_scope: "shared_with_spouse",
+      all_covered_individuals_lawfully_present: true,
+      no_self_employed_health_insurance_deduction: true,
+    },
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "MFS-POLICY-1",
+      monthly_premiums: Array(12).fill(1_200),
+      monthly_slcsps: Array(12).fill(1_500),
+      monthly_aptcs: Array(12).fill(800),
+      shared_mfs_policy: {
+        basis: "no_exception",
+        other_taxpayer_ssn: "222-33-4444",
+        start_month: 1,
+        end_month: 12,
+      },
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.total_advance_ptc, 4_800);
+  assertEquals(result.pending.schedule2?.line1a_excess_advance_premium, 750);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<SharePolicyMarriedAltCalcInd>true</SharePolicyMarriedAltCalcInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthlyAdvancedPTCPct>0.50</MonthlyAdvancedPTCPct>",
+  );
+  assertEquals(xml.includes("<MonthlyPremiumPct>"), false);
+  assertEquals(xml.includes("<MonthlyPremiumSLCSPPct>"), false);
+  await validateXsd(xml, "shared MFS APTC-only allocation");
+});
+
+Deno.test({
+  name:
+    "XSD: shared MFS exception allocates premium and APTC but not family SLCSP",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFS,
+    spouse_first_name: "Other",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "222-33-4444",
+    mfs_spouse_itemizing: false,
+    ptc_mfs_status: {
+      basis: "domestic_abuse",
+      living_apart_at_filing: true,
+      unable_to_file_joint_due_to_exception: true,
+      prior_consecutive_exception_years: 0,
+      no_one_can_claim_taxpayer: true,
+      policy_scope: "shared_with_spouse",
+    },
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "MFS-POLICY-1",
+      monthly_premiums: Array(12).fill(1_200),
+      monthly_slcsps: Array(12).fill(1_500),
+      monthly_aptcs: Array(12).fill(800),
+      shared_mfs_policy: {
+        basis: "exception",
+        other_taxpayer_ssn: "222-33-4444",
+        start_month: 1,
+        end_month: 12,
+        monthly_family_slcsps: Array(12).fill(700),
+      },
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 7_200);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 2_400);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<MonthlyPremiumPct>0.50</MonthlyPremiumPct>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyAdvancedPTCPct>0.50</MonthlyAdvancedPTCPct>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>700</MonthlyPremiumSLCSPAmt>",
+  );
+  assertEquals(xml.includes("<MonthlyPremiumSLCSPPct>"), false);
+  await validateXsd(xml, "shared MFS exception allocation");
 });
 
 Deno.test({

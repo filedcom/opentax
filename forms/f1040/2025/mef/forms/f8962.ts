@@ -11,6 +11,16 @@ interface MonthlyRow {
   aptc: number;
 }
 
+interface SharedPolicyAllocation {
+  basis: "mfs_exception" | "mfs_no_exception";
+  policy_number: string;
+  other_taxpayer_ssn: string;
+  start_month: number;
+  end_month: number;
+  premium_pct?: number;
+  aptc_pct: number;
+}
+
 export interface Fields {
   qsehra_ind?: boolean | null;
   mfs_exception_ind?: boolean | null;
@@ -30,6 +40,7 @@ export interface Fields {
   annual_ptc_allowed?: number | null;
   annual_aptc?: number | null;
   monthly_ptc_rows?: readonly MonthlyRow[] | null;
+  shared_policy_allocations?: readonly SharedPolicyAllocation[] | null;
   total_premium_tax_credit?: number | null;
   total_advance_ptc?: number | null;
   net_premium_tax_credit?: number | null;
@@ -82,6 +93,7 @@ function monthlyXml(rows: readonly MonthlyRow[]): string[] {
 
 function buildIRS8962(fields: Input): string {
   const monthlyRows = fields.monthly_ptc_rows;
+  const allocations = fields.shared_policy_allocations ?? [];
   const hasSource = Array.isArray(monthlyRows) ||
     typeof fields.annual_premium === "number" ||
     typeof fields.annual_slcsp === "number" ||
@@ -99,6 +111,14 @@ function buildIRS8962(fields: Input): string {
   ) {
     throw new Error(
       "Form 8962 MeF requires the completed 2025 calculation, not source premiums alone",
+    );
+  }
+  if (
+    allocations.length > 4 ||
+    (allocations.length > 0 && !Array.isArray(monthlyRows))
+  ) {
+    throw new Error(
+      "Form 8962 shared policies need at most four allocations and monthly rows",
     );
   }
   if (
@@ -159,6 +179,9 @@ function buildIRS8962(fields: Input): string {
       "MonthlyContriHealthCareCvrAmt",
       fields.monthly_applicable_contribution,
     ),
+    allocations.length > 0
+      ? element("SharePolicyMarriedAltCalcInd", "true")
+      : "",
     element(
       "FullYrCoverage1095AInd",
       Array.isArray(monthlyRows) ? "false" : "true",
@@ -173,6 +196,21 @@ function buildIRS8962(fields: Input): string {
     numberElement("ExcessAdvncPaymentAmt", fields.excess_advance_payment),
     numberElement("AdditionalTaxLimitationAmt", fields.repayment_limitation),
     numberElement("PremiumTaxCreditTaxLiabAmt", fields.excess_advance_premium),
+    ...allocations.map((row) =>
+      elements("SharedPolicyAllocationGrp", [
+        element("PolicyNum", row.policy_number),
+        element("SSN", row.other_taxpayer_ssn),
+        element("StartMonthNumberCd", String(row.start_month).padStart(2, "0")),
+        element("EndMonthNumberCd", String(row.end_month).padStart(2, "0")),
+        typeof row.premium_pct === "number"
+          ? element("MonthlyPremiumPct", row.premium_pct.toFixed(2))
+          : "",
+        element("MonthlyAdvancedPTCPct", row.aptc_pct.toFixed(2)),
+      ])
+    ),
+    allocations.length > 0
+      ? element("SharedPolicyAllocationInfoInd", "true")
+      : "",
   ]);
 }
 
