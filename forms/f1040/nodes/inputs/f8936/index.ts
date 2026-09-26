@@ -43,6 +43,8 @@ export const itemSchema = z.object({
   // The date the binding contract and payment made the vehicle "acquired".
   acquisition_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   seller_report_received: z.boolean().optional(),
+  transferred_to_dealer: z.boolean().optional(),
+  transferred_amount: z.number().nonnegative().optional(),
   resold_within_30_days: z.boolean().optional(),
   acquired_for_use_not_resale: z.boolean().optional(),
   claimed_as_dependent: z.boolean().optional(),
@@ -66,7 +68,7 @@ export const inputSchema = z.object({
   f8936s: z.array(itemSchema),
 });
 
-type F8936Item = z.infer<typeof itemSchema>;
+export type F8936Item = z.infer<typeof itemSchema>;
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
@@ -208,16 +210,35 @@ function computeUsedVehicleCredit(item: F8936Item): number {
   return Math.round(credit);
 }
 
-function vehicleOutput(item: F8936Item): NodeOutput[] {
+export function computeVehiclePersonalCredit(item: F8936Item): number {
   if (item.is_new_vehicle === undefined) {
     throw new Error(
       "f8936: vehicle must be classified as new or previously owned",
     );
   }
   const used = item.is_new_vehicle === false;
-  const credit = used
-    ? computeUsedVehicleCredit(item)
-    : computeNewVehicleCredit(item);
+  return used ? computeUsedVehicleCredit(item) : computeNewVehicleCredit(item);
+}
+
+function vehicleOutput(item: F8936Item): NodeOutput[] {
+  if (item.transferred_to_dealer === undefined) {
+    throw new Error("f8936: dealer-transfer answer is required");
+  }
+  if (item.transferred_to_dealer && item.transferred_amount === undefined) {
+    throw new Error(
+      "f8936: dealer-transferred credit needs its transferred amount",
+    );
+  }
+  if (!item.transferred_to_dealer && (item.transferred_amount ?? 0) > 0) {
+    throw new Error(
+      "f8936: transferred amount requires a dealer-transfer election",
+    );
+  }
+  const used = item.is_new_vehicle === false;
+  const credit = computeVehiclePersonalCredit(item);
+  // A dealer transfer is reconciled on Form 8936/Schedule A, not claimed
+  // again as a personal credit on Schedule 3.
+  if (item.transferred_to_dealer) return [];
   if (credit <= 0) return [];
   return [
     output(

@@ -72,6 +72,14 @@ transfer, and a model year at least two years older than acquisition. The
 corresponding cases are written but unrun. These checks do not substitute for
 the still-missing IRS8936 and Schedule A MeF documents or tax-liability limit.
 
+An unregistered `IRS8936ScheduleA` builder now writes one XML document per
+vehicle from the captured identity and credit facts, including new and
+previously owned groups and the dealer-transfer amount. The input node no
+longer routes dealer-transferred amounts to Schedule 3 as a second personal
+credit. The builder is intentionally not in `ALL_MEF_FORMS` until the parent
+`IRS8936` document, return-level MAGI consistency, tax-liability limitation,
+and transfer recapture routing are built. Its tests are written but unrun.
+
 ## Status definitions
 
 | Status                    | Meaning                                                                                                                     |

@@ -11,6 +11,7 @@ function compute(items: Parameters<typeof f8936.compute>[1]["f8936s"]) {
     vehicle_model: "EV",
     placed_in_service_date: "2025-09-30",
     seller_report_received: true,
+    transferred_to_dealer: false,
     resold_within_30_days: false,
     acquired_for_use_not_resale: true,
     claimed_as_dependent: false,
@@ -189,6 +190,18 @@ Deno.test("f8936: a vehicle resold within 30 days has no credit", () => {
     is_new_vehicle: true,
     credit_amount: 7_500,
     resold_within_30_days: true,
+    modified_agi: 100_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f8936: dealer-transferred amount is not claimed again on Schedule 3", () => {
+  const result = compute([{
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    transferred_to_dealer: true,
+    transferred_amount: 7_500,
     modified_agi: 100_000,
     filing_status: FilingStatus.Single,
   }]);
