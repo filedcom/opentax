@@ -133,9 +133,19 @@ cases are unrun. A subsequent IRS-instructions review corrected Part IV column
 (e) to credit-allowance-date percentage, not ownership percentage, and separates
 BAB interest payable from other bonds' outstanding principal with the required
 35% BAB rate. These source facts still need complete Part II integration,
-source-document serialization, allowance-date verification against the holding
-period, bond-specific carryforward identity, taxable-interest reconciliation,
-and IRS business-rule review.
+registered source-document serialization, allowance-date verification against
+the holding period, bond-specific carryforward identity, taxable-interest
+reconciliation, and IRS business-rule review.
+
+The next Form 8912 build pass models each Part IV bond as one or more explicit
+line 18 rows, preserves bond identity on carryforwards, and drafts `IRS8912` MeF
+output with separate Parts I through IV and a Part II input reconciliation.
+Direct XML and local schema cases are written but unrun. The builder is not
+registered, since the return graph does not yet supply final tax, AMT, prior
+credits, and allowed Form 3800 in the required order. Positive Form 8912 claims
+remain blocked at the input node; this XML draft is not a filing path. Its
+displayed whole-dollar row and aggregate rounding, as well as pass-through CREB
+taxable-income limits, still need end-to-end reconciliation.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on

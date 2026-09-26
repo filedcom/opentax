@@ -1,10 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { BondType, f8912 } from "./index.ts";
+import { BondType, f8912, itemSchema, sourceLinesFromItem } from "./index.ts";
 import { calculateForm8912SourceLines } from "./calculation.ts";
 
 const reported = {
   bond_type: BondType.CREB,
-  issue_date: "2017-12-31",
+  issue_date: "2009-12-31",
   issuer_name: "Issuer",
   issuer_ein: "123456789",
   unique_identifier: "bond-1",
@@ -21,20 +21,21 @@ const unreported = {
   issuer_state: "TX",
   issuer_ein: "123456789",
   maturity_date: "2030-12-31",
-  cusip: "123456789",
-  principal_payment_dates: [],
-  interest_payment_dates: [],
-  outstanding_principal: 10_000,
-  credit_rate: 0.05,
-  credit_allowance_percentage: 0.5,
+  line18_rows: [{
+    cusip: "123456789",
+    outstanding_principal: 10_000,
+    credit_rate: 0.05,
+    credit_allowance_percentage: 0.5,
+  }],
   issuer_elected_direct_payment: false,
+  is_pass_through_creb_credit: false,
 };
 
 function item(overrides: Record<string, unknown> = {}) {
   return {
     reported_bonds: [reported],
     unreported_bonds: [unreported],
-    qualified_bond_carryforward: 0,
+    carryforwards: [],
     ...overrides,
   };
 }
@@ -53,6 +54,7 @@ Deno.test("Form 8912: Part III, Part IV 70% bond, and carryforward remain distin
       creditRate: 0.05,
       creditAllowancePercentage: 0.5,
       issuerElectedDirectPayment: false,
+      isPassThroughCrebCredit: false,
     }],
     25,
   );
@@ -84,11 +86,14 @@ Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", 
   const bab = {
     ...unreported,
     bond_type: BondType.BAB,
-    outstanding_principal: undefined,
-    interest_payable: 1_000,
-    interest_payment_dates: ["2025-06-15"],
-    credit_rate: 0.35,
-    credit_allowance_percentage: 1,
+    issue_date: "2010-01-01",
+    line18_rows: [{
+      cusip: "123456789",
+      interest_payable: 1_000,
+      interest_payment_date: "2025-06-15",
+      credit_rate: 0.35,
+      credit_allowance_percentage: 1,
+    }],
   };
   assertEquals(
     f8912.inputSchema.safeParse({
@@ -102,11 +107,17 @@ Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", 
     creditRate: 0.35,
     creditAllowancePercentage: 1,
     issuerElectedDirectPayment: false,
+    isPassThroughCrebCredit: false,
   }], 0);
   assertEquals(lines.line2, 350);
   assertEquals(
     f8912.inputSchema.safeParse({
-      f8912s: [item({ unreported_bonds: [{ ...bab, credit_rate: 0.25 }] })],
+      f8912s: [item({
+        unreported_bonds: [{
+          ...bab,
+          line18_rows: [{ ...bab.line18_rows[0], credit_rate: 0.25 }],
+        }],
+      })],
     }).success,
     false,
   );
@@ -118,6 +129,7 @@ Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", 
         creditRate: 0.25,
         creditAllowancePercentage: 1,
         issuerElectedDirectPayment: false,
+        isPassThroughCrebCredit: false,
       }], 0),
     Error,
     "35%",
@@ -131,6 +143,7 @@ Deno.test("Form 8912: Part IV source identity follows the bond type", () => {
         unreported_bonds: [{
           ...unreported,
           bond_type: BondType.CREB,
+          issue_date: "2009-12-31",
         }],
       })],
     }).success,
@@ -141,12 +154,76 @@ Deno.test("Form 8912: Part IV source identity follows the bond type", () => {
       f8912s: [item({
         unreported_bonds: [{
           ...unreported,
-          cusip: undefined,
-          principal_payment_dates: [],
+          line18_rows: [{
+            ...unreported.line18_rows[0],
+            cusip: undefined,
+          }],
         }],
       })],
     }).success,
     false,
+  );
+});
+
+Deno.test("Form 8912: multiple Part IV line 18 rows contribute to line 20", () => {
+  const parsed = itemSchema.parse(item({
+    reported_bonds: [],
+    unreported_bonds: [{
+      ...unreported,
+      line18_rows: [
+        unreported.line18_rows[0],
+        { ...unreported.line18_rows[0], credit_allowance_percentage: 0.25 },
+      ],
+    }],
+  }));
+  assertEquals(sourceLinesFromItem(parsed).line2, 262.5);
+});
+
+Deno.test("Form 8912: only eligible bond credits carry forward", () => {
+  const current = itemSchema.parse(item({
+    carryforwards: [{
+      bond_type: BondType.QECB,
+      issue_date: "2017-12-31",
+      bond_identifier: "bond-2",
+      origin_tax_year: 2024,
+      amount: 25,
+    }],
+  }));
+  assertEquals(sourceLinesFromItem(current).line3, 25);
+  assertEquals(
+    itemSchema.safeParse(item({
+      carryforwards: [{
+        bond_type: BondType.CREB,
+        issue_date: "2009-12-31",
+        bond_identifier: "bond-1",
+        origin_tax_year: 2024,
+        amount: 25,
+      }],
+    })).success,
+    false,
+  );
+});
+
+Deno.test("Form 8912: unreported pass-through CREB retains its separate limit flag", () => {
+  const parsed = itemSchema.parse(item({
+    reported_bonds: [],
+    unreported_bonds: [{
+      ...unreported,
+      bond_type: BondType.CREB,
+      issue_date: "2009-12-31",
+      is_pass_through_creb_credit: true,
+      line18_rows: [{
+        ...unreported.line18_rows[0],
+        principal_payment_date: "2025-06-15",
+      }],
+    }],
+  }));
+  assertEquals(sourceLinesFromItem(parsed).hasPassThroughCrebCredit, true);
+  assertThrows(
+    () =>
+      f8912.compute({ taxYear: 2025, formType: "f1040" }, { f8912s: [parsed] }),
+    Error,
+    "pass-through CREB",
   );
 });
 

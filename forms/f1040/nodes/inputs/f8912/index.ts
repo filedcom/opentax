@@ -3,7 +3,11 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { calculateForm8912SourceLines } from "./calculation.ts";
+import {
+  calculateForm8912SourceLines,
+  type Form8912SourceLines,
+  type Form8912UnreportedBond,
+} from "./calculation.ts";
 
 // Form 8912 (Rev. December 2024): Part III uses Form 1097-BTC amounts;
 // Part IV computes credits where no Form 1097-BTC was received. This node
@@ -59,12 +63,22 @@ const reportedBondSchema = z.object({
   issue_date: pre2018IssueDate,
   issuer_name: z.string().min(1),
   issuer_ein: z.string().regex(/^\d{9}$/),
-  unique_identifier: z.string().min(1),
+  unique_identifier: z.string().min(1).max(40),
   credit_amount: z.number().finite().nonnegative(),
   issuer_elected_direct_payment: z.boolean(),
   is_pass_through_creb_credit: z.boolean(),
 }).superRefine((bond, ctx) => {
   checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
+});
+
+const partIVRowSchema = z.object({
+  cusip: z.string().length(9).optional(),
+  principal_payment_date: isoDate.optional(),
+  interest_payment_date: isoDate.optional(),
+  outstanding_principal: z.number().finite().nonnegative().optional(),
+  interest_payable: z.number().finite().nonnegative().optional(),
+  credit_rate: z.number().finite().min(0).max(1),
+  credit_allowance_percentage: z.number().finite().min(0).max(1),
 });
 
 const unreportedBondSchema = z.object({
@@ -76,61 +90,65 @@ const unreportedBondSchema = z.object({
   issuer_ein: z.string().regex(/^\d{9}$/),
   maturity_date: isoDate,
   disposition_date: isoDate.optional(),
-  cusip: z.string().min(1).optional(),
-  principal_payment_dates: z.array(isoDate),
-  interest_payment_dates: z.array(isoDate),
-  outstanding_principal: z.number().finite().nonnegative().optional(),
-  interest_payable: z.number().finite().nonnegative().optional(),
-  credit_rate: z.number().finite().nonnegative(),
-  credit_allowance_percentage: z.number().finite().min(0).max(1),
+  line18_rows: z.array(partIVRowSchema).min(1).max(50),
   issuer_elected_direct_payment: z.boolean(),
+  is_pass_through_creb_credit: z.boolean(),
 }).superRefine((bond, ctx) => {
   checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
-  if (bond.bond_type === BondType.BAB) {
-    if (
-      bond.interest_payable === undefined ||
-      bond.outstanding_principal !== undefined
-    ) {
+  for (const [index, row] of bond.line18_rows.entries()) {
+    const issue = (message: string) =>
       ctx.addIssue({
         code: "custom",
-        message: "BAB needs interest payable, not outstanding principal",
+        message,
+        path: ["line18_rows", index],
       });
-    }
-    if (bond.credit_rate !== 0.35 || bond.credit_allowance_percentage !== 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: "BAB needs a 35% rate and 100% allowance percentage",
-      });
-    }
-    if (!bond.cusip || bond.interest_payment_dates.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "BAB needs a CUSIP and interest payment dates",
-      });
-    }
-  } else {
-    if (
-      bond.outstanding_principal === undefined ||
-      bond.interest_payable !== undefined
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          "Non-BAB bond needs outstanding principal, not interest payable",
-      });
+    if (bond.bond_type === BondType.BAB) {
+      if (
+        row.interest_payable === undefined ||
+        row.outstanding_principal !== undefined
+      ) {
+        issue("BAB needs interest payable, not outstanding principal");
+      }
+      if (row.credit_rate !== 0.35 || row.credit_allowance_percentage !== 1) {
+        issue("BAB needs a 35% rate and 100% allowance percentage");
+      }
+      if (!row.cusip || !row.interest_payment_date) {
+        issue("BAB needs a CUSIP and interest payment date");
+      }
+    } else {
+      if (
+        row.outstanding_principal === undefined ||
+        row.interest_payable !== undefined
+      ) {
+        issue("Non-BAB bond needs outstanding principal, not interest payable");
+      }
+      if (bond.bond_type === BondType.CREB) {
+        if (!row.cusip || !row.principal_payment_date) {
+          issue("CREB needs a CUSIP and principal payment date");
+        }
+      } else if (!row.cusip && !row.principal_payment_date) {
+        issue("Bond needs a CUSIP or principal payment date");
+      }
     }
   }
-  if (bond.bond_type === BondType.CREB) {
-    if (!bond.cusip || bond.principal_payment_dates.length === 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: "CREB needs a CUSIP and principal payment dates",
-      });
-    }
-  } else if (!bond.cusip && bond.principal_payment_dates.length === 0) {
+});
+
+const carryforwardSchema = z.object({
+  bond_type: z.nativeEnum(BondType),
+  issue_date: pre2018IssueDate,
+  bond_identifier: z.string().min(1),
+  origin_tax_year: z.number().int().min(2000).max(2024),
+  amount: z.number().finite().nonnegative(),
+}).superRefine((carryforward, ctx) => {
+  checkIssueWindow(carryforward.bond_type, carryforward.issue_date, ctx);
+  if (
+    carryforward.bond_type === BondType.CREB ||
+    (carryforward.bond_type === BondType.QZAB &&
+      carryforward.issue_date < "2008-10-04")
+  ) {
     ctx.addIssue({
       code: "custom",
-      message: "Bond needs a CUSIP or principal payment dates",
+      message: "CREB and pre-October 4, 2008 QZAB credits cannot carry forward",
     });
   }
 });
@@ -138,12 +156,56 @@ const unreportedBondSchema = z.object({
 export const itemSchema = z.object({
   reported_bonds: z.array(reportedBondSchema),
   unreported_bonds: z.array(unreportedBondSchema),
-  qualified_bond_carryforward: z.number().finite().nonnegative(),
+  carryforwards: z.array(carryforwardSchema),
 });
 
 export const inputSchema = z.object({
   f8912s: z.array(itemSchema).min(1),
 });
+
+export type F8912Item = z.infer<typeof itemSchema>;
+export type F8912UnreportedBond = F8912Item["unreported_bonds"][number];
+export type F8912PartIVRow = F8912UnreportedBond["line18_rows"][number];
+
+export function partIVRowInput(
+  bond: F8912UnreportedBond,
+  row: F8912PartIVRow,
+): Form8912UnreportedBond {
+  const creditBaseAmount = bond.bond_type === BondType.BAB
+    ? row.interest_payable
+    : row.outstanding_principal;
+  if (creditBaseAmount === undefined) {
+    throw new Error("Form 8912 line 18 credit base is missing");
+  }
+  return {
+    bondType: bond.bond_type,
+    creditBaseAmount,
+    creditRate: row.credit_rate,
+    creditAllowancePercentage: row.credit_allowance_percentage,
+    issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
+    isPassThroughCrebCredit: bond.is_pass_through_creb_credit,
+  };
+}
+
+export function sourceLinesFromItem(
+  item: F8912Item,
+): Form8912SourceLines {
+  return calculateForm8912SourceLines(
+    item.reported_bonds.map((bond) => ({
+      bondType: bond.bond_type,
+      creditAmount: bond.credit_amount,
+      issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
+      isPassThroughCrebCredit: bond.is_pass_through_creb_credit,
+    })),
+    item.unreported_bonds.flatMap((bond) =>
+      bond.line18_rows.map((row) => partIVRowInput(bond, row))
+    ),
+    item.carryforwards.reduce(
+      (sum, carryforward) => sum + carryforward.amount,
+      0,
+    ),
+  );
+}
 
 class F8912Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8912";
@@ -156,24 +218,7 @@ class F8912Node extends TaxNode<typeof inputSchema> {
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
     for (const item of input.f8912s) {
-      const lines = calculateForm8912SourceLines(
-        item.reported_bonds.map((bond) => ({
-          bondType: bond.bond_type,
-          creditAmount: bond.credit_amount,
-          issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
-          isPassThroughCrebCredit: bond.is_pass_through_creb_credit,
-        })),
-        item.unreported_bonds.map((bond) => ({
-          bondType: bond.bond_type,
-          creditBaseAmount: bond.bond_type === BondType.BAB
-            ? bond.interest_payable!
-            : bond.outstanding_principal!,
-          creditRate: bond.credit_rate,
-          creditAllowancePercentage: bond.credit_allowance_percentage,
-          issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
-        })),
-        item.qualified_bond_carryforward,
-      );
+      const lines = sourceLinesFromItem(item);
       if (lines.hasPassThroughCrebCredit) {
         throw new Error(
           "Form 8912 pass-through CREB credit needs its separate taxable-income limit",
