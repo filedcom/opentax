@@ -13,6 +13,7 @@ import { income_tax_calculation } from "../../worksheets/income_tax_calculation/
 import { rate_28_gain_worksheet } from "../../worksheets/rate_28_gain_worksheet/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { form8995 } from "../../forms/form8995/index.ts";
+import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -252,7 +253,7 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet, form8960, form8995]);
+  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet, form8960, form8995, scheduleA]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -310,6 +311,7 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     // for the QDCGT / Schedule D Tax Worksheet (IRC §1(h)).
     if (line17Yes) {
       const netCapGain = Math.min(line15, line16);
+      outputs.push(this.outputNodes.output(scheduleA, { reported_net_capital_gain: netCapGain }));
 
       // Line 19: unrecaptured §1250 gain — include for 25% tier when present
       const unrecaptured1250 = input.line19_unrecaptured_1250 ?? 0;

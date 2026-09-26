@@ -17,6 +17,7 @@ import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { form4562 } from "../../intermediate/forms/form4562/index.ts";
+import { scheduleA } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1065) — Partner's Share of Income, Deductions, Credits
@@ -476,10 +477,15 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
     rate_28_gain_worksheet,
     form4797,
     form4562,
+    scheduleA,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_partnerships } = inputSchema.parse(input);
+    const investmentOrdinaryDividends = k1_partnerships.reduce((sum, item) =>
+      sum + (item.box6a_ordinary_dividends ?? 0) + (item.box6c_dividend_equivalents ?? 0), 0);
+    const investmentQualifiedDividends = k1_partnerships.reduce((sum, item) =>
+      sum + (item.box6b_qualified_dividends ?? 0), 0);
 
     const outputs: NodeOutput[] = [
       ...schedule1Output(k1_partnerships),
@@ -507,6 +513,13 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
       // box18_tax_exempt_income: excluded from taxable income — no routing needed.
       // box19_distributions: not taxable within basis — no routing needed (basis tracking not yet implemented).
     ];
+
+    if (investmentOrdinaryDividends > 0 || investmentQualifiedDividends > 0) {
+      outputs.push(this.outputNodes.output(scheduleA, {
+        investment_interest_ordinary_dividends: investmentOrdinaryDividends,
+        investment_interest_qualified_dividends: investmentQualifiedDividends,
+      }));
+    }
 
     return { outputs };
   }

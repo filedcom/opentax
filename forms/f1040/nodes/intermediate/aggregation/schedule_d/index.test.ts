@@ -416,21 +416,22 @@ Deno.test("28pct: ST transaction with code C does NOT trigger 28% routing", () =
 // ---------------------------------------------------------------------------
 
 // Every activity case also self-emits one print-line output for the PDF builder.
-Deno.test("output count: gain only → 6 outputs including form8995 and print lines", () => {
+Deno.test("output count: gain also routes the investment-interest capital-gain ceiling", () => {
   const result = compute({ transaction: mkLtTx({ gain_loss: 1000 }) });
-  assertEquals(result.outputs.length, 6);
+  assertEquals(result.outputs.length, 7);
   assert(result.outputs.some((o) => o.nodeType === "f1040"));
   assert(result.outputs.some((o) => o.nodeType === "agi_aggregator"));
   assert(result.outputs.some((o) => o.nodeType === "income_tax_calculation"));
   assert(result.outputs.some((o) => o.nodeType === "form8960"));
   assert(result.outputs.some((o) => o.nodeType === "form8995"));
+  assertEquals(result.outputs.find((o) => o.nodeType === "schedule_a")?.fields.reported_net_capital_gain, 1_000);
 });
 
-Deno.test("output count: gain + 28pct → exactly 7 outputs", () => {
+Deno.test("output count: gain + 28pct → exactly 8 outputs", () => {
   const result = compute({
     transaction: mkLtTx({ gain_loss: 1000, adjustment_codes: "C" }),
   });
-  assertEquals(result.outputs.length, 7);
+  assertEquals(result.outputs.length, 8);
 });
 
 Deno.test("output count: pure loss → exactly 2 outputs (f1040 + agi_aggregator, capped)", () => {
@@ -493,8 +494,8 @@ Deno.test("smoke: ST + LT + cap_gain_distrib + COD + collectibles", () => {
   assertEquals(fieldsOf(result.outputs, rate_28_gain_worksheet)!.collectibles_gain_from_8949, 600);
 
   // f1040 + agi_aggregator + income_tax_calculation + rate_28_gain_worksheet
-  // + form8960 + form8995 + the Schedule D print lines.
-  assertEquals(result.outputs.length, 7);
+  // + form8960 + form8995 + Schedule A capital-gain ceiling + print lines.
+  assertEquals(result.outputs.length, 8);
 });
 
 // ===========================================================================

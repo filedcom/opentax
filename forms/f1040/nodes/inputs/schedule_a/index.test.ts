@@ -186,6 +186,7 @@ Deno.test("scheduleA.compute: interest aggregates all four interest lines", () =
     line_8b_mortgage_interest_no_1098: 3_000,
     line_8c_points_no_1098: 800,
     line_9_investment_interest: 2_200,
+    investment_interest_taxable_interest: 2_200,
   });
   assertEquals(f1040Input(result).line12e_itemized_deductions, 18_000);
 });
@@ -348,6 +349,7 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
     line_8a_mortgage_interest_1098: 18_000,
     line_8c_points_no_1098: 1_000,
     line_9_investment_interest: 3_000,
+    investment_interest_taxable_interest: 3_000,
     line_11_cash_contributions: 10_000,
     line_12_noncash_contributions: 5_000,
     line_13_contribution_carryover: 2_000,
@@ -361,8 +363,8 @@ Deno.test("scheduleA.compute: smoke — all major boxes populated produces corre
   assertEquals(form6251Out !== undefined, true);
   assertEquals((form6251Out!.fields as Record<string, number>).line2a_taxes_paid, 11_500);
 
-  // three outputs: f1040, standard_deduction, form6251
-  assertEquals(result.outputs.length, 3);
+  // Also records the Form 4952 calculation and allowed Schedule A line 9.
+  assertEquals(result.outputs.length, 5);
 });
 
 // ── MFS SALT cap ─────────────────────────────────────────────────────────────

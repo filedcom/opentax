@@ -1,6 +1,7 @@
 import { assertEquals, assertMatch, assertRejects } from "@std/assert";
 import { appendInput } from "../store/store.ts";
 import { createReturnCommand, getReturnCommand } from "./return.ts";
+import { formAddCommand } from "./form.ts";
 
 Deno.test("createReturnCommand creates return.json with meta and inputs", async () => {
   const tmpDir = await Deno.makeTempDir();
@@ -82,6 +83,27 @@ Deno.test("getReturnCommand two W-2s returns line_1a = 130000", async () => {
     const result = await getReturnCommand({ returnId, baseDir: tmpDir });
     assertEquals(result.summary.line1z_total_wages, 130000);
     assertEquals(result.summary.line9_total_income, 130000);
+  } finally {
+    await Deno.remove(tmpDir, { recursive: true });
+  }
+});
+
+Deno.test("CLI return reports the Form 4952 limit and carryforward", async () => {
+  const tmpDir = await Deno.makeTempDir();
+  try {
+    const returnId = await makeReturn(tmpDir);
+    for (const [nodeType, data] of [
+      ["general", { filing_status: "single" }],
+      ["w2", { box1_wages: 300_000, box2_fed_withheld: 60_000 }],
+      ["f1099int", { payer_name: "Example Bank", box1: 2_000 }],
+      ["schedule_a", { line_9_investment_interest: 50_000, line_8a_mortgage_interest_1098: 20_000 }],
+    ] as const) {
+      await formAddCommand({ returnId, nodeType, dataJson: JSON.stringify(data), baseDir: tmpDir });
+    }
+    const result = await getReturnCommand({ returnId, baseDir: tmpDir });
+    assertEquals(result.lines.line12c_deduction_total, 22_000);
+    assertEquals(result.carryforwards.investment_interest_excess_4952, 48_000);
+    assertEquals(result.forms.includes("form4952"), true);
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

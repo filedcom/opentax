@@ -137,6 +137,33 @@ Deno.test("executor: scalar field set — single deposit sets scalar value, not 
   assertEquals(result.pending["mock_a"]?.["value"], 99);
 });
 
+Deno.test("executor: a node's final self-output replaces its input field", () => {
+  const plan: readonly ExecutionStep[] = [
+    { id: "start", nodeType: "start" },
+    { id: "summary", nodeType: "summary" },
+  ];
+  const startSchema = z.object({ amount: z.number() });
+  class Start extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
+      return { outputs: [{ nodeType: "summary", fields: { amount: input.amount } }] };
+    }
+  }
+  class Summary extends TaxNode<typeof startSchema> {
+    readonly nodeType = "summary";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, input: z.infer<typeof startSchema>): NodeResult {
+      return { outputs: [{ nodeType: "summary", fields: { amount: Math.min(input.amount, 2_000) } }] };
+    }
+  }
+  const result = execute(plan, { start: new Start(), summary: new Summary() },
+    { amount: 50_000 }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.pending.summary.amount, 2_000);
+});
+
 Deno.test("executor: optional node skip — node with no deposited inputs is silently skipped", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },

@@ -100,7 +100,7 @@ Deno.test("both interest and dividends produce a single f1040 output with both f
   });
   // f1040 + agi_aggregator + form8960 (interest > 0)
   // routing outputs + self-emitted print-line output for the PDF builder
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 5);
   const f1040 = findOutput(result, "f1040");
   const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 400);
@@ -176,7 +176,7 @@ Deno.test("smoke: multiple interest + dividend payers with EE bond exclusion", (
 
   // f1040 + agi_aggregator + form8960 (interest > 0)
   // routing outputs + self-emitted print-line output for the PDF builder
-  assertEquals(result.outputs.length, 4);
+  assertEquals(result.outputs.length, 5);
   const f1040 = findOutput(result, "f1040");
   const inp = f1040?.fields as Record<string, number>;
   assertEquals(inp.line2b_taxable_interest, 3500);

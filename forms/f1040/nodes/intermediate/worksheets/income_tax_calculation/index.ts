@@ -51,6 +51,8 @@ export const inputSchema = z.object({
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
+  form4952_elected_qualified_dividends: z.number().nonnegative().optional(),
+  form4952_elected_net_capital_gain: z.number().nonnegative().optional(),
   // Unrecaptured §1250 gain (from unrecaptured_1250_worksheet via schedule_d line 19).
   // Taxed at 25% rate per IRC §1(h)(1)(D).
   unrecaptured_1250_gain: z.number().nonnegative().optional(),
@@ -182,8 +184,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     // Apply QDCGT / Schedule D Tax Worksheet when preferential income is present.
     // qualified_dividends is accumulable: multiple upstream nodes (f1099div, k1_partnership, etc.)
     // may each deposit their portion; sumField collapses the accumulated array to a scalar.
-    const qualDiv = sumField(input.qualified_dividends as number | number[] | undefined);
-    const netCg = input.net_capital_gain ?? 0;
+    const qualDiv = Math.max(0, sumField(input.qualified_dividends as number | number[] | undefined) -
+      (input.form4952_elected_qualified_dividends ?? 0));
+    const netCg = Math.max(0, (input.net_capital_gain ?? 0) -
+      (input.form4952_elected_net_capital_gain ?? 0));
     const unrecaptured1250 = input.unrecaptured_1250_gain ?? 0;
     const rate28 = input.rate_28_gain ?? 0;
     const hasPrefIncome = qualDiv > 0 || netCg > 0;

@@ -26,12 +26,14 @@ Deno.test("zero NII — no deduction allowed even with expense", () => {
     investment_interest_expense: 8_000,
     net_investment_income: 0,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  assertEquals(findOutput(result, "form4952")?.fields.allowed_interest, 0);
 });
 
 Deno.test("no NII provided — no deduction allowed", () => {
   const result = compute({ investment_interest_expense: 5_000 });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(result.outputs.length, 1);
+  assertEquals(findOutput(result, "form4952")?.fields.allowed_interest, 0);
 });
 
 // ─── Deductible interest: min(total, NII) ─────────────────────────────────────
@@ -42,8 +44,8 @@ Deno.test("interest below NII — full expense deducted", () => {
     investment_interest_expense: 3_000,
     net_investment_income: 5_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 3_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 3_000);
 });
 
 Deno.test("interest equal to NII — full expense deducted", () => {
@@ -51,8 +53,8 @@ Deno.test("interest equal to NII — full expense deducted", () => {
     investment_interest_expense: 5_000,
     net_investment_income: 5_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 5_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 5_000);
 });
 
 Deno.test("interest above NII — limited to NII (carryover implied)", () => {
@@ -61,8 +63,8 @@ Deno.test("interest above NII — limited to NII (carryover implied)", () => {
     investment_interest_expense: 10_000,
     net_investment_income: 6_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 6_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 6_000);
 });
 
 // ─── Carryforward from prior year ─────────────────────────────────────────────
@@ -72,8 +74,8 @@ Deno.test("carryforward only, no current expense — deducted up to NII", () => 
     prior_year_carryforward: 6_000,
     net_investment_income: 10_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 6_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 6_000);
 });
 
 Deno.test("carryforward adds to current expense — total limited by NII", () => {
@@ -83,8 +85,8 @@ Deno.test("carryforward adds to current expense — total limited by NII", () =>
     prior_year_carryforward: 3_000,
     net_investment_income: 4_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 4_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 4_000);
 });
 
 Deno.test("carryforward + current expense, NII covers both", () => {
@@ -94,8 +96,8 @@ Deno.test("carryforward + current expense, NII covers both", () => {
     prior_year_carryforward: 2_000,
     net_investment_income: 8_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 5_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 5_000);
 });
 
 Deno.test("carryforward + current, NII less than both — limited to NII", () => {
@@ -105,18 +107,18 @@ Deno.test("carryforward + current, NII less than both — limited to NII", () =>
     prior_year_carryforward: 4_000,
     net_investment_income: 6_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 6_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 6_000);
 });
 
 // ─── Output routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes to schedule_a line_9_investment_interest with exact value", () => {
+Deno.test("form self-output reports the allowed interest with exact value", () => {
   const result = compute({
     investment_interest_expense: 1_000,
     net_investment_income: 2_000,
   });
-  const sched = findOutput(result, "schedule_a");
-  assertEquals(sched?.nodeType, "schedule_a");
-  assertEquals(sched?.fields.line_9_investment_interest, 1_000);
+  const sched = findOutput(result, "form4952");
+  assertEquals(sched?.nodeType, "form4952");
+  assertEquals(sched?.fields.allowed_interest, 1_000);
 });
