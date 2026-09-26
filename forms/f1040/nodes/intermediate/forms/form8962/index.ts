@@ -141,7 +141,7 @@ export const inputSchema = z.object({
   dependent_income_complete: z.boolean().optional(),
   below_100_fpl_status: below100FplStatusSchema.optional(),
   mfs_ptc_status: mfsPtcStatusSchema.optional(),
-  shared_policy_allocations: z.array(sharedPolicyAllocationSchema).max(4)
+  shared_policy_allocations: z.array(sharedPolicyAllocationSchema).max(99)
     .optional(),
 
   // Annual totals (used when no monthly detail provided)

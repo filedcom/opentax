@@ -120,3 +120,39 @@ Deno.test("monthly Form 8962 emits only the monthly choice branch", () => {
   assertStringIncludes(xml, "<MonthlyAdvancedPTCAmt>0</MonthlyAdvancedPTCAmt>");
   assertEquals(xml.includes("<AnnualPTCCalculationGrp>"), false);
 });
+
+Deno.test("Form 8962 carries five Part IV groups and marks line 34 No", () => {
+  const allocations = Array.from({ length: 5 }, (_, index) => ({
+    basis: "other_agreed" as const,
+    policy_number: `POLICY-${index + 1}`,
+    other_taxpayer_ssn: "222334444",
+    start_month: index + 1,
+    end_month: index + 1,
+    premium_pct: 0.5,
+    slcsp_pct: 0.5,
+    aptc_pct: 0.5,
+  }));
+  const xml = form8962.build({
+    ...annual,
+    monthly_ptc_rows: [],
+    shared_policy_allocations: allocations,
+  });
+  assertEquals((xml.match(/<SharedPolicyAllocationGrp>/g) ?? []).length, 5);
+  assertStringIncludes(
+    xml,
+    "<SharedPolicyAllocationInfoInd>false</SharedPolicyAllocationInfoInd>",
+  );
+  assertThrows(
+    () =>
+      form8962.build({
+        ...annual,
+        monthly_ptc_rows: [],
+        shared_policy_allocations: Array.from({ length: 100 }, (_, index) => ({
+          ...allocations[0],
+          policy_number: `P${index}`,
+        })),
+      }),
+    Error,
+    "at most 99 MeF allocations",
+  );
+});
