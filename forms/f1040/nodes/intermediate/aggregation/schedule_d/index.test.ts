@@ -35,6 +35,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("multiple Form 6252 and 4797 line 11 sources sum before filing", () => {
+  const result = compute({ line_11_form2439: [11_000, 10_000] });
+  assertEquals(findOutput(result, "f1040")?.fields.line7_capital_gain, 21_000);
+  assertEquals(findOutput(result, "schedule_d")?.fields.line_11_form2439, 21_000);
+});
+
 // ---------------------------------------------------------------------------
 // Helpers (from d_screen tests)
 // ---------------------------------------------------------------------------
@@ -218,7 +224,8 @@ Deno.test("LT: single LT transaction gain", () => {
 
 Deno.test("LT: cap gain distribution alone routes correctly", () => {
   const result = compute({ line13_cap_gain_distrib: 400 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 400);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7a_cap_gain_distrib, 400);
+  assertEquals(result.outputs.some((output) => output.nodeType === "schedule_d"), false);
 });
 
 Deno.test("LT: cap gain distrib absent contributes 0", () => {
@@ -587,7 +594,7 @@ Deno.test("compute: line_12_cap_gain_dist (always LT) included in net gain", () 
   const result = computeD2({ line_12_cap_gain_dist: 4_000 });
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
-  assertEquals(input.line7_capital_gain, 4_000);
+  assertEquals(input.line7a_cap_gain_distrib, 4_000);
 });
 
 Deno.test("compute: line_12_cap_gain_dist = 0 → no capital activity, emits no outputs", () => {
@@ -1187,13 +1194,16 @@ Deno.test("cap gain distributions always treated as LT — no ST treatment", () 
   const f1040 = findOutput(result, "f1040");
   const input = f1040!.fields as Record<string, number>;
   // Capital gain distributions must flow through to f1040 as a gain
-  assertEquals(input.line7_capital_gain, 5_000);
+  assertEquals(input.line7a_cap_gain_distrib, 5_000);
+  const incomeTax = findOutput(result, "income_tax_calculation");
+  assertEquals((incomeTax!.fields as Record<string, number>).net_capital_gain, 5_000);
 });
 
-Deno.test("cap gain distributions do NOT require Form 8949 — direct to Schedule D Line 13", () => {
+Deno.test("cap gain distributions alone need neither Form 8949 nor Schedule D", () => {
   // Verifies distributions work without any 8949 transactions
   const result = computeD2({ line_12_cap_gain_dist: 8_000 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line7_capital_gain, 8_000);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line7a_cap_gain_distrib, 8_000);
+  assertEquals(result.outputs.some((output) => output.nodeType === "schedule_d"), false);
 });
 
 // ---------------------------------------------------------------------------

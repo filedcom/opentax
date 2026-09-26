@@ -109,8 +109,9 @@ Deno.test("form2441: benefits of $5001 (just above limit) route $1 to f1040", ()
 
 Deno.test("form2441: output nodeType is 'f1040' when taxable excess exists", () => {
   const result = compute({ dep_care_benefits: 6000 });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "f1040");
+  assertEquals(result.outputs[1].nodeType, "agi_aggregator");
 });
 
 Deno.test("form2441: output field is line1e_taxable_dep_care (not another field)", () => {
@@ -163,7 +164,7 @@ Deno.test("form2441 smoke test: $7500 employer benefits → $2500 taxable on f10
   // Taxable: $7,500 - $5,000 = $2,500
   const result = compute({ dep_care_benefits: 7500 });
 
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
 
   const f1040Out = findOutput(result, "f1040");
   assertEquals(f1040Out !== undefined, true);

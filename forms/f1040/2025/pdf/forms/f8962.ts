@@ -6,7 +6,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // Part I  — Annual and Monthly Contribution Amount.
 // Part II — Premium Tax Credit Claim and Reconciliation.
 // household_size               → line 1  (family size)
-// household_income             → line 2a (modified AGI)
+// taxpayer_modified_agi        → line 2a (modified AGI)
 // federal_poverty_line         → line 2b (federal poverty line)
 // federal_poverty_pct          → line 2c (household income as % of FPL)
 // annual_premium               → line 11a (annual applicable premium)
@@ -17,17 +17,61 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // net_premium_tax_credit       → line 26 (net premium tax credit)
 // excess_advance_premium       → line 29 (excess advance premium tax credit repayment)
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "household_size", pdfField: "topmostSubform[0].Page1[0].f1_3[0]" },
-  { kind: "text", domainKey: "household_income", pdfField: "topmostSubform[0].Page1[0].f1_4[0]" },
-  { kind: "text", domainKey: "federal_poverty_line", pdfField: "topmostSubform[0].Page1[0].f1_5[0]" },
-  { kind: "text", domainKey: "federal_poverty_pct", pdfField: "topmostSubform[0].Page1[0].f1_6[0]" },
-  { kind: "text", domainKey: "annual_premium", pdfField: "topmostSubform[0].Page1[0].f1_9[0]" },
-  { kind: "text", domainKey: "annual_slcsp", pdfField: "topmostSubform[0].Page1[0].f1_10[0]" },
-  { kind: "text", domainKey: "annual_applicable_contribution", pdfField: "topmostSubform[0].Page1[0].f1_11[0]" },
-  { kind: "text", domainKey: "annual_max_ptc", pdfField: "topmostSubform[0].Page1[0].f1_1[0]" },
-  { kind: "text", domainKey: "annual_aptc", pdfField: "topmostSubform[0].Page1[0].Part2Table1[0].BodyRow1[0].f1_13[0]" },
-  { kind: "text", domainKey: "net_premium_tax_credit", pdfField: "topmostSubform[0].Page2[0].f2_3[0]" },
-  { kind: "text", domainKey: "excess_advance_premium", pdfField: "topmostSubform[0].Page2[0].Lines30e-g[0].f2_6[0]" },
+  {
+    kind: "text",
+    domainKey: "household_size",
+    pdfField: "topmostSubform[0].Page1[0].f1_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "taxpayer_modified_agi",
+    pdfField: "topmostSubform[0].Page1[0].f1_4[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "federal_poverty_line",
+    pdfField: "topmostSubform[0].Page1[0].f1_5[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "federal_poverty_pct",
+    pdfField: "topmostSubform[0].Page1[0].f1_6[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "annual_premium",
+    pdfField: "topmostSubform[0].Page1[0].f1_9[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "annual_slcsp",
+    pdfField: "topmostSubform[0].Page1[0].f1_10[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "annual_applicable_contribution",
+    pdfField: "topmostSubform[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "annual_max_ptc",
+    pdfField: "topmostSubform[0].Page1[0].f1_1[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "annual_aptc",
+    pdfField: "topmostSubform[0].Page1[0].Part2Table1[0].BodyRow1[0].f1_13[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "net_premium_tax_credit",
+    pdfField: "topmostSubform[0].Page2[0].f2_3[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "excess_advance_premium",
+    pdfField: "topmostSubform[0].Page2[0].Lines30e-g[0].f2_6[0]",
+  },
 ];
 
 export const form8962Pdf: PdfFormDescriptor = {
@@ -37,6 +81,7 @@ export const form8962Pdf: PdfFormDescriptor = {
   // Form 8962 reconciles marketplace premium tax credit — it requires 1095-A
   // premium data; household income alone (deposited from AGI) must not print it.
   includeWhen: (fields) =>
-    fields["annual_premium"] !== undefined || fields["annual_aptc"] !== undefined ||
+    fields["annual_premium"] !== undefined ||
+    fields["annual_aptc"] !== undefined ||
     fields["annual_slcsp"] !== undefined,
 };

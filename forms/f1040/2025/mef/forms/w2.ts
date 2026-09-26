@@ -154,6 +154,7 @@ function buildW2(
     item.box13_third_party_sick === true
       ? element("ThirdPartySickPayInd", "X")
       : "",
+    element("StandardOrNonStandardCd", "S"),
   ]);
 }
 

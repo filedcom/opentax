@@ -187,7 +187,7 @@ Deno.test("business §1231 property loss routes to form4797", () => {
     business_insurance: 0,
     business_is_section_1231: true,
   });
-  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain, -30_000);
+  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain_form4684, -30_000);
   assertEquals(findOutput(result, "schedule_a"), undefined);
   assertEquals(findOutput(result, "schedule_d"), undefined);
 });
@@ -215,7 +215,7 @@ Deno.test("business loss reduced by insurance", () => {
     business_is_section_1231: true,
   });
   const f4797 = findOutput(result, "form4797");
-  assertEquals(f4797?.fields.ordinary_gain, -20_000);
+  assertEquals(f4797?.fields.ordinary_gain_form4684, -20_000);
 });
 
 // ─── Personal + Business Combined ────────────────────────────────────────────
@@ -239,7 +239,7 @@ Deno.test("personal federal disaster loss + business §1231 loss combined", () =
     business_is_section_1231: true,
   });
   assertEquals(findOutput(result, "schedule_a")?.fields.line_15_casualty_theft_loss, 14_900);
-  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain, -30_000);
+  assertEquals(findOutput(result, "form4797")?.fields.ordinary_gain_form4684, -30_000);
 });
 
 // ─── Output Field Routing ─────────────────────────────────────────────────────

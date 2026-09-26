@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { TaxNode, type NodeResult } from "../../../../../core/types/tax-node.ts";
+import {
+  type NodeResult,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -24,9 +27,8 @@ const inputSchema = z.object({
   // Line 4 — Other gains or (losses) from Form 4797
   line4_other_gains: z.number().optional(),
   // Line 5 — Rental real estate, royalties, partnerships (Schedule E)
-  line5_schedule_e: z.number().optional(),
-  // Form 8582 passive loss allowed portion (Schedule E)
-  line17_schedule_e: z.number().optional(),
+  // Schedule E and Form 8582 can each contribute to this printed line.
+  line5_schedule_e: z.union([z.number(), z.array(z.number())]).optional(),
   // Line 6 — Farm income or (loss) from Schedule F
   line6_schedule_f: z.number().optional(),
   // Line 7 — Unemployment compensation (Form 1099-G)
@@ -49,6 +51,7 @@ const inputSchema = z.object({
   line8z_nqdc: z.number().optional(),
   line8z_golden_parachute: z.number().optional(),
   line8z_other_income: z.number().optional(),
+  line8z_form8814: z.number().nonnegative().optional(),
   line8z_other: z.number().optional(),
   // ── Part II — Adjustments to Income ──────────────────────────────────────
   // Line 11 — Educator expenses (up to $300 / $600 MFJ)
@@ -93,15 +96,29 @@ const inputSchema = z.object({
 
 type Schedule1Input = z.infer<typeof inputSchema>;
 
+function scheduleELine5(value: Schedule1Input["line5_schedule_e"]): number {
+  return Array.isArray(value)
+    ? value.reduce((sum, amount) => sum + amount, 0)
+    : value ?? 0;
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 function otherIncome(input: Schedule1Input): number {
   return (
-    (input.line8a_nol_deduction !== undefined ? -(input.line8a_nol_deduction) : 0) +
-    (input.line8b_savings_bond_exclusion !== undefined ? -(input.line8b_savings_bond_exclusion) : 0) +
+    (input.line8a_nol_deduction !== undefined
+      ? -(input.line8a_nol_deduction)
+      : 0) +
+    (input.line8b_savings_bond_exclusion !== undefined
+      ? -(input.line8b_savings_bond_exclusion)
+      : 0) +
     (input.line8c_cod_income ?? 0) +
-    (input.line8d_foreign_earned_income_exclusion !== undefined ? -(input.line8d_foreign_earned_income_exclusion) : 0) +
-    (input.line8d_foreign_housing_deduction !== undefined ? -(input.line8d_foreign_housing_deduction) : 0) +
+    (input.line8d_foreign_earned_income_exclusion !== undefined
+      ? -(input.line8d_foreign_earned_income_exclusion)
+      : 0) +
+    (input.line8d_foreign_housing_deduction !== undefined
+      ? -(input.line8d_foreign_housing_deduction)
+      : 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8g_child_interest_dividends ?? 0) +
     (input.line8i_prizes_awards ?? 0) +
@@ -113,6 +130,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_nqdc ?? 0) +
     (input.line8z_golden_parachute ?? 0) +
     (input.line8z_other_income ?? 0) +
+    (input.line8z_form8814 ?? 0) +
     (input.line8z_other ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +
@@ -127,8 +145,7 @@ function totalAdditionalIncome(input: Schedule1Input): number {
     (input.line2a_alimony_received ?? 0) +
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
-    (input.line5_schedule_e ?? 0) +
-    (input.line17_schedule_e ?? 0) +
+    scheduleELine5(input.line5_schedule_e) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
     otherIncome(input)
@@ -164,17 +181,46 @@ function assembleSchedule1(input: Schedule1Input): Record<string, number> {
   };
 
   // Pass-through fields when present
-  if (input.line1_state_refund !== undefined) result.line1_state_refund = input.line1_state_refund;
-  if (input.line3_schedule_c !== undefined) result.line3_schedule_c = input.line3_schedule_c;
-  if (input.line4_other_gains !== undefined) result.line4_other_gains = input.line4_other_gains;
-  if (input.line5_schedule_e !== undefined) result.line5_schedule_e = input.line5_schedule_e;
-  if (input.line6_schedule_f !== undefined) result.line6_schedule_f = input.line6_schedule_f;
-  if (input.line7_unemployment !== undefined) result.line7_unemployment = input.line7_unemployment;
-  if (input.line13_hsa_deduction !== undefined) result.line13_hsa_deduction = input.line13_hsa_deduction;
-  if (input.line14_moving_expenses !== undefined) result.line14_moving_expenses = input.line14_moving_expenses;
-  if (input.line15_se_deduction !== undefined) result.line15_se_deduction = input.line15_se_deduction;
-  if (input.line17_se_health_insurance !== undefined) result.line17_se_health_insurance = input.line17_se_health_insurance;
-  if (input.line20_ira_deduction !== undefined) result.line20_ira_deduction = input.line20_ira_deduction;
+  if (input.line1_state_refund !== undefined) {
+    result.line1_state_refund = input.line1_state_refund;
+  }
+  if (input.line3_schedule_c !== undefined) {
+    result.line3_schedule_c = input.line3_schedule_c;
+  }
+  if (input.line4_other_gains !== undefined) {
+    result.line4_other_gains = input.line4_other_gains;
+  }
+  if (input.line5_schedule_e !== undefined) {
+    result.line5_schedule_e = scheduleELine5(input.line5_schedule_e);
+  }
+  if (input.line6_schedule_f !== undefined) {
+    result.line6_schedule_f = input.line6_schedule_f;
+  }
+  if (input.line7_unemployment !== undefined) {
+    result.line7_unemployment = input.line7_unemployment;
+  }
+  if (input.line8d_foreign_earned_income_exclusion !== undefined) {
+    result.line8d_foreign_earned_income_exclusion =
+      input.line8d_foreign_earned_income_exclusion;
+  }
+  if (input.line8d_foreign_earned_income_exclusion !== undefined) {
+    result.line9_total_other_income = otherIncome(input);
+  }
+  if (input.line13_hsa_deduction !== undefined) {
+    result.line13_hsa_deduction = input.line13_hsa_deduction;
+  }
+  if (input.line14_moving_expenses !== undefined) {
+    result.line14_moving_expenses = input.line14_moving_expenses;
+  }
+  if (input.line15_se_deduction !== undefined) {
+    result.line15_se_deduction = input.line15_se_deduction;
+  }
+  if (input.line17_se_health_insurance !== undefined) {
+    result.line17_se_health_insurance = input.line17_se_health_insurance;
+  }
+  if (input.line20_ira_deduction !== undefined) {
+    result.line20_ira_deduction = input.line20_ira_deduction;
+  }
 
   return result;
 }

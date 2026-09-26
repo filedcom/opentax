@@ -3,7 +3,11 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
@@ -14,17 +18,19 @@ import {
   type Form8606Input,
   taxableTraditionalDistribution,
 } from "../../intermediate/forms/form8606/index.ts";
-import { tsSchema } from "../../types.ts";
+import { TS, tsSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
-// Distribution codes that produce zero taxable income (pure rollovers/non-taxable exchanges)
-const ZERO_TAXABLE_CODES = new Set(["G", "N", "R", "Q", "T", "6", "W"]);
+// Distribution codes that produce zero taxable income (non-taxable exchanges).
+// Code G is not included: a direct rollover to a Roth account can have a
+// taxable amount explicitly reported in box 2a.
+const ZERO_TAXABLE_CODES = new Set(["N", "R", "Q", "T", "6", "W"]);
 
 // Distribution codes triggering form5329 (early distribution penalty)
 // Code 1 = early distribution, no known exception (traditional/SEP/SIMPLE IRA, pension)
 // Code J = early distribution from Roth IRA, no known exception (IRC §72(t))
-const EARLY_DIST_CODES = new Set(["1", "J"]);
+const EARLY_DIST_CODES = new Set(["1", "J", "S"]);
 
 // Distribution codes triggering form4972 (lump-sum election)
 const LUMP_SUM_CODES = new Set(["5"]);
@@ -100,6 +106,9 @@ function effectiveTaxableAmount(
 
   // Rollover codes G and S produce zero taxable (not C — that's a Roth conversion)
   if (item.rollover_code === "G" || item.rollover_code === "S") return 0;
+  // A code-G Form 1099-R can report a taxable Roth rollover in box 2a.
+  // With no box 2a, retain the non-taxable direct-rollover treatment.
+  if (code1 === "G" && item.box2a_taxable_amount === undefined) return 0;
   // Rollover_code X: partial rollover — only the non-rolled portion is taxable
   if (item.rollover_code === "X") {
     const rolled = item.partial_rollover_amount ?? 0;
@@ -126,7 +135,10 @@ function effectiveTaxableAmount(
   }
 
   // Simplified Method exclusion — pension distributions only
-  if (item.box7_ira_simple_indicator !== true && item.simplified_method_flag === true) {
+  if (
+    item.box7_ira_simple_indicator !== true &&
+    item.simplified_method_flag === true
+  ) {
     const exclusion = simplifiedMethodExclusion(item);
     taxable = Math.max(0, taxable - exclusion);
   }
@@ -180,6 +192,14 @@ export const itemSchema = z.object({
   // Required identifiers
   payer_name: z.string().min(1),
   payer_ein: z.string().min(1),
+  payer_address_line1: z.string().optional(),
+  payer_address_city: z.string().optional(),
+  payer_address_state: z.string().optional(),
+  payer_address_zip: z.string().optional(),
+  recipient_address_line1: z.string().optional(),
+  recipient_address_city: z.string().optional(),
+  recipient_address_state: z.string().optional(),
+  recipient_address_zip: z.string().optional(),
   account_number: z.string().optional(),
   ts: tsSchema.optional(),
 
@@ -320,18 +340,23 @@ function pensionItems(items: R1099Items): R1099Items {
 // Disability-as-wages items: disability routing to line1a
 function disabilityWagesItems(items: R1099Items): R1099Items {
   return items.filter(
-    (item) => item.disability_flag === true && item.disability_as_wages === true,
+    (item) =>
+      item.disability_flag === true && item.disability_as_wages === true,
   );
 }
 
 // Whether an item should be excluded from gross distribution lines (4a/5a).
 // Per IRS Form 1040 instructions, direct rollovers and recharacterizations
-// are not reported on lines 4a/5a — only the taxable portion (4b/5b) matters,
-// and for these codes that is always zero.
+// are not reported on lines 4a/5a. A code-G item with a positive box 2a is
+// reportable because it can represent a taxable rollover to a Roth account.
 function isExcludedFromGross(item: R1099Item): boolean {
   if (item.exclude_4972 === true) return true;
   if (item.exclude_8606_roth === true) return true;
   if (ZERO_TAXABLE_CODES.has(item.box7_distribution_code)) return true;
+  if (
+    item.box7_distribution_code === "G" &&
+    (item.box2a_taxable_amount ?? 0) === 0
+  ) return true;
   if (item.rollover_code === "G" || item.rollover_code === "S") return true;
   return false;
 }
@@ -340,7 +365,8 @@ function isExcludedFromGross(item: R1099Item): boolean {
 // When prior_ira_basis is set, box2a is suppressed from line4b and form8606 computes
 // the correct taxable amount after applying the nondeductible basis ratio.
 function routedThrough8606PartI(item: R1099Item): boolean {
-  return item.box7_ira_simple_indicator === true && (item.prior_ira_basis ?? 0) > 0;
+  return item.box7_ira_simple_indicator === true &&
+    (item.prior_ira_basis ?? 0) > 0;
 }
 
 // Form 8606 Part I payload for a traditional IRA distribution carrying that basis.
@@ -365,11 +391,15 @@ function iraF1040Fields(
   // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
   // are not reported on line 4a (gross). Only reportable distributions contribute to gross.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
-  const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
+  const gross = reportableItems.reduce(
+    (sum, item) => sum + item.box1_gross_distribution,
+    0,
+  );
   // Items routed through Form 8606 Part I are excluded here — form8606 emits line4b for them.
   const nonBasisItems = active.filter((item) => !routedThrough8606PartI(item));
   const taxable = nonBasisItems.reduce(
-    (sum, item) => sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
+    (sum, item) =>
+      sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
     0,
   );
   const has8606Items = active.some((item) => routedThrough8606PartI(item));
@@ -392,13 +422,19 @@ function pensionF1040Fields(
 ): Record<string, number> {
   // Exclude disability-as-wages items from pension lines (they go to line1a)
   const disWagesSet = new Set(disabilityWagesItems(activeItems(items)));
-  const active = pensionItems(activeItems(items)).filter((item) => !disWagesSet.has(item));
+  const active = pensionItems(activeItems(items)).filter((item) =>
+    !disWagesSet.has(item)
+  );
   // Per IRS instructions, zero-taxable-code items (rollovers, recharacterizations, etc.)
   // are not reported on line 5a (gross). Only reportable distributions contribute to gross.
   const reportableItems = active.filter((item) => !isExcludedFromGross(item));
-  const gross = reportableItems.reduce((sum, item) => sum + item.box1_gross_distribution, 0);
+  const gross = reportableItems.reduce(
+    (sum, item) => sum + item.box1_gross_distribution,
+    0,
+  );
   const taxable = active.reduce(
-    (sum, item) => sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
+    (sum, item) =>
+      sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
     0,
   );
   const fields: Record<string, number> = {};
@@ -416,7 +452,8 @@ function disabilityWagesF1040Fields(
   const disItems = disabilityWagesItems(activeItems(items));
   if (disItems.length === 0) return {};
   const total = disItems.reduce(
-    (sum, item) => sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
+    (sum, item) =>
+      sum + effectiveTaxableAmount(item, qcdAnnualLimit, psoExclusionLimit),
     0,
   );
   if (total <= 0) return {};
@@ -447,9 +484,12 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
       ? taxableTraditionalDistribution(form8606PartIInput(item))
       : item.box2a_taxable_amount ?? item.box1_gross_distribution;
     return output(form5329, {
-        early_distribution: taxable,
-        distribution_code: item.box7_distribution_code as string,
-      });
+      ...(item.box7_distribution_code === "S"
+        ? { simple_ira_early_distribution: taxable }
+        : { early_distribution: taxable }),
+      distribution_code: item.box7_distribution_code as string,
+      subject_ts: item.ts ?? TS.T,
+    });
   });
 }
 
@@ -457,9 +497,13 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
 // Also triggered by exclude_4972 = true
 function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
-    (item) => LUMP_SUM_CODES.has(item.box7_distribution_code) || item.exclude_4972 === true,
+    (item) =>
+      LUMP_SUM_CODES.has(item.box7_distribution_code) ||
+      item.exclude_4972 === true,
   );
-  return lumpItems.map((item) => (output(form4972, { lump_sum_amount: item.box1_gross_distribution })));
+  return lumpItems.map((
+    item,
+  ) => (output(form4972, { lump_sum_amount: item.box1_gross_distribution })));
 }
 
 // Form 8606 outputs: triggered by exclude_8606_roth, rollover_code = C, or prior_ira_basis.
@@ -468,12 +512,13 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
   for (const item of activeItems(items)) {
     if (item.exclude_8606_roth === true) {
       outputs.push(output(form8606, {
-          roth_distribution: item.box1_gross_distribution,
-        }));
+        roth_distribution: item.box1_gross_distribution,
+      }));
     } else if (item.rollover_code === "C") {
       outputs.push(output(form8606, {
-          roth_conversion: item.box2a_taxable_amount ?? item.box1_gross_distribution,
-        }));
+        roth_conversion: item.box2a_taxable_amount ??
+          item.box1_gross_distribution,
+      }));
     } else if (routedThrough8606PartI(item)) {
       // Traditional IRA with nondeductible basis: Form 8606 Part I computes the taxable amount.
       outputs.push(output(form8606, form8606PartIInput(item)));
@@ -485,7 +530,13 @@ function form8606Outputs(items: R1099Items): NodeOutput[] {
 class F1099rNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099r";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, form5329, form4972, form8606]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    agi_aggregator,
+    form5329,
+    form4972,
+    form8606,
+  ]);
 
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -501,11 +552,23 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // IRA f1040 fields
-    const iraFields = iraF1040Fields(r1099s, cfg.qcdAnnualLimit, cfg.psoExclusionLimit);
+    const iraFields = iraF1040Fields(
+      r1099s,
+      cfg.qcdAnnualLimit,
+      cfg.psoExclusionLimit,
+    );
     // Pension f1040 fields
-    const pensionFields = pensionF1040Fields(r1099s, cfg.qcdAnnualLimit, cfg.psoExclusionLimit);
+    const pensionFields = pensionF1040Fields(
+      r1099s,
+      cfg.qcdAnnualLimit,
+      cfg.psoExclusionLimit,
+    );
     // Disability-as-wages fields
-    const disWagesFields = disabilityWagesF1040Fields(r1099s, cfg.qcdAnnualLimit, cfg.psoExclusionLimit);
+    const disWagesFields = disabilityWagesF1040Fields(
+      r1099s,
+      cfg.qcdAnnualLimit,
+      cfg.psoExclusionLimit,
+    );
     // Withholding fields
     const withholdingFields = withholdingF1040Fields(r1099s);
 
@@ -517,19 +580,38 @@ class F1099rNode extends TaxNode<typeof inputSchema> {
       ...withholdingFields,
     };
     if (Object.keys(f1040Fields).length > 0) {
-      outputs.push(this.outputNodes.output(f1040, f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>));
+      outputs.push(
+        this.outputNodes.output(
+          f1040,
+          f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+        ),
+      );
     }
 
     // Route IRA/pension taxable amounts to AGI aggregator.
     // Only emit line4b_ira_taxable when > 0 to avoid accumulation conflicts with form8606,
     // which emits its own line4b_ira_taxable to agi_aggregator for items with prior_ira_basis.
     // Also route disability-as-wages (line1a_wages) so AGI is computed correctly.
-    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
-    if ((iraFields.line4b_ira_taxable ?? 0) > 0) agiFields.line4b_ira_taxable = iraFields.line4b_ira_taxable;
-    if (pensionFields.line5b_pension_taxable !== undefined) agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
-    if ((disWagesFields.line1a_wages ?? 0) > 0) agiFields.line1a_wages = disWagesFields.line1a_wages;
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
+      {};
+    if ((iraFields.line4b_ira_taxable ?? 0) > 0) {
+      agiFields.line4b_ira_taxable = iraFields.line4b_ira_taxable;
+    }
+    if (pensionFields.line5b_pension_taxable !== undefined) {
+      agiFields.line5b_pension_taxable = pensionFields.line5b_pension_taxable;
+    }
+    if ((disWagesFields.line1a_wages ?? 0) > 0) {
+      agiFields.line1a_wages = disWagesFields.line1a_wages;
+    }
     if (Object.keys(agiFields).length > 0) {
-      outputs.push(this.outputNodes.output(agi_aggregator, agiFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>));
+      outputs.push(
+        this.outputNodes.output(
+          agi_aggregator,
+          agiFields as AtLeastOne<
+            z.infer<typeof agi_aggregator["inputSchema"]>
+          >,
+        ),
+      );
     }
 
     // Secondary form outputs

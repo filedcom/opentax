@@ -5,8 +5,16 @@ import { FilingStatus } from "../../../types.ts";
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
 function compute(input: Record<string, unknown>) {
-  return eitc.compute({ taxYear: 2025, formType: "f1040" }, input);
+  return eitc.compute({ taxYear: 2025, formType: "f1040" }, {
+    filer_has_valid_ssns: true,
+    ...input,
+  });
 }
+
+Deno.test("EITC needs verified filer SSNs", () => {
+  noCredit({ earned_income: 12_730, qualifying_children: 1, filing_status: FilingStatus.Single, filer_has_valid_ssns: false });
+  noCredit({ earned_income: 12_730, qualifying_children: 1, filing_status: FilingStatus.Single, filer_has_valid_ssns: undefined });
+});
 
 function getCredit(input: Record<string, unknown>): number {
   const result = compute(input);
@@ -28,6 +36,16 @@ Deno.test("no_earned_income_no_credit — earned_income=0 → no output", () => 
 
 Deno.test("no_earned_income_no_credit — empty input → no output", () => {
   noCredit({});
+});
+
+Deno.test("computed EITC amount is retained for the MeF Schedule EIC builder", () => {
+  const result = compute({
+    earned_income: 12_730,
+    qualifying_children: 1,
+    filing_status: FilingStatus.Single,
+  });
+  const filing = result.outputs.find((item) => item.nodeType === "eitc");
+  assertEquals(filing?.fields.credit_amount, 4_328);
 });
 
 // ─── Investment Income Disqualifier ──────────────────────────────────────────

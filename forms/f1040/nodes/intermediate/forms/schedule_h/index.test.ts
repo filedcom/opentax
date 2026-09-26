@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { schedule_h } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -17,49 +17,46 @@ Deno.test("smoke — empty input returns no outputs", () => {
 });
 
 Deno.test("zero wages → no tax", () => {
-  const result = compute({ total_cash_wages: 0 });
+  const result = compute({ ss_wages: 0, medicare_wages: 0 });
   assertEquals(result.outputs.length, 0);
 });
 
-// ─── FICA Threshold ───────────────────────────────────────────────────────────
+// ─── Explicit taxable wage lines ────────────────────────────────────────────
 
-Deno.test("wages below $2,800 threshold → no FICA (no explicit fica_wages)", () => {
-  // $2,000 total wages — below $2,800 threshold
-  const result = compute({ total_cash_wages: 2_000 });
-  assertEquals(result.outputs.length, 0);
+Deno.test("total payroll alone cannot determine each employee's FICA wages", () => {
+  assertThrows(
+    () => compute({ total_cash_wages: 2_000 }),
+    Error,
+    "Unrecognized key",
+  );
 });
 
-Deno.test("wages at $2,800 threshold → FICA applies", () => {
-  // $2,800 exactly — triggers FICA
+Deno.test("2,800 of already-taxable wages produces the form-line tax", () => {
   // Employer SS: $2,800 × 6.2% = $173.60
   // Employer Medicare: $2,800 × 1.45% = $40.60
   // Employee SS: $2,800 × 6.2% = $173.60
   // Employee Medicare: $2,800 × 1.45% = $40.60
   // Total FICA: $428.40 → rounded to $428
-  const result = compute({ total_cash_wages: 2_800 });
+  const result = compute({ ss_wages: 2_800, medicare_wages: 2_800 });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 428);
+  assertEquals(s2?.fields.line9_household_employment, 428);
 });
 
-Deno.test("wages above $2,800 → FICA applies on all wages (pinned)", () => {
-  // $10,000 above threshold → full FICA: 15.3% × $10,000 = $1,530
-  const result = compute({ total_cash_wages: 10_000 });
+Deno.test("10,000 of already-taxable wages produces the full combined tax", () => {
+  // Full FICA: 15.3% × $10,000 = $1,530.
+  const result = compute({ ss_wages: 10_000, medicare_wages: 10_000 });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 1_530);
+  assertEquals(s2?.fields.line9_household_employment, 1_530);
 });
 
 // ─── FICA Tax Computation ─────────────────────────────────────────────────────
 
-Deno.test("explicit fica_wages — full FICA: employer + employee share", () => {
-  // $10,000 FICA wages
-  // Employer SS: $10,000 × 6.2% = $620
-  // Employer Medicare: $10,000 × 1.45% = $145
-  // Employee SS: $10,000 × 6.2% = $620
-  // Employee Medicare: $10,000 × 1.45% = $145
-  // Total FICA: $620 + $145 + $620 + $145 = $1,530
-  const result = compute({ fica_wages: 10_000 });
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 1_530);
+Deno.test("ambiguous aggregate FICA wages require both taxable wage lines", () => {
+  assertThrows(
+    () => compute({ fica_wages: 10_000 }),
+    Error,
+    "Unrecognized key",
+  );
 });
 
 Deno.test("explicit ss_wages and medicare_wages — computed separately", () => {
@@ -70,24 +67,51 @@ Deno.test("explicit ss_wages and medicare_wages — computed separately", () => 
     medicare_wages: 10_000,
   });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 1_530);
+  assertEquals(s2?.fields.line9_household_employment, 1_530);
 });
 
-Deno.test("SS wages above wage base — capped at $176,100", () => {
-  // SS wages $200,000 — capped at $176,100 for SS tax
-  // SS employer+employee: $176,100 × 12.4% = $21,836.40 → rounded
+Deno.test("aggregate taxable SS wages from multiple employees are not capped again", () => {
+  // Each employee's wage base has already been applied to the line 1 input.
   // Medicare employer+employee: $200,000 × 2.9% = $5,800
-  // Total: $21,836 + $5,800 = $27,636 (approx, depends on rounding)
+  // Total: $24,800 + $5,800 = $30,600.
   const result = compute({
     ss_wages: 200_000,
     medicare_wages: 200_000,
   });
   const s2 = findOutput(result, "schedule2");
-  const tax = s2?.fields.line7a_household_employment as number;
-  // SS portion capped: 176100 × 12.4% = $21,836.40 rounded to $21,836
-  // Medicare: 200000 × 2.9% = $5,800
-  // Total ≈ $27,636
-  assertEquals(tax, 27_636);
+  const tax = s2?.fields.line9_household_employment as number;
+  assertEquals(tax, 30_600);
+});
+
+Deno.test("Additional Medicare Tax applies only to sourced per-employee excess wages", () => {
+  const result = compute({
+    ss_wages: 176_100,
+    medicare_wages: 220_000,
+    additional_medicare_wages: 20_000,
+  });
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line9_household_employment,
+    28_396,
+  );
+  const noExcess = compute({
+    ss_wages: 352_200,
+    medicare_wages: 400_000,
+    additional_medicare_wages: 0,
+  });
+  assertEquals(
+    findOutput(noExcess, "schedule2")?.fields.line9_household_employment,
+    55_273,
+  );
+  assertThrows(
+    () =>
+      compute({
+        ss_wages: 176_100,
+        medicare_wages: 220_000,
+        additional_medicare_wages: 220_001,
+      }),
+    Error,
+    "sufficient Medicare wage amount",
+  );
 });
 
 // ─── Federal Income Tax Withheld ─────────────────────────────────────────────
@@ -95,67 +119,108 @@ Deno.test("SS wages above wage base — capped at $176,100", () => {
 Deno.test("federal income tax withheld adds to total", () => {
   // $10,000 FICA wages → $1,530 FICA + $1,000 federal withheld = $2,530
   const result = compute({
-    fica_wages: 10_000,
+    ss_wages: 10_000,
+    medicare_wages: 10_000,
     federal_income_tax_withheld: 1_000,
   });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 2_530);
+  assertEquals(s2?.fields.line9_household_employment, 2_530);
 });
 
 // ─── FUTA ─────────────────────────────────────────────────────────────────────
 
-Deno.test("FUTA tax adds to total", () => {
-  // $10,000 FICA wages → $1,530 FICA + $100 FUTA = $1,630
+Deno.test("single-state Section A FUTA is 0.6% of taxable wages", () => {
+  // $10,000 FICA wages plus $7,000 taxable FUTA wages.
   const result = compute({
-    fica_wages: 10_000,
-    futa_tax: 100,
+    ss_wages: 10_000,
+    medicare_wages: 10_000,
+    cash_wages_over_quarter_limit: true,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 100,
+      taxable_wages: 7_000,
+    },
   });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 1_630);
+  assertEquals(s2?.fields.line9_household_employment, 1_572);
+});
+
+Deno.test("Section B FUTA routes the credit-reduced tax to Schedule 2", () => {
+  const result = compute({
+    cash_wages_over_quarter_limit: true,
+    federal_unemployment: {
+      paid_only_one_state: false,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      taxable_futa_wages: 7_000,
+      state_rows: [{
+        state: "CA",
+        taxable_state_wages: 7_000,
+        experience_rate: 0.05,
+        rate_period_from: "2025-01-01",
+        rate_period_to: "2025-12-31",
+        contributions_paid_by_due_date: 350,
+      }],
+      credit_reduction_wages: [{ state: "CA", taxable_futa_wages: 7_000 }],
+    },
+  });
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line9_household_employment,
+    126,
+  );
 });
 
 // ─── Explicit Withholding Amounts ────────────────────────────────────────────
 
-Deno.test("explicit employee withholding overrides computed amounts", () => {
-  // Use explicit withholding instead of computed
-  // SS wages $10,000, Medicare wages $10,000
-  // Employee SS withheld: $500 (instead of computed $620)
-  // Employee Medicare withheld: $100 (instead of computed $145)
-  // Employer SS: $620, Employer Medicare: $145
-  // Total: $620 + $145 + $500 + $100 = $1,365
-  const result = compute({
-    ss_wages: 10_000,
-    medicare_wages: 10_000,
-    employee_ss_withheld: 500,
-    employee_medicare_withheld: 100,
-  });
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 1_365);
+Deno.test("employee withholding fields cannot override Schedule H tax", () => {
+  assertThrows(
+    () =>
+      compute({
+        ss_wages: 10_000,
+        medicare_wages: 10_000,
+        employee_ss_withheld: 500,
+        employee_medicare_withheld: 100,
+      }),
+    Error,
+    "employee_ss_withheld",
+  );
 });
 
 // ─── Combined Scenario ────────────────────────────────────────────────────────
 
-Deno.test("combined: FICA + federal withholding + FUTA", () => {
+Deno.test("combined: FICA + federal withholding + Section A FUTA", () => {
   // FICA wages $20,000:
   // Employer+Employee SS: $20,000 × 12.4% = $2,480
   // Employer+Employee Medicare: $20,000 × 2.9% = $580
   // Federal withheld: $2,000
-  // FUTA: $420
-  // Total: $2,480 + $580 + $2,000 + $420 = $5,480
+  // FUTA: $7,000 × 0.6% = $42
+  // Total: $2,480 + $580 + $2,000 + $42 = $5,102
   const result = compute({
-    fica_wages: 20_000,
+    ss_wages: 20_000,
+    medicare_wages: 20_000,
     federal_income_tax_withheld: 2_000,
-    futa_tax: 420,
+    cash_wages_over_quarter_limit: true,
+    federal_unemployment: {
+      paid_only_one_state: true,
+      all_contributions_paid_on_time: true,
+      all_futa_wages_state_taxable: true,
+      state: "OH",
+      contributions_paid: 100,
+      taxable_wages: 7_000,
+    },
   });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 5_480);
+  assertEquals(s2?.fields.line9_household_employment, 5_102);
 });
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
-Deno.test("output routes to schedule2 line7a_household_employment", () => {
+Deno.test("output routes to schedule2 line9_household_employment", () => {
   // $5,000 FICA wages → 15.3% = $765
-  const result = compute({ fica_wages: 5_000 });
+  const result = compute({ ss_wages: 5_000, medicare_wages: 5_000 });
   const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line7a_household_employment, 765);
+  assertEquals(s2?.fields.line9_household_employment, 765);
 });

@@ -1,374 +1,337 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../../types.ts";
 import { form8962 } from "./index.ts";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-// TY2025 FPL (2024 FPL per IRS rules):
-//   size 1: $15,060
-//   size 2: $20,440
-//   size 4: $31,200
+const context = { taxYear: 2025, formType: "f1040" as const };
 
 function compute(input: Record<string, unknown>) {
-  return form8962.compute({ taxYear: 2025, formType: "f1040" }, input);
+  return form8962.compute(context, {
+    fpl_region: "contiguous",
+    filing_status: FilingStatus.Single,
+    dependent_income_complete: true,
+    ...input,
+  });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
+function fields(result: ReturnType<typeof compute>, nodeType: string) {
+  return result.outputs.find((item) => item.nodeType === nodeType)?.fields;
 }
 
-// ─── Smoke Tests ─────────────────────────────────────────────────────────────
-
-Deno.test("smoke — empty input returns no outputs", () => {
-  const result = compute({});
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("smoke — household_size only returns no outputs", () => {
-  const result = compute({ household_size: 2 });
-  assertEquals(result.outputs.length, 0);
-});
-
-// ─── PTC Calculation — Exact Values ──────────────────────────────────────────
-
-Deno.test("PTC — FPL 150%, size=1, benchmark=$500/mo, no APTC → exact credit", () => {
-  // FPL size 1 = $15,060; 150% FPL = $22,590
-  // Bracket 150-200%: minContrib=4.12%, maxContrib=6.18% (Rev. Proc. 2024-57)
-  // Position = (150 - 150) / 50 = 0 → applicable % = 4.12%
-  // Applicable premium = $22,590 × 4.12% = $930.708
-  // SLCSP = $500 × 12 = $6,000
-  // Max PTC = $6,000 - $930.708 = $5,069.292
-  // Actual premium = $6,000, allowed = min($5,069.292, $6,000) = $5,069.292
-  // Rounded → $5,069
-  const result = compute({
+function annual(
+  householdIncome: number,
+  annualPremium: number,
+  annualSlcsp: number,
+  annualAptc = 0,
+  extra: Record<string, unknown> = {},
+) {
+  return compute({
     household_size: 1,
-    household_income: 22_590,
-    annual_premium: 6_000,
-    annual_slcsp: 6_000,
-    annual_aptc: 0,
+    taxpayer_modified_agi: householdIncome,
+    annual_premium: annualPremium,
+    annual_slcsp: annualSlcsp,
+    annual_aptc: annualAptc,
+    annual_line11_eligible: true,
+    ...extra,
   });
-  const s3 = findOutput(result, "schedule3");
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 5_069);
-  assertEquals(s2, undefined);
+}
+
+Deno.test("Form 8962 has no output without marketplace premiums or APTC", () => {
+  assertEquals(compute({}).outputs, []);
+  assertEquals(
+    compute({ household_size: 2, taxpayer_modified_agi: 30_000 }).outputs,
+    [],
+  );
 });
 
-Deno.test("PTC — FPL 200%, size=1, no APTC → exact credit", () => {
-  // FPL size 1 = $15,060; 200% FPL = $30,120
-  // Bracket 200-250%: minContrib=6.18%, maxContrib=8.24% (Rev. Proc. 2024-57)
-  // Position = (200 - 200) / 50 = 0 → applicable % = 6.18%
-  // Applicable premium = $30,120 × 6.18% = $1,861.416
-  // SLCSP = $4,000, max PTC = $4,000 - $1,861.416 = $2,138.584
-  // Actual premium = $4,000, allowed = min($2,138.584, $4,000) = $2,138.584
-  // Rounded → $2,139
-  const result = compute({
-    household_size: 1,
-    household_income: 30_120,
-    annual_premium: 4_000,
-    annual_slcsp: 4_000,
-    annual_aptc: 0,
-  });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 2_139);
-  assertEquals(findOutput(result, "schedule2"), undefined);
+Deno.test("annual totals alone do not establish Form 8962 line 11 eligibility", () => {
+  assertThrows(
+    () =>
+      compute({
+        household_size: 1,
+        taxpayer_modified_agi: 30_000,
+        annual_premium: 6_000,
+        annual_slcsp: 7_000,
+      }),
+    Error,
+    "annual line 11 needs verified full-year unchanged monthly coverage",
+  );
 });
 
-Deno.test("PTC — FPL 300%, size=2, no APTC → exact credit", () => {
-  // FPL size 2 = $20,440; 300% FPL = $61,320
-  // Bracket 300-400%: minContrib=8.5%, maxContrib=8.5%
-  // Applicable premium = $61,320 × 8.5% = $5,212.20
-  // SLCSP = $7,000, max PTC = $7,000 - $5,212.20 = $1,787.80
-  // Actual premium = $7,000, allowed = $1,787.80, rounded → $1,788
+Deno.test("Form 8962 separates taxpayer and dependent MAGI before line 3", () => {
+  const result = annual(30_000, 6_000, 7_200, 0, {
+    household_size: 2,
+    dependents_modified_agi: 12_500,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.taxpayer_modified_agi, 30_000);
+  assertEquals(form?.dependents_modified_agi, 12_500);
+  assertEquals(form?.household_income, 42_500);
+});
+
+Deno.test("Form 8962 adds elected Form 8814 dependent amount once by SSN", () => {
+  const result = annual(30_000, 6_000, 7_200, 0, {
+    household_size: 2,
+    form8814_expected_ssns: ["123456789"],
+    form8814_children: [{ ssn: "123456789", magi: 3_600 }],
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.dependents_modified_agi, 3_600);
+  assertEquals(form?.household_income, 33_600);
+});
+
+Deno.test("Form 8962 rejects a dependent Form 8814 without the matching election", () => {
+  assertThrows(
+    () =>
+      annual(30_000, 6_000, 7_200, 0, {
+        household_size: 2,
+        form8814_expected_ssns: ["123456789"],
+        form8814_children: [{ ssn: "987654321", magi: 3_600 }],
+      }),
+    Error,
+    "matching Form 8814",
+  );
+});
+
+Deno.test("Form 8962 refuses unverified dependent filing facts", () => {
+  assertThrows(
+    () =>
+      annual(30_000, 6_000, 7_200, 0, {
+        dependent_income_complete: false,
+      }),
+    Error,
+    "needs verified dependent filing and modified-AGI facts",
+  );
+});
+
+Deno.test("2025 Table 2: 150% FPL has a zero applicable figure", () => {
+  const result = annual(22_590, 6_000, 6_000);
+  assertEquals(fields(result, "form8962")?.federal_poverty_pct, 150);
+  assertEquals(fields(result, "form8962")?.applicable_figure, 0);
+  assertEquals(fields(result, "form8962")?.annual_applicable_contribution, 0);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 6_000);
+});
+
+Deno.test("2025 Table 2: 200%, 250%, and 300% FPL use 2%, 4%, and 6%", () => {
+  const cases = [
+    {
+      income: 30_120,
+      pct: 200,
+      figure: 0.02,
+      contribution: 602,
+      credit: 3_398,
+    },
+    {
+      income: 37_650,
+      pct: 250,
+      figure: 0.04,
+      contribution: 1_506,
+      credit: 2_494,
+    },
+    {
+      income: 45_180,
+      pct: 300,
+      figure: 0.06,
+      contribution: 2_711,
+      credit: 1_289,
+    },
+  ];
+  for (const sample of cases) {
+    const result = annual(sample.income, 4_000, 4_000);
+    assertEquals(fields(result, "form8962")?.federal_poverty_pct, sample.pct);
+    assertEquals(fields(result, "form8962")?.applicable_figure, sample.figure);
+    assertEquals(
+      fields(result, "form8962")?.annual_applicable_contribution,
+      sample.contribution,
+    );
+    assertEquals(
+      fields(result, "schedule3")?.line9_premium_tax_credit,
+      sample.credit,
+    );
+  }
+});
+
+Deno.test("2025 Table 2: 301% and 399% FPL use four-decimal table figures", () => {
+  const at301 = annual(45_331, 7_000, 7_000);
+  const at399 = annual(60_090, 7_000, 7_000);
+  assertEquals(fields(at301, "form8962")?.federal_poverty_pct, 301);
+  assertEquals(fields(at301, "form8962")?.applicable_figure, 0.0603);
+  assertEquals(fields(at399, "form8962")?.federal_poverty_pct, 399);
+  assertEquals(fields(at399, "form8962")?.applicable_figure, 0.0848);
+});
+
+Deno.test("2025 Table 2: above 400% FPL uses 401 on line 5 and 8.5%", () => {
+  const result = annual(75_300, 8_000, 8_000);
+  assertEquals(fields(result, "form8962")?.federal_poverty_pct, 401);
+  assertEquals(fields(result, "form8962")?.applicable_figure, 0.085);
+  assertEquals(
+    fields(result, "form8962")?.annual_applicable_contribution,
+    6_401,
+  );
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 1_599);
+});
+
+Deno.test("line 11e is capped by actual premium after computing max assistance", () => {
+  const result = annual(22_590, 1_000, 6_000);
+  assertEquals(fields(result, "form8962")?.annual_max_ptc, 6_000);
+  assertEquals(fields(result, "form8962")?.annual_ptc_allowed, 1_000);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 1_000);
+});
+
+Deno.test("line 26 net PTC reconciles to Schedule 3", () => {
+  const result = annual(40_880, 5_500, 6_000, 1_000, { household_size: 2 });
+  assertEquals(fields(result, "form8962")?.annual_applicable_contribution, 818);
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 5_182);
+  assertEquals(fields(result, "form8962")?.net_premium_tax_credit, 4_182);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 4_182);
+  assertEquals(fields(result, "schedule2"), undefined);
+});
+
+Deno.test("line 29 excess APTC reconciles to Schedule 2 line 1a", () => {
+  const result = annual(75_300, 6_500, 7_000, 5_000);
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 599);
+  assertEquals(fields(result, "form8962")?.excess_advance_payment, 4_401);
+  assertEquals(fields(result, "form8962")?.repayment_limitation, undefined);
+  assertEquals(fields(result, "form8962")?.excess_advance_premium, 4_401);
+  assertEquals(
+    fields(result, "schedule2")?.line1a_excess_advance_premium,
+    4_401,
+  );
+  assertEquals(fields(result, "schedule3"), undefined);
+});
+
+Deno.test("2025 Table 5 single repayment limits are 375, 975, and 1625", () => {
+  const cases = [
+    { income: 22_590, cap: 375 },
+    { income: 37_650, cap: 975 },
+    { income: 52_710, cap: 1_625 },
+  ];
+  for (const sample of cases) {
+    const result = annual(sample.income, 4_000, 4_000, 10_000);
+    assertEquals(fields(result, "form8962")?.repayment_limitation, sample.cap);
+    assertEquals(
+      fields(result, "schedule2")?.line1a_excess_advance_premium,
+      sample.cap,
+    );
+  }
+});
+
+Deno.test("2025 Table 5 other-filing-status caps are 750, 1950, and 3250", () => {
+  const cases = [
+    { income: 22_590, cap: 750 },
+    { income: 37_650, cap: 1_950 },
+    { income: 52_710, cap: 3_250 },
+  ];
+  for (const sample of cases) {
+    const result = annual(sample.income, 4_000, 4_000, 10_000, {
+      filing_status: FilingStatus.MFJ,
+    });
+    assertEquals(fields(result, "form8962")?.repayment_limitation, sample.cap);
+    assertEquals(
+      fields(result, "schedule2")?.line1a_excess_advance_premium,
+      sample.cap,
+    );
+  }
+});
+
+Deno.test("below 100% FPL needs exception facts with or without APTC", () => {
+  for (const aptc of [0, 1_200]) {
+    assertThrows(
+      () => annual(10_000, 3_000, 4_000, aptc),
+      Error,
+      "below 100% FPL needs verified PTC exception facts",
+    );
+  }
+});
+
+Deno.test("Alaska and Hawaii use their 2024 poverty tables for TY2025", () => {
+  const alaska = annual(30_000, 6_000, 6_000, 0, { fpl_region: "alaska" });
+  const hawaii = annual(30_000, 6_000, 6_000, 0, { fpl_region: "hawaii" });
+  assertEquals(fields(alaska, "form8962")?.federal_poverty_line, 18_810);
+  assertEquals(fields(alaska, "form8962")?.federal_poverty_pct, 159);
+  assertEquals(fields(hawaii, "form8962")?.federal_poverty_line, 17_310);
+  assertEquals(fields(hawaii, "form8962")?.federal_poverty_pct, 173);
+});
+
+Deno.test("monthly calculation reports twelve rows and reconciles its line 24", () => {
   const result = compute({
     household_size: 2,
-    household_income: 61_320,
-    annual_premium: 7_000,
-    annual_slcsp: 7_000,
-    annual_aptc: 0,
-  });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 1_788);
-  assertEquals(findOutput(result, "schedule2"), undefined);
-});
-
-Deno.test("PTC — FPL 400%+, size=1, ARP extension caps at 8.5% → exact credit", () => {
-  // FPL size 1 = $15,060; 500% FPL = $75,300
-  // Bracket 400%+: applicable % = 8.5%
-  // Applicable premium = $75,300 × 8.5% = 6400.500000000001 (float)
-  // SLCSP = $8,000, max PTC = $8,000 - 6400.500... = 1599.499...
-  // Actual premium = $8,000, allowed = 1599.499..., Math.round → $1,599
-  const result = compute({
-    household_size: 1,
-    household_income: 75_300,
-    annual_premium: 8_000,
-    annual_slcsp: 8_000,
-    annual_aptc: 0,
-  });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 1_599);
-  assertEquals(findOutput(result, "schedule2"), undefined);
-});
-
-Deno.test("PTC — allowed capped at actual premium when premium < max PTC", () => {
-  // FPL size 1 = $15,060; 150% FPL = $22,590; 4.12% bracket start
-  // Applicable = $22,590 × 4.12% = $930.71
-  // Allowed = min($1,000, $6,000) - $930.71 = $69.29 → $69
-  const result = compute({
-    household_size: 1,
-    household_income: 22_590,
-    annual_premium: 1_000,
-    annual_slcsp: 6_000,
-    annual_aptc: 0,
-  });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 69);
-});
-
-// ─── Net PTC — APTC Offsets Credit ───────────────────────────────────────────
-
-Deno.test("net PTC — APTC partially received, net credit goes to schedule3", () => {
-  // FPL size 2 = $20,440; income = $40,880 = 200% FPL
-  // Bracket 200-250%: applicable % = 6.18% (Rev. Proc. 2024-57)
-  // Applicable premium = $40,880 × 6.18% = $2,526.384
-  // SLCSP = $6,000, max PTC = $6,000 - $2,526.384 = $3,473.616
-  // Actual premium = $5,500, allowed = min($3,473.616, $5,500) = $3,473.616
-  // APTC = $1,000; net = $3,473.616 - $1,000 = $2,473.616 → rounded $2,474
-  const result = compute({
-    household_size: 2,
-    household_income: 40_880,
-    annual_premium: 5_500,
-    annual_slcsp: 6_000,
-    annual_aptc: 1_000,
-  });
-  const s3 = findOutput(result, "schedule3");
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 1_974);
-  assertEquals(s2, undefined);
-});
-
-Deno.test("net PTC — zero APTC, full allowed credit routes to schedule3", () => {
-  // FPL size 1 = $15,060; income $30,000 ≈ 199.2% FPL
-  // Bracket 150-200%, position = (199.2 - 150)/50 = 0.984 → contrib ≈ 5.984% ≈ 5.98%
-  // Income × contrib = $30,000 × ~5.98% = ~$1,794
-  // SLCSP = $4,000; max PTC ≈ $4,000 - $1,794 = $2,206
-  // Actual premium $3,500, allowed = min($2,206, $3,500) = $2,206
-  // Rounded → $2,206, no APTC
-  const result = compute({
-    household_size: 1,
-    household_income: 30_000,
-    annual_premium: 3_500,
-    annual_slcsp: 4_000,
-    annual_aptc: 0,
-  });
-  const s3 = findOutput(result, "schedule3");
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(typeof s3?.fields.line9_premium_tax_credit, "number");
-  assertEquals((s3?.fields.line9_premium_tax_credit as number) > 0, true);
-  assertEquals(s2, undefined);
-});
-
-// ─── Excess APTC Repayment ───────────────────────────────────────────────────
-
-Deno.test("excess APTC — APTC exceeds allowed credit → exact repayment to schedule2", () => {
-  // FPL size 1 = $15,060; income $75,300 = 500% FPL → bracket 400%+, 8.5%
-  // Applicable premium = $75,300 × 8.5% = $6,400.50
-  // SLCSP = $7,000; max PTC = $7,000 - $6,400.50 = $599.50
-  // Actual premium = $6,500; allowed = min($599.50, $6,500) = $599.50
-  // APTC = $5,000; net = $599.50 - $5,000 = -$4,400.50 → excess = $4,401
-  const result = compute({
-    household_size: 1,
-    household_income: 75_300,
-    annual_premium: 6_500,
-    annual_slcsp: 7_000,
-    annual_aptc: 5_000,
-  });
-  const s2 = findOutput(result, "schedule2");
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 4_901);
-  assertEquals(s3, undefined);
-});
-
-Deno.test("excess APTC — APTC greater than allowed credit → repayment to schedule2", () => {
-  // FPL size 2 = $20,440; income $40,880 = 200% FPL → 6.18% applicable (Rev. Proc. 2024-57)
-  // Applicable = $40,880 × 6.18% = $2,526.384
-  // SLCSP = $6,000; max PTC = $3,473.616; premium = $5,500; allowed = $3,473.616
-  // APTC = $4,000; net = $3,473.616 - $4,000 = -$526.384 → excess = $526
-  // IRC §36B(f)(2)(B) cap: 200-300% FPL, other household = $1,750 (not binding)
-  const result = compute({
-    household_size: 2,
-    household_income: 40_880,
-    annual_premium: 5_500,
-    annual_slcsp: 6_000,
-    annual_aptc: 4_000,
-  });
-  const s2 = findOutput(result, "schedule2");
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 1_026);
-  assertEquals(s3, undefined);
-});
-
-// ─── Below 100% FPL — Full APTC Repayment ────────────────────────────────────
-
-Deno.test("below 100% FPL — not eligible, full APTC repaid to schedule2", () => {
-  // $10,000 income, size 1, FPL = $15,060 → 66% FPL → not eligible
-  const result = compute({
-    household_size: 1,
-    household_income: 10_000,
-    annual_premium: 3_000,
-    annual_slcsp: 4_000,
-    annual_aptc: 1_200,
-  });
-  const s2 = findOutput(result, "schedule2");
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 1_200);
-  assertEquals(s3, undefined);
-});
-
-Deno.test("below 100% FPL — no APTC, no outputs", () => {
-  const result = compute({
-    household_size: 1,
-    household_income: 10_000,
-    annual_premium: 3_000,
-    annual_slcsp: 4_000,
-    annual_aptc: 0,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-// ─── QSEHRA Reduces Credit ────────────────────────────────────────────────────
-
-Deno.test("QSEHRA — reduces PTC dollar-for-dollar, no credit below zero", () => {
-  // FPL size 1, income $22,590 (150% FPL), applicable 4.12% (Rev. Proc. 2024-57)
-  // Applicable = $22,590 × 4.12% = $930.708; SLCSP = $6,000; max PTC = $5,069.292
-  // Premium = $6,000; allowed = $5,069.292
-  // QSEHRA $3,000 → after QSEHRA = $5,069.292 - $3,000 = $2,069.292 → $2,069
-  // No APTC; net = $2,069 → schedule3
-  const result = compute({
-    household_size: 1,
-    household_income: 22_590,
-    annual_premium: 6_000,
-    annual_slcsp: 6_000,
-    annual_aptc: 0,
-    qsehra_amount_offered: 3_000,
-  });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 2_069);
-  assertEquals(findOutput(result, "schedule2"), undefined);
-});
-
-Deno.test("QSEHRA — exceeds allowed PTC → no credit (floor at 0, not negative)", () => {
-  // FPL size 1, income $22,590 (150% FPL), allowed PTC = $5,096.40
-  // QSEHRA $10,000 > allowed → after QSEHRA = max(0, $5,096.40 - $10,000) = 0
-  // No APTC; net = 0 → no output
-  const result = compute({
-    household_size: 1,
-    household_income: 22_590,
-    annual_premium: 6_000,
-    annual_slcsp: 6_000,
-    annual_aptc: 0,
-    qsehra_amount_offered: 10_000,
-  });
-  assertEquals(result.outputs.length, 0);
-});
-
-// ─── Monthly Detail Arrays ────────────────────────────────────────────────────
-
-Deno.test("monthly arrays — totals match annual equivalents", () => {
-  // 12 months × $500 premium, $600 SLCSP, $100 APTC → same as annual 6000/7200/1200
-  // FPL size 2 = $20,440; income $40,880 = 200% FPL → 6.18% applicable (Rev. Proc. 2024-57)
-  // Applicable = $40,880 × 6.18% = $2,526.384; SLCSP = $7,200; max PTC = $4,673.616
-  // Premium = $6,000; allowed = min($4,673.616, $6,000) = $4,673.616
-  // APTC = $1,200; net = $4,673.616 - $1,200 = $3,473.616 → $3,474
-  const result = compute({
-    household_size: 2,
-    household_income: 40_880,
+    taxpayer_modified_agi: 40_880,
     monthly_premiums: Array(12).fill(500),
     monthly_slcsps: Array(12).fill(600),
     monthly_aptcs: Array(12).fill(100),
   });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.fields.line9_premium_tax_credit, 2_274);
+  const form = fields(result, "form8962");
+  assertEquals(form?.monthly_applicable_contribution, 68);
+  assertEquals((form?.monthly_ptc_rows as unknown[])?.length, 12);
+  assertEquals(form?.total_premium_tax_credit, 6_000);
+  assertEquals(form?.total_advance_ptc, 1_200);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 4_800);
 });
 
-// ─── Repayment Caps (IRC §36B(f)(2)(B)) ──────────────────────────────────────
-
-Deno.test("repayment cap — 250% FPL, single filer, excess $2000 → capped at $875", () => {
-  // FPL size 1 = $15,060; 250% FPL = $37,650
-  // Bracket 250-300%: 8.24+position*(8.5-8.24)/50... at 250 position=0 → 8.24%
-  // applicable = $37,650 × 8.24% = $3,102.36
-  // SLCSP = $5,500; max PTC = $2,397.64; premium = $5,500; allowed = $2,397.64
-  // APTC = $4,400; raw excess = $2,002.36 → $2,002
-  // Cap: 200-300% FPL, single filer = $875
-  const result = compute({
-    household_size: 1,
-    household_income: 37_650,
-    annual_premium: 5_500,
-    annual_slcsp: 5_500,
-    annual_aptc: 4_400,
-    filing_status: "single",
-  });
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 875);
+Deno.test("annual QSEHRA is refused until monthly affordability can be checked", () => {
+  assertThrows(
+    () =>
+      annual(22_590, 6_000, 6_000, 0, {
+        qsehra_amount_offered: 3_000,
+      }),
+    Error,
+    "QSEHRA needs monthly affordability and benefit facts",
+  );
 });
 
-Deno.test("repayment cap — 150% FPL, other household, excess $1000 → capped at $700", () => {
-  // income $22,590 (150% FPL); 4.12% rate; applicable = $930.71
-  // SLCSP = $3,000; max PTC = $2,069.29; premium = $3,000; allowed = $2,069.29
-  // APTC = $3,100; raw excess = $1,030.71 → $1,031
-  // Cap: under 200% FPL, other household = $700
-  const result = compute({
-    household_size: 1,
-    household_income: 22_590,
-    annual_premium: 3_000,
-    annual_slcsp: 3_000,
-    annual_aptc: 3_100,
-    filing_status: "mfj",
-  });
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 700);
+Deno.test("marketplace credit cannot be computed without household facts", () => {
+  assertThrows(
+    () =>
+      form8962.compute(context, { annual_premium: 5_000, annual_slcsp: 5_000 }),
+    Error,
+    "requires taxpayer modified AGI, family size, FPL region, and filing status",
+  );
 });
 
-Deno.test("repayment cap — 400%+ FPL, no cap applies, full excess repaid", () => {
-  // income $75,300 (500% FPL); above 400% → no repayment cap
-  // 8.5%; applicable = $6,400.50; SLCSP=$7,000; PTC=$599.50
-  // APTC = $2,000; excess = $2,000 - $599.50 = $1,400.50 → $1,401
-  // No cap → full $1,401 repaid
-  const result = compute({
-    household_size: 1,
-    household_income: 75_300,
-    annual_premium: 7_000,
-    annual_slcsp: 7_000,
-    annual_aptc: 2_000,
-    filing_status: "single",
-  });
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.fields.line2_excess_advance_premium, 1_401);
+Deno.test("monthly calculation refuses incomplete 1095-A columns", () => {
+  assertThrows(
+    () =>
+      compute({
+        household_size: 1,
+        taxpayer_modified_agi: 30_000,
+        monthly_premiums: Array(12).fill(500),
+      }),
+    Error,
+    "needs all three 1095-A columns",
+  );
 });
 
-// ─── Output Routing ───────────────────────────────────────────────────────────
-
-Deno.test("routing — net PTC routes to schedule3 line9_premium_tax_credit", () => {
-  const result = compute({
-    household_size: 1,
-    household_income: 22_590,
-    annual_premium: 6_000,
-    annual_slcsp: 6_000,
-    annual_aptc: 0,
-  });
-  const s3 = findOutput(result, "schedule3");
-  assertEquals(s3?.nodeType, "schedule3");
-  assertEquals("line9_premium_tax_credit" in (s3?.fields ?? {}), true);
-  assertEquals(findOutput(result, "schedule2"), undefined);
+Deno.test("monthly QSEHRA is refused until monthly affordability can be checked", () => {
+  assertThrows(
+    () =>
+      compute({
+        household_size: 1,
+        taxpayer_modified_agi: 30_000,
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(500),
+        monthly_aptcs: Array(12).fill(0),
+        qsehra_amount_offered: 1_200,
+      }),
+    Error,
+    "QSEHRA needs monthly affordability and benefit facts",
+  );
 });
 
-Deno.test("routing — excess APTC routes to schedule2 line2_excess_advance_premium", () => {
-  const result = compute({
-    household_size: 1,
-    household_income: 75_300,
-    annual_premium: 4_000,
-    annual_slcsp: 5_000,
-    annual_aptc: 5_000,
-  });
-  const s2 = findOutput(result, "schedule2");
-  assertEquals(s2?.nodeType, "schedule2");
-  assertEquals("line2_excess_advance_premium" in (s2?.fields ?? {}), true);
-  assertEquals(findOutput(result, "schedule3"), undefined);
+Deno.test("MFS cannot claim PTC without verified exception and allocation facts", () => {
+  assertThrows(
+    () =>
+      annual(22_590, 4_000, 4_000, 0, {
+        filing_status: FilingStatus.MFS,
+      }),
+    Error,
+    "MFS needs verified exception and policy-allocation facts",
+  );
+  assertThrows(
+    () =>
+      annual(22_590, 4_000, 4_000, 10_000, {
+        filing_status: FilingStatus.MFS,
+      }),
+    Error,
+    "MFS needs verified exception and policy-allocation facts",
+  );
 });

@@ -8,6 +8,7 @@
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/path@*": "1.1.3",
     "jsr:@std/path@^1.1.3": "1.1.3",
+    "npm:fflate@0.8.2": "0.8.2",
     "npm:pdf-lib@*": "1.17.1",
     "npm:pdf-lib@^1.17.1": "1.17.1",
     "npm:zod@*": "3.25.76",
@@ -58,6 +59,9 @@
       "dependencies": [
         "pako"
       ]
+    },
+    "fflate@0.8.2": {
+      "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="
     },
     "pako@1.0.11": {
       "integrity": "sha512-4hLB8Py4zZce5s4yd9XzopqwVv/yGNhV1Bl8NTmCq1763HeK2+EwVTv+leGeL13Dnh2wfbqowVPXCIO0z4taYw=="
@@ -165,6 +169,7 @@
       "jsr:@std/cli@*",
       "jsr:@std/fs@*",
       "jsr:@std/path@*",
+      "npm:fflate@0.8.2",
       "npm:pdf-lib@^1.17.1",
       "npm:zod@^3.24.0"
     ]

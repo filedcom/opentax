@@ -1,141 +1,117 @@
-import { assertEquals, assertAlmostEquals } from "@std/assert";
-import { f8911, FuelType } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { f8911, type F8911Input, FuelType } from "./index.ts";
 
-function compute(input: Parameters<typeof f8911.compute>[1]) {
+const scenario13: F8911Input = {
+  cost: 1_000,
+  business_use_pct: 0,
+  fuel_type: FuelType.ElectricCharging,
+  property_description: "ELECTRIC CHARGER",
+  property_us_address: {
+    line1: "13 Elm Street",
+    city: "Anytown",
+    state: "TX",
+    zip: "77013",
+  },
+  construction_began: "2025-03-01",
+  placed_in_service: "2025-03-01",
+  eligible_census_tract: true,
+  census_tract_geoid: "48201100000",
+  main_home_property: true,
+  regular_tax_before_credits: 162,
+  tentative_minimum_tax: 0,
+};
+
+function compute(input: F8911Input) {
   return f8911.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-function findSchedule3All(result: ReturnType<typeof compute>) {
-  return result.outputs.filter((o) => o.nodeType === "schedule3");
-}
-
-// ── Schema Validation ─────────────────────────────────────────────────────────
-
-Deno.test("f8911: schema rejects negative cost", () => {
-  const result = f8911.inputSchema.safeParse({ cost: -500 });
-  assertEquals(result.success, false);
+Deno.test("Form 8911 routes the limited ATS Scenario 13 credit to Schedule 3 line 6j", () => {
+  const result = compute(scenario13);
+  assertEquals(result.outputs, [{
+    nodeType: "schedule3",
+    fields: { line6j_alt_fuel_vehicle_refueling: 162 },
+  }]);
 });
 
-Deno.test("f8911: schema rejects business_use_pct above 1", () => {
-  const result = f8911.inputSchema.safeParse({ cost: 5000, business_use_pct: 1.5 });
-  assertEquals(result.success, false);
+Deno.test("Form 8911 personal credit is capped at $1,000 before the tax limit", () => {
+  const result = compute({
+    ...scenario13,
+    cost: 10_000,
+    regular_tax_before_credits: 5_000,
+  });
+  assertEquals(
+    result.outputs[0]?.fields.line6j_alt_fuel_vehicle_refueling,
+    1_000,
+  );
 });
 
-// ── Zero / No Output Cases ────────────────────────────────────────────────────
-
-Deno.test("f8911: zero cost produces no output", () => {
-  const result = compute({ cost: 0, business_use_pct: 1.0 });
-  assertEquals(result.outputs.length, 0);
+Deno.test("Form 8911 accounts for other credits and tentative minimum tax", () => {
+  const result = compute({
+    ...scenario13,
+    cost: 2_000,
+    regular_tax_before_credits: 700,
+    foreign_tax_credit: 100,
+    certain_allowable_credits: 50,
+    tentative_minimum_tax: 200,
+  });
+  assertEquals(
+    result.outputs[0]?.fields.line6j_alt_fuel_vehicle_refueling,
+    350,
+  );
 });
 
-// ── 100% Business Use — 30% rate, $100k cap ──────────────────────────────────
-
-Deno.test("f8911: business credit = 30% of cost", () => {
-  // $10,000 × 30% = $3,000 (below $100k cap)
-  const result = compute({ cost: 10_000, business_use_pct: 1.0 });
-  const outs = findSchedule3All(result);
-  const busOut = outs.find((o) => o.fields.line6z_general_business_credit !== undefined);
-  assertEquals(busOut?.fields.line6z_general_business_credit, 3_000);
+Deno.test("Form 8911 does not route a personal credit when the tax limit is zero", () => {
+  assertEquals(
+    compute({ ...scenario13, regular_tax_before_credits: 0 }).outputs,
+    [],
+  );
+  assertEquals(compute({ ...scenario13, cost: 0 }).outputs, []);
 });
 
-Deno.test("f8911: business credit capped at $100,000 per location", () => {
-  // $400,000 × 30% = $120,000 → capped at $100,000
-  const result = compute({ cost: 400_000, business_use_pct: 1.0 });
-  const outs = findSchedule3All(result);
-  const busOut = outs.find((o) => o.fields.line6z_general_business_credit !== undefined);
-  assertEquals(busOut?.fields.line6z_general_business_credit, 100_000);
+Deno.test("Form 8911 rejects unsupported or unsubstantiated claims", () => {
+  assertThrows(
+    () => compute({ ...scenario13, business_use_pct: 0.2 }),
+    Error,
+    "Form 3800 path",
+  );
+  assertThrows(
+    () => compute({ ...scenario13, eligible_census_tract: false }),
+    Error,
+    "eligible census tract",
+  );
+  assertThrows(
+    () => compute({ ...scenario13, main_home_property: false }),
+    Error,
+    "main home",
+  );
+  assertThrows(
+    () => compute({ ...scenario13, regular_tax_before_credits: undefined }),
+    Error,
+    "regular tax",
+  );
+  assertThrows(
+    () => compute({ ...scenario13, property_us_address: undefined }),
+    Error,
+    "structured address",
+  );
 });
 
-Deno.test("f8911: business cap multiplied by num_locations", () => {
-  // $400,000 × 30% = $120,000; 2 locations → cap = $200,000 → credit = $120,000
-  const result = compute({ cost: 400_000, business_use_pct: 1.0, num_locations: 2 });
-  const outs = findSchedule3All(result);
-  const busOut = outs.find((o) => o.fields.line6z_general_business_credit !== undefined);
-  assertEquals(busOut?.fields.line6z_general_business_credit, 120_000);
-});
-
-Deno.test("f8911: business credit at exactly cap boundary — $333,333 × 30% = $99,999.90", () => {
-  // Just below $100k cap → no capping
-  const result = compute({ cost: 333_333, business_use_pct: 1.0 });
-  const outs = findSchedule3All(result);
-  const busOut = outs.find((o) => o.fields.line6z_general_business_credit !== undefined);
-  assertAlmostEquals(busOut?.fields.line6z_general_business_credit as number, 99_999.9, 0.01);
-});
-
-// ── 100% Personal Use — 30% rate, $1,000 cap ─────────────────────────────────
-
-Deno.test("f8911: personal credit = 30% of cost", () => {
-  // $2,000 × 30% = $600 (below $1,000 cap)
-  const result = compute({ cost: 2_000, business_use_pct: 0 });
-  const outs = findSchedule3All(result);
-  const persOut = outs.find((o) => o.fields.line6b_alt_fuel_vehicle_refueling !== undefined);
-  assertEquals(persOut?.fields.line6b_alt_fuel_vehicle_refueling, 600);
-});
-
-Deno.test("f8911: personal credit capped at $1,000", () => {
-  // $10,000 × 30% = $3,000 → capped at $1,000
-  const result = compute({ cost: 10_000, business_use_pct: 0 });
-  const outs = findSchedule3All(result);
-  const persOut = outs.find((o) => o.fields.line6b_alt_fuel_vehicle_refueling !== undefined);
-  assertEquals(persOut?.fields.line6b_alt_fuel_vehicle_refueling, 1_000);
-});
-
-Deno.test("f8911: no business_use_pct defaults to all-personal", () => {
-  // business_use_pct defaults to 0 → all personal
-  // $3,000 × 30% = $900 (below $1,000)
-  const result = compute({ cost: 3_000 });
-  const outs = findSchedule3All(result);
-  const busOut = outs.find((o) => o.fields.line6z_general_business_credit !== undefined);
-  const persOut = outs.find((o) => o.fields.line6b_alt_fuel_vehicle_refueling !== undefined);
-  assertEquals(busOut, undefined);
-  assertAlmostEquals(persOut?.fields.line6b_alt_fuel_vehicle_refueling as number, 900, 0.01);
-});
-
-// ── Mixed Business + Personal Use ────────────────────────────────────────────
-
-Deno.test("f8911: 60% business / 40% personal — both credits computed correctly", () => {
-  // Cost $10,000
-  // Business: $10,000 × 60% × 30% = $1,800
-  // Personal: $10,000 × 40% × 30% = $1,200 → capped at $1,000
-  const result = compute({ cost: 10_000, business_use_pct: 0.6 });
-  const outs = findSchedule3All(result);
-  const busOut = outs.find((o) => o.fields.line6z_general_business_credit !== undefined);
-  const persOut = outs.find((o) => o.fields.line6b_alt_fuel_vehicle_refueling !== undefined);
-  assertAlmostEquals(busOut?.fields.line6z_general_business_credit as number, 1_800, 0.01);
-  assertEquals(persOut?.fields.line6b_alt_fuel_vehicle_refueling, 1_000);
-});
-
-Deno.test("f8911: 100% business — no personal credit output", () => {
-  const result = compute({ cost: 5_000, business_use_pct: 1.0 });
-  const outs = findSchedule3All(result);
-  assertEquals(outs.find((o) => o.fields.line6b_alt_fuel_vehicle_refueling !== undefined), undefined);
-});
-
-Deno.test("f8911: 100% personal — no business credit output", () => {
-  const result = compute({ cost: 5_000, business_use_pct: 0 });
-  const outs = findSchedule3All(result);
-  assertEquals(outs.find((o) => o.fields.line6z_general_business_credit !== undefined), undefined);
-});
-
-// ── Routing ───────────────────────────────────────────────────────────────────
-
-Deno.test("f8911: business credit routes to schedule3 line6z_general_business_credit", () => {
-  const result = compute({ cost: 5_000, business_use_pct: 1.0 });
-  assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit, 1_500);
-});
-
-Deno.test("f8911: personal credit routes to schedule3 line6b_alt_fuel_vehicle_refueling", () => {
-  const result = compute({ cost: 2_000, business_use_pct: 0 });
-  assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertEquals(result.outputs[0]?.fields.line6b_alt_fuel_vehicle_refueling, 600);
-});
-
-// ── Fuel Type Enum Accepted ───────────────────────────────────────────────────
-
-Deno.test("f8911: all FuelType enum values accepted by schema", () => {
+Deno.test("Form 8911 validates credit inputs", () => {
+  assertEquals(f8911.inputSchema.safeParse({ cost: -500 }).success, false);
+  assertEquals(
+    f8911.inputSchema.safeParse({ cost: 500, business_use_pct: 1.5 }).success,
+    false,
+  );
+  assertEquals(
+    f8911.inputSchema.safeParse({ ...scenario13, census_tract_geoid: "123" })
+      .success,
+    false,
+  );
   for (const fuelType of Object.values(FuelType)) {
-    const result = f8911.inputSchema.safeParse({ cost: 1_000, fuel_type: fuelType });
-    assertEquals(result.success, true);
+    assertEquals(
+      f8911.inputSchema.safeParse({ ...scenario13, fuel_type: fuelType })
+        .success,
+      true,
+    );
   }
 });

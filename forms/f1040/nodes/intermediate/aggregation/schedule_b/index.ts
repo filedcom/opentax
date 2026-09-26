@@ -34,6 +34,14 @@ export const inputSchema = z.object({
   // ── Part II: Dividends (from f1099div, one entry per payer when needed) ────
   // Ordinary dividends per payer (box1a); nominee amounts already excluded upstream
   ordinaryDividends: accumulable(z.number().nonnegative()).optional(),
+  // Dividend rows already routed directly to Form 1040 by their source node.
+  // They become relevant when another source pushes the combined total above
+  // the Schedule B filing threshold; they must not be routed twice.
+  dividend_info: z.array(z.object({
+    payerName: z.string(),
+    amount: z.number().nonnegative(),
+  })).optional(),
+  form8814_dividends: z.number().nonnegative().optional(),
   // Payer names for dividends (informational)
   payerName: accumulable(z.string()).optional(),
   // Nominee flags (informational — f1099div already nets nominee amounts)
@@ -60,7 +68,9 @@ function line4TaxableInterest(input: ScheduleBInput): number {
 // Part II — Line 6: sum all per-payer ordinary dividend amounts
 function line6OrdinaryDividends(input: ScheduleBInput): number {
   return normalizeArray(input.ordinaryDividends)
-    .reduce((sum, n) => sum + n, 0);
+    .reduce((sum, n) => sum + n, 0) +
+    (input.dividend_info ?? []).reduce((sum, row) => sum + row.amount, 0) +
+    (input.form8814_dividends ?? 0);
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -75,6 +85,8 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
 
     const line4 = line4TaxableInterest(input);
     const line6 = line6OrdinaryDividends(input);
+    const dividendsForReturn = normalizeArray(input.ordinaryDividends)
+      .reduce((sum, n) => sum + n, 0);
 
     if (line4 === 0 && line6 === 0) {
       return { outputs: [] };
@@ -82,18 +94,24 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
 
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (line4 > 0) f1040Fields.line2b_taxable_interest = line4;
-    if (line6 > 0) f1040Fields.line3b_ordinary_dividends = line6;
+    if (dividendsForReturn > 0) {
+      f1040Fields.line3b_ordinary_dividends = dividendsForReturn;
+    }
 
-    const outputs: NodeOutput[] = [
-      this.outputNodes.output(
+    const outputs: NodeOutput[] = [];
+    if (Object.keys(f1040Fields).length > 0) {
+      outputs.push(this.outputNodes.output(
         f1040,
         f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
-      ),
-    ];
+      ));
+    }
 
-    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
+      {};
     if (line4 > 0) agiFields.line2b_taxable_interest = line4;
-    if (line6 > 0) agiFields.line3b_ordinary_dividends = line6;
+    if (dividendsForReturn > 0) {
+      agiFields.line3b_ordinary_dividends = dividendsForReturn;
+    }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(this.outputNodes.output(
         agi_aggregator,
@@ -105,7 +123,9 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     // IRC §1411(c)(1)(A): taxable interest is net investment income.
     // Note: dividends are routed to form8960 directly by f1099div; schedule_b only handles interest.
     if (line4 > 0) {
-      outputs.push(this.outputNodes.output(form8960, { line1_taxable_interest: line4 }));
+      outputs.push(
+        this.outputNodes.output(form8960, { line1_taxable_interest: line4 }),
+      );
     }
 
     // ── Self-emit print-layer values for the PDF builder ─────────────────────
@@ -115,16 +135,41 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     // schedule is filed.
     const printFields: Record<string, number | string> = {};
     const intAmounts = normalizeArray(input.taxable_interest_net);
-    const intNames = normalizeArray(input.payer_name as string | string[] | undefined);
+    const intNames = normalizeArray(
+      input.payer_name as string | string[] | undefined,
+    );
     for (let i = 0; i < Math.min(intAmounts.length, 14); i++) {
       printFields[`print_int_payer_${i + 1}`] = intNames[i] ?? "";
       printFields[`print_int_amount_${i + 1}`] = intAmounts[i];
     }
     const divAmounts = normalizeArray(input.ordinaryDividends);
-    const divNames = normalizeArray(input.payerName as string | string[] | undefined);
-    for (let i = 0; i < Math.min(divAmounts.length, 15); i++) {
-      printFields[`print_div_payer_${i + 1}`] = divNames[i] ?? "";
-      printFields[`print_div_amount_${i + 1}`] = divAmounts[i];
+    const divNames = normalizeArray(
+      input.payerName as string | string[] | undefined,
+    );
+    const dividendRows = divAmounts.map((amount, index) => ({
+      payerName: divNames[index] ?? "",
+      amount,
+    }));
+    dividendRows.push(...(input.dividend_info ?? []));
+    if ((input.form8814_dividends ?? 0) > 0) {
+      dividendRows.push({
+        payerName: "Form 8814",
+        amount: input.form8814_dividends!,
+      });
+    }
+    if (dividendRows.length > 15 && line6 > 1500) {
+      throw new Error(
+        "Schedule B needs an additional dividend-payer statement for more than 15 rows",
+      );
+    }
+    if (line6 > 1500 && dividendRows.some((row) => !row.payerName.trim())) {
+      throw new Error(
+        "Schedule B needs every dividend payer name when total dividends exceed $1,500",
+      );
+    }
+    for (let i = 0; i < Math.min(dividendRows.length, 15); i++) {
+      printFields[`print_div_payer_${i + 1}`] = dividendRows[i].payerName;
+      printFields[`print_div_amount_${i + 1}`] = dividendRows[i].amount;
     }
     if (line4 > 0 || intAmounts.length > 0) {
       printFields.print_line2_total = totalTaxableInterest(input);

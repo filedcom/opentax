@@ -2,12 +2,36 @@ import { assertEquals } from "@std/assert";
 import { f1099oid } from "./index.ts";
 
 function compute(items: Parameters<typeof f1099oid.compute>[1]["f1099oids"]) {
-  return f1099oid.compute({ taxYear: 2025, formType: "f1040" }, { f1099oids: items });
+  return f1099oid.compute({ taxYear: 2025, formType: "f1040" }, {
+    f1099oids: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("f1099oid: affirmed investment-property OID reaches Form 4952 once", () => {
+  const item = {
+    payer_name: "Bond Fund",
+    box1_oid: 500,
+    box2_other_interest: 50,
+    box6_acquisition_premium: 100,
+    investment_property_for_form4952: true,
+  };
+  assertEquals(
+    findOutput(
+      compute([{ ...item, investment_property_for_form4952: false }]),
+      "form4952",
+    ),
+    undefined,
+  );
+  const result = compute([item]);
+  assertEquals(
+    findOutput(result, "form4952")?.fields.source_1099_interest,
+    450,
+  );
+});
 
 // ---------------------------------------------------------------------------
 // 1. Basic OID routing to schedule_b

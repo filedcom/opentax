@@ -68,7 +68,7 @@ export const inputSchema = z.object({
   // Prior-year REIT/PTP net loss carryforward (must be zero or negative)
   reit_loss_carryforward: z.number().nonpositive().optional(),
   // AGI — used to compute pre-QBI taxable income when taxable_income is not yet known
-  agi: z.number().nonnegative().optional(),
+  agi: z.number().optional(),
   // Filing status — used to look up the standard deduction base for income limit
   filing_status: z.nativeEnum(FilingStatus).optional(),
   // Age/blindness flags — used to compute the full standard deduction (including additional factors)
@@ -301,6 +301,7 @@ class Form8995Node extends TaxNode<typeof inputSchema> {
       // Route QBI deduction to standard_deduction so it is subtracted from taxable income
       // before routing to income_tax_calculation (Form 1040 lines 13 → 14 → 15).
       this.outputNodes.output(standard_deduction, { qbi_deduction: deduction }),
+      { nodeType: this.nodeType, fields: { qbi_deduction: deduction } },
     ];
 
     return { outputs };

@@ -1,8 +1,15 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { form4797, inputSchema } from "./index.ts";
 
-function compute(input: Record<string, unknown>) { return form4797.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input)); }
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) { return result.outputs.find((o) => o.nodeType === nodeType); }
+function compute(input: Record<string, unknown>) {
+  return form4797.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
+}
+function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
+  return result.outputs.find((o) => o.nodeType === nodeType);
+}
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
 
@@ -24,8 +31,26 @@ Deno.test("Part I: pure §1231 gain routes to schedule_d line_11_form2439", () =
   assertEquals(sd?.fields.line_11_form2439, 10_000);
 });
 
+Deno.test("Part I: K-1 and Form 6252 section 1231 gains accumulate", () => {
+  const result = compute({
+    section_1231_gain: [4_000, 10_000],
+    gain_form6252: 10_000,
+  });
+  assertEquals(
+    findOutput(result, "schedule_d")?.fields.line_11_form2439,
+    14_000,
+  );
+  assertEquals(
+    findOutput(result, "form4797")?.fields.section_1231_gain,
+    14_000,
+  );
+});
+
 Deno.test("Part I: §1231 gain with no prior losses goes entirely to schedule_d", () => {
-  const result = compute({ section_1231_gain: 5_000, nonrecaptured_1231_loss: 0 });
+  const result = compute({
+    section_1231_gain: 5_000,
+    nonrecaptured_1231_loss: 0,
+  });
   const sd = findOutput(result, "schedule_d");
   assertEquals(sd?.fields.line_11_form2439, 5_000);
 });
@@ -33,7 +58,10 @@ Deno.test("Part I: §1231 gain with no prior losses goes entirely to schedule_d"
 Deno.test("Part I: §1231 gain partially offset by prior nonrecaptured loss → reduced LT gain + ordinary income", () => {
   // §1231 gain = 10,000; prior loss recapture = 3,000
   // → net LT gain = 7,000 to schedule_d; ordinary gain from recapture = 3,000 to schedule1
-  const result = compute({ section_1231_gain: 10_000, nonrecaptured_1231_loss: 3_000 });
+  const result = compute({
+    section_1231_gain: 10_000,
+    nonrecaptured_1231_loss: 3_000,
+  });
   const sd = findOutput(result, "schedule_d");
   const s1 = findOutput(result, "schedule1");
   assertEquals(sd?.fields.line_11_form2439, 7_000);
@@ -41,7 +69,10 @@ Deno.test("Part I: §1231 gain partially offset by prior nonrecaptured loss → 
 });
 
 Deno.test("Part I: §1231 gain fully offset by prior losses → all ordinary income, no schedule_d output", () => {
-  const result = compute({ section_1231_gain: 5_000, nonrecaptured_1231_loss: 5_000 });
+  const result = compute({
+    section_1231_gain: 5_000,
+    nonrecaptured_1231_loss: 5_000,
+  });
   const sd = findOutput(result, "schedule_d");
   const s1 = findOutput(result, "schedule1");
   assertEquals(sd, undefined);
@@ -49,7 +80,10 @@ Deno.test("Part I: §1231 gain fully offset by prior losses → all ordinary inc
 });
 
 Deno.test("Part I: §1231 gain less than prior losses → all gain is ordinary, no schedule_d output", () => {
-  const result = compute({ section_1231_gain: 3_000, nonrecaptured_1231_loss: 8_000 });
+  const result = compute({
+    section_1231_gain: 3_000,
+    nonrecaptured_1231_loss: 8_000,
+  });
   const sd = findOutput(result, "schedule_d");
   const s1 = findOutput(result, "schedule1");
   assertEquals(sd, undefined);
@@ -108,6 +142,30 @@ Deno.test("Part II: negative ordinary_gain (loss) routes to schedule1", () => {
   assertEquals(s1?.fields.line4_other_gains, -2_000);
 });
 
+Deno.test("Part II: Form 4684 line 38a loss remains a distinct Form 4797 source", () => {
+  const result = compute({ ordinary_gain_form4684: -20_000 });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    -20_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line4_other_gains,
+    -20_000,
+  );
+});
+
+Deno.test("Part III: Form 6252 line 12 recapture remains a distinct source", () => {
+  const result = compute({ recapture_form6252: 15_000 });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    15_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line4_other_gains,
+    15_000,
+  );
+});
+
 // ─── Part III — §1245/§1250 recapture (flows into ordinary_gain) ─────────────
 
 Deno.test("Part III: §1245 recapture alone produces schedule1 ordinary gain output", () => {
@@ -128,24 +186,37 @@ Deno.test("Part III: §1250 recapture included in ordinary gain", () => {
 
 Deno.test("unrecaptured §1250 gain routes to schedule_d line19_unrecaptured_1250", () => {
   // §1231 gain of 50,000 with 20,000 of unrecaptured §1250 gain
-  const result = compute({ section_1231_gain: 50_000, unrecaptured_section_1250_gain: 20_000 });
+  const result = compute({
+    section_1231_gain: 50_000,
+    unrecaptured_section_1250_gain: 20_000,
+  });
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
   const gainOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const unrecapturedOut = sdOutputs.find((o) => "line19_unrecaptured_1250" in o.fields);
+  const unrecapturedOut = sdOutputs.find((o) =>
+    "line19_unrecaptured_1250" in o.fields
+  );
   assertEquals(gainOut?.fields.line_11_form2439, 50_000);
   assertEquals(unrecapturedOut?.fields.line19_unrecaptured_1250, 20_000);
 });
 
 Deno.test("unrecaptured §1250 gain routes to schedule_d even without §1231 gain", () => {
-  const result = compute({ ordinary_gain: 10_000, unrecaptured_section_1250_gain: 8_000 });
+  const result = compute({
+    ordinary_gain: 10_000,
+    unrecaptured_section_1250_gain: 8_000,
+  });
   const sdOut = findOutput(result, "schedule_d");
   assertEquals(sdOut?.fields.line19_unrecaptured_1250, 8_000);
 });
 
 Deno.test("zero unrecaptured §1250 gain produces no schedule_d line19 output", () => {
-  const result = compute({ section_1231_gain: 10_000, unrecaptured_section_1250_gain: 0 });
+  const result = compute({
+    section_1231_gain: 10_000,
+    unrecaptured_section_1250_gain: 0,
+  });
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
-  const unrecapturedOut = sdOutputs.find((o) => "line19_unrecaptured_1250" in o.fields);
+  const unrecapturedOut = sdOutputs.find((o) =>
+    "line19_unrecaptured_1250" in o.fields
+  );
   assertEquals(unrecapturedOut, undefined);
 });
 

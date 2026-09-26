@@ -15,7 +15,8 @@ Aggregation node that collects nonrefundable credits (Part I → Form 1040 line 
 | `line2_childcare_credit` | Form 2441 line 11 | §21 |
 | `line3_education_credit` | Form 8863 line 19 | §25A |
 | `line4_retirement_savings_credit` | Form 8880 line 12 | §25B |
-| `line5_residential_energy` | Form 5695 | §25C, §25D |
+| `line5a_residential_clean_energy` | Form 5695 Part I | §25D |
+| `line5b_energy_efficient_home` | Form 5695 Part II | §25C |
 | `line6b_child_tax_credit` | Form 8812 line 14 | §24 |
 | `line6c_adoption_credit` | Form 8839 | §23 |
 | `line6d_clean_vehicle_credit` | Form 8936 line 15 | §30D |

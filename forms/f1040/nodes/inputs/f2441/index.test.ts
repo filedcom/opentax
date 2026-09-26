@@ -49,11 +49,9 @@ Deno.test("f2441: negative employer_dep_care_benefits throws", () => {
   );
 });
 
-Deno.test("f2441: negative agi throws", () => {
-  assertThrows(
-    () => compute([{ agi: -1, qualifying_expenses_paid: 1000 }]),
-    Error,
-  );
+Deno.test("f2441: negative AGI is accepted as a signed return amount", () => {
+  const result = compute([{ agi: -1 }]);
+  assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("f2441: qualifying_person_count of 0 throws (min 1)", () => {

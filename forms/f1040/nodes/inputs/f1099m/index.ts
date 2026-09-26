@@ -3,7 +3,11 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
@@ -21,7 +25,11 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 const RENTS_ROUTING = ["schedule_e", "schedule_c"] as const;
 const ROYALTIES_ROUTING = ["schedule_e", "schedule_c"] as const;
-const OTHER_INCOME_ROUTING = ["prizes_awards", "other_income", "excluded"] as const;
+const OTHER_INCOME_ROUTING = [
+  "prizes_awards",
+  "other_income",
+  "excluded",
+] as const;
 
 type RentsRouting = typeof RENTS_ROUTING[number];
 type RoyaltiesRouting = typeof ROYALTIES_ROUTING[number];
@@ -72,6 +80,7 @@ export const itemSchema = z.object({
   // Box 9 — Crop insurance → Schedule F (unless deferred under IRC §451(d))
   box9_crop_insurance: z.number().nonnegative().optional(),
   box9_crop_insurance_deferred: z.boolean().optional(),
+  farm_id: z.string().min(1).optional(),
   // Box 10 — Attorney proceeds → Schedule 1 Line 8z (unless physical injury IRC §104)
   box10_attorney_proceeds: z.number().nonnegative().optional(),
   box10_attorney_taxable: z.boolean().optional(), // defaults true; false = excluded
@@ -104,7 +113,10 @@ type M99Input = z.infer<typeof inputSchema>;
 const NQDC_EXCISE_RATE = 0.20;
 
 function totalOf(items: M99Item[], field: keyof M99Item): number {
-  return items.reduce((sum, item) => sum + ((item[field] as number | undefined) ?? 0), 0);
+  return items.reduce(
+    (sum, item) => sum + ((item[field] as number | undefined) ?? 0),
+    0,
+  );
 }
 
 function rentalIncomeForScheduleE(items: M99Item[]): number {
@@ -133,7 +145,9 @@ function royaltiesForScheduleC(items: M99Item[]): number {
 
 function prizesAwardsTotal(items: M99Item[]): number {
   return items
-    .filter((i) => (i.box3_other_income_routing ?? "prizes_awards") === "prizes_awards")
+    .filter((i) =>
+      (i.box3_other_income_routing ?? "prizes_awards") === "prizes_awards"
+    )
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
 }
 
@@ -141,12 +155,6 @@ function otherIncomeTotal(items: M99Item[]): number {
   return items
     .filter((i) => i.box3_other_income_routing === "other_income")
     .reduce((s, i) => s + (i.box3_other_income ?? 0), 0);
-}
-
-function cropInsuranceTotal(items: M99Item[]): number {
-  return items
-    .filter((i) => !i.box9_crop_insurance_deferred)
-    .reduce((s, i) => s + (i.box9_crop_insurance ?? 0), 0);
 }
 
 function taxableAttorneyTotal(items: M99Item[]): number {
@@ -172,7 +180,10 @@ function scheduleEOutput(items: M99Item[]): NodeOutput | null {
   const schedEInput: Partial<z.infer<typeof schedule_e["inputSchema"]>> = {};
   if (rental > 0) schedEInput.rental_income = rental;
   if (royalty > 0) schedEInput.royalty_income = royalty;
-  return output(schedule_e, schedEInput as AtLeastOne<z.infer<typeof schedule_e["inputSchema"]>>);
+  return output(
+    schedule_e,
+    schedEInput as AtLeastOne<z.infer<typeof schedule_e["inputSchema"]>>,
+  );
 }
 
 function niitIncomeTotal(items: M99Item[]): number {
@@ -195,7 +206,10 @@ function schedule1Output(items: M99Item[]): NodeOutput | null {
   if (attorney > 0) s1Input.line8z_attorney_proceeds = attorney;
   if (nqdc > 0) s1Input.line8z_nqdc = nqdc;
   if (Object.keys(s1Input).length === 0) return null;
-  return output(schedule1, s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>);
+  return output(
+    schedule1,
+    s1Input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -225,7 +239,11 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // f1040 line25b — federal withholding (always aggregated)
     const totalWithheld = totalOf(m99s, "box4_federal_withheld");
     if (totalWithheld > 0) {
-      outputs.push(this.outputNodes.output(f1040, { line25b_withheld_1099: totalWithheld }));
+      outputs.push(
+        this.outputNodes.output(f1040, {
+          line25b_withheld_1099: totalWithheld,
+        }),
+      );
     }
 
     // schedule_e — rents (typical) + royalties (investment)
@@ -235,7 +253,11 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     // schedule_c — fishing boat + medical + fish purchased + rents (substantial services) + royalties (trade/business)
     const totalScheduleC = scheduleCGrossReceipts(m99s);
     if (totalScheduleC > 0) {
-      outputs.push(this.outputNodes.output(schedule_c, { line1_gross_receipts: totalScheduleC }));
+      outputs.push(
+        this.outputNodes.output(schedule_c, {
+          line1_gross_receipts: totalScheduleC,
+        }),
+      );
     }
 
     // schedule1 — prizes, other income, substitute payments, attorney proceeds, NQDC ordinary income
@@ -243,33 +265,60 @@ class F1099mNode extends TaxNode<typeof inputSchema> {
     if (sched1) outputs.push(sched1);
 
     // agi_aggregator — schedule1 is a print-only sink; all line 8 income must also route here
-    const totalLine8Income =
-      prizesAwardsTotal(m99s) +
+    const totalLine8Income = prizesAwardsTotal(m99s) +
       otherIncomeTotal(m99s) +
       totalOf(m99s, "box8_substitute_payments") +
       taxableAttorneyTotal(m99s) +
       totalOf(m99s, "box15_nqdc");
     if (totalLine8Income > 0) {
-      outputs.push(this.outputNodes.output(agi_aggregator, { line8z_other: totalLine8Income }));
+      outputs.push(
+        this.outputNodes.output(agi_aggregator, {
+          line8z_other: totalLine8Income,
+        }),
+      );
     }
 
-    // schedule_f — crop insurance (non-deferred only)
-    const totalCropInsurance = cropInsuranceTotal(m99s);
-    if (totalCropInsurance > 0) {
-      outputs.push(this.outputNodes.output(schedule_f, { crop_insurance: totalCropInsurance }));
+    // Schedule F line 6a shows received proceeds even when tax is deferred.
+    const farmCropSources = m99s.flatMap((item) => {
+      const amount = item.box9_crop_insurance ?? 0;
+      if (amount === 0) return [];
+      if (!item.farm_id) {
+        throw new Error("1099-MISC crop insurance requires farm_id");
+      }
+      return [{
+        farm_id: item.farm_id,
+        kind: "1099m_crop_insurance" as const,
+        amount,
+        ...(item.box9_crop_insurance_deferred === true
+          ? { deferred: true }
+          : {}),
+      }];
+    });
+    if (farmCropSources.length > 0) {
+      outputs.push(
+        this.outputNodes.output(schedule_f, { farm_sources: farmCropSources }),
+      );
     }
 
     // schedule2 — §409A excise tax (20% of NQDC includible amount)
     const totalNqdc = totalOf(m99s, "box15_nqdc");
     if (totalNqdc > 0) {
-      outputs.push(this.outputNodes.output(schedule2, { line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE }));
+      outputs.push(
+        this.outputNodes.output(schedule2, {
+          line17h_nqdc_tax: totalNqdc * NQDC_EXCISE_RATE,
+        }),
+      );
     }
 
     // form8960 — NIIT: box3_other_income that is investment income (box3_niit_applicable = true)
     // Routed to line7_other_modifications (additional investment income per IRC §1411).
     const totalNiit = niitIncomeTotal(m99s);
     if (totalNiit > 0) {
-      outputs.push(this.outputNodes.output(form8960, { line7_other_modifications: totalNiit }));
+      outputs.push(
+        this.outputNodes.output(form8960, {
+          line7_other_modifications: totalNiit,
+        }),
+      );
     }
 
     return { outputs };

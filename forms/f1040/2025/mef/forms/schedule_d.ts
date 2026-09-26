@@ -69,6 +69,14 @@ function buildBasisRptNoAdjGroup(
 
 function buildIRS1040ScheduleD(fields: Input): string {
   const f = fields as Fields;
+  // The intermediate node reports a distribution-only return directly on
+  // Form 1040 line 7a. It emits print_line16_combined only when Schedule D is
+  // actually filed, so raw line-13 input alone must not create an attachment.
+  if (
+    ((f.line13_cap_gain_distrib ?? 0) > 0 ||
+      (f.line_12_cap_gain_dist ?? 0) > 0) &&
+    typeof fields["print_line16_combined"] !== "number"
+  ) return "";
   const children: string[] = [];
 
   // Nested groups first (XSD order: line 1a before line 8a)

@@ -3,7 +3,11 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { form2441 } from "../../intermediate/forms/form2441/index.ts";
 import { form4137 } from "../../intermediate/forms/form4137/index.ts";
@@ -29,80 +33,136 @@ import { CONFIG_BY_YEAR } from "../../config/index.ts";
 import { schedule1a } from "../../intermediate/forms/schedule1a/index.ts";
 
 export enum Box12Code {
-  A = "A",     // Uncollected SS tax on tips
-  AA = "AA",   // Designated Roth contributions to 401(k)
-  B = "B",     // Uncollected Medicare tax on tips
-  BB = "BB",   // Designated Roth contributions to 403(b)
-  C = "C",     // Taxable cost of group-term life insurance >$50k
-  D = "D",     // 401(k) elective deferrals
-  DD = "DD",   // Cost of employer-sponsored health coverage
-  E = "E",     // 403(b) elective deferrals
-  EE = "EE",   // Designated Roth contributions to 457(b)
-  F = "F",     // 408(k)(6) SEP elective deferrals
-  FF = "FF",   // Permitted benefits under qualified small employer HRA
-  G = "G",     // 457(b) deferrals and employer contributions
-  GG = "GG",   // Income from qualified equity grants
-  H = "H",     // 501(c)(18)(D) plan elective deferrals
-  HH = "HH",   // Aggregate deferrals under §83(i) elections
-  J = "J",     // Non-taxable sick pay
-  K = "K",     // 20% excise tax on excess golden parachute payments
-  L = "L",     // Substantiated employee business expense reimbursements
-  M = "M",     // Uncollected SS tax on group-term life insurance cost
-  N = "N",     // Uncollected Medicare tax on group-term life insurance cost
-  P = "P",     // Excludable moving expense reimbursements
-  Q = "Q",     // Nontaxable combat pay
-  R = "R",     // Employer contributions to Archer MSA
-  S = "S",     // 408(p) SIMPLE salary reduction contributions
-  T = "T",     // Adoption benefits
-  V = "V",     // Income from exercise of nonstatutory stock options
-  W = "W",     // Employer contributions to HSA
-  Y = "Y",     // 409A nonqualified deferred compensation deferrals
-  Z = "Z",     // Income under 409A-failing nonqualified deferred compensation
+  A = "A", // Uncollected SS tax on tips
+  AA = "AA", // Designated Roth contributions to 401(k)
+  B = "B", // Uncollected Medicare tax on tips
+  BB = "BB", // Designated Roth contributions to 403(b)
+  C = "C", // Taxable cost of group-term life insurance >$50k
+  D = "D", // 401(k) elective deferrals
+  DD = "DD", // Cost of employer-sponsored health coverage
+  E = "E", // 403(b) elective deferrals
+  EE = "EE", // Designated Roth contributions to 457(b)
+  F = "F", // 408(k)(6) SEP elective deferrals
+  FF = "FF", // Permitted benefits under qualified small employer HRA
+  G = "G", // 457(b) deferrals and employer contributions
+  GG = "GG", // Income from qualified equity grants
+  H = "H", // 501(c)(18)(D) plan elective deferrals
+  HH = "HH", // Aggregate deferrals under §83(i) elections
+  J = "J", // Non-taxable sick pay
+  K = "K", // 20% excise tax on excess golden parachute payments
+  L = "L", // Substantiated employee business expense reimbursements
+  M = "M", // Uncollected SS tax on group-term life insurance cost
+  N = "N", // Uncollected Medicare tax on group-term life insurance cost
+  P = "P", // Excludable moving expense reimbursements
+  Q = "Q", // Nontaxable combat pay
+  R = "R", // Employer contributions to Archer MSA
+  S = "S", // 408(p) SIMPLE salary reduction contributions
+  T = "T", // Adoption benefits
+  V = "V", // Income from exercise of nonstatutory stock options
+  W = "W", // Employer contributions to HSA
+  Y = "Y", // 409A nonqualified deferred compensation deferrals
+  Z = "Z", // Income under 409A-failing nonqualified deferred compensation
 }
 
 const box12EntrySchema = z.object({
-  code: z.nativeEnum(Box12Code).describe("Box 12 code (see enum for descriptions)"),
+  code: z.nativeEnum(Box12Code).describe(
+    "Box 12 code (see enum for descriptions)",
+  ),
   amount: z.number().nonnegative().describe("Dollar amount for this code"),
 });
 
 const box14EntrySchema = z.object({
   description: z.string().describe("Label printed by employer"),
   amount: z.number().nonnegative().describe("Dollar amount"),
-  is_state_sdi_pfml: z.boolean().describe("True if this entry is state SDI or PFML (deductible on Sch A)"),
+  is_state_sdi_pfml: z.boolean().describe(
+    "True if this entry is state SDI or PFML (deductible on Sch A)",
+  ),
 });
 
 // Per-entry schema — one W-2 from one employer. Used by the CLI for per-entry validation.
 export const w2ItemSchema = z.object({
-  employer_ein: z.string().optional().describe("Employer identification number"),
+  employer_ein: z.string().optional().describe(
+    "Employer identification number",
+  ),
   employer_name: z.string().optional().describe("Employer legal name"),
-  employer_address_line1: z.string().optional().describe("Employer street address"),
-  employer_address_line2: z.string().optional().describe("Employer address line 2"),
+  employer_address_line1: z.string().optional().describe(
+    "Employer street address",
+  ),
+  employer_address_line2: z.string().optional().describe(
+    "Employer address line 2",
+  ),
   employer_address_city: z.string().optional().describe("Employer city"),
-  employer_address_state: z.string().optional().describe("Employer state abbreviation"),
+  employer_address_state: z.string().optional().describe(
+    "Employer state abbreviation",
+  ),
   employer_address_zip: z.string().optional().describe("Employer ZIP code"),
-  employee_ssn: z.string().optional().describe("Employee SSN when this W-2 belongs to the spouse"),
-  box1_wages: z.number().nonnegative().describe("Wages, tips, other compensation"),
-  box2_fed_withheld: z.number().nonnegative().describe("Federal income tax withheld"),
-  box3_ss_wages: z.number().nonnegative().optional().describe("Social security wages"),
-  box4_ss_withheld: z.number().nonnegative().optional().describe("Social security tax withheld"),
-  box5_medicare_wages: z.number().nonnegative().optional().describe("Medicare wages and tips"),
-  box6_medicare_withheld: z.number().nonnegative().optional().describe("Medicare tax withheld"),
-  box7_ss_tips: z.number().nonnegative().optional().describe("Social security tips"),
-  box8_allocated_tips: z.number().nonnegative().optional().describe("Allocated tips — routes to Form 4137"),
-  box10_dep_care: z.number().nonnegative().optional().describe("Dependent care benefits — routes to Form 2441"),
-  box11_nonqual_plans: z.number().nonnegative().optional().describe("Nonqualified plans — included in box 1 wages"),
-  box12_entries: z.array(box12EntrySchema).optional().describe("Coded benefit/deferral entries (up to 4 per W-2)"),
-  box13_statutory_employee: z.boolean().optional().describe("Statutory employee — wages go to Schedule C, not line 1a"),
-  box13_retirement_plan: z.boolean().optional().describe("Retirement plan participant — affects IRA deduction phaseout"),
-  box13_third_party_sick: z.boolean().optional().describe("Third-party sick pay — excluded from SE tax"),
-  box14_entries: z.array(box14EntrySchema).optional().describe("Other — employer-labeled items; SDI/PFML deductible on Sch A"),
-  box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe("Treasury Tipped Occupation Code"),
+  employee_ssn: z.string().optional().describe(
+    "Employee SSN when this W-2 belongs to the spouse",
+  ),
+  box1_wages: z.number().nonnegative().describe(
+    "Wages, tips, other compensation",
+  ),
+  box2_fed_withheld: z.number().nonnegative().describe(
+    "Federal income tax withheld",
+  ),
+  box3_ss_wages: z.number().nonnegative().optional().describe(
+    "Social security wages",
+  ),
+  box4_ss_withheld: z.number().nonnegative().optional().describe(
+    "Social security tax withheld",
+  ),
+  box5_medicare_wages: z.number().nonnegative().optional().describe(
+    "Medicare wages and tips",
+  ),
+  box6_medicare_withheld: z.number().nonnegative().optional().describe(
+    "Medicare tax withheld",
+  ),
+  box7_ss_tips: z.number().nonnegative().optional().describe(
+    "Social security tips",
+  ),
+  box8_allocated_tips: z.number().nonnegative().optional().describe(
+    "Allocated tips — routes to Form 4137",
+  ),
+  box10_dep_care: z.number().nonnegative().optional().describe(
+    "Dependent care benefits — routes to Form 2441",
+  ),
+  box11_nonqual_plans: z.number().nonnegative().optional().describe(
+    "Nonqualified plans — included in box 1 wages",
+  ),
+  box12_entries: z.array(box12EntrySchema).optional().describe(
+    "Coded benefit/deferral entries (up to 4 per W-2)",
+  ),
+  box13_statutory_employee: z.boolean().optional().describe(
+    "Statutory employee — wages go to Schedule C, not line 1a",
+  ),
+  box13_retirement_plan: z.boolean().optional().describe(
+    "Retirement plan participant — affects IRA deduction phaseout",
+  ),
+  box13_third_party_sick: z.boolean().optional().describe(
+    "Third-party sick pay — excluded from SE tax",
+  ),
+  box14_entries: z.array(box14EntrySchema).optional().describe(
+    "Other — employer-labeled items; SDI/PFML deductible on Sch A",
+  ),
+  box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
+    "Treasury Tipped Occupation Code",
+  ),
   box15_state: z.string().optional().describe("State abbreviation"),
-  box16_state_wages: z.number().nonnegative().optional().describe("State wages, tips, etc."),
-  box17_state_withheld: z.number().nonnegative().optional().describe("State income tax withheld"),
-  box18_local_wages: z.number().nonnegative().optional().describe("Local wages, tips, etc."),
-  box19_local_withheld: z.number().nonnegative().optional().describe("Local income tax withheld"),
-  taxpayer_age: z.number().nonnegative().optional().describe("Taxpayer age — used for retirement contribution limit (catch-up)"),
+  box16_state_wages: z.number().nonnegative().optional().describe(
+    "State wages, tips, etc.",
+  ),
+  box17_state_withheld: z.number().nonnegative().optional().describe(
+    "State income tax withheld",
+  ),
+  box18_local_wages: z.number().nonnegative().optional().describe(
+    "Local wages, tips, etc.",
+  ),
+  box19_local_withheld: z.number().nonnegative().optional().describe(
+    "Local income tax withheld",
+  ),
+  taxpayer_age: z.number().nonnegative().optional().describe(
+    "Taxpayer age — used for retirement contribution limit (catch-up)",
+  ),
 });
 
 // Node inputSchema — receives all W-2s for this return as a single array.
@@ -133,6 +193,13 @@ function validateItem(
   ssTaxPerEmployer: number,
   retirementLimits: Record<string, Record<number, number>>,
 ): void {
+  if (
+    item.box14b_tipped_code !== undefined &&
+    (item.box7_ss_tips ?? 0) > 0 &&
+    !/^\d{9}$/.test(item.employee_ssn?.replaceAll("-", "") ?? "")
+  ) {
+    throw new Error("W-2 qualified tips need a nine-digit employee SSN");
+  }
   const ssWages = (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
   if (ssWages > ssWageBase) {
     throw new Error(
@@ -148,28 +215,42 @@ function validateItem(
   const entries = item.box12_entries ?? [];
   const age = item.taxpayer_age;
 
-  const code401k = entries.filter((e) => e.code === Box12Code.D || e.code === Box12Code.AA)
+  const code401k = entries.filter((e) =>
+    e.code === Box12Code.D || e.code === Box12Code.AA
+  )
     .reduce((s, e) => s + e.amount, 0);
   if (code401k > retirementLimit(retirementLimits, "401k", age)) {
-    throw new Error(`W-2 validation error: 401(k) deferrals (${code401k}) exceed the limit`);
+    throw new Error(
+      `W-2 validation error: 401(k) deferrals (${code401k}) exceed the limit`,
+    );
   }
 
-  const code403b = entries.filter((e) => e.code === Box12Code.E || e.code === Box12Code.BB)
+  const code403b = entries.filter((e) =>
+    e.code === Box12Code.E || e.code === Box12Code.BB
+  )
     .reduce((s, e) => s + e.amount, 0);
   if (code403b > retirementLimit(retirementLimits, "403b", age)) {
-    throw new Error(`W-2 validation error: 403(b) deferrals (${code403b}) exceed the limit`);
+    throw new Error(
+      `W-2 validation error: 403(b) deferrals (${code403b}) exceed the limit`,
+    );
   }
 
-  const code457b = entries.filter((e) => e.code === Box12Code.G || e.code === Box12Code.EE)
+  const code457b = entries.filter((e) =>
+    e.code === Box12Code.G || e.code === Box12Code.EE
+  )
     .reduce((s, e) => s + e.amount, 0);
   if (code457b > retirementLimit(retirementLimits, "457b", age)) {
-    throw new Error(`W-2 validation error: 457(b) deferrals (${code457b}) exceed the limit`);
+    throw new Error(
+      `W-2 validation error: 457(b) deferrals (${code457b}) exceed the limit`,
+    );
   }
 
   const codeS = entries.filter((e) => e.code === Box12Code.S)
     .reduce((s, e) => s + e.amount, 0);
   if (codeS > retirementLimit(retirementLimits, "simple", age)) {
-    throw new Error(`W-2 validation error: SIMPLE IRA deferrals (${codeS}) exceed the limit`);
+    throw new Error(
+      `W-2 validation error: SIMPLE IRA deferrals (${codeS}) exceed the limit`,
+    );
   }
 }
 
@@ -203,14 +284,19 @@ function combatPayFields(w2s: W2Items): F1040Input {
 }
 
 function excessSsOutput(w2s: W2Items, ssTaxPerEmployer: number): NodeOutput[] {
-  const totalSsWithheld = w2s.reduce((sum, item) => sum + (item.box4_ss_withheld ?? 0), 0);
+  const totalSsWithheld = w2s.reduce(
+    (sum, item) => sum + (item.box4_ss_withheld ?? 0),
+    0,
+  );
   const excess = totalSsWithheld - ssTaxPerEmployer;
   if (w2s.length < 2 || excess <= 0) return [];
   return [output(schedule3, { line11_excess_ss: excess })];
 }
 
 function statutoryOutput(w2s: W2Items): NodeOutput[] {
-  const statutory = w2s.filter((item) => item.box13_statutory_employee === true);
+  const statutory = w2s.filter((item) =>
+    item.box13_statutory_employee === true
+  );
   const wages = statutory.reduce((sum, item) => sum + item.box1_wages, 0);
   if (wages === 0) return [];
   const withholding = statutory.reduce(
@@ -231,8 +317,14 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   // threshold per benchmark reference calculator behavior).
   const totalBox1Wages = items.reduce((sum, item) => sum + item.box1_wages, 0);
   // Use box5_medicare_wages for line20 (regular Medicare isolation from total withheld).
-  const totalBox5Wages = items.reduce((sum, item) => sum + (item.box5_medicare_wages ?? 0), 0);
-  const totalWithheld = items.reduce((sum, item) => sum + (item.box6_medicare_withheld ?? 0), 0);
+  const totalBox5Wages = items.reduce(
+    (sum, item) => sum + (item.box5_medicare_wages ?? 0),
+    0,
+  );
+  const totalWithheld = items.reduce(
+    (sum, item) => sum + (item.box6_medicare_withheld ?? 0),
+    0,
+  );
   const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
   if (totalBox1Wages > 0) fields.medicare_wages = totalBox1Wages;
   // Only send box5 separately when it differs from box1 (avoids no-op field)
@@ -241,16 +333,26 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   }
   if (totalWithheld > 0) fields.medicare_withheld = totalWithheld;
   if (Object.keys(fields).length === 0) return [];
-  return [output(form8959, fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>)];
+  return [
+    output(
+      form8959,
+      fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>,
+    ),
+  ];
 }
 
 function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
-  const total = regularItems(w2s).reduce(
-    (sum, item) => sum + (item.box8_allocated_tips ?? 0),
-    0,
-  );
-  return total > 0
-    ? [output(form4137, { allocated_tips: total })]
+  const sources = w2s.map((item) => ({
+    recipient: item.employee_ssn === undefined
+      ? "taxpayer" as const
+      : "spouse" as const,
+    allocated_tips: item.box8_allocated_tips ?? 0,
+    ss_wages_and_tips: item.box3_ss_wages === undefined
+      ? undefined
+      : item.box3_ss_wages + (item.box7_ss_tips ?? 0),
+  }));
+  return sources.length > 0
+    ? [output(form4137, { w2_tip_sources: sources })]
     : [];
 }
 
@@ -259,13 +361,13 @@ function depCareOutput(w2s: W2Items): NodeOutput[] {
     (sum, item) => sum + (item.box10_dep_care ?? 0),
     0,
   );
-  return total > 0
-    ? [output(form2441, { dep_care_benefits: total })]
-    : [];
+  return total > 0 ? [output(form2441, { dep_care_benefits: total })] : [];
 }
 
 function retirementPlanOutput(w2s: W2Items): NodeOutput[] {
-  const any = regularItems(w2s).some((item) => item.box13_retirement_plan === true);
+  const any = regularItems(w2s).some((item) =>
+    item.box13_retirement_plan === true
+  );
   return any
     ? [output(ira_deduction_worksheet, { covered_by_retirement_plan: true })]
     : [];
@@ -308,18 +410,27 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
 }
 
 function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
-  const total = regularItems(w2s)
-    .filter((item) => item.box14b_tipped_code !== undefined)
-    .reduce((sum, item) => sum + (item.box7_ss_tips ?? 0), 0);
-  return total > 0
-    ? [output(schedule1a, { qualified_employee_tips: total })]
+  const tips = regularItems(w2s)
+    .filter((item) =>
+      item.box14b_tipped_code !== undefined &&
+      (item.box7_ss_tips ?? 0) > 0
+    )
+    .map((item) => ({
+      employee_ssn: item.employee_ssn!,
+      amount: item.box7_ss_tips!,
+    }));
+  return tips.length > 0
+    ? [output(schedule1a, { qualified_employee_tips: tips })]
     : [];
 }
 
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
   const sum = (...codes: Box12Code[]) =>
-    entries.filter((e) => codes.includes(e.code)).reduce((s, e) => s + e.amount, 0);
+    entries.filter((e) => codes.includes(e.code)).reduce(
+      (s, e) => s + e.amount,
+      0,
+    );
 
   const outputs: NodeOutput[] = [];
 
@@ -348,7 +459,12 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const zCode = sum(Box12Code.Z);
   if (zCode > 0) schedule2Input.section409a_excise = zCode;
   if (Object.keys(schedule2Input).length > 0) {
-    outputs.push(output(schedule2, schedule2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>));
+    outputs.push(
+      output(
+        schedule2,
+        schedule2Input as AtLeastOne<z.infer<typeof schedule2["inputSchema"]>>,
+      ),
+    );
   }
 
   // Code FF: QSEHRA benefits reduce Form 8962 PTC per IRC §36B(c)(4)
@@ -388,7 +504,12 @@ class W2Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     for (const item of input.w2s) {
-      validateItem(item, cfg.ssWageBase, cfg.ssTaxPerEmployer, cfg.retirementLimits);
+      validateItem(
+        item,
+        cfg.ssWageBase,
+        cfg.ssTaxPerEmployer,
+        cfg.retirementLimits,
+      );
     }
 
     const f1040Fields: F1040Input = {
@@ -411,22 +532,29 @@ class W2Node extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 
-    // Route wages, allocated tips, and §501(c)(18)(D) deduction to AGI aggregator
-    const agiWageFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    // Route taxable W-2 wages and §501(c)(18)(D) deduction to AGI.
+    // Form 4137 routes the actual unreported tips after reconciling box 8.
+    const agiWageFields: Partial<
+      z.infer<typeof agi_aggregator["inputSchema"]>
+    > = {};
     const wages = wageFields(input.w2s);
-    if (wages.line1a_wages !== undefined) agiWageFields.line1a_wages = wages.line1a_wages;
-    const allocatedTips = regularItems(input.w2s).reduce(
-      (sum, item) => sum + (item.box8_allocated_tips ?? 0),
+    if (wages.line1a_wages !== undefined) {
+      agiWageFields.line1a_wages = wages.line1a_wages;
+    }
+    const entries = regularItems(input.w2s).flatMap((item) =>
+      item.box12_entries ?? []
+    );
+    const h = entries.filter((e) => e.code === Box12Code.H).reduce(
+      (s, e) => s + e.amount,
       0,
     );
-    if (allocatedTips > 0) agiWageFields.line1b_allocated_tips = allocatedTips;
-    const entries = regularItems(input.w2s).flatMap((item) => item.box12_entries ?? []);
-    const h = entries.filter((e) => e.code === Box12Code.H).reduce((s, e) => s + e.amount, 0);
     if (h > 0) agiWageFields.line24f_501c18d = h;
     if (Object.keys(agiWageFields).length > 0) {
       outputs.push(this.outputNodes.output(
         agi_aggregator,
-        agiWageFields as AtLeastOne<z.infer<typeof agi_aggregator["inputSchema"]>>,
+        agiWageFields as AtLeastOne<
+          z.infer<typeof agi_aggregator["inputSchema"]>
+        >,
       ));
     }
 
@@ -436,8 +564,12 @@ class W2Node extends TaxNode<typeof inputSchema> {
       0,
     );
     if (earnedIncome > 0) {
-      outputs.push(this.outputNodes.output(eitc, { earned_income: earnedIncome }));
-      outputs.push(this.outputNodes.output(f8812, { auto_earned_income: earnedIncome }));
+      outputs.push(
+        this.outputNodes.output(eitc, { earned_income: earnedIncome }),
+      );
+      outputs.push(
+        this.outputNodes.output(f8812, { auto_earned_income: earnedIncome }),
+      );
     }
 
     return { outputs };

@@ -3,14 +3,18 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
 import { form8582 } from "../../intermediate/forms/form8582/index.ts";
-import { form6198 } from "../../intermediate/forms/form6198/index.ts";
+import {
+  type AtRiskNet,
+  calculateSimplifiedAtRiskLoss,
+  simplifiedAtRiskSchema,
+} from "../../intermediate/forms/form6198/simplified.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form8990 } from "../../intermediate/forms/form8990/index.ts";
 import { form461 } from "../../intermediate/forms/form461/index.ts";
@@ -21,13 +25,13 @@ import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
 // ── TY2025 Constants ────────────────────────────────────────────────────────
 
-const SE_TAX_THRESHOLD = 400;               // Net profit >= $400 → Schedule SE
-const CLERGY_SE_THRESHOLD = 108.28;         // Clergy SE threshold (no Form 4361)
-const MEALS_STANDARD_PCT = 0.50;            // Standard business meals
-const MEALS_DOT_PCT = 0.80;                 // DOT hours-of-service workers
-const MEALS_WAGES_PCT = 1.00;              // Meals treated as employee wages
-const HOME_OFFICE_SIMPLIFIED_RATE = 5.00;  // $5.00 per sq ft (simplified method)
-const HOME_OFFICE_MAX_SQ_FT = 300;         // 300 sq ft maximum
+const SE_TAX_THRESHOLD = 400; // Net profit >= $400 → Schedule SE
+const CLERGY_SE_THRESHOLD = 108.28; // Clergy SE threshold (no Form 4361)
+const MEALS_STANDARD_PCT = 0.50; // Standard business meals
+const MEALS_DOT_PCT = 0.80; // DOT hours-of-service workers
+const MEALS_WAGES_PCT = 1.00; // Meals treated as employee wages
+const HOME_OFFICE_SIMPLIFIED_RATE = 5.00; // $5.00 per sq ft (simplified method)
+const HOME_OFFICE_MAX_SQ_FT = 300; // 300 sq ft maximum
 
 // ── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -42,7 +46,13 @@ export const itemSchema = z.object({
   line_b_business_code: z.string(),
   line_c_business_name: z.string().optional(),
   line_d_ein: z.string().optional(),
-  line_e_business_address: z.string().optional(),
+  line_e_business_address: z.object({
+    line1: z.string().min(1),
+    line2: z.string().optional(),
+    city: z.string().min(1),
+    state: z.string().length(2),
+    zip: z.string().regex(/^\d{5}(?:-\d{4})?$/),
+  }).optional(),
   line_f_accounting_method: z.enum(["cash", "accrual", "other"]),
   line_g_material_participation: z.boolean(),
   line_h_new_business: z.boolean().optional(),
@@ -58,7 +68,7 @@ export const itemSchema = z.object({
   disposed_of_business: z.boolean().optional(),
   multi_form_code: z.string().optional(),
   llc_number: z.number().int().min(1).max(999).optional(),
-  subject_to_163j: z.boolean().optional(),  // §163(j) business interest limitation
+  subject_to_163j: z.boolean().optional(), // §163(j) business interest limitation
 
   // Section 199A information used when taxable income exceeds the QBI threshold.
   qbi_specified_service: z.boolean().optional(),
@@ -68,7 +78,7 @@ export const itemSchema = z.object({
   // Part I: Income
   line_1_gross_receipts: z.number().nonnegative(),
   line_2_returns_allowances: z.number().nonnegative().optional(),
-  line_6_other_income: z.number().optional(),  // can be negative (recapture)
+  line_6_other_income: z.number().optional(), // can be negative (recapture)
 
   // Part II: Expenses
   line_8_advertising: z.number().nonnegative().optional(),
@@ -91,16 +101,17 @@ export const itemSchema = z.object({
   line_23_taxes_licenses: z.number().nonnegative().optional(),
   line_24a_travel: z.number().nonnegative().optional(),
   line_24b_meals: z.number().nonnegative().optional(),
-  meals_dot_worker: z.boolean().optional(),   // DOT hours-of-service → 80% meals
-  meals_as_wages: z.boolean().optional(),     // Meals treated as wages → 100%
+  meals_dot_worker: z.boolean().optional(), // DOT hours-of-service → 80% meals
+  meals_as_wages: z.boolean().optional(), // Meals treated as wages → 100%
   line_25_utilities: z.number().nonnegative().optional(),
   line_26_wages: z.number().nonnegative().optional(),
   line_27a_energy_efficient: z.number().nonnegative().optional(),
   line_27b_other_expenses: z.number().nonnegative().optional(),
   line_30_home_office: z.number().nonnegative().optional(), // pre-computed dollar amount
-  home_office_sq_ft: z.number().nonnegative().optional(),   // simplified method sq ft input
+  home_office_sq_ft: z.number().nonnegative().optional(), // simplified method sq ft input
   home_office_method: z.enum(["simplified", "actual"]).optional(),
   line_32_at_risk: z.enum(["a", "b"]).optional(),
+  at_risk_simplified: simplifiedAtRiskSchema.optional(),
 
   // Part III: Cost of Goods Sold
   line_33_inventory_method: z.enum(["cost", "lcm", "other"]).optional(),
@@ -151,11 +162,11 @@ export const inputSchema = z.object({
   line_12_depletion: z.number().nonnegative().optional(),
 });
 
-type ScheduleCItem = z.infer<typeof itemSchema>;
+export type ScheduleCItem = z.infer<typeof itemSchema>;
 
 // ── Pure helpers ────────────────────────────────────────────────────────────
 
-function computeCOGS(item: ScheduleCItem): number {
+export function computeCOGS(item: ScheduleCItem): number {
   const line40 = (item.line_35_cogs_beginning_inventory ?? 0) +
     (item.line_36_purchases ?? 0) +
     (item.line_37_cost_of_labor ?? 0) +
@@ -164,21 +175,28 @@ function computeCOGS(item: ScheduleCItem): number {
   return line40 - (item.line_41_cogs_ending_inventory ?? 0);
 }
 
-function computeGrossIncome(item: ScheduleCItem): number {
-  const netSales = item.line_1_gross_receipts - (item.line_2_returns_allowances ?? 0);
+export function computeGrossIncome(item: ScheduleCItem): number {
+  const netSales = item.line_1_gross_receipts -
+    (item.line_2_returns_allowances ?? 0);
   const grossProfit = netSales - computeCOGS(item);
   return grossProfit + (item.line_6_other_income ?? 0);
 }
 
-function mealsDeductiblePct(item: ScheduleCItem): number {
+export function mealsDeductiblePct(item: ScheduleCItem): number {
   if (item.meals_as_wages === true) return MEALS_WAGES_PCT;
   if (item.meals_dot_worker === true) return MEALS_DOT_PCT;
   return MEALS_STANDARD_PCT;
 }
 
-function homeOfficeDeduction(item: ScheduleCItem, tentativeProfit: number): number {
+export function homeOfficeDeduction(
+  item: ScheduleCItem,
+  tentativeProfit: number,
+): number {
   let deduction: number;
-  if (item.home_office_method === "simplified" && item.home_office_sq_ft !== undefined) {
+  if (
+    item.home_office_method === "simplified" &&
+    item.home_office_sq_ft !== undefined
+  ) {
     const cappedSqFt = Math.min(item.home_office_sq_ft, HOME_OFFICE_MAX_SQ_FT);
     deduction = cappedSqFt * HOME_OFFICE_SIMPLIFIED_RATE;
   } else {
@@ -188,9 +206,12 @@ function homeOfficeDeduction(item: ScheduleCItem, tentativeProfit: number): numb
   return Math.min(deduction, Math.max(0, tentativeProfit));
 }
 
-function computeTotalExpenses(item: ScheduleCItem): number {
+export function computeTotalExpenses(item: ScheduleCItem): number {
   const mealsDeductible = (item.line_24b_meals ?? 0) * mealsDeductiblePct(item);
-  const partVTotal = (item.part_v_other_expenses ?? []).reduce((sum, e) => sum + e.amount, 0);
+  const partVTotal = (item.part_v_other_expenses ?? []).reduce(
+    (sum, e) => sum + e.amount,
+    0,
+  );
   return (item.line_8_advertising ?? 0) +
     (item.line_9_car_truck_expenses ?? 0) +
     (item.line_10_commissions_fees ?? 0) +
@@ -218,20 +239,41 @@ function computeTotalExpenses(item: ScheduleCItem): number {
     partVTotal;
 }
 
-function computeNetProfit(item: ScheduleCItem): number {
+export function computeNetProfit(item: ScheduleCItem): number {
   const grossIncome = computeGrossIncome(item);
   const totalExpenses = computeTotalExpenses(item);
-  const tentativeProfit = grossIncome - totalExpenses;   // Line 29
+  const tentativeProfit = grossIncome - totalExpenses; // Line 29
   const homeOffice = homeOfficeDeduction(item, tentativeProfit);
-  const rawProfit = tentativeProfit - homeOffice;        // Line 31
+  const rawProfit = tentativeProfit - homeOffice; // Line 31
   // Professional gamblers cannot report a net loss (IRC §165(d))
-  return item.professional_gambler === true ? Math.max(0, rawProfit) : rawProfit;
+  return item.professional_gambler === true
+    ? Math.max(0, rawProfit)
+    : rawProfit;
 }
 
 function isSeExempt(item: ScheduleCItem): boolean {
   return item.statutory_employee === true ||
     item.exempt_notary === true ||
     item.paper_route === true;
+}
+
+export function calculateScheduleCAtRiskNet(item: ScheduleCItem): AtRiskNet {
+  const preliminaryNet = computeNetProfit(item);
+  if (item.at_risk_simplified && item.line_32_at_risk !== "b") {
+    throw new Error("Schedule C Form 6198 facts require line 32b");
+  }
+  if (item.line_32_at_risk !== "b" || preliminaryNet >= 0) {
+    if (item.at_risk_simplified) {
+      throw new Error("Schedule C Form 6198 facts require a current-year loss");
+    }
+    return { preliminaryNet, atRiskNet: preliminaryNet, suspended: 0 };
+  }
+  if (!item.at_risk_simplified) {
+    throw new Error(
+      "Schedule C line 32b requires Form 6198 simplified-computation facts",
+    );
+  }
+  return calculateSimplifiedAtRiskLoss(preliminaryNet, item.at_risk_simplified);
 }
 
 // Schedule SE line 4c threshold for the combined businesses. Clergy Schedule C income
@@ -242,23 +284,28 @@ function seThreshold(items: readonly ScheduleCItem[]): number {
     : SE_TAX_THRESHOLD;
 }
 
-function deductionOutputs(item: ScheduleCItem, netProfit: number): NodeOutput[] {
+function deductionOutputs(
+  item: ScheduleCItem,
+  netProfit: number,
+): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (item.line_12_depletion && item.line_12_depletion > 0) {
-    outputs.push(output(form6251, { other_adjustments: item.line_12_depletion }));
+    outputs.push(
+      output(form6251, { other_adjustments: item.line_12_depletion }),
+    );
   }
   if (item.line_g_material_participation === false) {
     outputs.push(output(form8582, { passive_schedule_c: netProfit }));
   }
-  if (netProfit < 0 && item.line_32_at_risk === "b") {
-    outputs.push(output(form6198, { schedule_c_loss: netProfit }));
-  }
-  if (item.subject_to_163j === true &&
-    ((item.line_16a_interest_mortgage ?? 0) + (item.line_16b_interest_other ?? 0)) > 0) {
+  if (
+    item.subject_to_163j === true &&
+    ((item.line_16a_interest_mortgage ?? 0) +
+        (item.line_16b_interest_other ?? 0)) > 0
+  ) {
     outputs.push(output(form8990, {
-        business_interest_expense:
-          (item.line_16a_interest_mortgage ?? 0) + (item.line_16b_interest_other ?? 0),
-      }));
+      business_interest_expense: (item.line_16a_interest_mortgage ?? 0) +
+        (item.line_16b_interest_other ?? 0),
+    }));
   }
   return outputs;
 }
@@ -274,7 +321,6 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     schedule_se,
     form8995,
     form8582,
-    form6198,
     form6251,
     form8990,
     form461,
@@ -295,37 +341,58 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // Per-item: compute net profit and collect per-item routing outputs
-    const netProfits = input.schedule_cs.map(computeNetProfit);
+    const atRisk = input.schedule_cs.map(calculateScheduleCAtRiskNet);
+    const netProfits = atRisk.map((result) => result.atRiskNet);
 
     // Aggregate net profits → single schedule1 output and AGI aggregator
     const totalNetProfit = netProfits.reduce((sum, p) => sum + p, 0);
-    outputs.push(this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }));
-    outputs.push(this.outputNodes.output(agi_aggregator, { line3_schedule_c: totalNetProfit }));
+    outputs.push(
+      this.outputNodes.output(schedule1, { line3_schedule_c: totalNetProfit }),
+    );
+    outputs.push(
+      this.outputNodes.output(agi_aggregator, {
+        line3_schedule_c: totalNetProfit,
+      }),
+    );
 
     // Preserve the Schedule C business classification and limitation inputs so the
     // QBI node can select Form 8995 or 8995-A after taxable income is known.
     const nonSstbQbi = input.schedule_cs.reduce(
-      (sum, item, index) => item.qbi_specified_service === true ? sum : sum + netProfits[index],
+      (sum, item, index) =>
+        item.qbi_specified_service === true ? sum : sum + netProfits[index],
       0,
     );
     const sstbQbi = input.schedule_cs.reduce(
-      (sum, item, index) => item.qbi_specified_service === true ? sum + netProfits[index] : sum,
+      (sum, item, index) =>
+        item.qbi_specified_service === true ? sum + netProfits[index] : sum,
       0,
     );
     const nonSstbWages = input.schedule_cs.reduce(
-      (sum, item) => item.qbi_specified_service === true ? sum : sum + (item.qbi_w2_wages ?? 0),
+      (sum, item) =>
+        item.qbi_specified_service === true
+          ? sum
+          : sum + (item.qbi_w2_wages ?? 0),
       0,
     );
     const sstbWages = input.schedule_cs.reduce(
-      (sum, item) => item.qbi_specified_service === true ? sum + (item.qbi_w2_wages ?? 0) : sum,
+      (sum, item) =>
+        item.qbi_specified_service === true
+          ? sum + (item.qbi_w2_wages ?? 0)
+          : sum,
       0,
     );
     const nonSstbUbia = input.schedule_cs.reduce(
-      (sum, item) => item.qbi_specified_service === true ? sum : sum + (item.qbi_unadjusted_basis ?? 0),
+      (sum, item) =>
+        item.qbi_specified_service === true
+          ? sum
+          : sum + (item.qbi_unadjusted_basis ?? 0),
       0,
     );
     const sstbUbia = input.schedule_cs.reduce(
-      (sum, item) => item.qbi_specified_service === true ? sum + (item.qbi_unadjusted_basis ?? 0) : sum,
+      (sum, item) =>
+        item.qbi_specified_service === true
+          ? sum + (item.qbi_unadjusted_basis ?? 0)
+          : sum,
       0,
     );
     if (
@@ -344,8 +411,14 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
 
     // SE net profit counts as earned income for EITC (IRC §32(c)(2)(A)(ii)) and ACTC
     if (totalNetProfit > 0) {
-      outputs.push(this.outputNodes.output(eitc, { se_net_profit: totalNetProfit }));
-      outputs.push(this.outputNodes.output(f8812, { auto_se_earned_income: totalNetProfit }));
+      outputs.push(
+        this.outputNodes.output(eitc, { se_net_profit: totalNetProfit }),
+      );
+      outputs.push(
+        this.outputNodes.output(f8812, {
+          auto_se_earned_income: totalNetProfit,
+        }),
+      );
     }
 
     // Schedule SE: combine the businesses first, then test the total.
@@ -358,7 +431,11 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
       0,
     );
     if (seNetProfit >= seThreshold(seItems)) {
-      outputs.push(this.outputNodes.output(schedule_se, { net_profit_schedule_c: seNetProfit }));
+      outputs.push(
+        this.outputNodes.output(schedule_se, {
+          net_profit_schedule_c: seNetProfit,
+        }),
+      );
     }
 
     // Per-item downstream routing (passive, at-risk, depletion, interest)
@@ -373,11 +450,24 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
         ? cfg.eblThresholdMfj
         : cfg.eblThresholdSingle;
       if (loss > threshold) {
-        outputs.push(this.outputNodes.output(form461, { excess_business_loss: loss - threshold }));
+        outputs.push(
+          this.outputNodes.output(form461, {
+            excess_business_loss: loss - threshold,
+          }),
+        );
       }
     }
 
-    return { outputs };
+    return {
+      outputs,
+      carryforwards: Object.fromEntries(
+        atRisk.flatMap((result, index) =>
+          result.suspended > 0
+            ? [[`schedule_c_at_risk_suspended_${index + 1}`, result.suspended]]
+            : []
+        ),
+      ),
+    };
   }
 }
 

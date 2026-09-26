@@ -33,10 +33,14 @@ export const claimInputSchema = z.object({
 });
 
 export const inputSchema = claimInputSchema.extend({
-  qualified_employee_tips: z.number().nonnegative().optional(),
+  qualified_employee_tips: z.array(z.object({
+    employee_ssn: z.string(),
+    amount: z.number().nonnegative(),
+  })).optional(),
   magi: z.number().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
-  has_valid_ssn: z.boolean().optional(),
+  taxpayer_ssn: z.string().optional(),
+  spouse_ssn: z.string().optional(),
   taxpayer_has_valid_ssn: z.boolean().optional(),
   spouse_has_valid_ssn: z.boolean().optional(),
   taxpayer_age_65_or_older: z.boolean().optional(),
@@ -65,11 +69,28 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
 }
 
 export function qualifiedTipsDeduction(input: Schedule1AInput): number {
-  const tips = Math.min(input.qualified_employee_tips ?? 0, QUALIFIED_TIPS_CAP);
+  const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
+  const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
+  const eligibleTips = (input.qualified_employee_tips ?? []).reduce(
+    (sum, entry) => {
+      const employeeSsn = entry.employee_ssn.replaceAll("-", "");
+      if (
+        employeeSsn === taxpayerSsn &&
+        input.taxpayer_has_valid_ssn === true
+      ) return sum + entry.amount;
+      if (
+        input.filing_status === FilingStatus.MFJ &&
+        employeeSsn === spouseSsn &&
+        input.spouse_has_valid_ssn === true
+      ) return sum + entry.amount;
+      return sum;
+    },
+    0,
+  );
+  const tips = Math.min(eligibleTips, QUALIFIED_TIPS_CAP);
   const phaseout = tipsOvertimePhaseout(input);
   if (
     tips === 0 ||
-    input.has_valid_ssn !== true ||
     input.filing_status === FilingStatus.MFS ||
     phaseout === undefined
   ) {

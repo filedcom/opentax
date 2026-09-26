@@ -33,6 +33,7 @@ import { w2 } from "../nodes/inputs/w2/index.ts";
 import { w2g } from "../nodes/inputs/w2g/index.ts";
 import { f1099patr } from "../nodes/inputs/f1099patr/index.ts";
 import { f8283 } from "../nodes/inputs/f8283/index.ts";
+import { f7217 } from "../nodes/inputs/f7217/index.ts";
 import { f9465 } from "../nodes/inputs/f9465/index.ts";
 import { f8888 } from "../nodes/inputs/f8888/index.ts";
 import { schedule_r } from "../nodes/inputs/schedule_r/index.ts";
@@ -146,6 +147,7 @@ import { form8824 } from "../nodes/intermediate/forms/form8824/index.ts";
 import { form4972 } from "../nodes/intermediate/forms/form4972/index.ts";
 import { form5329 } from "../nodes/intermediate/forms/form5329/index.ts";
 import { form5695 } from "../nodes/intermediate/forms/form5695/index.ts";
+import { jointOccupancyStatementNode } from "../nodes/intermediate/forms/joint_occupancy_statement/index.ts";
 import { form6198 } from "../nodes/intermediate/forms/form6198/index.ts";
 import { form6251 } from "../nodes/intermediate/forms/form6251/index.ts";
 import { form6252 } from "../nodes/intermediate/forms/form6252/index.ts";
@@ -232,6 +234,7 @@ export const registry: NodeRegistry = {
   w2g,
   f1099patr,
   f8283,
+  f7217,
   f9465,
   f8888,
   schedule_r,
@@ -345,6 +348,7 @@ export const registry: NodeRegistry = {
   form4972,
   form5329,
   form5695,
+  jointOccupancyStatementNode,
   form6198,
   form6251,
   form6252,

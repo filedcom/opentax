@@ -1,96 +1,37 @@
-# Form 8911 — Alternative Fuel Vehicle Refueling Property Credit
+# Form 8911, tax year 2025
 
-## Overview
-Computes the IRC §30C credit for qualifying alternative fuel vehicle refueling property (EV charging stations, hydrogen, natural gas, propane). TY2025: 30% of cost. Business portion: capped at $100,000 per location → Schedule 3 line 6z. Personal portion: capped at $1,000 → Schedule 3 line 6b.
+The input node computes the personal-use alternative fuel vehicle refueling
+property credit. The 2025 form requires a separate Schedule A (Form 8911) for
+each property. The configured MeF 2025v5.4 package contains both `IRS8911` and
+`IRS8911ScheduleA`. Both serializers are implemented and their personal-use
+Scenario 13 XML slice passes the v5.4 XSD. That structural check does not make
+the full return ATS-ready.
 
-**IRS Form:** 8911
-**Drake Screen:** 8911
-**Node Type:** input
-**Tax Year:** 2025
-**Drake Reference:** https://kb.drakesoftware.com/Site/Browse/14045
+Source:
+[Form 8911 and instructions](https://www.irs.gov/forms-pubs/about-form-8911),
+and the IRS TY2025 ATS Scenario 13 PDF stored privately under
+`.state/research/docs/ats-ty2025/1040-scenario-13.pdf`.
 
----
+## Input and calculation
 
-## Input Fields
+The node accepts property cost, business-use fraction, fuel type, property
+description, structured US address and dates, eligible-tract flag and 11-digit
+GEOID, main-home flag, regular tax before credits, other specified credits, and
+tentative minimum tax. A positive personal claim requires an eligible tract, the
+main home, the GEOID, and both tax limitation amounts.
 
-| Field | Type | Required | Source / Label | Description | IRS Reference | URL |
-| ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
-| cost | number (≥0) | Yes | Property cost | Total cost of qualifying refueling property placed in service | Form 8911 Line 1 | https://www.irs.gov/pub/irs-pdf/i8911.pdf |
-| business_use_pct | number (0–1) | No | Business use % | Percentage of business use (remainder = personal) | Form 8911 | https://www.irs.gov/pub/irs-pdf/i8911.pdf |
-| fuel_type | FuelType enum | No | Fuel type | electric_charging, hydrogen, natural_gas, or propane | Form 8911; IRC §30C(c) | https://www.irs.gov/pub/irs-pdf/i8911.pdf |
-| num_locations | number (int, ≥1) | No | Locations | Number of locations (for business cap; default 1) | Form 8911; IRC §30C(b) | https://www.irs.gov/pub/irs-pdf/i8911.pdf |
+For a personal-only property, Schedule A line 21 is the smaller of 30% of cost
+and $1,000. Form 8911 lines 5 through 9 reduce regular tax by foreign and other
+allowable credits, then tentative minimum tax. Line 10 is the smaller of the
+tentative property credit and the resulting tax limit. Only this allowed line 10
+amount routes to Schedule 3 line 6j and Form 1040 line 20.
 
----
+The Scenario 13 PDF has $1,000 of cost, a $300 tentative credit, $162 of regular
+tax, zero tentative minimum tax, and a $162 allowed credit. Its printed $30,000
+standard deduction differs from the current TY2025 $31,500 amount, so this is
+not yet a complete reconciled return fixture.
 
-## Calculation Logic
-
-### Step 1 — Business credit
-`businessCost = cost × business_use_pct`
-`rawBusiness = businessCost × 30%`
-`businessCredit = min(rawBusiness, $100,000 × num_locations)`
-Source: IRC §30C(b)(1) — https://www.irs.gov/pub/irs-pdf/i8911.pdf
-
-### Step 2 — Personal credit
-`personalPct = 1 − business_use_pct`
-`personalCost = cost × personalPct`
-`personalCredit = min(personalCost × 30%, $1,000)`
-Source: IRC §30C(b)(2) — https://www.irs.gov/pub/irs-pdf/i8911.pdf
-
----
-
-## Output Routing
-
-| Output Field | Destination Node | Condition | IRS Reference | URL |
-| ------------ | ---------------- | --------- | ------------- | --- |
-| line6z_general_business_credit | schedule3 | businessCredit > 0 | Form 8911 → Schedule 3 Line 6z | https://www.irs.gov/pub/irs-pdf/f1040s3.pdf |
-| line6b_alt_fuel_vehicle_refueling | schedule3 | personalCredit > 0 | Form 8911 Line 19 → Schedule 3 Line 6b | https://www.irs.gov/pub/irs-pdf/f1040s3.pdf |
-
----
-
-## Constants & Thresholds (Tax Year 2025)
-
-| Constant | Value | Source | URL |
-| -------- | ----- | ------ | --- |
-| Credit rate | 30% of cost | IRC §30C(a); IRA expanded | https://www.law.cornell.edu/uscode/text/26/30C |
-| Business credit cap per location | $100,000 | IRC §30C(b)(1); IRA §13404 | https://www.law.cornell.edu/uscode/text/26/30C |
-| Personal credit cap | $1,000 | IRC §30C(b)(2) | https://www.law.cornell.edu/uscode/text/26/30C |
-
----
-
-## Data Flow Diagram
-
-flowchart LR
-  subgraph inputs["Data Entry"]
-    cost["cost"]
-    biz["business_use_pct"]
-    loc["num_locations"]
-  end
-  subgraph node["f8911 (Alt Fuel Refueling Credit)"]
-    bc["businessCredit()"]
-    pc["personalCredit()"]
-  end
-  subgraph outputs["Downstream"]
-    s3z["schedule3 line6z (business)"]
-    s3b["schedule3 line6b (personal)"]
-  end
-  cost & biz & loc --> bc --> s3z
-  cost & biz --> pc --> s3b
-
----
-
-## Edge Cases & Special Rules
-
-1. **100% personal**: If `business_use_pct = 0` (or undefined), entire credit is personal, capped at $1,000.
-2. **100% business**: If `business_use_pct = 1`, entire credit is business, capped at $100,000 per location.
-3. **Rural/low-income area requirement (IRA)**: IRA §13404 requires the property to be in a low-income community or non-urban area. Node does not enforce eligibility.
-4. **Multiple locations**: `num_locations` multiplies the business cap ($100,000 × locations).
-5. **IRA expansion**: Pre-IRA, business cap was $30,000 and personal was $1,000. IRA increased to $100,000 for business property placed in service after 12/31/2022.
-
----
-
-## Sources
-
-| Document | Year | Section | URL | Saved as |
-| -------- | ---- | ------- | --- | -------- |
-| Form 8911 Instructions | 2024 | All | https://www.irs.gov/pub/irs-pdf/i8911.pdf | .research/docs/i8911.pdf |
-| IRC §30C — Alternative Fuel Vehicle Refueling Property | current | §30C(a–b) | https://www.law.cornell.edu/uscode/text/26/30C | N/A |
+Business or mixed-use claims are rejected. The 2025 Schedule A uses a 6%
+business rate unless prevailing-wage and apprenticeship requirements support
+30%, and Form 8911 line 3 routes through Form 3800. This path needs property-
+level data and a correct Form 3800 integration before it can be emitted.

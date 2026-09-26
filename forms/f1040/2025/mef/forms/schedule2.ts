@@ -2,11 +2,13 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
-  line1_amt?: number | null;
+  line1a_excess_advance_premium?: number | null;
+  line2_amt?: number | null;
   line4_se_tax?: number | null;
   line5_unreported_tip_tax?: number | null;
   line6_uncollected_8919?: number | null;
   line8_form5329_tax?: number | null;
+  line9_household_employment?: number | null;
   line11_additional_medicare?: number | null;
   line12_niit?: number | null;
   uncollected_fica?: number | null;
@@ -25,11 +27,13 @@ type Input = Partial<Fields> & Record<string, unknown>;
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["line1_amt", "AlternativeMinimumTaxAmt"],
+  ["line1a_excess_advance_premium", "PremiumTaxCreditTaxLiabAmt"],
+  ["line2_amt", "AlternativeMinimumTaxAmt"],
   ["line4_se_tax", "SelfEmploymentTaxAmt"],
   ["line5_unreported_tip_tax", "SocSecMedicareTaxUnrptdTipAmt"],
   ["line6_uncollected_8919", "UncollectedSocSecMedTaxAmt"],
   ["line8_form5329_tax", "TaxOnIRAsAmt"],
+  ["line9_household_employment", "HouseholdEmploymentTaxAmt"],
   ["line11_additional_medicare", "TotalAMRRTTaxAmt"],
   ["line12_niit", "IndivNetInvstIncomeTaxAmt"],
   ["line17b_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],

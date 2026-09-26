@@ -20,6 +20,7 @@ function run(
 }
 
 const baseW2 = {
+  employee_ssn: "111-22-3333",
   box1_wages: 30_000,
   box2_fed_withheld: 2_500,
   box3_ss_wages: 30_000,
@@ -31,7 +32,13 @@ const baseW2 = {
 
 Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund", () => {
   const result = run(
-    { filing_status: "single", taxpayer_ssn: "111-22-3333" },
+    {
+      filing_status: "single",
+      taxpayer_ssn: "111-22-3333",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
+    },
     { ...baseW2, box14b_tipped_code: "102" },
   );
   const f1040 = result.pending.f1040;
@@ -40,7 +47,9 @@ Deno.test("qualified tips: flows from W-2 through Schedule 1-A to tax and refund
     result.diagnostics.filter((d) => d.nodeType === "schedule1a"),
     [],
   );
-  assertEquals(result.pending.schedule1a?.qualified_employee_tips, 5_000);
+  assertEquals(result.pending.schedule1a?.qualified_employee_tips, [
+    { employee_ssn: "111-22-3333", amount: 5_000 },
+  ]);
   assertEquals(f1040.line13b_additional_deductions, 5_000);
   assertEquals(f1040.line14_deductions_qbi_total, 20_750);
   assertEquals(finalValue(f1040.line15_taxable_income), 9_250);
@@ -76,4 +85,34 @@ Deno.test("qualified tips: MFS filer does not receive the deduction", () => {
 
   assertEquals(result.pending.f1040.line13b_additional_deductions, undefined);
   assertEquals(finalValue(result.pending.f1040.line15_taxable_income), 14_250);
+});
+
+Deno.test("qualified tips: a joint filer's eligible spouse can deduct their own W-2 tips", () => {
+  const result = run(
+    {
+      filing_status: "mfj",
+      taxpayer_ssn: "111-22-3333",
+      taxpayer_ssn_valid_for_employment: false,
+      taxpayer_tin_issued_by_due_date: true,
+      spouse_ssn: "444-55-6666",
+      spouse_ssn_valid_for_employment: true,
+      spouse_ssn_issued_before_due_date: true,
+      spouse_tin_issued_by_due_date: true,
+    },
+    { ...baseW2, employee_ssn: "444-55-6666", box14b_tipped_code: "102" },
+  );
+  assertEquals(result.pending.f1040.line13b_additional_deductions, 5_000);
+});
+
+Deno.test("qualified tips: an employment-invalid taxpayer SSN cannot use their own tips", () => {
+  const result = run(
+    {
+      filing_status: "single",
+      taxpayer_ssn: "111-22-3333",
+      taxpayer_ssn_valid_for_employment: false,
+      taxpayer_tin_issued_by_due_date: true,
+    },
+    { ...baseW2, box14b_tipped_code: "102" },
+  );
+  assertEquals(result.pending.f1040.line13b_additional_deductions, undefined);
 });

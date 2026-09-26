@@ -5,6 +5,11 @@ import { schedule1a } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
+const TAXPAYER_SSN = "111223333";
+
+function tips(amount: number, employee_ssn = TAXPAYER_SSN) {
+  return [{ employee_ssn, amount }];
+}
 
 function deduction(
   input: Parameters<typeof schedule1a.compute>[1],
@@ -16,10 +21,11 @@ function deduction(
 Deno.test("schedule1a: deducts qualified employee tips", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 5_000,
+      qualified_employee_tips: tips(5_000),
       magi: 30_000,
       filing_status: FilingStatus.Single,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     5_000,
   );
@@ -28,10 +34,11 @@ Deno.test("schedule1a: deducts qualified employee tips", () => {
 Deno.test("schedule1a: caps qualified tips at $25,000", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 40_000,
+      qualified_employee_tips: tips(40_000),
       magi: 100_000,
       filing_status: FilingStatus.HOH,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     25_000,
   );
@@ -40,19 +47,21 @@ Deno.test("schedule1a: caps qualified tips at $25,000", () => {
 Deno.test("schedule1a: phases out $100 per full $1,000 over threshold", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 5_000,
+      qualified_employee_tips: tips(5_000),
       magi: 150_999,
       filing_status: FilingStatus.Single,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     5_000,
   );
   assertEquals(
     deduction({
-      qualified_employee_tips: 5_000,
+      qualified_employee_tips: tips(5_000),
       magi: 151_000,
       filing_status: FilingStatus.Single,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     4_900,
   );
@@ -61,10 +70,11 @@ Deno.test("schedule1a: phases out $100 per full $1,000 over threshold", () => {
 Deno.test("schedule1a: uses $300,000 phaseout threshold for joint returns", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 25_000,
+      qualified_employee_tips: tips(25_000),
       magi: 301_000,
       filing_status: FilingStatus.MFJ,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     24_900,
   );
@@ -73,10 +83,11 @@ Deno.test("schedule1a: uses $300,000 phaseout threshold for joint returns", () =
 Deno.test("schedule1a: married filing separately is ineligible", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 5_000,
+      qualified_employee_tips: tips(5_000),
       magi: 30_000,
       filing_status: FilingStatus.MFS,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     undefined,
   );
@@ -85,22 +96,55 @@ Deno.test("schedule1a: married filing separately is ineligible", () => {
 Deno.test("schedule1a: valid SSN is required", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 5_000,
+      qualified_employee_tips: tips(5_000),
       magi: 30_000,
       filing_status: FilingStatus.Single,
-      has_valid_ssn: false,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: false,
+    }),
+    undefined,
+  );
+});
+
+Deno.test("schedule1a: joint tips belong to the spouse with the valid SSN", () => {
+  assertEquals(
+    deduction({
+      qualified_employee_tips: [
+        ...tips(2_000),
+        ...tips(3_000, "444556666"),
+      ],
+      magi: 50_000,
+      filing_status: FilingStatus.MFJ,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: false,
+      spouse_ssn: "444-55-6666",
+      spouse_has_valid_ssn: true,
+    }),
+    3_000,
+  );
+});
+
+Deno.test("schedule1a: tips from an unmatched employee SSN are not deducted", () => {
+  assertEquals(
+    deduction({
+      qualified_employee_tips: tips(5_000, "999887777"),
+      magi: 30_000,
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     undefined,
   );
 });
 
 Deno.test("schedule1a: incomplete eligibility context emits no deduction", () => {
-  assertEquals(deduction({ qualified_employee_tips: 5_000 }), undefined);
+  assertEquals(deduction({ qualified_employee_tips: tips(5_000) }), undefined);
   assertEquals(
     deduction({
       magi: 30_000,
       filing_status: FilingStatus.Single,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     undefined,
   );
@@ -109,10 +153,11 @@ Deno.test("schedule1a: incomplete eligibility context emits no deduction", () =>
 Deno.test("schedule1a: phaseout never produces a negative deduction", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 5_000,
+      qualified_employee_tips: tips(5_000),
       magi: 250_000,
       filing_status: FilingStatus.Single,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
+      taxpayer_has_valid_ssn: true,
     }),
     undefined,
   );
@@ -256,14 +301,14 @@ Deno.test("schedule1a: senior deduction requires a valid SSN and a joint return 
 Deno.test("schedule1a: total combines tips, overtime, vehicle interest, and senior deduction", () => {
   assertEquals(
     deduction({
-      qualified_employee_tips: 2_000,
+      qualified_employee_tips: tips(2_000),
       taxpayer_qualified_overtime_compensation: 3_000,
       vehicle_loans: [{
         vin: "1HGCM82633A004352",
         qualified_interest_paid: 1_000,
       }],
       taxpayer_age_65_or_older: true,
-      has_valid_ssn: true,
+      taxpayer_ssn: TAXPAYER_SSN,
       taxpayer_has_valid_ssn: true,
       magi: 50_000,
       filing_status: FilingStatus.Single,

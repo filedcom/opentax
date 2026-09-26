@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form8824 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -14,6 +14,19 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("no exchange data — no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("related-party and recapture exchanges do not silently use simple-exchange math", () => {
+  assertThrows(() => compute({
+    relinquished_basis: 100_000,
+    received_fmv: 200_000,
+    related_party: true,
+  }), Error, "additional tax treatment");
+  assertThrows(() => compute({
+    relinquished_basis: 100_000,
+    received_fmv: 200_000,
+    recapture_applies: true,
+  }), Error, "additional tax treatment");
 });
 
 // ─── Pure exchange — no boot, gain deferred ───────────────────────────────────
@@ -170,6 +183,7 @@ Deno.test("section_1231 gain_type routes recognized gain to form4797", () => {
   const f4797 = findOutput(result, "form4797");
   const sd = findOutput(result, "schedule_d");
   assertEquals(f4797?.fields.section_1231_gain, 50_000);
+  assertEquals(f4797?.fields.gain_form8824, 50_000);
   assertEquals(sd, undefined);
 });
 
@@ -183,15 +197,14 @@ Deno.test("capital gain_type routes recognized gain to schedule_d line_11_form24
   const sd = findOutput(result, "schedule_d");
   const f4797 = findOutput(result, "form4797");
   assertEquals(sd?.fields.line_11_form2439, 50_000);
+  assertEquals(sd?.fields.gain_form8824_lt, 50_000);
   assertEquals(f4797, undefined);
 });
 
-Deno.test("default gain_type is capital when omitted", () => {
-  const result = compute({
+Deno.test("recognized gain requires an explicit capital or section 1231 classification", () => {
+  assertThrows(() => compute({
     relinquished_basis: 200_000,
     received_fmv: 400_000,
     cash_received: 50_000,
-  });
-  const sd = findOutput(result, "schedule_d");
-  assertEquals(sd?.fields.line_11_form2439, 50_000);
+  }), Error, "needs explicit capital or section 1231 classification");
 });

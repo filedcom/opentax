@@ -1,5 +1,5 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { scheduleC, type itemSchema } from "./index.ts";
+import { type itemSchema, scheduleC } from "./index.ts";
 import type { z } from "zod";
 
 // ============================================================
@@ -21,7 +21,10 @@ function compute(
   items: z.infer<typeof itemSchema>[],
   opts: { filing_status?: string } = {},
 ) {
-  return scheduleC.compute({ taxYear: 2025, formType: "f1040" }, { schedule_cs: items, ...opts });
+  return scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+    schedule_cs: items,
+    ...opts,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -55,14 +58,21 @@ Deno.test("schema_negative_gross_receipts: line_1_gross_receipts = -1 fails vali
 
 Deno.test("schema_negative_returns_allowances: line_2_returns_allowances = -1 fails validation", () => {
   const parsed = scheduleC.inputSchema.safeParse({
-    schedule_cs: [minimalItem({ line_1_gross_receipts: 10000, line_2_returns_allowances: -1 })],
+    schedule_cs: [
+      minimalItem({
+        line_1_gross_receipts: 10000,
+        line_2_returns_allowances: -1,
+      }),
+    ],
   });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("schema_negative_expense: line_8_advertising = -500 fails validation", () => {
   const parsed = scheduleC.inputSchema.safeParse({
-    schedule_cs: [minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: -500 })],
+    schedule_cs: [
+      minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: -500 }),
+    ],
   });
   assertEquals(parsed.success, false);
 });
@@ -75,7 +85,9 @@ Deno.test("schema_invalid_accounting_method: 'FIFO' fails validation", () => {
 });
 
 Deno.test("schema_empty_array: empty schedule_cs array does not throw", () => {
-  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, { schedule_cs: [] });
+  const result = scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
+    schedule_cs: [],
+  });
   assertEquals(Array.isArray(result.outputs), true);
 });
 
@@ -97,28 +109,39 @@ Deno.test("routing_gross_receipts_to_schedule1: income-only item routes to sched
 });
 
 Deno.test("routing_returns_allowances_reduce_net_sales: line_1=10000, line_2=2000 → net_sales=8000", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_2_returns_allowances: 2000 })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_2_returns_allowances: 2000,
+    }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 8000);
 });
 
 Deno.test("routing_line_6_other_income_adds_to_gross: line_1=5000, line_6=500 → gross_income=5500", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 5000, line_6_other_income: 500 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 5000, line_6_other_income: 500 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 5500);
 });
 
 Deno.test("routing_advertising_reduces_net_profit: advertising=1000 on 10000 receipts → profit=9000", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: 1000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: 1000 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 9000);
 });
 
 Deno.test("routing_meals_50pct_default: meals=1000, no special flag → deductible=500", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   // net = 10000 - 500 = 9500
@@ -127,7 +150,13 @@ Deno.test("routing_meals_50pct_default: meals=1000, no special flag → deductib
 
 Deno.test("routing_meals_80pct_dot_worker: meals=1000, dot_worker → deductible=800", () => {
   // AMBIGUITY: field name for DOT worker flag — verify against implementation
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000, meals_dot_worker: true })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_24b_meals: 1000,
+      meals_dot_worker: true,
+    }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   // net = 10000 - 800 = 9200
@@ -136,7 +165,13 @@ Deno.test("routing_meals_80pct_dot_worker: meals=1000, dot_worker → deductible
 
 Deno.test("routing_meals_100pct_as_wages: meals=1000, meals_as_wages → deductible=1000", () => {
   // AMBIGUITY: field name for meals-as-wages flag — verify against implementation
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 1000, meals_as_wages: true })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_24b_meals: 1000,
+      meals_as_wages: true,
+    }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   // net = 10000 - 1000 = 9000
@@ -144,21 +179,27 @@ Deno.test("routing_meals_100pct_as_wages: meals=1000, meals_as_wages → deducti
 });
 
 Deno.test("routing_meals_zero_no_impact: meals=0 → deductible contribution=0", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 0 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_24b_meals: 0 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 10000);
 });
 
 Deno.test("routing_home_office_reduces_net_profit: home_office=500 on 10000 receipts → profit=9500", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_30_home_office: 500 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_30_home_office: 500 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 9500);
 });
 
 Deno.test("routing_statutory_employee_suppresses_se: statutory_employee=true → no schedule_se output", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, statutory_employee: true })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, statutory_employee: true }),
+  ]);
   assertEquals(findOutput(result, "schedule_se"), undefined);
   // profit still flows to schedule1
   const s1 = findOutput(result, "schedule1");
@@ -166,37 +207,60 @@ Deno.test("routing_statutory_employee_suppresses_se: statutory_employee=true →
 });
 
 Deno.test("routing_exempt_notary_suppresses_se: exempt_notary=true → no schedule_se output", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, exempt_notary: true })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, exempt_notary: true }),
+  ]);
   const se = findOutput(result, "schedule_se");
   assertEquals(se, undefined);
 });
 
 Deno.test("routing_paper_route_suppresses_se: paper_route=true → no schedule_se output", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, paper_route: true })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, paper_route: true }),
+  ]);
   const se = findOutput(result, "schedule_se");
   assertEquals(se, undefined);
 });
 
 Deno.test("routing_passive_activity_routes_to_form8582: line_g=false → form8582 with exact passive amount", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_g_material_participation: false })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 50000,
+      line_g_material_participation: false,
+    }),
+  ]);
   const f8582 = findOutput(result, "form8582");
-  assertEquals((f8582!.fields as Record<string, number>).passive_schedule_c, 50000);
+  assertEquals(
+    (f8582!.fields as Record<string, number>).passive_schedule_c,
+    50000,
+  );
 });
 
 Deno.test("routing_active_business_no_form8582: line_g=true → no form8582 output", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_g_material_participation: true })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 50000,
+      line_g_material_participation: true,
+    }),
+  ]);
   const f8582 = findOutput(result, "form8582");
   assertEquals(f8582, undefined);
 });
 
-Deno.test("routing_at_risk_b_with_loss_routes_form6198: loss + at_risk=b → form6198 with exact loss amount", () => {
+Deno.test("at-risk Schedule C loss is limited before reaching downstream nodes", () => {
   const result = compute([minimalItem({
     line_1_gross_receipts: 5000,
     line_8_advertising: 20000,
     line_32_at_risk: "b",
+    at_risk_simplified: {
+      opening_adjusted_basis: 6000,
+      current_year_increases: 0,
+      line9_decreases_and_exclusions: 0,
+    },
   })]);
-  const f6198 = findOutput(result, "form6198");
-  assertEquals((f6198!.fields as Record<string, number>).schedule_c_loss, -15000);
+  assertEquals(findOutput(result, "schedule1")?.fields.line3_schedule_c, -6000);
+  assertEquals(result.carryforwards?.schedule_c_at_risk_suspended_1, 9000);
+  assertEquals(findOutput(result, "form6198"), undefined);
 });
 
 Deno.test("routing_at_risk_a_with_loss_no_form6198: loss + at_risk=a → no form6198", () => {
@@ -210,13 +274,20 @@ Deno.test("routing_at_risk_a_with_loss_no_form6198: loss + at_risk=a → no form
 });
 
 Deno.test("routing_depletion_nonzero_routes_form6251: depletion=1000 → form6251 with exact adjustment", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_12_depletion: 1000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, line_12_depletion: 1000 }),
+  ]);
   const f6251 = findOutput(result, "form6251");
-  assertEquals((f6251!.fields as Record<string, number>).other_adjustments, 1000);
+  assertEquals(
+    (f6251!.fields as Record<string, number>).other_adjustments,
+    1000,
+  );
 });
 
 Deno.test("routing_depletion_zero_no_form6251: depletion=0 → no form6251 output", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_12_depletion: 0 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, line_12_depletion: 0 }),
+  ]);
   const f6251 = findOutput(result, "form6251");
   assertEquals(f6251, undefined);
 });
@@ -224,7 +295,10 @@ Deno.test("routing_depletion_zero_no_form6251: depletion=0 → no form6251 outpu
 Deno.test("routing_profit_400_triggers_se: net_profit=400 → schedule_se with exact net_profit", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 400 })]);
   const se = findOutput(result, "schedule_se");
-  assertEquals((se!.fields as Record<string, number>).net_profit_schedule_c, 400);
+  assertEquals(
+    (se!.fields as Record<string, number>).net_profit_schedule_c,
+    400,
+  );
 });
 
 Deno.test("routing_profit_below_400_no_se: net_profit=399 → no schedule_se output", () => {
@@ -236,7 +310,10 @@ Deno.test("routing_profit_below_400_no_se: net_profit=399 → no schedule_se out
 Deno.test("routing_profit_routes_form8995: net_profit > 0 → form8995 with exact qbi amount", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 50000 })]);
   const qbi = findOutput(result, "form8995");
-  assertEquals((qbi!.fields as Record<string, number>).qbi_from_schedule_c, 50000);
+  assertEquals(
+    (qbi!.fields as Record<string, number>).qbi_from_schedule_c,
+    50000,
+  );
 });
 
 Deno.test("routing_qbi_limitation_fields: Schedule C preserves SSTB, W-2 wage, and UBIA amounts", () => {
@@ -266,13 +343,21 @@ Deno.test("routing_qbi_nets_loss_business: a loss in one Schedule C reduces the 
   ]);
   const qbiOutputs = result.outputs.filter((o) => o.nodeType === "form8995");
   assertEquals(qbiOutputs.length, 1);
-  assertEquals((qbiOutputs[0].fields as Record<string, number>).qbi_from_schedule_c, 120000);
+  assertEquals(
+    (qbiOutputs[0].fields as Record<string, number>).qbi_from_schedule_c,
+    120000,
+  );
 });
 
 Deno.test("routing_qbi_net_loss: all businesses at a loss → negative QBI routed to form8995", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 1000, line_11_contract_labor: 21000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 1000, line_11_contract_labor: 21000 }),
+  ]);
   const qbi = findOutput(result, "form8995");
-  assertEquals((qbi!.fields as Record<string, number>).qbi_from_schedule_c, -20000);
+  assertEquals(
+    (qbi!.fields as Record<string, number>).qbi_from_schedule_c,
+    -20000,
+  );
 });
 
 Deno.test("routing_gambler_loss_capped_at_zero: professional_gambler with loss → line31=0", () => {
@@ -287,7 +372,9 @@ Deno.test("routing_gambler_loss_capped_at_zero: professional_gambler with loss �
 });
 
 Deno.test("routing_gambler_with_profit_routes_normally: professional_gambler, profit=1000 → schedule1 shows 1000", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 1000, professional_gambler: true })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 1000, professional_gambler: true }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 1000);
@@ -295,7 +382,12 @@ Deno.test("routing_gambler_with_profit_routes_normally: professional_gambler, pr
 
 Deno.test("routing_interest_small_biz_no_form8990: interest expense, no large_business flag → no form8990", () => {
   // AMBIGUITY: small business is default; no large_business flag → form8990 should not appear
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_16b_interest_other: 5000 })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 50000,
+      line_16b_interest_other: 5000,
+    }),
+  ]);
   const f8990 = findOutput(result, "form8990");
   assertEquals(f8990, undefined);
 });
@@ -307,7 +399,10 @@ Deno.test("routing_interest_large_biz_triggers_form8990: §163(j) applicable →
     subject_to_163j: true,
   })]);
   const f8990 = findOutput(result, "form8990");
-  assertEquals((f8990!.fields as Record<string, number>).business_interest_expense, 5000);
+  assertEquals(
+    (f8990!.fields as Record<string, number>).business_interest_expense,
+    5000,
+  );
 });
 
 Deno.test("routing_se_profit_routes_eitc: net_profit > 0 → eitc se_net_profit", () => {
@@ -319,11 +414,16 @@ Deno.test("routing_se_profit_routes_eitc: net_profit > 0 → eitc se_net_profit"
 Deno.test("routing_se_profit_routes_f8812: net_profit > 0 → f8812 auto_se_earned_income", () => {
   const result = compute([minimalItem({ line_1_gross_receipts: 45000 })]);
   const f8812 = findOutput(result, "f8812");
-  assertEquals((f8812!.fields as Record<string, number>).auto_se_earned_income, 45000);
+  assertEquals(
+    (f8812!.fields as Record<string, number>).auto_se_earned_income,
+    45000,
+  );
 });
 
 Deno.test("routing_se_loss_no_eitc_f8812: net_profit <= 0 → no eitc or f8812 output", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 1000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 0, line_8_advertising: 1000 }),
+  ]);
   assertEquals(findOutput(result, "eitc"), undefined);
   assertEquals(findOutput(result, "f8812"), undefined);
 });
@@ -354,7 +454,10 @@ Deno.test("agg_se_nets_loss_against_profit: profit 50000 + loss 20000 \u2192 one
   ]);
   const ses = result.outputs.filter((o) => o.nodeType === "schedule_se");
   assertEquals(ses.length, 1);
-  assertEquals((ses[0].fields as Record<string, number>).net_profit_schedule_c, 30000);
+  assertEquals(
+    (ses[0].fields as Record<string, number>).net_profit_schedule_c,
+    30000,
+  );
 });
 
 Deno.test("agg_qbi_nets_loss_against_profit: profit 50000 + loss 20000 \u2192 one form8995 for 30000", () => {
@@ -366,7 +469,10 @@ Deno.test("agg_qbi_nets_loss_against_profit: profit 50000 + loss 20000 \u2192 on
   ]);
   const qbis = result.outputs.filter((o) => o.nodeType === "form8995");
   assertEquals(qbis.length, 1);
-  assertEquals((qbis[0].fields as Record<string, number>).qbi_from_schedule_c, 30000);
+  assertEquals(
+    (qbis[0].fields as Record<string, number>).qbi_from_schedule_c,
+    30000,
+  );
 });
 
 Deno.test("agg_se_two_profits_one_output: profit 50000 + profit 10000 \u2192 one schedule_se for 60000", () => {
@@ -378,7 +484,10 @@ Deno.test("agg_se_two_profits_one_output: profit 50000 + profit 10000 \u2192 one
   ]);
   const ses = result.outputs.filter((o) => o.nodeType === "schedule_se");
   assertEquals(ses.length, 1);
-  assertEquals((ses[0].fields as Record<string, number>).net_profit_schedule_c, 60000);
+  assertEquals(
+    (ses[0].fields as Record<string, number>).net_profit_schedule_c,
+    60000,
+  );
 });
 
 Deno.test("agg_cogs_reduces_gross_profit: COGS=800, line_1=5000 → net_profit=4200", () => {
@@ -460,7 +569,10 @@ Deno.test("threshold_se_combined_at_400_from_two_businesses: 300 + 100 \u2192 sc
     minimalItem({ line_1_gross_receipts: 100 }),
   ]);
   const se = findOutput(result, "schedule_se");
-  assertEquals((se!.fields as Record<string, number>).net_profit_schedule_c, 400);
+  assertEquals(
+    (se!.fields as Record<string, number>).net_profit_schedule_c,
+    400,
+  );
 });
 
 Deno.test("threshold_clergy_se_below_108_28: clergy=true, net_profit=108 → no schedule_se", () => {
@@ -507,7 +619,9 @@ Deno.test("threshold_home_office_below_max: 200sqft × $5 = $1000", () => {
 
 Deno.test("threshold_home_office_gross_income_cap: home_office > tentative_profit → capped at tentative profit", () => {
   // line_1=3000, home_office=5000 → tentative_profit=3000, deduction capped at 3000
-  const result = compute([minimalItem({ line_1_gross_receipts: 3000, line_30_home_office: 5000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 3000, line_30_home_office: 5000 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   // net profit after capped home office = 3000 - 3000 = 0
@@ -522,7 +636,10 @@ Deno.test("threshold_excess_business_loss_single_313k: loss > $313k single → r
   );
   const f461 = findOutput(result, "form461");
   assertEquals(f461 !== undefined, true);
-  assertEquals((f461!.fields as Record<string, number>).excess_business_loss, 87000);
+  assertEquals(
+    (f461!.fields as Record<string, number>).excess_business_loss,
+    87000,
+  );
 });
 
 Deno.test("threshold_excess_business_loss_below_313k: loss < $313k single → no form461", () => {
@@ -542,7 +659,10 @@ Deno.test("threshold_excess_business_loss_mfj_626k: loss > $626k MFJ → routes 
   );
   const f461 = findOutput(result, "form461");
   assertEquals(f461 !== undefined, true);
-  assertEquals((f461!.fields as Record<string, number>).excess_business_loss, 74000);
+  assertEquals(
+    (f461!.fields as Record<string, number>).excess_business_loss,
+    74000,
+  );
 });
 
 Deno.test("threshold_excess_business_loss_mfj_below_626k: loss < $626k MFJ → no form461", () => {
@@ -572,12 +692,16 @@ Deno.test("hard_validation_zero_gross_receipts_ok: line_1=0 → does not throw",
 
 Deno.test("hard_validation_negative_expense_throws: line_8_advertising=-1 → throws", () => {
   assertThrows(() => {
-    compute([minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: -1 })]);
+    compute([
+      minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: -1 }),
+    ]);
   }, Error);
 });
 
 Deno.test("hard_validation_zero_expense_ok: line_8_advertising=0 → does not throw", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: 0 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_8_advertising: 0 }),
+  ]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
@@ -586,7 +710,12 @@ Deno.test("hard_validation_zero_expense_ok: line_8_advertising=0 → does not th
 // ============================================================
 
 Deno.test("warning_passive_activity_no_throw: line_g=false → does not throw", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, line_g_material_participation: false })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 50000,
+      line_g_material_participation: false,
+    }),
+  ]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
@@ -599,13 +728,17 @@ Deno.test("warning_gambler_loss_no_throw: professional_gambler with net loss →
   assertEquals(Array.isArray(result.outputs), true);
 });
 
-Deno.test("warning_at_risk_b_loss_no_throw: at_risk=b with net loss → does not throw", () => {
-  const result = compute([minimalItem({
-    line_1_gross_receipts: 1000,
-    line_8_advertising: 5000,
-    line_32_at_risk: "b",
-  })]);
-  assertEquals(Array.isArray(result.outputs), true);
+Deno.test("at-risk Schedule C loss requires a Form 6198 computation", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        line_1_gross_receipts: 1000,
+        line_8_advertising: 5000,
+        line_32_at_risk: "b",
+      })]),
+    Error,
+    "simplified-computation facts",
+  );
 });
 
 Deno.test("warning_inventory_change_yes_no_throw: line_34_inventory_change=true → does not throw", () => {
@@ -617,12 +750,16 @@ Deno.test("warning_inventory_change_yes_no_throw: line_34_inventory_change=true 
 });
 
 Deno.test("warning_disposed_of_business_no_throw: disposed_of_business=true → does not throw", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, disposed_of_business: true })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, disposed_of_business: true }),
+  ]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
 Deno.test("warning_clergy_schedule_c_no_throw: clergy_schedule_c=true → does not throw", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 50000, clergy_schedule_c: true })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 50000, clergy_schedule_c: true }),
+  ]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
@@ -632,67 +769,109 @@ Deno.test("warning_clergy_schedule_c_no_throw: clergy_schedule_c=true → does n
 
 Deno.test("info_line_a_change_no_output_change: changing line_a does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withA = compute([minimalItem({ line_1_gross_receipts: 10000, line_a_principal_business: "Different" })]);
+  const withA = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_a_principal_business: "Different",
+    }),
+  ]);
   assertEquals(base.outputs.length, withA.outputs.length);
 });
 
 Deno.test("info_line_b_change_no_output_change: changing line_b does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withB = compute([minimalItem({ line_1_gross_receipts: 10000, line_b_business_code: "722511" })]);
+  const withB = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_b_business_code: "722511",
+    }),
+  ]);
   assertEquals(base.outputs.length, withB.outputs.length);
 });
 
 Deno.test("info_line_c_no_output_change: adding line_c_business_name does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withC = compute([minimalItem({ line_1_gross_receipts: 10000, line_c_business_name: "Acme LLC" })]);
+  const withC = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_c_business_name: "Acme LLC",
+    }),
+  ]);
   assertEquals(base.outputs.length, withC.outputs.length);
 });
 
 Deno.test("info_line_d_ein_no_output_change: adding line_d_ein does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withEIN = compute([minimalItem({ line_1_gross_receipts: 10000, line_d_ein: "12-3456789" })]);
+  const withEIN = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_d_ein: "12-3456789" }),
+  ]);
   assertEquals(base.outputs.length, withEIN.outputs.length);
 });
 
 Deno.test("info_line_e_address_no_output_change: adding line_e_business_address does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withAddr = compute([minimalItem({ line_1_gross_receipts: 10000, line_e_business_address: "123 Main St" })]);
+  const withAddr = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_e_business_address: {
+        line1: "123 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+    }),
+  ]);
   assertEquals(base.outputs.length, withAddr.outputs.length);
 });
 
 Deno.test("info_line_h_new_business_no_output_change: line_h_new_business=true does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withH = compute([minimalItem({ line_1_gross_receipts: 10000, line_h_new_business: true })]);
+  const withH = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_h_new_business: true }),
+  ]);
   assertEquals(base.outputs.length, withH.outputs.length);
 });
 
 Deno.test("info_line_i_1099_payments_no_output_change: line_i_made_1099_payments does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withI = compute([minimalItem({ line_1_gross_receipts: 10000, line_i_made_1099_payments: true })]);
+  const withI = compute([
+    minimalItem({
+      line_1_gross_receipts: 10000,
+      line_i_made_1099_payments: true,
+    }),
+  ]);
   assertEquals(base.outputs.length, withI.outputs.length);
 });
 
 Deno.test("info_line_j_filed_1099s_no_output_change: line_j_filed_1099s does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withJ = compute([minimalItem({ line_1_gross_receipts: 10000, line_j_filed_1099s: true })]);
+  const withJ = compute([
+    minimalItem({ line_1_gross_receipts: 10000, line_j_filed_1099s: true }),
+  ]);
   assertEquals(base.outputs.length, withJ.outputs.length);
 });
 
 Deno.test("info_multi_form_code_no_output_change: multi_form_code does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withMFC = compute([minimalItem({ line_1_gross_receipts: 10000, multi_form_code: "1" })]);
+  const withMFC = compute([
+    minimalItem({ line_1_gross_receipts: 10000, multi_form_code: "1" }),
+  ]);
   assertEquals(base.outputs.length, withMFC.outputs.length);
 });
 
 Deno.test("info_disposed_no_output_change: disposed_of_business does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withDisposed = compute([minimalItem({ line_1_gross_receipts: 10000, disposed_of_business: true })]);
+  const withDisposed = compute([
+    minimalItem({ line_1_gross_receipts: 10000, disposed_of_business: true }),
+  ]);
   assertEquals(base.outputs.length, withDisposed.outputs.length);
 });
 
 Deno.test("info_llc_number_no_output_change: llc_number does not change output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withLLC = compute([minimalItem({ line_1_gross_receipts: 10000, llc_number: 1 })]);
+  const withLLC = compute([
+    minimalItem({ line_1_gross_receipts: 10000, llc_number: 1 }),
+  ]);
   assertEquals(base.outputs.length, withLLC.outputs.length);
 });
 
@@ -729,7 +908,12 @@ Deno.test("edge_multiple_instances_one_profit_one_loss: combined net flows to sc
 });
 
 Deno.test("edge_passive_with_profit_routes_se: line_g=false, profit=1000 → still routes to schedule1 and schedule_se", () => {
-  const result = compute([minimalItem({ line_1_gross_receipts: 1000, line_g_material_participation: false })]);
+  const result = compute([
+    minimalItem({
+      line_1_gross_receipts: 1000,
+      line_g_material_participation: false,
+    }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const se = findOutput(result, "schedule_se");
   assertEquals(s1 !== undefined, true);
@@ -748,7 +932,9 @@ Deno.test("edge_statutory_and_normal_two_instances: one suppresses SE, other doe
 
 Deno.test("edge_home_office_capped_at_tentative_profit: home_office > profit → capped, does not throw", () => {
   // line_1=2000, home_office=5000 → deduction capped at 2000, net = 0
-  const result = compute([minimalItem({ line_1_gross_receipts: 2000, line_30_home_office: 5000 })]);
+  const result = compute([
+    minimalItem({ line_1_gross_receipts: 2000, line_30_home_office: 5000 }),
+  ]);
   const s1 = findOutput(result, "schedule1");
   const input = s1!.fields as Record<string, number>;
   assertEquals(input.line3_schedule_c, 0);
@@ -766,7 +952,9 @@ Deno.test("edge_nil_income_routes_same_as_regular: NIL income on line_1 routes n
 
 Deno.test("edge_part_v_empty_array_no_change: empty part_v_other_expenses does not affect output count", () => {
   const base = compute([minimalItem({ line_1_gross_receipts: 10000 })]);
-  const withEmpty = compute([minimalItem({ line_1_gross_receipts: 10000, part_v_other_expenses: [] })]);
+  const withEmpty = compute([
+    minimalItem({ line_1_gross_receipts: 10000, part_v_other_expenses: [] }),
+  ]);
   assertEquals(base.outputs.length, withEmpty.outputs.length);
 });
 

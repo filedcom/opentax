@@ -45,20 +45,24 @@ Deno.test("qbi_from_schedule_f alone returns empty string (tracking field only)"
 // ---------------------------------------------------------------------------
 
 Deno.test("qbi maps to TotQualifiedBusinessIncomeAmt", () => {
-  const result = form8995.build({ qbi: 80000 });
+  const result = form8995.build({ qbi: 80000, qbi_deduction: 100 });
   assertStringIncludes(
     result,
     "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
   );
 });
 
-Deno.test("net_capital_gain maps to NetCapitalGainAmt", () => {
-  const result = form8995.build({ net_capital_gain: 10000 });
+Deno.test("net capital gain without QBI does not create Form 8995", () => {
+  assertEquals(form8995.build({ net_capital_gain: 10000 }), "");
+});
+
+Deno.test("net_capital_gain maps to NetCapitalGainAmt when QBI is claimed", () => {
+  const result = form8995.build({ net_capital_gain: 10000, qbi_deduction: 100 });
   assertStringIncludes(result, "<NetCapitalGainAmt>10000</NetCapitalGainAmt>");
 });
 
 Deno.test("taxable_income maps to TaxableIncomeBeforeQBIDedAmt", () => {
-  const result = form8995.build({ taxable_income: 150000 });
+  const result = form8995.build({ taxable_income: 150000, qbi_deduction: 100 });
   assertStringIncludes(
     result,
     "<TaxableIncomeBeforeQBIDedAmt>150000</TaxableIncomeBeforeQBIDedAmt>",
@@ -66,7 +70,7 @@ Deno.test("taxable_income maps to TaxableIncomeBeforeQBIDedAmt", () => {
 });
 
 Deno.test("qbi_loss_carryforward maps to TotQlfyBusLossCarryforwardAmt", () => {
-  const result = form8995.build({ qbi_loss_carryforward: 3000 });
+  const result = form8995.build({ qbi_loss_carryforward: 3000, qbi_deduction: 100 });
   assertStringIncludes(
     result,
     "<TotQlfyBusLossCarryforwardAmt>3000</TotQlfyBusLossCarryforwardAmt>",
@@ -74,7 +78,7 @@ Deno.test("qbi_loss_carryforward maps to TotQlfyBusLossCarryforwardAmt", () => {
 });
 
 Deno.test("reit_loss_carryforward maps to TotQlfyREITDivPTPLossCfwdAmt", () => {
-  const result = form8995.build({ reit_loss_carryforward: 1500 });
+  const result = form8995.build({ reit_loss_carryforward: 1500, qbi_deduction: 100 });
   assertStringIncludes(
     result,
     "<TotQlfyREITDivPTPLossCfwdAmt>1500</TotQlfyREITDivPTPLossCfwdAmt>",
@@ -86,7 +90,7 @@ Deno.test("reit_loss_carryforward maps to TotQlfyREITDivPTPLossCfwdAmt", () => {
 // ---------------------------------------------------------------------------
 
 Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form8995.build({ qbi: 80000 });
+  const result = form8995.build({ qbi: 80000, qbi_deduction: 100 });
   assertStringIncludes(
     result,
     "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
@@ -96,7 +100,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 });
 
 Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form8995.build({ qbi: 80000, taxable_income: 150000 });
+  const result = form8995.build({ qbi: 80000, taxable_income: 150000, qbi_deduction: 100 });
   assertStringIncludes(
     result,
     "<TotQualifiedBusinessIncomeAmt>80000</TotQualifiedBusinessIncomeAmt>",
@@ -114,6 +118,7 @@ Deno.test("two fields present: only those two elements emitted", () => {
 
 const allFields = {
   qbi: 80000,
+  qbi_deduction: 100,
   net_capital_gain: 10000,
   taxable_income: 150000,
   qbi_loss_carryforward: 3000,

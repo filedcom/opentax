@@ -1,8 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { schedule_f, inputSchema } from "./index.ts";
+import { computeAccrualIncome, inputSchema, schedule_f } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_f.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return schedule_f.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -11,9 +14,12 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 // ── Minimal valid farm item ───────────────────────────────────────────────────
 
-function minimalItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function minimalItem(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
   return {
-    line_b_agricultural_activity_code: "0111",
+    line_a_principal_crop_activity: "GRAIN FARMING",
+    line_b_agricultural_activity_code: "111100",
     line_e_material_participation: true,
     accounting_method: "cash",
     line1_sales_livestock_resale: 0,
@@ -104,7 +110,7 @@ Deno.test("schedule_f: profit below $400 SE threshold — no schedule_se output"
     schedule_fs: [
       minimalItem({
         line1_sales_livestock_resale: 500,
-        line16_feed: 200,   // profit = 300 < 400
+        line16_feed: 200, // profit = 300 < 400
       }),
     ],
   });
@@ -128,20 +134,42 @@ Deno.test("schedule_f: non-material participation routes to form8582", () => {
   assertEquals(passive?.fields.passive_schedule_f, -10_000);
 });
 
-// ── At-risk box 36b + loss → form6198 ────────────────────────────────────────
+// ── At-risk box 36b + loss ────────────────────────────────────────────────────
 
-Deno.test("schedule_f: at-risk box 'b' with loss routes to form6198", () => {
+Deno.test("schedule_f: at-risk loss is limited before Schedule 1", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
         line1_sales_livestock_resale: 5_000,
         line16_feed: 15_000,
         line36_at_risk: "b",
+        at_risk_simplified: {
+          opening_adjusted_basis: 4000,
+          current_year_increases: 0,
+          line9_decreases_and_exclusions: 0,
+        },
       }),
     ],
   });
-  const atrisk = findOutput(result, "form6198");
-  assertEquals(atrisk?.fields.schedule_f_loss, -10_000);
+  assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, -4000);
+  assertEquals(result.carryforwards?.schedule_f_at_risk_suspended_1, 6000);
+  assertEquals(findOutput(result, "form6198"), undefined);
+});
+
+Deno.test("schedule_f: zero at-risk amount still carries the full farm loss", () => {
+  const result = compute({
+    schedule_fs: [minimalItem({
+      line16_feed: 1000,
+      line36_at_risk: "b",
+      at_risk_simplified: {
+        opening_adjusted_basis: 0,
+        current_year_increases: 0,
+        line9_decreases_and_exclusions: 0,
+      },
+    })],
+  });
+  assertEquals(result.carryforwards?.schedule_f_at_risk_suspended_1, 1000);
+  assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 0);
 });
 
 Deno.test("schedule_f: at-risk box 'a' with loss does NOT route to form6198", () => {
@@ -163,8 +191,14 @@ Deno.test("schedule_f: at-risk box 'a' with loss does NOT route to form6198", ()
 Deno.test("schedule_f: aggregates net profit across multiple farms to single schedule1 output", () => {
   const result = compute({
     schedule_fs: [
-      minimalItem({ line1_sales_livestock_resale: 40_000, line16_feed: 10_000 }),  // profit 30k
-      minimalItem({ line1_sales_livestock_resale: 20_000, line17_fertilizers: 5_000 }),  // profit 15k
+      minimalItem({
+        line1_sales_livestock_resale: 40_000,
+        line16_feed: 10_000,
+      }), // profit 30k
+      minimalItem({
+        line1_sales_livestock_resale: 20_000,
+        line17_fertilizers: 5_000,
+      }), // profit 15k
     ],
   });
   const s1 = findOutput(result, "schedule1");
@@ -196,6 +230,10 @@ Deno.test("schedule_f: cooperative distributions and CCC loans are included in g
       minimalItem({
         line3b_cooperative_distributions_taxable: 5_000,
         line5a_ccc_loans_election: 3_000,
+        line5a_ccc_loan_details: [{
+          description: "2025 CORN LOAN",
+          amount: 3_000,
+        }],
         line4b_ag_program_payments_taxable: 2_000,
       }),
     ],
@@ -205,14 +243,109 @@ Deno.test("schedule_f: cooperative distributions and CCC loans are included in g
   assertEquals(s1?.fields.line6_schedule_f, 10_000);
 });
 
+Deno.test("schedule_f: raised-product sales and line 5c taxable CCC amount enter gross income", () => {
+  const result = compute({
+    schedule_fs: [minimalItem({
+      line2_sales_products_raised: 7_000,
+      line5b_ccc_loans_forfeited: 4_000,
+      line5c_ccc_loans_forfeited_taxable: 1_500,
+    })],
+  });
+  assertEquals(findOutput(result, "schedule1")?.fields.line6_schedule_f, 8_500);
+});
+
+Deno.test("schedule_f: accrual farm is not calculated using cash-method lines", () => {
+  assertThrows(
+    () =>
+      compute({ schedule_fs: [minimalItem({ accounting_method: "accrual" })] }),
+    Error,
+    "Part III",
+  );
+});
+
+Deno.test("schedule_f: accrual Part III flows through inventory, expenses, and Schedule 1", () => {
+  const result = compute({
+    schedule_fs: [{
+      line_a_principal_crop_activity: "GRAIN FARMING",
+      line_b_agricultural_activity_code: "111100",
+      line_e_material_participation: true,
+      accounting_method: "accrual",
+      part_iii: {
+        line37_sales_products: 20_000,
+        line38b_cooperative_distributions_taxable: 1_000,
+        line45_beginning_inventory: 5_000,
+        line46_products_purchased: 2_000,
+        line48_ending_inventory: 3_000,
+        inventory_method: "cost",
+      },
+      line16_feed: 1_500,
+    }],
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line6_schedule_f,
+    15_500,
+  );
+});
+
+Deno.test("schedule_f: inventory valuation method determines line 49 sign", () => {
+  const base = {
+    line_a_principal_crop_activity: "GRAIN FARMING",
+    line_b_agricultural_activity_code: "111100",
+    line_e_material_participation: true,
+    accounting_method: "accrual",
+    part_iii: {
+      line37_sales_products: 10_000,
+      line45_beginning_inventory: 1_000,
+      line46_products_purchased: 0,
+      line48_ending_inventory: 2_000,
+      inventory_method: "unit_livestock_price",
+    },
+  };
+  const result = compute({ schedule_fs: [base] });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line6_schedule_f,
+    11_000,
+  );
+  const special = inputSchema.parse({ schedule_fs: [base] }).schedule_fs[0];
+  assertEquals(computeAccrualIncome(special).costOfProductsSold, 1_000);
+  const cost = inputSchema.parse({
+    schedule_fs: [{
+      ...base,
+      part_iii: { ...base.part_iii, inventory_method: "cost" },
+    }],
+  }).schedule_fs[0];
+  assertEquals(computeAccrualIncome(cost).costOfProductsSold, -1_000);
+  assertThrows(
+    () =>
+      compute({ schedule_fs: [{ ...base, line1_sales_livestock_resale: 0 }] }),
+    Error,
+    "cash-method income",
+  );
+  assertThrows(
+    () =>
+      compute({
+        schedule_fs: [{
+          ...base,
+          part_iii: {
+            ...base.part_iii,
+            line37_sales_products: 0,
+            line43_other_income: -1,
+          },
+        }],
+      }),
+    Error,
+    "line 44 cannot be negative",
+  );
+});
+
 // ── Livestock resale — net (line 1 − line 2) ─────────────────────────────────
 
-Deno.test("schedule_f: cost basis of livestock resale is subtracted from sales (line 1 - line 2)", () => {
+Deno.test("schedule_f: line 1b cost basis of livestock resale is subtracted from line 1a sales", () => {
   const result = compute({
     schedule_fs: [
       minimalItem({
         line1_sales_livestock_resale: 50_000,
-        line2_cost_livestock_resale: 30_000,
+        line1b_cost_livestock_resale: 30_000,
       }),
     ],
   });

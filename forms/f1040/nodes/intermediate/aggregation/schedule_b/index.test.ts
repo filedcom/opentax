@@ -1,8 +1,11 @@
 import { assertEquals } from "@std/assert";
-import { schedule_b, inputSchema } from "./index.ts";
+import { inputSchema, schedule_b } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return schedule_b.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return schedule_b.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -28,7 +31,10 @@ Deno.test("multiple interest entries (array) aggregate to line2b", () => {
     taxable_interest_net: [300, 700],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.fields as Record<string, number>).line2b_taxable_interest, 1000);
+  assertEquals(
+    (f1040?.fields as Record<string, number>).line2b_taxable_interest,
+    1000,
+  );
 });
 
 Deno.test("zero taxable_interest_net produces no interest in f1040 output", () => {
@@ -56,7 +62,24 @@ Deno.test("multiple dividend entries (array) aggregate to line3b", () => {
     isNominee: [false, false],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.fields as Record<string, number>).line3b_ordinary_dividends, 1000);
+  assertEquals(
+    (f1040?.fields as Record<string, number>).line3b_ordinary_dividends,
+    1000,
+  );
+});
+
+Deno.test("Form 8814 and below-threshold parent dividends trigger Schedule B without double counting", () => {
+  const result = compute({
+    dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
+    form8814_dividends: 500,
+  });
+  assertEquals(findOutput(result, "f1040"), undefined);
+  assertEquals(findOutput(result, "agi_aggregator"), undefined);
+  const printable = findOutput(result, "schedule_b")?.fields;
+  assertEquals(printable?.print_line6_total, 1_700);
+  assertEquals(printable?.print_div_payer_1, "Fund A");
+  assertEquals(printable?.print_div_payer_2, "Form 8814");
+  assertEquals(printable?.print_div_amount_2, 500);
 });
 
 Deno.test("zero ordinaryDividends produces no dividend output", () => {
@@ -116,7 +139,10 @@ Deno.test("ee_bond_exclusion reduces taxable interest (line 4 = line 2 - line 3)
     ee_bond_exclusion: 500,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.fields as Record<string, number>).line2b_taxable_interest, 1500);
+  assertEquals(
+    (f1040?.fields as Record<string, number>).line2b_taxable_interest,
+    1500,
+  );
 });
 
 Deno.test("ee_bond_exclusion equal to total interest → no line2b output", () => {
@@ -145,7 +171,10 @@ Deno.test("mixed scalar and array interest entries normalize correctly", () => {
     taxable_interest_net: [100, 200, 300],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040?.fields as Record<string, number>).line2b_taxable_interest, 600);
+  assertEquals(
+    (f1040?.fields as Record<string, number>).line2b_taxable_interest,
+    600,
+  );
 });
 
 Deno.test("all zeros produce empty outputs", () => {
@@ -198,7 +227,10 @@ Deno.test("box3_us_obligations: field is accepted by schema and does not affect 
   });
 
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_000);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line2b_taxable_interest,
+    1_000,
+  );
 });
 
 // ─── $1,500 threshold aggregation behavior ────────────────────────────────────
@@ -210,7 +242,10 @@ Deno.test("threshold: 3 interest payers totaling $1,600 > $1,500 — all include
     taxable_interest_net: [600, 800, 200],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_600);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line2b_taxable_interest,
+    1_600,
+  );
 });
 
 Deno.test("threshold: interest total exactly $1,499 — included in line2b (below threshold)", () => {
@@ -219,7 +254,10 @@ Deno.test("threshold: interest total exactly $1,499 — included in line2b (belo
     taxable_interest_net: [999, 500],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line2b_taxable_interest, 1_499);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line2b_taxable_interest,
+    1_499,
+  );
 });
 
 Deno.test("threshold: dividend total $1,600 > $1,500 — all included in line3b", () => {
@@ -229,7 +267,10 @@ Deno.test("threshold: dividend total $1,600 > $1,500 — all included in line3b"
     ordinaryDividends: [600, 700, 300],
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line3b_ordinary_dividends, 1_600);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line3b_ordinary_dividends,
+    1_600,
+  );
 });
 
 Deno.test("threshold: interest $800 + dividend $900 each below $1,500 — both route to f1040", () => {
@@ -250,11 +291,17 @@ Deno.test("threshold: interest $800 + dividend $900 each below $1,500 — both r
 Deno.test("interest routes to agi_aggregator as well as f1040", () => {
   const result = compute({ payer_name: "Bank", taxable_interest_net: 1_200 });
   const agiOut = findOutput(result, "agi_aggregator");
-  assertEquals((agiOut!.fields as Record<string, number>).line2b_taxable_interest, 1_200);
+  assertEquals(
+    (agiOut!.fields as Record<string, number>).line2b_taxable_interest,
+    1_200,
+  );
 });
 
 Deno.test("dividends route to agi_aggregator as well as f1040", () => {
   const result = compute({ payerName: "Fund", ordinaryDividends: 800 });
   const agiOut = findOutput(result, "agi_aggregator");
-  assertEquals((agiOut!.fields as Record<string, number>).line3b_ordinary_dividends, 800);
+  assertEquals(
+    (agiOut!.fields as Record<string, number>).line3b_ordinary_dividends,
+    800,
+  );
 });

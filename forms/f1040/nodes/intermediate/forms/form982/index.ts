@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -13,13 +13,12 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // IRC §108(a)(1) exclusion reasons — each maps to a checkbox on Form 982 lines 1a–1e
 export enum ExclusionType {
-  Bankruptcy = "bankruptcy",               // Line 1a — Title 11 case
-  Insolvency = "insolvency",               // Line 1b — Insolvency (capped at insolvent amount)
-  FarmDebt = "farm_debt",                  // Line 1c — Qualified farm indebtedness
+  Bankruptcy = "bankruptcy", // Line 1a — Title 11 case
+  Insolvency = "insolvency", // Line 1b — Insolvency (capped at insolvent amount)
+  FarmDebt = "farm_debt", // Line 1c — Qualified farm indebtedness
   RealPropertyBusiness = "real_property_business", // Line 1d — Qualified real property business debt
-  Qpri = "qpri",                          // Line 1e — Qualified principal residence indebtedness
+  Qpri = "qpri", // Line 1e — Qualified principal residence indebtedness
 }
-
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -36,6 +35,12 @@ export const inputSchema = z.object({
 
   // For QPRI (line 1e): true if married filing separately (lowers cap to $375k)
   qpri_mfs: z.boolean().optional(),
+
+  // QPRI line 10b applies only when the taxpayer still owns the home after
+  // discharge. The basis reduction cannot exceed either excluded debt or basis.
+  principal_residence_retained: z.boolean().optional(),
+  principal_residence_basis: z.number().nonnegative().optional(),
+  discharge_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 type Form982Input = z.infer<typeof inputSchema>;
@@ -44,7 +49,10 @@ type Form982Input = z.infer<typeof inputSchema>;
 
 // Returns the maximum amount that can be excluded under the given exclusion type.
 // Infinity = no cap (bankruptcy, farm debt, real property business).
-function exclusionCap(input: Form982Input, cfg: import("../../../config/index.ts").F1040Config): number {
+function exclusionCap(
+  input: Form982Input,
+  cfg: import("../../../config/index.ts").F1040Config,
+): number {
   switch (input.exclusion_type) {
     case ExclusionType.Bankruptcy:
       return Infinity; // Title 11 — no dollar cap (IRC §108(a)(1)(A))
@@ -107,7 +115,10 @@ class Form982Node extends TaxNode<typeof inputSchema> {
 
     const cap = exclusionCap(input, cfg);
     const excluded = computeExcluded(input.line2_excluded_cod, cap);
-    const taxableExcess = computeTaxableExcess(input.line2_excluded_cod, excluded);
+    const taxableExcess = computeTaxableExcess(
+      input.line2_excluded_cod,
+      excluded,
+    );
 
     if (taxableExcess <= 0) {
       return { outputs: [] };

@@ -1,5 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   net_profit_schedule_c?: number | null;
@@ -17,9 +17,7 @@ type Input = Partial<Fields> & Record<string, unknown>;
 //   w2_ss_wages           → SSTWagesRRTCompAmt      (xsd line 271; W-2 SS wages for SE cap)
 //   unreported_tips_4137  → UnreportedTipsAmt        (xsd line 280)
 //   wages_8919            → WagesSubjectToSSTAmt     (xsd line 289)
-// IRS1040ScheduleSE.xsd §60 requires SSN (no minOccurs) before all other fields.
-// When taxpayer_ssn is absent from the pending dict, "000000000" is used as a
-// placeholder to keep the XML well-formed.
+// IRS1040ScheduleSE.xsd §60 requires the filer's SSN before all other fields.
 // SE_INCOME_KEYS: fields that trigger Schedule SE emission. w2_ss_wages alone
 // (W-2-only filers) should not cause a Schedule SE to be generated.
 const SE_INCOME_KEYS: ReadonlyArray<keyof Fields> = [
@@ -37,15 +35,20 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["wages_8919", "WagesSubjectToSSTAmt"],
 ];
 
-function buildIRS1040ScheduleSE(fields: Input): string {
+function buildIRS1040ScheduleSE(fields: Input, context?: MefBuildContext): string {
   const hasSeIncome = SE_INCOME_KEYS.some((key) => typeof fields[key] === "number");
   if (!hasSeIncome) return "";
 
-  // IRS1040ScheduleSE.xsd §60 requires SSN before income fields.
-  // Use taxpayer_ssn from pending dict if available; fall back to placeholder.
-  const ssn = typeof fields["taxpayer_ssn"] === "string"
-    ? (fields["taxpayer_ssn"] as string)
-    : "000000000";
+  const ssn = context?.filer?.primarySSN.replaceAll("-", "");
+  if (!ssn || !/^\d{9}$/.test(ssn) || ssn === "000000000") {
+    throw new Error("Schedule SE MeF needs the filer's nine-digit SSN");
+  }
+  if (
+    typeof fields["taxpayer_ssn"] === "string" &&
+    fields["taxpayer_ssn"].replaceAll("-", "") !== ssn
+  ) {
+    throw new Error("Schedule SE SSN does not match the filer");
+  }
 
   const ssnChild = element("SSN", ssn);
   const children = FIELD_MAP.map(([key, tag]) => {
@@ -60,7 +63,7 @@ export const scheduleSE: MefFormDescriptor<"schedule_se", Input> = {
   pendingKey: "schedule_se",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sse.pdf",
-  build(fields) {
-    return buildIRS1040ScheduleSE(fields);
+  build(fields, context) {
+    return buildIRS1040ScheduleSE(fields, context);
   },
 };

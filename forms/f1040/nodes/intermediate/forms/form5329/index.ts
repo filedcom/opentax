@@ -3,10 +3,11 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { TS, tsSchema } from "../../../types.ts";
 
 // ─── Constants — TY2025 ───────────────────────────────────────────────────────
 
@@ -21,16 +22,55 @@ const ESA_ABLE_RATE = 0.10;
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumAmounts(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  return Array.isArray(value)
+    ? value.reduce((sum, amount) => sum + amount, 0)
+    : value;
+}
+
 export const inputSchema = z.object({
   // ── Part I: Early Distributions (line 1–4) ──────────────────────────────
   // Distribution code from 1099-R Box 7 (informational, passed through from f1099r)
-  distribution_code: z.string().optional(),
+  distribution_code: accumulable(z.string()).optional(),
+  subject_ts: accumulable(tsSchema).optional(),
   // Line 1: Early distributions includible in income (from f1099r, code 1)
-  early_distribution: z.number().nonnegative().optional(),
+  early_distribution: accumulable(z.number().nonnegative()).optional(),
   // Line 2: Exception amount (portion not subject to tax)
   early_distribution_exception: z.number().nonnegative().optional(),
+  early_distribution_exception_code: z.enum([
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+    "24",
+    "99",
+  ]).optional(),
   // Line 1 (25% rate): SIMPLE IRA early distribution within first 2 years (code S)
-  simple_ira_early_distribution: z.number().nonnegative().optional(),
+  simple_ira_early_distribution: accumulable(z.number().nonnegative())
+    .optional(),
 
   // ── Part II: ESA/QTP/ABLE Distributions (line 5–8) ──────────────────────
   // Line 5: Taxable distributions from Coverdell ESA, QTP, or ABLE account
@@ -82,7 +122,7 @@ type Form5329Input = z.infer<typeof inputSchema>;
 // Part I, Line 4: 10% additional tax on early distributions (non-SIMPLE IRA)
 // IRC §72(t)(1); Form 5329 line 4 → Schedule 2 line 8
 function partI_regularTax(input: Form5329Input): number {
-  const dist = input.early_distribution ?? 0;
+  const dist = sumAmounts(input.early_distribution);
   if (dist <= 0) return 0;
   const exception = input.early_distribution_exception ?? 0;
   const netSubjectToTax = Math.max(0, dist - exception);
@@ -92,7 +132,7 @@ function partI_regularTax(input: Form5329Input): number {
 // Part I, Line 4 (25%): Additional tax on SIMPLE IRA early distribution
 // IRC §72(t)(6); applies when distribution within first 2 years of plan participation
 function partI_simpleTax(input: Form5329Input): number {
-  const dist = input.simple_ira_early_distribution ?? 0;
+  const dist = sumAmounts(input.simple_ira_early_distribution);
   if (dist <= 0) return 0;
   return dist * SIMPLE_IRA_EARLY_RATE;
 }
@@ -108,18 +148,24 @@ function partII_tax(input: Form5329Input): number {
 }
 
 // 6% excise on excess account contributions: min(excess, account_value) × 6%
-// When account FMV not provided, use excess amount as the base (conservative default)
 // IRC §4973; Form 5329 Parts III–VIII
 function excessContribTax(excess: number, accountValue?: number): number {
   if (excess <= 0) return 0;
-  const base = accountValue !== undefined ? Math.min(excess, accountValue) : excess;
-  return base * EXCESS_CONTRIB_RATE;
+  if (accountValue === undefined) {
+    throw new Error(
+      "Form 5329 needs the December 31 account value to calculate excess-contribution tax",
+    );
+  }
+  return Math.min(excess, accountValue) * EXCESS_CONTRIB_RATE;
 }
 
 // Part III, Line 17: 6% excise on excess traditional IRA contributions
 // IRC §4973(a); Form 5329 line 17 → Schedule 2 line 8
 function partIII_tax(input: Form5329Input): number {
-  return excessContribTax(input.excess_traditional_ira ?? 0, input.traditional_ira_value);
+  return excessContribTax(
+    input.excess_traditional_ira ?? 0,
+    input.traditional_ira_value,
+  );
 }
 
 // Part IV, Line 25: 6% excise on excess Roth IRA contributions
@@ -131,7 +177,10 @@ function partIV_tax(input: Form5329Input): number {
 // Part V, Line 33: 6% excise on excess Coverdell ESA contributions
 // IRC §4973(e); Form 5329 line 33 → Schedule 2 line 8
 function partV_tax(input: Form5329Input): number {
-  return excessContribTax(input.excess_coverdell_esa ?? 0, input.coverdell_esa_value);
+  return excessContribTax(
+    input.excess_coverdell_esa ?? 0,
+    input.coverdell_esa_value,
+  );
 }
 
 // Part VI, Line 41: 6% excise on excess Archer MSA contributions
@@ -182,8 +231,46 @@ class Form5329Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form5329Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const subjects = input.subject_ts === undefined
+      ? []
+      : Array.isArray(input.subject_ts)
+      ? input.subject_ts
+      : [input.subject_ts];
+    if (new Set(subjects).size > 1) {
+      throw new Error("Form 5329 needs separate taxpayer and spouse forms");
+    }
+    if (
+      (input.early_distribution_exception ?? 0) >
+        sumAmounts(input.early_distribution)
+    ) {
+      throw new Error(
+        "Form 5329 early-distribution exception exceeds regular distributions",
+      );
+    }
+    if ((input.esa_able_exception ?? 0) > (input.esa_able_distribution ?? 0)) {
+      throw new Error(
+        "Form 5329 education-account exception exceeds distributions",
+      );
+    }
     const total = totalTax(input);
-    return { outputs: schedule2Output(total) };
+    // Preserve the full taxable distribution total for MeF/PDF. The generic
+    // pending normalizer treats numeric arrays as successive snapshots, while
+    // these arrays are independent 1099-R distributions that must be summed.
+    const regular = sumAmounts(input.early_distribution);
+    const simple = sumAmounts(input.simple_ira_early_distribution);
+    const printFields = {
+      ...(regular > 0 ? { early_distribution: regular } : {}),
+      ...(simple > 0 ? { simple_ira_early_distribution: simple } : {}),
+      ...(subjects.length > 0 ? { subject_ts: subjects[0] ?? TS.T } : {}),
+    };
+    return {
+      outputs: [
+        ...schedule2Output(total),
+        ...(Object.keys(printFields).length > 0
+          ? [{ nodeType: this.nodeType, fields: printFields }]
+          : []),
+      ],
+    };
   }
 }
 

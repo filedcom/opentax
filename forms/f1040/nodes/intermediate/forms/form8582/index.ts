@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
@@ -29,6 +29,17 @@ const MFS_MAGI_UPPER = 75_000;
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  // Activity rows retained for Part IV/V and loss-allocation worksheets in MeF.
+  activities: z.array(z.object({
+    name: z.string().min(1),
+    activity_type: z.enum(["A", "B"]),
+    property_type: z.number().int().min(1).max(8),
+    current_net: z.number(),
+    prior_unallowed_operating: z.number().nonnegative(),
+    prior_active_participation: z.boolean().optional(),
+    prior_unallowed_4797_part1: z.number().nonnegative(),
+    prior_unallowed_4797_part2: z.number().nonnegative(),
+  })).optional(),
   // Per-activity passthrough fields (merged by executor; stored for traceability)
   // schedule_c passive net profit/loss
   passive_schedule_c: z.number().optional(),
@@ -37,6 +48,8 @@ export const inputSchema = z.object({
 
   // Current-year net passive income (sum of activities with net > 0)
   current_income: z.number().nonnegative().optional(),
+  // The portion of current passive income from actively participated rentals.
+  rental_current_income: z.number().nonnegative().optional(),
 
   // Current-year net passive loss (positive amount; sum of |net| for loss activities)
   current_loss: z.number().nonnegative().optional(),
@@ -46,6 +59,7 @@ export const inputSchema = z.object({
   // passive activity losses (e.g., limited partnership losses, passive Schedule C losses).
   // Must be <= current_loss. If omitted, defaults to zero (no rental-only carryforward).
   rental_current_loss: z.number().nonnegative().optional(),
+  rental_prior_eligible_loss: z.number().nonnegative().optional(),
 
   // Prior-year unallowed PAL carryforward (positive amount)
   prior_unallowed: z.number().nonnegative().optional(),
@@ -80,9 +94,10 @@ export type PassiveActivity = {
   readonly currentIncome: number;
   readonly currentLoss: number;
   readonly priorUnallowed: number;
-  // Current-year loss from rental real estate only — the §469(i) allowance reaches
-  // no other passive activity. Omitted means the whole loss is rental.
-  readonly rentalLoss?: number;
+  // Rental loss eligible for the §469(i) allowance, including qualifying prior
+  // operating carryovers. Omitted means no proven rental portion.
+  readonly rentalLoss: number;
+  readonly rentalIncome: number;
   readonly activeParticipation: boolean;
   readonly modifiedAgi?: number;
   readonly filingStatus?: FilingStatus;
@@ -94,6 +109,122 @@ export type PassiveLossLimit = {
   // Loss carried to next year
   readonly suspended: number;
 };
+
+/** Allocate whole-dollar allowed losses proportionally, preserving the exact total. */
+export function allocateRentalLosses(
+  losses: readonly number[],
+  allowed: number,
+): number[] {
+  const total = losses.reduce((sum, loss) => sum + loss, 0);
+  if (
+    losses.some((loss) => !Number.isSafeInteger(loss) || loss < 0) ||
+    !Number.isSafeInteger(total) ||
+    !Number.isSafeInteger(allowed) || allowed < 0 || allowed > total
+  ) {
+    throw new Error(
+      "Form 8582 rental allocation needs whole-dollar losses and an allowed total within them",
+    );
+  }
+  if (total === 0) return losses.map(() => 0);
+  const divisor = BigInt(total);
+  const shares = losses.map((loss, index) => {
+    const product = BigInt(loss) * BigInt(allowed);
+    return {
+      index,
+      quotient: Number(product / divisor),
+      remainder: product % divisor,
+    };
+  });
+  const amounts = shares.map((share) => share.quotient);
+  let remaining = allowed - amounts.reduce((sum, amount) => sum + amount, 0);
+  const ranked = [...shares].sort((a, b) =>
+    a.remainder === b.remainder
+      ? a.index - b.index
+      : a.remainder > b.remainder
+      ? -1
+      : 1
+  );
+  for (const share of ranked) {
+    if (remaining === 0) break;
+    amounts[share.index]++;
+    remaining--;
+  }
+  return amounts;
+}
+
+export function allocatePassiveActivityLosses(
+  activities: readonly {
+    currentNet: number;
+    priorUnallowed: number;
+    specialEligible: boolean;
+    priorSpecialEligible: boolean;
+  }[],
+  allowedTotal: number,
+): {
+  allowed: number[];
+  suspended: number[];
+  overallLosses: number[];
+  specialEligibleLosses: number[];
+  specialByActivity: number[];
+  postSpecialLosses: number[];
+} {
+  const grossLosses = activities.map(({ currentNet, priorUnallowed }) =>
+    Math.max(0, -currentNet) + priorUnallowed
+  );
+  const ownIncome = activities.map(({ currentNet }) => Math.max(0, currentNet));
+  if (
+    activities.some(({ currentNet, priorUnallowed }) =>
+      !Number.isSafeInteger(currentNet) ||
+      !Number.isSafeInteger(priorUnallowed) || priorUnallowed < 0
+    )
+  ) {
+    throw new Error("Form 8582 activity allocation needs whole-dollar amounts");
+  }
+  const overallLosses = grossLosses.map((loss, index) =>
+    Math.max(0, loss - ownIncome[index])
+  );
+  const specialEligibleLosses = activities.map((activity, index) =>
+    activity.specialEligible
+      ? Math.min(
+        overallLosses[index],
+        Math.max(
+          0,
+          Math.max(0, -activity.currentNet) +
+            (activity.priorSpecialEligible ? activity.priorUnallowed : 0) -
+            ownIncome[index],
+        ),
+      )
+      : 0
+  );
+  const totalIncome = ownIncome.reduce((sum, amount) => sum + amount, 0);
+  const totalLoss = grossLosses.reduce((sum, amount) => sum + amount, 0);
+  const specialAllowance = Math.max(0, allowedTotal - totalIncome);
+  const specialByActivity = allocateRentalLosses(
+    specialEligibleLosses,
+    specialAllowance,
+  );
+  const postSpecialLosses = overallLosses.map((amount, index) =>
+    amount - specialByActivity[index]
+  );
+  const suspended = allocateRentalLosses(
+    postSpecialLosses,
+    totalLoss - allowedTotal,
+  );
+  const allowed = grossLosses.map((amount, index) => amount - suspended[index]);
+  if (allowed.reduce((sum, amount) => sum + amount, 0) !== allowedTotal) {
+    throw new Error(
+      "Form 8582 per-activity losses do not reconcile to allowed total",
+    );
+  }
+  return {
+    allowed,
+    suspended,
+    overallLosses,
+    specialEligibleLosses,
+    specialByActivity,
+    postSpecialLosses,
+  };
+}
 
 function totalPassiveIncome(input: Form8582Input): number {
   return input.current_income ?? 0;
@@ -118,7 +249,11 @@ function allowanceThresholds(activity: PassiveActivity): {
     // Note: MFS who lived with spouse at ANY time gets $0 — that's handled
     // by isMfsIneligible check before calling this. If we reach here, MFS
     // already returned $0. This is only for documentation clarity.
-    return { lower: MFS_MAGI_LOWER, upper: MFS_MAGI_UPPER, max: MFS_ALLOWANCE_MAX };
+    return {
+      lower: MFS_MAGI_LOWER,
+      upper: MFS_MAGI_UPPER,
+      max: MFS_ALLOWANCE_MAX,
+    };
   }
   return {
     lower: MAGI_LOWER_THRESHOLD,
@@ -129,7 +264,10 @@ function allowanceThresholds(activity: PassiveActivity): {
 
 // IRC §469(i): the special $25k allowance for rental real estate.
 // Returns $0 if conditions are not met.
-function specialAllowance(activity: PassiveActivity, rentalNetLoss: number): number {
+function specialAllowance(
+  activity: PassiveActivity,
+  rentalNetLoss: number,
+): number {
   // Must be an active rental real estate activity the taxpayer participated in
   if (!activity.activeParticipation) return 0;
 
@@ -165,6 +303,18 @@ function specialAllowance(activity: PassiveActivity, rentalNetLoss: number): num
 export function passiveLossLimit(activity: PassiveActivity): PassiveLossLimit {
   const income = activity.currentIncome;
   const loss = activity.currentLoss + activity.priorUnallowed;
+  if (
+    !Number.isFinite(income) || !Number.isFinite(loss) ||
+    !Number.isFinite(activity.rentalLoss) ||
+    !Number.isFinite(activity.rentalIncome) ||
+    income < 0 || loss < 0 ||
+    activity.rentalLoss < 0 || activity.rentalLoss > loss ||
+    activity.rentalIncome < 0 || activity.rentalIncome > income
+  ) {
+    throw new Error(
+      "Form 8582 rental and passive activity totals do not reconcile",
+    );
+  }
   if (loss <= 0) return { allowed: 0, suspended: 0 };
 
   // Passive income first releases an equal amount of loss. Schedule E has held
@@ -175,7 +325,10 @@ export function passiveLossLimit(activity: PassiveActivity): PassiveLossLimit {
   if (remainingLoss <= 0) return { allowed: loss, suspended: 0 };
 
   // Only rental real estate loss can use the additional §469(i) allowance.
-  const rentalNetLoss = Math.min(remainingLoss, activity.rentalLoss ?? loss);
+  const rentalNetLoss = Math.min(
+    remainingLoss,
+    Math.max(0, activity.rentalLoss - activity.rentalIncome),
+  );
   const allowance = specialAllowance(activity, rentalNetLoss);
   const allowed = allowedAgainstIncome + Math.min(remainingLoss, allowance);
 
@@ -187,9 +340,12 @@ function passiveActivity(input: Form8582Input): PassiveActivity {
     currentIncome: totalPassiveIncome(input),
     currentLoss: input.current_loss ?? 0,
     priorUnallowed: input.prior_unallowed ?? 0,
-    rentalLoss: input.rental_current_loss,
+    rentalLoss: (input.rental_current_loss ?? 0) +
+      (input.rental_prior_eligible_loss ?? 0),
+    rentalIncome: input.rental_current_income ?? 0,
     // Part II needs both an active rental activity and actual participation
-    activeParticipation: (input.has_active_rental ?? false) && (input.active_participation ?? false),
+    activeParticipation: (input.has_active_rental ?? false) &&
+      (input.active_participation ?? false),
     modifiedAgi: input.modified_agi,
     filingStatus: input.filing_status,
   };
@@ -197,7 +353,7 @@ function passiveActivity(input: Form8582Input): PassiveActivity {
 
 function schedule1Output(allowedLoss: number): NodeOutput[] {
   if (allowedLoss <= 0) return [];
-  return [output(schedule1, { line17_schedule_e: -allowedLoss })];
+  return [output(schedule1, { line5_schedule_e: -allowedLoss })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -210,6 +366,27 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
     const input = inputSchema.parse(rawInput);
 
+    if (
+      input.has_active_rental === true &&
+      input.activities === undefined &&
+      (input.current_loss ?? 0) > 0 &&
+      input.rental_current_loss === undefined
+    ) {
+      throw new Error(
+        "Form 8582 needs the rental portion of current passive losses",
+      );
+    }
+    if (
+      input.has_active_rental === true &&
+      input.activities === undefined &&
+      (input.current_income ?? 0) > 0 &&
+      input.rental_current_income === undefined
+    ) {
+      throw new Error(
+        "Form 8582 needs the rental portion of current passive income",
+      );
+    }
+
     // No passive activity at all → nothing to do
     if (totalPassiveIncome(input) === 0 && totalPassiveLoss(input) === 0) {
       return { outputs: [] };
@@ -219,7 +396,9 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
 
     return {
       outputs: schedule1Output(allowed),
-      ...(suspended > 0 ? { carryforwards: { suspended_pal_8582: suspended } } : {}),
+      ...(suspended > 0
+        ? { carryforwards: { suspended_pal_8582: suspended } }
+        : {}),
     };
   }
 }

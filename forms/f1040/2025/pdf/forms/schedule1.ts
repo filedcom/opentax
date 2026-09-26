@@ -17,7 +17,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 //     f1_17 = Line 8e Archer MSA distributions
 //     f1_21 = Line 8i prizes and awards
 //     f1_27 = Line 8p excess business loss
-//     Line8z_ReadOrder group → f1_35 = Line 8z other income
+//     Line8z_ReadOrder group → f1_35 = description, f1_36 = amount
 //     f1_37 = Line 10 total additional income
 //
 // Page 2 (f2_01–f2_09):
@@ -30,27 +30,113 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Page 1: Part I Additional Income ────────────────────────────────────────
-  { kind: "text", domainKey: "line1_state_refund", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
-  { kind: "text", domainKey: "line3_schedule_c", pdfField: "topmostSubform[0].Page1[0].f1_03[0]" },
-  { kind: "text", domainKey: "line4_other_gains", pdfField: "topmostSubform[0].Page1[0].f1_04[0]" },
-  { kind: "text", domainKey: "line6_schedule_f", pdfField: "topmostSubform[0].Page1[0].f1_06[0]" },
-  { kind: "text", domainKey: "line7_unemployment", pdfField: "topmostSubform[0].Page1[0].Line7_ReadOrder[0].f1_11[0]" },
-  { kind: "text", domainKey: "line8c_cod_income", pdfField: "topmostSubform[0].Page1[0].f1_15[0]" },
-  { kind: "text", domainKey: "line8e_archer_msa_dist", pdfField: "topmostSubform[0].Page1[0].f1_17[0]" },
-  { kind: "text", domainKey: "line8i_prizes_awards", pdfField: "topmostSubform[0].Page1[0].f1_21[0]" },
-  { kind: "text", domainKey: "line8p_excess_business_loss", pdfField: "topmostSubform[0].Page1[0].f1_27[0]" },
-  { kind: "text", domainKey: "line8z_other", pdfField: "topmostSubform[0].Page1[0].Line8z_ReadOrder[0].f1_35[0]" },
+  {
+    kind: "text",
+    domainKey: "line1_state_refund",
+    pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line3_schedule_c",
+    pdfField: "topmostSubform[0].Page1[0].f1_03[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line4_other_gains",
+    pdfField: "topmostSubform[0].Page1[0].f1_04[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line5_schedule_e",
+    pdfField: "topmostSubform[0].Page1[0].f1_05[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line6_schedule_f",
+    pdfField: "topmostSubform[0].Page1[0].f1_06[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line7_unemployment",
+    pdfField: "topmostSubform[0].Page1[0].Line7_ReadOrder[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8c_cod_income",
+    pdfField: "topmostSubform[0].Page1[0].f1_15[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8e_archer_msa_dist",
+    pdfField: "topmostSubform[0].Page1[0].f1_17[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8i_prizes_awards",
+    pdfField: "topmostSubform[0].Page1[0].f1_21[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8p_excess_business_loss",
+    pdfField: "topmostSubform[0].Page1[0].f1_27[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8z_description",
+    pdfField: "topmostSubform[0].Page1[0].Line8z_ReadOrder[0].f1_35[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line8z_other",
+    pdfField: "topmostSubform[0].Page1[0].f1_36[0]",
+  },
 
   // ── Page 2: Part II Adjustments ─────────────────────────────────────────────
-  { kind: "text", domainKey: "line13_hsa_deduction", pdfField: "topmostSubform[0].Page2[0].f2_02[0]" },
-  { kind: "text", domainKey: "line15_se_deduction", pdfField: "topmostSubform[0].Page2[0].f2_04[0]" },
-  { kind: "text", domainKey: "line17_schedule_e", pdfField: "topmostSubform[0].Page2[0].f2_06[0]" },
-  { kind: "text", domainKey: "line18_early_withdrawal", pdfField: "topmostSubform[0].Page2[0].f2_07[0]" },
-  { kind: "text", domainKey: "line20_ira_deduction", pdfField: "topmostSubform[0].Page2[0].f2_09[0]" },
+  {
+    kind: "text",
+    domainKey: "line13_hsa_deduction",
+    pdfField: "topmostSubform[0].Page2[0].f2_02[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line15_se_deduction",
+    pdfField: "topmostSubform[0].Page2[0].f2_04[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line17_se_health_insurance",
+    pdfField: "topmostSubform[0].Page2[0].f2_06[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line18_early_withdrawal",
+    pdfField: "topmostSubform[0].Page2[0].f2_07[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line20_ira_deduction",
+    pdfField: "topmostSubform[0].Page2[0].f2_09[0]",
+  },
 ];
 
 export const schedule1Pdf: PdfFormDescriptor = {
   pendingKey: "schedule1",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s1--2025.pdf",
+  instances(fields) {
+    const electionAmount = fields.line8z_form8814;
+    if (typeof electionAmount !== "number" || electionAmount <= 0) {
+      return [fields];
+    }
+    const otherAmount = typeof fields.line8z_other === "number"
+      ? fields.line8z_other
+      : 0;
+    return [{
+      ...fields,
+      line8z_other: otherAmount + electionAmount,
+      line8z_description: otherAmount > 0
+        ? "Form 8814 and other income"
+        : "Form 8814",
+    }];
+  },
   fields,
 };

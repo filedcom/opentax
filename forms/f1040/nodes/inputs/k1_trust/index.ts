@@ -1,12 +1,25 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
-import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { form4952 } from "../../intermediate/forms/form4952/index.ts";
+import {
+  ForeignTaxCreditMethod,
+  ForeignTaxKind,
+  form_1116,
+  IncomeCategory,
+} from "../../intermediate/forms/form_1116/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Schedule K-1 (Form 1041) — Beneficiary's Share of Income, Deductions, Credits
@@ -21,6 +34,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   // Identification
   estate_trust_name: z.string().min(1),
+  // Affirm the beneficiary's limited portfolio boxes are investment-property
+  // income not already included in Form 4952's manual "other" facts.
+  investment_property_for_form4952: z.boolean().optional(),
 
   // Distributable Net Income (DNI) — the ceiling on beneficiary inclusion
   // per IRC §662(a). If provided and total distributions exceed DNI, all
@@ -64,7 +80,8 @@ export const itemSchema = z.object({
   // Box 9 — Directly apportioned deductions (codes A–B)
   // Deductions allocated directly to the beneficiary (e.g. depreciation, depletion).
   // Reduce gross income of the same character; typically Schedule E or Schedule A.
-  box9_directly_apportioned_deductions: z.number().nonnegative().optional().describe("Box 9 — Directly apportioned deductions"),
+  box9_directly_apportioned_deductions: z.number().nonnegative().optional()
+    .describe("Box 9 — Directly apportioned deductions"),
 
   // Box 10 — Estate tax deduction (IRD) — informational; Schedule A line 16
   box10_estate_tax_deduction: z.number().nonnegative().optional(),
@@ -77,13 +94,24 @@ export const itemSchema = z.object({
 
   // Box 13 — Credits and credit recapture → applicable credit form
   // Beneficiary's share of credits passed through from the trust (e.g. foreign tax credit).
-  box13_credits: z.number().nonnegative().optional().describe("Box 13 — Credits and credit recapture"),
+  box13_credits: z.number().nonnegative().optional().describe(
+    "Box 13 — Credits and credit recapture",
+  ),
 
   // Box 14 — Foreign taxes → Form 1116
   box14_foreign_tax: z.number().nonnegative().optional(),
   box14_foreign_income: z.number().nonnegative().optional(),
   box14_foreign_income_category: z.nativeEnum(IncomeCategory).optional(),
   box14_foreign_deductions: z.number().nonnegative().optional(),
+  box14_foreign_deductions_explanation: z.string().trim().min(1).optional(),
+  // Use the country, tax type, and payment details from the trust's K-1 statement.
+  box14_foreign_tax_irs_country_code: z.string().length(2).optional(),
+  box14_foreign_tax_paid_or_accrued_date: z.string().regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+  ).optional(),
+  box14_foreign_tax_kind: z.nativeEnum(ForeignTaxKind).optional(),
+  box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
+    .optional(),
 });
 
 export const inputSchema = z.object({
@@ -126,25 +154,41 @@ function applyDniLimit(item: K1TrustItem): K1TrustItem {
   return {
     ...item,
     box1_interest: item.box1_interest !== undefined
-      ? item.box1_interest * ratio : undefined,
+      ? item.box1_interest * ratio
+      : undefined,
     box2a_ordinary_dividends: item.box2a_ordinary_dividends !== undefined
-      ? item.box2a_ordinary_dividends * ratio : undefined,
+      ? item.box2a_ordinary_dividends * ratio
+      : undefined,
     box2b_qualified_dividends: item.box2b_qualified_dividends !== undefined
-      ? item.box2b_qualified_dividends * ratio : undefined,
-    box3_net_st_cap_gain: item.box3_net_st_cap_gain !== undefined && item.box3_net_st_cap_gain > 0
-      ? item.box3_net_st_cap_gain * ratio : item.box3_net_st_cap_gain,
-    box4a_net_lt_cap_gain: item.box4a_net_lt_cap_gain !== undefined && item.box4a_net_lt_cap_gain > 0
-      ? item.box4a_net_lt_cap_gain * ratio : item.box4a_net_lt_cap_gain,
-    box5_other_portfolio: item.box5_other_portfolio !== undefined && item.box5_other_portfolio > 0
-      ? item.box5_other_portfolio * ratio : item.box5_other_portfolio,
-    box6_ordinary_business: item.box6_ordinary_business !== undefined && item.box6_ordinary_business > 0
-      ? item.box6_ordinary_business * ratio : item.box6_ordinary_business,
-    box7_rental_real_estate: item.box7_rental_real_estate !== undefined && item.box7_rental_real_estate > 0
-      ? item.box7_rental_real_estate * ratio : item.box7_rental_real_estate,
-    box8_other_rental: item.box8_other_rental !== undefined && item.box8_other_rental > 0
-      ? item.box8_other_rental * ratio : item.box8_other_rental,
+      ? item.box2b_qualified_dividends * ratio
+      : undefined,
+    box3_net_st_cap_gain:
+      item.box3_net_st_cap_gain !== undefined && item.box3_net_st_cap_gain > 0
+        ? item.box3_net_st_cap_gain * ratio
+        : item.box3_net_st_cap_gain,
+    box4a_net_lt_cap_gain:
+      item.box4a_net_lt_cap_gain !== undefined && item.box4a_net_lt_cap_gain > 0
+        ? item.box4a_net_lt_cap_gain * ratio
+        : item.box4a_net_lt_cap_gain,
+    box5_other_portfolio:
+      item.box5_other_portfolio !== undefined && item.box5_other_portfolio > 0
+        ? item.box5_other_portfolio * ratio
+        : item.box5_other_portfolio,
+    box6_ordinary_business: item.box6_ordinary_business !== undefined &&
+        item.box6_ordinary_business > 0
+      ? item.box6_ordinary_business * ratio
+      : item.box6_ordinary_business,
+    box7_rental_real_estate: item.box7_rental_real_estate !== undefined &&
+        item.box7_rental_real_estate > 0
+      ? item.box7_rental_real_estate * ratio
+      : item.box7_rental_real_estate,
+    box8_other_rental:
+      item.box8_other_rental !== undefined && item.box8_other_rental > 0
+        ? item.box8_other_rental * ratio
+        : item.box8_other_rental,
     box14_foreign_income: item.box14_foreign_income !== undefined
-      ? item.box14_foreign_income * ratio : undefined,
+      ? item.box14_foreign_income * ratio
+      : undefined,
   };
 }
 
@@ -176,21 +220,32 @@ function scheduleBDividendOutputs(items: K1TrustItems): NodeOutput[] {
 
 // Aggregate qualified dividends (Box 2b) → f1040 line3a
 function f1040QualDivOutput(items: K1TrustItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box2b_qualified_dividends ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box2b_qualified_dividends ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(f1040, { line3a_qualified_dividends: total })];
 }
 
 // Aggregate capital gains/losses → schedule_d (one merged output)
 function scheduleDOutput(items: K1TrustItems): NodeOutput[] {
-  const totalSt = items.reduce((sum, item) => sum + (item.box3_net_st_cap_gain ?? 0), 0);
-  const totalLt = items.reduce((sum, item) => sum + (item.box4a_net_lt_cap_gain ?? 0), 0);
+  const totalSt = items.reduce(
+    (sum, item) => sum + (item.box3_net_st_cap_gain ?? 0),
+    0,
+  );
+  const totalLt = items.reduce(
+    (sum, item) => sum + (item.box4a_net_lt_cap_gain ?? 0),
+    0,
+  );
   const hasSt = totalSt !== 0;
   const hasLt = totalLt !== 0;
   if (!hasSt && !hasLt) return [];
 
   if (hasSt && hasLt) {
-    return [output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt })];
+    return [
+      output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt }),
+    ];
   }
   if (hasSt) {
     return [output(schedule_d, { line_5_k1_st: totalSt })];
@@ -210,11 +265,19 @@ function schedule1Output(items: K1TrustItems): NodeOutput[] {
       (item.box8_other_rental ?? 0),
     0,
   );
-  const otherPortfolioTotal = items.reduce((sum, item) => sum + (item.box5_other_portfolio ?? 0), 0);
+  const otherPortfolioTotal = items.reduce(
+    (sum, item) => sum + (item.box5_other_portfolio ?? 0),
+    0,
+  );
 
   if (scheduleETotal === 0 && otherPortfolioTotal === 0) return [];
   if (scheduleETotal !== 0 && otherPortfolioTotal !== 0) {
-    return [output(schedule1, { line5_schedule_e: scheduleETotal, line8z_other_income: otherPortfolioTotal })];
+    return [
+      output(schedule1, {
+        line5_schedule_e: scheduleETotal,
+        line8z_other_income: otherPortfolioTotal,
+      }),
+    ];
   }
   if (scheduleETotal !== 0) {
     return [output(schedule1, { line5_schedule_e: scheduleETotal })];
@@ -237,6 +300,11 @@ function form1116Outputs(items: K1TrustItems): NodeOutput[] {
           foreign_gross_income: item.box14_foreign_income!,
           income_category: item.box14_foreign_income_category!,
           directly_allocable_deductions: item.box14_foreign_deductions,
+          direct_expense_explanation: item.box14_foreign_deductions_explanation,
+          irs_country_code: item.box14_foreign_tax_irs_country_code,
+          tax_paid_or_accrued_date: item.box14_foreign_tax_paid_or_accrued_date,
+          tax_kind: item.box14_foreign_tax_kind,
+          tax_credit_method: item.box14_foreign_tax_credit_method,
         }],
       })
     );
@@ -247,7 +315,10 @@ function form1116Outputs(items: K1TrustItems): NodeOutput[] {
 // Routed to schedule1 line8z_other_income as a negative adjustment to offset passthrough
 // income, which is the closest available sink until a dedicated schedule_e sink is wired.
 function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box9_directly_apportioned_deductions ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box9_directly_apportioned_deductions ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(schedule1, { line8z_other_income: -total })];
 }
@@ -255,7 +326,14 @@ function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_b, f1040, schedule_d, schedule1, form_1116]);
+  readonly outputNodes = new OutputNodes([
+    schedule_b,
+    f1040,
+    schedule_d,
+    schedule1,
+    form_1116,
+    form4952,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_trusts } = inputSchema.parse(input);
@@ -272,6 +350,33 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...form1116Outputs(limitedItems),
       ...apportionedDeductionOutputs(limitedItems),
     ];
+
+    for (const item of limitedItems) {
+      if (item.investment_property_for_form4952 !== true) continue;
+      if (
+        (item.box2b_qualified_dividends ?? 0) >
+          (item.box2a_ordinary_dividends ?? 0)
+      ) {
+        throw new Error(
+          "Trust K-1 qualified dividends exceed ordinary dividends",
+        );
+      }
+      if ((item.box1_interest ?? 0) > 0) {
+        outputs.push(
+          output(form4952, { source_k1_interest: item.box1_interest! }),
+        );
+      }
+      if ((item.box2a_ordinary_dividends ?? 0) > 0) {
+        outputs.push(output(form4952, {
+          source_k1_dividends: item.box2a_ordinary_dividends!,
+        }));
+      }
+      if ((item.box2b_qualified_dividends ?? 0) > 0) {
+        outputs.push(output(form4952, {
+          source_k1_qualified_dividends: item.box2b_qualified_dividends!,
+        }));
+      }
+    }
 
     return { outputs };
   }

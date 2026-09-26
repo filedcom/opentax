@@ -9,22 +9,53 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: items });
+  return k1_trust.compute({ taxYear: 2025, formType: "f1040" }, {
+    k1_trusts: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("trust K-1 uses DNI-limited portfolio income for affirmed Form 4952 source", () => {
+  const item = minimalItem({
+    distributable_net_income: 300,
+    box1_interest: 200,
+    box2a_ordinary_dividends: 400,
+    box2b_qualified_dividends: 100,
+  });
+  assertEquals(findOutput(compute([item]), "form4952"), undefined);
+  const fields = compute([{
+    ...item,
+    investment_property_for_form4952: true,
+  }]).outputs.filter((output) => output.nodeType === "form4952")
+    .map((output) => output.fields);
+  assertEquals(fields, [
+    { source_k1_interest: 100 },
+    { source_k1_dividends: 200 },
+    { source_k1_qualified_dividends: 50 },
+  ]);
+});
+
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: [] }), Error);
+  assertThrows(
+    () =>
+      k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: [] }),
+    Error,
+  );
 });
 
 Deno.test("missing estate_trust_name throws", () => {
   assertThrows(
-    () => k1_trust.compute({ taxYear: 2025, formType: "f1040" }, { k1_trusts: [{ box1_interest: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () =>
+      k1_trust.compute({ taxYear: 2025, formType: "f1040" }, {
+        k1_trusts: [
+          { box1_interest: 100 } as unknown as ReturnType<typeof minimalItem>,
+        ],
+      }),
     Error,
   );
 });
@@ -34,11 +65,17 @@ Deno.test("negative box1_interest throws", () => {
 });
 
 Deno.test("negative box2a_ordinary_dividends throws", () => {
-  assertThrows(() => compute([minimalItem({ box2a_ordinary_dividends: -5 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ box2a_ordinary_dividends: -5 })]),
+    Error,
+  );
 });
 
 Deno.test("negative box2b_qualified_dividends throws", () => {
-  assertThrows(() => compute([minimalItem({ box2b_qualified_dividends: -10 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ box2b_qualified_dividends: -10 })]),
+    Error,
+  );
 });
 
 // ── 2. Per-box routing ────────────────────────────────────────────────────────
@@ -134,9 +171,23 @@ Deno.test("box8_other_rental routes to schedule1 line5_schedule_e", () => {
 });
 
 Deno.test("box14_foreign_tax routes to form_1116", () => {
-  const result = compute([minimalItem({ box14_foreign_tax: 150, box14_foreign_income: 750, box14_foreign_income_category: "passive" })]);
+  const result = compute([minimalItem({
+    box14_foreign_tax: 150,
+    box14_foreign_income: 750,
+    box14_foreign_income_category: "passive",
+    box14_foreign_tax_irs_country_code: "UK",
+    box14_foreign_tax_paid_or_accrued_date: "2025-08-03",
+    box14_foreign_tax_kind: "rents_royalties",
+    box14_foreign_tax_credit_method: "paid",
+  })]);
   const out = findOutput(result, "form_1116");
-  assertEquals((out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 150);
+  const taxItem =
+    (out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0];
+  assertEquals(taxItem.foreign_tax_paid, 150);
+  assertEquals(taxItem.irs_country_code, "UK");
+  assertEquals(taxItem.tax_paid_or_accrued_date, "2025-08-03");
+  assertEquals(taxItem.tax_kind, "rents_royalties");
+  assertEquals(taxItem.tax_credit_method, "paid");
 });
 
 Deno.test("zero box14 does not route to form_1116", () => {
@@ -155,14 +206,18 @@ Deno.test("box1_interest from multiple K-1s produces separate per-payer schedule
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
   // Each K-1 produces its own schedule_b entry with the per-payer amount
   assertEquals(sbOutputs.length, 2);
-  const amounts = sbOutputs.map((o) => o.fields.taxable_interest_net as number).sort((a, b) => a - b);
+  const amounts = sbOutputs.map((o) => o.fields.taxable_interest_net as number)
+    .sort((a, b) => a - b);
   assertEquals(amounts, [200, 300]);
 });
 
 Deno.test("box2b_qualified_dividends sums across K-1s to f1040", () => {
   const result = compute([
     minimalItem({ box2b_qualified_dividends: 200 }),
-    minimalItem({ estate_trust_name: "Trust B", box2b_qualified_dividends: 300 }),
+    minimalItem({
+      estate_trust_name: "Trust B",
+      box2b_qualified_dividends: 300,
+    }),
   ]);
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line3a_qualified_dividends, 500);
@@ -247,7 +302,9 @@ Deno.test("all-zero K-1 produces no outputs", () => {
 });
 
 Deno.test("K-1 with both STCG and LTCG produces single merged schedule_d output", () => {
-  const result = compute([minimalItem({ box3_net_st_cap_gain: 500, box4a_net_lt_cap_gain: 1000 })]);
+  const result = compute([
+    minimalItem({ box3_net_st_cap_gain: 500, box4a_net_lt_cap_gain: 1000 }),
+  ]);
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
   assertEquals(sdOutputs.length, 1);
   assertEquals(sdOutputs[0].fields.line_5_k1_st, 500);
@@ -284,7 +341,11 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   assertEquals(sch1?.fields.line5_schedule_e, 6500);
   assertEquals(sch1?.fields.line8z_other_income, 300);
   const f1116 = findOutput(result, "form_1116");
-  assertEquals((f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 100);
+  assertEquals(
+    (f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0]
+      .foreign_tax_paid,
+    100,
+  );
 });
 
 // ── 10. DNI limitation (IRC §662) ─────────────────────────────────────────────
@@ -296,14 +357,18 @@ Deno.test("DNI: no cap when distributable_net_income not provided", () => {
 });
 
 Deno.test("DNI: no cap when total income <= DNI", () => {
-  const result = compute([minimalItem({ box1_interest: 5_000, distributable_net_income: 8_000 })]);
+  const result = compute([
+    minimalItem({ box1_interest: 5_000, distributable_net_income: 8_000 }),
+  ]);
   const sb = findOutput(result, "schedule_b");
   assertEquals(sb?.fields.taxable_interest_net, 5_000);
 });
 
 Deno.test("DNI: caps single box when total exceeds DNI", () => {
   // Total $10,000, DNI $6,000 → ratio 0.60 → interest = $6,000
-  const result = compute([minimalItem({ box1_interest: 10_000, distributable_net_income: 6_000 })]);
+  const result = compute([
+    minimalItem({ box1_interest: 10_000, distributable_net_income: 6_000 }),
+  ]);
   const sb = findOutput(result, "schedule_b");
   assertEquals(sb?.fields.taxable_interest_net, 6_000);
 });
@@ -311,11 +376,15 @@ Deno.test("DNI: caps single box when total exceeds DNI", () => {
 Deno.test("DNI: prorates all characters proportionally", () => {
   // interest=$4,000 + dividends=$6,000 = $10,000; DNI=$5,000 → ratio 0.50
   const result = compute([
-    minimalItem({ box1_interest: 4_000, box2a_ordinary_dividends: 6_000, distributable_net_income: 5_000 }),
+    minimalItem({
+      box1_interest: 4_000,
+      box2a_ordinary_dividends: 6_000,
+      distributable_net_income: 5_000,
+    }),
   ]);
   // Check schedule_b interest (4000 * 0.5 = 2000)
   const sbInterest = result.outputs.find(
-    (o) => o.nodeType === "schedule_b" && "taxable_interest_net" in o.fields
+    (o) => o.nodeType === "schedule_b" && "taxable_interest_net" in o.fields,
   );
   assertEquals(sbInterest?.fields.taxable_interest_net, 2_000);
 });
@@ -323,7 +392,11 @@ Deno.test("DNI: prorates all characters proportionally", () => {
 Deno.test("DNI: losses pass through unchanged regardless of DNI cap", () => {
   // Loss in box6 should not be scaled
   const result = compute([
-    minimalItem({ box6_ordinary_business: -3_000, box1_interest: 5_000, distributable_net_income: 2_000 }),
+    minimalItem({
+      box6_ordinary_business: -3_000,
+      box1_interest: 5_000,
+      distributable_net_income: 2_000,
+    }),
   ]);
   const sch1 = findOutput(result, "schedule1");
   assertEquals(sch1?.fields.line5_schedule_e, -3_000); // loss unchanged
@@ -336,7 +409,10 @@ Deno.test("DNI: per-trust — DNI cap applied independently to each K-1", () => 
     minimalItem({ box1_interest: 10_000, distributable_net_income: 5_000 }),
     minimalItem({ estate_trust_name: "Trust B", box1_interest: 8_000 }),
   ]);
-  const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b" && "taxable_interest_net" in o.fields);
-  const amounts = sbOutputs.map((o) => o.fields.taxable_interest_net as number).sort((a, b) => a - b);
+  const sbOutputs = result.outputs.filter((o) =>
+    o.nodeType === "schedule_b" && "taxable_interest_net" in o.fields
+  );
+  const amounts = sbOutputs.map((o) => o.fields.taxable_interest_net as number)
+    .sort((a, b) => a - b);
   assertEquals(amounts, [5_000, 8_000]);
 });

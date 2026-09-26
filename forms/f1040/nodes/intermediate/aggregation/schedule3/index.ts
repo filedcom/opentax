@@ -3,7 +3,10 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, type AtLeastOne } from "../../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  TaxNode,
+} from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -69,9 +72,9 @@ export const inputSchema = z.object({
   // IRC §31(b); excess SS over wage base across multiple employers → Schedule 3 line 11
   line11_excess_ss: z.number().nonnegative().optional(),
 
-  // Line 5 — Residential clean energy + energy efficient home improvement credits (Form 5695)
-  // IRC §25C, §25D; Form 5695 line 15 + line 30 → Schedule 3 line 5
-  line5_residential_energy: z.number().nonnegative().optional(),
+  // Form 5695 lines 15 and 32 must remain distinct for Schedule 3 and MeF.
+  line5a_residential_clean_energy: z.number().nonnegative().optional(),
+  line5b_energy_efficient_home: z.number().nonnegative().optional(),
 
   // Line 6d — Clean vehicle credit (Form 8936 line 15 — nonrefundable portion)
   // IRC §30D; Form 8936 Part IV line 15 → Schedule 3 line 6d
@@ -84,6 +87,10 @@ export const inputSchema = z.object({
   // Line 6f — Mortgage interest credit (Form 8396 line 11)
   // IRC §25; Form 8396 line 11 → Schedule 3 line 6f
   line6f_mortgage_interest_credit: z.number().nonnegative().optional(),
+
+  // Line 6j — allowed personal-use alternative fuel refueling property credit
+  // from Form 8911 line 10, after the regular-tax / AMT limitation.
+  line6j_alt_fuel_vehicle_refueling: z.number().nonnegative().optional(),
 
   // Line 9 — Net premium tax credit (Form 8962 line 26)
   // IRC §36B; Form 8962 line 26 → Schedule 3 line 9 (Part II refundable credit)
@@ -118,7 +125,9 @@ type Schedule3Input = z.infer<typeof inputSchema>;
 // IRC §901, Treas. Reg. §1.901-1
 function line1(input: Schedule3Input): number {
   return (input.line1_foreign_tax_credit ?? 0) +
-    sumAccumulable(input.line1_foreign_tax_1099 as number | number[] | undefined);
+    sumAccumulable(
+      input.line1_foreign_tax_1099 as number | number[] | undefined,
+    );
 }
 
 // Part I, Line 8 — total nonrefundable credits.
@@ -128,13 +137,15 @@ function partITotal(input: Schedule3Input): number {
     (input.line2_childcare_credit ?? 0) +
     (input.line3_education_credit ?? 0) +
     (input.line4_retirement_savings_credit ?? 0) +
-    (input.line5_residential_energy ?? 0) +
+    (input.line5a_residential_clean_energy ?? 0) +
+    (input.line5b_energy_efficient_home ?? 0) +
     (input.line6b_child_tax_credit ?? 0) +
     (input.line6c_adoption_credit ?? 0) +
     (input.line6d_clean_vehicle_credit ?? 0) +
     (input.line6d_elderly_disabled_credit ?? 0) +
     (input.line6e_prior_year_min_tax_credit ?? 0) +
     (input.line6f_mortgage_interest_credit ?? 0) +
+    (input.line6j_alt_fuel_vehicle_refueling ?? 0) +
     (input.line6z_general_business_credit ?? 0) +
     (input.line6b_low_income_housing_credit ?? 0)
   );
@@ -170,7 +181,10 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     if (payments > 0) f1040Input.line31_additional_payments = payments;
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>),
+      this.outputNodes.output(
+        f1040,
+        f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+      ),
     ];
 
     // Self-emit computed line values into this node's own pending dict so the

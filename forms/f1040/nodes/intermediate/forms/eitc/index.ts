@@ -28,6 +28,22 @@ const PHASEOUT_RATE: Record<number, number> = {
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+export const qualifyingChildDetailSchema = z.object({
+  first_name: z.string(),
+  last_name: z.string(),
+  name_control: z.string().optional(),
+  ssn: z.string(),
+  ssn_valid_for_employment: z.boolean().optional(),
+  tin_issued_by_due_date: z.boolean().optional(),
+  dob: z.string(),
+  irs_relationship_code: z.string().optional(),
+  months_in_home: z.number().int().min(0).max(12),
+  full_time_student: z.boolean().optional(),
+  disabled: z.boolean().optional(),
+  ip_pin: z.string().optional(),
+});
+export type QualifyingChildDetail = z.infer<typeof qualifyingChildDetailSchema>;
+
 export const inputSchema = z.object({
   // Earned income from wages (W-2 Box 1), fed by w2 node
   earned_income: z.number().nonnegative().optional(),
@@ -37,13 +53,15 @@ export const inputSchema = z.object({
   se_net_profit: z.number().nonnegative().optional(),
 
   // Adjusted Gross Income — used for EITC phaseout when AGI > earned income
-  agi: z.number().nonnegative().optional(),
+  agi: z.number().optional(),
 
   // Number of qualifying children (0, 1, 2, or 3+)
   qualifying_children: z.number().int().min(0).max(3).optional(),
+  qualifying_child_details: z.array(qualifyingChildDetailSchema).max(3).optional(),
 
   // Filing status — determines phaseout thresholds
   filing_status: filingStatusSchema.optional(),
+  filer_has_valid_ssns: z.boolean().optional(),
 
   // Investment income (interest, dividends, capital gains, rents)
   // If investment_income > eitcInvestmentIncomeLimit, no EITC allowed
@@ -113,6 +131,8 @@ function computeEitc(
   const children = clampChildren(input.qualifying_children ?? 0);
   const isJoint = isJointFiler(input.filing_status);
 
+  if (input.filer_has_valid_ssns !== true) return 0;
+
   // MFS filers are disqualified (IRC §32(d))
   if (input.filing_status === FilingStatus.MFS) return 0;
 
@@ -163,7 +183,12 @@ class EitcNode extends TaxNode<typeof inputSchema> {
       cfg.eitcIncomeLimit,
       cfg.eitcInvestmentIncomeLimit,
     );
-    return { outputs: buildOutput(credit) };
+    return {
+      outputs: [
+        ...buildOutput(credit),
+        { nodeType: this.nodeType, fields: { credit_amount: credit } },
+      ],
+    };
   }
 }
 

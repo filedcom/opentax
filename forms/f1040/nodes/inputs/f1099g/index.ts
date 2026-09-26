@@ -3,12 +3,17 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
+import type { FarmSource } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // TY2025 thresholds from IRS Form 1099-G instructions
@@ -30,6 +35,7 @@ export const itemSchema = z.object({
   box_7_agriculture: z.number().nonnegative().optional(),
   box_8_trade_or_business: z.boolean().optional(),
   box_9_market_gain: z.number().nonnegative().optional(),
+  farm_id: z.string().min(1).optional(),
   box_10a_state: z.string().optional(),
   box_10b_state_id: z.string().optional(),
   box_11_state_withheld: z.number().nonnegative().optional(),
@@ -66,7 +72,10 @@ function totalStateRefundTaxable(g99s: G99Items): number {
 }
 
 function totalFederalWithheld(g99s: G99Items): number {
-  return g99s.reduce((sum, item) => sum + (item.box_4_federal_withheld ?? 0), 0);
+  return g99s.reduce(
+    (sum, item) => sum + (item.box_4_federal_withheld ?? 0),
+    0,
+  );
 }
 
 function totalRtaa(g99s: G99Items): number {
@@ -75,14 +84,6 @@ function totalRtaa(g99s: G99Items): number {
 
 function totalTaxableGrants(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_6_taxable_grants ?? 0), 0);
-}
-
-function totalAgriculture(g99s: G99Items): number {
-  return g99s.reduce((sum, item) => sum + (item.box_7_agriculture ?? 0), 0);
-}
-
-function totalMarketGain(g99s: G99Items): number {
-  return g99s.reduce((sum, item) => sum + (item.box_9_market_gain ?? 0), 0);
 }
 
 function schedule1Output(g99s: G99Items): NodeOutput[] {
@@ -106,7 +107,12 @@ function schedule1Output(g99s: G99Items): NodeOutput[] {
   }
 
   if (Object.keys(fields).length === 0) return [];
-  return [output(schedule1, fields as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
+  return [
+    output(
+      schedule1,
+      fields as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>,
+    ),
+  ];
 }
 
 function f1040Output(g99s: G99Items): NodeOutput[] {
@@ -116,21 +122,45 @@ function f1040Output(g99s: G99Items): NodeOutput[] {
 }
 
 function scheduleFOutput(g99s: G99Items): NodeOutput[] {
-  const agriculture = totalAgriculture(g99s);
-  const marketGain = totalMarketGain(g99s);
-
-  const fields: Partial<z.infer<typeof schedule_f["inputSchema"]>> = {};
-  if (agriculture > 0) fields.line4a_gov_payments = agriculture;
-  if (marketGain > 0) fields.line5_ccc_gain = marketGain;
-
-  if (Object.keys(fields).length === 0) return [];
-  return [output(schedule_f, fields as AtLeastOne<z.infer<typeof schedule_f["inputSchema"]>>)];
+  const sources: FarmSource[] = [];
+  for (const item of g99s) {
+    const agriculture = item.box_7_agriculture ?? 0;
+    const marketGain = item.box_9_market_gain ?? 0;
+    if (agriculture === 0 && marketGain === 0) continue;
+    if (!item.farm_id) {
+      throw new Error(
+        "1099-G agricultural payments and CCC market gain require farm_id",
+      );
+    }
+    if (agriculture > 0) {
+      sources.push({
+        farm_id: item.farm_id,
+        kind: "1099g_agriculture",
+        amount: agriculture,
+      });
+    }
+    if (marketGain > 0) {
+      sources.push({
+        farm_id: item.farm_id,
+        kind: "1099g_ccc_market_gain",
+        amount: marketGain,
+      });
+    }
+  }
+  return sources.length === 0
+    ? []
+    : [output(schedule_f, { farm_sources: sources })];
 }
 
 class F1099gNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099g";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, f1040, schedule_f]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    agi_aggregator,
+    f1040,
+    schedule_f,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
@@ -149,11 +179,18 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
     const stateRefund = totalStateRefundTaxable(g99s);
     const rtaa = totalRtaa(g99s);
     const grants = totalTaxableGrants(g99s);
-    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
-    if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) agiFields.line7_unemployment = unemploymentNet;
-    if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) agiFields.line1_state_refund = stateRefund;
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
+      {};
+    if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) {
+      agiFields.line7_unemployment = unemploymentNet;
+    }
+    if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) {
+      agiFields.line1_state_refund = stateRefund;
+    }
     if (rtaa >= RTAA_MIN_THRESHOLD) agiFields.line8z_rtaa = rtaa;
-    if (grants >= GRANTS_MIN_THRESHOLD) agiFields.line8z_taxable_grants = grants;
+    if (grants >= GRANTS_MIN_THRESHOLD) {
+      agiFields.line8z_taxable_grants = grants;
+    }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(this.outputNodes.output(
         agi_aggregator,

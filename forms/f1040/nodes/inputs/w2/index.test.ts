@@ -1,10 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { w2, Box12Code } from "./index.ts";
+import { Box12Code, w2 } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8839 } from "../../intermediate/forms/form8839/index.ts";
 import { form2441 } from "../../intermediate/forms/form2441/index.ts";
 import { form4137 } from "../../intermediate/forms/form4137/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import { form8853 } from "../../intermediate/forms/form8853/index.ts";
 import { form8880 } from "../../intermediate/forms/form8880/index.ts";
 import { form8889 } from "../../intermediate/forms/form8889/index.ts";
@@ -43,7 +44,11 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 
 Deno.test("box12_enum_rejects_unknown_code: invalid Box12 code 'X9' fails schema", () => {
   const parsed = w2.inputSchema.safeParse({
-    w2s: [{ box1_wages: 50000, box2_fed_withheld: 5000, box12_entries: [{ code: "X9", amount: 100 }] }],
+    w2s: [{
+      box1_wages: 50000,
+      box2_fed_withheld: 5000,
+      box12_entries: [{ code: "X9", amount: 100 }],
+    }],
   });
   assertEquals(parsed.success, false);
 });
@@ -63,49 +68,123 @@ Deno.test("box1_wages_route_to_f1040_line1a: $50,000 wages appear exactly on lin
 });
 
 Deno.test("box2_fed_withheld_routes_to_f1040_line25a: $5,000 withheld appears exactly on line25a", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000 })]);
+  const result = compute([
+    minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000 }),
+  ]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 5000);
 });
 
 Deno.test("box8_allocated_tips_routes_to_form4137: $2,000 allocated tips appear exactly on form4137", () => {
-  const result = compute([minimalItem({ box1_wages: 40000, box8_allocated_tips: 2000 })]);
-  assertEquals(fieldsOf(result.outputs, form4137)!.allocated_tips, 2000);
+  const result = compute([
+    minimalItem({ box1_wages: 40000, box8_allocated_tips: 2000 }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, form4137)!.w2_tip_sources?.[0].allocated_tips,
+    2000,
+  );
+  assertEquals(
+    "line1b_allocated_tips" in (fieldsOf(result.outputs, agi_aggregator) ?? {}),
+    false,
+  );
 });
 
 Deno.test("box10_dep_care_routes_to_form2441: $3,000 dep care appears exactly on form2441", () => {
-  const result = compute([minimalItem({ box1_wages: 70000, box10_dep_care: 3000 })]);
+  const result = compute([
+    minimalItem({ box1_wages: 70000, box10_dep_care: 3000 }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 3000);
 });
 
 Deno.test("box7 tips with a tipped occupation code route to Schedule 1-A", () => {
-  const result = compute([minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000, box14b_tipped_code: "102" })]);
-  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, 5_000);
+  const result = compute([
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 30_000,
+      box7_ss_tips: 5_000,
+      box14b_tipped_code: "102",
+    }),
+  ]);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [{
+    employee_ssn: "111223333",
+    amount: 5_000,
+  }]);
 });
 
 Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1-A", () => {
-  const result = compute([minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000 })]);
+  const result = compute([
+    minimalItem({ box1_wages: 30_000, box7_ss_tips: 5_000 }),
+  ]);
   assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
 });
 
 Deno.test("qualified tips are summed across eligible W-2s only", () => {
   const result = compute([
-    minimalItem({ box1_wages: 20_000, box7_ss_tips: 2_000, box14b_tipped_code: "102" }),
-    minimalItem({ box1_wages: 20_000, box7_ss_tips: 3_000, box14b_tipped_code: "203" }),
+    minimalItem({
+      employee_ssn: "111223333",
+      box1_wages: 20_000,
+      box7_ss_tips: 2_000,
+      box14b_tipped_code: "102",
+    }),
+    minimalItem({
+      employee_ssn: "444556666",
+      box1_wages: 20_000,
+      box7_ss_tips: 3_000,
+      box14b_tipped_code: "203",
+    }),
     minimalItem({ box1_wages: 20_000, box7_ss_tips: 4_000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, 5_000);
+  assertEquals(fieldsOf(result.outputs, schedule1a)?.qualified_employee_tips, [
+    { employee_ssn: "111223333", amount: 2_000 },
+    { employee_ssn: "444556666", amount: 3_000 },
+  ]);
+});
+
+Deno.test("qualified tips need the W-2 employee SSN for filer attribution", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          box1_wages: 20_000,
+          box7_ss_tips: 2_000,
+          box14b_tipped_code: "102",
+        }),
+      ]),
+    Error,
+    "qualified tips need a nine-digit employee SSN",
+  );
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          employee_ssn: "not-a-ssn",
+          box1_wages: 20_000,
+          box7_ss_tips: 2_000,
+          box14b_tipped_code: "102",
+        }),
+      ]),
+    Error,
+    "qualified tips need a nine-digit employee SSN",
+  );
 });
 
 Deno.test("invalid tipped occupation code is rejected", () => {
   const parsed = w2.inputSchema.safeParse({
-    w2s: [minimalItem({ box7_ss_tips: 1_000, box14b_tipped_code: "restaurant" })],
+    w2s: [
+      minimalItem({ box7_ss_tips: 1_000, box14b_tipped_code: "restaurant" }),
+    ],
   });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("box13_retirement_plan_routes_ira_worksheet: covered_by_retirement_plan = true", () => {
-  const result = compute([minimalItem({ box1_wages: 80000, box13_retirement_plan: true })]);
-  assertEquals(fieldsOf(result.outputs, ira_deduction_worksheet)!.covered_by_retirement_plan, true);
+  const result = compute([
+    minimalItem({ box1_wages: 80000, box13_retirement_plan: true }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, ira_deduction_worksheet)!
+      .covered_by_retirement_plan,
+    true,
+  );
 });
 
 // ============================================================
@@ -113,13 +192,21 @@ Deno.test("box13_retirement_plan_routes_ira_worksheet: covered_by_retirement_pla
 // ============================================================
 
 Deno.test("statutory_employee_wages_route_to_schedule_c: wages excluded from f1040 line1a", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box13_statutory_employee: true })]);
+  const result = compute([
+    minimalItem({ box1_wages: 50000, box13_statutory_employee: true }),
+  ]);
   assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, undefined);
 });
 
 Deno.test("statutory_employee_withholding_included_in_f1040_line25a: withholding still flows to f1040", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000, box13_statutory_employee: true })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 50000,
+      box2_fed_withheld: 5000,
+      box13_statutory_employee: true,
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 50000);
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 5000);
 });
@@ -135,37 +222,75 @@ Deno.test("non_statutory_wages_stay_on_f1040_not_schedule_c: regular W2 does not
 // ============================================================
 
 Deno.test("box12_code_w_routes_to_form8889: Code W = $2,000 → employer_hsa_contributions = 2000", () => {
-  const result = compute([minimalItem({ box1_wages: 60000, box12_entries: [{ code: Box12Code.W, amount: 2000 }] })]);
-  assertEquals(fieldsOf(result.outputs, form8889)!.employer_hsa_contributions, 2000);
+  const result = compute([
+    minimalItem({
+      box1_wages: 60000,
+      box12_entries: [{ code: Box12Code.W, amount: 2000 }],
+    }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
+    2000,
+  );
 });
 
 Deno.test("box12_code_h_routes_to_schedule1_line24f: Code H = $1,500 → line24f_501c18d = 1500", () => {
-  const result = compute([minimalItem({ box1_wages: 60000, box12_entries: [{ code: Box12Code.H, amount: 1500 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 60000,
+      box12_entries: [{ code: Box12Code.H, amount: 1500 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line24f_501c18d, 1500);
 });
 
 Deno.test("box12_code_t_routes_to_form8839: Code T = $5,000 → adoption_benefits = 5000", () => {
-  const result = compute([minimalItem({ box1_wages: 80000, box12_entries: [{ code: Box12Code.T, amount: 5000 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 80000,
+      box12_entries: [{ code: Box12Code.T, amount: 5000 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 5000);
 });
 
 Deno.test("box12_code_r_routes_to_form8853: Code R = $1,500 → employer_archer_msa = 1500", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box12_entries: [{ code: Box12Code.R, amount: 1500 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 50000,
+      box12_entries: [{ code: Box12Code.R, amount: 1500 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form8853)!.employer_archer_msa, 1500);
 });
 
 Deno.test("box12_code_d_routes_to_form8880: Code D = $10,000 → elective_deferrals = 10000", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box12_entries: [{ code: Box12Code.D, amount: 10000 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 50000,
+      box12_entries: [{ code: Box12Code.D, amount: 10000 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 10000);
 });
 
 Deno.test("box12_code_e_routes_to_form8880: Code E = $8,000 → elective_deferrals = 8000", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box12_entries: [{ code: Box12Code.E, amount: 8000 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 50000,
+      box12_entries: [{ code: Box12Code.E, amount: 8000 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 8000);
 });
 
 Deno.test("box12_code_g_routes_to_form8880: Code G = $5,000 → elective_deferrals = 5000", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box12_entries: [{ code: Box12Code.G, amount: 5000 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 50000,
+      box12_entries: [{ code: Box12Code.G, amount: 5000 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 5000);
 });
 
@@ -182,24 +307,45 @@ Deno.test("box12_code_d_e_g_aggregate_to_form8880: D + E + G = 3000 + 2000 + 100
 });
 
 Deno.test("box12_code_q_routes_to_f1040_line1i_combat_pay: Code Q = $3,000 → line1i_combat_pay = 3000", () => {
-  const result = compute([minimalItem({ box1_wages: 30000, box12_entries: [{ code: Box12Code.Q, amount: 3000 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 30000,
+      box12_entries: [{ code: Box12Code.Q, amount: 3000 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1i_combat_pay, 3000);
 });
 
 Deno.test("box12_code_k_routes_to_schedule2_golden_parachute: Code K = $1,000 → golden_parachute_excise = 1000", () => {
-  const result = compute([minimalItem({ box1_wages: 500000, box12_entries: [{ code: Box12Code.K, amount: 1000 }] })]);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.golden_parachute_excise, 1000);
+  const result = compute([
+    minimalItem({
+      box1_wages: 500000,
+      box12_entries: [{ code: Box12Code.K, amount: 1000 }],
+    }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.golden_parachute_excise,
+    1000,
+  );
 });
 
 Deno.test("box12_code_z_routes_to_schedule2_409a_excise: Code Z = $2,000 → section409a_excise = 2000", () => {
-  const result = compute([minimalItem({ box1_wages: 100000, box12_entries: [{ code: Box12Code.Z, amount: 2000 }] })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 100000,
+      box12_entries: [{ code: Box12Code.Z, amount: 2000 }],
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, schedule2)!.section409a_excise, 2000);
 });
 
 Deno.test("box12_code_a_routes_to_schedule2_uncollected_fica: Code A = $300 + Code B = $200 → uncollected_fica = 500", () => {
   const result = compute([minimalItem({
     box1_wages: 30000,
-    box12_entries: [{ code: Box12Code.A, amount: 300 }, { code: Box12Code.B, amount: 200 }],
+    box12_entries: [{ code: Box12Code.A, amount: 300 }, {
+      code: Box12Code.B,
+      amount: 200,
+    }],
   })]);
   assertEquals(fieldsOf(result.outputs, schedule2)!.uncollected_fica, 500);
 });
@@ -207,7 +353,10 @@ Deno.test("box12_code_a_routes_to_schedule2_uncollected_fica: Code A = $300 + Co
 Deno.test("box12_code_m_n_routes_to_schedule2_uncollected_fica_gtl: M = $200 + N = $100 → uncollected_fica_gtl = 300", () => {
   const result = compute([minimalItem({
     box1_wages: 0,
-    box12_entries: [{ code: Box12Code.M, amount: 200 }, { code: Box12Code.N, amount: 100 }],
+    box12_entries: [{ code: Box12Code.M, amount: 200 }, {
+      code: Box12Code.N,
+      amount: 100,
+    }],
   })]);
   assertEquals(fieldsOf(result.outputs, schedule2)!.uncollected_fica_gtl, 300);
 });
@@ -222,7 +371,10 @@ Deno.test("box12_multiple_entries_on_one_w2: D + W + T all route to separate nod
     ],
   })]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 5000);
-  assertEquals(fieldsOf(result.outputs, form8889)!.employer_hsa_contributions, 2500);
+  assertEquals(
+    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
+    2500,
+  );
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 3000);
 });
 
@@ -249,34 +401,62 @@ Deno.test("box12_informational_codes_produce_no_routing: codes C, F, J, L, P, S 
 Deno.test("box14_sdi_pfml_routes_to_schedule_a: $600 SDI → line_5a_state_income_tax = 600", () => {
   const result = compute([minimalItem({
     box1_wages: 80000,
-    box14_entries: [{ description: "CA SDI", amount: 600, is_state_sdi_pfml: true }],
+    box14_entries: [{
+      description: "CA SDI",
+      amount: 600,
+      is_state_sdi_pfml: true,
+    }],
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 600);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    600,
+  );
 });
 
 Deno.test("box14_sdi_plus_state_withheld_combined_to_schedule_a: SDI $500 + box17 $3,000 → line_5a = 3500", () => {
   const result = compute([minimalItem({
     box1_wages: 80000,
-    box14_entries: [{ description: "CA SDI", amount: 500, is_state_sdi_pfml: true }],
+    box14_entries: [{
+      description: "CA SDI",
+      amount: 500,
+      is_state_sdi_pfml: true,
+    }],
     box17_state_withheld: 3000,
   })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 3500);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    3500,
+  );
 });
 
 Deno.test("box17_state_withheld_routes_to_schedule_a: $4,000 state withholding → line_5a_state_income_tax = 4000", () => {
-  const result = compute([minimalItem({ box1_wages: 80000, box17_state_withheld: 4000 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 4000);
+  const result = compute([
+    minimalItem({ box1_wages: 80000, box17_state_withheld: 4000 }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    4000,
+  );
 });
 
 Deno.test("box19_local_withheld_routes_to_schedule_a: $1,200 local → line_5a_state_income_tax = 1200", () => {
-  const result = compute([minimalItem({ box1_wages: 80000, box19_local_withheld: 1200 })]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 1200);
+  const result = compute([
+    minimalItem({ box1_wages: 80000, box19_local_withheld: 1200 }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    1200,
+  );
 });
 
 Deno.test("box14_non_sdi_entry_does_not_route_to_schedule_a: union dues not routed", () => {
   const result = compute([minimalItem({
     box1_wages: 80000,
-    box14_entries: [{ description: "Union Dues", amount: 500, is_state_sdi_pfml: false }],
+    box14_entries: [{
+      description: "Union Dues",
+      amount: 500,
+      is_state_sdi_pfml: false,
+    }],
   })]);
   assertEquals(findOutput(result, "schedule_a"), undefined);
 });
@@ -306,7 +486,13 @@ Deno.test("two_w2s_allocated_tips_aggregate_to_form4137: $1k + $1.5k = $2,500", 
     minimalItem({ box1_wages: 20000, box8_allocated_tips: 1000 }),
     minimalItem({ box1_wages: 20000, box8_allocated_tips: 1500 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form4137)!.allocated_tips, 2500);
+  assertEquals(
+    fieldsOf(result.outputs, form4137)!.w2_tip_sources?.reduce(
+      (sum, source) => sum + source.allocated_tips,
+      0,
+    ),
+    2500,
+  );
 });
 
 Deno.test("two_w2s_dep_care_aggregate_to_form2441: $2k + $1.5k = $3,500", () => {
@@ -319,24 +505,47 @@ Deno.test("two_w2s_dep_care_aggregate_to_form2441: $2k + $1.5k = $3,500", () => 
 
 Deno.test("two_w2s_code_d_aggregate_to_form8880: $5k + $5k = $10,000 elective_deferrals", () => {
   const result = compute([
-    minimalItem({ box1_wages: 50000, box12_entries: [{ code: Box12Code.D, amount: 5000 }] }),
-    minimalItem({ box1_wages: 50000, box12_entries: [{ code: Box12Code.D, amount: 5000 }] }),
+    minimalItem({
+      box1_wages: 50000,
+      box12_entries: [{ code: Box12Code.D, amount: 5000 }],
+    }),
+    minimalItem({
+      box1_wages: 50000,
+      box12_entries: [{ code: Box12Code.D, amount: 5000 }],
+    }),
   ]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 10000);
 });
 
 Deno.test("two_w2s_code_w_aggregate_to_form8889: $1,200 + $800 = $2,000 employer_hsa_contributions", () => {
   const result = compute([
-    minimalItem({ box1_wages: 40000, box12_entries: [{ code: Box12Code.W, amount: 1200 }] }),
-    minimalItem({ box1_wages: 40000, box12_entries: [{ code: Box12Code.W, amount: 800 }] }),
+    minimalItem({
+      box1_wages: 40000,
+      box12_entries: [{ code: Box12Code.W, amount: 1200 }],
+    }),
+    minimalItem({
+      box1_wages: 40000,
+      box12_entries: [{ code: Box12Code.W, amount: 800 }],
+    }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8889)!.employer_hsa_contributions, 2000);
+  assertEquals(
+    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
+    2000,
+  );
 });
 
 Deno.test("two_w2s_medicare_wages_aggregate_to_form8959: $60k + $60k = $120,000", () => {
   const result = compute([
-    minimalItem({ box1_wages: 60000, box5_medicare_wages: 60000, box6_medicare_withheld: 870 }),
-    minimalItem({ box1_wages: 60000, box5_medicare_wages: 60000, box6_medicare_withheld: 870 }),
+    minimalItem({
+      box1_wages: 60000,
+      box5_medicare_wages: 60000,
+      box6_medicare_withheld: 870,
+    }),
+    minimalItem({
+      box1_wages: 60000,
+      box5_medicare_wages: 60000,
+      box6_medicare_withheld: 870,
+    }),
   ]);
   assertEquals(fieldsOf(result.outputs, form8959)!.medicare_wages, 120000);
   assertEquals(fieldsOf(result.outputs, form8959)!.medicare_withheld, 1740);
@@ -347,12 +556,19 @@ Deno.test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 li
     minimalItem({ box1_wages: 50000, box17_state_withheld: 2000 }),
     minimalItem({ box1_wages: 50000, box17_state_withheld: 3000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 5000);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    5000,
+  );
 });
 
 Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regular go to line1a", () => {
   const result = compute([
-    minimalItem({ box1_wages: 30000, box2_fed_withheld: 3000, box13_statutory_employee: true }),
+    minimalItem({
+      box1_wages: 30000,
+      box2_fed_withheld: 3000,
+      box13_statutory_employee: true,
+    }),
     minimalItem({ box1_wages: 50000, box2_fed_withheld: 5000 }),
   ]);
   assertEquals(fieldsOf(result.outputs, scheduleC)!.statutory_wages, 30000);
@@ -366,23 +582,43 @@ Deno.test("statutory_regular_mixed_w2s: statutory wages go to schedule_c, regula
 
 Deno.test("two_employers_at_max_ss_produce_exact_excess_on_schedule3: 2 × $10,918.20 → excess = $10,918.20", () => {
   const result = compute([
-    minimalItem({ box1_wages: 176100, box3_ss_wages: 176100, box4_ss_withheld: 10918.20 }),
-    minimalItem({ box1_wages: 176100, box3_ss_wages: 176100, box4_ss_withheld: 10918.20 }),
+    minimalItem({
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+    minimalItem({
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
   ]);
   assertEquals(fieldsOf(result.outputs, schedule3)!.line11_excess_ss, 10918.20);
 });
 
 Deno.test("single_employer_at_max_ss_no_excess_schedule3: single employer does not produce schedule3", () => {
   const result = compute([
-    minimalItem({ box1_wages: 176100, box3_ss_wages: 176100, box4_ss_withheld: 10918.20 }),
+    minimalItem({
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
   ]);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
 
 Deno.test("two_employers_partial_ss_withholding_no_excess: $5k + $5k < max → no schedule3", () => {
   const result = compute([
-    minimalItem({ box1_wages: 80000, box3_ss_wages: 80000, box4_ss_withheld: 5000 }),
-    minimalItem({ box1_wages: 80000, box3_ss_wages: 80000, box4_ss_withheld: 5000 }),
+    minimalItem({
+      box1_wages: 80000,
+      box3_ss_wages: 80000,
+      box4_ss_withheld: 5000,
+    }),
+    minimalItem({
+      box1_wages: 80000,
+      box3_ss_wages: 80000,
+      box4_ss_withheld: 5000,
+    }),
   ]);
   assertEquals(findOutput(result, "schedule3"), undefined);
 });
@@ -393,20 +629,40 @@ Deno.test("two_employers_partial_ss_withholding_no_excess: $5k + $5k < max → n
 
 Deno.test("ss_wage_base_exactly_at_limit_is_valid: $176,100 does not throw and wages route to f1040", () => {
   // box4_ss_withheld is SS payroll tax — it does NOT flow to line25a (that's box2 federal income tax)
-  const result = compute([minimalItem({ box1_wages: 176100, box3_ss_wages: 176100, box4_ss_withheld: 10918.20 })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 176100,
+      box3_ss_wages: 176100,
+      box4_ss_withheld: 10918.20,
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 176100);
 });
 
 Deno.test("ss_wage_base_exceeded_throws: $176,101 throws", () => {
   assertThrows(
-    () => compute([minimalItem({ box1_wages: 176101, box3_ss_wages: 176101, box4_ss_withheld: 10918.26 })]),
+    () =>
+      compute([
+        minimalItem({
+          box1_wages: 176101,
+          box3_ss_wages: 176101,
+          box4_ss_withheld: 10918.26,
+        }),
+      ]),
     Error,
   );
 });
 
 Deno.test("ss_tax_withheld_above_per_employer_max_throws: $10,918.21 throws", () => {
   assertThrows(
-    () => compute([minimalItem({ box1_wages: 176100, box3_ss_wages: 176100, box4_ss_withheld: 10918.21 })]),
+    () =>
+      compute([
+        minimalItem({
+          box1_wages: 176100,
+          box3_ss_wages: 176100,
+          box4_ss_withheld: 10918.21,
+        }),
+      ]),
     Error,
   );
 });
@@ -419,7 +675,10 @@ Deno.test("401k_under50_at_limit_valid: age 40, D + AA = $23,500 is valid → fo
   // AA (Roth 401k) is counted against the 401k limit but only D routes to form8880 elective_deferrals
   const result = compute([minimalItem({
     box1_wages: 80000,
-    box12_entries: [{ code: Box12Code.D, amount: 15000 }, { code: Box12Code.AA, amount: 8500 }],
+    box12_entries: [{ code: Box12Code.D, amount: 15000 }, {
+      code: Box12Code.AA,
+      amount: 8500,
+    }],
     taxpayer_age: 40,
   })]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 15000);
@@ -427,11 +686,15 @@ Deno.test("401k_under50_at_limit_valid: age 40, D + AA = $23,500 is valid → fo
 
 Deno.test("401k_under50_above_limit_throws: age 40, D + AA = $23,501 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 80000,
-      box12_entries: [{ code: Box12Code.D, amount: 20000 }, { code: Box12Code.AA, amount: 3501 }],
-      taxpayer_age: 40,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 80000,
+        box12_entries: [{ code: Box12Code.D, amount: 20000 }, {
+          code: Box12Code.AA,
+          amount: 3501,
+        }],
+        taxpayer_age: 40,
+      })]),
     Error,
   );
 });
@@ -447,11 +710,12 @@ Deno.test("401k_age50_59_at_limit_valid: age 55, D = $31,000 is valid → electi
 
 Deno.test("401k_age50_59_above_limit_throws: age 55, D = $31,001 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 150000,
-      box12_entries: [{ code: Box12Code.D, amount: 31001 }],
-      taxpayer_age: 55,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 150000,
+        box12_entries: [{ code: Box12Code.D, amount: 31001 }],
+        taxpayer_age: 55,
+      })]),
     Error,
   );
 });
@@ -460,7 +724,10 @@ Deno.test("401k_age60_63_super_catchup_at_limit_valid: age 62, D + AA = $34,750 
   // AA (Roth) counted against limit but not routed to form8880; only D routes
   const result = compute([minimalItem({
     box1_wages: 200000,
-    box12_entries: [{ code: Box12Code.D, amount: 23500 }, { code: Box12Code.AA, amount: 11250 }],
+    box12_entries: [{ code: Box12Code.D, amount: 23500 }, {
+      code: Box12Code.AA,
+      amount: 11250,
+    }],
     taxpayer_age: 62,
   })]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 23500);
@@ -468,22 +735,30 @@ Deno.test("401k_age60_63_super_catchup_at_limit_valid: age 62, D + AA = $34,750 
 
 Deno.test("401k_age60_63_above_super_catchup_throws: age 62, D + AA = $34,751 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 200000,
-      box12_entries: [{ code: Box12Code.D, amount: 23500 }, { code: Box12Code.AA, amount: 11251 }],
-      taxpayer_age: 62,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 200000,
+        box12_entries: [{ code: Box12Code.D, amount: 23500 }, {
+          code: Box12Code.AA,
+          amount: 11251,
+        }],
+        taxpayer_age: 62,
+      })]),
     Error,
   );
 });
 
 Deno.test("403b_under50_above_limit_throws: age 40, E + BB = $23,501 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 80000,
-      box12_entries: [{ code: Box12Code.E, amount: 20000 }, { code: Box12Code.BB, amount: 3501 }],
-      taxpayer_age: 40,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 80000,
+        box12_entries: [{ code: Box12Code.E, amount: 20000 }, {
+          code: Box12Code.BB,
+          amount: 3501,
+        }],
+        taxpayer_age: 40,
+      })]),
     Error,
   );
 });
@@ -492,7 +767,10 @@ Deno.test("403b_age60_63_at_limit_valid: age 61, E + BB = $34,750 → form8880 r
   // BB (Roth 403b) counted against limit but not routed to form8880; only E routes
   const result = compute([minimalItem({
     box1_wages: 200000,
-    box12_entries: [{ code: Box12Code.E, amount: 23500 }, { code: Box12Code.BB, amount: 11250 }],
+    box12_entries: [{ code: Box12Code.E, amount: 23500 }, {
+      code: Box12Code.BB,
+      amount: 11250,
+    }],
     taxpayer_age: 61,
   })]);
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 23500);
@@ -500,11 +778,15 @@ Deno.test("403b_age60_63_at_limit_valid: age 61, E + BB = $34,750 → form8880 r
 
 Deno.test("457b_under50_above_limit_throws: age 40, G + EE = $23,501 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 80000,
-      box12_entries: [{ code: Box12Code.G, amount: 20000 }, { code: Box12Code.EE, amount: 3501 }],
-      taxpayer_age: 40,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 80000,
+        box12_entries: [{ code: Box12Code.G, amount: 20000 }, {
+          code: Box12Code.EE,
+          amount: 3501,
+        }],
+        taxpayer_age: 40,
+      })]),
     Error,
   );
 });
@@ -521,11 +803,12 @@ Deno.test("simple_ira_under50_at_limit_valid: age 40, S = $16,500 → no route b
 
 Deno.test("simple_ira_under50_above_limit_throws: age 40, S = $16,501 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 60000,
-      box12_entries: [{ code: Box12Code.S, amount: 16501 }],
-      taxpayer_age: 40,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 60000,
+        box12_entries: [{ code: Box12Code.S, amount: 16501 }],
+        taxpayer_age: 40,
+      })]),
     Error,
   );
 });
@@ -541,11 +824,12 @@ Deno.test("simple_ira_age60_63_at_super_catchup_valid: age 62, S = $21,750 is va
 
 Deno.test("simple_ira_age60_63_above_super_catchup_throws: age 62, S = $21,751 throws", () => {
   assertThrows(
-    () => compute([minimalItem({
-      box1_wages: 60000,
-      box12_entries: [{ code: Box12Code.S, amount: 21751 }],
-      taxpayer_age: 62,
-    })]),
+    () =>
+      compute([minimalItem({
+        box1_wages: 60000,
+        box12_entries: [{ code: Box12Code.S, amount: 21751 }],
+        taxpayer_age: 62,
+      })]),
     Error,
   );
 });
@@ -555,12 +839,20 @@ Deno.test("simple_ira_age60_63_above_super_catchup_throws: age 62, S = $21,751 t
 // ============================================================
 
 Deno.test("ss_rate_mismatch_is_warning_only_not_error: Box 3 = $50k, Box 4 = $3,050 still computes", () => {
-  const result = compute([minimalItem({ box1_wages: 50000, box3_ss_wages: 50000, box4_ss_withheld: 3050 })]);
+  const result = compute([
+    minimalItem({
+      box1_wages: 50000,
+      box3_ss_wages: 50000,
+      box4_ss_withheld: 3050,
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 50000);
 });
 
 Deno.test("dep_care_above_5000_is_warning_only: Box 10 = $5,001 still routes to form2441", () => {
-  const result = compute([minimalItem({ box1_wages: 80000, box10_dep_care: 5001 })]);
+  const result = compute([
+    minimalItem({ box1_wages: 80000, box10_dep_care: 5001 }),
+  ]);
   assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 5001);
 });
 
@@ -584,7 +876,11 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
         { code: Box12Code.R, amount: 1200 },
       ],
       box13_retirement_plan: true,
-      box14_entries: [{ description: "CA SDI", amount: 400, is_state_sdi_pfml: true }],
+      box14_entries: [{
+        description: "CA SDI",
+        amount: 400,
+        is_state_sdi_pfml: true,
+      }],
       box17_state_withheld: 5000,
       taxpayer_age: 45,
     }),
@@ -604,11 +900,20 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   // form8959 medicare wages aggregated
   assertEquals(fieldsOf(result.outputs, form8959)!.medicare_wages, 100000);
   // form4137 allocated tips
-  assertEquals(fieldsOf(result.outputs, form4137)!.allocated_tips, 500);
+  assertEquals(
+    fieldsOf(result.outputs, form4137)!.w2_tip_sources?.reduce(
+      (sum, source) => sum + source.allocated_tips,
+      0,
+    ),
+    500,
+  );
   // form2441 dep care
   assertEquals(fieldsOf(result.outputs, form2441)!.dep_care_benefits, 3000);
   // form8889 HSA: 2000 + 500
-  assertEquals(fieldsOf(result.outputs, form8889)!.employer_hsa_contributions, 2500);
+  assertEquals(
+    fieldsOf(result.outputs, form8889)!.employer_hsa_contributions,
+    2500,
+  );
   // form8839 adoption
   assertEquals(fieldsOf(result.outputs, form8839)!.adoption_benefits, 3000);
   // form8853 archer MSA
@@ -616,7 +921,14 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   // form8880 elective deferrals
   assertEquals(fieldsOf(result.outputs, form8880)!.elective_deferrals, 8000);
   // IRA worksheet
-  assertEquals(fieldsOf(result.outputs, ira_deduction_worksheet)!.covered_by_retirement_plan, true);
+  assertEquals(
+    fieldsOf(result.outputs, ira_deduction_worksheet)!
+      .covered_by_retirement_plan,
+    true,
+  );
   // schedule_a: SDI $400 + state $5,000
-  assertEquals(fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax, 5400);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleA)!.line_5a_state_income_tax,
+    5400,
+  );
 });

@@ -9,6 +9,7 @@ export interface Fields {
   qbi?: number | null;
   taxable_income?: number | null;
   net_capital_gain?: number | null;
+  qbi_deduction?: number | null;
   qbi_loss_carryforward?: number | null;
   reit_loss_carryforward?: number | null;
 }
@@ -29,8 +30,9 @@ type Input = Partial<Fields> & Record<string, unknown>;
 //   reit_loss_carryforward → TotQlfyREITDivPTPLossCfwdAmt (was REITLossCarryforwardAmt)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["qbi", "TotQualifiedBusinessIncomeAmt"],
-  ["net_capital_gain", "NetCapitalGainAmt"],
   ["taxable_income", "TaxableIncomeBeforeQBIDedAmt"],
+  ["net_capital_gain", "NetCapitalGainAmt"],
+  ["qbi_deduction", "QualifiedBusinessIncomeDedAmt"],
   ["qbi_loss_carryforward", "TotQlfyBusLossCarryforwardAmt"],
   ["reit_loss_carryforward", "TotQlfyREITDivPTPLossCfwdAmt"],
 ];
@@ -43,6 +45,11 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
 // Only emit IRS8995 when we have aggregated total fields that map to valid XSD
 // top-level elements. The per-source tracking fields alone are not sufficient.
 function buildIRS8995(fields: Input): string {
+  // Upstream capital-gain and income-limit data alone do not constitute a
+  // QBI claim. The calculation node writes this field only for a deduction.
+  if (typeof fields.qbi_deduction !== "number" || fields.qbi_deduction <= 0) {
+    return "";
+  }
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";

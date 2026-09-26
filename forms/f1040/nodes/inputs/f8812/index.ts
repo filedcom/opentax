@@ -6,17 +6,77 @@ import type {
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../config/index.ts";
 
+export const earnedIncomeWorksheetSchema = z.object({
+  form1040_line1z_wages: z.number().nonnegative(),
+  nontaxable_combat_pay: z.number().nonnegative(),
+  schedule_c_statutory_employee_income: z.number().nonnegative(),
+  nonfarm_schedule_c_and_k1_net: z.number(),
+  farm_schedule_f_and_k1_net: z.number(),
+  farm_optional_method_used: z.boolean(),
+  schedule_se_line15: z.number().nonnegative().optional(),
+  excluded_medicaid_waiver_payments: z.number().nonnegative(),
+  schedule1_line15_se_deduction: z.number().nonnegative(),
+}).superRefine((value, ctx) => {
+  if (
+    value.farm_optional_method_used && value.schedule_se_line15 === undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Schedule 8812 earned-income worksheet needs Schedule SE line 15 for the farm optional method",
+    });
+  }
+  if (
+    !value.farm_optional_method_used && value.schedule_se_line15 !== undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Schedule 8812 earned-income worksheet Schedule SE line 15 requires the farm optional method",
+    });
+  }
+});
+
+export const creditLimitWorksheetSchema = z.object({
+  schedule3_line1: z.number().nonnegative(),
+  schedule3_line2: z.number().nonnegative(),
+  schedule3_line3: z.number().nonnegative(),
+  schedule3_line4: z.number().nonnegative(),
+  schedule3_line5b: z.number().nonnegative(),
+  schedule3_line6d: z.number().nonnegative(),
+  schedule3_line6f: z.number().nonnegative(),
+  schedule3_line6l: z.number().nonnegative(),
+  schedule3_line6m: z.number().nonnegative(),
+  worksheet_b_applies: z.boolean(),
+  worksheet_b_line15: z.number().nonnegative().optional(),
+}).superRefine((value, ctx) => {
+  if (value.worksheet_b_applies && value.worksheet_b_line15 === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Schedule 8812 Worksheet B needs its line 15 credit total",
+    });
+  }
+  if (!value.worksheet_b_applies && value.worksheet_b_line15 !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Schedule 8812 Worksheet B line 15 requires Worksheet B",
+    });
+  }
+});
+
 export const itemSchema = z.object({
   qualifying_children_count: z.number().int().nonnegative().optional(),
   other_dependents_count: z.number().int().nonnegative().optional(),
-  agi: z.number().nonnegative().optional(),
+  agi: z.number().optional(),
   filing_status: filingStatusSchema.optional(),
   earned_income: z.number().nonnegative().optional(),
+  line18a_earned_income: z.number().optional(),
+  earned_income_worksheet: earnedIncomeWorksheetSchema.optional(),
+  credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
   income_tax_liability: z.number().nonnegative().optional(),
   // Modified AGI add-backs (Lines 2a-2c of Schedule 8812)
   puerto_rico_excluded_income: z.number().nonnegative().optional(),
@@ -36,19 +96,44 @@ export const itemSchema = z.object({
   odc_only_override: z.boolean().optional(),
   not_eligible_override: z.boolean().optional(),
   form_8332_override: z.boolean().optional(),
+}).superRefine((item, ctx) => {
+  if (
+    item.ss_taxes_withheld !== undefined ||
+    item.medicare_taxes_withheld !== undefined ||
+    item.se_tax !== undefined ||
+    item.eic_amount !== undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Schedule 8812 legacy payroll fields cannot represent Part II-B; use the structured part_iib line sources",
+    });
+  }
 });
 
 export const inputSchema = z.object({
   f8812s: z.array(itemSchema).optional(),
   // Set by Form 8862 when prior-year CTC/ACTC disallowance has been cleared
   form8862_filed: z.boolean().optional(),
+  credit_limit_worksheet: creditLimitWorksheetSchema.optional(),
+  part_iib: z.object({
+    line21_w2_withheld_social_security_medicare: z.number().nonnegative(),
+    schedule1_line15: z.number().nonnegative(),
+    schedule2_line5: z.number().nonnegative(),
+    schedule2_line6: z.number().nonnegative(),
+    schedule2_line13: z.number().nonnegative(),
+    form1040_line27a_eic: z.number().nonnegative(),
+    schedule3_line11_adoption_credit: z.number().nonnegative(),
+  }).optional(),
+  line18a_earned_income: z.number().optional(),
+  earned_income_worksheet: earnedIncomeWorksheetSchema.optional(),
   // ── Auto-populated fields (used when f8812s is empty) ──────────────────────
   // Number of qualifying children for CTC (from general node)
   auto_qualifying_children: z.number().int().nonnegative().optional(),
   // Filing status (from general node)
-  auto_filing_status: z.string().optional(),
+  auto_filing_status: filingStatusSchema.optional(),
   // AGI (from agi_aggregator)
-  auto_agi: z.number().nonnegative().optional(),
+  auto_agi: z.number().optional(),
   // Income tax liability (from income_tax_calculation)
   auto_income_tax_liability: z.number().nonnegative().optional(),
   // Earned income from wages (from w2 node)
@@ -57,28 +142,110 @@ export const inputSchema = z.object({
   auto_se_earned_income: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
   auto_other_dependents: z.number().int().nonnegative().optional(),
-  // Prior nonrefundable credits (Schedule 3 lines 1-6a) that reduce the tax
-  // liability available for CTC — per IRS Form 8812 Line 14 instructions.
-  // Accumulated from multiple credit nodes, so may arrive as scalar or array.
-  auto_prior_nonrefundable_credits: z.union([
-    z.number().nonnegative(),
-    z.array(z.number().nonnegative()),
-  ]).optional(),
 });
 
 const PHASE_OUT_STEP = 50;
 const PHASE_OUT_INCREMENT = 1000;
 const ACTC_EARNED_INCOME_RATE = 0.15;
 
-// Sum a value that may have been accumulated from multiple upstream nodes.
-function sumAccumulable(value: number | number[] | undefined): number {
-  if (value === undefined) return 0;
-  if (Array.isArray(value)) return value.reduce((s, n) => s + n, 0);
-  return value;
+type F8812Item = z.infer<typeof itemSchema>;
+export type F8812Input = z.infer<typeof inputSchema>;
+
+export type CreditLimitWorksheet = NonNullable<
+  F8812Input["credit_limit_worksheet"]
+>;
+export type PartIIBDetails = NonNullable<F8812Input["part_iib"]>;
+export type EarnedIncomeWorksheet = z.infer<typeof earnedIncomeWorksheetSchema>;
+
+export function calculateEarnedIncomeWorksheet(
+  rawWorksheet: EarnedIncomeWorksheet,
+) {
+  const worksheet = earnedIncomeWorksheetSchema.parse(rawWorksheet);
+  const line1a = worksheet.form1040_line1z_wages;
+  const line1b = worksheet.nontaxable_combat_pay;
+  const line2a = worksheet.schedule_c_statutory_employee_income;
+  const line2b = worksheet.nonfarm_schedule_c_and_k1_net;
+  const line2c = worksheet.farm_schedule_f_and_k1_net;
+  const line2d = worksheet.farm_optional_method_used
+    ? worksheet.schedule_se_line15
+    : line2c;
+  if (line2d === undefined) {
+    throw new Error(
+      "Schedule 8812 earned-income worksheet needs Schedule SE line 15 for the farm optional method",
+    );
+  }
+  const line2e = line2c > 0 ? Math.min(line2c, line2d) : line2c;
+  const line3 = line1a + line1b + line2a + line2b + line2e;
+  const line4 = line3 > 0 ? worksheet.excluded_medicaid_waiver_payments : 0;
+  const line5 = line3 > 0 ? worksheet.schedule1_line15_se_deduction : 0;
+  const line6 = line4 + line5;
+  const line7 = line3 > 0 ? line3 - line6 : 0;
+  return {
+    line1a,
+    line1b,
+    line2a,
+    line2b,
+    line2c,
+    line2d,
+    line2e,
+    line3,
+    line4,
+    line5,
+    line6,
+    line7,
+  };
 }
 
-type F8812Item = z.infer<typeof itemSchema>;
-type F8812Input = z.infer<typeof inputSchema>;
+export function calculatePartIIBLines(
+  details: PartIIBDetails,
+  line20: number,
+) {
+  const line21 = details.line21_w2_withheld_social_security_medicare;
+  const line22 = details.schedule1_line15 + details.schedule2_line5 +
+    details.schedule2_line6 + details.schedule2_line13;
+  const line23 = line21 + line22;
+  const line24 = details.form1040_line27a_eic +
+    details.schedule3_line11_adoption_credit;
+  const line25 = Math.max(0, line23 - line24);
+  const line26 = Math.max(line20, line25);
+  return { line21, line22, line23, line24, line25, line26 };
+}
+
+export function calculateCreditLimitWorksheetALine5(
+  form1040Line18Tax: number,
+  worksheet: CreditLimitWorksheet,
+): number {
+  const line2 = worksheet.schedule3_line1 + worksheet.schedule3_line2 +
+    worksheet.schedule3_line3 + worksheet.schedule3_line4 +
+    worksheet.schedule3_line5b + worksheet.schedule3_line6d +
+    worksheet.schedule3_line6f + worksheet.schedule3_line6l +
+    worksheet.schedule3_line6m;
+  let line4 = 0;
+  if (worksheet.worksheet_b_applies) {
+    if (worksheet.worksheet_b_line15 === undefined) {
+      throw new Error(
+        "Schedule 8812 Worksheet B needs its line 15 credit total",
+      );
+    }
+    line4 = worksheet.worksheet_b_line15;
+  }
+  return Math.max(0, form1040Line18Tax - line2 - line4);
+}
+
+function returnValue<K extends keyof F8812Item>(
+  items: F8812Item[],
+  key: K,
+): F8812Item[K] {
+  const values = items.map((item) => item[key]).filter((value) =>
+    value !== undefined
+  );
+  if (values.some((value) => value !== values[0])) {
+    throw new Error(
+      `Schedule 8812 has conflicting return-level ${String(key)}`,
+    );
+  }
+  return values[0];
+}
 
 // Build a synthetic f8812 item from auto-populated fields (engine-computed inputs).
 function buildAutoItem(input: F8812Input): F8812Item | null {
@@ -88,15 +255,21 @@ function buildAutoItem(input: F8812Input): F8812Item | null {
   return {
     qualifying_children_count: children || undefined,
     other_dependents_count: otherDeps || undefined,
-    filing_status: (input.auto_filing_status ?? "single") as F8812Item["filing_status"],
+    filing_status: input.auto_filing_status,
     agi: input.auto_agi,
     income_tax_liability: input.auto_income_tax_liability,
-    earned_income: (input.auto_earned_income ?? 0) + (input.auto_se_earned_income ?? 0) || undefined,
+    earned_income:
+      (input.auto_earned_income ?? 0) + (input.auto_se_earned_income ?? 0) ||
+      undefined,
   };
 }
 
 // Line 9: phase-out threshold based on filing status
-function phaseOutThreshold(filingStatus: string, mfj: number, other: number): number {
+function phaseOutThreshold(
+  filingStatus: string,
+  mfj: number,
+  other: number,
+): number {
   return filingStatus === "mfj" ? mfj : other;
 }
 
@@ -108,179 +281,260 @@ function computePhaseOutReduction(
   thresholdMfj: number,
   thresholdOther: number,
 ): number {
-  const excess = Math.max(0, modifiedAgi - phaseOutThreshold(filingStatus, thresholdMfj, thresholdOther));
+  const excess = Math.max(
+    0,
+    modifiedAgi - phaseOutThreshold(filingStatus, thresholdMfj, thresholdOther),
+  );
   if (excess === 0) return 0;
   const steps = Math.ceil(excess / PHASE_OUT_INCREMENT);
   return steps * PHASE_OUT_STEP;
 }
 
-// Lines 1-3: modified AGI = AGI + PR excluded income + Form 2555 amounts + Form 4563 amount
-function computeModifiedAgi(item: F8812Item): number {
-  return (item.agi ?? 0) +
-    (item.puerto_rico_excluded_income ?? 0) +
-    (item.form_2555_amounts ?? 0) +
-    (item.form_4563_amount ?? 0);
-}
-
-// Line 18a effective earned income includes nontaxable combat pay (Line 18b)
-function computeEffectiveEarnedIncome(item: F8812Item): number {
-  return (item.earned_income ?? 0) + (item.nontaxable_combat_pay ?? 0);
-}
-
 // Lines 19-20: ACTC via 15% earned income method (Part II-A)
-function computeActcEarnedIncomeBased(effectiveEarnedIncome: number, floor: number): number {
+function computeActcEarnedIncomeBased(
+  effectiveEarnedIncome: number,
+  floor: number,
+): number {
   const excess = Math.max(0, effectiveEarnedIncome - floor);
   return excess * ACTC_EARNED_INCOME_RATE;
 }
 
-// Lines 22-26: ACTC via payroll tax method (Part II-B)
-// Applies when taxpayer has 3+ qualifying children or is a bona fide Puerto Rico resident.
-// Returns 0 when the taxpayer does not qualify for Part II-B.
-function computePartIIB(
-  qualifyingChildren: number,
-  isPrResident: boolean,
-  ssTaxesWithheld: number,
-  medicareTaxesWithheld: number,
-  seTax: number,
-  eicAmount: number,
-): number {
-  const qualifies = qualifyingChildren >= 3 || isPrResident;
-  if (!qualifies) return 0;
-  const payrollTaxes = ssTaxesWithheld + medicareTaxesWithheld + seTax;
-  return Math.max(0, payrollTaxes - eicAmount);
+export function calculateSchedule8812Lines(
+  taxYear: number,
+  rawInput: F8812Input,
+) {
+  const cfg = CONFIG_BY_YEAR[taxYear];
+  if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
+  const input = inputSchema.parse(rawInput);
+  const explicitItems = input.f8812s ?? [];
+  if (explicitItems.length > 0) {
+    const explicitChildren = explicitItems.reduce(
+      (sum, item) => sum + (item.qualifying_children_count ?? 0),
+      0,
+    );
+    const explicitOtherDependents = explicitItems.reduce(
+      (sum, item) => sum + (item.other_dependents_count ?? 0),
+      0,
+    );
+    if (
+      (input.auto_qualifying_children !== undefined &&
+        input.auto_qualifying_children !== explicitChildren) ||
+      (input.auto_other_dependents !== undefined &&
+        input.auto_other_dependents !== explicitOtherDependents)
+    ) {
+      throw new Error(
+        "Schedule 8812 credit counts must match the Form 1040 dependent rows",
+      );
+    }
+  }
+  const autoItem = explicitItems.length ? null : buildAutoItem(input);
+  const items = explicitItems.length
+    ? explicitItems
+    : autoItem
+    ? [autoItem]
+    : [];
+  if (items.length === 0) return null;
+
+  const line4 = items.reduce(
+    (sum, item) => sum + (item.qualifying_children_count ?? 0),
+    0,
+  );
+  const line6 = items.reduce(
+    (sum, item) => sum + (item.other_dependents_count ?? 0),
+    0,
+  );
+  if (line4 + line6 === 0) return null;
+  const filingStatus = returnValue(items, "filing_status");
+  const line1 = returnValue(items, "agi");
+  const tax = returnValue(items, "income_tax_liability");
+  if (filingStatus === undefined || line1 === undefined) {
+    throw new Error("Schedule 8812 needs filing status and Form 1040 AGI");
+  }
+  const line2a = returnValue(items, "puerto_rico_excluded_income") ?? 0;
+  const line2b = returnValue(items, "form_2555_amounts") ?? 0;
+  const line2c = returnValue(items, "form_4563_amount") ?? 0;
+  const line2d = line2a + line2b + line2c;
+  const line3 = line1 + line2d;
+  const line5 = line4 * cfg.ctcPerChild;
+  const line7 = line6 * cfg.odcPerDependent;
+  const line8 = line5 + line7;
+  const line9 = phaseOutThreshold(
+    filingStatus,
+    cfg.ctcPhaseOutThresholdMfj,
+    cfg.ctcPhaseOutThresholdOther,
+  );
+  const line11 = computePhaseOutReduction(
+    line3,
+    filingStatus,
+    cfg.ctcPhaseOutThresholdMfj,
+    cfg.ctcPhaseOutThresholdOther,
+  );
+  const line10 = line11 / 0.05;
+  const line12 = Math.max(0, line8 - line11);
+  if (line12 === 0) return null;
+
+  const hasFEIE = items.some((item) =>
+    item.has_form_2555 === true || (item.form_2555_amounts ?? 0) > 0
+  );
+  const doNotClaimActc = items.some((item) => item.do_not_claim_actc === true);
+  const isPrResident = items.some((item) =>
+    item.bona_fide_pr_resident === true
+  );
+  const itemCreditWorksheets = items.flatMap((item) =>
+    item.credit_limit_worksheet ? [item.credit_limit_worksheet] : []
+  );
+  if (itemCreditWorksheets.length > 1) {
+    throw new Error(
+      "Schedule 8812 credit-limit worksheet must be supplied only once",
+    );
+  }
+  if (input.credit_limit_worksheet && itemCreditWorksheets.length > 0) {
+    throw new Error(
+      "Schedule 8812 credit-limit worksheet cannot be supplied both on an item and at the root",
+    );
+  }
+  const creditWorksheet = input.credit_limit_worksheet ??
+    itemCreditWorksheets[0];
+  if (!creditWorksheet) {
+    throw new Error(
+      "Schedule 8812 needs complete Credit Limit Worksheet A and B answers",
+    );
+  }
+  if (
+    creditWorksheet.worksheet_b_applies &&
+    (line4 === 0 || hasFEIE)
+  ) {
+    throw new Error(
+      "Schedule 8812 Worksheet B requires a qualifying child and no Form 2555",
+    );
+  }
+  if (tax === undefined) {
+    throw new Error(
+      "Schedule 8812 needs Form 1040 line 18 tax before calculating line 14",
+    );
+  }
+  const line13 = calculateCreditLimitWorksheetALine5(tax, creditWorksheet);
+  const line14 = Math.min(line12, line13);
+
+  const canClaimActc = line4 > 0 && !doNotClaimActc && !hasFEIE;
+  const line16a = canClaimActc ? Math.max(0, line12 - line14) : 0;
+  const line16b = canClaimActc ? line4 * cfg.actcMaxPerChild : 0;
+  const line17 = Math.min(line16a, line16b);
+  const itemWorksheets = items.flatMap((item) =>
+    item.earned_income_worksheet ? [item.earned_income_worksheet] : []
+  );
+  if (itemWorksheets.length > 1) {
+    throw new Error(
+      "Schedule 8812 earned-income worksheet must be supplied only once",
+    );
+  }
+  if (input.earned_income_worksheet && itemWorksheets.length > 0) {
+    throw new Error(
+      "Schedule 8812 earned-income worksheet cannot be supplied both on an item and at the root",
+    );
+  }
+  const worksheetInput = input.earned_income_worksheet ?? itemWorksheets[0];
+  const worksheet = worksheetInput
+    ? calculateEarnedIncomeWorksheet(worksheetInput)
+    : null;
+  const itemCombatPay = returnValue(items, "nontaxable_combat_pay");
+  if (
+    worksheet && itemCombatPay !== undefined &&
+    worksheet.line1b !== itemCombatPay
+  ) {
+    throw new Error("Schedule 8812 has conflicting nontaxable combat pay");
+  }
+  const line18b = itemCombatPay ?? worksheet?.line1b ?? 0;
+  const itemLine18a = returnValue(items, "line18a_earned_income");
+  if (
+    itemLine18a !== undefined &&
+    input.line18a_earned_income !== undefined &&
+    itemLine18a !== input.line18a_earned_income
+  ) {
+    throw new Error("Schedule 8812 has conflicting line 18a earned income");
+  }
+  const explicitLine18a = input.line18a_earned_income ?? itemLine18a;
+  if (
+    worksheet && explicitLine18a !== undefined &&
+    worksheet.line7 !== explicitLine18a
+  ) {
+    throw new Error(
+      "Schedule 8812 earned-income worksheet conflicts with line 18a",
+    );
+  }
+  const line18a = explicitLine18a ?? worksheet?.line7;
+  if (line17 > 0 && line18a === undefined) {
+    throw new Error(
+      "Schedule 8812 refundable credit needs verified line 18a earned income from the IRS Earned Income Chart or Worksheet",
+    );
+  }
+  const line19 = Math.max(0, (line18a ?? 0) - cfg.actcEarnedIncomeFloor);
+  const line20 = computeActcEarnedIncomeBased(
+    line18a ?? 0,
+    cfg.actcEarnedIncomeFloor,
+  );
+  const needsPartIIB = line17 > 0 &&
+    (isPrResident || (line4 >= 3 && line20 < line17));
+  let partIIBLines = null;
+  if (needsPartIIB) {
+    if (!input.part_iib) {
+      throw new Error(
+        "Schedule 8812 Part II-B needs its W-2, Schedule 1, Schedule 2, EIC, and adoption-credit line sources",
+      );
+    }
+    partIIBLines = calculatePartIIBLines(input.part_iib, line20);
+  }
+  const line27 = Math.min(
+    line17,
+    partIIBLines ? partIIBLines.line26 : line20,
+  );
+  return {
+    line1,
+    line2a,
+    line2b,
+    line2c,
+    line2d,
+    line3,
+    line4,
+    line5,
+    line6,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+    line13,
+    line14,
+    line16a,
+    line16b,
+    line17,
+    line18a: line18a ?? 0,
+    line18b,
+    line19,
+    line20,
+    partIIBLines,
+    needsPartIIB,
+    line27,
+  };
 }
 
 class F8812Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8812";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3, f1040]);
+  readonly outputNodes = new OutputNodes([f1040]);
 
-  compute(ctx: NodeContext, rawInput: F8812Input): NodeResult {
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
-
-    const input = inputSchema.parse(rawInput);
-
-    // Build item list: use explicit f8812s when provided; otherwise fall back to auto-populated fields.
-    const explicitItems = input.f8812s ?? [];
-    let items: F8812Item[];
-    if (explicitItems.length > 0) {
-      items = explicitItems;
-    } else {
-      const autoItem = buildAutoItem(input);
-      if (autoItem === null) return { outputs: [] };
-      items = [autoItem];
-    }
-
-    if (items.length === 0) return { outputs: [] };
-
-    // Aggregate counts and flags across all items
-    let totalQualifyingChildren = 0;
-    let totalOtherDependents = 0;
-    let combinedModifiedAgi = 0;
-    let combinedEarnedIncome = 0;
-    let combinedTaxLiability: number | undefined = undefined;
-    let combinedSsWithheld = 0;
-    let combinedMedicareWithheld = 0;
-    let combinedSeTax = 0;
-    let combinedEicAmount = 0;
-    let hasFEIE = false;
-    let doNotClaimActc = false;
-    let isPrResident = false;
-    let filingStatus = "single";
-
-    for (const item of items) {
-      totalQualifyingChildren += item.qualifying_children_count ?? 0;
-      totalOtherDependents += item.other_dependents_count ?? 0;
-      combinedModifiedAgi += computeModifiedAgi(item);
-      combinedEarnedIncome += computeEffectiveEarnedIncome(item);
-      combinedSsWithheld += item.ss_taxes_withheld ?? 0;
-      combinedMedicareWithheld += item.medicare_taxes_withheld ?? 0;
-      combinedSeTax += item.se_tax ?? 0;
-      combinedEicAmount += item.eic_amount ?? 0;
-
-      if (item.income_tax_liability !== undefined) {
-        combinedTaxLiability = (combinedTaxLiability ?? 0) + item.income_tax_liability;
-      }
-      if (item.has_form_2555 === true || (item.form_2555_amounts ?? 0) > 0) {
-        hasFEIE = true;
-      }
-      if (item.do_not_claim_actc === true) doNotClaimActc = true;
-      if (item.bona_fide_pr_resident === true) isPrResident = true;
-      if (item.filing_status) filingStatus = item.filing_status;
-    }
-
-    // Line 5: tentative CTC = children × cfg.ctcPerChild
-    const tentativeCTC = totalQualifyingChildren * cfg.ctcPerChild;
-    // Line 7: tentative ODC = other dependents × cfg.odcPerDependent
-    const tentativeODC = totalOtherDependents * cfg.odcPerDependent;
-    // Line 8: total tentative credit
-    const tentativeTotal = tentativeCTC + tentativeODC;
-
-    if (tentativeTotal === 0) return { outputs: [] };
-
-    // Lines 10-12: apply phase-out using modified AGI
-    const phaseOutReduction = computePhaseOutReduction(
-      combinedModifiedAgi, filingStatus,
-      cfg.ctcPhaseOutThresholdMfj, cfg.ctcPhaseOutThresholdOther,
-    );
-    const creditAfterPhaseOut = Math.max(0, tentativeTotal - phaseOutReduction);
-
-    if (creditAfterPhaseOut === 0) return { outputs: [] };
-
-    // Line 14: non-refundable CTC+ODC limited by income tax liability
-    // Per IRS Form 8812 instructions, Line 14 = Line 18 tax minus
-    // Schedule 3 lines 1-6a (prior nonrefundable credits: foreign tax,
-    // dep care, education, retirement savings, residential energy).
-    const priorCredits = sumAccumulable(input.auto_prior_nonrefundable_credits);
-    const adjustedTaxLiability = combinedTaxLiability !== undefined
-      ? Math.max(0, combinedTaxLiability - priorCredits)
-      : undefined;
-    const nonrefundableCTC = adjustedTaxLiability !== undefined
-      ? Math.min(creditAfterPhaseOut, adjustedTaxLiability)
-      : creditAfterPhaseOut;
-
-    const outputs: NodeOutput[] = [];
-
-    // Non-refundable portion → Schedule 3 Line 6b (→ Form 1040 Line 19)
-    if (nonrefundableCTC > 0) {
-      outputs.push(this.outputNodes.output(schedule3, { line6b_child_tax_credit: nonrefundableCTC }));
-    }
-
-    // ACTC (refundable) → Form 1040 Line 28
-    // Conditions: must have qualifying children, must not opt out, must not file Form 2555
-    const canClaimActc = totalQualifyingChildren > 0 && !doNotClaimActc && !hasFEIE;
-
-    if (canClaimActc) {
-      // Line 16a: unabsorbed CTC (potential ACTC)
-      const ctcUnused = Math.max(0, creditAfterPhaseOut - nonrefundableCTC);
-      // Line 16b: ACTC cap = qualifying children × cfg.actcMaxPerChild
-      const actcCap = totalQualifyingChildren * cfg.actcMaxPerChild;
-
-      if (ctcUnused > 0 && actcCap > 0) {
-        // Line 17: tentative ACTC = min(Line 16a, Line 16b)
-        const tentativeActc = Math.min(ctcUnused, actcCap);
-        // Line 20: Part II-A — earned income based ACTC = (earned income − floor) × 15%
-        const earnedIncomeBased = computeActcEarnedIncomeBased(combinedEarnedIncome, cfg.actcEarnedIncomeFloor);
-        const partIIA = Math.min(tentativeActc, earnedIncomeBased);
-        // Lines 22-26: Part II-B — payroll tax method (3+ children or PR resident)
-        const partIIB = computePartIIB(
-          totalQualifyingChildren,
-          isPrResident,
-          combinedSsWithheld,
-          combinedMedicareWithheld,
-          combinedSeTax,
-          combinedEicAmount,
-        );
-        // Line 27: final ACTC = min(tentativeActc, max(Part II-A, Part II-B))
-        const actc = Math.min(tentativeActc, Math.max(partIIA, partIIB));
-
-        if (actc > 0) {
-          outputs.push(this.outputNodes.output(f1040, { line28_actc: actc }));
-        }
-      }
-    }
-
+  compute(ctx: NodeContext, input: F8812Input): NodeResult {
+    const lines = calculateSchedule8812Lines(ctx.taxYear, input);
+    if (!lines) return { outputs: [] };
+    const outputs: NodeOutput[] = lines.line14 > 0
+      ? [this.outputNodes.output(f1040, {
+        line19_child_tax_credit: lines.line14,
+        ...(lines.line27 > 0 ? { line28_actc: lines.line27 } : {}),
+      })]
+      : lines.line27 > 0
+      ? [this.outputNodes.output(f1040, { line28_actc: lines.line27 })]
+      : [];
     return { outputs };
   }
 }

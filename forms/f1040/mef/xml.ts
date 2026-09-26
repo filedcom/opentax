@@ -20,8 +20,17 @@ export function element(
   return `<${tag}${attrsStr}>${content}</${tag}>`;
 }
 
-export function elements(tag: string, children: string[]): string {
+export function elements(
+  tag: string,
+  children: string[],
+  attrs?: Record<string, string>,
+): string {
   const filtered = children.filter((c) => c !== "");
   if (filtered.length === 0) return "";
-  return `<${tag}>${filtered.join("")}</${tag}>`;
+  const attrsStr = attrs
+    ? Object.entries(attrs).map(([name, value]) =>
+      ` ${name}="${escapeXml(value)}"`
+    ).join("")
+    : "";
+  return `<${tag}${attrsStr}>${filtered.join("")}</${tag}>`;
 }

@@ -63,6 +63,7 @@ Deno.test("w2 emits required identity, address, wage, and withholding fields in 
     "<EmployeeUSAddress>",
     "<WagesAmt>",
     "<WithholdingAmt>",
+    "<StandardOrNonStandardCd>",
   ];
 
   let previous = -1;
@@ -79,6 +80,7 @@ Deno.test("w2 emits required identity, address, wage, and withholding fields in 
   assertStringIncludes(result, "<EmployerEIN>123456789</EmployerEIN>");
   assertStringIncludes(result, "<WagesAmt>30000</WagesAmt>");
   assertStringIncludes(result, "<WithholdingAmt>3000</WithholdingAmt>");
+  assertStringIncludes(result, "<StandardOrNonStandardCd>S</StandardOrNonStandardCd>");
 });
 
 Deno.test("w2 refuses a finalized document with missing employer filing data", () => {

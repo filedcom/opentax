@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildReturnHeader, FilingStatus } from "./header.ts";
 import type { FilerIdentity } from "./header.ts";
 
@@ -21,18 +21,18 @@ function sampleFiler(): FilerIdentity {
 // Section 1: Always-present elements
 // ---------------------------------------------------------------------------
 
-Deno.test("always emits ReturnType 1040 with no filer", () => {
-  const result = buildReturnHeader(undefined);
+Deno.test("always emits ReturnType 1040", () => {
+  const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<ReturnTypeCd>1040</ReturnTypeCd>");
 });
 
-Deno.test("always emits TaxPeriodBeginDate with no filer", () => {
-  const result = buildReturnHeader(undefined);
+Deno.test("always emits TaxPeriodBeginDate", () => {
+  const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<TaxPeriodBeginDt>2025-01-01</TaxPeriodBeginDt>");
 });
 
-Deno.test("always emits TaxPeriodEndDate with no filer", () => {
-  const result = buildReturnHeader(undefined);
+Deno.test("always emits TaxPeriodEndDate", () => {
+  const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "<TaxPeriodEndDt>2025-12-31</TaxPeriodEndDt>");
 });
 
@@ -52,39 +52,40 @@ Deno.test("always emits TaxPeriodEndDate when filer is provided", () => {
 });
 
 Deno.test("return value is a string", () => {
-  assertEquals(typeof buildReturnHeader(undefined), "string");
   assertEquals(typeof buildReturnHeader(sampleFiler()), "string");
 });
 
 // ---------------------------------------------------------------------------
-// Section 2: No filer — absent blocks
+// Section 2: Missing filer
 // ---------------------------------------------------------------------------
 
-Deno.test("no filer: placeholder Filer block is emitted (XSD requires Filer)", () => {
-  // ReturnHeader1040x.xsd §338 requires a Filer element.
-  // When no filer identity is provided, a placeholder is emitted so the schema
-  // validator accepts the document (test/preview use case).
-  const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<Filer>"), true);
+Deno.test("missing filer is rejected instead of filled with placeholder identity", () => {
+  assertThrows(
+    () => buildReturnHeader(undefined),
+    Error,
+    "requires a real filer identity",
+  );
 });
 
-Deno.test("no filer: FilingStatusCd is absent", () => {
-  const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<FilingStatusCd>"), false);
-});
-
-Deno.test("no filer: placeholder USAddress is emitted (required by XSD)", () => {
-  // XSD requires USAddress or ForeignAddress inside Filer.
-  // Placeholder address is emitted when no filer identity is provided.
-  const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<USAddress>"), true);
-});
-
-Deno.test("no filer: placeholder PrimarySSN is emitted (required by XSD)", () => {
-  // XSD requires PrimarySSN inside Filer.
-  // Placeholder SSN 000000000 is emitted when no filer identity is provided.
-  const result = buildReturnHeader(undefined);
-  assertEquals(result.includes("<PrimarySSN>"), true);
+Deno.test("header rejects placeholder SSN and incomplete filer details", () => {
+  assertThrows(
+    () => buildReturnHeader({ ...sampleFiler(), primarySSN: "000000000" }),
+    Error,
+    "nine-digit filer SSN or ITIN",
+  );
+  assertThrows(
+    () => buildReturnHeader({ ...sampleFiler(), nameControl: "" }),
+    Error,
+    "name and name control",
+  );
+  assertThrows(
+    () => buildReturnHeader({
+      ...sampleFiler(),
+      address: { ...sampleFiler().address, line1: "" },
+    }),
+    Error,
+    "mailing address",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -233,12 +234,12 @@ Deno.test("address line with less-than: raw unescaped tag is not present as text
 
 Deno.test("output is wrapped in opening ReturnHeader element with binaryAttachmentCnt attribute", () => {
   // ReturnHeader1040x.xsd requires binaryAttachmentCnt attribute (value 0 for no binary attachments)
-  const result = buildReturnHeader(undefined);
+  const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, '<ReturnHeader binaryAttachmentCnt="0">');
 });
 
 Deno.test("output closes ReturnHeader element", () => {
-  const result = buildReturnHeader(undefined);
+  const result = buildReturnHeader(sampleFiler());
   assertStringIncludes(result, "</ReturnHeader>");
 });
 

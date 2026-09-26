@@ -29,8 +29,8 @@ Deno.test("all unknown keys returns empty string", () => {
 // Section 3: Zero value emitted
 // ---------------------------------------------------------------------------
 
-Deno.test("line1_amt at zero is emitted", () => {
-  const result = schedule2.build({ line1_amt: 0 });
+Deno.test("line2_amt at zero is emitted", () => {
+  const result = schedule2.build({ line2_amt: 0 });
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>0</AlternativeMinimumTaxAmt>",
@@ -41,12 +41,24 @@ Deno.test("line1_amt at zero is emitted", () => {
 // Section 4: Per-field mapping — direct 1:1 fields
 // ---------------------------------------------------------------------------
 
-Deno.test("line1_amt maps to AlternativeMinimumTaxAmt", () => {
-  const result = schedule2.build({ line1_amt: 5000 });
+Deno.test("line2_amt maps to AlternativeMinimumTaxAmt", () => {
+  const result = schedule2.build({ line2_amt: 5000 });
   assertStringIncludes(
     result,
     "<AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt>",
   );
+});
+
+Deno.test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD order", () => {
+  const result = schedule2.build({
+    line1a_excess_advance_premium: 1_200,
+    line2_amt: 5_000,
+  });
+  const repayment = "<PremiumTaxCreditTaxLiabAmt>1200</PremiumTaxCreditTaxLiabAmt>";
+  const amt = "<AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt>";
+  assertStringIncludes(result, repayment);
+  assertStringIncludes(result, amt);
+  assertEquals(result.indexOf(repayment) < result.indexOf(amt), true);
 });
 
 Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
@@ -76,6 +88,14 @@ Deno.test("line6_uncollected_8919 maps to UncollectedSocSecMedTaxAmt", () => {
 Deno.test("line8_form5329_tax maps to TaxOnIRAsAmt", () => {
   const result = schedule2.build({ line8_form5329_tax: 600 });
   assertStringIncludes(result, "<TaxOnIRAsAmt>600</TaxOnIRAsAmt>");
+});
+
+Deno.test("line9_household_employment maps to HouseholdEmploymentTaxAmt", () => {
+  const result = schedule2.build({ line9_household_employment: 474 });
+  assertStringIncludes(
+    result,
+    "<HouseholdEmploymentTaxAmt>474</HouseholdEmploymentTaxAmt>",
+  );
 });
 
 Deno.test("line11_additional_medicare maps to TotalAMRRTTaxAmt", () => {
@@ -235,7 +255,7 @@ Deno.test("single known field emits only that element, absent fields omitted", (
 
 Deno.test("two fields present: only those two elements emitted", () => {
   const result = schedule2.build({
-    line1_amt: 3000,
+    line2_amt: 3000,
     line12_niit: 1900,
   });
   assertStringIncludes(
@@ -255,7 +275,7 @@ Deno.test("two fields present: only those two elements emitted", () => {
 // ---------------------------------------------------------------------------
 
 const allFields = {
-  line1_amt: 100,
+  line2_amt: 100,
   line4_se_tax: 200,
   line5_unreported_tip_tax: 300,
   line6_uncollected_8919: 400,
@@ -357,7 +377,7 @@ Deno.test("known field emitted, unknown field dropped", () => {
 
 Deno.test("multiple known and unknown fields: only known emitted", () => {
   const result = schedule2.build({
-    line1_amt: 2500,
+    line2_amt: 2500,
     unknown_field_1: 500,
     line12_niit: 800,
     not_a_real_key: "ignored",

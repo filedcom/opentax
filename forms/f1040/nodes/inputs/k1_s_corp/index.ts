@@ -1,19 +1,32 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
-import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import {
+  ForeignTaxCreditMethod,
+  ForeignTaxKind,
+  form_1116,
+  IncomeCategory,
+} from "../../intermediate/forms/form_1116/index.ts";
 import { form7203 } from "../../intermediate/forms/form7203/index.ts";
 import { form4797 } from "../../intermediate/forms/form4797/index.ts";
 import { rate_28_gain_worksheet } from "../../intermediate/worksheets/rate_28_gain_worksheet/index.ts";
 import { unrecaptured_1250_worksheet } from "../../intermediate/worksheets/unrecaptured_1250_worksheet/index.ts";
 import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -29,6 +42,9 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   // Identification
   corporation_name: z.string().min(1),
+  // Affirm portfolio boxes 4/5 are investment-property income not already
+  // included in Form 4952's manual "other" facts.
+  investment_property_for_form4952: z.boolean().optional(),
 
   // Box 1 — Ordinary business income/loss → Schedule E page 2 → Schedule 1 line 5
   box1_ordinary_business: z.number().optional(),
@@ -58,37 +74,62 @@ export const itemSchema = z.object({
   box8a_net_lt_cap_gain: z.number().optional(),
 
   // Box 8b — Collectibles (28%) gain/loss → Schedule D 28% Rate Gain Worksheet
-  box8b_collectibles_gain: z.number().optional().describe("Box 8b — Collectibles (28%) gain/loss"),
+  box8b_collectibles_gain: z.number().optional().describe(
+    "Box 8b — Collectibles (28%) gain/loss",
+  ),
 
   // Box 8c — Unrecaptured §1250 gain → Unrecaptured §1250 Gain Worksheet
-  box8c_unrecaptured_1250: z.number().nonnegative().optional().describe("Box 8c — Unrecaptured section 1250 gain"),
+  box8c_unrecaptured_1250: z.number().nonnegative().optional().describe(
+    "Box 8c — Unrecaptured section 1250 gain",
+  ),
 
   // Box 9 — Net §1231 gain/loss (informational; full computation requires Form 4797)
   box9_net_1231: z.number().optional(),
 
   // Box 10 — Other income (loss) → Schedule 1 line 8z (various codes A–E)
-  box10_other_income: z.number().optional().describe("Box 10 — Other income (loss)"),
+  box10_other_income: z.number().optional().describe(
+    "Box 10 — Other income (loss)",
+  ),
 
   // Box 11 — Section 179 deduction → Form 4562
-  box11_section_179: z.number().nonnegative().optional().describe("Box 11 — Section 179 deduction"),
+  box11_section_179: z.number().nonnegative().optional().describe(
+    "Box 11 — Section 179 deduction",
+  ),
 
   // Box 12 — Other deductions (various codes A–S)
-  box12_other_deductions: z.number().nonnegative().optional().describe("Box 12 — Other deductions"),
+  box12_other_deductions: z.number().nonnegative().optional().describe(
+    "Box 12 — Other deductions",
+  ),
 
   // Box 15 — Alternative minimum tax (AMT) items (codes A–C) → Form 6251
-  box15_amt_adjustment: z.number().optional().describe("Box 15 — Alternative minimum tax (AMT) items"),
+  box15_amt_adjustment: z.number().optional().describe(
+    "Box 15 — Alternative minimum tax (AMT) items",
+  ),
 
   // Box 16 — Tax-exempt income and nondeductible expenses (codes A–C)
-  box16_tax_exempt_income: z.number().nonnegative().optional().describe("Box 16 — Tax-exempt income and nondeductible expenses"),
+  box16_tax_exempt_income: z.number().nonnegative().optional().describe(
+    "Box 16 — Tax-exempt income and nondeductible expenses",
+  ),
 
   // Box 17 — Distributions (code A: cash/property; code B: dividend distributions)
-  box17_distributions: z.number().nonnegative().optional().describe("Box 17 — Distributions"),
+  box17_distributions: z.number().nonnegative().optional().describe(
+    "Box 17 — Distributions",
+  ),
 
   // Box 14 — Foreign taxes → Form 1116
   box14_foreign_tax: z.number().nonnegative().optional(),
   box14_foreign_income: z.number().nonnegative().optional(),
   box14_foreign_income_category: z.nativeEnum(IncomeCategory).optional(),
   box14_foreign_deductions: z.number().nonnegative().optional(),
+  box14_foreign_deductions_explanation: z.string().trim().min(1).optional(),
+  // Use the country, tax type, and payment details from Schedule K-3 Part III.
+  box14_foreign_tax_irs_country_code: z.string().length(2).optional(),
+  box14_foreign_tax_paid_or_accrued_date: z.string().regex(
+    /^\d{4}-\d{2}-\d{2}$/,
+  ).optional(),
+  box14_foreign_tax_kind: z.nativeEnum(ForeignTaxKind).optional(),
+  box14_foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod)
+    .optional(),
 
   // Box 17 — QBI/W-2 wages/UBIA for §199A deduction (legacy fields retained for compat)
   box17_w2_wages: z.number().nonnegative().optional(),
@@ -165,21 +206,32 @@ function scheduleBDividendOutputs(items: K1SCorpItems): NodeOutput[] {
 
 // Aggregate qualified dividends (Box 5b) → f1040 line3a
 function f1040QualDivOutput(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box5b_qualified_dividends ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box5b_qualified_dividends ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(f1040, { line3a_qualified_dividends: total })];
 }
 
 // Aggregate capital gains/losses → schedule_d (one merged output)
 function scheduleDOutput(items: K1SCorpItems): NodeOutput[] {
-  const totalSt = items.reduce((sum, item) => sum + (item.box7_net_st_cap_gain ?? 0), 0);
-  const totalLt = items.reduce((sum, item) => sum + (item.box8a_net_lt_cap_gain ?? 0), 0);
+  const totalSt = items.reduce(
+    (sum, item) => sum + (item.box7_net_st_cap_gain ?? 0),
+    0,
+  );
+  const totalLt = items.reduce(
+    (sum, item) => sum + (item.box8a_net_lt_cap_gain ?? 0),
+    0,
+  );
   const hasSt = totalSt !== 0;
   const hasLt = totalLt !== 0;
   if (!hasSt && !hasLt) return [];
 
   if (hasSt && hasLt) {
-    return [output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt })];
+    return [
+      output(schedule_d, { line_5_k1_st: totalSt, line_12_k1_lt: totalLt }),
+    ];
   }
   if (hasSt) {
     return [output(schedule_d, { line_5_k1_st: totalSt })];
@@ -207,10 +259,16 @@ function resolveUbia(item: K1SCorpItem): number {
 function form8995Output(items: K1SCorpItems): NodeOutput[] {
   const nonSstb = items.filter((item) => item.sstb_indicator !== true);
   const sstb = items.filter((item) => item.sstb_indicator === true);
-  const totalQbi = nonSstb.reduce((sum, item) => sum + resolveQbiAmount(item), 0);
+  const totalQbi = nonSstb.reduce(
+    (sum, item) => sum + resolveQbiAmount(item),
+    0,
+  );
   const totalW2 = nonSstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
   const totalUbia = nonSstb.reduce((sum, item) => sum + resolveUbia(item), 0);
-  const totalSstbQbi = sstb.reduce((sum, item) => sum + resolveQbiAmount(item), 0);
+  const totalSstbQbi = sstb.reduce(
+    (sum, item) => sum + resolveQbiAmount(item),
+    0,
+  );
   const totalSstbW2 = sstb.reduce((sum, item) => sum + resolveW2Wages(item), 0);
   const totalSstbUbia = sstb.reduce((sum, item) => sum + resolveUbia(item), 0);
 
@@ -227,20 +285,35 @@ function form8995Output(items: K1SCorpItems): NodeOutput[] {
   if (totalSstbW2 > 0) fields.sstb_w2_wages = totalSstbW2;
   if (totalSstbUbia > 0) fields.sstb_unadjusted_basis = totalSstbUbia;
 
-  return [output(form8995, fields as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>)];
+  return [
+    output(
+      form8995,
+      fields as AtLeastOne<z.infer<typeof form8995["inputSchema"]>>,
+    ),
+  ];
 }
 
 // Route K-1 Box 9 §1231 gain/loss → Form 4797 (Part I)
 // IRC §1231 gains/losses from S-corps flow through Form 4797
 function form4797Outputs(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box9_net_1231 ?? 0), 0);
-  if (total === 0) return [];
-  return [output(form4797, { section_1231_gain: total })];
+  const rows = items
+    .filter((item) => (item.box9_net_1231 ?? 0) !== 0)
+    .map((item) => ({
+      source: "s_corp" as const,
+      entity_name: item.corporation_name,
+      gain_loss: item.box9_net_1231 ?? 0,
+    }));
+  if (rows.length === 0) return [];
+  const total = rows.reduce((sum, row) => sum + row.gain_loss, 0);
+  return [output(form4797, { section_1231_gain: total, k1_1231_rows: rows })];
 }
 
 // Route Box 10 other income/loss → schedule1 line 8z (catch-all "other income" line)
 function schedule1OtherIncomeOutput(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box10_other_income ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box10_other_income ?? 0),
+    0,
+  );
   if (total === 0) return [];
   return [output(schedule1, { line8z_other_income: total })];
 }
@@ -255,11 +328,14 @@ function hasBasisData(item: K1SCorpItem): boolean {
   );
 }
 
-function buildForm7203Fields(item: K1SCorpItem): Parameters<typeof output<typeof form7203>>[1] {
+function buildForm7203Fields(
+  item: K1SCorpItem,
+): Parameters<typeof output<typeof form7203>>[1] {
   const loss = Math.max(0, -(item.box1_ordinary_business ?? 0));
   // Pre-2018 suspended losses and at-risk suspended losses both map to
   // form7203 prior_year_unallowed_loss (Part III column b)
-  const priorLoss = (item.pre2018_suspended_losses ?? 0) + (item.pre2018_at_risk_suspended ?? 0);
+  const priorLoss = (item.pre2018_suspended_losses ?? 0) +
+    (item.pre2018_at_risk_suspended ?? 0);
   // hasBasisData guarantees at least one field is set; cast satisfies AtLeastOne
   return {
     stock_basis_beginning: item.stock_basis_beginning,
@@ -290,6 +366,11 @@ function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
           foreign_gross_income: item.box14_foreign_income!,
           income_category: item.box14_foreign_income_category!,
           directly_allocable_deductions: item.box14_foreign_deductions,
+          direct_expense_explanation: item.box14_foreign_deductions_explanation,
+          irs_country_code: item.box14_foreign_tax_irs_country_code,
+          tax_paid_or_accrued_date: item.box14_foreign_tax_paid_or_accrued_date,
+          tax_kind: item.box14_foreign_tax_kind,
+          tax_credit_method: item.box14_foreign_tax_credit_method,
         }],
       })
     );
@@ -297,35 +378,52 @@ function form1116Outputs(items: K1SCorpItems): NodeOutput[] {
 
 // Aggregate box8b collectibles (28%) gain → rate_28_gain_worksheet
 function collectiblesGainOutput(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box8b_collectibles_gain ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box8b_collectibles_gain ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(rate_28_gain_worksheet, { collectibles_gain: total })];
 }
 
 // Aggregate box8c unrecaptured §1250 gain → unrecaptured_1250_worksheet
 function unrecaptured1250Output(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box8c_unrecaptured_1250 ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box8c_unrecaptured_1250 ?? 0),
+    0,
+  );
   if (total <= 0) return [];
-  return [output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total })];
+  return [
+    output(unrecaptured_1250_worksheet, { unrecaptured_1250_gain: total }),
+  ];
 }
 
 // Aggregate box11 §179 deduction → form4562
 function section179Output(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box11_section_179 ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box11_section_179 ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(form4562, { section_179_deduction: total })];
 }
 
 // Aggregate box12 other deductions → schedule_a line 16 (other deductions)
 function otherDeductionsOutput(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box12_other_deductions ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box12_other_deductions ?? 0),
+    0,
+  );
   if (total <= 0) return [];
   return [output(schedule_a, { line_16_other_deductions: total })];
 }
 
 // Aggregate box15 AMT adjustment → form6251 other_adjustments
 function amtAdjustmentOutput(items: K1SCorpItems): NodeOutput[] {
-  const total = items.reduce((sum, item) => sum + (item.box15_amt_adjustment ?? 0), 0);
+  const total = items.reduce(
+    (sum, item) => sum + (item.box15_amt_adjustment ?? 0),
+    0,
+  );
   if (total === 0) return [];
   return [output(form6251, { other_adjustments: total })];
 }
@@ -333,7 +431,22 @@ function amtAdjustmentOutput(items: K1SCorpItems): NodeOutput[] {
 class K1SCorpNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_s_corp";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule_b, f1040, schedule_d, form8995, form_1116, form7203, form4797, rate_28_gain_worksheet, unrecaptured_1250_worksheet, form4562, form6251, schedule_a]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    schedule_b,
+    f1040,
+    schedule_d,
+    form8995,
+    form_1116,
+    form7203,
+    form4797,
+    rate_28_gain_worksheet,
+    unrecaptured_1250_worksheet,
+    form4562,
+    form6251,
+    schedule_a,
+    form4952,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { k1_s_corps } = inputSchema.parse(input);
@@ -357,6 +470,33 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       // box16_tax_exempt_income: intentionally not routed — tax-exempt income does not flow to taxable income
       // box17_distributions: intentionally not routed — not taxable within basis; no basis-tracking node declared
     ];
+
+    for (const item of k1_s_corps) {
+      if (item.investment_property_for_form4952 !== true) continue;
+      if (
+        (item.box5b_qualified_dividends ?? 0) >
+          (item.box5a_ordinary_dividends ?? 0)
+      ) {
+        throw new Error(
+          "S corporation K-1 qualified dividends exceed ordinary dividends",
+        );
+      }
+      if ((item.box4_interest ?? 0) > 0) {
+        outputs.push(output(form4952, {
+          source_k1_interest: item.box4_interest!,
+        }));
+      }
+      if ((item.box5a_ordinary_dividends ?? 0) > 0) {
+        outputs.push(output(form4952, {
+          source_k1_dividends: item.box5a_ordinary_dividends!,
+        }));
+      }
+      if ((item.box5b_qualified_dividends ?? 0) > 0) {
+        outputs.push(output(form4952, {
+          source_k1_qualified_dividends: item.box5b_qualified_dividends!,
+        }));
+      }
+    }
 
     return { outputs };
   }

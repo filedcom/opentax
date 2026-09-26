@@ -34,7 +34,7 @@ Deno.test("form6251: no output when tentative minimum tax equals regular tax", (
 
 // ─── AMT owed calculation ─────────────────────────────────────────────────────
 
-Deno.test("form6251: AMT owed routes to schedule2 line1_amt", () => {
+Deno.test("form6251: AMT owed routes to schedule2 line2_amt", () => {
   // Single: AMTI = $200,000; exemption = $88,100; line6 = $111,900
   // TMT = floor($111,900 × 0.26) = $29,094; regular_tax = $15,000
   // AMT = $29,094 − $15,000 = $14,094
@@ -43,7 +43,7 @@ Deno.test("form6251: AMT owed routes to schedule2 line1_amt", () => {
     regular_tax_income: 200_000,
     regular_tax: 15_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 14_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
 Deno.test("form6251: AMT owed with ISO adjustment", () => {
@@ -57,7 +57,7 @@ Deno.test("form6251: AMT owed with ISO adjustment", () => {
     iso_adjustment: 100_000,
     regular_tax: 25_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 17_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 17_094);
 });
 
 Deno.test("form6251: AMT owed with depreciation adjustment", () => {
@@ -71,7 +71,7 @@ Deno.test("form6251: AMT owed with depreciation adjustment", () => {
     depreciation_adjustment: 50_000,
     regular_tax: 30_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 12_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 12_094);
 });
 
 // ─── Exemption phase-out ──────────────────────────────────────────────────────
@@ -90,7 +90,7 @@ Deno.test("form6251: exemption phases out for high-AMTI single filer", () => {
     regular_tax_income: 700_000,
     regular_tax: 100_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 71_705);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 71_705);
 });
 
 Deno.test("form6251: exemption is zero when AMTI exceeds complete phase-out threshold", () => {
@@ -103,7 +103,7 @@ Deno.test("form6251: exemption is zero when AMTI exceeds complete phase-out thre
     regular_tax_income: 1_000_000,
     regular_tax: 150_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 125_218);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 125_218);
 });
 
 // ─── 26% bracket vs 28% bracket ──────────────────────────────────────────────
@@ -117,7 +117,7 @@ Deno.test("form6251: 26% rate applies when taxable excess is at or below $239,10
     regular_tax_income: 300_000,
     regular_tax: 40_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 15_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 15_094);
 });
 
 Deno.test("form6251: 28% rate applies when taxable excess exceeds $239,100 (single)", () => {
@@ -130,7 +130,7 @@ Deno.test("form6251: 28% rate applies when taxable excess exceeds $239,100 (sing
     regular_tax_income: 400_000,
     regular_tax: 60_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 22_550);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_550);
 });
 
 // ─── Filing status differences ────────────────────────────────────────────────
@@ -144,7 +144,7 @@ Deno.test("form6251: MFJ exemption $137,000 (vs single $88,100)", () => {
     regular_tax_income: 300_000,
     regular_tax: 30_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 12_380);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 12_380);
 });
 
 Deno.test("form6251: MFS has halved rate bracket threshold ($119,550 vs $239,100)", () => {
@@ -157,7 +157,7 @@ Deno.test("form6251: MFS has halved rate bracket threshold ($119,550 vs $239,100
     regular_tax_income: 300_000,
     regular_tax: 40_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 22_429);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_429);
 });
 
 Deno.test("form6251: HOH uses same exemption as single ($88,100)", () => {
@@ -169,7 +169,7 @@ Deno.test("form6251: HOH uses same exemption as single ($88,100)", () => {
     regular_tax_income: 200_000,
     regular_tax: 15_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 14_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
 Deno.test("form6251: QSS uses MFJ exemption amounts ($137,000)", () => {
@@ -181,7 +181,7 @@ Deno.test("form6251: QSS uses MFJ exemption amounts ($137,000)", () => {
     regular_tax_income: 300_000,
     regular_tax: 30_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 12_380);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 12_380);
 });
 
 // ─── AMTFTC reduces AMT ───────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ Deno.test("form6251: AMTFTC reduces tentative minimum tax", () => {
     regular_tax: 10_000,
     amtftc: 5_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 14_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 14_094);
 });
 
 Deno.test("form6251: no output when AMTFTC fully offsets tentative minimum tax", () => {
@@ -224,7 +224,7 @@ Deno.test("form6251: private activity bond interest increases AMTI", () => {
     private_activity_bond_interest: 20_000,
     regular_tax: 15_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 19_294);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 19_294);
 });
 
 Deno.test("form6251: NOL adjustment (negative) reduces AMTI", () => {
@@ -238,7 +238,7 @@ Deno.test("form6251: NOL adjustment (negative) reduces AMTI", () => {
     nol_adjustment: -50_000,
     regular_tax: 20_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 22_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_094);
 });
 
 Deno.test("form6251: other_adjustments field is included in AMTI", () => {
@@ -252,7 +252,7 @@ Deno.test("form6251: other_adjustments field is included in AMTI", () => {
     other_adjustments: 30_000,
     regular_tax: 20_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 16_894);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 16_894);
 });
 
 // ─── Input validation ─────────────────────────────────────────────────────────
@@ -304,8 +304,8 @@ Deno.test("form6251: line2g_pab_interest alias produces same AMTI as private_act
     regular_tax: 15_000,
   });
   assertEquals(
-    fieldsOf(via_primary.outputs, schedule2)!.line1_amt,
-    fieldsOf(via_alias.outputs, schedule2)!.line1_amt,
+    fieldsOf(via_primary.outputs, schedule2)!.line2_amt,
+    fieldsOf(via_alias.outputs, schedule2)!.line2_amt,
   );
 });
 
@@ -318,7 +318,7 @@ Deno.test("form6251: both PAB fields set to same value — no double-count", () 
     line2g_pab_interest: 20_000,
     regular_tax: 15_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 19_294);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 19_294);
 });
 
 Deno.test("form6251: routes exactly one output to schedule2", () => {
@@ -331,5 +331,5 @@ Deno.test("form6251: routes exactly one output to schedule2", () => {
   });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "schedule2");
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line1_amt, 22_094);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_094);
 });
