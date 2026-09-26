@@ -22,8 +22,33 @@ export enum EnergyType {
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const itemSchema = z.object({
   energy_type: z.nativeEnum(EnergyType),
-  kwh_produced: z.number().nonnegative(),
-  kwh_sold: z.number().nonnegative(),
+  kwh_produced: z.number().int().nonnegative(),
+  kwh_sold: z.number().int().nonnegative(),
+  facility_description: z.string().min(1).max(50).optional(),
+  facility_us_address: z.object({
+    line1: z.string().min(1),
+    line2: z.string().optional(),
+    city: z.string().min(1),
+    state: z.string().length(2),
+    zip: z.string().regex(/^\d{5}(?:\d{4})?$/),
+  }).optional(),
+  facility_latitude: z.number().min(-90).max(90).optional(),
+  facility_longitude: z.number().min(-180).max(180).optional(),
+  facility_owned_by_filer: z.boolean().optional(),
+  facility_owner_person: z.object({
+    name: z.string().min(1),
+    ssn: z.string().regex(/^\d{9}$/),
+  }).optional(),
+  facility_owner_business: z.object({
+    name: z.string().min(1),
+    ein: z.string().regex(/^\d{9}$/),
+  }).optional(),
+  existing_facility_expansion: z.boolean().optional(),
+  solar_dc_nameplate_kw: z.number().int().nonnegative().optional(),
+  ac_nameplate_kw: z.number().int().nonnegative().optional(),
+  increased_credit_statement_file_name: z.string().min(1).optional(),
+  domestic_content_statement_file_name: z.string().min(1).optional(),
+  pwa_form7220_file_name: z.string().min(1).optional(),
   facility_placed_in_service_date: isoDate,
   facility_construction_start_date: isoDate,
   production_period_start_date: isoDate,
@@ -44,7 +69,9 @@ export const itemSchema = z.object({
   is_fiscal_year: z.boolean(),
   phaseout_adjustment: z.number().nonnegative().optional(),
   transfer_election_amount: z.number().nonnegative().optional(),
-  registration_number: z.string().min(1).optional(),
+  registration_number: z.string().regex(
+    /^[CPT][A-M][A-Za-z0-9]{3}[0-9]{2}[A-Za-z0-9]{5}$/,
+  ).optional(),
 });
 export const inputSchema = z.object({ f8835s: z.array(itemSchema).min(1) });
 export type F8835Item = z.infer<typeof itemSchema>;
@@ -209,7 +236,9 @@ export function calculateForm8835(item: F8835Item): F8835Lines {
     );
   }
   const line5a = bonds > 0
-    ? Math.min(1, bonds / (item.aggregate_capital_additions ?? 1))
+    ? Math.round(
+      Math.min(1, bonds / (item.aggregate_capital_additions ?? 1)) * 100,
+    ) / 100
     : 0;
   const line5b = Math.round(line4 * line5a);
   const line5c = Math.round(line4 * 0.15);

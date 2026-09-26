@@ -91,16 +91,16 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 | `crop_insurance_deferral_statement` | `PostponementCropInsDsstrStmt`              | S                                                                                                                                                                         | R                                                                                                                   | S                                                        | S                                                                     | S                                                                        | ?                  |
 | `joint_occupancy_statement`         | `JointOccupancyStatement`                   | P                                                                                                                                                                         | R                                                                                                                   | P                                                        | P                                                                     | P                                                                        | ?                  |
 
-## In-scope ATS documents without a registered serializer
+## In-scope ATS document and attachment gaps
 
-These appear in Form 1040 Scenario 4 and cannot be treated as supported simply
-because the IRS XSD permits them.
+These appear in Form 1040 Scenario 4 and cannot be treated as ATS-ready simply
+because a serializer exists or the IRS XSD permits them.
 
-| Scenario | Missing IRS XML root or required attachment | Current evidence                                                                               |
-| -------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| 1040-04  | `IRS3800`                                   | M: no registered MeF serializer                                                                |
-| 1040-04  | `IRS8835`                                   | M: no registered MeF serializer                                                                |
-| 1040-04  | Transfer Election Statement PDF             | M: source PDF identifies the attachment, but its content is not in the captured scenario facts |
+| Scenario | IRS XML root or required attachment | Current evidence                                                                                                                                                               |
+| -------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1040-04  | `IRS3800`                           | M: no registered MeF serializer                                                                                                                                                |
+| 1040-04  | `IRS8835`                           | Build pass: per-facility Part I/II serializer registered; source-to-XSD and negative cases written but unrun. Fiscal years, source statements, and ATS acceptance remain open. |
+| 1040-04  | Transfer Election Statement PDF     | M: source PDF identifies the attachment, but its content is not in the captured scenario facts                                                                                 |
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS

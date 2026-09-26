@@ -60,6 +60,22 @@ Deno.test("f8835: bond-financed facility uses the smaller of ratio and 15 percen
   assertEquals(result.line15, 5_100);
 });
 
+Deno.test("f8835: bond ratio uses Form 8835's two-decimal filed precision", () => {
+  const result = lines({
+    tax_exempt_bond_proceeds: 12_500,
+    aggregate_capital_additions: 100_000,
+  });
+  assertEquals(result.line5a, 0.13);
+  assertEquals(result.line5b, 780);
+});
+
+Deno.test("f8835: sold kilowatt-hours must be whole units", () => {
+  assertEquals(
+    f8835.inputSchema.safeParse({ f8835s: [item({ kwh_sold: 1.5 })] }).success,
+    false,
+  );
+});
+
 Deno.test("f8835: validates increased-credit evidence and transferred credit", () => {
   assertThrows(() => lines({ increased_credit_reason: "under_one_mw" }));
   assertThrows(() =>
@@ -71,7 +87,10 @@ Deno.test("f8835: validates increased-credit evidence and transferred credit", (
   );
   assertThrows(() => lines({ transfer_election_amount: 1_000 }));
   assertThrows(() =>
-    lines({ transfer_election_amount: 7_000, registration_number: "REG-1" })
+    lines({
+      transfer_election_amount: 7_000,
+      registration_number: "CAABC12ABCDE",
+    })
   );
   assertThrows(() => lines({ kwh_sold: 1_000_001 }));
 });
@@ -101,7 +120,10 @@ Deno.test("f8835: rejects periods crossing the Form 3800 four-year boundary", ()
 Deno.test("f8835: forwards each facility and transfer election to Form 3800", () => {
   const result = f8835.compute({ taxYear: 2025, formType: "f1040" }, {
     f8835s: [
-      item({ transfer_election_amount: 2_000, registration_number: "REG-1" }),
+      item({
+        transfer_election_amount: 2_000,
+        registration_number: "CAABC12ABCDE",
+      }),
       item({
         energy_type: EnergyType.BiomassOpen,
         kwh_sold: 500_000,
@@ -113,7 +135,7 @@ Deno.test("f8835: forwards each facility and transfer election to Form 3800", ()
       form3800_line: "4e",
       credit_amount: 6_000,
       transfer_out_amount: 2_000,
-      registration_number: "REG-1",
+      registration_number: "CAABC12ABCDE",
     },
     {
       form3800_line: "4e",
