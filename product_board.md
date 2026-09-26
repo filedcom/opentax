@@ -117,7 +117,17 @@ Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800 limit. It
 subtracts the specific Form 3800 line 7 and 10b exclusions instead of letting
 the general business credit count against itself. That bridge is not yet wired
 to graph finalization. Other GBC producers still send gross source credits
-straight to Schedule 3 line 6a and require a common limitation pass.
+straight to Schedule 3 line 6a and require a common limitation pass. The
+[business-credit routing audit](docs/mef/general-business-credit-routing.md) now
+names the direct line 6a producers and the source classifications needed before
+a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
+6k credit currently misrouted to 6a. This inventory is not a fix: the direct
+deposits remain in code and can still overstate filed credits. An unrun pure
+Form 8912 Part I/II limit calculation now keeps its line 12 allowed credit and
+unused amount separate, taking the already-allowed Form 3800 credit on line 10c.
+It rejects pass-through CREB cases until their separate taxable-income limit is
+modeled. Its current input node still uses an oversimplified bond formula and
+the wrong Schedule 3 line, so this helper is not yet a filed Form 8912 path.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
