@@ -244,6 +244,64 @@ Deno.test("below 100% FPL needs exception facts with or without APTC", () => {
   }
 });
 
+Deno.test("below 100% FPL Marketplace-estimate eligibility uses zero contribution", () => {
+  const eligibility = {
+    basis: "marketplace_estimate",
+    no_one_can_claim_taxpayer: true,
+    marketplace_coverage: true,
+    marketplace_estimated_at_least_100_fpl: true,
+    marketplace_information_provided_in_good_faith: true,
+    otherwise_applicable_taxpayer: true,
+  };
+  const result = annual(10_000, 3_000, 4_000, 1_200, {
+    below_100_fpl_eligibility: eligibility,
+  });
+  assertEquals(fields(result, "form8962")?.federal_poverty_pct, 66);
+  assertEquals(fields(result, "form8962")?.applicable_figure, 0);
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 3_000);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 1_800);
+  assertThrows(
+    () =>
+      annual(10_000, 3_000, 4_000, 0, {
+        below_100_fpl_eligibility: eligibility,
+      }),
+    Error,
+    "marketplace-estimate route requires paid APTC",
+  );
+});
+
+Deno.test("below 100% FPL lawful-presence eligibility does not require APTC", () => {
+  const result = annual(10_000, 3_000, 4_000, 0, {
+    below_100_fpl_eligibility: {
+      basis: "lawfully_present",
+      no_one_can_claim_taxpayer: true,
+      marketplace_coverage: true,
+      enrolled_individual_lawfully_present: true,
+      medicaid_ineligible_due_to_immigration_status: true,
+      otherwise_applicable_taxpayer: true,
+    },
+  });
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 3_000);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 3_000);
+});
+
+Deno.test("below 100% FPL route refuses incomplete eligibility facts", () => {
+  assertThrows(
+    () =>
+      annual(10_000, 3_000, 4_000, 1_200, {
+        below_100_fpl_eligibility: {
+          basis: "marketplace_estimate",
+          no_one_can_claim_taxpayer: true,
+          marketplace_coverage: true,
+          marketplace_estimated_at_least_100_fpl: true,
+          otherwise_applicable_taxpayer: true,
+        },
+      }),
+    Error,
+    "marketplace_information_provided_in_good_faith",
+  );
+});
+
 Deno.test("Alaska and Hawaii use their 2024 poverty tables for TY2025", () => {
   const alaska = annual(30_000, 6_000, 6_000, 0, { fpl_region: "alaska" });
   const hawaii = annual(30_000, 6_000, 6_000, 0, { fpl_region: "hawaii" });
