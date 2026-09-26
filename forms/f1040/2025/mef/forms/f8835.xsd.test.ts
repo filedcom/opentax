@@ -25,6 +25,7 @@ Deno.test({
 }, async () => {
   const facility = {
     energy_type: EnergyType.Wind,
+    subject_to_passive_activity_limit: false,
     kwh_produced: 1_000_000,
     kwh_sold: 1_000_000,
     facility_description: "Onshore wind turbine",

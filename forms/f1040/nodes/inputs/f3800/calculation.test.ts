@@ -1,6 +1,9 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../types.ts";
-import { calculateForm3800Nonpassive } from "./calculation.ts";
+import {
+  calculateForm3800Nonpassive,
+  classifyForm8835Credits,
+} from "./calculation.ts";
 
 function input(overrides: Record<string, number> = {}) {
   return {
@@ -102,5 +105,77 @@ Deno.test("Form 3800 Part II: rejects negative and nonfinite source amounts", ()
   );
   assertThrows(() =>
     calculateForm3800Nonpassive(input({ regularTax: Number.NaN }))
+  );
+});
+
+Deno.test("Form 3800: separates Form 8835 Part III lines 1f and 4e after transfer", () => {
+  const result = classifyForm8835Credits([
+    {
+      form3800_line: "1f",
+      credit_amount: 4_000,
+      transfer_out_amount: 0,
+      subject_to_passive_activity_limit: false,
+    },
+    {
+      form3800_line: "4e",
+      credit_amount: 13_200,
+      transfer_out_amount: 5_000,
+      registration_number: "CAABC12ABCDE",
+      subject_to_passive_activity_limit: false,
+      transfer_election_statement_file_name: "Transfer Election Statement.pdf",
+    },
+  ]);
+  assertEquals(result.standardCredit, 4_000);
+  assertEquals(result.specifiedCredit, 8_200);
+  assertEquals(result.rows.map((row) => row.line), ["1f", "4e"]);
+  assertEquals(result.rows[1].transferOutAmount, 5_000);
+  assertEquals(result.transferStatementFileNames, [
+    "Transfer Election Statement.pdf",
+  ]);
+});
+
+Deno.test("Form 3800: multiple same-line facilities require Part V detail", () => {
+  const result = classifyForm8835Credits([
+    {
+      form3800_line: "4e",
+      credit_amount: 3_000,
+      transfer_out_amount: 0,
+      subject_to_passive_activity_limit: false,
+    },
+    {
+      form3800_line: "4e",
+      credit_amount: 6_000,
+      transfer_out_amount: 0,
+      subject_to_passive_activity_limit: false,
+    },
+  ]);
+  assertEquals(result.rows[0].facilityCount, 2);
+  assertEquals(result.rows[0].availableCredit, 9_000);
+  assertEquals(result.rows[0].facilities.length, 2);
+});
+
+Deno.test("Form 3800: transfer cannot omit the signed statement file", () => {
+  assertThrows(() =>
+    classifyForm8835Credits([{
+      form3800_line: "4e",
+      credit_amount: 1_000,
+      transfer_out_amount: 500,
+      registration_number: "CAABC12ABCDE",
+      subject_to_passive_activity_limit: false,
+    }])
+  );
+});
+
+Deno.test("Form 3800: passive Form 8835 credit cannot enter nonpassive limits", () => {
+  assertThrows(
+    () =>
+      classifyForm8835Credits([{
+        form3800_line: "4e",
+        credit_amount: 1_000,
+        transfer_out_amount: 0,
+        subject_to_passive_activity_limit: true,
+      }]),
+    Error,
+    "8582-CR",
   );
 });

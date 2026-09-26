@@ -6,6 +6,7 @@ import { calculateForm8835, EnergyType, f8835 } from "./index.ts";
 function item(overrides: Record<string, unknown> = {}) {
   return {
     energy_type: EnergyType.Wind,
+    subject_to_passive_activity_limit: false,
     kwh_produced: 1_000_000,
     kwh_sold: 1_000_000,
     facility_placed_in_service_date: "2023-01-01",
@@ -123,6 +124,8 @@ Deno.test("f8835: forwards each facility and transfer election to Form 3800", ()
       item({
         transfer_election_amount: 2_000,
         registration_number: "CAABC12ABCDE",
+        transfer_election_statement_file_name:
+          "Transfer Election Statement.pdf",
       }),
       item({
         energy_type: EnergyType.BiomassOpen,
@@ -136,12 +139,16 @@ Deno.test("f8835: forwards each facility and transfer election to Form 3800", ()
       credit_amount: 6_000,
       transfer_out_amount: 2_000,
       registration_number: "CAABC12ABCDE",
+      subject_to_passive_activity_limit: false,
+      transfer_election_statement_file_name: "Transfer Election Statement.pdf",
     },
     {
       form3800_line: "4e",
       credit_amount: 1_500,
       transfer_out_amount: 0,
       registration_number: undefined,
+      subject_to_passive_activity_limit: false,
+      transfer_election_statement_file_name: undefined,
     },
   ]);
   assertEquals(

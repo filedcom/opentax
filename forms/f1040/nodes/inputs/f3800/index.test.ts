@@ -34,6 +34,9 @@ Deno.test("f3800: stops Form 8835 credit until its tax-liability limit is built"
         credit_amount: 6_000,
         transfer_out_amount: 2_000,
         registration_number: "REG-1",
+        subject_to_passive_activity_limit: false,
+        transfer_election_statement_file_name:
+          "Transfer Election Statement.pdf",
       }],
     })
   );
@@ -47,8 +50,27 @@ Deno.test("f3800: rejects transferred credit larger than its source credit", () 
         credit_amount: 1_000,
         transfer_out_amount: 1_001,
         registration_number: "REG-1",
+        subject_to_passive_activity_limit: false,
+        transfer_election_statement_file_name:
+          "Transfer Election Statement.pdf",
       }],
     })
+  );
+});
+
+Deno.test("f3800: passive Form 8835 credit needs Form 8582-CR before limitation", () => {
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8835_credit_entries: [{
+          form3800_line: "4e",
+          credit_amount: 1_000,
+          transfer_out_amount: 0,
+          subject_to_passive_activity_limit: true,
+        }],
+      }),
+    Error,
+    "8582-CR",
   );
 });
 
