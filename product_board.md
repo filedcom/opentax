@@ -90,7 +90,12 @@ written but unrun. This is not complete Form 8835 or Form 3800 support: the
 required MeF documents, transfer-election statement, general business credit
 limitation, full eligibility/source evidence, PDF output, and ATS validation
 remain open. Do not treat the forwarded gross credit as an allowed credit until
-the Form 3800 limitation is implemented.
+the Form 3800 limitation is implemented. The build pass now has an unrun pure
+Part II calculation for individual, non-passive credits, including the separate
+ordinary and specified-credit limits and the married-filing-separately
+threshold. It is not wired to return assembly: the required Form 1040, Schedule
+2, Schedule 3, and Form 6251 tax inputs and the other Part III/IV categories
+still need reconciliation.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
