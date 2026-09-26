@@ -37,6 +37,19 @@ Deno.test("multiple interest entries (array) aggregate to line2b", () => {
   );
 });
 
+Deno.test("interest payer and amount pairs survive the Schedule B output boundary", () => {
+  const result = compute({
+    payer_name: ["Bank A", "Bond issuer"],
+    taxable_interest_net: [300, 700],
+  });
+  const printable = findOutput(result, "schedule_b")?.fields;
+  assertEquals(printable?.interest_rows, [
+    { payerName: "Bank A", amount: 300 },
+    { payerName: "Bond issuer", amount: 700 },
+  ]);
+  assertEquals(printable?.print_line2_total, 1_000);
+});
+
 Deno.test("zero taxable_interest_net produces no interest in f1040 output", () => {
   const result = compute({ payer_name: "Bank A", taxable_interest_net: 0 });
   // If no dividends either, no output at all

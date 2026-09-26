@@ -160,9 +160,12 @@ needs to route the resulting taxable interest through Schedule B and AGI before
 it computes tax, and reconcile any interest already represented by another
 source document. Schedule B's MeF builder now emits source-backed interest-payer
 rows and its line 1/4 totals when paired payer names and amounts are available;
-source-to-XSD cases are written but unrun. This does not yet route Form 8912
-interest, cover all Schedule B adjustment rows, or supply a PDF continuation for
-more than 14 interest payers.
+source-to-XSD cases are written but unrun. The Schedule B node now self-emits
+paired interest rows so numeric-array pending normalization does not discard
+payer amounts before XML/PDF export. The PDF path now appends paginated
+interest-payer detail after the 14 printed rows, with cases written but unrun.
+This does not yet route Form 8912 interest or cover all Schedule B adjustment
+rows. The PDF statement still needs filled-render verification.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on

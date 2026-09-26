@@ -133,11 +133,20 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     // plus the Part I/II totals. Part III (foreign accounts/trusts) has no
     // engine data source and is left for the taxpayer to complete when the
     // schedule is filed.
-    const printFields: Record<string, number | string> = {};
+    const printFields: Record<string, unknown> = {};
     const intAmounts = normalizeArray(input.taxable_interest_net);
     const intNames = normalizeArray(
       input.payer_name as string | string[] | undefined,
     );
+    if (
+      intAmounts.length > 0 && intAmounts.length === intNames.length &&
+      intNames.every((name) => name.trim())
+    ) {
+      printFields.interest_rows = intAmounts.map((amount, index) => ({
+        payerName: intNames[index],
+        amount,
+      }));
+    }
     for (let i = 0; i < Math.min(intAmounts.length, 14); i++) {
       printFields[`print_int_payer_${i + 1}`] = intNames[i] ?? "";
       printFields[`print_int_amount_${i + 1}`] = intAmounts[i];
