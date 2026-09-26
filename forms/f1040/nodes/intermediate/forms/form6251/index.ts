@@ -84,6 +84,8 @@ export const inputSchema = z.object({
   // Routed from income_tax_calculation alongside regular_tax_income.
   qualified_dividends: z.number().nonnegative().optional(),
   net_capital_gain: z.number().nonnegative().optional(),
+  form4952_election: z.number().nonnegative().optional(),
+  form4952_elected_capital_gain: z.number().nonnegative().optional(),
   unrecaptured_1250_gain: z.number().nonnegative().optional(),
   rate_28_gain: z.number().nonnegative().optional(),
   foreign_earned_income_exclusion: z.number().nonnegative().optional(),
@@ -183,6 +185,8 @@ function partThreeWorksheetInputs(
   unrecaptured1250: number,
   rate28Gain: number,
   status: FilingStatus,
+  form4952Election: number,
+  electedCapitalGain: number,
 ): {
   line13: number;
   line14: number;
@@ -190,9 +194,14 @@ function partThreeWorksheetInputs(
   line20: number;
   line27: number;
 } {
-  const worksheetLine10 = qualDividends + netCapGain;
-  const useScheduleD = netCapGain > 0 &&
-    (unrecaptured1250 > 0 || rate28Gain > 0);
+  const worksheetLine6 = Math.max(
+    0,
+    qualDividends - Math.max(0, form4952Election - electedCapitalGain),
+  );
+  const worksheetLine9 = Math.max(0, netCapGain - electedCapitalGain);
+  const worksheetLine10 = worksheetLine6 + worksheetLine9;
+  const useScheduleD = form4952Election > 0 ||
+    (netCapGain > 0 && (unrecaptured1250 > 0 || rate28Gain > 0));
   if (!useScheduleD) {
     const regularWorksheetLine5 = Math.max(
       0,
@@ -207,9 +216,9 @@ function partThreeWorksheetInputs(
     };
   }
 
-  // Schedule D Tax Worksheet lines 10–14 and 18–21. A positive Form 4952
-  // line 4g election must be handled separately before reaching this path.
-  const scheduleDLine9 = netCapGain;
+  // Schedule D Tax Worksheet lines 10–14 and 18–21, including Form 4952
+  // line 4g amounts removed from preferential-rate income.
+  const scheduleDLine9 = worksheetLine9;
   const scheduleDLine11 = rate28Gain + unrecaptured1250;
   const scheduleDLine12 = Math.min(scheduleDLine9, scheduleDLine11);
   const scheduleDLine13 = worksheetLine10 - scheduleDLine12;
@@ -363,6 +372,8 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
           input.unrecaptured_1250_gain ?? 0,
           input.rate_28_gain ?? 0,
           input.filing_status,
+          input.form4952_election ?? 0,
+          input.form4952_elected_capital_gain ?? 0,
         ),
         input.filing_status,
         cfg.qdcgtZeroCeiling,

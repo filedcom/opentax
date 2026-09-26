@@ -5,6 +5,8 @@ import type {
 } from "../../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import { scheduleA } from "../../../inputs/schedule_a/index.ts";
+import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // The manual line 4 source facts exclude 1099s explicitly marked as investment
@@ -32,6 +34,9 @@ export const inputSchema = z.object({
   other_investment_property_net_capital_gain: z.number().nonnegative()
     .optional(),
   investment_income_election: z.number().nonnegative().optional(),
+  // Dotted-line election beside line 4e. Without it, the IRS attributes line
+  // 4g to eligible net capital gain first, then qualified dividends.
+  elected_capital_gain_portion: z.number().nonnegative().optional(),
   investment_expenses: z.number().nonnegative().optional(),
   source_1099_interest: accumulableAmount.optional(),
   source_1099_dividends: accumulableAmount.optional(),
@@ -94,9 +99,14 @@ export function calculateForm4952(input: Form4952Input): Form4952Lines {
   if (line4g > line4b + line4e) {
     throw new Error("Form 4952 line 4g exceeds eligible dividends and gain");
   }
-  if (line4g > 0) {
+  const electedCapitalGain = input.elected_capital_gain_portion ??
+    Math.min(line4g, line4e);
+  if (
+    electedCapitalGain > Math.min(line4g, line4e) ||
+    electedCapitalGain < Math.max(0, line4g - line4b)
+  ) {
     throw new Error(
-      "Form 4952 line 4g election requires the Schedule D Tax Worksheet",
+      "Form 4952 elected capital-gain portion must reconcile with line 4g, line 4e, and qualified dividends",
     );
   }
   const line4h = line4c + line4f + line4g;
@@ -126,10 +136,16 @@ export function calculateForm4952(input: Form4952Input): Form4952Lines {
 class Form4952Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4952";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([]);
+  readonly outputNodes = new OutputNodes([scheduleA, income_tax_calculation]);
 
   compute(_ctx: NodeContext, rawInput: Form4952Input): NodeResult {
-    const lines = calculateForm4952(inputSchema.parse(rawInput));
+    const input = inputSchema.parse(rawInput);
+    const lines = calculateForm4952(input);
+    if (lines.line3 === 0 && lines.line4g > 0) {
+      throw new Error(
+        "Form 4952 cannot elect investment income without investment interest expense",
+      );
+    }
     if (lines.line3 === 0) return { outputs: [] };
     const outputs: NodeOutput[] = [
       { nodeType: this.nodeType, fields: lines },
@@ -138,6 +154,13 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
       outputs.push(
         output(scheduleA, { line_9_investment_interest: lines.line8 }),
       );
+    }
+    if (lines.line4g > 0) {
+      outputs.push(output(income_tax_calculation, {
+        form4952_election: lines.line4g,
+        form4952_elected_capital_gain: input.elected_capital_gain_portion ??
+          Math.min(lines.line4g, lines.line4e),
+      }));
     }
     return {
       outputs,

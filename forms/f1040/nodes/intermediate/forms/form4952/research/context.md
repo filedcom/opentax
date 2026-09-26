@@ -1,28 +1,27 @@
-# Form 4952 — Investment Interest Expense Deduction
+# TY2025 Form 4952 build-pass notes
 
-## Purpose
-Limits the deduction for investment interest expense (e.g., margin interest) to net investment income. Any disallowed excess carries forward to future years. Routes deductible amount to **Schedule A line 9**.
+Form 4952 limits deductible investment interest to net investment income and
+carries the unused interest into 2026. Use the [2025 IRS Form 4952 and its
+instructions](https://www.irs.gov/pub/irs-pdf/f4952.pdf), the
+[Schedule D Tax Worksheet](https://www.irs.gov/instructions/i1040sd), and the
+[Form 6251 instructions](https://www.irs.gov/instructions/i6251) as sources.
 
-## IRS References
-- Form 4952 and Instructions (TY2025)
-- IRC §163(d) — Limitation on Investment Interest
+The input takes current interest expense, prior disallowed interest, other
+investment-property income and expenses, plus affirmed 1099, K-1, and Form 8814
+source amounts. It calculates lines 1 through 8, emits native Form 4952, routes
+line 8 to Schedule A line 9, and records line 7 as a carryforward.
 
-## Input Schema
-- `investment_interest_expense` — current-year investment interest paid (Form 4952 line 1)
-- `net_investment_income` — ceiling for deduction; includes interest, ordinary dividends, ST cap gains, and any LT gains/qualified dividends the taxpayer elects to treat as investment income (Form 4952 line 4g election)
-- `prior_year_carryforward` — prior-year disallowed interest carried forward (line 2; IRC §163(d)(2))
+Line 4g is an explicit election to include eligible qualified dividends and net
+capital gain in investment income. The IRS normally attributes it first to
+line 4e capital gain. `elected_capital_gain_portion` records the alternative
+dotted-line attribution when the taxpayer chooses one, bounded by lines 4b,
+4e, and 4g. The election routes to the regular Schedule D Tax Worksheet and
+the current Form 6251 Part III worksheet so that elected amounts lose their
+preferential tax rates without changing Form 1040 lines 3a or 7.
 
-## Compute Logic
-1. `totalInterest = investment_interest_expense + prior_year_carryforward`
-2. If total = 0 → `{ outputs: [] }`
-3. `deductible = min(totalInterest, net_investment_income)` (Form 4952 line 6; IRC §163(d)(1))
-4. If deductible = 0 → `{ outputs: [] }`
-5. Routes `deductible` to `scheduleA.line_9_investment_interest`
-
-## Output Nodes
-- `scheduleA` (line 9)
-
-## Key Design Notes
-- Carryforward is computed externally (prior year disallowed = total - deductible); this node does not expose a carryforward output field.
-- `net_investment_income` includes the taxpayer's election to include LT cap gains/qualified dividends — provided pre-computed.
-- No inflation-adjusted thresholds — purely the min(interest, NII) rule.
+This is not whole-form verification. The user requested a single full test batch
+after the build pass, so these new cases are written but unrun. The separate AMT
+Form 4952 refigure and Form 6251 line 2c difference still need AMT-specific
+interest, carryforward, investment-property income, basis, and expense facts.
+Broker and non-portfolio source derivation, foreign-tax interactions, PDF
+layout, XML business rules, and ATS acceptance also remain open.
