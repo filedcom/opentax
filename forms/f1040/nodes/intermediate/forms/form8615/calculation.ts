@@ -29,8 +29,8 @@ export interface Form8615CalculatedFields {
   line1_child_unearned_income: number;
   line2_kiddie_deduction: number;
   line3_adjusted_unearned_income: number;
-  line4_child_taxable_income: number;
-  line5_child_net_unearned_income: number;
+  line4_child_taxable_income?: number;
+  line5_child_net_unearned_income?: number;
   line6_parent_taxable_income?: number;
   line7_other_children_income?: number;
   line8_family_income?: number;
@@ -56,21 +56,6 @@ export function calculateForm8615(
   source: F8615Input,
   context: Form8615CalculationContext,
 ): Form8615CalculationResult {
-  if (source.parent_tax_method !== "ordinary") {
-    throw new Error(
-      "Form 8615 parent preferential-rate, Schedule J, or foreign-income tax needs the corresponding line 9 worksheet",
-    );
-  }
-  if (context.childHasPreferentialIncome) {
-    throw new Error(
-      "Form 8615 child preferential-rate tax needs line 5 and Part III gain worksheets",
-    );
-  }
-  if (context.childForeignEarnedIncomeExclusion > 0) {
-    throw new Error(
-      "Form 8615 with Form 2555 needs the foreign earned income tax worksheet",
-    );
-  }
   if (
     context.takingStandardDeduction &&
     (source.itemized_deductions_directly_connected ?? 0) > 0
@@ -86,8 +71,6 @@ export function calculateForm8615(
     1_350 + Math.round(source.itemized_deductions_directly_connected ?? 0),
   );
   const line3 = line1 - line2;
-  const line4 = Math.round(context.childTaxableIncome);
-  const line5 = Math.min(Math.max(0, line3), line4);
   const base = {
     parent_name: source.parent_name,
     parent_name_control: source.parent_name_control,
@@ -96,11 +79,42 @@ export function calculateForm8615(
     line1_child_unearned_income: line1,
     line2_kiddie_deduction: line2,
     line3_adjusted_unearned_income: line3,
+  };
+  if (line3 <= 0) {
+    return { fields: base, line18Tax: Math.round(context.childRegularTax) };
+  }
+
+  const line4 = Math.round(context.childTaxableIncome);
+  const line5 = Math.min(line3, line4);
+  const throughLine5 = {
+    ...base,
     line4_child_taxable_income: line4,
     line5_child_net_unearned_income: line5,
   };
   if (line5 === 0) {
-    return { fields: base, line18Tax: Math.round(context.childRegularTax) };
+    return {
+      fields: throughLine5,
+      line18Tax: Math.round(context.childRegularTax),
+    };
+  }
+
+  // The 2025 form stops before the family-tax worksheets when line 5 is zero.
+  // A preferential-rate or Form 2555 calculation is only needed if those
+  // worksheets actually affect the child's Form 8615 tax.
+  if (source.parent_tax_method !== "ordinary") {
+    throw new Error(
+      "Form 8615 parent preferential-rate, Schedule J, or foreign-income tax needs the corresponding line 9 worksheet",
+    );
+  }
+  if (context.childHasPreferentialIncome) {
+    throw new Error(
+      "Form 8615 child preferential-rate tax needs line 5 and Part III gain worksheets",
+    );
+  }
+  if (context.childForeignEarnedIncomeExclusion > 0) {
+    throw new Error(
+      "Form 8615 with Form 2555 needs the foreign earned income tax worksheet",
+    );
   }
 
   const line6 = Math.round(source.parent_taxable_income);
@@ -137,7 +151,7 @@ export function calculateForm8615(
   const line18 = Math.max(line16, line17);
   return {
     fields: {
-      ...base,
+      ...throughLine5,
       line6_parent_taxable_income: line6,
       ...(line7 > 0 ? { line7_other_children_income: line7 } : {}),
       line8_family_income: line8,
