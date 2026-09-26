@@ -100,6 +100,7 @@ const inputSchema = z.object({
   // ── Part II — Tax and Credits ─────────────────────────────────────────────
   // Line 16 — Income tax (from tax tables / worksheets)
   line16_income_tax: z.number().nonnegative().optional(),
+  form4972_tax: z.number().nonnegative().optional(),
   // Line 17 — AMT (Form 6251) via Schedule 2 line 1
   line17_additional_taxes: z.number().nonnegative().optional(),
   // Line 18 — Total tax before credits (16 + 17)
@@ -371,6 +372,9 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   }
   if (input.line16_income_tax !== undefined) {
     result.line16_income_tax = input.line16_income_tax;
+  }
+  if (input.form4972_tax !== undefined) {
+    result.form4972_tax = input.form4972_tax;
   }
   if (input.line17_additional_taxes !== undefined) {
     result.line17_additional_taxes = input.line17_additional_taxes;

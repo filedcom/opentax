@@ -28,6 +28,7 @@ export const inputSchema = z.object({
   // Form 4972, Schedule 2 line 1z, Schedule 3 line 1, and Form 8978
   // adjustments still need source routing before line 10 is complete.
   regular_tax: z.number().nonnegative(),
+  form4972_tax: z.number().nonnegative().optional(),
 
   // Line 2i — ISO exercise adjustment.
   // Excess of FMV of stock acquired through ISO over exercise price.
@@ -382,7 +383,11 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const netTmt = computeNetTmt(tmt, input.amtftc ?? 0);
 
     // Line 11 — AMT liability
-    const amt = computeAmt(netTmt, input.regular_tax);
+    const adjustedRegularTax = Math.max(
+      0,
+      input.regular_tax - (input.form4972_tax ?? 0),
+    );
+    const amt = computeAmt(netTmt, adjustedRegularTax);
 
     if (amt === 0 && input.must_file_for_credit !== true) {
       return { outputs: [] };
@@ -396,6 +401,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         nodeType: this.nodeType,
         fields: {
           ...input,
+          regular_tax: adjustedRegularTax,
           private_activity_bond_interest: Math.max(
             input.private_activity_bond_interest ?? 0,
             input.line2g_pab_interest ?? 0,
