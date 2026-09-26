@@ -170,7 +170,14 @@ Positive credit still stops final Form 1040 assembly until Part II and the
 native document are registered; the fail-closed check moved to that sink and to
 Form 1040 XML/PDF export so taxable interest can reach AGI first without
 yielding an unfinished return. These graph and duplicate-interest cases are
-written but unrun. Source-document identity reconciliation remains open.
+written but unrun. Source-document identity reconciliation remains open. The
+Form 1097-BTC reported-bond input now requires all 12 monthly credit boxes and
+checks their sum against annual box 1, captures box 2a's C/A/O code, and
+constrains box 2b to the IRS 39-character alphanumeric identifier. It also
+rejects duplicate issuer-EIN/unique-ID pairs within and across Form 8912 input
+items. These source cases are written but unrun. The actual annual 1097-BTC
+document, corrected statements, fiscal-year allocation, multi-bond type 1097-BTC
+source model, and cross-document identity matching remain open.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on

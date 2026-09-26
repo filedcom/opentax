@@ -71,7 +71,13 @@ const reportedBondSchema = z.object({
   issue_date: pre2018IssueDate,
   issuer_name: z.string().min(1),
   issuer_ein: z.string().regex(/^\d{9}$/),
-  unique_identifier: z.string().min(1).max(40),
+  unique_identifier_code: z.enum(["C", "A", "O"]),
+  unique_identifier: z.string().regex(/^[A-Za-z0-9]{1,39}$/, {
+    message:
+      "Form 1097-BTC box 2b must contain 1 to 39 alphanumeric characters",
+  }),
+  // Annual Form 1097-BTC boxes 5a-5l, January through December.
+  monthly_credit_amounts: z.array(z.number().finite().nonnegative()).length(12),
   credit_amount: z.number().finite().nonnegative(),
   disposition_date: isoDate.optional(),
   purchase_accrued_interest: z.number().finite().nonnegative(),
@@ -81,6 +87,27 @@ const reportedBondSchema = z.object({
   is_pass_through_creb_credit: z.boolean(),
 }).superRefine((bond, ctx) => {
   checkIssueWindow(bond.bond_type, bond.issue_date, ctx);
+  if (
+    bond.unique_identifier_code === "C" && bond.unique_identifier.length < 9
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "Form 1097-BTC CUSIP identifier must begin with a 9-character CUSIP",
+      path: ["unique_identifier"],
+    });
+  }
+  const monthlyTotal = bond.monthly_credit_amounts.reduce(
+    (sum, amount) => sum + amount,
+    0,
+  );
+  if (Math.abs(monthlyTotal - bond.credit_amount) > 0.01) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 1097-BTC box 1 must equal the sum of boxes 5a through 5l",
+      path: ["credit_amount"],
+    });
+  }
   if (bond.sale_accrued_interest > 0 && !bond.disposition_date) {
     ctx.addIssue({
       code: "custom",
@@ -184,6 +211,19 @@ export const itemSchema = z.object({
   reported_bonds: z.array(reportedBondSchema),
   unreported_bonds: z.array(unreportedBondSchema),
   carryforwards: z.array(carryforwardSchema),
+}).superRefine((item, ctx) => {
+  const identifiers = new Set<string>();
+  item.reported_bonds.forEach((bond, index) => {
+    const identifier = `${bond.issuer_ein}:${bond.unique_identifier}`;
+    if (identifiers.has(identifier)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 1097-BTC issuer and unique identifier appear twice",
+        path: ["reported_bonds", index, "unique_identifier"],
+      });
+    }
+    identifiers.add(identifier);
+  });
 });
 
 export const inputSchema = z.object({
@@ -313,7 +353,17 @@ class F8912Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const outputs: NodeOutput[] = [];
     let tentativeCredit = 0;
+    const reportedIdentifiers = new Set<string>();
     for (const item of input.f8912s) {
+      for (const bond of item.reported_bonds) {
+        const identifier = `${bond.issuer_ein}:${bond.unique_identifier}`;
+        if (reportedIdentifiers.has(identifier)) {
+          throw new Error(
+            "Form 1097-BTC issuer and unique identifier appear in multiple Form 8912 items",
+          );
+        }
+        reportedIdentifiers.add(identifier);
+      }
       const lines = sourceLinesFromItem(item);
       const interestRows = interestRowsFromItem(item);
       if (lines.hasPassThroughCrebCredit) {
