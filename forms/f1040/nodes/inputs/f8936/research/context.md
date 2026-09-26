@@ -22,6 +22,7 @@ Computes provisional personal Clean Vehicle Credit amounts under IRC §30D (new 
 | placed_in_service_date | string (ISO) | Required to compute | Service date | Must be in 2025 | Schedule A line 3 | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
 | acquisition_date | string (ISO) | Required to compute | Acquisition date | Date of binding contract and payment; no credit after 2025-09-30 | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
 | seller_report_received | boolean | Required to compute | Seller report | Confirms the required seller report was received | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
+| transferred_to_dealer, transferred_amount | boolean, number | Election and amount when transferred | Dealer transfer | Transfer must be reconciled on Form 8936 and Schedule A, not claimed again on Schedule 3 | Schedule A line 4a | https://www.irs.gov/instructions/i8936 |
 | resold_within_30_days, acquired_for_use_not_resale | boolean, boolean | Required to compute | Vehicle use | Rejects resale within 30 days or purchase for resale | Schedule A Parts II/IV | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
 | claimed_as_dependent, claimed_prev_owned_credit_last_3_years | boolean, boolean | Previously owned | Prior claim/dependent | Rejects barred previously owned claims | Schedule A Part IV | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
 | purchased_from_dealer, previously_owned_first_eligible_transfer | boolean, boolean | Previously owned | Dealer/transfer | Both required for the previously owned credit | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
@@ -106,7 +107,7 @@ flowchart LR
 
 1. **Income test uses prior OR current year MAGI**: Each year uses its own filing-status threshold. If current-year MAGI exceeds its threshold, the node requires prior-year MAGI and status instead of silently assuming ineligibility.
 2. **VIN required for IRS processing**: VIN is captured but not yet required or serialized. This is an open filing gap, not a verified return path.
-3. **Dealer transfer (point-of-sale)**: Starting TY2024, dealers can apply the credit at point-of-sale. This node handles the traditional tax-return credit path.
+3. **Dealer transfer (point-of-sale)**: Transferred amounts are not also routed to Schedule 3. An unregistered Schedule A builder captures the transfer election and amount; Form 8936 and any Schedule 2 line 1b repayment are still missing.
 4. **Used vehicle — once per vehicle**: A vehicle can only qualify for the §25E credit once in its lifetime.
 5. **Business use split**: Business use reduces the personal credit proportionally. Business portion should be claimed on Form 3800.
 6. **No longer needs separate f8936_input**: The input and intermediate nodes were merged into f8936 (input) + form8936 (intermediate). The old f8936_input node is deleted.
