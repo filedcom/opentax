@@ -5,6 +5,20 @@ import { FilingStatus } from "../../types.ts";
 function compute(items: Parameters<typeof f8936.compute>[1]["f8936s"]) {
   const datedItems = items.map((item) => ({
     acquisition_date: "2025-09-30",
+    vin: "1HGCM82633A004352",
+    vehicle_year: item.is_new_vehicle === false ? 2022 : 2025,
+    vehicle_make: "Example",
+    vehicle_model: "EV",
+    placed_in_service_date: "2025-09-30",
+    seller_report_received: true,
+    resold_within_30_days: false,
+    acquired_for_use_not_resale: true,
+    claimed_as_dependent: false,
+    claimed_prev_owned_credit_last_3_years: false,
+    previously_owned_first_eligible_transfer: true,
+    purchased_from_dealer: true,
+    msrp: item.is_new_vehicle === false ? undefined : 45_000,
+    vehicle_type: item.is_new_vehicle === false ? undefined : "other" as const,
     prior_year_modified_agi: item.modified_agi,
     prior_year_filing_status: item.filing_status,
     ...item,
@@ -97,21 +111,132 @@ Deno.test("f8936: missing current-year MAGI cannot award credit", () => {
 Deno.test("f8936: prior-year MAGI is required if current-year MAGI is over the limit", () => {
   assertThrows(
     () =>
-      f8936.compute(
-        { taxYear: 2025, formType: "f1040" },
-        {
-          f8936s: [{
-            is_new_vehicle: true,
-            credit_amount: 7_500,
-            acquisition_date: "2025-09-30",
-            modified_agi: 150_001,
-            filing_status: FilingStatus.Single,
-          }],
-        },
-      ),
+      compute([{
+        is_new_vehicle: true,
+        credit_amount: 7_500,
+        modified_agi: 150_001,
+        filing_status: FilingStatus.Single,
+        prior_year_modified_agi: undefined,
+        prior_year_filing_status: undefined,
+      }]),
     Error,
     "prior-year MAGI",
   );
+});
+
+Deno.test("f8936: VIN and vehicle identity are required before a credit is awarded", () => {
+  assertThrows(
+    () =>
+      compute([{
+        is_new_vehicle: true,
+        credit_amount: 7_500,
+        vin: undefined,
+        modified_agi: 100_000,
+        filing_status: FilingStatus.Single,
+      }]),
+    Error,
+    "valid VIN",
+  );
+});
+
+Deno.test("f8936: a new vehicle needs MSRP and its vehicle type", () => {
+  assertThrows(
+    () =>
+      compute([{
+        is_new_vehicle: true,
+        credit_amount: 7_500,
+        msrp: undefined,
+        modified_agi: 100_000,
+        filing_status: FilingStatus.Single,
+      }]),
+    Error,
+    "MSRP and vehicle type",
+  );
+});
+
+Deno.test("f8936: placed-in-service date must be in 2025", () => {
+  assertThrows(
+    () =>
+      compute([{
+        is_new_vehicle: true,
+        credit_amount: 7_500,
+        placed_in_service_date: "2024-12-31",
+        modified_agi: 100_000,
+        filing_status: FilingStatus.Single,
+      }]),
+    Error,
+    "valid 2025 placed-in-service date",
+  );
+});
+
+Deno.test("f8936: seller report is required before a credit is awarded", () => {
+  assertThrows(
+    () =>
+      compute([{
+        is_new_vehicle: true,
+        credit_amount: 7_500,
+        seller_report_received: false,
+        modified_agi: 100_000,
+        filing_status: FilingStatus.Single,
+      }]),
+    Error,
+    "seller report",
+  );
+});
+
+Deno.test("f8936: a vehicle resold within 30 days has no credit", () => {
+  const result = compute([{
+    is_new_vehicle: true,
+    credit_amount: 7_500,
+    resold_within_30_days: true,
+    modified_agi: 100_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f8936: previously owned credit is barred after another claim within three years", () => {
+  const result = compute([{
+    is_new_vehicle: false,
+    sale_price: 15_000,
+    claimed_prev_owned_credit_last_3_years: true,
+    modified_agi: 50_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f8936: previously owned model year must be at least two years older", () => {
+  const result = compute([{
+    is_new_vehicle: false,
+    vehicle_year: 2024,
+    sale_price: 15_000,
+    modified_agi: 50_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f8936: previously owned vehicle must be bought from a dealer", () => {
+  const result = compute([{
+    is_new_vehicle: false,
+    purchased_from_dealer: false,
+    sale_price: 15_000,
+    modified_agi: 50_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("f8936: previously owned vehicle requires first eligible transfer", () => {
+  const result = compute([{
+    is_new_vehicle: false,
+    previously_owned_first_eligible_transfer: false,
+    sale_price: 15_000,
+    modified_agi: 50_000,
+    filing_status: FilingStatus.Single,
+  }]);
+  assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("f8936: vehicles acquired October 1 are ineligible", () => {
