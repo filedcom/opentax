@@ -148,19 +148,49 @@ Deno.test("Form 8936: mismatched Form 1040 AGI stops XML", () => {
 });
 
 Deno.test("Form 8936: dealer transfer is not silently serialized as a claimed personal credit", () => {
+  const xml = form8936.build({
+    ...source,
+    f8936s: [{
+      ...vehicle,
+      transferred_to_dealer: true,
+      transferred_amount: 7_500,
+    }],
+  }, context(10_000, 0));
+  assertStringIncludes(xml, "<IRS8936>");
+  assertEquals(xml.includes("<CrPrsnlUsePartNewCleanVehGrp>"), false);
+});
+
+Deno.test("Form 8936: disqualified dealer transfer requires matching Schedule 2 repayment", () => {
+  const transferred = {
+    ...source,
+    current_year_magi: { adjusted_gross_income: 200_000 },
+    prior_year_magi: { adjusted_gross_income: 200_000 },
+    f8936s: [{
+      ...vehicle,
+      transferred_to_dealer: true,
+      transferred_amount: 7_500,
+    }],
+  };
   assertThrows(
     () =>
-      form8936.build({
-        ...source,
-        f8936s: [{
-          ...vehicle,
-          transferred_to_dealer: true,
-          transferred_amount: 7_500,
-        }],
-      }, context(10_000, 0)),
+      form8936.build(transferred, {
+        pending: {
+          f1040: {
+            line11_agi: 200_000,
+            line18_total_tax_before_credits: 7_500,
+          },
+        },
+      }),
     Error,
-    "dealer-transfer reconciliation",
+    "does not reconcile with Schedule 2",
   );
+  const xml = form8936.build(transferred, {
+    pending: {
+      f1040: { line11_agi: 200_000, line18_total_tax_before_credits: 7_500 },
+      schedule2: { line1b_new_clean_vehicle_repayment: 7_500 },
+    },
+  });
+  assertStringIncludes(xml, "<IRS8936>");
 });
 
 Deno.test("Form 8936: business-use amount is held for Form 3800 routing", () => {

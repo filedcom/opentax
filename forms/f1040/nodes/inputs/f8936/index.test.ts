@@ -388,6 +388,36 @@ Deno.test("Form 8936: transferred dealer amount is not claimed again on Schedule
   );
 });
 
+Deno.test("Form 8936: disqualified transferred new credit is repaid on Schedule 2 line 1b", () => {
+  const result = compute(source([{
+    ...newVehicle,
+    transferred_to_dealer: true,
+    transferred_amount: 7_500,
+  }], {
+    current_year_magi: { adjusted_gross_income: 200_000 },
+    prior_year_magi: { adjusted_gross_income: 200_000 },
+  }));
+  assertEquals(result.outputs, [{
+    nodeType: "schedule2",
+    fields: { line1b_new_clean_vehicle_repayment: 7_500 },
+  }]);
+});
+
+Deno.test("Form 8936: disqualified transferred used credit is repaid on Schedule 2 line 1c", () => {
+  const result = compute(source([{
+    ...usedVehicle,
+    transferred_to_dealer: true,
+    transferred_amount: 4_000,
+  }], {
+    current_year_magi: { adjusted_gross_income: 100_000 },
+    prior_year_magi: { adjusted_gross_income: 100_000 },
+  }));
+  assertEquals(result.outputs, [{
+    nodeType: "schedule2",
+    fields: { line1c_prev_owned_clean_vehicle_repayment: 4_000 },
+  }]);
+});
+
 Deno.test("Form 8936: multiple vehicles share one return-level MAGI test", () => {
   const result = compute(source([newVehicle, usedVehicle], {
     current_year_magi: { adjusted_gross_income: 100_000 },

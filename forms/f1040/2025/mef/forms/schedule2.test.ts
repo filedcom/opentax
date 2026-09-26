@@ -62,6 +62,23 @@ Deno.test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD ord
   assertEquals(result.indexOf(repayment) < result.indexOf(amt), true);
 });
 
+Deno.test("dealer-transfer repayments reference the parent Form 8936, not its Schedule A", () => {
+  const xml = schedule2.build({
+    line1b_new_clean_vehicle_repayment: 7_500,
+    line1c_prev_owned_clean_vehicle_repayment: 4_000,
+  }, {
+    documentIdsByTag: { IRS8936: ["IRS89362"] },
+  });
+  assertStringIncludes(
+    xml,
+    '<CrTrnsfrDlrSaleAmt referenceDocumentId="IRS89362" referenceDocumentName="IRS8936">7500</CrTrnsfrDlrSaleAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<PrevOwnCrTrnsfrDlrSaleAmt referenceDocumentId="IRS89362" referenceDocumentName="IRS8936">4000</PrevOwnCrTrnsfrDlrSaleAmt>',
+  );
+});
+
 Deno.test("line4_se_tax maps to SelfEmploymentTaxAmt", () => {
   const result = schedule2.build({ line4_se_tax: 14100 });
   assertStringIncludes(

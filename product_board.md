@@ -61,23 +61,26 @@ current-or-prior-year MAGI with each year's filing status, and refuses to award
 a credit without a valid acquisition date. It excludes acquisitions after
 September 30, 2025 and stops reducing the previously owned credit by a
 business-use percentage. These cases are written but unrun. VIN/seller
-verification, placed-in-service and transfer/recapture facts, business-use
-routing, and ATS evidence remain open.
+verification, placed-in-service and other recapture facts, business-use routing,
+and ATS evidence remain open.
 
 The next Form 8936 input pass requires structured VIN/year/make/model, a valid
 2025 placed-in-service date, seller-report confirmation, 30-day resale and
 use-not-resale answers before awarding a credit. Previously owned vehicles also
 require dependent/prior-claim answers, dealer purchase, first eligible transfer,
 and a model year at least two years older than acquisition. The corresponding
-cases are written but unrun. These checks do not substitute for business-use and
-dealer-transfer processing or ATS acceptance.
+cases are written but unrun. These checks do not substitute for business-use
+processing, other recapture rules, or ATS acceptance.
 
 An `IRS8936ScheduleA` builder now writes one XML document per vehicle from the
 captured identity and credit facts, including new and previously owned groups
 and the dealer-transfer amount. The input node no longer routes
 dealer-transferred amounts to Schedule 3 as a second personal credit. The
-builder is registered for personal-use cases, while parent reconciliation
-explicitly stops dealer-transfer cases. Its tests are written but unrun.
+builder is registered for personal-use and dealer-transfer filing cases. A
+disqualified transfer now routes its seller-reported amount to Schedule 2 line
+1b or 1c, with a reference to the parent Form 8936, rather than to Schedule 3.
+The parent builder checks the repayment against Schedule 2. These cases are
+written but unrun; other recapture conditions remain open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
@@ -92,10 +95,11 @@ personal-use vehicles. It compares current AGI with Form 1040, credit amounts
 with Schedule 3, and caps allowed amounts at Form 1040 line 18 after the credits
 specified by IRS instructions. The tentative and allowed amounts are kept
 separate. The current build pass adds 2025 IRS PDF descriptors for the parent
-form and one Schedule A per personal-use vehicle, sharing the liability
-calculation with XML. These PDF mappings and source-to-XSD cases are written but
-unrun, and no filled PDF has been rendered for visual verification. Business-use
-Form 3800 routing and dealer-transfer repayment remain open.
+form and one Schedule A per personal-use or dealer-transferred vehicle, sharing
+the liability calculation with XML. These PDF mappings and source-to-XSD cases
+are written but unrun, and no filled PDF has been rendered for visual
+verification. Business-use Form 3800 routing and other recapture paths remain
+open.
 
 ## Status definitions
 

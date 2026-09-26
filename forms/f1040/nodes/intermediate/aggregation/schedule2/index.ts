@@ -13,6 +13,16 @@ import { form8978_reporting_year } from "../../worksheets/form8978_reporting_yea
 
 // Schedule 2 receives pre-computed excise/penalty amounts from upstream nodes.
 // All fields are optional — any subset may be present on a given return.
+const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.array(schema)]);
+
+function sumAccumulable(value: number | number[] | undefined): number {
+  if (value === undefined) return 0;
+  return Array.isArray(value)
+    ? value.reduce((sum, item) => sum + item, 0)
+    : value;
+}
+
 export const inputSchema = z.object({
   // Line 2 — Alternative minimum tax (from Form 6251 line 11).
   // IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
@@ -64,6 +74,14 @@ export const inputSchema = z.object({
   // Line 1a — Excess advance premium tax credit repayment (Form 8962 line 29).
   // IRC §36B(f); 2025 Schedule 2 line 1a.
   line1a_excess_advance_premium: z.number().nonnegative().optional(),
+  // Lines 1b and 1c — dealer-transferred clean-vehicle credits that must be
+  // repaid when the purchaser does not qualify at filing.
+  line1b_new_clean_vehicle_repayment: accumulable(z.number().nonnegative())
+    .optional(),
+  line1c_prev_owned_clean_vehicle_repayment: accumulable(
+    z.number().nonnegative(),
+  )
+    .optional(),
   // Line 7a — Household employment taxes (Schedule H line 26)
   // IRC §3510; Schedule H line 26 → Schedule 2 line 7a
   line9_household_employment: z.number().nonnegative().optional(),
@@ -123,7 +141,9 @@ function line17k(input: Schedule2Input): number {
 }
 
 function part1Total(input: Schedule2Input): number {
-  return (input.line2_amt ?? 0) + (input.line1a_excess_advance_premium ?? 0);
+  return (input.line2_amt ?? 0) + (input.line1a_excess_advance_premium ?? 0) +
+    sumAccumulable(input.line1b_new_clean_vehicle_repayment) +
+    sumAccumulable(input.line1c_prev_owned_clean_vehicle_repayment);
 }
 
 function part2Total(input: Schedule2Input): number {
@@ -210,6 +230,22 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
         schedule2_unclassified_part2_tax: part2UnclassifiedTax(input),
       }),
     ];
+
+    const line1b = sumAccumulable(input.line1b_new_clean_vehicle_repayment);
+    const line1c = sumAccumulable(
+      input.line1c_prev_owned_clean_vehicle_repayment,
+    );
+    if (line1b > 0 || line1c > 0) {
+      outputs.push({
+        nodeType: this.nodeType,
+        fields: {
+          line1b_new_clean_vehicle_repayment: line1b > 0 ? line1b : undefined,
+          line1c_prev_owned_clean_vehicle_repayment: line1c > 0
+            ? line1c
+            : undefined,
+        },
+      });
+    }
 
     return { outputs };
   }

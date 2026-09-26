@@ -15,6 +15,16 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line1b_new_clean_vehicle_repayment",
+    pdfField: "form1[0].Page1[0].f1_04[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line1c_prev_owned_clean_vehicle_repayment",
+    pdfField: "form1[0].Page1[0].f1_05[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line2_amt",
     pdfField: "form1[0].Page1[0].f1_12[0]",
   },

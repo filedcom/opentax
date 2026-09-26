@@ -3,7 +3,9 @@ import {
   computeVehiclePersonalCredit,
   type F8936Input,
   type F8936Item,
+  incomeLimit,
   inputSchema,
+  modifiedAgi,
 } from "../../../nodes/inputs/f8936/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -42,46 +44,101 @@ function requiredVehicleDetails(item: F8936Item): {
   };
 }
 
-function newVehicleGroup(item: F8936Item, personalCredit: number): string {
+function incomeAnswers(input: F8936Input, used: boolean) {
+  const currentOver = modifiedAgi(input.current_year_magi) >
+    incomeLimit(input.filing_status, used);
+  const priorOver = modifiedAgi(input.prior_year_magi) >
+    incomeLimit(input.prior_year_filing_status, used);
+  return { currentOver, priorOver };
+}
+
+function newVehicleGroup(
+  item: F8936Item,
+  input: F8936Input,
+  personalCredit: number,
+): string {
   const tentative = Math.min(item.credit_amount ?? 0, 7_500);
   const businessUsePct = item.business_use_pct ?? 0;
   const businessPart = Math.round(tentative * businessUsePct);
+  const { currentOver, priorOver } = incomeAnswers(input, false);
+  const stopsAtIncome = currentOver && priorOver;
+  const passesQuestions = !item.resold_within_30_days && !stopsAtIncome;
   return elements("NewCleanVehicleGrp", [
     element("NewClnVehServiceTYYesInd", "X"),
     element("ResellClnVeh30DaysInd", String(item.resold_within_30_days)),
-    element("FilingFormIITRInd", "true"),
-    element(
-      "AcqVehUseOrLeaseNotResaleInd",
-      String(item.acquired_for_use_not_resale),
-    ),
-    element("TentativeCreditAmt", tentative),
+    !item.resold_within_30_days ? element("FilingFormIITRInd", "true") : "",
+    !item.resold_within_30_days
+      ? element("AmtGrtrThanCYFSLimitInd", String(currentOver))
+      : "",
+    currentOver && !item.resold_within_30_days
+      ? element("AmtGrtrThanPYFSLimitInd", String(priorOver))
+      : "",
+    passesQuestions
+      ? element(
+        "AcqVehUseOrLeaseNotResaleInd",
+        String(item.acquired_for_use_not_resale),
+      )
+      : "",
+    passesQuestions && item.acquired_for_use_not_resale
+      ? element("TentativeCreditAmt", tentative)
+      : "",
     businessUsePct > 0
       ? element("BusinessInvestmentUsePct", businessUsePct.toFixed(5))
       : "",
     businessPart > 0 ? element("BusinessInvestmentUseAmt", businessPart) : "",
-    element("PrsnlUseNewCleanVehicleCrAmt", personalCredit),
+    personalCredit > 0
+      ? element("PrsnlUseNewCleanVehicleCrAmt", personalCredit)
+      : "",
   ]);
 }
 
-function previouslyOwnedGroup(item: F8936Item, personalCredit: number): string {
+function previouslyOwnedGroup(
+  item: F8936Item,
+  input: F8936Input,
+  personalCredit: number,
+): string {
   const price = item.sale_price ?? 0;
+  const { currentOver, priorOver } = incomeAnswers(input, true);
+  const passesIncome = !item.resold_within_30_days &&
+    !(currentOver && priorOver);
+  const passesPriorClaim = passesIncome &&
+    !item.claimed_prev_owned_credit_last_3_years;
+  const passesPrice = passesPriorClaim && price <= 25_000;
+  const passesUse = passesPrice && item.acquired_for_use_not_resale === true;
+  const passesDependent = passesUse && item.claimed_as_dependent === false;
   return elements("PrevOwnCleanVehicleGrp", [
     element("NewClnVehServiceTYNoInd", "X"),
     element("PrevOwnClnVehServiceTYYesInd", "X"),
     element("PrevOwnResellClnVeh30DaysInd", String(item.resold_within_30_days)),
-    element(
-      "ClmPrevOwnClnVeh3YrPeriodInd",
-      String(item.claimed_prev_owned_credit_last_3_years),
-    ),
-    element("ClnVehSalePriceMoreSpcfdAmtInd", String(price > 25_000)),
-    element(
-      "AcqPrevOwnVehUseNotResaleInd",
-      String(item.acquired_for_use_not_resale),
-    ),
-    element("ClaimedAsDependentInd", String(item.claimed_as_dependent)),
-    element("SalePriceAmt", price),
-    element("SalePriceBySpecifiedPctAmt", price * 0.30),
-    element("PrevOwnedCleanVehCreditAmt", personalCredit),
+    !item.resold_within_30_days
+      ? element("PrevOwnAmtGrtrThanCYFSLimitInd", String(currentOver))
+      : "",
+    currentOver && !item.resold_within_30_days
+      ? element("PrevOwnAmtGrtrThanPYFSLimitInd", String(priorOver))
+      : "",
+    passesIncome
+      ? element(
+        "ClmPrevOwnClnVeh3YrPeriodInd",
+        String(item.claimed_prev_owned_credit_last_3_years),
+      )
+      : "",
+    passesPriorClaim
+      ? element("ClnVehSalePriceMoreSpcfdAmtInd", String(price > 25_000))
+      : "",
+    passesPrice
+      ? element(
+        "AcqPrevOwnVehUseNotResaleInd",
+        String(item.acquired_for_use_not_resale),
+      )
+      : "",
+    passesUse
+      ? element("ClaimedAsDependentInd", String(item.claimed_as_dependent))
+      : "",
+    passesDependent ? element("SalePriceAmt", price) : "",
+    passesDependent ? element("SalePriceBySpecifiedPctAmt", price * 0.30) : "",
+    personalCredit > 0
+      ? element("PrevOwnedCleanVehCreditAmt", personalCredit)
+      : "",
   ]);
 }
 
@@ -95,6 +152,12 @@ function buildScheduleA(item: F8936Item, input: F8936Input): string {
   if (item.transferred_to_dealer && item.transferred_amount === undefined) {
     throw new Error("Form 8936 Schedule A needs the dealer-transferred amount");
   }
+  const { currentOver, priorOver } = incomeAnswers(
+    input,
+    item.is_new_vehicle === false,
+  );
+  const directedRepaymentBox = item.transferred_to_dealer === true &&
+    (item.resold_within_30_days === true || (currentOver && priorOver));
   return elements("IRS8936ScheduleA", [
     elements("VehicleDescriptionGrp", [
       element("VehicleModelYr", vehicle.year),
@@ -107,12 +170,10 @@ function buildScheduleA(item: F8936Item, input: F8936Input): string {
     item.transferred_to_dealer
       ? element("CrTrnsfrDlrSaleAmt", item.transferred_amount)
       : "",
-    item.transferred_to_dealer && personalCredit === 0
-      ? element("NotAllowedClaimClnVehCrInd", "X")
-      : "",
+    directedRepaymentBox ? element("NotAllowedClaimClnVehCrInd", "X") : "",
     item.is_new_vehicle === true
-      ? newVehicleGroup(item, personalCredit)
-      : previouslyOwnedGroup(item, personalCredit),
+      ? newVehicleGroup(item, input, personalCredit)
+      : previouslyOwnedGroup(item, input, personalCredit),
   ]);
 }
 

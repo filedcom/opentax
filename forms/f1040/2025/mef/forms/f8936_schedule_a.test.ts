@@ -96,6 +96,36 @@ Deno.test("Form 8936 Schedule A: dealer transfer retains filing document", () =>
   assertStringIncludes(xml[0], "<CrTrnsfrDlrSaleAmt>7500</CrTrnsfrDlrSaleAmt>");
 });
 
+Deno.test("Form 8936 Schedule A: ineligible dealer transfer marks the directed repayment box", () => {
+  const xml = form8936ScheduleA.build({
+    ...taxpayer,
+    current_year_magi: { adjusted_gross_income: 200_000 },
+    prior_year_magi: { adjusted_gross_income: 200_000 },
+    f8936s: [{
+      ...vehicle,
+      is_new_vehicle: true,
+      credit_amount: 7_500,
+      msrp: 45_000,
+      vehicle_type: "other",
+      transferred_to_dealer: true,
+      transferred_amount: 7_500,
+    }],
+  });
+  assertEquals(xml.length, 1);
+  assertStringIncludes(
+    xml[0],
+    "<NotAllowedClaimClnVehCrInd>X</NotAllowedClaimClnVehCrInd>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<AmtGrtrThanCYFSLimitInd>true</AmtGrtrThanCYFSLimitInd>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<AmtGrtrThanPYFSLimitInd>true</AmtGrtrThanPYFSLimitInd>",
+  );
+});
+
 Deno.test("Form 8936 Schedule A: post-cutoff acquisition with no transfer emits no document", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,

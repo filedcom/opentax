@@ -6,6 +6,7 @@ import type {
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../types.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -242,6 +243,9 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
       "f8936: dealer-transferred credit needs its transferred amount",
     );
   }
+  if (item.transferred_to_dealer && item.transferred_amount === 0) {
+    throw new Error("f8936: dealer-transferred amount must be positive");
+  }
   if (!item.transferred_to_dealer && (item.transferred_amount ?? 0) > 0) {
     throw new Error(
       "f8936: transferred amount requires a dealer-transfer election",
@@ -251,7 +255,20 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
   const credit = computeVehiclePersonalCredit(item, input);
   // A dealer transfer is reconciled on Form 8936/Schedule A, not claimed
   // again as a personal credit on Schedule 3.
-  if (item.transferred_to_dealer) return [];
+  if (item.transferred_to_dealer) {
+    if ((item.business_use_pct ?? 0) > 0) {
+      throw new Error(
+        "f8936: dealer transfer with business use needs Form 3800 routing",
+      );
+    }
+    if (credit > 0) return [];
+    return [output(
+      schedule2,
+      used
+        ? { line1c_prev_owned_clean_vehicle_repayment: item.transferred_amount }
+        : { line1b_new_clean_vehicle_repayment: item.transferred_amount },
+    )];
+  }
   if (credit <= 0) return [];
   return [
     output(
@@ -268,7 +285,7 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
 class F8936Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8936";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule2, schedule3]);
 
   compute(
     _ctx: NodeContext,

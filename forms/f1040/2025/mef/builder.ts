@@ -183,6 +183,14 @@ function buildReturnXml(
       ),
     ]),
   );
+  const documentIdsByTag = Object.fromEntries(
+    [...new Set(initial.map((fragment) => fragment.tag))].map((tag) => [
+      tag,
+      initial.flatMap((fragment, index) =>
+        fragment.tag === tag ? [documentId(fragment.tag, index)] : []
+      ),
+    ]),
+  );
   const documentIdsByAttachmentFileName = Object.fromEntries(
     attachments.map((attachment, index) => [
       attachment.fileName,
@@ -193,6 +201,7 @@ function buildReturnXml(
     filer,
     binaryAttachmentFileNames,
     documentIdsByPendingKey,
+    documentIdsByTag,
     documentIdsByAttachmentFileName,
     pending,
   });
