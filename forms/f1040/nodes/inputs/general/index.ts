@@ -16,7 +16,7 @@ import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/in
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import {
-  below100FplEligibilitySchema,
+  below100FplStatusSchema,
   form8962,
 } from "../../intermediate/forms/form8962/index.ts";
 import { form8582 } from "../../intermediate/forms/form8582/index.ts";
@@ -191,7 +191,7 @@ export const inputSchema = z.object({
   // MFS-specific
   mfs_spouse_itemizing: z.boolean().optional(), // MFS: spouse is itemizing
   mfs_spouse_lived_with_taxpayer: z.boolean().optional(),
-  ptc_below_100_fpl_eligibility: below100FplEligibilitySchema.optional(),
+  ptc_below_100_fpl_status: below100FplStatusSchema.optional(),
   // HOH-specific
   hoh_qualifying_person_name: z.string().optional(),
   hoh_qualifying_person_relationship: z.string().optional(),
@@ -789,7 +789,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       }),
       this.outputNodes.output(form8962, {
         filing_status: parsed.filing_status,
-        below_100_fpl_eligibility: parsed.ptc_below_100_fpl_eligibility,
+        below_100_fpl_status: parsed.ptc_below_100_fpl_status,
         household_size: 1 +
           (parsed.filing_status === FilingStatus.MFJ ? 1 : 0) +
           claimedDeps.length,

@@ -33,9 +33,24 @@ const REPAYMENT_CAP_TIERS: readonly RepaymentCapTier[] = [
   { maxPct: 400, singleCap: 1_625, otherCap: 3_250 },
 ];
 
+const MONTH_CODES = [
+  "JANUARY",
+  "FEBRUARY",
+  "MARCH",
+  "APRIL",
+  "MAY",
+  "JUNE",
+  "JULY",
+  "AUGUST",
+  "SEPTEMBER",
+  "OCTOBER",
+  "NOVEMBER",
+  "DECEMBER",
+] as const;
+
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
-export const below100FplEligibilitySchema = z.discriminatedUnion("basis", [
+export const below100FplStatusSchema = z.discriminatedUnion("basis", [
   z.object({
     basis: z.literal("marketplace_estimate"),
     no_one_can_claim_taxpayer: z.literal(true),
@@ -51,6 +66,15 @@ export const below100FplEligibilitySchema = z.discriminatedUnion("basis", [
     enrolled_individual_lawfully_present: z.literal(true),
     medicaid_ineligible_due_to_immigration_status: z.literal(true),
     otherwise_applicable_taxpayer: z.literal(true),
+  }).strict(),
+  z.object({
+    basis: z.literal("not_applicable"),
+    exception_routes_reviewed: z.literal(true),
+    no_one_can_claim_taxpayer: z.literal(true),
+    all_covered_individuals_lawfully_present: z.literal(true),
+    no_shared_policy: z.literal(true),
+    no_self_employed_health_insurance_deduction: z.literal(true),
+    no_alternative_marriage_calculation: z.literal(true),
   }).strict(),
 ]);
 
@@ -68,7 +92,7 @@ export const inputSchema = z.object({
     magi: z.number().nonnegative(),
   })).optional(),
   dependent_income_complete: z.boolean().optional(),
-  below_100_fpl_eligibility: below100FplEligibilitySchema.optional(),
+  below_100_fpl_status: below100FplStatusSchema.optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -217,28 +241,6 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       );
     }
 
-    const hasMonthlyColumns = input.monthly_premiums !== undefined ||
-      input.monthly_slcsps !== undefined || input.monthly_aptcs !== undefined;
-    if (
-      hasMonthlyColumns &&
-      (!input.monthly_premiums || !input.monthly_slcsps || !input.monthly_aptcs)
-    ) {
-      throw new Error(
-        "Form 8962 monthly calculation needs all three 1095-A columns for each month",
-      );
-    }
-    if (!hasMonthlyColumns && input.annual_line11_eligible !== true) {
-      throw new Error(
-        "Form 8962 annual line 11 needs verified full-year unchanged monthly coverage",
-      );
-    }
-    const monthly = hasMonthlyColumns && input.annual_line11_eligible !== true;
-    if ((input.qsehra_amount_offered ?? 0) > 0) {
-      throw new Error(
-        "Form 8962 QSEHRA needs monthly affordability and benefit facts before PTC can be filed",
-      );
-    }
-
     const taxpayerMagi = input.taxpayer_modified_agi;
     const expected8814 = input.form8814_expected_ssns ?? [];
     const reported8814 = input.form8814_children ?? [];
@@ -263,18 +265,86 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       cfg,
     );
     const incomePct = income > 4 * fpl ? 401 : Math.floor(income / fpl * 100);
+    const baseFields = {
+      household_size: input.household_size,
+      taxpayer_modified_agi: taxpayerMagi,
+      dependents_modified_agi: dependentsMagi,
+      household_income: income,
+      federal_poverty_line: fpl,
+      fpl_region: input.fpl_region,
+      federal_poverty_pct: incomePct,
+    };
     if (incomePct < 100) {
-      const qualification = input.below_100_fpl_eligibility;
-      if (!qualification) {
+      const status = input.below_100_fpl_status;
+      if (!status) {
         throw new Error(
           "Form 8962 below 100% FPL needs verified PTC exception facts before filing",
         );
       }
-      if (qualification.basis === "marketplace_estimate" && aptc === 0) {
+      if (status.basis === "marketplace_estimate" && aptc === 0) {
         throw new Error(
           "Form 8962 below 100% FPL marketplace-estimate route requires paid APTC",
         );
       }
+      if (status.basis === "not_applicable") {
+        if (aptc === 0) return { outputs: [] };
+        const monthlyAptc = input.monthly_aptcs;
+        const monthlyRepayment = monthlyAptc !== undefined &&
+          input.annual_line11_eligible !== true;
+        if (!monthlyRepayment && input.annual_line11_eligible !== true) {
+          throw new Error(
+            "Form 8962 APTC-only annual line 11 needs verified full-year unchanged coverage or monthly APTC",
+          );
+        }
+        const cap = repaymentCap(incomePct, input.filing_status);
+        if (cap === null) {
+          throw new Error("Form 8962 below 100% FPL repayment cap is missing");
+        }
+        const line25 = Math.round(aptc);
+        const line29 = Math.min(line25, cap);
+        return {
+          outputs: buildOutputs(0, line29, {
+            ...baseFields,
+            below_100_fpl_status: "not_applicable",
+            total_premium_tax_credit: 0,
+            total_advance_ptc: line25,
+            ...(monthlyAptc !== undefined &&
+                input.annual_line11_eligible !== true
+              ? {
+                monthly_ptc_rows: monthlyAptc.map((amount, index) => ({
+                  month_code: MONTH_CODES[index],
+                  aptc: amount,
+                })),
+              }
+              : { annual_aptc: aptc }),
+            excess_advance_payment: line25,
+            repayment_limitation: cap,
+            excess_advance_premium: line29,
+          }),
+        };
+      }
+    }
+
+    const hasMonthlyColumns = input.monthly_premiums !== undefined ||
+      input.monthly_slcsps !== undefined || input.monthly_aptcs !== undefined;
+    if (
+      hasMonthlyColumns &&
+      (!input.monthly_premiums || !input.monthly_slcsps || !input.monthly_aptcs)
+    ) {
+      throw new Error(
+        "Form 8962 monthly calculation needs all three 1095-A columns for each month",
+      );
+    }
+    if (!hasMonthlyColumns && input.annual_line11_eligible !== true) {
+      throw new Error(
+        "Form 8962 annual line 11 needs verified full-year unchanged monthly coverage",
+      );
+    }
+    const monthly = hasMonthlyColumns && input.annual_line11_eligible !== true;
+    if ((input.qsehra_amount_offered ?? 0) > 0) {
+      throw new Error(
+        "Form 8962 QSEHRA needs monthly affordability and benefit facts before PTC can be filed",
+      );
     }
     const applicableFigure = applicableContributionPct(incomePct);
     const annualContribution = applicableFigure === Infinity
@@ -291,20 +361,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
           ? 0
           : Math.max(0, monthSlcsp - monthlyContribution!);
         return {
-          month_code: [
-            "JANUARY",
-            "FEBRUARY",
-            "MARCH",
-            "APRIL",
-            "MAY",
-            "JUNE",
-            "JULY",
-            "AUGUST",
-            "SEPTEMBER",
-            "OCTOBER",
-            "NOVEMBER",
-            "DECEMBER",
-          ][index],
+          month_code: MONTH_CODES[index],
           premium: monthPremium,
           slcsp: monthSlcsp,
           contribution: monthlyContribution,
@@ -332,13 +389,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const line29 = cap === null ? line27 : Math.min(line27, cap);
 
     const formFields: Record<string, unknown> = {
-      household_size: input.household_size,
-      taxpayer_modified_agi: taxpayerMagi,
-      dependents_modified_agi: dependentsMagi,
-      household_income: income,
-      federal_poverty_line: fpl,
-      fpl_region: input.fpl_region,
-      federal_poverty_pct: incomePct,
+      ...baseFields,
       total_premium_tax_credit: line24,
       total_advance_ptc: line25,
       ...(annualContribution !== undefined && {

@@ -13,7 +13,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // annual_slcsp                 → line 11b (annual SLCSP premium)
 // annual_applicable_contribution → line 11c (annual contribution amount)
 // annual_max_ptc               → line 11d (annual max premium tax credit)
-// annual_aptc                  → line 11e (annual advance payment of PTC)
+// annual_aptc                  → line 11f (annual advance payment of PTC)
 // net_premium_tax_credit       → line 26 (net premium tax credit)
 // excess_advance_premium       → line 29 (excess advance premium tax credit repayment)
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -78,10 +78,11 @@ export const form8962Pdf: PdfFormDescriptor = {
   pendingKey: "form8962",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8962--2025.pdf",
   fields,
-  // Form 8962 reconciles marketplace premium tax credit — it requires 1095-A
-  // premium data; household income alone (deposited from AGI) must not print it.
+  // Household income alone (deposited from AGI) must not print Form 8962.
+  // A repayment-only return can have just monthly APTC rows.
   includeWhen: (fields) =>
     fields["annual_premium"] !== undefined ||
     fields["annual_aptc"] !== undefined ||
-    fields["annual_slcsp"] !== undefined,
+    fields["annual_slcsp"] !== undefined ||
+    Array.isArray(fields["monthly_ptc_rows"]),
 };

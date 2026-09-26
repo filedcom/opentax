@@ -3,6 +3,15 @@ import { FilingStatus } from "../../../types.ts";
 import { form8962 } from "./index.ts";
 
 const context = { taxYear: 2025, formType: "f1040" as const };
+const nonApplicableBelowFpl = {
+  basis: "not_applicable",
+  exception_routes_reviewed: true,
+  no_one_can_claim_taxpayer: true,
+  all_covered_individuals_lawfully_present: true,
+  no_shared_policy: true,
+  no_self_employed_health_insurance_deduction: true,
+  no_alternative_marriage_calculation: true,
+} as const;
 
 function compute(input: Record<string, unknown>) {
   return form8962.compute(context, {
@@ -254,7 +263,7 @@ Deno.test("below 100% FPL Marketplace-estimate eligibility uses zero contributio
     otherwise_applicable_taxpayer: true,
   };
   const result = annual(10_000, 3_000, 4_000, 1_200, {
-    below_100_fpl_eligibility: eligibility,
+    below_100_fpl_status: eligibility,
   });
   assertEquals(fields(result, "form8962")?.federal_poverty_pct, 66);
   assertEquals(fields(result, "form8962")?.applicable_figure, 0);
@@ -263,7 +272,7 @@ Deno.test("below 100% FPL Marketplace-estimate eligibility uses zero contributio
   assertThrows(
     () =>
       annual(10_000, 3_000, 4_000, 0, {
-        below_100_fpl_eligibility: eligibility,
+        below_100_fpl_status: eligibility,
       }),
     Error,
     "marketplace-estimate route requires paid APTC",
@@ -272,7 +281,7 @@ Deno.test("below 100% FPL Marketplace-estimate eligibility uses zero contributio
 
 Deno.test("below 100% FPL lawful-presence eligibility does not require APTC", () => {
   const result = annual(10_000, 3_000, 4_000, 0, {
-    below_100_fpl_eligibility: {
+    below_100_fpl_status: {
       basis: "lawfully_present",
       no_one_can_claim_taxpayer: true,
       marketplace_coverage: true,
@@ -289,7 +298,7 @@ Deno.test("below 100% FPL route refuses incomplete eligibility facts", () => {
   assertThrows(
     () =>
       annual(10_000, 3_000, 4_000, 1_200, {
-        below_100_fpl_eligibility: {
+        below_100_fpl_status: {
           basis: "marketplace_estimate",
           no_one_can_claim_taxpayer: true,
           marketplace_coverage: true,
@@ -299,6 +308,82 @@ Deno.test("below 100% FPL route refuses incomplete eligibility facts", () => {
       }),
     Error,
     "marketplace_information_provided_in_good_faith",
+  );
+});
+
+Deno.test("below 100% FPL non-applicable taxpayer repays APTC up to Table 5 cap", () => {
+  const status = nonApplicableBelowFpl;
+  const result = annual(10_000, 3_000, 4_000, 3_000, {
+    below_100_fpl_status: status,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.total_premium_tax_credit, 0);
+  assertEquals(form?.total_advance_ptc, 3_000);
+  assertEquals(form?.applicable_figure, undefined);
+  assertEquals(form?.annual_premium, undefined);
+  assertEquals(form?.annual_slcsp, undefined);
+  assertEquals(form?.annual_aptc, 3_000);
+  assertEquals(form?.repayment_limitation, 375);
+  assertEquals(fields(result, "schedule3"), undefined);
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 375);
+  assertEquals(fields(result, "form6251")?.schedule2_line1z_tax, 375);
+  assertEquals(
+    annual(10_000, 3_000, 4_000, 0, {
+      below_100_fpl_status: status,
+    }).outputs,
+    [],
+  );
+});
+
+Deno.test("below 100% FPL repayment-only monthly rows contain APTC only", () => {
+  const result = compute({
+    household_size: 1,
+    taxpayer_modified_agi: 10_000,
+    monthly_aptcs: [200, 200, ...Array(10).fill(0)],
+    below_100_fpl_status: nonApplicableBelowFpl,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.total_premium_tax_credit, 0);
+  assertEquals(form?.repayment_limitation, 375);
+  assertEquals(form?.excess_advance_premium, 375);
+  assertEquals((form?.monthly_ptc_rows as unknown[])?.length, 12);
+  assertEquals((form?.monthly_ptc_rows as { aptc: number }[])[0].aptc, 200);
+  assertEquals(form?.annual_aptc, undefined);
+});
+
+Deno.test("below 100% FPL APTC-only annual route needs line 11 coverage proof", () => {
+  assertThrows(
+    () =>
+      compute({
+        household_size: 1,
+        taxpayer_modified_agi: 10_000,
+        annual_aptc: 1_000,
+        below_100_fpl_status: nonApplicableBelowFpl,
+      }),
+    Error,
+    "APTC-only annual line 11 needs verified full-year unchanged coverage",
+  );
+});
+
+Deno.test("below 100% FPL repayment route requires reviewed exceptions", () => {
+  assertThrows(
+    () =>
+      annual(10_000, 3_000, 4_000, 1_000, {
+        below_100_fpl_status: { basis: "not_applicable" },
+      }),
+    Error,
+    "exception_routes_reviewed",
+  );
+  assertThrows(
+    () =>
+      annual(10_000, 3_000, 4_000, 1_000, {
+        below_100_fpl_status: {
+          ...nonApplicableBelowFpl,
+          all_covered_individuals_lawfully_present: false,
+        },
+      }),
+    Error,
+    "all_covered_individuals_lawfully_present",
   );
 });
 
