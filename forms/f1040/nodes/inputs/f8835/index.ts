@@ -22,6 +22,7 @@ export enum EnergyType {
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const itemSchema = z.object({
   energy_type: z.nativeEnum(EnergyType),
+  subject_to_passive_activity_limit: z.boolean(),
   kwh_produced: z.number().int().nonnegative(),
   kwh_sold: z.number().int().nonnegative(),
   facility_description: z.string().min(1).max(50).optional(),
@@ -69,6 +70,7 @@ export const itemSchema = z.object({
   is_fiscal_year: z.boolean(),
   phaseout_adjustment: z.number().nonnegative().optional(),
   transfer_election_amount: z.number().nonnegative().optional(),
+  transfer_election_statement_file_name: z.string().min(1).optional(),
   registration_number: z.string().regex(
     /^[CPT][A-M][A-Za-z0-9]{3}[0-9]{2}[A-Za-z0-9]{5}$/,
   ).optional(),
@@ -295,6 +297,10 @@ class F8835Node extends TaxNode<typeof inputSchema> {
         credit_amount: lines.line15,
         transfer_out_amount: item.transfer_election_amount ?? 0,
         registration_number: item.registration_number,
+        subject_to_passive_activity_limit:
+          item.subject_to_passive_activity_limit,
+        transfer_election_statement_file_name:
+          item.transfer_election_statement_file_name,
       };
     });
     return { outputs: [output(f3800, { f8835_credit_entries: entries })] };

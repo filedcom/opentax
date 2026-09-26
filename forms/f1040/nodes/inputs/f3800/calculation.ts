@@ -122,3 +122,92 @@ export function calculateForm3800Nonpassive(
     unusedSpecifiedCredit: line36 - line37,
   };
 }
+
+export type Form8835CreditEntry = {
+  readonly form3800_line: "1f" | "4e";
+  readonly credit_amount: number;
+  readonly transfer_out_amount: number;
+  readonly registration_number?: string;
+  readonly subject_to_passive_activity_limit: boolean;
+  readonly transfer_election_statement_file_name?: string;
+};
+
+export type Form3800CreditRow = {
+  readonly line: "1f" | "4e";
+  readonly facilityCount: number;
+  readonly selfEarnedCredit: number;
+  readonly transferOutAmount: number;
+  readonly availableCredit: number;
+  readonly facilities: readonly Form8835CreditEntry[];
+};
+
+export type Form3800CreditClassification = {
+  readonly standardCredit: number;
+  readonly specifiedCredit: number;
+  readonly rows: readonly Form3800CreditRow[];
+  readonly transferStatementFileNames: readonly string[];
+};
+
+export function classifyForm8835Credits(
+  entries: readonly Form8835CreditEntry[],
+): Form3800CreditClassification {
+  if (entries.length === 0) {
+    throw new Error("Form 3800 needs at least one Form 8835 facility credit");
+  }
+  const statementFiles = new Set<string>();
+  for (const entry of entries) {
+    if (entry.subject_to_passive_activity_limit) {
+      throw new Error(
+        "Form 8835 passive credit needs Form 8582-CR before Form 3800",
+      );
+    }
+    if (
+      !Number.isFinite(entry.credit_amount) || entry.credit_amount < 0 ||
+      !Number.isFinite(entry.transfer_out_amount) ||
+      entry.transfer_out_amount < 0 ||
+      entry.transfer_out_amount > entry.credit_amount
+    ) {
+      throw new Error(
+        "Form 3800 needs valid Form 8835 credit and transfer amounts",
+      );
+    }
+    if (entry.transfer_out_amount > 0) {
+      if (
+        !entry.registration_number ||
+        !entry.transfer_election_statement_file_name
+      ) {
+        throw new Error(
+          "Form 3800 transferred Form 8835 credit needs registration and transfer election statement",
+        );
+      }
+      statementFiles.add(entry.transfer_election_statement_file_name);
+    }
+  }
+  const rows: Form3800CreditRow[] = (["1f", "4e"] as const).flatMap((line) => {
+    const facilities = entries.filter((entry) => entry.form3800_line === line);
+    if (facilities.length === 0) return [];
+    const selfEarnedCredit = facilities.reduce(
+      (sum, entry) => sum + entry.credit_amount,
+      0,
+    );
+    const transferOutAmount = facilities.reduce(
+      (sum, entry) => sum + entry.transfer_out_amount,
+      0,
+    );
+    return [{
+      line,
+      facilityCount: facilities.length,
+      selfEarnedCredit,
+      transferOutAmount,
+      availableCredit: selfEarnedCredit - transferOutAmount,
+      facilities,
+    }];
+  });
+  return {
+    standardCredit: rows.find((row) => row.line === "1f")?.availableCredit ?? 0,
+    specifiedCredit: rows.find((row) => row.line === "4e")?.availableCredit ??
+      0,
+    rows,
+    transferStatementFileNames: [...statementFiles],
+  };
+}

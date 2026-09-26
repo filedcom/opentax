@@ -7,6 +7,7 @@ import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { classifyForm8835Credits } from "./calculation.ts";
 
 // TY2025 — Form 3800: General Business Credit
 // Aggregates component business credits and carryovers; routes to Schedule 3
@@ -53,6 +54,8 @@ const f8835CreditEntrySchema = z.object({
   credit_amount: z.number().nonnegative(),
   transfer_out_amount: z.number().nonnegative(),
   registration_number: z.string().min(1).optional(),
+  subject_to_passive_activity_limit: z.boolean(),
+  transfer_election_statement_file_name: z.string().min(1).optional(),
 });
 
 export const inputSchema = z.object({
@@ -107,20 +110,12 @@ function schedule3Output(
   items: F3800Items,
   f8835Entries: z.infer<typeof f8835CreditEntrySchema>[],
 ): NodeOutput[] {
-  f8835Entries.forEach((entry) => {
-    if (entry.transfer_out_amount > entry.credit_amount) {
-      throw new Error("Form 3800 transfer cannot exceed Form 8835 credit");
-    }
-    if (entry.transfer_out_amount > 0 && !entry.registration_number) {
-      throw new Error(
-        "Form 3800 transferred credit needs a registration number",
-      );
-    }
-  });
+  const f8835Credit = f8835Entries.length > 0
+    ? classifyForm8835Credits(f8835Entries)
+    : undefined;
   if (
-    f8835Entries.some((entry) =>
-      entry.credit_amount > entry.transfer_out_amount
-    )
+    (f8835Credit?.standardCredit ?? 0) > 0 ||
+    (f8835Credit?.specifiedCredit ?? 0) > 0
   ) {
     throw new Error(
       "Form 3800 tax-liability limitation is not implemented for Form 8835 credit",
