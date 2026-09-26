@@ -25,22 +25,10 @@ function excessEvent(amount = 10_000): ExcessEvent {
   return {
     kind: ExcessEventKind.Distribution,
     amount_usd: amount,
-    holding_period_explanation: "Allocated across the holding period by year",
-    allocations: [
-      {
-        tax_year: 2017,
-        allocated_amount: amount * 0.2,
-        pfic_year: true,
-        interest_charge: 150,
-      },
-      {
-        tax_year: 2022,
-        allocated_amount: amount * 0.3,
-        pfic_year: true,
-        interest_charge: 80,
-      },
-      { tax_year: 2025, allocated_amount: amount * 0.5, pfic_year: true },
-    ],
+    holding_period_start: "2024-01-01",
+    event_date: "2025-12-31",
+    first_pfic_tax_year: 2024,
+    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
   };
 }
 
@@ -86,13 +74,13 @@ Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Sched
   const result = compute([minimalItem({ excess_events: [excessEvent()] })]);
   assertEquals(
     fieldsOf(result.outputs, income_tax_calculation)?.form8621_tax,
-    1_902,
+    1_853,
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
-    230,
+    150,
   );
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 5_000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 4_993);
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17z_other_additional_taxes,
     undefined,
@@ -118,13 +106,13 @@ Deno.test("Form 8621 combines separate holdings without losing their filed docum
   ]);
   assertEquals(
     fieldsOf(result.outputs, income_tax_calculation)?.form8621_tax,
-    2_853,
+    2_779,
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
-    460,
+    300,
   );
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 7_500);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 7_490);
   const filed = result.outputs.find((item) => item.nodeType === "form8621");
   assertEquals((filed?.fields as { items: Form8621Lines[] }).items.length, 2);
 });
@@ -163,15 +151,15 @@ Deno.test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respectiv
       mtm_adjusted_basis_at_year_end: 10_000,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 9_000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 8_993);
   assertEquals(fieldsOf(result.outputs, schedule_d)?.line_11_qef_lt, 1_000);
   assertEquals(
     fieldsOf(result.outputs, income_tax_calculation)?.form8621_tax,
-    1_902,
+    1_853,
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
-    230,
+    150,
   );
   const filed = result.outputs.find((item) => item.nodeType === "form8621");
   assertEquals((filed?.fields as { items: Form8621Lines[] }).items.length, 3);
