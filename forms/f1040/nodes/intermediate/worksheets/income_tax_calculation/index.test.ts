@@ -10,7 +10,11 @@ import { FilingStatus } from "../../../types.ts";
 function compute(input: Record<string, unknown>) {
   return income_tax_calculation.compute(
     { taxYear: 2025, formType: "f1040" },
-    inputSchema.parse(input),
+    inputSchema.parse({
+      form6251_line1b: input.taxable_income,
+      form6251_line2a: 0,
+      ...input,
+    }),
   );
 }
 
@@ -28,13 +32,14 @@ Deno.test("smoke — missing required fields throws", () => {
   assertThrows(() => inputSchema.parse({}));
 });
 
-Deno.test("smoke — zero taxable income returns the two zero-liability outputs", () => {
+Deno.test("zero taxable income still sends Form 6251 its AMT base", () => {
   const result = compute({
     taxable_income: 0,
     filing_status: FilingStatus.Single,
   });
-  // Even at zero income, notify f8812 for ACTC and form_1116 for the §904 limit
-  assertEquals(result.outputs.length, 2);
+  assertEquals(f6251Fields(result)?.regular_tax_income, 0);
+  assertEquals(f1040Fields(result)?.line16_income_tax, 0);
+  assertEquals(result.outputs.length, 4);
 });
 
 Deno.test("Form 8814 tax remains on line 16 even with zero parent taxable income", () => {
@@ -244,6 +249,8 @@ Deno.test("unknown tax year throws with year in message", () => {
         { taxYear: 9999, formType: "f1040" },
         inputSchema.parse({
           taxable_income: 50_000,
+          form6251_line1b: 50_000,
+          form6251_line2a: 0,
           filing_status: FilingStatus.Single,
         }),
       ),
@@ -394,6 +401,33 @@ Deno.test("QDCGT: Form 6251 line 10 receives Form 1040 line 16 tax", () => {
   const f6251Tax = f6251Fields(result)!.regular_tax as number;
   assertAlmostEquals(f1040Tax, 16_214, 1); // QDCGT-reduced (qual divs at 15%)
   assertEquals(f6251Tax, f1040Tax);
+});
+
+Deno.test("Schedule D worksheet: 25% and 28% gains use line 21 ordinary-rate cap", () => {
+  const result = compute({
+    taxable_income: 200_000,
+    filing_status: FilingStatus.Single,
+    qualified_dividends: 1_000,
+    net_capital_gain: 50_000,
+    unrecaptured_1250_gain: 10_000,
+    rate_28_gain: 5_000,
+  });
+  // Schedule D Tax Worksheet line 21 = 164,000, taxed at ordinary rates
+  // (32,207); line 30 = 36,000 at 15% (5,400).
+  assertEquals(f1040Fields(result)?.line16_income_tax, 37_607);
+  assertEquals(f6251Fields(result)?.regular_tax, 37_607);
+  assertEquals(f6251Fields(result)?.unrecaptured_1250_gain, 10_000);
+  assertEquals(f6251Fields(result)?.rate_28_gain, 5_000);
+});
+
+Deno.test("Form 6251 receives signed line 1b even when Form 1040 line 15 is zero", () => {
+  const result = compute({
+    taxable_income: 0,
+    form6251_line1b: -12_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(f6251Fields(result)?.regular_tax_income, -12_000);
+  assertEquals(f6251Fields(result)?.regular_tax, 0);
 });
 
 Deno.test("QDCGT: qualified dividends exceeding taxable income capped at taxable income", () => {

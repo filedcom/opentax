@@ -30,6 +30,9 @@ Deno.test("Form 8911 routes the limited ATS Scenario 13 credit to Schedule 3 lin
   assertEquals(result.outputs, [{
     nodeType: "schedule3",
     fields: { line6j_alt_fuel_vehicle_refueling: 162 },
+  }, {
+    nodeType: "form6251",
+    fields: { must_file_for_credit: true },
   }]);
 });
 
@@ -63,7 +66,7 @@ Deno.test("Form 8911 accounts for other credits and tentative minimum tax", () =
 Deno.test("Form 8911 does not route a personal credit when the tax limit is zero", () => {
   assertEquals(
     compute({ ...scenario13, regular_tax_before_credits: 0 }).outputs,
-    [],
+    [{ nodeType: "form6251", fields: { must_file_for_credit: true } }],
   );
   assertEquals(compute({ ...scenario13, cost: 0 }).outputs, []);
 });

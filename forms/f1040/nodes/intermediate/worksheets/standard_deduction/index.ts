@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -30,12 +33,17 @@ export const inputSchema = z.object({
 
   // From schedule_a — total itemized deductions (Schedule A line 17)
   itemized_deductions: z.number().nonnegative().optional(),
+  // Schedule A line 7, used for Form 6251 line 2a only if itemizing wins.
+  itemized_taxes: z.number().nonnegative().optional(),
 
   // From form8995 / form8995a — qualified business income deduction (Form 1040 Line 13)
   qbi_deduction: z.number().nonnegative().optional(),
 
   // From Schedule 1-A: qualified tips and other additional deductions (Form 1040 Line 13b)
   additional_deductions: z.number().nonnegative().optional(),
+
+  // Schedule 1-A line 37 is added back for Form 6251 line 1b only.
+  enhanced_senior_deduction: z.number().nonnegative().optional(),
 
   // From nol_carryforward — NOL deduction (IRC §172) applied after standard/itemized deduction
   // Post-2017 NOLs limited to 80% of pre-NOL taxable income; pre-2018 NOLs limited to 100%.
@@ -74,7 +82,8 @@ function computeStandardAmount(
   cfg: import("../../../config/index.ts").F1040Config,
 ): number {
   const base = cfg.standardDeductionBase[input.filing_status];
-  const additionalPerFactor = cfg.standardDeductionAdditional[input.filing_status];
+  const additionalPerFactor =
+    cfg.standardDeductionAdditional[input.filing_status];
   return base + additionalFactorCount(input) * additionalPerFactor;
 }
 
@@ -107,7 +116,11 @@ function resolveDeduction(
 class StandardDeductionNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "standard_deduction";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, income_tax_calculation, form_1116]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    income_tax_calculation,
+    form_1116,
+  ]);
 
   compute(ctx: NodeContext, rawInput: StandardDeductionInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -117,14 +130,40 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
     const { deduction, takingStandard } = resolveDeduction(input, cfg);
     const qbi = input.qbi_deduction ?? 0;
     const additionalDeductions = input.additional_deductions ?? 0;
+    const enhancedSeniorDeduction = input.enhanced_senior_deduction ?? 0;
+    if (enhancedSeniorDeduction > additionalDeductions) {
+      throw new Error(
+        "Schedule 1-A senior deduction exceeds total additional deductions",
+      );
+    }
     const nol = input.nol_deduction ?? 0;
-    const taxableIncome = Math.max(0, Math.max(0, input.agi - deduction) - qbi - additionalDeductions - nol);
+    const taxableIncome = Math.max(
+      0,
+      Math.max(0, input.agi - deduction) - qbi - additionalDeductions - nol,
+    );
+    // 2025 Form 6251 line 1a = Form 1040 line 14 minus Schedule 1-A line 37;
+    // line 1b = AGI minus line 1a, without the Form 1040 line 15 zero floor.
+    const form6251Line1b = input.agi - deduction - qbi -
+      additionalDeductions + enhancedSeniorDeduction;
+    // 2025 Form 6251 line 2a: Schedule A line 7 if itemizing, otherwise
+    // Form 1040 line 12e (the standard deduction).
+    const form6251Line2a = takingStandard
+      ? deduction
+      : input.itemized_taxes ?? 0;
 
     const outputs: NodeOutput[] = [];
 
     if (takingStandard) {
       outputs.push(
-        this.outputNodes.output(f1040, { line12a_standard_deduction: deduction }),
+        this.outputNodes.output(f1040, {
+          line12a_standard_deduction: deduction,
+        }),
+      );
+    } else {
+      outputs.push(
+        this.outputNodes.output(f1040, {
+          line12e_itemized_deductions: deduction,
+        }),
       );
     }
 
@@ -132,6 +171,8 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(f1040, { line15_taxable_income: taxableIncome }),
       this.outputNodes.output(income_tax_calculation, {
         taxable_income: taxableIncome,
+        form6251_line1b: form6251Line1b,
+        form6251_line2a: form6251Line2a,
         filing_status: input.filing_status,
       }),
       this.outputNodes.output(form_1116, {
