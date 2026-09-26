@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -48,9 +48,23 @@ export const itemSchema = z.object({
   carryback_credit: z.number().nonnegative().optional(),
 });
 
-export const inputSchema = z.object({
-  f3800s: z.array(itemSchema).min(1),
+const f8835CreditEntrySchema = z.object({
+  form3800_line: z.enum(["1f", "4e"]),
+  credit_amount: z.number().nonnegative(),
+  transfer_out_amount: z.number().nonnegative(),
+  registration_number: z.string().min(1).optional(),
 });
+
+export const inputSchema = z.object({
+  f3800s: z.array(itemSchema).min(1).optional(),
+  f8835_credit_entries: z.array(f8835CreditEntrySchema).min(1).optional(),
+}).refine(
+  (input) =>
+    input.f3800s !== undefined || input.f8835_credit_entries !== undefined,
+  {
+    message: "Form 3800 needs a credit source",
+  },
+);
 
 type F3800Item = z.infer<typeof itemSchema>;
 type F3800Items = F3800Item[];
@@ -89,7 +103,29 @@ function totalGbc(items: F3800Items): number {
   return items.reduce((sum, item) => sum + itemTotal(item), 0);
 }
 
-function schedule3Output(items: F3800Items): NodeOutput[] {
+function schedule3Output(
+  items: F3800Items,
+  f8835Entries: z.infer<typeof f8835CreditEntrySchema>[],
+): NodeOutput[] {
+  f8835Entries.forEach((entry) => {
+    if (entry.transfer_out_amount > entry.credit_amount) {
+      throw new Error("Form 3800 transfer cannot exceed Form 8835 credit");
+    }
+    if (entry.transfer_out_amount > 0 && !entry.registration_number) {
+      throw new Error(
+        "Form 3800 transferred credit needs a registration number",
+      );
+    }
+  });
+  if (
+    f8835Entries.some((entry) =>
+      entry.credit_amount > entry.transfer_out_amount
+    )
+  ) {
+    throw new Error(
+      "Form 3800 tax-liability limitation is not implemented for Form 8835 credit",
+    );
+  }
   const total = totalGbc(items);
   if (total === 0) return [];
   return [output(schedule3, { line6a_general_business_credit: total })];
@@ -102,7 +138,12 @@ class F3800Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: schedule3Output(parsed.f3800s) };
+    return {
+      outputs: schedule3Output(
+        parsed.f3800s ?? [],
+        parsed.f8835_credit_entries ?? [],
+      ),
+    };
   }
 }
 

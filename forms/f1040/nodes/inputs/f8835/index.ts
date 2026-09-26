@@ -1,105 +1,274 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
+import { f3800 } from "../f3800/index.ts";
 
-// Form 8835 — Renewable Electricity, Refined Coal, and Indian Coal Production Credit
-// IRC §45: Production Tax Credit (PTC) for electricity from qualified renewable sources.
-// IRA 2022 (§13101): Added prevailing wage and apprenticeship requirements for full rate.
-// Credit flows to General Business Credit → Schedule 3 line 6z.
-
-// TY2025 inflation-adjusted credit rates per Rev. Proc. 2024-40
-// Full rate applies when meets_prevailing_wage AND meets_apprenticeship = true.
-// Otherwise reduced rate = full rate / 5 per IRC §45(b)(6).
-const FULL_RATE_HIGH = 0.028; // $0.028/kWh — WIND, SOLAR, GEOTHERMAL, BIOMASS_CLOSED
-const FULL_RATE_LOW = 0.014; // $0.014/kWh — BIOMASS_OPEN, HYDRO, LANDFILL, MARINE
-const REDUCED_RATE_HIGH = FULL_RATE_HIGH / 5; // $0.0056/kWh
-const REDUCED_RATE_LOW = FULL_RATE_LOW / 5; // $0.0028/kWh
-
+// Form 8835 line 1 base rates and line 9 fivefold increase are separate.
 export enum EnergyType {
   Wind = "WIND",
+  OffshoreWind = "OFFSHORE_WIND",
   Solar = "SOLAR",
   Geothermal = "GEOTHERMAL",
   BiomassClosed = "BIOMASS_CLOSED",
   BiomassOpen = "BIOMASS_OPEN",
   Hydro = "HYDRO",
   Landfill = "LANDFILL",
+  Trash = "TRASH",
   Marine = "MARINE",
 }
 
-// Energy types that use the full (high) base rate per IRC §45(d)
-const HIGH_RATE_TYPES = new Set<EnergyType>([
-  EnergyType.Wind,
-  EnergyType.Solar,
-  EnergyType.Geothermal,
-  EnergyType.BiomassClosed,
-]);
-
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const itemSchema = z.object({
-  // Type of qualified energy source per IRC §45(d)
   energy_type: z.nativeEnum(EnergyType),
-  // Total kWh produced during the tax year
   kwh_produced: z.number().nonnegative(),
-  // kWh of electricity sold to unrelated party (credit is based on kwh_sold)
   kwh_sold: z.number().nonnegative(),
-  // Date the qualified facility was first placed in service (ISO date string)
-  facility_placed_in_service_date: z.string(),
-  // Meets prevailing wage requirements per IRA 2022 IRC §45(b)(7)
+  facility_placed_in_service_date: isoDate,
+  facility_construction_start_date: isoDate,
+  production_period_start_date: isoDate,
+  production_period_end_date: isoDate,
+  increased_credit_reason: z.enum([
+    "under_one_mw",
+    "construction_before_2023_01_29",
+    "prevailing_wage_and_apprenticeship",
+    "none",
+  ]),
+  maximum_net_output_mw: z.number().nonnegative().optional(),
   meets_prevailing_wage: z.boolean().optional(),
-  // Meets apprenticeship requirements per IRA 2022 IRC §45(b)(8)
   meets_apprenticeship: z.boolean().optional(),
+  domestic_content_bonus: z.boolean(),
+  energy_community_bonus: z.boolean(),
+  tax_exempt_bond_proceeds: z.number().nonnegative().optional(),
+  aggregate_capital_additions: z.number().positive().optional(),
+  is_fiscal_year: z.boolean(),
+  phaseout_adjustment: z.number().nonnegative().optional(),
+  transfer_election_amount: z.number().nonnegative().optional(),
+  registration_number: z.string().min(1).optional(),
 });
+export const inputSchema = z.object({ f8835s: z.array(itemSchema).min(1) });
+export type F8835Item = z.infer<typeof itemSchema>;
+export type F8835Input = z.infer<typeof inputSchema>;
 
-export const inputSchema = z.object({
-  f8835s: z.array(itemSchema).min(1),
-});
+export type F8835Lines = {
+  readonly line1: number;
+  readonly line2: number;
+  readonly line3: number;
+  readonly line4: number;
+  readonly line5a: number;
+  readonly line5b: number;
+  readonly line5c: number;
+  readonly line5d: number;
+  readonly line6: number;
+  readonly line7g: number;
+  readonly line8: number;
+  readonly line9: number;
+  readonly line10: number;
+  readonly line11: number;
+  readonly line12: number;
+  readonly line13: number;
+  readonly line15: number;
+  readonly form3800Line: "1f" | "4e";
+};
 
-type F8835Item = z.infer<typeof itemSchema>;
-
-// Whether both IRA 2022 wage/apprenticeship requirements are satisfied
-function meetsWageAndApprenticeship(item: F8835Item): boolean {
-  return item.meets_prevailing_wage === true && item.meets_apprenticeship === true;
-}
-
-// Applicable credit rate per kWh
-function creditRate(item: F8835Item): number {
-  const isHighRate = HIGH_RATE_TYPES.has(item.energy_type);
-  if (meetsWageAndApprenticeship(item)) {
-    return isHighRate ? FULL_RATE_HIGH : FULL_RATE_LOW;
+function parsedDate(value: string): Date {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (
+    Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value
+  ) {
+    throw new Error(`Form 8835 needs a valid date: ${value}`);
   }
-  return isHighRate ? REDUCED_RATE_HIGH : REDUCED_RATE_LOW;
+  return date;
 }
 
-// Credit for one facility — uses kwh_sold per IRC §45(a)(1)
-function facilityCredit(item: F8835Item): number {
-  if (item.kwh_sold > item.kwh_produced) {
+function baseRate(item: F8835Item): number {
+  const service = parsedDate(item.facility_placed_in_service_date);
+  const oldFacility = service < parsedDate("2022-01-01");
+  if (
+    oldFacility && (item.energy_type === EnergyType.Solar ||
+      item.energy_type === EnergyType.OffshoreWind)
+  ) {
     throw new Error(
-      `f8835: kwh_sold (${item.kwh_sold}) cannot exceed kwh_produced (${item.kwh_produced})`,
+      "Form 8835 pre-2022 solar/offshore-wind rate needs qualification review",
     );
   }
-  return item.kwh_sold * creditRate(item);
+  const high = new Set<EnergyType>([
+    EnergyType.Wind,
+    EnergyType.OffshoreWind,
+    EnergyType.Solar,
+    EnergyType.Geothermal,
+    EnergyType.BiomassClosed,
+  ]).has(item.energy_type) ||
+    ((item.energy_type === EnergyType.Hydro ||
+      item.energy_type === EnergyType.Marine) &&
+      service >= parsedDate("2023-01-01"));
+  return oldFacility ? (high ? 0.03 : 0.015) : (high ? 0.006 : 0.003);
 }
 
-function totalCredit(items: F8835Item[]): number {
-  return items.reduce((sum, item) => sum + facilityCredit(item), 0);
+function increaseFactor(item: F8835Item): number {
+  const reason = item.increased_credit_reason;
+  if (item.facility_placed_in_service_date < "2022-01-01") {
+    if (reason !== "none") {
+      throw new Error(
+        "Form 8835 pre-2022 facilities cannot use line 9's fivefold increase",
+      );
+    }
+    return 1;
+  }
+  if (reason === "none") return 1;
+  if (
+    reason === "under_one_mw" &&
+    (item.maximum_net_output_mw === undefined ||
+      item.maximum_net_output_mw >= 1)
+  ) {
+    throw new Error(
+      "Form 8835 under-one-MW increase needs measured output below 1 MW",
+    );
+  }
+  if (
+    reason === "construction_before_2023_01_29" &&
+    item.facility_construction_start_date >= "2023-01-29"
+  ) {
+    throw new Error(
+      "Form 8835 early-construction increase needs a start before January 29, 2023",
+    );
+  }
+  if (
+    reason === "prevailing_wage_and_apprenticeship" &&
+    (item.meets_prevailing_wage !== true || item.meets_apprenticeship !== true)
+  ) {
+    throw new Error(
+      "Form 8835 wage/apprenticeship increase needs both requirements met",
+    );
+  }
+  return 5;
 }
 
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+function windPhaseout(item: F8835Item, line6: number): number {
+  if (
+    item.energy_type !== EnergyType.Wind ||
+    item.facility_placed_in_service_date >= "2022-01-01"
+  ) return 0;
+  const year = parsedDate(item.facility_construction_start_date)
+    .getUTCFullYear();
+  const rate = year === 2017
+    ? 0.20
+    : year === 2019
+    ? 0.60
+    : [2018, 2020, 2021].includes(year)
+    ? 0.40
+    : 0;
+  return Math.round(line6 * rate);
+}
+
+function form3800Line(item: F8835Item): "1f" | "4e" {
+  const service = parsedDate(item.facility_placed_in_service_date);
+  const start = parsedDate(item.production_period_start_date);
+  const end = parsedDate(item.production_period_end_date);
+  if (
+    start > end || start < service ||
+    start.getUTCFullYear() !== 2025 || end.getUTCFullYear() !== 2025
+  ) {
+    throw new Error(
+      "Form 8835 production period must be a valid 2025 period after service",
+    );
+  }
+  const fourthAnniversary = new Date(service);
+  fourthAnniversary.setUTCFullYear(fourthAnniversary.getUTCFullYear() + 4);
+  if (start < fourthAnniversary && end >= fourthAnniversary) {
+    throw new Error(
+      "Form 8835 production crossing the four-year boundary needs separate periods",
+    );
+  }
+  return end < fourthAnniversary ? "4e" : "1f";
+}
+
+export function calculateForm8835(item: F8835Item): F8835Lines {
+  if (item.kwh_sold > item.kwh_produced) {
+    throw new Error("Form 8835 kWh sold cannot exceed kWh produced");
+  }
+  const line = form3800Line(item);
+  const line1 = Math.round(item.kwh_sold * baseRate(item));
+  const line3 = item.is_fiscal_year ? item.phaseout_adjustment : 0;
+  if (line3 === undefined) {
+    throw new Error("Form 8835 fiscal-year phaseout adjustment is required");
+  }
+  if (!item.is_fiscal_year && (item.phaseout_adjustment ?? 0) > 0) {
+    throw new Error(
+      "Form 8835 calendar-year 2025 cannot carry a phaseout adjustment",
+    );
+  }
+  if (line3 > line1) {
+    throw new Error("Form 8835 phaseout cannot exceed the production credit");
+  }
+  const line4 = line1 - line3;
+  const bonds = item.tax_exempt_bond_proceeds ?? 0;
+  if (bonds > 0 && item.aggregate_capital_additions === undefined) {
+    throw new Error(
+      "Form 8835 bond reduction needs aggregate capital additions",
+    );
+  }
+  const line5a = bonds > 0
+    ? Math.min(1, bonds / (item.aggregate_capital_additions ?? 1))
+    : 0;
+  const line5b = Math.round(line4 * line5a);
+  const line5c = Math.round(line4 * 0.15);
+  const line5d = Math.min(line5b, line5c);
+  const line6 = line4 - line5d;
+  const line7g = windPhaseout(item, line6);
+  const line8 = line6 - line7g;
+  const line9 = line8 * increaseFactor(item);
+  const line10 = item.domestic_content_bonus ? Math.round(line9 * 0.10) : 0;
+  const line11 = item.energy_community_bonus ? Math.round(line9 * 0.10) : 0;
+  const line12 = line9 + line10 + line11;
+  const transfer = item.transfer_election_amount ?? 0;
+  if (transfer > line12) {
+    throw new Error("Form 8835 transfer amount exceeds the credit");
+  }
+  if (transfer > 0 && !item.registration_number) {
+    throw new Error(
+      "Form 8835 transfer needs the IRS-issued registration number",
+    );
+  }
+  return {
+    line1,
+    line2: line1,
+    line3,
+    line4,
+    line5a,
+    line5b,
+    line5c,
+    line5d,
+    line6,
+    line7g,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+    line13: line12,
+    line15: line12,
+    form3800Line: line,
+  };
 }
 
 class F8835Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8835";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(_ctx: NodeContext, rawInput: F8835Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const credit = totalCredit(input.f8835s);
-    return { outputs: buildOutputs(credit) };
+    const entries = input.f8835s.map((item) => {
+      const lines = calculateForm8835(item);
+      return {
+        form3800_line: lines.form3800Line,
+        credit_amount: lines.line15,
+        transfer_out_amount: item.transfer_election_amount ?? 0,
+        registration_number: item.registration_number,
+      };
+    });
+    return { outputs: [output(f3800, { f8835_credit_entries: entries })] };
   }
 }
 
