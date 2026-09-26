@@ -1,86 +1,155 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 
-// Form 8978 — Partner's Additional Reporting Year Tax (IRC §6226)
-// Used when a BBA partnership elects out of paying the imputed underpayment
-// itself and instead passes adjustments to partners via Form 8986.
-// Each partner re-figures their reviewed year tax and pays the additional
-// amount in the current year. Routes to Schedule 2 as additional tax.
-//
-// BBA regime applies to tax years beginning after 12/31/2017.
-// Reg. §301.6226-3 governs partner-level computation.
+// Form 8978 (Rev. January 2023, still used in TY2025) is a comparison of
+// corrected and originally reported tax liabilities for up to four affected
+// years per form. A marginal-rate estimate is not a Form 8978 calculation.
+export enum Form8978Source {
+  BbaAudit = "bba_audit",
+  Aar = "aar",
+}
 
-// ─── TY2025 Constants (IRC §6226) ────────────────────────────────────────────
+export const adjustmentSchema = z.object({
+  description: z.string().trim().min(1).max(50),
+  amount: z.number().int(),
+  tracking_number: z.string().regex(/^\d{8}-\d{6}$/).optional(),
+  aar_tracking_number: z.string().min(1).optional(),
+  audit_control_number: z.string().regex(/^\d{10}$/).optional(),
+  ein: z.string().regex(/^\d{9}$/).optional(),
+}).refine((row) => [
+  row.tracking_number,
+  row.aar_tracking_number,
+  row.audit_control_number,
+  row.ein,
+].filter(Boolean).length <= 1, "Form 8978 Schedule A adjustment needs at most one tracking identifier");
 
-const DEFAULT_TAX_RATE = 0.37; // Top marginal rate per IRC §6226(b)(4)
-const MIN_REVIEWED_YEAR = 2018; // BBA effective for years beginning after 12/31/2017
-
-// ─── Input schema ─────────────────────────────────────────────────────────────
-
-export const inputSchema = z.object({
-  // Tax year under examination (the year being audited) — must be ≥ 2018
-  reviewed_tax_year: z.number().int().min(MIN_REVIEWED_YEAR),
-  // Partner's share of positive adjustments from Form 8986 (income increases / deduction decreases)
-  // IRC §6226(b)(1); Reg. §301.6226-3(b)
-  positive_adjustments_share: z.number().nonnegative().optional(),
-  // Partner's share of negative adjustments from Form 8986 (income decreases / deduction increases)
-  // IRC §6226(b)(2); Reg. §301.6226-3(c)
-  negative_adjustments_share: z.number().nonnegative().optional(),
-  // Partner's applicable marginal tax rate; defaults to 37% if omitted (IRC §6226(b)(4))
-  partner_tax_rate: z.number().nonnegative().max(1).optional(),
-  // Net tax effect from intervening years (tax attribute carryforwards, basis adjustments)
-  // Positive = additional tax; negative = tax reduction. IRC §6226(b)(2); Reg. §301.6226-3(e)
-  intervening_year_adjustments: z.number().optional(),
+export const yearColumnSchema = z.object({
+  tax_year_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((date) =>
+    !Number.isNaN(Date.parse(date)) &&
+    new Date(date).toISOString().slice(0, 10) === date
+  ),
+  original_income: z.number().int(),
+  income_adjustments: z.array(adjustmentSchema),
+  original_deductions: z.number().int(),
+  deduction_adjustments: z.array(adjustmentSchema),
+  // Source-backed recomputation under that affected year's tax rules.
+  corrected_income_tax: z.number().int().nonnegative(),
+  corrected_amt: z.number().int().nonnegative(),
+  original_credits: z.number().int().nonnegative(),
+  credit_adjustments: z.array(adjustmentSchema),
+  original_tax_liability: z.number().int().nonnegative(),
+  penalty: z.number().int().nonnegative().optional(),
+  interest: z.number().int().nonnegative().optional(),
+  tax_calculation_explanation: z.string().trim().min(1),
 });
 
-type F8978Input = z.infer<typeof inputSchema>;
+export const filingSchema = z.object({
+  source: z.nativeEnum(Form8978Source),
+  columns: z.array(yearColumnSchema).min(1).max(4),
+});
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
+export const inputSchema = z.object({
+  filings: z.array(filingSchema).min(1).max(6),
+});
 
-function effectiveRate(input: F8978Input): number {
-  return input.partner_tax_rate ?? DEFAULT_TAX_RATE;
+type YearColumn = z.infer<typeof yearColumnSchema>;
+type Filing = z.infer<typeof filingSchema>;
+export type Form8978Input = z.infer<typeof inputSchema>;
+
+function adjustmentTotal(rows: readonly z.infer<typeof adjustmentSchema>[]): number {
+  return rows.reduce((sum, row) => sum + row.amount, 0);
 }
 
-function reviewedYearTax(input: F8978Input): number {
-  const positiveAdj = input.positive_adjustments_share ?? 0;
-  return positiveAdj * effectiveRate(input);
+export function calculateYearColumn(column: YearColumn) {
+  const line1b = adjustmentTotal(column.income_adjustments);
+  const line2 = column.original_income + line1b;
+  const line3b = adjustmentTotal(column.deduction_adjustments);
+  const line4 = column.original_deductions + line3b;
+  const line5 = line2 - line4;
+  const line8 = column.corrected_income_tax + column.corrected_amt;
+  const line9b = adjustmentTotal(column.credit_adjustments);
+  const line10 = column.original_credits + line9b;
+  if (line10 < 0 || line10 > line8) {
+    throw new Error(
+      `Form 8978 ${column.tax_year_end} corrected credits need the affected-year tax limitation`,
+    );
+  }
+  const line11 = line8 - line10;
+  const line13 = line11 - column.original_tax_liability;
+  return {
+    ...column,
+    line1b,
+    line2,
+    line3b,
+    line4,
+    line5,
+    line8,
+    line9b,
+    line10,
+    line11,
+    line13,
+  };
 }
 
-function negativeAdjEffect(input: F8978Input): number {
-  const negativeAdj = input.negative_adjustments_share ?? 0;
-  return negativeAdj * effectiveRate(input);
+export function calculateFiling(filing: Filing) {
+  const years = filing.columns.map(calculateYearColumn);
+  const line14 = years.reduce((sum, year) => sum + year.line13, 0);
+  const line16 = years.reduce((sum, year) => sum + (year.penalty ?? 0), 0);
+  const line18 = years.reduce((sum, year) => sum + (year.interest ?? 0), 0);
+  return { source: filing.source, years, line14, line16, line18 };
 }
 
-function additionalTax(input: F8978Input): number {
-  const base = reviewedYearTax(input);
-  const negEffect = negativeAdjEffect(input);
-  const intervening = input.intervening_year_adjustments ?? 0;
-  return Math.max(0, base - negEffect + intervening);
-}
-
-function buildOutputs(tax: number): NodeOutput[] {
-  if (tax <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line17z_other_additional_taxes: tax } }];
-}
-
-// ─── Node class ───────────────────────────────────────────────────────────────
+export type Form8978Lines = ReturnType<typeof calculateFiling>;
 
 class F8978Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8978";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2]);
+  readonly outputNodes = new OutputNodes([income_tax_calculation]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8978Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const tax = additionalTax(input);
-    return { outputs: buildOutputs(tax) };
+    const filings = input.filings.map((filing) => {
+      const yearEnds = filing.columns.map((column) => column.tax_year_end);
+      if (filing.columns.every((column) =>
+        column.income_adjustments.length === 0 &&
+        column.deduction_adjustments.length === 0 &&
+        column.credit_adjustments.length === 0
+      )) {
+        throw new Error("Form 8978 needs Schedule A adjustment rows from Form 8986");
+      }
+      if (new Set(yearEnds).size !== yearEnds.length) {
+        throw new Error("Form 8978 repeats an affected tax year on one form");
+      }
+      if (yearEnds.some((date) => Number(date.slice(0, 4)) >= ctx.taxYear)) {
+        throw new Error("Form 8978 affected tax years must precede the reporting year");
+      }
+      return calculateFiling(filing);
+    });
+    const line14 = filings.reduce((sum, filing) => sum + filing.line14, 0);
+    if (line14 < 0) {
+      throw new Error(
+        "Form 8978 negative line 14 requires the Schedule 3 line 6l and Schedule 2 line 17z limitation worksheets",
+      );
+    }
+    return {
+      outputs: [
+        { nodeType: this.nodeType, fields: {
+          filings: input.filings,
+          calculated_filings: filings,
+          line14,
+        } },
+        ...(line14 > 0
+          ? [this.outputNodes.output(income_tax_calculation, {
+            form8978_tax: line14,
+          })]
+          : []),
+      ],
+    };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const f8978 = new F8978Node();

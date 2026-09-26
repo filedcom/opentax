@@ -65,6 +65,7 @@ export interface Fields {
   line16_income_tax?: number | null;
   form8814_tax?: number | null;
   form4972_tax?: number | null;
+  form8978_tax?: number | null;
   line17_additional_taxes?: number | null;
   line18_total_tax_before_credits?: number | null;
   line19_child_tax_credit?: number | null;
@@ -526,6 +527,27 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
           }
           : undefined,
       ),
+    );
+  }
+  const form8978Tax = resolveNumber(fields.form8978_tax);
+  if (form8978Tax !== undefined && form8978Tax > 0) {
+    const formIds = context?.documentIdsByPendingKey?.f8978 ?? [];
+    if (context?.documentIdsByPendingKey && formIds.length === 0) {
+      throw new Error("Form 1040 line 16 needs an attached Form 8978");
+    }
+    if ((resolveNumber(fields.line16_income_tax) ?? 0) < form8978Tax) {
+      throw new Error("Form 1040 line 16 omits Form 8978 tax");
+    }
+    const taxIndex = FIELD_MAP.findIndex(([key]) => key === "line16_income_tax");
+    const offset = (fields.form8814_tax ? 1 : 0) + (form4972Tax ? 1 : 0);
+    incomeChildren.splice(
+      taxIndex + 1 + offset,
+      0,
+      element("OtherTaxAmtInd", "X"),
+      elements("OtherTaxAmtGrp", [
+        element("OtherTaxAmtCd", "FORM 8978"),
+        element("OtherTaxAmt", form8978Tax),
+      ]),
     );
   }
 
