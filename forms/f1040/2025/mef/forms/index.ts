@@ -49,6 +49,8 @@ import { form8949 } from "./f8949.ts";
 import { form8959 } from "./f8959.ts";
 import { form8960 } from "./f8960.ts";
 import { form8962 } from "./f8962.ts";
+import { form8978 } from "./f8978.ts";
+import { form8978ScheduleA } from "./f8978_schedule_a.ts";
 import { form8990 } from "./f8990.ts";
 import { form8995 } from "./f8995.ts";
 import { form8995a } from "./f8995a.ts";
@@ -181,6 +183,9 @@ export const ALL_MEF_FORMS = [
   form8960,
   // Form 8962
   form8962,
+  // Form 8978 and its linked Schedule A follow Form 8962 in ReturnData1040.xsd.
+  form8978,
+  form8978ScheduleA,
   // Form 8990
   form8990,
   // Form 8995

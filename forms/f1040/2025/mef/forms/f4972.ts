@@ -121,7 +121,8 @@ function buildIRS4972(fields: Input, context?: MefBuildContext): string {
       : element("PriorYearDistributionInd", "false"),
     ...FIELD_MAP.map(([key, tag]) => {
       const value = fields[key];
-      return typeof value === "number" ? element(tag, value) : "";
+      if (typeof value !== "number") return "";
+      return element(tag, key === "line20" ? value.toFixed(5) : value);
     }),
   ]);
 }
