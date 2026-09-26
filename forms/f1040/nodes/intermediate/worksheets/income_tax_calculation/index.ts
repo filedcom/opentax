@@ -255,16 +255,14 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
 
     const childElectionTax = input.form8814_tax ?? 0;
     tax += childElectionTax;
-    const regularTax = taxFromBrackets(input.taxable_income, brackets) +
-      childElectionTax;
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line16_income_tax: tax }),
-      // Feed form6251 the regular bracket tax (not QDCGT) — AMT uses regular tax base.
-      // Also pass qualified_dividends and net_capital_gain for AMT QDCGT worksheet
-      // per IRC §55(b)(3) so preferential rates apply within AMT too.
+      // Form 6251 line 10 starts with Form 1040 line 16, including the
+      // qualified-dividend/capital-gain rate calculation. Other line 10
+      // adjustments still require their own source routing and audit.
       this.outputNodes.output(form6251, {
-        regular_tax: regularTax,
+        regular_tax: tax,
         regular_tax_income: input.taxable_income,
         filing_status: input.filing_status,
         ...(qualDiv > 0 ? { qualified_dividends: qualDiv } : {}),

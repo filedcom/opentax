@@ -384,8 +384,7 @@ Deno.test("QDCGT: QDCGT tax is always ≤ regular bracket tax (invariant)", () =
   }
 });
 
-Deno.test("QDCGT: form6251 always receives regular_tax (not QDCGT reduced tax)", () => {
-  // AMT uses the regular bracket tax, not the QDCGT reduced amount
+Deno.test("QDCGT: Form 6251 line 10 receives Form 1040 line 16 tax", () => {
   const result = compute({
     taxable_income: 100_000,
     filing_status: FilingStatus.Single,
@@ -393,10 +392,8 @@ Deno.test("QDCGT: form6251 always receives regular_tax (not QDCGT reduced tax)",
   });
   const f1040Tax = f1040Fields(result)!.line16_income_tax as number;
   const f6251Tax = f6251Fields(result)!.regular_tax as number;
-  // f1040 has QDCGT-reduced tax; f6251 has regular bracket tax
-  assertAlmostEquals(f6251Tax, 16_914, 1); // regular bracket tax on $100k Single
   assertAlmostEquals(f1040Tax, 16_214, 1); // QDCGT-reduced (qual divs at 15%)
-  assertEquals(f6251Tax > f1040Tax, true);
+  assertEquals(f6251Tax, f1040Tax);
 });
 
 Deno.test("QDCGT: qualified dividends exceeding taxable income capped at taxable income", () => {
