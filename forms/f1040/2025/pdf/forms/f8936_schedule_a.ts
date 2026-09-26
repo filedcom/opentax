@@ -89,7 +89,9 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
     const input = source.data;
     return input.f8936s.flatMap((item) => {
       const personalCredit = computeVehiclePersonalCredit(item, input);
-      if (personalCredit === 0) return [];
+      if (personalCredit === 0 && item.transferred_to_dealer !== true) {
+        return [];
+      }
       if (
         item.vehicle_year === undefined || !item.vehicle_make ||
         !item.vehicle_model || !item.vin || !item.placed_in_service_date ||
@@ -104,13 +106,21 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
         incomeLimit(input.filing_status, used);
       const priorOver = modifiedAgi(input.prior_year_magi) >
         incomeLimit(input.prior_year_filing_status, used);
+      const resold = item.resold_within_30_days === true;
+      const passesIncome = !resold && !(currentOver && priorOver);
+      const directedRepaymentBox = item.transferred_to_dealer === true &&
+        (resold || (currentOver && priorOver));
       const common = {
         vehicle_year: item.vehicle_year,
         vehicle_make: item.vehicle_make,
         vehicle_model: item.vehicle_model,
         vin: item.vin,
         service_date: formatServiceDate(item.placed_in_service_date),
-        transferred_to_dealer: false,
+        transferred_to_dealer: item.transferred_to_dealer,
+        transferred_amount: item.transferred_to_dealer
+          ? item.transferred_amount
+          : undefined,
+        dealer_transfer_repayment: directedRepaymentBox,
         is_new_vehicle: item.is_new_vehicle,
         is_used_vehicle: used,
         is_commercial_vehicle: false,
@@ -120,26 +130,54 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
         ...(item.is_new_vehicle
           ? {
             new_resold_within_30_days: item.resold_within_30_days,
-            new_individual_return: true,
-            new_current_magi_over_limit: currentOver,
-            new_prior_magi_over_limit: currentOver ? priorOver : undefined,
-            new_acquired_for_use: item.acquired_for_use_not_resale,
-            new_tentative_credit: Math.min(item.credit_amount ?? 0, 7_500),
-            new_personal_credit: personalCredit,
+            new_individual_return: !resold ? true : undefined,
+            new_current_magi_over_limit: !resold ? currentOver : undefined,
+            new_prior_magi_over_limit: !resold && currentOver
+              ? priorOver
+              : undefined,
+            new_acquired_for_use: passesIncome
+              ? item.acquired_for_use_not_resale
+              : undefined,
+            new_tentative_credit: passesIncome &&
+                item.acquired_for_use_not_resale
+              ? Math.min(item.credit_amount ?? 0, 7_500)
+              : undefined,
+            new_personal_credit: personalCredit > 0
+              ? personalCredit
+              : undefined,
           }
           : {
             used_resold_within_30_days: item.resold_within_30_days,
-            used_current_magi_over_limit: currentOver,
-            used_prior_magi_over_limit: currentOver ? priorOver : undefined,
-            used_claimed_prev_credit:
-              item.claimed_prev_owned_credit_last_3_years,
-            used_price_over_cap: (item.sale_price ?? 0) > 25_000,
-            used_acquired_for_use: item.acquired_for_use_not_resale,
-            used_claimed_as_dependent: item.claimed_as_dependent,
-            used_sale_price: item.sale_price,
-            used_sale_price_30pct: (item.sale_price ?? 0) * 0.30,
-            used_credit_cap: 4_000,
-            used_personal_credit: personalCredit,
+            used_current_magi_over_limit: !resold ? currentOver : undefined,
+            used_prior_magi_over_limit: !resold && currentOver
+              ? priorOver
+              : undefined,
+            used_claimed_prev_credit: passesIncome
+              ? item.claimed_prev_owned_credit_last_3_years
+              : undefined,
+            used_price_over_cap: passesIncome &&
+                !item.claimed_prev_owned_credit_last_3_years
+              ? (item.sale_price ?? 0) > 25_000
+              : undefined,
+            used_acquired_for_use: passesIncome &&
+                !item.claimed_prev_owned_credit_last_3_years &&
+                (item.sale_price ?? 0) <= 25_000
+              ? item.acquired_for_use_not_resale
+              : undefined,
+            used_claimed_as_dependent: passesIncome &&
+                !item.claimed_prev_owned_credit_last_3_years &&
+                (item.sale_price ?? 0) <= 25_000 &&
+                item.acquired_for_use_not_resale
+              ? item.claimed_as_dependent
+              : undefined,
+            used_sale_price: personalCredit > 0 ? item.sale_price : undefined,
+            used_sale_price_30pct: personalCredit > 0
+              ? (item.sale_price ?? 0) * 0.30
+              : undefined,
+            used_credit_cap: personalCredit > 0 ? 4_000 : undefined,
+            used_personal_credit: personalCredit > 0
+              ? personalCredit
+              : undefined,
           }),
       }];
     });

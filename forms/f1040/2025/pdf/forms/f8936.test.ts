@@ -79,3 +79,32 @@ Deno.test("Form 8936 Schedule A PDF: one page per vehicle, with previously owned
   assertEquals(instances[1].used_sale_price_30pct, 4_500);
   assertEquals(instances[1].used_personal_credit, 4_000);
 });
+
+Deno.test("Form 8936 PDF: ineligible dealer transfer prints MAGI and Schedule A repayment facts, not a claimed credit", () => {
+  const transfer = {
+    ...source,
+    current_year_magi: { adjusted_gross_income: 200_000 },
+    prior_year_magi: { adjusted_gross_income: 200_000 },
+    f8936s: [{
+      ...vehicle,
+      transferred_to_dealer: true,
+      transferred_amount: 7_500,
+    }],
+  };
+  const finalized = {
+    f1040: { line11_agi: 200_000, line18_total_tax_before_credits: 7_500 },
+    schedule2: { line1b_new_clean_vehicle_repayment: 7_500 },
+  };
+  const parent = form8936Pdf.projectFields!(transfer, finalized);
+  assertEquals(parent.line1a, 200_000);
+  assertEquals(parent.line9, undefined);
+  const projected = form8936ScheduleAPdf.projectFields!(transfer, finalized);
+  const instances = form8936ScheduleAPdf.instances!(projected);
+  assertEquals(instances.length, 1);
+  assertEquals(instances[0].transferred_to_dealer, true);
+  assertEquals(instances[0].transferred_amount, 7_500);
+  assertEquals(instances[0].dealer_transfer_repayment, true);
+  assertEquals(instances[0].new_current_magi_over_limit, true);
+  assertEquals(instances[0].new_prior_magi_over_limit, true);
+  assertEquals(instances[0].new_personal_credit, undefined);
+});

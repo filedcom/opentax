@@ -97,3 +97,72 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name:
+    "XSD: disqualified dealer transfer links Schedule 2 repayment to the parent Form 8936",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: {
+      filing_status: "single",
+      line9_total_income: 200_000,
+      line11_agi: 200_000,
+      line15_taxable_income: 200_000,
+      line16_income_tax: 0,
+      line17_additional_taxes: 7_500,
+      line18_total_tax_before_credits: 7_500,
+      line24_total_tax: 7_500,
+    },
+    schedule2: { line1b_new_clean_vehicle_repayment: 7_500 },
+    f8936: {
+      current_year_magi: { adjusted_gross_income: 200_000 },
+      prior_year_magi: { adjusted_gross_income: 200_000 },
+      filing_status: FilingStatus.Single,
+      prior_year_filing_status: FilingStatus.Single,
+      f8936s: [{
+        vin: "1HGCM82633A004352",
+        vehicle_year: 2025,
+        vehicle_make: "Example",
+        vehicle_model: "EV",
+        placed_in_service_date: "2025-09-30",
+        acquisition_date: "2025-09-30",
+        seller_report_received: true,
+        transferred_to_dealer: true,
+        transferred_amount: 7_500,
+        resold_within_30_days: false,
+        acquired_for_use_not_resale: true,
+        is_new_vehicle: true,
+        credit_amount: 7_500,
+        msrp: 45_000,
+        vehicle_type: "other",
+      }],
+    },
+  }, filer);
+  assertStringIncludes(xml, "<IRS8936 documentId=");
+  assertStringIncludes(xml, "<IRS8936ScheduleA documentId=");
+  assertStringIncludes(xml, '<CrTrnsfrDlrSaleAmt referenceDocumentId="IRS8936');
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="IRS8936">7500</CrTrnsfrDlrSaleAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    "<NotAllowedClaimClnVehCrInd>X</NotAllowedClaimClnVehCrInd>",
+  );
+
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

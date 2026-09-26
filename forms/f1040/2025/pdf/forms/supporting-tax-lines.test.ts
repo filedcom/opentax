@@ -45,6 +45,17 @@ Deno.test("Schedule 2 maps Additional Medicare Tax and NIIT to 2025 lines 11 and
   );
 });
 
+Deno.test("Schedule 2 maps dealer-transfer repayments to 2025 lines 1b and 1c", () => {
+  assertEquals(
+    mappedField(schedule2Pdf, "line1b_new_clean_vehicle_repayment"),
+    "form1[0].Page1[0].f1_04[0]",
+  );
+  assertEquals(
+    mappedField(schedule2Pdf, "line1c_prev_owned_clean_vehicle_repayment"),
+    "form1[0].Page1[0].f1_05[0]",
+  );
+});
+
 Deno.test("Form 8960 maps computed NIIT through line 17", () => {
   assertEquals(
     mappedField(form8960Pdf, "line12_net_investment_income"),

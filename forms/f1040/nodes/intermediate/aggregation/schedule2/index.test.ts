@@ -31,6 +31,21 @@ Deno.test("validation: all-zero fields produce no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("dealer-transfer repayments accumulate on Schedule 2 lines 1b and 1c", () => {
+  const result = compute({
+    line1b_new_clean_vehicle_repayment: [7_500, 7_500],
+    line1c_prev_owned_clean_vehicle_repayment: 4_000,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)!.line17_additional_taxes,
+    19_000,
+  );
+  assertEquals(findOutput(result, "schedule2")?.fields, {
+    line1b_new_clean_vehicle_repayment: 15_000,
+    line1c_prev_owned_clean_vehicle_repayment: 4_000,
+  });
+});
+
 // ── Per-field calculation ────────────────────────────────────────────────────
 
 Deno.test("calc: uncollected_fica alone routes to f1040 line23", () => {

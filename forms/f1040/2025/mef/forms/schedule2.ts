@@ -3,6 +3,8 @@ import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   line1a_excess_advance_premium?: number | null;
+  line1b_new_clean_vehicle_repayment?: number | null;
+  line1c_prev_owned_clean_vehicle_repayment?: number | null;
   line2_amt?: number | null;
   line4_se_tax?: number | null;
   line5_unreported_tip_tax?: number | null;
@@ -29,6 +31,8 @@ type Input = Partial<Fields> & Record<string, unknown>;
 // Direct 1:1 field mappings (inputSchema key -> XSD element name)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line1a_excess_advance_premium", "PremiumTaxCreditTaxLiabAmt"],
+  ["line1b_new_clean_vehicle_repayment", "CrTrnsfrDlrSaleAmt"],
+  ["line1c_prev_owned_clean_vehicle_repayment", "PrevOwnCrTrnsfrDlrSaleAmt"],
   ["line2_amt", "AlternativeMinimumTaxAmt"],
   ["line4_se_tax", "SelfEmploymentTaxAmt"],
   ["line5_unreported_tip_tax", "SocSecMedicareTaxUnrptdTipAmt"],
@@ -64,6 +68,26 @@ function buildIRS1040Schedule2(
   for (const [key, tag] of FIELD_MAP) {
     const value = fields[key];
     if (typeof value !== "number") continue;
+    if (
+      key === "line1b_new_clean_vehicle_repayment" ||
+      key === "line1c_prev_owned_clean_vehicle_repayment"
+    ) {
+      const formIds = context?.documentIdsByTag?.IRS8936 ?? [];
+      if (context?.documentIdsByTag && formIds.length === 0) {
+        throw new Error("Schedule 2 clean-vehicle repayment needs Form 8936");
+      }
+      children.push(element(
+        tag,
+        value,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8936",
+          }
+          : undefined,
+      ));
+      continue;
+    }
     children.push(element(tag, value));
   }
 

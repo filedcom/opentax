@@ -44,6 +44,8 @@ export interface MefBuildContext {
   readonly documentIdsByPendingKey?: Readonly<
     Record<string, readonly string[]>
   >;
+  /** IDs grouped by exact IRS XML root, for references to one document type. */
+  readonly documentIdsByTag?: Readonly<Record<string, readonly string[]>>;
   readonly documentIdsByAttachmentFileName?: Readonly<Record<string, string>>;
 }
 
