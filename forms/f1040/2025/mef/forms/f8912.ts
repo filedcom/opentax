@@ -7,6 +7,7 @@ import {
 } from "../../../nodes/inputs/f8912/calculation.ts";
 import {
   type F8912UnreportedBond,
+  interestFromItem,
   itemSchema,
   partIVRowInput,
   sourceLinesFromItem,
@@ -25,6 +26,7 @@ export function buildForm8912Document(
     );
   }
   const source = sourceLinesFromItem(item);
+  interestFromItem(item);
   const limit = calculateForm8912IndividualLimit(
     deriveForm8912IndividualLimitInput(source, finalizedReturn),
   );

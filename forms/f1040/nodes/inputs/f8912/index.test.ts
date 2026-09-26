@@ -1,5 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { BondType, f8912, itemSchema, sourceLinesFromItem } from "./index.ts";
+import {
+  BondType,
+  f8912,
+  interestFromItem,
+  itemSchema,
+  sourceLinesFromItem,
+} from "./index.ts";
 import { calculateForm8912SourceLines } from "./calculation.ts";
 
 const reported = {
@@ -9,6 +15,8 @@ const reported = {
   issuer_ein: "123456789",
   unique_identifier: "bond-1",
   credit_amount: 100,
+  purchase_accrued_interest: 0,
+  sale_accrued_interest: 0,
   issuer_elected_direct_payment: false,
   is_pass_through_creb_credit: false,
 };
@@ -21,6 +29,8 @@ const unreported = {
   issuer_state: "TX",
   issuer_ein: "123456789",
   maturity_date: "2030-12-31",
+  purchase_accrued_interest: 0,
+  sale_accrued_interest: 0,
   line18_rows: [{
     cusip: "123456789",
     outstanding_principal: 10_000,
@@ -204,6 +214,34 @@ Deno.test("Form 8912: only eligible bond credits carry forward", () => {
   );
 });
 
+Deno.test("Form 8912: carryforward does not duplicate current-year deemed interest", () => {
+  const parsed = itemSchema.parse(item({
+    reported_bonds: [{
+      ...reported,
+      purchase_accrued_interest: 20,
+      sale_accrued_interest: 5,
+      disposition_date: "2025-12-01",
+    }],
+    carryforwards: [{
+      bond_type: BondType.QECB,
+      issue_date: "2017-12-31",
+      bond_identifier: "prior-bond",
+      origin_tax_year: 2024,
+      amount: 25,
+    }],
+  }));
+  const interest = interestFromItem(parsed);
+  assertEquals(sourceLinesFromItem(parsed).line4, 300);
+  assertEquals(interest.creditInterest, 275);
+  assertEquals(interest.taxableInterest, 260);
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{ ...reported, sale_accrued_interest: 5 }],
+    })).success,
+    false,
+  );
+});
+
 Deno.test("Form 8912: unreported pass-through CREB retains its separate limit flag", () => {
   const parsed = itemSchema.parse(item({
     reported_bonds: [],
@@ -275,4 +313,23 @@ Deno.test("Form 8912: zero source credit contributes no Schedule 3 output", () =
     f8912s: [item({ reported_bonds: [], unreported_bonds: [] })],
   });
   assertEquals(result.outputs, []);
+});
+
+Deno.test("Form 8912: sale accrued interest cannot disappear on a zero-credit return", () => {
+  assertThrows(
+    () =>
+      f8912.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8912s: [item({
+          unreported_bonds: [],
+          reported_bonds: [{
+            ...reported,
+            credit_amount: 0,
+            disposition_date: "2025-10-01",
+            sale_accrued_interest: 5,
+          }],
+        })],
+      }),
+    Error,
+    "routed to taxable interest income",
+  );
 });

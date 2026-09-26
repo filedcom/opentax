@@ -10,6 +10,8 @@ const source = {
     issuer_ein: "123456789",
     unique_identifier: "BOND-1097",
     credit_amount: 100,
+    purchase_accrued_interest: 0,
+    sale_accrued_interest: 0,
     issuer_elected_direct_payment: false,
     is_pass_through_creb_credit: false,
   }],
@@ -21,6 +23,8 @@ const source = {
     issuer_state: "TX",
     issuer_ein: "123456789",
     maturity_date: "2030-12-31",
+    purchase_accrued_interest: 0,
+    sale_accrued_interest: 0,
     line18_rows: [{
       cusip: "123456789",
       outstanding_principal: 10_000,
@@ -150,6 +154,21 @@ Deno.test("Form 8912 MeF draft rejects unmatched allowed Form 3800 credit", () =
       }),
     Error,
     "reconcile to allowed Form 3800",
+  );
+});
+
+Deno.test("Form 8912 MeF draft rejects purchase interest larger than its bond credit", () => {
+  assertThrows(
+    () =>
+      buildForm8912Document({
+        ...source,
+        reported_bonds: [{
+          ...source.reported_bonds[0],
+          purchase_accrued_interest: 101,
+        }],
+      }, finalized),
+    Error,
+    "cannot exceed current-year bond credit",
   );
 });
 

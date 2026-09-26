@@ -42,6 +42,44 @@ export type Form8912PartIVBondLines = {
   readonly line20: number;
 };
 
+export type Form8912BondInterest = {
+  readonly creditInterest: number;
+  readonly purchaseAccruedInterestRecoveredAsBasis: number;
+  readonly saleAccruedInterest: number;
+  readonly taxableInterest: number;
+};
+
+/** Carryforwards are not a second payment of deemed interest. */
+export function calculateForm8912BondInterest(
+  currentYearCredit: number,
+  purchaseAccruedInterest: number,
+  saleAccruedInterest: number,
+): Form8912BondInterest {
+  for (
+    const [name, amount] of [
+      ["current-year credit", currentYearCredit],
+      ["purchase accrued interest", purchaseAccruedInterest],
+      ["sale accrued interest", saleAccruedInterest],
+    ] as const
+  ) {
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new Error(`Form 8912 ${name} must be a nonnegative finite amount`);
+    }
+  }
+  if (purchaseAccruedInterest > currentYearCredit) {
+    throw new Error(
+      "Form 8912 purchase accrued interest cannot exceed current-year bond credit",
+    );
+  }
+  return {
+    creditInterest: currentYearCredit,
+    purchaseAccruedInterestRecoveredAsBasis: purchaseAccruedInterest,
+    saleAccruedInterest,
+    taxableInterest: currentYearCredit - purchaseAccruedInterest +
+      saleAccruedInterest,
+  };
+}
+
 export function calculateForm8912PartIVBond(
   bond: Form8912UnreportedBond,
 ): Form8912PartIVBondLines {

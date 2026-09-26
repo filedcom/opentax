@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  calculateForm8912BondInterest,
   calculateForm8912IndividualLimit,
   deriveForm8912IndividualLimitInput,
   type Form8912IndividualLimitInput,
@@ -107,5 +108,18 @@ Deno.test("Form 8912: finalized return bridge rejects unproven Form 3800 amounts
       }),
     Error,
     "smaller than its excluded credits",
+  );
+});
+
+Deno.test("Form 8912: bond-interest calculation excludes purchased accrued interest", () => {
+  const interest = calculateForm8912BondInterest(275, 50, 20);
+  assertEquals(interest.creditInterest, 275);
+  assertEquals(interest.purchaseAccruedInterestRecoveredAsBasis, 50);
+  assertEquals(interest.saleAccruedInterest, 20);
+  assertEquals(interest.taxableInterest, 245);
+  assertThrows(
+    () => calculateForm8912BondInterest(100, 101, 0),
+    Error,
+    "cannot exceed current-year bond credit",
   );
 });
