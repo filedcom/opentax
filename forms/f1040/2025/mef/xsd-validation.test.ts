@@ -635,6 +635,60 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: one policy has shared months followed by family-only months",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 3_000)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "MIXED-POLICY",
+      monthly_premiums: Array(12).fill(1_200),
+      monthly_slcsps: Array(12).fill(1_500),
+      monthly_aptcs: Array(12).fill(800),
+      shared_policy_periods: [{
+        basis: "divorce_agreed",
+        divorced_or_legally_separated_in_tax_year: true,
+        shared_during_marriage: true,
+        other_taxpayer_ssn: "222-33-4444",
+        start_month: 1,
+        end_month: 6,
+        allocation_pct: 0.5,
+      }, {
+        basis: "family_only",
+        only_tax_family_covered: true,
+        start_month: 7,
+        end_month: 12,
+        monthly_family_slcsps: [
+          ...Array(6).fill(0),
+          ...Array(6).fill(900),
+        ],
+      }],
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertEquals((xml.match(/<SharedPolicyAllocationGrp>/g) ?? []).length, 1);
+  assertStringIncludes(xml, "<MonthlyPremiumPct>0.50</MonthlyPremiumPct>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>750</MonthlyPremiumSLCSPAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>900</MonthlyPremiumSLCSPAmt>",
+  );
+  await validateXsd(xml, "shared then family-only policy months");
+});
+
+Deno.test({
   name: "XSD: two same-state Marketplace policies use one SLCSP benchmark",
   sanitizeOps: false,
   sanitizeResources: false,

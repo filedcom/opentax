@@ -29,7 +29,7 @@ Reconciles Advance Premium Tax Credits (APTC) against the actual allowable PTC b
 - `dependent_income_complete` — confirms filing-status facts were supplied for every claimed dependent
 - `below_100_fpl_status` — documented Marketplace-estimate or lawful-presence qualification, or reviewed non-applicable-taxpayer status; the Marketplace-estimate route also requires paid APTC
 - `mfs_ptc_status` — documented abuse or abandonment exception with the three-year limit, or reviewed no-exception status, identifying whether each policy is family-only or shared with the spouse
-- `shared_policy_allocations` — Form 1095-A-derived Part IV rows for Situation 1 divorce, Situation 2 MFS, Situation 3 no APTC, and Situation 4 other shared families, including the other taxpayer, policy, months, and applicable percentage columns. A 1095-A source can carry multiple nonoverlapping `shared_policy_periods` on one policy.
+- `shared_policy_allocations` — Form 1095-A-derived Part IV rows for Situation 1 divorce, Situation 2 MFS, Situation 3 no APTC, and Situation 4 other shared families, including the other taxpayer, policy, months, and applicable percentage columns. A 1095-A source can carry multiple nonoverlapping `shared_policy_periods` on one policy, including an explicit `family_only` period that uses the full source premium and APTC and a separately supplied coverage-family SLCSP without creating a Part IV row.
 - `fpl_region` — contiguous states/DC, Alaska, or Hawaii
 - `annual_premium` / `annual_slcsp` / `annual_aptc` — annual totals (when no monthly detail)
 - `monthly_premiums` / `monthly_slcsps` / `monthly_aptcs` — monthly arrays (12 elements each; preferred for mid-year coverage changes)
@@ -56,4 +56,4 @@ Reconciles Advance Premium Tax Credits (APTC) against the actual allowable PTC b
 - ARP extension: 400% FPL cliff is eliminated through TY2025; no hard cutoff.
 - Both positive and negative scenarios handled in a single `compute()` call (can only emit one of the two outputs).
 - SLCSP = Second Lowest Cost Silver Plan (the benchmark plan for credit calculation).
-- This is not whole-form support. The new shared-policy cases are written but untested under the build-first workflow. Mixed shared and unshared periods on one policy, more than four Part IV allocations, alternative marriage calculation, QSEHRA and self-employed insurance interactions, PDF mappings, and IRS business rules still need a complete audit.
+- This is not whole-form support. The new shared-policy cases are written but untested under the build-first workflow. More than four Part IV allocations, alternative marriage calculation, QSEHRA and self-employed insurance interactions, PDF mappings, and IRS business rules still need a complete audit.

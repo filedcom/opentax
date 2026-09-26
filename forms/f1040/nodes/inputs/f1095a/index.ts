@@ -22,6 +22,13 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // Per-item schema — one 1095-A from one Marketplace policy
 const sharedPolicySchema = z.discriminatedUnion("basis", [
   z.object({
+    basis: z.literal("family_only"),
+    only_tax_family_covered: z.literal(true),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+    monthly_family_slcsps: z.array(z.number().nonnegative()).length(12),
+  }).strict(),
+  z.object({
     basis: z.literal("mfs_exception"),
     other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
     start_month: z.number().int().min(1).max(12),
@@ -98,7 +105,10 @@ export const itemSchema = z.object({
   annual_premium: z.number().nonnegative().optional(),
   annual_slcsp: z.number().nonnegative().optional(),
   annual_aptc: z.number().nonnegative().optional(),
-  shared_policy_periods: z.array(sharedPolicySchema).min(1).optional(),
+  shared_policy_periods: z.array(sharedPolicySchema).min(1).refine(
+    (periods) => periods.some((period) => period.basis !== "family_only"),
+    "Shared policy periods need at least one allocation period",
+  ).optional(),
 });
 
 // Node inputSchema — all 1095-A forms for this return
@@ -218,6 +228,22 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       for (const shared of periods) {
         if (shared.start_month > shared.end_month) {
           throw new Error("Shared policy allocation months are reversed");
+        }
+        if (shared.basis === "family_only") {
+          for (
+            let index = shared.start_month - 1;
+            index < shared.end_month;
+            index++
+          ) {
+            if (coveredByPeriod[index]) {
+              throw new Error("Shared policy allocation periods overlap");
+            }
+            coveredByPeriod[index] = true;
+            allocatedPremiums[index] = item.monthly_premiums[index];
+            allocatedSlcsps[index] = shared.monthly_family_slcsps[index];
+            allocatedAptcs[index] = item.monthly_aptcs[index];
+          }
+          continue;
         }
         const allocatesReportedSlcsp = shared.basis === "divorce_agreed" ||
           shared.basis === "divorce_no_agreement" ||
