@@ -272,7 +272,9 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   const computed_line23 = (input.line23_other_taxes ?? 0) -
     (input.form8978_schedule2_line17z_reduction ?? 0);
   if (computed_line23 < -0.000001) {
-    throw new Error("Form 8978 reduction exceeds Form 1040 line 23 other taxes");
+    throw new Error(
+      "Form 8978 reduction exceeds Form 1040 line 23 other taxes",
+    );
   }
   const computed_line24 = computed_line22 + computed_line23;
   const computed_line25d = totalWithholding(input);
@@ -322,9 +324,10 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     result.line23_other_taxes = Math.max(0, computed_line23);
   }
 
-  // line20_nonrefundable_credits and line23_other_taxes are deposited into the
-  // f1040 pending dict by upstream nodes (schedule3, etc.) before this node runs.
-  // Re-emitting them here would cause the executor to merge-accumulate duplicates.
+  // line20_nonrefundable_credits and the unadjusted line23_other_taxes are
+  // deposited by upstream nodes before this node runs. Only re-emit line 23
+  // when the Form 8978 worksheet changes its filed value; otherwise the
+  // executor would merge-accumulate the same amount twice.
   // They are used above for line21/line22/line24 computation — no re-emission needed.
   if (input.line26_estimated_tax !== undefined) {
     result.line26_estimated_tax = input.line26_estimated_tax;

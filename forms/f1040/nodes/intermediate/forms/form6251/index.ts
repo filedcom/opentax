@@ -25,8 +25,8 @@ export const inputSchema = z.object({
   regular_taxable_income: z.number().nonnegative().optional(),
 
   // Form 6251 line 10 starts with Form 1040 line 16, removes Form 4972 tax,
-  // adds Schedule 2 line 1z, and removes Schedule 3 line 1. The signed
-  // Form 8978 and Schedule J refigure still need separate source routing.
+  // adds Schedule 2 line 1z, and removes Schedule 3 line 1 and a negative
+  // Form 8978 line 14. The Schedule J refigure still needs source routing.
   regular_tax: z.number().nonnegative(),
   form4972_tax: z.number().nonnegative().optional(),
   form8978_negative_line14: z.number().int().nonnegative().optional(),
