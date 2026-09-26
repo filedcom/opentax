@@ -26,6 +26,7 @@ const source = {
     issuer_state: "TX",
     issuer_ein: "123456789",
     maturity_date: "2030-12-31",
+    acquisition_date: "2024-01-01",
     purchase_accrued_interest: 0,
     sale_accrued_interest: 0,
     taxable_interest_reported_elsewhere: 0,
@@ -33,7 +34,7 @@ const source = {
       cusip: "123456789",
       outstanding_principal: 10_000,
       credit_rate: 0.05,
-      credit_allowance_percentage: 0.5,
+      allowance_dates: ["2025-03-15", "2025-06-15"],
     }],
     issuer_elected_direct_payment: false,
     is_pass_through_creb_credit: false,
@@ -110,7 +111,7 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
         source.unreported_bonds[0].line18_rows[0],
         {
           ...source.unreported_bonds[0].line18_rows[0],
-          credit_allowance_percentage: 0.25,
+          allowance_dates: ["2025-09-15"],
         },
       ],
     }],
@@ -121,6 +122,7 @@ Deno.test("Form 8912 MeF draft emits each Part IV line 18 detail", () => {
     schedule3Line8: 387.5,
   });
   assertEquals(xml.split("<BondNotRptOn1097BTCDetail>").length - 1, 2);
+  assertStringIncludes(xml, "<PercentageAmt>25.00</PercentageAmt>");
   assertStringIncludes(
     xml,
     "<TotalOtherNotRptF1097BTCAmt>375</TotalOtherNotRptF1097BTCAmt>",

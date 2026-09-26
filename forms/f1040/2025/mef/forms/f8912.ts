@@ -44,7 +44,8 @@ export function buildForm8912Document(
   let line19 = 0;
   const partIV = item.unreported_bonds.map((bond) => {
     const details = bond.line18_rows.map((row) => {
-      const lines = calculateForm8912PartIVBond(partIVRowInput(bond, row));
+      const sourceRow = partIVRowInput(bond, row);
+      const lines = calculateForm8912PartIVBond(sourceRow);
       line19 += lines.line18f;
       return elements("BondNotRptOn1097BTCDetail", [
         element("CUSIPNum", row.cusip),
@@ -56,7 +57,7 @@ export function buildForm8912Document(
         element("TotalBeforeOthLimitationsCrAmt", lines.line18d),
         element(
           "PercentageAmt",
-          (row.credit_allowance_percentage * 100).toFixed(2),
+          (sourceRow.creditAllowancePercentage * 100).toFixed(2),
         ),
         element("BeforeOtherLmtAllowableCrAmt", lines.line18f),
       ]);

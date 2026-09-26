@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
+import { form8912AllowancePercentage } from "./allowance.ts";
 import {
   calculateForm8912BondInterest,
   calculateForm8912PartIVBond,
@@ -123,7 +124,7 @@ const partIVRowSchema = z.object({
   outstanding_principal: z.number().finite().nonnegative().optional(),
   interest_payable: z.number().finite().nonnegative().optional(),
   credit_rate: z.number().finite().min(0).max(1),
-  credit_allowance_percentage: z.number().finite().min(0).max(1),
+  allowance_dates: z.array(isoDate).min(1).max(5),
 });
 
 const unreportedBondSchema = z.object({
@@ -134,7 +135,9 @@ const unreportedBondSchema = z.object({
   issuer_state: z.string().length(2),
   issuer_ein: z.string().regex(/^\d{9}$/),
   maturity_date: isoDate,
+  acquisition_date: isoDate,
   disposition_date: isoDate.optional(),
+  disposition_kind: z.enum(["sale", "redemption", "other"]).optional(),
   purchase_accrued_interest: z.number().finite().nonnegative(),
   sale_accrued_interest: z.number().finite().nonnegative(),
   taxable_interest_reported_elsewhere: z.number().finite().nonnegative(),
@@ -149,6 +152,14 @@ const unreportedBondSchema = z.object({
       message: "Sale accrued interest needs a disposition date",
     });
   }
+  if (Boolean(bond.disposition_date) !== Boolean(bond.disposition_kind)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Part IV disposition date and kind must be provided together",
+      path: ["disposition_kind"],
+    });
+  }
+  const allowanceDates = new Set<string>();
   for (const [index, row] of bond.line18_rows.entries()) {
     const issue = (message: string) =>
       ctx.addIssue({
@@ -163,13 +174,19 @@ const unreportedBondSchema = z.object({
       ) {
         issue("BAB needs interest payable, not outstanding principal");
       }
-      if (row.credit_rate !== 0.35 || row.credit_allowance_percentage !== 1) {
-        issue("BAB needs a 35% rate and 100% allowance percentage");
+      if (row.credit_rate !== 0.35) {
+        issue("BAB needs a 35% credit rate");
       }
       if (!row.cusip || !row.interest_payment_date) {
         issue("BAB needs a CUSIP and interest payment date");
       }
+      if (row.principal_payment_date !== undefined) {
+        issue("BAB must not use a principal payment date");
+      }
     } else {
+      if (row.interest_payment_date !== undefined) {
+        issue("Non-BAB bond must not use an interest payment date");
+      }
       if (
         row.outstanding_principal === undefined ||
         row.interest_payable !== undefined
@@ -183,6 +200,27 @@ const unreportedBondSchema = z.object({
       } else if (!row.cusip && !row.principal_payment_date) {
         issue("Bond needs a CUSIP or principal payment date");
       }
+    }
+    for (const date of row.allowance_dates) {
+      if (allowanceDates.has(date)) {
+        issue("Bond allowance date cannot appear in more than one line 18 row");
+      }
+      allowanceDates.add(date);
+    }
+    try {
+      form8912AllowancePercentage({
+        bondType: bond.bond_type,
+        issueDate: bond.issue_date,
+        acquisitionDate: bond.acquisition_date,
+        maturityDate: bond.maturity_date,
+        dispositionDate: bond.disposition_date,
+        dispositionKind: bond.disposition_kind,
+      }, {
+        allowanceDates: row.allowance_dates,
+        interestPaymentDate: row.interest_payment_date,
+      });
+    } catch (error) {
+      issue(error instanceof Error ? error.message : "Invalid allowance dates");
     }
   }
 });
@@ -248,7 +286,17 @@ export function partIVRowInput(
     bondType: bond.bond_type,
     creditBaseAmount,
     creditRate: row.credit_rate,
-    creditAllowancePercentage: row.credit_allowance_percentage,
+    creditAllowancePercentage: form8912AllowancePercentage({
+      bondType: bond.bond_type,
+      issueDate: bond.issue_date,
+      acquisitionDate: bond.acquisition_date,
+      maturityDate: bond.maturity_date,
+      dispositionDate: bond.disposition_date,
+      dispositionKind: bond.disposition_kind,
+    }, {
+      allowanceDates: row.allowance_dates,
+      interestPaymentDate: row.interest_payment_date,
+    }),
     issuerElectedDirectPayment: bond.issuer_elected_direct_payment,
     isPassThroughCrebCredit: bond.is_pass_through_creb_credit,
   };
