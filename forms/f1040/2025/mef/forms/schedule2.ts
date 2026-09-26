@@ -20,6 +20,7 @@ export interface Fields {
   line17b_hsa_penalty?: number | null;
   line17e_archer_msa_tax?: number | null;
   line17f_medicare_advantage_msa_tax?: number | null;
+  line17p_form8621_interest?: number | null;
   line17z_other_additional_taxes?: number | null;
 }
 
@@ -74,6 +75,24 @@ function buildIRS1040Schedule2(
     if (values.length === 0) continue;
     const sum = values.reduce((a, b) => a + b, 0);
     children.push(element(tag, sum));
+  }
+
+  const form8621Interest = fields.line17p_form8621_interest;
+  if (typeof form8621Interest === "number" && form8621Interest > 0) {
+    const formIds = context?.documentIdsByPendingKey?.form8621 ?? [];
+    if (context?.documentIdsByPendingKey && formIds.length === 0) {
+      throw new Error("Schedule 2 line 17p needs an attached Form 8621");
+    }
+    children.push(element(
+      "InterestOnEachNetIncrInTaxAmt",
+      form8621Interest,
+      formIds.length > 0
+        ? {
+          referenceDocumentId: formIds.join(" "),
+          referenceDocumentName: "IRS8621",
+        }
+        : undefined,
+    ));
   }
 
   const adjustment = context?.pending?.form8978_reporting_year;

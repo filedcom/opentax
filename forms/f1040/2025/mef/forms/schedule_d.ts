@@ -4,12 +4,13 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 export interface Fields {
   line_1a_proceeds?: number | null;
   line_1a_cost?: number | null;
-  line_4_other_st?: number | null;
+  line_4_other_st?: number | readonly number[] | null;
   line_5_k1_st?: number | null;
   line_6_carryover?: number | null;
   line_8a_proceeds?: number | null;
   line_8a_cost?: number | null;
-  line_11_form2439?: number | null;
+  line_11_form2439?: number | readonly number[] | null;
+  line_11_qef_lt?: number | null;
   line_12_k1_lt?: number | null;
   line13_cap_gain_distrib?: number | null;
   line_12_cap_gain_dist?: number | null;
@@ -25,6 +26,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_5_k1_st", "NetSTGainOrLossFromSchK1Amt"],
   ["line_6_carryover", "STCapitalLossCarryoverAmt"],
   ["line_11_form2439", "LTGainOrLossFromFormsAmt"],
+  ["line_11_qef_lt", "LTGainOrLossFromFormsAmt"],
   ["line_12_k1_lt", "NetLTGainOrLossFromSchK1Amt"],
   ["line_14_carryover", "LTCapitalLossCarryoverAmt"],
   ["line19_unrecaptured_1250", "UnrcptrSect1250GainWrkshtAmt"],
@@ -95,10 +97,18 @@ function buildIRS1040ScheduleD(fields: Input): string {
     ),
   );
 
-  // Scalar FIELD_MAP
+  // Repeated source keys for one XSD line are summed before serialization.
+  // Map insertion order preserves the XSD's field order.
+  const mappedAmounts = new Map<string, number>();
   for (const [key, tag] of FIELD_MAP) {
     const value = f[key];
-    if (typeof value !== "number") continue;
+    const amounts = Array.isArray(value) ? value : [value];
+    for (const amount of amounts) {
+      if (typeof amount !== "number") continue;
+      mappedAmounts.set(tag, (mappedAmounts.get(tag) ?? 0) + amount);
+    }
+  }
+  for (const [tag, value] of mappedAmounts) {
     children.push(element(tag, value));
   }
 

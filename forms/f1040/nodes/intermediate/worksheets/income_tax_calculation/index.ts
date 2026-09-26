@@ -70,6 +70,7 @@ export const inputSchema = z.object({
   form8814_tax: z.number().nonnegative().optional(),
   form4972_tax: accumulable(z.number().nonnegative()).optional(),
   form8978_tax: accumulable(z.number().nonnegative()).optional(),
+  form8621_tax: accumulable(z.number().nonnegative()).optional(),
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
@@ -326,7 +327,9 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     const childElectionTax = input.form8814_tax ?? 0;
     const lumpSumTax = sumField(input.form4972_tax);
     const additionalReportingYearTax = sumField(input.form8978_tax);
-    tax += childElectionTax + lumpSumTax + additionalReportingYearTax;
+    const priorPficYearTax = sumField(input.form8621_tax);
+    tax += childElectionTax + lumpSumTax + additionalReportingYearTax +
+      priorPficYearTax;
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, {
@@ -335,6 +338,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         ...(additionalReportingYearTax > 0
           ? { form8978_tax: additionalReportingYearTax }
           : {}),
+        ...(priorPficYearTax > 0 ? { form8621_tax: priorPficYearTax } : {}),
       }),
       this.outputNodes.output(form8978_reporting_year, { regular_tax: tax }),
       // Form 6251 line 10 starts with Form 1040 line 16, including the

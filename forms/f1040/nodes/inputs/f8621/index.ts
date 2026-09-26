@@ -1,10 +1,17 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
+import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
+import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import {
+  calculateExcessEvent,
+  excessEventSchema,
+} from "./excess_distribution.ts";
+import type { ExcessEventResult } from "./excess_distribution.ts";
 
 // TY2025 — Form 8621: Information Return by a Shareholder of a PFIC or QEF
 // US shareholders of Passive Foreign Investment Companies (PFICs) file annually.
@@ -15,10 +22,6 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // 3. QEF (Qualified Electing Fund) — IRC §1293: annual inclusion of ordinary income
 //    and net capital gain from PFIC.
 //
-// TY2025 highest marginal rate: 37% (Rev. Proc. 2024-40, §3.01)
-
-const HIGHEST_RATE_2025 = 0.37;
-
 export enum PficRegime {
   EXCESS_DISTRIBUTION = "EXCESS_DISTRIBUTION",
   MTM = "MTM",
@@ -29,8 +32,8 @@ export enum PficRegime {
 export const itemSchema = z.object({
   // Legal name of the PFIC or QEF
   company_name: z.string(),
-  // EIN of PFIC or internal reference (optional)
-  company_ein_or_ref: z.string().optional(),
+  // IRS business rule F8621-026 requires an EIN or foreign-entity reference ID.
+  company_ein_or_ref: z.string().regex(/^(?:\d{2}-?\d{7}|[A-Za-z0-9]{1,50})$/),
   // Country where PFIC/QEF is incorporated (Form 8621 line A)
   country_of_incorporation: z.string(),
   // Taxation regime elected for this PFIC (Form 8621 Parts II/III/IV)
@@ -39,28 +42,31 @@ export const itemSchema = z.object({
   shares_owned: z.number().nonnegative(),
   // Fair market value of shares at end of tax year (Form 8621 Part I line 1b)
   fmv_at_year_end: z.number().nonnegative(),
-  // Total distributions received during year (Form 8621 Part II line 6; IRC §1291)
-  total_distributions: z.number().nonnegative().optional(),
-  // Excess distribution amount: amount exceeding 125% of prior 3-year average (Form 8621 Part II line 15)
-  excess_distribution_amount: z.number().nonnegative().optional(),
+  // One Part V computation per excess distribution or disposition. A
+  // year-by-year allocation and its supporting explanation are required.
+  excess_events: z.array(excessEventSchema).optional(),
   // QEF: pro-rata share of ordinary income (Form 8621 Part III line 6a; IRC §1293(a)(1)(A))
   qef_ordinary_income: z.number().nonnegative().optional(),
+  qef_ordinary_951_or_1293g_reduction: z.number().nonnegative().optional(),
   // QEF: pro-rata share of net capital gain (Form 8621 Part III line 6b; IRC §1293(a)(1)(B))
   qef_capital_gain: z.number().nonnegative().optional(),
-  // MTM: mark-to-market gain or (loss) for year (Form 8621 Part IV line 9; IRC §1296(a))
-  mtm_gain_loss: z.number().optional(),
-});
+  qef_capital_951_or_1293g_reduction: z.number().nonnegative().optional(),
+  // Form 8621 Part IV lines 10a-12. A loss is limited by unreversed prior
+  // inclusions, rather than accepted as an arbitrary signed amount.
+  mtm_adjusted_basis_at_year_end: z.number().nonnegative().optional(),
+  mtm_unreversed_inclusions: z.number().nonnegative().optional(),
+}).strict();
 
 export const inputSchema = z.object({
   f8621s: z.array(itemSchema).min(1),
 });
 
-type F8621Item = z.infer<typeof itemSchema>;
+export type F8621Item = z.infer<typeof itemSchema>;
 type F8621Items = F8621Item[];
 
-// Excess distribution items
-function excessDistributionItems(items: F8621Items): F8621Items {
-  return items.filter((item) => item.regime === PficRegime.EXCESS_DISTRIBUTION);
+export interface Form8621Lines {
+  item: F8621Item;
+  excessEvents: ExcessEventResult[];
 }
 
 // MTM items
@@ -73,61 +79,159 @@ function qefItems(items: F8621Items): F8621Items {
   return items.filter((item) => item.regime === PficRegime.QEF);
 }
 
-// Excess distribution: tax at highest rate on excess amount (simplified §1291 computation)
-// Full §1291 requires per-year allocation and interest charge — user completes on form.
-function totalExcessDistributionTax(items: F8621Items): number {
-  return excessDistributionItems(items).reduce(
-    (sum, item) => sum + (item.excess_distribution_amount ?? 0) * HIGHEST_RATE_2025,
-    0,
-  );
-}
-
 // MTM: total gain/loss across all MTM items
 function totalMtmGainLoss(items: F8621Items): number {
-  return mtmItems(items).reduce(
-    (sum, item) => sum + (item.mtm_gain_loss ?? 0),
-    0,
-  );
+  return mtmItems(items).reduce((sum, item) => {
+    if (item.mtm_adjusted_basis_at_year_end === undefined) {
+      throw new Error(
+        "Form 8621 mark-to-market needs adjusted year-end stock basis",
+      );
+    }
+    const difference = item.fmv_at_year_end -
+      item.mtm_adjusted_basis_at_year_end;
+    if (difference >= 0) return sum + difference;
+    if (item.mtm_unreversed_inclusions === undefined) {
+      throw new Error(
+        "Form 8621 mark-to-market loss needs unreversed prior inclusions",
+      );
+    }
+    return sum - Math.min(-difference, item.mtm_unreversed_inclusions);
+  }, 0);
 }
 
-// QEF: total ordinary income + capital gain across all QEF items
-function totalQefIncome(items: F8621Items): number {
+// QEF ordinary earnings belong on Schedule 1. Its net capital gain instead
+// belongs on Schedule D as long-term gain.
+function totalQefOrdinaryIncome(items: F8621Items): number {
   return qefItems(items).reduce(
-    (sum, item) => sum + (item.qef_ordinary_income ?? 0) + (item.qef_capital_gain ?? 0),
+    (sum, item) =>
+      sum + (item.qef_ordinary_income ?? 0) -
+      (item.qef_ordinary_951_or_1293g_reduction ?? 0),
     0,
   );
 }
 
-// Total schedule1 income: MTM gain/loss + QEF income
-function totalSchedule1Income(items: F8621Items): number {
-  return totalMtmGainLoss(items) + totalQefIncome(items);
+function validateHoldings(items: F8621Items): void {
+  const identifiers = items.map((item) => item.company_ein_or_ref);
+  if (new Set(identifiers).size !== identifiers.length) {
+    throw new Error(
+      "Form 8621 needs one filing per unique PFIC/QEF identifier",
+    );
+  }
+  for (const item of items) {
+    if (
+      item.regime !== PficRegime.QEF &&
+      ((item.qef_ordinary_income ?? 0) > 0 ||
+        (item.qef_ordinary_951_or_1293g_reduction ?? 0) > 0 ||
+        (item.qef_capital_gain ?? 0) > 0 ||
+        (item.qef_capital_951_or_1293g_reduction ?? 0) > 0)
+    ) {
+      throw new Error("Form 8621 QEF earnings require the QEF regime");
+    }
+    if (
+      item.regime !== PficRegime.MTM &&
+      (item.mtm_adjusted_basis_at_year_end !== undefined ||
+        item.mtm_unreversed_inclusions !== undefined)
+    ) {
+      throw new Error("Form 8621 mark-to-market basis requires the MTM regime");
+    }
+    if (
+      item.regime === PficRegime.QEF &&
+      (item.qef_ordinary_income === undefined ||
+        item.qef_capital_gain === undefined)
+    ) {
+      throw new Error(
+        "Form 8621 QEF needs both pro rata ordinary earnings and capital gain facts",
+      );
+    }
+    if (
+      (item.qef_ordinary_951_or_1293g_reduction ?? 0) >
+        (item.qef_ordinary_income ?? 0) ||
+      (item.qef_capital_951_or_1293g_reduction ?? 0) >
+        (item.qef_capital_gain ?? 0)
+    ) {
+      throw new Error(
+        "Form 8621 QEF section 951 or 1293(g) reduction exceeds pro rata income",
+      );
+    }
+    if (
+      item.regime !== PficRegime.EXCESS_DISTRIBUTION &&
+      item.excess_events?.length
+    ) {
+      throw new Error(
+        "Form 8621 excess events require the section 1291 regime",
+      );
+    }
+  }
 }
 
-function schedule2OutputNodes(items: F8621Items): NodeOutput[] {
-  const tax = totalExcessDistributionTax(items);
-  if (tax === 0) return [];
-  return [output(schedule2, { line17z_other_additional_taxes: tax })];
+function calculatedLines(items: F8621Items): Form8621Lines[] {
+  return items.map((item) => ({
+    item,
+    excessEvents: (item.excess_events ?? []).map(calculateExcessEvent),
+  }));
 }
 
-function schedule1OutputNodes(items: F8621Items): NodeOutput[] {
-  const income = totalSchedule1Income(items);
-  if (income === 0) return [];
-  return [output(schedule1, { line8z_other: income })];
+function totalEventLine(
+  lines: readonly Form8621Lines[],
+  pick: (event: ExcessEventResult) => number,
+): number {
+  return lines.flatMap((line) => line.excessEvents).reduce(
+    (sum, event) => sum + pick(event),
+    0,
+  );
 }
 
 class F8621Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8621";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, schedule2]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    schedule2,
+    schedule_d,
+    income_tax_calculation,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
-    const parsed = inputSchema.parse(input);
-    const { f8621s } = parsed;
+    const { f8621s } = inputSchema.parse(input);
+    validateHoldings(f8621s);
+    const lines = calculatedLines(f8621s);
+    const currentAndPrePficIncome = totalEventLine(
+      lines,
+      (event) => event.line16b_current_and_pre_pfic_income,
+    );
+    const additionalTax = totalEventLine(
+      lines,
+      (event) => event.line16e_additional_tax,
+    );
+    const interest = totalEventLine(
+      lines,
+      (event) => event.line16f_interest,
+    );
+
+    const ordinaryIncome = totalMtmGainLoss(f8621s) +
+      totalQefOrdinaryIncome(f8621s) + currentAndPrePficIncome;
+    const capitalGain = qefItems(f8621s).reduce(
+      (sum, item) =>
+        sum + (item.qef_capital_gain ?? 0) -
+        (item.qef_capital_951_or_1293g_reduction ?? 0),
+      0,
+    );
 
     return {
       outputs: [
-        ...schedule2OutputNodes(f8621s),
-        ...schedule1OutputNodes(f8621s),
+        { nodeType: "form8621", fields: { items: lines } },
+        ...(ordinaryIncome !== 0
+          ? [output(schedule1, { line8z_other: ordinaryIncome })]
+          : []),
+        ...(capitalGain > 0
+          ? [output(schedule_d, { line_11_qef_lt: capitalGain })]
+          : []),
+        ...(additionalTax > 0
+          ? [output(income_tax_calculation, { form8621_tax: additionalTax })]
+          : []),
+        ...(interest > 0
+          ? [output(schedule2, { line17p_form8621_interest: interest })]
+          : []),
       ],
     };
   }

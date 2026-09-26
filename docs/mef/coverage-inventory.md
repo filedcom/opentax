@@ -107,11 +107,11 @@ facts that remain incomplete. This file must be expanded after comparing IRS
 instructions and the full ReturnData1040 document list with the agreed product
 requirements. It is not yet the completed `INV-01` audit.
 
-## Other in-scope Form 1040 documents without a registered serializer
+## Newly registered in-scope document under audit
 
 | Document | Current evidence |
 | -------- | ---------------- |
-| `IRS8621` and applicable statements | The input node exists, but its excess-distribution tax uses an incorrect 2025-rate estimate and Schedule 2 route; no native MeF serializer is registered. See `GAP-8621` in `product_board.md`. |
+| `IRS8621` and applicable statements | Native Form 8621 and one Part V holding-period statement per affected holding are registered in the current build pass. Tax, interest, QEF gain, and MTM loss routes were changed, but tests and local XSD have not run. Several source, election, attachment, and business-rule paths remain open. See `GAP-8621` in `product_board.md`. |
 
 ## Other discovered in-scope source path requiring verification
 

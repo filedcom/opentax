@@ -32,6 +32,8 @@ import { form8396 } from "./f8396.ts";
 import { form8582 } from "./f8582.ts";
 import { form8606 } from "./f8606.ts";
 import { form8615 } from "./f8615.ts";
+import { form8621 } from "./f8621.ts";
+import { form8621ExcessStatement } from "./f8621_excess_statement.ts";
 import { form8814 } from "./f8814.ts";
 import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
@@ -150,6 +152,8 @@ export const ALL_MEF_FORMS = [
   form8606,
   // Form 8615
   form8615,
+  // Form 8621, one document per PFIC/QEF holding.
+  form8621,
   // Form 8814 (one document per child)
   form8814,
   // Form 8815
@@ -210,4 +214,6 @@ export const ALL_MEF_FORMS = [
   // Form 8283 vehicle acknowledgment follows numbered forms and other
   // supporting statements in ReturnData1040.xsd.
   form8283VehicleStatement,
+  // Form 8621 Part V holding-period computation statements follow numbered forms.
+  form8621ExcessStatement,
 ] as const;
