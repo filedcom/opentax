@@ -112,6 +112,12 @@ builder cases are written but unrun. This builder is not registered in return
 assembly, has not passed local XSD or business-rule validation, and does not
 cover passive credits, other business-credit sources, or carryovers. The
 Schedule 3 allowed-credit route is still blocked for positive Form 8835 credit.
+The current build pass also has an unrun pure bridge from finalized Form 1040,
+Schedules 2 and 3, and Form 6251 lines into the nonpassive Form 3800 limit. It
+subtracts the specific Form 3800 line 7 and 10b exclusions instead of letting
+the general business credit count against itself. That bridge is not yet wired
+to graph finalization. Other GBC producers still send gross source credits
+straight to Schedule 3 line 6a and require a common limitation pass.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old

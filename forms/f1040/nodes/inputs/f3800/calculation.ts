@@ -56,6 +56,92 @@ export type Form3800NonpassiveLines = {
   unusedSpecifiedCredit: number;
 };
 
+/** Printed, finalized return lines needed for an individual's Form 3800 Part II. */
+export type Form3800IndividualReturnContext = {
+  readonly filingStatus: FilingStatus;
+  readonly spouseHasBusinessCredit?: boolean;
+  readonly form1040Line16: number;
+  readonly schedule2Line1z: number;
+  readonly educationCreditRecaptureTaxIncludedInLine7Sources: number;
+  readonly form8621TaxIncludedInLine7Sources: number;
+  readonly deferred965TaxIncludedInLine7Sources: number;
+  readonly triggering965TaxIncludedInLine7Sources: number;
+  readonly form6251Line11: number;
+  readonly form6251Line9: number;
+  readonly form1040Line19: number;
+  readonly schedule3Line1: number;
+  readonly schedule3Line2: number;
+  readonly schedule3Line3: number;
+  readonly schedule3Line4: number;
+  readonly schedule3Line5a: number;
+  readonly schedule3Line5b: number;
+  readonly schedule3Line7: number;
+  readonly schedule3Line6aGbc: number;
+  readonly schedule3Line6bPriorMinimumTax: number;
+  readonly form8912CreditInSchedule3Line7: number;
+};
+
+/**
+ * Derive Form 3800 lines 7, 8, 10a, 10b, and 14 from the finalized return.
+ * Source: 2025 Instructions for Form 3800, Part II lines 7 and 10b.
+ */
+export function deriveForm3800NonpassiveInput(
+  returnLines: Form3800IndividualReturnContext,
+  credits: Form3800CreditClassification,
+): Form3800NonpassiveInput {
+  for (const [name, amount] of Object.entries(returnLines)) {
+    if (
+      typeof amount === "number" && (!Number.isFinite(amount) || amount < 0)
+    ) {
+      throw new Error(
+        `Form 3800 return source ${name} must be a nonnegative finite amount`,
+      );
+    }
+  }
+  const regularTax = returnLines.form1040Line16 + returnLines.schedule2Line1z -
+    returnLines.educationCreditRecaptureTaxIncludedInLine7Sources -
+    returnLines.form8621TaxIncludedInLine7Sources -
+    returnLines.deferred965TaxIncludedInLine7Sources -
+    returnLines.triggering965TaxIncludedInLine7Sources;
+  const schedule3OtherLine7 = returnLines.schedule3Line7 -
+    returnLines.schedule3Line6aGbc -
+    returnLines.schedule3Line6bPriorMinimumTax -
+    returnLines.form8912CreditInSchedule3Line7;
+  if (regularTax < 0 || schedule3OtherLine7 < 0) {
+    throw new Error(
+      "Form 3800 return lines do not reconcile after required exclusions",
+    );
+  }
+  if (
+    returnLines.filingStatus === FilingStatus.MFS &&
+    returnLines.spouseHasBusinessCredit === undefined
+  ) {
+    throw new Error(
+      "Form 3800 MFS limit needs the spouse business-credit answer",
+    );
+  }
+  const priorAllowableCredits = returnLines.form1040Line19 +
+    returnLines.schedule3Line2 + returnLines.schedule3Line3 +
+    returnLines.schedule3Line4 + returnLines.schedule3Line5a +
+    returnLines.schedule3Line5b + schedule3OtherLine7;
+  const common = {
+    regularTax,
+    alternativeMinimumTax: returnLines.form6251Line11,
+    foreignTaxCredit: returnLines.schedule3Line1,
+    priorAllowableCredits,
+    tentativeMinimumTax: returnLines.form6251Line9,
+    standardCredit: credits.standardCredit,
+    specifiedCredit: credits.specifiedCredit,
+  };
+  return returnLines.filingStatus === FilingStatus.MFS
+    ? {
+      ...common,
+      filingStatus: FilingStatus.MFS,
+      spouseHasBusinessCredit: returnLines.spouseHasBusinessCredit === true,
+    }
+    : { ...common, filingStatus: returnLines.filingStatus };
+}
+
 export function calculateForm3800Nonpassive(
   input: Form3800NonpassiveInput,
 ): Form3800NonpassiveLines {
