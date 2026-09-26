@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { scheduleB } from "./schedule_b.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -149,10 +149,10 @@ Deno.test("schedule_b: all 3 fields present: all elements emitted", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Section 7: String fields are silently ignored
+// Section 7: Source-backed interest rows
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b: payer_name string field is silently ignored", () => {
+Deno.test("schedule_b: payer name and amount emit an IRS interest row", () => {
   const result = scheduleB.build({
     payer_name: "Bank of America",
     taxable_interest_net: 3000,
@@ -161,6 +161,68 @@ Deno.test("schedule_b: payer_name string field is silently ignored", () => {
     result,
     "<TaxableInterestSubtotalAmt>3000</TaxableInterestSubtotalAmt>",
   );
-  assertNotIncludes(result, "payer_name");
-  assertNotIncludes(result, "Bank of America");
+  assertStringIncludes(
+    result,
+    "<BusinessNameLine1Txt>Bank of America</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(result, "<InterestAmt>3000</InterestAmt>");
+  assertStringIncludes(result, 'interestSubtotalLiteralCd="INTEREST SUBTOTAL"');
+  assertStringIncludes(
+    result,
+    "<CalculatedTotalTaxableIntAmt>3000</CalculatedTotalTaxableIntAmt>",
+  );
+});
+
+Deno.test("schedule_b: multiple source interest rows reconcile to line 2", () => {
+  const xml = scheduleB.build({
+    payer_name: ["Bank A", "Bond issuer"],
+    taxable_interest_net: [100, 275],
+    print_line2_total: 375,
+    print_line4_total: 375,
+  });
+  assertEquals(xml.split("<Form1040SchBPartIGroup2>").length - 1, 2);
+  assertStringIncludes(
+    xml,
+    "<TaxableInterestSubtotalAmt>375</TaxableInterestSubtotalAmt>",
+  );
+  assertThrows(
+    () =>
+      scheduleB.build({
+        payer_name: ["Bank A"],
+        taxable_interest_net: [100, 275],
+      }),
+    Error,
+    "pair one-to-one",
+  );
+});
+
+Deno.test("schedule_b: source interest detail follows the IRS 2025 schema", async () => {
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Common/IRS1040ScheduleB/IRS1040ScheduleB.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsd);
+  } catch {
+    return;
+  }
+  const xml = scheduleB.build({
+    payer_name: ["Bank A", "Bond issuer"],
+    taxable_interest_net: [100, 275],
+  }).replace(
+    "<IRS1040ScheduleB>",
+    '<IRS1040ScheduleB xmlns="http://www.irs.gov/efile">',
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });

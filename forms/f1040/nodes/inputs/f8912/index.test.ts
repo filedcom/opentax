@@ -3,6 +3,7 @@ import {
   BondType,
   f8912,
   interestFromItem,
+  interestRowsFromItem,
   itemSchema,
   sourceLinesFromItem,
 } from "./index.ts";
@@ -240,6 +241,18 @@ Deno.test("Form 8912: carryforward does not duplicate current-year deemed intere
     })).success,
     false,
   );
+});
+
+Deno.test("Form 8912: taxable interest stays paired with its bond issuer", () => {
+  const parsed = itemSchema.parse(item({
+    unreported_bonds: [{ ...unreported, issuer_name: "Other bond issuer" }],
+  }));
+  const rows = interestRowsFromItem(parsed);
+  assertEquals(rows.map((row) => row.payerName), [
+    "Issuer",
+    "Other bond issuer",
+  ]);
+  assertEquals(rows.map((row) => row.interest.taxableInterest), [100, 175]);
 });
 
 Deno.test("Form 8912: unreported pass-through CREB retains its separate limit flag", () => {
