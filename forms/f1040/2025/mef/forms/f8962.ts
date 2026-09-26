@@ -13,6 +13,7 @@ interface MonthlyRow {
 
 export interface Fields {
   qsehra_ind?: boolean | null;
+  mfs_exception_ind?: boolean | null;
   household_size?: number | null;
   taxpayer_modified_agi?: number | null;
   dependents_modified_agi?: number | null;
@@ -40,6 +41,7 @@ export interface Fields {
 type Input = Partial<Fields> & Record<string, unknown>;
 
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
+  ["mfs_exception_ind", "MarriedFilingSeparatelyExcInd"],
   ["household_size", "TotalExemptionsCnt"],
   ["taxpayer_modified_agi", "ModifiedAGIAmt"],
   ["dependents_modified_agi", "TotalDependentsModifiedAGIAmt"],
@@ -130,6 +132,9 @@ function buildIRS8962(fields: Input): string {
   ];
   return elements("IRS8962", [
     element("QSEHRAInd", fields.qsehra_ind === true ? "true" : "false"),
+    fields.mfs_exception_ind === true
+      ? element("MarriedFilingSeparatelyExcInd", "X")
+      : "",
     element("TotalExemptionsCnt", fields.household_size),
     element("ModifiedAGIAmt", fields.taxpayer_modified_agi),
     numberElement(

@@ -100,6 +100,22 @@ Deno.test("general routes below-100%-FPL Marketplace eligibility to Form 8962", 
   );
 });
 
+Deno.test("general routes reviewed MFS Marketplace status to Form 8962", () => {
+  const status = {
+    basis: "no_exception",
+    exception_reviewed: true,
+    no_one_can_claim_taxpayer: true,
+    no_shared_policy: true,
+    all_covered_individuals_lawfully_present: true,
+    no_self_employed_health_insurance_deduction: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    ptc_mfs_status: status,
+  });
+  assertEquals(findOutput(result, "form8962")?.fields.mfs_ptc_status, status);
+});
+
 Deno.test("general excludes refund-only dependents and flags missing filing facts", () => {
   const result = compute({
     filing_status: FilingStatus.Single,

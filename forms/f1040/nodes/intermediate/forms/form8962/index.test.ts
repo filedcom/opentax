@@ -12,6 +12,14 @@ const nonApplicableBelowFpl = {
   no_self_employed_health_insurance_deduction: true,
   no_alternative_marriage_calculation: true,
 } as const;
+const mfsNoException = {
+  basis: "no_exception",
+  exception_reviewed: true,
+  no_one_can_claim_taxpayer: true,
+  no_shared_policy: true,
+  all_covered_individuals_lawfully_present: true,
+  no_self_employed_health_insurance_deduction: true,
+} as const;
 
 function compute(input: Record<string, unknown>) {
   return form8962.compute(context, {
@@ -478,4 +486,105 @@ Deno.test("MFS cannot claim PTC without verified exception and allocation facts"
     Error,
     "MFS needs verified exception and policy-allocation facts",
   );
+});
+
+Deno.test("MFS without exception files APTC-only repayment subject to Table 5", () => {
+  const result = annual(30_000, 4_000, 4_000, 5_000, {
+    filing_status: FilingStatus.MFS,
+    mfs_ptc_status: mfsNoException,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.total_premium_tax_credit, 0);
+  assertEquals(form?.annual_aptc, 5_000);
+  assertEquals(form?.annual_premium, undefined);
+  assertEquals(form?.mfs_exception_ind, undefined);
+  assertEquals(form?.repayment_limitation, 750);
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 750);
+  assertEquals(fields(result, "schedule3"), undefined);
+  assertEquals(
+    annual(30_000, 4_000, 4_000, 0, {
+      filing_status: FilingStatus.MFS,
+      mfs_ptc_status: mfsNoException,
+    }).outputs,
+    [],
+  );
+  assertThrows(
+    () =>
+      annual(30_000, 4_000, 4_000, 5_000, {
+        filing_status: FilingStatus.MFS,
+        mfs_ptc_status: { ...mfsNoException, no_shared_policy: false },
+      }),
+    Error,
+    "no_shared_policy",
+  );
+});
+
+Deno.test("MFS APTC-only repayment has no Table 5 cap at 400% FPL", () => {
+  const result = annual(70_000, 4_000, 4_000, 5_000, {
+    filing_status: FilingStatus.MFS,
+    mfs_ptc_status: mfsNoException,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.federal_poverty_pct, 401);
+  assertEquals(form?.repayment_limitation, undefined);
+  assertEquals(
+    fields(result, "schedule2")?.line1a_excess_advance_premium,
+    5_000,
+  );
+});
+
+Deno.test("MFS without exception reports monthly APTC without PTC columns", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    household_size: 1,
+    taxpayer_modified_agi: 30_000,
+    monthly_aptcs: Array(12).fill(100),
+    mfs_ptc_status: mfsNoException,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.total_premium_tax_credit, 0);
+  const rows = form?.monthly_ptc_rows as { month_code: string; aptc: number }[];
+  assertEquals(rows.length, 12);
+  assertEquals(rows[0], { month_code: "JANUARY", aptc: 100 });
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 750);
+});
+
+Deno.test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => {
+  const status = {
+    basis: "domestic_abuse",
+    living_apart_at_filing: true,
+    unable_to_file_joint_due_to_exception: true,
+    prior_consecutive_exception_years: 0,
+    no_one_can_claim_taxpayer: true,
+    no_shared_policy: true,
+  };
+  const result = annual(30_000, 6_000, 7_200, 1_200, {
+    filing_status: FilingStatus.MFS,
+    mfs_ptc_status: status,
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.mfs_exception_ind, true);
+  assertEquals(form?.total_premium_tax_credit, 6_000);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 4_800);
+  assertThrows(
+    () =>
+      annual(30_000, 6_000, 7_200, 1_200, {
+        filing_status: FilingStatus.MFS,
+        mfs_ptc_status: {
+          ...status,
+          prior_consecutive_exception_years: 3,
+        },
+      }),
+    Error,
+    "prior_consecutive_exception_years",
+  );
+  const abandonment = annual(30_000, 6_000, 7_200, 1_200, {
+    filing_status: FilingStatus.MFS,
+    mfs_ptc_status: {
+      ...status,
+      basis: "spousal_abandonment",
+      prior_consecutive_exception_years: 2,
+    },
+  });
+  assertEquals(fields(abandonment, "form8962")?.mfs_exception_ind, true);
 });

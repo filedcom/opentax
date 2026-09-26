@@ -287,6 +287,99 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: MFS without exception files family-only APTC repayment",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFS,
+    spouse_first_name: "Other",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "222-33-4444",
+    mfs_spouse_itemizing: false,
+    ptc_mfs_status: {
+      basis: "no_exception",
+      exception_reviewed: true,
+      no_one_can_claim_taxpayer: true,
+      no_shared_policy: true,
+      all_covered_individuals_lawfully_present: true,
+      no_self_employed_health_insurance_deduction: true,
+    },
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      monthly_premiums: Array(12).fill(250),
+      monthly_slcsps: Array(12).fill(350),
+      monthly_aptcs: Array(12).fill(200),
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 0);
+  assertEquals(result.pending.schedule2?.line1a_excess_advance_premium, 750);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<AnnualAdvancedPTCAmt>2400</AnnualAdvancedPTCAmt>",
+  );
+  assertEquals(xml.includes("<MarriedFilingSeparatelyExcInd>"), false);
+  await validateXsd(xml, "MFS APTC-only repayment without exception");
+});
+
+Deno.test({
+  name: "XSD: MFS abuse exception marks Form 8962 line A and claims PTC",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFS,
+    spouse_first_name: "Other",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "222-33-4444",
+    mfs_spouse_itemizing: false,
+    ptc_mfs_status: {
+      basis: "domestic_abuse",
+      living_apart_at_filing: true,
+      unable_to_file_joint_due_to_exception: true,
+      prior_consecutive_exception_years: 0,
+      no_one_can_claim_taxpayer: true,
+      no_shared_policy: true,
+    },
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      monthly_premiums: Array(12).fill(500),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(100),
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.mfs_exception_ind, true);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 4_800);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<MarriedFilingSeparatelyExcInd>X</MarriedFilingSeparatelyExcInd>",
+  );
+  await validateXsd(xml, "MFS Form 8962 abuse exception");
+});
+
+Deno.test({
   name: "XSD: two same-state Marketplace policies use one SLCSP benchmark",
   sanitizeOps: false,
   sanitizeResources: false,

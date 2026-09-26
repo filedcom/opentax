@@ -75,3 +75,10 @@ Deno.test("Form 8962 PDF includes APTC-only monthly repayment", () => {
     false,
   );
 });
+
+Deno.test("Form 8962 PDF maps MFS exception certification to line A", () => {
+  assertEquals(
+    mappedField(form8962Pdf, "mfs_exception_ind"),
+    "topmostSubform[0].Page1[0].c1_1[0]",
+  );
+});
