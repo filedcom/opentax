@@ -2,10 +2,12 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
+  payer_name?: string | readonly string[] | null;
   taxable_interest_net?: number | readonly number[] | null;
   ee_bond_exclusion?: number | null;
   ordinaryDividends?: number | readonly number[] | null;
   print_line2_total?: number | null;
+  print_line4_total?: number | null;
   print_line6_total?: number | null;
 }
 
@@ -34,6 +36,46 @@ function buildIRS1040ScheduleB(fields: Input): string {
   const interest = typeof fields.print_line2_total === "number"
     ? fields.print_line2_total
     : sum(fields.taxable_interest_net);
+  const interestAmounts = typeof fields.taxable_interest_net === "number"
+    ? [fields.taxable_interest_net]
+    : Array.isArray(fields.taxable_interest_net)
+    ? [...fields.taxable_interest_net]
+    : [];
+  const interestPayers = typeof fields.payer_name === "string"
+    ? [fields.payer_name]
+    : Array.isArray(fields.payer_name)
+    ? [...fields.payer_name]
+    : [];
+  if (
+    interestAmounts.length > 0 && interestPayers.length > 0 &&
+    interestPayers.length !== interestAmounts.length
+  ) {
+    throw new Error(
+      "Schedule B interest payer names and amounts must pair one-to-one",
+    );
+  }
+  if (interestPayers.some((name) => !name.trim())) {
+    throw new Error("Schedule B needs a name for each interest payer");
+  }
+  const interestRows = (interestAmounts.length > 0 ? interestPayers : []).map((
+    name,
+    index,
+  ) =>
+    elements("Form1040SchBPartIGroup2", [
+      elements("InterestPayerName", [element("BusinessNameLine1Txt", name)]),
+      element("InterestAmt", interestAmounts[index]),
+    ])
+  );
+  if (
+    interestRows.length > 0 && interest !== undefined &&
+    Math.abs(
+        interestAmounts.reduce((total, amount) => total + amount, 0) - interest,
+      ) > 0.000001
+  ) {
+    throw new Error(
+      "Schedule B interest payer rows do not reconcile to line 2",
+    );
+  }
   const dividends = typeof fields.print_line6_total === "number"
     ? fields.print_line6_total
     : sum(fields.ordinaryDividends);
@@ -63,12 +105,24 @@ function buildIRS1040ScheduleB(fields: Input): string {
     ]);
   });
   const children = [
+    ...interestRows,
+    interestRows.length > 0 && interest !== undefined
+      ? element("InterestSubtotalAmt", interest, {
+        interestSubtotalLiteralCd: "INTEREST SUBTOTAL",
+      })
+      : "",
     interest === undefined
       ? ""
       : element("TaxableInterestSubtotalAmt", interest),
     typeof fields.ee_bond_exclusion === "number"
       ? element("ExcludableSavingsBondIntAmt", fields.ee_bond_exclusion)
       : "",
+    interest === undefined ? "" : element(
+      "CalculatedTotalTaxableIntAmt",
+      typeof fields.print_line4_total === "number"
+        ? fields.print_line4_total
+        : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0)),
+    ),
     ...rows,
     dividends === undefined
       ? ""

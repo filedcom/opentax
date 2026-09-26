@@ -228,34 +228,15 @@ export function sourceLinesFromItem(
 }
 
 export function interestFromItem(item: F8912Item): Form8912BondInterest {
-  const reported = item.reported_bonds.map((bond) =>
-    calculateForm8912BondInterest(
-      bond.credit_amount,
-      bond.purchase_accrued_interest,
-      bond.sale_accrued_interest,
-    )
-  );
-  const unreported = item.unreported_bonds.map((bond) => {
-    const credit = bond.line18_rows.reduce(
-      (sum, row) =>
-        sum +
-        calculateForm8912PartIVBond(partIVRowInput(bond, row)).line20,
-      0,
-    );
-    return calculateForm8912BondInterest(
-      credit,
-      bond.purchase_accrued_interest,
-      bond.sale_accrued_interest,
-    );
-  });
-  return [...reported, ...unreported].reduce(
-    (sum, bond) => ({
-      creditInterest: sum.creditInterest + bond.creditInterest,
+  return interestRowsFromItem(item).reduce(
+    (sum, { interest }) => ({
+      creditInterest: sum.creditInterest + interest.creditInterest,
       purchaseAccruedInterestRecoveredAsBasis:
         sum.purchaseAccruedInterestRecoveredAsBasis +
-        bond.purchaseAccruedInterestRecoveredAsBasis,
-      saleAccruedInterest: sum.saleAccruedInterest + bond.saleAccruedInterest,
-      taxableInterest: sum.taxableInterest + bond.taxableInterest,
+        interest.purchaseAccruedInterestRecoveredAsBasis,
+      saleAccruedInterest: sum.saleAccruedInterest +
+        interest.saleAccruedInterest,
+      taxableInterest: sum.taxableInterest + interest.taxableInterest,
     }),
     {
       creditInterest: 0,
@@ -264,6 +245,38 @@ export function interestFromItem(item: F8912Item): Form8912BondInterest {
       taxableInterest: 0,
     },
   );
+}
+
+export function interestRowsFromItem(
+  item: F8912Item,
+): ReadonlyArray<
+  { readonly payerName: string; readonly interest: Form8912BondInterest }
+> {
+  const reported = item.reported_bonds.map((bond) => ({
+    payerName: bond.issuer_name,
+    interest: calculateForm8912BondInterest(
+      bond.credit_amount,
+      bond.purchase_accrued_interest,
+      bond.sale_accrued_interest,
+    ),
+  }));
+  const unreported = item.unreported_bonds.map((bond) => {
+    const credit = bond.line18_rows.reduce(
+      (sum, row) =>
+        sum +
+        calculateForm8912PartIVBond(partIVRowInput(bond, row)).line20,
+      0,
+    );
+    return {
+      payerName: bond.issuer_name,
+      interest: calculateForm8912BondInterest(
+        credit,
+        bond.purchase_accrued_interest,
+        bond.sale_accrued_interest,
+      ),
+    };
+  });
+  return [...reported, ...unreported];
 }
 
 class F8912Node extends TaxNode<typeof inputSchema> {
