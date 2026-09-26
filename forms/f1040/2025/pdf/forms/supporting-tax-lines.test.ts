@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import type { PdfFormDescriptor } from "../form-descriptor.ts";
 import { form8959Pdf } from "./f8959.ts";
 import { form8960Pdf } from "./f8960.ts";
@@ -80,5 +80,90 @@ Deno.test("Form 8962 PDF maps MFS exception certification to line A", () => {
   assertEquals(
     mappedField(form8962Pdf, "mfs_exception_ind"),
     "topmostSubform[0].Page1[0].c1_1[0]",
+  );
+});
+
+Deno.test("Form 8962 PDF maps its calculated lines and monthly table to page 1", () => {
+  assertEquals(
+    mappedField(form8962Pdf, "federal_poverty_line"),
+    "topmostSubform[0].Page1[0].f1_7[0]",
+  );
+  assertEquals(
+    mappedField(form8962Pdf, "total_premium_tax_credit"),
+    "topmostSubform[0].Page1[0].f1_91[0]",
+  );
+  assertEquals(
+    mappedField(form8962Pdf, "pdf_net_premium_tax_credit"),
+    "topmostSubform[0].Page1[0].f1_93[0]",
+  );
+  assertEquals(
+    mappedField(form8962Pdf, "excess_advance_premium"),
+    "topmostSubform[0].Page1[0].f1_96[0]",
+  );
+  assertEquals(
+    mappedField(form8962Pdf, "pdf_month_1_premium"),
+    "topmostSubform[0].Page1[0].Part2Table2[0].BodyRow1[0].f1_19[0]",
+  );
+  assertEquals(
+    mappedField(form8962Pdf, "pdf_month_12_aptc"),
+    "topmostSubform[0].Page1[0].Part2Table2[0].BodyRow12[0].f1_90[0]",
+  );
+});
+
+Deno.test("Form 8962 PDF projects shared policy percentages without dollar rounding", () => {
+  const allocation = {
+    policy_number: "POLICY-1",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 6,
+    premium_pct: 0.67,
+    slcsp_pct: 0.67,
+    aptc_pct: 0.67,
+  };
+  const projected = form8962Pdf.projectFields?.({
+    fpl_region: "contiguous",
+    applicable_figure: 0.0200,
+    monthly_ptc_rows: [{
+      month_code: "JANUARY",
+      premium: 804,
+      slcsp: 1_005,
+      contribution: 50,
+      max_assistance: 955,
+      allowed_credit: 804,
+      aptc: 536,
+    }],
+    shared_policy_allocations: [allocation],
+    total_premium_tax_credit: 804,
+    total_advance_ptc: 536,
+    net_premium_tax_credit: 268,
+  }, {});
+  assertEquals(projected?.pdf_applicable_figure, "0.0200");
+  assertEquals(projected?.pdf_line9_yes, true);
+  assertEquals(projected?.pdf_line10_no, true);
+  assertEquals(projected?.pdf_line34_yes, true);
+  assertEquals(projected?.pdf_month_1_aptc, "536");
+  assertEquals(projected?.pdf_allocation_1_start_month, "01");
+  assertEquals(projected?.pdf_allocation_1_premium_pct, "0.67");
+  assertEquals(
+    mappedField(form8962Pdf, "pdf_allocation_1_premium_pct"),
+    "topmostSubform[0].Page2[0].Lines30e-g[0].f2_5[0]",
+  );
+});
+
+Deno.test("Form 8962 PDF stops before dropping a fifth allocation row", () => {
+  assertThrows(
+    () =>
+      form8962Pdf.projectFields?.({
+        monthly_ptc_rows: [],
+        shared_policy_allocations: Array(5).fill({
+          policy_number: "POLICY-1",
+          other_taxpayer_ssn: "222334444",
+          start_month: 1,
+          end_month: 1,
+          premium_pct: 0.5,
+        }),
+      }, {}),
+    Error,
+    "Part IV overflow statement",
   );
 });
