@@ -3,6 +3,7 @@ import { FilingStatus } from "../../types.ts";
 import {
   calculateForm3800Nonpassive,
   classifyForm8835Credits,
+  deriveForm3800NonpassiveInput,
 } from "./calculation.ts";
 
 function input(overrides: Record<string, number> = {}) {
@@ -18,6 +19,72 @@ function input(overrides: Record<string, number> = {}) {
     ...overrides,
   };
 }
+
+const returnLines = {
+  filingStatus: FilingStatus.Single,
+  form1040Line16: 42_000,
+  schedule2Line1z: 3_000,
+  educationCreditRecaptureTaxIncludedInLine7Sources: 500,
+  form8621TaxIncludedInLine7Sources: 1_000,
+  deferred965TaxIncludedInLine7Sources: 0,
+  triggering965TaxIncludedInLine7Sources: 0,
+  form6251Line11: 2_000,
+  form6251Line9: 18_000,
+  form1040Line19: 2_000,
+  schedule3Line1: 1_000,
+  schedule3Line2: 300,
+  schedule3Line3: 400,
+  schedule3Line4: 500,
+  schedule3Line5a: 600,
+  schedule3Line5b: 700,
+  schedule3Line7: 5_000,
+  schedule3Line6aGbc: 3_000,
+  schedule3Line6bPriorMinimumTax: 1_000,
+  form8912CreditInSchedule3Line7: 200,
+};
+
+Deno.test("Form 3800: derives Part II tax and prior credits from finalized return lines", () => {
+  const credits = classifyForm8835Credits([{
+    form3800_line: "1f",
+    credit_amount: 5_000,
+    transfer_out_amount: 0,
+    subject_to_passive_activity_limit: false,
+  }]);
+  const derived = deriveForm3800NonpassiveInput(returnLines, credits);
+  assertEquals(derived.regularTax, 43_500);
+  assertEquals(derived.alternativeMinimumTax, 2_000);
+  assertEquals(derived.foreignTaxCredit, 1_000);
+  assertEquals(derived.priorAllowableCredits, 5_300);
+  assertEquals(derived.tentativeMinimumTax, 18_000);
+  assertEquals(derived.standardCredit, 5_000);
+});
+
+Deno.test("Form 3800: rejects exclusions that exceed their source lines", () => {
+  const credits = classifyForm8835Credits([{
+    form3800_line: "1f",
+    credit_amount: 100,
+    transfer_out_amount: 0,
+    subject_to_passive_activity_limit: false,
+  }]);
+  assertThrows(
+    () =>
+      deriveForm3800NonpassiveInput({
+        ...returnLines,
+        schedule3Line6aGbc: 6_000,
+      }, credits),
+    Error,
+    "do not reconcile",
+  );
+  assertThrows(
+    () =>
+      deriveForm3800NonpassiveInput({
+        ...returnLines,
+        filingStatus: FilingStatus.MFS,
+      }, credits),
+    Error,
+    "spouse business-credit answer",
+  );
+});
 
 Deno.test("Form 3800 Part II: MFS threshold depends on spouse business credit", () => {
   const base = input({ regularTax: 20_000 });
