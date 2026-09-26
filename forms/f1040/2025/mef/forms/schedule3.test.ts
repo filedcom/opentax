@@ -64,11 +64,39 @@ Deno.test("line4_retirement_savings_credit maps to RtrSavingsContributionsCrAmt"
   );
 });
 
+Deno.test("Form 5695 credits retain separate Schedule 3 line 5a and 5b amounts", () => {
+  const result = schedule3.build({
+    line5a_residential_clean_energy: 300,
+    line5b_energy_efficient_home: 1_200,
+  });
+  assertStringIncludes(
+    result,
+    "<ResidentialCleanEnergyCrAmt>300</ResidentialCleanEnergyCrAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<EgyEffcntHmImprvCrAmt>1200</EgyEffcntHmImprvCrAmt>",
+  );
+  assertEquals(
+    result.indexOf("ResidentialCleanEnergyCrAmt") <
+      result.indexOf("EgyEffcntHmImprvCrAmt"),
+    true,
+  );
+});
+
 Deno.test("line6c_adoption_credit maps to AdoptionCreditAmt", () => {
   const result = schedule3.build({ line6c_adoption_credit: 15950 });
   assertStringIncludes(
     result,
     "<AdoptionCreditAmt>15950</AdoptionCreditAmt>",
+  );
+});
+
+Deno.test("Form 8911 allowed personal credit maps to Schedule 3 line 6j", () => {
+  const result = schedule3.build({ line6j_alt_fuel_vehicle_refueling: 162 });
+  assertStringIncludes(
+    result,
+    "<TotalPersonalUsePartOfCrAmt>162</TotalPersonalUsePartOfCrAmt>",
   );
 });
 

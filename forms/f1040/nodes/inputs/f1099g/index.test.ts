@@ -5,11 +5,13 @@ import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
-  return { ...overrides };
+  return { farm_id: "farm-1", ...overrides };
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1099g.compute({ taxYear: 2025, formType: "f1040" }, { f1099gs: items });
+  return f1099g.compute({ taxYear: 2025, formType: "f1040" }, {
+    f1099gs: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -125,10 +127,14 @@ Deno.test("f1099g.compute: box_6_taxable_grants routes to schedule1 line8z_taxab
   assertEquals(input.line8z_taxable_grants, 2000);
 });
 
-Deno.test("f1099g.compute: box_7_agriculture routes to schedule_f line4a_gov_payments", () => {
+Deno.test("f1099g.compute: box_7_agriculture retains its farm source", () => {
   const result = compute([minimalItem({ box_7_agriculture: 3500 })]);
   const out = findOutput(result, "schedule_f");
-  assertEquals((out!.fields as Record<string, unknown>).line4a_gov_payments, 3500);
+  assertEquals(out?.fields.farm_sources, [{
+    farm_id: "farm-1",
+    kind: "1099g_agriculture",
+    amount: 3500,
+  }]);
 });
 
 Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () => {
@@ -136,15 +142,19 @@ Deno.test("f1099g.compute: box_7_agriculture zero — no schedule_f output", () 
   const out = result.outputs.find(
     (o) =>
       o.nodeType === "schedule_f" &&
-      (o.fields as Record<string, unknown>).line4a_gov_payments !== undefined,
+      (o.fields as Record<string, unknown>).farm_sources !== undefined,
   );
   assertEquals(out, undefined);
 });
 
-Deno.test("f1099g.compute: box_9_market_gain routes to schedule_f line5_ccc_gain", () => {
+Deno.test("f1099g.compute: box_9_market_gain retains its farm source", () => {
   const result = compute([minimalItem({ box_9_market_gain: 600 })]);
   const out = findOutput(result, "schedule_f");
-  assertEquals((out!.fields as Record<string, unknown>).line5_ccc_gain, 600);
+  assertEquals(out?.fields.farm_sources, [{
+    farm_id: "farm-1",
+    kind: "1099g_ccc_market_gain",
+    amount: 600,
+  }]);
 });
 
 Deno.test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output", () => {
@@ -152,7 +162,7 @@ Deno.test("f1099g.compute: box_9_market_gain zero — no schedule_f ccc output",
   const out = result.outputs.find(
     (o) =>
       o.nodeType === "schedule_f" &&
-      (o.fields as Record<string, unknown>).line5_ccc_gain !== undefined,
+      (o.fields as Record<string, unknown>).farm_sources !== undefined,
   );
   assertEquals(out, undefined);
 });
@@ -211,13 +221,16 @@ Deno.test("f1099g.compute: multiple items — box_2_state_refund summed when bot
   assertEquals(input.line1_state_refund, 300);
 });
 
-Deno.test("f1099g.compute: multiple items — box_7_agriculture summed on schedule_f line4a", () => {
+Deno.test("f1099g.compute: multiple agricultural payments retain separate source records", () => {
   const result = compute([
     minimalItem({ box_7_agriculture: 1000 }),
     minimalItem({ box_7_agriculture: 2500 }),
   ]);
   const out = findOutput(result, "schedule_f");
-  assertEquals((out!.fields as Record<string, unknown>).line4a_gov_payments, 3500);
+  assertEquals(out?.fields.farm_sources, [
+    { farm_id: "farm-1", kind: "1099g_agriculture", amount: 1000 },
+    { farm_id: "farm-1", kind: "1099g_agriculture", amount: 2500 },
+  ]);
 });
 
 Deno.test("f1099g.compute: mixed items — unemployment and state refund both routed correctly", () => {
@@ -428,7 +441,9 @@ Deno.test("f1099g.compute: mixed itemized and non-itemized refunds — only item
 });
 
 Deno.test("f1099g.compute: empty g99s array produces no outputs", () => {
-  const result = f1099g.compute({ taxYear: 2025, formType: "f1040" }, { f1099gs: [] });
+  const result = f1099g.compute({ taxYear: 2025, formType: "f1040" }, {
+    f1099gs: [],
+  });
   assertEquals(result.outputs.length, 0);
 });
 
@@ -476,6 +491,8 @@ Deno.test("f1099g.compute: smoke test — all major boxes populated produces cor
 
   // Schedule F: agriculture payments and CCC market gain
   const schedF = findOutput(result, "schedule_f");
-  assertEquals((schedF!.fields as Record<string, unknown>).line4a_gov_payments, 4000);
-  assertEquals((schedF!.fields as Record<string, unknown>).line5_ccc_gain, 300);
+  assertEquals(schedF?.fields.farm_sources, [
+    { farm_id: "farm-1", kind: "1099g_agriculture", amount: 4000 },
+    { farm_id: "farm-1", kind: "1099g_ccc_market_gain", amount: 300 },
+  ]);
 });

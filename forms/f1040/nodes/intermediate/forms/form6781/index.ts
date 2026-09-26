@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule_d } from "../../aggregation/schedule_d/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -27,17 +27,21 @@ const SHORT_TERM_RATE = 0.40;
 //
 // Wash sale rules do NOT apply to §1256 contracts (IRC §1256(f)(1)).
 
-export const inputSchema = z.object({
-  // Part I — Net gain or loss from all §1256 contracts (Form 6781 line 4).
-  // This is the aggregate mark-to-market gain/loss for the year.
-  // IRC §1256(a)(1)
-  net_section_1256_gain: z.number().optional(),
+export const accountSchema = z.object({
+  account_identification: z.string().trim().min(1),
+  gain_loss: z.number().finite(),
+}).strict();
 
-  // Prior-year §1256 net loss carryback or carryforward (Form 6781 line 5).
-  // Under IRC §1256(f)(2), a net §1256 loss may be carried back 3 years.
-  // The carryback/forward reduces the current-year net before the 60/40 split.
+export const inputSchema = z.object({
+  // Form 6781 Part I line 1. A broker's Form 1099-B is one account row;
+  // contracts not reported on a current-year 1099-B need separate rows.
+  accounts: z.array(accountSchema).optional(),
+  // Legacy calculation-only aggregate. It cannot populate line 1 in MeF.
+  net_section_1256_gain: z.number().optional(),
+  // Kept only to reject an old, incorrect input. Line 6 is a current-year
+  // loss *carried back*, not a prior-year loss carried into this year.
   prior_year_loss_carryover: z.number().nonnegative().optional(),
-});
+}).strict();
 
 type Form6781Input = z.infer<typeof inputSchema>;
 
@@ -45,10 +49,24 @@ type Form6781Input = z.infer<typeof inputSchema>;
 
 // Net §1256 amount after applying prior-year loss carryover (line 6).
 function netAmount(input: Form6781Input): number {
-  const gross = input.net_section_1256_gain ?? 0;
-  const carryover = input.prior_year_loss_carryover ?? 0;
-  // Prior-year loss carryover reduces net gain (or increases net loss)
-  return gross - carryover;
+  if ((input.prior_year_loss_carryover ?? 0) !== 0) {
+    throw new Error(
+      "Form 6781 does not apply a prior-year loss carryover on line 6; that line is for an elected current-year loss carryback",
+    );
+  }
+  const accountNet = input.accounts?.reduce(
+    (sum, row) => sum + row.gain_loss,
+    0,
+  );
+  if (
+    accountNet !== undefined && input.net_section_1256_gain !== undefined &&
+    accountNet !== input.net_section_1256_gain
+  ) {
+    throw new Error(
+      "Form 6781 account rows do not match net_section_1256_gain",
+    );
+  }
+  return accountNet ?? input.net_section_1256_gain ?? 0;
 }
 
 // Long-term portion: 60% of net §1256 amount.
@@ -92,11 +110,9 @@ class Form6781Node extends TaxNode<typeof inputSchema> {
       outputs.push(output(schedule_d, { line_11_form2439: ltAmount }));
     }
 
-    // Short-term portion → Schedule D line 1a (short-term aggregate).
-    // Reported as proceeds adjustment (positive gain = proceeds > 0, cost = 0;
-    // negative loss = 0 proceeds, cost > 0 — but using signed proceeds/cost=0 for simplicity).
+    // Form 6781 line 8 → Schedule D line 4, not line 1a.
     if (stAmount !== 0) {
-      outputs.push(output(schedule_d, { line_1a_proceeds: stAmount, line_1a_cost: 0 }));
+      outputs.push(output(schedule_d, { line_4_other_st: stAmount }));
     }
 
     return { outputs };

@@ -148,19 +148,20 @@ Deno.test("plain W-2 MeF validation does not report missing 1040 totals or Form 
   }
 });
 
-Deno.test("exportMefCommand draft empty return labels diagnostic XML", async () => {
+Deno.test("exportMefCommand rejects an empty draft without fabricating XML", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
-    const xml = await exportMefCommand({
-      returnId,
-      baseDir: tmpDir,
-      force: true,
-      draft: true,
-    });
-    assertStringIncludes(xml, "DRAFT/INCOMPLETE");
-    assertStringIncludes(xml, "<Return ");
-    assertStringIncludes(xml, "</Return>");
+    await assertRejects(
+      () => exportMefCommand({
+        returnId,
+        baseDir: tmpDir,
+        force: true,
+        draft: true,
+      }),
+      Error,
+      "requires a real filer identity",
+    );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });
   }

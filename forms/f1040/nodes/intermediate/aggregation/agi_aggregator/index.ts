@@ -64,7 +64,6 @@ export const inputSchema = z.object({
   // Line 1h — Other earned income, including foreign employer compensation
   line1h_other_earned: z.number().optional(),
   // Line 1b — Allocated tips (W-2 Box 8; reported when employer allocation exceeds declared tips)
-  line1b_allocated_tips: z.number().nonnegative().optional(),
   // Line 1c — Unreported tips (Form 4137)
   line1c_unreported_tips: z.number().nonnegative().optional(),
   // Line 1e — Taxable dependent care benefits (Form 2441)
@@ -109,7 +108,6 @@ export const inputSchema = z.object({
   // Line 5 — Rental real estate, royalties, partnerships, etc. (Schedule E)
   line5_schedule_e: z.number().optional(),
   // Line 17 — Rental real estate passive loss allowed (Form 8582 negative output)
-  line17_schedule_e: z.number().optional(),
   // ── IRC §469 passive activity loss limit (Schedule E) ─────────────────────
   // Schedule E holds its passive loss back and sends the figures here, because only
   // this node knows modified AGI — the number Form 8582 Part II sizes the allowance by.
@@ -117,6 +115,8 @@ export const inputSchema = z.object({
   pal_current_loss: z.number().nonnegative().optional(),
   // Current-year net income from passive activities
   pal_current_income: z.number().nonnegative().optional(),
+  // Current income from actively participated rental real estate, for Form 8582 line 1a.
+  pal_rental_income: z.number().nonnegative().optional(),
   // Prior-year unallowed passive loss carryforward
   pal_prior_unallowed: z.number().nonnegative().optional(),
   // Current-year loss from active rental real estate only (§469(i) allowance)
@@ -135,6 +135,7 @@ export const inputSchema = z.object({
   line8e_archer_msa_dist: z.number().nonnegative().optional(),
   // Line 8z — Other income (HSA taxable distributions, 1099-NEC line 8z, etc.)
   line8z_other: z.number().optional(),
+  line8z_form8814: z.number().nonnegative().optional(),
   // Line 8z — RTAA payments (Form 1099-G)
   line8z_rtaa: z.number().optional(),
   // Line 8z — Taxable grants (Form 1099-G)
@@ -244,7 +245,6 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
   return (
     sumField(input.line1a_wages as number | number[] | undefined) +
     (input.line1h_other_earned ?? 0) +
-    (input.line1b_allocated_tips ?? 0) +
     (input.line1c_unreported_tips ?? 0) +
     (input.line1e_taxable_dep_care ?? 0) +
     (input.line1f_taxable_adoption_benefits ?? 0) +
@@ -260,12 +260,12 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     (input.line5_schedule_e ?? 0) +
-    (input.line17_schedule_e ?? 0) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8z_other ?? 0) +
+    (input.line8z_form8814 ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
@@ -402,11 +402,22 @@ function allowedPassiveLoss(input: AgiInput): number {
   const priorUnallowed = input.pal_prior_unallowed ?? 0;
   if (currentLoss === 0 && priorUnallowed === 0) return 0;
 
+  if (
+    input.pal_active_participation === true &&
+    (input.pal_current_income ?? 0) > 0 &&
+    input.pal_rental_income === undefined
+  ) {
+    throw new Error(
+      "Form 8582 needs the rental portion of current passive income",
+    );
+  }
+
   const activity: PassiveActivity = {
     currentIncome: input.pal_current_income ?? 0,
     currentLoss,
     priorUnallowed,
-    rentalLoss: input.pal_rental_loss,
+    rentalLoss: input.pal_rental_loss ?? 0,
+    rentalIncome: input.pal_rental_income ?? 0,
     activeParticipation: input.pal_active_participation ?? false,
     modifiedAgi: modifiedAgiFor8582(input),
     filingStatus: input.filing_status as FilingStatus | undefined,
@@ -429,12 +440,12 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line3_schedule_c ?? 0) +
     (input.line4_other_gains ?? 0) +
     (input.line5_schedule_e ?? 0) +
-    (input.line17_schedule_e ?? 0) +
     (input.line6_schedule_f ?? 0) +
     (input.line7_unemployment ?? 0) +
     (input.line8c_cod_income ?? 0) +
     (input.line8e_archer_msa_dist ?? 0) +
     (input.line8z_other ?? 0) +
+    (input.line8z_form8814 ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
@@ -513,8 +524,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8995, { agi }),
       // Pass AGI as MAGI to form8960 for NIIT threshold comparison (AGI = MAGI for most taxpayers)
       this.outputNodes.output(form8960, { magi: agi }),
-      // Pass AGI as household_income to form8962 for PTC eligibility and reconciliation
-      this.outputNodes.output(form8962, { household_income: agi }),
+      // Form 8962 Worksheet 1-1: AGI plus tax-exempt interest, Form 2555
+      // exclusions, and the non-taxable portion of Social Security. Dependent
+      // modified AGI is a separate Worksheet 1-2 amount, not sourced here.
+      this.outputNodes.output(form8962, {
+        taxpayer_modified_agi: agi + (input.tax_exempt_interest ?? 0) +
+          (input.line8d_foreign_earned_income_exclusion ?? 0) +
+          (input.line8d_foreign_housing_deduction ?? 0) +
+          Math.max(0, ssaGross - ssaTaxable),
+      }),
       this.outputNodes.output(schedule1a, { magi: agi }),
       // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
       this.outputNodes.output(form8880, {

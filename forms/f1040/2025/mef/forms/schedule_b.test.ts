@@ -68,6 +68,40 @@ Deno.test("schedule_b: ordinaryDividends maps to TotalOrdinaryDividendsAmt", () 
   );
 });
 
+Deno.test("schedule_b: combined parent and Form 8814 dividends include payer rows", () => {
+  const xml = scheduleB.build({
+    dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
+    form8814_dividends: 500,
+    print_line6_total: 1_700,
+    print_div_payer_1: "Fund A",
+    print_div_amount_1: 1_200,
+    print_div_payer_2: "Form 8814",
+    print_div_amount_2: 500,
+  });
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>Fund A</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>Form 8814</BusinessNameLine1Txt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalOrdinaryDividendsAmt>1700</TotalOrdinaryDividendsAmt>",
+  );
+});
+
+Deno.test("schedule_b: information-only below-threshold dividends do not file the form", () => {
+  assertEquals(
+    scheduleB.build({
+      dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
+      print_line6_total: 1_200,
+    }),
+    "",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------

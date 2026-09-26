@@ -1,7 +1,7 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { fromFileUrl } from "@std/path";
 
-Deno.test("CLI force cannot override calculation failure; draft is explicit and labeled", async () => {
+Deno.test("CLI force and draft cannot export an empty return with invented identity", async () => {
   const cwd = await Deno.makeTempDir();
   const main = fromFileUrl(new URL("../main.ts", import.meta.url));
   const run = (...args: string[]) =>
@@ -45,12 +45,12 @@ Deno.test("CLI force cannot override calculation failure; draft is explicit and 
       );
     }
     const draft = await run(...common, "--draft");
-    assertEquals(draft.code, 0);
+    assertEquals(draft.code, 1);
+    assertEquals(new TextDecoder().decode(draft.stdout).includes("<Return "), false);
     assertStringIncludes(
-      new TextDecoder().decode(draft.stdout),
-      "DRAFT/INCOMPLETE",
+      new TextDecoder().decode(draft.stderr),
+      "requires a real filer identity",
     );
-    assertStringIncludes(new TextDecoder().decode(draft.stdout), "<Return ");
   } finally {
     await Deno.remove(cwd, { recursive: true });
   }

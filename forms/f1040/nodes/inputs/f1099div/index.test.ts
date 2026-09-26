@@ -4,7 +4,6 @@ import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
 import { form8995 } from "../../intermediate/forms/form8995/index.ts";
@@ -22,6 +21,7 @@ type ItemOverrides = Partial<{
   isNominee: boolean;
   box11: boolean;
   box1a: number;
+  investment_property_for_form4952: boolean;
   box1b: number;
   box2a: number;
   box2b: number;
@@ -35,6 +35,9 @@ type ItemOverrides = Partial<{
   box6: number;
   box7: number;
   box8: string;
+  foreign_source_dividends_usd: number;
+  foreign_source_qualified_dividends_usd: number;
+  foreign_tax_irs_country_code: string;
   box9: number;
   box10: number;
   box12: number;
@@ -55,6 +58,22 @@ function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
   };
 }
 
+function taxedDividend(
+  tax: number,
+  foreignDividends: number,
+  overrides: ItemOverrides = {},
+): ItemOverrides {
+  return minimalItem({
+    box1a: foreignDividends,
+    box7: tax,
+    box8: "Canada",
+    foreign_source_dividends_usd: foreignDividends,
+    foreign_tax_irs_country_code: "CA",
+    holdingPeriodDays: 20,
+    ...overrides,
+  });
+}
+
 function compute(
   items: ItemOverrides[],
   context: { taxableIncome?: number; filingStatus?: string } = {},
@@ -69,6 +88,37 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("1099-DIV routes investment-property dividends and capital gain to Form 4952 only when affirmed", () => {
+  assertEquals(
+    findOutput(compute([minimalItem({ box1a: 500 })]), "form4952"),
+    undefined,
+  );
+  const result = compute([minimalItem({
+    box1a: 500,
+    box1b: 150,
+    box2a: 200,
+    investment_property_for_form4952: true,
+  })]);
+  assertEquals(findOutput(result, "form4952")?.fields, {
+    source_1099_dividends: 500,
+    source_1099_qualified_dividends: 150,
+    source_1099_capital_gain_distributions: 200,
+  });
+});
+
+Deno.test("1099-DIV flagged for Form 4952 cannot have qualified dividends above ordinary dividends", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1a: 100,
+        box1b: 200,
+        investment_property_for_form4952: true,
+      })]),
+    Error,
+    "cannot exceed ordinary dividends on Form 4952",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // 1. Input Schema Validation (one representative test per concern)
 // ---------------------------------------------------------------------------
@@ -82,7 +132,10 @@ Deno.test("schema: normalizes box1b exceeding box1a — box1a unchanged, box1b f
   // box1b (qualified dividends) flows as reported even when it exceeds box1a.
   const result = compute([minimalItem({ box1a: 400, box1b: 500 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 400);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, 500);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends,
+    500,
+  );
 });
 
 Deno.test("schema: accepts box1b equal to box1a (boundary)", () => {
@@ -94,7 +147,13 @@ Deno.test("schema: rejects box2b+2c+2d+2f sum exceeding box2a", () => {
   assertThrows(
     () =>
       compute([
-        minimalItem({ box2a: 300, box2b: 100, box2c: 100, box2d: 100, box2f: 100 }),
+        minimalItem({
+          box2a: 300,
+          box2b: 100,
+          box2c: 100,
+          box2d: 100,
+          box2f: 100,
+        }),
       ]),
     Error,
   );
@@ -110,13 +169,19 @@ Deno.test("schema: accepts box2b+2c+2d+2f sum equal to box2a (boundary)", () => 
 Deno.test("schema: normalizes box13 exceeding box12 — clamps box13 to box12", () => {
   // box13 (specified PAB) is clamped to box12 (exempt-interest dividends).
   const result = compute([minimalItem({ box12: 150, box13: 200 })]);
-  assertEquals(fieldsOf(result.outputs, form6251)?.private_activity_bond_interest, 150);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)?.private_activity_bond_interest,
+    150,
+  );
 });
 
 Deno.test("schema: normalizes box5 exceeding box1a — clamps box5 to box1a", () => {
   // box5 (§199A dividends) is clamped to box1a so income is not over-counted.
   const result = compute([minimalItem({ box1a: 500, box5: 600 })]);
-  assertEquals(fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends, 500);
+  assertEquals(
+    fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends,
+    500,
+  );
 });
 
 Deno.test("schema: normalizes box2e exceeding box1a — clamps box2e to box1a", () => {
@@ -136,9 +201,12 @@ Deno.test("box1a above threshold routes to schedule_b with correct payer and amo
   assertEquals(sbFields?.ordinaryDividends, 2000);
 });
 
-Deno.test("box1a below threshold routes directly to f1040 line3b and agi_aggregator", () => {
+Deno.test("box1a below threshold routes directly to f1040 and records Schedule B payer facts", () => {
   const result = compute([minimalItem({ box1a: 500 })]);
-  assertEquals(findOutput(result, "schedule_b"), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.dividend_info, [{
+    payerName: "Test Payer",
+    amount: 500,
+  }]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 500);
   assertEquals(
     fieldsOf(result.outputs, agi_aggregator)?.line3b_ordinary_dividends,
@@ -148,37 +216,81 @@ Deno.test("box1a below threshold routes directly to f1040 line3b and agi_aggrega
 
 Deno.test("box1a = 0 produces no ordinary dividend output", () => {
   const result = compute([minimalItem({ box1a: 0 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends,
+    undefined,
+  );
 });
 
 Deno.test("box1b routes to f1040 line3a (qualified dividends)", () => {
   const result = compute([minimalItem({ box1a: 500, box1b: 400 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, 400);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends,
+    400,
+  );
 });
 
 Deno.test("box1b = 0 produces no qualified dividend output", () => {
   const result = compute([minimalItem({ box1a: 500, box1b: 0 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends,
+    undefined,
+  );
 });
 
 Deno.test("box2a without sub-amounts routes to schedule_d line13 (always via Schedule D)", () => {
   const result = compute([minimalItem({ box1a: 1000, box2a: 1000 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 1000);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    1000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib,
+    undefined,
+  );
+});
+
+Deno.test("capital-gain-only 1099-DIV can omit an unknown payer name", () => {
+  const result = compute([{
+    isNominee: false,
+    box11: false,
+    box1a: 0,
+    box2a: 7_500,
+  }]);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    7_500,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule_b), undefined);
+});
+
+Deno.test("1099-DIV without payer name is rejected when Schedule B is required", () => {
+  assertThrows(
+    () => compute([{ isNominee: false, box11: false, box1a: 2_000 }]),
+    Error,
+    "payer name is required",
+  );
 });
 
 Deno.test("box2a with sub-amounts routes to schedule_d line13 (standard path)", () => {
   const result = compute([
     minimalItem({ box1a: 1000, box2a: 1000, box2b: 100 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 1000);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    1000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib,
+    undefined,
+  );
 });
 
 Deno.test("box2b routes to unrecaptured_1250_worksheet", () => {
   const result = compute([minimalItem({ box1a: 500, box2a: 500, box2b: 200 })]);
   assertEquals(
-    fieldsOf(result.outputs, unrecaptured_1250_worksheet)?.unrecaptured_1250_gain,
+    fieldsOf(result.outputs, unrecaptured_1250_worksheet)
+      ?.unrecaptured_1250_gain,
     200,
   );
 });
@@ -203,14 +315,20 @@ Deno.test("box4 routes to f1040 line25b (federal withholding)", () => {
 
 Deno.test("box4 = 0 produces no withholding output", () => {
   const result = compute([minimalItem({ box4: 0 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line25b_withheld_1099,
+    undefined,
+  );
 });
 
 Deno.test("box5 routes to form8995 when holding period met (>= 45 days)", () => {
   const result = compute([
     minimalItem({ box1a: 500, box5: 300, holdingPeriodDays: 60 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends, 300);
+  assertEquals(
+    fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends,
+    300,
+  );
   assertEquals(findOutput(result, "form8995a"), undefined);
 });
 
@@ -222,26 +340,52 @@ Deno.test("box5 excluded from form8995 when holding period not met (< 45 days)",
   assertEquals(findOutput(result, "form8995a"), undefined);
 });
 
-Deno.test("box7 routes to schedule3 when below $300 single threshold (simplified path)", () => {
-  const result = compute([minimalItem({ box7: 200, holdingPeriodDays: 20 })], {
+Deno.test("box7 routes to Form 1116 without a no-form election", () => {
+  const result = compute([taxedDividend(200, 500)], {
     filingStatus: "single",
   });
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 200);
-  assertEquals(findOutput(result, "form_1116"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    200,
+  );
 });
 
 Deno.test("box7 routes to form_1116 when exceeds $300 single threshold", () => {
-  const result = compute([minimalItem({ box7: 400, holdingPeriodDays: 20 })], {
+  const result = compute([taxedDividend(400, 500)], {
     filingStatus: "single",
   });
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 400);
-  assertEquals(findOutput(result, "schedule3"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    400,
+  );
 });
 
 Deno.test("box7 not routed when holding period < 16 days", () => {
   const result = compute([minimalItem({ box7: 150, holdingPeriodDays: 10 })]);
-  assertEquals(findOutput(result, "schedule3"), undefined);
   assertEquals(findOutput(result, "form_1116"), undefined);
+});
+
+Deno.test("foreign tax cannot assume all ordinary dividends are foreign source", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({ box1a: 500, box7: 50, holdingPeriodDays: 20 })]),
+    Error,
+    "verified foreign-source dividends",
+  );
+});
+
+Deno.test("foreign qualified dividends cannot skip the Form 1116 rate adjustment", () => {
+  assertThrows(
+    () =>
+      compute([taxedDividend(50, 500, {
+        box1b: 200,
+        foreign_source_qualified_dividends_usd: 200,
+      })]),
+    Error,
+    "rate-adjustment worksheet",
+  );
 });
 
 Deno.test("box12 routes to f1040 line2a (tax-exempt dividends)", () => {
@@ -269,7 +413,9 @@ Deno.test("box2e does not produce tax output (Section 897 ordinary dividends —
 
 Deno.test("box2f does not produce tax output (Section 897 cap gain — informational)", () => {
   const baseline = compute([minimalItem({ box1a: 500, box2a: 500 })]);
-  const withBox2f = compute([minimalItem({ box1a: 500, box2a: 500, box2f: 200 })]);
+  const withBox2f = compute([
+    minimalItem({ box1a: 500, box2a: 500, box2f: 200 }),
+  ]);
   assertEquals(withBox2f.outputs.length, baseline.outputs.length);
 });
 
@@ -326,7 +472,10 @@ Deno.test("multiple payers — box1b (qualified dividends) summed to single f104
     minimalItem({ box1a: 300, box1b: 200 }),
     minimalItem({ box1a: 400, box1b: 350 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends, 550);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3a_qualified_dividends,
+    550,
+  );
 });
 
 Deno.test("multiple payers — box2a summed for schedule_d when sub-amounts present", () => {
@@ -334,7 +483,10 @@ Deno.test("multiple payers — box2a summed for schedule_d when sub-amounts pres
     minimalItem({ box1a: 500, box2a: 300, box2b: 50 }),
     minimalItem({ box1a: 600, box2a: 500, box2b: 50 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 800);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    800,
+  );
 });
 
 Deno.test("multiple payers — box2b summed to unrecaptured_1250_worksheet", () => {
@@ -343,7 +495,8 @@ Deno.test("multiple payers — box2b summed to unrecaptured_1250_worksheet", () 
     minimalItem({ box1a: 500, box2a: 500, box2b: 150 }),
   ]);
   assertEquals(
-    fieldsOf(result.outputs, unrecaptured_1250_worksheet)?.unrecaptured_1250_gain,
+    fieldsOf(result.outputs, unrecaptured_1250_worksheet)
+      ?.unrecaptured_1250_gain,
     250,
   );
 });
@@ -383,18 +536,29 @@ Deno.test("multiple payers — box5 (§199A) summed when holding period met", ()
     minimalItem({ box1a: 500, box5: 400, holdingPeriodDays: 60 }),
     minimalItem({ box1a: 500, box5: 600, holdingPeriodDays: 60 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends, 900);
+  assertEquals(
+    fieldsOf(result.outputs, form8995)?.line6_sec199a_dividends,
+    900,
+  );
 });
 
-Deno.test("multiple payers — box7 summed, simplified path if total <= $300 single", () => {
+Deno.test("multiple payers retain separate Form 1116 country sources", () => {
   const result = compute(
     [
-      minimalItem({ box7: 100, holdingPeriodDays: 20 }),
-      minimalItem({ box7: 150, holdingPeriodDays: 20 }),
+      taxedDividend(100, 500),
+      taxedDividend(150, 600, {
+        box8: "France",
+        foreign_tax_irs_country_code: "FR",
+      }),
     ],
     { filingStatus: "single" },
   );
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 250);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.map((item) =>
+      item.foreign_tax_paid
+    ),
+    [100, 150],
+  );
 });
 
 Deno.test("multiple payers — box12 summed to f1040 line2a", () => {
@@ -420,16 +584,25 @@ Deno.test("multiple payers — box13 summed to form6251", () => {
 // 5. Schedule B Threshold ($1,500)
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule_b not triggered when total box1a below $1,500", () => {
+Deno.test("below-threshold dividend keeps payer facts without moving the tax amount", () => {
   const result = compute([minimalItem({ box1a: 1499 })]);
-  assertEquals(findOutput(result, "schedule_b"), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.dividend_info, [{
+    payerName: "Test Payer",
+    amount: 1499,
+  }]);
 });
 
 Deno.test("schedule_b not triggered when total box1a exactly $1,500", () => {
   const result = compute([minimalItem({ box1a: 1500 })]);
-  assertEquals(findOutput(result, "schedule_b"), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule_b)?.dividend_info, [{
+    payerName: "Test Payer",
+    amount: 1500,
+  }]);
   // below threshold: routes directly to f1040 and agi_aggregator
-  assertEquals(fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends, 1500);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line3b_ordinary_dividends,
+    1500,
+  );
   assertEquals(
     fieldsOf(result.outputs, agi_aggregator)?.line3b_ordinary_dividends,
     1500,
@@ -450,13 +623,16 @@ Deno.test("nominee=true forces schedule_b even when total below $1,500", () => {
   assertEquals(sbFields?.isNominee, true);
 });
 
-Deno.test("multi-payer total below $1,500 with no nominee skips schedule_b", () => {
+Deno.test("multi-payer total below $1,500 retains all payer facts for combined-source threshold", () => {
   const result = compute([
     minimalItem({ payerName: "P1", box1a: 500 }),
     minimalItem({ payerName: "P2", box1a: 499 }),
     minimalItem({ payerName: "P3", box1a: 500 }),
   ]);
-  assertEquals(findOutput(result, "schedule_b"), undefined);
+  assertEquals(
+    (fieldsOf(result.outputs, schedule_b)?.dividend_info as unknown[]).length,
+    3,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -500,39 +676,51 @@ Deno.test("form8995a used when taxable income above MFJ §199A threshold ($394,6
 });
 
 // ---------------------------------------------------------------------------
-// 7. Foreign Tax Thresholds — Schedule 3 vs Form 1116
+// 7. Foreign tax always reaches Form 1116 without a return-level election
 // ---------------------------------------------------------------------------
 
-Deno.test("schedule3 used when box7 exactly at $300 single threshold", () => {
-  const result = compute([minimalItem({ box7: 300, holdingPeriodDays: 20 })], {
+Deno.test("box7 at $300 still reaches Form 1116", () => {
+  const result = compute([taxedDividend(300, 500)], {
     filingStatus: "single",
   });
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 300);
-  assertEquals(findOutput(result, "form_1116"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    300,
+  );
 });
 
 Deno.test("form_1116 required when box7 exceeds $300 single threshold", () => {
-  const result = compute([minimalItem({ box7: 301, holdingPeriodDays: 20 })], {
+  const result = compute([taxedDividend(301, 500)], {
     filingStatus: "single",
   });
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 301);
-  assertEquals(findOutput(result, "schedule3"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    301,
+  );
 });
 
-Deno.test("schedule3 used when box7 exactly at $600 MFJ threshold", () => {
-  const result = compute([minimalItem({ box7: 600, holdingPeriodDays: 20 })], {
+Deno.test("box7 at $600 MFJ still reaches Form 1116", () => {
+  const result = compute([taxedDividend(600, 1000)], {
     filingStatus: "mfj",
   });
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 600);
-  assertEquals(findOutput(result, "form_1116"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    600,
+  );
 });
 
 Deno.test("form_1116 required when box7 exceeds $600 MFJ threshold", () => {
-  const result = compute([minimalItem({ box7: 601, holdingPeriodDays: 20 })], {
+  const result = compute([taxedDividend(601, 1000)], {
     filingStatus: "mfj",
   });
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 601);
-  assertEquals(findOutput(result, "schedule3"), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    601,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -558,7 +746,10 @@ Deno.test("V3: box2e exceeding box1a — clamps box2e to box1a, does not throw",
 
 Deno.test("V4: box13 exceeding box12 — clamps box13 to box12, does not throw", () => {
   const result = compute([minimalItem({ box12: 150, box13: 200 })]);
-  assertEquals(fieldsOf(result.outputs, form6251)?.private_activity_bond_interest, 150);
+  assertEquals(
+    fieldsOf(result.outputs, form6251)?.private_activity_bond_interest,
+    150,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -587,20 +778,40 @@ Deno.test("box2a with no sub-amounts: always routes to schedule_d line13, not f1
   const result = compute([
     minimalItem({ box1a: 1000, box2a: 1000, box2b: 0, box2c: 0, box2d: 0 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 1000);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    1000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib,
+    undefined,
+  );
 });
 
 Deno.test("box2a with any sub-amount > 0: standard path (schedule_d), not simplified", () => {
-  const result = compute([minimalItem({ box1a: 1000, box2a: 1000, box2b: 50 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 1000);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
+  const result = compute([
+    minimalItem({ box1a: 1000, box2a: 1000, box2b: 50 }),
+  ]);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    1000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib,
+    undefined,
+  );
 });
 
 Deno.test("box1a = 0, box2a > 0: pure cap-gain fund routes to schedule_d line13", () => {
   const result = compute([minimalItem({ box1a: 0, box2a: 500 })]);
-  assertEquals(fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib, 500);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule_d)?.line13_cap_gain_distrib,
+    500,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line7a_cap_gain_distrib,
+    undefined,
+  );
 });
 
 Deno.test("isNominee=true passes full box1a amount to schedule_b (subtraction happens in schedule_b node)", () => {
@@ -628,7 +839,7 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
   // Fidelity: box1a=700, box1b=400, box2a=300, box4=30, box5=200
   // Total box1a = 1700 > $1,500 → Schedule B required
   // Single filer, taxableIncome=$100,000 (below §199A threshold) → form8995
-  // box7=150 (single) <= $300 → schedule3 simplified path
+  // The Vanguard foreign tax is supported by verified source facts.
   const result = compute(
     [
       minimalItem({
@@ -642,6 +853,9 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
         box4: 80,
         box5: 300,
         box7: 150,
+        foreign_source_dividends_usd: 1_000,
+        foreign_source_qualified_dividends_usd: 0,
+        foreign_tax_irs_country_code: "CA",
         box12: 400,
         box13: 100,
         holdingPeriodDays: 60,
@@ -684,7 +898,8 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
 
   // unrecaptured_1250_worksheet = 100 (only Vanguard has box2b)
   assertEquals(
-    fieldsOf(result.outputs, unrecaptured_1250_worksheet)?.unrecaptured_1250_gain,
+    fieldsOf(result.outputs, unrecaptured_1250_worksheet)
+      ?.unrecaptured_1250_gain,
     100,
     "unrecaptured §1250 gain",
   );
@@ -709,15 +924,19 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
     500,
     "§199A dividends",
   );
-  assertEquals(findOutput(result, "form8995a"), undefined, "form8995a absent below threshold");
-
-  // schedule3 simplified foreign tax: box7=150 (single, <= $300)
   assertEquals(
-    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099,
-    150,
-    "foreign tax simplified path",
+    findOutput(result, "form8995a"),
+    undefined,
+    "form8995a absent below threshold",
   );
-  assertEquals(findOutput(result, "form_1116"), undefined, "form_1116 absent on simplified path");
+
+  // Form 1116 receives the Vanguard foreign tax and income.
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    150,
+    "foreign tax",
+  );
 
   // f1040 line2a tax-exempt dividends = box12 = 400
   assertEquals(
@@ -738,16 +957,28 @@ Deno.test("smoke: two payers, all major boxes populated — correct routing thro
 // Foreign source income for the §904 limitation (Form 1116 Part I line 1a)
 // ---------------------------------------------------------------------------
 
-Deno.test("box7 above threshold also routes box1a as foreign_income", () => {
-  const result = compute([minimalItem({ box1a: 5000, box7: 400 })]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 5000);
+Deno.test("Form 1116 uses verified foreign-source dividends, not all box 1a", () => {
+  const result = compute([taxedDividend(400, 3_000, { box1a: 5_000 })]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_gross_income,
+    3_000,
+  );
 });
 
 Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
   const result = compute([
-    minimalItem({ payerName: "Foreign Fund", box1a: 5000, box7: 400 }),
+    taxedDividend(400, 5000, { payerName: "Foreign Fund" }),
     minimalItem({ payerName: "Domestic Fund", box1a: 20000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 400);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 5000);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    400,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_gross_income,
+    5000,
+  );
 });

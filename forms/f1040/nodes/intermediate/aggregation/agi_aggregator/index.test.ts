@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { agi_aggregator } from "./index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
@@ -18,6 +18,34 @@ function agi(result: ReturnType<typeof compute>): number {
 Deno.test("agi_aggregator: wages only", () => {
   const result = compute({ line1a_wages: 60_000 });
   assertEquals(agi(result), 60_000);
+});
+
+Deno.test("agi_aggregator: Form 8962 modified AGI adds Worksheet 1-1 amounts", () => {
+  const result = compute({
+    line1a_wages: 30_000,
+    line6a_ss_gross: 10_000,
+    line6b_ss_taxable: 2_000,
+    tax_exempt_interest: 500,
+    line8d_foreign_earned_income_exclusion: 1_000,
+    line8d_foreign_housing_deduction: 300,
+  });
+  assertEquals(agi(result), 30_700);
+  const form8962 = result.outputs.find((item) => item.nodeType === "form8962");
+  assertEquals(form8962?.fields.taxpayer_modified_agi, 40_500);
+});
+
+Deno.test("agi_aggregator: Form 8962 adds non-taxable Social Security after its worksheet", () => {
+  const result = compute({
+    line1a_wages: 20_000,
+    line6a_ss_gross: 10_000,
+  });
+  const taxable = result.outputs.find((item) => item.nodeType === "f1040")
+    ?.fields.line6b_ss_taxable as number | undefined;
+  const form8962 = result.outputs.find((item) => item.nodeType === "form8962");
+  assertEquals(
+    form8962?.fields.taxpayer_modified_agi,
+    agi(result) + 10_000 - (taxable ?? 0),
+  );
 });
 
 Deno.test("agi_aggregator: wages + taxable interest", () => {
@@ -417,8 +445,38 @@ Deno.test("agi_aggregator: pre-computed line6b_ss_taxable bypasses worksheet", (
 // ─── Negative adjustment / loss from one source reduces AGI ──────────────────
 
 Deno.test("agi_aggregator: rental real estate passive loss reduces AGI", () => {
-  const result = compute({ line1a_wages: 100_000, line17_schedule_e: -25_000 });
+  const result = compute({ line1a_wages: 100_000, line5_schedule_e: -25_000 });
   assertEquals(agi(result), 75_000);
+});
+
+Deno.test("agi_aggregator: rental profits limit the special passive loss allowance", () => {
+  const result = compute({
+    line1a_wages: 50_000,
+    line5_schedule_e: 10_000,
+    pal_current_income: 10_000,
+    pal_rental_income: 10_000,
+    pal_current_loss: 30_000,
+    pal_rental_loss: 20_000,
+    pal_active_participation: true,
+    filing_status: "single",
+  });
+  assertEquals(agi(result), 40_000);
+});
+
+Deno.test("agi_aggregator: active rental income share cannot be guessed", () => {
+  assertThrows(
+    () =>
+      compute({
+        line1a_wages: 50_000,
+        pal_current_income: 10_000,
+        pal_current_loss: 30_000,
+        pal_rental_loss: 20_000,
+        pal_active_participation: true,
+        filing_status: "single",
+      }),
+    Error,
+    "rental portion of current passive income",
+  );
 });
 
 Deno.test("agi_aggregator: schedule_f farm net loss reduces AGI", () => {

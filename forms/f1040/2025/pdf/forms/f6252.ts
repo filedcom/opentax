@@ -1,4 +1,5 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
+import { inputSchema } from "../../../nodes/intermediate/forms/form6252/index.ts";
 
 // IRS Form 6252 (2025) AcroForm field names.
 // Part I  — gross profit percentage (lines 1–5).
@@ -10,15 +11,39 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // payments_received → line 11 (payments received during year)
 // depreciation_recapture → line 13 (ordinary income recapture from Form 4797)
 const fields: ReadonlyArray<PdfFieldEntry> = [
-  { kind: "text", domainKey: "selling_price", pdfField: "topmostSubform[0].Page1[0].f1_5[0]" },
-  { kind: "text", domainKey: "gross_profit", pdfField: "topmostSubform[0].Page1[0].f1_11[0]" },
-  { kind: "text", domainKey: "contract_price", pdfField: "topmostSubform[0].Page1[0].f1_12[0]" },
-  { kind: "text", domainKey: "payments_received", pdfField: "topmostSubform[0].Page1[0].f1_13[0]" },
-  { kind: "text", domainKey: "depreciation_recapture", pdfField: "topmostSubform[0].Page1[0].f1_21[0]" },
+  {
+    kind: "text",
+    domainKey: "selling_price",
+    pdfField: "topmostSubform[0].Page1[0].f1_5[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "gross_profit",
+    pdfField: "topmostSubform[0].Page1[0].f1_11[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "contract_price",
+    pdfField: "topmostSubform[0].Page1[0].f1_12[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "payments_received",
+    pdfField: "topmostSubform[0].Page1[0].f1_13[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "depreciation_recapture",
+    pdfField: "topmostSubform[0].Page1[0].f1_21[0]",
+  },
 ];
 
 export const form6252Pdf: PdfFormDescriptor = {
   pendingKey: "form6252",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f6252--2025.pdf",
+  instances(fields) {
+    if (!("f6252s" in fields)) return [];
+    return inputSchema.parse(fields).f6252s.map((item) => ({ ...item }));
+  },
   fields,
 };

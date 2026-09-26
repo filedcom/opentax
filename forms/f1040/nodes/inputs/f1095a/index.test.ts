@@ -9,7 +9,9 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f1095a.compute({ taxYear: 2025, formType: "f1040" }, { f1095as: items });
+  return f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
+    f1095as: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -19,12 +21,20 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => f1095a.compute({ taxYear: 2025, formType: "f1040" }, { f1095as: [] }), Error);
+  assertThrows(
+    () => f1095a.compute({ taxYear: 2025, formType: "f1040" }, { f1095as: [] }),
+    Error,
+  );
 });
 
 Deno.test("missing issuer_name throws", () => {
   assertThrows(
-    () => f1095a.compute({ taxYear: 2025, formType: "f1040" }, { f1095as: [{ annual_premium: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () =>
+      f1095a.compute({ taxYear: 2025, formType: "f1040" }, {
+        f1095as: [
+          { annual_premium: 100 } as unknown as ReturnType<typeof minimalItem>,
+        ],
+      }),
     Error,
   );
 });
@@ -79,7 +89,20 @@ Deno.test("zero annual values does not route to form8962", () => {
 Deno.test("monthly premiums route to form8962", () => {
   const result = compute([
     minimalItem({
-      monthly_premiums: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      monthly_premiums: [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+      ],
     }),
   ]);
   const out = findOutput(result, "form8962");
@@ -90,7 +113,20 @@ Deno.test("monthly premiums route to form8962", () => {
 Deno.test("monthly slcsp routes to form8962", () => {
   const result = compute([
     minimalItem({
-      monthly_slcsps: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120],
+      monthly_slcsps: [
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+        120,
+      ],
     }),
   ]);
   const out = findOutput(result, "form8962");
@@ -149,7 +185,10 @@ Deno.test("annual_aptc sums across multiple policies", () => {
 Deno.test("policy_number does not produce tax output", () => {
   const withoutPolicyNumber = compute([minimalItem()]);
   const withPolicyNumber = compute([minimalItem({ policy_number: "POL123" })]);
-  assertEquals(withoutPolicyNumber.outputs.length, withPolicyNumber.outputs.length);
+  assertEquals(
+    withoutPolicyNumber.outputs.length,
+    withPolicyNumber.outputs.length,
+  );
 });
 
 // ── 8. Edge cases ─────────────────────────────────────────────────────────────
@@ -175,20 +214,166 @@ Deno.test("no APTC paid routes annual premium and slcsp to form8962", () => {
   assertEquals(out?.fields.annual_slcsp, 1500);
 });
 
+Deno.test("an explicit zero monthly APTC column stays with covered months", () => {
+  const result = compute([minimalItem({
+    monthly_premiums: Array(12).fill(500),
+    monthly_slcsps: Array(12).fill(600),
+    monthly_aptcs: Array(12).fill(0),
+  })]);
+  const out = findOutput(result, "form8962");
+  assertEquals(out?.fields.monthly_aptcs, Array(12).fill(0));
+  assertEquals(out?.fields.annual_line11_eligible, true);
+});
+
+Deno.test("changed monthly premiums require Form 8962 monthly rows", () => {
+  const result = compute([minimalItem({
+    monthly_premiums: [500, ...Array(11).fill(600)],
+    monthly_slcsps: Array(12).fill(700),
+    monthly_aptcs: Array(12).fill(100),
+  })]);
+  assertEquals(
+    findOutput(result, "form8962")?.fields.annual_line11_eligible,
+    undefined,
+  );
+});
+
+Deno.test("annual 1095-A total cannot disagree with its monthly column", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        monthly_premiums: Array(12).fill(500),
+        annual_premium: 5_000,
+      })]),
+    Error,
+    "annual_premium must equal its twelve monthly amounts",
+  );
+});
+
 Deno.test("multiple policies aggregate monthly arrays", () => {
   const result = compute([
     minimalItem({
+      coverage_state: "TX",
       monthly_premiums: [100, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0, 0],
+      monthly_slcsps: [120, 120, 120, 120, 120, 120, 0, 0, 0, 0, 0, 0],
+      monthly_aptcs: Array(12).fill(0),
     }),
     minimalItem({
       issuer_name: "Second Marketplace",
+      coverage_state: "TX",
       monthly_premiums: [0, 0, 0, 0, 0, 0, 200, 200, 200, 200, 200, 200],
+      monthly_slcsps: [0, 0, 0, 0, 0, 0, 220, 220, 220, 220, 220, 220],
+      monthly_aptcs: Array(12).fill(0),
     }),
   ]);
   const out = findOutput(result, "form8962");
   const premiums = out?.fields.monthly_premiums as number[];
   assertEquals(premiums[0], 100);
   assertEquals(premiums[6], 200);
+});
+
+Deno.test("same-state policies use one SLCSP while premiums and APTC add", () => {
+  const result = compute([
+    minimalItem({
+      coverage_state: "TX",
+      monthly_premiums: Array(12).fill(300),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(100),
+    }),
+    minimalItem({
+      coverage_state: "TX",
+      monthly_premiums: Array(12).fill(200),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(50),
+    }),
+  ]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, Array(12).fill(500));
+  assertEquals(fields?.monthly_slcsps, Array(12).fill(600));
+  assertEquals(fields?.monthly_aptcs, Array(12).fill(150));
+  assertEquals(fields?.annual_line11_eligible, true);
+});
+
+Deno.test("different-state policies add their SLCSP amounts", () => {
+  const result = compute([
+    minimalItem({
+      coverage_state: "TX",
+      monthly_premiums: Array(12).fill(300),
+      monthly_slcsps: Array(12).fill(600),
+      monthly_aptcs: Array(12).fill(0),
+    }),
+    minimalItem({
+      coverage_state: "CA",
+      monthly_premiums: Array(12).fill(200),
+      monthly_slcsps: Array(12).fill(700),
+      monthly_aptcs: Array(12).fill(0),
+    }),
+  ]);
+  assertEquals(
+    findOutput(result, "form8962")?.fields.monthly_slcsps,
+    Array(12).fill(1_300),
+  );
+  assertEquals(
+    findOutput(result, "form8962")?.fields.annual_line11_eligible,
+    true,
+  );
+});
+
+Deno.test("multiple covered policies reject missing state or conflicting same-state SLCSP", () => {
+  const first = minimalItem({
+    coverage_state: "TX",
+    monthly_premiums: Array(12).fill(300),
+    monthly_slcsps: Array(12).fill(600),
+    monthly_aptcs: Array(12).fill(0),
+  });
+  assertThrows(
+    () =>
+      compute([
+        first,
+        minimalItem({
+          monthly_premiums: Array(12).fill(200),
+          monthly_slcsps: Array(12).fill(600),
+          monthly_aptcs: Array(12).fill(0),
+        }),
+      ]),
+    Error,
+    "monthly SLCSP and coverage_state",
+  );
+  assertThrows(
+    () =>
+      compute([
+        first,
+        minimalItem({
+          coverage_state: "TX",
+          monthly_premiums: Array(12).fill(200),
+          monthly_slcsps: Array(12).fill(700),
+          monthly_aptcs: Array(12).fill(0),
+        }),
+      ]),
+    Error,
+    "same-state policies disagree on monthly SLCSP",
+  );
+});
+
+Deno.test("monthly policy cannot silently omit an annual-only policy", () => {
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          monthly_premiums: Array(12).fill(500),
+          monthly_slcsps: Array(12).fill(600),
+          monthly_aptcs: Array(12).fill(0),
+          annual_premium: 6_000,
+          annual_slcsp: 7_200,
+        }),
+        minimalItem({
+          issuer_name: "Second Marketplace",
+          annual_premium: 1_200,
+          annual_slcsp: 1_400,
+        }),
+      ]),
+    Error,
+    "need monthly columns for every policy",
+  );
 });
 
 // ── 9. Smoke test ─────────────────────────────────────────────────────────────
@@ -200,9 +385,48 @@ Deno.test("smoke test — full 1095-A with all major fields", () => {
       annual_premium: 14400,
       annual_slcsp: 18000,
       annual_aptc: 9600,
-      monthly_premiums: [1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200],
-      monthly_slcsps: [1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500],
-      monthly_aptcs: [800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800, 800],
+      monthly_premiums: [
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+        1200,
+      ],
+      monthly_slcsps: [
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+        1500,
+      ],
+      monthly_aptcs: [
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+        800,
+      ],
     }),
   ]);
   const out = findOutput(result, "form8962");

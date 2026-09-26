@@ -1,76 +1,172 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
-// ─── Field Map ────────────────────────────────────────────────────────────────
-// Maps Fields keys to IRS XSD element names for IRS8962.
-// Element order follows the XSD sequence for Form 8962 (Premium Tax Credit).
+interface MonthlyRow {
+  month_code: string;
+  premium: number;
+  slcsp: number;
+  contribution?: number;
+  max_assistance: number;
+  allowed_credit: number;
+  aptc: number;
+}
 
 export interface Fields {
-  // QSEHRA indicator (required by XSD; true when taxpayer has a QSEHRA)
   qsehra_ind?: boolean | null;
-  // Line 1: Household size
   household_size?: number | null;
-  // Line 2a: Modified AGI (household income)
+  taxpayer_modified_agi?: number | null;
+  dependents_modified_agi?: number | null;
   household_income?: number | null;
-  // Line 2b: Federal poverty line amount
   federal_poverty_line?: number | null;
-  // Line 2c: Household income as percentage of FPL (e.g. 250 = 250%)
+  fpl_region?: "contiguous" | "alaska" | "hawaii" | null;
   federal_poverty_pct?: number | null;
-  // Line 11a: Total annual premium
+  applicable_figure?: number | null;
   annual_premium?: number | null;
-  // Line 11b: Annual applicable SLCSP premium
   annual_slcsp?: number | null;
-  // Line 11c: Annual applicable contribution amount
   annual_applicable_contribution?: number | null;
-  // Line 11d: Annual maximum premium tax credit
+  monthly_applicable_contribution?: number | null;
   annual_max_ptc?: number | null;
-  // Line 11e: Annual advance payment of PTC received
+  annual_ptc_allowed?: number | null;
   annual_aptc?: number | null;
-  // Line 26: Net premium tax credit (refundable credit, if positive)
+  monthly_ptc_rows?: readonly MonthlyRow[] | null;
+  total_premium_tax_credit?: number | null;
+  total_advance_ptc?: number | null;
   net_premium_tax_credit?: number | null;
-  // Line 29: Excess advance premium tax credit repayment (if APTC exceeded)
+  excess_advance_payment?: number | null;
+  repayment_limitation?: number | null;
   excess_advance_premium?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["household_size", "ExemptionNumber"],
+  ["household_size", "TotalExemptionsCnt"],
+  ["taxpayer_modified_agi", "ModifiedAGIAmt"],
+  ["dependents_modified_agi", "TotalDependentsModifiedAGIAmt"],
   ["household_income", "HouseholdIncomeAmt"],
-  ["federal_poverty_line", "FederalPovertyLineAmt"],
-  ["federal_poverty_pct", "HouseholdIncomeAsPercentageOfFPL"],
-  ["annual_premium", "TotalPremiumAmt"],
-  ["annual_slcsp", "AnnualApplicableSLCSPAmt"],
-  ["annual_applicable_contribution", "ApplicableFigureAmt"],
-  ["annual_max_ptc", "AnnualMaximumPremiumTaxCreditAmt"],
-  ["annual_aptc", "TotalAdvancePaymentPTCAmt"],
-  ["net_premium_tax_credit", "PremiumTaxCreditAmt"],
-  ["excess_advance_premium", "ExcessAdvancePremiumTaxCreditRepayAmt"],
+  ["federal_poverty_line", "PovertyLevelAmt"],
+  ["federal_poverty_pct", "FederalPovertyLevelPct"],
+  ["applicable_figure", "ApplicableFigureRt"],
+  ["annual_applicable_contribution", "AnnualContributionAmt"],
+  ["monthly_applicable_contribution", "MonthlyContriHealthCareCvrAmt"],
+  ["total_premium_tax_credit", "TotalPremiumTaxCreditAmt"],
+  ["total_advance_ptc", "TotalAdvancedPTCAmt"],
+  ["net_premium_tax_credit", "ReconciledPremiumTaxCreditAmt"],
+  ["excess_advance_payment", "ExcessAdvncPaymentAmt"],
+  ["repayment_limitation", "AdditionalTaxLimitationAmt"],
+  ["excess_advance_premium", "PremiumTaxCreditTaxLiabAmt"],
 ];
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
+function numberElement(tag: string, value: unknown): string {
+  return typeof value === "number" ? element(tag, value) : "";
+}
+
+function monthlyXml(rows: readonly MonthlyRow[]): string[] {
+  return rows.filter((row) => row.premium > 0 || row.slcsp > 0 || row.aptc > 0)
+    .map((row) =>
+      elements("MonthlyPTCCalculationGrp", [
+        element("MonthCd", row.month_code),
+        element("MonthlyPremiumAmt", row.premium),
+        element("MonthlyPremiumSLCSPAmt", row.slcsp),
+        numberElement("MonthlyContributionAmt", row.contribution),
+        element("MonthlyMaxPremiumAssistanceAmt", row.max_assistance),
+        element("MonthlyPremiumTaxCreditAllwAmt", row.allowed_credit),
+        element("MonthlyAdvancedPTCAmt", row.aptc),
+      ])
+    );
+}
 
 function buildIRS8962(fields: Input): string {
-  // Only emit Form 8962 when there is actual PTC or excess APTC data.
-  // household_income alone (from agi_aggregator routing) does not make a return
-  // require Form 8962 — marketplace coverage data is needed.
-  const hasPtcData = typeof fields.net_premium_tax_credit === "number" ||
-    typeof fields.excess_advance_premium === "number" ||
+  const monthlyRows = fields.monthly_ptc_rows;
+  const hasSource = Array.isArray(monthlyRows) ||
     typeof fields.annual_premium === "number" ||
-    typeof fields.household_size === "number";
-  if (!hasPtcData) return "";
+    typeof fields.annual_slcsp === "number" ||
+    typeof fields.annual_aptc === "number";
+  if (!hasSource) return "";
+  if (
+    typeof fields.household_size !== "number" ||
+    typeof fields.taxpayer_modified_agi !== "number" ||
+    typeof fields.household_income !== "number" ||
+    typeof fields.federal_poverty_line !== "number" ||
+    typeof fields.federal_poverty_pct !== "number" ||
+    typeof fields.total_premium_tax_credit !== "number" ||
+    typeof fields.total_advance_ptc !== "number" ||
+    !fields.fpl_region
+  ) {
+    throw new Error(
+      "Form 8962 MeF requires the completed 2025 calculation, not source premiums alone",
+    );
+  }
+  if (
+    fields.household_income !== Math.max(
+      0,
+      fields.taxpayer_modified_agi + (fields.dependents_modified_agi ?? 0),
+    )
+  ) {
+    throw new Error(
+      "Form 8962 household income must reconcile to taxpayer and dependent modified AGI",
+    );
+  }
 
-  // QSEHRAInd is required by XSD (no minOccurs="0") and must be first
-  const qsehraInd = fields.qsehra_ind === true ? "true" : "false";
-  const children = [
-    element("QSEHRAInd", qsehraInd),
-    ...FIELD_MAP.map(([key, tag]) => {
-      const value = fields[key];
-      if (typeof value !== "number") return "";
-      return element(tag, value);
-    }),
+  const location = fields.fpl_region === "alaska"
+    ? "A"
+    : fields.fpl_region === "hawaii"
+    ? "B"
+    : "C";
+  const annualGroup = Array.isArray(monthlyRows) ? [] : [
+    elements("AnnualPTCCalculationGrp", [
+      numberElement("AnnualPremiumAmt", fields.annual_premium),
+      numberElement("AnnualPremiumSLCSPAmt", fields.annual_slcsp),
+      numberElement(
+        "AnnualContributionAmt",
+        fields.annual_applicable_contribution,
+      ),
+      numberElement("AnnualMaxPremiumAssistanceAmt", fields.annual_max_ptc),
+      numberElement("AnnualPremiumTaxCreditAllwAmt", fields.annual_ptc_allowed),
+      numberElement("AnnualAdvancedPTCAmt", fields.annual_aptc),
+    ]),
   ];
-  return elements("IRS8962", children);
+  return elements("IRS8962", [
+    element("QSEHRAInd", fields.qsehra_ind === true ? "true" : "false"),
+    element("TotalExemptionsCnt", fields.household_size),
+    element("ModifiedAGIAmt", fields.taxpayer_modified_agi),
+    numberElement(
+      "TotalDependentsModifiedAGIAmt",
+      fields.dependents_modified_agi,
+    ),
+    element("HouseholdIncomeAmt", fields.household_income),
+    element("PovertyLevelAmt", fields.federal_poverty_line),
+    element("FederalPovertyTableLocCd", location),
+    element("FederalPovertyLevelPct", fields.federal_poverty_pct),
+    fields.federal_poverty_pct === 401
+      ? element("FederalPovertyLevelPct401Ind", "true")
+      : "",
+    typeof fields.applicable_figure === "number"
+      ? element("ApplicableFigureRt", fields.applicable_figure.toFixed(4))
+      : "",
+    numberElement(
+      "AnnualContributionAmt",
+      fields.annual_applicable_contribution,
+    ),
+    numberElement(
+      "MonthlyContriHealthCareCvrAmt",
+      fields.monthly_applicable_contribution,
+    ),
+    element(
+      "FullYrCoverage1095AInd",
+      Array.isArray(monthlyRows) ? "false" : "true",
+    ),
+    ...(Array.isArray(monthlyRows) ? monthlyXml(monthlyRows) : annualGroup),
+    element("TotalPremiumTaxCreditAmt", fields.total_premium_tax_credit),
+    element("TotalAdvancedPTCAmt", fields.total_advance_ptc),
+    numberElement(
+      "ReconciledPremiumTaxCreditAmt",
+      fields.net_premium_tax_credit,
+    ),
+    numberElement("ExcessAdvncPaymentAmt", fields.excess_advance_payment),
+    numberElement("AdditionalTaxLimitationAmt", fields.repayment_limitation),
+    numberElement("PremiumTaxCreditTaxLiabAmt", fields.excess_advance_premium),
+  ]);
 }
 
 export const form8962: MefFormDescriptor<"form8962", Input> = {

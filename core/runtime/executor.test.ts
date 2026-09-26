@@ -79,6 +79,40 @@ class MockOptionalNode extends TaxNode<typeof optionalInputSchema> {
 
 // --- Tests ---
 
+Deno.test("executor: self-output replaces accumulated contributions", () => {
+  const startSchema = z.object({ amount: z.number() });
+  const sinkSchema = z.object({ amount: z.array(z.number()) });
+  class Start extends TaxNode<typeof startSchema> {
+    readonly nodeType = "start";
+    readonly inputSchema = startSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(): NodeResult {
+      return { outputs: [
+        { nodeType: "sink", fields: { amount: 12_000 } },
+        { nodeType: "sink", fields: { amount: -5_000 } },
+      ] };
+    }
+  }
+  class Sink extends TaxNode<typeof sinkSchema> {
+    readonly nodeType = "sink";
+    readonly inputSchema = sinkSchema;
+    readonly outputNodes = new OutputNodes([]);
+    compute(_ctx: NodeContext, input: z.infer<typeof sinkSchema>): NodeResult {
+      return { outputs: [{
+        nodeType: "sink",
+        fields: { amount: input.amount.reduce((sum, value) => sum + value, 0) },
+      }] };
+    }
+  }
+  const result = execute(
+    [{ id: "start", nodeType: "start" }, { id: "sink", nodeType: "sink" }],
+    { start: new Start(), sink: new Sink() },
+    { amount: 1 },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.pending.sink.amount, 7_000);
+});
+
 Deno.test("executor: 2-node DAG (A -> B) executes in order, B receives A's output", () => {
   const plan: readonly ExecutionStep[] = [
     { id: "start", nodeType: "start" },

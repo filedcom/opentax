@@ -34,7 +34,7 @@ Deno.test("form1116: applies taxable-income ratio", () => {
     }],
     worldwide_taxable_income: 85_250,
     us_tax_before_credits: 13_669,
-  }), 135.336728914956);
+  }), 135);
 });
 
 Deno.test("form1116: directly allocable deductions reduce the limit", () => {
@@ -99,4 +99,23 @@ Deno.test("form1116: same-category items aggregate before applying the limit", (
     worldwide_taxable_income: 50_000,
     us_tax_before_credits: 5_000,
   }), 500);
+});
+
+Deno.test("form1116: Part IV caps combined category credits at U.S. tax", () => {
+  assertEquals(credit({
+    foreign_tax_items: [
+      {
+        foreign_tax_paid: 1_000,
+        foreign_gross_income: 10_000,
+        income_category: IncomeCategory.Passive,
+      },
+      {
+        foreign_tax_paid: 1_000,
+        foreign_gross_income: 10_000,
+        income_category: IncomeCategory.General,
+      },
+    ],
+    worldwide_taxable_income: 10_000,
+    us_tax_before_credits: 1_000,
+  }), 1_000);
 });

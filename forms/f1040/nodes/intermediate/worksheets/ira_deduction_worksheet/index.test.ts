@@ -1,12 +1,15 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { ira_deduction_worksheet, inputSchema } from "./index.ts";
+import { inputSchema, ira_deduction_worksheet } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { form8606 } from "../../forms/form8606/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return ira_deduction_worksheet.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return ira_deduction_worksheet.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
@@ -21,6 +24,35 @@ Deno.test("smoke: zero contribution → no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("W-2 retirement-plan coverage alone does not calculate an IRA deduction", () => {
+  const result = compute({ covered_by_retirement_plan: true });
+  assertEquals(result.outputs, []);
+});
+
+Deno.test("positive IRA contribution still requires filing status, MAGI, and coverage", () => {
+  assertThrows(
+    () =>
+      compute({ ira_contribution: 1_000, covered_by_retirement_plan: true }),
+    Error,
+    "IRA contribution requires filing status, MAGI, and employer-plan coverage",
+  );
+});
+
+Deno.test("W-2 coverage overrides a conflicting manually entered participant flag", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    magi: 100_000,
+    ira_contribution: 7_000,
+    active_participant: false,
+    covered_by_retirement_plan: true,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, form8606)?.nondeductible_contributions,
+    7_000,
+  );
+});
+
 // ─── Not active participant (fully deductible) ────────────────────────────────
 
 Deno.test("not active participant: single → full deduction", () => {
@@ -30,7 +62,10 @@ Deno.test("not active participant: single → full deduction", () => {
     ira_contribution: 7_000,
     active_participant: false,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    7_000,
+  );
 });
 
 Deno.test("not active participant: MFJ spouse not participant → full deduction", () => {
@@ -41,7 +76,10 @@ Deno.test("not active participant: MFJ spouse not participant → full deduction
     active_participant: false,
     spouse_active_participant: false,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    7_000,
+  );
 });
 
 // ─── Active participant — below phase-out (full deduction) ────────────────────
@@ -53,7 +91,10 @@ Deno.test("active participant: single below phase-out → full deduction", () =>
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    7_000,
+  );
 });
 
 Deno.test("active participant: MFJ below phase-out → full deduction", () => {
@@ -63,7 +104,10 @@ Deno.test("active participant: MFJ below phase-out → full deduction", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    7_000,
+  );
 });
 
 // ─── Active participant — in phase-out (partial deduction) ───────────────────
@@ -78,7 +122,10 @@ Deno.test("active participant: single in phase-out → partial deduction", () =>
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    3_500,
+  );
 });
 
 Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
@@ -90,7 +137,10 @@ Deno.test("active participant: MFJ in phase-out → partial deduction", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    3_500,
+  );
 });
 
 Deno.test("active participant: HOH in phase-out → partial deduction", () => {
@@ -102,7 +152,10 @@ Deno.test("active participant: HOH in phase-out → partial deduction", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    3_500,
+  );
 });
 
 // ─── Active participant — above phase-out (no deduction) ─────────────────────
@@ -114,7 +167,10 @@ Deno.test("active participant: single above phase-out → no deduction, form8606
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8606)!.nondeductible_contributions,
+    7_000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
@@ -125,7 +181,10 @@ Deno.test("active participant: MFJ above phase-out → no deduction, form8606 ba
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8606)!.nondeductible_contributions,
+    7_000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
@@ -140,7 +199,10 @@ Deno.test("non-covered MFJ spouse: below non-covered range → full deduction", 
     active_participant: false,
     spouse_active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    7_000,
+  );
 });
 
 Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", () => {
@@ -153,7 +215,10 @@ Deno.test("non-covered MFJ spouse: in non-covered range → partial deduction", 
     active_participant: false,
     spouse_active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    3_500,
+  );
 });
 
 Deno.test("non-covered MFJ spouse: above non-covered range → no deduction, form8606 basis tracked", () => {
@@ -164,7 +229,10 @@ Deno.test("non-covered MFJ spouse: above non-covered range → no deduction, for
     active_participant: false,
     spouse_active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8606)!.nondeductible_contributions,
+    7_000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
@@ -178,7 +246,10 @@ Deno.test("age 50+: contribution limit is $8,000", () => {
     active_participant: false,
     age_50_or_older: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 8_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    8_000,
+  );
 });
 
 Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
@@ -189,7 +260,10 @@ Deno.test("age 50+: contribution exceeds $8,000 → capped at $8,000", () => {
     active_participant: false,
     age_50_or_older: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 8_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    8_000,
+  );
 });
 
 // ─── Contribution cap (under 50) ─────────────────────────────────────────────
@@ -201,7 +275,10 @@ Deno.test("contribution exceeds $7,000 limit → capped at $7,000", () => {
     ira_contribution: 9_000,
     active_participant: false,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    7_000,
+  );
 });
 
 // ─── Phase-out rounding rules ─────────────────────────────────────────────────
@@ -215,7 +292,10 @@ Deno.test("phase-out: reduced amount rounds up to nearest $10", () => {
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 6_300);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    6_300,
+  );
 });
 
 Deno.test("phase-out: minimum $200 deduction floor applies", () => {
@@ -242,7 +322,10 @@ Deno.test("MFS active participant: phase-out $0–$10,000 → partial at MAGI $5
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, schedule1)!.line20_ira_deduction, 3_500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)!.line20_ira_deduction,
+    3_500,
+  );
 });
 
 Deno.test("MFS active participant: above $10,000 MAGI → no deduction, form8606 basis tracked", () => {
@@ -252,26 +335,33 @@ Deno.test("MFS active participant: above $10,000 MAGI → no deduction, form8606
     ira_contribution: 7_000,
     active_participant: true,
   });
-  assertEquals(fieldsOf(result.outputs, form8606)!.nondeductible_contributions, 7_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8606)!.nondeductible_contributions,
+    7_000,
+  );
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
 });
 
 // ─── Schema validation ─────────────────────────────────────────────────────────
 
 Deno.test("schema: rejects negative ira_contribution", () => {
-  assertThrows(() => compute({
-    filing_status: FilingStatus.Single,
-    magi: 50_000,
-    ira_contribution: -100,
-    active_participant: false,
-  }));
+  assertThrows(() =>
+    compute({
+      filing_status: FilingStatus.Single,
+      magi: 50_000,
+      ira_contribution: -100,
+      active_participant: false,
+    })
+  );
 });
 
 Deno.test("schema: rejects negative magi", () => {
-  assertThrows(() => compute({
-    filing_status: FilingStatus.Single,
-    magi: -1,
-    ira_contribution: 7_000,
-    active_participant: false,
-  }));
+  assertThrows(() =>
+    compute({
+      filing_status: FilingStatus.Single,
+      magi: -1,
+      ira_contribution: 7_000,
+      active_participant: false,
+    })
+  );
 });

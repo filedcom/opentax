@@ -1,4 +1,4 @@
-import { assertEquals, assertAlmostEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form6781 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -23,32 +23,31 @@ Deno.test("zero net gain — no outputs", () => {
 
 // ─── 60/40 rule — gains ───────────────────────────────────────────────────────
 
-Deno.test("60/40: $10k net gain → $6k LT (line_11_form2439), $4k ST (line_1a_proceeds)", () => {
+Deno.test("60/40: $10k net gain → $6k LT (line 11), $4k ST (line 4)", () => {
   const result = compute({ net_section_1256_gain: 10_000 });
   const sdOutputs = allOutputs(result, "schedule_d");
   const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
+  const stOut = sdOutputs.find((o) => "line_4_other_st" in o.fields);
   assertEquals(ltOut?.fields.line_11_form2439, 6_000);
-  assertEquals(stOut?.fields.line_1a_proceeds, 4_000);
-  assertEquals(stOut?.fields.line_1a_cost, 0);
+  assertEquals(stOut?.fields.line_4_other_st, 4_000);
 });
 
 Deno.test("60/40: $50k net gain → $30k LT, $20k ST", () => {
   const result = compute({ net_section_1256_gain: 50_000 });
   const sdOutputs = allOutputs(result, "schedule_d");
   const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
+  const stOut = sdOutputs.find((o) => "line_4_other_st" in o.fields);
   assertEquals(ltOut?.fields.line_11_form2439, 30_000);
-  assertEquals(stOut?.fields.line_1a_proceeds, 20_000);
+  assertEquals(stOut?.fields.line_4_other_st, 20_000);
 });
 
 Deno.test("60/40: $1k net gain → $600 LT, $400 ST (exact integers)", () => {
   const result = compute({ net_section_1256_gain: 1_000 });
   const sdOutputs = allOutputs(result, "schedule_d");
   const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
+  const stOut = sdOutputs.find((o) => "line_4_other_st" in o.fields);
   assertEquals(ltOut?.fields.line_11_form2439, 600);
-  assertEquals(stOut?.fields.line_1a_proceeds, 400);
+  assertEquals(stOut?.fields.line_4_other_st, 400);
 });
 
 // ─── 60/40 rule — losses ──────────────────────────────────────────────────────
@@ -57,62 +56,61 @@ Deno.test("60/40: $10k net loss → -$6k LT, -$4k ST", () => {
   const result = compute({ net_section_1256_gain: -10_000 });
   const sdOutputs = allOutputs(result, "schedule_d");
   const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
+  const stOut = sdOutputs.find((o) => "line_4_other_st" in o.fields);
   assertEquals(ltOut?.fields.line_11_form2439, -6_000);
-  assertEquals(stOut?.fields.line_1a_proceeds, -4_000);
+  assertEquals(stOut?.fields.line_4_other_st, -4_000);
 });
 
 Deno.test("60/40: $25k net loss → -$15k LT, -$10k ST", () => {
   const result = compute({ net_section_1256_gain: -25_000 });
   const sdOutputs = allOutputs(result, "schedule_d");
   const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
+  const stOut = sdOutputs.find((o) => "line_4_other_st" in o.fields);
   assertEquals(ltOut?.fields.line_11_form2439, -15_000);
-  assertEquals(stOut?.fields.line_1a_proceeds, -10_000);
+  assertEquals(stOut?.fields.line_4_other_st, -10_000);
 });
 
-// ─── Prior-year loss carryover reduces net before 60/40 split ────────────────
-
-Deno.test("carryover reduces gain: $10k gain - $4k carryover = $6k net → LT=$3.6k, ST=$2.4k", () => {
+Deno.test("account rows net gains and losses before the 60/40 split", () => {
   const result = compute({
-    net_section_1256_gain: 10_000,
-    prior_year_loss_carryover: 4_000,
+    accounts: [
+      { account_identification: "Broker A", gain_loss: 12_000 },
+      { account_identification: "Broker B", gain_loss: -2_000 },
+    ],
   });
-  const sdOutputs = allOutputs(result, "schedule_d");
-  const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
-  assertAlmostEquals(ltOut?.fields.line_11_form2439 as number, 3_600, 0.01);
-  assertAlmostEquals(stOut?.fields.line_1a_proceeds as number, 2_400, 0.01);
+  assertEquals(
+    result.outputs.find((o) => "line_11_form2439" in o.fields)?.fields
+      .line_11_form2439,
+    6_000,
+  );
+  assertEquals(
+    result.outputs.find((o) => "line_4_other_st" in o.fields)?.fields
+      .line_4_other_st,
+    4_000,
+  );
 });
 
-Deno.test("carryover equals gain — net zero, no outputs", () => {
-  const result = compute({
-    net_section_1256_gain: 5_000,
-    prior_year_loss_carryover: 5_000,
-  });
-  assertEquals(result.outputs.length, 0);
+Deno.test("mismatched aggregate and account rows are rejected", () => {
+  assertThrows(
+    () =>
+      compute({
+        accounts: [{ account_identification: "Broker A", gain_loss: 100 }],
+        net_section_1256_gain: 99,
+      }),
+    Error,
+    "do not match",
+  );
 });
 
-Deno.test("carryover exceeds gain: $3k gain - $8k carryover = -$5k net → LT=-$3k, ST=-$2k", () => {
-  const result = compute({
-    net_section_1256_gain: 3_000,
-    prior_year_loss_carryover: 8_000,
-  });
-  const sdOutputs = allOutputs(result, "schedule_d");
-  const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
-  assertEquals(ltOut?.fields.line_11_form2439, -3_000);
-  assertEquals(stOut?.fields.line_1a_proceeds, -2_000);
-});
-
-Deno.test("carryover with no current-year gain: -$5k net → LT=-$3k, ST=-$2k", () => {
-  const result = compute({ prior_year_loss_carryover: 5_000 });
-  const sdOutputs = allOutputs(result, "schedule_d");
-  const ltOut = sdOutputs.find((o) => "line_11_form2439" in o.fields);
-  const stOut = sdOutputs.find((o) => "line_1a_proceeds" in o.fields);
-  assertEquals(ltOut?.fields.line_11_form2439, -3_000);
-  assertEquals(stOut?.fields.line_1a_costs, undefined); // verify no extra fields bleed
-  assertEquals(stOut?.fields.line_1a_proceeds, -2_000);
+Deno.test("old prior-year carryover input is rejected rather than misreported", () => {
+  assertThrows(
+    () =>
+      compute({
+        net_section_1256_gain: 10_000,
+        prior_year_loss_carryover: 4_000,
+      }),
+    Error,
+    "does not apply a prior-year loss carryover",
+  );
 });
 
 // ─── Output routing ───────────────────────────────────────────────────────────

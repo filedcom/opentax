@@ -80,7 +80,7 @@ const inputSchema = z.object({
   // Line 10 — Adjustments from Schedule 1 Part II
   line10_adjustments: z.number().nonnegative().optional(),
   // Line 11 — Adjusted gross income (line 9 - line 10)
-  line11_agi: z.number().nonnegative().optional(),
+  line11_agi: z.number().optional(),
   // Line 12a — Standard deduction
   line12a_standard_deduction: z.number().nonnegative().optional(),
   // Line 12b — Charitable contributions (if standard deduction)
@@ -227,16 +227,6 @@ function creditsTotal(input: F1040Input): number {
     (input.line20_nonrefundable_credits ?? 0);
 }
 
-function taxAfterCredits(input: F1040Input): number {
-  const beforeCredits = totalTaxBeforeCredits(input);
-  const credits = creditsTotal(input);
-  return Math.max(0, beforeCredits - credits);
-}
-
-function totalTax(input: F1040Input): number {
-  return taxAfterCredits(input) + (input.line23_other_taxes ?? 0);
-}
-
 function totalWithholding(input: F1040Input): number {
   return (
     (input.line25a_w2_withheld ?? 0) +
@@ -273,7 +263,6 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     (input.line13b_additional_deductions ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
-  const computed_line20 = input.line20_nonrefundable_credits ?? 0;
   const computed_line21 = creditsTotal(input);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
   const computed_line23 = input.line23_other_taxes ?? 0;

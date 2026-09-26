@@ -13,12 +13,15 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
     total_miles: 10000,
     method: AutoMethod.Standard,
     purpose: AutoPurpose.SCHEDULE_C,
+    farm_id: "farm-1",
     ...overrides,
   };
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return auto_expense.compute({ taxYear: 2025, formType: "f1040" }, { auto_expenses: items });
+  return auto_expense.compute({ taxYear: 2025, formType: "f1040" }, {
+    auto_expenses: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -81,19 +84,37 @@ Deno.test("auto_expense.inputSchema: invalid purpose fails", () => {
 // =============================================================================
 
 Deno.test("auto_expense.compute: standard mileage — 10,000 business miles = $7,000", () => {
-  const result = compute([minimalItem({ business_miles: 10000, total_miles: 15000, method: AutoMethod.Standard })]);
+  const result = compute([
+    minimalItem({
+      business_miles: 10000,
+      total_miles: 15000,
+      method: AutoMethod.Standard,
+    }),
+  ]);
   const fields = fieldsOf(result.outputs, scheduleC)!;
   assertEquals(fields.line_9_car_truck_expenses, 7000);
 });
 
 Deno.test("auto_expense.compute: standard mileage — 1,000 business miles = $700", () => {
-  const result = compute([minimalItem({ business_miles: 1000, total_miles: 5000, method: AutoMethod.Standard })]);
+  const result = compute([
+    minimalItem({
+      business_miles: 1000,
+      total_miles: 5000,
+      method: AutoMethod.Standard,
+    }),
+  ]);
   const fields = fieldsOf(result.outputs, scheduleC)!;
   assertEquals(fields.line_9_car_truck_expenses, 700);
 });
 
 Deno.test("auto_expense.compute: standard mileage — zero business miles = no output", () => {
-  const result = compute([minimalItem({ business_miles: 0, total_miles: 10000, method: AutoMethod.Standard })]);
+  const result = compute([
+    minimalItem({
+      business_miles: 0,
+      total_miles: 10000,
+      method: AutoMethod.Standard,
+    }),
+  ]);
   assertEquals(result.outputs.length, 0);
 });
 
@@ -152,7 +173,10 @@ Deno.test("auto_expense.compute: purpose SCHEDULE_C routes to schedule_c with co
     purpose: AutoPurpose.SCHEDULE_C,
   })]);
   // 5000 × 0.70 = 3500
-  assertEquals(fieldsOf(result.outputs, scheduleC)!.line_9_car_truck_expenses, 3500);
+  assertEquals(
+    fieldsOf(result.outputs, scheduleC)!.line_9_car_truck_expenses,
+    3500,
+  );
   assertEquals(findOutput(result, "schedule_e"), undefined);
   assertEquals(findOutput(result, "schedule_f"), undefined);
 });
@@ -175,7 +199,9 @@ Deno.test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f with co
     method: AutoMethod.Standard,
     purpose: AutoPurpose.SCHEDULE_F,
   })]);
-  assertEquals(fieldsOf(result.outputs, schedule_f)!.line10_car_truck, 3500);
+  assertEquals(fieldsOf(result.outputs, schedule_f)!.farm_sources, [
+    { farm_id: "farm-1", kind: "auto_expense", amount: 3500 },
+  ]);
   assertEquals(findOutput(result, "schedule_c"), undefined);
 });
 
@@ -185,20 +211,42 @@ Deno.test("auto_expense.compute: purpose SCHEDULE_F routes to schedule_f with co
 
 Deno.test("auto_expense.compute: two SCHEDULE_C vehicles — deductions summed into one output", () => {
   const result = compute([
-    minimalItem({ business_miles: 10000, total_miles: 15000, method: AutoMethod.Standard, purpose: AutoPurpose.SCHEDULE_C }),
-    minimalItem({ business_miles: 5000, total_miles: 8000, method: AutoMethod.Standard, purpose: AutoPurpose.SCHEDULE_C }),
+    minimalItem({
+      business_miles: 10000,
+      total_miles: 15000,
+      method: AutoMethod.Standard,
+      purpose: AutoPurpose.SCHEDULE_C,
+    }),
+    minimalItem({
+      business_miles: 5000,
+      total_miles: 8000,
+      method: AutoMethod.Standard,
+      purpose: AutoPurpose.SCHEDULE_C,
+    }),
   ]);
   // 10000 × 0.70 = 7000; 5000 × 0.70 = 3500; total = 10500
   const fields = fieldsOf(result.outputs, scheduleC)!;
   assertEquals(fields.line_9_car_truck_expenses, 10500);
-  const schedCOutputs = result.outputs.filter((o) => o.nodeType === "schedule_c");
+  const schedCOutputs = result.outputs.filter((o) =>
+    o.nodeType === "schedule_c"
+  );
   assertEquals(schedCOutputs.length, 1);
 });
 
 Deno.test("auto_expense.compute: mixed purposes — separate outputs for each", () => {
   const result = compute([
-    minimalItem({ business_miles: 10000, total_miles: 15000, method: AutoMethod.Standard, purpose: AutoPurpose.SCHEDULE_C }),
-    minimalItem({ business_miles: 5000, total_miles: 10000, method: AutoMethod.Standard, purpose: AutoPurpose.SCHEDULE_E }),
+    minimalItem({
+      business_miles: 10000,
+      total_miles: 15000,
+      method: AutoMethod.Standard,
+      purpose: AutoPurpose.SCHEDULE_C,
+    }),
+    minimalItem({
+      business_miles: 5000,
+      total_miles: 10000,
+      method: AutoMethod.Standard,
+      purpose: AutoPurpose.SCHEDULE_E,
+    }),
   ]);
   assertEquals(result.outputs.length, 2);
   const cFields = fieldsOf(result.outputs, scheduleC)!;
@@ -213,20 +261,41 @@ Deno.test("auto_expense.compute: mixed purposes — separate outputs for each", 
 
 Deno.test("auto_expense.compute: throws when business_miles > total_miles", () => {
   assertThrows(
-    () => compute([minimalItem({ business_miles: 15000, total_miles: 10000, method: AutoMethod.Standard })]),
+    () =>
+      compute([
+        minimalItem({
+          business_miles: 15000,
+          total_miles: 10000,
+          method: AutoMethod.Standard,
+        }),
+      ]),
     Error,
   );
 });
 
 Deno.test("auto_expense.compute: throws when total_miles = 0 (with actual method)", () => {
   assertThrows(
-    () => compute([minimalItem({ business_miles: 0, total_miles: 0, method: AutoMethod.Actual, actual_expenses: { gas_oil: 1000 } })]),
+    () =>
+      compute([
+        minimalItem({
+          business_miles: 0,
+          total_miles: 0,
+          method: AutoMethod.Actual,
+          actual_expenses: { gas_oil: 1000 },
+        }),
+      ]),
     Error,
   );
 });
 
 Deno.test("auto_expense.compute: business_miles = total_miles does not throw", () => {
-  const result = compute([minimalItem({ business_miles: 5000, total_miles: 5000, method: AutoMethod.Standard })]);
+  const result = compute([
+    minimalItem({
+      business_miles: 5000,
+      total_miles: 5000,
+      method: AutoMethod.Standard,
+    }),
+  ]);
   assertEquals(Array.isArray(result.outputs), true);
 });
 
@@ -235,7 +304,13 @@ Deno.test("auto_expense.compute: business_miles = total_miles does not throw", (
 // =============================================================================
 
 Deno.test("auto_expense.compute: standard method — exact mileage calculation at 70 cents", () => {
-  const result = compute([minimalItem({ business_miles: 100, total_miles: 200, method: AutoMethod.Standard })]);
+  const result = compute([
+    minimalItem({
+      business_miles: 100,
+      total_miles: 200,
+      method: AutoMethod.Standard,
+    }),
+  ]);
   const fields = fieldsOf(result.outputs, scheduleC)!;
   assertEquals(fields.line_9_car_truck_expenses, 70);
 });
@@ -246,7 +321,7 @@ Deno.test("auto_expense.compute: actual method — partial business use rounds c
     business_miles: 3000,
     total_miles: 7000,
     method: AutoMethod.Actual,
-    actual_expenses: { gas_oil: 2000, insurance: 1400, repairs: 800 },  // total = 4200
+    actual_expenses: { gas_oil: 2000, insurance: 1400, repairs: 800 }, // total = 4200
     purpose: AutoPurpose.SCHEDULE_C,
   })]);
   const fields = fieldsOf(result.outputs, scheduleC)!;
@@ -272,7 +347,13 @@ Deno.test("auto_expense.compute: smoke test — two vehicles mixed methods and p
       business_miles: 4000,
       total_miles: 8000,
       method: AutoMethod.Actual,
-      actual_expenses: { depreciation: 2000, gas_oil: 1200, repairs: 400, insurance: 1200, registration: 200 },
+      actual_expenses: {
+        depreciation: 2000,
+        gas_oil: 1200,
+        repairs: 400,
+        insurance: 1200,
+        registration: 200,
+      },
       purpose: AutoPurpose.SCHEDULE_F,
     }),
   ]);
@@ -281,6 +362,8 @@ Deno.test("auto_expense.compute: smoke test — two vehicles mixed methods and p
   const cFields = fieldsOf(result.outputs, scheduleC)!;
   assertEquals(cFields.line_9_car_truck_expenses, 14000);
   const fFields = fieldsOf(result.outputs, schedule_f)!;
-  assertEquals(fFields.line10_car_truck, 2500);
+  assertEquals(fFields.farm_sources, [
+    { farm_id: "farm-1", kind: "auto_expense", amount: 2500 },
+  ]);
   assertEquals(result.outputs.length, 2);
 });

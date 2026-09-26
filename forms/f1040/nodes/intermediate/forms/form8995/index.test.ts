@@ -353,8 +353,9 @@ Deno.test("routing: w2_wages and unadjusted_basis accepted but not routed separa
   });
   const out = findOutput(result, "f1040");
   assertEquals(out?.fields.line13_qbi_deduction, 2000);
-  // No separate output for w2_wages or unadjusted_basis (f1040 + standard_deduction)
-  assertEquals(result.outputs.length, 2);
+  // The third output carries the completed MeF deduction, not W-2/UBIA data.
+  assertEquals(result.outputs.length, 3);
+  assertEquals(findOutput(result, "form8995")?.fields.qbi_deduction, 2000);
 });
 
 // ── Edge cases ────────────────────────────────────────────────────────────────
@@ -430,7 +431,8 @@ Deno.test("smoke: full scenario — Schedule C + Schedule E + REIT dividends + c
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out?.fields.line13_qbi_deduction, 10600);
-  assertEquals(result.outputs.length, 2); // f1040 + standard_deduction
+  assertEquals(result.outputs.length, 3); // f1040 + standard_deduction + MeF form fields
+  assertEquals(findOutput(result, "form8995")?.fields.qbi_deduction, 10600);
 });
 
 Deno.test("above-threshold Schedule C QBI is handed to Form 8995-A after business deductions", () => {

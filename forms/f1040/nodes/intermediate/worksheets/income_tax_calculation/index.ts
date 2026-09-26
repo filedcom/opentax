@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
@@ -21,7 +24,9 @@ const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
 
 function sumField(value: number | number[] | undefined): number {
   if (value === undefined) return 0;
-  if (Array.isArray(value)) return value.reduce((s: number, n: number) => s + n, 0);
+  if (Array.isArray(value)) {
+    return value.reduce((s: number, n: number) => s + n, 0);
+  }
   return value;
 }
 
@@ -48,6 +53,7 @@ export const inputSchema = z.object({
   // Accumulable: multiple upstream nodes may each deposit their portion; the executor
   // accumulates them as an array which sumField collapses to a single total.
   qualified_dividends: accumulable(z.number().nonnegative()).optional(),
+  form8814_tax: z.number().nonnegative().optional(),
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
@@ -75,9 +81,16 @@ type IncomeTaxCalcInput = z.infer<typeof inputSchema>;
 
 function bracketsForStatus(
   status: FilingStatus,
-  cfg: { bracketsMfj: ReadonlyArray<Bracket>; bracketsSingle: ReadonlyArray<Bracket>; bracketsHoh: ReadonlyArray<Bracket>; bracketsMfs: ReadonlyArray<Bracket> },
+  cfg: {
+    bracketsMfj: ReadonlyArray<Bracket>;
+    bracketsSingle: ReadonlyArray<Bracket>;
+    bracketsHoh: ReadonlyArray<Bracket>;
+    bracketsMfs: ReadonlyArray<Bracket>;
+  },
 ): ReadonlyArray<Bracket> {
-  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) return cfg.bracketsMfj;
+  if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
+    return cfg.bracketsMfj;
+  }
   if (status === FilingStatus.HOH) return cfg.bracketsHoh;
   if (status === FilingStatus.MFS) return cfg.bracketsMfs;
   return cfg.bracketsSingle;
@@ -85,7 +98,10 @@ function bracketsForStatus(
 
 // Compute tax using the pre-computed base amounts stored in each bracket.
 // Equivalent to summing tax across every rate band the income passes through.
-function taxFromBrackets(income: number, brackets: ReadonlyArray<Bracket>): number {
+function taxFromBrackets(
+  income: number,
+  brackets: ReadonlyArray<Bracket>,
+): number {
   if (income <= 0) return 0;
   const bracket = [...brackets].reverse().find((b) => income > b.over);
   if (!bracket) return 0;
@@ -125,7 +141,10 @@ function qdcgtTax(
   const twentyFloorVal = twentyFloor[status];
 
   // Amount of preferentially taxed income in the 0% bracket
-  const inZero = Math.max(0, Math.min(taxableIncome, zeroCeilingVal) - ordinary);
+  const inZero = Math.max(
+    0,
+    Math.min(taxableIncome, zeroCeilingVal) - ordinary,
+  );
 
   // Remaining preferential income above the zero-rate ceiling
   const remaining = prefIncome - inZero;
@@ -139,16 +158,23 @@ function qdcgtTax(
   const remaining28 = remaining25 - in28;
 
   // Room available in the 15% bracket above the zero ceiling
-  const availFifteen = Math.max(0, twentyFloorVal - Math.max(ordinary, zeroCeilingVal));
+  const availFifteen = Math.max(
+    0,
+    twentyFloorVal - Math.max(ordinary, zeroCeilingVal),
+  );
 
   const inFifteen = Math.min(remaining28, availFifteen);
   const inTwenty = remaining28 - inFifteen;
 
-  const prefTax = in25 * 0.25 + in28 * 0.28 + inFifteen * 0.15 + inTwenty * 0.20;
+  const prefTax = in25 * 0.25 + in28 * 0.28 + inFifteen * 0.15 +
+    inTwenty * 0.20;
   const ordinaryTax = taxFromBrackets(ordinary, brackets);
 
   // Worksheet result is always ≤ regular bracket tax
-  return Math.min(prefTax + ordinaryTax, taxFromBrackets(taxableIncome, brackets));
+  return Math.min(
+    prefTax + ordinaryTax,
+    taxFromBrackets(taxableIncome, brackets),
+  );
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -164,7 +190,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
 
     const input = inputSchema.parse(rawInput);
 
-    if (input.taxable_income === 0) {
+    if (input.taxable_income === 0 && (input.form8814_tax ?? 0) === 0) {
       // Still notify f8812 of zero tax liability so ACTC can be computed, and
       // form_1116 so the §904 limitation is zero rather than absent.
       return {
@@ -184,10 +210,10 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     // Apply QDCGT / Schedule D Tax Worksheet when preferential income is present.
     // qualified_dividends is accumulable: multiple upstream nodes (f1099div, k1_partnership, etc.)
     // may each deposit their portion; sumField collapses the accumulated array to a scalar.
-    const qualDiv = Math.max(0, sumField(input.qualified_dividends as number | number[] | undefined) -
-      (input.form4952_elected_qualified_dividends ?? 0));
-    const netCg = Math.max(0, (input.net_capital_gain ?? 0) -
-      (input.form4952_elected_net_capital_gain ?? 0));
+    const qualDiv = sumField(
+      input.qualified_dividends as number | number[] | undefined,
+    );
+    const netCg = input.net_capital_gain ?? 0;
     const unrecaptured1250 = input.unrecaptured_1250_gain ?? 0;
     const rate28 = input.rate_28_gain ?? 0;
     const hasPrefIncome = qualDiv > 0 || netCg > 0;
@@ -199,17 +225,40 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     if (floor > 0) {
       const stackedIncome = input.taxable_income + floor;
       const stackedTax = hasPrefIncome
-        ? qdcgtTax(stackedIncome, qualDiv, netCg, input.filing_status, brackets, cfg.qdcgtZeroCeiling, cfg.qdcgtTwentyFloor, unrecaptured1250, rate28)
+        ? qdcgtTax(
+          stackedIncome,
+          qualDiv,
+          netCg,
+          input.filing_status,
+          brackets,
+          cfg.qdcgtZeroCeiling,
+          cfg.qdcgtTwentyFloor,
+          unrecaptured1250,
+          rate28,
+        )
         : taxFromBrackets(stackedIncome, brackets);
       const floorTax = taxFromBrackets(floor, brackets);
       tax = Math.max(0, stackedTax - floorTax);
     } else if (hasPrefIncome) {
-      tax = qdcgtTax(input.taxable_income, qualDiv, netCg, input.filing_status, brackets, cfg.qdcgtZeroCeiling, cfg.qdcgtTwentyFloor, unrecaptured1250, rate28);
+      tax = qdcgtTax(
+        input.taxable_income,
+        qualDiv,
+        netCg,
+        input.filing_status,
+        brackets,
+        cfg.qdcgtZeroCeiling,
+        cfg.qdcgtTwentyFloor,
+        unrecaptured1250,
+        rate28,
+      );
     } else {
       tax = taxFromBrackets(input.taxable_income, brackets);
     }
 
-    const regularTax = taxFromBrackets(input.taxable_income, brackets);
+    const childElectionTax = input.form8814_tax ?? 0;
+    tax += childElectionTax;
+    const regularTax = taxFromBrackets(input.taxable_income, brackets) +
+      childElectionTax;
 
     const outputs: NodeOutput[] = [
       this.outputNodes.output(f1040, { line16_income_tax: tax }),

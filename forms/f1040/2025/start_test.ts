@@ -5,10 +5,15 @@ Deno.test("inputNodes has expected structure (array + singleton entries)", () =>
   const arrayEntries = inputNodes.filter((e) => e.isArray === true);
   const singletonEntries = inputNodes.filter((e) => e.isArray === false);
   // qbi_aggregation is a singleton; verify it is registered
-  const hasQbiAgg = singletonEntries.some((e) => e.node.nodeType === "qbi_aggregation");
+  const hasQbiAgg = singletonEntries.some((e) =>
+    e.node.nodeType === "qbi_aggregation"
+  );
   assertEquals(hasQbiAgg, true);
   // Total count must be array + singleton
-  assertEquals(inputNodes.length, arrayEntries.length + singletonEntries.length);
+  assertEquals(
+    inputNodes.length,
+    arrayEntries.length + singletonEntries.length,
+  );
 });
 
 Deno.test("buildStartNode returns a node with nodeType 'start'", () => {
@@ -28,7 +33,9 @@ Deno.test("single w2 item routes to w2 node", () => {
     box1_wages: 50000,
     box2_fed_withheld: 5000,
   };
-  const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, { w2: [w2Item] });
+  const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, {
+    w2: [w2Item],
+  });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "w2");
 });
@@ -36,9 +43,45 @@ Deno.test("single w2 item routes to w2 node", () => {
 Deno.test("singleton general entry routes to general node", () => {
   const startNode = buildStartNode(inputNodes);
   const generalInput = { filing_status: "single" as const };
-  const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, { general: generalInput });
+  const result = startNode.compute({ taxYear: 2025, formType: "f1040" }, {
+    general: generalInput,
+  });
   assertEquals(result.outputs.length, 1);
   assertEquals(result.outputs[0].nodeType, "general");
+});
+
+Deno.test("singleton Schedule F entry routes farm records to its calculation node", () => {
+  const startNode = buildStartNode(inputNodes);
+  const input = {
+    schedule_fs: [{
+      farm_id: "north",
+      line_a_principal_crop_activity: "GRAIN FARMING",
+      line_b_agricultural_activity_code: "111100",
+      line_e_material_participation: true,
+      accounting_method: "cash",
+      line1_sales_livestock_resale: 0,
+      line2_sales_products_raised: 1_000,
+    }],
+  };
+  const result = startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { schedule_f: input },
+  );
+  assertEquals(result.outputs, [{ nodeType: "schedule_f", fields: input }]);
+});
+
+Deno.test("singleton Form 8824 exchange routes to its calculation node", () => {
+  const startNode = buildStartNode(inputNodes);
+  const exchange = {
+    relinquished_basis: 100_000,
+    received_fmv: 200_000,
+    gain_type: "capital" as const,
+  };
+  const result = startNode.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { form8824: exchange },
+  );
+  assertEquals(result.outputs, [{ nodeType: "form8824", fields: exchange }]);
 });
 
 Deno.test("singleton Schedule 1-A claim routes taxpayer-entered deductions", () => {

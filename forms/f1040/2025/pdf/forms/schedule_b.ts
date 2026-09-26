@@ -22,7 +22,13 @@ function interestRow(i: number): PdfFieldEntry[] {
     : `topmostSubform[0].Page1[0].f1_${String(2 * i + 1).padStart(2, "0")}[0]`;
   return [
     { kind: "text", domainKey: `print_int_payer_${i}`, pdfField: nameField },
-    { kind: "text", domainKey: `print_int_amount_${i}`, pdfField: `topmostSubform[0].Page1[0].f1_${String(2 * i + 2).padStart(2, "0")}[0]` },
+    {
+      kind: "text",
+      domainKey: `print_int_amount_${i}`,
+      pdfField: `topmostSubform[0].Page1[0].f1_${
+        String(2 * i + 2).padStart(2, "0")
+      }[0]`,
+    },
   ];
 }
 
@@ -32,20 +38,40 @@ function dividendRow(i: number): PdfFieldEntry[] {
     : `topmostSubform[0].Page1[0].f1_${32 + 2 * i}[0]`;
   return [
     { kind: "text", domainKey: `print_div_payer_${i}`, pdfField: nameField },
-    { kind: "text", domainKey: `print_div_amount_${i}`, pdfField: `topmostSubform[0].Page1[0].f1_${33 + 2 * i}[0]` },
+    {
+      kind: "text",
+      domainKey: `print_div_amount_${i}`,
+      pdfField: `topmostSubform[0].Page1[0].f1_${33 + 2 * i}[0]`,
+    },
   ];
 }
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
   // ── Part I: Interest payer rows + totals ────────────────────────────────────
   ...Array.from({ length: 14 }, (_, i) => interestRow(i + 1)).flat(),
-  { kind: "text", domainKey: "print_line2_total", pdfField: "topmostSubform[0].Page1[0].f1_31[0]" },
-  { kind: "text", domainKey: "ee_bond_exclusion", pdfField: "topmostSubform[0].Page1[0].f1_32[0]" },
-  { kind: "text", domainKey: "print_line4_total", pdfField: "topmostSubform[0].Page1[0].f1_33[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line2_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_31[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "ee_bond_exclusion",
+    pdfField: "topmostSubform[0].Page1[0].f1_32[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_line4_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_33[0]",
+  },
 
   // ── Part II: Dividend payer rows + total ────────────────────────────────────
   ...Array.from({ length: 15 }, (_, i) => dividendRow(i + 1)).flat(),
-  { kind: "text", domainKey: "print_line6_total", pdfField: "topmostSubform[0].Page1[0].f1_64[0]" },
+  {
+    kind: "text",
+    domainKey: "print_line6_total",
+    pdfField: "topmostSubform[0].Page1[0].f1_64[0]",
+  },
 ];
 
 export const scheduleBPdf: PdfFormDescriptor = {
@@ -53,10 +79,19 @@ export const scheduleBPdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sb--2025.pdf",
   fields,
   filerFields: [
-    { kind: "text", domainKey: "fullName", pdfField: "topmostSubform[0].Page1[0].f1_01[0]" },
-    { kind: "text", domainKey: "primarySSN", pdfField: "topmostSubform[0].Page1[0].f1_02[0]" },
+    {
+      kind: "text",
+      domainKey: "fullName",
+      pdfField: "topmostSubform[0].Page1[0].f1_01[0]",
+    },
+    {
+      kind: "text",
+      domainKey: "primarySSN",
+      pdfField: "topmostSubform[0].Page1[0].f1_02[0]",
+    },
   ],
   includeWhen: (fields) =>
     ((fields["print_line4_total"] as number | undefined) ?? 0) > 1500 ||
-    ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500,
+    ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500 ||
+    fields["ordinaryDividends"] !== undefined,
 };

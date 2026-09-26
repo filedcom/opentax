@@ -9,22 +9,69 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, { k1_partnerships: items });
+  return k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, {
+    k1_partnerships: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", () => {
+  const item = minimalItem({
+    box5_interest: 200,
+    box6a_ordinary_dividends: 300,
+    box6b_qualified_dividends: 100,
+  });
+  assertEquals(findOutput(compute([item]), "form4952"), undefined);
+  const fields = compute([{
+    ...item,
+    investment_property_for_form4952: true,
+  }]).outputs.filter((output) => output.nodeType === "form4952")
+    .map((output) => output.fields);
+  assertEquals(fields, [
+    { source_k1_interest: 200 },
+    { source_k1_dividends: 300 },
+    { source_k1_qualified_dividends: 100 },
+  ]);
+});
+
+Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
+  const result = compute([
+    minimalItem({ partnership_name: "Partner One", box10_net_1231: 10_000 }),
+    minimalItem({ partnership_name: "Partner Two", box10_net_1231: -2_000 }),
+  ]);
+  const fields = findOutput(result, "form4797")?.fields;
+  assertEquals(fields?.section_1231_gain, 8_000);
+  assertEquals(fields?.k1_1231_rows, [
+    { source: "partnership", entity_name: "Partner One", gain_loss: 10_000 },
+    { source: "partnership", entity_name: "Partner Two", gain_loss: -2_000 },
+  ]);
+});
+
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {
-  assertThrows(() => k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, { k1_partnerships: [] }), Error);
+  assertThrows(
+    () =>
+      k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, {
+        k1_partnerships: [],
+      }),
+    Error,
+  );
 });
 
 Deno.test("missing partnership_name throws", () => {
   assertThrows(
-    () => k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, { k1_partnerships: [{ box1_ordinary_business: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () =>
+      k1Partnership.compute({ taxYear: 2025, formType: "f1040" }, {
+        k1_partnerships: [
+          { box1_ordinary_business: 100 } as unknown as ReturnType<
+            typeof minimalItem
+          >,
+        ],
+      }),
     Error,
   );
 });
@@ -34,11 +81,17 @@ Deno.test("negative box5_interest throws", () => {
 });
 
 Deno.test("negative box6a_ordinary_dividends throws", () => {
-  assertThrows(() => compute([minimalItem({ box6a_ordinary_dividends: -5 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ box6a_ordinary_dividends: -5 })]),
+    Error,
+  );
 });
 
 Deno.test("negative box6b_qualified_dividends throws", () => {
-  assertThrows(() => compute([minimalItem({ box6b_qualified_dividends: -10 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ box6b_qualified_dividends: -10 })]),
+    Error,
+  );
 });
 
 // ── 2. Per-box routing ────────────────────────────────────────────────────────
@@ -166,15 +219,37 @@ Deno.test("box20z_qbi routes to form8995 qbi", () => {
 });
 
 Deno.test("box20_w2_wages routes to form8995 w2_wages", () => {
-  const result = compute([minimalItem({ box20z_qbi: 10000, box20_w2_wages: 6000 })]);
+  const result = compute([
+    minimalItem({ box20z_qbi: 10000, box20_w2_wages: 6000 }),
+  ]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.w2_wages, 6000);
 });
 
 Deno.test("box16_foreign_tax routes to form_1116", () => {
-  const result = compute([minimalItem({ box16_foreign_tax: 180, box16_foreign_income: 900, box16_foreign_income_category: "passive" })]);
+  const result = compute([
+    minimalItem({
+      box16_foreign_tax: 180,
+      box16_foreign_income: 900,
+      box16_foreign_income_category: "passive",
+      box16_foreign_tax_irs_country_code: "GM",
+      box16_foreign_tax_paid_or_accrued_date: "2025-06-15",
+      box16_foreign_tax_kind: "interest",
+      box16_foreign_tax_credit_method: "paid",
+    }),
+  ]);
   const out = findOutput(result, "form_1116");
-  assertEquals((out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 180);
+  assertEquals(
+    (out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0]
+      .foreign_tax_paid,
+    180,
+  );
+  const taxItem =
+    (out?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0];
+  assertEquals(taxItem.irs_country_code, "GM");
+  assertEquals(taxItem.tax_paid_or_accrued_date, "2025-06-15");
+  assertEquals(taxItem.tax_kind, "interest");
+  assertEquals(taxItem.tax_credit_method, "paid");
 });
 
 Deno.test("zero box16_foreign_tax does not route to form_1116", () => {
@@ -232,19 +307,25 @@ Deno.test("box1+box2+box3+box4a+box4b+box7 combined in schedule1", () => {
 Deno.test("box20_sstb true is accepted and does not produce extra outputs", () => {
   // SSTB indicator is informational in this node — Form 8995-A handles phaseout.
   // The field must be accepted by the schema without throwing.
-  const result = compute([minimalItem({ box20z_qbi: 10000, box20_sstb: true })]);
+  const result = compute([
+    minimalItem({ box20z_qbi: 10000, box20_sstb: true }),
+  ]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.qbi, 10000);
 });
 
 Deno.test("box20_sstb false is accepted", () => {
-  const result = compute([minimalItem({ box20z_qbi: 5000, box20_sstb: false })]);
+  const result = compute([
+    minimalItem({ box20z_qbi: 5000, box20_sstb: false }),
+  ]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.qbi, 5000);
 });
 
 Deno.test("box20_aggregation_group is accepted and does not affect routing", () => {
-  const result = compute([minimalItem({ box20z_qbi: 8000, box20_aggregation_group: "GroupA" })]);
+  const result = compute([
+    minimalItem({ box20z_qbi: 8000, box20_aggregation_group: "GroupA" }),
+  ]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.qbi, 8000);
 });
@@ -328,7 +409,10 @@ Deno.test("pre2018_basis_other_loss is accepted", () => {
 });
 
 Deno.test("negative pre2018_basis_ordinary_loss throws (nonnegative constraint)", () => {
-  assertThrows(() => compute([minimalItem({ pre2018_basis_ordinary_loss: -500 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ pre2018_basis_ordinary_loss: -500 })]),
+    Error,
+  );
 });
 
 // ── 8. Pre-2018 At-Risk Carryover fields (K1P> "Pre-2018 At-Risk" tab) ───────
@@ -354,7 +438,10 @@ Deno.test("pre2018_atrisk_other_loss is accepted", () => {
 });
 
 Deno.test("negative pre2018_atrisk_ordinary_loss throws (nonnegative constraint)", () => {
-  assertThrows(() => compute([minimalItem({ pre2018_atrisk_ordinary_loss: -100 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ pre2018_atrisk_ordinary_loss: -100 })]),
+    Error,
+  );
 });
 
 Deno.test("pre-2018 carryover fields alongside QBI produce correct QBI routing", () => {
@@ -384,7 +471,9 @@ Deno.test("all-zero K-1 produces no outputs", () => {
 });
 
 Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
-  const result = compute([minimalItem({ box8_net_st_cap_gain: 800, box9a_net_lt_cap_gain: 1200 })]);
+  const result = compute([
+    minimalItem({ box8_net_st_cap_gain: 800, box9a_net_lt_cap_gain: 1200 }),
+  ]);
   const sdOutputs = result.outputs.filter((o) => o.nodeType === "schedule_d");
   assertEquals(sdOutputs.length, 1);
   assertEquals(sdOutputs[0].fields.line_5_k1_st, 800);
@@ -395,7 +484,9 @@ Deno.test("STCG and LTCG produce single merged schedule_d output", () => {
 
 Deno.test("box14a takes priority over box4a for schedule_se when both present", () => {
   // Box 14a is the authoritative SE earnings figure; box4a fallback only when 14a absent
-  const result = compute([minimalItem({ box4a_guaranteed_services: 5000, box14a_se_earnings: 12000 })]);
+  const result = compute([
+    minimalItem({ box4a_guaranteed_services: 5000, box14a_se_earnings: 12000 }),
+  ]);
   const out = findOutput(result, "schedule_se");
   assertEquals(out?.fields.net_profit_schedule_c, 12000);
 });
@@ -423,7 +514,11 @@ Deno.test("box20z_qbi sums across K-1s to form8995 qbi", () => {
 Deno.test("box20_w2_wages sums across K-1s to form8995 w2_wages", () => {
   const result = compute([
     minimalItem({ box20z_qbi: 8000, box20_w2_wages: 4000 }),
-    minimalItem({ partnership_name: "Fund B", box20z_qbi: 4000, box20_w2_wages: 2000 }),
+    minimalItem({
+      partnership_name: "Fund B",
+      box20z_qbi: 4000,
+      box20_w2_wages: 2000,
+    }),
   ]);
   const out = findOutput(result, "form8995");
   assertEquals(out?.fields.w2_wages, 6000);
@@ -490,5 +585,9 @@ Deno.test("smoke test — K-1 with all major boxes", () => {
   assertEquals(f8995?.fields.qbi, 20000);
   assertEquals(f8995?.fields.w2_wages, 10000);
   const f1116 = findOutput(result, "form_1116");
-  assertEquals((f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0].foreign_tax_paid, 200);
+  assertEquals(
+    (f1116?.fields.foreign_tax_items as Array<Record<string, unknown>>)[0]
+      .foreign_tax_paid,
+    200,
+  );
 });

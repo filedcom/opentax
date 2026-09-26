@@ -32,8 +32,8 @@ Deno.test("form8880: negative ira_contributions_taxpayer throws", () => {
   assertThrows(() => compute({ ira_contributions_taxpayer: -1, agi: 20000, filing_status: "single" }), Error);
 });
 
-Deno.test("form8880: negative agi throws", () => {
-  assertThrows(() => compute({ ira_contributions_taxpayer: 1000, agi: -1, filing_status: "single" }), Error);
+Deno.test("form8880: negative AGI is accepted but zero tax liability permits no credit", () => {
+  assertEquals(compute({ ira_contributions_taxpayer: 1000, agi: -1, filing_status: "single", income_tax_liability: 0 }).outputs.length, 0);
 });
 
 Deno.test("form8880: no contributions produces no output", () => {

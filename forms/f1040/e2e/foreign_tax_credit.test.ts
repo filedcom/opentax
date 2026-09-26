@@ -67,7 +67,14 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 12_000)],
-    f1099int: [{ payer_name: "FOREIGN BANK", box1: 1_000, box6: 500 }],
+    f1099int: [{
+      payer_name: "FOREIGN BANK",
+      box1: 1_000,
+      box6: 500,
+      box7: "Canada",
+      foreign_source_interest_usd: 1_000,
+      foreign_tax_irs_country_code: "CA",
+    }],
   });
 
   const f1116 = result.pending["form_1116"] ?? {};
@@ -77,10 +84,10 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
   assertEquals(f1116["us_tax_before_credits"], 13_669, "Part III line 20 — Form 1040 line 16");
 
   const credit = result.pending["schedule3"]?.["line1_foreign_tax_credit"] as number;
-  assertEquals(r2(credit), 135.34, "Part III line 24 — credit limited to line 21");
+  assertEquals(r2(credit), 135, "Part III line 24 — whole-dollar credit limited to line 21");
 
   const f = result.pending["f1040"] ?? {};
-  assertEquals(r2(f["line24_total_tax"] as number), 13_533.66, "total tax = 13,669 − 135.34");
+  assertEquals(r2(f["line24_total_tax"] as number), 13_534, "total tax = 13,669 − 135");
 });
 
 // ── General category: foreign tax on wages reaches Form 1116 ─────────────────
@@ -115,7 +122,14 @@ Deno.test("Form 1116: passive and general income remain separate through the ful
   const result = runReturn({
     general: singleGeneral(),
     w2: [w2Item(100_000, 12_000)],
-    f1099int: [{ payer_name: "FOREIGN BANK", box1: 1_000, box6: 500 }],
+    f1099int: [{
+      payer_name: "FOREIGN BANK",
+      box1: 1_000,
+      box6: 500,
+      box7: "Canada",
+      foreign_source_interest_usd: 1_000,
+      foreign_tax_irs_country_code: "CA",
+    }],
     fec: [{
       foreign_employer_name: "Foreign Employer GmbH",
       country_code: "DE",

@@ -77,6 +77,11 @@ Deno.test("scheduleA.compute: medical deduction with zero AGI equals full medica
   assertEquals(f1040Input(result).line12e_itemized_deductions, 5_000);
 });
 
+Deno.test("scheduleA.compute: negative AGI cannot make the medical deduction exceed expenses", () => {
+  const result = compute({ line_1_medical: 5_000, agi: -1_000 });
+  assertEquals(f1040Input(result).line12e_itemized_deductions, 5_000);
+});
+
 // =============================================================================
 // 3. SALT CAP — $40,000 (OBBBA §70002, TY2025)
 // =============================================================================

@@ -151,7 +151,7 @@ function computeNetTmt(tmt: number, amtftc: number): number {
 
 // Form 6251 Line 11: AMT liability = max(0, net TMT − regular tax)
 // Only positive when tentative minimum tax exceeds regular income tax.
-// IRC §55(a); Form 6251 Line 11 → Schedule 2 Line 1
+// IRC §55(a); Form 6251 Line 11 → 2025 Schedule 2 Line 2
 function computeAmt(netTmt: number, regularTax: number): number {
   return Math.max(0, netTmt - regularTax);
 }
@@ -255,7 +255,7 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     if (amt === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(schedule2, { line1_amt: amt }),
+      this.outputNodes.output(schedule2, { line2_amt: amt }),
     ];
 
     return { outputs };

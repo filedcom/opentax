@@ -1,288 +1,326 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f4835 } from "./index.ts";
+import {
+  calculateForm4835AtRiskNet,
+  calculateForm4835Lines,
+  f4835,
+  itemSchema,
+} from "./index.ts";
+import { scheduleE } from "../schedule_e/index.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
-  return {
-    activity_name: "Test Farm",
-    gross_farm_rental_income: 0,
-    ...overrides,
-  };
+function item(overrides: Record<string, unknown> = {}) {
+  return { activity_name: "Test Farm", livestock_crop_income: 0, ...overrides };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
+function compute(items: ReturnType<typeof item>[]) {
   return f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: items });
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
-// ── 1. Input schema validation ────────────────────────────────────────────────
-
-Deno.test("empty array throws", () => {
-  assertThrows(() => f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: [] }), Error);
+Deno.test("Form 4835 requires at least one and at most four farms", () => {
+  assertThrows(() => compute([]));
+  assertThrows(() => compute(Array.from({ length: 5 }, () => item())));
 });
 
-Deno.test("missing activity_name throws", () => {
+Deno.test("Form 4835 uses taxable columns, not gross payment columns", () => {
+  const parsed = itemSchema.parse(item({
+    livestock_crop_income: 100,
+    cooperative_distributions_gross: 500,
+    cooperative_distributions_taxable: 250,
+    agricultural_program_payments_gross: 600,
+    agricultural_program_payments_taxable: 300,
+    ccc_loans_forfeited_gross: 700,
+    ccc_loans_forfeited_taxable: 350,
+    crop_insurance_disaster_received: 800,
+    crop_insurance_disaster_taxable: 400,
+    crop_insurance_deferred_prior_year: 50,
+    other_income: 25,
+  }));
+  assertEquals(calculateForm4835Lines(parsed).gross, 1475);
+});
+
+Deno.test("Form 4835 rejects taxable income exceeding gross receipts", () => {
   assertThrows(
-    () => f4835.compute({ taxYear: 2025, formType: "f1040" }, { f4835s: [{ gross_farm_rental_income: 100 } as unknown as ReturnType<typeof minimalItem>] }),
+    () => compute([item({ agricultural_program_payments_taxable: 1 })]),
+    Error,
+  );
+  assertThrows(
+    () =>
+      compute([
+        item({
+          crop_insurance_disaster_received: 100,
+          crop_insurance_disaster_taxable: 101,
+        }),
+      ]),
     Error,
   );
 });
 
-Deno.test("negative gross_farm_rental_income throws", () => {
+Deno.test("Form 4835 subtracts named and other expenses, net of 263A capitalization", () => {
+  const parsed = itemSchema.parse(item({
+    livestock_crop_income: 10000,
+    expense_feed: 1000,
+    expense_repairs_maintenance: 500,
+    expense_other_details: [{ description: "Farm supplies", amount: 200 }],
+    expense_capitalized_263a: 300,
+  }));
+  assertEquals(calculateForm4835Lines(parsed), {
+    gross: 10000,
+    expenses: 1400,
+    preliminaryNet: 8600,
+  });
+  assertThrows(() => compute([item({ expense_capitalized_263a: 1 })]), Error);
+});
+
+Deno.test("Form 4835 income routes to Schedule E rather than Schedule 1 directly", () => {
+  const result = compute([item({ livestock_crop_income: 5000 })]);
+  assertEquals(result.outputs, [{
+    nodeType: "schedule_e",
+    fields: {
+      farm_rental_net: 5000,
+      farm_rental_gross: 5000,
+      farm_rental_activities: [{
+        name: "Test Farm",
+        current_net: 5000,
+        actively_participated: false,
+      }],
+    },
+  }]);
+  const scheduleResult = scheduleE.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { schedule_es: [], farm_rental_net: 5000, farm_rental_gross: 5000 },
+  );
+  assertEquals(
+    scheduleResult.outputs.find((out) => out.nodeType === "schedule1")?.fields
+      .line5_schedule_e,
+    5000,
+  );
+});
+
+Deno.test("Form 4835 passes each preliminary farm result for passive allocation", () => {
+  const result = compute([
+    item({ livestock_crop_income: 3000 }),
+    item({
+      activity_name: "Second farm",
+      livestock_crop_income: 500,
+      expense_feed: 2000,
+      some_investment_not_at_risk: false,
+    }),
+  ]);
+  assertEquals(result.outputs[0].fields, {
+    farm_rental_net: 1500,
+    farm_rental_gross: 3500,
+    farm_rental_activities: [
+      { name: "Test Farm", current_net: 3000, actively_participated: false },
+      { name: "Second farm", current_net: -1500, actively_participated: false },
+    ],
+  });
+});
+
+Deno.test("Form 4835 loss requires at-risk facts and does not trust a supplied deduction", () => {
+  assertThrows(() => compute([item({ expense_feed: 2000 })]), Error);
+  assertEquals(
+    compute([
+      item({
+        expense_feed: 2000,
+        some_investment_not_at_risk: false,
+      }),
+    ]).outputs[0]
+      .fields.farm_rental_net,
+    -2000,
+  );
   assertThrows(
-    () => compute([minimalItem({ gross_farm_rental_income: -1 })]),
+    () =>
+      compute([
+        item({ expense_feed: 2000, some_investment_not_at_risk: true }),
+      ]),
+    Error,
+  );
+  assertThrows(
+    () =>
+      compute([
+        item({
+          expense_feed: 2000,
+          deductible_loss: 2001,
+          some_investment_not_at_risk: false,
+        }),
+      ]),
+    Error,
+  );
+  assertThrows(
+    () => compute([item({ livestock_crop_income: 100, deductible_loss: 1 })]),
     Error,
   );
 });
 
-Deno.test("negative expenses throw", () => {
+Deno.test("Form 4835 limits each farm loss to its computed Form 6198 amount at risk", () => {
+  const farm = itemSchema.parse(item({
+    expense_feed: 2000,
+    some_investment_not_at_risk: true,
+    at_risk_simplified: {
+      opening_adjusted_basis: 1000,
+      current_year_increases: 200,
+      line9_decreases_and_exclusions: 600,
+    },
+  }));
+  assertEquals(calculateForm4835AtRiskNet(farm), {
+    preliminaryNet: -2000,
+    atRiskNet: -600,
+    suspended: 1400,
+    amountAtRisk: 600,
+  });
+  const result = compute([farm]);
+  assertEquals(result.outputs[0].fields.farm_rental_net, -600);
+  assertEquals(result.carryforwards?.f4835_at_risk_suspended_1, 1400);
   assertThrows(
-    () => compute([minimalItem({ expense_repairs_maintenance: -50 })]),
+    () =>
+      compute([item({
+        expense_feed: 2000,
+        some_investment_not_at_risk: true,
+        at_risk_simplified: {
+          opening_adjusted_basis: 100,
+          current_year_increases: 0,
+          line9_decreases_and_exclusions: 101,
+        },
+      })]),
     Error,
+    "line 10a",
   );
 });
 
-// ── 2. Per-box routing ────────────────────────────────────────────────────────
-
-Deno.test("positive net routes to schedule1 line5_schedule_e", () => {
-  const result = compute([minimalItem({ gross_farm_rental_income: 5000 })]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 5000);
-});
-
-Deno.test("negative net routes to schedule1 line5_schedule_e as loss", () => {
-  const result = compute([
-    minimalItem({ gross_farm_rental_income: 1000, expense_repairs_maintenance: 3000 }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, -2000);
-});
-
-Deno.test("zero income and zero expenses does not route", () => {
-  const result = compute([minimalItem()]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out, undefined);
-});
-
-Deno.test("federal_withheld routes to f1040 line25b", () => {
-  const result = compute([minimalItem({ federal_withheld: 200 })]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line25b_withheld_1099, 200);
-});
-
-Deno.test("zero federal_withheld does not route to f1040", () => {
-  const result = compute([minimalItem({ gross_farm_rental_income: 1000 })]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out, undefined);
-});
-
-// ── 3. Aggregation across multiple farms ──────────────────────────────────────
-
-Deno.test("net income sums across multiple farms to schedule1", () => {
-  const result = compute([
-    minimalItem({ gross_farm_rental_income: 3000 }),
-    minimalItem({ activity_name: "Second Farm", gross_farm_rental_income: 2000 }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 5000);
-});
-
-Deno.test("federal_withheld sums across multiple farms to f1040", () => {
-  const result = compute([
-    minimalItem({ federal_withheld: 100 }),
-    minimalItem({ activity_name: "Farm 2", federal_withheld: 150 }),
-  ]);
-  const out = findOutput(result, "f1040");
-  assertEquals(out?.fields.line25b_withheld_1099, 250);
-});
-
-// ── 4. Calculation logic ──────────────────────────────────────────────────────
-
-Deno.test("net computed as gross income minus total expenses", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 10000,
-      expense_chemicals: 500,
-      expense_feed: 1000,
-      expense_repairs_maintenance: 750,
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  // net = 10000 - 500 - 1000 - 750 = 7750
-  assertEquals(out?.fields.line5_schedule_e, 7750);
-});
-
-Deno.test("pre-computed net_farm_rental_income overrides calculation", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 10000,
-      expense_repairs_maintenance: 500,
-      net_farm_rental_income: 8000, // override
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 8000);
-});
-
-Deno.test("ccc_loans_forfeited added to income", () => {
-  const result = compute([
-    minimalItem({ gross_farm_rental_income: 5000, ccc_loans_forfeited: 1000 }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 6000);
-});
-
-// ── 7. Informational fields ───────────────────────────────────────────────────
-
-Deno.test("activity_name does not affect output count", () => {
-  const r1 = compute([minimalItem({ gross_farm_rental_income: 1000 })]);
-  const r2 = compute([minimalItem({ activity_name: "Different Name", gross_farm_rental_income: 1000 })]);
-  assertEquals(r1.outputs.length, r2.outputs.length);
-});
-
-// ── 8. Edge cases ─────────────────────────────────────────────────────────────
-
-Deno.test("loss (negative net) aggregates correctly across two farms", () => {
-  const result = compute([
-    minimalItem({ gross_farm_rental_income: 1000 }),
-    minimalItem({ activity_name: "Farm 2", gross_farm_rental_income: 500, expense_feed: 2000 }),
-  ]);
-  // Farm 1: +1000, Farm 2: +500 - 2000 = -1500 → total = -500
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, -500);
-});
-
-Deno.test("at-risk flag routes to form6198 with current_year_income", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 5000,
-      some_investment_not_at_risk: true,
-    }),
-  ]);
-  const out = findOutput(result, "form6198");
-  assertEquals(out?.fields.current_year_income, 5000);
-});
-
-Deno.test("no at-risk flag does not route to form6198", () => {
-  const result = compute([minimalItem({ gross_farm_rental_income: 5000 })]);
-  const out = findOutput(result, "form6198");
-  assertEquals(out, undefined);
-});
-
-// ── 5. CIDP — Crop Insurance and Disaster Payments (IRC §451(d)) ──────────────
-
-Deno.test("crop_insurance_proceeds adds to net income", () => {
-  const result = compute([
-    minimalItem({ gross_farm_rental_income: 5000, crop_insurance_proceeds: 2000 }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 7000);
-});
-
-Deno.test("disaster_payment adds to net income", () => {
-  const result = compute([
-    minimalItem({ gross_farm_rental_income: 5000, disaster_payment: 3000 }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 8000);
-});
-
-Deno.test("defer_to_next_year true excludes deferred_amount from current-year income", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 5000,
-      crop_insurance_proceeds: 4000,
-      defer_to_next_year: true,
-      deferred_amount: 4000, // defer all
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  // Only the gross rental counts; all crop insurance deferred
-  assertEquals(out?.fields.line5_schedule_e, 5000);
-});
-
-Deno.test("defer partial amount: non-deferred portion included in net", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 5000,
-      crop_insurance_proceeds: 6000,
-      defer_to_next_year: true,
-      deferred_amount: 4000, // defer 4000, recognize 2000
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 7000); // 5000 + 2000
-});
-
-Deno.test("defer_to_next_year false includes all crop_insurance_proceeds", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 5000,
-      crop_insurance_proceeds: 3000,
-      defer_to_next_year: false,
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  assertEquals(out?.fields.line5_schedule_e, 8000);
-});
-
-Deno.test("deferred_amount capped at total CIDP proceeds when over-specified", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 5000,
-      crop_insurance_proceeds: 2000,
-      disaster_payment: 1000,
-      defer_to_next_year: true,
-      deferred_amount: 9999, // exceeds total proceeds of 3000 — capped to 3000
-    }),
-  ]);
-  const out = findOutput(result, "schedule1");
-  // No CIDP income recognized; only gross
-  assertEquals(out?.fields.line5_schedule_e, 5000);
-});
-
-Deno.test("negative crop_insurance_proceeds throws", () => {
+Deno.test("Form 4835 retains prior passive losses by farm and checks participation history", () => {
+  const result = compute([item({
+    livestock_crop_income: 1000,
+    prior_unallowed_passive_operating: 1500,
+  })]);
+  assertEquals(result.outputs[0].fields.farm_rental_activities, [{
+    name: "Test Farm",
+    current_net: 1000,
+    actively_participated: false,
+    prior_unallowed_operating: 1500,
+    prior_active_participation: undefined,
+  }]);
   assertThrows(
-    () => compute([minimalItem({ crop_insurance_proceeds: -100 })]),
+    () =>
+      compute([item({
+        livestock_crop_income: 1000,
+        actively_participated: true,
+        prior_unallowed_passive_operating: 500,
+      })]),
     Error,
+    "prior-year active participation answer",
+  );
+  const changedParticipation = compute([item({
+    livestock_crop_income: 1000,
+    actively_participated: true,
+    prior_unallowed_passive_operating: 500,
+    prior_passive_losses_active_when_incurred: false,
+  })]);
+  assertEquals(changedParticipation.outputs[0].fields.farm_rental_activities, [{
+    name: "Test Farm",
+    current_net: 1000,
+    actively_participated: true,
+    prior_unallowed_operating: 500,
+    prior_active_participation: false,
+  }]);
+});
+
+Deno.test("Form 4835 CCC election needs loan details matching line 4a", () => {
+  assertThrows(
+    () => compute([item({ ccc_loans_reported_election: 100 })]),
+    Error,
+    "itemized CCC loans",
+  );
+  assertThrows(
+    () =>
+      compute([item({
+        ccc_loans_reported_election: 100,
+        ccc_loan_details: [{ description: "Corn loan", amount: 90 }],
+      })]),
+    Error,
+    "itemized CCC loans",
+  );
+  const result = compute([item({
+    ccc_loans_reported_election: 100,
+    ccc_loan_details: [{ description: "Corn loan", amount: 100 }],
+  })]);
+  assertEquals(result.outputs[0].fields, {
+    farm_rental_net: 100,
+    farm_rental_gross: 100,
+    farm_rental_activities: [{
+      name: "Test Farm",
+      current_net: 100,
+      actively_participated: false,
+    }],
+  });
+});
+
+Deno.test("Form 4835 still refuses crop-insurance deferral without its statement", () => {
+  assertThrows(() => compute([item({ defer_crop_insurance: true })]), Error);
+});
+
+Deno.test("Form 4835 defers eligible crop insurance but taxes current and prior-year amounts", () => {
+  const details = {
+    cash_method: true,
+    normal_practice_next_year_percent: 80,
+    damaged_crops: [{ crop: "Corn", damage_date: "2025-08-15", cause: "Hail" }],
+    payments: [{
+      crop: "Corn",
+      received_date: "2025-10-01",
+      amount: 4000,
+      carrier: "Farm Mutual",
+    }],
+  };
+  const result = compute([item({
+    defer_crop_insurance: true,
+    crop_insurance_deferral_details: details,
+    crop_insurance_disaster_received: 5000,
+    crop_insurance_disaster_taxable: 1000,
+    crop_insurance_deferred_prior_year: 700,
+  })]);
+  assertEquals(result.outputs[0].fields, {
+    farm_rental_net: 1700,
+    farm_rental_gross: 1700,
+    farm_rental_activities: [{
+      name: "Test Farm",
+      current_net: 1700,
+      actively_participated: false,
+    }],
+  });
+  assertThrows(
+    () =>
+      compute([item({
+        defer_crop_insurance: true,
+        crop_insurance_deferral_details: details,
+        crop_insurance_disaster_received: 4500,
+        crop_insurance_disaster_taxable: 1000,
+      })]),
+    Error,
+    "must equal taxable and deferred",
+  );
+  assertThrows(
+    () =>
+      compute([item({
+        crop_insurance_deferral_details: details,
+      })]),
+    Error,
+    "require a deferral election",
+  );
+  assertThrows(
+    () =>
+      compute([item({
+        defer_crop_insurance: true,
+        crop_insurance_deferral_details: {
+          ...details,
+          payments: [{ ...details.payments[0], crop: "Wheat" }],
+        },
+        crop_insurance_disaster_received: 4000,
+      })]),
+    Error,
+    "identify a damaged crop",
   );
 });
 
-Deno.test("negative disaster_payment throws", () => {
-  assertThrows(
-    () => compute([minimalItem({ disaster_payment: -50 })]),
-    Error,
-  );
-});
-
-Deno.test("negative deferred_amount throws", () => {
-  assertThrows(
-    () => compute([minimalItem({ deferred_amount: -10 })]),
-    Error,
-  );
-});
-
-// ── 9. Smoke test ─────────────────────────────────────────────────────────────
-
-Deno.test("smoke test — full 4835 with all major fields", () => {
-  const result = compute([
-    minimalItem({
-      gross_farm_rental_income: 20000,
-      ccc_loans_forfeited: 1000,
-      expense_chemicals: 500,
-      expense_depreciation: 2000,
-      expense_feed: 1500,
-      expense_insurance: 800,
-      expense_repairs_maintenance: 600,
-      expense_taxes: 400,
-      federal_withheld: 300,
-    }),
-  ]);
-  // net = (20000 + 1000) - (500 + 2000 + 1500 + 800 + 600 + 400) = 21000 - 5800 = 15200
-  const sch1 = findOutput(result, "schedule1");
-  assertEquals(sch1?.fields.line5_schedule_e, 15200);
-  const f1040 = findOutput(result, "f1040");
-  assertEquals(f1040?.fields.line25b_withheld_1099, 300);
+Deno.test("Form 4835 rejects old override and withholding shortcuts", () => {
+  assertThrows(() => compute([item({ net_farm_rental_income: 100 })]), Error);
+  assertThrows(() => compute([item({ federal_withheld: 100 })]), Error);
+  assertThrows(() => compute([item({ gross_farm_rental_income: 100 })]), Error);
 });

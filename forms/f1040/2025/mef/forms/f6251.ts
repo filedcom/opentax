@@ -16,9 +16,9 @@ export interface Fields {
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
-// Tag names verified against IRS6251.xsd (2025v3.0).
+// Tag names verified against IRS6251.xsd (2025v5.4).
 // Element order matches the XSD sequence (required for validation).
-// - regular_tax_income → AGIOrAGILessDeductionAmt  (line 1)
+// - regular_tax_income → AGILessTotDedLessEnhncSrDedAmt (line 1b)
 // - line2a_taxes_paid  → ScheduleATaxesAmt          (line 2a)
 // - nol_adjustment     → AltTaxNetOperatingLossDedAmt (line 2f)
 // - private_activity_bond_interest → ExemptPrivateActivityBondsAmt (line 2g)
@@ -29,7 +29,7 @@ type Input = Partial<Fields> & Record<string, unknown>;
 // - amtftc             → AMTForeignTaxCreditAmt     (line 8)
 // - regular_tax        → AdjustedRegularTaxAmt      (line 10)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
-  ["regular_tax_income", "AGIOrAGILessDeductionAmt"],
+  ["regular_tax_income", "AGILessTotDedLessEnhncSrDedAmt"],
   ["line2a_taxes_paid", "ScheduleATaxesAmt"],
   ["nol_adjustment", "AltTaxNetOperatingLossDedAmt"],
   ["private_activity_bond_interest", "ExemptPrivateActivityBondsAmt"],

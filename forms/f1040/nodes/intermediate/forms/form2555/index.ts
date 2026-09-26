@@ -9,6 +9,11 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule_se } from "../schedule_se/index.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import {
+  calculatePhysicalPresence2555,
+  physicalPresenceFilingSchema,
+} from "./calculation.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
@@ -23,6 +28,7 @@ const DAYS_IN_YEAR = 365;
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  filing_details: physicalPresenceFilingSchema.optional(),
   // Foreign wages / salary earned abroad (Form 2555, Part VII line 27)
   foreign_wages: z.number().nonnegative().optional(),
 
@@ -56,6 +62,10 @@ export const inputSchema = z.object({
   // Reported on Form 2555 line 44.
   employer_housing_exclusion: z.number().nonnegative().optional(),
 });
+
+export const filingInputSchema = z.object({
+  filing_details: physicalPresenceFilingSchema,
+}).strict();
 
 type Form2555Input = z.infer<typeof inputSchema>;
 
@@ -98,6 +108,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form2555";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([
+    f1040,
     schedule1,
     agi_aggregator,
     schedule_se,
@@ -108,6 +119,43 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+
+    if (input.filing_details) {
+      if (
+        input.foreign_wages !== undefined ||
+        input.foreign_self_employment_income !== undefined ||
+        input.days_in_foreign_country !== undefined ||
+        input.bona_fide_resident !== undefined ||
+        input.qualifying_days !== undefined ||
+        input.foreign_housing_expenses !== undefined ||
+        input.employer_housing_exclusion !== undefined
+      ) {
+        throw new Error(
+          "Form 2555 filing details cannot be mixed with aggregate inputs",
+        );
+      }
+      const lines = calculatePhysicalPresence2555(
+        input.filing_details,
+        ctx.taxYear,
+      );
+      return {
+        outputs: [
+          output(f1040, {
+            line1h_other_earned: lines.line19,
+          }),
+          output(agi_aggregator, {
+            line1h_other_earned: lines.line19,
+            line8d_foreign_earned_income_exclusion: lines.line45,
+          }),
+          output(schedule1, {
+            line8d_foreign_earned_income_exclusion: lines.line45,
+          }),
+          output(income_tax_calculation, {
+            foreign_earned_income_exclusion: lines.line45,
+          }),
+        ],
+      };
+    }
 
     const income = totalForeignEarnedIncome(input);
     const hasHousingActivity =

@@ -28,9 +28,27 @@ export interface MefFormDescriptor<
     fields: TFields,
     context?: MefBuildContext,
   ): TResult;
+  /** Create any PDF files this form requires in the return bundle. */
+  buildBinaryAttachments?(
+    fields: TFields,
+    context?: MefBuildContext,
+  ): Promise<ReadonlyArray<MefPdfAttachment>>;
 }
 import type { FilerIdentity } from "../../mef/header.ts";
 
 export interface MefBuildContext {
   readonly filer?: FilerIdentity;
+  /** Read-only full pending graph for cross-document reconciliation. */
+  readonly pending?: Readonly<Record<string, unknown>>;
+  readonly binaryAttachmentFileNames?: readonly string[];
+  readonly documentIdsByPendingKey?: Readonly<
+    Record<string, readonly string[]>
+  >;
+  readonly documentIdsByAttachmentFileName?: Readonly<Record<string, string>>;
+}
+
+export interface MefPdfAttachment {
+  readonly fileName: string;
+  readonly description: string;
+  readonly bytes: Uint8Array;
 }

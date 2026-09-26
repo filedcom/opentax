@@ -25,7 +25,7 @@ export const inputSchema = z.object({
   distributions_taxpayer: z.number().nonnegative().optional(),
   distributions_spouse: z.number().nonnegative().optional(),
   // AGI and filing status for credit rate determination
-  agi: z.number().nonnegative().optional(),
+  agi: z.number().optional(),
   filing_status: z.nativeEnum(FilingStatus).optional(),
   // Tax liability for the nonrefundable credit limit (optional; uncapped if absent)
   income_tax_liability: z.number().nonnegative().optional(),

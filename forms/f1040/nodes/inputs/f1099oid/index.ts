@@ -7,6 +7,7 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 
@@ -19,6 +20,9 @@ export const itemSchema = z.object({
 
   // Box 1: Original issue discount for 2025
   box1_oid: z.number().nonnegative().optional(),
+  // Confirm this OID is investment-property income omitted from the Form 4952
+  // manual "other" source facts.
+  investment_property_for_form4952: z.boolean().optional(),
 
   // Box 2: Other periodic interest
   box2_other_interest: z.number().nonnegative().optional(),
@@ -88,7 +92,10 @@ function netTreasuryOid(item: OIDItem): number {
 // Route each payer's net OID (box 1 + box 2 + box 8 Treasury) to Schedule B as interest income
 function scheduleBOutputs(items: OIDItems): NodeOutput[] {
   return items
-    .filter((item) => netTaxableOid(item) + (item.box2_other_interest ?? 0) + netTreasuryOid(item) > 0)
+    .filter((item) =>
+      netTaxableOid(item) + (item.box2_other_interest ?? 0) +
+          netTreasuryOid(item) > 0
+    )
     .map((item) =>
       output(schedule_b, {
         payer_name: item.payer_name,
@@ -122,7 +129,12 @@ function withholdingOutput(items: OIDItems): NodeOutput[] {
 class F1099oidNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099oid";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_b, f1040, form6251]);
+  readonly outputNodes = new OutputNodes([
+    schedule_b,
+    f1040,
+    form6251,
+    form4952,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const { f1099oids } = inputSchema.parse(input);
@@ -132,6 +144,15 @@ class F1099oidNode extends TaxNode<typeof inputSchema> {
       ...form6251Output(f1099oids),
       ...withholdingOutput(f1099oids),
     ];
+
+    for (const item of f1099oids) {
+      if (item.investment_property_for_form4952 !== true) continue;
+      const interest = netTaxableOid(item) + (item.box2_other_interest ?? 0) +
+        netTreasuryOid(item);
+      if (interest > 0) {
+        outputs.push(output(form4952, { source_1099_interest: interest }));
+      }
+    }
 
     return { outputs };
   }

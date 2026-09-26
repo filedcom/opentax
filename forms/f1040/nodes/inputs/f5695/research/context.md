@@ -22,7 +22,10 @@ Pass-through input node that collects taxpayer-entered cost data for residential
 | solar_electric_cost | number (nonneg) | no | Form 5695 Line 1 | Qualified solar electric (photovoltaic) property costs | §25D(a)(1); Instructions p.2 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
 | solar_water_heater_cost | number (nonneg) | no | Form 5695 Line 2 | Solar water heating property costs (must be SRCC-certified; ≥50% solar energy) | §25D(a)(2); Instructions p.2 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
 | fuel_cell_cost | number (nonneg) | no | Form 5695 Line 8 | Qualified fuel cell property costs (main home only; ≥0.5 kW; >30% efficiency) | §25D(a)(5); Instructions p.3 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
-| fuel_cell_kw_capacity | number (nonneg) | no | Form 5695 Line 10 | Fuel cell kilowatt capacity — used to compute $500/½-kW dollar cap | §25D(b)(1); Form 5695 Line 10 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
+| fuel_cell_kw_capacity | number (nonneg) | required for positive fuel-cell cost | Form 5695 Line 10 | Nameplate capacity must be at least 0.5 kW in half-kW increments; used to compute $500/½-kW dollar cap | §25D(b)(1); Form 5695 Line 10 | https://www.irs.gov/instructions/i5695 |
+| fuel_cell_home_in_us | boolean | required for positive fuel-cell cost | Form 5695 Line 7a | Must affirm installation on or in connection with the main home in the United States | Form 5695 Line 7a | https://www.irs.gov/instructions/i5695 |
+| fuel_cell_home_address | US address | required for positive fuel-cell cost | Form 5695 Line 7b | Address of the main home where fuel cell property was installed | Form 5695 Line 7b | https://www.irs.gov/instructions/i5695 |
+| fuel_cell_joint_occupancy | boolean | required for positive fuel-cell cost | Form 5695 Line 7c | Joint-occupancy claims need an allocation statement and are not yet exportable | Form 5695 Line 7c | https://www.irs.gov/instructions/i5695 |
 | small_wind_cost | number (nonneg) | no | Form 5695 Line 3 | Qualified small wind energy property costs (≤100 kW turbines) | §25D(a)(3); Instructions p.2 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
 | geothermal_cost | number (nonneg) | no | Form 5695 Line 4 | Qualified geothermal heat pump property costs (must meet Energy Star at time of purchase) | §25D(a)(4); Instructions p.3 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
 | battery_storage_cost | number (nonneg) | no | Form 5695 Line 5b | Qualified battery storage technology costs | §25D(d)(7); Instructions p.3 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
@@ -30,6 +33,9 @@ Pass-through input node that collects taxpayer-entered cost data for residential
 | prior_year_carryforward | number (nonneg) | no | Form 5695 Line 12 | Unused §25D credit carried forward from prior year | §25D(c); Instructions p.4 | https://www.irs.gov/pub/irs-pdf/i5695.pdf |
 
 ### Part II — Energy Efficient Home Improvement Credit (IRC §25C)
+
+MeF Section A uses `part_ii_section_a`: explicit answers for lines 17a, 17b, 17c, and 17e, the line 17d address, insulation cost, and itemized exterior doors and windows with a cost and four-character QMID per item. The flat totals below remain temporarily for the existing PDF exporter; MeF rejects them because it cannot infer item IDs or the first-door cap.
+MeF Section B uses `part_ii_section_b`: explicit lines 21a and 21b, up to four home addresses, and cost/QMID pairs for the directly reportable central AC, water heaters, furnace/boiler, heat pump, heat-pump water heater, biomass, and enabling panelboard property. `part_ii_energy_audit` captures an independent qualified audit claim. Extra items requiring a separate statement are not yet exportable. Flat Section B totals remain temporarily for the PDF exporter and are rejected by MeF.
 
 | Field | Type | Required | Source / Label | Description | IRS Reference | URL |
 | ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
@@ -127,7 +133,7 @@ flowchart LR
 
 4. **Heat pump vs. gas water heater:** Heat pump water heaters fall under the $2,000 combined heat-pump/biomass cap (§25C(b)(2)); gas/oil water heaters fall under the $600 per-item cap (§25C(b)(1)). Must be separate fields.
 
-5. **Enabling property (panelboard):** Only qualifies if installed to enable a separate qualifying §25C improvement in the same year (or prior year under consecutive-year safe harbor). The input node captures the cost; form5695 enforces the condition.
+5. **Enabling property (panelboard):** Only qualifies if installed to enable a separate qualifying §25C improvement in the same year (or prior year under consecutive-year safe harbor). The input node captures the cost, but the required eligibility facts are not yet modeled. The MeF serializer rejects Part II claims until those and item-level manufacturer IDs are captured.
 
 6. **Exterior doors count:** The per-door cap of $250 (max $500 total) requires knowing whether costs are for 1, 2, or 3+ doors. `exterior_doors_count` is needed to compute per-door allocation correctly.
 

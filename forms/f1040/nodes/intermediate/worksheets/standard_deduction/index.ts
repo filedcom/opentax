@@ -17,7 +17,7 @@ export const inputSchema = z.object({
   filing_status: z.nativeEnum(FilingStatus),
 
   // AGI (Form 1040 Line 11) — required; provided by the future AGI aggregator node.
-  agi: z.number().nonnegative(),
+  agi: z.number(),
 
   // Age / blindness flags — from general node
   taxpayer_age_65_or_older: z.boolean().optional(),
@@ -151,6 +151,8 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
       }),
       this.outputNodes.output(form_1116, {
         general_deductions: deduction + qbi + additionalDeductions + nol,
+        standard_or_itemized_deduction: deduction,
+        other_deductions: qbi + additionalDeductions + nol,
       }),
     );
 

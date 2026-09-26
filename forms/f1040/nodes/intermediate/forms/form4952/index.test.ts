@@ -1,124 +1,172 @@
-import { assertEquals } from "@std/assert";
-import { form4952 } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { calculateForm4952, form4952 } from "./index.ts";
+import { form4952 as mef4952 } from "../../../../2025/mef/forms/f4952.ts";
 
 function compute(input: Record<string, unknown>) {
   return form4952.compute({ taxYear: 2025, formType: "f1040" }, input);
 }
 
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
-// ─── Zero / no-op cases ───────────────────────────────────────────────────────
-
-Deno.test("no interest expense — no outputs", () => {
-  const result = compute({});
-  assertEquals(result.outputs.length, 0);
+Deno.test("Form 4952 has no attachment without interest expense", () => {
+  assertEquals(
+    compute({ other_investment_property_gross_income: 5_000 }).outputs,
+    [],
+  );
 });
 
-Deno.test("zero interest expense — no outputs", () => {
-  const result = compute({ investment_interest_expense: 0, net_investment_income: 5_000 });
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("zero NII — no deduction allowed even with expense", () => {
-  const result = compute({
-    investment_interest_expense: 8_000,
-    net_investment_income: 0,
+Deno.test("Form 4952 computes all lines, deduction, and carryforward", () => {
+  const lines = calculateForm4952({
+    investment_interest_expense: 7_000,
+    prior_year_carryforward: 1_000,
+    other_investment_property_gross_income: 5_000,
+    other_investment_property_qualified_dividends: 500,
+    other_investment_property_net_disposition_gain: 1_000,
+    other_investment_property_net_capital_gain: 600,
+    investment_expenses: 100,
   });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(findOutput(result, "form4952")?.fields.allowed_interest, 0);
-});
-
-Deno.test("no NII provided — no deduction allowed", () => {
-  const result = compute({ investment_interest_expense: 5_000 });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(findOutput(result, "form4952")?.fields.allowed_interest, 0);
-});
-
-// ─── Deductible interest: min(total, NII) ─────────────────────────────────────
-
-Deno.test("interest below NII — full expense deducted", () => {
-  // $3k expense, $5k NII → deductible = $3k
-  const result = compute({
-    investment_interest_expense: 3_000,
-    net_investment_income: 5_000,
+  assertEquals(lines, {
+    line1: 7_000,
+    line2: 1_000,
+    line3: 8_000,
+    line4a: 5_000,
+    line4b: 500,
+    line4c: 4_500,
+    line4d: 1_000,
+    line4e: 600,
+    line4f: 400,
+    line4g: 0,
+    line4h: 4_900,
+    line5: 100,
+    line6: 4_800,
+    line7: 3_200,
+    line8: 4_800,
   });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 3_000);
-});
-
-Deno.test("interest equal to NII — full expense deducted", () => {
   const result = compute({
-    investment_interest_expense: 5_000,
-    net_investment_income: 5_000,
+    investment_interest_expense: 7_000,
+    prior_year_carryforward: 1_000,
+    other_investment_property_gross_income: 5_000,
+    other_investment_property_qualified_dividends: 500,
+    other_investment_property_net_disposition_gain: 1_000,
+    other_investment_property_net_capital_gain: 600,
+    investment_expenses: 100,
   });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 5_000);
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "schedule_a")?.fields,
+    {
+      line_9_investment_interest: 4_800,
+    },
+  );
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "form4952")?.fields,
+    lines,
+  );
+  assertEquals(result.carryforwards?.investment_interest_excess_4952, 3_200);
 });
 
-Deno.test("interest above NII — limited to NII (carryover implied)", () => {
-  // $10k expense, $6k NII → deductible = $6k; excess $4k carries forward
-  const result = compute({
-    investment_interest_expense: 10_000,
-    net_investment_income: 6_000,
-  });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 6_000);
-});
-
-// ─── Carryforward from prior year ─────────────────────────────────────────────
-
-Deno.test("carryforward only, no current expense — deducted up to NII", () => {
-  const result = compute({
-    prior_year_carryforward: 6_000,
-    net_investment_income: 10_000,
-  });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 6_000);
-});
-
-Deno.test("carryforward adds to current expense — total limited by NII", () => {
-  // Current $2k + carryforward $3k = $5k total; NII $4k → deduct $4k
-  const result = compute({
+Deno.test("Form 8814 child amounts stay separate from parent line 4 source facts", () => {
+  const lines = calculateForm4952({
     investment_interest_expense: 2_000,
-    prior_year_carryforward: 3_000,
-    net_investment_income: 4_000,
+    other_investment_property_gross_income: 700,
+    other_investment_property_qualified_dividends: 100,
+    form8814_line9_qualified_dividends: 200,
+    form8814_line10_capital_gain: 300,
+    form8814_line12_investment_income: 500,
   });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 4_000);
+  assertEquals(lines.line4a, 1_400);
+  assertEquals(lines.line4b, 300);
+  assertEquals(lines.line4c, 1_100);
+  assertEquals(lines.line4d, 300);
+  assertEquals(lines.line4e, 300);
+  assertEquals(lines.line6, 1_100);
+  assertEquals(lines.line8, 1_100);
 });
 
-Deno.test("carryforward + current expense, NII covers both", () => {
-  // $3k + $2k carryforward = $5k total; NII $8k → all $5k deductible
-  const result = compute({
-    investment_interest_expense: 3_000,
-    prior_year_carryforward: 2_000,
-    net_investment_income: 8_000,
+Deno.test("Form 4952 combines explicit other income with multiple affirmed 1099 sources", () => {
+  const lines = calculateForm4952({
+    investment_interest_expense: 2_000,
+    other_investment_property_gross_income: 100,
+    other_investment_property_qualified_dividends: 20,
+    source_1099_interest: [300, 400],
+    source_1099_dividends: [500, 600],
+    source_1099_qualified_dividends: [100, 200],
+    source_1099_capital_gain_distributions: [50, 75],
+    source_k1_interest: [25, 25],
+    source_k1_dividends: 80,
+    source_k1_qualified_dividends: 30,
   });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 5_000);
+  assertEquals(lines.line4a, 2_030);
+  assertEquals(lines.line4b, 350);
+  assertEquals(lines.line4d, 125);
+  assertEquals(lines.line4e, 125);
+  assertEquals(lines.line6, 1_680);
+  assertEquals(lines.line8, 1_680);
 });
 
-Deno.test("carryforward + current, NII less than both — limited to NII", () => {
-  // $5k + $4k = $9k total; NII $6k → deductible $6k
-  const result = compute({
-    investment_interest_expense: 5_000,
-    prior_year_carryforward: 4_000,
-    net_investment_income: 6_000,
-  });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 6_000);
+Deno.test("Form 4952 carries forward interest when net investment income is zero", () => {
+  const result = compute({ investment_interest_expense: 5_000 });
+  assertEquals(result.outputs.some((o) => o.nodeType === "form4952"), true);
+  assertEquals(result.outputs.some((o) => o.nodeType === "schedule_a"), false);
+  assertEquals(result.carryforwards?.investment_interest_excess_4952, 5_000);
 });
 
-// ─── Output routing ───────────────────────────────────────────────────────────
+Deno.test("Form 4952 rejects impossible qualified-dividend and line 4g facts", () => {
+  assertThrows(
+    () =>
+      calculateForm4952({
+        other_investment_property_gross_income: 100,
+        other_investment_property_qualified_dividends: 200,
+      }),
+    Error,
+    "line 4b",
+  );
+  assertThrows(
+    () =>
+      calculateForm4952({
+        other_investment_property_gross_income: 100,
+        investment_income_election: 101,
+      }),
+    Error,
+    "line 4g exceeds",
+  );
+  assertThrows(
+    () =>
+      calculateForm4952({
+        other_investment_property_gross_income: 100,
+        other_investment_property_qualified_dividends: 100,
+        investment_income_election: 1,
+      }),
+    Error,
+    "Schedule D Tax Worksheet",
+  );
+});
 
-Deno.test("form self-output reports the allowed interest with exact value", () => {
-  const result = compute({
-    investment_interest_expense: 1_000,
-    net_investment_income: 2_000,
+Deno.test("Form 4952 XML uses the 2025 schema line tags", () => {
+  const xml = mef4952.build({
+    line1: 5_000,
+    line2: 100,
+    line3: 5_100,
+    line4a: 2_000,
+    line4b: 100,
+    line4c: 1_900,
+    line4d: 0,
+    line4e: 0,
+    line4f: 0,
+    line4g: 0,
+    line4h: 1_900,
+    line5: 0,
+    line6: 1_900,
+    line7: 3_200,
+    line8: 1_900,
   });
-  const sched = findOutput(result, "form4952");
-  assertEquals(sched?.nodeType, "form4952");
-  assertEquals(sched?.fields.allowed_interest, 1_000);
+  assertEquals(
+    xml.includes(
+      "<PriorYrDisallowInvsmtIntExpAmt>100</PriorYrDisallowInvsmtIntExpAmt>",
+    ),
+    true,
+  );
+  assertEquals(
+    xml.includes(
+      "<InvestmentInterestExpDeductAmt>1900</InvestmentInterestExpDeductAmt>",
+    ),
+    true,
+  );
 });

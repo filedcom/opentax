@@ -16,6 +16,9 @@ Deno.test("Schedule 1-A: DOB-derived senior deduction matches issue #36 reproduc
       filing_status: "single",
       taxpayer_dob: "1955-06-01",
       taxpayer_ssn: "111-22-3333",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
     },
     w2: [{
       box1_wages: 50_000,
@@ -42,6 +45,9 @@ Deno.test("Schedule 1-A: overtime and vehicle interest flow from public input to
       filing_status: "single",
       taxpayer_dob: "1985-06-01",
       taxpayer_ssn: "111-22-3333",
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_tin_issued_by_due_date: true,
     },
     w2: [{
       box1_wages: 80_000,

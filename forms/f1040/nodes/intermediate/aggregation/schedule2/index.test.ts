@@ -186,13 +186,13 @@ Deno.test("calc: line5_unreported_tip_tax alone routes to f1040 line23", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 765);
 });
 
-Deno.test("calc: line2_excess_advance_premium alone routes to f1040 line17", () => {
-  const result = compute({ line2_excess_advance_premium: 1_200 });
+Deno.test("calc: line1a_excess_advance_premium alone routes to f1040 line17", () => {
+  const result = compute({ line1a_excess_advance_premium: 1_200 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 1_200);
 });
 
-Deno.test("calc: line7a_household_employment alone routes to f1040 line23", () => {
-  const result = compute({ line7a_household_employment: 2_400 });
+Deno.test("calc: line9_household_employment alone routes to f1040 line23", () => {
+  const result = compute({ line9_household_employment: 2_400 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 2_400);
 });
 
@@ -245,8 +245,8 @@ Deno.test("routing: mixed Part I and Part II taxes stay separated", () => {
   // SE tax + AMT + household employment
   const result = compute({
     line4_se_tax: 14_130,
-    line1_amt: 5_000,
-    line7a_household_employment: 2_400,
+    line2_amt: 5_000,
+    line9_household_employment: 2_400,
   });
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line17_additional_taxes, 5_000);
@@ -255,12 +255,12 @@ Deno.test("routing: mixed Part I and Part II taxes stay separated", () => {
 
 Deno.test("agg: all fields populated — grand total is correct sum", () => {
   const result = compute({
-    line1_amt: 1_000,
-    line2_excess_advance_premium: 200,
+    line2_amt: 1_000,
+    line1a_excess_advance_premium: 200,
     line4_se_tax: 300,
     line5_unreported_tip_tax: 400,
     line6_uncollected_8919: 500,
-    line7a_household_employment: 600,
+    line9_household_employment: 600,
     line8_form5329_tax: 700,
     line9_965_net_tax_liability: 800,
     line10_homebuyer_credit_repayment: 900,
@@ -290,8 +290,8 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
 
 // ── Previously untested fields ───────────────────────────────────────────────
 
-Deno.test("calc: line1_amt alone routes to f1040 line17", () => {
-  const result = compute({ line1_amt: 5_000 });
+Deno.test("calc: line2_amt alone routes to f1040 line17", () => {
+  const result = compute({ line2_amt: 5_000 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line17_additional_taxes, 5_000);
 });
 
@@ -332,7 +332,7 @@ Deno.test("calc: line12_niit alone routes to f1040 line23", () => {
 
 Deno.test("routing: Part I AMT stays separate from eight Part II tax fields", () => {
   const result = compute({
-    line1_amt: 5_000,
+    line2_amt: 5_000,
     line8_form5329_tax: 300,
     line17e_archer_msa_tax: 400,
     line17f_medicare_advantage_msa_tax: 500,

@@ -3,7 +3,12 @@ import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { IncomeCategory, form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import {
+  ForeignTaxCreditMethod,
+  ForeignTaxKind,
+  IncomeCategory,
+  form_1116,
+} from "../../intermediate/forms/form_1116/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -19,7 +24,7 @@ export const itemSchema = z.object({
   // Name of the foreign employer
   foreign_employer_name: z.string(),
   // ISO 3166-1 alpha-2 country code of the foreign employer
-  country_code: z.string(),
+  country_code: z.string().length(2),
   // Amount in foreign currency (pre-conversion, for record-keeping)
   compensation_amount: z.number().nonnegative(),
   // ISO 4217 currency code (e.g., "EUR", "GBP", "JPY")
@@ -33,6 +38,11 @@ export const itemSchema = z.object({
   // personal services as an employee is general category income, not passive
   // (IRC §904(d)(1)(B); Form 1116 Part I box d and line 1b).
   foreign_tax_paid_usd: z.number().nonnegative().optional(),
+  // IRS MeF CountryType code for the tax-credit source, which may differ from
+  // the ISO employer country code (for example, Germany is GM rather than DE).
+  foreign_tax_irs_country_code: z.string().length(2).optional(),
+  foreign_tax_paid_or_accrued_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  foreign_tax_credit_method: z.nativeEnum(ForeignTaxCreditMethod).optional(),
   // Compensation for services physically performed outside the United States.
   // Employer location alone does not determine wage source.
   foreign_service_compensation_usd: z.number().nonnegative().optional(),
@@ -83,6 +93,10 @@ function form1116Output(items: FecItems): NodeOutput[] {
       income_category: IncomeCategory.General,
       foreign_gross_income: foreignServices,
       excluded_income: excluded,
+      irs_country_code: item.foreign_tax_irs_country_code,
+      tax_paid_or_accrued_date: item.foreign_tax_paid_or_accrued_date,
+      tax_kind: ForeignTaxKind.Other,
+      tax_credit_method: item.foreign_tax_credit_method,
     }];
   });
   if (foreignTaxItems.length === 0) return [];

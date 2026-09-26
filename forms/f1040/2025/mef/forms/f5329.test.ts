@@ -1,291 +1,180 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { form5329 } from "./f5329.ts";
+import { TS } from "../../../nodes/types.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("empty object returns empty string", () => {
-  assertEquals(form5329.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("all unknown keys returns empty string", () => {
-  assertEquals(form5329.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("early_distribution at zero is emitted", () => {
-  const result = form5329.build({ early_distribution: 0 });
-  assertStringIncludes(
-    result,
-    "<EarlyDistributionAmt>0</EarlyDistributionAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 15 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("early_distribution maps to EarlyDistributionAmt", () => {
-  const result = form5329.build({ early_distribution: 5000 });
-  assertStringIncludes(
-    result,
-    "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
-  );
-});
-
-Deno.test("simple_ira_early_distribution maps to SimpleIRAEarlyDistriAmt", () => {
-  const result = form5329.build({ simple_ira_early_distribution: 3000 });
-  assertStringIncludes(
-    result,
-    "<SimpleIRAEarlyDistriAmt>3000</SimpleIRAEarlyDistriAmt>",
-  );
-});
-
-Deno.test("esa_able_distribution maps to ESAABLEDistributionAmt", () => {
-  const result = form5329.build({ esa_able_distribution: 2000 });
-  assertStringIncludes(
-    result,
-    "<ESAABLEDistributionAmt>2000</ESAABLEDistributionAmt>",
-  );
-});
-
-Deno.test("excess_traditional_ira maps to ExcessContriTradIRAAmt", () => {
-  const result = form5329.build({ excess_traditional_ira: 1500 });
-  assertStringIncludes(
-    result,
-    "<ExcessContriTradIRAAmt>1500</ExcessContriTradIRAAmt>",
-  );
-});
-
-Deno.test("traditional_ira_value maps to TraditionalIRAValueAmt", () => {
-  const result = form5329.build({ traditional_ira_value: 50000 });
-  assertStringIncludes(
-    result,
-    "<TraditionalIRAValueAmt>50000</TraditionalIRAValueAmt>",
-  );
-});
-
-Deno.test("excess_roth_ira maps to ExcessContriRothIRAAmt", () => {
-  const result = form5329.build({ excess_roth_ira: 1000 });
-  assertStringIncludes(
-    result,
-    "<ExcessContriRothIRAAmt>1000</ExcessContriRothIRAAmt>",
-  );
-});
-
-Deno.test("roth_ira_value maps to RothIRAValueAmt", () => {
-  const result = form5329.build({ roth_ira_value: 30000 });
-  assertStringIncludes(result, "<RothIRAValueAmt>30000</RothIRAValueAmt>");
-});
-
-Deno.test("excess_coverdell_esa maps to ExcessContriCoverdellESAAmt", () => {
-  const result = form5329.build({ excess_coverdell_esa: 500 });
-  assertStringIncludes(
-    result,
-    "<ExcessContriCoverdellESAAmt>500</ExcessContriCoverdellESAAmt>",
-  );
-});
-
-Deno.test("coverdell_esa_value maps to CoverdellESAValueAmt", () => {
-  const result = form5329.build({ coverdell_esa_value: 10000 });
-  assertStringIncludes(
-    result,
-    "<CoverdellESAValueAmt>10000</CoverdellESAValueAmt>",
-  );
-});
-
-Deno.test("excess_archer_msa maps to ExcessContriArcherMSAAmt", () => {
-  const result = form5329.build({ excess_archer_msa: 750 });
-  assertStringIncludes(
-    result,
-    "<ExcessContriArcherMSAAmt>750</ExcessContriArcherMSAAmt>",
-  );
-});
-
-Deno.test("archer_msa_value maps to ArcherMSAValueAmt", () => {
-  const result = form5329.build({ archer_msa_value: 8000 });
-  assertStringIncludes(result, "<ArcherMSAValueAmt>8000</ArcherMSAValueAmt>");
-});
-
-Deno.test("excess_hsa maps to ExcessContriHSAAmt", () => {
-  const result = form5329.build({ excess_hsa: 600 });
-  assertStringIncludes(result, "<ExcessContriHSAAmt>600</ExcessContriHSAAmt>");
-});
-
-Deno.test("hsa_value maps to HSAValueAmt", () => {
-  const result = form5329.build({ hsa_value: 4000 });
-  assertStringIncludes(result, "<HSAValueAmt>4000</HSAValueAmt>");
-});
-
-Deno.test("excess_able maps to ExcessContriABLEAmt", () => {
-  const result = form5329.build({ excess_able: 400 });
-  assertStringIncludes(
-    result,
-    "<ExcessContriABLEAmt>400</ExcessContriABLEAmt>",
-  );
-});
-
-Deno.test("able_value maps to ABLEAccountValueAmt", () => {
-  const result = form5329.build({ able_value: 15000 });
-  assertStringIncludes(
-    result,
-    "<ABLEAccountValueAmt>15000</ABLEAccountValueAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("single known field emits only that element, absent fields omitted", () => {
-  const result = form5329.build({ early_distribution: 5000 });
-  assertStringIncludes(
-    result,
-    "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
-  );
-  assertNotIncludes(result, "<SimpleIRAEarlyDistriAmt>");
-  assertNotIncludes(result, "<ExcessContriTradIRAAmt>");
-  assertNotIncludes(result, "<HSAValueAmt>");
-});
-
-Deno.test("two fields present: only those two elements emitted", () => {
-  const result = form5329.build({
-    early_distribution: 5000,
-    excess_traditional_ira: 1500,
-  });
-  assertStringIncludes(
-    result,
-    "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<ExcessContriTradIRAAmt>1500</ExcessContriTradIRAAmt>",
-  );
-  assertNotIncludes(result, "<SimpleIRAEarlyDistriAmt>");
-  assertNotIncludes(result, "<HSAValueAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  early_distribution: 5000,
-  simple_ira_early_distribution: 3000,
-  esa_able_distribution: 2000,
-  excess_traditional_ira: 1500,
-  traditional_ira_value: 50000,
-  excess_roth_ira: 1000,
-  roth_ira_value: 30000,
-  excess_coverdell_esa: 500,
-  coverdell_esa_value: 10000,
-  excess_archer_msa: 750,
-  archer_msa_value: 8000,
-  excess_hsa: 600,
-  hsa_value: 4000,
-  excess_able: 400,
-  able_value: 15000,
+const filer: FilerIdentity = {
+  fullName: "Test Taxpayer",
+  primarySSN: "123456789",
+  nameLine1: "TAXPAYER TEST",
+  nameControl: "TAXP",
+  address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.Single,
 };
 
-Deno.test("all 15 fields present: output wrapped in IRS5329 tag", () => {
-  const result = form5329.build(allFields);
-  assertStringIncludes(result, "<IRS5329>");
-  assertStringIncludes(result, "</IRS5329>");
+Deno.test("Form 5329 absent input emits no document", () => {
+  assertEquals(form5329.build({}, { filer }), "");
 });
 
-Deno.test("all 15 fields present: all elements emitted", () => {
-  const result = form5329.build(allFields);
+Deno.test("Form 5329 early distribution fills Parts I lines 1, 3, and 4", () => {
+  const xml = form5329.build({ early_distribution: 10_000 }, { filer });
+  assertStringIncludes(xml, "<PersonNm>Test Taxpayer</PersonNm>");
+  assertStringIncludes(xml, "<SSN>123456789</SSN>");
   assertStringIncludes(
-    result,
-    "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
+    xml,
+    "<EarlyDistributionsAmt>10000</EarlyDistributionsAmt>",
   );
   assertStringIncludes(
-    result,
-    "<SimpleIRAEarlyDistriAmt>3000</SimpleIRAEarlyDistriAmt>",
+    xml,
+    "<EarlyDistriSubjectToTaxAmt>10000</EarlyDistriSubjectToTaxAmt>",
   );
   assertStringIncludes(
-    result,
-    "<ESAABLEDistributionAmt>2000</ESAABLEDistributionAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<ExcessContriTradIRAAmt>1500</ExcessContriTradIRAAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<TraditionalIRAValueAmt>50000</TraditionalIRAValueAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<ExcessContriRothIRAAmt>1000</ExcessContriRothIRAAmt>",
-  );
-  assertStringIncludes(result, "<RothIRAValueAmt>30000</RothIRAValueAmt>");
-  assertStringIncludes(
-    result,
-    "<ExcessContriCoverdellESAAmt>500</ExcessContriCoverdellESAAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<CoverdellESAValueAmt>10000</CoverdellESAValueAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<ExcessContriArcherMSAAmt>750</ExcessContriArcherMSAAmt>",
-  );
-  assertStringIncludes(result, "<ArcherMSAValueAmt>8000</ArcherMSAValueAmt>");
-  assertStringIncludes(result, "<ExcessContriHSAAmt>600</ExcessContriHSAAmt>");
-  assertStringIncludes(result, "<HSAValueAmt>4000</HSAValueAmt>");
-  assertStringIncludes(
-    result,
-    "<ExcessContriABLEAmt>400</ExcessContriABLEAmt>",
-  );
-  assertStringIncludes(
-    result,
-    "<ABLEAccountValueAmt>15000</ABLEAccountValueAmt>",
+    xml,
+    "<IRAEarlyDistributionsTaxAmt>1000</IRAEarlyDistributionsTaxAmt>",
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-numeric enum fields are ignored
-// ---------------------------------------------------------------------------
+Deno.test("Form 5329 sums regular and two-year SIMPLE IRA tax at their actual rates", () => {
+  const xml = form5329.build({
+    early_distribution: [10_000, 5_000],
+    simple_ira_early_distribution: 4_000,
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<EarlyDistributionsAmt>19000</EarlyDistributionsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<IRAEarlyDistributionsTaxAmt>2500</IRAEarlyDistributionsTaxAmt>",
+  );
+});
 
-Deno.test("distribution_code enum field is silently ignored", () => {
-  const result = form5329.build({
-    distribution_code: "7",
-    early_distribution: 5000,
+Deno.test("Form 5329 exception needs its IRS code", () => {
+  assertThrows(
+    () =>
+      form5329.build({
+        early_distribution: 10_000,
+        early_distribution_exception: 3_000,
+      }, { filer }),
+    Error,
+    "exception code",
+  );
+  const xml = form5329.build({
+    early_distribution: 10_000,
+    early_distribution_exception: 3_000,
+    early_distribution_exception_code: "01",
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<EarlyDistriExceptionReasonCd>01</EarlyDistriExceptionReasonCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EarlyDistriNotSubjectToTaxAmt>3000</EarlyDistriNotSubjectToTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<IRAEarlyDistributionsTaxAmt>700</IRAEarlyDistributionsTaxAmt>",
+  );
+});
+
+Deno.test("Form 5329 education distribution fills Part II lines 5-8", () => {
+  const xml = form5329.build({
+    esa_able_distribution: 5_000,
+    esa_able_exception: 2_000,
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<EducAcctDistributionAmt>5000</EducAcctDistributionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EducAcctDistriNotSubjToTaxAmt>2000</EducAcctDistriNotSubjToTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EducAcctDistriSubjectToTaxAmt>3000</EducAcctDistriSubjectToTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EducIRADistributionsTaxAmt>300</EducIRADistributionsTaxAmt>",
+  );
+});
+
+Deno.test("Form 5329 excess-contribution lines use balance-capped tax", () => {
+  const xml = form5329.build({
+    excess_traditional_ira: 2_000,
+    traditional_ira_value: 1_000,
+    excess_roth_ira: 500,
+    roth_ira_value: 2_000,
+    excess_coverdell_esa: 400,
+    coverdell_esa_value: 1_000,
+    excess_archer_msa: 300,
+    archer_msa_value: 1_000,
+    excess_hsa: 600,
+    hsa_value: 1_000,
+    excess_able: 200,
+    able_value: 1_000,
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<IRAExcessContribTaxAmt>60</IRAExcessContribTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<RothIRAExcessContribTaxAmt>30</RothIRAExcessContribTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EducIRAExcessContribTaxAmt>24</EducIRAExcessContribTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MSAExcessContribTaxAmt>18</MSAExcessContribTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HSAExcessContribTaxAmt>36</HSAExcessContribTaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ABLEExcessContribTaxAmt>12</ABLEExcessContribTaxAmt>",
+  );
+});
+
+Deno.test("Form 5329 will not invent a required account balance", () => {
+  assertThrows(
+    () => form5329.build({ excess_hsa: 500 }, { filer }),
+    Error,
+    "hsa_value",
+  );
+});
+
+Deno.test("Form 5329 for a spouse uses spouse identity, never primary identity", () => {
+  const xml = form5329.build({ early_distribution: 5_000, subject_ts: TS.S }, {
+    filer: {
+      ...filer,
+      spouse: {
+        firstName: "Alex",
+        lastName: "Taxpayer",
+        ssn: "987654321",
+        nameControl: "TAXP",
+      },
+    },
   });
-  assertStringIncludes(
-    result,
-    "<EarlyDistributionAmt>5000</EarlyDistributionAmt>",
-  );
-  assertNotIncludes(result, "distribution_code");
-  assertNotIncludes(result, '"7"');
+  assertStringIncludes(xml, "<PersonNm>Alex Taxpayer</PersonNm>");
+  assertStringIncludes(xml, "<SSN>987654321</SSN>");
+  assertEquals(xml.includes("<SSN>123456789</SSN>"), false);
 });
 
-Deno.test("early_distribution_exception enum field is silently ignored", () => {
-  const result = form5329.build({
-    early_distribution_exception: "02",
-    excess_traditional_ira: 1500,
-  });
-  assertStringIncludes(
-    result,
-    "<ExcessContriTradIRAAmt>1500</ExcessContriTradIRAAmt>",
+Deno.test("Form 5329 refuses to merge taxpayer and spouse amounts", () => {
+  assertThrows(
+    () =>
+      form5329.build({
+        early_distribution: [5_000, 3_000],
+        subject_ts: [TS.T, TS.S],
+      }, { filer }),
+    Error,
+    "separate taxpayer and spouse forms",
   );
-  assertNotIncludes(result, "early_distribution_exception");
 });

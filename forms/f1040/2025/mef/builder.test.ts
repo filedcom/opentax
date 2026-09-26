@@ -1,11 +1,98 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
-import { buildMefXml } from "./builder.ts";
+import {
+  assertEquals,
+  assertRejects,
+  assertStringIncludes,
+  assertThrows,
+} from "@std/assert";
+import { PDFDocument } from "pdf-lib";
+import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
+import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
+import { FilingStatus as NodeFilingStatus } from "../../nodes/types.ts";
+import {
+  ForeignTaxCreditMethod,
+  ForeignTaxKind,
+  IncomeCategory,
+} from "../../nodes/intermediate/forms/form_1116/index.ts";
+
+const sampleForm1116 = {
+  foreign_tax_paid: 800,
+  total_income: 50_000,
+  worldwide_gross_income: 100_000,
+  general_deductions: 0,
+  standard_or_itemized_deduction: 0,
+  us_tax_before_credits: 5_000,
+  category_summaries: [{
+    category: IncomeCategory.Passive,
+    items: [{
+      foreign_tax_paid: 800,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+      irs_country_code: "CA",
+      tax_paid_or_accrued_date: "2025-11-01",
+      tax_kind: ForeignTaxKind.Interest,
+      tax_credit_method: ForeignTaxCreditMethod.Paid,
+    }],
+    foreignTaxPaid: 800,
+    foreignGrossIncome: 10_000,
+    includedForeignIncome: 10_000,
+    directlyAllocableDeductions: 0,
+    explicitlyApportionedDeductions: 0,
+    automaticallyApportionedDeductions: 0,
+    foreignTaxableIncome: 10_000,
+    allowedCredit: 800,
+  }],
+};
+
+const sampleScheduleF = {
+  schedule_fs: [{
+    line_a_principal_crop_activity: "GRAIN FARMING",
+    line_b_agricultural_activity_code: "111100" as const,
+    line_e_material_participation: true,
+    accounting_method: "cash" as const,
+    line1_sales_livestock_resale: 0,
+    line2_sales_products_raised: 2_000,
+  }],
+};
+
+const sampleForm2441 = {
+  dep_care_benefits: 5000,
+  agi: 50_000,
+  filing_details: {
+    filing_status: NodeFilingStatus.Single,
+    care_providers: [{
+      kind: "business" as const,
+      name: "Daycare Center",
+      name_control: "DAYC",
+      ein: "123456789",
+      us_address: {
+        line1: "1 Child Care Way",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      household_employee: false,
+      amount_paid: 5000,
+    }],
+    qualifying_people: [{
+      first_name: "Child",
+      last_name: "Smith",
+      name_control: "SMIT",
+      ssn: "123456789",
+      credit_expenses_paid: 0,
+    }],
+    taxpayer_earned_income: 50_000,
+    tax_liability_limit: 5000,
+    dependent_care_plan_limit: 5000,
+    total_qualified_expenses_incurred: 5000,
+  },
+};
 
 function sampleFiler(): FilerIdentity {
   return {
     primarySSN: "123456789",
+    fullName: "John A Smith",
     nameLine1: "SMITH JOHN A",
     nameControl: "SMIT",
     address: {
@@ -18,6 +105,16 @@ function sampleFiler(): FilerIdentity {
   };
 }
 
+function buildMefXml(...args: Parameters<typeof rawBuildMefXml>): string {
+  return rawBuildMefXml(
+    args[0],
+    args[1] ?? sampleFiler(),
+    args[2],
+    args[3],
+    args[4],
+  );
+}
+
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
     actual.includes(expected),
@@ -25,6 +122,200 @@ function assertNotIncludes(actual: string, expected: string) {
     `Expected NOT to include: ${expected}`,
   );
 }
+
+async function sampleAttachmentBytes(): Promise<Uint8Array> {
+  const pdf = await PDFDocument.create();
+  const page = pdf.addPage([612, 792]);
+  page.drawText("Form 5695 additional QMID statement", { x: 72, y: 720 });
+  return pdf.save();
+}
+
+Deno.test("MeF bundle pairs a readable PDF with one BinaryAttachment document", async () => {
+  const bytes = await sampleAttachmentBytes();
+  const bundle = await buildMefBundle({}, {
+    filer: sampleFiler(),
+    attachments: [{
+      fileName: "AdditionalQMIDStatement.pdf",
+      description: "Additional QMID Statement",
+      bytes,
+    }],
+  });
+  assertStringIncludes(bundle.xml, 'binaryAttachmentCnt="1"');
+  assertStringIncludes(bundle.xml, 'documentCnt="2"');
+  assertStringIncludes(
+    bundle.xml,
+    '<BinaryAttachment documentId="BinaryAttachment1">',
+  );
+  assertStringIncludes(bundle.xml, "<DocumentTypeCd>PDF</DocumentTypeCd>");
+  assertStringIncludes(bundle.xml, "<Desc>Additional QMID Statement</Desc>");
+  assertStringIncludes(
+    bundle.xml,
+    "<AttachmentLocationTxt>AdditionalQMIDStatement.pdf</AttachmentLocationTxt>",
+  );
+  assertEquals(bundle.attachments.length, 1);
+  assertEquals(bundle.attachments[0].bytes, bytes);
+  assertEquals(bundle.attachments[0].bytes === bytes, false);
+  assertStringIncludes(buildMefXml({}), 'binaryAttachmentCnt="0"');
+});
+
+Deno.test("MeF bundle rejects invalid PDFs and duplicate metadata", async () => {
+  const bytes = await sampleAttachmentBytes();
+  const valid = {
+    fileName: "AdditionalQMIDStatement.pdf",
+    description: "Additional QMID Statement",
+    bytes,
+  };
+  await assertRejects(
+    () =>
+      buildMefBundle({}, {
+        attachments: [{ ...valid, bytes: new Uint8Array([1, 2, 3]) }],
+      }),
+    Error,
+    "not a complete PDF",
+  );
+  await assertRejects(
+    () =>
+      buildMefBundle({}, {
+        attachments: [{ ...valid, fileName: "../bad.pdf" }],
+      }),
+    Error,
+    "Invalid or duplicate MeF PDF filename",
+  );
+  await assertRejects(
+    () => buildMefBundle({}, { attachments: [valid, valid] }),
+    Error,
+    "Invalid or duplicate MeF PDF filename",
+  );
+});
+
+Deno.test("Form 5695 overflow generates its PDF in the MeF bundle", async () => {
+  const filer = {
+    ...sampleFiler(),
+    fullName: "John Smith",
+  };
+  const pending = {
+    form5695: {
+      part_ii_section_a: {
+        main_home_in_us: true,
+        original_user: true,
+        five_year_use: true,
+        home_address: filer.address,
+        related_to_new_home: false,
+        exterior_doors: [
+          { cost: 1_000, qmid: "A1B2" },
+          { cost: 900, qmid: "C3D4" },
+          { cost: 800, qmid: "E5F6" },
+          { cost: 700, qmid: "G7H8" },
+        ],
+        windows: [
+          { cost: 500, qmid: "J9K0" },
+          { cost: 400, qmid: "L1M2" },
+          { cost: 300, qmid: "N3P4" },
+          { cost: 200, qmid: "R5S6" },
+          { cost: 100, qmid: "T7U8" },
+        ],
+      },
+      part_ii_tax_limit: 1_000,
+    },
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "AdditionalQMIDStatement.pdf bundle attachment",
+  );
+  const bundle = await buildMefBundle(pending, { filer, attachments: [] });
+  assertEquals(bundle.attachments.length, 1);
+  assertEquals(bundle.attachments[0].fileName, "AdditionalQMIDStatement.pdf");
+  assertStringIncludes(bundle.xml, 'binaryAttachmentCnt="1"');
+  assertStringIncludes(bundle.xml, 'documentCnt="3"');
+  assertStringIncludes(
+    bundle.xml,
+    "<OtherQlfyExtrDoorsCostAmt>700</OtherQlfyExtrDoorsCostAmt>",
+  );
+  const pdf = await PDFDocument.load(bundle.attachments[0].bytes);
+  assertEquals(pdf.getPageCount(), 1);
+});
+
+Deno.test("Form 5695 Section B overflow preserves every QMID and cost", async () => {
+  const filer = { ...sampleFiler(), fullName: "John Smith" };
+  const form5695 = {
+    part_ii_section_b: {
+      home_in_us: true,
+      originally_placed_in_service: true,
+      home_addresses: [filer.address],
+      central_air_conditioner: { cost: 700, qmid: "A1B2" },
+      other_central_air_conditioners: [{ cost: 2_000, qmid: "C3D4" }],
+      water_heaters: [
+        { cost: 1_000, qmid: "E5F6" },
+        { cost: 900, qmid: "G7H8" },
+        { cost: 1_200, qmid: "J9K0" },
+      ],
+      furnace_or_boiler: { cost: 800, qmid: "L1M2" },
+      other_furnaces_or_boilers: [{ cost: 1_500, qmid: "N3P4" }],
+      heat_pump: { cost: 1_000, qmid: "R5S6" },
+      other_heat_pumps: [{ cost: 1_200, qmid: "T7U8" }],
+      heat_pump_water_heater: { cost: 900, qmid: "V9W0" },
+      other_heat_pump_water_heaters: [{ cost: 1_100, qmid: "X1Y2" }],
+      biomass_stove_or_boiler: { cost: 700, qmid: "Z3A4" },
+      other_biomass_stoves_or_boilers: [{ cost: 1_300, qmid: "B5C6" }],
+    },
+    part_ii_tax_limit: 5_000,
+  };
+  const lines = additionalQmidLines(form5695);
+  assertEquals(lines.map((line) => [line.formLine, line.items[0].qmid]), [
+    ["22b", "A1B2"],
+    ["23b", "G7H8"],
+    ["24b", "L1M2"],
+    ["29b", "R5S6"],
+    ["29d", "V9W0"],
+    ["29f", "Z3A4"],
+  ]);
+  assertThrows(
+    () => buildMefXml({ form5695 }, filer),
+    Error,
+    "AdditionalQMIDStatement.pdf bundle attachment",
+  );
+  const bundle = await buildMefBundle({ form5695 }, {
+    filer,
+    attachments: [],
+  });
+  assertEquals(bundle.attachments.length, 1);
+  assertStringIncludes(bundle.xml, 'binaryAttachmentCnt="1"');
+  assertStringIncludes(
+    bundle.xml,
+    "<MostExpnsCentralAirCondCostAmt>2000</MostExpnsCentralAirCondCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OthCentralAirCondCostAmt>700</OthCentralAirCondCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OthNatGasPrpnOilWtrHtrCostAmt>900</OthNatGasPrpnOilWtrHtrCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OthFrncHotWtrBlrCostAmt>800</OthFrncHotWtrBlrCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OthElecGasHtPumpCostAmt>1000</OthElecGasHtPumpCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OthElecGasHtPumpWtrHtCostAmt>900</OthElecGasHtPumpWtrHtCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<OthBmssStoveBlrCostAmt>700</OthBmssStoveBlrCostAmt>",
+  );
+  assertStringIncludes(
+    bundle.xml,
+    "<EgyEffcntHmImprvCrAmt>3060</EgyEffcntHmImprvCrAmt>",
+  );
+  const pdf = await PDFDocument.load(bundle.attachments[0].bytes);
+  assertEquals(pdf.getPageCount(), 1);
+});
 
 // ─── 1. Root element ──────────────────────────────────────────────────────────
 
@@ -35,7 +326,7 @@ Deno.test("root element tag", () => {
 
 Deno.test("root returnVersion attribute", () => {
   const xml = buildMefXml({});
-  assertStringIncludes(xml, 'returnVersion="2025v3.0"');
+  assertStringIncludes(xml, 'returnVersion="2025v5.4"');
 });
 
 Deno.test("root xmlns attribute", () => {
@@ -154,6 +445,31 @@ Deno.test("IRS1040 present when f1040 has data", () => {
   assertStringIncludes(xml, "<IRS1040 ");
 });
 
+Deno.test("Form 1040 MeF preserves the digital-asset answer", () => {
+  const yes = buildMefXml({
+    f1040: { filing_status: "single", digital_assets: true },
+  }, sampleFiler());
+  const no = buildMefXml({
+    f1040: { filing_status: "single", digital_assets: false },
+  }, sampleFiler());
+  assertStringIncludes(
+    yes,
+    "<VirtualCurAcquiredDurTYInd>true</VirtualCurAcquiredDurTYInd>",
+  );
+  assertStringIncludes(
+    no,
+    "<VirtualCurAcquiredDurTYInd>false</VirtualCurAcquiredDurTYInd>",
+  );
+});
+
+Deno.test("Form 1040 MeF rejects a filing status that conflicts with the header", () => {
+  assertThrows(
+    () => buildMefXml({ f1040: { filing_status: "mfj" } }, sampleFiler()),
+    Error,
+    "differs from the return header",
+  );
+});
+
 Deno.test("IRS1040 absent when f1040 missing from pending", () => {
   const xml = buildMefXml({});
   assertNotIncludes(xml, "<IRS1040>");
@@ -198,10 +514,25 @@ Deno.test("IRS1040 appears before IRS1040Schedule1 when both present", () => {
 });
 
 // ─── 11. Filer block ─────────────────────────────────────────────────────────
-// header.ts emits a placeholder Filer block when no filer identity is provided
-// so that IRS1040.xsd §60 (SSN required) is satisfied in all outputs.
+// Production export requires a real filer identity.
 
-Deno.test("Filer block always present (placeholder when filer undefined)", () => {
+Deno.test("MeF export rejects a missing filer instead of inventing one", () => {
+  assertThrows(
+    () => rawBuildMefXml({}),
+    Error,
+    "requires a real filer identity",
+  );
+});
+
+Deno.test("MeF bundle also rejects a missing filer", async () => {
+  await assertRejects(
+    () => buildMefBundle({}, { attachments: [] }),
+    Error,
+    "requires a real filer identity",
+  );
+});
+
+Deno.test("Filer block always present when identity is supplied", () => {
   const xml = buildMefXml({});
   assertStringIncludes(xml, "<Filer>");
 });
@@ -221,7 +552,10 @@ Deno.test("Filer block present when filer provided", () => {
 
 Deno.test("FilingStatusCd present when filer provided", () => {
   const xml = buildMefXml({}, sampleFiler());
-  assertStringIncludes(xml, "<IndividualReturnFilingStatusCd>1</IndividualReturnFilingStatusCd>");
+  assertStringIncludes(
+    xml,
+    "<IndividualReturnFilingStatusCd>1</IndividualReturnFilingStatusCd>",
+  );
 });
 
 // ─── 13. No XML declaration ───────────────────────────────────────────────────
@@ -274,7 +608,7 @@ Deno.test("schedule1 BusinessIncomeLossAmt negative value appears in output", ()
 // ─── 16. schedule2 routing ───────────────────────────────────────────────────
 
 Deno.test("IRS1040Schedule2 present when schedule2 has data", () => {
-  const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
+  const xml = buildMefXml({ schedule2: { line2_amt: 5000 } });
   assertStringIncludes(xml, "<IRS1040Schedule2 ");
 });
 
@@ -309,7 +643,7 @@ Deno.test("IRS1040Schedule3 absent when schedule3 has only unknown keys", () => 
 
 Deno.test("documentCnt=2 when only schedule2 has data", () => {
   // IRS1040 always emits + schedule2 = documentCnt=2
-  const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
+  const xml = buildMefXml({ schedule2: { line2_amt: 5000 } });
   assertStringIncludes(xml, 'documentCnt="2"');
 });
 
@@ -322,7 +656,7 @@ Deno.test("documentCnt=2 when only schedule3 has data", () => {
 Deno.test("documentCnt=2 when f1040 + schedule2 have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
-    schedule2: { line1_amt: 5000 },
+    schedule2: { line2_amt: 5000 },
   });
   assertStringIncludes(xml, 'documentCnt="2"');
 });
@@ -331,7 +665,7 @@ Deno.test("documentCnt=3 when f1040 + schedule1 + schedule2 have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
+    schedule2: { line2_amt: 5000 },
   });
   assertStringIncludes(xml, 'documentCnt="3"');
 });
@@ -340,7 +674,7 @@ Deno.test("documentCnt=4 when all four forms have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
+    schedule2: { line2_amt: 5000 },
     schedule3: { line2_childcare_credit: 1200 },
   });
   assertStringIncludes(xml, 'documentCnt="4"');
@@ -351,7 +685,7 @@ Deno.test("documentCnt=4 when all four forms have data", () => {
 Deno.test("IRS1040 appears before IRS1040Schedule2 when both present", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
-    schedule2: { line1_amt: 5000 },
+    schedule2: { line2_amt: 5000 },
   });
   const f1040Idx = xml.indexOf("<IRS1040 ");
   const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
@@ -365,7 +699,7 @@ Deno.test("IRS1040 appears before IRS1040Schedule2 when both present", () => {
 Deno.test("IRS1040Schedule1 appears before IRS1040Schedule2 when both present", () => {
   const xml = buildMefXml({
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
+    schedule2: { line2_amt: 5000 },
   });
   const sched1Idx = xml.indexOf("<IRS1040Schedule1 ");
   const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
@@ -378,7 +712,7 @@ Deno.test("IRS1040Schedule1 appears before IRS1040Schedule2 when both present", 
 
 Deno.test("IRS1040Schedule2 appears before IRS1040Schedule3 when both present", () => {
   const xml = buildMefXml({
-    schedule2: { line1_amt: 5000 },
+    schedule2: { line2_amt: 5000 },
     schedule3: { line2_childcare_credit: 1200 },
   });
   const sched2Idx = xml.indexOf("<IRS1040Schedule2 ");
@@ -393,7 +727,7 @@ Deno.test("IRS1040Schedule2 appears before IRS1040Schedule3 when both present", 
 // ─── 20. Field pass-through ───────────────────────────────────────────────────
 
 Deno.test("schedule2 AlternativeMinimumTaxAmt value appears in assembled output", () => {
-  const xml = buildMefXml({ schedule2: { line1_amt: 5000 } });
+  const xml = buildMefXml({ schedule2: { line2_amt: 5000 } });
   assertStringIncludes(
     xml,
     "<AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt>",
@@ -446,7 +780,7 @@ Deno.test("IRS8889 absent when form8889 missing from pending", () => {
 });
 
 Deno.test("IRS2441 present when form2441 has data", () => {
-  const xml = buildMefXml({ form2441: { dep_care_benefits: 5000 } });
+  const xml = buildMefXml({ form2441: sampleForm2441 });
   assertStringIncludes(xml, "<IRS2441 ");
 });
 
@@ -507,11 +841,11 @@ Deno.test("documentCnt=10 when all 10 forms have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule2: { line2_amt: 5000 },
+    schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
-    form2441: { dep_care_benefits: 5000 },
+    form2441: sampleForm2441,
     form8949: [{
       part: "A",
       description: "AAPL",
@@ -532,11 +866,11 @@ Deno.test("all 10 forms populated: XML contains all 10 document tags", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule2: { line2_amt: 5000 },
+    schedule3: { line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
-    form2441: { dep_care_benefits: 5000 },
+    form2441: sampleForm2441,
     form8949: [{
       part: "A",
       description: "AAPL",
@@ -598,7 +932,7 @@ Deno.test("form8889 HSAContributionAmt value appears in assembled output", () =>
 });
 
 Deno.test("form2441 DependentCareBenefitsAmt value appears in assembled output", () => {
-  const xml = buildMefXml({ form2441: { dep_care_benefits: 5000 } });
+  const xml = buildMefXml({ form2441: sampleForm2441 });
   assertStringIncludes(
     xml,
     "<DependentCareBenefitsAmt>5000</DependentCareBenefitsAmt>",
@@ -619,7 +953,20 @@ Deno.test("form8960 TaxableInterestAmt value appears in assembled output", () =>
 // ─── 24. New forms (plans 11-01 through 11-05): routing ───────────────────────
 
 Deno.test("IRS4137 present when form4137 has data", () => {
-  const xml = buildMefXml({ form4137: { allocated_tips: 500 } });
+  const xml = buildMefXml({
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 500,
+          tips_reported: 0,
+        }],
+        ss_wages_from_w2: 0,
+      }],
+    },
+  });
   assertStringIncludes(xml, "<IRS4137 ");
 });
 
@@ -669,8 +1016,19 @@ Deno.test("IRS8606 absent when form8606 missing from pending", () => {
 });
 
 Deno.test("IRS1116 present when form_1116 has data", () => {
-  const xml = buildMefXml({ form_1116: { foreign_tax_paid: 800 } });
+  const xml = buildMefXml({
+    form_1116: sampleForm1116,
+    schedule3: { line1_foreign_tax_credit: 800 },
+  });
   assertStringIncludes(xml, "<IRS1116 ");
+});
+
+Deno.test("IRS1116 aggregate-only data is rejected", () => {
+  assertThrows(
+    () => buildMefXml({ form_1116: { foreign_tax_paid: 800 } }),
+    Error,
+    "category calculation details",
+  );
 });
 
 Deno.test("IRS1116 absent when form_1116 missing from pending", () => {
@@ -678,9 +1036,38 @@ Deno.test("IRS1116 absent when form_1116 missing from pending", () => {
   assertNotIncludes(xml, "<IRS1116>");
 });
 
-Deno.test("IRS8582 present when form8582 has data", () => {
-  const xml = buildMefXml({ form8582: { current_loss: 5000 } });
-  assertStringIncludes(xml, "<IRS8582 ");
+Deno.test("IRS8582 aggregate data blocks MeF rather than producing invalid XML", () => {
+  assertThrows(
+    () => buildMefXml({ form8582: { current_loss: 5000 } }),
+    Error,
+    "requires per-activity",
+  );
+});
+
+Deno.test("IRS8582 property loss cannot be filed without its Schedule E property", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        form8582: {
+          activities: [{
+            name: "Rental house",
+            activity_type: "A",
+            property_type: 1,
+            current_net: -1_000,
+            prior_unallowed_operating: 0,
+            prior_unallowed_4797_part1: 0,
+            prior_unallowed_4797_part2: 0,
+          }],
+          current_loss: 1_000,
+          rental_current_loss: 1_000,
+          has_active_rental: true,
+          active_participation: true,
+          modified_agi: 0,
+        },
+      }),
+    Error,
+    "do not match their Schedule E and Form 4835 sources",
+  );
 });
 
 Deno.test("IRS8582 absent when form8582 missing from pending", () => {
@@ -689,7 +1076,7 @@ Deno.test("IRS8582 absent when form8582 missing from pending", () => {
 });
 
 Deno.test("IRS1040ScheduleF present when schedule_f has data", () => {
-  const xml = buildMefXml({ schedule_f: { crop_insurance: 2000 } });
+  const xml = buildMefXml({ schedule_f: sampleScheduleF });
   assertStringIncludes(xml, "<IRS1040ScheduleF ");
 });
 
@@ -729,7 +1116,7 @@ Deno.test("IRS8880 absent when form8880 missing from pending", () => {
 });
 
 Deno.test("IRS8995 present when form8995 has data", () => {
-  const xml = buildMefXml({ form8995: { qbi: 50000 } });
+  const xml = buildMefXml({ form8995: { qbi: 50000, qbi_deduction: 10000 } });
   assertStringIncludes(xml, "<IRS8995 ");
 });
 
@@ -759,7 +1146,9 @@ Deno.test("IRS8995A absent when form8995a missing from pending", () => {
 });
 
 Deno.test("IRS6251 present when form6251 has data", () => {
-  const xml = buildMefXml({ form6251: { regular_tax_income: 80000, iso_adjustment: 5000 } });
+  const xml = buildMefXml({
+    form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
+  });
   assertStringIncludes(xml, "<IRS6251 ");
 });
 
@@ -769,7 +1158,10 @@ Deno.test("IRS6251 absent when form6251 missing from pending", () => {
 });
 
 Deno.test("IRS5329 present when form5329 has data", () => {
-  const xml = buildMefXml({ form5329: { early_distribution: 5000 } });
+  const xml = buildMefXml(
+    { form5329: { early_distribution: 5000 } },
+    sampleFiler(),
+  );
   assertStringIncludes(xml, "<IRS5329 ");
 });
 
@@ -810,15 +1202,15 @@ Deno.test("IRS8839 absent when form8839 missing from pending", () => {
 
 // ─── 25. Full 29-form smoke test ──────────────────────────────────────────────
 
-Deno.test("documentCnt=29 when all 29 forms have data", () => {
+Deno.test("documentCnt=28 when all currently serializable forms have data", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule2: { line2_amt: 5000 },
+    schedule3: { line1_foreign_tax_credit: 800, line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
-    form2441: { dep_care_benefits: 5000 },
+    form2441: sampleForm2441,
     form8949: [{
       part: "A",
       description: "AAPL",
@@ -831,18 +1223,28 @@ Deno.test("documentCnt=29 when all 29 forms have data", () => {
     }],
     form8959: { medicare_wages: 250000 },
     form8960: { line1_taxable_interest: 1200 },
-    form4137: { allocated_tips: 500 },
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 500,
+          tips_reported: 0,
+        }],
+        ss_wages_from_w2: 0,
+      }],
+    },
     form8919: { wages: 45000 },
     form4972: { lump_sum_amount: 100000 },
     schedule_se: { net_profit_schedule_c: 30000 },
     form8606: { nondeductible_contributions: 6000 },
-    form_1116: { foreign_tax_paid: 800 },
-    form8582: { current_loss: 5000 },
-    schedule_f: { crop_insurance: 2000 },
+    form_1116: sampleForm1116,
+    schedule_f: sampleScheduleF,
     schedule_b: { taxable_interest_net: 1500 },
     form4797: { section_1231_gain: 12000 },
     form8880: { contributions_taxpayer: 3000 },
-    form8995: { qbi: 50000 },
+    form8995: { qbi: 50000, qbi_deduction: 10000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
     form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
@@ -850,19 +1252,19 @@ Deno.test("documentCnt=29 when all 29 forms have data", () => {
     form8853: { employer_archer_msa: 3650 },
     form_8829: { mortgage_interest: 12000 },
     form8839: { adoption_benefits: 14890 },
-  });
-  assertStringIncludes(xml, 'documentCnt="29"');
+  }, sampleFiler());
+  assertStringIncludes(xml, 'documentCnt="28"');
 });
 
-Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
+Deno.test("all 28 serializable forms populated: XML contains their document tags", () => {
   const xml = buildMefXml({
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
-    schedule2: { line1_amt: 5000 },
-    schedule3: { line2_childcare_credit: 1200 },
+    schedule2: { line2_amt: 5000 },
+    schedule3: { line1_foreign_tax_credit: 800, line2_childcare_credit: 0 },
     schedule_d: { line_4_other_st: 1000 },
     form8889: { taxpayer_hsa_contributions: 3600 },
-    form2441: { dep_care_benefits: 5000 },
+    form2441: sampleForm2441,
     form8949: [{
       part: "A",
       description: "AAPL",
@@ -875,18 +1277,28 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
     }],
     form8959: { medicare_wages: 250000 },
     form8960: { line1_taxable_interest: 1200 },
-    form4137: { allocated_tips: 500 },
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 500,
+          tips_reported: 0,
+        }],
+        ss_wages_from_w2: 0,
+      }],
+    },
     form8919: { wages: 45000 },
     form4972: { lump_sum_amount: 100000 },
     schedule_se: { net_profit_schedule_c: 30000 },
     form8606: { nondeductible_contributions: 6000 },
-    form_1116: { foreign_tax_paid: 800 },
-    form8582: { current_loss: 5000 },
-    schedule_f: { crop_insurance: 2000 },
+    form_1116: sampleForm1116,
+    schedule_f: sampleScheduleF,
     schedule_b: { taxable_interest_net: 1500 },
     form4797: { section_1231_gain: 12000 },
     form8880: { contributions_taxpayer: 3000 },
-    form8995: { qbi: 50000 },
+    form8995: { qbi: 50000, qbi_deduction: 10000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
     form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
@@ -894,7 +1306,7 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
     form8853: { employer_archer_msa: 3650 },
     form_8829: { mortgage_interest: 12000 },
     form8839: { adoption_benefits: 14890 },
-  });
+  }, sampleFiler());
   assertStringIncludes(xml, "<IRS1040 ");
   assertStringIncludes(xml, "<IRS1040Schedule1 ");
   assertStringIncludes(xml, "<IRS1040Schedule2 ");
@@ -911,7 +1323,6 @@ Deno.test("all 29 forms populated: XML contains all 29 document tags", () => {
   assertStringIncludes(xml, "<IRS1040ScheduleSE ");
   assertStringIncludes(xml, "<IRS8606 ");
   assertStringIncludes(xml, "<IRS1116 ");
-  assertStringIncludes(xml, "<IRS8582 ");
   assertStringIncludes(xml, "<IRS1040ScheduleF ");
   assertStringIncludes(xml, "<IRS1040ScheduleB ");
   assertStringIncludes(xml, "<IRS4797 ");
@@ -985,4 +1396,46 @@ Deno.test("context-only supporting forms are not emitted", () => {
   assertNotIncludes(xml, "<IRS1040ScheduleA ");
   assertNotIncludes(xml, "<IRS6251 ");
   assertNotIncludes(xml, "<IRS8880 ");
+});
+
+Deno.test("joint fuel-cell claim cannot emit an unlinked Form 5695", () => {
+  const claim = {
+    fuel_cell_cost: 12_000,
+    fuel_cell_kw_capacity: 5,
+    fuel_cell_home_in_us: true,
+    fuel_cell_home_address: {
+      line1: "123 Main St",
+      city: "Springfield",
+      state: "IL",
+      zip: "62701",
+    },
+    fuel_cell_joint_occupancy: true,
+    fuel_cell_total_joint_occupants_paid: 20_000,
+    part_i_tax_limit: 10_000,
+  };
+  assertThrows(() =>
+    buildMefXml({ form5695: claim }, {
+      ...sampleFiler(),
+      fullName: "John Smith",
+    })
+  );
+});
+
+Deno.test("joint-occupancy statement cannot be emitted without a form reference", () => {
+  assertThrows(() =>
+    buildMefXml({
+      joint_occupancy_statement: {
+        statements: [{
+          fuel_cell_properties: [{
+            kw_capacity: 5,
+            paid: 12_000,
+            total_joint_occupants_paid: 20_000,
+          }],
+        }],
+      },
+    }, {
+      ...sampleFiler(),
+      fullName: "John Smith",
+    })
+  );
 });

@@ -1,104 +1,161 @@
-import { assertEquals } from "@std/assert";
-import { f8814 } from "./index.ts";
+import { assertEquals, assertThrows } from "@std/assert";
+import { calculateForm8814, f8814, type F8814Item } from "./index.ts";
 
-function compute(items: Parameters<typeof f8814.compute>[1]["f8814s"]) {
+const child: F8814Item = {
+  child_name: "Alex Rivera",
+  child_name_control: "RIVE",
+  child_ssn: "123456789",
+  child_age_eligible: true,
+  child_required_to_file: true,
+  child_income_only_permitted_types: true,
+  child_no_joint_return: true,
+  child_no_estimated_payments: true,
+  child_no_withholding: true,
+  parent_eligible_to_elect: true,
+};
+
+function compute(items: F8814Item[]) {
   return f8814.compute({ taxYear: 2025, formType: "f1040" }, { f8814s: items });
 }
 
-function f1040Outputs(result: ReturnType<typeof compute>) {
-  return result.outputs.filter((o) => o.nodeType === "f1040");
+function field(
+  result: ReturnType<typeof compute>,
+  nodeType: string,
+  key: string,
+): unknown {
+  return result.outputs.find((output) =>
+    output.nodeType === nodeType && key in output.fields
+  )
+    ?.fields[key];
 }
 
-function sumField(result: ReturnType<typeof compute>, field: string): number {
-  return result.outputs
-    .filter((o) => o.nodeType === "f1040")
-    .reduce((sum, o) => sum + ((o.fields as Record<string, number>)[field] ?? 0), 0);
-}
-
-// =============================================================================
-// 1. Schema Validation
-// =============================================================================
-
-Deno.test("f8814: empty array is valid and produces no outputs", () => {
-  const result = compute([]);
-  assertEquals(result.outputs.length, 0);
+Deno.test("f8814: empty election emits nothing", () => {
+  assertEquals(compute([]).outputs, []);
 });
 
-Deno.test("f8814: negative interest_income rejected", () => {
-  const parsed = f8814.inputSchema.safeParse({ f8814s: [{ interest_income: -1 }] });
-  assertEquals(parsed.success, false);
+Deno.test("f8814: eligibility and identity facts are required", () => {
+  assertEquals(
+    f8814.inputSchema.safeParse({ f8814s: [{ interest_income: 2000 }] })
+      .success,
+    false,
+  );
+  assertEquals(
+    f8814.inputSchema.safeParse({
+      f8814s: [{ ...child, child_no_withholding: false }],
+    }).success,
+    false,
+  );
 });
 
-Deno.test("f8814: negative dividend_income rejected", () => {
-  const parsed = f8814.inputSchema.safeParse({ f8814s: [{ dividend_income: -50 }] });
-  assertEquals(parsed.success, false);
+Deno.test("f8814: exactly $1,350 has no child tax or transferred income", () => {
+  const lines = calculateForm8814({ ...child, interest_income: 1350 });
+  assertEquals(lines.line14, 0);
+  assertEquals(lines.line15, 0);
+  assertEquals(lines.line12, 0);
+  assertEquals(lines.dependentPtcMagi, 0);
+  assertThrows(() => compute([{ ...child, interest_income: 1350 }]));
 });
 
-// =============================================================================
-// 2. Below-threshold: no income included ($1,300 threshold)
-// =============================================================================
-
-Deno.test("f8814: child income exactly $1,300 → no output (threshold not exceeded)", () => {
-  const result = compute([{ interest_income: 1_300 }]);
-  assertEquals(result.outputs.length, 0);
+Deno.test("f8814: $2,000 has $65 child tax but no income transfer", () => {
+  const result = compute([{ ...child, interest_income: 2000 }]);
+  assertEquals(field(result, "income_tax_calculation", "form8814_tax"), 65);
+  assertEquals(field(result, "schedule1", "line8z_form8814"), undefined);
 });
 
-Deno.test("f8814: child income below $1,300 → no output", () => {
-  const result = compute([{ interest_income: 500, dividend_income: 400 }]);
-  assertEquals(result.outputs.length, 0);
+Deno.test("f8814: $2,700 has $135 tax and no transferred income", () => {
+  const lines = calculateForm8814({ ...child, dividend_income: 2700 });
+  assertEquals(lines.line6, 0);
+  assertEquals(lines.line15, 135);
 });
 
-// =============================================================================
-// 3. Above threshold: income flows to parent's return
-// =============================================================================
-
-Deno.test("f8814: interest above $1,300 routes to f1040 line2b", () => {
-  // $2,000 interest → $2,000 flows to parent (above threshold, full amount per §8814 rules)
-  const result = compute([{ interest_income: 2_000 }]);
-  const interest = sumField(result, "line2b_taxable_interest");
-  assertEquals(interest, 2_000);
+Deno.test("f8814: $3,700 interest transfers only $1,000 to Schedule 1", () => {
+  const result = compute([{ ...child, interest_income: 3700 }]);
+  assertEquals(field(result, "schedule1", "line8z_form8814"), 1000);
+  assertEquals(field(result, "agi_aggregator", "line8z_form8814"), 1000);
+  assertEquals(field(result, "f1040", "line2b_taxable_interest"), undefined);
+  assertEquals(field(result, "income_tax_calculation", "form8814_tax"), 135);
 });
 
-Deno.test("f8814: dividends above threshold route to f1040 line3b", () => {
-  const result = compute([{ dividend_income: 2_000 }]);
-  const divs = sumField(result, "line3b_ordinary_dividends");
-  assertEquals(divs, 2_000);
+Deno.test("f8814: qualified dividend and capital gain allocations reconcile", () => {
+  const item = {
+    ...child,
+    interest_income: 1000,
+    dividend_income: 2000,
+    qualified_dividends: 1500,
+    capital_gain_distributions: 1000,
+  };
+  const lines = calculateForm8814(item);
+  assertEquals(lines.line4, 4000);
+  assertEquals(lines.line6, 1300);
+  assertEquals(lines.line9, 488);
+  assertEquals(lines.line10, 325);
+  assertEquals(lines.line12, 487);
+  const result = compute([item]);
+  assertEquals(field(result, "f1040", "line3a_qualified_dividends"), 488);
+  assertEquals(field(result, "schedule_d", "line13_form8814"), 325);
+  assertEquals(field(result, "schedule1", "line8z_form8814"), 487);
+  assertEquals(
+    field(result, "form4952", "form8814_line9_qualified_dividends"),
+    488,
+  );
+  assertEquals(field(result, "form4952", "form8814_line10_capital_gain"), 325);
+  assertEquals(
+    field(result, "form4952", "form8814_line12_investment_income"),
+    487,
+  );
 });
 
-Deno.test("f8814: $0 interest with high dividends — interest not included", () => {
-  const result = compute([{ dividend_income: 3_000 }]);
-  const interest = sumField(result, "line2b_taxable_interest");
-  assertEquals(interest, 0);
+Deno.test("f8814: Alaska PFD is ordinary dividend, not qualified dividend", () => {
+  const lines = calculateForm8814({ ...child, alaska_pfd: 3200 });
+  assertEquals(lines.line2a, 3200);
+  assertEquals(lines.line9, 0);
+  assertEquals(lines.line12, 500);
 });
 
-// =============================================================================
-// 4. Multiple children
-// =============================================================================
+Deno.test("f8814: Alaska PFD share is excluded from Form 8960 line 7", () => {
+  const item = { ...child, interest_income: 4000, alaska_pfd: 2000 };
+  const lines = calculateForm8814(item);
+  assertEquals(lines.line12, 3300);
+  assertEquals(lines.line12InvestmentIncome, 2200);
+  const result = compute([item]);
+  assertEquals(
+    field(result, "form8960", "form8814_line12_investment_income"),
+    2200,
+  );
+  assertEquals(
+    field(result, "form4952", "form8814_line12_investment_income"),
+    2200,
+  );
+});
 
-Deno.test("f8814: two children with income each produce separate outputs", () => {
+Deno.test("f8814: $13,500 income must use a child return", () => {
+  assertThrows(() => calculateForm8814({ ...child, interest_income: 13_500 }));
+});
+
+Deno.test("f8814: duplicate child is rejected", () => {
+  assertThrows(() => compute([child, child]));
+});
+
+Deno.test("f8814: multiple children aggregate tax and retain separate forms", () => {
   const result = compute([
-    { interest_income: 2_000 },
-    { dividend_income: 1_500 },
+    { ...child, interest_income: 3000 },
+    {
+      ...child,
+      child_name: "Jamie Rivera",
+      child_ssn: "987654321",
+      dividend_income: 2000,
+    },
   ]);
-  assertEquals(f1040Outputs(result).length, 2);
+  assertEquals(field(result, "income_tax_calculation", "form8814_tax"), 200);
+  assertEquals((field(result, "form8814", "items") as unknown[]).length, 2);
 });
 
-Deno.test("f8814: one child above threshold + one below — only one contributes", () => {
-  const result = compute([
-    { interest_income: 2_000 },  // above threshold
-    { interest_income: 500 },    // below threshold
-  ]);
-  assertEquals(f1040Outputs(result).length, 1);
-});
-
-// =============================================================================
-// 5. Alaska PFD
-// =============================================================================
-
-Deno.test("f8814: alaska_pfd counted toward total income", () => {
-  // $1,000 interest + $500 Alaska PFD = $1,500 total → above $1,300 threshold
-  const result = compute([{ interest_income: 1_000, alaska_pfd: 500 }]);
-  // Interest is included (total > threshold)
-  const interest = sumField(result, "line2b_taxable_interest");
-  assertEquals(interest, 1_000);
+Deno.test("f8814: PTC worksheet special amount includes tax-exempt interest and nontaxable Social Security", () => {
+  const lines = calculateForm8814({
+    ...child,
+    interest_income: 3000,
+    tax_exempt_interest: 200,
+    nontaxable_social_security: 700,
+  });
+  assertEquals(lines.dependentPtcMagi, 3600);
 });

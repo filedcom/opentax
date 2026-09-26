@@ -183,12 +183,17 @@ Report on the appropriate line regardless of taxability.
 The taxable amount for each 1099-R depends on distribution code and
 circumstances:
 
-**Case A — Direct rollover (codes G, S, X, rollover_code in {G,S,X,C}):**
+**Case A — Rollovers and code G:**
 
-- Taxable amount = $0 (rollover is not income)
-- Show rollover indicator on Form 1040 (line 4b or 5b)
-- Exception: rollover_code = C (Roth conversion) → taxable as Roth conversion
-  income; flows to Form 8606 Line 16
+- A non-taxable direct rollover has $0 taxable income. The node keeps that
+  treatment when code G has no box 2a amount or an explicit non-taxable
+  `rollover_code` of G or S is supplied.
+- Code G alone does not prove the distribution is tax-free. IRS instructions
+  allow a taxable rollover to a Roth account with the taxable portion in box
+  2a. TY2025 ATS 1040 Scenario 8 reports code G with $10,300 in box 2a; that
+  amount must flow to Form 1040 line 5b.
+- A partial rollover (`rollover_code = X`) taxes the amount not rolled over.
+  `rollover_code = C` routes a Roth conversion through Form 8606.
 
 **Case B — Qualified Roth distribution (code Q or T):**
 

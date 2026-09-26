@@ -215,7 +215,7 @@ Deno.test("formAddCommand unknown nodeType rejects with Unknown node type", asyn
   }
 });
 
-Deno.test("formAddCommand rejects registered intermediate nodes that cannot run as inputs", async () => {
+Deno.test("formAddCommand rejects legacy Form 2555 aggregate inputs", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
@@ -228,7 +228,7 @@ Deno.test("formAddCommand rejects registered intermediate nodes that cannot run 
           baseDir: tmpDir,
         }),
       Error,
-      "Node type form2555 is not a valid input for f1040/2025",
+      "Validation error",
     );
 
     const inputs = await loadInputs(`${tmpDir}/${returnId}`);
@@ -429,7 +429,7 @@ Deno.test("formUpdateCommand validates against schema", async () => {
   }
 });
 
-Deno.test("formUpdateCommand rejects legacy stored intermediate nodes", async () => {
+Deno.test("formUpdateCommand rejects legacy stored Form 2555 aggregate inputs", async () => {
   const tmpDir = await Deno.makeTempDir();
   try {
     const returnId = await makeReturn(tmpDir);
@@ -448,7 +448,7 @@ Deno.test("formUpdateCommand rejects legacy stored intermediate nodes", async ()
           baseDir: tmpDir,
         }),
       Error,
-      "Node type form2555 is not a valid input for f1040/2025",
+      "Validation error",
     );
   } finally {
     await Deno.remove(tmpDir, { recursive: true });

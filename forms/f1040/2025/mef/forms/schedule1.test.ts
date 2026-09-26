@@ -54,8 +54,8 @@ Deno.test("line3_schedule_c negative emits with minus sign", () => {
   );
 });
 
-Deno.test("line17_schedule_e negative emits with minus sign", () => {
-  const result = schedule1.build({ line17_schedule_e: -12000 });
+Deno.test("line5_schedule_e negative emits with minus sign", () => {
+  const result = schedule1.build({ line5_schedule_e: -12000 });
   assertStringIncludes(
     result,
     "<RentalRealEstateIncomeLossAmt>-12000</RentalRealEstateIncomeLossAmt>",
@@ -145,19 +145,34 @@ Deno.test("line8z_golden_parachute maps to ExcessGoldenParachuteAmt", () => {
   );
 });
 
-Deno.test("line8c_cod_income maps to CancellationOfDebtAmt", () => {
+Deno.test("line8c_cod_income maps to DebtCancellationAmt", () => {
   const result = schedule1.build({ line8c_cod_income: 3000 });
   assertStringIncludes(
     result,
-    "<CancellationOfDebtAmt>3000</CancellationOfDebtAmt>",
+    "<DebtCancellationAmt>3000</DebtCancellationAmt>",
   );
 });
 
-Deno.test("line17_schedule_e maps to RentalRealEstateIncomeLossAmt", () => {
-  const result = schedule1.build({ line17_schedule_e: 8000 });
+Deno.test("line5_schedule_e maps to RentalRealEstateIncomeLossAmt", () => {
+  const result = schedule1.build({ line5_schedule_e: 8000 });
   assertStringIncludes(
     result,
     "<RentalRealEstateIncomeLossAmt>8000</RentalRealEstateIncomeLossAmt>",
+  );
+});
+
+Deno.test("Schedule E contributions emit one combined line 5 in form order", () => {
+  const result = schedule1.build({
+    line4_other_gains: 1_000,
+    line5_schedule_e: [12_000, -5_000],
+    line6_schedule_f: 2_000,
+  });
+  assertStringIncludes(result, "<RentalRealEstateIncomeLossAmt>7000</RentalRealEstateIncomeLossAmt>");
+  assertEquals(result.match(/<RentalRealEstateIncomeLossAmt>/g)?.length, 1);
+  assertEquals(
+    result.indexOf("<OtherGainLossAmt>") < result.indexOf("<RentalRealEstateIncomeLossAmt>") &&
+      result.indexOf("<RentalRealEstateIncomeLossAmt>") < result.indexOf("<NetFarmProfitLossAmt>"),
+    true,
   );
 });
 
@@ -226,7 +241,7 @@ const allFields = {
   line8z_other: 1000,
   line8z_golden_parachute: 1100,
   line8c_cod_income: 1200,
-  line17_schedule_e: 1300,
+  line5_schedule_e: 1300,
   line18_early_withdrawal: 1400,
   line24f_501c18d: 1500,
 };
@@ -273,7 +288,7 @@ Deno.test("all 15 fields present: all elements emitted", () => {
   );
   assertStringIncludes(
     result,
-    "<CancellationOfDebtAmt>1200</CancellationOfDebtAmt>",
+    "<DebtCancellationAmt>1200</DebtCancellationAmt>",
   );
   assertStringIncludes(
     result,
@@ -582,7 +597,7 @@ Deno.test("all 23 fields present: all elements emitted and wrapped", () => {
     line8z_golden_parachute: 1600,
     line13_hsa_deduction: 1700,
     line15_se_deduction: 1800,
-    line17_schedule_e: 1900,
+    line5_schedule_e: 1900,
     line18_early_withdrawal: 2000,
     line20_ira_deduction: 2100,
     line23_archer_msa_deduction: 2200,
@@ -610,7 +625,7 @@ Deno.test("all 23 fields present: all elements emitted and wrapped", () => {
   );
   assertStringIncludes(
     result,
-    "<CancellationOfDebtAmt>600</CancellationOfDebtAmt>",
+    "<DebtCancellationAmt>600</DebtCancellationAmt>",
   );
   assertStringIncludes(
     result,

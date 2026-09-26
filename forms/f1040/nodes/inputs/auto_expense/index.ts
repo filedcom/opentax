@@ -1,6 +1,9 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { scheduleC } from "../schedule_c/index.ts";
 import { scheduleE } from "../schedule_e/index.ts";
@@ -48,6 +51,7 @@ export const itemSchema = z.object({
   actual_expenses: actualExpensesSchema.optional(),
   // Which schedule receives the deduction
   purpose: z.nativeEnum(AutoPurpose),
+  farm_id: z.string().min(1).optional(),
 });
 
 export const inputSchema = z.object({
@@ -64,8 +68,13 @@ function validateItem(item: AutoExpenseItem): void {
       `auto_expense validation: business_miles (${item.business_miles}) cannot exceed total_miles (${item.total_miles}) for vehicle "${item.vehicle_description}"`,
     );
   }
-  if (item.method === AutoMethod.Actual && item.total_miles === 0 && item.actual_expenses !== undefined) {
-    const hasActual = Object.values(item.actual_expenses).some((v) => (v ?? 0) > 0);
+  if (
+    item.method === AutoMethod.Actual && item.total_miles === 0 &&
+    item.actual_expenses !== undefined
+  ) {
+    const hasActual = Object.values(item.actual_expenses).some((v) =>
+      (v ?? 0) > 0
+    );
     if (hasActual) {
       throw new Error(
         `auto_expense validation: total_miles cannot be 0 when actual expenses are provided for vehicle "${item.vehicle_description}"`,
@@ -75,7 +84,9 @@ function validateItem(item: AutoExpenseItem): void {
 }
 
 // Compute total actual expenses for a vehicle
-function totalActualExpenses(expenses: z.infer<typeof actualExpensesSchema>): number {
+function totalActualExpenses(
+  expenses: z.infer<typeof actualExpensesSchema>,
+): number {
   return (expenses.depreciation ?? 0) +
     (expenses.gas_oil ?? 0) +
     (expenses.repairs ?? 0) +
@@ -104,7 +115,9 @@ function deductibleExpense(item: AutoExpenseItem): number {
 }
 
 // Aggregate deductible amounts by purpose
-function aggregateByPurpose(items: AutoExpenseItems): Record<AutoPurpose, number> {
+function aggregateByPurpose(
+  items: AutoExpenseItems,
+): Record<AutoPurpose, number> {
   const totals: Record<AutoPurpose, number> = {
     [AutoPurpose.SCHEDULE_C]: 0,
     [AutoPurpose.SCHEDULE_E]: 0,
@@ -116,16 +129,38 @@ function aggregateByPurpose(items: AutoExpenseItems): Record<AutoPurpose, number
   return totals;
 }
 
-function buildOutputs(totals: Record<AutoPurpose, number>): NodeOutput[] {
+function buildOutputs(
+  totals: Record<AutoPurpose, number>,
+  items: AutoExpenseItems,
+): NodeOutput[] {
   const outputs: NodeOutput[] = [];
   if (totals[AutoPurpose.SCHEDULE_C] > 0) {
-    outputs.push(output(scheduleC, { line_9_car_truck_expenses: totals[AutoPurpose.SCHEDULE_C] }));
+    outputs.push(
+      output(scheduleC, {
+        line_9_car_truck_expenses: totals[AutoPurpose.SCHEDULE_C],
+      }),
+    );
   }
   if (totals[AutoPurpose.SCHEDULE_E] > 0) {
-    outputs.push(output(scheduleE, { expense_auto_travel: totals[AutoPurpose.SCHEDULE_E] }));
+    outputs.push(
+      output(scheduleE, {
+        expense_auto_travel: totals[AutoPurpose.SCHEDULE_E],
+      }),
+    );
   }
-  if (totals[AutoPurpose.SCHEDULE_F] > 0) {
-    outputs.push(output(schedule_f, { line10_car_truck: totals[AutoPurpose.SCHEDULE_F] }));
+  const farmSources = items.flatMap((item) => {
+    if (item.purpose !== AutoPurpose.SCHEDULE_F) return [];
+    const amount = deductibleExpense(item);
+    if (amount === 0) return [];
+    if (!item.farm_id) {
+      throw new Error(
+        `Schedule F vehicle "${item.vehicle_description}" requires farm_id`,
+      );
+    }
+    return [{ farm_id: item.farm_id, kind: "auto_expense" as const, amount }];
+  });
+  if (farmSources.length > 0) {
+    outputs.push(output(schedule_f, { farm_sources: farmSources }));
   }
   return outputs;
 }
@@ -144,7 +179,7 @@ class AutoExpenseNode extends TaxNode<typeof inputSchema> {
     }
 
     const totals = aggregateByPurpose(parsed.auto_expenses);
-    return { outputs: buildOutputs(totals) };
+    return { outputs: buildOutputs(totals, parsed.auto_expenses) };
   }
 }
 

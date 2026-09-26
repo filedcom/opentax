@@ -1,13 +1,12 @@
-
 import { assertEquals, assertThrows } from "@std/assert";
-import { inputSchema, f1099int } from "./index.ts";
+import { f1099int, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { schedule1 } from "../../outputs/schedule1/index.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { form_1116 } from "../../intermediate/forms/form_1116/index.ts";
+import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -21,12 +20,15 @@ type ItemOverrides = Partial<{
   payer_address: string;
   payer_city_state_zip: string;
   box1: number;
+  investment_property_for_form4952: boolean;
   box2: number;
   box3: number;
   box4: number;
   box5: number;
   box6: number;
   box7: string;
+  foreign_source_interest_usd: number;
+  foreign_tax_irs_country_code: string;
   box8: number;
   box9: number;
   box10: number;
@@ -51,16 +53,59 @@ function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
   };
 }
 
-function compute(items: ItemOverrides[], filingStatus?: string) {
+function taxedInterest(
+  tax: number,
+  foreignInterest: number,
+  overrides: ItemOverrides = {},
+): ItemOverrides {
+  return minimalItem({
+    box1: foreignInterest,
+    box6: tax,
+    box7: "France",
+    foreign_source_interest_usd: foreignInterest,
+    foreign_tax_irs_country_code: "FR",
+    ...overrides,
+  });
+}
+
+function compute(items: ItemOverrides[]) {
   return f1099int.compute(
     { taxYear: 2025, formType: "f1040" },
-    inputSchema.parse({ f1099ints: items, filing_status: filingStatus }),
+    inputSchema.parse({ f1099ints: items }),
   );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("1099-INT routes adjusted investment-property interest to Form 4952 only when affirmed", () => {
+  const ordinary = compute([minimalItem({ box1: 1_000 })]);
+  assertEquals(findOutput(ordinary, "form4952"), undefined);
+  const investment = compute([minimalItem({
+    box1: 1_000,
+    box11: 100,
+    elect_bond_premium_amortization: true,
+    investment_property_for_form4952: true,
+  })]);
+  assertEquals(
+    findOutput(investment, "form4952")?.fields.source_1099_interest,
+    900,
+  );
+});
+
+Deno.test("1099-INT rejects negative net interest for Form 4952", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1: 100,
+        nominee_interest: 200,
+        investment_property_for_form4952: true,
+      })]),
+    Error,
+    "negative after adjustments",
+  );
+});
 
 // ---------------------------------------------------------------------------
 // 1. Input Schema Validation
@@ -148,7 +193,10 @@ Deno.test("box1 = 0 routes to schedule_b with taxable_interest_net = 0", () => {
 
 Deno.test("box2 routes to schedule1 line18_early_withdrawal", () => {
   const result = compute([minimalItem({ box2: 50 })]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal, 50);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal,
+    50,
+  );
 });
 
 Deno.test("box2 = 0 produces no schedule1 output", () => {
@@ -173,23 +221,33 @@ Deno.test("box4 routes to f1040 line25b_withheld_1099", () => {
 
 Deno.test("box4 = 0 produces no f1040 withholding output", () => {
   const result = compute([minimalItem({ box4: 0 })]);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line25b_withheld_1099, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line25b_withheld_1099,
+    undefined,
+  );
 });
 
-Deno.test("box6 below $300 single routes to schedule3 (simplified FTC method)", () => {
-  const result = compute([minimalItem({ box1: 500, box6: 200 })]);
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 200);
+Deno.test("box6 below $300 still routes to Form 1116 without an election", () => {
+  const result = compute([taxedInterest(200, 500)]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    200,
+  );
 });
 
 Deno.test("box6 = 0 produces no foreign tax output", () => {
   const result = compute([minimalItem({ box1: 500, box6: 0 })]);
-  assertEquals(findOutput(result, "schedule3"), undefined);
   assertEquals(findOutput(result, "form_1116"), undefined);
 });
 
 Deno.test("box8 routes to f1040 line2a_tax_exempt (informational MAGI component)", () => {
   const result = compute([minimalItem({ box8: 300 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 300);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.tax_exempt_interest,
+    300,
+  );
 });
 
 Deno.test("box8 = 0 produces no f1040 line2a output", () => {
@@ -213,7 +271,13 @@ Deno.test("box10 (market discount) adds to schedule_b taxable_interest_net", () 
 });
 
 Deno.test("box11 (ABP) reduces schedule_b taxable_interest_net when election made", () => {
-  const result = compute([minimalItem({ box1: 100, box11: 30, elect_bond_premium_amortization: true })]);
+  const result = compute([
+    minimalItem({
+      box1: 100,
+      box11: 30,
+      elect_bond_premium_amortization: true,
+    }),
+  ]);
   assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 70);
 });
 
@@ -230,6 +294,10 @@ Deno.test("box12 (ABP treasury) reduces schedule_b taxable_interest_net", () => 
 Deno.test("box13 (ABP tax-exempt) reduces f1040 line2a — net = box8 - box13", () => {
   const result = compute([minimalItem({ box8: 100, box13: 15 })]);
   assertEquals(fieldsOf(result.outputs, f1040)?.line2a_tax_exempt, 85);
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.tax_exempt_interest,
+    85,
+  );
 });
 
 Deno.test("box13 = box8: line2a is zero, no f1040 line2a output", () => {
@@ -247,12 +315,16 @@ Deno.test("nominee_interest reduces schedule_b taxable_interest_net", () => {
 });
 
 Deno.test("accrued_interest_paid reduces schedule_b taxable_interest_net", () => {
-  const result = compute([minimalItem({ box1: 100, accrued_interest_paid: 10 })]);
+  const result = compute([
+    minimalItem({ box1: 100, accrued_interest_paid: 10 }),
+  ]);
   assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 90);
 });
 
 Deno.test("non_taxable_oid_adjustment reduces schedule_b taxable_interest_net", () => {
-  const result = compute([minimalItem({ box1: 100, non_taxable_oid_adjustment: 8 })]);
+  const result = compute([
+    minimalItem({ box1: 100, non_taxable_oid_adjustment: 8 }),
+  ]);
   assertEquals(fieldsOf(result.outputs, schedule_b)?.taxable_interest_net, 92);
 });
 
@@ -294,7 +366,10 @@ Deno.test("multiple payers — box2 summed to single schedule1 output", () => {
     minimalItem({ payer_name: "Bank A", box2: 25 }),
     minimalItem({ payer_name: "Bank B", box2: 50 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal, 75);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal,
+    75,
+  );
 });
 
 Deno.test("multiple payers — box3 included in each schedule_b net", () => {
@@ -304,7 +379,10 @@ Deno.test("multiple payers — box3 included in each schedule_b net", () => {
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "schedule_b")
-    .reduce((sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0), 0);
+    .reduce(
+      (sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0),
+      0,
+    );
   assertEquals(total, 140);
 });
 
@@ -348,36 +426,59 @@ Deno.test("multiple payers — nominee_interest deductions reduce each schedule_
   ]);
   const total = result.outputs
     .filter((o) => o.nodeType === "schedule_b")
-    .reduce((sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0), 0);
+    .reduce(
+      (sum, o) => sum + ((o.fields.taxable_interest_net as number) ?? 0),
+      0,
+    );
   assertEquals(total, 135); // (100-25) + (100-40)
 });
 
 // ---------------------------------------------------------------------------
-// 5. Foreign Tax Thresholds — Schedule 3 vs Form 1116
+// 5. Foreign tax source facts for Form 1116
 // ---------------------------------------------------------------------------
 
-Deno.test("box6 exactly at $300 single threshold routes to schedule3", () => {
-  const result = compute([minimalItem({ box1: 500, box6: 300 })]);
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 300);
-  assertEquals(findOutput(result, "form_1116"), undefined);
+Deno.test("box6 at $300 still routes to Form 1116 without an election", () => {
+  const result = compute([taxedInterest(300, 500)]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    300,
+  );
 });
 
-Deno.test("box6 above $300 single threshold routes to form_1116", () => {
-  const result = compute([minimalItem({ box1: 500, box6: 350 })]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 350);
-  assertEquals(findOutput(result, "schedule3"), undefined);
+Deno.test("box6 above $300 routes to Form 1116", () => {
+  const result = compute([taxedInterest(350, 500)]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    350,
+  );
 });
 
-Deno.test("box6 exactly at $600 MFJ threshold routes to schedule3", () => {
-  const result = compute([minimalItem({ box1: 1000, box6: 600 })], "mfj");
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099, 600);
-  assertEquals(findOutput(result, "form_1116"), undefined);
+Deno.test("box6 at $600 still routes to Form 1116 without an election", () => {
+  const result = compute([taxedInterest(600, 1000)]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    600,
+  );
 });
 
-Deno.test("box6 above $600 MFJ threshold routes to form_1116", () => {
-  const result = compute([minimalItem({ box1: 1000, box6: 650 })], "mfj");
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 650);
-  assertEquals(findOutput(result, "schedule3"), undefined);
+Deno.test("box6 above $600 routes to Form 1116", () => {
+  const result = compute([taxedInterest(650, 1000)]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    650,
+  );
+});
+
+Deno.test("foreign tax cannot assume the whole 1099-INT box 1 is foreign source", () => {
+  assertThrows(
+    () => compute([minimalItem({ box1: 500, box6: 50 })]),
+    Error,
+    "verified foreign-source interest",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -393,14 +494,20 @@ Deno.test("box5 (TCJA-suspended investment expenses) does not add output", () =>
 Deno.test("box14, box15, box16, box17 (state fields) do not add federal outputs", () => {
   const without = compute([minimalItem({ box1: 100 })]);
   const withState = compute([
-    minimalItem({ box1: 100, box14: "CA", box15: "CA", box16: "94-123", box17: 50 }),
+    minimalItem({
+      box1: 100,
+      box14: "CA",
+      box15: "CA",
+      box16: "94-123",
+      box17: 50,
+    }),
   ]);
   assertEquals(withState.outputs.length, without.outputs.length);
 });
 
 Deno.test("box7 (foreign country name string) does not change output count", () => {
-  const without = compute([minimalItem({ box1: 100, box6: 50 })]);
-  const withCountry = compute([minimalItem({ box1: 100, box6: 50, box7: "France" })]);
+  const without = compute([taxedInterest(50, 100, { box7: undefined })]);
+  const withCountry = compute([taxedInterest(50, 100)]);
   assertEquals(withCountry.outputs.length, without.outputs.length);
 });
 
@@ -461,31 +568,32 @@ Deno.test("box10 = 0 does not change schedule_b net vs baseline", () => {
 Deno.test("smoke: two payers with multiple boxes — all expected outputs present", () => {
   // Payer A: box1=500, box3=200, box4=75, box6=100, box8=300, box9=50 (box8>=50)
   // Payer B: box1=600, box2=25, box4=50, box6=150, box8=100, box9=100, box13=50
-  // Filing status MFJ; total foreign tax = $250 (< $600 MFJ) → schedule3
-  const result = compute(
-    [
-      {
-        payer_name: "Payer A",
-        box1: 500,
-        box3: 200,
-        box4: 75,
-        box6: 100,
-        box8: 300,
-        box9: 50,
-      },
-      {
-        payer_name: "Payer B",
-        box1: 600,
-        box2: 25,
-        box4: 50,
-        box6: 150,
-        box8: 100,
-        box9: 100,
-        box13: 50,
-      },
-    ],
-    "mfj",
-  );
+  // Both payers have verified foreign-source interest; no shortcut election.
+  const result = compute([
+    {
+      payer_name: "Payer A",
+      box1: 500,
+      box3: 200,
+      box4: 75,
+      box6: 100,
+      foreign_source_interest_usd: 500,
+      foreign_tax_irs_country_code: "CA",
+      box8: 300,
+      box9: 50,
+    },
+    {
+      payer_name: "Payer B",
+      box1: 600,
+      box2: 25,
+      box4: 50,
+      box6: 150,
+      foreign_source_interest_usd: 600,
+      foreign_tax_irs_country_code: "FR",
+      box8: 100,
+      box9: 100,
+      box13: 50,
+    },
+  ]);
 
   // schedule_b: one entry per payer
   const sbOutputs = result.outputs.filter((o) => o.nodeType === "schedule_b");
@@ -505,13 +613,14 @@ Deno.test("smoke: two payers with multiple boxes — all expected outputs presen
     "total withholding",
   );
 
-  // schedule3: box6 $100 + $150 = $250 (MFJ, <= $600)
+  // Form 1116 retains both country-specific source records.
   assertEquals(
-    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_1099,
-    250,
-    "foreign tax simplified",
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.map((item) =>
+      item.foreign_tax_paid
+    ),
+    [100, 150],
+    "foreign taxes by statement",
   );
-  assertEquals(findOutput(result, "form_1116"), undefined, "form_1116 absent");
 
   // form6251: box9 50 + 100 = 150
   assertEquals(
@@ -532,16 +641,47 @@ Deno.test("smoke: two payers with multiple boxes — all expected outputs presen
 // Foreign source income for the §904 limitation (Form 1116 Part I line 1a)
 // ---------------------------------------------------------------------------
 
-Deno.test("box6 above threshold also routes box1 as foreign_income", () => {
-  const result = compute([minimalItem({ box1: 1000, box6: 500 })]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 1000);
+Deno.test("Form 1116 uses verified foreign-source interest, not the whole box 1", () => {
+  const result = compute([taxedInterest(500, 600, { box1: 1000 })]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_gross_income,
+    600,
+  );
+});
+
+Deno.test("Form 1116 carries 1099 tax kind, method, and country", () => {
+  const result = compute([taxedInterest(500, 1000)]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_gross_income,
+    1000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .irs_country_code,
+    "FR",
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .tax_reported_on_1099,
+    true,
+  );
 });
 
 Deno.test("only payers that withheld foreign tax contribute foreign_income", () => {
   const result = compute([
-    minimalItem({ payer_name: "FOREIGN BANK", box1: 1000, box6: 500 }),
+    taxedInterest(500, 1000, { payer_name: "FOREIGN BANK" }),
     minimalItem({ payer_name: "DOMESTIC BANK", box1: 4000 }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_tax_paid, 500);
-  assertEquals(fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0].foreign_gross_income, 1000);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_tax_paid,
+    500,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.foreign_tax_items?.[0]
+      .foreign_gross_income,
+    1000,
+  );
 });

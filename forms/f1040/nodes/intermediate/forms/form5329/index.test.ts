@@ -1,10 +1,13 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form5329, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form5329.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form5329.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -51,13 +54,17 @@ Deno.test("no_output: no fields provided → no outputs", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("no_output: early_distribution fully covered by exception → no outputs", () => {
+Deno.test("no_tax: early distribution fully covered by exception retains printable form amount", () => {
   // All $10,000 covered by exception — net subject to tax = 0
   const result = compute({
     early_distribution: 10_000,
     early_distribution_exception: 10_000,
   });
-  assertEquals(result.outputs.length, 0);
+  assertEquals(findOutput(result, "schedule2"), undefined);
+  assertEquals(
+    findOutput(result, "form5329")?.fields.early_distribution,
+    10_000,
+  );
 });
 
 Deno.test("no_output: zero excess contributions → no outputs", () => {
@@ -93,13 +100,16 @@ Deno.test("part1: 10% penalty reduced by exception", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_500);
 });
 
-Deno.test("part1: exception cannot exceed distribution (clamped to zero)", () => {
-  // Exception > distribution → net = 0 → no penalty
-  const result = compute({
-    early_distribution: 5_000,
-    early_distribution_exception: 8_000,
-  });
-  assertEquals(result.outputs.length, 0);
+Deno.test("part1: exception cannot exceed distribution", () => {
+  assertThrows(
+    () =>
+      compute({
+        early_distribution: 5_000,
+        early_distribution_exception: 8_000,
+      }),
+    Error,
+    "exceeds regular distributions",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -190,14 +200,12 @@ Deno.test("part3: 6% capped at IRA FMV when excess > FMV", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 30);
 });
 
-Deno.test("part3: excess traditional IRA with no FMV provided uses excess as base", () => {
-  // When account value not provided, assume excess is the base (most conservative)
-  // 6% × 3000 = 180
-  const result = compute({ excess_traditional_ira: 3_000 });
-
-  const sch2Out = findOutput(result, "schedule2");
-  assertEquals(sch2Out !== undefined, true);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 180);
+Deno.test("part3: excess traditional IRA with no FMV is rejected", () => {
+  assertThrows(
+    () => compute({ excess_traditional_ira: 3_000 }),
+    Error,
+    "December 31 account value",
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -326,10 +334,38 @@ Deno.test("routing: all penalties aggregate to single schedule2 output", () => {
   assertEquals(fieldsOf(result.outputs, schedule2)!.line8_form5329_tax, 1_150);
 });
 
-Deno.test("routing: output nodeType is schedule2", () => {
+Deno.test("routing: output reaches schedule2 and prints the aggregated form amount", () => {
   const result = compute({ early_distribution: 5_000 });
-  assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "schedule2");
+  assertEquals(result.outputs.length, 2);
+  assertEquals(findOutput(result, "schedule2")?.nodeType, "schedule2");
+  assertEquals(
+    findOutput(result, "form5329")?.fields.early_distribution,
+    5_000,
+  );
+});
+
+Deno.test("two independent 1099-R early distributions sum before tax and filing", () => {
+  const result = compute({
+    early_distribution: [4_000, 6_000],
+    distribution_code: ["1", "1"],
+  });
+  assertEquals(
+    findOutput(result, "schedule2")?.fields.line8_form5329_tax,
+    1_000,
+  );
+  assertEquals(
+    findOutput(result, "form5329")?.fields.early_distribution,
+    10_000,
+  );
+});
+
+Deno.test("taxpayer and spouse 1099-R amounts cannot collapse into one Form 5329", () => {
+  assertThrows(
+    () =>
+      compute({ early_distribution: [4_000, 6_000], subject_ts: ["T", "S"] }),
+    Error,
+    "separate taxpayer and spouse forms",
+  );
 });
 
 // ---------------------------------------------------------------------------

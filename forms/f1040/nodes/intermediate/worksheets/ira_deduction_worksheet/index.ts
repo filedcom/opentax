@@ -3,7 +3,7 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
@@ -22,13 +22,13 @@ const MINIMUM_DEDUCTION = 200;
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
-  filing_status: z.nativeEnum(FilingStatus),
+  filing_status: z.nativeEnum(FilingStatus).optional(),
   // Modified AGI for IRA deduction purposes (Pub 590-A Worksheet 1-1)
-  magi: z.number().nonnegative(),
+  magi: z.number().nonnegative().optional(),
   // Traditional IRA contribution for the year (not Roth)
-  ira_contribution: z.number().nonnegative(),
+  ira_contribution: z.number().nonnegative().optional(),
   // Whether the taxpayer is covered by an employer retirement plan (W-2 Box 13)
-  active_participant: z.boolean(),
+  active_participant: z.boolean().optional(),
   // Alias for active_participant (from W-2 Box 13 routing)
   covered_by_retirement_plan: z.boolean().optional(),
   // Age 50 or older — enables $1,000 catch-up contribution
@@ -38,12 +38,18 @@ export const inputSchema = z.object({
 });
 
 type IraDeductionInput = z.infer<typeof inputSchema>;
+type CompleteIraDeductionInput = IraDeductionInput & {
+  filing_status: FilingStatus;
+  magi: number;
+  ira_contribution: number;
+  active_participant: boolean;
+};
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Maximum contribution limit based on age
 function contributionLimit(
-  input: IraDeductionInput,
+  input: CompleteIraDeductionInput,
   limit: number,
   limitAge50: number,
 ): number {
@@ -53,7 +59,7 @@ function contributionLimit(
 // Phase-out lower and upper bounds for this filer, or null if no phase-out applies.
 // Returns null when fully deductible (no employer plan coverage applies).
 function phaseOutRange(
-  input: IraDeductionInput,
+  input: CompleteIraDeductionInput,
   phaseOutSingleLower: number,
   phaseOutSingleUpper: number,
   phaseOutMfjLower: number,
@@ -63,7 +69,8 @@ function phaseOutRange(
   phaseOutMfsLower: number,
   phaseOutMfsUpper: number,
 ): [number, number] | null {
-  const { filing_status, active_participant, spouse_active_participant } = input;
+  const { filing_status, active_participant, spouse_active_participant } =
+    input;
 
   if (filing_status === FilingStatus.MFS) {
     // MFS: narrow range if active participant; otherwise fully deductible
@@ -91,7 +98,12 @@ function phaseOutRange(
 //   - Reduced = limit × (1 - ratio)
 //   - Round UP to nearest $10
 //   - If reduced > 0 but < $200, use $200
-function reducedLimit(limit: number, magi: number, lower: number, upper: number): number {
+function reducedLimit(
+  limit: number,
+  magi: number,
+  lower: number,
+  upper: number,
+): number {
   if (magi <= lower) return limit;
   if (magi >= upper) return 0;
 
@@ -117,19 +129,51 @@ function schedule1Output(deductible: number): NodeOutput[] {
 class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "ira_deduction_worksheet";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, form8606, form8880]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    agi_aggregator,
+    form8606,
+    form8880,
+  ]);
 
   compute(ctx: NodeContext, rawInput: IraDeductionInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
 
-    if (input.ira_contribution <= 0) return { outputs: schedule1Output(0) };
+    // W-2 Box 13 can supply coverage before an IRA contribution is entered.
+    // Coverage alone does not create an IRA deduction worksheet.
+    if (input.ira_contribution === undefined || input.ira_contribution <= 0) {
+      return { outputs: [] };
+    }
+    // W-2 Box 13 is sourced coverage evidence and wins over a conflicting
+    // manually entered participant flag when both are present.
+    const activeParticipant = input.covered_by_retirement_plan ??
+      input.active_participant;
+    if (
+      input.filing_status === undefined || input.magi === undefined ||
+      activeParticipant === undefined
+    ) {
+      throw new Error(
+        "IRA contribution requires filing status, MAGI, and employer-plan coverage",
+      );
+    }
+    const completeInput: CompleteIraDeductionInput = {
+      ...input,
+      filing_status: input.filing_status,
+      magi: input.magi,
+      ira_contribution: input.ira_contribution,
+      active_participant: activeParticipant,
+    };
 
-    const limit = contributionLimit(input, cfg.iraContributionLimit, cfg.iraContributionLimitAge50);
-    const capped = Math.min(input.ira_contribution, limit);
+    const limit = contributionLimit(
+      completeInput,
+      cfg.iraContributionLimit,
+      cfg.iraContributionLimitAge50,
+    );
+    const capped = Math.min(completeInput.ira_contribution, limit);
     const range = phaseOutRange(
-      input,
+      completeInput,
       cfg.iraPhaseoutSingleLower,
       cfg.iraPhaseoutSingleUpper,
       cfg.iraPhaseoutMfjLower,
@@ -145,25 +189,37 @@ class IraDeductionWorksheetNode extends TaxNode<typeof inputSchema> {
       deductible = capped; // fully deductible
     } else {
       const [lower, upper] = range;
-      const allowed = reducedLimit(limit, input.magi, lower, upper);
+      const allowed = reducedLimit(limit, completeInput.magi, lower, upper);
       deductible = Math.min(capped, allowed);
     }
 
     const outputs: NodeOutput[] = [...schedule1Output(deductible)];
     if (deductible > 0) {
-      outputs.push(this.outputNodes.output(agi_aggregator, { line20_ira_deduction: deductible }));
+      outputs.push(
+        this.outputNodes.output(agi_aggregator, {
+          line20_ira_deduction: deductible,
+        }),
+      );
     }
 
     // Route IRA contribution to Form 8880 (Saver's Credit) — IRC §25B
     // The full contribution (not just the deductible portion) counts toward the credit.
     if (capped > 0) {
-      outputs.push(this.outputNodes.output(form8880, { ira_contributions_taxpayer: capped }));
+      outputs.push(
+        this.outputNodes.output(form8880, {
+          ira_contributions_taxpayer: capped,
+        }),
+      );
     }
 
     // Non-deductible excess → Form 8606 for IRA basis tracking (IRC §408(o))
     const nonDeductible = capped - deductible;
     if (nonDeductible > 0) {
-      outputs.push(this.outputNodes.output(form8606, { nondeductible_contributions: nonDeductible }));
+      outputs.push(
+        this.outputNodes.output(form8606, {
+          nondeductible_contributions: nonDeductible,
+        }),
+      );
     }
 
     return { outputs };

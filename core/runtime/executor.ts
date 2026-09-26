@@ -27,6 +27,7 @@ export type ExecuteResult = {
  * - If target is a scalar and incoming is scalar, promote both to an array (accumulation pattern:
  *   multiple upstream nodes depositing the same key produces an array, e.g. two W-2s → wages[]).
  * - If target is a scalar and incoming is an array, replace with the array.
+ * - A node's self-output is its finalized value and replaces its accumulated input.
  */
 function mergePending(
   pending: Record<string, Record<string, unknown>>,
@@ -34,7 +35,7 @@ function mergePending(
   targetId: string,
   input: Readonly<Record<string, unknown>>,
   isDirectInput: boolean,
-  isSelfOutput = false,
+  isSelfOutput: boolean,
 ): void {
   if (pending[targetId] === undefined) {
     pending[targetId] = {};

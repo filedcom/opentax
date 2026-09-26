@@ -3,7 +3,10 @@ import { form8960, inputSchema } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8960.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form8960.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -44,6 +47,19 @@ Deno.test("NII < MAGI excess → NIIT = NII × 3.8%", () => {
   });
   const sch2 = findOutput(result, "schedule2");
   assertEquals(sch2?.fields.line12_niit, 380);
+});
+
+Deno.test("Form 8960 includes Form 8814 line 12 investment income on line 7", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    magi: 300_000,
+    form8814_line12_investment_income: 2_200,
+  });
+  assertEquals(
+    findOutput(result, "form8960")?.fields.line7_other_modifications,
+    2_200,
+  );
+  assertEquals(findOutput(result, "schedule2")?.fields.line12_niit, 83.6);
 });
 
 // ─── MAGI excess is the smaller factor ────────────────────────────────────────
@@ -328,13 +344,11 @@ Deno.test("missing magi throws", () => {
   });
 });
 
-Deno.test("negative magi throws", () => {
-  assertThrows(() => {
-    compute({
-      filing_status: FilingStatus.Single,
-      magi: -1,
-    });
-  });
+Deno.test("negative MAGI is accepted and incurs no NIIT", () => {
+  assertEquals(
+    compute({ filing_status: FilingStatus.Single, magi: -1 }).outputs.length,
+    0,
+  );
 });
 
 // ─── Smoke test ────────────────────────────────────────────────────────────────

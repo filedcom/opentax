@@ -7,10 +7,16 @@ import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
+import { f2441 } from "../../../inputs/f2441/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import type { F1040Config } from "../../../config/index.ts";
+import {
+  calculateForm2441Benefits,
+  filingDetailsSchema,
+} from "./calculation.ts";
 
 // IRC §21(a): credit rate — 35% at AGI ≤ $15,000, drops 1% per $2,000, floor 20%
 const MAX_CREDIT_RATE = 0.35;
@@ -19,6 +25,9 @@ const MIN_CREDIT_RATE = 0.20;
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
+  filing_details: filingDetailsSchema.optional(),
+  // AGI is supplied by the AGI aggregator through the Form 2441 input node.
+  agi: z.number().int().optional(),
   // Total employer-provided dependent care benefits from W-2 Box 10.
   // Aggregated across all W-2s by the w2 input node.
   dep_care_benefits: z.number().nonnegative().optional(),
@@ -39,24 +48,35 @@ export const inputSchema = z.object({
 
   // Spouse's earned income (MFJ only; credit capped at lower spouse's income per IRC §21(d))
   spouse_earned_income: z.number().nonnegative().optional(),
-
   // Adjusted Gross Income — determines §21 credit rate
-  agi: z.number().nonnegative().optional(),
 });
+
+// User-facing start input is only the filing facts. W-2 Box 10 is the
+// authoritative source of employee dependent-care benefits in the graph.
+export const filingInputSchema = z.object({
+  filing_details: filingDetailsSchema,
+}).strict();
 
 type Form2441Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // IRC §129(a)(2): employer exclusion limit — $5,000 general, $2,500 for MFS
-function employerExclusionLimit(status: FilingStatus | undefined, cfg: F1040Config): number {
+function employerExclusionLimit(
+  status: FilingStatus | undefined,
+  cfg: F1040Config,
+): number {
   return status === FilingStatus.MFS
     ? cfg.depCareEmployerExclusionMfs
     : cfg.depCareEmployerExclusion;
 }
 
 // Amount of employer benefits that exceeds the §129 exclusion → taxable income (f1040 line 1e)
-function taxableExcess(benefits: number, status: FilingStatus | undefined, cfg: F1040Config): number {
+function taxableExcess(
+  benefits: number,
+  status: FilingStatus | undefined,
+  cfg: F1040Config,
+): number {
   return Math.max(0, benefits - employerExclusionLimit(status, cfg));
 }
 
@@ -64,7 +84,8 @@ function taxableExcess(benefits: number, status: FilingStatus | undefined, cfg: 
 function applicablePercentage(agi: number, cfg: F1040Config): number {
   if (agi <= cfg.depCareCreditRateAgiThreshold) return MAX_CREDIT_RATE;
   const stepsOver = Math.ceil(
-    (agi - cfg.depCareCreditRateAgiThreshold) / cfg.depCareCreditRateBracketSize,
+    (agi - cfg.depCareCreditRateAgiThreshold) /
+      cfg.depCareCreditRateBracketSize,
   );
   return Math.max(MIN_CREDIT_RATE, MAX_CREDIT_RATE - stepsOver * 0.01);
 }
@@ -87,20 +108,30 @@ function earnedIncomeCap(
 }
 
 // IRC §21 credit: qualifying expenses × applicable percentage
-function computeSection21Credit(input: Form2441Input, cfg: F1040Config): number {
+function computeSection21Credit(
+  input: Form2441Input,
+  cfg: F1040Config,
+): number {
   const expenses = input.qualifying_expenses ?? 0;
   const persons = input.qualifying_persons ?? 0;
   const agi = input.agi ?? 0;
   const taxpayerEarned = input.taxpayer_earned_income ?? 0;
   const benefits = input.dep_care_benefits ?? 0;
-  const excludedBenefits = Math.min(benefits, employerExclusionLimit(input.filing_status, cfg));
+  const excludedBenefits = Math.min(
+    benefits,
+    employerExclusionLimit(input.filing_status, cfg),
+  );
 
   if (expenses <= 0 || persons <= 0) return 0;
 
   const dollarCap = expenseDollarLimit(persons, cfg);
   // Employer-excluded benefits reduce the qualifying expense base (Form 2441 line 9)
   const reducedCap = Math.max(0, dollarCap - excludedBenefits);
-  const earnedCap = earnedIncomeCap(taxpayerEarned, input.spouse_earned_income, input.filing_status);
+  const earnedCap = earnedIncomeCap(
+    taxpayerEarned,
+    input.spouse_earned_income,
+    input.filing_status,
+  );
   const allowedExpenses = Math.min(expenses, reducedCap, earnedCap);
 
   if (allowedExpenses <= 0) return 0;
@@ -113,7 +144,12 @@ function computeSection21Credit(input: Form2441Input, cfg: F1040Config): number 
 class Form2441Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form2441";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, schedule3]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    schedule3,
+    agi_aggregator,
+    f2441,
+  ]);
 
   compute(ctx: NodeContext, input: Form2441Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -122,16 +158,57 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
     const benefits = parsed.dep_care_benefits ?? 0;
     const outputs: NodeOutput[] = [];
 
+    if (parsed.filing_details) {
+      if (
+        parsed.qualifying_persons !== undefined ||
+        parsed.qualifying_expenses !== undefined ||
+        parsed.taxpayer_earned_income !== undefined ||
+        parsed.spouse_earned_income !== undefined ||
+        parsed.agi !== undefined ||
+        parsed.filing_status !== undefined
+      ) {
+        throw new Error(
+          "Form 2441 filing details cannot be mixed with aggregate inputs",
+        );
+      }
+      const lines = calculateForm2441Benefits(
+        parsed.filing_details,
+        benefits,
+      );
+      if (lines.line26 > 0) {
+        outputs.push(this.outputNodes.output(f1040, {
+          line1e_taxable_dep_care: lines.line26,
+        }));
+        outputs.push(this.outputNodes.output(agi_aggregator, {
+          line1e_taxable_dep_care: lines.line26,
+        }));
+      }
+      outputs.push(this.outputNodes.output(f2441, {
+        filing_details: parsed.filing_details,
+        dep_care_benefits: benefits,
+      }));
+      return { outputs };
+    }
+
     // Part III — §129 employer exclusion: excess above limit is taxable income
     const taxable = taxableExcess(benefits, parsed.filing_status, cfg);
     if (taxable > 0) {
-      outputs.push(this.outputNodes.output(f1040, { line1e_taxable_dep_care: taxable }));
+      outputs.push(
+        this.outputNodes.output(f1040, { line1e_taxable_dep_care: taxable }),
+      );
+      outputs.push(
+        this.outputNodes.output(agi_aggregator, {
+          line1e_taxable_dep_care: taxable,
+        }),
+      );
     }
 
     // Part II — §21 credit: route to Schedule 3 line 2
     const credit = computeSection21Credit(parsed, cfg);
     if (credit > 0) {
-      outputs.push(this.outputNodes.output(schedule3, { line2_childcare_credit: credit }));
+      outputs.push(
+        this.outputNodes.output(schedule3, { line2_childcare_credit: credit }),
+      );
     }
 
     return { outputs };

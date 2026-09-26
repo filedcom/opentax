@@ -3,12 +3,13 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule_d } from "../../aggregation/schedule_d/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { normalizeArray } from "../../../utils.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +17,13 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 // schedule_e (disposed_properties indicator). The engine does not re-derive
 // per-line recapture arithmetic — that computation happens outside and the
 // results are passed in as the appropriate aggregates.
+
+export const k1Section1231RowSchema = z.object({
+  source: z.enum(["partnership", "s_corp"]),
+  entity_name: z.string().min(1),
+  gain_loss: z.number(),
+}).strict();
+export type K1Section1231Row = z.infer<typeof k1Section1231RowSchema>;
 
 export const inputSchema = z.object({
   // Indicator from schedule_e: count of rental properties marked disposed_of=true.
@@ -26,17 +34,28 @@ export const inputSchema = z.object({
   // nonrecaptured §1231 loss recapture). Positive = net §1231 gain before
   // prior-loss offset. Negative = net §1231 LOSS treated as ordinary income
   // under IRC §1231(a)(2) — NOT routed to Schedule D.
-  section_1231_gain: z.number().optional(),
+  section_1231_gain: z.union([z.number(), z.array(z.number())]).optional(),
+  // Part I line 4 source, included in section_1231_gain rather than added to it.
+  gain_form6252: z.number().nonnegative().optional(),
+  // Part I line 5 source, included in section_1231_gain.
+  gain_form8824: z.number().nonnegative().optional(),
+  // Form 4797 Part I line 2, one source row per Schedule K-1.
+  k1_1231_rows: z.array(k1Section1231RowSchema).optional(),
 
   // Part I line 8 — prior-year nonrecaptured §1231 losses that must be
   // recaptured as ordinary income before any remaining §1231 gain is treated
   // as long-term capital gain. Always entered as a non-negative value.
   nonrecaptured_1231_loss: z.number().nonnegative().optional(),
 
-  // Part II line 18b / line 20 — total ordinary gain (or loss) from Part II.
-  // Includes Part III §1245/§1250 depreciation recapture amounts and any
-  // ordinary gains/losses from property held ≤ 1 year.
+  // Additional ordinary gain or loss whose source-line breakdown is not yet
+  // supplied. The MeF builder rejects a nonzero aggregate because it cannot
+  // assign it to Part II lines 10 through 16 without those source facts.
   ordinary_gain: z.number().optional(),
+
+  // Source-specific amounts. The Form 6252 line 12 recapture requires Form
+  // 4797 Part III property detail in MeF, not the line 15 installment amount.
+  ordinary_gain_form4684: z.number().optional(),
+  recapture_form6252: z.number().nonnegative().optional(),
 
   // Informational — §1245 depreciation recapture (Part III, line 25).
   // Included in ordinary_gain; retained for audit trail.
@@ -55,13 +74,24 @@ export const inputSchema = z.object({
 
 type Form4797Input = z.infer<typeof inputSchema>;
 
+function totalSection1231(input: Form4797Input): number {
+  return normalizeArray(input.section_1231_gain).reduce(
+    (sum, gain) => sum + gain,
+    0,
+  );
+}
+
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Returns true if the input contains any computable sale data.
 function hasSaleData(input: Form4797Input): boolean {
   return (
-    (input.section_1231_gain !== undefined && input.section_1231_gain !== 0) ||
-    (input.ordinary_gain !== undefined && input.ordinary_gain !== 0)
+    totalSection1231(input) !== 0 ||
+    (input.k1_1231_rows?.length ?? 0) > 0 ||
+    (input.ordinary_gain !== undefined && input.ordinary_gain !== 0) ||
+    (input.ordinary_gain_form4684 !== undefined &&
+      input.ordinary_gain_form4684 !== 0) ||
+    (input.recapture_form6252 !== undefined && input.recapture_form6252 !== 0)
   );
 }
 
@@ -77,7 +107,10 @@ function recapturedAsOrdinary(grossGain: number, priorLoss: number): number {
 // Compute the net §1231 gain that flows to Schedule D line 11 as a long-term
 // capital gain. Returns 0 when the entire gain is recaptured as ordinary income
 // or when the gross gain is non-positive.
-function netSection1231GainForScheduleD(grossGain: number, priorLoss: number): number {
+function netSection1231GainForScheduleD(
+  grossGain: number,
+  priorLoss: number,
+): number {
   if (grossGain <= 0) return 0;
   return Math.max(0, grossGain - priorLoss);
 }
@@ -85,7 +118,10 @@ function netSection1231GainForScheduleD(grossGain: number, priorLoss: number): n
 // Build Schedule D output for Part I §1231 net gain only.
 // A positive net gain (after prior loss recapture) flows to Sch D line 11.
 // A §1231 LOSS is ordinary income per IRC §1231(a)(2) — NOT routed here.
-function scheduleDOutput(grossGain: number, priorLoss: number): NodeOutput | null {
+function scheduleDOutput(
+  grossGain: number,
+  priorLoss: number,
+): NodeOutput | null {
   if (grossGain <= 0) return null;
   const ltGain = netSection1231GainForScheduleD(grossGain, priorLoss);
   if (ltGain === 0) return null;
@@ -115,7 +151,11 @@ function ordinaryAmount(
 class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4797";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule_d, schedule1, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([
+    schedule_d,
+    schedule1,
+    agi_aggregator,
+  ]);
 
   compute(_ctx: NodeContext, rawInput: Form4797Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -124,9 +164,11 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const grossGain = input.section_1231_gain ?? 0;
+    const grossGain = totalSection1231(input);
     const priorLoss = input.nonrecaptured_1231_loss ?? 0;
-    const partIIOrdinaryGain = input.ordinary_gain ?? 0;
+    const partIIOrdinaryGain = (input.ordinary_gain ?? 0) +
+      (input.ordinary_gain_form4684 ?? 0) +
+      (input.recapture_form6252 ?? 0);
     const unrecaptured1250 = input.unrecaptured_section_1250_gain ?? 0;
 
     const outputs: NodeOutput[] = [];
@@ -145,7 +187,16 @@ class Form4797IntermediateNode extends TaxNode<typeof inputSchema> {
     // Unrecaptured §1250 gain → Schedule D line 19 → 25% rate tier in QDCGT worksheet
     // IRC §1(h)(1)(D); Form 4797 / Unrecaptured §1250 Gain Worksheet
     if (unrecaptured1250 > 0) {
-      outputs.push(output(schedule_d, { line19_unrecaptured_1250: unrecaptured1250 }));
+      outputs.push(
+        output(schedule_d, { line19_unrecaptured_1250: unrecaptured1250 }),
+      );
+    }
+
+    if (Array.isArray(input.section_1231_gain)) {
+      outputs.push({
+        nodeType: this.nodeType,
+        fields: { section_1231_gain: grossGain },
+      });
     }
 
     return { outputs };

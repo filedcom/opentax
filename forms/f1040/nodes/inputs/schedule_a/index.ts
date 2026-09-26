@@ -36,7 +36,7 @@ export const inputSchema = z.object({
   force_itemized: z.boolean().optional(),
   force_standard: z.boolean().optional(),
   line_1_medical: z.number().nonnegative().optional(),
-  agi: z.number().nonnegative().optional(),
+  agi: z.number().optional(),
   // Line 5a: State and local income taxes — mutually exclusive with line_5a_sales_tax
   // per IRC §164(b)(5) election. Provide one or the other, never both.
   line_5a_state_income_tax: z.number().nonnegative().optional(),
@@ -92,7 +92,7 @@ export const inputSchema = z.object({
 type ScheduleAInput = z.infer<typeof inputSchema>;
 
 function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
-  return Math.max(0, (input.line_1_medical ?? 0) - agi * MEDICAL_AGI_FLOOR_PCT);
+  return Math.max(0, (input.line_1_medical ?? 0) - Math.max(0, agi) * MEDICAL_AGI_FLOOR_PCT);
 }
 
 function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {

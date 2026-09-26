@@ -65,6 +65,12 @@ Deno.test("schedule1: rental income from schedule E included", () => {
   assertEquals(f.line10_total_additional_income, 12_000);
 });
 
+Deno.test("schedule1: Schedule E and allowed passive loss share printed line 5", () => {
+  const f = fields({ line5_schedule_e: [12_000, -5_000] });
+  assertEquals(f.line5_schedule_e, 7_000);
+  assertEquals(f.line10_total_additional_income, 7_000);
+});
+
 Deno.test("schedule1: farm income from schedule F included", () => {
   const f = fields({ line6_schedule_f: 8_000 });
   assertEquals(f.line10_total_additional_income, 8_000);

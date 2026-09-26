@@ -1,6 +1,12 @@
 import { eitc } from "./eitc.ts";
+import { cccLoanStatement } from "./ccc_loan_statement.ts";
+import { cccLoanAccrualStatement } from "./ccc_loan_accrual_statement.ts";
+import { cropInsuranceDeferralStatement } from "./crop_insurance_deferral_statement.ts";
+import { jointOccupancyStatement } from "./joint_occupancy_statement.ts";
 import { irs1040 } from "./f1040.ts";
+import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
+import { form1116DirectExpenseStatement } from "./f1116_direct_expense_statement.ts";
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form4137 } from "./f4137.ts";
@@ -8,26 +14,36 @@ import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
 import { form4684 } from "./f4684.ts";
 import { form4797 } from "./f4797.ts";
+import { form4835 } from "./f4835.ts";
 import { form4952 } from "./f4952.ts";
 import { form4972 } from "./f4972.ts";
 import { form5329 } from "./f5329.ts";
 import { form5695 } from "./f5695.ts";
 import { form6198 } from "./f6198.ts";
+import { form4835AtRisk } from "./f4835_at_risk.ts";
 import { form6251 } from "./f6251.ts";
 import { form6252 } from "./f6252.ts";
 import { form6781 } from "./f6781.ts";
 import { form7206 } from "./f7206.ts";
+import { form7217 } from "./f7217.ts";
+import { form8283 } from "./f8283.ts";
+import { form8283VehicleStatement } from "./f8283_vehicle_statement.ts";
 import { form8396 } from "./f8396.ts";
 import { form8582 } from "./f8582.ts";
 import { form8606 } from "./f8606.ts";
 import { form8615 } from "./f8615.ts";
+import { form8814 } from "./f8814.ts";
 import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
 import { form8829 } from "./f8829.ts";
 import { form8839 } from "./f8839.ts";
 import { form8853 } from "./f8853.ts";
+import { form8862 } from "./f8862.ts";
+import { form8863 } from "./f8863.ts";
 import { form8880 } from "./f8880.ts";
 import { form8889 } from "./f8889.ts";
+import { form8911 } from "./f8911.ts";
+import { form8911ScheduleA } from "./f8911_schedule_a.ts";
 import { form8919 } from "./f8919.ts";
 import { form8949 } from "./f8949.ts";
 import { form8959 } from "./f8959.ts";
@@ -40,13 +56,17 @@ import { form982 } from "./f982.ts";
 import { schedule1 } from "./schedule1.ts";
 import { schedule2 } from "./schedule2.ts";
 import { schedule3 } from "./schedule3.ts";
+import { schedule8812 } from "./schedule_8812.ts";
 import { scheduleA } from "./schedule_a.ts";
 import { scheduleB } from "./schedule_b.ts";
+import { scheduleC } from "./schedule_c.ts";
 import { scheduleD } from "./schedule_d.ts";
+import { scheduleE } from "./schedule_e.ts";
 import { scheduleF } from "./schedule_f.ts";
 import { scheduleH } from "./schedule_h.ts";
 import { scheduleSE } from "./schedule_se.ts";
 import { w2 } from "./w2.ts";
+import { fecRecord, wagesNotShownSchedule } from "./foreign_employer_wages.ts";
 
 // XSD-required element sequence from ReturnData1040.xsd.
 // Any reordering here must stay in sync with the sequence in that XSD or
@@ -58,11 +78,15 @@ export const ALL_MEF_FORMS = [
   schedule1,
   schedule2,
   schedule3,
+  schedule8812,
   // 6-7. Schedule A, Schedule B
   scheduleA,
   scheduleB,
+  // 8. Schedule C
+  scheduleC,
   // 9. Schedule D
   scheduleD,
+  scheduleE,
   // 11. Schedule EIC (eitc)
   eitc,
   // 12. Schedule F
@@ -75,6 +99,8 @@ export const ALL_MEF_FORMS = [
   form461,
   // 22. Form 982
   form982,
+  // 25. Form 1099-R (one document per distribution statement)
+  f1099r,
   // 26. Form 1116
   form1116,
   // Form 2441
@@ -89,6 +115,7 @@ export const ALL_MEF_FORMS = [
   form4684,
   // Form 4797
   form4797,
+  form4835,
   // Form 4952
   form4952,
   // Form 4972
@@ -99,6 +126,7 @@ export const ALL_MEF_FORMS = [
   form5695,
   // Form 6198
   form6198,
+  form4835AtRisk,
   // Form 6251
   form6251,
   // Form 6252
@@ -107,6 +135,10 @@ export const ALL_MEF_FORMS = [
   form6781,
   // Form 7206
   form7206,
+  // Form 7217 (one document per distribution date)
+  form7217,
+  // Form 8283
+  form8283,
   // Form 8396
   form8396,
   // Form 8582
@@ -115,6 +147,8 @@ export const ALL_MEF_FORMS = [
   form8606,
   // Form 8615
   form8615,
+  // Form 8814 (one document per child)
+  form8814,
   // Form 8815
   form8815,
   // Form 8824
@@ -125,12 +159,20 @@ export const ALL_MEF_FORMS = [
   form8839,
   // Form 8853
   form8853,
+  // Form 8862
+  form8862,
+  // Form 8863
+  form8863,
   // Form 8880
   form8880,
   // Form 8889
   form8889,
+  // Form 8911
+  form8911,
   // Form 8919
   form8919,
+  // Form 8911 Schedule A follows Form 8919 in ReturnData1040.xsd.
+  form8911ScheduleA,
   // Form 8949
   form8949,
   // Form 8959 (must come after 8949 per XSD sequence)
@@ -147,4 +189,17 @@ export const ALL_MEF_FORMS = [
   form8995a,
   // Form W-2 wage statements (one document per employer)
   w2,
+  fecRecord,
+  wagesNotShownSchedule,
+  // Form 4835 line 4a statement follows wage statements in ReturnData1040.xsd.
+  cccLoanAccrualStatement,
+  cccLoanStatement,
+  cropInsuranceDeferralStatement,
+  // Form 1116 Part I line 2 statement precedes joint occupancy in ReturnData.
+  form1116DirectExpenseStatement,
+  // Form 5695 supporting document follows W-2 in ReturnData1040.xsd.
+  jointOccupancyStatement,
+  // Form 8283 vehicle acknowledgment follows numbered forms and other
+  // supporting statements in ReturnData1040.xsd.
+  form8283VehicleStatement,
 ] as const;

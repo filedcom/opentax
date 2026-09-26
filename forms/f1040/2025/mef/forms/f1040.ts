@@ -1,13 +1,41 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import {
+  DependentCreditCategory,
+  dependentCreditCategory,
+  type DependentFiling,
+  dependentFilingSchema,
+  DependentRelationship,
+  filerCreditEligibility,
+  IRSDependentRelationshipCode,
+} from "../../../nodes/inputs/general/index.ts";
+import { FilingStatus } from "../../../nodes/types.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
+  filing_status?: string;
+  taxpayer_ssn?: string;
+  taxpayer_ssn_valid_for_employment?: boolean;
+  taxpayer_ssn_issued_before_due_date?: boolean;
+  taxpayer_tin_issued_by_due_date?: boolean;
+  spouse_ssn?: string;
+  spouse_ssn_valid_for_employment?: boolean;
+  spouse_ssn_issued_before_due_date?: boolean;
+  spouse_tin_issued_by_due_date?: boolean;
+  digital_assets?: boolean;
+  dependent_details?: readonly DependentFiling[];
+  dependent_count?: number;
+  qualifying_child_tax_credit_count?: number;
+  other_dependent_count?: number;
   line1a_wages?: number | null;
+  line1b_household_wages?: number | null;
   line1c_unreported_tips?: number | null;
+  line1d_medicaid_waiver?: number | null;
   line1e_taxable_dep_care?: number | null;
   line1f_taxable_adoption_benefits?: number | null;
   line1g_wages_8919?: number | null;
+  line1h_other_earned?: number | null;
   line1i_combat_pay?: number | null;
+  line1z_total_wages?: number | null;
   line2a_tax_exempt?: number | null;
   line2b_taxable_interest?: number | null;
   line3a_qualified_dividends?: number | null;
@@ -20,15 +48,22 @@ export interface Fields {
   line6b_ss_taxable?: number | null;
   line7_capital_gain?: number | null;
   line7a_cap_gain_distrib?: number | null;
+  line8_additional_income?: number | null;
   line9_total_income?: number | null;
   line10_adjustments?: number | null;
   line11_agi?: number | null;
+  mfs_spouse_itemizing?: boolean;
+  taxpayer_age_65_or_older?: boolean;
+  taxpayer_blind?: boolean;
+  spouse_age_65_or_older?: boolean;
+  spouse_blind?: boolean;
   line12c_deduction_total?: number | null;
   line13_qbi_deduction?: number | null;
   line13b_additional_deductions?: number | null;
   line14_deductions_qbi_total?: number | null;
   line15_taxable_income?: number | null;
   line16_income_tax?: number | null;
+  form8814_tax?: number | null;
   line17_additional_taxes?: number | null;
   line18_total_tax_before_credits?: number | null;
   line19_child_tax_credit?: number | null;
@@ -70,11 +105,15 @@ type Input = Partial<Fields> & Record<string, unknown>;
 //   line25b_withheld_1099 → Form1099WithheldTaxAmt (was Form1099WithholdingAmt)
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line1a_wages", "WagesAmt"],
+  ["line1b_household_wages", "HouseholdEmployeeWagesAmt"],
   ["line1c_unreported_tips", "TipIncomeAmt"],
+  ["line1d_medicaid_waiver", "MedicaidWaiverPymtNotRptW2Amt"],
   ["line1e_taxable_dep_care", "TaxableBenefitsAmt"],
   ["line1f_taxable_adoption_benefits", "TaxableBenefitsForm8839Amt"],
   ["line1g_wages_8919", "TotalWagesWithNoWithholdingAmt"],
+  ["line1h_other_earned", "OtherEarnedIncomeAmt"],
   ["line1i_combat_pay", "NontxCombatPayElectionAmt"],
+  ["line1z_total_wages", "WagesSalariesAndTipsAmt"],
   ["line2a_tax_exempt", "TaxExemptInterestAmt"],
   ["line2b_taxable_interest", "TaxableInterestAmt"],
   ["line3a_qualified_dividends", "QualifiedDividendsAmt"],
@@ -87,6 +126,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line6b_ss_taxable", "TaxableSocSecAmt"],
   ["line7_capital_gain", "CapitalGainLossAmt"],
   ["line7a_cap_gain_distrib", "CapitalGainLossAmt"],
+  ["line8_additional_income", "TotalAdditionalIncomeAmt"],
   ["line9_total_income", "TotalIncomeAmt"],
   ["line10_adjustments", "TotalAdjustmentsAmt"],
   ["line11_agi", "AdjustedGrossIncomeAmt"],
@@ -149,26 +189,354 @@ const FILING_STATUS_CODE: Record<string, string> = {
   qss: "5",
 };
 
-function buildIRS1040(fields: Input): string {
+const RELATIONSHIP_CODES: Record<
+  DependentRelationship,
+  readonly IRSDependentRelationshipCode[]
+> = {
+  [DependentRelationship.Son]: [IRSDependentRelationshipCode.Son],
+  [DependentRelationship.Daughter]: [IRSDependentRelationshipCode.Daughter],
+  [DependentRelationship.StepChild]: [IRSDependentRelationshipCode.StepChild],
+  [DependentRelationship.FosterChild]: [
+    IRSDependentRelationshipCode.FosterChild,
+  ],
+  [DependentRelationship.Sibling]: [
+    IRSDependentRelationshipCode.Brother,
+    IRSDependentRelationshipCode.Sister,
+  ],
+  [DependentRelationship.StepSibling]: [
+    IRSDependentRelationshipCode.StepBrother,
+    IRSDependentRelationshipCode.StepSister,
+  ],
+  [DependentRelationship.HalfSibling]: [
+    IRSDependentRelationshipCode.HalfBrother,
+    IRSDependentRelationshipCode.HalfSister,
+  ],
+  [DependentRelationship.Grandchild]: [IRSDependentRelationshipCode.Grandchild],
+  [DependentRelationship.Grandparent]: [
+    IRSDependentRelationshipCode.Grandparent,
+  ],
+  [DependentRelationship.Parent]: [IRSDependentRelationshipCode.Parent],
+  [DependentRelationship.StepParent]: [
+    IRSDependentRelationshipCode.Parent,
+    IRSDependentRelationshipCode.Other,
+  ],
+  [DependentRelationship.ParentInLaw]: [IRSDependentRelationshipCode.Other],
+  [DependentRelationship.ChildInLaw]: [IRSDependentRelationshipCode.Other],
+  [DependentRelationship.SiblingInLaw]: [IRSDependentRelationshipCode.Other],
+  [DependentRelationship.SiblingParent]: [
+    IRSDependentRelationshipCode.Aunt,
+    IRSDependentRelationshipCode.Uncle,
+  ],
+  [DependentRelationship.ChildSibling]: [
+    IRSDependentRelationshipCode.Niece,
+    IRSDependentRelationshipCode.Nephew,
+  ],
+  [DependentRelationship.Other]: [
+    IRSDependentRelationshipCode.Other,
+    IRSDependentRelationshipCode.None,
+  ],
+};
+
+function dependentXml(fields: Input, context?: MefBuildContext): string[] {
+  const details = dependentFilingSchema.array().max(100).parse(
+    fields.dependent_details ?? [],
+  );
+  if (
+    fields.dependent_count !== undefined &&
+    fields.dependent_count !== details.length
+  ) {
+    throw new Error(
+      "Form 1040 dependent count does not match the dependent rows",
+    );
+  }
+  const creditCounts = {
+    ctc:
+      details.filter((dep) =>
+        dep.credit_category === DependentCreditCategory.ChildTaxCredit
+      ).length,
+    odc:
+      details.filter((dep) =>
+        dep.credit_category === DependentCreditCategory.OtherDependentCredit
+      ).length,
+  };
+  if (
+    (fields.qualifying_child_tax_credit_count !== undefined &&
+      fields.qualifying_child_tax_credit_count !== creditCounts.ctc) ||
+    (fields.other_dependent_count !== undefined &&
+      fields.other_dependent_count !== creditCounts.odc)
+  ) {
+    throw new Error(
+      "Form 1040 dependent credits do not match the dependent rows",
+    );
+  }
+  if (details.length === 0) return [];
+
+  if (
+    !Object.values(FilingStatus).includes(fields.filing_status as FilingStatus)
+  ) {
+    throw new Error("Form 1040 dependent rows need a filing status");
+  }
+  const filer = filerCreditEligibility({
+    filing_status: fields.filing_status as FilingStatus,
+    taxpayer_ssn: fields.taxpayer_ssn,
+    taxpayer_ssn_valid_for_employment: fields.taxpayer_ssn_valid_for_employment,
+    taxpayer_ssn_issued_before_due_date:
+      fields.taxpayer_ssn_issued_before_due_date,
+    taxpayer_tin_issued_by_due_date: fields.taxpayer_tin_issued_by_due_date,
+    spouse_ssn: fields.spouse_ssn,
+    spouse_ssn_valid_for_employment: fields.spouse_ssn_valid_for_employment,
+    spouse_ssn_issued_before_due_date: fields.spouse_ssn_issued_before_due_date,
+    spouse_tin_issued_by_due_date: fields.spouse_tin_issued_by_due_date,
+  });
+
+  const seenIds = new Set<string>();
+  const rows = details.map((dep, index) => {
+    const label = `Form 1040 dependent ${index + 1}`;
+    if (dep.dependent_on_another_return === true) {
+      throw new Error(`${label} cannot be claimed on this return`);
+    }
+    if (
+      dep.credit_category !== DependentCreditCategory.None &&
+      dep.us_citizen_national_or_resident !== true
+    ) {
+      throw new Error(
+        `${label} needs confirmed U.S. citizenship, nationality, or resident-alien status for the claimed credit`,
+      );
+    }
+    if (dep.filed_joint_return_except_refund_only !== false) {
+      throw new Error(
+        `${label} needs a confirmed answer to the dependent joint-return test`,
+      );
+    }
+    if (
+      dep.provided_over_half_own_support === true ||
+      (dep.provided_over_half_own_support !== false &&
+        dep.taxpayer_provided_over_half_support !== true)
+    ) {
+      throw new Error(
+        `${label} needs a confirmed qualifying-child or qualifying-relative support basis`,
+      );
+    }
+    if (dep.credit_category !== dependentCreditCategory(dep, filer)) {
+      throw new Error(
+        `${label} credit category does not match the dependent facts`,
+      );
+    }
+    const irsName = /^([A-Za-z-] ?)*[A-Za-z-]$/;
+    if (
+      dep.first_name.length > 20 || dep.last_name.length > 20 ||
+      !irsName.test(dep.first_name) || !irsName.test(dep.last_name) ||
+      !dep.name_control
+    ) {
+      throw new Error(`${label} needs a name and IRS name control`);
+    }
+    if (
+      !dep.irs_relationship_code ||
+      !RELATIONSHIP_CODES[dep.relationship].includes(dep.irs_relationship_code)
+    ) {
+      throw new Error(`${label} needs a matching IRS relationship code`);
+    }
+    const tin = dep.ssn ?? dep.itin ?? dep.atin;
+    const normalizedTin = tin?.replaceAll("-", "");
+    if (!normalizedTin || !/^\d{9}$/.test(normalizedTin)) {
+      throw new Error(`${label} needs a nine-digit SSN, ITIN, or ATIN`);
+    }
+    if (
+      seenIds.has(normalizedTin) ||
+      normalizedTin === context?.filer?.primarySSN.replaceAll("-", "") ||
+      normalizedTin === context?.filer?.spouse?.ssn.replaceAll("-", "")
+    ) {
+      throw new Error(`${label} has a duplicate taxpayer identifier`);
+    }
+    seenIds.add(normalizedTin);
+    if (
+      dep.credit_category === DependentCreditCategory.ChildTaxCredit &&
+      (!dep.ssn || dep.itin || dep.atin)
+    ) {
+      throw new Error(`${label} needs an SSN for the child tax credit`);
+    }
+    return elements("DependentDetail", [
+      element("DependentFirstNm", dep.first_name),
+      element("DependentLastNm", dep.last_name),
+      element("DependentNameControlTxt", dep.name_control),
+      element("IdentityProtectionPIN", dep.ip_pin),
+      element("DependentSSN", normalizedTin),
+      element("DependentRelationshipCd", dep.irs_relationship_code),
+      dep.months_in_home > 6
+        ? element("YesLiveWithChildOverHalfYrInd", "X")
+        : "",
+      dep.lived_in_us_over_half_year === true
+        ? element("YesLiveWithChldUSOvrHalfYrInd", "X")
+        : "",
+      dep.full_time_student === true
+        ? element("ChildIsAStudentUnder24Ind", "X")
+        : "",
+      dep.disabled === true ? element("ChildPermanentlyDisabledInd", "X") : "",
+      dep.credit_category === DependentCreditCategory.ChildTaxCredit
+        ? element("EligibleForChildTaxCreditInd", "X")
+        : dep.credit_category === DependentCreditCategory.OtherDependentCredit
+        ? element("EligibleForODCInd", "X")
+        : "",
+    ]);
+  });
+  const livedWithYou = details.filter((dep) => dep.months_in_home > 6).length;
+  return [
+    ...rows,
+    details.length > 4 ? element("MoreDependentsInd", "X") : "",
+    element("ChldWhoLivedWithYouCnt", livedWithYou),
+    element("OtherDependentsListedCnt", details.length - livedWithYou),
+  ];
+}
+
+function buildIRS1040(fields: Input, context?: MefBuildContext): string {
   // IndividualReturnFilingStatusCd is required by IRS1040.xsd §230 and must
   // precede all income/deduction fields in the XSD sequence.
   const statusRaw = fields["filing_status"];
-  const statusCode = typeof statusRaw === "string"
-    ? (FILING_STATUS_CODE[statusRaw] ?? "1")
-    : "1";
+  if (
+    statusRaw !== undefined &&
+    (typeof statusRaw !== "string" ||
+      FILING_STATUS_CODE[statusRaw] === undefined)
+  ) {
+    throw new Error("Form 1040 MeF needs a valid filing status");
+  }
+  const fieldStatusCode = statusRaw === undefined
+    ? undefined
+    : FILING_STATUS_CODE[statusRaw];
+  const filerStatusCode = context?.filer?.filingStatus.toString();
+  if (
+    fieldStatusCode !== undefined && filerStatusCode !== undefined &&
+    fieldStatusCode !== filerStatusCode
+  ) {
+    throw new Error("Form 1040 filing status differs from the return header");
+  }
+  const statusCode = fieldStatusCode ?? filerStatusCode ?? "1";
+
+  const digitalAssets = fields["digital_assets"];
+  if (digitalAssets !== undefined && typeof digitalAssets !== "boolean") {
+    throw new Error("Form 1040 digital-asset answer must be Yes or No");
+  }
 
   // VirtualCurAcquiredDurTYInd is required by IRS1040.xsd §338 (BooleanType).
-  // Default to "false" — most returns do not involve digital asset transactions.
+  // Preserve the answer supplied on the general input rather than overwriting Yes.
   const requiredPrefix = [
     element("IndividualReturnFilingStatusCd", statusCode),
-    element("VirtualCurAcquiredDurTYInd", "false"),
+    element(
+      "VirtualCurAcquiredDurTYInd",
+      digitalAssets === true ? "true" : "false",
+    ),
+    ...dependentXml(fields, context),
   ];
+
+  const capitalGain = resolveNumber(fields.line7_capital_gain);
+  const directDistribution = resolveNumber(fields.line7a_cap_gain_distrib);
+  if (capitalGain !== undefined && (directDistribution ?? 0) > 0) {
+    throw new Error(
+      "Form 1040 line 7a cannot contain both a Schedule D gain and direct capital-gain distributions",
+    );
+  }
 
   const incomeChildren = FIELD_MAP.map(([key, tag]) => {
     const value = resolveNumber(fields[key]);
     if (value === undefined) return "";
+    if (key === "line7a_cap_gain_distrib") {
+      return value > 0
+        ? element(tag, value) + element("CapitalDistributionInd", "X")
+        : "";
+    }
+    if (key === "line1h_other_earned") {
+      const scheduleId = context?.documentIdsByPendingKey
+        ?.wages_not_shown_schedule?.[0];
+      return element(
+        tag,
+        value,
+        scheduleId
+          ? {
+            referenceDocumentId: scheduleId,
+            referenceDocumentName:
+              "NonW2DisabilityPaymentStatement WagesNotShownSchedule",
+          }
+          : undefined,
+      );
+    }
+    if (key === "line27_eitc" && value > 0) {
+      const scheduleId = context?.documentIdsByPendingKey?.eitc?.[0];
+      return element(
+        tag,
+        value,
+        scheduleId
+          ? {
+            referenceDocumentId: scheduleId,
+            referenceDocumentName: "IRS1040ScheduleEIC",
+          }
+          : undefined,
+      );
+    }
     return element(tag, value);
   });
+  if (typeof fields.form8814_tax === "number" && fields.form8814_tax > 0) {
+    const formIds = context?.documentIdsByPendingKey?.form8814 ?? [];
+    if (context?.documentIdsByPendingKey && formIds.length === 0) {
+      throw new Error(
+        "Form 1040 child-election tax needs an attached Form 8814",
+      );
+    }
+    if ((resolveNumber(fields.line16_income_tax) ?? 0) < fields.form8814_tax) {
+      throw new Error("Form 1040 line 16 omits Form 8814 child-election tax");
+    }
+    const taxIndex = FIELD_MAP.findIndex(([key]) =>
+      key === "line16_income_tax"
+    );
+    incomeChildren.splice(
+      taxIndex + 1,
+      0,
+      element("Form8814Ind", "X", {
+        childInterestAndDividendTaxAmt: String(fields.form8814_tax),
+        ...(formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8814",
+          }
+          : {}),
+      }),
+    );
+  }
+
+  function checked(
+    key:
+      | "mfs_spouse_itemizing"
+      | "taxpayer_age_65_or_older"
+      | "taxpayer_blind"
+      | "spouse_age_65_or_older"
+      | "spouse_blind",
+  ): boolean {
+    const value = fields[key];
+    if (value !== undefined && typeof value !== "boolean") {
+      throw new Error(`Form 1040 ${key} must be a Yes or No answer`);
+    }
+    return value === true;
+  }
+  const mustItemize = checked("mfs_spouse_itemizing");
+  if (mustItemize && statusCode !== "3") {
+    throw new Error("Form 1040 spouse-itemizes box requires MFS filing status");
+  }
+  const ageBoxes = [
+    ["taxpayer_age_65_or_older", "Primary65OrOlderInd"],
+    ["taxpayer_blind", "PrimaryBlindInd"],
+    ["spouse_age_65_or_older", "Spouse65OrOlderInd"],
+    ["spouse_blind", "SpouseBlindInd"],
+  ] as const;
+  const checkedAgeBoxes = ageBoxes.filter(([key]) => checked(key));
+  const deductionIndicators = [
+    mustItemize ? element("MustItemizeInd", "X") : "",
+    ...ageBoxes.map(([key, tag]) => checked(key) ? element(tag, "X") : ""),
+    checkedAgeBoxes.length > 0
+      ? element("TotalBoxesCheckedCnt", checkedAgeBoxes.length)
+      : "",
+  ];
+  const deductionIndex = FIELD_MAP.findIndex(([key]) =>
+    key === "line12c_deduction_total"
+  );
+  incomeChildren.splice(deductionIndex, 0, ...deductionIndicators);
 
   // RefundProductCd is REQUIRED by IRS1040.xsd §1894 (minOccurs defaults to 1).
   // "NO FINANCIAL PRODUCT" indicates the filer is not using a refund anticipation
@@ -185,7 +553,7 @@ export const irs1040: MefFormDescriptor<"f1040", Input> = {
   pendingKey: "f1040",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
-  build(fields) {
-    return buildIRS1040(fields);
+  build(fields, context) {
+    return buildIRS1040(fields, context);
   },
 };

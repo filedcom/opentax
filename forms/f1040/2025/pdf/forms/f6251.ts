@@ -34,5 +34,5 @@ export const form6251Pdf: PdfFormDescriptor = {
   // Form 6251 attaches only when AMT is due (Schedule 2 line 1). The engine
   // always runs the worksheet; a zero result means the form is not filed.
   includeWhen: (_fields, all) =>
-    (((all?.["schedule2"]?.["line1_amt"]) as number | undefined) ?? 0) > 0,
+    (((all?.["schedule2"]?.["line2_amt"]) as number | undefined) ?? 0) > 0,
 };

@@ -47,7 +47,7 @@ Line 11 = max(0, Line 9 − Line 10)
 ## Output Routing
 | Output Field | Destination Node | Line / Field | Condition | IRS Reference | URL |
 | ------------ | ---------------- | ------------ | --------- | ------------- | --- |
-| line1_amt | schedule2 | Line 1 | AMT > 0 | Form 6251 Line 11 → Schedule 2 Line 1 | https://www.irs.gov/pub/irs-pdf/i6251.pdf |
+| line2_amt | schedule2 | Line 2 | AMT > 0 | Form 6251 Line 11 → 2025 Schedule 2 Line 2 | https://www.irs.gov/pub/irs-pdf/f1040s2.pdf |
 
 ---
 ## Constants & Thresholds (Tax Year 2025)
@@ -78,7 +78,7 @@ flowchart LR
     amt["AMT = max(0, TMT − AMTFTC − regular tax)"]
   end
   subgraph outputs["Downstream Nodes"]
-    schedule2["schedule2\n(line1_amt)"]
+    schedule2["schedule2\n(line2_amt)"]
   end
   general --> amti
   f1099int --> amti
@@ -92,7 +92,7 @@ flowchart LR
 - If AMTI ≥ zero-exemption threshold (Single: $978,750, MFJ: $1,800,700, MFS: $900,350), exemption = $0 — skip worksheet, use line 4 directly as line 6
 - AMT = 0 when regular tax ≥ tentative minimum tax → no output
 - ISO exercise: for AMT, income = FMV − exercise price (not recognized for regular tax)
-- Part III (capital gains rates) not implemented; upstream should pre-compute TMT if capital gains apply
+- Part III is only approximated by a qualified-dividend/net-capital-gain shortcut. The full 2025 lines 12–40, including Schedule D Tax Worksheet, 28% rate gain, unrecaptured section 1250 gain, and Form 2555 branches, have not been reconciled. Do not claim complete AMT support for those situations.
 
 ---
 ## Sources

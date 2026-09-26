@@ -70,6 +70,7 @@ export const inputSchema = z.object({
   transaction: accumulable(transactionSchema).optional(),
   // Line 13: capital gain distributions from f1099div (box 2a)
   line13_cap_gain_distrib: z.number().nonnegative().optional(),
+  line13_form8814: z.number().nonnegative().optional(),
   // QSBS amount from f1099div (box 2c) — informational subset of line13; not additive
   box2c_qsbs: z.number().nonnegative().optional(),
   // COD property dispositions from f1099c — parallel arrays; gain = fmv - debt per pair
@@ -92,9 +93,13 @@ export const inputSchema = z.object({
   // Capital gain distributions from d_screen (Line 13 of Schedule D — same line as line13_cap_gain_distrib)
   line_12_cap_gain_dist: z.number().nonnegative().optional(),
   // Undistributed LT gains (Form 2439, Form 4797 Part I, etc.) — Line 11
-  line_11_form2439: z.number().optional(),
+  line_11_form2439: accumulable(z.number()).optional(),
+  // Source audit fields for Form 6252; included in the aggregate lines above.
+  gain_form6252_lt: z.number().nonnegative().optional(),
+  gain_form8824_lt: z.number().nonnegative().optional(),
   // Other short-term gains/losses (Form 6252, 4684, 6781, 8824) — Line 4
-  line_4_other_st: z.number().optional(),
+  line_4_other_st: accumulable(z.number()).optional(),
+  gain_form6252_st: z.number().nonnegative().optional(),
   // K-1 short-term capital gains/losses — Line 5
   line_5_k1_st: z.number().optional(),
   // K-1 long-term capital gains/losses — Line 12
@@ -113,8 +118,11 @@ type ScheduleDInput = z.infer<typeof inputSchema>;
 type Transaction = z.infer<typeof transactionSchema>;
 type DScreenTransaction = z.infer<typeof dScreenTransactionSchema>;
 
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
+function sumAmounts(value: number | number[] | undefined): number {
+  return normalizeArray(value).reduce((sum, amount) => sum + amount, 0);
+}
 
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
 
 // Returns true if the input has any capital activity worth computing
 function hasCapitalActivity(input: ScheduleDInput): boolean {
@@ -125,26 +133,55 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
   const dScreenTxs = input.transactions ?? [];
 
   // Aggregate d_screen lines (any non-zero value means activity)
-  const hasAggregateLines =
-    (input.line_1a_proceeds ?? 0) !== 0 ||
+  const hasAggregateLines = (input.line_1a_proceeds ?? 0) !== 0 ||
     (input.line_1a_cost ?? 0) !== 0 ||
     (input.line_8a_proceeds ?? 0) !== 0 ||
     (input.line_8a_cost ?? 0) !== 0 ||
     (input.line_6_carryover ?? 0) !== 0 ||
     (input.line_14_carryover ?? 0) !== 0 ||
     (input.line_12_cap_gain_dist ?? 0) !== 0 ||
-    (input.line_11_form2439 ?? 0) !== 0 ||
-    (input.line_4_other_st ?? 0) !== 0 ||
+    sumAmounts(input.line_11_form2439) !== 0 ||
+    sumAmounts(input.line_4_other_st) !== 0 ||
     (input.line_5_k1_st ?? 0) !== 0 ||
     (input.line_12_k1_lt ?? 0) !== 0;
 
   return (
     txs.length > 0 ||
     (input.line13_cap_gain_distrib ?? 0) > 0 ||
+    (input.line13_form8814 ?? 0) > 0 ||
     codGain !== 0 ||
     dScreenTxs.length > 0 ||
     hasAggregateLines
   );
+}
+
+// Form 1040 line 7a may report capital gain distributions directly when they
+// are the only capital activity. In that case Schedule D is not filed.
+function hasOnlyCapitalGainDistributions(input: ScheduleDInput): boolean {
+  const distributions = (input.line13_cap_gain_distrib ?? 0) +
+    (input.line13_form8814 ?? 0) +
+    (input.line_12_cap_gain_dist ?? 0);
+  if (distributions <= 0) return false;
+  if (normalizeArray(input.transaction).length > 0) return false;
+  if ((input.transactions ?? []).length > 0) return false;
+  if (normalizeArray(input.cod_property_fmv).length > 0) return false;
+  if (normalizeArray(input.cod_debt_cancelled).length > 0) return false;
+  return [
+    input.box2c_qsbs,
+    input.capital_loss_carryover,
+    input.line_1a_proceeds,
+    input.line_1a_cost,
+    input.line_8a_proceeds,
+    input.line_8a_cost,
+    input.line_6_carryover,
+    input.line_14_carryover,
+    sumAmounts(input.line_11_form2439),
+    sumAmounts(input.line_4_other_st),
+    input.line_5_k1_st,
+    input.line_12_k1_lt,
+    input.line19_unrecaptured_1250,
+    input.collectibles_gain_form2439,
+  ].every((value) => (value ?? 0) === 0);
 }
 
 function computeTransactionGains(transactions: Transaction[]): {
@@ -201,7 +238,7 @@ function computeDScreenStNet(input: ScheduleDInput): number {
   return (
     (input.line_1a_proceeds ?? 0) -
     (input.line_1a_cost ?? 0) +
-    (input.line_4_other_st ?? 0) +
+    sumAmounts(input.line_4_other_st) +
     (input.line_5_k1_st ?? 0) -
     (input.line_6_carryover ?? 0)
   );
@@ -212,7 +249,7 @@ function computeDScreenLtNet(input: ScheduleDInput): number {
   return (
     (input.line_8a_proceeds ?? 0) -
     (input.line_8a_cost ?? 0) +
-    (input.line_11_form2439 ?? 0) +
+    sumAmounts(input.line_11_form2439) +
     (input.line_12_cap_gain_dist ?? 0) +
     (input.line_12_k1_lt ?? 0) -
     (input.line_14_carryover ?? 0)
@@ -245,7 +282,9 @@ function compute28PctGain(
 }
 
 function lossLimit(filingStatus: FilingStatus | undefined): number {
-  return filingStatus === FilingStatus.MFS ? CAPITAL_LOSS_LIMIT_MFS : CAPITAL_LOSS_LIMIT;
+  return filingStatus === FilingStatus.MFS
+    ? CAPITAL_LOSS_LIMIT_MFS
+    : CAPITAL_LOSS_LIMIT;
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -253,7 +292,14 @@ function lossLimit(filingStatus: FilingStatus | undefined): number {
 class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_d";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, agi_aggregator, income_tax_calculation, rate_28_gain_worksheet, form8960, form8995, scheduleA]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    agi_aggregator,
+    income_tax_calculation,
+    rate_28_gain_worksheet,
+    form8960,
+    form8995,
+  ]);
 
   compute(_ctx: NodeContext, rawInput: ScheduleDInput): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -262,13 +308,39 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
+    if (hasOnlyCapitalGainDistributions(input)) {
+      const distributions = (input.line13_cap_gain_distrib ?? 0) +
+        (input.line13_form8814 ?? 0) +
+        (input.line_12_cap_gain_dist ?? 0);
+      return {
+        outputs: [
+          this.outputNodes.output(f1040, {
+            line7a_cap_gain_distrib: distributions,
+          }),
+          this.outputNodes.output(agi_aggregator, {
+            line7a_cap_gain_distrib: distributions,
+          }),
+          this.outputNodes.output(income_tax_calculation, {
+            net_capital_gain: distributions,
+          }),
+          this.outputNodes.output(form8995, {
+            net_capital_gain: distributions,
+          }),
+          this.outputNodes.output(form8960, { line5a_net_gain: distributions }),
+        ],
+      };
+    }
+
     // f8949 transactions (pre-computed gain_loss + is_long_term)
     const f8949Txs = normalizeArray(input.transaction);
-    const { stGain: stTxGain, ltGain: ltTxGain } = computeTransactionGains(f8949Txs);
+    const { stGain: stTxGain, ltGain: ltTxGain } = computeTransactionGains(
+      f8949Txs,
+    );
 
     // d_screen transactions (gain_loss computed here from proceeds/cost/adjustment)
     const dScreenTxs = input.transactions ?? [];
-    const { stGain: dScreenStTxGain, ltGain: dScreenLtTxGain } = computeDScreenTransactionGains(dScreenTxs);
+    const { stGain: dScreenStTxGain, ltGain: dScreenLtTxGain } =
+      computeDScreenTransactionGains(dScreenTxs);
 
     // COD property gains (always LT)
     const fmvs = normalizeArray(input.cod_property_fmv);
@@ -281,10 +353,12 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
 
     // f1099div cap gain distributions
     const line13F1099div = input.line13_cap_gain_distrib ?? 0;
+    const line13Form8814 = input.line13_form8814 ?? 0;
 
     // Schedule D line 7 (net short-term) and line 15 (net long-term)
     const line7 = stTxGain + dScreenStTxGain + dScreenStAgg;
-    const line15 = ltTxGain + dScreenLtTxGain + dScreenLtAgg + ltCodGain + line13F1099div;
+    const line15 = ltTxGain + dScreenLtTxGain + dScreenLtAgg + ltCodGain +
+      line13F1099div + line13Form8814;
 
     // Line 16: combined net capital gain or loss
     const line16 = line7 + line15;
@@ -297,13 +371,21 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
     const capitalGainForReturn = line16 >= 0 ? line16 : Math.max(limit, line16);
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, { line7_capital_gain: capitalGainForReturn }),
-      this.outputNodes.output(agi_aggregator, { line7_capital_gain: capitalGainForReturn }),
+      this.outputNodes.output(f1040, {
+        line7_capital_gain: capitalGainForReturn,
+      }),
+      this.outputNodes.output(agi_aggregator, {
+        line7_capital_gain: capitalGainForReturn,
+      }),
     ];
 
     // NII: net capital gain (not loss) is subject to NIIT (IRC §1411(c)(1)(A)(iii))
     if (capitalGainForReturn > 0) {
-      outputs.push(this.outputNodes.output(form8960, { line5a_net_gain: capitalGainForReturn }));
+      outputs.push(
+        this.outputNodes.output(form8960, {
+          line5a_net_gain: capitalGainForReturn,
+        }),
+      );
     }
 
     // Line 17 = Yes: both line 15 and line 16 are gains.
@@ -321,19 +403,29 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
           unrecaptured_1250_gain: unrecaptured1250,
         }));
       } else {
-        outputs.push(this.outputNodes.output(income_tax_calculation, { net_capital_gain: netCapGain }));
+        outputs.push(
+          this.outputNodes.output(income_tax_calculation, {
+            net_capital_gain: netCapGain,
+          }),
+        );
       }
 
       // Form 8995 line 12 is Form 1040 line 3a plus net capital gain, and i8995 Line 12
       // defines that gain as the smaller of Schedule D line 15 or 16.
-      outputs.push(this.outputNodes.output(form8995, { net_capital_gain: netCapGain }));
+      outputs.push(
+        this.outputNodes.output(form8995, { net_capital_gain: netCapGain }),
+      );
 
       // Line 18: 28% Rate Gain Worksheet (collectibles/1202 gains from f8949 + Form 2439)
       const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs);
       const form2439Collectibles = input.collectibles_gain_form2439 ?? 0;
       const total28Pct = gain28Pct + form2439Collectibles;
       if (total28Pct > 0) {
-        outputs.push(this.outputNodes.output(rate_28_gain_worksheet, { collectibles_gain_from_8949: total28Pct }));
+        outputs.push(
+          this.outputNodes.output(rate_28_gain_worksheet, {
+            collectibles_gain_from_8949: total28Pct,
+          }),
+        );
       }
     }
 
@@ -353,17 +445,25 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       if (!isDirect(tx.part, tx.adjustment_codes)) continue;
       const gl = dScreenGainLoss(tx);
       if (LONG_TERM_PARTS.has(tx.part)) {
-        direct.ltP += tx.proceeds; direct.ltC += tx.cost_basis; direct.ltG += gl;
+        direct.ltP += tx.proceeds;
+        direct.ltC += tx.cost_basis;
+        direct.ltG += gl;
       } else {
-        direct.stP += tx.proceeds; direct.stC += tx.cost_basis; direct.stG += gl;
+        direct.stP += tx.proceeds;
+        direct.stC += tx.cost_basis;
+        direct.stG += gl;
       }
     }
     for (const tx of f8949Txs) {
       if (!isDirect(tx.part, tx.adjustment_codes)) continue;
       if (tx.is_long_term) {
-        direct.ltP += tx.proceeds; direct.ltC += tx.cost_basis; direct.ltG += tx.gain_loss;
+        direct.ltP += tx.proceeds;
+        direct.ltC += tx.cost_basis;
+        direct.ltG += tx.gain_loss;
       } else {
-        direct.stP += tx.proceeds; direct.stC += tx.cost_basis; direct.stG += tx.gain_loss;
+        direct.stP += tx.proceeds;
+        direct.stC += tx.cost_basis;
+        direct.stG += tx.gain_loss;
       }
     }
 
@@ -375,6 +475,15 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       // engine, so it is always answered "No".
       print_qof_disposition: false,
     };
+    // Multiple source nodes can contribute to these Form 6252/4797 lines.
+    // Replace the executor's accumulated array with the exact line total for
+    // both the pending MeF document and the calculation above.
+    if (Array.isArray(input.line_11_form2439)) {
+      printFields.line_11_form2439 = sumAmounts(input.line_11_form2439);
+    }
+    if (Array.isArray(input.line_4_other_st)) {
+      printFields.line_4_other_st = sumAmounts(input.line_4_other_st);
+    }
     // Line 17 is only answered when line 16 is a gain (a loss skips to
     // line 21; zero skips to line 22 — both leave lines 17–20 blank).
     if (line16 > 0) {
@@ -390,16 +499,23 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       printFields.print_line8a_cost = direct.ltC;
       printFields.print_line8a_gain = direct.ltG;
     }
-    if (line13F1099div > 0 || (input.line_12_cap_gain_dist ?? 0) > 0) {
-      printFields.print_line13_cap_gain_distrib = line13F1099div + (input.line_12_cap_gain_dist ?? 0);
+    if (
+      line13F1099div > 0 || line13Form8814 > 0 ||
+      (input.line_12_cap_gain_dist ?? 0) > 0
+    ) {
+      printFields.print_line13_cap_gain_distrib = line13F1099div +
+        line13Form8814 +
+        (input.line_12_cap_gain_dist ?? 0);
     }
     if (line17Yes) {
       const unrecaptured1250 = input.line19_unrecaptured_1250 ?? 0;
-      const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs) + (input.collectibles_gain_form2439 ?? 0);
+      const gain28Pct = compute28PctGain(f8949Txs, dScreenTxs) +
+        (input.collectibles_gain_form2439 ?? 0);
       printFields.print_line18_28pct = gain28Pct;
       printFields.print_line19_unrecaptured_1250 = unrecaptured1250;
       // Line 20: both 18 and 19 zero/blank → use the QDCGT worksheet.
-      printFields.print_line20_qdcgt = gain28Pct === 0 && unrecaptured1250 === 0;
+      printFields.print_line20_qdcgt = gain28Pct === 0 &&
+        unrecaptured1250 === 0;
     }
     if (line16 < 0) {
       printFields.print_line21_loss = capitalGainForReturn;

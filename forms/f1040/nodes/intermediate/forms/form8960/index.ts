@@ -25,7 +25,7 @@ export const inputSchema = z.object({
   // Part III: Modified Adjusted Gross Income
   // For most individuals = AGI from Form 1040/1040-SR
   // IRC §1411(d); Form 8960 line 13
-  magi: z.number().nonnegative(),
+  magi: z.number(),
 
   // Part I: Investment Income components
 
@@ -65,6 +65,7 @@ export const inputSchema = z.object({
   // Includes §1411 NOL (negative), §62(a)(1) deductions (negative), other items
   // Form 8960 line 7
   line7_other_modifications: z.number().optional(),
+  form8814_line12_investment_income: z.number().nonnegative().optional(),
 
   // Part II: Investment Expenses allocable to NII
 
@@ -140,7 +141,8 @@ function niiGross(input: Form8960Input): number {
     (input.line4b_rental_net ?? 0) +
     (input.line5a_net_gain ?? 0) +
     (input.line5b_net_gain_adjustment ?? 0) +
-    (input.line7_other_modifications ?? 0)
+    (input.line7_other_modifications ?? 0) +
+    (input.form8814_line12_investment_income ?? 0)
   );
 }
 
@@ -247,7 +249,8 @@ class Form8960Node extends TaxNode<typeof inputSchema> {
           line5a_net_gain: line5a,
           line5b_net_gain_adjustment: line5b,
           line5d_combined: line5a + line5b,
-          line7_other_modifications: input.line7_other_modifications ?? 0,
+          line7_other_modifications: (input.line7_other_modifications ?? 0) +
+            (input.form8814_line12_investment_income ?? 0),
           line8_total_investment_income: gross,
           line9a_investment_interest_expense: line9a,
           line9b_state_local_tax: line9b,

@@ -1,5 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   line1_foreign_tax_credit?: number | null;
@@ -7,8 +7,11 @@ export interface Fields {
   line2_childcare_credit?: number | null;
   line3_education_credit?: number | null;
   line4_retirement_savings_credit?: number | null;
+  line5a_residential_clean_energy?: number | null;
+  line5b_energy_efficient_home?: number | null;
   line6b_child_tax_credit?: number | null;
   line6c_adoption_credit?: number | null;
+  line6j_alt_fuel_vehicle_refueling?: number | null;
   line10_amount_paid_extension?: number | null;
   line11_excess_ss?: number | null;
 }
@@ -23,7 +26,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line2_childcare_credit", "CreditForChildAndDepdCareAmt"],
   ["line3_education_credit", "EducationCreditAmt"],
   ["line4_retirement_savings_credit", "RtrSavingsContributionsCrAmt"],
+  ["line5a_residential_clean_energy", "ResidentialCleanEnergyCrAmt"],
+  ["line5b_energy_efficient_home", "EgyEffcntHmImprvCrAmt"],
   ["line6c_adoption_credit", "AdoptionCreditAmt"],
+  ["line6j_alt_fuel_vehicle_refueling", "TotalPersonalUsePartOfCrAmt"],
   ["line10_amount_paid_extension", "RequestForExtensionAmt"],
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
 ];
@@ -34,7 +40,7 @@ const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Fields)[]]> = [
   ["ForeignTaxCreditAmt", "line1_foreign_tax_credit", "line1_foreign_tax_1099"],
 ];
 
-function buildIRS1040Schedule3(fields: Input): string {
+function buildIRS1040Schedule3(fields: Input, context?: MefBuildContext): string {
   const children: string[] = [];
 
   // Aggregated mappings first (line 1 comes before line 2 in XSD order)
@@ -44,7 +50,13 @@ function buildIRS1040Schedule3(fields: Input): string {
       .filter((v): v is number => typeof v === "number");
     if (values.length === 0) continue;
     const sum = values.reduce((a, b) => a + b, 0);
-    children.push(element(tag, sum));
+    const form1116Ids = context?.documentIdsByPendingKey?.form_1116 ?? [];
+    children.push(element(tag, sum, form1116Ids.length > 0
+      ? {
+        referenceDocumentId: form1116Ids.join(" "),
+        referenceDocumentName: "IRS1116",
+      }
+      : undefined));
   }
 
   // Direct mappings
@@ -61,7 +73,7 @@ export const schedule3: MefFormDescriptor<"schedule3", Input> = {
   pendingKey: "schedule3",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040s3.pdf",
-  build(fields) {
-    return buildIRS1040Schedule3(fields);
+  build(fields, context) {
+    return buildIRS1040Schedule3(fields, context);
   },
 };

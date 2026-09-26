@@ -35,6 +35,19 @@ function runReturn(inputs: Record<string, unknown>): ExecuteResult {
   return execute(plan, registry, inputs, ctx);
 }
 
+const zeroCreditWorksheet = {
+  schedule3_line1: 0,
+  schedule3_line2: 0,
+  schedule3_line3: 0,
+  schedule3_line4: 0,
+  schedule3_line5b: 0,
+  schedule3_line6d: 0,
+  schedule3_line6f: 0,
+  schedule3_line6l: 0,
+  schedule3_line6m: 0,
+  worksheet_b_applies: false,
+};
+
 /** Round to 2 decimal places for floating-point comparison. */
 function r2(n: number): number {
   return Math.round(n * 100) / 100;
@@ -48,6 +61,9 @@ function singleGeneral() {
     taxpayer_first_name: "Test",
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",
+    taxpayer_ssn_valid_for_employment: true,
+    taxpayer_ssn_issued_before_due_date: true,
+    taxpayer_tin_issued_by_due_date: true,
     taxpayer_dob: "1985-06-15",
   };
 }
@@ -58,10 +74,16 @@ function mfjGeneral() {
     taxpayer_first_name: "Test",
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",
+    taxpayer_ssn_valid_for_employment: true,
+    taxpayer_ssn_issued_before_due_date: true,
+    taxpayer_tin_issued_by_due_date: true,
     taxpayer_dob: "1985-06-15",
     spouse_first_name: "Spouse",
     spouse_last_name: "Taxpayer",
     spouse_ssn: "444-55-6666",
+    spouse_ssn_valid_for_employment: true,
+    spouse_ssn_issued_before_due_date: true,
+    spouse_tin_issued_by_due_date: true,
     spouse_dob: "1987-03-10",
   };
 }
@@ -72,6 +94,9 @@ function hohGeneral() {
     taxpayer_first_name: "Test",
     taxpayer_last_name: "Taxpayer",
     taxpayer_ssn: "111-22-3333",
+    taxpayer_ssn_valid_for_employment: true,
+    taxpayer_ssn_issued_before_due_date: true,
+    taxpayer_tin_issued_by_due_date: true,
     taxpayer_dob: "1985-06-15",
   };
 }
@@ -117,11 +142,13 @@ Deno.test("Scenario 1: Single, W-2 $75K — refund $3,051", () => {
 
   // Intermediate checks
   assertEquals(
-    result.pending["agi_aggregator"]?.["line1a_wages"], 75_000,
+    result.pending["agi_aggregator"]?.["line1a_wages"],
+    75_000,
     "agi_aggregator receives wages",
   );
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 59_250,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    59_250,
     "taxable income = $75K − $15,750 std ded",
   );
 
@@ -147,7 +174,8 @@ Deno.test("Scenario 2: MFJ, W-2 $120K — refund $2,857", () => {
   });
 
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 88_500,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    88_500,
     "taxable income = $120K − $31,500 std ded",
   );
 
@@ -170,16 +198,22 @@ Deno.test("Scenario 3: MFJ, dual W-2s $150K — refund $2,102", () => {
     general: mfjGeneral(),
     w2: [
       w2Item(85_000, 10_200),
-      { ...w2Item(65_000, 7_800), employer_ein: "98-7654321", employer_name: "Beta Inc" },
+      {
+        ...w2Item(65_000, 7_800),
+        employer_ein: "98-7654321",
+        employer_name: "Beta Inc",
+      },
     ],
   });
 
   assertEquals(
-    result.pending["agi_aggregator"]?.["line1a_wages"], 150_000,
+    result.pending["agi_aggregator"]?.["line1a_wages"],
+    150_000,
     "agi_aggregator receives combined wages",
   );
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 118_500,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    118_500,
     "taxable income = $150K − $31,500 std ded",
   );
 
@@ -207,11 +241,13 @@ Deno.test("Scenario 4: Single, W-2 + interest — refund $1,987", () => {
   });
 
   assertEquals(
-    result.pending["standard_deduction"]?.["agi"], 66_200,
+    result.pending["standard_deduction"]?.["agi"],
+    66_200,
     "AGI = wages + interest",
   );
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 50_450,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    50_450,
     "taxable income = $66,200 − $15,750 std ded",
   );
 
@@ -252,11 +288,13 @@ Deno.test("Scenario 5: Single, W-2 + qualified dividends (QDCGTW) — refund $1,
   });
 
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 57_250,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    57_250,
     "taxable income = $73K − $15,750 std ded",
   );
   assertEquals(
-    result.pending["income_tax_calculation"]?.["qualified_dividends"], 2_500,
+    result.pending["income_tax_calculation"]?.["qualified_dividends"],
+    2_500,
     "qualified dividends flow to income tax calc",
   );
 
@@ -280,7 +318,8 @@ Deno.test("Scenario 6: HOH, W-2 $52K — refund $1,135", () => {
   });
 
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 28_375,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    28_375,
     "taxable income = $52K − $23,625 std ded",
   );
 
@@ -325,17 +364,23 @@ Deno.test("Scenario 7: Single, self-employed Schedule C $80K — owes ~$16,691",
   // AGI aggregator inputs
   const agg = result.pending["agi_aggregator"] ?? {};
   assertEquals(agg["line3_schedule_c"], 80_000, "schedule C income");
-  assertEquals(r2(agg["line15_se_deduction"] as number), 5_651.82, "SE deduction");
+  assertEquals(
+    r2(agg["line15_se_deduction"] as number),
+    5_651.82,
+    "SE deduction",
+  );
 
   // Standard deduction receives correct AGI
   assertEquals(
-    r2(result.pending["standard_deduction"]?.["agi"] as number), 74_348.18,
+    r2(result.pending["standard_deduction"]?.["agi"] as number),
+    74_348.18,
     "AGI = $80K − $5,651.82 SE deduction",
   );
 
   // Income tax calculation receives correct taxable income (after QBI deduction)
   assertEquals(
-    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 46_878.54,
+    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
+    46_878.54,
     "taxable income = AGI − $15,750 std ded − QBI deduction",
   );
 
@@ -364,7 +409,8 @@ Deno.test("Scenario 8: MFJ, W-2 $200K — refund $5,102", () => {
   });
 
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 168_500,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    168_500,
     "taxable income = $200K − $31,500 std ded",
   );
 
@@ -389,7 +435,8 @@ Deno.test("Scenario 9: MFS, W-2 $80K — refund $1,351", () => {
   });
 
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 64_250,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    64_250,
     "taxable income = $80K − $15,750 std ded",
   );
 
@@ -414,7 +461,8 @@ Deno.test("Scenario 10: Single, W-2 $140K (24% bracket) — refund $1,333", () =
   });
 
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 124_250,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    124_250,
     "taxable income = $140K − $15,750 std ded",
   );
 
@@ -441,7 +489,7 @@ Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $
     general: singleGeneral(),
     w2: [w2Item(200_000, 40_000)],
     schedule_a: {
-      line_5a_state_income_tax: 10_000,   // state income taxes ($10K < $40K SALT cap)
+      line_5a_state_income_tax: 10_000, // state income taxes ($10K < $40K SALT cap)
       line_8a_mortgage_interest_1098: 18_000,
       line_11_cash_contributions: 5_000,
     },
@@ -449,20 +497,26 @@ Deno.test("Scenario 11: Single, itemized deductions Schedule A $33K — refund $
 
   // Schedule A produces $33,000 itemized deductions, fed to standard_deduction node
   assertEquals(
-    result.pending["standard_deduction"]?.["itemized_deductions"], 33_000,
+    result.pending["standard_deduction"]?.["itemized_deductions"],
+    33_000,
     "standard_deduction node receives $33,000 itemized deductions",
   );
 
   // income_tax_calculation sees taxable income = $200K - $33K = $167K
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 167_000,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    167_000,
     "taxable income = $200K − $33K itemized",
   );
 
   const f = result.pending["f1040"] ?? {};
 
   // Standard deduction is NOT used when itemizing
-  assertEquals(f["line12a_standard_deduction"], undefined, "no standard deduction when itemizing");
+  assertEquals(
+    f["line12a_standard_deduction"],
+    undefined,
+    "no standard deduction when itemizing",
+  );
 
   // Tax and refund (scalar summary lines are authoritative)
   assertEquals(f["line24_total_tax"], 32_927, "total tax");
@@ -501,26 +555,35 @@ Deno.test("Scenario 12: Single, AMT via PAB interest $100K — owes $6,999", () 
     f1099int: [
       {
         payer_name: "Muni Bond Fund",
-        box8: 100_000,   // tax-exempt interest (all PAB)
-        box9: 100_000,   // private activity bond interest → AMT preference item
+        box8: 100_000, // tax-exempt interest (all PAB)
+        box9: 100_000, // private activity bond interest → AMT preference item
       },
     ],
   });
 
   // Regular tax
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 84_250,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    84_250,
     "taxable income = $100K − $15,750 std ded",
   );
 
   const f = result.pending["f1040"] ?? {};
 
   // AMT fires — form6251 → schedule2 (scalar, no double-write)
-  assertEquals(result.pending["schedule2"]?.["line1_amt"], 11_550, "AMT computed by form6251 = $11,550");
+  assertEquals(
+    result.pending["schedule2"]?.["line2_amt"],
+    11_550,
+    "AMT computed by form6251 = $11,550",
+  );
 
   // Income tax from brackets (line16) and AMT (line17) combine into total
   assertEquals(f["line24_total_tax"], 24_999, "total tax = regular + AMT");
-  assertEquals(f["line33_total_payments"], 18_000, "total payments (W-2 withheld)");
+  assertEquals(
+    f["line33_total_payments"],
+    18_000,
+    "total payments (W-2 withheld)",
+  );
   assertEquals(f["line37_amount_owed"], 6_999, "amount owed");
   assertEquals(f["line35a_refund"], undefined, "no refund when AMT fires");
 });
@@ -561,27 +624,50 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
         {
           first_name: "Child1",
           last_name: "Taxpayer",
-          dob: "2017-06-15",  // age 8 at 12/31/2025
+          dob: "2017-06-15", // age 8 at 12/31/2025
           relationship: DependentRelationship.Son,
           months_in_home: 12,
           ssn: "111-22-3334",
+          ssn_valid_for_employment: true,
+          ssn_issued_before_due_date: true,
+          tin_issued_by_due_date: true,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
         },
         {
           first_name: "Child2",
           last_name: "Taxpayer",
-          dob: "2015-03-20",  // age 10 at 12/31/2025
+          dob: "2015-03-20", // age 10 at 12/31/2025
           relationship: DependentRelationship.Daughter,
           months_in_home: 12,
           ssn: "111-22-3335",
+          ssn_valid_for_employment: true,
+          ssn_issued_before_due_date: true,
+          tin_issued_by_due_date: true,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
         },
       ],
     },
     w2: [w2Item(32_000, 3_500)],
+    f8812: [{
+      qualifying_children_count: 2,
+      agi: 32_000,
+      filing_status: FilingStatus.HOH,
+      income_tax_liability: 950,
+      line18a_earned_income: 32_000,
+      credit_limit_worksheet: zeroCreditWorksheet,
+    }],
   });
 
   // EITC should be $5,364
   assertEquals(
-    result.pending["eitc"]?.["qualifying_children"], 2,
+    result.pending["eitc"]?.["qualifying_children"],
+    2,
     "eitc sees 2 qualifying children",
   );
 
@@ -589,9 +675,32 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
 
   // CTC zeroes out tax; ACTC $3,400 flows as refundable credit
   assertEquals(f["line24_total_tax"], 0, "total tax = $0 after CTC");
-  assertEquals(f["line33_total_payments"], 12_264, "total payments = withheld + EITC + ACTC");
+  assertEquals(
+    f["line33_total_payments"],
+    12_264,
+    "total payments = withheld + EITC + ACTC",
+  );
   assertEquals(f["line35a_refund"], 12_264, "refund = $12,264");
   assertEquals(f["line37_amount_owed"], undefined, "no amount owed");
+});
+
+Deno.test("Schedule 8812 cannot claim a child absent from Form 1040 dependents", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    f8812: [{
+      qualifying_children_count: 1,
+      agi: 32_000,
+      filing_status: FilingStatus.Single,
+      income_tax_liability: 950,
+    }],
+  });
+  assertEquals(
+    result.diagnostics.some((entry) =>
+      entry.nodeType === "f8812" &&
+      entry.message.includes("must match the Form 1040 dependent rows")
+    ),
+    true,
+  );
 });
 
 // ── Scenario 14: MFJ, CTC + ACTC with 3 qualifying children ─────────────────
@@ -618,7 +727,7 @@ Deno.test("Scenario 13: HOH, EITC + CTC 2 qualifying children $32K — refund $1
 //   ACTC = min($657, $12,375) = $657
 //
 // f1040:
-//   line19 = 0, line20 (nonrefundable CTC via Schedule 3) = $5,943
+//   line19 (nonrefundable CTC) = $5,943
 //   line22 = max(0, $5,943 − $5,943) = $0
 //   line24 (total tax) = $0
 //   line28 (ACTC) = $657
@@ -633,26 +742,47 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,657", ()
         {
           first_name: "Child1",
           last_name: "Taxpayer",
-          dob: "2010-05-01",  // age 15 at 12/31/2025
+          dob: "2010-05-01", // age 15 at 12/31/2025
           relationship: DependentRelationship.Son,
           months_in_home: 12,
           ssn: "111-22-3336",
+          ssn_valid_for_employment: true,
+          ssn_issued_before_due_date: true,
+          tin_issued_by_due_date: true,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
         },
         {
           first_name: "Child2",
           last_name: "Taxpayer",
-          dob: "2012-08-15",  // age 13 at 12/31/2025
+          dob: "2012-08-15", // age 13 at 12/31/2025
           relationship: DependentRelationship.Daughter,
           months_in_home: 12,
           ssn: "111-22-3338",
+          ssn_valid_for_employment: true,
+          ssn_issued_before_due_date: true,
+          tin_issued_by_due_date: true,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
         },
         {
           first_name: "Child3",
           last_name: "Taxpayer",
-          dob: "2014-11-30",  // age 11 at 12/31/2025
+          dob: "2014-11-30", // age 11 at 12/31/2025
           relationship: DependentRelationship.Son,
           months_in_home: 12,
           ssn: "111-22-3339",
+          ssn_valid_for_employment: true,
+          ssn_issued_before_due_date: true,
+          tin_issued_by_due_date: true,
+          lived_in_us_over_half_year: true,
+          us_citizen_national_or_resident: true,
+          provided_over_half_own_support: false,
+          filed_joint_return_except_refund_only: false,
         },
       ],
     },
@@ -663,24 +793,44 @@ Deno.test("Scenario 14: MFJ, CTC + ACTC, 3 children, $85K — refund $8,657", ()
         agi: 85_000,
         filing_status: FilingStatus.MFJ,
         earned_income: 85_000,
-        income_tax_liability: 5_943,  // pre-computed above
+        earned_income_worksheet: {
+          form1040_line1z_wages: 85_000,
+          nontaxable_combat_pay: 0,
+          schedule_c_statutory_employee_income: 0,
+          nonfarm_schedule_c_and_k1_net: 0,
+          farm_schedule_f_and_k1_net: 0,
+          farm_optional_method_used: false,
+          excluded_medicaid_waiver_payments: 0,
+          schedule1_line15_se_deduction: 0,
+        },
+        income_tax_liability: 5_943, // pre-computed above
+        credit_limit_worksheet: zeroCreditWorksheet,
       },
     ],
   });
 
   // Tax calculation
   assertEquals(
-    result.pending["income_tax_calculation"]?.["taxable_income"], 53_500,
+    result.pending["income_tax_calculation"]?.["taxable_income"],
+    53_500,
     "taxable income = $85K − $31,500 std ded",
   );
 
   const f = result.pending["f1040"] ?? {};
 
-  // Nonrefundable CTC flows through Schedule 3 → f1040 line20
-  assertEquals(f["line20_nonrefundable_credits"], 5_943, "nonrefundable CTC = $5,943");
+  // Schedule 8812 line 14 flows directly to Form 1040 line 19.
+  assertEquals(
+    f["line19_child_tax_credit"],
+    5_943,
+    "nonrefundable CTC = $5,943",
+  );
 
   // Total tax is $0 (CTC wipes out the $5,943 tax liability)
-  assertEquals(f["line24_total_tax"], 0, "total tax = $0 (CTC absorbs all tax)");
+  assertEquals(
+    f["line24_total_tax"],
+    0,
+    "total tax = $0 (CTC absorbs all tax)",
+  );
 
   // Payments = $8,000 withheld + $657 ACTC refundable
   assertEquals(f["line33_total_payments"], 8_657, "total payments = $8,657");
@@ -720,15 +870,18 @@ Deno.test("Scenario 15: MFJ, Schedule C $150K + interest — QBI reduced by the 
   });
 
   assertEquals(
-    r2(result.pending["form8995"]?.["se_tax_deduction"] as number), 10_597.16,
+    r2(result.pending["form8995"]?.["se_tax_deduction"] as number),
+    10_597.16,
     "deductible part of SE tax reaches Form 8995",
   );
   assertEquals(
-    r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number), 27_880.57,
+    r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number),
+    27_880.57,
     "QBI deduction = 20% × ($150,000 − $10,597.16)",
   );
   assertEquals(
-    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 180_022.27,
+    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
+    180_022.27,
     "taxable income = $207,902.84 pre-QBI − $27,880.57",
   );
 });
@@ -772,15 +925,18 @@ Deno.test("Scenario 16: MFJ, Schedule C + qualified dividends — income limit b
   });
 
   assertEquals(
-    result.pending["form8995"]?.["net_capital_gain"], 100_000,
+    result.pending["form8995"]?.["net_capital_gain"],
+    100_000,
     "qualified dividends reach Form 8995 line 12",
   );
   assertEquals(
-    r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number), 12_287.05,
+    r2(result.pending["standard_deduction"]?.["qbi_deduction"] as number),
+    12_287.05,
     "QBI deduction = 20% × ($161,435.23 − $100,000)",
   );
   assertEquals(
-    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number), 149_148.18,
+    r2(result.pending["income_tax_calculation"]?.["taxable_income"] as number),
+    149_148.18,
     "taxable income = $161,435.23 pre-QBI − $12,287.05",
   );
 });

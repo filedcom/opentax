@@ -1,5 +1,19 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
-import { scheduleSE } from "./schedule_se.ts";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { FilingStatus, type FilerIdentity } from "../../../mef/header.ts";
+import { scheduleSE as rawScheduleSE } from "./schedule_se.ts";
+
+const filer: FilerIdentity = {
+  primarySSN: "123456789",
+  fullName: "Test Filer",
+  nameLine1: "FILER TEST",
+  nameControl: "FILE",
+  address: { line1: "1 Main St", city: "Austin", state: "TX", zip: "78701" },
+  filingStatus: FilingStatus.Single,
+};
+const scheduleSE = {
+  build: (fields: Parameters<typeof rawScheduleSE.build>[0]) =>
+    rawScheduleSE.build(fields, { filer }),
+};
 
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
@@ -94,17 +108,25 @@ Deno.test("schedule_se: SSN element emitted before income fields", () => {
   assertEquals(ssnPos < incomePos, true, "SSN must precede income fields");
 });
 
-Deno.test("schedule_se: uses taxpayer_ssn from pending when available", () => {
+Deno.test("schedule_se: uses the filer SSN and checks a supplied pending SSN", () => {
   const result = scheduleSE.build({
     net_profit_schedule_c: 30000,
     taxpayer_ssn: "123-45-6789",
   });
-  assertStringIncludes(result, "<SSN>123-45-6789</SSN>");
+  assertStringIncludes(result, "<SSN>123456789</SSN>");
 });
 
-Deno.test("schedule_se: falls back to placeholder SSN when taxpayer_ssn absent", () => {
-  const result = scheduleSE.build({ net_profit_schedule_c: 30000 });
-  assertStringIncludes(result, "<SSN>000000000</SSN>");
+Deno.test("schedule_se: rejects missing or conflicting filer identity", () => {
+  assertThrows(
+    () => rawScheduleSE.build({ net_profit_schedule_c: 30000 }),
+    Error,
+    "needs the filer's nine-digit SSN",
+  );
+  assertThrows(
+    () => scheduleSE.build({ net_profit_schedule_c: 30000, taxpayer_ssn: "987654321" }),
+    Error,
+    "does not match the filer",
+  );
 });
 
 // ---------------------------------------------------------------------------

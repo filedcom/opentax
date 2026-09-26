@@ -25,6 +25,7 @@ Computes deductible casualty and theft losses for personal and business property
 - `business_basis` — adjusted basis
 - `business_insurance` — insurance reimbursement
 - `business_is_section_1231` — true = §1231 property → form4797; false = capital → schedule_d
+- Filing details for a long-term business casualty: `business_property_description`, `business_property_location`, `business_acquired_date`, `business_casualty_date`, and `business_casualty_description`. The TY2025 MeF builder requires these facts and verifies the property was held more than one year.
 
 ## Compute Logic — Personal
 1. `is_federal_disaster !== true` → return `[]`
@@ -35,10 +36,14 @@ Computes deductible casualty and theft losses for personal and business property
 
 ## Compute Logic — Business
 1. `rawLoss = min(fmv_decline, basis) - insurance`
-2. `business_is_section_1231 = true` → `form4797.ordinary_gain: -loss`
+2. `business_is_section_1231 = true` → `form4797.ordinary_gain_form4684: -loss` (Form 4684 line 38a to Form 4797 line 14)
 3. `business_is_section_1231 = false` → `schedule_d.line_11_form2439: -loss` (capital loss)
 
 ## Output Nodes
 - `scheduleA` (line 15 — personal losses)
 - `schedule_d` (capital loss — business non-§1231)
 - `form4797` (ordinary loss — business §1231)
+
+## MeF status
+
+A single long-term trade or business casualty loss now emits Form 4684 Section B lines 19 through 28 and 34 through 38a, linked to Form 4797 line 14. The XML builder recalculates the loss from the same basis, value, and reimbursement facts as the tax node and rejects a mismatch between the two forms. This path has an end-to-end TY2025v5.4 XSD test. Personal casualties, short-term/investment casualties, casualty gains, and multiple events still need their own source details and MeF paths; they do not use this long-term business-loss serialization.

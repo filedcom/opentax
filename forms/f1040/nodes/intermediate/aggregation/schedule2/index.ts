@@ -13,9 +13,9 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 // Schedule 2 receives pre-computed excise/penalty amounts from upstream nodes.
 // All fields are optional — any subset may be present on a given return.
 export const inputSchema = z.object({
-  // Line 1 — Alternative Minimum Tax (from Form 6251 line 11)
-  // IRC §55; Form 6251 line 11 → Schedule 2 line 1
-  line1_amt: z.number().nonnegative().optional(),
+  // Line 2 — Alternative minimum tax (from Form 6251 line 11).
+  // IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
+  line2_amt: z.number().nonnegative().optional(),
   // Line 8 — Additional taxes from Form 5329 (early dist, excess contributions)
   // IRC §72(t), §4973; Form 5329 all parts → Schedule 2 line 8
   line8_form5329_tax: z.number().nonnegative().optional(),
@@ -58,12 +58,12 @@ export const inputSchema = z.object({
   // Line 17c — Tax on lump-sum distributions (from Form 4972)
   // IRC §402(e)(1); Form 4972 → Schedule 2 line 17c
   lump_sum_tax: z.number().nonnegative().optional(),
-  // Line 2 — Excess advance premium tax credit repayment (Form 8962 line 29)
-  // IRC §36B(f); Form 8962 line 29 → Schedule 2 line 2
-  line2_excess_advance_premium: z.number().nonnegative().optional(),
+  // Line 1a — Excess advance premium tax credit repayment (Form 8962 line 29).
+  // IRC §36B(f); 2025 Schedule 2 line 1a.
+  line1a_excess_advance_premium: z.number().nonnegative().optional(),
   // Line 7a — Household employment taxes (Schedule H line 26)
   // IRC §3510; Schedule H line 26 → Schedule 2 line 7a
-  line7a_household_employment: z.number().nonnegative().optional(),
+  line9_household_employment: z.number().nonnegative().optional(),
   // Line 17d — Section 965 net tax liability (Form 8615 — Kiddie Tax)
   // IRC §1(g); Form 8615 line 18 → Schedule 2 line 17d
   line17d_kiddie_tax: z.number().nonnegative().optional(),
@@ -120,7 +120,7 @@ function line17k(input: Schedule2Input): number {
 }
 
 function part1Total(input: Schedule2Input): number {
-  return (input.line1_amt ?? 0) + (input.line2_excess_advance_premium ?? 0);
+  return (input.line2_amt ?? 0) + (input.line1a_excess_advance_premium ?? 0);
 }
 
 function part2Total(input: Schedule2Input): number {
@@ -137,7 +137,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line17b_hsa_penalty ?? 0) +
     (input.line11_additional_medicare ?? 0) +
     (input.line12_niit ?? 0) +
-    (input.line7a_household_employment ?? 0) +
+    (input.line9_household_employment ?? 0) +
     (input.line17d_kiddie_tax ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
     (input.line10_homebuyer_credit_repayment ?? 0) +
