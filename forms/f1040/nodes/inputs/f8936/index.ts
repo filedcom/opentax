@@ -90,7 +90,7 @@ export function modifiedAgi(year: F8936MagiYear): number {
 
 // ─── Pure Helpers ─────────────────────────────────────────────────────────────
 
-function incomeLimit(status: FilingStatus, used: boolean): number {
+export function incomeLimit(status: FilingStatus, used: boolean): number {
   if (status === FilingStatus.MFJ || status === FilingStatus.QSS) {
     return used ? USED_INCOME_LIMIT_MFJ : NEW_INCOME_LIMIT_MFJ;
   }

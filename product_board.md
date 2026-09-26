@@ -62,7 +62,7 @@ a credit without a valid acquisition date. It excludes acquisitions after
 September 30, 2025 and stops reducing the previously owned credit by a
 business-use percentage. These cases are written but unrun. VIN/seller
 verification, placed-in-service and transfer/recapture facts, business-use
-routing, PDF output, and ATS evidence remain open.
+routing, and ATS evidence remain open.
 
 The next Form 8936 input pass requires structured VIN/year/make/model, a valid
 2025 placed-in-service date, seller-report confirmation, 30-day resale and
@@ -91,8 +91,11 @@ components and personal-credit Part III/IV amounts for nontransferred,
 personal-use vehicles. It compares current AGI with Form 1040, credit amounts
 with Schedule 3, and caps allowed amounts at Form 1040 line 18 after the credits
 specified by IRS instructions. The tentative and allowed amounts are kept
-separate. Business-use Form 3800 routing, dealer-transfer repayment, and PDF
-descriptors remain open. Source-to-XSD and builder cases are written but unrun.
+separate. The current build pass adds 2025 IRS PDF descriptors for the parent
+form and one Schedule A per personal-use vehicle, sharing the liability
+calculation with XML. These PDF mappings and source-to-XSD cases are written but
+unrun, and no filled PDF has been rendered for visual verification. Business-use
+Form 3800 routing and dealer-transfer repayment remain open.
 
 ## Status definitions
 
