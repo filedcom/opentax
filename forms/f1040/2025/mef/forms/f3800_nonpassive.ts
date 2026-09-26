@@ -74,8 +74,11 @@ export function buildIRS3800Nonpassive(
   }
   const partVGroups: string[] = [];
   const partIIIGroups = credits.rows.map((row) => {
-    const applied = row.facilities.reduce(
-      (sum, facility) => sum + appliedAt(input.facilities.indexOf(facility)),
+    const facilityIndexes = input.facilities.flatMap((facility, index) =>
+      facility.form3800_line === row.line ? [index] : []
+    );
+    const applied = facilityIndexes.reduce(
+      (sum, index) => sum + appliedAt(index),
       0,
     );
     const expected = row.line === "1f" ? lines.line17 : lines.line37;
@@ -88,8 +91,11 @@ export function buildIRS3800Nonpassive(
       facility.transfer_out_amount > 0
     );
     if (row.facilityCount > 1) {
-      for (const facility of row.facilities) {
-        const index = input.facilities.indexOf(facility);
+      for (const index of facilityIndexes) {
+        const facility = input.facilities[index];
+        if (!facility) {
+          throw new Error(`Form 3800 facility ${index + 1} is missing`);
+        }
         const available = facility.credit_amount - facility.transfer_out_amount;
         const facilityApplied = appliedAt(index);
         const specified = row.line === "4e";
@@ -123,11 +129,10 @@ export function buildIRS3800Nonpassive(
         ));
       }
     }
-    const firstFacility = row.facilities[0];
-    if (!firstFacility) {
+    const firstFacilityIndex = facilityIndexes[0];
+    if (firstFacilityIndex === undefined) {
       throw new Error(`Form 3800 Part III line ${row.line} has no facility`);
     }
-    const firstFacilityIndex = input.facilities.indexOf(firstFacility);
     return {
       line: row.line,
       xml: elements(
@@ -153,9 +158,7 @@ export function buildIRS3800Nonpassive(
         ],
         {
           referenceDocumentId: row.facilityCount > 1
-            ? row.facilities.map((facility) =>
-              documentIdAt(input.facilities.indexOf(facility))
-            ).join(" ")
+            ? facilityIndexes.map(documentIdAt).join(" ")
             : documentIdAt(firstFacilityIndex),
           referenceDocumentName: "IRS8835",
         },
