@@ -105,7 +105,7 @@ Deno.test("general routes reviewed MFS Marketplace status to Form 8962", () => {
     basis: "no_exception",
     exception_reviewed: true,
     no_one_can_claim_taxpayer: true,
-    no_shared_policy: true,
+    policy_scope: "family_only",
     all_covered_individuals_lawfully_present: true,
     no_self_employed_health_insurance_deduction: true,
   };

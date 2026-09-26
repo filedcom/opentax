@@ -83,7 +83,7 @@ const mfsExceptionFactsSchema = z.object({
   unable_to_file_joint_due_to_exception: z.literal(true),
   prior_consecutive_exception_years: z.number().int().min(0).max(2),
   no_one_can_claim_taxpayer: z.literal(true),
-  no_shared_policy: z.literal(true),
+  policy_scope: z.enum(["family_only", "shared_with_spouse"]),
 });
 
 export const mfsPtcStatusSchema = z.discriminatedUnion("basis", [
@@ -95,11 +95,21 @@ export const mfsPtcStatusSchema = z.discriminatedUnion("basis", [
     basis: z.literal("no_exception"),
     exception_reviewed: z.literal(true),
     no_one_can_claim_taxpayer: z.literal(true),
-    no_shared_policy: z.literal(true),
+    policy_scope: z.enum(["family_only", "shared_with_spouse"]),
     all_covered_individuals_lawfully_present: z.literal(true),
     no_self_employed_health_insurance_deduction: z.literal(true),
   }).strict(),
 ]);
+
+export const sharedPolicyAllocationSchema = z.object({
+  basis: z.enum(["mfs_exception", "mfs_no_exception"]),
+  policy_number: z.string().regex(/^[A-Za-z0-9 \-:_]{1,15}$/),
+  other_taxpayer_ssn: z.string().regex(/^\d{9}$/),
+  start_month: z.number().int().min(1).max(12),
+  end_month: z.number().int().min(1).max(12),
+  premium_pct: z.literal(0.5).optional(),
+  aptc_pct: z.literal(0.5),
+}).strict();
 
 export const inputSchema = z.object({
   // Household size for FPL calculation
@@ -117,6 +127,8 @@ export const inputSchema = z.object({
   dependent_income_complete: z.boolean().optional(),
   below_100_fpl_status: below100FplStatusSchema.optional(),
   mfs_ptc_status: mfsPtcStatusSchema.optional(),
+  shared_policy_allocations: z.array(sharedPolicyAllocationSchema).max(4)
+    .optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -259,6 +271,9 @@ function aptcOnlyRepayment(
   return {
     outputs: buildOutputs(0, line29, {
       ...baseFields,
+      ...(input.shared_policy_allocations?.length
+        ? { shared_policy_allocations: input.shared_policy_allocations }
+        : {}),
       total_premium_tax_credit: 0,
       total_advance_ptc: line25,
       ...(monthlyAptc !== undefined &&
@@ -348,6 +363,40 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         "Form 8962 MFS needs verified exception and policy-allocation facts before filing",
       );
     }
+    const allocations = input.shared_policy_allocations ?? [];
+    if (allocations.length > 0 && !mfsStatus) {
+      throw new Error("Form 8962 shared MFS policy needs MFS filing status");
+    }
+    if (
+      mfsStatus?.policy_scope === "shared_with_spouse" &&
+      allocations.length === 0
+    ) {
+      throw new Error("Form 8962 MFS shared policy allocation is missing");
+    }
+    if (
+      mfsStatus?.policy_scope === "family_only" && allocations.length > 0
+    ) {
+      throw new Error(
+        "Form 8962 family-only MFS status conflicts with shared policy allocation",
+      );
+    }
+    if (
+      allocations.some((row) =>
+        row.start_month > row.end_month ||
+        row.basis !== (mfsStatus?.basis === "no_exception"
+            ? "mfs_no_exception"
+            : "mfs_exception") ||
+        (row.basis === "mfs_exception" && row.premium_pct !== 0.5) ||
+        (row.basis === "mfs_no_exception" && row.premium_pct !== undefined)
+      )
+    ) {
+      throw new Error(
+        "Form 8962 MFS policy allocation does not match exception status",
+      );
+    }
+    if (allocations.length > 0 && input.annual_line11_eligible === true) {
+      throw new Error("Form 8962 shared policy must use monthly calculation");
+    }
     if (mfsStatus?.basis === "no_exception") {
       return aptcOnlyRepayment(input, aptc, baseFields);
     }
@@ -434,6 +483,9 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const formFields: Record<string, unknown> = {
       ...baseFields,
       ...(mfsStatus ? { mfs_exception_ind: true } : {}),
+      ...(allocations.length > 0
+        ? { shared_policy_allocations: allocations }
+        : {}),
       total_premium_tax_credit: line24,
       total_advance_ptc: line25,
       ...(annualContribution !== undefined && {

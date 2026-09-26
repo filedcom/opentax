@@ -16,9 +16,17 @@ const mfsNoException = {
   basis: "no_exception",
   exception_reviewed: true,
   no_one_can_claim_taxpayer: true,
-  no_shared_policy: true,
+  policy_scope: "family_only",
   all_covered_individuals_lawfully_present: true,
   no_self_employed_health_insurance_deduction: true,
+} as const;
+const sharedMfsAllocation = {
+  basis: "mfs_no_exception",
+  policy_number: "MFS-POLICY-1",
+  other_taxpayer_ssn: "222334444",
+  start_month: 1,
+  end_month: 12,
+  aptc_pct: 0.5,
 } as const;
 
 function compute(input: Record<string, unknown>) {
@@ -512,10 +520,13 @@ Deno.test("MFS without exception files APTC-only repayment subject to Table 5", 
     () =>
       annual(30_000, 4_000, 4_000, 5_000, {
         filing_status: FilingStatus.MFS,
-        mfs_ptc_status: { ...mfsNoException, no_shared_policy: false },
+        mfs_ptc_status: {
+          ...mfsNoException,
+          policy_scope: "shared_with_spouse",
+        },
       }),
     Error,
-    "no_shared_policy",
+    "shared policy allocation",
   );
 });
 
@@ -549,6 +560,37 @@ Deno.test("MFS without exception reports monthly APTC without PTC columns", () =
   assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 750);
 });
 
+Deno.test("MFS shared policy without exception reports Part IV and half APTC", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    household_size: 1,
+    taxpayer_modified_agi: 30_000,
+    monthly_aptcs: Array(12).fill(400),
+    mfs_ptc_status: {
+      ...mfsNoException,
+      policy_scope: "shared_with_spouse",
+    },
+    shared_policy_allocations: [sharedMfsAllocation],
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.shared_policy_allocations, [sharedMfsAllocation]);
+  assertEquals(form?.total_advance_ptc, 4_800);
+  assertEquals(fields(result, "schedule2")?.line1a_excess_advance_premium, 750);
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFS,
+        household_size: 1,
+        taxpayer_modified_agi: 30_000,
+        monthly_aptcs: Array(12).fill(400),
+        mfs_ptc_status: mfsNoException,
+        shared_policy_allocations: [sharedMfsAllocation],
+      }),
+    Error,
+    "family-only MFS status conflicts",
+  );
+});
+
 Deno.test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => {
   const status = {
     basis: "domestic_abuse",
@@ -556,7 +598,7 @@ Deno.test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => 
     unable_to_file_joint_due_to_exception: true,
     prior_consecutive_exception_years: 0,
     no_one_can_claim_taxpayer: true,
-    no_shared_policy: true,
+    policy_scope: "family_only",
   };
   const result = annual(30_000, 6_000, 7_200, 1_200, {
     filing_status: FilingStatus.MFS,
@@ -587,4 +629,33 @@ Deno.test("MFS abuse exception can claim PTC and marks Form 8962 line A", () => 
     },
   });
   assertEquals(fields(abandonment, "form8962")?.mfs_exception_ind, true);
+});
+
+Deno.test("MFS shared-policy exception uses separately determined family SLCSP", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFS,
+    household_size: 1,
+    taxpayer_modified_agi: 30_000,
+    monthly_premiums: Array(12).fill(600),
+    monthly_slcsps: Array(12).fill(700),
+    monthly_aptcs: Array(12).fill(400),
+    mfs_ptc_status: {
+      basis: "spousal_abandonment",
+      living_apart_at_filing: true,
+      unable_to_file_joint_due_to_exception: true,
+      prior_consecutive_exception_years: 0,
+      no_one_can_claim_taxpayer: true,
+      policy_scope: "shared_with_spouse",
+    },
+    shared_policy_allocations: [{
+      ...sharedMfsAllocation,
+      basis: "mfs_exception",
+      premium_pct: 0.5,
+    }],
+  });
+  const form = fields(result, "form8962");
+  assertEquals(form?.mfs_exception_ind, true);
+  assertEquals(form?.total_premium_tax_credit, 7_200);
+  assertEquals(form?.total_advance_ptc, 4_800);
+  assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 2_400);
 });
