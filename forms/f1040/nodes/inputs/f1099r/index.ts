@@ -32,9 +32,6 @@ const ZERO_TAXABLE_CODES = new Set(["N", "R", "Q", "T", "6", "W"]);
 // Code J = early distribution from Roth IRA, no known exception (IRC §72(t))
 const EARLY_DIST_CODES = new Set(["1", "J", "S"]);
 
-// Distribution codes triggering form4972 (lump-sum election)
-const LUMP_SUM_CODES = new Set(["5"]);
-
 // Simplified Method Table 1 — single-life annuity (annuity start after 12/31/1997)
 function simplifiedMethodMonthsTable1(age: number): number {
   if (age <= 55) return 360;
@@ -493,17 +490,30 @@ function form5329Outputs(items: R1099Items): NodeOutput[] {
   });
 }
 
-// Form 4972 outputs: code 5 (prohibited transaction / lump-sum) routes automatically
-// Also triggered by exclude_4972 = true
+// Code 5 means a prohibited transaction, not a lump-sum election. Code A
+// signals possible eligibility but does not make the election for the filer.
+// Only the explicit Form 4972 choice routes the distribution here.
 function form4972Outputs(items: R1099Items): NodeOutput[] {
   const lumpItems = activeItems(items).filter(
-    (item) =>
-      LUMP_SUM_CODES.has(item.box7_distribution_code) ||
-      item.exclude_4972 === true,
+    (item) => item.exclude_4972 === true,
   );
-  return lumpItems.map((
-    item,
-  ) => (output(form4972, { lump_sum_amount: item.box1_gross_distribution })));
+  return lumpItems.map((item) => {
+    if (item.box2a_taxable_amount === undefined) {
+      throw new Error(
+        "Form 4972 election requires the taxable amount from Form 1099-R box 2a or a separately calculated taxable amount",
+      );
+    }
+    return output(form4972, {
+      lump_sum_amount: item.box2a_taxable_amount,
+      ...(item.ts !== undefined ? { recipient: item.ts } : {}),
+      ...(item.box3_capital_gain !== undefined
+        ? { capital_gain_amount: item.box3_capital_gain }
+        : {}),
+      ...(item.box8_other !== undefined
+        ? { annuity_actuarial_value: item.box8_other }
+        : {}),
+    });
+  });
 }
 
 // Form 8606 outputs: triggered by exclude_8606_roth, rollover_code = C, or prior_ira_basis.

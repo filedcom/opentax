@@ -20,7 +20,6 @@ export interface Fields {
   line17b_hsa_penalty?: number | null;
   line17e_archer_msa_tax?: number | null;
   line17f_medicare_advantage_msa_tax?: number | null;
-  lump_sum_tax?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -39,7 +38,6 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line17b_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],
   ["line17e_archer_msa_tax", "ArcherMSAAddnlDistriTaxAmt"],
   ["line17f_medicare_advantage_msa_tax", "MedicareMSAAddnlDistriTaxAmt"],
-  ["lump_sum_tax", "PartialTaxOnAccumDistriAmt"],
 ];
 
 // Aggregated mappings: multiple inputSchema fields -> single XSD element

@@ -54,7 +54,8 @@ Deno.test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD ord
     line1a_excess_advance_premium: 1_200,
     line2_amt: 5_000,
   });
-  const repayment = "<PremiumTaxCreditTaxLiabAmt>1200</PremiumTaxCreditTaxLiabAmt>";
+  const repayment =
+    "<PremiumTaxCreditTaxLiabAmt>1200</PremiumTaxCreditTaxLiabAmt>";
   const amt = "<AlternativeMinimumTaxAmt>5000</AlternativeMinimumTaxAmt>";
   assertStringIncludes(result, repayment);
   assertStringIncludes(result, amt);
@@ -139,14 +140,6 @@ Deno.test(
     );
   },
 );
-
-Deno.test("lump_sum_tax maps to PartialTaxOnAccumDistriAmt", () => {
-  const result = schedule2.build({ lump_sum_tax: 5500 });
-  assertStringIncludes(
-    result,
-    "<PartialTaxOnAccumDistriAmt>5500</PartialTaxOnAccumDistriAmt>",
-  );
-});
 
 // ---------------------------------------------------------------------------
 // Section 5: Aggregated field tests
@@ -291,7 +284,6 @@ const allFields = {
   line17b_hsa_penalty: 1400,
   line17e_archer_msa_tax: 1500,
   line17f_medicare_advantage_msa_tax: 1600,
-  lump_sum_tax: 1700,
 };
 
 Deno.test("all fields present: output wrapped in IRS1040Schedule2 tag", () => {
@@ -336,10 +328,7 @@ Deno.test("all fields present: all direct-mapped elements emitted", () => {
     result,
     "<MedicareMSAAddnlDistriTaxAmt>1600</MedicareMSAAddnlDistriTaxAmt>",
   );
-  assertStringIncludes(
-    result,
-    "<PartialTaxOnAccumDistriAmt>1700</PartialTaxOnAccumDistriAmt>",
-  );
+  assertEquals(result.includes("PartialTaxOnAccumDistriAmt"), false);
 });
 
 Deno.test("all fields present: aggregated elements summed correctly", () => {

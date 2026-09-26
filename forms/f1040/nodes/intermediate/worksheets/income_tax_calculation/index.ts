@@ -60,7 +60,7 @@ export const inputSchema = z.object({
   // accumulates them as an array which sumField collapses to a single total.
   qualified_dividends: accumulable(z.number().nonnegative()).optional(),
   form8814_tax: z.number().nonnegative().optional(),
-  form4972_tax: z.number().nonnegative().optional(),
+  form4972_tax: accumulable(z.number().nonnegative()).optional(),
   // Net capital gain for preferential rate purposes (from schedule_d line 19).
   // Equal to min(line15, line16) when both are positive (i.e., line17 = Yes).
   net_capital_gain: z.number().nonnegative().optional(),
@@ -307,7 +307,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     }
 
     const childElectionTax = input.form8814_tax ?? 0;
-    const lumpSumTax = input.form4972_tax ?? 0;
+    const lumpSumTax = sumField(input.form4972_tax);
     tax += childElectionTax + lumpSumTax;
 
     const outputs: NodeOutput[] = [

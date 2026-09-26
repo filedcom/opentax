@@ -196,6 +196,7 @@ Deno.test("line 29 excess APTC reconciles to Schedule 2 line 1a", () => {
     fields(result, "schedule2")?.line1a_excess_advance_premium,
     4_401,
   );
+  assertEquals(fields(result, "form6251")?.schedule2_line1z_tax, 4_401);
   assertEquals(fields(result, "schedule3"), undefined);
 });
 

@@ -9,6 +9,7 @@ import {
 } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form6251 } from "../../forms/form6251/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // Executor accumulation pattern: multiple upstream nodes (f1099int, f1099div) may
@@ -166,7 +167,7 @@ function partIITotal(input: Schedule3Input): number {
 class Schedule3Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule3";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040]);
+  readonly outputNodes = new OutputNodes([f1040, form6251]);
 
   compute(_ctx: NodeContext, rawInput: Schedule3Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -186,6 +187,11 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
       ),
     ];
+    if (line1(input) > 0) {
+      outputs.push(this.outputNodes.output(form6251, {
+        schedule3_line1_foreign_tax_credit: line1(input),
+      }));
+    }
 
     // Self-emit computed line values into this node's own pending dict so the
     // PDF/MeF builders can print the schedule (same pattern as the f1040 node).

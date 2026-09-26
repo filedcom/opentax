@@ -7,6 +7,7 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { form6251 } from "../form6251/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
@@ -155,6 +156,7 @@ function buildOutputs(
   }
   if (line29 > 0) {
     outputs.push(output(schedule2, { line1a_excess_advance_premium: line29 }));
+    outputs.push(output(form6251, { schedule2_line1z_tax: line29 }));
   }
   outputs.push({ nodeType: "form8962", fields: formFields });
   return outputs;
@@ -165,7 +167,7 @@ function buildOutputs(
 class Form8962Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8962";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3, schedule2]);
+  readonly outputNodes = new OutputNodes([schedule3, schedule2, form6251]);
 
   compute(ctx: NodeContext, rawInput: Form8962Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];

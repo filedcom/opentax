@@ -24,11 +24,13 @@ export const inputSchema = z.object({
   regular_tax_income: z.number(),
   regular_taxable_income: z.number().nonnegative().optional(),
 
-  // Current Form 6251 line 10 input starts with Form 1040 line 16.
-  // Form 4972, Schedule 2 line 1z, Schedule 3 line 1, and Form 8978
-  // adjustments still need source routing before line 10 is complete.
+  // Form 6251 line 10 starts with Form 1040 line 16, removes Form 4972 tax,
+  // adds Schedule 2 line 1z, and removes Schedule 3 line 1. The signed
+  // Form 8978 and Schedule J refigure still need separate source routing.
   regular_tax: z.number().nonnegative(),
   form4972_tax: z.number().nonnegative().optional(),
+  schedule2_line1z_tax: z.number().nonnegative().optional(),
+  schedule3_line1_foreign_tax_credit: z.number().nonnegative().optional(),
 
   // Line 2i — ISO exercise adjustment.
   // Excess of FMV of stock acquired through ISO over exercise price.
@@ -385,7 +387,9 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     // Line 11 — AMT liability
     const adjustedRegularTax = Math.max(
       0,
-      input.regular_tax - (input.form4972_tax ?? 0),
+      input.regular_tax - (input.form4972_tax ?? 0) +
+        (input.schedule2_line1z_tax ?? 0) -
+        (input.schedule3_line1_foreign_tax_credit ?? 0),
     );
     const amt = computeAmt(netTmt, adjustedRegularTax);
 

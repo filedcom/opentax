@@ -61,6 +61,30 @@ Deno.test("Form 1040 rejects an elected child tax without its document", () => {
   );
 });
 
+Deno.test("Form 1040 line 16 links an attached Form 4972", () => {
+  const xml = irs1040.build(
+    { line16_income_tax: 14_705, form4972_tax: 14_705 },
+    { documentIdsByPendingKey: { form4972: ["DOC4972"] } },
+  );
+  assertStringIncludes(xml, "<TaxAmt>14705</TaxAmt>");
+  assertStringIncludes(
+    xml,
+    '<Form4972Ind referenceDocumentId="DOC4972" referenceDocumentName="IRS4972">X</Form4972Ind>',
+  );
+});
+
+Deno.test("Form 1040 rejects Form 4972 tax with no attached document", () => {
+  assertThrows(
+    () =>
+      irs1040.build(
+        { line16_income_tax: 2_000, form4972_tax: 2_000 },
+        { documentIdsByPendingKey: { form4972: [] } },
+      ),
+    Error,
+    "needs an attached Form 4972",
+  );
+});
+
 Deno.test("Form 1040 cannot claim dependent credits without dependent rows", () => {
   assertThrows(
     () => irs1040.build({ qualifying_child_tax_credit_count: 1 }),

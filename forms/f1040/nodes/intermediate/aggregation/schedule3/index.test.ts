@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import { schedule3 } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { form6251 } from "../../forms/form6251/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return schedule3.compute({ taxYear: 2025, formType: "f1040" }, input);
@@ -48,6 +49,17 @@ Deno.test("calc: line1_foreign_tax_1099 alone → f1040 line20", () => {
   assertEquals(
     fieldsOf(result.outputs, f1040)!.line20_nonrefundable_credits,
     250,
+  );
+});
+
+Deno.test("Schedule 3 line 1 reaches Form 6251 without other credits", () => {
+  const result = compute({
+    line1_foreign_tax_credit: 300,
+    line1_foreign_tax_1099: [75, 45],
+  });
+  assertEquals(
+    fieldsOf(result.outputs, form6251)?.schedule3_line1_foreign_tax_credit,
+    420,
   );
 });
 
@@ -175,8 +187,8 @@ Deno.test("routing: Part I → line20, Part II → line31, both present in same 
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     600,
   );
-  // f1040 routing output + self-emitted print-line output for the PDF builder
-  assertEquals(result.outputs.length, 2);
+  // Form 6251 also receives the foreign tax credit from line 1.
+  assertEquals(result.outputs.length, 3);
 });
 
 Deno.test("routing: only line20 emitted when Part II is zero", () => {
@@ -268,8 +280,7 @@ Deno.test("smoke: all fields populated — correct totals emitted to f1040", () 
     fieldsOf(result.outputs, f1040)!.line31_additional_payments,
     1540,
   );
-  // f1040 routing output + self-emitted print-line output for the PDF builder
-  assertEquals(result.outputs.length, 2);
+  assertEquals(result.outputs.length, 3);
 });
 
 // ── Previously untested Part I credits ───────────────────────────────────────
