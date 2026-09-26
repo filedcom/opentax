@@ -39,6 +39,7 @@ import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
 import { form8829 } from "./f8829.ts";
 import { form8839 } from "./f8839.ts";
+import { form8835 } from "./f8835.ts";
 import { form8853 } from "./f8853.ts";
 import { form8862 } from "./f8862.ts";
 import { form8863 } from "./f8863.ts";
@@ -164,6 +165,8 @@ export const ALL_MEF_FORMS = [
   form8824,
   // Form 8829
   form8829,
+  // Form 8835 is one document per qualified facility.
+  form8835,
   // Form 8839
   form8839,
   // Form 8853

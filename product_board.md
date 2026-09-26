@@ -86,8 +86,8 @@ The current Form 8835 build pass separates the 2025 base production rate from
 the fivefold increase, models qualifying conditions, bond reduction, bonuses,
 and transfer-out amounts, and forwards per-facility credits to Form 3800 instead
 of sending them straight to Schedule 3. Calculation and routing cases are
-written but unrun. This is not complete Form 8835 or Form 3800 support: the
-required MeF documents, transfer-election statement, general business credit
+written but unrun. This is not complete Form 8835 or Form 3800 support: the Form
+3800 MeF document, transfer-election statement, general business credit
 limitation, full eligibility/source evidence, PDF output, and ATS validation
 remain open. Do not treat the forwarded gross credit as an allowed credit until
 the Form 3800 limitation is implemented. The build pass now has an unrun pure
@@ -96,6 +96,13 @@ ordinary and specified-credit limits and the married-filing-separately
 threshold. It is not wired to return assembly: the required Form 1040, Schedule
 2, Schedule 3, and Form 6251 tax inputs and the other Part III/IV categories
 still need reconciliation.
+
+The Form 8835 MeF build pass now creates one `IRS8835` document per facility and
+requires Part I location, ownership, capacity, and statement-file facts before
+export. It maps the calculated Part II lines and has local XSD and negative
+cases written but unrun. Fiscal-year production still stops, and the linked Form
+3800 document, transfer election statement, Form 7220 source validation, PDF
+output, and complete ATS scenario remain open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
