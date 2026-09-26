@@ -35,6 +35,25 @@ const REPAYMENT_CAP_TIERS: readonly RepaymentCapTier[] = [
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
+export const below100FplEligibilitySchema = z.discriminatedUnion("basis", [
+  z.object({
+    basis: z.literal("marketplace_estimate"),
+    no_one_can_claim_taxpayer: z.literal(true),
+    marketplace_coverage: z.literal(true),
+    marketplace_estimated_at_least_100_fpl: z.literal(true),
+    marketplace_information_provided_in_good_faith: z.literal(true),
+    otherwise_applicable_taxpayer: z.literal(true),
+  }).strict(),
+  z.object({
+    basis: z.literal("lawfully_present"),
+    no_one_can_claim_taxpayer: z.literal(true),
+    marketplace_coverage: z.literal(true),
+    enrolled_individual_lawfully_present: z.literal(true),
+    medicaid_ineligible_due_to_immigration_status: z.literal(true),
+    otherwise_applicable_taxpayer: z.literal(true),
+  }).strict(),
+]);
+
 export const inputSchema = z.object({
   // Household size for FPL calculation
   household_size: z.number().int().positive().optional(),
@@ -49,6 +68,7 @@ export const inputSchema = z.object({
     magi: z.number().nonnegative(),
   })).optional(),
   dependent_income_complete: z.boolean().optional(),
+  below_100_fpl_eligibility: below100FplEligibilitySchema.optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -89,7 +109,6 @@ function federalPovertyLevel(
 
 function applicableContributionPct(incomeAsFplPct: number): number {
   const line5 = Math.floor(incomeAsFplPct);
-  if (line5 < 100) return Infinity;
   if (line5 <= 150) return 0;
   if (line5 <= 300) return ((line5 - 150) * 4) / 10_000;
   if (line5 < 400) {
@@ -245,9 +264,17 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     );
     const incomePct = income > 4 * fpl ? 401 : Math.floor(income / fpl * 100);
     if (incomePct < 100) {
-      throw new Error(
-        "Form 8962 below 100% FPL needs verified PTC exception facts before filing",
-      );
+      const qualification = input.below_100_fpl_eligibility;
+      if (!qualification) {
+        throw new Error(
+          "Form 8962 below 100% FPL needs verified PTC exception facts before filing",
+        );
+      }
+      if (qualification.basis === "marketplace_estimate" && aptc === 0) {
+        throw new Error(
+          "Form 8962 below 100% FPL marketplace-estimate route requires paid APTC",
+        );
+      }
     }
     const applicableFigure = applicableContributionPct(incomePct);
     const annualContribution = applicableFigure === Infinity

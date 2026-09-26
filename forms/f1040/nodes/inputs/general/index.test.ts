@@ -81,6 +81,25 @@ Deno.test("general routes required-filing dependent modified AGI to Form 8962", 
   assertEquals(fields?.dependents_modified_agi, 13_300);
 });
 
+Deno.test("general routes below-100%-FPL Marketplace eligibility to Form 8962", () => {
+  const eligibility = {
+    basis: "marketplace_estimate",
+    no_one_can_claim_taxpayer: true,
+    marketplace_coverage: true,
+    marketplace_estimated_at_least_100_fpl: true,
+    marketplace_information_provided_in_good_faith: true,
+    otherwise_applicable_taxpayer: true,
+  };
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    ptc_below_100_fpl_eligibility: eligibility,
+  });
+  assertEquals(
+    findOutput(result, "form8962")?.fields.below_100_fpl_eligibility,
+    eligibility,
+  );
+});
+
 Deno.test("general excludes refund-only dependents and flags missing filing facts", () => {
   const result = compute({
     filing_status: FilingStatus.Single,

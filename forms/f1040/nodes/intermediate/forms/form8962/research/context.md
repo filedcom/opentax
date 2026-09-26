@@ -27,6 +27,7 @@ Reconciles Advance Premium Tax Credits (APTC) against the actual allowable PTC b
 - `taxpayer_modified_agi` — Form 8962 line 2a from the return and Worksheet 1-1
 - `dependents_modified_agi` — line 2b from dependents who must file because income meets the filing threshold
 - `dependent_income_complete` — confirms filing-status facts were supplied for every claimed dependent
+- `below_100_fpl_eligibility` — explicitly documented Marketplace-estimate or lawful-presence route for a household below 100% FPL; the former also requires paid APTC
 - `fpl_region` — contiguous states/DC, Alaska, or Hawaii
 - `annual_premium` / `annual_slcsp` / `annual_aptc` — annual totals (when no monthly detail)
 - `monthly_premiums` / `monthly_slcsps` / `monthly_aptcs` — monthly arrays (12 elements each; preferred for mid-year coverage changes)
@@ -49,8 +50,8 @@ Reconciles Advance Premium Tax Credits (APTC) against the actual allowable PTC b
 - When policies are combined, a monthly policy cannot be mixed with an annual-only policy because the annual-only amounts would disappear from the monthly calculation.
 - For multiple covered policies, Form 1095-A routing uses one SLCSP per state per month, adds SLCSP across different states, and rejects missing coverage states or conflicting same-state benchmarks.
 - QSEHRA requires monthly affordability and permitted-benefit facts, so both annual and monthly QSEHRA inputs are rejected. MFS marketplace inputs are rejected until exception and policy-allocation facts can be verified.
-- Marketplace coverage below 100% of the FPL is rejected until the estimated-income or lawful-presence exception facts can be checked; APTC alone does not settle eligibility.
+- Marketplace coverage below 100% of the FPL uses zero applicable contribution only when the filer supplies every fact for the estimated-income or lawful-presence exception. The estimated-income route also checks that APTC was actually paid. Without an exception, the engine still rejects the case, including APTC-only repayment cases that need a separate non-applicable-taxpayer path.
 - ARP extension: 400% FPL cliff is eliminated through TY2025; no hard cutoff.
 - Both positive and negative scenarios handled in a single `compute()` call (can only emit one of the two outputs).
 - SLCSP = Second Lowest Cost Silver Plan (the benchmark plan for credit calculation).
-- This is not whole-form support. Dependent MAGI, policy sharing, MFS rules, alternative marriage calculation, below-100%-FPL exceptions, QSEHRA and self-employed insurance interactions, PDF mappings, and IRS business rules still need a complete audit.
+- This is not whole-form support. Policy sharing, MFS rules, alternative marriage calculation, below-100%-FPL non-applicable-taxpayer repayment, QSEHRA and self-employed insurance interactions, PDF mappings, and IRS business rules still need a complete audit.

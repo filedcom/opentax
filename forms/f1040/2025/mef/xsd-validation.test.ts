@@ -157,6 +157,53 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: below-100%-FPL Marketplace exception reaches Form 8962 and Schedule 3",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    ptc_below_100_fpl_eligibility: {
+      basis: "marketplace_estimate",
+      no_one_can_claim_taxpayer: true,
+      marketplace_coverage: true,
+      marketplace_estimated_at_least_100_fpl: true,
+      marketplace_information_provided_in_good_faith: true,
+      otherwise_applicable_taxpayer: true,
+    },
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(10_000, 0)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      monthly_premiums: Array(12).fill(250),
+      monthly_slcsps: Array(12).fill(350),
+      monthly_aptcs: Array(12).fill(100),
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8962?.federal_poverty_pct, 66);
+  assertEquals(result.pending.form8962?.total_premium_tax_credit, 3_000);
+  assertEquals(result.pending.schedule3?.line9_premium_tax_credit, 1_800);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<FederalPovertyLevelPct>66</FederalPovertyLevelPct>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReconciledPremiumTaxCreditAmt>1800</ReconciledPremiumTaxCreditAmt>",
+  );
+  await validateXsd(xml, "below-100%-FPL Marketplace exception");
+});
+
+Deno.test({
   name: "XSD: two same-state Marketplace policies use one SLCSP benchmark",
   sanitizeOps: false,
   sanitizeResources: false,
