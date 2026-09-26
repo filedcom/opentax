@@ -1,118 +1,80 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { type FilerIdentity, FilingStatus } from "../types.ts";
+import { TS } from "../../../nodes/types.ts";
 import { form4972 } from "./f4972.ts";
 
-function assertNotIncludes(actual: string, expected: string) {
-  assertEquals(
-    actual.includes(expected),
-    false,
-    `Expected string NOT to include: ${expected}`,
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section 1: Empty input
-// ---------------------------------------------------------------------------
-
-Deno.test("f4972: empty object returns empty string", () => {
-  assertEquals(form4972.build({}), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 2: Unknown keys ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("f4972: all unknown keys returns empty string", () => {
-  assertEquals(form4972.build({ junk: 999, foo: "bar", baz: 0 }), "");
-});
-
-// ---------------------------------------------------------------------------
-// Section 3: Zero value emitted
-// ---------------------------------------------------------------------------
-
-Deno.test("f4972: lump_sum_amount at zero is emitted", () => {
-  const result = form4972.build({ lump_sum_amount: 0 });
-  assertStringIncludes(result, "<LumpSumDistriAmt>0</LumpSumDistriAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 4: Per-field mapping (one test per field, 3 fields)
-// ---------------------------------------------------------------------------
-
-Deno.test("f4972: lump_sum_amount maps to LumpSumDistriAmt", () => {
-  const result = form4972.build({ lump_sum_amount: 100000 });
-  assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
-});
-
-Deno.test("f4972: capital_gain_amount maps to CapitalGainAmt", () => {
-  const result = form4972.build({ capital_gain_amount: 25000 });
-  assertStringIncludes(result, "<CapitalGainAmt>25000</CapitalGainAmt>");
-});
-
-Deno.test("f4972: death_benefit_exclusion maps to DeathBenefitExclusionAmt", () => {
-  const result = form4972.build({ death_benefit_exclusion: 5000 });
-  assertStringIncludes(
-    result,
-    "<DeathBenefitExclusionAmt>5000</DeathBenefitExclusionAmt>",
-  );
-});
-
-// ---------------------------------------------------------------------------
-// Section 5: Sparse output
-// ---------------------------------------------------------------------------
-
-Deno.test("f4972: single known field emits only that element, absent fields omitted", () => {
-  const result = form4972.build({ lump_sum_amount: 100000 });
-  assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
-  assertNotIncludes(result, "<CapitalGainAmt>");
-  assertNotIncludes(result, "<DeathBenefitExclusionAmt>");
-});
-
-Deno.test("f4972: two fields present: only those two elements emitted", () => {
-  const result = form4972.build({
-    lump_sum_amount: 100000,
-    capital_gain_amount: 25000,
-  });
-  assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
-  assertStringIncludes(result, "<CapitalGainAmt>25000</CapitalGainAmt>");
-  assertNotIncludes(result, "<DeathBenefitExclusionAmt>");
-});
-
-// ---------------------------------------------------------------------------
-// Section 6: All fields present
-// ---------------------------------------------------------------------------
-
-const allFields = {
-  lump_sum_amount: 100000,
-  capital_gain_amount: 25000,
-  death_benefit_exclusion: 5000,
+const filer: FilerIdentity = {
+  primarySSN: "123456789",
+  fullName: "Alex Taxpayer",
+  nameLine1: "TAXPAYER ALEX",
+  nameControl: "TAXP",
+  filingStatus: FilingStatus.MFJ,
+  address: { line1: "1 Test Way", city: "Austin", state: "TX", zip: "78701" },
+  spouse: {
+    ssn: "987654321",
+    firstName: "Sam",
+    lastName: "Taxpayer",
+    nameControl: "TAXP",
+  },
 };
 
-Deno.test("f4972: all 3 fields present: output wrapped in IRS4972 tag", () => {
-  const result = form4972.build(allFields);
-  assertStringIncludes(result, "<IRS4972>");
-  assertStringIncludes(result, "</IRS4972>");
+const qualified = {
+  born_before_1936: true,
+  entire_balance_distributed: true,
+  rolled_over_any: false,
+  participant_five_year_member: true,
+  prior_election_after_1986: false,
+};
+
+Deno.test("Form 4972 emits no XML for source facts without calculated form lines", () => {
+  assertEquals(form4972.build({ lump_sum_amount: 100_000 }), "");
 });
 
-Deno.test("f4972: all 3 fields present: all elements emitted", () => {
-  const result = form4972.build(allFields);
-  assertStringIncludes(result, "<LumpSumDistriAmt>100000</LumpSumDistriAmt>");
-  assertStringIncludes(result, "<CapitalGainAmt>25000</CapitalGainAmt>");
+Deno.test("Form 4972 emits recipient identity and the 2025 Part II element names", () => {
+  const xml = form4972.build(
+    { ...qualified, recipient: TS.T, line6: 10_000, line7: 2_000 },
+    { filer },
+  );
+  assertStringIncludes(xml, "<PersonNm>Alex Taxpayer</PersonNm>");
+  assertStringIncludes(xml, "<SSN>123456789</SSN>");
   assertStringIncludes(
-    result,
-    "<DeathBenefitExclusionAmt>5000</DeathBenefitExclusionAmt>",
+    xml,
+    "<CapitalGainElectionAmt>10000</CapitalGainElectionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CapitalGainTimesElectionPctAmt>2000</CapitalGainTimesElectionPctAmt>",
+  );
+  assertEquals(xml.includes("<LumpSumDistriAmt>"), false);
+});
+
+Deno.test("Form 4972 spouse recipient is distinct from the taxpayer", () => {
+  const xml = form4972.build(
+    {
+      ...qualified,
+      recipient: TS.S,
+      line8: 90_000,
+      line29: 12_705,
+      line30: 14_705,
+    },
+    { filer },
+  );
+  assertStringIncludes(xml, "<PersonNm>Sam Taxpayer</PersonNm>");
+  assertStringIncludes(xml, "<SSN>987654321</SSN>");
+  assertStringIncludes(
+    xml,
+    "<LumpSumDistriOrdinaryIncmAmt>90000</LumpSumDistriOrdinaryIncmAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<LumpSumDistributionTaxAmt>14705</LumpSumDistributionTaxAmt>",
   );
 });
 
-// ---------------------------------------------------------------------------
-// Section 7: Non-numeric fields (boolean) silently ignored
-// ---------------------------------------------------------------------------
-
-Deno.test("f4972: boolean field is silently ignored", () => {
-  const result = form4972.build({
-    elected_lump_sum: true,
-    lump_sum_amount: 50000,
-  });
-  assertStringIncludes(result, "<LumpSumDistriAmt>50000</LumpSumDistriAmt>");
-  assertNotIncludes(result, "elected_lump_sum");
-  assertNotIncludes(result, "true");
+Deno.test("Form 4972 refuses to guess which recipient owns the distribution", () => {
+  assertThrows(
+    () => form4972.build({ ...qualified, line7: 2_000 }, { filer }),
+    Error,
+    "requires the recipient",
+  );
 });

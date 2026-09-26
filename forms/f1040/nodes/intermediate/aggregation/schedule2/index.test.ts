@@ -236,11 +236,6 @@ Deno.test("calc: line9_965_net_tax_liability alone routes to f1040 line23", () =
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 10_000);
 });
 
-Deno.test("calc: lump_sum_tax alone routes to f1040 line23", () => {
-  const result = compute({ lump_sum_tax: 4_000 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 4_000);
-});
-
 Deno.test("routing: mixed Part I and Part II taxes stay separated", () => {
   // SE tax + AMT + household employment
   const result = compute({
@@ -276,7 +271,6 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
     line17k_golden_parachute_excise: 1_900,
     line17e_archer_msa_tax: 2_000,
     line17f_medicare_advantage_msa_tax: 2_100,
-    lump_sum_tax: 2_200,
     line17b_hsa_penalty: 2_300,
     line17d_kiddie_tax: 2_400,
     line17a_investment_credit_recapture: 2_500,
@@ -285,7 +279,7 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
   });
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line17_additional_taxes, 1_200);
-  assertEquals(fields.line23_other_taxes, 37_500);
+  assertEquals(fields.line23_other_taxes, 35_300);
 });
 
 // ── Previously untested fields ───────────────────────────────────────────────

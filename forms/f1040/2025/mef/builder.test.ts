@@ -9,7 +9,7 @@ import { buildMefBundle, buildMefXml as rawBuildMefXml } from "./builder.ts";
 import { FilingStatus } from "./types.ts";
 import type { FilerIdentity } from "./types.ts";
 import { additionalQmidLines } from "./forms/f5695_qmid_attachment.ts";
-import { FilingStatus as NodeFilingStatus } from "../../nodes/types.ts";
+import { FilingStatus as NodeFilingStatus, TS } from "../../nodes/types.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -104,6 +104,16 @@ function sampleFiler(): FilerIdentity {
     filingStatus: FilingStatus.Single,
   };
 }
+
+const qualifiedForm4972 = {
+  recipient: TS.T,
+  born_before_1936: true,
+  entire_balance_distributed: true,
+  rolled_over_any: false,
+  participant_five_year_member: true,
+  prior_election_after_1986: false,
+  line7: 2000,
+};
 
 function buildMefXml(...args: Parameters<typeof rawBuildMefXml>): string {
   return rawBuildMefXml(
@@ -986,7 +996,7 @@ Deno.test("IRS8919 absent when form8919 missing from pending", () => {
 });
 
 Deno.test("IRS4972 present when form4972 has data", () => {
-  const xml = buildMefXml({ form4972: { lump_sum_amount: 100000 } });
+  const xml = buildMefXml({ form4972: qualifiedForm4972 });
   assertStringIncludes(xml, "<IRS4972 ");
 });
 
@@ -1240,7 +1250,7 @@ Deno.test("documentCnt=28 when all currently serializable forms have data", () =
       }],
     },
     form8919: { wages: 45000 },
-    form4972: { lump_sum_amount: 100000 },
+    form4972: qualifiedForm4972,
     schedule_se: { net_profit_schedule_c: 30000 },
     form8606: { nondeductible_contributions: 6000 },
     form_1116: sampleForm1116,
@@ -1298,7 +1308,7 @@ Deno.test("all 28 serializable forms populated: XML contains their document tags
       }],
     },
     form8919: { wages: 45000 },
-    form4972: { lump_sum_amount: 100000 },
+    form4972: qualifiedForm4972,
     schedule_se: { net_profit_schedule_c: 30000 },
     form8606: { nondeductible_contributions: 6000 },
     form_1116: sampleForm1116,

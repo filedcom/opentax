@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import type { z } from "zod";
+import { TS } from "../../types.ts";
 import {
   DistributionCode,
   f1099r,
@@ -216,14 +217,40 @@ Deno.test("f1099r.compute: distribution code 7 does not route to form5329", () =
   assertEquals(form5329, undefined);
 });
 
-Deno.test("f1099r.compute: distribution code 5 routes to form4972 with gross amount", () => {
+Deno.test("f1099r.compute: code 5 does not elect Form 4972", () => {
   const result = compute([minimalPensionItem({
     box1_gross_distribution: 100000,
     box7_distribution_code: DistributionCode.Code5,
   })]);
   const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
-  const f4972Fields = form4972Out!.fields as Record<string, unknown>;
-  assertEquals(f4972Fields.lump_sum_amount, 100000);
+  assertEquals(form4972Out, undefined);
+});
+
+Deno.test("f1099r.compute: code A is eligibility information, not an election", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 100000,
+    box7_distribution_code: DistributionCode.CodeA,
+  })]);
+  assertEquals(
+    result.outputs.find((o) => o.nodeType === "form4972"),
+    undefined,
+  );
+});
+
+Deno.test("f1099r.compute: explicit Form 4972 choice carries box 2a and box 3", () => {
+  const result = compute([minimalPensionItem({
+    box1_gross_distribution: 100_000,
+    box2a_taxable_amount: 80_000,
+    box3_capital_gain: 10_000,
+    box7_distribution_code: DistributionCode.CodeA,
+    exclude_4972: true,
+    ts: TS.T,
+  })]);
+  const form4972Out = result.outputs.find((o) => o.nodeType === "form4972");
+  const fields = form4972Out!.fields as Record<string, unknown>;
+  assertEquals(fields.lump_sum_amount, 80_000);
+  assertEquals(fields.capital_gain_amount, 10_000);
+  assertEquals(fields.recipient, TS.T);
 });
 
 Deno.test("f1099r.compute: distribution code 7 does not route to form4972", () => {

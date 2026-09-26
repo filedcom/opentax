@@ -64,6 +64,7 @@ export interface Fields {
   line15_taxable_income?: number | null;
   line16_income_tax?: number | null;
   form8814_tax?: number | null;
+  form4972_tax?: number | null;
   line17_additional_taxes?: number | null;
   line18_total_tax_before_credits?: number | null;
   line19_child_tax_credit?: number | null;
@@ -498,6 +499,33 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
           }
           : {}),
       }),
+    );
+  }
+  const form4972Tax = resolveNumber(fields.form4972_tax);
+  if (form4972Tax !== undefined && form4972Tax > 0) {
+    const formIds = context?.documentIdsByPendingKey?.form4972 ?? [];
+    if (context?.documentIdsByPendingKey && formIds.length === 0) {
+      throw new Error("Form 1040 line 16 needs an attached Form 4972");
+    }
+    if ((resolveNumber(fields.line16_income_tax) ?? 0) < form4972Tax) {
+      throw new Error("Form 1040 line 16 omits Form 4972 tax");
+    }
+    const taxIndex = FIELD_MAP.findIndex(([key]) =>
+      key === "line16_income_tax"
+    );
+    incomeChildren.splice(
+      taxIndex + 1 + (fields.form8814_tax ? 1 : 0),
+      0,
+      element(
+        "Form4972Ind",
+        "X",
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS4972",
+          }
+          : undefined,
+      ),
     );
   }
 

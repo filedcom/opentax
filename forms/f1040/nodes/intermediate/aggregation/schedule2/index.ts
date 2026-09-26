@@ -57,7 +57,6 @@ export const inputSchema = z.object({
   line5_unreported_tip_tax: z.number().nonnegative().optional(),
   // Line 17c — Tax on lump-sum distributions (from Form 4972)
   // IRC §402(e)(1); Form 4972 → Schedule 2 line 17c
-  lump_sum_tax: z.number().nonnegative().optional(),
   // Line 1a — Excess advance premium tax credit repayment (Form 8962 line 29).
   // IRC §36B(f); 2025 Schedule 2 line 1a.
   line1a_excess_advance_premium: z.number().nonnegative().optional(),
@@ -130,7 +129,6 @@ function part2Total(input: Schedule2Input): number {
     line13(input) +
     line17h(input) +
     line17k(input) +
-    (input.lump_sum_tax ?? 0) +
     (input.line17e_archer_msa_tax ?? 0) +
     (input.line17f_medicare_advantage_msa_tax ?? 0) +
     (input.line6_uncollected_8919 ?? 0) +
