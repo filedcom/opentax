@@ -411,12 +411,12 @@ Deno.test({
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
-      shared_policy: {
+      shared_policy_periods: [{
         basis: "mfs_no_exception",
         other_taxpayer_ssn: "222-33-4444",
         start_month: 1,
         end_month: 12,
-      },
+      }],
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -471,13 +471,13 @@ Deno.test({
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
-      shared_policy: {
+      shared_policy_periods: [{
         basis: "mfs_exception",
         other_taxpayer_ssn: "222-33-4444",
         start_month: 1,
         end_month: 12,
         monthly_family_slcsps: Array(12).fill(700),
-      },
+      }],
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -517,7 +517,7 @@ Deno.test({
       monthly_premiums: [1_200, ...Array(11).fill(0)],
       monthly_slcsps: [1_500, ...Array(11).fill(0)],
       monthly_aptcs: [800, ...Array(11).fill(0)],
-      shared_policy: {
+      shared_policy_periods: [{
         basis: "divorce_agreed",
         divorced_or_legally_separated_in_tax_year: true,
         shared_during_marriage: true,
@@ -525,7 +525,7 @@ Deno.test({
         start_month: 1,
         end_month: 1,
         allocation_pct: 0.67,
-      },
+      }],
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -569,14 +569,14 @@ Deno.test({
       policy_number: "NO-APTC-POLICY",
       monthly_premiums: [15_000, ...Array(11).fill(0)],
       monthly_aptcs: Array(12).fill(0),
-      shared_policy: {
+      shared_policy_periods: [{
         basis: "no_aptc",
         other_taxpayer_ssn: "222-33-4444",
         start_month: 1,
         end_month: 1,
         monthly_family_slcsps: [12_000, ...Array(11).fill(0)],
         monthly_other_family_slcsps: [6_000, ...Array(11).fill(0)],
-      },
+      }],
     }],
   });
   assertEquals(result.diagnostics, []);
@@ -593,6 +593,45 @@ Deno.test({
     "<MonthlyPremiumSLCSPAmt>12000</MonthlyPremiumSLCSPAmt>",
   );
   await validateXsd(xml, "no-APTC shared policy allocation");
+});
+
+Deno.test({
+  name: "XSD: one Marketplace policy emits two nonoverlapping Part IV periods",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const period = {
+    basis: "other_agreed",
+    situations_1_to_3_reviewed_and_inapplicable: true,
+    other_taxpayer_ssn: "222-33-4444",
+  };
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 3_000)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "SPLIT-POLICY",
+      monthly_premiums: Array(12).fill(1_200),
+      monthly_slcsps: Array(12).fill(1_500),
+      monthly_aptcs: Array(12).fill(800),
+      shared_policy_periods: [
+        { ...period, start_month: 1, end_month: 6, allocation_pct: 0.2 },
+        { ...period, start_month: 7, end_month: 12, allocation_pct: 0.8 },
+      ],
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertEquals((xml.match(/<SharedPolicyAllocationGrp>/g) ?? []).length, 2);
+  assertStringIncludes(xml, "<MonthlyPremiumPct>0.20</MonthlyPremiumPct>");
+  assertStringIncludes(xml, "<MonthlyPremiumPct>0.80</MonthlyPremiumPct>");
+  assertStringIncludes(xml, "<StartMonthNumberCd>07</StartMonthNumberCd>");
+  await validateXsd(xml, "two shared-policy periods");
 });
 
 Deno.test({
