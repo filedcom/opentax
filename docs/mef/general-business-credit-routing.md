@@ -51,8 +51,10 @@ credit into refundable line 12. The represented Form 4136 fuel uses now apply
 their printed 2025 rates, but its complete Part I qualifying-business facts, all
 Part II claim categories, supporting documents, and source-form serializer
 remain open. Form 8834 and Form 8859 source limits and filing documents also
-remain unaudited. `f8912` still deposits its unbounded amount into line 6a; its
-separate line 6k and Part II limit are not wired to that node yet.
+remain unaudited. `f8912` no longer deposits its unbounded amount into line 6a.
+It separates reported and unreported bond source amounts, then stops positive
+claims until its Part II limit and separate Schedule 3 line 6k are wired. These
+source cases and the stop are written but unrun in the current build pass.
 
 ## Required common flow
 

@@ -121,13 +121,16 @@ straight to Schedule 3 line 6a and require a common limitation pass. The
 [business-credit routing audit](docs/mef/general-business-credit-routing.md) now
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
-6k credit currently misrouted to 6a. This inventory is not a fix: the direct
-deposits remain in code and can still overstate filed credits. An unrun pure
-Form 8912 Part I/II limit calculation now keeps its line 12 allowed credit and
-unused amount separate, taking the already-allowed Form 3800 credit on line 10c.
-It rejects pass-through CREB cases until their separate taxable-income limit is
-modeled. Its current input node still uses an oversimplified bond formula and
-the wrong Schedule 3 line, so this helper is not yet a filed Form 8912 path.
+6k credit formerly misrouted to 6a. The other direct deposits remain in code and
+can still overstate filed credits. An unrun pure Form 8912 Part I/II limit
+calculation now keeps its line 12 allowed credit and unused amount separate,
+taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
+CREB cases until their separate taxable-income limit is modeled. The Form 8912
+input now separates Form 1097-BTC reported amounts, unreported-bond
+calculations, and carryforward; positive credit explicitly stops rather than
+depositing an unbounded amount on Schedule 3 line 6a. This source model and its
+cases are unrun and still need complete Part II integration, source-document
+serialization, and IRS business-rule review.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on
@@ -135,12 +138,11 @@ their printed lines 6h and 6i. Form 4136 now combines its represented fuel-use
 credits on refundable line 12 instead of misrouting some to general business
 credit and some to a nonexistent Form 1040 field; the represented 2025 fuel
 rates are updated, with separate aviation-kerosene tax-rate inputs. These
-routing and field-map cases are written but unrun. Form 8912 still needs its
-source and tax limit wired to line 6k, and all three source forms need complete
-eligibility, document, and business-rule review. The Schedule 3 MeF builder now
-requires attached source-form IDs for lines 6h, 6i, 6k, and 12; those source
-serializers are not yet registered, so these paths must not be treated as e-file
-ready.
+routing and field-map cases are written but unrun. Form 8912 still needs its tax
+limit wired to line 6k, and all three source forms need complete eligibility,
+document, and business-rule review. The Schedule 3 MeF builder now requires
+attached source-form IDs for lines 6h, 6i, 6k, and 12; those source serializers
+are not yet registered, so these paths must not be treated as e-file ready.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old

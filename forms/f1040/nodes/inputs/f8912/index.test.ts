@@ -1,223 +1,102 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { f8912, BondType } from "./index.ts";
-import { fieldsOf } from "../../../../../core/test-utils/output.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { BondType, f8912 } from "./index.ts";
+import { calculateForm8912SourceLines } from "./calculation.ts";
 
-function minimalItem(overrides: Record<string, unknown> = {}) {
+const reported = {
+  bond_type: BondType.CREB,
+  issue_date: "2017-12-31",
+  issuer_ein: "123456789",
+  unique_identifier: "bond-1",
+  credit_amount: 100,
+  issuer_elected_direct_payment: false,
+  is_pass_through_creb_credit: false,
+};
+
+const unreported = {
+  bond_type: BondType.QECB,
+  issue_date: "2017-12-31",
+  issuer_name: "Issuer",
+  issuer_ein: "123456789",
+  maturity_date: "2030-12-31",
+  outstanding_principal: 10_000,
+  credit_rate: 0.05,
+  ownership_percentage: 0.5,
+  issuer_elected_direct_payment: false,
+};
+
+function item(overrides: Record<string, unknown> = {}) {
   return {
-    bond_type: BondType.CREB,
-    face_amount: 0,
-    credit_rate: 0,
-    holding_period_days: 0,
-    total_days_in_period: 365,
+    reported_bonds: [reported],
+    unreported_bonds: [unreported],
+    qualified_bond_carryforward: 0,
     ...overrides,
   };
 }
 
-function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f8912.compute({ taxYear: 2025, formType: "f1040" }, { f8912s: items });
-}
-
-function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o) => o.nodeType === nodeType);
-}
-
-// =============================================================================
-// 1. Input Schema Validation
-// =============================================================================
-
-Deno.test("f8912.inputSchema: valid minimal item passes", () => {
-  const parsed = f8912.inputSchema.safeParse({
-    f8912s: [{
-      bond_type: BondType.CREB,
-      face_amount: 10_000,
-      credit_rate: 0.045,
-      holding_period_days: 365,
-      total_days_in_period: 365,
+Deno.test("Form 8912: Part III, Part IV 70% bond, and carryforward remain distinct", () => {
+  const lines = calculateForm8912SourceLines(
+    [{
+      bondType: "CREB",
+      creditAmount: 100,
+      issuerElectedDirectPayment: false,
+      isPassThroughCrebCredit: false,
     }],
+    [{
+      bondType: "QECB",
+      outstandingPrincipal: 10_000,
+      creditRate: 0.05,
+      ownershipPercentage: 0.5,
+      issuerElectedDirectPayment: false,
+    }],
+    25,
+  );
+  assertEquals(lines.line1, 100);
+  assertEquals(lines.line2, 175);
+  assertEquals(lines.line3, 25);
+  assertEquals(lines.line4, 300);
+});
+
+Deno.test("Form 8912: direct-payment election cannot be claimed by holder", () => {
+  assertThrows(
+    () =>
+      calculateForm8912SourceLines(
+        [{
+          bondType: "CREB",
+          creditAmount: 100,
+          issuerElectedDirectPayment: true,
+          isPassThroughCrebCredit: false,
+        }],
+        [],
+        0,
+      ),
+    Error,
+    "direct-payment",
+  );
+});
+
+Deno.test("Form 8912: post-2017 issues are ineligible", () => {
+  assertEquals(
+    f8912.inputSchema.safeParse({
+      f8912s: [
+        item({ reported_bonds: [{ ...reported, issue_date: "2018-01-01" }] }),
+      ],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 8912: positive source credit does not bypass its Part II limit", () => {
+  assertThrows(
+    () =>
+      f8912.compute({ taxYear: 2025, formType: "f1040" }, { f8912s: [item()] }),
+    Error,
+    "Part II tax limit",
+  );
+});
+
+Deno.test("Form 8912: zero source credit contributes no Schedule 3 output", () => {
+  const result = f8912.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8912s: [item({ reported_bonds: [], unreported_bonds: [] })],
   });
-  assertEquals(parsed.success, true);
-});
-
-Deno.test("f8912.inputSchema: empty array fails (min 1)", () => {
-  const parsed = f8912.inputSchema.safeParse({ f8912s: [] });
-  assertEquals(parsed.success, false);
-});
-
-Deno.test("f8912.inputSchema: all bond types accepted", () => {
-  for (const bondType of Object.values(BondType)) {
-    const parsed = f8912.inputSchema.safeParse({
-      f8912s: [{ bond_type: bondType, face_amount: 10_000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 }],
-    });
-    assertEquals(parsed.success, true, `BondType.${bondType} should be valid`);
-  }
-});
-
-// =============================================================================
-// 2. Per-Bond Credit Calculation
-// =============================================================================
-
-Deno.test("f8912.compute: full year holding = face × rate", () => {
-  // 10,000 × 0.05 × (365/365) = 500
-  const result = compute([minimalItem({
-    bond_type: BondType.CREB,
-    face_amount: 10_000,
-    credit_rate: 0.05,
-    holding_period_days: 365,
-    total_days_in_period: 365,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 500);
-});
-
-Deno.test("f8912.compute: partial year holding prorates credit", () => {
-  // 10,000 × 0.10 × (182/365) ≈ 498.63
-  const result = compute([minimalItem({
-    bond_type: BondType.NEW_CREB,
-    face_amount: 10_000,
-    credit_rate: 0.10,
-    holding_period_days: 182,
-    total_days_in_period: 365,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  // Check approximate value (floating point)
-  const expected = 10_000 * 0.10 * (182 / 365);
-  assertEquals(Math.abs((fields.line6a_general_business_credit ?? 0) - expected) < 0.01, true);
-});
-
-Deno.test("f8912.compute: zero face_amount — no output", () => {
-  const result = compute([minimalItem({
-    bond_type: BondType.QECB,
-    face_amount: 0,
-    credit_rate: 0.05,
-    holding_period_days: 365,
-    total_days_in_period: 365,
-  })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8912.compute: zero credit_rate — no output", () => {
-  const result = compute([minimalItem({
-    bond_type: BondType.BAB_DIRECT,
-    face_amount: 100_000,
-    credit_rate: 0,
-    holding_period_days: 365,
-    total_days_in_period: 365,
-  })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8912.compute: zero holding days — no output", () => {
-  const result = compute([minimalItem({
-    bond_type: BondType.QZAB,
-    face_amount: 100_000,
-    credit_rate: 0.05,
-    holding_period_days: 0,
-    total_days_in_period: 365,
-  })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-Deno.test("f8912.compute: routes to schedule3 line6a_general_business_credit", () => {
-  // 50,000 × 0.06 × 1.0 = 3,000
-  const result = compute([minimalItem({
-    bond_type: BondType.QSCB,
-    face_amount: 50_000,
-    credit_rate: 0.06,
-    holding_period_days: 365,
-    total_days_in_period: 365,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 3_000);
-});
-
-// =============================================================================
-// 3. Aggregation — Multiple Bonds
-// =============================================================================
-
-Deno.test("f8912.compute: multiple bonds — credits summed", () => {
-  // Bond 1: 10,000 × 0.05 × 1.0 = 500
-  // Bond 2: 20,000 × 0.04 × 1.0 = 800
-  // Total: 1,300
-  const result = compute([
-    minimalItem({ bond_type: BondType.CREB, face_amount: 10_000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 }),
-    minimalItem({ bond_type: BondType.QECB, face_amount: 20_000, credit_rate: 0.04, holding_period_days: 365, total_days_in_period: 365 }),
-  ]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 1_300);
-});
-
-Deno.test("f8912.compute: multiple bonds — only one schedule3 output", () => {
-  const result = compute([
-    minimalItem({ bond_type: BondType.CREB, face_amount: 10_000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 }),
-    minimalItem({ bond_type: BondType.QECB, face_amount: 20_000, credit_rate: 0.04, holding_period_days: 365, total_days_in_period: 365 }),
-  ]);
-  assertEquals(result.outputs.length, 1);
-});
-
-// =============================================================================
-// 4. Leap Year
-// =============================================================================
-
-Deno.test("f8912.compute: 366-day year (leap year) — uses correct denominator", () => {
-  // 10,000 × 0.05 × (366/366) = 500
-  const result = compute([minimalItem({
-    bond_type: BondType.CREB,
-    face_amount: 10_000,
-    credit_rate: 0.05,
-    holding_period_days: 366,
-    total_days_in_period: 366,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 500);
-});
-
-// =============================================================================
-// 5. Hard Validation
-// =============================================================================
-
-Deno.test("f8912.compute: throws on total_days_in_period = 0", () => {
-  assertThrows(() => compute([minimalItem({ bond_type: BondType.CREB, face_amount: 10_000, credit_rate: 0.05, holding_period_days: 10, total_days_in_period: 0 })]), Error);
-});
-
-Deno.test("f8912.compute: zero face does not throw", () => {
-  const result = compute([minimalItem({ bond_type: BondType.CREB, face_amount: 0, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 })]);
-  assertEquals(result.outputs.length, 0);
-});
-
-// =============================================================================
-// 6. Edge Cases
-// =============================================================================
-
-Deno.test("f8912.compute: holding_period_days > total_days — still calculates", () => {
-  // Not realistic but edge case — formula still works
-  const result = compute([minimalItem({
-    bond_type: BondType.NEW_CREB,
-    face_amount: 10_000,
-    credit_rate: 0.05,
-    holding_period_days: 400,
-    total_days_in_period: 365,
-  })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  const expected = 10_000 * 0.05 * (400 / 365);
-  assertEquals(Math.abs((fields.line6a_general_business_credit ?? 0) - expected) < 0.01, true);
-});
-
-// =============================================================================
-// 7. Smoke Test
-// =============================================================================
-
-Deno.test("f8912.compute: smoke test — mixed bond types, partial years", () => {
-  const result = compute([
-    minimalItem({ bond_type: BondType.CREB, face_amount: 100_000, credit_rate: 0.05, holding_period_days: 365, total_days_in_period: 365 }),
-    minimalItem({ bond_type: BondType.BAB_DIRECT, face_amount: 200_000, credit_rate: 0.035, holding_period_days: 182, total_days_in_period: 365 }),
-    minimalItem({ bond_type: BondType.QECB, face_amount: 50_000, credit_rate: 0.045, holding_period_days: 100, total_days_in_period: 365 }),
-  ]);
-  // Bond 1: 100,000 × 0.05 × 1.0 = 5,000
-  // Bond 2: 200,000 × 0.035 × (182/365) ≈ 3,491.78
-  // Bond 3: 50,000 × 0.045 × (100/365) ≈ 616.44
-  // Total ≈ 9,108.22
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  const expected = 5_000 + (200_000 * 0.035 * 182 / 365) + (50_000 * 0.045 * 100 / 365);
-  assertEquals(Math.abs((fields.line6a_general_business_credit ?? 0) - expected) < 0.01, true);
+  assertEquals(result.outputs, []);
 });

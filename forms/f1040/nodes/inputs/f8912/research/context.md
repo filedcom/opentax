@@ -112,3 +112,11 @@ flowchart LR
 | IRC §54A | 2008 (repealed 2017 for new issuances) | §54A(a)-(f) | https://www.law.cornell.edu/uscode/text/26/54A | N/A |
 | Form 8912 (Rev. 12/2024) | 2024 | All lines | https://www.irs.gov/pub/irs-pdf/f8912.pdf | N/A |
 | Form 8912 Instructions | 2024 | All | https://www.irs.gov/pub/irs-pdf/i8912.pdf | N/A |
+# Historical research note
+
+This file describes the old face-amount/holding-days model and is not an
+implementation guide. The current Form 8912 source inputs follow Parts III and
+IV of the IRS form, and positive claims are blocked until the Part II limit and
+source document are integrated. See `../index.ts`, `../calculation.ts`, and
+`../../../../../../docs/mef/general-business-credit-routing.md` for the current
+WIP status.
