@@ -156,9 +156,17 @@ export const inputSchema = z.object({
   monthly_slcsps: z.array(z.number().nonnegative()).length(12).optional(),
   monthly_aptcs: z.array(z.number().nonnegative()).length(12).optional(),
 
-  // QSEHRA — kept as an input fact, but rejected until monthly affordability
-  // and permitted-benefit calculations are modeled (2025 Form 8962 instructions).
+  // Box 12 code FF or the QSEHRA source gives the annual permitted benefit.
+  // Monthly notice facts are needed separately for Pub. 974 Worksheets N/Q.
   qsehra_amount_offered: z.number().nonnegative().optional(),
+  qsehra_w2_reported_benefit: z.number().nonnegative().optional(),
+  qsehra_monthly_facts: z.array(
+    z.object({
+      self_only_slcsp: z.number().nonnegative(),
+      self_only_permitted_benefit: z.number().nonnegative(),
+      permitted_benefit: z.number().nonnegative(),
+    }).strict().nullable(),
+  ).length(12).optional(),
 
   // Filing status — Table 5 has a Single cap and a cap for every other status.
   filing_status: filingStatusSchema.optional(),
@@ -221,6 +229,21 @@ function allowedPtc(
   applicable: number,
 ): number {
   return Math.min(actualPremium, Math.max(0, slcsp - applicable));
+}
+
+function qsehraMonthlyCredit(
+  tentativeCredit: number,
+  householdIncome: number,
+  facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>[number],
+): number {
+  if (facts === null) return tentativeCredit;
+  // Pub. 974 Worksheet N, lines 4 and 8. Equality is affordable.
+  const affordabilityThreshold = householdIncome * 0.0902 / 12;
+  const employeeCost = facts.self_only_slcsp -
+    facts.self_only_permitted_benefit;
+  if (affordabilityThreshold >= employeeCost) return 0;
+  // Worksheet Q, Part III, columns A-C.
+  return Math.max(0, tentativeCredit - facts.permitted_benefit);
 }
 
 // IRC §36B(f)(2)(B): cap on excess APTC repayment liability
@@ -490,10 +513,44 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       );
     }
     const monthly = hasMonthlyColumns && input.annual_line11_eligible !== true;
-    if ((input.qsehra_amount_offered ?? 0) > 0) {
+    const qsehraFacts = input.qsehra_monthly_facts;
+    if (
+      input.qsehra_amount_offered !== undefined &&
+      input.qsehra_w2_reported_benefit !== undefined &&
+      Math.abs(
+          input.qsehra_amount_offered - input.qsehra_w2_reported_benefit,
+        ) > 0.01
+    ) {
+      throw new Error(
+        "Form 8962 QSEHRA benefit disagrees with W-2 code FF",
+      );
+    }
+    const annualQsehraBenefit = input.qsehra_w2_reported_benefit ??
+      input.qsehra_amount_offered;
+    if ((annualQsehraBenefit ?? 0) > 0 && !qsehraFacts) {
       throw new Error(
         "Form 8962 QSEHRA needs monthly affordability and benefit facts before PTC can be filed",
       );
+    }
+    if (qsehraFacts) {
+      if (!monthly) {
+        throw new Error(
+          "Form 8962 QSEHRA monthly facts need monthly Form 1095-A calculation",
+        );
+      }
+      const monthlyBenefit = qsehraFacts.reduce(
+        (sum, facts) => sum + (facts?.permitted_benefit ?? 0),
+        0,
+      );
+      if (
+        annualQsehraBenefit === undefined ||
+        Math.abs(monthlyBenefit - annualQsehraBenefit) > 0.01 ||
+        !qsehraFacts.some((facts) => facts !== null)
+      ) {
+        throw new Error(
+          "Form 8962 QSEHRA monthly benefits must reconcile to the annual permitted benefit",
+        );
+      }
     }
     const applicableFigure = applicableContributionPct(incomePct);
     const annualContribution = applicableFigure === Infinity
@@ -515,7 +572,11 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
           slcsp: monthSlcsp,
           contribution: monthlyContribution,
           max_assistance: maxAssistance,
-          allowed_credit: Math.min(monthPremium, maxAssistance),
+          allowed_credit: qsehraMonthlyCredit(
+            Math.min(monthPremium, maxAssistance),
+            income,
+            qsehraFacts?.[index] ?? null,
+          ),
           aptc: monthAptc,
         };
       })
@@ -540,6 +601,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const formFields: Record<string, unknown> = {
       ...baseFields,
       ...(mfsStatus ? { mfs_exception_ind: true } : {}),
+      ...(qsehraFacts ? { qsehra_ind: true } : {}),
       ...(allocations.length > 0
         ? { shared_policy_allocations: allocations }
         : {}),

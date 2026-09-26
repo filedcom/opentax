@@ -121,6 +121,28 @@ Deno.test("monthly Form 8962 emits only the monthly choice branch", () => {
   assertEquals(xml.includes("<AnnualPTCCalculationGrp>"), false);
 });
 
+Deno.test("monthly QSEHRA credit and indicator are serialized together", () => {
+  const xml = form8962.build({
+    ...annual,
+    qsehra_ind: true,
+    total_premium_tax_credit: 400,
+    monthly_ptc_rows: [{
+      month_code: "JANUARY",
+      premium: 500,
+      slcsp: 600,
+      contribution: 68,
+      max_assistance: 532,
+      allowed_credit: 400,
+      aptc: 100,
+    }],
+  });
+  assertStringIncludes(xml, "<QSEHRAInd>true</QSEHRAInd>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumTaxCreditAllwAmt>400</MonthlyPremiumTaxCreditAllwAmt>",
+  );
+});
+
 Deno.test("Form 8962 carries five Part IV groups and marks line 34 No", () => {
   const allocations = Array.from({ length: 5 }, (_, index) => ({
     basis: "other_agreed" as const,
