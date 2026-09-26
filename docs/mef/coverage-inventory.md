@@ -102,6 +102,12 @@ because a serializer exists or the IRS XSD permits them.
 | 1040-04  | `IRS8835`                           | Build pass: per-facility Part I/II serializer registered; source-to-XSD and negative cases written but unrun. Fiscal years, source statements, and ATS acceptance remain open. |
 | 1040-04  | Transfer Election Statement PDF     | M: source PDF identifies the attachment, but its content is not in the captured scenario facts                                                                                 |
 
+Form 8826 is another in-scope source document, outside the Scenario 4 rows
+above. Its self-earned lines 1, 3, 5, 6, and 8 now have an unregistered
+`IRS8826` XML draft and unrun source-to-XSD case. No Form 3800 allowed-credit
+reconciliation, registered XML document, PDF, pass-through line 7, or ATS
+evidence exists yet.
+
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS
 instructions and the full ReturnData1040 document list with the agreed product
