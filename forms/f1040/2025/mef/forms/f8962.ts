@@ -12,13 +12,21 @@ interface MonthlyRow {
 }
 
 interface SharedPolicyAllocation {
-  basis: "mfs_exception" | "mfs_no_exception";
+  basis:
+    | "mfs_exception"
+    | "mfs_no_exception"
+    | "divorce_agreed"
+    | "divorce_no_agreement"
+    | "other_agreed"
+    | "other_no_agreement"
+    | "no_aptc";
   policy_number: string;
   other_taxpayer_ssn: string;
   start_month: number;
   end_month: number;
   premium_pct?: number;
-  aptc_pct: number;
+  slcsp_pct?: number;
+  aptc_pct?: number;
 }
 
 export interface Fields {
@@ -205,7 +213,12 @@ function buildIRS8962(fields: Input): string {
         typeof row.premium_pct === "number"
           ? element("MonthlyPremiumPct", row.premium_pct.toFixed(2))
           : "",
-        element("MonthlyAdvancedPTCPct", row.aptc_pct.toFixed(2)),
+        typeof row.slcsp_pct === "number"
+          ? element("MonthlyPremiumSLCSPPct", row.slcsp_pct.toFixed(2))
+          : "",
+        typeof row.aptc_pct === "number"
+          ? element("MonthlyAdvancedPTCPct", row.aptc_pct.toFixed(2))
+          : "",
       ])
     ),
     allocations.length > 0

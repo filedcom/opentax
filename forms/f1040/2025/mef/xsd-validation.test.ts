@@ -411,8 +411,8 @@ Deno.test({
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
-      shared_mfs_policy: {
-        basis: "no_exception",
+      shared_policy: {
+        basis: "mfs_no_exception",
         other_taxpayer_ssn: "222-33-4444",
         start_month: 1,
         end_month: 12,
@@ -471,8 +471,8 @@ Deno.test({
       monthly_premiums: Array(12).fill(1_200),
       monthly_slcsps: Array(12).fill(1_500),
       monthly_aptcs: Array(12).fill(800),
-      shared_mfs_policy: {
-        basis: "exception",
+      shared_policy: {
+        basis: "mfs_exception",
         other_taxpayer_ssn: "222-33-4444",
         start_month: 1,
         end_month: 12,
@@ -498,6 +498,101 @@ Deno.test({
   );
   assertEquals(xml.includes("<MonthlyPremiumSLCSPPct>"), false);
   await validateXsd(xml, "shared MFS exception allocation");
+});
+
+Deno.test({
+  name:
+    "XSD: divorced taxpayers' agreed allocation fills all Part IV percentages",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 3_000)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "DIV-POLICY-1",
+      monthly_premiums: [1_200, ...Array(11).fill(0)],
+      monthly_slcsps: [1_500, ...Array(11).fill(0)],
+      monthly_aptcs: [800, ...Array(11).fill(0)],
+      shared_policy: {
+        basis: "divorce_agreed",
+        divorced_or_legally_separated_in_tax_year: true,
+        shared_during_marriage: true,
+        other_taxpayer_ssn: "222-33-4444",
+        start_month: 1,
+        end_month: 1,
+        allocation_pct: 0.67,
+      },
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<MonthlyPremiumPct>0.67</MonthlyPremiumPct>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPPct>0.67</MonthlyPremiumSLCSPPct>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthlyAdvancedPTCPct>0.67</MonthlyAdvancedPTCPct>",
+  );
+  assertStringIncludes(xml, "<MonthlyPremiumAmt>804</MonthlyPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>1005</MonthlyPremiumSLCSPAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<MonthlyAdvancedPTCAmt>536</MonthlyAdvancedPTCAmt>",
+  );
+  await validateXsd(xml, "divorce agreed policy allocation");
+});
+
+Deno.test({
+  name: "XSD: no-APTC shared policy allocates only premium in Part IV",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [w2Item(30_000, 3_000)],
+    f1095a: [{
+      issuer_name: "Marketplace Plan",
+      policy_number: "NO-APTC-POLICY",
+      monthly_premiums: [15_000, ...Array(11).fill(0)],
+      monthly_aptcs: Array(12).fill(0),
+      shared_policy: {
+        basis: "no_aptc",
+        other_taxpayer_ssn: "222-33-4444",
+        start_month: 1,
+        end_month: 1,
+        monthly_family_slcsps: [12_000, ...Array(11).fill(0)],
+        monthly_other_family_slcsps: [6_000, ...Array(11).fill(0)],
+      },
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<MonthlyPremiumPct>0.67</MonthlyPremiumPct>");
+  assertEquals(xml.includes("<MonthlyPremiumSLCSPPct>"), false);
+  assertEquals(xml.includes("<MonthlyAdvancedPTCPct>"), false);
+  assertStringIncludes(xml, "<MonthlyPremiumAmt>10000</MonthlyPremiumAmt>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyPremiumSLCSPAmt>12000</MonthlyPremiumSLCSPAmt>",
+  );
+  await validateXsd(xml, "no-APTC shared policy allocation");
 });
 
 Deno.test({

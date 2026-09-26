@@ -659,3 +659,53 @@ Deno.test("MFS shared-policy exception uses separately determined family SLCSP",
   assertEquals(form?.total_advance_ptc, 4_800);
   assertEquals(fields(result, "schedule3")?.line9_premium_tax_credit, 2_400);
 });
+
+Deno.test("divorce allocation can report all three agreed percentages", () => {
+  const allocation = {
+    basis: "divorce_agreed",
+    policy_number: "DIV-POLICY-1",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 1,
+    premium_pct: 0.67,
+    slcsp_pct: 0.67,
+    aptc_pct: 0.67,
+  };
+  const result = compute({
+    household_size: 1,
+    taxpayer_modified_agi: 30_000,
+    monthly_premiums: [804, ...Array(11).fill(0)],
+    monthly_slcsps: [1_005, ...Array(11).fill(0)],
+    monthly_aptcs: [536, ...Array(11).fill(0)],
+    shared_policy_allocations: [allocation],
+  });
+  assertEquals(fields(result, "form8962")?.shared_policy_allocations, [
+    allocation,
+  ]);
+  assertEquals(fields(result, "form8962")?.total_advance_ptc, 536);
+});
+
+Deno.test("zero-percent shared allocation still produces Form 8962 Part IV", () => {
+  const allocation = {
+    basis: "other_agreed",
+    policy_number: "OTHER-POLICY-1",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 1,
+    premium_pct: 0,
+    slcsp_pct: 0,
+    aptc_pct: 0,
+  };
+  const result = compute({
+    household_size: 1,
+    taxpayer_modified_agi: 30_000,
+    monthly_premiums: Array(12).fill(0),
+    monthly_slcsps: Array(12).fill(0),
+    monthly_aptcs: Array(12).fill(0),
+    shared_policy_allocations: [allocation],
+  });
+  assertEquals(fields(result, "form8962")?.shared_policy_allocations, [
+    allocation,
+  ]);
+  assertEquals(fields(result, "form8962")?.total_premium_tax_credit, 0);
+});

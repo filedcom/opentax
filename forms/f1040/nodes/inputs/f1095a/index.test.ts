@@ -445,8 +445,8 @@ Deno.test("shared MFS exception allocates half premium and APTC but uses family 
     monthly_premiums: Array(12).fill(1_200),
     monthly_slcsps: Array(12).fill(1_500),
     monthly_aptcs: Array(12).fill(800),
-    shared_mfs_policy: {
-      basis: "exception",
+    shared_policy: {
+      basis: "mfs_exception",
       other_taxpayer_ssn: "222-33-4444",
       start_month: 1,
       end_month: 12,
@@ -475,8 +475,8 @@ Deno.test("shared MFS no-exception allocates only half APTC", () => {
     monthly_premiums: Array(12).fill(1_200),
     monthly_slcsps: Array(12).fill(1_500),
     monthly_aptcs: Array(12).fill(800),
-    shared_mfs_policy: {
-      basis: "no_exception",
+    shared_policy: {
+      basis: "mfs_no_exception",
       other_taxpayer_ssn: "222-33-4444",
       start_month: 1,
       end_month: 12,
@@ -506,8 +506,8 @@ Deno.test("shared MFS source rejects coverage outside allocation and missing fam
     () =>
       compute([minimalItem({
         ...base,
-        shared_mfs_policy: {
-          basis: "no_exception",
+        shared_policy: {
+          basis: "mfs_no_exception",
           other_taxpayer_ssn: "222-33-4444",
           start_month: 1,
           end_month: 6,
@@ -520,8 +520,8 @@ Deno.test("shared MFS source rejects coverage outside allocation and missing fam
     () =>
       compute([minimalItem({
         ...base,
-        shared_mfs_policy: {
-          basis: "exception",
+        shared_policy: {
+          basis: "mfs_exception",
           other_taxpayer_ssn: "222-33-4444",
           start_month: 1,
           end_month: 12,
@@ -531,4 +531,169 @@ Deno.test("shared MFS source rejects coverage outside allocation and missing fam
     Error,
     "coverage-family SLCSP",
   );
+});
+
+Deno.test("divorced taxpayers use the same agreed share for all three policy amounts", () => {
+  const result = compute([minimalItem({
+    policy_number: "DIV-POLICY-1",
+    monthly_premiums: [1_200, ...Array(11).fill(0)],
+    monthly_slcsps: [1_500, ...Array(11).fill(0)],
+    monthly_aptcs: [800, ...Array(11).fill(0)],
+    shared_policy: {
+      basis: "divorce_agreed",
+      divorced_or_legally_separated_in_tax_year: true,
+      shared_during_marriage: true,
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 1,
+      allocation_pct: 0.67,
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals((fields?.monthly_premiums as number[])[0], 804);
+  assertEquals((fields?.monthly_slcsps as number[])[0], 1_005);
+  assertEquals((fields?.monthly_aptcs as number[])[0], 536);
+  assertEquals(fields?.shared_policy_allocations, [{
+    basis: "divorce_agreed",
+    policy_number: "DIV-POLICY-1",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 1,
+    premium_pct: 0.67,
+    slcsp_pct: 0.67,
+    aptc_pct: 0.67,
+  }]);
+});
+
+Deno.test("divorce without agreement uses the statutory 50 percent share", () => {
+  const result = compute([minimalItem({
+    policy_number: "DIVORCE-POLICY-2",
+    monthly_premiums: [1_201, ...Array(11).fill(0)],
+    monthly_slcsps: [1_500, ...Array(11).fill(0)],
+    monthly_aptcs: [801, ...Array(11).fill(0)],
+    shared_policy: {
+      basis: "divorce_no_agreement",
+      divorced_or_legally_separated_in_tax_year: true,
+      shared_during_marriage: true,
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 1,
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals((fields?.monthly_premiums as number[])[0], 601);
+  assertEquals((fields?.monthly_slcsps as number[])[0], 750);
+  assertEquals((fields?.monthly_aptcs as number[])[0], 401);
+  assertEquals(
+    (fields?.shared_policy_allocations as { slcsp_pct: number }[])[0]
+      .slcsp_pct,
+    0.5,
+  );
+});
+
+Deno.test("other shared family agreement preserves a zero-percent Part IV row", () => {
+  const result = compute([minimalItem({
+    policy_number: "OTHER-POLICY-1",
+    monthly_premiums: [1_200, ...Array(11).fill(0)],
+    monthly_slcsps: [1_500, ...Array(11).fill(0)],
+    monthly_aptcs: [800, ...Array(11).fill(0)],
+    shared_policy: {
+      basis: "other_agreed",
+      situations_1_to_3_reviewed_and_inapplicable: true,
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 1,
+      allocation_pct: 0,
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, Array(12).fill(0));
+  assertEquals(fields?.monthly_slcsps, Array(12).fill(0));
+  assertEquals(fields?.monthly_aptcs, Array(12).fill(0));
+  assertEquals(
+    (fields?.shared_policy_allocations as { premium_pct: number }[])[0]
+      .premium_pct,
+    0,
+  );
+});
+
+Deno.test("agreed allocation rejects percentages beyond two decimal places", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        policy_number: "OTHER-POLICY-1",
+        monthly_premiums: Array(12).fill(1_200),
+        monthly_slcsps: Array(12).fill(1_500),
+        monthly_aptcs: Array(12).fill(800),
+        shared_policy: {
+          basis: "other_agreed",
+          situations_1_to_3_reviewed_and_inapplicable: true,
+          other_taxpayer_ssn: "222-33-4444",
+          start_month: 1,
+          end_month: 12,
+          allocation_pct: 0.671,
+        },
+      })]),
+    Error,
+    "two decimal places",
+  );
+});
+
+Deno.test("Situation 3 uses exact family SLCSP ratio for dollars and rounded Part IV percent", () => {
+  const result = compute([minimalItem({
+    policy_number: "NO-APTC-POLICY",
+    monthly_premiums: [15_000, ...Array(11).fill(0)],
+    monthly_aptcs: Array(12).fill(0),
+    shared_policy: {
+      basis: "no_aptc",
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 1,
+      monthly_family_slcsps: [12_000, ...Array(11).fill(0)],
+      monthly_other_family_slcsps: [6_000, ...Array(11).fill(0)],
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals((fields?.monthly_premiums as number[])[0], 10_000);
+  assertEquals((fields?.monthly_slcsps as number[])[0], 12_000);
+  assertEquals(fields?.shared_policy_allocations, [{
+    basis: "no_aptc",
+    policy_number: "NO-APTC-POLICY",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 1,
+    premium_pct: 0.67,
+  }]);
+});
+
+Deno.test("Situation 4 without agreement uses enrollee ratio for dollars", () => {
+  const result = compute([minimalItem({
+    policy_number: "OTHER-POLICY-2",
+    monthly_premiums: [15_000, ...Array(11).fill(0)],
+    monthly_slcsps: [12_000, ...Array(11).fill(0)],
+    monthly_aptcs: [6_000, ...Array(11).fill(0)],
+    shared_policy: {
+      basis: "other_no_agreement",
+      situations_1_to_3_reviewed_and_inapplicable: true,
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 1,
+      allocated_enrollees_in_tax_family: 1,
+      total_enrollees: 3,
+    },
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals((fields?.monthly_premiums as number[])[0], 5_000);
+  assertEquals((fields?.monthly_slcsps as number[])[0], 4_000);
+  assertEquals((fields?.monthly_aptcs as number[])[0], 2_000);
+  assertEquals(fields?.shared_policy_allocations, [{
+    basis: "other_no_agreement",
+    policy_number: "OTHER-POLICY-2",
+    other_taxpayer_ssn: "222334444",
+    start_month: 1,
+    end_month: 1,
+    premium_pct: 0.33,
+    slcsp_pct: 0.33,
+    aptc_pct: 0.33,
+  }]);
 });

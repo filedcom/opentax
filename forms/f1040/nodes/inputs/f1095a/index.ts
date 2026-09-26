@@ -3,6 +3,7 @@ import type { NodeResult } from "../../../../../core/types/tax-node.ts";
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import {
+  allocationPctSchema,
   form8962,
   sharedPolicyAllocationSchema,
 } from "../../intermediate/forms/form8962/index.ts";
@@ -19,19 +20,61 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // IRS Form 8962 Instructions (2025): https://www.irs.gov/instructions/i8962
 
 // Per-item schema — one 1095-A from one Marketplace policy
-const sharedMfsPolicySchema = z.discriminatedUnion("basis", [
+const sharedPolicySchema = z.discriminatedUnion("basis", [
   z.object({
-    basis: z.literal("exception"),
+    basis: z.literal("mfs_exception"),
     other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
     start_month: z.number().int().min(1).max(12),
     end_month: z.number().int().min(1).max(12),
     monthly_family_slcsps: z.array(z.number().nonnegative()).length(12),
   }).strict(),
   z.object({
-    basis: z.literal("no_exception"),
+    basis: z.literal("mfs_no_exception"),
     other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
     start_month: z.number().int().min(1).max(12),
     end_month: z.number().int().min(1).max(12),
+  }).strict(),
+  z.object({
+    basis: z.literal("divorce_agreed"),
+    divorced_or_legally_separated_in_tax_year: z.literal(true),
+    shared_during_marriage: z.literal(true),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+    allocation_pct: allocationPctSchema,
+  }).strict(),
+  z.object({
+    basis: z.literal("divorce_no_agreement"),
+    divorced_or_legally_separated_in_tax_year: z.literal(true),
+    shared_during_marriage: z.literal(true),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+  }).strict(),
+  z.object({
+    basis: z.literal("other_agreed"),
+    situations_1_to_3_reviewed_and_inapplicable: z.literal(true),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+    allocation_pct: allocationPctSchema,
+  }).strict(),
+  z.object({
+    basis: z.literal("no_aptc"),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+    monthly_family_slcsps: z.array(z.number().nonnegative()).length(12),
+    monthly_other_family_slcsps: z.array(z.number().nonnegative()).length(12),
+  }).strict(),
+  z.object({
+    basis: z.literal("other_no_agreement"),
+    situations_1_to_3_reviewed_and_inapplicable: z.literal(true),
+    other_taxpayer_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/),
+    start_month: z.number().int().min(1).max(12),
+    end_month: z.number().int().min(1).max(12),
+    allocated_enrollees_in_tax_family: z.number().int().min(0),
+    total_enrollees: z.number().int().positive(),
   }).strict(),
 ]);
 
@@ -55,7 +98,7 @@ export const itemSchema = z.object({
   annual_premium: z.number().nonnegative().optional(),
   annual_slcsp: z.number().nonnegative().optional(),
   annual_aptc: z.number().nonnegative().optional(),
-  shared_mfs_policy: sharedMfsPolicySchema.optional(),
+  shared_policy: sharedPolicySchema.optional(),
 });
 
 // Node inputSchema — all 1095-A forms for this return
@@ -158,19 +201,62 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
       z.infer<typeof sharedPolicyAllocationSchema>
     > = [];
     const allocatedItems = f1095as.map((item) => {
-      const shared = item.shared_mfs_policy;
+      const shared = item.shared_policy;
       if (!shared) return item;
       if (
         !item.policy_number || !item.monthly_premiums ||
         !item.monthly_aptcs
       ) {
         throw new Error(
-          "Shared MFS Form 1095-A needs policy number and monthly premiums and APTC",
+          "Shared Form 1095-A needs policy number and monthly premiums and APTC",
         );
       }
       if (shared.start_month > shared.end_month) {
-        throw new Error("Shared MFS policy allocation months are reversed");
+        throw new Error("Shared policy allocation months are reversed");
       }
+      const allocatesReportedSlcsp = shared.basis === "divorce_agreed" ||
+        shared.basis === "divorce_no_agreement" ||
+        shared.basis === "other_agreed" ||
+        shared.basis === "other_no_agreement";
+      if (allocatesReportedSlcsp && !item.monthly_slcsps) {
+        throw new Error(
+          "Divorce and other shared policies need monthly SLCSP amounts",
+        );
+      }
+      if (
+        (shared.basis === "other_agreed" ||
+          shared.basis === "other_no_agreement") &&
+        !item.monthly_aptcs.some((amount) => amount > 0)
+      ) {
+        throw new Error(
+          "Shared policy without APTC must use Situation 3 allocation",
+        );
+      }
+      if (
+        shared.basis === "other_no_agreement" &&
+        shared.allocated_enrollees_in_tax_family > shared.total_enrollees
+      ) {
+        throw new Error(
+          "Shared policy allocated enrollees cannot exceed total enrollees",
+        );
+      }
+      if (
+        shared.basis === "no_aptc" &&
+        item.monthly_aptcs.some((amount) => amount > 0)
+      ) {
+        throw new Error("Situation 3 shared policy cannot have APTC");
+      }
+      const premiumRatios = Array<number>(12).fill(0.5);
+      if (
+        shared.basis === "divorce_agreed" || shared.basis === "other_agreed"
+      ) {
+        premiumRatios.fill(shared.allocation_pct);
+      } else if (shared.basis === "other_no_agreement") {
+        premiumRatios.fill(
+          shared.allocated_enrollees_in_tax_family / shared.total_enrollees,
+        );
+      }
+      let noAptcDisplayPct: number | undefined;
       for (let index = 0; index < 12; index++) {
         const month = index + 1;
         if (
@@ -178,11 +264,11 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
           (item.monthly_premiums[index] > 0 || item.monthly_aptcs[index] > 0)
         ) {
           throw new Error(
-            "Shared MFS policy has coverage outside its allocation months",
+            "Shared policy has coverage outside its allocation months",
           );
         }
         if (
-          shared.basis === "exception" &&
+          shared.basis === "mfs_exception" &&
           item.monthly_premiums[index] > 0 &&
           shared.monthly_family_slcsps[index] <= 0
         ) {
@@ -190,28 +276,70 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
             "Shared MFS exception needs the coverage-family SLCSP for each covered month",
           );
         }
+        if (
+          allocatesReportedSlcsp && item.monthly_premiums[index] > 0 &&
+          item.monthly_slcsps![index] <= 0
+        ) {
+          throw new Error(
+            "Divorce and other shared policies need SLCSP for each covered month",
+          );
+        }
+        if (shared.basis === "no_aptc" && item.monthly_premiums[index] > 0) {
+          const familySlcsp = shared.monthly_family_slcsps[index];
+          const otherSlcsp = shared.monthly_other_family_slcsps[index];
+          if (familySlcsp + otherSlcsp <= 0) {
+            throw new Error(
+              "Situation 3 needs both coverage-family SLCSP amounts to allocate premiums",
+            );
+          }
+          premiumRatios[index] = familySlcsp / (familySlcsp + otherSlcsp);
+          const displayPct = Math.round(premiumRatios[index] * 100) / 100;
+          if (
+            noAptcDisplayPct !== undefined &&
+            displayPct !== noAptcDisplayPct
+          ) {
+            throw new Error(
+              "Situation 3 changing percentages need separate Part IV periods",
+            );
+          }
+          noAptcDisplayPct = displayPct;
+        }
       }
+      if (shared.basis === "no_aptc" && noAptcDisplayPct === undefined) {
+        throw new Error("Situation 3 needs a covered month to allocate");
+      }
+      const pct = shared.basis === "no_aptc"
+        ? noAptcDisplayPct!
+        : Math.round(premiumRatios[0] * 100) / 100;
+      const allocatesPremium = shared.basis !== "mfs_no_exception";
+      const allocatesSlcsp = allocatesReportedSlcsp;
+      const allocatesAptc = shared.basis !== "no_aptc";
       sharedAllocations.push(sharedPolicyAllocationSchema.parse({
-        basis: shared.basis === "exception"
-          ? "mfs_exception"
-          : "mfs_no_exception",
+        basis: shared.basis,
         policy_number: item.policy_number.slice(-15),
         other_taxpayer_ssn: shared.other_taxpayer_ssn.replaceAll("-", ""),
         start_month: shared.start_month,
         end_month: shared.end_month,
-        ...(shared.basis === "exception" ? { premium_pct: 0.5 } : {}),
-        aptc_pct: 0.5,
+        ...(allocatesPremium ? { premium_pct: pct } : {}),
+        ...(allocatesSlcsp ? { slcsp_pct: pct } : {}),
+        ...(allocatesAptc ? { aptc_pct: pct } : {}),
       }));
       return {
         ...item,
-        monthly_premiums: item.monthly_premiums.map((amount) =>
-          shared.basis === "exception" ? Math.round(amount / 2) : 0
+        monthly_premiums: item.monthly_premiums.map((amount, index) =>
+          allocatesPremium ? Math.round(amount * premiumRatios[index]) : 0
         ),
-        monthly_slcsps: shared.basis === "exception"
+        monthly_slcsps: shared.basis === "mfs_exception"
           ? shared.monthly_family_slcsps
+          : shared.basis === "no_aptc"
+          ? shared.monthly_family_slcsps
+          : allocatesSlcsp
+          ? item.monthly_slcsps!.map((amount, index) =>
+            Math.round(amount * premiumRatios[index])
+          )
           : Array<number>(12).fill(0),
-        monthly_aptcs: item.monthly_aptcs.map((amount) =>
-          Math.round(amount / 2)
+        monthly_aptcs: item.monthly_aptcs.map((amount, index) =>
+          allocatesAptc ? Math.round(amount * premiumRatios[index]) : 0
         ),
         annual_premium: undefined,
         annual_slcsp: undefined,
@@ -270,7 +398,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     const hasAnnualData = totalAnnualPremium > 0 || totalAnnualSlcsp > 0 ||
       totalAnnualAptc > 0;
 
-    if (!hasMonthlyData && !hasAnnualData) {
+    if (!hasMonthlyData && !hasAnnualData && sharedAllocations.length === 0) {
       return { outputs: [] };
     }
 
@@ -289,7 +417,7 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     if (activeAptcs !== null) form8962Fields.monthly_aptcs = activeAptcs;
     if (
       allocatedItems.every((item) =>
-        !item.shared_mfs_policy &&
+        !item.shared_policy &&
         item.monthly_premiums && item.monthly_slcsps && item.monthly_aptcs &&
         item.monthly_premiums[0] > 0 && item.monthly_slcsps[0] > 0 &&
         item.monthly_premiums.every((amount) =>
