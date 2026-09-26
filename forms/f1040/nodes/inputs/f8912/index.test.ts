@@ -17,7 +17,9 @@ const reported = {
   issue_date: "2009-12-31",
   issuer_name: "Issuer",
   issuer_ein: "123456789",
-  unique_identifier: "bond-1",
+  unique_identifier_code: "O" as const,
+  unique_identifier: "bond1",
+  monthly_credit_amounts: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 100],
   credit_amount: 100,
   purchase_accrued_interest: 0,
   sale_accrued_interest: 0,
@@ -248,6 +250,78 @@ Deno.test("Form 8912: carryforward does not duplicate current-year deemed intere
   );
 });
 
+Deno.test("Form 8912: annual Form 1097-BTC box 1 reconciles to monthly credits", () => {
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{
+        ...reported,
+        monthly_credit_amounts: [0, 0, 25, 0, 0, 25, 0, 0, 25, 0, 0, 25],
+      }],
+    })).success,
+    true,
+  );
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{
+        ...reported,
+        monthly_credit_amounts: Array(12).fill(0),
+      }],
+    })).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{ ...reported, monthly_credit_amounts: [100] }],
+    })).success,
+    false,
+  );
+});
+
+Deno.test("Form 8912: Form 1097-BTC issuer and identifier cannot be claimed twice", () => {
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [reported, { ...reported }],
+    })).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      f8912.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8912s: [
+          item({ unreported_bonds: [] }),
+          item({ unreported_bonds: [] }),
+        ],
+      }),
+    Error,
+    "multiple Form 8912 items",
+  );
+});
+
+Deno.test("Form 8912: Form 1097-BTC box 2b identifier has the IRS length and characters", () => {
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{ ...reported, unique_identifier: "BOND-1" }],
+    })).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{ ...reported, unique_identifier: "A".repeat(40) }],
+    })).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [{
+        ...reported,
+        unique_identifier_code: "C",
+        unique_identifier: "BOND1",
+      }],
+    })).success,
+    false,
+  );
+});
+
 Deno.test("Form 8912: taxable interest stays paired with its bond issuer", () => {
   const parsed = itemSchema.parse(item({
     unreported_bonds: [{ ...unreported, issuer_name: "Other bond issuer" }],
@@ -356,6 +430,7 @@ Deno.test("Form 8912: sale accrued interest reaches Schedule B on a zero-credit 
       reported_bonds: [{
         ...reported,
         credit_amount: 0,
+        monthly_credit_amounts: Array(12).fill(0),
         disposition_date: "2025-10-01",
         sale_accrued_interest: 5,
       }],
@@ -426,6 +501,7 @@ Deno.test("Form 8912: zero-credit sale interest reaches finalized Form 1040 line
       reported_bonds: [{
         ...reported,
         credit_amount: 0,
+        monthly_credit_amounts: Array(12).fill(0),
         disposition_date: "2025-10-01",
         sale_accrued_interest: 5,
       }],
