@@ -127,6 +127,56 @@ Deno.test("f1040: AMT added to line16 for total tax before credits", () => {
   assertEquals(f.line24_total_tax, 12_000);
 });
 
+Deno.test("f1040: Form 8936 new credit is capped at remaining line 18 tax", () => {
+  const input = {
+    line16_income_tax: 5_000,
+    line20_nonrefundable_credits: 7_500,
+    form8936_tentative_new_credit: 7_500,
+    form8936_tentative_used_credit: 0,
+    form8936_priority_personal_credits: 0,
+    form8936_schedule3_line7_tentative: 7_500,
+  };
+  const result = compute(input);
+  const f = result.outputs[0].fields;
+  assertEquals(f.line20_nonrefundable_credits, 5_000);
+  assertEquals(f.line21_credits_total, 5_000);
+  assertEquals(f.line22_tax_after_credits, 0);
+  assertEquals(result.finalizations?.[0].fields, {
+    line6f_total: 5_000,
+    line6m_total: undefined,
+    line7_total: 5_000,
+    line8_total: 5_000,
+  });
+});
+
+Deno.test("f1040: previously owned credit takes priority over new clean vehicle credit", () => {
+  const result = compute({
+    line16_income_tax: 9_000,
+    line20_nonrefundable_credits: 12_500,
+    form8936_tentative_new_credit: 7_500,
+    form8936_tentative_used_credit: 4_000,
+    form8936_priority_personal_credits: 1_000,
+    form8936_schedule3_line7_tentative: 11_500,
+  });
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 9_000);
+  assertEquals(result.finalizations?.[0].fields.line6m_total, 4_000);
+  assertEquals(result.finalizations?.[0].fields.line6f_total, 4_000);
+  assertEquals(result.finalizations?.[0].fields.line7_total, 8_000);
+});
+
+Deno.test("f1040: Form 8936 personal credit is zero when line 18 is zero", () => {
+  const result = compute({
+    line20_nonrefundable_credits: 7_500,
+    form8936_tentative_new_credit: 7_500,
+    form8936_tentative_used_credit: 0,
+    form8936_priority_personal_credits: 0,
+    form8936_schedule3_line7_tentative: 7_500,
+  });
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 0);
+  assertEquals(result.finalizations?.[0].fields.line6f_total, undefined);
+  assertEquals(result.finalizations?.[0].fields.line8_total, undefined);
+});
+
 Deno.test("f1040: child tax credit reduces tax", () => {
   const f = fields({
     line16_income_tax: 5_000,

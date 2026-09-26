@@ -130,6 +130,24 @@ export function execute(
           output.nodeType === step.nodeType,
         );
       }
+      for (const finalized of result.finalizations ?? []) {
+        if (
+          !registry[finalized.nodeType] ||
+          pending[finalized.nodeType] === undefined
+        ) {
+          throw new Error(
+            `Cannot finalize node "${finalized.nodeType}" before it has pending values`,
+          );
+        }
+        mergePending(
+          pending,
+          directInputFields,
+          finalized.nodeType,
+          finalized.fields,
+          false,
+          true,
+        );
+      }
       if (result.carryforwards) {
         Object.assign(carryforwards, result.carryforwards);
       }

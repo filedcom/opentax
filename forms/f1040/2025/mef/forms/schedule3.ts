@@ -16,6 +16,7 @@ export interface Fields {
   line6d_elderly_disabled_credit?: number | null;
   line6f_total?: number | null;
   line6g_mortgage_interest_credit?: number | null;
+  line6i_qualified_electric_vehicle_credit?: number | null;
   line6j_alt_fuel_vehicle_refueling?: number | null;
   line6l_form8978_credit?: number | null;
   line6m_total?: number | null;
@@ -43,6 +44,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line6d_elderly_disabled_credit", "CreditForElderlyOrDisabledAmt"],
   ["line6f_total", "CleanVehPrsnlUsePartCrAmt"],
   ["line6g_mortgage_interest_credit", "MortgageInterestCreditAmt"],
+  ["line6i_qualified_electric_vehicle_credit", "QlfyElecMotorVehCrAmt"],
   ["line6j_alt_fuel_vehicle_refueling", "TotalPersonalUsePartOfCrAmt"],
   ["line6l_form8978_credit", "TotRptgYrTxIncreaseDecreaseAmt"],
   ["line6m_total", "MaxPrevOwnedCleanVehCrAmt"],
@@ -54,7 +56,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line15_total", "TotalOtherPaymentsRfdblCrAmt"],
 ];
 
-function buildIRS1040Schedule3(fields: Input, context?: MefBuildContext): string {
+function buildIRS1040Schedule3(
+  fields: Input,
+  context?: MefBuildContext,
+): string {
   const children: string[] = [];
 
   // Direct mappings
@@ -63,12 +68,16 @@ function buildIRS1040Schedule3(fields: Input, context?: MefBuildContext): string
     if (typeof value !== "number") continue;
     if (key === "line1_total") {
       const form1116Ids = context?.documentIdsByPendingKey?.form_1116 ?? [];
-      children.push(element(tag, value, form1116Ids.length > 0
-        ? {
-          referenceDocumentId: form1116Ids.join(" "),
-          referenceDocumentName: "IRS1116",
-        }
-        : undefined));
+      children.push(element(
+        tag,
+        value,
+        form1116Ids.length > 0
+          ? {
+            referenceDocumentId: form1116Ids.join(" "),
+            referenceDocumentName: "IRS1116",
+          }
+          : undefined,
+      ));
       continue;
     }
     if (key === "line6l_form8978_credit") {
@@ -76,12 +85,16 @@ function buildIRS1040Schedule3(fields: Input, context?: MefBuildContext): string
       if (context?.documentIdsByPendingKey && formIds.length === 0) {
         throw new Error("Schedule 3 line 6l needs attached Forms 8978");
       }
-      children.push(element(tag, value, formIds.length > 0
-        ? {
-          referenceDocumentId: formIds.join(" "),
-          referenceDocumentName: "IRS8978",
-        }
-        : undefined));
+      children.push(element(
+        tag,
+        value,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8978",
+          }
+          : undefined,
+      ));
       continue;
     }
     children.push(element(tag, value));

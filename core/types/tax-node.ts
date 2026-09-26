@@ -13,6 +13,8 @@ export type NodeOutput = {
 // What compute() returns
 export type NodeResult = {
   readonly outputs: readonly NodeOutput[];
+  /** Final filed values for nodes that ran earlier in the graph. These replace, rather than accumulate with, the earlier pending fields. */
+  readonly finalizations?: readonly NodeOutput[];
   // Carryforward amounts to next tax year (key = descriptive label, value = positive amount)
   readonly carryforwards?: Readonly<Record<string, number>>;
 };

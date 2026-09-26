@@ -111,6 +111,11 @@ const inputSchema = z.object({
   line19_child_tax_credit: z.number().nonnegative().optional(),
   // Line 20 — Nonrefundable credits from Schedule 3 Part I
   line20_nonrefundable_credits: z.number().nonnegative().optional(),
+  // Tentative Form 8936 amounts are finalized here after line 18 is known.
+  form8936_tentative_new_credit: z.number().nonnegative().optional(),
+  form8936_tentative_used_credit: z.number().nonnegative().optional(),
+  form8936_priority_personal_credits: z.number().nonnegative().optional(),
+  form8936_schedule3_line7_tentative: z.number().nonnegative().optional(),
   // Line 21 — Sum of 19 + 20
   line21_credits_total: z.number().nonnegative().optional(),
   // Line 22 — Tax after credits (18 - 21)
@@ -227,9 +232,48 @@ function totalTaxBeforeCredits(input: F1040Input): number {
   return (input.line16_income_tax ?? 0) + (input.line17_additional_taxes ?? 0);
 }
 
-function creditsTotal(input: F1040Input): number {
+function creditsTotal(input: F1040Input, schedule3Credits: number): number {
   return (input.line19_child_tax_credit ?? 0) +
-    (input.line20_nonrefundable_credits ?? 0);
+    schedule3Credits;
+}
+
+type CleanVehicleAllowance = {
+  readonly newCredit: number;
+  readonly usedCredit: number;
+  readonly schedule3Credits: number;
+  readonly schedule3Line7: number;
+};
+
+function cleanVehicleAllowance(
+  input: F1040Input,
+): CleanVehicleAllowance | undefined {
+  const tentativeNew = input.form8936_tentative_new_credit ?? 0;
+  const tentativeUsed = input.form8936_tentative_used_credit ?? 0;
+  if (tentativeNew === 0 && tentativeUsed === 0) return undefined;
+  const line18 = totalTaxBeforeCredits(input);
+  const priority = input.form8936_priority_personal_credits;
+  const tentativeLine7 = input.form8936_schedule3_line7_tentative;
+  if (priority === undefined || tentativeLine7 === undefined) {
+    throw new Error("Form 8936 needs Schedule 3 credit-priority totals");
+  }
+  const usedCredit = Math.min(tentativeUsed, Math.max(0, line18 - priority));
+  const newCredit = Math.min(
+    tentativeNew,
+    Math.max(0, line18 - priority - usedCredit),
+  );
+  const reduction = tentativeNew + tentativeUsed - newCredit - usedCredit;
+  const schedule3Credits = (input.line20_nonrefundable_credits ?? 0) -
+    reduction;
+  const schedule3Line7 = tentativeLine7 - reduction;
+  if (schedule3Credits < -0.000001 || schedule3Line7 < -0.000001) {
+    throw new Error("Form 8936 tentative credits exceed Schedule 3 totals");
+  }
+  return {
+    newCredit,
+    usedCredit,
+    schedule3Credits: Math.max(0, schedule3Credits),
+    schedule3Line7: Math.max(0, schedule3Line7),
+  };
 }
 
 function totalWithholding(input: F1040Input): number {
@@ -269,7 +313,10 @@ function assembleReturn(input: F1040Input): Record<string, number> {
     (input.line13b_additional_deductions ?? 0);
   const computed_line15 = taxableIncome(input);
   const computed_line18 = totalTaxBeforeCredits(input);
-  const computed_line21 = creditsTotal(input);
+  const cleanVehicles = cleanVehicleAllowance(input);
+  const computed_line20 = cleanVehicles?.schedule3Credits ??
+    (input.line20_nonrefundable_credits ?? 0);
+  const computed_line21 = creditsTotal(input, computed_line20);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
   const computed_line23 = (input.line23_other_taxes ?? 0) -
     (input.form8978_schedule2_line17z_reduction ?? 0);
@@ -323,6 +370,9 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   result.line12c_deduction_total = deductionAmount(input);
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
+  if (cleanVehicles !== undefined) {
+    result.line20_nonrefundable_credits = computed_line20;
+  }
   if (computed_line25c > 0) result.line25c_total = computed_line25c;
   if ((input.form8978_schedule2_line17z_reduction ?? 0) > 0) {
     // The finalized return line replaces the unadjusted Schedule 2 deposit.
@@ -445,7 +495,27 @@ class F1040Node extends TaxNode<typeof inputSchema> {
   compute(_ctx: NodeContext, rawInput: F1040Input): NodeResult {
     const input = inputSchema.parse(rawInput);
     const assembled = assembleReturn(input);
-    return { outputs: [{ nodeType: this.nodeType, fields: assembled }] };
+    const cleanVehicles = cleanVehicleAllowance(input);
+    return {
+      outputs: [{ nodeType: this.nodeType, fields: assembled }],
+      finalizations: cleanVehicles === undefined ? undefined : [{
+        nodeType: "schedule3",
+        fields: {
+          line6f_total: cleanVehicles.newCredit > 0
+            ? cleanVehicles.newCredit
+            : undefined,
+          line6m_total: cleanVehicles.usedCredit > 0
+            ? cleanVehicles.usedCredit
+            : undefined,
+          line7_total: cleanVehicles.schedule3Line7 > 0
+            ? cleanVehicles.schedule3Line7
+            : undefined,
+          line8_total: cleanVehicles.schedule3Credits > 0
+            ? cleanVehicles.schedule3Credits
+            : undefined,
+        },
+      }],
+    };
   }
 }
 

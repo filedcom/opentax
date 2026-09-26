@@ -32,6 +32,21 @@ Deno.test("validation: all-zero fields produce no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("Schedule 3: sends Form 8936 tentative and priority amounts to Form 1040", () => {
+  const result = compute({
+    line1_foreign_tax_credit: 500,
+    line6i_qualified_electric_vehicle_credit: 200,
+    line6f_clean_vehicle_credit: [3_000, 2_000],
+    line6m_prev_owned_clean_vehicle_credit: 4_000,
+  });
+  const f = fieldsOf(result.outputs, f1040)!;
+  assertEquals(f.form8936_tentative_new_credit, 5_000);
+  assertEquals(f.form8936_tentative_used_credit, 4_000);
+  assertEquals(f.form8936_priority_personal_credits, 700);
+  assertEquals(f.form8936_schedule3_line7_tentative, 9_200);
+  assertEquals(findOutput(result, "schedule3")?.fields.line8_total, 9_700);
+});
+
 // ── Part I — per-field routing ───────────────────────────────────────────────
 
 Deno.test("calc: line1_foreign_tax_credit alone → f1040 line20", () => {
@@ -63,7 +78,10 @@ Deno.test("Schedule 3 line 1 is included once in nonrefundable credits", () => {
 
 Deno.test("Schedule 3 line 6l includes the capped Form 8978 credit", () => {
   const result = compute({ line6l_form8978_credit: 500 });
-  assertEquals(fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits, 500);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
+    500,
+  );
   assertEquals(findOutput(result, "schedule3")?.fields.line8_total, 500);
 });
 
@@ -303,7 +321,10 @@ Deno.test("Schedule 3 keeps new and previously owned clean vehicle credits on li
   assertEquals(schedule?.line6m_total, 5_000);
   assertEquals(schedule?.line7_total, 10_000);
   assertEquals(schedule?.line8_total, 10_000);
-  assertEquals(fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits, 10_000);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
+    10_000,
+  );
 });
 
 Deno.test("Schedule 3 sums GBC producers into a single line 6a", () => {
