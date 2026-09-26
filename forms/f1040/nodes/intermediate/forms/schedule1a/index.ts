@@ -185,10 +185,11 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
 
   compute(ctx: NodeContext, rawInput: Schedule1AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
+    const enhancedSeniorDeduction = seniorDeduction(ctx, input);
     const deduction = qualifiedTipsDeduction(input) +
       qualifiedOvertimeDeduction(input) +
       vehicleLoanInterestDeduction(input) +
-      seniorDeduction(ctx, input);
+      enhancedSeniorDeduction;
     if (deduction === 0) return { outputs: [] };
     return {
       outputs: [
@@ -197,6 +198,7 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
         }),
         this.outputNodes.output(standard_deduction, {
           additional_deductions: deduction,
+          enhanced_senior_deduction: enhancedSeniorDeduction,
         }),
       ],
     };

@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { standard_deduction, inputSchema } from "./index.ts";
+import { inputSchema, standard_deduction } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
@@ -18,31 +18,46 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("Single: base standard deduction $15,750", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 15_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    15_750,
+  );
 });
 
 Deno.test("MFJ: base standard deduction $31,500", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 31_500);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    31_500,
+  );
 });
 
 Deno.test("HOH: base standard deduction $23,625", () => {
   const result = compute({ filing_status: FilingStatus.HOH, agi: 50_000 });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 23_625);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    23_625,
+  );
 });
 
 Deno.test("MFS: base standard deduction $15,750", () => {
   const result = compute({ filing_status: FilingStatus.MFS, agi: 40_000 });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 15_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    15_750,
+  );
 });
 
 Deno.test("QSS: base standard deduction $31,500", () => {
   const result = compute({ filing_status: FilingStatus.QSS, agi: 70_000 });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 31_500);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    31_500,
+  );
 });
 
 // ─── Additional deduction for age/blindness ───────────────────────────────────
@@ -54,7 +69,10 @@ Deno.test("Single 65+: $15,750 + $2,000 = $17,750", () => {
     taxpayer_age_65_or_older: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 17_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    17_750,
+  );
 });
 
 Deno.test("Single blind: $15,750 + $2,000 = $17,750", () => {
@@ -64,7 +82,10 @@ Deno.test("Single blind: $15,750 + $2,000 = $17,750", () => {
     taxpayer_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 17_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    17_750,
+  );
 });
 
 Deno.test("Single 65+ and blind: $15,750 + $4,000 = $19,750", () => {
@@ -75,7 +96,10 @@ Deno.test("Single 65+ and blind: $15,750 + $4,000 = $19,750", () => {
     taxpayer_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 19_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    19_750,
+  );
 });
 
 Deno.test("MFJ both spouses 65+: $31,500 + 2×$1,600 = $34,700", () => {
@@ -86,7 +110,10 @@ Deno.test("MFJ both spouses 65+: $31,500 + 2×$1,600 = $34,700", () => {
     spouse_age_65_or_older: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 34_700);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    34_700,
+  );
 });
 
 Deno.test("MFJ all four factors: $31,500 + 4×$1,600 = $37,900", () => {
@@ -99,7 +126,10 @@ Deno.test("MFJ all four factors: $31,500 + 4×$1,600 = $37,900", () => {
     spouse_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 37_900);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    37_900,
+  );
 });
 
 // Spouse flags should be ignored for Single filers
@@ -111,7 +141,10 @@ Deno.test("Single: spouse flags do not add additional deduction", () => {
     spouse_blind: true,
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 15_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    15_750,
+  );
 });
 
 // ─── Taxable income routing ───────────────────────────────────────────────────
@@ -119,7 +152,10 @@ Deno.test("Single: spouse flags do not add additional deduction", () => {
 Deno.test("Taxable income = AGI − standard deduction", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, number>).taxable_income, 34_250);
+  assertEquals(
+    (incTax!.fields as Record<string, number>).taxable_income,
+    34_250,
+  );
 });
 
 Deno.test("Taxable income = AGI − standard deduction − QBI deduction", () => {
@@ -129,7 +165,10 @@ Deno.test("Taxable income = AGI − standard deduction − QBI deduction", () =>
     qbi_deduction: 5_000,
   });
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, number>).taxable_income, 39_250);
+  assertEquals(
+    (incTax!.fields as Record<string, number>).taxable_income,
+    39_250,
+  );
 });
 
 Deno.test("Taxable income floors at 0 when deductions exceed AGI", () => {
@@ -146,23 +185,79 @@ Deno.test("f1040 line15_taxable_income matches income_tax_calculation taxable_in
     .map((o) => (o.fields as Record<string, number>).line15_taxable_income)
     .find((v) => v !== undefined);
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals(line15, (incTax!.fields as Record<string, number>).taxable_income);
+  assertEquals(
+    line15,
+    (incTax!.fields as Record<string, number>).taxable_income,
+  );
 });
 
 Deno.test("Schedule 1-A additional deductions reduce taxable income", () => {
-  const result = compute({ filing_status: FilingStatus.Single, agi: 30_000, additional_deductions: 5_000 });
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 30_000,
+    additional_deductions: 5_000,
+  });
   const f1040Output = result.outputs.find((output) =>
-    output.nodeType === "f1040" && output.fields.line15_taxable_income !== undefined
+    output.nodeType === "f1040" &&
+    output.fields.line15_taxable_income !== undefined
   );
   const taxOutput = findOutput(result, "income_tax_calculation");
   assertEquals(f1040Output?.fields.line15_taxable_income, 9_250);
   assertEquals(taxOutput?.fields.taxable_income, 9_250);
 });
 
+Deno.test("Form 6251 line 1b adds back only Schedule 1-A senior deduction", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 30_000,
+    additional_deductions: 8_000,
+    enhanced_senior_deduction: 6_000,
+  });
+  const incomeTax = findOutput(result, "income_tax_calculation");
+  assertEquals(incomeTax?.fields.taxable_income, 6_250);
+  assertEquals(incomeTax?.fields.form6251_line1b, 12_250);
+});
+
+Deno.test("Form 6251 line 1b keeps negative income before line 15's zero floor", () => {
+  const result = compute({ filing_status: FilingStatus.Single, agi: 5_000 });
+  const incomeTax = findOutput(result, "income_tax_calculation");
+  assertEquals(incomeTax?.fields.taxable_income, 0);
+  assertEquals(incomeTax?.fields.form6251_line1b, -10_750);
+});
+
+Deno.test("Form 6251 line 2a adds back the standard deduction when it wins", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    itemized_deductions: 10_000,
+    itemized_taxes: 8_000,
+  });
+  assertEquals(
+    findOutput(result, "income_tax_calculation")?.fields.form6251_line2a,
+    15_750,
+  );
+});
+
+Deno.test("Form 6251 line 2a uses Schedule A line 7 when itemizing wins", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    agi: 50_000,
+    itemized_deductions: 25_000,
+    itemized_taxes: 8_000,
+  });
+  assertEquals(
+    findOutput(result, "income_tax_calculation")?.fields.form6251_line2a,
+    8_000,
+  );
+});
+
 Deno.test("income_tax_calculation receives filing_status", () => {
   const result = compute({ filing_status: FilingStatus.MFJ, agi: 80_000 });
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, unknown>).filing_status, FilingStatus.MFJ);
+  assertEquals(
+    (incTax!.fields as Record<string, unknown>).filing_status,
+    FilingStatus.MFJ,
+  );
 });
 
 // ─── Standard vs itemized comparison ─────────────────────────────────────────
@@ -175,10 +270,17 @@ Deno.test("Takes itemized when itemized > standard", () => {
   });
   const f1040 = findOutput(result, "f1040");
   // Should NOT have line12a_standard_deduction
-  assertEquals((f1040!.fields as Record<string, unknown>).line12a_standard_deduction, undefined);
+  assertEquals(
+    (f1040!.fields as Record<string, unknown>).line12a_standard_deduction,
+    undefined,
+  );
+  assertEquals(f1040?.fields.line12e_itemized_deductions, 25_000);
   // Taxable income uses itemized amount
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, number>).taxable_income, 75_000);
+  assertEquals(
+    (incTax!.fields as Record<string, number>).taxable_income,
+    75_000,
+  );
 });
 
 Deno.test("Takes standard when standard >= itemized", () => {
@@ -188,9 +290,16 @@ Deno.test("Takes standard when standard >= itemized", () => {
     itemized_deductions: 10_000, // less than $15,750 standard
   });
   const f1040 = findOutput(result, "f1040");
-  assertEquals((f1040!.fields as Record<string, number>).line12a_standard_deduction, 15_750);
+  assertEquals(
+    (f1040!.fields as Record<string, number>).line12a_standard_deduction,
+    15_750,
+  );
+  assertEquals(f1040?.fields.line12e_itemized_deductions, undefined);
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, number>).taxable_income, 44_250);
+  assertEquals(
+    (incTax!.fields as Record<string, number>).taxable_income,
+    44_250,
+  );
 });
 
 // ─── MFS spouse itemizing rule ────────────────────────────────────────────────
@@ -204,9 +313,15 @@ Deno.test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", (
   });
   const f1040 = findOutput(result, "f1040");
   // No standard deduction line (must itemize)
-  assertEquals((f1040!.fields as Record<string, unknown>).line12a_standard_deduction, undefined);
+  assertEquals(
+    (f1040!.fields as Record<string, unknown>).line12a_standard_deduction,
+    undefined,
+  );
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, number>).taxable_income, 50_000);
+  assertEquals(
+    (incTax!.fields as Record<string, number>).taxable_income,
+    50_000,
+  );
 });
 
 // ─── Output structure ─────────────────────────────────────────────────────────
@@ -214,7 +329,9 @@ Deno.test("MFS spouse itemizing: taxpayer must itemize even if itemized is 0", (
 Deno.test("Standard deduction: produces f1040 and income_tax_calculation outputs", () => {
   const result = compute({ filing_status: FilingStatus.Single, agi: 50_000 });
   const f1040Outputs = result.outputs.filter((o) => o.nodeType === "f1040");
-  const incTaxOutputs = result.outputs.filter((o) => o.nodeType === "income_tax_calculation");
+  const incTaxOutputs = result.outputs.filter((o) =>
+    o.nodeType === "income_tax_calculation"
+  );
   // At least one f1040 output (line12a_standard_deduction + line15_taxable_income)
   assertEquals(f1040Outputs.length, 2);
   assertEquals(incTaxOutputs.length, 1);
@@ -228,9 +345,14 @@ Deno.test("Itemizing: produces f1040 line15 output and income_tax_calculation, n
   });
   const f1040Out = result.outputs.filter((o) => o.nodeType === "f1040");
   const hasLine12a = f1040Out.some(
-    (o) => (o.fields as Record<string, unknown>).line12a_standard_deduction !== undefined,
+    (o) =>
+      (o.fields as Record<string, unknown>).line12a_standard_deduction !==
+        undefined,
   );
   assertEquals(hasLine12a, false);
   const incTax = findOutput(result, "income_tax_calculation");
-  assertEquals((incTax!.fields as Record<string, number>).taxable_income, 80_000);
+  assertEquals(
+    (incTax!.fields as Record<string, number>).taxable_income,
+    80_000,
+  );
 });

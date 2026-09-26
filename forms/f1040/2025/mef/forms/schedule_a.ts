@@ -1,5 +1,5 @@
 import { element, elements } from "../../../mef/xml.ts";
-import type { MefFormDescriptor } from "../form-descriptor.ts";
+import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   line_1_medical?: number | null;
@@ -48,13 +48,27 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_16_other_deductions", "OtherMiscellaneousDedAmt"],
 ];
 
-function buildIRS1040ScheduleA(fields: Input): string {
+function buildIRS1040ScheduleA(
+  fields: Input,
+  context?: MefBuildContext,
+): string {
+  const returnFields = context?.pending?.f1040 as
+    | Record<string, unknown>
+    | undefined;
+  if (
+    returnFields?.line12a_standard_deduction !== undefined &&
+    returnFields.line12e_itemized_deductions === undefined
+  ) {
+    return "";
+  }
   // Combine the mutually exclusive line 5a fields into a single XSD element.
   // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
-  const line5a = (fields.line_5a_state_income_tax ?? 0) + (fields.line_5a_sales_tax ?? 0);
-  const hasDeduction = FIELD_MAP.some(([key]) =>
-    key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
-  ) || line5a !== 0;
+  const line5a = (fields.line_5a_state_income_tax ?? 0) +
+    (fields.line_5a_sales_tax ?? 0);
+  const hasDeduction =
+    FIELD_MAP.some(([key]) =>
+      key !== "agi" && typeof fields[key] === "number" && fields[key] !== 0
+    ) || line5a !== 0;
   if (!hasDeduction) return "";
 
   // Elements must follow the XSD sequence order defined in IRS1040ScheduleA.xsd:
@@ -87,7 +101,7 @@ export const scheduleA: MefFormDescriptor<"schedule_a", Input> = {
   pendingKey: "schedule_a",
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f1040sa.pdf",
-  build(fields) {
-    return buildIRS1040ScheduleA(fields);
+  build(fields, context) {
+    return buildIRS1040ScheduleA(fields, context);
   },
 };

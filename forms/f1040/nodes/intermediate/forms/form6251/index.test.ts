@@ -4,7 +4,10 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form6251.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form6251.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 // ─── No AMT owed (AMT < regular tax) ─────────────────────────────────────────
@@ -19,6 +22,20 @@ Deno.test("form6251: no output when AMT is less than regular tax", () => {
     regular_tax: 10_000,
   });
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("form6251: Form 8911 claim files the form with zero AMT", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 80_000,
+    line2a_taxes_paid: 15_750,
+    regular_tax: 10_000,
+    must_file_for_credit: true,
+  });
+  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs[0].nodeType, "form6251");
+  assertEquals(result.outputs[0].fields.line11_amt, 0);
+  assertEquals(result.outputs[0].fields.must_file_for_credit, true);
 });
 
 Deno.test("form6251: no output when tentative minimum tax equals regular tax", () => {
@@ -58,6 +75,63 @@ Deno.test("form6251: AMT owed with ISO adjustment", () => {
     regular_tax: 25_000,
   });
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 17_094);
+});
+
+Deno.test("form6251: Part III zero-rate gain uses regular-tax worksheet line 5", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 20_000,
+    regular_taxable_income: 20_000,
+    iso_adjustment: 180_000,
+    qualified_dividends: 10_000,
+    regular_tax: 5_000,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.line12, 111_900);
+  assertEquals(filed?.fields.line13, 10_000);
+  assertEquals(filed?.fields.line20, 10_000);
+  assertEquals(filed?.fields.line21, 38_350);
+  assertEquals(filed?.fields.line23, 10_000);
+  assertEquals(filed?.fields.line31, 0);
+  assertEquals(filed?.fields.line40, 26_494);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 21_494);
+});
+
+Deno.test("form6251: Part III Schedule D branch handles 25% and 28% gain", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 200_000,
+    regular_taxable_income: 200_000,
+    qualified_dividends: 1_000,
+    net_capital_gain: 50_000,
+    unrecaptured_1250_gain: 10_000,
+    rate_28_gain: 5_000,
+    regular_tax: 10_000,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.line13, 36_000);
+  assertEquals(filed?.fields.line14, 10_000);
+  assertEquals(filed?.fields.line15, 46_000);
+  assertEquals(filed?.fields.line20, 164_000);
+  assertEquals(filed?.fields.line27, 164_000);
+  assertEquals(filed?.fields.line37, 2_500);
+  assertEquals(filed?.fields.line40, 25_034);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.line2_amt, 15_034);
+});
+
+Deno.test("form6251: Form 2555 requires its AMT foreign-earned-income worksheet", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: "single",
+        regular_tax_income: 200_000,
+        regular_taxable_income: 200_000,
+        regular_tax: 10_000,
+        foreign_earned_income_exclusion: 100_000,
+      }),
+    Error,
+    "Foreign Earned Income Tax Worksheet",
+  );
 });
 
 Deno.test("form6251: AMT owed with depreciation adjustment", () => {
@@ -267,14 +341,13 @@ Deno.test("form6251: throws on invalid filing_status", () => {
   });
 });
 
-Deno.test("form6251: throws on negative regular_tax_income", () => {
-  assertThrows(() => {
-    compute({
-      filing_status: "single",
-      regular_tax_income: -1,
-      regular_tax: 0,
-    });
+Deno.test("form6251: signed line 1b can be negative", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: -1,
+    regular_tax: 0,
   });
+  assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("form6251: throws on negative regular_tax", () => {
@@ -321,7 +394,7 @@ Deno.test("form6251: both PAB fields set to same value — no double-count", () 
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 19_294);
 });
 
-Deno.test("form6251: routes exactly one output to schedule2", () => {
+Deno.test("form6251: routes AMT to Schedule 2 and its filed form", () => {
   // Single: AMTI = $250,000; exemption = $88,100; line6 = $161,900
   // TMT = $42,094; regular_tax = $20,000; AMT = $22,094
   const result = compute({
@@ -329,7 +402,12 @@ Deno.test("form6251: routes exactly one output to schedule2", () => {
     regular_tax_income: 250_000,
     regular_tax: 20_000,
   });
-  assertEquals(result.outputs.length, 1);
+  assertEquals(result.outputs.length, 2);
   assertEquals(result.outputs[0].nodeType, "schedule2");
   assertEquals(fieldsOf(result.outputs, schedule2)!.line2_amt, 22_094);
+  assertEquals(result.outputs[1].nodeType, "form6251");
+  assertEquals(result.outputs[1].fields.line11_amt, 22_094);
+  assertEquals(result.outputs[1].fields.amti, 250_000);
+  assertEquals(result.outputs[1].fields.exemption, 88_100);
+  assertEquals(result.outputs[1].fields.taxable_excess, 161_900);
 });

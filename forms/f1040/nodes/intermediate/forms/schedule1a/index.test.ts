@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule1a } from "./index.ts";
+import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus } from "../../../types.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" } as const;
@@ -261,6 +262,19 @@ Deno.test("schedule1a: senior deduction is $6,000 per eligible joint filer", () 
     }),
     12_000,
   );
+});
+
+Deno.test("schedule1a: routes the enhanced senior amount separately for AMT", () => {
+  const result = schedule1a.compute(ctx, {
+    taxpayer_age_65_or_older: true,
+    taxpayer_has_valid_ssn: true,
+    taxpayer_qualified_overtime_compensation: 2_000,
+    magi: 50_000,
+    filing_status: FilingStatus.Single,
+  });
+  const deductionFields = fieldsOf(result.outputs, standard_deduction);
+  assertEquals(deductionFields?.additional_deductions, 8_000);
+  assertEquals(deductionFields?.enhanced_senior_deduction, 6_000);
 });
 
 Deno.test("schedule1a: senior phaseout is calculated per eligible person", () => {

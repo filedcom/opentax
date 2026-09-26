@@ -7,6 +7,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 
 // Form 8911 (2025) takes a separate Schedule A for each property. The current
 // MeF v3.0 package has no Schedule A (Form 8911) XML element, so this node
@@ -119,16 +120,21 @@ export function computePersonalCreditAmounts(
 class F8911Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8911";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251]);
 
   compute(_ctx: NodeContext, rawInput: F8911Input): NodeResult {
     const amounts = computePersonalCreditAmounts(rawInput);
-    const outputs: NodeOutput[] = amounts?.allowedCredit
-      ? [{
-        nodeType: schedule3.nodeType,
-        fields: { line6j_alt_fuel_vehicle_refueling: amounts.allowedCredit },
-      }]
-      : [];
+    const outputs: NodeOutput[] = [];
+    if (amounts) {
+      if (amounts.allowedCredit > 0) {
+        outputs.push(this.outputNodes.output(schedule3, {
+          line6j_alt_fuel_vehicle_refueling: amounts.allowedCredit,
+        }));
+      }
+      outputs.push(this.outputNodes.output(form6251, {
+        must_file_for_credit: true,
+      }));
+    }
     return { outputs };
   }
 }

@@ -12,6 +12,41 @@ export interface Fields {
   line2a_taxes_paid?: number | null;
   other_adjustments?: number | null;
   amtftc?: number | null;
+  amti?: number | null;
+  exemption?: number | null;
+  taxable_excess?: number | null;
+  tentative_tax?: number | null;
+  net_tmt?: number | null;
+  line11_amt?: number | null;
+  must_file_for_credit?: boolean | null;
+  line12?: number | null;
+  line13?: number | null;
+  line14?: number | null;
+  line15?: number | null;
+  line16?: number | null;
+  line17?: number | null;
+  line18?: number | null;
+  line19?: number | null;
+  line20?: number | null;
+  line21?: number | null;
+  line22?: number | null;
+  line23?: number | null;
+  line24?: number | null;
+  line25?: number | null;
+  line27?: number | null;
+  line28?: number | null;
+  line29?: number | null;
+  line30?: number | null;
+  line31?: number | null;
+  line32?: number | null;
+  line33?: number | null;
+  line34?: number | null;
+  line35?: number | null;
+  line36?: number | null;
+  line37?: number | null;
+  line38?: number | null;
+  line39?: number | null;
+  line40?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -37,16 +72,51 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["iso_adjustment", "IncentiveStockOptionsAmt"],
   ["depreciation_adjustment", "DepreciationAmt"],
   ["other_adjustments", "RelatedAdjustmentAmt"],
+  ["amti", "AlternativeMinTaxableIncomeAmt"],
+  ["exemption", "AlternativeMinimumTaxExemptAmt"],
+  ["taxable_excess", "AdjAlternativeMinTaxableIncAmt"],
+  ["tentative_tax", "TaxOnAltMinTaxableIncAmt"],
   ["amtftc", "AMTForeignTaxCreditAmt"],
+  ["net_tmt", "TentativeAlternativeMinTaxAmt"],
   ["regular_tax", "AdjustedRegularTaxAmt"],
+  ["line11_amt", "AlternativeMinimumTaxAmt"],
+  ["line12", "ReportedAltMinTaxableIncAmt"],
+  ["line13", "CapitalGainsWorksheetAmt"],
+  ["line14", "UnrecapturedSection1250GainAmt"],
+  ["line15", "SumPlusUnrecapturedSect1250Amt"],
+  ["line16", "SmallerOfAltMinTxblIncOrSumAmt"],
+  ["line17", "AdjAltMinTaxableIncLessGainAmt"],
+  ["line18", "NetAdjAltMinTxblIncTimesPctAmt"],
+  ["line19", "FilingStatusLimitAmt"],
+  ["line20", "IncomeAboveThresholdWorkshtAmt"],
+  ["line21", "FSAmtLessIncAboveThresholdAmt"],
+  ["line22", "SmllrOfAdjustedAltMinOrSchDAmt"],
+  ["line23", "SmllrAbvThrshldOrAltMinGainAmt"],
+  ["line24", "SmllrNetAdjAltMinOrNetGainAmt"],
+  ["line25", "FilingThresholdAmt"],
+  ["line27", "ApplcblCapGainsOrSchDWrkshtAmt"],
+  ["line28", "SumThresholdApplcblWrkshtAmt"],
+  ["line29", "FlngThrshldLessThesholdSumAmt"],
+  ["line30", "SmllrAdjNetGainOrTxblIncAmt"],
+  ["line31", "NetAltMinTaxableIncTimesPctAmt"],
+  ["line32", "SumOfSmllrAmt"],
+  ["line33", "ExcessOfSumAmt"],
+  ["line34", "ExcessOfSumTimesPctAmt"],
+  ["line35", "TotalNetAmt"],
+  ["line36", "NetSmallerSchDOrAdjNetGainAmt"],
+  ["line37", "NetSchDOrAdjNetGainTimesPctAmt"],
+  ["line38", "SumOfAltMinTaxPercentagesAmt"],
+  ["line39", "NetAltMinTxblIncTimesFSPctAmt"],
+  ["line40", "TaxOnAlternativeMinimumGainAmt"],
 ];
 
 function buildIRS6251(fields: Input): string {
-  const hasAmtReason = FIELD_MAP.some(([key]) =>
-    key !== "regular_tax_income" && key !== "regular_tax" &&
-    typeof fields[key] === "number" && fields[key] !== 0
-  );
-  if (!hasAmtReason) return "";
+  if (
+    (typeof fields.line11_amt !== "number" || fields.line11_amt <= 0) &&
+    fields.must_file_for_credit !== true
+  ) {
+    return "";
+  }
   const children = FIELD_MAP.map(([key, tag]) => {
     const value = fields[key];
     if (typeof value !== "number") return "";

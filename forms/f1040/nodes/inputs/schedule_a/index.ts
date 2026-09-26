@@ -5,8 +5,6 @@ import type {
 } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { f1040 } from "../../outputs/f1040/index.ts";
-import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { standard_deduction } from "../../intermediate/worksheets/standard_deduction/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import { form4952, calculateInvestmentInterest } from "../../intermediate/forms/form4952/index.ts";
@@ -92,14 +90,19 @@ export const inputSchema = z.object({
 type ScheduleAInput = z.infer<typeof inputSchema>;
 
 function computeMedicalDeduction(input: ScheduleAInput, agi: number): number {
-  return Math.max(0, (input.line_1_medical ?? 0) - Math.max(0, agi) * MEDICAL_AGI_FLOOR_PCT);
+  return Math.max(
+    0,
+    (input.line_1_medical ?? 0) - Math.max(0, agi) * MEDICAL_AGI_FLOOR_PCT,
+  );
 }
 
 function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
   const isMfs = input.filing_status === FilingStatus.MFS;
   const baseCap = isMfs ? cfg.saltCap / 2 : cfg.saltCap;
   const floor = isMfs ? cfg.saltFloorMfs : cfg.saltFloor;
-  const threshold = isMfs ? cfg.saltPhaseoutThresholdMfs : cfg.saltPhaseoutThreshold;
+  const threshold = isMfs
+    ? cfg.saltPhaseoutThresholdMfs
+    : cfg.saltPhaseoutThreshold;
   const magi = input.agi ?? 0;
   if (magi <= threshold) return baseCap;
   const reduction = (magi - threshold) * cfg.saltPhaseoutRate;
@@ -108,7 +111,8 @@ function effectiveSaltCap(input: ScheduleAInput, cfg: F1040Config): number {
 
 function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   // line_5a is either state income tax or sales tax (election) — never both (validated in schema)
-  const line5a = (input.line_5a_state_income_tax ?? 0) + (input.line_5a_sales_tax ?? 0);
+  const line5a = (input.line_5a_state_income_tax ?? 0) +
+    (input.line_5a_sales_tax ?? 0);
   const saltTotal = line5a +
     (input.line_5b_real_estate_tax ?? 0) +
     (input.line_5c_personal_property_tax ?? 0);
@@ -165,7 +169,7 @@ function computeContributions(input: ScheduleAInput, agi: number): number {
 class ScheduleANode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "schedule_a";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form6251, standard_deduction, form4952, income_tax_calculation]);
+  readonly outputNodes = new OutputNodes([standard_deduction]);
 
   compute(ctx: NodeContext, input: ScheduleAInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -195,37 +199,10 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
       (input.line_16_other_deductions ?? 0);
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(f1040, { line12e_itemized_deductions: totalItemized }),
-      ...(expense + priorYear > 0 ? [this.outputNodes.output(form4952, {
-        investment_interest_expense: expense,
-        net_investment_income: netIncome,
-        investment_income: grossInvestmentIncome,
-        prior_year_carryforward: priorYear,
-        gross_investment_income: sumAmounts(input.investment_interest_taxable_interest) +
-          sumAmounts(input.investment_interest_ordinary_dividends),
-        qualified_dividends: sumAmounts(input.investment_interest_qualified_dividends),
-        investment_net_gain: input.investment_net_gain ?? 0,
-        investment_net_capital_gain: Math.min(input.investment_net_gain ?? 0, input.investment_net_capital_gain ?? 0),
-        elected_qualified_dividends: input.elected_qualified_dividends ?? 0,
-        elected_net_capital_gain: input.elected_net_capital_gain ?? 0,
-        investment_expenses: input.investment_expenses ?? 0,
-      })] : []),
-      ...((input.elected_qualified_dividends ?? 0) + (input.elected_net_capital_gain ?? 0) > 0
-        ? [this.outputNodes.output(income_tax_calculation, {
-          form4952_elected_qualified_dividends: input.elected_qualified_dividends ?? 0,
-          form4952_elected_net_capital_gain: input.elected_net_capital_gain ?? 0,
-        })] : []),
-      ...(expense + priorYear > 0 ? [{ nodeType: this.nodeType, fields: {
-        line_9_investment_interest: allowed,
-      } }] : []),
-      // Feed standard_deduction node so it can compare standard vs itemized
       this.outputNodes.output(standard_deduction, {
         itemized_deductions: totalItemized,
-        investment_interest_for_niit: allowed,
-        niit_allocable_state_local_tax: niitTax,
+        itemized_taxes: taxesTotal,
       }),
-      // AMT addback: taxes paid total (Line 7) flows to Form 6251 Line 2a
-      ...(taxesTotal > 0 ? [this.outputNodes.output(form6251, { line2a_taxes_paid: taxesTotal })] : []),
     ];
     return { outputs };
   }

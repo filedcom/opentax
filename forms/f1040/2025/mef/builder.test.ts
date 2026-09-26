@@ -1145,9 +1145,13 @@ Deno.test("IRS8995A absent when form8995a missing from pending", () => {
   assertNotIncludes(xml, "<IRS8995A>");
 });
 
-Deno.test("IRS6251 present when form6251 has data", () => {
+Deno.test("IRS6251 present when calculated AMT is positive", () => {
   const xml = buildMefXml({
-    form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
+    form6251: {
+      regular_tax_income: 80000,
+      iso_adjustment: 5000,
+      line11_amt: 100,
+    },
   });
   assertStringIncludes(xml, "<IRS6251 ");
 });
@@ -1247,7 +1251,11 @@ Deno.test("documentCnt=28 when all currently serializable forms have data", () =
     form8995: { qbi: 50000, qbi_deduction: 10000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
-    form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
+    form6251: {
+      regular_tax_income: 80000,
+      iso_adjustment: 5000,
+      line11_amt: 100,
+    },
     form5329: { early_distribution: 5000 },
     form8853: { employer_archer_msa: 3650 },
     form_8829: { mortgage_interest: 12000 },
@@ -1301,7 +1309,11 @@ Deno.test("all 28 serializable forms populated: XML contains their document tags
     form8995: { qbi: 50000, qbi_deduction: 10000 },
     form4562: { section_179_deduction: 10000 },
     form8995a: { qbi: 75000 },
-    form6251: { regular_tax_income: 80000, iso_adjustment: 5000 },
+    form6251: {
+      regular_tax_income: 80000,
+      iso_adjustment: 5000,
+      line11_amt: 100,
+    },
     form5329: { early_distribution: 5000 },
     form8853: { employer_archer_msa: 3650 },
     form_8829: { mortgage_interest: 12000 },

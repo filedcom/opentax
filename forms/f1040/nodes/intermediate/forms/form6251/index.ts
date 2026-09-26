@@ -19,14 +19,14 @@ export const inputSchema = z.object({
   // Filing status determines exemption amounts and rate bracket thresholds
   filing_status: z.nativeEnum(FilingStatus),
 
-  // Regular taxable income (approximately Form 1040 line 15).
-  // This is the base AMTI before adjustments and preference items.
-  // IRC §55(b)(2); Form 6251 Line 1
-  regular_tax_income: z.number().nonnegative(),
+  // Signed Form 6251 line 1b: AGI minus Form 1040 line 14 after removing
+  // Schedule 1-A line 37. This is not the floored Form 1040 line 15 amount.
+  regular_tax_income: z.number(),
+  regular_taxable_income: z.number().nonnegative().optional(),
 
-  // Regular tax liability for AMT comparison.
-  // Form 1040 line 16 minus any Form 4972 tax on lump-sum distributions.
-  // IRC §55(c)(1); Form 6251 Line 10
+  // Current Form 6251 line 10 input starts with Form 1040 line 16.
+  // Form 4972, Schedule 2 line 1z, Schedule 3 line 1, and Form 8978
+  // adjustments still need source routing before line 10 is complete.
   regular_tax: z.number().nonnegative(),
 
   // Line 2i — ISO exercise adjustment.
@@ -71,11 +71,18 @@ export const inputSchema = z.object({
   // IRC §59(a); Form 6251 Line 8
   amtftc: z.number().nonnegative().optional(),
 
+  // IRS filing instruction: a claimed personal-use Form 8911 credit requires
+  // Form 6251 even when the final AMT amount is zero.
+  must_file_for_credit: z.boolean().optional(),
+
   // AMT QDCGT inputs (IRC §55(b)(3)) — same preferential 0%/15%/20% rates
   // apply for AMT purposes, preventing over-taxation of investment income.
   // Routed from income_tax_calculation alongside regular_tax_income.
   qualified_dividends: z.number().nonnegative().optional(),
   net_capital_gain: z.number().nonnegative().optional(),
+  unrecaptured_1250_gain: z.number().nonnegative().optional(),
+  rate_28_gain: z.number().nonnegative().optional(),
+  foreign_earned_income_exclusion: z.number().nonnegative().optional(),
 });
 
 type Form6251Input = z.infer<typeof inputSchema>;
@@ -92,7 +99,10 @@ function computeAmti(input: Form6251Input): number {
     (input.iso_adjustment ?? 0) +
     (input.depreciation_adjustment ?? 0) +
     (input.nol_adjustment ?? 0) +
-    Math.max(input.private_activity_bond_interest ?? 0, input.line2g_pab_interest ?? 0) +
+    Math.max(
+      input.private_activity_bond_interest ?? 0,
+      input.line2g_pab_interest ?? 0,
+    ) +
     (input.qsbs_adjustment ?? 0) +
     (input.other_adjustments ?? 0)
   );
@@ -135,8 +145,12 @@ function computeTentativeMinimumTax(
   adjustmentMfs: number,
 ): number {
   if (taxableExcess === 0) return 0;
-  const threshold = status === FilingStatus.MFS ? thresholdMfs : thresholdStandard;
-  const adjustment = status === FilingStatus.MFS ? adjustmentMfs : adjustmentStandard;
+  const threshold = status === FilingStatus.MFS
+    ? thresholdMfs
+    : thresholdStandard;
+  const adjustment = status === FilingStatus.MFS
+    ? adjustmentMfs
+    : adjustmentStandard;
   if (taxableExcess <= threshold) {
     return Math.floor(taxableExcess * 0.26);
   }
@@ -156,13 +170,67 @@ function computeAmt(netTmt: number, regularTax: number): number {
   return Math.max(0, netTmt - regularTax);
 }
 
-// AMT QDCGT worksheet (IRC §55(b)(3)): applies 0%/15%/20% preferential rates
-// to qualified dividends and net capital gain within AMTI, instead of 26%/28%.
-// Uses the same thresholds as the regular QDCGT worksheet.
-function computeTmtWithQdcgt(
-  taxableExcess: number,
+// Form 6251 Part III lines 13–15, 20, and 27 draw from either the QDCGT
+// Worksheet or the Schedule D Tax Worksheet used for regular tax.
+function partThreeWorksheetInputs(
+  regularTaxableIncome: number,
   qualDividends: number,
   netCapGain: number,
+  unrecaptured1250: number,
+  rate28Gain: number,
+  status: FilingStatus,
+): {
+  line13: number;
+  line14: number;
+  line15: number;
+  line20: number;
+  line27: number;
+} {
+  const worksheetLine10 = qualDividends + netCapGain;
+  const useScheduleD = netCapGain > 0 &&
+    (unrecaptured1250 > 0 || rate28Gain > 0);
+  if (!useScheduleD) {
+    const regularWorksheetLine5 = Math.max(
+      0,
+      regularTaxableIncome - worksheetLine10,
+    );
+    return {
+      line13: worksheetLine10,
+      line14: 0,
+      line15: worksheetLine10,
+      line20: regularWorksheetLine5,
+      line27: regularWorksheetLine5,
+    };
+  }
+
+  // Schedule D Tax Worksheet lines 10–14 and 18–21. A positive Form 4952
+  // line 4g election must be handled separately before reaching this path.
+  const scheduleDLine9 = netCapGain;
+  const scheduleDLine11 = rate28Gain + unrecaptured1250;
+  const scheduleDLine12 = Math.min(scheduleDLine9, scheduleDLine11);
+  const scheduleDLine13 = worksheetLine10 - scheduleDLine12;
+  const scheduleDLine14 = Math.max(0, regularTaxableIncome - scheduleDLine13);
+  const scheduleDLine18 = Math.max(0, regularTaxableIncome - worksheetLine10);
+  const limit = status === FilingStatus.MFJ || status === FilingStatus.QSS
+    ? 394_600
+    : 197_300;
+  const scheduleDLine19 = Math.min(regularTaxableIncome, limit);
+  const scheduleDLine20 = Math.min(scheduleDLine14, scheduleDLine19);
+  const scheduleDLine21 = Math.max(scheduleDLine18, scheduleDLine20);
+  return {
+    line13: scheduleDLine13,
+    line14: unrecaptured1250,
+    line15: Math.min(scheduleDLine13 + unrecaptured1250, worksheetLine10),
+    line20: regularTaxableIncome > 0 ? scheduleDLine14 : 0,
+    line27: regularTaxableIncome > 0 ? scheduleDLine21 : 0,
+  };
+}
+
+// 2025 Form 6251 Part III, using the worksheet amounts above for both the
+// regular QDCGT and Schedule D Tax Worksheet branches.
+function computePartThree(
+  taxableExcess: number,
+  worksheet: ReturnType<typeof partThreeWorksheetInputs>,
   status: FilingStatus,
   zeroCeilingMap: Record<FilingStatus, number>,
   twentyFloorMap: Record<FilingStatus, number>,
@@ -170,38 +238,72 @@ function computeTmtWithQdcgt(
   thresholdMfs: number,
   adjustmentStandard: number,
   adjustmentMfs: number,
-): number {
-  const prefIncome = Math.min(qualDividends + netCapGain, taxableExcess);
-  if (prefIncome <= 0) {
-    return computeTentativeMinimumTax(
-      taxableExcess, status,
-      thresholdStandard, thresholdMfs, adjustmentStandard, adjustmentMfs,
-    );
-  }
-
-  const ordinary = taxableExcess - prefIncome;
-  const zeroCeiling = zeroCeilingMap[status];
-  const twentyFloor = twentyFloorMap[status];
-
-  const inZero = Math.max(0, Math.min(taxableExcess, zeroCeiling) - ordinary);
-  const remaining = prefIncome - inZero;
-  const availFifteen = Math.max(0, twentyFloor - Math.max(ordinary, zeroCeiling));
-  const inFifteen = Math.min(remaining, availFifteen);
-  const inTwenty = remaining - inFifteen;
-
-  const prefTax = Math.floor(inFifteen * 0.15 + inTwenty * 0.20);
-  const ordTax = computeTentativeMinimumTax(
-    ordinary, status,
-    thresholdStandard, thresholdMfs, adjustmentStandard, adjustmentMfs,
-  );
-
-  return Math.min(
-    prefTax + ordTax,
+): Record<string, number> {
+  const line12 = taxableExcess;
+  const { line13, line14, line15, line20, line27 } = worksheet;
+  const line16 = Math.min(line12, line15);
+  const line17 = line12 - line16;
+  const amtOrdinaryTax = (income: number) =>
     computeTentativeMinimumTax(
-      taxableExcess, status,
-      thresholdStandard, thresholdMfs, adjustmentStandard, adjustmentMfs,
-    ),
-  );
+      income,
+      status,
+      thresholdStandard,
+      thresholdMfs,
+      adjustmentStandard,
+      adjustmentMfs,
+    );
+  const line18 = amtOrdinaryTax(line17);
+  const line19 = zeroCeilingMap[status];
+  const line21 = Math.max(0, line19 - line20);
+  const line22 = Math.min(line12, line13);
+  const line23 = Math.min(line21, line22);
+  const line24 = line22 - line23;
+  const line25 = twentyFloorMap[status];
+  const line26 = line21;
+  const line28 = line26 + line27;
+  const line29 = Math.max(0, line25 - line28);
+  const line30 = Math.min(line24, line29);
+  const line31 = Math.floor(line30 * 0.15);
+  const line32 = line23 + line30;
+  const line33 = line22 - line32;
+  const line34 = Math.floor(line33 * 0.20);
+  const line35 = line17 + line32 + line33;
+  const line36 = line12 - line35;
+  const line37 = Math.floor(line36 * 0.25);
+  const line38 = line18 + line31 + line34 + (line14 > 0 ? line37 : 0);
+  const line39 = amtOrdinaryTax(line12);
+  const line40 = Math.min(line38, line39);
+  const additionalRateLinesApply = line32 !== line12;
+  return {
+    line12,
+    line13,
+    ...(line14 > 0 ? { line14 } : {}),
+    line15,
+    line16,
+    line17,
+    line18,
+    line19,
+    line20,
+    line21,
+    line22,
+    line23,
+    line24,
+    line25,
+    line26,
+    line27,
+    line28,
+    line29,
+    line30,
+    line31,
+    line32,
+    ...(additionalRateLinesApply ? { line33, line34 } : {}),
+    ...(additionalRateLinesApply && line14 > 0
+      ? { line35, line36, line37 }
+      : {}),
+    line38,
+    line39,
+    line40,
+  };
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -222,29 +324,59 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
 
     // Part II — Exemption (Line 5)
     const exemption = computeExemption(
-      amti, input.filing_status,
-      cfg.amtExemption, cfg.amtPhaseOutStart,
+      amti,
+      input.filing_status,
+      cfg.amtExemption,
+      cfg.amtPhaseOutStart,
     );
 
     // Line 6 — Taxable excess
     const taxableExcess = computeTaxableExcess(amti, exemption);
 
-    // Line 7 — Tentative Minimum Tax
-    // Apply QDCGT preferential rates when qualified dividends / LTCG present
+    // Line 7 and Part III — use the IRS worksheet when preferential income is present.
     const qualDiv = input.qualified_dividends ?? 0;
     const netCg = input.net_capital_gain ?? 0;
-    const tmt = (qualDiv > 0 || netCg > 0)
-      ? computeTmtWithQdcgt(
-          taxableExcess, qualDiv, netCg, input.filing_status,
-          cfg.qdcgtZeroCeiling, cfg.qdcgtTwentyFloor,
-          cfg.amtBracket26ThresholdStandard, cfg.amtBracket26ThresholdMfs,
-          cfg.amtBracketAdjustmentStandard, cfg.amtBracketAdjustmentMfs,
-        )
-      : computeTentativeMinimumTax(
-          taxableExcess, input.filing_status,
-          cfg.amtBracket26ThresholdStandard, cfg.amtBracket26ThresholdMfs,
-          cfg.amtBracketAdjustmentStandard, cfg.amtBracketAdjustmentMfs,
-        );
+    if ((input.foreign_earned_income_exclusion ?? 0) > 0) {
+      throw new Error(
+        "Form 6251 with Form 2555 requires the Foreign Earned Income Tax Worksheet",
+      );
+    }
+    if (
+      taxableExcess > 0 && (qualDiv > 0 || netCg > 0) &&
+      input.regular_taxable_income === undefined
+    ) {
+      throw new Error(
+        "Form 6251 Part III requires Form 1040 line 15 taxable income",
+      );
+    }
+    const partThree = taxableExcess > 0 && (qualDiv > 0 || netCg > 0)
+      ? computePartThree(
+        taxableExcess,
+        partThreeWorksheetInputs(
+          input.regular_taxable_income!,
+          qualDiv,
+          netCg,
+          input.unrecaptured_1250_gain ?? 0,
+          input.rate_28_gain ?? 0,
+          input.filing_status,
+        ),
+        input.filing_status,
+        cfg.qdcgtZeroCeiling,
+        cfg.qdcgtTwentyFloor,
+        cfg.amtBracket26ThresholdStandard,
+        cfg.amtBracket26ThresholdMfs,
+        cfg.amtBracketAdjustmentStandard,
+        cfg.amtBracketAdjustmentMfs,
+      )
+      : undefined;
+    const tmt = partThree?.line40 ?? computeTentativeMinimumTax(
+      taxableExcess,
+      input.filing_status,
+      cfg.amtBracket26ThresholdStandard,
+      cfg.amtBracket26ThresholdMfs,
+      cfg.amtBracketAdjustmentStandard,
+      cfg.amtBracketAdjustmentMfs,
+    );
 
     // Line 9 — Net TMT after AMTFTC
     const netTmt = computeNetTmt(tmt, input.amtftc ?? 0);
@@ -252,10 +384,31 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     // Line 11 — AMT liability
     const amt = computeAmt(netTmt, input.regular_tax);
 
-    if (amt === 0) return { outputs: [] };
+    if (amt === 0 && input.must_file_for_credit !== true) {
+      return { outputs: [] };
+    }
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(schedule2, { line2_amt: amt }),
+      ...(amt > 0
+        ? [this.outputNodes.output(schedule2, { line2_amt: amt })]
+        : []),
+      {
+        nodeType: this.nodeType,
+        fields: {
+          ...input,
+          private_activity_bond_interest: Math.max(
+            input.private_activity_bond_interest ?? 0,
+            input.line2g_pab_interest ?? 0,
+          ),
+          amti,
+          exemption,
+          taxable_excess: taxableExcess,
+          tentative_tax: tmt,
+          net_tmt: netTmt,
+          line11_amt: amt,
+          ...partThree,
+        },
+      },
     ];
 
     return { outputs };
