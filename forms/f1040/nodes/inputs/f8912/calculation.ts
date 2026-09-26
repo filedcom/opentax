@@ -101,9 +101,9 @@ export function calculateForm8912PartIVBond(
       );
     }
   }
-  if (bond.creditRate > 1 || bond.creditAllowancePercentage > 1) {
+  if (bond.creditRate > 1 || bond.creditAllowancePercentage > 1.25) {
     throw new Error(
-      "Form 8912 credit rate and allowance percentage cannot exceed 100%",
+      "Form 8912 credit rate cannot exceed 100%, and allowance percentage cannot exceed 125%",
     );
   }
   if (bond.bondType === "BAB" && bond.creditRate !== 0.35) {

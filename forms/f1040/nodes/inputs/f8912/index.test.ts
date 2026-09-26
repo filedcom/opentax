@@ -8,6 +8,7 @@ import {
   interestFromItem,
   interestRowsFromItem,
   itemSchema,
+  partIVRowInput,
   sourceLinesFromItem,
 } from "./index.ts";
 import { calculateForm8912SourceLines } from "./calculation.ts";
@@ -36,6 +37,7 @@ const unreported = {
   issuer_state: "TX",
   issuer_ein: "123456789",
   maturity_date: "2030-12-31",
+  acquisition_date: "2024-01-01",
   purchase_accrued_interest: 0,
   sale_accrued_interest: 0,
   taxable_interest_reported_elsewhere: 0,
@@ -43,7 +45,7 @@ const unreported = {
     cusip: "123456789",
     outstanding_principal: 10_000,
     credit_rate: 0.05,
-    credit_allowance_percentage: 0.5,
+    allowance_dates: ["2025-03-15", "2025-06-15"],
   }],
   issuer_elected_direct_payment: false,
   is_pass_through_creb_credit: false,
@@ -110,7 +112,7 @@ Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", 
       interest_payable: 1_000,
       interest_payment_date: "2025-06-15",
       credit_rate: 0.35,
-      credit_allowance_percentage: 1,
+      allowance_dates: ["2025-06-15"],
     }],
   };
   assertEquals(
@@ -134,6 +136,20 @@ Deno.test("Form 8912: BAB uses interest payable, 35% rate, and full allowance", 
         unreported_bonds: [{
           ...bab,
           line18_rows: [{ ...bab.line18_rows[0], credit_rate: 0.25 }],
+        }],
+      })],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8912.inputSchema.safeParse({
+      f8912s: [item({
+        unreported_bonds: [{
+          ...bab,
+          line18_rows: [{
+            ...bab.line18_rows[0],
+            principal_payment_date: "2025-06-15",
+          }],
         }],
       })],
     }).success,
@@ -190,11 +206,52 @@ Deno.test("Form 8912: multiple Part IV line 18 rows contribute to line 20", () =
       ...unreported,
       line18_rows: [
         unreported.line18_rows[0],
-        { ...unreported.line18_rows[0], credit_allowance_percentage: 0.25 },
+        { ...unreported.line18_rows[0], allowance_dates: ["2025-09-15"] },
       ],
     }],
   }));
   assertEquals(sourceLinesFromItem(parsed).line2, 262.5);
+  assertEquals(
+    partIVRowInput(
+      parsed.unreported_bonds[0],
+      parsed.unreported_bonds[0].line18_rows[1],
+    ).creditAllowancePercentage,
+    0.25,
+  );
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [],
+      unreported_bonds: [{
+        ...unreported,
+        line18_rows: [unreported.line18_rows[0], unreported.line18_rows[0]],
+      }],
+    })).success,
+    false,
+  );
+});
+
+Deno.test("Form 8912: Part IV disposition kind is required with its date", () => {
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [],
+      unreported_bonds: [{
+        ...unreported,
+        disposition_date: "2025-07-23",
+      }],
+    })).success,
+    false,
+  );
+  assertEquals(
+    itemSchema.safeParse(item({
+      reported_bonds: [],
+      unreported_bonds: [{
+        ...unreported,
+        disposition_date: "2025-07-23",
+        disposition_kind: "sale",
+      }],
+    })).success,
+    true,
+  );
 });
 
 Deno.test("Form 8912: only eligible bond credits carry forward", () => {

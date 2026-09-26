@@ -133,9 +133,9 @@ cases are unrun. A subsequent IRS-instructions review corrected Part IV column
 (e) to credit-allowance-date percentage, not ownership percentage, and separates
 BAB interest payable from other bonds' outstanding principal with the required
 35% BAB rate. These source facts still need complete Part II integration,
-registered source-document serialization, allowance-date verification against
-the holding period, bond-specific carryforward identity, taxable-interest
-reconciliation, and IRS business-rule review.
+registered source-document serialization, sale record-holder and other
+disposition allowance-date rules, bond-specific carryforward identity,
+taxable-interest reconciliation, and IRS business-rule review.
 
 The next Form 8912 build pass models each Part IV bond as one or more explicit
 line 18 rows, preserves bond identity on carryforwards, and drafts `IRS8912` MeF
@@ -177,7 +177,15 @@ constrains box 2b to the IRS 39-character alphanumeric identifier. It also
 rejects duplicate issuer-EIN/unique-ID pairs within and across Form 8912 input
 items. These source cases are written but unrun. The actual annual 1097-BTC
 document, corrected statements, fiscal-year allocation, multi-bond type 1097-BTC
-source model, and cross-document identity matching remain open.
+source model, and cross-document identity matching remain open. The Part IV
+input now records acquisition and allowance dates instead of an unchecked column
+(e) percentage. The build pass derives quarterly allowances, BAB
+interest-payment allowances, pre-October 2008 QZAB annual allowances, and the
+final quarter prorated on maturity or redemption, including a fifth partial date
+after December 15; it rejects dates outside the 2025 holding period or
+duplicated across line 18 rows. These date and XML cases are written but unrun.
+Record-holder timing on a sale, other dispositions, and the required bond-rate
+source still need review.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on
