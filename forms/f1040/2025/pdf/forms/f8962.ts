@@ -18,6 +18,11 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 // excess_advance_premium       → line 29 (excess advance premium tax credit repayment)
 const fields: ReadonlyArray<PdfFieldEntry> = [
   {
+    kind: "checkbox",
+    domainKey: "mfs_exception_ind",
+    pdfField: "topmostSubform[0].Page1[0].c1_1[0]",
+  },
+  {
     kind: "text",
     domainKey: "household_size",
     pdfField: "topmostSubform[0].Page1[0].f1_3[0]",

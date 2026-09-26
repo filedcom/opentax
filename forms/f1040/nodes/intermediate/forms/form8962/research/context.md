@@ -28,6 +28,7 @@ Reconciles Advance Premium Tax Credits (APTC) against the actual allowable PTC b
 - `dependents_modified_agi` — line 2b from dependents who must file because income meets the filing threshold
 - `dependent_income_complete` — confirms filing-status facts were supplied for every claimed dependent
 - `below_100_fpl_status` — documented Marketplace-estimate or lawful-presence qualification, or reviewed non-applicable-taxpayer status; the Marketplace-estimate route also requires paid APTC
+- `mfs_ptc_status` — documented abuse or abandonment exception with the three-year limit, or reviewed no-exception status for a policy covering only this filer’s tax family
 - `fpl_region` — contiguous states/DC, Alaska, or Hawaii
 - `annual_premium` / `annual_slcsp` / `annual_aptc` — annual totals (when no monthly detail)
 - `monthly_premiums` / `monthly_slcsps` / `monthly_aptcs` — monthly arrays (12 elements each; preferred for mid-year coverage changes)
@@ -49,9 +50,9 @@ Reconciles Advance Premium Tax Credits (APTC) against the actual allowable PTC b
 - Annual line 11 is used only when every policy has twelve monthly premium and SLCSP values proving full-year unchanged coverage under IRS line 10. Annual totals alone are rejected; changed monthly amounts use lines 12–23.
 - When policies are combined, a monthly policy cannot be mixed with an annual-only policy because the annual-only amounts would disappear from the monthly calculation.
 - For multiple covered policies, Form 1095-A routing uses one SLCSP per state per month, adds SLCSP across different states, and rejects missing coverage states or conflicting same-state benchmarks.
-- QSEHRA requires monthly affordability and permitted-benefit facts, so both annual and monthly QSEHRA inputs are rejected. MFS marketplace inputs are rejected until exception and policy-allocation facts can be verified.
+- QSEHRA requires monthly affordability and permitted-benefit facts, so both annual and monthly QSEHRA inputs are rejected. MFS family-only policies use explicit exception or no-exception facts; the former claims the PTC and marks Form 8962 line A, while the latter reconciles APTC only. Shared-policy MFS cases still stop pending Part IV allocation.
 - Marketplace coverage below 100% of the FPL uses zero applicable contribution only with all facts for the estimated-income or lawful-presence exception. The estimated-income route also checks that APTC was paid. A reviewed non-applicable taxpayer who cannot be claimed as a dependent, has no shared policy, no unlawfully present covered person, no self-employed health-insurance deduction, and no alternative marriage calculation instead reports no PTC, only APTC in the annual or monthly MeF group, and the Table 5 capped repayment; without APTC, Form 8962 is not filed. An unreviewed or special case still stops.
 - ARP extension: 400% FPL cliff is eliminated through TY2025; no hard cutoff.
 - Both positive and negative scenarios handled in a single `compute()` call (can only emit one of the two outputs).
 - SLCSP = Second Lowest Cost Silver Plan (the benchmark plan for credit calculation).
-- This is not whole-form support. Policy sharing, MFS rules, alternative marriage calculation, QSEHRA and self-employed insurance interactions, PDF mappings, and IRS business rules still need a complete audit.
+- This is not whole-form support. Policy sharing and MFS Part IV allocations, alternative marriage calculation, QSEHRA and self-employed insurance interactions, PDF mappings, and IRS business rules still need a complete audit.

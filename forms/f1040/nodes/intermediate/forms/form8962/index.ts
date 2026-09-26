@@ -78,6 +78,29 @@ export const below100FplStatusSchema = z.discriminatedUnion("basis", [
   }).strict(),
 ]);
 
+const mfsExceptionFactsSchema = z.object({
+  living_apart_at_filing: z.literal(true),
+  unable_to_file_joint_due_to_exception: z.literal(true),
+  prior_consecutive_exception_years: z.number().int().min(0).max(2),
+  no_one_can_claim_taxpayer: z.literal(true),
+  no_shared_policy: z.literal(true),
+});
+
+export const mfsPtcStatusSchema = z.discriminatedUnion("basis", [
+  mfsExceptionFactsSchema.extend({ basis: z.literal("domestic_abuse") })
+    .strict(),
+  mfsExceptionFactsSchema.extend({ basis: z.literal("spousal_abandonment") })
+    .strict(),
+  z.object({
+    basis: z.literal("no_exception"),
+    exception_reviewed: z.literal(true),
+    no_one_can_claim_taxpayer: z.literal(true),
+    no_shared_policy: z.literal(true),
+    all_covered_individuals_lawfully_present: z.literal(true),
+    no_self_employed_health_insurance_deduction: z.literal(true),
+  }).strict(),
+]);
+
 export const inputSchema = z.object({
   // Household size for FPL calculation
   household_size: z.number().int().positive().optional(),
@@ -93,6 +116,7 @@ export const inputSchema = z.object({
   })).optional(),
   dependent_income_complete: z.boolean().optional(),
   below_100_fpl_status: below100FplStatusSchema.optional(),
+  mfs_ptc_status: mfsPtcStatusSchema.optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -110,7 +134,7 @@ export const inputSchema = z.object({
   // and permitted-benefit calculations are modeled (2025 Form 8962 instructions).
   qsehra_amount_offered: z.number().nonnegative().optional(),
 
-  // Filing status — used for IRC §36B(f)(2)(B) repayment cap (Single/MFS vs other)
+  // Filing status — Table 5 has a Single cap and a cap for every other status.
   filing_status: filingStatusSchema.optional(),
 });
 
@@ -205,6 +229,54 @@ function buildOutputs(
   return outputs;
 }
 
+interface Form8962BaseFields {
+  household_size: number;
+  taxpayer_modified_agi: number;
+  dependents_modified_agi: number;
+  household_income: number;
+  federal_poverty_line: number;
+  fpl_region: NonNullable<Form8962Input["fpl_region"]>;
+  federal_poverty_pct: number;
+}
+
+function aptcOnlyRepayment(
+  input: Form8962Input,
+  aptc: number,
+  baseFields: Form8962BaseFields,
+): NodeResult {
+  if (aptc === 0) return { outputs: [] };
+  const monthlyAptc = input.monthly_aptcs;
+  const monthly = monthlyAptc !== undefined &&
+    input.annual_line11_eligible !== true;
+  if (!monthly && input.annual_line11_eligible !== true) {
+    throw new Error(
+      "Form 8962 APTC-only annual line 11 needs verified full-year unchanged coverage or monthly APTC",
+    );
+  }
+  const line25 = Math.round(aptc);
+  const cap = repaymentCap(baseFields.federal_poverty_pct, input.filing_status);
+  const line29 = cap === null ? line25 : Math.min(line25, cap);
+  return {
+    outputs: buildOutputs(0, line29, {
+      ...baseFields,
+      total_premium_tax_credit: 0,
+      total_advance_ptc: line25,
+      ...(monthlyAptc !== undefined &&
+          input.annual_line11_eligible !== true
+        ? {
+          monthly_ptc_rows: monthlyAptc.map((amount, index) => ({
+            month_code: MONTH_CODES[index],
+            aptc: amount,
+          })),
+        }
+        : { annual_aptc: aptc }),
+      excess_advance_payment: line25,
+      ...(cap !== null ? { repayment_limitation: cap } : {}),
+      excess_advance_premium: line29,
+    }),
+  };
+}
+
 // ─── Node Class ───────────────────────────────────────────────────────────────
 
 class Form8962Node extends TaxNode<typeof inputSchema> {
@@ -235,12 +307,6 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         "Form 8962 needs verified dependent filing and modified-AGI facts",
       );
     }
-    if (input.filing_status === FilingStatus.MFS) {
-      throw new Error(
-        "Form 8962 MFS needs verified exception and policy-allocation facts before filing",
-      );
-    }
-
     const taxpayerMagi = input.taxpayer_modified_agi;
     const expected8814 = input.form8814_expected_ssns ?? [];
     const reported8814 = input.form8814_children ?? [];
@@ -274,6 +340,17 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       fpl_region: input.fpl_region,
       federal_poverty_pct: incomePct,
     };
+    const mfsStatus = input.filing_status === FilingStatus.MFS
+      ? input.mfs_ptc_status
+      : undefined;
+    if (input.filing_status === FilingStatus.MFS && !mfsStatus) {
+      throw new Error(
+        "Form 8962 MFS needs verified exception and policy-allocation facts before filing",
+      );
+    }
+    if (mfsStatus?.basis === "no_exception") {
+      return aptcOnlyRepayment(input, aptc, baseFields);
+    }
     if (incomePct < 100) {
       const status = input.below_100_fpl_status;
       if (!status) {
@@ -287,41 +364,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
       if (status.basis === "not_applicable") {
-        if (aptc === 0) return { outputs: [] };
-        const monthlyAptc = input.monthly_aptcs;
-        const monthlyRepayment = monthlyAptc !== undefined &&
-          input.annual_line11_eligible !== true;
-        if (!monthlyRepayment && input.annual_line11_eligible !== true) {
-          throw new Error(
-            "Form 8962 APTC-only annual line 11 needs verified full-year unchanged coverage or monthly APTC",
-          );
-        }
-        const cap = repaymentCap(incomePct, input.filing_status);
-        if (cap === null) {
-          throw new Error("Form 8962 below 100% FPL repayment cap is missing");
-        }
-        const line25 = Math.round(aptc);
-        const line29 = Math.min(line25, cap);
-        return {
-          outputs: buildOutputs(0, line29, {
-            ...baseFields,
-            below_100_fpl_status: "not_applicable",
-            total_premium_tax_credit: 0,
-            total_advance_ptc: line25,
-            ...(monthlyAptc !== undefined &&
-                input.annual_line11_eligible !== true
-              ? {
-                monthly_ptc_rows: monthlyAptc.map((amount, index) => ({
-                  month_code: MONTH_CODES[index],
-                  aptc: amount,
-                })),
-              }
-              : { annual_aptc: aptc }),
-            excess_advance_payment: line25,
-            repayment_limitation: cap,
-            excess_advance_premium: line29,
-          }),
-        };
+        return aptcOnlyRepayment(input, aptc, baseFields);
       }
     }
 
@@ -390,6 +433,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
 
     const formFields: Record<string, unknown> = {
       ...baseFields,
+      ...(mfsStatus ? { mfs_exception_ind: true } : {}),
       total_premium_tax_credit: line24,
       total_advance_ptc: line25,
       ...(annualContribution !== undefined && {
