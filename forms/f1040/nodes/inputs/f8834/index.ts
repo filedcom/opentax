@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
@@ -9,11 +12,11 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // Old §30 credit for 2-/3-wheel and low-speed vehicles (NOT new §30D).
 // Mostly obsolete in TY2025 but carryforwards from prior years still exist.
 // Credit = cost × credit_percentage (10% for 2-/3-wheel, 10% for low-speed)
-// Routes to Schedule 3, Line 6z (general business credit section).
+// Personal-use credit reports on Schedule 3 line 6i, not Form 3800 line 6a.
 
 // TY2025 constants — IRC §30
-const MAX_CREDIT_TWO_THREE_WHEEL = 2500;   // 10% × $25,000 cost cap
-const MAX_CREDIT_LOW_SPEED = 2500;         // 10% × $25,000 cost cap
+const MAX_CREDIT_TWO_THREE_WHEEL = 2500; // 10% × $25,000 cost cap
+const MAX_CREDIT_LOW_SPEED = 2500; // 10% × $25,000 cost cap
 const TWO_THREE_WHEEL_RATE = 0.10;
 const LOW_SPEED_RATE = 0.10;
 
@@ -49,7 +52,9 @@ function vehicleCredit(item: F8834Item): number {
   if (item.cost <= 0) return 0;
 
   const rate = item.credit_percentage ?? (
-    item.vehicle_type === VehicleType.LowSpeed ? LOW_SPEED_RATE : TWO_THREE_WHEEL_RATE
+    item.vehicle_type === VehicleType.LowSpeed
+      ? LOW_SPEED_RATE
+      : TWO_THREE_WHEEL_RATE
   );
   const rawCredit = item.cost * rate;
 
@@ -67,7 +72,10 @@ function totalCredit(items: F8834Item[]): number {
 
 function buildOutputs(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+  return [{
+    nodeType: schedule3.nodeType,
+    fields: { line6i_qualified_electric_vehicle_credit: credit },
+  }];
 }
 
 class F8834Node extends TaxNode<typeof inputSchema> {
@@ -75,7 +83,10 @@ class F8834Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = totalCredit(input.f8834s);
     return { outputs: buildOutputs(credit) };

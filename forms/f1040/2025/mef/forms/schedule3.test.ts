@@ -1,4 +1,4 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { schedule3 } from "./schedule3.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
@@ -100,6 +100,46 @@ Deno.test("Form 8911 allowed personal credit maps to Schedule 3 line 6j", () => 
   );
 });
 
+Deno.test("Schedule 3 has distinct 2025 lines 6h, 6k, and 12", () => {
+  const result = schedule3.build({
+    line6h_dc_homebuyer_credit: 300,
+    line6k_tax_credit_bonds: 450,
+    line12_fuel_tax_credit: 125,
+  });
+  assertStringIncludes(
+    result,
+    "<DCHmByrCurrentYearCreditAmt>300</DCHmByrCurrentYearCreditAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<CurrentYearAllowableCreditAmt>450</CurrentYearAllowableCreditAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalFuelTaxCreditAmt>125</TotalFuelTaxCreditAmt>",
+  );
+});
+
+Deno.test("Schedule 3 source-credit lines require their attached filing forms", () => {
+  for (
+    const fields of [
+      { line6h_dc_homebuyer_credit: 300 },
+      { line6i_qualified_electric_vehicle_credit: 400 },
+      { line6k_tax_credit_bonds: 450 },
+      { line12_fuel_tax_credit: 125 },
+    ]
+  ) {
+    assertThrows(() =>
+      schedule3.build(fields, { documentIdsByPendingKey: {} })
+    );
+  }
+  const xml = schedule3.build(
+    { line6k_tax_credit_bonds: 450 },
+    { documentIdsByPendingKey: { f8912: ["IRS8912_1"] } },
+  );
+  assertStringIncludes(xml, 'referenceDocumentId="IRS8912_1"');
+});
+
 Deno.test("2025 Schedule 3 lines 6a, 6b, 6f, 6g, and 6m use distinct XML elements", () => {
   const result = schedule3.build({
     line6a_total: 1_000,
@@ -110,15 +150,17 @@ Deno.test("2025 Schedule 3 lines 6a, 6b, 6f, 6g, and 6m use distinct XML element
     line7_total: 9_450,
     line8_total: 9_450,
   });
-  for (const [tag, value] of [
-    ["CurrentYearCreditAllowedAmt", 1_000],
-    ["MinAMTCrAmt", 200],
-    ["CleanVehPrsnlUsePartCrAmt", 3_750],
-    ["MortgageInterestCreditAmt", 500],
-    ["MaxPrevOwnedCleanVehCrAmt", 4_000],
-    ["OtherCreditsAmt", 9_450],
-    ["TotalNonrefundableCreditsAmt", 9_450],
-  ] as const) {
+  for (
+    const [tag, value] of [
+      ["CurrentYearCreditAllowedAmt", 1_000],
+      ["MinAMTCrAmt", 200],
+      ["CleanVehPrsnlUsePartCrAmt", 3_750],
+      ["MortgageInterestCreditAmt", 500],
+      ["MaxPrevOwnedCleanVehCrAmt", 4_000],
+      ["OtherCreditsAmt", 9_450],
+      ["TotalNonrefundableCreditsAmt", 9_450],
+    ] as const
+  ) {
     assertStringIncludes(result, `<${tag}>${value}</${tag}>`);
   }
 });

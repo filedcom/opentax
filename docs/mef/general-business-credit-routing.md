@@ -18,16 +18,13 @@ or Form 3800 line assignment is correct.
 | Source node | Required classification before filing                                                                                                        |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `f3468`     | Separate its Part II/III/IV/V/VI/VII credit lines, EPEs, transfers, and specified-credit parts.                                              |
-| `f4136`     | Determine which fuel credits belong on Form 3800 and which are refundable or otherwise claimed.                                              |
 | `f5884`     | Part III line 4b specified credit and any carryover classification.                                                                          |
 | `f6478`     | Part III line 4c specified credit and applicable source year.                                                                                |
 | `f6765`     | Ordinary line 1c versus eligible-small-business specified line 4i, plus payroll-tax election.                                                |
 | `f7207`     | Part III line 1b, transfer/EPE, and facility breakdown.                                                                                      |
 | `f8820`     | Part III line 1h and applicable source limits.                                                                                               |
 | `f8826`     | Part III line 1e and passive-activity classification.                                                                                        |
-| `f8834`     | Check whether only a historic carryover is eligible. Form 3800 Part IV lists its legacy credit; current-year line 6a must not be assumed.    |
 | `f8844`     | Part III line 3 uses its own Part II section B limitation.                                                                                   |
-| `f8859`     | Verify the current-year Form 3800 line and source eligibility before routing.                                                                |
 | `f8864`     | Separate diesel line 1l and SAF line 1ff, including transfer eligibility.                                                                    |
 | `f8874`     | Part III line 1i and pass-through/source limits.                                                                                             |
 | `f8881`     | Separate Part I line 1j, Part II line 1dd, and Part III line 1ee.                                                                            |
@@ -47,6 +44,15 @@ activity limit, not necessarily the Form 3800 tax-liability limit. `f8835`
 instead forwards per-facility amounts to `f3800`; positive available credit
 currently stops rather than claiming gross credit. Form 8936 business-use and
 Form 8911 business-use paths also need the shared Form 3800 treatment.
+
+Separate 2025 Schedule 3 corrections in the current build pass: `f8859` now
+deposits into line 6h, `f8834` into line 6i, and the combined Form 4136 fuel
+credit into refundable line 12. The represented Form 4136 fuel uses now apply
+their printed 2025 rates, but its complete Part I qualifying-business facts, all
+Part II claim categories, supporting documents, and source-form serializer
+remain open. Form 8834 and Form 8859 source limits and filing documents also
+remain unaudited. `f8912` still deposits its unbounded amount into line 6a; its
+separate line 6k and Part II limit are not wired to that node yet.
 
 ## Required common flow
 
