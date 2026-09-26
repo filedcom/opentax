@@ -278,6 +278,17 @@ function buildOutputs(
   return outputs;
 }
 
+function noForm8962Required(): NodeResult {
+  // A self-output replaces source-only pending fields. Without it, a 1095-A
+  // premium can be mistaken for a completed Form 8962 at export time.
+  return {
+    outputs: [{
+      nodeType: "form8962",
+      fields: { filing_required: false },
+    }],
+  };
+}
+
 interface Form8962BaseFields {
   household_size: number;
   taxpayer_modified_agi: number;
@@ -293,7 +304,7 @@ function aptcOnlyRepayment(
   aptc: number,
   baseFields: Form8962BaseFields,
 ): NodeResult {
-  if (aptc === 0) return { outputs: [] };
+  if (aptc === 0) return noForm8962Required();
   const monthlyAptc = input.monthly_aptcs;
   const monthly = monthlyAptc !== undefined &&
     input.annual_line11_eligible !== true;
@@ -347,7 +358,16 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     if (
       premium === 0 && slcsp === 0 && aptc === 0 &&
       !input.shared_policy_allocations?.length
-    ) return { outputs: [] };
+    ) {
+      return input.annual_premium !== undefined ||
+          input.annual_slcsp !== undefined ||
+          input.annual_aptc !== undefined ||
+          input.monthly_premiums !== undefined ||
+          input.monthly_slcsps !== undefined ||
+          input.monthly_aptcs !== undefined
+        ? noForm8962Required()
+        : { outputs: [] };
+    }
     if (
       input.taxpayer_modified_agi === undefined ||
       input.household_size === undefined ||
@@ -533,11 +553,6 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       );
     }
     if (qsehraFacts) {
-      if (!monthly) {
-        throw new Error(
-          "Form 8962 QSEHRA monthly facts need monthly Form 1095-A calculation",
-        );
-      }
       const monthlyBenefit = qsehraFacts.reduce(
         (sum, facts) => sum + (facts?.permitted_benefit ?? 0),
         0,
@@ -584,13 +599,29 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const annualMaxAssistance = annualContribution === undefined
       ? 0
       : Math.max(0, slcsp - annualContribution);
-    const allowed = monthlyRows
-      ? monthlyRows.reduce((sum, row) => sum + row.allowed_credit, 0)
-      : annualContribution === undefined
+    const annualTentativeCredit = annualContribution === undefined
       ? 0
       : allowedPtc(slcsp, premium, annualContribution);
+    const allowed = monthlyRows
+      ? monthlyRows.reduce((sum, row) => sum + row.allowed_credit, 0)
+      : qsehraFacts
+      ? qsehraFacts.reduce(
+        (sum, facts) =>
+          sum + qsehraMonthlyCredit(
+            annualTentativeCredit / 12,
+            income,
+            facts,
+          ),
+        0,
+      )
+      : annualTentativeCredit;
     const line24 = Math.round(allowed);
     const line25 = Math.round(aptc);
+    // Pub. 974 Worksheet N/Q: no Form 8962 when QSEHRA leaves no PTC and
+    // no APTC was paid for anyone in the tax family.
+    if (qsehraFacts && line24 === 0 && line25 === 0) {
+      return noForm8962Required();
+    }
     const line26 = Math.max(0, line24 - line25);
     const line27 = Math.max(0, line25 - line24);
     const cap = line27 > 0
