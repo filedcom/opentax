@@ -82,6 +82,16 @@ disqualified transfer now routes its seller-reported amount to Schedule 2 line
 The parent builder checks the repayment against Schedule 2. These cases are
 written but unrun; other recapture conditions remain open.
 
+The current Form 8835 build pass separates the 2025 base production rate from
+the fivefold increase, models qualifying conditions, bond reduction, bonuses,
+and transfer-out amounts, and forwards per-facility credits to Form 3800 instead
+of sending them straight to Schedule 3. Calculation and routing cases are
+written but unrun. This is not complete Form 8835 or Form 3800 support: the
+required MeF documents, transfer-election statement, general business credit
+limitation, full eligibility/source evidence, PDF output, and ATS validation
+remain open. Do not treat the forwarded gross credit as an allowed credit until
+the Form 3800 limitation is implemented.
+
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old
 per-vehicle MAGI and status fields were removed without an alias. This makes all

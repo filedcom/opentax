@@ -12,7 +12,9 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
-  return result.outputs.find((o: { nodeType: string }) => o.nodeType === nodeType);
+  return result.outputs.find((o: { nodeType: string }) =>
+    o.nodeType === nodeType
+  );
 }
 
 // =============================================================================
@@ -22,6 +24,32 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("f3800.inputSchema: empty array fails (min 1)", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [] });
   assertEquals(parsed.success, false);
+});
+
+Deno.test("f3800: stops Form 8835 credit until its tax-liability limit is built", () => {
+  assertThrows(() =>
+    f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+      f8835_credit_entries: [{
+        form3800_line: "4e",
+        credit_amount: 6_000,
+        transfer_out_amount: 2_000,
+        registration_number: "REG-1",
+      }],
+    })
+  );
+});
+
+Deno.test("f3800: rejects transferred credit larger than its source credit", () => {
+  assertThrows(() =>
+    f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+      f8835_credit_entries: [{
+        form3800_line: "4e",
+        credit_amount: 1_000,
+        transfer_out_amount: 1_001,
+        registration_number: "REG-1",
+      }],
+    })
+  );
 });
 
 Deno.test("f3800.inputSchema: valid minimal item (empty object) passes", () => {
@@ -35,22 +63,30 @@ Deno.test("f3800.inputSchema: negative total_gbc fails", () => {
 });
 
 Deno.test("f3800.inputSchema: negative work_opportunity_credit fails", () => {
-  const parsed = f3800.inputSchema.safeParse({ f3800s: [{ work_opportunity_credit: -50 }] });
+  const parsed = f3800.inputSchema.safeParse({
+    f3800s: [{ work_opportunity_credit: -50 }],
+  });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("f3800.inputSchema: negative research_credit fails", () => {
-  const parsed = f3800.inputSchema.safeParse({ f3800s: [{ research_credit: -200 }] });
+  const parsed = f3800.inputSchema.safeParse({
+    f3800s: [{ research_credit: -200 }],
+  });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("f3800.inputSchema: negative carryforward_credit fails", () => {
-  const parsed = f3800.inputSchema.safeParse({ f3800s: [{ carryforward_credit: -10 }] });
+  const parsed = f3800.inputSchema.safeParse({
+    f3800s: [{ carryforward_credit: -10 }],
+  });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("f3800.inputSchema: negative carryback_credit fails", () => {
-  const parsed = f3800.inputSchema.safeParse({ f3800s: [{ carryback_credit: -10 }] });
+  const parsed = f3800.inputSchema.safeParse({
+    f3800s: [{ carryback_credit: -10 }],
+  });
   assertEquals(parsed.success, false);
 });
 
@@ -98,7 +134,9 @@ Deno.test("f3800.compute: disabled_access_credit alone routes to schedule3", () 
 });
 
 Deno.test("f3800.compute: employer_pension_startup_credit alone routes to schedule3", () => {
-  const result = compute([minimalItem({ employer_pension_startup_credit: 750 })]);
+  const result = compute([
+    minimalItem({ employer_pension_startup_credit: 750 }),
+  ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 750);
 });
@@ -128,7 +166,9 @@ Deno.test("f3800.compute: energy_efficient_home_credit alone routes to schedule3
 });
 
 Deno.test("f3800.compute: advanced_manufacturing_credit alone routes to schedule3", () => {
-  const result = compute([minimalItem({ advanced_manufacturing_credit: 3500 })]);
+  const result = compute([
+    minimalItem({ advanced_manufacturing_credit: 3500 }),
+  ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 3500);
 });
@@ -263,7 +303,9 @@ Deno.test("f3800.compute: multiple items produce exactly one schedule3 output", 
     minimalItem({ research_credit: 2000 }),
     minimalItem({ carryforward_credit: 500 }),
   ]);
-  const schedule3Outputs = result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule3");
+  const schedule3Outputs = result.outputs.filter((o: { nodeType: string }) =>
+    o.nodeType === "schedule3"
+  );
   assertEquals(schedule3Outputs.length, 1);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 3500);
@@ -278,11 +320,17 @@ Deno.test("f3800.compute: throws on negative total_gbc", () => {
 });
 
 Deno.test("f3800.compute: throws on negative work_opportunity_credit", () => {
-  assertThrows(() => compute([minimalItem({ work_opportunity_credit: -500 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ work_opportunity_credit: -500 })]),
+    Error,
+  );
 });
 
 Deno.test("f3800.compute: throws on negative carryforward_credit", () => {
-  assertThrows(() => compute([minimalItem({ carryforward_credit: -100 })]), Error);
+  assertThrows(
+    () => compute([minimalItem({ carryforward_credit: -100 })]),
+    Error,
+  );
 });
 
 Deno.test("f3800.compute: zero values do not throw", () => {
@@ -295,7 +343,9 @@ Deno.test("f3800.compute: zero values do not throw", () => {
 // =============================================================================
 
 Deno.test("f3800.compute: carryforward and carryback only (no current-year) — routes correctly", () => {
-  const result = compute([minimalItem({ carryforward_credit: 1500, carryback_credit: 300 })]);
+  const result = compute([
+    minimalItem({ carryforward_credit: 1500, carryback_credit: 300 }),
+  ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 1800);
 });
@@ -332,5 +382,10 @@ Deno.test("f3800.compute: smoke test — mixed override and carryovers across mu
   const fields = fieldsOf(result.outputs, schedule3)!;
   assertEquals(fields.line6a_general_business_credit, 18500);
   // Only one schedule3 output
-  assertEquals(result.outputs.filter((o: { nodeType: string }) => o.nodeType === "schedule3").length, 1);
+  assertEquals(
+    result.outputs.filter((o: { nodeType: string }) =>
+      o.nodeType === "schedule3"
+    ).length,
+    1,
+  );
 });
