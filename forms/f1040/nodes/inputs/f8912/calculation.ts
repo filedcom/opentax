@@ -25,6 +25,7 @@ export type Form8912UnreportedBond = {
   readonly creditRate: number;
   readonly creditAllowancePercentage: number;
   readonly issuerElectedDirectPayment: boolean;
+  readonly isPassThroughCrebCredit: boolean;
 };
 
 export type Form8912SourceLines = {
@@ -34,6 +35,57 @@ export type Form8912SourceLines = {
   readonly line4: number;
   readonly hasPassThroughCrebCredit: boolean;
 };
+
+export type Form8912PartIVBondLines = {
+  readonly line18d: number;
+  readonly line18f: number;
+  readonly line20: number;
+};
+
+export function calculateForm8912PartIVBond(
+  bond: Form8912UnreportedBond,
+): Form8912PartIVBondLines {
+  if (bond.issuerElectedDirectPayment) {
+    throw new Error(
+      "Form 8912 holder cannot claim an issuer direct-payment bond",
+    );
+  }
+  for (
+    const amount of [
+      bond.creditBaseAmount,
+      bond.creditRate,
+      bond.creditAllowancePercentage,
+    ]
+  ) {
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new Error(
+        "Form 8912 bond inputs must be nonnegative finite amounts",
+      );
+    }
+  }
+  if (bond.creditRate > 1 || bond.creditAllowancePercentage > 1) {
+    throw new Error(
+      "Form 8912 credit rate and allowance percentage cannot exceed 100%",
+    );
+  }
+  if (bond.bondType === "BAB" && bond.creditRate !== 0.35) {
+    throw new Error("Form 8912 build America bond credit rate must be 35%");
+  }
+  if (bond.bondType === "BAB" && bond.creditAllowancePercentage !== 1) {
+    throw new Error(
+      "Form 8912 build America bond uses a 100% allowance percentage",
+    );
+  }
+  const line18d = bond.creditBaseAmount * bond.creditRate;
+  const line18f = line18d * bond.creditAllowancePercentage;
+  return {
+    line18d,
+    line18f,
+    line20: bond.bondType === "NEW_CREB" || bond.bondType === "QECB"
+      ? line18f * 0.7
+      : line18f,
+  };
+}
 
 export function calculateForm8912SourceLines(
   reportedBonds: readonly Form8912ReportedBond[],
@@ -63,42 +115,9 @@ export function calculateForm8912SourceLines(
     hasPassThroughCrebCredit ||= bond.isPassThroughCrebCredit;
   }
   for (const bond of unreportedBonds) {
-    if (bond.issuerElectedDirectPayment) {
-      throw new Error(
-        "Form 8912 holder cannot claim an issuer direct-payment bond",
-      );
-    }
-    for (
-      const amount of [
-        bond.creditBaseAmount,
-        bond.creditRate,
-        bond.creditAllowancePercentage,
-      ]
-    ) {
-      if (!Number.isFinite(amount) || amount < 0) {
-        throw new Error(
-          "Form 8912 bond inputs must be nonnegative finite amounts",
-        );
-      }
-    }
-    if (bond.creditAllowancePercentage > 1) {
-      throw new Error(
-        "Form 8912 credit-allowance percentage cannot exceed 100%",
-      );
-    }
-    if (bond.bondType === "BAB" && bond.creditRate !== 0.35) {
-      throw new Error("Form 8912 build America bond credit rate must be 35%");
-    }
-    if (bond.bondType === "BAB" && bond.creditAllowancePercentage !== 1) {
-      throw new Error(
-        "Form 8912 build America bond uses a 100% allowance percentage",
-      );
-    }
-    const credit = bond.creditBaseAmount * bond.creditRate *
-      bond.creditAllowancePercentage;
-    line2 += bond.bondType === "NEW_CREB" || bond.bondType === "QECB"
-      ? credit * 0.7
-      : credit;
+    line2 += calculateForm8912PartIVBond(bond).line20;
+    hasPassThroughCrebCredit ||= bond.bondType === "CREB" &&
+      bond.isPassThroughCrebCredit;
   }
   return {
     line1,
