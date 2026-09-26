@@ -759,3 +759,68 @@ Deno.test("one policy can have separate Part IV percentages across two periods",
     "coverage outside its allocation months",
   );
 });
+
+Deno.test("shared months and family-only months on one policy use separate SLCSPs", () => {
+  const result = compute([minimalItem({
+    policy_number: "MIXED-POLICY",
+    monthly_premiums: Array(12).fill(1_200),
+    monthly_slcsps: Array(12).fill(1_500),
+    monthly_aptcs: Array(12).fill(800),
+    shared_policy_periods: [{
+      basis: "mfs_exception",
+      other_taxpayer_ssn: "222-33-4444",
+      start_month: 1,
+      end_month: 6,
+      monthly_family_slcsps: [
+        ...Array(6).fill(700),
+        ...Array(6).fill(0),
+      ],
+    }, {
+      basis: "family_only",
+      only_tax_family_covered: true,
+      start_month: 7,
+      end_month: 12,
+      monthly_family_slcsps: [
+        ...Array(6).fill(0),
+        ...Array(6).fill(900),
+      ],
+    }],
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_premiums, [
+    ...Array(6).fill(600),
+    ...Array(6).fill(1_200),
+  ]);
+  assertEquals(fields?.monthly_slcsps, [
+    ...Array(6).fill(700),
+    ...Array(6).fill(900),
+  ]);
+  assertEquals(fields?.monthly_aptcs, [
+    ...Array(6).fill(400),
+    ...Array(6).fill(800),
+  ]);
+  assertEquals(
+    (fields?.shared_policy_allocations as unknown[]).length,
+    1,
+  );
+});
+
+Deno.test("family-only periods cannot replace a required shared allocation", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        policy_number: "MIXED-POLICY",
+        monthly_premiums: Array(12).fill(1_200),
+        monthly_aptcs: Array(12).fill(800),
+        shared_policy_periods: [{
+          basis: "family_only",
+          only_tax_family_covered: true,
+          start_month: 1,
+          end_month: 12,
+          monthly_family_slcsps: Array(12).fill(900),
+        }],
+      })]),
+    Error,
+    "at least one allocation period",
+  );
+});
