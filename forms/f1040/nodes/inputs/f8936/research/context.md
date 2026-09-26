@@ -18,7 +18,13 @@ Computes provisional personal Clean Vehicle Credit amounts under IRC §30D (new 
 | f8936s | VehicleItem[] | Yes | Vehicles | Array of qualifying clean vehicle records | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vehicle_description | string | No | Vehicle description | Make, model, year | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | vin | string | No | VIN | Vehicle Identification Number | Form 8936 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
+| vehicle_year, vehicle_make, vehicle_model | number, string, string | Required to compute | Vehicle identity | Schedule A line 1a-1c | 2025 Schedule A | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
+| placed_in_service_date | string (ISO) | Required to compute | Service date | Must be in 2025 | Schedule A line 3 | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
 | acquisition_date | string (ISO) | Required to compute | Acquisition date | Date of binding contract and payment; no credit after 2025-09-30 | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
+| seller_report_received | boolean | Required to compute | Seller report | Confirms the required seller report was received | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
+| resold_within_30_days, acquired_for_use_not_resale | boolean, boolean | Required to compute | Vehicle use | Rejects resale within 30 days or purchase for resale | Schedule A Parts II/IV | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
+| claimed_as_dependent, claimed_prev_owned_credit_last_3_years | boolean, boolean | Previously owned | Prior claim/dependent | Rejects barred previously owned claims | Schedule A Part IV | https://www.irs.gov/pub/irs-prior/f8936sa--2025.pdf |
+| purchased_from_dealer, previously_owned_first_eligible_transfer | boolean, boolean | Previously owned | Dealer/transfer | Both required for the previously owned credit | Form 8936 instructions | https://www.irs.gov/instructions/i8936 |
 | is_new_vehicle | boolean | No | New vehicle | True = new (§30D, $7,500 max); false = used (§25E, $4,000 max) | IRC §30D / §25E | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | credit_amount | number (≥0) | No | Credit amount | Pre-determined credit from IRS certification (new vehicles) | Form 8936 Line 4 | https://www.irs.gov/pub/irs-pdf/i8936.pdf |
 | sale_price | number (≥0) | No | Sale price | Sale price (used vehicles; must be ≤$25,000) | IRC §25E(b)(1) | https://www.irs.gov/pub/irs-pdf/i8936.pdf |

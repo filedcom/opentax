@@ -36,8 +36,19 @@ const USED_VEHICLE_PRICE_CAP = 25_000;
 export const itemSchema = z.object({
   vehicle_description: z.string().optional(),
   vin: z.string().optional(),
+  vehicle_year: z.number().int().min(1900).max(2100).optional(),
+  vehicle_make: z.string().min(1).optional(),
+  vehicle_model: z.string().min(1).optional(),
+  placed_in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   // The date the binding contract and payment made the vehicle "acquired".
   acquisition_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  seller_report_received: z.boolean().optional(),
+  resold_within_30_days: z.boolean().optional(),
+  acquired_for_use_not_resale: z.boolean().optional(),
+  claimed_as_dependent: z.boolean().optional(),
+  claimed_prev_owned_credit_last_3_years: z.boolean().optional(),
+  previously_owned_first_eligible_transfer: z.boolean().optional(),
+  purchased_from_dealer: z.boolean().optional(),
 
   is_new_vehicle: z.boolean().optional(),
   credit_amount: z.number().nonnegative().optional(),
@@ -92,14 +103,46 @@ function acquiredAfterCreditCutoff(item: F8936Item): boolean {
       "f8936: acquisition date is required to determine credit eligibility",
     );
   }
-  const date = new Date(`${item.acquisition_date}T00:00:00Z`);
-  if (
-    Number.isNaN(date.getTime()) ||
-    date.toISOString().slice(0, 10) !== item.acquisition_date
-  ) {
+  if (!hasValidDate(item.acquisition_date)) {
     throw new Error("f8936: acquisition date must be a valid ISO date");
   }
   return item.acquisition_date > LAST_ELIGIBLE_ACQUISITION_DATE;
+}
+
+function hasValidDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+function requireVehicleFacts(item: F8936Item): void {
+  if (
+    !item.vin || !/^[A-HJ-NPR-Z0-9]{17}$/.test(item.vin) ||
+    item.vehicle_year === undefined ||
+    !item.vehicle_make || !item.vehicle_model
+  ) {
+    throw new Error(
+      "f8936: a valid VIN, vehicle year, make, and model are required",
+    );
+  }
+  if (
+    !item.placed_in_service_date ||
+    !hasValidDate(item.placed_in_service_date) ||
+    !item.placed_in_service_date.startsWith("2025-")
+  ) {
+    throw new Error(
+      "f8936: vehicle must have a valid 2025 placed-in-service date",
+    );
+  }
+  if (item.seller_report_received !== true) {
+    throw new Error("f8936: seller report is required");
+  }
+  if (item.resold_within_30_days === undefined) {
+    throw new Error("f8936: 30-day resale answer is required");
+  }
+  if (item.acquired_for_use_not_resale === undefined) {
+    throw new Error("f8936: use-not-resale answer is required");
+  }
 }
 
 function msrpCap(vehicleType: "suv_van_truck" | "other" | undefined): number {
@@ -115,7 +158,12 @@ function newVehicleExceedsMsrpCap(item: F8936Item): boolean {
 
 function computeNewVehicleCredit(item: F8936Item): number {
   if (acquiredAfterCreditCutoff(item)) return 0;
+  requireVehicleFacts(item);
+  if (item.resold_within_30_days || !item.acquired_for_use_not_resale) return 0;
   if (exceedsIncomeLimit(item, false)) return 0;
+  if (item.msrp === undefined || item.vehicle_type === undefined) {
+    throw new Error("f8936: new vehicle MSRP and vehicle type are required");
+  }
   if (newVehicleExceedsMsrpCap(item)) return 0;
   const credit = Math.min(item.credit_amount ?? 0, NEW_VEHICLE_MAX_CREDIT);
   const personalPct = 1 - (item.business_use_pct ?? 0);
@@ -124,6 +172,35 @@ function computeNewVehicleCredit(item: F8936Item): number {
 
 function computeUsedVehicleCredit(item: F8936Item): number {
   if (acquiredAfterCreditCutoff(item)) return 0;
+  requireVehicleFacts(item);
+  if (item.resold_within_30_days || !item.acquired_for_use_not_resale) return 0;
+  if (
+    item.claimed_as_dependent === undefined ||
+    item.claimed_prev_owned_credit_last_3_years === undefined
+  ) {
+    throw new Error(
+      "f8936: dependent and three-year prior-credit answers are required for previously owned vehicles",
+    );
+  }
+  if (
+    item.claimed_as_dependent || item.claimed_prev_owned_credit_last_3_years
+  ) return 0;
+  if (
+    item.previously_owned_first_eligible_transfer === undefined ||
+    item.purchased_from_dealer === undefined
+  ) {
+    throw new Error(
+      "f8936: dealer purchase and first eligible transfer answers are required",
+    );
+  }
+  if (
+    !item.purchased_from_dealer ||
+    !item.previously_owned_first_eligible_transfer
+  ) return 0;
+  if (
+    item.vehicle_year !== undefined && item.acquisition_date !== undefined &&
+    item.vehicle_year > Number(item.acquisition_date.slice(0, 4)) - 2
+  ) return 0;
   if (exceedsIncomeLimit(item, true)) return 0;
   const price = item.sale_price ?? 0;
   if (price > USED_VEHICLE_PRICE_CAP) return 0;
@@ -132,6 +209,11 @@ function computeUsedVehicleCredit(item: F8936Item): number {
 }
 
 function vehicleOutput(item: F8936Item): NodeOutput[] {
+  if (item.is_new_vehicle === undefined) {
+    throw new Error(
+      "f8936: vehicle must be classified as new or previously owned",
+    );
+  }
   const used = item.is_new_vehicle === false;
   const credit = used
     ? computeUsedVehicleCredit(item)

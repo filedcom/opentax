@@ -64,6 +64,14 @@ verification, placed-in-service and transfer/recapture facts, Form 1040 tax
 liability limits, business-use routing, IRS8936 and Schedule A XML, and ATS
 evidence remain open.
 
+The next Form 8936 input pass requires structured VIN/year/make/model, a valid
+2025 placed-in-service date, seller-report confirmation, 30-day resale and
+use-not-resale answers before awarding a credit. Previously owned vehicles
+also require dependent/prior-claim answers, dealer purchase, first eligible
+transfer, and a model year at least two years older than acquisition. The
+corresponding cases are written but unrun. These checks do not substitute for
+the still-missing IRS8936 and Schedule A MeF documents or tax-liability limit.
+
 ## Status definitions
 
 | Status                    | Meaning                                                                                                                     |
