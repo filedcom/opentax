@@ -101,14 +101,28 @@ export const mfsPtcStatusSchema = z.discriminatedUnion("basis", [
   }).strict(),
 ]);
 
+export const allocationPctSchema = z.number().min(0).max(1).refine(
+  (pct) => Math.abs(pct * 100 - Math.round(pct * 100)) < 1e-9,
+  "Allocation percentage must have at most two decimal places",
+);
+
 export const sharedPolicyAllocationSchema = z.object({
-  basis: z.enum(["mfs_exception", "mfs_no_exception"]),
+  basis: z.enum([
+    "mfs_exception",
+    "mfs_no_exception",
+    "divorce_agreed",
+    "divorce_no_agreement",
+    "other_agreed",
+    "other_no_agreement",
+    "no_aptc",
+  ]),
   policy_number: z.string().regex(/^[A-Za-z0-9 \-:_]{1,15}$/),
   other_taxpayer_ssn: z.string().regex(/^\d{9}$/),
   start_month: z.number().int().min(1).max(12),
   end_month: z.number().int().min(1).max(12),
-  premium_pct: z.literal(0.5).optional(),
-  aptc_pct: z.literal(0.5),
+  premium_pct: allocationPctSchema.optional(),
+  slcsp_pct: allocationPctSchema.optional(),
+  aptc_pct: allocationPctSchema.optional(),
 }).strict();
 
 export const inputSchema = z.object({
@@ -307,7 +321,10 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const premium = totalPremium(input);
     const slcsp = totalSlcsp(input);
     const aptc = totalAptc(input);
-    if (premium === 0 && slcsp === 0 && aptc === 0) return { outputs: [] };
+    if (
+      premium === 0 && slcsp === 0 && aptc === 0 &&
+      !input.shared_policy_allocations?.length
+    ) return { outputs: [] };
     if (
       input.taxpayer_modified_agi === undefined ||
       input.household_size === undefined ||
@@ -364,8 +381,14 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       );
     }
     const allocations = input.shared_policy_allocations ?? [];
-    if (allocations.length > 0 && !mfsStatus) {
+    const hasMfsAllocation = allocations.some((row) =>
+      row.basis === "mfs_exception" || row.basis === "mfs_no_exception"
+    );
+    if (hasMfsAllocation && !mfsStatus) {
       throw new Error("Form 8962 shared MFS policy needs MFS filing status");
+    }
+    if (mfsStatus && allocations.length > 0 && !hasMfsAllocation) {
+      throw new Error("Form 8962 MFS status requires Situation 2 allocation");
     }
     if (
       mfsStatus?.policy_scope === "shared_with_spouse" &&
@@ -380,19 +403,53 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         "Form 8962 family-only MFS status conflicts with shared policy allocation",
       );
     }
-    if (
-      allocations.some((row) =>
-        row.start_month > row.end_month ||
-        row.basis !== (mfsStatus?.basis === "no_exception"
-            ? "mfs_no_exception"
-            : "mfs_exception") ||
-        (row.basis === "mfs_exception" && row.premium_pct !== 0.5) ||
-        (row.basis === "mfs_no_exception" && row.premium_pct !== undefined)
-      )
-    ) {
-      throw new Error(
-        "Form 8962 MFS policy allocation does not match exception status",
-      );
+    for (const row of allocations) {
+      if (row.start_month > row.end_month) {
+        throw new Error("Form 8962 shared policy months are reversed");
+      }
+      if (mfsStatus) {
+        const expectedBasis = mfsStatus.basis === "no_exception"
+          ? "mfs_no_exception"
+          : "mfs_exception";
+        if (
+          row.basis !== expectedBasis || row.aptc_pct !== 0.5 ||
+          row.slcsp_pct !== undefined ||
+          (row.basis === "mfs_exception" && row.premium_pct !== 0.5) ||
+          (row.basis === "mfs_no_exception" &&
+            row.premium_pct !== undefined)
+        ) {
+          throw new Error(
+            "Form 8962 MFS policy allocation does not match exception status",
+          );
+        }
+      } else if (
+        row.basis !== "divorce_agreed" &&
+        row.basis !== "divorce_no_agreement" &&
+        row.basis !== "other_agreed" &&
+        row.basis !== "other_no_agreement" &&
+        row.basis !== "no_aptc"
+      ) {
+        throw new Error("Form 8962 shared policy allocation basis is invalid");
+      } else if (row.basis === "no_aptc") {
+        if (
+          row.premium_pct === undefined || row.slcsp_pct !== undefined ||
+          row.aptc_pct !== undefined
+        ) {
+          throw new Error(
+            "Form 8962 Situation 3 allocates premiums only and has no APTC",
+          );
+        }
+      } else if (
+        row.premium_pct === undefined || row.slcsp_pct === undefined ||
+        row.aptc_pct === undefined ||
+        row.premium_pct !== row.slcsp_pct ||
+        row.premium_pct !== row.aptc_pct ||
+        (row.basis === "divorce_no_agreement" && row.premium_pct !== 0.5)
+      ) {
+        throw new Error(
+          "Form 8962 shared policy must allocate all three amounts equally",
+        );
+      }
     }
     if (allocations.length > 0 && input.annual_line11_eligible === true) {
       throw new Error("Form 8962 shared policy must use monthly calculation");
