@@ -94,7 +94,7 @@ Deno.test("single_building_routes_to_schedule3", () => {
 Deno.test("single_building_credit_amount_passed_through", () => {
   const result = compute([minimalItem({ annual_credit_amount: 10000 })]);
   const s3 = findSchedule3(result);
-  assertEquals(s3?.fields.line6b_low_income_housing_credit, 10000);
+  assertEquals(s3?.fields.line6a_low_income_housing_credit, 10000);
 });
 
 Deno.test("single_building_with_optional_fields_routes_correctly", () => {
@@ -107,7 +107,7 @@ Deno.test("single_building_with_optional_fields_routes_correctly", () => {
     },
   ]);
   const s3 = findSchedule3(result);
-  assertEquals(s3?.fields.line6b_low_income_housing_credit, 7500);
+  assertEquals(s3?.fields.line6a_low_income_housing_credit, 7500);
 });
 
 // ── Multiple Buildings ────────────────────────────────────────────────────────
@@ -118,7 +118,7 @@ Deno.test("two_buildings_total_is_summed", () => {
     minimalItem({ annual_credit_amount: 5000 }),
   ]);
   const s3 = findSchedule3(result);
-  assertEquals(s3?.fields.line6b_low_income_housing_credit, 15000);
+  assertEquals(s3?.fields.line6a_low_income_housing_credit, 15000);
 });
 
 Deno.test("three_buildings_total_is_summed", () => {
@@ -128,7 +128,7 @@ Deno.test("three_buildings_total_is_summed", () => {
     minimalItem({ annual_credit_amount: 2000 }),
   ]);
   const s3 = findSchedule3(result);
-  assertEquals(s3?.fields.line6b_low_income_housing_credit, 20000);
+  assertEquals(s3?.fields.line6a_low_income_housing_credit, 20000);
 });
 
 Deno.test("multiple_buildings_only_one_schedule3_output", () => {
@@ -147,7 +147,7 @@ Deno.test("mix_of_zero_and_nonzero_buildings_sums_correctly", () => {
     minimalItem({ annual_credit_amount: 0 }),
   ]);
   const s3 = findSchedule3(result);
-  assertEquals(s3?.fields.line6b_low_income_housing_credit, 12000);
+  assertEquals(s3?.fields.line6a_low_income_housing_credit, 12000);
 });
 
 // ── Routing Correctness ───────────────────────────────────────────────────────

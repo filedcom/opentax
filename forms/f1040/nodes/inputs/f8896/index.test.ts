@@ -40,7 +40,7 @@ Deno.test("f8896.compute: credit = gallons × 0.05", () => {
     refinery_capacity_barrels_per_day: 100_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 50_000);
+  assertEquals(fields.line6a_general_business_credit, 50_000);
 });
 
 Deno.test("f8896.compute: zero gallons — no output", () => {
@@ -56,14 +56,14 @@ Deno.test("f8896.compute: no gallons field — no output", () => {
   assertEquals(result.outputs, []);
 });
 
-Deno.test("f8896.compute: routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8896.compute: routes to schedule3 line6a_general_business_credit", () => {
   const result = compute([minimalItem({
     gallons_ulsd_produced: 200_000,
     refinery_capacity_barrels_per_day: 50_000,
   })]);
   assertEquals(result.outputs[0].nodeType, "schedule3");
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 10_000);
+  assertEquals(fields.line6a_general_business_credit, 10_000);
 });
 
 // =============================================================================
@@ -78,7 +78,7 @@ Deno.test("f8896.compute: base credit within capital costs cap — cap not appli
     refinery_capacity_barrels_per_day: 50_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 10_000);
+  assertEquals(fields.line6a_general_business_credit, 10_000);
 });
 
 Deno.test("f8896.compute: base credit exceeds capital costs cap — capped", () => {
@@ -90,7 +90,7 @@ Deno.test("f8896.compute: base credit exceeds capital costs cap — capped", () 
     prior_year_credits_claimed: 0,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 50_000);
+  assertEquals(fields.line6a_general_business_credit, 50_000);
 });
 
 Deno.test("f8896.compute: prior credits reduce capital costs cap", () => {
@@ -102,7 +102,7 @@ Deno.test("f8896.compute: prior credits reduce capital costs cap", () => {
     refinery_capacity_barrels_per_day: 50_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 20_000);
+  assertEquals(fields.line6a_general_business_credit, 20_000);
 });
 
 Deno.test("f8896.compute: prior credits fully consume cap — no output", () => {
@@ -123,7 +123,7 @@ Deno.test("f8896.compute: no qualified_capital_costs — no cap applied", () => 
     refinery_capacity_barrels_per_day: 50_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 50_000);
+  assertEquals(fields.line6a_general_business_credit, 50_000);
 });
 
 // =============================================================================
@@ -136,7 +136,7 @@ Deno.test("f8896.compute: capacity exactly at 205,000 bbl/day — allowed", () =
     refinery_capacity_barrels_per_day: 205_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5_000);
+  assertEquals(fields.line6a_general_business_credit, 5_000);
 });
 
 Deno.test("f8896.compute: capacity above 205,000 bbl/day — throws", () => {
@@ -160,7 +160,7 @@ Deno.test("f8896.compute: multiple refineries — credits summed", () => {
     minimalItem({ gallons_ulsd_produced: 300_000, refinery_capacity_barrels_per_day: 80_000 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 25_000);
+  assertEquals(fields.line6a_general_business_credit, 25_000);
 });
 
 // =============================================================================
@@ -178,5 +178,5 @@ Deno.test("f8896.compute: smoke test — capital costs cap applied", () => {
     }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 200_000);
+  assertEquals(fields.line6a_general_business_credit, 200_000);
 });

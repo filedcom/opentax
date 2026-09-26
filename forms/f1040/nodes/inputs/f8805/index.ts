@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 8805 — Foreign Partner's Information Statement of Section 1446 Withholding Tax
@@ -11,7 +11,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // A partnership withholds §1446 tax on effectively connected income (ECI)
 // allocable to foreign partners. The foreign partner receives Form 8805
 // showing withholding paid, which they claim as a credit on their US return.
-// Credit flows to Schedule 3 Part II (additional payments reducing tax liability).
+// Withholding flows to Form 1040 line 25c (other federal income tax withheld).
 
 // TY2025 withholding rates (IRC §1446(b)(2); Rev. Proc. 2024-40)
 // 37% for individual foreign partners; 21% for corporate foreign partners
@@ -51,20 +51,20 @@ function totalCreditAmount(items: F8805Item[]): number {
   return items.reduce((sum, item) => sum + itemCreditAmount(item), 0);
 }
 
-function schedule3Output(items: F8805Item[]): NodeOutput[] {
+function f1040Output(items: F8805Item[]): NodeOutput[] {
   const total = totalCreditAmount(items);
   if (total === 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line13_1446_withholding: total } }];
+  return [{ nodeType: f1040.nodeType, fields: { line25c_other_withheld: total } }];
 }
 
 class F8805Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8805";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f1040]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: schedule3Output(parsed.f8805s) };
+    return { outputs: f1040Output(parsed.f8805s) };
   }
 }
 

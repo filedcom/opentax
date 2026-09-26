@@ -107,7 +107,7 @@ Deno.test("f8801.compute: excess > available_credit — full credit allowed", ()
   });
   assertEquals(result.outputs.length, 1);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 3000);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 3000);
 });
 
 Deno.test("f8801.compute: carryforward only — full credit allowed when excess sufficient", () => {
@@ -118,7 +118,7 @@ Deno.test("f8801.compute: carryforward only — full credit allowed when excess 
     current_year_tmt: 8000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 2500);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 2500);
 });
 
 Deno.test("f8801.compute: both prior_year_amt_paid and carryforward — sums correctly", () => {
@@ -130,7 +130,7 @@ Deno.test("f8801.compute: both prior_year_amt_paid and carryforward — sums cor
     current_year_tmt: 13000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 5000);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 5000);
 });
 
 // =============================================================================
@@ -145,7 +145,7 @@ Deno.test("f8801.compute: excess < available_credit — partial credit, limited 
     current_year_tmt: 18000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 2000);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 2000);
 });
 
 Deno.test("f8801.compute: tmt is zero — excess equals regular_tax", () => {
@@ -156,7 +156,7 @@ Deno.test("f8801.compute: tmt is zero — excess equals regular_tax", () => {
     current_year_tmt: 0,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 4000);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 4000);
 });
 
 // =============================================================================
@@ -173,14 +173,14 @@ Deno.test("f8801.compute: credit routes to schedule3 node", () => {
   assertEquals(result.outputs[0].nodeType, "schedule3");
 });
 
-Deno.test("f8801.compute: credit field is line6e_prior_year_min_tax_credit", () => {
+Deno.test("f8801.compute: credit field is line6b_prior_year_min_tax_credit", () => {
   const result = compute({
     prior_year_amt_paid: 1500,
     current_year_regular_tax: 10000,
     current_year_tmt: 3000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 1500);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 1500);
 });
 
 // =============================================================================
@@ -229,7 +229,7 @@ Deno.test("f8801.compute: smoke test — realistic scenario", () => {
   });
   assertEquals(result.outputs.length, 1);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 7000);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 7000);
 });
 
 Deno.test("f8801.compute: smoke test — partial credit scenario", () => {
@@ -240,5 +240,5 @@ Deno.test("f8801.compute: smoke test — partial credit scenario", () => {
     current_year_tmt: 20000,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6e_prior_year_min_tax_credit, 2000);
+  assertEquals(fields.line6b_prior_year_min_tax_credit, 2000);
 });

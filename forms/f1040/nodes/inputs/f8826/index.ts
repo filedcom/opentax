@@ -47,7 +47,7 @@ function computeCredit(input: F8826Input): number {
 
 function buildOutputs(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6z_general_business_credit: credit } }];
+  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
 }
 
 class F8826Node extends TaxNode<typeof inputSchema> {

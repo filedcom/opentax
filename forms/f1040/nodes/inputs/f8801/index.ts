@@ -59,7 +59,7 @@ class F8801Node extends TaxNode<typeof inputSchema> {
     if (credit === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(schedule3, { line6e_prior_year_min_tax_credit: credit }),
+      this.outputNodes.output(schedule3, { line6b_prior_year_min_tax_credit: credit }),
     ];
 
     return { outputs };

@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
+  line1_total?: number | null;
   line1_foreign_tax_credit?: number | null;
   line1_foreign_tax_1099?: number | null;
   line2_childcare_credit?: number | null;
@@ -9,62 +10,67 @@ export interface Fields {
   line4_retirement_savings_credit?: number | null;
   line5a_residential_clean_energy?: number | null;
   line5b_energy_efficient_home?: number | null;
-  line6b_child_tax_credit?: number | null;
+  line6a_total?: number | null;
+  line6b_prior_year_min_tax_credit?: number | null;
   line6c_adoption_credit?: number | null;
+  line6d_elderly_disabled_credit?: number | null;
+  line6f_total?: number | null;
+  line6g_mortgage_interest_credit?: number | null;
   line6j_alt_fuel_vehicle_refueling?: number | null;
   line6l_form8978_credit?: number | null;
+  line6m_total?: number | null;
+  line7_total?: number | null;
+  line8_total?: number | null;
+  line9_premium_tax_credit?: number | null;
   line10_amount_paid_extension?: number | null;
   line11_excess_ss?: number | null;
+  line15_total?: number | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
 
 // Direct 1:1 field mappings (inputSchema key -> XSD element name, in XSD line order)
-// Note: line6b_child_tax_credit is excluded — the 2025v3.0 XSD line 6b element
-// (MinAMTCrAmt) is the Minimum AMT Credit from Form 8801, not the child tax credit.
-// The engine's line6b_child_tax_credit has no corresponding XSD element in Schedule 3.
 export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
+  ["line1_total", "ForeignTaxCreditAmt"],
   ["line2_childcare_credit", "CreditForChildAndDepdCareAmt"],
   ["line3_education_credit", "EducationCreditAmt"],
   ["line4_retirement_savings_credit", "RtrSavingsContributionsCrAmt"],
   ["line5a_residential_clean_energy", "ResidentialCleanEnergyCrAmt"],
   ["line5b_energy_efficient_home", "EgyEffcntHmImprvCrAmt"],
-  ["line6c_adoption_credit", "AdoptionCreditAmt"],
+  ["line6a_total", "CurrentYearCreditAllowedAmt"],
+  ["line6b_prior_year_min_tax_credit", "MinAMTCrAmt"],
+  ["line6c_adoption_credit", "NonrefundableAdoptionCreditAmt"],
+  ["line6d_elderly_disabled_credit", "CreditForElderlyOrDisabledAmt"],
+  ["line6f_total", "CleanVehPrsnlUsePartCrAmt"],
+  ["line6g_mortgage_interest_credit", "MortgageInterestCreditAmt"],
   ["line6j_alt_fuel_vehicle_refueling", "TotalPersonalUsePartOfCrAmt"],
   ["line6l_form8978_credit", "TotRptgYrTxIncreaseDecreaseAmt"],
+  ["line6m_total", "MaxPrevOwnedCleanVehCrAmt"],
+  ["line7_total", "OtherCreditsAmt"],
+  ["line8_total", "TotalNonrefundableCreditsAmt"],
+  ["line9_premium_tax_credit", "ReconciledPremiumTaxCreditAmt"],
   ["line10_amount_paid_extension", "RequestForExtensionAmt"],
   ["line11_excess_ss", "ExcessSocSecAndTier1RRTATaxAmt"],
-];
-
-// Aggregated: multiple inputSchema keys -> single XSD element
-// ForeignTaxCreditAmt (line 1) is processed before FIELD_MAP to maintain XSD order
-const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Fields)[]]> = [
-  ["ForeignTaxCreditAmt", "line1_foreign_tax_credit", "line1_foreign_tax_1099"],
+  ["line15_total", "TotalOtherPaymentsRfdblCrAmt"],
 ];
 
 function buildIRS1040Schedule3(fields: Input, context?: MefBuildContext): string {
   const children: string[] = [];
 
-  // Aggregated mappings first (line 1 comes before line 2 in XSD order)
-  for (const [tag, ...keys] of AGGREGATED) {
-    const values = keys
-      .map((k) => fields[k])
-      .filter((v): v is number => typeof v === "number");
-    if (values.length === 0) continue;
-    const sum = values.reduce((a, b) => a + b, 0);
-    const form1116Ids = context?.documentIdsByPendingKey?.form_1116 ?? [];
-    children.push(element(tag, sum, form1116Ids.length > 0
-      ? {
-        referenceDocumentId: form1116Ids.join(" "),
-        referenceDocumentName: "IRS1116",
-      }
-      : undefined));
-  }
-
   // Direct mappings
   for (const [key, tag] of FIELD_MAP) {
     const value = fields[key];
     if (typeof value !== "number") continue;
+    if (key === "line1_total") {
+      const form1116Ids = context?.documentIdsByPendingKey?.form_1116 ?? [];
+      children.push(element(tag, value, form1116Ids.length > 0
+        ? {
+          referenceDocumentId: form1116Ids.join(" "),
+          referenceDocumentName: "IRS1116",
+        }
+        : undefined));
+      continue;
+    }
     if (key === "line6l_form8978_credit") {
       const formIds = context?.documentIdsByPendingKey?.f8978 ?? [];
       if (context?.documentIdsByPendingKey && formIds.length === 0) {

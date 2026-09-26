@@ -203,6 +203,17 @@ Deno.test("f1040: withholding from multiple sources aggregated", () => {
     line25c_additional_medicare_withheld: 500,
   });
   assertEquals(f.line33_total_payments, 12_500);
+  assertEquals(f.line25c_total, 500);
+});
+
+Deno.test("f1040: Form 8805 withholding joins other line 25c withholding", () => {
+  const f = fields({
+    line25c_additional_medicare_withheld: 500,
+    line25c_other_withheld: [3_000, 2_000],
+  });
+  assertEquals(f.line25c_total, 5_500);
+  assertEquals(f.line25d_total_withholding, 5_500);
+  assertEquals(f.line33_total_payments, 5_500);
 });
 
 Deno.test("f1040: wage lines summed to line 1z", () => {

@@ -11,7 +11,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 //
 // Routing:
 //   Refundable (farming use) → f1040.line35_fuel_tax_credit
-//   Nonrefundable (off-highway business, aviation) → schedule3.line6z_general_business_credit
+//   Nonrefundable (off-highway business, aviation) → schedule3.line6a_general_business_credit
 
 // TY2025 credit rates per gallon
 const RATES = {
@@ -90,7 +90,7 @@ class F4136Node extends TaxNode<typeof inputSchema> {
     if (nonRefundable > 0) {
       outputs.push({
         nodeType: schedule3.nodeType,
-        fields: { line6z_general_business_credit: nonRefundable },
+        fields: { line6a_general_business_credit: nonRefundable },
       });
     }
     if (refundable > 0) {

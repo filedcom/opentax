@@ -138,7 +138,7 @@ function schedule3Output(allowedCredit: number): NodeOutput[] {
   if (allowedCredit <= 0) return [];
   return [{
     nodeType: schedule3.nodeType,
-    fields: { line6z_general_business_credit: allowedCredit },
+    fields: { line6a_general_business_credit: allowedCredit },
   }];
 }
 

@@ -54,10 +54,6 @@ export const inputSchema = z.object({
   // IRC §25B; Form 8880 line 12 → Schedule 3 line 4
   line4_retirement_savings_credit: z.number().nonnegative().optional(),
 
-  // Line 6b — Child tax credit / credit for other dependents (from Form 8812 line 14)
-  // IRC §24; Form 8812 line 14 → Schedule 3 line 6b (nonrefundable portion)
-  line6b_child_tax_credit: z.number().nonnegative().optional(),
-
   // Line 6c — Adoption credit (from Form 8839 Part II — nonrefundable portion)
   // IRC §23; Form 8839 → Schedule 3 line 6c
   line6c_adoption_credit: z.number().nonnegative().optional(),
@@ -76,17 +72,19 @@ export const inputSchema = z.object({
   line5a_residential_clean_energy: z.number().nonnegative().optional(),
   line5b_energy_efficient_home: z.number().nonnegative().optional(),
 
-  // Line 6d — Clean vehicle credit (Form 8936 line 15 — nonrefundable portion)
-  // IRC §30D; Form 8936 Part IV line 15 → Schedule 3 line 6d
-  line6d_clean_vehicle_credit: z.number().nonnegative().optional(),
+  // Line 6f — personal new clean vehicle credit from Form 8936 line 13.
+  line6f_clean_vehicle_credit: accumulable(z.number().nonnegative()).optional(),
+  // Line 6m — previously owned clean vehicle credit from Form 8936 line 18.
+  line6m_prev_owned_clean_vehicle_credit: accumulable(z.number().nonnegative())
+    .optional(),
 
   // Line 6d — Credit for the elderly or disabled (from Schedule R line 22)
   // IRC §22; Schedule R line 22 → Schedule 3 line 6d
   line6d_elderly_disabled_credit: z.number().nonnegative().optional(),
 
-  // Line 6f — Mortgage interest credit (Form 8396 line 11)
-  // IRC §25; Form 8396 line 11 → Schedule 3 line 6f
-  line6f_mortgage_interest_credit: z.number().nonnegative().optional(),
+  // Line 6g — Mortgage interest credit (Form 8396 line 11)
+  // IRC §25; Form 8396 line 11 → Schedule 3 line 6g
+  line6g_mortgage_interest_credit: z.number().nonnegative().optional(),
 
   // Line 6j — allowed personal-use alternative fuel refueling property credit
   // from Form 8911 line 10, after the regular-tax / AMT limitation.
@@ -98,22 +96,18 @@ export const inputSchema = z.object({
   // IRC §36B; Form 8962 line 26 → Schedule 3 line 9 (Part II refundable credit)
   line9_premium_tax_credit: z.number().nonnegative().optional(),
 
-  // Line 6z — General business credit (from Form 3800)
-  // IRC §38; Form 3800 line 38 → Schedule 3 line 6z
-  line6z_general_business_credit: z.number().nonnegative().optional(),
+  // Line 6a — General business credit (from Form 3800).
+  line6a_general_business_credit: accumulable(z.number().nonnegative())
+    .optional(),
 
-  // Line 6e — Credit for prior year minimum tax (from Form 8801 line 25)
-  // IRC §53; Form 8801 line 25 → Schedule 3 line 6e
-  line6e_prior_year_min_tax_credit: z.number().nonnegative().optional(),
+  // Line 6b — Credit for prior year minimum tax (from Form 8801).
+  line6b_prior_year_min_tax_credit: z.number().nonnegative().optional(),
 
   // Low-income housing credit (from Form 8609 / Form 8586 / IRC §42)
-  // Flows via Form 3800 → Schedule 3 line 7 (GBC) in IRS forms.
-  // Tracked separately in the engine for audit traceability.
-  line6b_low_income_housing_credit: z.number().nonnegative().optional(),
+  // A separate producer until Form 3800 combines all source credits.
+  line6a_low_income_housing_credit: accumulable(z.number().nonnegative())
+    .optional(),
 
-  // Line 13 — §1446 withholding tax credit (from Form 8805)
-  // IRC §1446(d); Form 8805 Box 6 → Schedule 3 Part II line 13
-  line13_1446_withholding: z.number().nonnegative().optional(),
 });
 
 type Schedule3Input = z.infer<typeof inputSchema>;
@@ -133,6 +127,23 @@ function line1(input: Schedule3Input): number {
 }
 
 // Part I, Line 8 — total nonrefundable credits.
+function line6a(input: Schedule3Input): number {
+  return sumAccumulable(input.line6a_general_business_credit) +
+    sumAccumulable(input.line6a_low_income_housing_credit);
+}
+
+function line7(input: Schedule3Input): number {
+  return line6a(input) +
+    (input.line6b_prior_year_min_tax_credit ?? 0) +
+    (input.line6c_adoption_credit ?? 0) +
+    (input.line6d_elderly_disabled_credit ?? 0) +
+    sumAccumulable(input.line6f_clean_vehicle_credit) +
+    (input.line6g_mortgage_interest_credit ?? 0) +
+    (input.line6j_alt_fuel_vehicle_refueling ?? 0) +
+    (input.line6l_form8978_credit ?? 0) +
+    sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit);
+}
+
 function partITotal(input: Schedule3Input): number {
   return (
     line1(input) +
@@ -141,16 +152,7 @@ function partITotal(input: Schedule3Input): number {
     (input.line4_retirement_savings_credit ?? 0) +
     (input.line5a_residential_clean_energy ?? 0) +
     (input.line5b_energy_efficient_home ?? 0) +
-    (input.line6b_child_tax_credit ?? 0) +
-    (input.line6c_adoption_credit ?? 0) +
-    (input.line6d_clean_vehicle_credit ?? 0) +
-    (input.line6d_elderly_disabled_credit ?? 0) +
-    (input.line6e_prior_year_min_tax_credit ?? 0) +
-    (input.line6f_mortgage_interest_credit ?? 0) +
-    (input.line6j_alt_fuel_vehicle_refueling ?? 0) +
-    (input.line6l_form8978_credit ?? 0) +
-    (input.line6z_general_business_credit ?? 0) +
-    (input.line6b_low_income_housing_credit ?? 0)
+    line7(input)
   );
 }
 
@@ -159,8 +161,7 @@ function partIITotal(input: Schedule3Input): number {
   return (
     (input.line9_premium_tax_credit ?? 0) +
     (input.line10_amount_paid_extension ?? 0) +
-    (input.line11_excess_ss ?? 0) +
-    (input.line13_1446_withholding ?? 0)
+    (input.line11_excess_ss ?? 0)
   );
 }
 
@@ -195,6 +196,12 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     const printFields: Record<string, number> = {};
     const line1Total = line1(input);
     if (line1Total > 0) printFields.line1_total = line1Total;
+    if (line6a(input) > 0) printFields.line6a_total = line6a(input);
+    const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
+    const cleanUsed = sumAccumulable(input.line6m_prev_owned_clean_vehicle_credit);
+    if (cleanNew > 0) printFields.line6f_total = cleanNew;
+    if (cleanUsed > 0) printFields.line6m_total = cleanUsed;
+    if (line7(input) > 0) printFields.line7_total = line7(input);
     if (credits > 0) printFields.line8_total = credits;
     if (payments > 0) printFields.line15_total = payments;
     if (Object.keys(printFields).length > 0) {

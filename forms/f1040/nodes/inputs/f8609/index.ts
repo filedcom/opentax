@@ -33,10 +33,10 @@ function totalCredit(items: F8609Item[]): number {
   return items.reduce((sum, item) => sum + item.annual_credit_amount, 0);
 }
 
-// Route total to schedule3 line6b_low_income_housing_credit
+// Route total to schedule3 line6a_low_income_housing_credit
 function buildOutputs(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6b_low_income_housing_credit: credit } }];
+  return [{ nodeType: schedule3.nodeType, fields: { line6a_low_income_housing_credit: credit } }];
 }
 
 class F8609Node extends TaxNode<typeof inputSchema> {

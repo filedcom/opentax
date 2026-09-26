@@ -90,7 +90,7 @@ Deno.test("full_50pct_credit_small_employer_low_wages", () => {
     premiums_paid: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 50000);
+  assertEquals(out?.fields.line6a_general_business_credit, 50000);
 });
 
 Deno.test("tax_exempt_35pct_rate", () => {
@@ -102,7 +102,7 @@ Deno.test("tax_exempt_35pct_rate", () => {
     is_tax_exempt: true,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 35000);
+  assertEquals(out?.fields.line6a_general_business_credit, 35000);
 });
 
 // ── FTE Phase-Out ─────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ Deno.test("fte_phase_out_halfway_at_17_5_fte", () => {
     premiums_paid: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 25000);
+  assertEquals(out?.fields.line6a_general_business_credit, 25000);
 });
 
 Deno.test("fte_10_is_phase_out_start_no_reduction", () => {
@@ -128,7 +128,7 @@ Deno.test("fte_10_is_phase_out_start_no_reduction", () => {
     premiums_paid: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 50000);
+  assertEquals(out?.fields.line6a_general_business_credit, 50000);
 });
 
 // ── Wage Phase-Out ────────────────────────────────────────────────────────────
@@ -144,7 +144,7 @@ Deno.test("wage_phase_out_halfway_at_42000_avg", () => {
     premiums_paid: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 25000);
+  assertEquals(out?.fields.line6a_general_business_credit, 25000);
 });
 
 Deno.test("wage_28000_is_phase_out_start_no_reduction", () => {
@@ -155,7 +155,7 @@ Deno.test("wage_28000_is_phase_out_start_no_reduction", () => {
     premiums_paid: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 50000);
+  assertEquals(out?.fields.line6a_general_business_credit, 50000);
 });
 
 // ── Combined Phase-Out ────────────────────────────────────────────────────────
@@ -170,7 +170,7 @@ Deno.test("combined_phase_out_both_50pct", () => {
     premiums_paid: 100000,
   });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 12500);
+  assertEquals(out?.fields.line6a_general_business_credit, 12500);
 });
 
 Deno.test("routes_to_schedule3", () => {

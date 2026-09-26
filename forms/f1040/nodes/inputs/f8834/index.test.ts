@@ -40,7 +40,7 @@ Deno.test("f8834: two/three-wheel credit = 10% of cost", () => {
   const result = compute({
     f8834s: [{ cost: 10_000, vehicle_type: VehicleType.TwoThreeWheel, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 1_000);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 1_000);
 });
 
 Deno.test("f8834: two/three-wheel credit capped at $2,500", () => {
@@ -48,14 +48,14 @@ Deno.test("f8834: two/three-wheel credit capped at $2,500", () => {
   const result = compute({
     f8834s: [{ cost: 30_000, vehicle_type: VehicleType.TwoThreeWheel, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 2_500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 2_500);
 });
 
 Deno.test("f8834: two/three-wheel credit at exact cap boundary — $25,000 × 10% = $2,500", () => {
   const result = compute({
     f8834s: [{ cost: 25_000, vehicle_type: VehicleType.TwoThreeWheel, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 2_500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 2_500);
 });
 
 // ── Low-Speed Vehicle Credit — 10% rate, $2,500 cap ──────────────────────────
@@ -65,7 +65,7 @@ Deno.test("f8834: low-speed credit = 10% of cost", () => {
   const result = compute({
     f8834s: [{ cost: 5_000, vehicle_type: VehicleType.LowSpeed, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 500);
 });
 
 Deno.test("f8834: low-speed credit capped at $2,500", () => {
@@ -73,7 +73,7 @@ Deno.test("f8834: low-speed credit capped at $2,500", () => {
   const result = compute({
     f8834s: [{ cost: 40_000, vehicle_type: VehicleType.LowSpeed, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 2_500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 2_500);
 });
 
 // ── Custom Credit Percentage ──────────────────────────────────────────────────
@@ -83,7 +83,7 @@ Deno.test("f8834: custom credit_percentage overrides default 10%", () => {
   const result = compute({
     f8834s: [{ cost: 10_000, credit_percentage: 0.05, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 500);
 });
 
 Deno.test("f8834: custom credit_percentage still subject to cap", () => {
@@ -91,7 +91,7 @@ Deno.test("f8834: custom credit_percentage still subject to cap", () => {
   const result = compute({
     f8834s: [{ cost: 100_000, credit_percentage: 0.05, original_use: true }],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 2_500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 2_500);
 });
 
 // ── Multiple Vehicles Aggregated ──────────────────────────────────────────────
@@ -105,7 +105,7 @@ Deno.test("f8834: multiple vehicles — credits aggregated into single schedule3
     ],
   });
   assertEquals(result.outputs.length, 1);
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 1_500);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 1_500);
 });
 
 Deno.test("f8834: mix of eligible and ineligible vehicles — only eligible credited", () => {
@@ -116,7 +116,7 @@ Deno.test("f8834: mix of eligible and ineligible vehicles — only eligible cred
       { cost: 10_000, vehicle_type: VehicleType.TwoThreeWheel, original_use: false },
     ],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 1_000);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 1_000);
 });
 
 Deno.test("f8834: all ineligible vehicles — no output", () => {
@@ -132,13 +132,13 @@ Deno.test("f8834: two vehicles at cap — total capped per vehicle, not combined
       { cost: 30_000, vehicle_type: VehicleType.LowSpeed, original_use: true },
     ],
   });
-  assertEquals(findSchedule3(result)?.fields.line6z_general_business_credit, 5_000);
+  assertEquals(findSchedule3(result)?.fields.line6a_general_business_credit, 5_000);
 });
 
 // ── Routing ───────────────────────────────────────────────────────────────────
 
-Deno.test("f8834: credit routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8834: credit routes to schedule3 line6a_general_business_credit", () => {
   const result = compute({ f8834s: [{ cost: 5_000, original_use: true }] });
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit, 500);
+  assertEquals(result.outputs[0]?.fields.line6a_general_business_credit, 500);
 });

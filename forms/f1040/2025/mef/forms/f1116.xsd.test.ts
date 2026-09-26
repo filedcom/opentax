@@ -136,7 +136,7 @@ Deno.test({
 }, async () => {
   const xml = buildMefXml({
     form_1116: computedFields(),
-    schedule3: { line1_foreign_tax_credit: 1_350 },
+    schedule3: { line1_total: 1_350 },
   }, filer);
   assertEquals([...xml.matchAll(/<IRS1116 documentId=/g)].length, 2);
   assertStringIncludes(
@@ -177,7 +177,7 @@ Deno.test({
   };
   const xml = buildMefXml({
     form_1116: withExpense,
-    schedule3: { line1_foreign_tax_credit: 1_340 },
+    schedule3: { line1_total: 1_340 },
   }, filer);
   const statementId = /<ForeignIncmRelatedExpensesStmt documentId="([^"]+)"/
     .exec(xml)?.[1];

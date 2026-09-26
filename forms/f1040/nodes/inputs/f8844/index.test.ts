@@ -78,19 +78,19 @@ Deno.test("f8844.compute: wages below cap — credit = 20% of wages", () => {
   // $10,000 × 20% = $2,000
   const result = compute([minimalItem({ qualified_zone_wages: 10_000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2_000);
+  assertEquals(fields.line6a_general_business_credit, 2_000);
 });
 
 Deno.test("f8844.compute: wages at cap ($15,000) — credit = $3,000", () => {
   const result = compute([minimalItem({ qualified_zone_wages: 15_000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3_000);
+  assertEquals(fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("f8844.compute: wages above cap ($20,000) — credit still = $3,000", () => {
   const result = compute([minimalItem({ qualified_zone_wages: 20_000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3_000);
+  assertEquals(fields.line6a_general_business_credit, 3_000);
 });
 
 Deno.test("f8844.compute: wages = 0 — no credit output", () => {
@@ -111,7 +111,7 @@ Deno.test("f8844.compute: two qualified employees — credits summed", () => {
     minimalItem({ qualified_zone_wages: 15_000 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 5_000);
+  assertEquals(fields.line6a_general_business_credit, 5_000);
 });
 
 Deno.test("f8844.compute: mixed qualified/disqualified employees — only qualified count", () => {
@@ -122,7 +122,7 @@ Deno.test("f8844.compute: mixed qualified/disqualified employees — only qualif
     minimalItem({ qualified_zone_wages: 20_000, employee_lives_in_zone: false }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 2_400);
+  assertEquals(fields.line6a_general_business_credit, 2_400);
 });
 
 Deno.test("f8844.compute: multiple employees all above cap — each capped at $3,000", () => {
@@ -133,17 +133,17 @@ Deno.test("f8844.compute: multiple employees all above cap — each capped at $3
     minimalItem({ qualified_zone_wages: 20_000 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 9_000);
+  assertEquals(fields.line6a_general_business_credit, 9_000);
 });
 
 // =============================================================================
 // 5. Output Routing
 // =============================================================================
 
-Deno.test("f8844.compute: routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8844.compute: routes to schedule3 line6a_general_business_credit", () => {
   const result = compute([minimalItem({ qualified_zone_wages: 5_000 })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1_000); // 20% × $5,000
+  assertEquals(fields.line6a_general_business_credit, 1_000); // 20% × $5,000
 });
 
 Deno.test("f8844.compute: does not route to schedule2", () => {
@@ -206,5 +206,5 @@ Deno.test("f8844.compute: smoke test — multiple employees with varied wages an
   // Dave: 8,000 × 20% = 1,600
   // Total: 7,400
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 7_400);
+  assertEquals(fields.line6a_general_business_credit, 7_400);
 });

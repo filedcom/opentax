@@ -87,11 +87,14 @@ function computeUsedVehicleCredit(item: F8936Item): number {
 }
 
 function vehicleOutput(item: F8936Item): NodeOutput[] {
-  const credit = item.is_new_vehicle === false
+  const used = item.is_new_vehicle === false;
+  const credit = used
     ? computeUsedVehicleCredit(item)
     : computeNewVehicleCredit(item);
   if (credit <= 0) return [];
-  return [output(schedule3, { line6d_clean_vehicle_credit: credit })];
+  return [output(schedule3, used
+    ? { line6m_prev_owned_clean_vehicle_credit: credit }
+    : { line6f_clean_vehicle_credit: credit })];
 }
 
 // ─── Node Class ───────────────────────────────────────────────────────────────

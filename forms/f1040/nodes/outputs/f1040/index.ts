@@ -129,6 +129,8 @@ const inputSchema = z.object({
   line25b_withheld_1099: accumulable(z.number().nonnegative()).optional(),
   // Line 25c — Additional Medicare Tax withheld (Form 8959 line 24)
   line25c_additional_medicare_withheld: z.number().nonnegative().optional(),
+  // Line 25c — other federal income tax withheld, including Form 8805.
+  line25c_other_withheld: accumulable(z.number().nonnegative()).optional(),
   // Line 26 — 2025 estimated tax payments
   line26_estimated_tax: z.number().nonnegative().optional(),
   // Line 27 — Earned Income Credit (EITC)
@@ -237,7 +239,8 @@ function totalWithholding(input: F1040Input): number {
   return (
     (input.line25a_w2_withheld ?? 0) +
     sumField(input.line25b_withheld_1099 as number | number[] | undefined) +
-    (input.line25c_additional_medicare_withheld ?? 0)
+    (input.line25c_additional_medicare_withheld ?? 0) +
+    sumField(input.line25c_other_withheld)
   );
 }
 
@@ -280,6 +283,8 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   }
   const computed_line24 = computed_line22 + computed_line23;
   const computed_line25d = totalWithholding(input);
+  const computed_line25c = (input.line25c_additional_medicare_withheld ?? 0) +
+    sumField(input.line25c_other_withheld);
   const computed_line32 = refundableCreditsTotal(input);
   const computed_line33 = totalPayments(input);
   const computed_line38 = input.line38_underpayment_penalty ??
@@ -321,6 +326,7 @@ function assembleReturn(input: F1040Input): Record<string, number> {
   result.line12c_deduction_total = deductionAmount(input);
   result.line14_deductions_qbi_total = computed_line14;
   result.line32_refundable_credits_total = computed_line32;
+  if (computed_line25c > 0) result.line25c_total = computed_line25c;
   if ((input.form8978_schedule2_line17z_reduction ?? 0) > 0) {
     // The finalized return line replaces the unadjusted Schedule 2 deposit.
     result.line23_other_taxes = Math.max(0, computed_line23);

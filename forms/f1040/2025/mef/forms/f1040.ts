@@ -78,7 +78,7 @@ export interface Fields {
   line24_total_tax?: number | null;
   line25a_w2_withheld?: number | null;
   line25b_withheld_1099?: number | null;
-  line25c_additional_medicare_withheld?: number | null;
+  line25c_total?: number | null;
   line25d_total_withholding?: number | null;
   line26_estimated_tax?: number | null;
   line27_eitc?: number | null;
@@ -150,7 +150,7 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line24_total_tax", "TotalTaxAmt"],
   ["line25a_w2_withheld", "FormW2WithheldTaxAmt"],
   ["line25b_withheld_1099", "Form1099WithheldTaxAmt"],
-  ["line25c_additional_medicare_withheld", "TaxWithheldOtherAmt"],
+  ["line25c_total", "TaxWithheldOtherAmt"],
   ["line25d_total_withholding", "WithholdingTaxAmt"],
   ["line26_estimated_tax", "EstimatedTaxPaymentsAmt"],
   ["line27_eitc", "EarnedIncomeCreditAmt"],

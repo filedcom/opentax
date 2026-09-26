@@ -41,19 +41,19 @@ Deno.test("schema_accepts_valid_item", () => {
 Deno.test("energy_star_50pct_yields_2500_credit", () => {
   const result = compute([minimalItem({ energy_certification: EnergyCertification.EnergyStar50Pct })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2500);
+  assertEquals(out?.fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("zero_energy_ready_yields_5000_credit", () => {
   const result = compute([minimalItem({ energy_certification: EnergyCertification.ZeroEnergyReady })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 Deno.test("energy_star_45ach_yields_2500_credit", () => {
   const result = compute([minimalItem({ energy_certification: EnergyCertification.EnergyStar45Ach })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2500);
+  assertEquals(out?.fields.line6a_general_business_credit, 2500);
 });
 
 // ── Credit Amount Override ────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ Deno.test("energy_star_45ach_yields_2500_credit", () => {
 Deno.test("credit_amount_override_used_when_provided", () => {
   const result = compute([minimalItem({ credit_amount_override: 3500 })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 3500);
+  assertEquals(out?.fields.line6a_general_business_credit, 3500);
 });
 
 Deno.test("zero_credit_override_produces_no_output", () => {
@@ -77,7 +77,7 @@ Deno.test("manufactured_home_energy_star_yields_2500", () => {
     energy_certification: EnergyCertification.EnergyStar50Pct,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2500);
+  assertEquals(out?.fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("multifamily_zero_energy_ready_yields_5000", () => {
@@ -86,7 +86,7 @@ Deno.test("multifamily_zero_energy_ready_yields_5000", () => {
     energy_certification: EnergyCertification.ZeroEnergyReady,
   })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 5000);
+  assertEquals(out?.fields.line6a_general_business_credit, 5000);
 });
 
 // ── Aggregation ───────────────────────────────────────────────────────────────
@@ -99,13 +99,13 @@ Deno.test("multiple_homes_aggregate", () => {
     minimalItem({ energy_certification: EnergyCertification.ZeroEnergyReady }),
   ]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 10000);
+  assertEquals(out?.fields.line6a_general_business_credit, 10000);
 });
 
 Deno.test("home_address_is_optional", () => {
   const result = compute([minimalItem({ home_address: "123 Main St, Anytown, CA 90210" })]);
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 2500);
+  assertEquals(out?.fields.line6a_general_business_credit, 2500);
 });
 
 Deno.test("routes_to_schedule3", () => {

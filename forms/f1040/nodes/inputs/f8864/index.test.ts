@@ -50,12 +50,12 @@ Deno.test("f8864: negative gallons_saf fails", () => {
 Deno.test("f8864: biodiesel credit = $1.00 per gallon", () => {
   // 1,000 gallons × $1.00 = $1,000
   const result = compute(minimalInput({ gallons_biodiesel: 1_000 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 1_000);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 1_000);
 });
 
 Deno.test("f8864: biodiesel credit scales linearly — 500 gallons = $500", () => {
   const result = compute(minimalInput({ gallons_biodiesel: 500 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 500);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 500);
 });
 
 Deno.test("f8864: zero biodiesel gallons — no output", () => {
@@ -70,7 +70,7 @@ Deno.test("f8864: zero biodiesel gallons — no output", () => {
 Deno.test("f8864: agri-biodiesel credit = $1.10 per gallon", () => {
   // 500 gallons × $1.10 = $550
   const result = compute(minimalInput({ gallons_agri_biodiesel: 500 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 550);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 550);
 });
 
 Deno.test("f8864: agri-biodiesel yields more credit than same gallons of biodiesel", () => {
@@ -78,11 +78,11 @@ Deno.test("f8864: agri-biodiesel yields more credit than same gallons of biodies
   const biodieselCredit = fieldsOf(
     compute(minimalInput({ gallons_biodiesel: 100 })).outputs,
     schedule3,
-  )?.line6z_general_business_credit!;
+  )?.line6a_general_business_credit!;
   const agriCredit = fieldsOf(
     compute(minimalInput({ gallons_agri_biodiesel: 100 })).outputs,
     schedule3,
-  )?.line6z_general_business_credit!;
+  )?.line6a_general_business_credit!;
   assertEquals(biodieselCredit, 100);
   assertAlmostEquals(agriCredit, 110, 0.001);
 });
@@ -94,7 +94,7 @@ Deno.test("f8864: agri-biodiesel yields more credit than same gallons of biodies
 Deno.test("f8864: renewable diesel credit = $1.00 per gallon", () => {
   // 2,000 gallons × $1.00 = $2,000
   const result = compute(minimalInput({ gallons_renewable_diesel: 2_000 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 2_000);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 2_000);
 });
 
 // =============================================================================
@@ -115,19 +115,19 @@ Deno.test("f8864: SAF with GHG reduction below 50% — no SAF credit", () => {
 Deno.test("f8864: SAF with GHG reduction = 51% → $1.26/gallon", () => {
   // base $1.25 + (51 - 50) × $0.01 = $1.26; 1,000 × $1.26 = $1,260
   const result = compute(minimalInput({ gallons_saf: 1_000, saf_ghg_reduction_percentage: 51 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 1_260);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 1_260);
 });
 
 Deno.test("f8864: SAF with GHG reduction = 75% → $1.50/gallon", () => {
   // base $1.25 + (75 - 50) × $0.01 = $1.50; 1,000 × $1.50 = $1,500
   const result = compute(minimalInput({ gallons_saf: 1_000, saf_ghg_reduction_percentage: 75 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 1_500);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 1_500);
 });
 
 Deno.test("f8864: SAF with GHG reduction = 100% → $1.75/gallon", () => {
   // base $1.25 + (100 - 50) × $0.01 = $1.75; 1,000 × $1.75 = $1,750
   const result = compute(minimalInput({ gallons_saf: 1_000, saf_ghg_reduction_percentage: 100 }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 1_750);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 1_750);
 });
 
 Deno.test("f8864: SAF gallons provided but no GHG percentage — no SAF credit", () => {
@@ -155,7 +155,7 @@ Deno.test("f8864: biodiesel + agri-biodiesel credits summed", () => {
     gallons_biodiesel: 1_000,
     gallons_agri_biodiesel: 500,
   }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 1_550);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 1_550);
 });
 
 Deno.test("f8864: all four fuel types combined into single schedule3 output", () => {
@@ -171,7 +171,7 @@ Deno.test("f8864: all four fuel types combined into single schedule3 output", ()
     gallons_saf: 1_000,
     saf_ghg_reduction_percentage: 75,
   }));
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 5_050);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 5_050);
   assertEquals(result.outputs.length, 1);
 });
 
@@ -179,10 +179,10 @@ Deno.test("f8864: all four fuel types combined into single schedule3 output", ()
 // 8. Routing
 // =============================================================================
 
-Deno.test("f8864: routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8864: routes to schedule3 line6a_general_business_credit", () => {
   const result = compute(minimalInput({ gallons_biodiesel: 100 }));
   assertEquals(result.outputs[0]?.nodeType, "schedule3");
-  assertEquals(result.outputs[0]?.fields.line6z_general_business_credit, 100);
+  assertEquals(result.outputs[0]?.fields.line6a_general_business_credit, 100);
 });
 
 // =============================================================================
@@ -214,6 +214,6 @@ Deno.test("f8864: realistic blender scenario — multiple fuels at scale", () =>
     gallons_saf: 5_000,
     saf_ghg_reduction_percentage: 80,
   });
-  assertEquals(fieldsOf(result.outputs, schedule3)?.line6z_general_business_credit, 95_250);
+  assertEquals(fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit, 95_250);
   assertEquals(result.outputs.length, 1);
 });

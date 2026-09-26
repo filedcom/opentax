@@ -821,8 +821,8 @@ Deno.test("line1g_wages_8919 maps to TotalWagesWithNoWithholdingAmt", () => {
   );
 });
 
-Deno.test("line25c_additional_medicare_withheld maps to TaxWithheldOtherAmt", () => {
-  const result = irs1040.build({ line25c_additional_medicare_withheld: 900 });
+Deno.test("line25c_total maps to TaxWithheldOtherAmt", () => {
+  const result = irs1040.build({ line25c_total: 900 });
   assertStringIncludes(
     result,
     "<TaxWithheldOtherAmt>900</TaxWithheldOtherAmt>",
@@ -899,7 +899,7 @@ Deno.test("all mapped fields produce correct elements and IRS1040 wrapper", () =
     line24_total_tax: 6000,
     line25a_w2_withheld: 8000,
     line25b_withheld_1099: 450,
-    line25c_additional_medicare_withheld: 900,
+    line25c_total: 900,
     line25d_total_withholding: 9350,
     line28_actc: 1600,
     line29_refundable_aoc: 2500,

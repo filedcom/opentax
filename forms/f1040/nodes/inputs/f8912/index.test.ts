@@ -67,7 +67,7 @@ Deno.test("f8912.compute: full year holding = face × rate", () => {
     total_days_in_period: 365,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 500);
+  assertEquals(fields.line6a_general_business_credit, 500);
 });
 
 Deno.test("f8912.compute: partial year holding prorates credit", () => {
@@ -82,7 +82,7 @@ Deno.test("f8912.compute: partial year holding prorates credit", () => {
   const fields = fieldsOf(result.outputs, schedule3)!;
   // Check approximate value (floating point)
   const expected = 10_000 * 0.10 * (182 / 365);
-  assertEquals(Math.abs((fields.line6z_general_business_credit ?? 0) - expected) < 0.01, true);
+  assertEquals(Math.abs((fields.line6a_general_business_credit ?? 0) - expected) < 0.01, true);
 });
 
 Deno.test("f8912.compute: zero face_amount — no output", () => {
@@ -118,7 +118,7 @@ Deno.test("f8912.compute: zero holding days — no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
-Deno.test("f8912.compute: routes to schedule3 line6z_general_business_credit", () => {
+Deno.test("f8912.compute: routes to schedule3 line6a_general_business_credit", () => {
   // 50,000 × 0.06 × 1.0 = 3,000
   const result = compute([minimalItem({
     bond_type: BondType.QSCB,
@@ -128,7 +128,7 @@ Deno.test("f8912.compute: routes to schedule3 line6z_general_business_credit", (
     total_days_in_period: 365,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 3_000);
+  assertEquals(fields.line6a_general_business_credit, 3_000);
 });
 
 // =============================================================================
@@ -144,7 +144,7 @@ Deno.test("f8912.compute: multiple bonds — credits summed", () => {
     minimalItem({ bond_type: BondType.QECB, face_amount: 20_000, credit_rate: 0.04, holding_period_days: 365, total_days_in_period: 365 }),
   ]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 1_300);
+  assertEquals(fields.line6a_general_business_credit, 1_300);
 });
 
 Deno.test("f8912.compute: multiple bonds — only one schedule3 output", () => {
@@ -169,7 +169,7 @@ Deno.test("f8912.compute: 366-day year (leap year) — uses correct denominator"
     total_days_in_period: 366,
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6z_general_business_credit, 500);
+  assertEquals(fields.line6a_general_business_credit, 500);
 });
 
 // =============================================================================
@@ -200,7 +200,7 @@ Deno.test("f8912.compute: holding_period_days > total_days — still calculates"
   })]);
   const fields = fieldsOf(result.outputs, schedule3)!;
   const expected = 10_000 * 0.05 * (400 / 365);
-  assertEquals(Math.abs((fields.line6z_general_business_credit ?? 0) - expected) < 0.01, true);
+  assertEquals(Math.abs((fields.line6a_general_business_credit ?? 0) - expected) < 0.01, true);
 });
 
 // =============================================================================
@@ -219,5 +219,5 @@ Deno.test("f8912.compute: smoke test — mixed bond types, partial years", () =>
   // Total ≈ 9,108.22
   const fields = fieldsOf(result.outputs, schedule3)!;
   const expected = 5_000 + (200_000 * 0.035 * 182 / 365) + (50_000 * 0.045 * 100 / 365);
-  assertEquals(Math.abs((fields.line6z_general_business_credit ?? 0) - expected) < 0.01, true);
+  assertEquals(Math.abs((fields.line6a_general_business_credit ?? 0) - expected) < 0.01, true);
 });

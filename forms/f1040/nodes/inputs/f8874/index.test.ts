@@ -43,19 +43,19 @@ Deno.test("direct_credit_years_1_to_3_only", () => {
   // $50,000 in pre-computed year 1-3 credit
   const result = compute({ credit_years_1_to_3: 50000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 50000);
+  assertEquals(out?.fields.line6a_general_business_credit, 50000);
 });
 
 Deno.test("direct_credit_years_4_to_7_only", () => {
   const result = compute({ credit_years_4_to_7: 60000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 60000);
+  assertEquals(out?.fields.line6a_general_business_credit, 60000);
 });
 
 Deno.test("direct_credits_both_periods_combined", () => {
   const result = compute({ credit_years_1_to_3: 50000, credit_years_4_to_7: 60000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 110000);
+  assertEquals(out?.fields.line6a_general_business_credit, 110000);
 });
 
 // ── Investment Amount → Applied Rate ─────────────────────────────────────────
@@ -64,14 +64,14 @@ Deno.test("investment_early_5pct_rate", () => {
   // $1,000,000 × 5% = $50,000
   const result = compute({ investment_amount_early: 1_000_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 50000);
+  assertEquals(out?.fields.line6a_general_business_credit, 50000);
 });
 
 Deno.test("investment_later_6pct_rate", () => {
   // $1,000,000 × 6% = $60,000
   const result = compute({ investment_amount_later: 1_000_000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 60000);
+  assertEquals(out?.fields.line6a_general_business_credit, 60000);
 });
 
 Deno.test("investment_both_periods_combined", () => {
@@ -81,7 +81,7 @@ Deno.test("investment_both_periods_combined", () => {
     investment_amount_later: 500_000,
   });
   const out = findSchedule3(result);
-  assertAlmostEquals(out?.fields.line6z_general_business_credit as number, 55000, 0.01);
+  assertAlmostEquals(out?.fields.line6a_general_business_credit as number, 55000, 0.01);
 });
 
 // ── Prior Year Carryforward ───────────────────────────────────────────────────
@@ -89,14 +89,14 @@ Deno.test("investment_both_periods_combined", () => {
 Deno.test("carryforward_only", () => {
   const result = compute({ prior_year_carryforward: 10000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 10000);
+  assertEquals(out?.fields.line6a_general_business_credit, 10000);
 });
 
 Deno.test("carryforward_plus_current_year", () => {
   // $50k current + $10k carryforward = $60k
   const result = compute({ credit_years_1_to_3: 50000, prior_year_carryforward: 10000 });
   const out = findSchedule3(result);
-  assertEquals(out?.fields.line6z_general_business_credit, 60000);
+  assertEquals(out?.fields.line6a_general_business_credit, 60000);
 });
 
 // ── Mixed Inputs ──────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ Deno.test("all_inputs_combined", () => {
     prior_year_carryforward: 5000,
   });
   const out = findSchedule3(result);
-  assertAlmostEquals(out?.fields.line6z_general_business_credit as number, 38000, 0.01);
+  assertAlmostEquals(out?.fields.line6a_general_business_credit as number, 38000, 0.01);
 });
 
 // ── Routing ───────────────────────────────────────────────────────────────────
