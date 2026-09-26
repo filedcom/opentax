@@ -354,6 +354,54 @@ Deno.test("Form 8912: Form 1097-BTC issuer and identifier cannot be claimed twic
   );
 });
 
+Deno.test("Form 8912: CUSIP credit reported on 1097-BTC cannot also enter Part IV", () => {
+  const reportedCusip = {
+    ...reported,
+    bond_type: BondType.QECB,
+    issue_date: "2017-12-31",
+    unique_identifier_code: "C" as const,
+    unique_identifier: "123456789ACCOUNT1",
+  };
+  const duplicate = {
+    f8912s: [
+      item({ reported_bonds: [reportedCusip], unreported_bonds: [] }),
+      item({ reported_bonds: [], unreported_bonds: [unreported] }),
+    ],
+  };
+  assertEquals(f8912.inputSchema.safeParse(duplicate).success, false);
+  assertThrows(
+    () => f8912.compute({ taxYear: 2025, formType: "f1040" }, duplicate),
+    Error,
+    "already reported on Form 1097-BTC",
+  );
+  assertEquals(
+    f8912.inputSchema.safeParse({
+      f8912s: [item({ reported_bonds: [reportedCusip] })],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8912.inputSchema.safeParse({
+      f8912s: [item({
+        reported_bonds: [reportedCusip],
+        unreported_bonds: [{ ...unreported, issuer_ein: "987654321" }],
+      })],
+    }).success,
+    true,
+  );
+  assertEquals(
+    f8912.inputSchema.safeParse({
+      f8912s: [item({
+        reported_bonds: [{
+          ...reportedCusip,
+          unique_identifier_code: "A",
+        }],
+      })],
+    }).success,
+    true,
+  );
+});
+
 Deno.test("Form 8912: Form 1097-BTC box 2b identifier has the IRS length and characters", () => {
   assertEquals(
     itemSchema.safeParse(item({
