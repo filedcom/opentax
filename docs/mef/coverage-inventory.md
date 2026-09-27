@@ -108,6 +108,8 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 The `f8854` Form 8949 reconciliation now checks a confirmed ordinary holding
 period against the filed acquisition and deemed-sale dates. Inherited and other
 special holding-period cases remain unsupported, and these cases are unrun.
+It now also checks an explicit digital-asset classification against the TY2025
+Form 8949 C/F versus I/L no-information-return box; cases are written, unrun.
 The `form8949` MeF descriptor now maps all twelve TY2025 A-L boxes to distinct
 v5.4 groups and indicators; its all-boxes and local XSD cases are unrun.
 The `f8854` row has a registered initial `IRS8854` serializer for

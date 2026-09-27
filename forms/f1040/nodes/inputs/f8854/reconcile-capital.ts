@@ -47,6 +47,11 @@ export function reconcileForm8854Form8949Properties(
         `Form 8854 property ${asset.item_id} needs confirmation of standard Form 8949 holding-period treatment`,
       );
     }
+    if (asset.form8949_digital_asset === undefined) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} needs explicit digital-asset classification for Form 8949`,
+      );
+    }
     if (
       allocation.builtInGainOrLoss < 0 &&
       asset.form8949_loss_treatment === undefined
@@ -67,6 +72,13 @@ export function reconcileForm8854Form8949Properties(
     if (!["C", "F", "I", "L"].includes(transaction.part)) {
       throw new Error(
         `Form 8854 property ${asset.item_id} must use a Form 8949 no-information-return category`,
+      );
+    }
+    if (
+      ["I", "L"].includes(transaction.part) !== asset.form8949_digital_asset
+    ) {
+      throw new Error(
+        `Form 8854 property ${asset.item_id} has inconsistent Form 8949 digital-asset category`,
       );
     }
     if (

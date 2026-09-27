@@ -1166,6 +1166,9 @@ The Form 8949 match now also requires confirmation that the ordinary
 holding-period rule applies and checks the acquisition date against the
 deemed-sale date and short/long box; inherited property and other special
 holding-period rules remain blocked rather than inferred from a description.
+It also requires an explicit digital-asset classification and matches that to
+the TY2025 C/F versus I/L no-information-return boxes, without guessing from
+the property name. These category cases are written but unrun.
 These checks are
 written but unrun. This is a reconciliation check, not an automatic transaction
 route; other loss characters, Form 4797, direct Schedule D, and excluded-item

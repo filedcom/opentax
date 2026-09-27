@@ -23,6 +23,7 @@ import { allocateMarkToMarketExclusion } from "./mark-to-market.ts";
 import { calculateBalanceSheet } from "./balance-sheet.ts";
 import {
   Form8949LossTreatment,
+  type MarkToMarketAsset,
   NongrantorTrustTreatment,
   ReportedFormCode,
 } from "./section-c.ts";
@@ -56,6 +57,7 @@ function asset(
     reported_form_code: ReportedFormCode.Form8949,
     reported_transaction_id: `TX-${assetId}`,
     form8949_standard_holding_period_confirmed: true as const,
+    form8949_digital_asset: false,
   };
 }
 
@@ -88,17 +90,7 @@ function filed8949(...transactions: Record<string, unknown>[]) {
   }));
 }
 
-function sectionC(
-  markToMarketAssets: Array<
-    & Omit<
-      ReturnType<typeof asset>,
-      "form8949_standard_holding_period_confirmed"
-    >
-    & {
-      form8949_standard_holding_period_confirmed?: true;
-    }
-  > = [],
-) {
+function sectionC(markToMarketAssets: MarkToMarketAsset[] = []) {
   return {
     property_inventory_confirmed_complete: true,
     mark_to_market_assets: markToMarketAssets,
@@ -1464,6 +1456,57 @@ Deno.test("Form 8854 Form 8949 holding period follows acquisition and deemed-sal
     () => reconcileForm8854Form8949Properties(unconfirmed, filed8949(sale)),
     Error,
     "needs confirmation of standard Form 8949 holding-period treatment",
+  );
+});
+
+Deno.test("Form 8854 Form 8949 digital-asset fact matches the no-report box", () => {
+  const base = input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
+  });
+  const nondigital = inputSchema.parse(base);
+  const digital = inputSchema.parse({
+    ...base,
+    section_c: sectionC([{
+      ...asset("stock", 1_000_000, 100_000),
+      form8949_digital_asset: true,
+    }]),
+  });
+  const sale = deemedSale8949("stock", 1_000_000, 100_000, 890_000);
+  assertEquals(
+    reconcileForm8854Form8949Properties(
+      digital,
+      filed8949({ ...sale, part: "L" }),
+    ).length,
+    1,
+  );
+  for (
+    const [property, part] of [
+      [nondigital, "L"],
+      [digital, "F"],
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        reconcileForm8854Form8949Properties(
+          property,
+          filed8949({ ...sale, part }),
+        ),
+      Error,
+      "inconsistent Form 8949 digital-asset category",
+    );
+  }
+  const unclassified = inputSchema.parse({
+    ...base,
+    section_c: sectionC([{
+      ...asset("stock", 1_000_000, 100_000),
+      form8949_digital_asset: undefined,
+    }]),
+  });
+  assertThrows(
+    () => reconcileForm8854Form8949Properties(unclassified, filed8949(sale)),
+    Error,
+    "needs explicit digital-asset classification",
   );
 });
 
