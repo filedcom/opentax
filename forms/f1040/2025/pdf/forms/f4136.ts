@@ -1,7 +1,9 @@
 import { PDFDocument, type PDFPage, rgb, StandardFonts } from "pdf-lib";
 import { z } from "zod";
 import {
+  allForm4136Claims,
   calculateForm4136,
+  form4136ClaimCreditCents,
   type Form4136Input,
   inputSchema,
   rateForForm4136Claim,
@@ -53,10 +55,63 @@ const creditReferenceNumber: Record<Line, string> = {
   "11h": "435",
 };
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
+function fieldPath(p: number, n: number): string {
+  if (p === 1 && n <= 9 || p === 4 && (n === 124 || n === 125)) {
+    return `${page(p)}.f${p}_${n}[0]`;
+  }
+  let table = "";
+  let line = "";
+  let column = "";
+  if (p === 1) {
+    if (n >= 10 && n <= 23) {
+      table = "Table_Line1";
+      line = n <= 12 ? "Line1a" : n <= 15 ? "Line1b" : "Line1c";
+      column = n >= 20 && n <= 21 ? "ColD" : n >= 22 ? "ColE" : "";
+    } else if (n >= 40 && n <= 47) {
+      table = "Table_Line2";
+      line = "Line2b";
+      column = n >= 43 && n <= 44 ? "ColD" : n >= 45 && n <= 46 ? "ColE" : "";
+    } else if (n >= 64 && n <= 74) {
+      table = "Table_Line3";
+      line = n <= 66 ? "Line3a" : "Line3b";
+      column = n >= 70 && n <= 71 ? "ColD" : n >= 72 && n <= 73 ? "ColE" : "";
+    }
+  } else if (p === 2) {
+    if (n >= 1 && n <= 11) {
+      table = "Table_Line4";
+      line = n <= 3 ? "Line4a" : "Line4b";
+      column = n >= 7 && n <= 8 ? "ColD" : n >= 9 && n <= 10 ? "ColE" : "";
+    } else if (n >= 60 && n <= 75) {
+      table = "Table_Line5";
+      line = n <= 67 ? "Line5c" : "Line5d";
+      column = n >= 63 && n <= 64 || n >= 71 && n <= 72
+        ? "ColD"
+        : n >= 65 && n <= 66 || n >= 73 && n <= 74
+        ? "ColE"
+        : "";
+    }
+  } else if (p === 3 && n >= 79 && n <= 142) {
+    table = "Table_Line11";
+    const index = Math.floor((n - 79) / 8);
+    line = `Line11${String.fromCharCode(97 + index)}`;
+    const offset = (n - 79) % 8;
+    column = offset === 3 || offset === 4
+      ? "ColD"
+      : offset === 5 || offset === 6
+      ? "ColE"
+      : "";
+  }
+  if (!table || !line) {
+    throw new Error(`Form 4136 field ${p}:${n} has no mapped IRS path`);
+  }
+  return `${page(p)}.${table}[0].${line}[0].${
+    column ? `${column}[0].` : ""
+  }f${p}_${n}[0]`;
+}
 const text = (key: string, p: number, n: number): PdfFieldEntry => ({
   kind: "text",
   domainKey: key,
-  pdfField: `${page(p)}.f${p}_${n}[0]`,
+  pdfField: fieldPath(p, n),
 });
 
 // The source PDF has separate dollars/cents widgets for column (d), column
@@ -137,7 +192,9 @@ function putClaimGroup(
   lines: readonly Line[],
   key: string,
 ): void {
-  const claims = input.claims.filter((claim) => lines.includes(claim.line));
+  const claims = allForm4136Claims(input).filter((claim) =>
+    lines.includes(claim.line)
+  );
   if (!claims.length) return;
   const total = (pick: (claim: Claim) => number) =>
     claims.reduce((sum, claim) => sum + pick(claim), 0);
@@ -145,7 +202,7 @@ function putClaimGroup(
   putMoney(
     out,
     `${key}_credit`,
-    total((claim) => claim.qualified_quantity * rateForForm4136Claim(claim)),
+    total((claim) => form4136ClaimCreditCents(claim)) / 100,
   );
 }
 
@@ -154,7 +211,9 @@ function putLine(
   input: Form4136Input,
   line: Line,
 ): void {
-  const claims = input.claims.filter((claim) => claim.line === line);
+  const claims = allForm4136Claims(input).filter((claim) =>
+    claim.line === line
+  );
   if (!claims.length) return;
   out[`line${line}_quantity`] = claims.length === 1
     ? claims[0].qualified_quantity
@@ -172,12 +231,16 @@ async function decorateBusRates(
   fields: Record<string, unknown>,
 ): Promise<void> {
   const input = inputSchema.parse(fields);
-  if (!input.claims.some((claim) => claim.type_of_use === "05")) return;
+  if (!allForm4136Claims(input).some((claim) => claim.type_of_use === "05")) {
+    return;
+  }
   const page = pages[2];
   if (!page) throw new Error("Form 4136 bus rates require page 3");
   const font = await document.embedFont(StandardFonts.Helvetica);
   for (const [index, line] of alternativeFuelLines.entries()) {
-    const claims = input.claims.filter((claim) => claim.line === line);
+    const claims = allForm4136Claims(input).filter((claim) =>
+      claim.line === line
+    );
     const bus = claims.find((claim) => claim.type_of_use === "05");
     if (!bus) continue;
     const y = page.getHeight() - alternativeFuelRateTop[index] - 9.328;
@@ -209,7 +272,7 @@ async function appendClaimStatement(
 ): Promise<void> {
   const input = inputSchema.parse(fields);
   const grouped = new Map<Line, Claim[]>();
-  input.claims.forEach((claim) => {
+  allForm4136Claims(input).forEach((claim) => {
     const row = grouped.get(claim.line) ?? [];
     row.push(claim);
     grouped.set(claim.line, row);
@@ -255,8 +318,7 @@ async function appendClaimStatement(
         String(claim.qualified_quantity).padStart(9),
         claim.unit.padEnd(7),
         claim.actual_fuel_cost.toFixed(2).padStart(12),
-        (claim.qualified_quantity * rateForForm4136Claim(claim)).toFixed(2)
-          .padStart(8),
+        (form4136ClaimCreditCents(claim) / 100).toFixed(2).padStart(8),
         creditReferenceNumber[claim.line],
       ].join(" ");
       page.drawText(row, { x: 36, y: 678 - index * 18, size: 8, font });
@@ -271,6 +333,43 @@ async function appendClaimStatement(
       },
     );
   }
+}
+
+export function projectForm4136Fields(
+  input: Form4136Input,
+): Record<string, unknown> {
+  const total = calculateForm4136(input);
+  const out: Record<string, unknown> = {
+    ...input,
+    ...input.business,
+    activity_count: 1 + input.additional_activities.length,
+    qualified_yes: true,
+  };
+  for (
+    const line of [
+      "1a",
+      "1b",
+      "2b",
+      "3a",
+      "3b",
+      "4a",
+      "4b",
+      "5c",
+      "5d",
+      ...alternativeFuelLines,
+    ] as const
+  ) {
+    putLine(out, input, line);
+  }
+  putClaimGroup(out, input, ["1a", "1b"], "line1");
+  putClaimGroup(out, input, ["2b"], "line2b");
+  putClaimGroup(out, input, ["3a", "3b"], "line3");
+  putClaimGroup(out, input, ["4a", "4b"], "line4");
+  for (const line of ["5c", "5d", ...alternativeFuelLines] as const) {
+    putClaimGroup(out, input, [line], `line${line}`);
+  }
+  putMoney(out, "line17_total", total);
+  return out;
 }
 
 export const form4136Pdf: PdfFormDescriptor = {
@@ -294,36 +393,7 @@ export const form4136Pdf: PdfFormDescriptor = {
     ) {
       throw new Error("Form 4136 PDF does not match Schedule 3 line 12");
     }
-    const out: Record<string, unknown> = {
-      ...input,
-      ...input.business,
-      qualified_yes: true,
-    };
-    for (
-      const line of [
-        "1a",
-        "1b",
-        "2b",
-        "3a",
-        "3b",
-        "4a",
-        "4b",
-        "5c",
-        "5d",
-        ...alternativeFuelLines,
-      ] as const
-    ) {
-      putLine(out, input, line);
-    }
-    putClaimGroup(out, input, ["1a", "1b"], "line1");
-    putClaimGroup(out, input, ["2b"], "line2b");
-    putClaimGroup(out, input, ["3a", "3b"], "line3");
-    putClaimGroup(out, input, ["4a", "4b"], "line4");
-    for (const line of ["5c", "5d", ...alternativeFuelLines] as const) {
-      putClaimGroup(out, input, [line], `line${line}`);
-    }
-    putMoney(out, "line17_total", total);
-    return out;
+    return projectForm4136Fields(input);
   },
   decoratePages: decorateBusRates,
   appendSupplementalPages: appendClaimStatement,

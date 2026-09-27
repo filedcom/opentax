@@ -259,8 +259,8 @@ feeds line 6k, while these source forms still need complete eligibility,
 document, and business-rule review. The Schedule 3 MeF builder requires attached
 source-form IDs for lines 6h, 6i, 6k, and 12. Forms 8912, 8859, and 8834 are
 registered but unrun. The Form 4136 input has now
-replaced unsubstantiated flat gallon fields with a single qualifying business
-and ultimate-purchaser affirmation,
+replaced unsubstantiated flat gallon fields with a primary qualifying business,
+separately validated additional activities, and ultimate-purchaser affirmation,
 purchase-record and duplicate-claim confirmations, and line-indexed gallons,
 use codes, measurement units, and actual fuel costs. Its calculation and rejection cases are
 written but unrun. Its `IRS4136` builder now maps the represented lines and
@@ -269,9 +269,14 @@ written but unrun. All line 11 fuels and reduced-rate bus calculations/MeF
 groups are now built. The PDF builder now overlays the read-only preprinted
 line 11 rates for bus use and adds "Bus" beside the use code, but this still
 needs filled-render inspection. Mixed-rate rows refer to an attached detail
-statement. Multiple businesses require Schedule A (Form 4136). The PDF
-descriptor now maps the four-page 2025 form and repeated-use statement, but
-filled rendering is unverified. Additional claim lines, source evidence, full
+statement. Multiple businesses now produce one official four-page Schedule A
+(Form 4136) PDF binary attachment per activity, and the Form 4136 XML references
+each attachment. The input affirms that the primary activity has the most
+qualifying fuel usage, and credits round by claim before the activity totals
+are combined. Both PDF descriptors now use the actual nested AcroForm paths;
+all mapped widget names were found in the IRS PDFs. Filled rendering and the
+binary-attachment IRS business rule are unverified. Mixed units on one fuel
+line stop until conversion rules are verified. Additional claim lines, source evidence, full
 test/XSD and IRS business rules, and ATS acceptance remain open.
 
 Form 8936 now enters the start graph as one singleton input containing both Part

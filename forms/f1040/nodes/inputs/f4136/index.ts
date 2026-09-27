@@ -100,20 +100,21 @@ export const fuelClaimSchema = z.object({
   not_highway_vehicle: z.literal(true).optional(),
 });
 
-export const inputSchema = z.object({
-  business: z.object({
-    qualifying_business_activity: z.literal(true),
-    claimant_is_ultimate_purchaser: z.literal(true),
-    activity_count: z.literal(1),
-    business_name: z.string().trim().min(1),
-    business_ein: z.string().regex(/^\d{9}$/).optional(),
-    principal_activity_code: z.string().regex(/^\d{6}$/),
-    equipment_make: z.string().trim().min(1),
-    equipment_model: z.string().trim().min(1),
-    equipment_type: z.string().trim().min(1),
-    purchase_records_confirmed: z.literal(true),
-    no_duplicate_excise_claim: z.literal(true),
-  }),
+const businessSchema = z.object({
+  qualifying_business_activity: z.literal(true),
+  claimant_is_ultimate_purchaser: z.literal(true),
+  business_name: z.string().trim().min(1),
+  business_ein: z.string().regex(/^\d{9}$/).optional(),
+  principal_activity_code: z.string().regex(/^\d{6}$/),
+  equipment_make: z.string().trim().min(1),
+  equipment_model: z.string().trim().min(1),
+  equipment_type: z.string().trim().min(1),
+  purchase_records_confirmed: z.literal(true),
+  no_duplicate_excise_claim: z.literal(true),
+});
+
+const activitySchema = z.object({
+  business: businessSchema,
   claims: z.array(fuelClaimSchema).min(1),
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
@@ -209,7 +210,54 @@ export const inputSchema = z.object({
   });
 });
 
+export const inputSchema = z.object({
+  business: businessSchema,
+  claims: z.array(fuelClaimSchema).min(1),
+  additional_activities: z.array(activitySchema),
+  primary_activity_has_most_qualified_fuel_usage: z.literal(true),
+}).superRefine((input, ctx) => {
+  const primary = activitySchema.safeParse({
+    business: input.business,
+    claims: input.claims,
+  });
+  if (!primary.success) {
+    for (const issue of primary.error.issues) ctx.addIssue(issue);
+  }
+  const unitsByLine = new Map<z.infer<typeof fuelLine>, string>();
+  const activities = [
+    { claims: input.claims },
+    ...input.additional_activities,
+  ];
+  activities.forEach((activity, activityIndex) => {
+    activity.claims.forEach((claim, claimIndex) => {
+      const previousUnit = unitsByLine.get(claim.line);
+      if (previousUnit && previousUnit !== claim.unit) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} cannot combine ${previousUnit} and ${claim.unit} without a verified conversion`,
+          path: activityIndex === 0 ? ["claims", claimIndex, "unit"] : [
+            "additional_activities",
+            activityIndex - 1,
+            "claims",
+            claimIndex,
+            "unit",
+          ],
+        });
+      }
+      unitsByLine.set(claim.line, claim.unit);
+    });
+  });
+});
+
 export type Form4136Input = z.infer<typeof inputSchema>;
+
+export function allForm4136Claims(input: Form4136Input) {
+  return [
+    ...input.claims,
+    ...input.additional_activities.flatMap((activity) => activity.claims),
+  ];
+}
 
 export function rateForForm4136Claim(
   claim: Form4136Input["claims"][number],
@@ -220,13 +268,20 @@ export function rateForForm4136Claim(
   return FORM4136_RATES[claim.line];
 }
 
+export function form4136ClaimCreditCents(
+  claim: Form4136Input["claims"][number],
+): number {
+  return Math.round(
+    claim.qualified_quantity * rateForForm4136Claim(claim) * 100,
+  );
+}
+
 export function calculateForm4136(input: Form4136Input): number {
-  const credit = input.claims.reduce(
-    (sum, claim) =>
-      sum + claim.qualified_quantity * rateForForm4136Claim(claim),
+  const cents = allForm4136Claims(input).reduce(
+    (sum, claim) => sum + form4136ClaimCreditCents(claim),
     0,
   );
-  return Math.round(credit * 100) / 100;
+  return cents / 100;
 }
 
 class F4136Node extends TaxNode<typeof inputSchema> {

@@ -6,12 +6,16 @@ const certifications = {
   credit_card_issuer_certificate_not_provided: true,
   not_highway_vehicle: true,
 } as const;
+const activityContext = {
+  additional_activities: [],
+  primary_activity_has_most_qualified_fuel_usage: true as const,
+};
 
 const fields = {
+  ...activityContext,
   business: {
     qualifying_business_activity: true as const,
     claimant_is_ultimate_purchaser: true as const,
-    activity_count: 1 as const,
     business_name: "Example Farm",
     principal_activity_code: "111000",
     equipment_make: "Example",
@@ -24,7 +28,7 @@ const fields = {
     {
       ...certifications,
       line: "1a" as const,
-      unit: "gallons",
+      unit: "gallons" as const,
       qualified_quantity: 100,
       actual_fuel_cost: 300,
     },
@@ -74,6 +78,7 @@ Deno.test("Form 4136 XML rejects a Schedule 3 source mismatch", () => {
 
 Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternative fuel groups", () => {
   const xml = form4136.build({
+    ...activityContext,
     business: fields.business,
     claims: [
       {
@@ -171,6 +176,7 @@ Deno.test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
     "11h",
   ] as const;
   const xml = form4136.build({
+    ...activityContext,
     business: fields.business,
     claims: lines.map((line) => ({
       ...certifications,
@@ -203,6 +209,7 @@ Deno.test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
 
 Deno.test("Form 4136 XML separates reduced-rate bus use from standard use", () => {
   const xml = form4136.build({
+    ...activityContext,
     business: fields.business,
     claims: [
       {
@@ -230,5 +237,67 @@ Deno.test("Form 4136 XML separates reduced-rate bus use from standard use", () =
   assertStringIncludes(
     xml,
     '<NontxLiquefiedPtrlmGasCrAmt creditReferenceNum="419">29</NontxLiquefiedPtrlmGasCrAmt>',
+  );
+});
+
+Deno.test("Form 4136 XML combines two activities and links both Schedule A PDFs", () => {
+  const multi = {
+    ...fields,
+    business: { ...fields.business, business_ein: "123456789" },
+    claims: [{
+      ...certifications,
+      line: "1a" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+    }],
+    additional_activities: [{
+      business: {
+        ...fields.business,
+        business_name: "Second Activity",
+        business_ein: "987654321",
+      },
+      claims: [{
+        ...certifications,
+        line: "1a" as const,
+        unit: "gallons" as const,
+        qualified_quantity: 50,
+        actual_fuel_cost: 150,
+      }],
+    }],
+  };
+  const xml = form4136.build(multi, {
+    pending: { schedule3: { line12_fuel_tax_credit: 27.45 } },
+    documentIdsByPendingKey: { f4136: ["IRS4136_1"] },
+    documentIdsByAttachmentFileName: {
+      "Form4136ScheduleA1.pdf": "BinaryAttachment1",
+      "Form4136ScheduleA2.pdf": "BinaryAttachment2",
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<QlfyBusinessActivitiesCnt>2</QlfyBusinessActivitiesCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<OffHwyBusUseGasolineGalsQty>150</OffHwyBusUseGasolineGalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="BinaryAttachment1 BinaryAttachment2"',
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="BinaryAttachment GeneralDependencySmall"',
+  );
+  assertThrows(
+    () =>
+      form4136.build(multi, {
+        pending: { schedule3: { line12_fuel_tax_credit: 27.45 } },
+        documentIdsByPendingKey: { f4136: ["IRS4136_1"] },
+        documentIdsByAttachmentFileName: {},
+      }),
+    Error,
+    "Schedule A",
   );
 });
