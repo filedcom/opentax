@@ -1096,12 +1096,19 @@ That route has been removed. The 2025 covered-expatriate average-tax threshold
 is $206,000 and the mark-to-market exclusion is $890,000. A source-identified
 asset calculation now allocates the exclusion proportionally to gain assets,
 without using losses to dilute it, and balances cents deterministically. The
-Form 8854 node still rejects filing, including non-covered cases, because it
-cannot yet produce the required `IRS8854` document. The initial and annual
-statement facts, dual-citizen/minor exceptions, excluded asset classes,
-property-character gain/loss routing, deferral, required statements, PDF, MeF
-serializer, source reconciliation, and IRS business rules remain open. The
-calculation and rejection cases are written but unrun. See the
+covered-expatriate test now recognizes qualifying dual-citizen and minor
+exceptions only when the five-year tax-compliance certification is true. It
+checks their residency limits and the minor's date-of-birth boundary, and
+rejects exception claims for long-term residents. These are entered facts, not
+independently authenticated citizenship or residency records. The current input
+covers initial 2025 expatriation only; the older annual-statement path still
+needs its own data model. The Form 8854 node still rejects filing, including
+non-covered cases, because it cannot yet produce the required `IRS8854`
+document. The initial and annual statement facts, exception source
+corroboration, excluded asset classes, property-character gain/loss routing,
+deferral, required statements, PDF, MeF serializer, source reconciliation, and
+IRS business rules remain open. The calculation and rejection cases are written
+but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
 ## Registered Form 1040 MeF documents to audit

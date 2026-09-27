@@ -70,6 +70,90 @@ Deno.test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
   );
 });
 
+Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests", () => {
+  const dual = {
+    kind: "DUAL_CITIZEN_AT_BIRTH",
+    us_citizen_at_birth: true,
+    other_country_citizen_at_birth: true,
+    other_country_citizen_at_expatriation: true,
+    other_country_tax_resident_at_expatriation: true,
+    us_resident_tax_years_in_last_15: 10,
+  };
+  const covered = {
+    average_annual_tax_prior_5_years: 300_000,
+    net_worth_at_expatriation: 4_000_000,
+    covered_expatriate_exception: dual,
+  };
+  assertEquals(isCoveredExpatriate(inputSchema.parse(input(covered))), false);
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      ...covered,
+      certified_tax_compliance: false,
+    }))),
+    true,
+  );
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      ...covered,
+      covered_expatriate_exception: {
+        ...dual,
+        us_resident_tax_years_in_last_15: 11,
+      },
+    }))),
+    true,
+  );
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      ...covered,
+      covered_expatriate_exception: {
+        ...dual,
+        other_country_tax_resident_at_expatriation: false,
+      },
+    }))),
+    true,
+  );
+});
+
+Deno.test("Form 8854 minor exception uses the strict age and residence boundaries", () => {
+  const minor = {
+    kind: "MINOR",
+    date_of_birth: "2007-01-01",
+    us_resident_tax_years_before_expatriation: 10,
+  };
+  const covered = {
+    average_annual_tax_prior_5_years: 300_000,
+    covered_expatriate_exception: minor,
+  };
+  assertEquals(isCoveredExpatriate(inputSchema.parse(input(covered))), false);
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      ...covered,
+      covered_expatriate_exception: {
+        ...minor,
+        date_of_birth: "2006-12-15",
+      },
+    }))),
+    true,
+  );
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      ...covered,
+      covered_expatriate_exception: {
+        ...minor,
+        us_resident_tax_years_before_expatriation: 11,
+      },
+    }))),
+    true,
+  );
+  assertEquals(
+    isCoveredExpatriate(inputSchema.parse(input({
+      ...covered,
+      certified_tax_compliance: false,
+    }))),
+    true,
+  );
+});
+
 Deno.test("Form 8854 validates its source date and asset amounts", () => {
   assertEquals(
     inputSchema.safeParse(input({
@@ -83,6 +167,33 @@ Deno.test("Form 8854 validates its source date and asset amounts", () => {
       false,
     );
   }
+  assertEquals(
+    inputSchema.safeParse(input({
+      expatriation_date: "2024-12-31",
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      expatriate_type: ExpatriateType.LONG_TERM_RESIDENT,
+      covered_expatriate_exception: {
+        kind: "MINOR",
+        date_of_birth: "2007-01-01",
+        us_resident_tax_years_before_expatriation: 2,
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      covered_expatriate_exception: {
+        kind: "MINOR",
+        date_of_birth: "2025-07-01",
+        us_resident_tax_years_before_expatriation: 0,
+      },
+    })).success,
+    false,
+  );
   assertEquals(
     inputSchema.safeParse(input({
       assets: [asset("A", -1, 0)],

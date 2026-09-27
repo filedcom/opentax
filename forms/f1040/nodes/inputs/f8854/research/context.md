@@ -26,6 +26,14 @@ cent-balancing rule. Loss properties receive no exclusion. This is only the
 Section C calculation; it does not establish that a loss is deductible or that
 an asset belongs in the mark-to-market class.
 
+For an initial 2025 statement, the covered-expatriate test now takes explicit
+dual-citizen-at-birth or minor facts. Either exception can remove the tax and
+net-worth tests, but not the five-year certification test. U.S. residence and
+the minor's age boundary are checked. Citizenship, foreign tax residence, and
+U.S. residence years remain entered assertions, not independently verified
+records. Annual statements for pre-2025 expatriations are not modeled by this
+input.
+
 Remaining build work: model all required Form 8854 identification and
 certification fields; distinguish assets subject to mark-to-market from deferred
 compensation, specified tax-deferred accounts and nongrantor trusts; route gains
