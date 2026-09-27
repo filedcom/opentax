@@ -53,9 +53,10 @@ current-year credit to Form 3800 Part III line 1i. A native IRS8874 source
 document and Part V source row are written, with tests deferred to the full
 batch. Nonpassive partnership and S-corporation K-1 code AD sources also enter
 line 1i directly, with filed K-1 amount and identity reconciliation and no
-invented IRS8874 for pass-through-only claims. Passive, estate/trust,
-carryforward, recapture, and cent-bearing cases remain open; this is not a
-complete New Markets Credit filing path.
+invented IRS8874 for pass-through-only claims. Estate/trust K-1 box 13 code ZZ
+credits require a statement identifying the New Markets Credit and use the same
+source-backed line 1i. Passive, carryforward, recapture, and cent-bearing cases
+remain open; this is not a complete New Markets Credit filing path.
 
 `f8820` now sends an identified, nonpassive orphan-drug source credit to Form
 3800 Part III line 1h instead of depositing its gross 25% credit in Schedule 3.

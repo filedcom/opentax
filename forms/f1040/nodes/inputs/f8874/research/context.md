@@ -24,13 +24,14 @@ Nonpassive partnership box 15 code AD and S-corporation box 13 code AD amounts
 go directly from identified K-1 sources to Form 3800 Part III line 1i. A
 pass-through-only filer does not get an invented IRS8874 attachment. Multiple
 same-line sources need explicit Part V use amounts if the tax limit only uses
-some of their combined credit. These cases are written but unrun.
+some of their combined credit. These cases are written but unrun. Estate/trust
+box 13 code ZZ amounts additionally require a source statement identifying the
+New Markets Credit and route directly to the same line 1i.
 
-Open work: passive credit and Form 8582-CR routing; estate and trust
-pass-through credits; carryovers and carrybacks; recapture and sale events;
-leap-day anniversary rules; cent-bearing investments and XML rounding; filled
-PDF output; IRS business rules and ATS acceptance. The current route is not
-filing-ready.
+Open work: passive credit and Form 8582-CR routing; carryovers and carrybacks;
+recapture and sale events; leap-day anniversary rules; cent-bearing investments
+and XML rounding; filled PDF output; IRS business rules and ATS acceptance. The
+current route is not filing-ready.
 
 Sources:
 

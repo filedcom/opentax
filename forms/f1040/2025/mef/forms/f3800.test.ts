@@ -489,6 +489,57 @@ Deno.test("Form 3800 files partnership code AD directly without an IRS8874", () 
   );
 });
 
+Deno.test("Form 3800 reconciles estate/trust code ZZ New Markets statement", () => {
+  const businessTax = { ...tax, standardCredit: 1_250 };
+  const source = {
+    estate_trust_name: "Community trust",
+    entity_type: "trust" as const,
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 trust K-1",
+    box13_code_zz_new_markets_statement_reference: "New Markets statement",
+    box13_code_zz_new_markets_credit: 1_250,
+    new_markets_credit_subject_to_passive_activity_limit: false,
+    box13_credits: 1_250,
+  };
+  const fields = {
+    f8874_k1_credit_entries: [{
+      source_type: "trust" as const,
+      source_ein: "123456789",
+      source_document_reference: "2025 trust K-1",
+      source_statement_reference: "New Markets statement",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false as const,
+    }],
+    tax_context: businessTax,
+    allowed_credit: 1_250,
+  };
+  const context = {
+    pending: {
+      ...filedPending(businessTax, 1_250),
+      k1_trust: { k1_trusts: [source] },
+    },
+    documentIdsByPendingKey: { f8874: [], form6251: ["IRS6251_1"] },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form8874CYCreditsGrp>");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8874_k1_credit_entries: [{
+          ...fields.f8874_k1_credit_entries[0],
+          source_statement_reference: "Different statement",
+        }],
+      }, context),
+    Error,
+    "does not reconcile to trust K-1 code ZZ statement",
+  );
+});
+
 Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820", () => {
   const source = {
     f8820s: [],

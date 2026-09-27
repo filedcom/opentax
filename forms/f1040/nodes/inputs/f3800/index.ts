@@ -127,11 +127,24 @@ const f8874CreditSchema = z.object({
 });
 
 const f8874K1CreditSchema = z.object({
-  source_type: z.enum(["partnership", "s_corporation"]),
+  source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
   source_ein: z.string().regex(/^\d{9}$/),
   source_document_reference: z.string().trim().min(1),
+  source_statement_reference: z.string().trim().min(1).optional(),
   credit_amount: z.number().int().positive(),
   subject_to_passive_activity_limit: z.literal(false),
+}).superRefine((entry, ctx) => {
+  if (
+    (entry.source_type === "estate" || entry.source_type === "trust") &&
+    !entry.source_statement_reference
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["source_statement_reference"],
+      message:
+        "Estate/trust code ZZ New Markets Credit needs its statement reference",
+    });
+  }
 });
 
 const f8820K1CreditSchema = z.object({
@@ -289,7 +302,9 @@ function schedule3Output(
   const newMarketsK1Keys = new Set<string>();
   for (const entry of f8874K1Credits) {
     const key =
-      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}`;
+      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}:${
+        entry.source_statement_reference ?? ""
+      }`;
     if (newMarketsK1Keys.has(key)) {
       throw new Error("Duplicate New Markets Credit K-1 source");
     }

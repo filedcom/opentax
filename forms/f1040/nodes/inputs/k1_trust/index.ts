@@ -43,6 +43,10 @@ export const itemSchema = z.object({
   source_document_reference: z.string().trim().min(1).optional(),
   box13_code_m_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+  box13_code_zz_new_markets_credit: z.number().int().positive().optional(),
+  box13_code_zz_new_markets_statement_reference: z.string().trim().min(1)
+    .optional(),
+  new_markets_credit_subject_to_passive_activity_limit: z.boolean().optional(),
   box13_code_zz_disabled_access_credit: z.number().finite().positive().refine(
     (amount) =>
       Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -179,11 +183,31 @@ export const itemSchema = z.object({
       }
     }
   }
+  if (item.box13_code_zz_new_markets_credit !== undefined) {
+    for (
+      const key of [
+        "entity_type",
+        "estate_trust_ein",
+        "source_document_reference",
+        "box13_code_zz_new_markets_statement_reference",
+        "new_markets_credit_subject_to_passive_activity_limit",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 13 code ZZ New Markets Credit needs ${key}`,
+        });
+      }
+    }
+  }
   if (
     item.box13_credits !== undefined &&
     Math.round(item.box13_credits * 100) <
       Math.round((item.box13_code_m_orphan_drug_credit ?? 0) * 100) +
-        Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100)
+        Math.round((item.box13_code_zz_disabled_access_credit ?? 0) * 100) +
+        Math.round((item.box13_code_zz_new_markets_credit ?? 0) * 100)
   ) {
     ctx.addIssue({
       code: "custom",
@@ -471,6 +495,38 @@ function orphanDrugCreditOutputs(items: K1TrustItems): NodeOutput[] {
   });
 }
 
+function newMarketsCreditOutputs(items: K1TrustItems): NodeOutput[] {
+  return items.flatMap((item) => {
+    const credit = item.box13_code_zz_new_markets_credit;
+    if (credit === undefined) return [];
+    if (
+      !item.entity_type || !item.estate_trust_ein ||
+      !item.source_document_reference ||
+      !item.box13_code_zz_new_markets_statement_reference
+    ) {
+      throw new Error(
+        "Estate/trust New Markets Credit K-1 source is incomplete",
+      );
+    }
+    if (item.new_markets_credit_subject_to_passive_activity_limit) {
+      throw new Error(
+        "Passive New Markets Credit needs Form 8582-CR activity facts",
+      );
+    }
+    return [output(f3800, {
+      f8874_k1_credit_entries: [{
+        source_type: item.entity_type,
+        source_ein: item.estate_trust_ein,
+        source_document_reference: item.source_document_reference,
+        source_statement_reference:
+          item.box13_code_zz_new_markets_statement_reference,
+        credit_amount: credit,
+        subject_to_passive_activity_limit: false,
+      }],
+    })];
+  });
+}
+
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
@@ -504,6 +560,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...apportionedDeductionOutputs(limitedItems),
       ...disabledAccessCreditOutputs(limitedItems),
       ...orphanDrugCreditOutputs(limitedItems),
+      ...newMarketsCreditOutputs(limitedItems),
     ];
 
     for (const item of limitedItems) {

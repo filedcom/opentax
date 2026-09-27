@@ -378,10 +378,18 @@ function sourceNewMarketsK1Credits(
     entries.some((entry) => entry.source_type === "s_corporation")
       ? sCorpK1InputSchema.parse(context.pending?.k1_s_corp).k1_s_corps
       : [];
+  const estatesAndTrusts =
+    entries.some((entry) =>
+        entry.source_type === "estate" || entry.source_type === "trust"
+      )
+      ? trustK1InputSchema.parse(context.pending?.k1_trust).k1_trusts
+      : [];
   const seen = new Set<string>();
   for (const entry of entries) {
     const key =
-      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}`;
+      `${entry.source_type}:${entry.source_ein}:${entry.source_document_reference}:${
+        entry.source_statement_reference ?? ""
+      }`;
     if (seen.has(key)) {
       throw new Error("Form 3800 New Markets Credit K-1 source is duplicated");
     }
@@ -393,15 +401,30 @@ function sourceNewMarketsK1Credits(
         k1.box15_code_ad_new_markets_credit === entry.credit_amount &&
         k1.new_markets_credit_subject_to_passive_activity_limit === false
       )
-      : corporations.filter((k1) =>
+      : entry.source_type === "s_corporation"
+      ? corporations.filter((k1) =>
         k1.corporation_ein === entry.source_ein &&
         k1.source_document_reference === entry.source_document_reference &&
         k1.box13_code_ad_new_markets_credit === entry.credit_amount &&
         k1.new_markets_credit_subject_to_passive_activity_limit === false
+      )
+      : estatesAndTrusts.filter((k1) =>
+        k1.entity_type === entry.source_type &&
+        k1.estate_trust_ein === entry.source_ein &&
+        k1.source_document_reference === entry.source_document_reference &&
+        k1.box13_code_zz_new_markets_statement_reference ===
+          entry.source_statement_reference &&
+        k1.box13_code_zz_new_markets_credit === entry.credit_amount &&
+        k1.new_markets_credit_subject_to_passive_activity_limit === false
       );
     if (matches.length !== 1) {
       throw new Error(
-        `Form 3800 New Markets Credit does not reconcile to ${entry.source_type} K-1 code AD`,
+        `Form 3800 New Markets Credit does not reconcile to ${entry.source_type} K-1 ${
+          entry.source_type === "partnership" ||
+            entry.source_type === "s_corporation"
+            ? "code AD"
+            : "code ZZ statement"
+        }`,
       );
     }
   }

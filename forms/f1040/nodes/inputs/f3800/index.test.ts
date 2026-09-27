@@ -282,6 +282,21 @@ Deno.test("f3800: New Markets Credit K-1 sources wait for the shared limit", () 
   );
 });
 
+Deno.test("f3800: estate/trust New Markets Credit needs code ZZ statement identity", () => {
+  assertEquals(
+    f3800.inputSchema.safeParse({
+      f8874_k1_credit_entries: [{
+        source_type: "trust",
+        source_ein: "123456789",
+        source_document_reference: "2025 trust K-1",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", () => {
   const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
     f8936_new_vehicle_credit: {

@@ -109,6 +109,48 @@ Deno.test("estate/trust K-1 code M reaches source-backed Form 3800", () => {
   }
 });
 
+Deno.test("estate/trust K-1 code ZZ New Markets Credit needs its statement", () => {
+  assertThrows(() =>
+    compute([minimalItem({
+      box13_code_zz_new_markets_credit: 1_250,
+    })])
+  );
+  for (const entity_type of ["estate", "trust"] as const) {
+    const item = minimalItem({
+      entity_type,
+      estate_trust_ein: "123456789",
+      source_document_reference: `${entity_type} K-1 2025`,
+      box13_code_zz_new_markets_statement_reference:
+        "Box 13 ZZ New Markets statement",
+      box13_code_zz_new_markets_credit: 1_250,
+      new_markets_credit_subject_to_passive_activity_limit: false,
+      box13_credits: 1_250,
+    });
+    assertEquals(findOutput(compute([item]), "f3800")?.fields, {
+      f8874_k1_credit_entries: [{
+        source_type: entity_type,
+        source_ein: "123456789",
+        source_document_reference: `${entity_type} K-1 2025`,
+        source_statement_reference: "Box 13 ZZ New Markets statement",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }],
+    });
+    assertThrows(() =>
+      compute([{
+        ...item,
+        box13_credits: 1_249,
+      }])
+    );
+    assertThrows(() =>
+      compute([{
+        ...item,
+        new_markets_credit_subject_to_passive_activity_limit: true,
+      }])
+    );
+  }
+});
+
 Deno.test("estate or trust K-1 disabled-access code ZZ needs its named statement", () => {
   assertThrows(() =>
     compute([minimalItem({ box13_code_zz_disabled_access_credit: 500 })])
