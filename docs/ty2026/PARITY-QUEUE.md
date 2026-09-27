@@ -48,6 +48,10 @@ The [Form 4797 disposition contract](FORM4797-GRAPH.md) maps the common
 asset ledger, §1231 and ordinary branches, depreciation recapture, the
 Form 4684 cycle and 188 draft PDF widgets. The 2026 line renumbering
 invalidates several TY2025 MeF and shared-node assumptions.
+The [Form 6252 installment contract](FORM6252-GRAPH.md) supplies the
+cross-year sale/obligation ledger, related-party and deemed-payment branches,
+recapture and Form 4797/Schedule D destinations. Its draft embedded
+instructions cite stale Form 4797 lines that need final-source resolution.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

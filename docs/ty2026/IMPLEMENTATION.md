@@ -82,6 +82,10 @@ The [Form 4797 contract](FORM4797-GRAPH.md) maps its renumbered Part I–IV
 lines, per-asset disposition and recapture ledger, Form 4684 casualty
 feedback, five-year §1231 history, QPP use change and 188 PDF widgets.
 Its TY2025 MeF and shared aggregate node cannot file the complete 2026 form.
+The [Form 6252 contract](FORM6252-GRAPH.md) maps the continuing installment
+obligation, sale-year and future payments, related-party/deemed receipts,
+recapture and 49 PDF widgets. The 2026 form embeds its instructions, which
+still cite obsolete Form 4797 line numbers; final reconciliation is a gate.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

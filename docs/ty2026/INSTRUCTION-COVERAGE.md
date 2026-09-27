@@ -4,11 +4,16 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and five additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-68 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
-**18 with no draft at the expected URL**, **1 covered by a combined 2026
-booklet**, and **2 whose year was not established from the title**. The
+68 entries: **27 pinned 2026 drafts**, **19 URLs serving 2025 instructions**,
+**17 with no draft at the expected URL**, **1 with 2026 instructions embedded
+in its form draft**, **1 covered by a combined 2026 booklet**, **1 with
+current continuous-use instructions**, and **2 whose year was not
+established from the title**. The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
+Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
+some references there still name the old Form 4797 lines, so they need
+final-source reconciliation before coding.
 
 The pinned PDFs include 2026 Schedules E, F, SE, R, and 8812 and Forms 2106,
 2441, 2555, 4835, 5329, 5695, 7206, 8606, 8615, 8814, 8815, 8829, 8853,

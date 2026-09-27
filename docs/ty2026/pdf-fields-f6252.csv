@@ -1,0 +1,50 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 683.968 460.05 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,460.8 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,1. Description of property. ,2,158.4 671.969 576 683.968,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,2a. Date acquired (m m/d d/y y y y). ,2,180 659.97 302.4 671.969,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,2b. Date sold (m m/d d/y y y y). ,2,439.2 659.97 576 671.969,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"3. Was the property sold to a related party? See instructions. If “Yes,” complete Part I I I for the year of sale and 2 years after the year of the sale unless you received the final payment during the tax year. Yes. ",2,518.4 637.969 526.4 645.969,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,3. No. ,2,554.4 637.969 562.4 645.969,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,4. Can the total selling price be determined by the close of the tax year in which such sale or other disposition occurs? Yes. ,2,518.4 626.22 526.4 634.22,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,4. No. ,2,554.4 626.22 562.4 634.22,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,"Part I. Gross Profit and Contract Price. Complete this part for all years of the installment agreement. 5. Selling price including mortgages and other debts. Don't include interest, whether stated or unstated. ",2,504 599.969 576 611.968,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"6. Mortgages, debts, and other liabilities the buyer assumed or took the property subject to (see instructions). ",2,504 575.968 576 587.967,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,7. Subtract line 6 from line 5. ,2,504 563.969 576 575.968,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,8. Cost or other basis of property sold. ,2,504 551.97 576 563.969,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,9. Depreciation allowed or allowable. ,2,504 539.968 576 551.967,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,10. Adjusted basis. Subtract line 9 from line 8. ,2,504 527.969 576 539.968,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,11. Commissions and other expenses of sale. ,2,504 515.97 576 527.969,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,"12. Income recapture from Form 4797, Part I I I (see instructions). ",2,504 503.968 576 515.967,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,"13. Add lines 10, 11, and 12. ",2,504 491.969 576 503.968,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"14. Subtract line 13 from line 5. If zero or less, don't complete the rest of this form. See instructions. ",2,504 479.97 576 491.969,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"15. If the property described on line 1 above was your main home, enter the amount of your excluded gain. See instructions. Otherwise, enter 0. ",2,504 455.969 576 467.968,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,16. Gross profit. Subtract line 15 from line 14. ,2,504 443.97 576 455.969,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,"17. Subtract line 13 from line 6. If zero or less, enter 0. ",2,504 431.968 576 443.967,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,18. Contract price. Add line 7 and line 17. ,2,504 419.969 576 431.968,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"Part I I. Installment Sale Income. Complete this part for all years of the installment agreement. 19. Gross profit percentage (expressed as a decimal amount). Divide line 16 by line 18. (For years after the year of sale, see instructions.). ",2,504 383.969 576 395.968,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"20. If this is the year of sale, enter the amount from line 17. Otherwise, enter 0. ",2,504 371.97 576 383.969,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,"21. Payments received during year (see instructions). Don't include interest, whether stated or unstated. ",2,504 359.968 576 371.967,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,22. Add lines 20 and 21. ,2,504 347.969 576 359.968,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,"23. Payments received in prior years (see instructions). Don't include interest, whether stated or unstated. ",2,504 335.97 576 347.969,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,24. Installment sale income. Multiply line 22 by line 19. This amount cannot be less than zero. See instructions.,2,504 311.969 576 323.968,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,25. Enter the part of line 24 that is ordinary income under the recapture rules. See instructions. ,2,504 299.97 576 311.969,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,26. Subtract line 25 from line 24. Enter here and on Schedule D or Form 4797. See instructions. ,2,504 287.968 576 299.967,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,"Part I I I. Related Party Installment Sale Income. Don't complete if you received the final payment this tax year. 27. Name, address, and taxpayer identifying number of related party. Line 1 of 2. ",2,331.2 263.97 576 275.969,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,27. Line 2 of 2. ,2,64.8 251.968 576 263.967,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,28. Did the related party resell or dispose of the property (“second disposition”) during this tax year? Yes. ,2,518.4 241.969 526.4 249.969,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,28. No. ,2,554.4 241.969 562.4 249.969,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,"29. If the answer to question 28 is “Yes,” complete lines 30 through 37 below unless one of the following conditions is met. Check the box that applies. 29a. The second disposition was more than 2 years after the first disposition (other than dispositions of marketable securities). ",2,66.799 205.469 74.799 213.469,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,"29a. If this box is checked, enter the date of disposition (m m/d d/y y y y). ",2,489.6 191.97 576 203.969,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,29b. The first disposition was a sale or exchange of stock to the issuing corporation. ,2,66.799 181.968 74.799 189.968,yes
+topmostSubform[0].Page1[0].c1_4[2],/Btn,29c. The second disposition was an involuntary conversion and the threat of conversion occurred after the first disposition. ,2,66.799 169.969 74.799 177.969,yes
+topmostSubform[0].Page1[0].c1_4[3],/Btn,29d. The second disposition occurred after the death of the original seller or buyer. ,2,66.799 157.97 74.799 165.97,yes
+topmostSubform[0].Page1[0].c1_4[4],/Btn,"29e. It can be established to the satisfaction of the I R S that tax avoidance wasn't a principal purpose for either of the dispositions. If this box is checked, attach an explanation. See instructions. ",2,66.799 145.968 74.799 153.968,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,30. Selling price of property sold by related party (see instructions). ,2,504 119.97 576 131.969,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,31. Enter contract price from line 18 for year of first sale. ,2,504 107.968 576 119.967,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,32. Enter the smaller of line 30 or line 31. ,2,504 95.969 576 107.968,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,33. Total payments received by the end of this tax year (see instructions).,2,504 83.97 576 95.969,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,"34. Subtract line 33 from line 32. If zero or less, enter 0. ",2,504 71.968 576 83.967,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,35. Multiply line 34 by the gross profit percentage on line 19 for year of first sale. ,2,504 59.969 576 71.968,yes
+topmostSubform[0].Page1[0].f1_37[0],/Tx,36. Enter the part of line 35 that is ordinary income under the recapture rules. See instructions. ,2,504 47.97 576 59.969,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,37. Subtract line 36 from line 35. Enter here and on Schedule D or Form 4797. See instructions. ,2,504 35.968 576 47.967,yes

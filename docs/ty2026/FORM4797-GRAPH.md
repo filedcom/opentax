@@ -9,6 +9,12 @@ as a **prior-year comparator**. The draft `i4797--dft.pdf` URL still serves
 qualified-production-property (QPP) use-change checkbox. Confirm the final
 2026 instructions, the current MeF XSD/rules and any QPP guidance before
 filing; do not treat old line numbers as current authority.
+The [2026 Form 6252 draft's embedded instructions](corpus/draft/f6252.pdf)
+still refer to old Form 4797 lines (for example, its line-12 recapture
+paragraph names Form 4797 lines 31/13/32, while the 2026 Form 4797 draft
+uses 33/14/34). Its installment-sale line-25/26 destinations similarly
+need reconciliation. Track this source conflict through final publication;
+do not encode the stale cross-references.
 
 ## Canonical disposition and history records
 

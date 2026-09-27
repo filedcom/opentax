@@ -34,6 +34,7 @@ NODE_PROGRESS = {
     "form6198": "Continuous-use 2025 form/instructions pinned for TY2026; activity basis/financing, Part III, recapture, per-item carryforward, 34 PDF widgets and current MeF remain",
     "form4684": "2026 draft and 2025 instruction comparator pinned; per-event casualty, state/qualified disaster, Schedule A/4797, Ponzi, election, 162 PDF widgets and current MeF remain",
     "form4797": "2026 draft and 2025 instruction comparator pinned; per-asset Part I-IV, 1231 history, 4684 feedback, QPP checkbox, 188 PDF widgets and current MeF remain",
+    "form6252": "2026 draft includes instructions; cross-year sale, recapture, related-party/deemed payments, 49 PDF widgets and current MeF remain; embedded Form 4797 references stale",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",
