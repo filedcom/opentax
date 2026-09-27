@@ -61,22 +61,20 @@ const nonApplicableBelowFpl = {
 } as const;
 
 Deno.test({
-  name: "XSD: TY2025 Schedule 2 recapture lines retain schema order",
+  name: "XSD: TY2025 Schedule 2 tax lines retain schema order",
   sanitizeOps: false,
   sanitizeResources: false,
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
-    f1040: { line23_other_taxes: 2_150 },
+    f1040: { line23_other_taxes: 1_400 },
     schedule2: {
       uncollected_fica: 100,
-      line16_lihtc_recapture: 750,
       line17b_mortgage_subsidy_recapture: 1_000,
       line17c_hsa_penalty: 300,
       line20_965_tax_installment: 8_000,
     },
   }, extractFilerIdentity(singleGeneral()));
-  assertStringIncludes(xml, "<RecaptureTaxAmt>750</RecaptureTaxAmt>");
   assertStringIncludes(
     xml,
     "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
@@ -97,30 +95,34 @@ Deno.test({
   const xml = buildMefXml({
     f1040: { line23_other_taxes: 9_090 },
     schedule2: { line16_lihtc_recapture: 9_090 },
-    f8611: { f8611s: [{
-      source_document_reference: "2025 Building A recapture worksheet",
-      building_bin: "TX1234567",
-      building_us_address: {
-        line1: "10 Housing Way",
-        city: "Austin",
-        state: "TX",
-        zip: "78701",
-      },
-      placed_in_service_date: "2017-08-01",
-      calculation: {
-        source_type: "own_credit",
-        recapture_event_type: "DISPOSITION",
-        credit_year_first_claimed: 2017,
+    f8611: {
+      f8611s: [{
+        source_document_reference: "2025 Building A recapture worksheet",
         recapture_year: 2025,
-        line1_prior_form8586_credits: 30_000,
-        line2_additions_to_qualified_basis_credits: 0,
-        line6_qualified_basis_decrease_ratio: 1,
-        line7_prior_accelerated_recapture_amount: 0,
-        line11_interest_from_prior_years: 100,
-        prior_unused_credits: 1_000,
-        unused_additions_to_qualified_basis_credits: 0,
-      },
-    }] },
+        building_bin: "TX1234567",
+        building_us_address: {
+          line1: "10 Housing Way",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
+        placed_in_service_date: "2017-08-01",
+        financed_with_tax_exempt_bonds: false,
+        calculation: {
+          source_type: "own_credit",
+          recapture_event_type: "DISPOSITION",
+          credit_period_start_year: 2017,
+          recapture_required_after_exceptions: true,
+          line1_prior_form8586_credits: 30_000,
+          line2_worksheets: [],
+          line6_qualified_basis_decrease_ratio: 1,
+          line7_prior_accelerated_recapture_amount: 0,
+          line11_interest_from_prior_years: 100,
+          prior_unused_credits: 1_000,
+          unused_additions_to_qualified_basis_credits: 0,
+        },
+      }],
+    },
   }, extractFilerIdentity(singleGeneral()));
   assertStringIncludes(xml, "<IRS8611 ");
   assertStringIncludes(
@@ -128,6 +130,61 @@ Deno.test({
     'referenceDocumentName="IRS8611">9090</RecaptureTaxAmt>',
   );
   await validateXsd(xml, "Form 8611 building recapture and Schedule 2");
+});
+
+Deno.test("Form 8611 source reaches Schedule 2, Form 1040, and its MeF attachment", () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    f8611: {
+      f8611s: [{
+        source_document_reference: "2025 Building A recapture worksheet",
+        recapture_year: 2025,
+        building_bin: "TX1234567",
+        building_us_address: {
+          line1: "10 Housing Way",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
+        placed_in_service_date: "2017-08-01",
+        financed_with_tax_exempt_bonds: false,
+        calculation: {
+          source_type: "own_credit",
+          recapture_event_type: "DISPOSITION",
+          credit_period_start_year: 2017,
+          recapture_required_after_exceptions: true,
+          line1_prior_form8586_credits: 30_000,
+          line2_worksheets: [],
+          line6_qualified_basis_decrease_ratio: 1,
+          line7_prior_accelerated_recapture_amount: 0,
+          line11_interest_from_prior_years: 100,
+          prior_unused_credits: 1_000,
+          unused_additions_to_qualified_basis_credits: 0,
+        },
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    (result.pending.schedule2 as { line16_lihtc_recapture?: number })
+      .line16_lihtc_recapture,
+    9_090,
+  );
+  assertEquals(
+    (result.pending.f1040 as { line23_other_taxes?: number })
+      .line23_other_taxes,
+    9_090,
+  );
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS8611 ");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="IRS8611">9090</RecaptureTaxAmt>',
+  );
 });
 
 Deno.test("section 965 installment reaches Schedule 2 but not Form 1040 line 23", () => {

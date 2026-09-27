@@ -18,8 +18,35 @@ export enum RecaptureEventType {
 const money = z.number().finite().nonnegative();
 const ratio = z.number().finite().min(0).max(1);
 
+const line2WorksheetSchema = z.object({
+  source_form8609a_reference: z.string().trim().min(1),
+  prior_tax_year: z.number().int(),
+  form8609a_line10: money,
+  form8609a_line11: money,
+  form8609a_line14_step1_ratio: ratio,
+  form8609a_line15: money.positive(),
+  form8609a_line16: money,
+}).superRefine((worksheet, ctx) => {
+  if (worksheet.form8609a_line11 > worksheet.form8609a_line10 * 2) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8611 line 2 worksheet step d cannot be negative",
+    });
+  }
+});
+
+type Line2Worksheet = z.infer<typeof line2WorksheetSchema>;
+
+export function calculateLine2Worksheet(worksheet: Line2Worksheet): number {
+  const source = line2WorksheetSchema.parse(worksheet);
+  const stepD = source.form8609a_line10 * 2 - source.form8609a_line11;
+  const stepG = stepD * (1 - source.form8609a_line14_step1_ratio);
+  return stepG * (source.form8609a_line16 / source.form8609a_line15);
+}
+
 const common = z.object({
   source_document_reference: z.string().trim().min(1),
+  recapture_year: z.number().int(),
   building_bin: z.string().trim().min(1).max(9),
   building_us_address: z.object({
     line1: z.string().trim().min(1),
@@ -29,6 +56,7 @@ const common = z.object({
     zip: z.string().regex(/^\d{5}(?:\d{4}|\d{7})?$/),
   }),
   placed_in_service_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  financed_with_tax_exempt_bonds: z.boolean(),
   tax_exempt_bond: z.object({
     issuer_name: z.string().trim().min(1),
     issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -39,7 +67,8 @@ const common = z.object({
     if (Boolean(bond.cusip) === Boolean(bond.no_cusip)) {
       ctx.addIssue({
         code: "custom",
-        message: "Form 8611 tax-exempt bond needs a CUSIP or an explicit no-CUSIP answer",
+        message:
+          "Form 8611 tax-exempt bond needs a CUSIP or an explicit no-CUSIP answer",
       });
     }
   }).optional(),
@@ -48,32 +77,40 @@ const common = z.object({
 const ownCredit = z.object({
   source_type: z.literal("own_credit"),
   recapture_event_type: z.nativeEnum(RecaptureEventType),
-  credit_year_first_claimed: z.number().int(),
-  recapture_year: z.number().int(),
+  credit_period_start_year: z.number().int(),
+  recapture_required_after_exceptions: z.literal(true),
   line1_prior_form8586_credits: money,
-  line2_additions_to_qualified_basis_credits: money,
+  line2_worksheets: z.array(line2WorksheetSchema),
   line6_qualified_basis_decrease_ratio: ratio,
   line7_prior_accelerated_recapture_amount: money,
   line11_interest_from_prior_years: money,
   prior_unused_credits: money,
   unused_additions_to_qualified_basis_credits: money,
 }).superRefine((source, ctx) => {
-  if (source.line2_additions_to_qualified_basis_credits >
-    source.line1_prior_form8586_credits) {
+  if (
+    source.line2_worksheets.reduce(
+      (sum, worksheet) => sum + calculateLine2Worksheet(worksheet),
+      0,
+    ) > source.line1_prior_form8586_credits
+  ) {
     ctx.addIssue({
       code: "custom",
       message: "Form 8611 line 2 cannot exceed line 1",
     });
   }
-  if (source.unused_additions_to_qualified_basis_credits >
-    source.prior_unused_credits) {
+  if (
+    source.unused_additions_to_qualified_basis_credits >
+      source.prior_unused_credits
+  ) {
     ctx.addIssue({
       code: "custom",
       message: "Form 8611 unused additions cannot exceed unused credits",
     });
   }
-  if (source.recapture_event_type === RecaptureEventType.DISPOSITION &&
-    source.line6_qualified_basis_decrease_ratio !== 1) {
+  if (
+    source.recapture_event_type === RecaptureEventType.DISPOSITION &&
+    source.line6_qualified_basis_decrease_ratio !== 1
+  ) {
     ctx.addIssue({
       code: "custom",
       message: "Form 8611 taxable building disposition needs line 6 equal to 1",
@@ -89,11 +126,14 @@ const passThroughCredit = z.object({
   prior_unused_credits: money,
   section42j5_partnership_interest_included: z.boolean(),
 }).superRefine((source, ctx) => {
-  if (source.section42j5_partnership_interest_included &&
-    source.line11_interest_from_prior_years !== 0) {
+  if (
+    source.section42j5_partnership_interest_included &&
+    source.line11_interest_from_prior_years !== 0
+  ) {
     ctx.addIssue({
       code: "custom",
-      message: "Form 8611 section 42(j)(5) interest is included in line 8; line 11 must be zero",
+      message:
+        "Form 8611 section 42(j)(5) interest is included in line 8; line 11 must be zero",
     });
   }
   if (source.line9_unused_accelerated_credit > source.prior_unused_credits) {
@@ -106,6 +146,29 @@ const passThroughCredit = z.object({
 
 export const itemSchema = common.extend({
   calculation: z.union([ownCredit, passThroughCredit]),
+}).superRefine((source, ctx) => {
+  if (
+    source.financed_with_tax_exempt_bonds !== Boolean(source.tax_exempt_bond)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8611 bond-financing answer and bond details must agree",
+    });
+  }
+  if (source.calculation.source_type === "own_credit") {
+    const years = source.calculation.line2_worksheets.map((row) =>
+      row.prior_tax_year
+    );
+    if (
+      years.some((year) => year >= source.recapture_year) ||
+      new Set(years).size !== years.length
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Form 8611 line 2 worksheets need distinct prior tax years",
+      });
+    }
+  }
 });
 
 export const inputSchema = z.object({
@@ -134,12 +197,19 @@ export type F8611Lines = {
 
 /** The exact three-decimal recapture percentages printed in Form 8611. */
 export function recapturePercentage(creditPeriodYear: number): number {
-  if (!Number.isInteger(creditPeriodYear) || creditPeriodYear < 2 ||
-    creditPeriodYear > 15) {
-    throw new Error("Form 8611 recapture event must be in credit-period years 2 through 15");
+  if (
+    !Number.isInteger(creditPeriodYear) || creditPeriodYear < 2 ||
+    creditPeriodYear > 15
+  ) {
+    throw new Error(
+      "Form 8611 recapture event must be in credit-period years 2 through 15",
+    );
   }
   if (creditPeriodYear <= 11) return 0.333;
-  return ({ 12: 0.267, 13: 0.200, 14: 0.133, 15: 0.067 } as Record<number, number>)[
+  return ({ 12: 0.267, 13: 0.200, 14: 0.133, 15: 0.067 } as Record<
+    number,
+    number
+  >)[
     creditPeriodYear
   ];
 }
@@ -147,16 +217,21 @@ export function recapturePercentage(creditPeriodYear: number): number {
 export function calculateForm8611(raw: F8611Item): F8611Lines {
   const item = itemSchema.parse(raw);
   const source = item.calculation;
-  let own: Pick<F8611Lines, "line1" | "line2" | "line3" | "line4" |
-    "line5" | "line6" | "line7"> = {};
+  let own: Pick<
+    F8611Lines,
+    "line1" | "line2" | "line3" | "line4" | "line5" | "line6" | "line7"
+  > = {};
   let line8: number | undefined;
   let line9: number;
   if (source.source_type === "own_credit") {
-    const creditPeriodYear = source.recapture_year -
-      source.credit_year_first_claimed + 1;
+    const creditPeriodYear = item.recapture_year -
+      source.credit_period_start_year + 1;
     const line4 = recapturePercentage(creditPeriodYear);
-    const line3 = source.line1_prior_form8586_credits -
-      source.line2_additions_to_qualified_basis_credits;
+    const line2 = source.line2_worksheets.reduce(
+      (sum, worksheet) => sum + calculateLine2Worksheet(worksheet),
+      0,
+    );
+    const line3 = source.line1_prior_form8586_credits - line2;
     const line5 = line3 * line4;
     const line6 = source.line6_qualified_basis_decrease_ratio;
     const accelerated = line5 * line6;
@@ -168,7 +243,7 @@ export function calculateForm8611(raw: F8611Item): F8611Lines {
       source.unused_additions_to_qualified_basis_credits) * line4 * line6;
     own = {
       line1: source.line1_prior_form8586_credits,
-      line2: source.line2_additions_to_qualified_basis_credits,
+      line2,
       line3,
       line4,
       line5,
@@ -204,8 +279,7 @@ class F8611Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
     const input = inputSchema.parse(rawInput);
     for (const item of input.f8611s) {
-      if (item.calculation.source_type === "own_credit" &&
-        item.calculation.recapture_year !== ctx.taxYear) {
+      if (item.recapture_year !== ctx.taxYear) {
         throw new Error("Form 8611 recapture year must match the return year");
       }
     }
