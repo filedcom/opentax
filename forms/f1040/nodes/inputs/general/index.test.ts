@@ -38,6 +38,19 @@ function compute(input: Record<string, unknown>) {
   );
 }
 
+function compute2026(input: Record<string, unknown>) {
+  const filer = {
+    taxpayer_ssn: "111-22-3333",
+    taxpayer_ssn_valid_for_employment: true,
+    taxpayer_ssn_issued_before_due_date: true,
+    taxpayer_tin_issued_by_due_date: true,
+  };
+  return general.compute(
+    { taxYear: 2026, formType: "f1040" },
+    general.inputSchema.parse({ ...filer, ...input }),
+  );
+}
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
@@ -402,6 +415,16 @@ Deno.test("ctc: child who turns 17 on Dec 31 2025 does NOT qualify (not under 17
   assertEquals(input?.other_dependent_count, 1);
 });
 
+Deno.test("TY2026 dependent age uses December 31, 2026", () => {
+  const result = compute2026({
+    filing_status: FilingStatus.Single,
+    dependents: [qualifyingChildDep({ dob: "2009-12-31" })],
+  });
+  const fields = findOutput(result, "f1040")?.fields;
+  assertEquals(fields?.qualifying_child_tax_credit_count, 0);
+  assertEquals(fields?.other_dependent_count, 1);
+});
+
 Deno.test("ctc: child with ITIN (no SSN) does not qualify for CTC → other_dependent_count = 1", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
@@ -514,6 +537,28 @@ Deno.test("qualifying relative ODC requires support and income facts, with the 2
     count({ taxpayer_provided_over_half_support: true, gross_income: 5_200 }),
     0,
   );
+});
+
+Deno.test("TY2026 qualifying relative income boundary is $5,300", () => {
+  const relative = (gross_income: number) => ({
+    first_name: "Mom",
+    last_name: "Doe",
+    ssn: "999-88-7777",
+    tin_issued_by_due_date: true,
+    dob: "1955-03-01",
+    relationship: DependentRelationship.Parent,
+    months_in_home: 0,
+    us_citizen_national_or_resident: true,
+    filed_joint_return_except_refund_only: false,
+    taxpayer_provided_over_half_support: true,
+    gross_income,
+  });
+  const count = (gross_income: number) => findOutput(compute2026({
+    filing_status: FilingStatus.Single,
+    dependents: [relative(gross_income)],
+  }), "f1040")?.fields.other_dependent_count;
+  assertEquals(count(5_299), 1);
+  assertEquals(count(5_300), 0);
 });
 
 Deno.test("qualifying-relative ODC requires family relationship or full-year household membership", () => {

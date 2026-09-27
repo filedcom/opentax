@@ -129,11 +129,10 @@ forms/f1040/nodes/inputs/f8997/index.ts,49,// gains will become includible on TY
 forms/f1040/nodes/inputs/f965/index.ts,8,"// TY2025 — Forms 965-A, 965-C, 965-D, 965-E: §965 Transition Tax (Repatriation)"
 forms/f1040/nodes/inputs/f965/index.ts,16,// TY2025 is the 8th (final) installment year for the original 2017 inclusion.
 forms/f1040/nodes/inputs/fec/index.ts,19,// TY2025 Form 1040 reports FEC on line 1h (IRS Publication 4164).
-forms/f1040/nodes/inputs/general/index.ts,270,"const TAX_YEAR_END = new Date(""2025-12-31"");"
-forms/f1040/nodes/inputs/general/index.ts,289,"// Age at December 31, 2025 (tax year end)."
-forms/f1040/nodes/inputs/general/index.ts,304,"// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use"
-forms/f1040/nodes/inputs/general/index.ts,322,"// For TY2025, CTC requires an employment-valid SSN issued before the return"
-forms/f1040/nodes/inputs/general/index.ts,407,"// The 2025 gross-income limit is $5,200. Zero is a valid explicit answer."
+forms/f1040/nodes/inputs/general/index.ts,269,// Rev. Proc. 2024-40 §3.23 and Rev. Proc. 2025-32 §4.23.
+forms/f1040/nodes/inputs/general/index.ts,271,"2025: 5_200,"
+forms/f1040/nodes/inputs/general/index.ts,308,"// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use"
+forms/f1040/nodes/inputs/general/index.ts,326,"// For TY2025, CTC requires an employment-valid SSN issued before the return"
 forms/f1040/nodes/inputs/ltc_premium/index.ts,11,"// Age of insured as of December 31, 2025 — determines age bracket"
 forms/f1040/nodes/inputs/nol_carryforward/index.ts,12,// TY2025 — Net Operating Loss (NOL) carryforward deduction (IRC §172)
 forms/f1040/nodes/inputs/qsehra/index.ts,24,// TY2025 limits (Rev Proc 2024-40 §3.25):

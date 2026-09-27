@@ -30,6 +30,10 @@ TY2026 return product or prove that every shared node has the right TY2026
 logic. The 2026 Form 982 QPRI path now requires a 2026 discharge date and a
 written agreement before 2026. Its cap remains $750,000 ($375,000 MFS) for
 eligible legacy agreements.
+The shared `general` node now uses the selected tax year for dependent CTC,
+ODC, and EITC age tests, and it uses Rev. Proc. 2025-32 §4.23's $5,300
+qualifying-relative gross-income ceiling for TY2026. Its TY2025 regression
+tests and TY2026 boundary tests pass.
 Rev. Proc. 2026-15 is pinned for passenger autos first placed in service in
 2026, and Rev. Proc. 2025-16 supports the TY2025 regression correction. Form
 4562 must select the cap table by the vehicle's placed-in-service year, not
@@ -48,6 +52,11 @@ input surface, form-specific credit reconciliation, and MeF/PDF mappings.
 The CLI node list, inspect, and graph commands now accept `--year` and select
 the registered definition for that year. They still default to TY2025 for
 existing CLI calls; an unregistered year fails explicitly.
+Regression audit note: `deno test forms/f1040/2025/mef/builder.test.ts` currently
+fails in the Form 8283 serializer (`inputSchema.parse` receives an array where
+an object is expected; one isolated failure is the multiple-W-2 case near
+line 1400). This is independent of the year-aware `general` node edit and must
+be resolved before the TY2025 regression gate can be called green.
 
 ## 0. Freeze source versions and establish the baseline
 
