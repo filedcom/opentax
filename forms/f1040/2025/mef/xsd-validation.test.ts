@@ -4109,6 +4109,10 @@ Deno.test({
     w2: [{
       employer_name: "CAFE",
       employer_ein: "123456789",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
       box1_wages: 190_000,
       box2_fed_withheld: 30_000,
       box3_ss_wages: 176_100,
@@ -4148,6 +4152,87 @@ Deno.test({
     "<AdditionalMedicareTaxAmt>18</AdditionalMedicareTaxAmt>",
   );
   await validateXsd(xml, "Form 4137 to Form 8959 and Schedule 2");
+});
+
+Deno.test({
+  name: "XSD: RRTA W-2 box 14 feeds Form 4137 line 8 and Form 8959 Part III",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const result = runReturn({
+    general,
+    w2: [
+      {
+        employee_ssn: "111-22-3333",
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        employer_address_line1: "100 Main St",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78701",
+        box1_wages: 50_000,
+        box2_fed_withheld: 5_000,
+        box3_ss_wages: 50_000,
+        box5_medicare_wages: 50_000,
+        box6_medicare_withheld: 725,
+        box8_allocated_tips: 3_000,
+      },
+      {
+        employee_ssn: "111-22-3333",
+        employer_name: "RAIL",
+        employer_ein: "987654321",
+        employer_address_line1: "200 Rail St",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78701",
+        box1_wages: 220_000,
+        box2_fed_withheld: 30_000,
+        box14_entries: [
+          {
+            description: "RRTA compensation",
+            amount: 220_000,
+            is_state_sdi_pfml: false,
+          },
+          {
+            description: "Additional Medicare Tax",
+            amount: 180,
+            is_state_sdi_pfml: false,
+          },
+        ],
+      },
+    ],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 3_000,
+          tips_reported: 0,
+        }],
+      }],
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 44);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 180);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<Desc>RRTA compensation</Desc><Amt>220000</Amt>");
+  assertStringIncludes(
+    xml,
+    "<SocialSecurityWagesAndTipsAmt>226100</SocialSecurityWagesAndTipsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalRailroadRetirementCompAmt>220000</TotalRailroadRetirementCompAmt>",
+  );
+  assertStringIncludes(xml, "<TotalW2AddlRRTTaxAmt>180</TotalW2AddlRRTTaxAmt>");
+  await validateXsd(xml, "RRTA Form 4137 and Form 8959 source chain");
 });
 
 Deno.test({

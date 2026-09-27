@@ -26,7 +26,7 @@ The calculation follows the numbered 2025 form:
 | 5    | Unreported amounts from employer/month records below $20             |
 | 6    | Line 4 minus line 5; Form 8959 line 2                                |
 | 7    | 2025 social security wage base, $176,100                             |
-| 8    | Recipient's W-2 boxes 3 and 7 total, or reconciled explicit amount   |
+| 8    | Recipient's W-2 boxes 3 and 7 plus capped box 14 RRTA compensation   |
 | 9    | Line 7 minus line 8, floored at zero                                 |
 | 10   | Lesser of line 6 (less eligible government employee tips) and line 9 |
 | 11   | Line 10 times 6.2%                                                   |
@@ -46,13 +46,22 @@ $20, checks reported tips, rejects duplicate employer/month records, and
 reconciles those records to annual employer totals. Those cases are written but
 unrun.
 
+The exact W-2 box 14 "RRTA compensation" entry now contributes to line 8, with
+the RRTA portion capped at the 2025 $176,100 wage base. The uncapped entry and
+any box 14 "Additional Medicare Tax" withholding also route to Form 8959 Part
+III and Part V. The W-2 MeF serializer emits those box 14 entries in native
+`OtherDeductionsBenefitsGrp` elements. RRTA-covered employer tips are rejected
+from Form 4137. Calculation, full-return, and source-to-XSD cases are written
+but unrun.
+
 Still open: Form 4137 employer rows without an allocated-tip W-2 have not been
 cross-checked to a filed W-2; the `records_support_lower_tips` answer is not
-authenticated against actual tip records; railroad retirement compensation on
-line 8 is not modeled. The full test batch, filled-PDF visual check, IRS
-business rules, and ATS acceptance are still required.
+authenticated against actual tip records. The full test batch, filled-PDF visual
+check, IRS business rules, and ATS acceptance are still required.
 
 Primary sources:
 [2025 Form 4137 and instructions](https://www.irs.gov/pub/irs-pdf/f4137.pdf),
 especially lines 1-13 and the separate-spouse/continuation instructions;
 [2025 Form 8959](https://www.irs.gov/pub/irs-pdf/f8959.pdf), line 2.
+[2025 W-2/W-3 instructions](https://www.irs.gov/pub/irs-prior/iw2w3--2025.pdf)
+describe the box 14 RRTA labels.

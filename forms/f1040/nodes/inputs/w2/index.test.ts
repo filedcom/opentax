@@ -106,6 +106,68 @@ Deno.test("W-2 carries employer and employee identity to Form 4137", () => {
   assertEquals(source?.ss_wages_and_tips, 32_000);
 });
 
+Deno.test("W-2 box 14 RRTA compensation reaches Form 4137 and Form 8959 separately", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "123-45-6789",
+    employer_name: "RAIL",
+    employer_ein: "98-7654321",
+    box1_wages: 220_000,
+    box14_entries: [
+      {
+        description: "RRTA compensation",
+        amount: 220_000,
+        is_state_sdi_pfml: false,
+      },
+      {
+        description: "Additional Medicare Tax",
+        amount: 180,
+        is_state_sdi_pfml: false,
+      },
+    ],
+  })]);
+  const source = fieldsOf(result.outputs, form4137)?.w2_tip_sources?.[0];
+  assertEquals(source?.rrta_compensation, 220_000);
+  assertEquals(source?.ss_wages_and_tips, 0);
+  assertEquals(fieldsOf(result.outputs, form8959)?.rrta_wages, 220_000);
+  assertEquals(fieldsOf(result.outputs, form8959)?.rrta_medicare_withheld, 180);
+  assertEquals(fieldsOf(result.outputs, form8959)?.medicare_wages, undefined);
+});
+
+Deno.test("RRTA W-2 box 14 facts cannot duplicate FICA boxes or labels", () => {
+  const rrta = {
+    description: "RRTA compensation",
+    amount: 100_000,
+    is_state_sdi_pfml: false,
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_wages: 100_000,
+        box5_medicare_wages: 100_000,
+        box14_entries: [rrta],
+      })]),
+    Error,
+    "cannot share FICA",
+  );
+  assertThrows(
+    () => compute([minimalItem({ box14_entries: [rrta, rrta] })]),
+    Error,
+    "duplicate RRTA compensation",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box14_entries: [{
+          description: "Additional Medicare Tax",
+          amount: 180,
+          is_state_sdi_pfml: false,
+        }],
+      })]),
+    Error,
+    "needs RRTA compensation",
+  );
+});
+
 Deno.test("box10_dep_care_routes_to_form2441: $3,000 dep care appears exactly on form2441", () => {
   const result = compute([
     minimalItem({ box1_wages: 70000, box10_dep_care: 3000 }),

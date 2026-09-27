@@ -80,7 +80,42 @@ Deno.test("w2 emits required identity, address, wage, and withholding fields in 
   assertStringIncludes(result, "<EmployerEIN>123456789</EmployerEIN>");
   assertStringIncludes(result, "<WagesAmt>30000</WagesAmt>");
   assertStringIncludes(result, "<WithholdingAmt>3000</WithholdingAmt>");
-  assertStringIncludes(result, "<StandardOrNonStandardCd>S</StandardOrNonStandardCd>");
+  assertStringIncludes(
+    result,
+    "<StandardOrNonStandardCd>S</StandardOrNonStandardCd>",
+  );
+});
+
+Deno.test("W-2 MeF retains RRTA box 14 compensation and Additional Medicare Tax", () => {
+  const [xml] = w2.build({
+    w2s: [item({
+      box3_ss_wages: undefined,
+      box4_ss_withheld: undefined,
+      box5_medicare_wages: undefined,
+      box6_medicare_withheld: undefined,
+      box14_entries: [
+        {
+          description: "RRTA compensation",
+          amount: 220_000,
+          is_state_sdi_pfml: false,
+        },
+        {
+          description: "Additional Medicare Tax",
+          amount: 180,
+          is_state_sdi_pfml: false,
+        },
+      ],
+    })],
+  }, { filer: filer() });
+  assertStringIncludes(
+    xml,
+    "<OtherDeductionsBenefitsGrp><Desc>RRTA compensation</Desc><Amt>220000</Amt></OtherDeductionsBenefitsGrp>",
+  );
+  assertStringIncludes(
+    xml,
+    "<OtherDeductionsBenefitsGrp><Desc>Additional Medicare Tax</Desc><Amt>180</Amt></OtherDeductionsBenefitsGrp>",
+  );
+  assertEquals(xml.includes("<MedicareWagesAndTipsAmt>"), false);
 });
 
 Deno.test("w2 refuses a finalized document with missing employer filing data", () => {

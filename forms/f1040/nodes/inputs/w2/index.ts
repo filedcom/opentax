@@ -72,7 +72,7 @@ const box12EntrySchema = z.object({
 });
 
 const box14EntrySchema = z.object({
-  description: z.string().describe("Label printed by employer"),
+  description: z.string().min(1).max(100).describe("Label printed by employer"),
   amount: z.number().nonnegative().describe("Dollar amount"),
   is_state_sdi_pfml: z.boolean().describe(
     "True if this entry is state SDI or PFML (deductible on Sch A)",
@@ -174,6 +174,16 @@ type F1040Input = z.infer<typeof f1040.inputSchema>;
 export type W2Item = z.infer<typeof w2ItemSchema>;
 type W2Items = W2Item[];
 
+function box14Amount(item: W2Item, description: string): number | undefined {
+  const matches = (item.box14_entries ?? []).filter((entry) =>
+    entry.description === description
+  );
+  if (matches.length > 1) {
+    throw new Error(`W-2 box 14 has duplicate ${description} entries`);
+  }
+  return matches[0]?.amount;
+}
+
 function retirementLimit(
   retirementLimits: Record<string, Record<number, number>>,
   planType: string,
@@ -201,6 +211,22 @@ function validateItem(
     throw new Error("W-2 qualified tips need a nine-digit employee SSN");
   }
   const ssWages = (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0);
+  const rrtaCompensation = box14Amount(item, "RRTA compensation") ?? 0;
+  const rrtaAdditionalTax = box14Amount(item, "Additional Medicare Tax") ?? 0;
+  if (rrtaAdditionalTax > 0 && rrtaCompensation === 0) {
+    throw new Error(
+      "W-2 RRTA Additional Medicare Tax needs RRTA compensation",
+    );
+  }
+  if (
+    rrtaCompensation > 0 &&
+    (ssWages > 0 || (item.box5_medicare_wages ?? 0) > 0 ||
+      (item.box6_medicare_withheld ?? 0) > 0)
+  ) {
+    throw new Error(
+      "W-2 RRTA compensation cannot share FICA social security or Medicare boxes",
+    );
+  }
   if (ssWages > ssWageBase) {
     throw new Error(
       `W-2 validation error: SS taxable wages (${ssWages}) exceed the wage base limit (${ssWageBase})`,
@@ -307,21 +333,34 @@ function statutoryOutput(w2s: W2Items): NodeOutput[] {
 }
 
 function medicareOutput(w2s: W2Items): NodeOutput[] {
-  const items = regularItems(w2s).filter(
+  const ficaItems = regularItems(w2s).filter(
     (item) =>
       item.box5_medicare_wages !== undefined ||
       item.box6_medicare_withheld !== undefined,
   );
-  if (items.length === 0) return [];
+  const rrtaWages = w2s.reduce(
+    (sum, item) => sum + (box14Amount(item, "RRTA compensation") ?? 0),
+    0,
+  );
+  const rrtaWithheld = w2s.reduce(
+    (sum, item) => sum + (box14Amount(item, "Additional Medicare Tax") ?? 0),
+    0,
+  );
+  if (ficaItems.length === 0 && rrtaWages === 0 && rrtaWithheld === 0) {
+    return [];
+  }
   // Use box1_wages for medicare_wages (the amount subject to Additional Medicare Tax
   // threshold per benchmark reference calculator behavior).
-  const totalBox1Wages = items.reduce((sum, item) => sum + item.box1_wages, 0);
+  const totalBox1Wages = ficaItems.reduce(
+    (sum, item) => sum + item.box1_wages,
+    0,
+  );
   // Use box5_medicare_wages for line20 (regular Medicare isolation from total withheld).
-  const totalBox5Wages = items.reduce(
+  const totalBox5Wages = ficaItems.reduce(
     (sum, item) => sum + (item.box5_medicare_wages ?? 0),
     0,
   );
-  const totalWithheld = items.reduce(
+  const totalWithheld = ficaItems.reduce(
     (sum, item) => sum + (item.box6_medicare_withheld ?? 0),
     0,
   );
@@ -332,6 +371,8 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
     fields.medicare_wages_box5 = totalBox5Wages;
   }
   if (totalWithheld > 0) fields.medicare_withheld = totalWithheld;
+  if (rrtaWages > 0) fields.rrta_wages = rrtaWages;
+  if (rrtaWithheld > 0) fields.rrta_medicare_withheld = rrtaWithheld;
   if (Object.keys(fields).length === 0) return [];
   return [
     output(
@@ -342,17 +383,28 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
 }
 
 function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
-  const sources = w2s.map((item) => ({
-    ...(item.employee_ssn !== undefined && { employee_ssn: item.employee_ssn }),
-    ...(item.employer_name !== undefined && {
-      employer_name: item.employer_name,
-    }),
-    ...(item.employer_ein !== undefined && { employer_ein: item.employer_ein }),
-    allocated_tips: item.box8_allocated_tips ?? 0,
-    ss_wages_and_tips: item.box3_ss_wages === undefined
-      ? undefined
-      : item.box3_ss_wages + (item.box7_ss_tips ?? 0),
-  }));
+  const sources = w2s.map((item) => {
+    const rrtaCompensation = box14Amount(item, "RRTA compensation");
+    return {
+      ...(item.employee_ssn !== undefined && {
+        employee_ssn: item.employee_ssn,
+      }),
+      ...(item.employer_name !== undefined && {
+        employer_name: item.employer_name,
+      }),
+      ...(item.employer_ein !== undefined && {
+        employer_ein: item.employer_ein,
+      }),
+      allocated_tips: item.box8_allocated_tips ?? 0,
+      ...(rrtaCompensation !== undefined && {
+        rrta_compensation: rrtaCompensation,
+      }),
+      ss_wages_and_tips: item.box3_ss_wages === undefined &&
+          item.box7_ss_tips === undefined && rrtaCompensation === undefined
+        ? undefined
+        : (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0),
+    };
+  });
   return sources.length > 0
     ? [output(form4137, { w2_tip_sources: sources })]
     : [];

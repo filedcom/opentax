@@ -271,3 +271,65 @@ Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax
   assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 58);
   assertEquals(result.pending.schedule2?.line11_additional_medicare, 18);
 });
+
+Deno.test("RRTA compensation caps Form 4137 line 8 but remains uncapped on Form 8959", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Tipper",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [
+      {
+        employee_ssn: "123-45-6789",
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        box1_wages: 50_000,
+        box2_fed_withheld: 5_000,
+        box3_ss_wages: 50_000,
+        box5_medicare_wages: 50_000,
+        box6_medicare_withheld: 725,
+        box8_allocated_tips: 3_000,
+      },
+      {
+        employee_ssn: "123-45-6789",
+        employer_name: "RAIL",
+        employer_ein: "987654321",
+        box1_wages: 220_000,
+        box2_fed_withheld: 30_000,
+        box14_entries: [
+          {
+            description: "RRTA compensation",
+            amount: 220_000,
+            is_state_sdi_pfml: false,
+          },
+          {
+            description: "Additional Medicare Tax",
+            amount: 180,
+            is_state_sdi_pfml: false,
+          },
+        ],
+      },
+    ],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "123456789",
+          tips_received: 3_000,
+          tips_reported: 0,
+        }],
+      }],
+    },
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule2?.line5_unreported_tip_tax, 44);
+  assertEquals(result.pending.form8959?.line1_medicare_wages, 50_000);
+  assertEquals(result.pending.form8959?.line2_unreported_tips, 3_000);
+  assertEquals(result.pending.form8959?.line14_rrta_wages, 220_000);
+  assertEquals(result.pending.form8959?.line17_rrta_tax, 180);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 180);
+  assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 180);
+});

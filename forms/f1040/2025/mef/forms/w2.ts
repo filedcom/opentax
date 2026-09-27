@@ -154,6 +154,12 @@ function buildW2(
     item.box13_third_party_sick === true
       ? element("ThirdPartySickPayInd", "X")
       : "",
+    ...(item.box14_entries ?? []).map(({ description, amount }) =>
+      elements("OtherDeductionsBenefitsGrp", [
+        element("Desc", description),
+        element("Amt", amount),
+      ])
+    ),
     element("StandardOrNonStandardCd", "S"),
   ]);
 }

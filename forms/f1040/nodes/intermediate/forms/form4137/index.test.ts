@@ -119,6 +119,53 @@ Deno.test("Form 4137 SS wage base caps only SS tax, not Medicare tax", () => {
   );
 });
 
+Deno.test("Form 4137 line 8 includes RRTA compensation up to the 2025 wage base", () => {
+  const [calculated] = calculateForm4137(
+    inputSchema.parse({
+      forms: [{ recipient: "taxpayer", employers: [employer] }],
+      w2_tip_sources: [
+        {
+          employer_name: "CAFE",
+          employer_ein: "12-3456789",
+          allocated_tips: 0,
+          ss_wages_and_tips: 50_000,
+        },
+        {
+          employer_name: "RAIL",
+          employer_ein: "98-7654321",
+          allocated_tips: 0,
+          rrta_compensation: 220_000,
+          ss_wages_and_tips: 0,
+        },
+      ],
+    }),
+    176_100,
+  );
+  assertEquals(calculated.ssWagesAndTips, 226_100);
+  assertEquals(calculated.ssWageBaseRoom, 0);
+  assertEquals(calculated.ssTax, 0);
+  assertEquals(calculated.medicareTax, 44);
+  assertEquals(calculated.totalTax, 44);
+});
+
+Deno.test("Form 4137 excludes RRTA-covered employer tips", () => {
+  assertThrows(
+    () =>
+      compute({
+        forms: [{ recipient: "taxpayer", employers: [employer] }],
+        w2_tip_sources: [{
+          employer_name: "CAFE",
+          employer_ein: "12-3456789",
+          allocated_tips: 0,
+          rrta_compensation: 50_000,
+          ss_wages_and_tips: 0,
+        }],
+      }),
+    Error,
+    "cannot include RRTA-covered employer tips",
+  );
+});
+
 Deno.test("Form 4137 government employee tips are Medicare-only", () => {
   const input = inputSchema.parse({
     forms: [{

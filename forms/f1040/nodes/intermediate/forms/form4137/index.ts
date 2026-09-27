@@ -58,6 +58,7 @@ const w2TipSourceSchema = z.object({
     z.literal("Applied For"),
   ]).optional(),
   allocated_tips: z.number().nonnegative(),
+  rrta_compensation: z.number().nonnegative().optional(),
   ss_wages_and_tips: z.number().nonnegative().optional(),
 }).strict();
 
@@ -128,6 +129,11 @@ export function calculateForm4137(
         `Form 4137 ${recipient} allocated tips need employer tip records`,
       );
     }
+    if ((source.rrta_compensation ?? 0) > 0 && source.allocated_tips > 0) {
+      throw new Error(
+        "Form 4137 cannot include tips from RRTA-covered work",
+      );
+    }
     return { ...source, recipient };
   });
   return forms.map((form) => {
@@ -143,6 +149,27 @@ export function calculateForm4137(
         throw new Error("Form 4137 needs one row per employer");
       }
       employerKeys.add(key);
+    }
+    for (const source of related) {
+      if ((source.rrta_compensation ?? 0) === 0) continue;
+      if (!source.employer_name || !source.employer_ein) {
+        throw new Error(
+          "Form 4137 RRTA W-2 needs employer name and EIN",
+        );
+      }
+      const sourceEin = source.employer_ein === "Applied For"
+        ? "Applied For"
+        : source.employer_ein.replaceAll("-", "");
+      if (
+        form.employers.some((employer) =>
+          employer.name === source.employer_name &&
+          (employer.ein?.replaceAll("-", "") ?? "Applied For") === sourceEin
+        )
+      ) {
+        throw new Error(
+          "Form 4137 cannot include RRTA-covered employer tips",
+        );
+      }
     }
     const allocatedByEmployer = new Map<number, number>();
     for (const source of related) {
@@ -254,12 +281,17 @@ export function calculateForm4137(
     ) {
       throw new Error("Form 4137 line 8 disagrees with W-2 wages and tips");
     }
-    const ssWagesAndTips = form.ss_wages_from_w2 ?? sourcedWages;
-    if (ssWagesAndTips === undefined) {
+    const ssWages = form.ss_wages_from_w2 ?? sourcedWages;
+    if (ssWages === undefined) {
       throw new Error(
         "Form 4137 line 8 needs all W-2 social security wages and tips",
       );
     }
+    const rrtaCompensation = related.reduce(
+      (sum, source) => sum + (source.rrta_compensation ?? 0),
+      0,
+    );
+    const ssWagesAndTips = ssWages + Math.min(rrtaCompensation, ssWageBase);
     const ssWageBaseRoom = Math.max(0, ssWageBase - ssWagesAndTips);
     const ssTips = Math.min(
       Math.max(0, medicareTips - governmentEmployeeTips),
