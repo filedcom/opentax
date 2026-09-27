@@ -50,7 +50,10 @@ function liabilityRow(input: F965Input, row: F965Item): string {
     row.entry_type === "assumed"
       ? ""
       : booleanElement("InstallmentElectionInd", row.installment_election),
-    adjustment !== 0 ? element("NetTaxAdjustmentAmt", adjustment) : "",
+    adjustment !== 0 ||
+      row.net_tax_adjustment_kind === "netted_adjustment_and_transfer"
+      ? element("NetTaxAdjustmentAmt", adjustment)
+      : "",
     counterparty(row.counterparty_tax_id),
     ...PAID_TAGS.map((tag, index) =>
       (row.paid_by_installment_year[index] ?? 0) > 0
@@ -124,7 +127,7 @@ function sCorpDeferredRows(input: F965Input): string[] {
   });
 }
 
-function buildIRS965A(input: F965Input): string {
+function buildIRS965A(input: F965Input, context?: MefBuildContext): string {
   const unpaid = input.f965s.reduce(
     (sum, row) => sum + unpaidLiability(input, row),
     0,
@@ -136,17 +139,46 @@ function buildIRS965A(input: F965Input): string {
       row.triggered_liability + row.transferred_liability,
     0,
   );
-  return elements("IRS965A", [
-    input.amended_report ? element("AmendedInd", "X") : "",
-    ...input.f965s.map((row) => liabilityRow(input, row)),
-    element("NetSection965TaxLiabUnpaidAmt", unpaid),
-    element("NetSection965TaxLiabPaidAmt", currentPayment),
-    ...sCorpCalculationGroups(input),
-    ...sCorpDeferredRows(input),
-    input.s_corp_deferred_rows.length > 0
-      ? element("TotSCorpDefrdNet965TaxLiabAmt", deferred)
-      : "",
-  ]);
+  const needsNetStatement = input.f965s.some((row) =>
+    row.net_tax_adjustment_kind === "netted_adjustment_and_transfer"
+  );
+  const needsMultipleTransfereeStatement = input.s_corp_deferred_rows.some(
+    (row) => row.multiple_transferees,
+  );
+  const netStatementIds = context?.documentIdsByPendingKey
+    ?.f965_net_adjustment_transfer_statement ?? [];
+  const multipleStatementIds = context?.documentIdsByPendingKey
+    ?.f965_multiple_transferee_statement ?? [];
+  if (
+    context?.documentIdsByPendingKey &&
+    ((needsNetStatement && netStatementIds.length === 0) ||
+      (needsMultipleTransfereeStatement &&
+        multipleStatementIds.length === 0))
+  ) {
+    throw new Error("Form 965-A needs its supporting transfer statement");
+  }
+  const statementIds = [...netStatementIds, ...multipleStatementIds];
+  return elements(
+    "IRS965A",
+    [
+      input.amended_report ? element("AmendedInd", "X") : "",
+      ...input.f965s.map((row) => liabilityRow(input, row)),
+      element("NetSection965TaxLiabUnpaidAmt", unpaid),
+      element("NetSection965TaxLiabPaidAmt", currentPayment),
+      ...sCorpCalculationGroups(input),
+      ...sCorpDeferredRows(input),
+      input.s_corp_deferred_rows.length > 0
+        ? element("TotSCorpDefrdNet965TaxLiabAmt", deferred)
+        : "",
+    ],
+    statementIds.length > 0
+      ? {
+        referenceDocumentId: statementIds.join(" "),
+        referenceDocumentName:
+          "BinaryAttachment NetAdjustmentTransferStatement MultipleTransfereeStatement",
+      }
+      : undefined,
+  );
 }
 
 export const form965a: MefFormDescriptor<"f965", unknown> = {
@@ -171,6 +203,6 @@ export const form965a: MefFormDescriptor<"f965", unknown> = {
         );
       }
     }
-    return buildIRS965A(input);
+    return buildIRS965A(input, context);
   },
 };

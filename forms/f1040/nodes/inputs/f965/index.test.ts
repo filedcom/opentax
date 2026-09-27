@@ -137,3 +137,62 @@ Deno.test("Form 965-A S corporation deferral reduces installment-eligible liabil
   });
   assertEquals(unpaidLiability(input, input.f965s[0]), 0);
 });
+
+Deno.test("Form 965-A netted adjustment and transfer require reconciling facts", () => {
+  const row = source().f965s[0];
+  const transaction = {
+    ...row,
+    net_tax_adjustment: 100,
+    net_tax_adjustment_kind: "netted_adjustment_and_transfer" as const,
+    counterparty_tax_id: { kind: "ein" as const, value: "987654321" },
+    netted_adjustment_and_transfer: {
+      adjustment_amount: 200,
+      transferred_out_amount: -100,
+      explanation: "IRS examination adjustment followed by transfer",
+      source_document_reference: "2025 signed transfer agreement",
+    },
+  };
+  const input = source({ f965s: [transaction] });
+  assertEquals(unpaidLiability(input, input.f965s[0]), 100);
+  assertThrows(() =>
+    source({
+      f965s: [{
+        ...transaction,
+        netted_adjustment_and_transfer: undefined,
+      }],
+    })
+  );
+});
+
+Deno.test("Form 965-A multiple transferees must sum to Part IV transfer", () => {
+  const annualRow = {
+    election_or_transfer_year: 2018,
+    source_document_reference: "2025 signed Form 965-D agreements",
+    corporation_name: "Example S Corp",
+    corporation_ein: "123456789",
+    beginning_deferred_liability: 10_000,
+    triggered_liability: 0,
+    transferred_liability: -6_000,
+    counterparty_tax_id: { kind: "ein" as const, value: "123123123" },
+    multiple_transferees: [
+      {
+        tax_id: { kind: "ein" as const, value: "123123123" },
+        transferred_amount: 2_000,
+      },
+      {
+        tax_id: { kind: "ssn" as const, value: "321321321" },
+        transferred_amount: 4_000,
+      },
+    ],
+  };
+  const input = source({ s_corp_deferred_rows: [annualRow] });
+  assertEquals(input.s_corp_deferred_rows[0].transferred_liability, -6_000);
+  assertThrows(() =>
+    source({
+      s_corp_deferred_rows: [{
+        ...annualRow,
+        transferred_liability: -5_000,
+      }],
+    })
+  );
+});

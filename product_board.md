@@ -114,9 +114,11 @@ model and MeF descriptor now carry cumulative Part I/II liability and payments,
 Part III S-corporation computations, and Part IV deferred balances, and
 reconcile current-year payments to Schedule 2 line 20. The old assumption that
 a 2017 inclusion normally has its eighth installment in 2025 was incorrect;
-the normal eighth year was 2024. Transfer/adjustment supporting statements,
-consent-agreement attachments, historical tax computations, and IRS business
-rules remain open. These cases are written but unrun.
+the normal eighth year was 2024. Native MeF statements now describe netted
+Part I adjustments/transfers and allocate Part IV transfers among multiple
+transferees, with required source facts, reconciliation, and parent document
+links. Consent-agreement binary attachments, historical tax computations, and
+IRS business rules remain open. These cases are written but unrun.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section

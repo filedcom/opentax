@@ -28,10 +28,15 @@ totals, Part III groups, and Part IV rows. It checks Part II current-year
 payments against Schedule 2 line 20. That Schedule 2 line is outside line 21 and
 Form 1040 line 23.
 
+The native net-adjustment/transfer statement is required when Part I column j
+nets a subsequent adjustment with a transfer out. The native multiple-transferee
+statement is required when one Part IV transfer out is allocated among more than
+one transferee. Both statements are linked from Form 965-A in the MeF bundle.
+
 Open verification and coverage: the IRS TY2025 XSD and full return tests are
-written but unrun under the requested build-first workflow. Transfer/adjustment
-supporting statements and consent-agreement binary attachments have not been
-built. The model takes actual installment payments from a ledger; it does not
-calculate accrued interest, penalties, acceleration, or the historical
+written but unrun under the requested build-first workflow. Consent-agreement
+binary attachments and independent authentication of transfer agreements have
+not been built. The model takes actual installment payments from a ledger; it
+does not calculate accrued interest, penalties, acceleration, or the historical
 tax-with/without computations. Those source records and any agreement with the
 IRS must be reviewed before filing.

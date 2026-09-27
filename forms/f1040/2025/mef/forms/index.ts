@@ -19,6 +19,8 @@ import { form4136CreditCardUsersStatement } from "./f4136_credit_card_users_stat
 import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
 import { form965a } from "./f965a.ts";
+import { form965aNetAdjustmentTransferStatement } from "./f965a_net_adjustment_transfer_statement.ts";
+import { form965aMultipleTransfereeStatement } from "./f965a_multiple_transferee_statement.ts";
 import { form4684 } from "./f4684.ts";
 import { form4797 } from "./f4797.ts";
 import { form4835 } from "./f4835.ts";
@@ -253,6 +255,9 @@ export const ALL_MEF_FORMS = [
   cccLoanAccrualStatement,
   cccLoanStatement,
   cropInsuranceDeferralStatement,
+  // Form 965-A native statements follow the farm statements in ReturnData.
+  form965aNetAdjustmentTransferStatement,
+  form965aMultipleTransfereeStatement,
   // Form 1116 Part I line 2 statement precedes joint occupancy in ReturnData.
   form1116DirectExpenseStatement,
   form4136EmulsionBlendingStatement,

@@ -245,6 +245,61 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 965-A netted transfer and multiple transferee statements",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const f965 = {
+    ...f965Source,
+    f965s: [{
+      ...f965Source.f965s[0],
+      net_tax_adjustment: 100,
+      net_tax_adjustment_kind: "netted_adjustment_and_transfer",
+      counterparty_tax_id: { kind: "ein", value: "987654321" },
+      netted_adjustment_and_transfer: {
+        adjustment_amount: 200,
+        transferred_out_amount: -100,
+        explanation: "IRS examination adjustment followed by transfer",
+        source_document_reference: "2025 signed transfer agreement",
+      },
+    }],
+    s_corp_deferred_rows: [{
+      election_or_transfer_year: 2018,
+      source_document_reference: "2025 signed Form 965-D agreements",
+      corporation_name: "Example S Corp",
+      corporation_ein: "123456789",
+      beginning_deferred_liability: 10_000,
+      triggered_liability: 0,
+      transferred_liability: -6_000,
+      counterparty_tax_id: { kind: "ein", value: "123123123" },
+      multiple_transferees: [
+        {
+          tax_id: { kind: "ein", value: "123123123" },
+          transferred_amount: 2_000,
+        },
+        {
+          tax_id: { kind: "ssn", value: "321321321" },
+          transferred_amount: 4_000,
+        },
+      ],
+    }],
+  };
+  const xml = buildMefXml({
+    f1040: { line23_other_taxes: 0 },
+    schedule2: { line20_965_tax_installment: 8_000 },
+    f965,
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<NetAdjustmentTransferStmt ");
+  assertStringIncludes(xml, "<MultipleTransfereeStmt ");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentName="BinaryAttachment NetAdjustmentTransferStatement MultipleTransfereeStatement"',
+  );
+  await validateXsd(xml, "Form 965-A linked native transfer statements");
+});
+
+Deno.test({
   name: "XSD: Form 8912 allowed credit links to Schedule 3 line 6k",
   sanitizeOps: false,
   sanitizeResources: false,

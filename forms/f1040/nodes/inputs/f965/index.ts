@@ -40,6 +40,10 @@ export const sCorpDeferredRowSchema = z.object({
   triggered_liability: amount,
   transferred_liability: signedAmount,
   counterparty_tax_id: taxId.optional(),
+  multiple_transferees: z.array(z.object({
+    tax_id: taxId,
+    transferred_amount: amount.positive(),
+  })).min(2).optional(),
 }).superRefine((row, ctx) => {
   if (row.transferred_liability !== 0 && !row.counterparty_tax_id) {
     ctx.addIssue({
@@ -57,6 +61,27 @@ export const sCorpDeferredRowSchema = z.object({
         "Form 965-A Part IV ending deferred liability cannot be negative",
     });
   }
+  if (row.multiple_transferees) {
+    const total = row.multiple_transferees.reduce(
+      (sum, transferee) => sum + transferee.transferred_amount,
+      0,
+    );
+    if (
+      row.transferred_liability >= 0 ||
+      Math.abs(total + row.transferred_liability) > 0.005 ||
+      !row.counterparty_tax_id ||
+      !row.multiple_transferees.some((transferee) =>
+        transferee.tax_id.kind === row.counterparty_tax_id?.kind &&
+        transferee.tax_id.value === row.counterparty_tax_id?.value
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Form 965-A multiple transferees must reconcile to Part IV transfer and listed counterparty",
+      });
+    }
+  }
 });
 
 const common = z.object({
@@ -64,6 +89,17 @@ const common = z.object({
   tax_year_of_inclusion: year,
   // Part I col (j): signed transfer or subsequent adjustment.
   net_tax_adjustment: signedAmount,
+  net_tax_adjustment_kind: z.enum([
+    "subsequent_adjustment",
+    "transfer_out",
+    "netted_adjustment_and_transfer",
+  ]).optional(),
+  netted_adjustment_and_transfer: z.object({
+    adjustment_amount: signedAmount,
+    transferred_out_amount: z.number().finite().negative(),
+    explanation: z.string().trim().min(1).max(9000),
+    source_document_reference: z.string().trim().min(1),
+  }).optional(),
   counterparty_tax_id: taxId.optional(),
   // Part II cols (b)-(i), cumulative actual payments on installments 1-8.
   paid_by_installment_year: z.array(amount).length(8),
@@ -134,6 +170,55 @@ export const inputSchema = z.object({
     }
   }
   for (const [index, row] of input.f965s.entries()) {
+    if (
+      row.entry_type !== "assumed" &&
+      ((row.net_tax_adjustment !== 0 && !row.net_tax_adjustment_kind) ||
+        (row.net_tax_adjustment === 0 &&
+          row.net_tax_adjustment_kind !== undefined &&
+          row.net_tax_adjustment_kind !== "netted_adjustment_and_transfer"))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message:
+          "Form 965-A Part I column j needs an explicit adjustment or transfer kind",
+      });
+    }
+    if (
+      row.net_tax_adjustment_kind === "transfer_out" &&
+      (row.net_tax_adjustment >= 0 || !row.counterparty_tax_id)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message:
+          "Form 965-A transferred-out liability needs a negative amount and transferee tax ID",
+      });
+    }
+    if (row.net_tax_adjustment_kind === "netted_adjustment_and_transfer") {
+      const details = row.netted_adjustment_and_transfer;
+      if (
+        !details || !row.counterparty_tax_id ||
+        Math.abs(
+            details.adjustment_amount + details.transferred_out_amount -
+              row.net_tax_adjustment,
+          ) > 0.005
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["f965s", index],
+          message:
+            "Form 965-A netted adjustment and transfer need reconciling statement facts",
+        });
+      }
+    } else if (row.netted_adjustment_and_transfer) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message:
+          "Form 965-A netted statement facts require a netted column j transaction",
+      });
+    }
     if (row.tax_year_of_inclusion > input.reporting_year) {
       ctx.addIssue({
         code: "custom",
@@ -141,7 +226,10 @@ export const inputSchema = z.object({
         message: "Form 965-A liability year cannot follow the reporting year",
       });
     }
-    if (row.net_tax_adjustment !== 0 && row.entry_type === "assumed") {
+    if (
+      row.entry_type === "assumed" &&
+      (row.net_tax_adjustment !== 0 || row.net_tax_adjustment_kind)
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["f965s", index],
