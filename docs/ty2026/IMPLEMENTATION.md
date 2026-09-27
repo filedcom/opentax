@@ -42,6 +42,9 @@ The [Form 8889 contract](FORM8889-GRAPH.md) maps owner-specific HSA limits,
 the 2026 eligibility expansions, spouse allocation and testing-period
 recapture to Schedule 1 lines 8f/13 and Schedule 2 lines 13c/13d. It
 inventories all 27 PDF fields and identifies stale 2025 widget tooltip text.
+The [Form 8959 contract](FORM8959-GRAPH.md) pins the 2026 wage/RRTA tax on
+Schedule 2 line 17b and SE tax on line 11, with withholding on 1040 line
+25c. It maps the changed Part II–IV line positions and all 26 PDF fields.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

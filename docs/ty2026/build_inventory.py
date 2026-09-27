@@ -45,6 +45,7 @@ NODE_PROGRESS = {
     "form5329": "dedicated 2026 Part I early SIMPLE 25% graph and PDF route; add exceptions, other parts, separate spouse forms, MeF; see FORM5329-GRAPH.md",
     "form8606": "2026 form and instructions pinned; dedicated per-owner basis and Roth calculation needed before registry; see FORM8606-GRAPH.md",
     "form8889": "2026 form/instructions pinned; shared node lacks month-by-month eligibility/spouse allocation, routes income/tax to wrong lines, and omits PDF/MeF parts; see FORM8889-GRAPH.md",
+    "form8959": "2026 form/instructions pinned; shared node sends combined old line 18 tax to Schedule 2 line 11, but 2026 splits line 12/18 to 17b/11 and changes PDF positions; see FORM8959-GRAPH.md",
     "schedule_f": "2026 draft makes line 21b vehicle interest and 21c other interest; build dedicated farm input, PDF/MeF, ATS 3; see SCHEDULEF-GRAPH.md",
     "f4835": "2026 form/instructions pinned; line 19b vehicle interest and farm-rent Schedule E route need PDF/MeF and ATS 3; see FORM4835-GRAPH.md",
     "schedule_se": "ATS 3 elects 2026 farm optional method; current Schedule F suppresses low-profit/loss SE route and 2025 PDF map puts profit in 2026 name field; see SCHEDULESE-GRAPH.md",

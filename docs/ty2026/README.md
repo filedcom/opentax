@@ -53,6 +53,9 @@ for the implementation contract.
 - [`FORM8889-GRAPH.md`](FORM8889-GRAPH.md) and `pdf-fields-f8889.csv`:
   owner-keyed HSA eligibility and contributions, distributions, testing-period
   tax, 2026 Schedule 1/2 routes, and the full PDF field map.
+- [`FORM8959-GRAPH.md`](FORM8959-GRAPH.md) and `pdf-fields-f8959.csv`:
+  2026 wage/RRTA/SE Additional Medicare Tax split, withholding reconciliation,
+  changed PDF line positions, and MeF/graph build order.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

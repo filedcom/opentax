@@ -31,6 +31,10 @@ The [Form 8889 contract](../../../docs/ty2026/FORM8889-GRAPH.md) maps
 per-beneficiary HSA coverage, contributions, distributions and failed
 testing periods into Schedule 1 lines 8f/13 and Schedule 2 lines 13c/13d.
 The shared node has incomplete 2026 destinations and PDF/MeF fields.
+The [Form 8959 contract](../../../docs/ty2026/FORM8959-GRAPH.md) maps
+separate 2026 wage/RRTA and self-employment Additional Medicare Tax to
+Schedule 2 lines 17b and 11, plus withholding to Form 1040 line 25c.
+The TY2025 calculator/PDF positions cannot describe that revised form.
 The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
 [business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
 map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.
