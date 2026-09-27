@@ -28,23 +28,12 @@ const source = {
   interest_paid_to_related_person: false,
   certificate_is_reissued: false,
   nonspouse_coowner: false,
-  carryforward_vintages: [
-    {
-      originating_tax_year: 2022,
-      amount: 100,
-      prior_form8396_reference: "2024 Form 8396 line 16",
-    },
-    {
-      originating_tax_year: 2023,
-      amount: 300,
-      prior_form8396_reference: "2024 Form 8396 line 14",
-    },
-    {
-      originating_tax_year: 2024,
-      amount: 400,
-      prior_form8396_reference: "2024 Form 8396 line 17",
-    },
-  ],
+  prior_2024_form8396: {
+    document_reference: "Filed 2024 Form 8396",
+    line14_2023_carryforward: 300,
+    line16_2022_carryforward: 100,
+    line17_2024_carryforward: 400,
+  },
 } as const;
 
 function parsed() {
@@ -198,10 +187,19 @@ Deno.test("Form 8396 rejects unsupported or incomplete MCC claims", () => {
       },
       {
         ...source,
-        carryforward_vintages: [
-          source.carryforward_vintages[0],
-          source.carryforward_vintages[0],
-        ],
+        prior_2024_form8396: {
+          ...source.prior_2024_form8396,
+          line14_2023_carryforward: 0,
+          line16_2022_carryforward: 0,
+          line17_2024_carryforward: 0,
+        },
+      },
+      {
+        ...source,
+        prior_2024_form8396: {
+          ...source.prior_2024_form8396,
+          document_reference: "",
+        },
       },
     ]
   ) {

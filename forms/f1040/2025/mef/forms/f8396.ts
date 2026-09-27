@@ -45,7 +45,7 @@ const SOURCE_KEYS = [
   "certificate_is_reissued",
   "nonspouse_coowner",
   "nonspouse_coowner_share",
-  "carryforward_vintages",
+  "prior_2024_form8396",
 ] as const;
 
 const FIELD_MAP: ReadonlyArray<readonly [LineKey, string]> = [

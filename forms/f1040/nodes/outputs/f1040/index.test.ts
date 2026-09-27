@@ -72,11 +72,12 @@ Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3",
       interest_paid_to_related_person: false,
       certificate_is_reissued: false,
       nonspouse_coowner: false,
-      carryforward_vintages: [{
-        originating_tax_year: 2024,
-        amount: 300,
-        prior_form8396_reference: "2024 Form 8396 line 17",
-      }],
+      prior_2024_form8396: {
+        document_reference: "Filed 2024 Form 8396",
+        line14_2023_carryforward: 0,
+        line16_2022_carryforward: 0,
+        line17_2024_carryforward: 300,
+      },
     },
     credit_limit_schedule3_lines: {
       ...emptySchedule3ForBusinessCredit,

@@ -117,17 +117,19 @@ export const form8396SourceSchema = z.object({
   certificate_is_reissued: z.boolean().optional(),
   nonspouse_coowner: z.boolean().optional(),
   nonspouse_coowner_share: z.number().finite().positive().lt(1).optional(),
-  carryforward_vintages: z.array(
-    z.object({
-      originating_tax_year: z.union([
-        z.literal(2022),
-        z.literal(2023),
-        z.literal(2024),
-      ]),
-      amount: wholeDollars.refine((value) => value > 0),
-      prior_form8396_reference: z.string().trim().min(1),
-    }).strict(),
-  ),
+  prior_2024_form8396: z.object({
+    document_reference: z.string().trim().min(1),
+    line14_2023_carryforward: wholeDollars,
+    line16_2022_carryforward: wholeDollars,
+    line17_2024_carryforward: wholeDollars,
+  }).strict().refine(
+    (prior) =>
+      prior.line14_2023_carryforward + prior.line16_2022_carryforward +
+          prior.line17_2024_carryforward > 0,
+    {
+      message: "A prior Form 8396 reference must contain a carryforward",
+    },
+  ).optional(),
 }).strict().superRefine((source, ctx) => {
   if (source.certificate_issue_date > "2025-12-31") {
     ctx.addIssue({
@@ -174,17 +176,6 @@ export const form8396SourceSchema = z.object({
       message: "A nonspouse co-owner needs an explicit share of the $2,000 cap",
     });
   }
-  const years = new Set<number>();
-  source.carryforward_vintages.forEach((vintage, index) => {
-    if (years.has(vintage.originating_tax_year)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["carryforward_vintages", index],
-        message: "Duplicate Form 8396 carryforward origin year",
-      });
-    }
-    years.add(vintage.originating_tax_year);
-  });
 });
 
 export type Form8396Source = z.infer<typeof form8396SourceSchema>;
@@ -226,15 +217,12 @@ export function calculateForm8396(
   if (!Number.isSafeInteger(taxLiabilityLimit) || taxLiabilityLimit < 0) {
     throw new Error("Form 8396 line 8 needs a nonnegative whole-dollar limit");
   }
-  const carry = (year: 2022 | 2023 | 2024): number =>
-    source.carryforward_vintages.find((vintage) =>
-      vintage.originating_tax_year === year
-    )?.amount ?? 0;
+  const prior = source.prior_2024_form8396;
   const line1 = calculateForm8396Line1(source);
   const line3 = calculateForm8396Line3(source);
-  const line4 = carry(2022);
-  const line5 = carry(2023);
-  const line6 = carry(2024);
+  const line4 = prior?.line16_2022_carryforward ?? 0;
+  const line5 = prior?.line14_2023_carryforward ?? 0;
+  const line6 = prior?.line17_2024_carryforward ?? 0;
   const line7 = line3 + line4 + line5 + line6;
   const line8 = taxLiabilityLimit;
   const line9 = Math.min(line7, line8);

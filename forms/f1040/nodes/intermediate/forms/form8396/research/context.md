@@ -4,7 +4,9 @@ The previous node added a gross current credit and one unexplained carryforward
 directly to Schedule 3. That omitted the printed tax-liability limit and
 separate 2022, 2023, and 2024 carryforward lines. The current build pass
 replaces it with source certificate identity, eligibility facts, identified
-interest evidence, and referenced carryforward vintages. It computes line 1
+interest evidence, and the three distinct carryforward amounts from a named
+2024 Form 8396 copy: line 16 for the 2022 vintage, line 14 for 2023, and line
+17 for 2024. It computes line 1
 from the taxpayer's paid interest times the original loan's fixed certified
 indebtedness fraction, as Publication 530 directs. For a cited Form 1098, MeF
 requires one entered source document with the same reference and box 1 amount;
@@ -28,9 +30,8 @@ an additional original-loan annual cap and, if rates differ in the refinance
 year, a linked calculation statement. The current source model explicitly
 rejects a reissued certificate rather than awarding an unsupported amount.
 That calculation and statement remain to be built. Other work still open:
-authenticate or inspect the actual Form 1098 or lender statement;
-verify the 2024 Form 8396 carryover
-references; run and visually inspect the newly mapped PDF field projection;
+authenticate or inspect the actual Form 1098 or lender statement and the prior
+Form 8396 copy; run and visually inspect the newly mapped PDF field projection;
 run local XSD and IRS business-rule
 checks in the requested full batch; and obtain ATS acceptance when available.
 

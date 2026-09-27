@@ -7,8 +7,8 @@ import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import {
   calculateForm8396Line3,
-  form8396SourceSchema,
   type Form8396Source,
+  form8396SourceSchema,
 } from "./calculation.ts";
 
 export { form8396SourceSchema as inputSchema } from "./calculation.ts";
@@ -21,10 +21,10 @@ class Form8396Node extends TaxNode<typeof form8396SourceSchema> {
   compute(_ctx: NodeContext, rawInput: Form8396Source): NodeResult {
     const source = form8396SourceSchema.parse(rawInput);
     const line3 = calculateForm8396Line3(source);
-    const priorCarryforward = source.carryforward_vintages.reduce(
-      (sum, vintage) => sum + vintage.amount,
-      0,
-    );
+    const prior = source.prior_2024_form8396;
+    const priorCarryforward = (prior?.line14_2023_carryforward ?? 0) +
+      (prior?.line16_2022_carryforward ?? 0) +
+      (prior?.line17_2024_carryforward ?? 0);
     if (line3 + priorCarryforward === 0) return { outputs: [] };
     return {
       outputs: [

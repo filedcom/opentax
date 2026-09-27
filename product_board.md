@@ -174,8 +174,10 @@ after Form 1040 line 18 is known, then replaces the tentative Schedule 3 lines
 None of these changes has passed the deferred full test batch.
 
 The current Form 8396 build pass replaces a gross Schedule 3 deposit with
-source-backed certificate, optional different-home US address, and 2022-2024
-carryforward vintages. It now derives current-year certified interest from a
+source-backed certificate, optional different-home US address, and separate
+2022-2024 carryforwards from named 2024 Form 8396 lines 16, 14, and 17. The
+prior form copy is still entered evidence, not authenticated. It now derives
+current-year certified interest from a
 named Form 1098 or lender statement and the fixed original-loan certificate
 fraction. A referenced Form 1098 must match the entered box 1 amount and be
 unique in the filed input; the actual document has not been authenticated.
