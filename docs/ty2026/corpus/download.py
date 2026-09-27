@@ -91,6 +91,7 @@ for label, url in page_links(MEF_PAGE):
 
 sources += [
     ("authorities/hhs-2025-poverty-guidelines.pdf", "https://public-inspection.federalregister.gov/2025-01377.pdf", "final-authority"),
+    ("authorities/iw2w3--2026.pdf", IRS + "/pub/irs-pdf/iw2w3.pdf", "final-authority"),
     ("authorities/p505--2026.pdf", IRS + "/pub/irs-prior/p505--2026.pdf", "final-authority"),
     ("authorities/rp-25-32.pdf", IRS + "/pub/irs-drop/rp-25-32.pdf", "final-authority"),
     ("authorities/rp-25-19.pdf", IRS + "/pub/irs-drop/rp-25-19.pdf", "final-authority"),

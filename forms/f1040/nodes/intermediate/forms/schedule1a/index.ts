@@ -29,11 +29,19 @@ const vehicleLoanSchema = z.object({
 export const claimInputSchema = z.object({
   taxpayer_qualified_overtime_compensation: z.number().nonnegative().optional(),
   spouse_qualified_overtime_compensation: z.number().nonnegative().optional(),
+  taxpayer_non_w2_qualified_overtime_compensation: z.number().nonnegative()
+    .optional(),
+  spouse_non_w2_qualified_overtime_compensation: z.number().nonnegative()
+    .optional(),
   vehicle_loans: z.array(vehicleLoanSchema).min(1).optional(),
 });
 
 export const inputSchema = claimInputSchema.extend({
   qualified_employee_tips: z.array(z.object({
+    employee_ssn: z.string(),
+    amount: z.number().nonnegative(),
+  })).optional(),
+  qualified_employee_overtime: z.array(z.object({
     employee_ssn: z.string(),
     amount: z.number().nonnegative(),
   })).optional(),
@@ -99,7 +107,26 @@ export function qualifiedTipsDeduction(input: Schedule1AInput): number {
   return Math.max(0, tips - phaseout);
 }
 
-export function qualifiedOvertimeDeduction(input: Schedule1AInput): number {
+export function qualifiedOvertimeDeduction(
+  input: Schedule1AInput,
+  taxYear = 2025,
+): number {
+  if (taxYear === 2026) {
+    if (
+      input.taxpayer_qualified_overtime_compensation !== undefined ||
+      input.spouse_qualified_overtime_compensation !== undefined
+    ) {
+      throw new Error(
+        "TY2026 overtime must distinguish W-2 code TT from non-W-2 compensation",
+      );
+    }
+  } else if (
+    input.qualified_employee_overtime !== undefined ||
+    input.taxpayer_non_w2_qualified_overtime_compensation !== undefined ||
+    input.spouse_non_w2_qualified_overtime_compensation !== undefined
+  ) {
+    throw new Error("W-2 code TT and separated overtime require tax year 2026");
+  }
   if (
     input.filing_status === undefined ||
     input.filing_status === FilingStatus.MFS
@@ -107,12 +134,39 @@ export function qualifiedOvertimeDeduction(input: Schedule1AInput): number {
     return 0;
   }
 
+  const normalizeSsn = (ssn: string | undefined) => ssn?.replaceAll("-", "");
+  const taxpayerSsn = normalizeSsn(input.taxpayer_ssn);
+  const spouseSsn = normalizeSsn(input.spouse_ssn);
+  const w2Overtime = input.qualified_employee_overtime ?? [];
+  if (
+    taxYear === 2026 && w2Overtime.some((entry) => {
+      const ssn = normalizeSsn(entry.employee_ssn);
+      return ssn !== taxpayerSsn && ssn !== spouseSsn;
+    })
+  ) {
+    throw new Error("W-2 code TT employee SSN does not match a filer");
+  }
+  const taxpayerW2 = taxYear === 2026
+    ? w2Overtime.filter((entry) =>
+      normalizeSsn(entry.employee_ssn) === taxpayerSsn
+    ).reduce((sum, entry) => sum + entry.amount, 0)
+    : 0;
+  const spouseW2 = taxYear === 2026
+    ? w2Overtime.filter((entry) =>
+      normalizeSsn(entry.employee_ssn) === spouseSsn
+    ).reduce((sum, entry) => sum + entry.amount, 0)
+    : 0;
   const taxpayerOvertime = input.taxpayer_has_valid_ssn === true
-    ? input.taxpayer_qualified_overtime_compensation ?? 0
+    ? taxYear === 2026
+      ? taxpayerW2 +
+        (input.taxpayer_non_w2_qualified_overtime_compensation ?? 0)
+      : input.taxpayer_qualified_overtime_compensation ?? 0
     : 0;
   const spouseOvertime = input.filing_status === FilingStatus.MFJ &&
       input.spouse_has_valid_ssn === true
-    ? input.spouse_qualified_overtime_compensation ?? 0
+    ? taxYear === 2026
+      ? spouseW2 + (input.spouse_non_w2_qualified_overtime_compensation ?? 0)
+      : input.spouse_qualified_overtime_compensation ?? 0
     : 0;
   const cap = input.filing_status === FilingStatus.MFJ
     ? OVERTIME_CAP_MFJ
@@ -187,7 +241,7 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const enhancedSeniorDeduction = seniorDeduction(ctx, input);
     const qualifiedTips = qualifiedTipsDeduction(input);
-    const qualifiedOvertime = qualifiedOvertimeDeduction(input);
+    const qualifiedOvertime = qualifiedOvertimeDeduction(input, ctx.taxYear);
     const vehicleLoanInterest = vehicleLoanInterestDeduction(input);
     const deduction = qualifiedTips + qualifiedOvertime + vehicleLoanInterest +
       enhancedSeniorDeduction;

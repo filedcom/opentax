@@ -58,6 +58,8 @@ export enum Box12Code {
   R = "R", // Employer contributions to Archer MSA
   S = "S", // 408(p) SIMPLE salary reduction contributions
   T = "T", // Adoption benefits
+  TP = "TP", // TY2026 cash tips reported to employer
+  TT = "TT", // TY2026 qualified overtime compensation
   V = "V", // Income from exercise of nonstatutory stock options
   W = "W", // Employer contributions to HSA
   Y = "Y", // 409A nonqualified deferred compensation deferrals
@@ -147,6 +149,8 @@ export const w2ItemSchema = z.object({
   box14b_tipped_code: z.string().regex(/^\d{3}$/).optional().describe(
     "Treasury Tipped Occupation Code",
   ),
+  box14b_tipped_codes: z.array(z.string().regex(/^\d{3}$/)).min(1).max(2)
+    .optional().describe("TY2026 Treasury Tipped Occupation Codes"),
   box15_state: z.string().optional().describe("State abbreviation"),
   box16_state_wages: z.number().nonnegative().optional().describe(
     "State wages, tips, etc.",
@@ -415,18 +419,55 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
   return [output(schedule_se, { w2_ss_wages: totalSsWages })];
 }
 
-function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
-  const tips = regularItems(w2s)
-    .filter((item) =>
-      item.box14b_tipped_code !== undefined &&
-      (item.box7_ss_tips ?? 0) > 0
-    )
-    .map((item) => ({
-      employee_ssn: item.employee_ssn!,
-      amount: item.box7_ss_tips!,
-    }));
+function qualifiedTipsOutput(w2s: W2Items, taxYear: number): NodeOutput[] {
+  const tips = regularItems(w2s).flatMap((item) => {
+    const amount = taxYear === 2026
+      ? (item.box12_entries ?? [])
+        .filter((entry) => entry.code === Box12Code.TP)
+        .reduce((sum, entry) => sum + entry.amount, 0)
+      : item.box7_ss_tips ?? 0;
+    if (amount <= 0) return [];
+    const codes = taxYear === 2026
+      ? item.box14b_tipped_codes ??
+        (item.box14b_tipped_code ? [item.box14b_tipped_code] : [])
+      : item.box14b_tipped_code
+      ? [item.box14b_tipped_code]
+      : [];
+    if (codes.length === 0) {
+      if (taxYear === 2026) {
+        throw new Error("W-2 code TP needs box 14b occupation code");
+      }
+      return [];
+    }
+    if (taxYear === 2026 && codes.includes("000")) {
+      throw new Error(
+        "W-2 code TP with nonqualifying occupation needs a qualified-tip breakdown",
+      );
+    }
+    if (!item.employee_ssn) {
+      throw new Error("Qualified W-2 tips need employee SSN");
+    }
+    return [{ employee_ssn: item.employee_ssn, amount }];
+  });
   return tips.length > 0
     ? [output(schedule1a, { qualified_employee_tips: tips })]
+    : [];
+}
+
+function qualifiedOvertimeOutput(w2s: W2Items, taxYear: number): NodeOutput[] {
+  if (taxYear !== 2026) return [];
+  const overtime = regularItems(w2s).flatMap((item) => {
+    const amount = (item.box12_entries ?? [])
+      .filter((entry) => entry.code === Box12Code.TT)
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    if (amount <= 0) return [];
+    if (!item.employee_ssn) {
+      throw new Error("W-2 code TT needs employee SSN");
+    }
+    return [{ employee_ssn: item.employee_ssn, amount }];
+  });
+  return overtime.length > 0
+    ? [output(schedule1a, { qualified_employee_overtime: overtime })]
     : [];
 }
 
@@ -512,6 +553,20 @@ class W2Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     for (const item of input.w2s) {
+      if (
+        ctx.taxYear !== 2026 &&
+        (item.box12_entries ?? []).some((entry) =>
+          entry.code === Box12Code.TP || entry.code === Box12Code.TT
+        )
+      ) {
+        throw new Error("W-2 codes TP and TT require tax year 2026");
+      }
+      if (
+        ctx.taxYear === 2026 && item.box14b_tipped_code &&
+        item.box14b_tipped_codes
+      ) {
+        throw new Error("Supply one W-2 box 14b occupation-code field");
+      }
       validateItem(
         item,
         cfg.ssWageBase,
@@ -535,7 +590,8 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),
       ...scheduleSEOutput(input.w2s),
-      ...qualifiedTipsOutput(input.w2s),
+      ...qualifiedTipsOutput(input.w2s, ctx.taxYear),
+      ...qualifiedOvertimeOutput(input.w2s, ctx.taxYear),
       ...box12NodeOutputs(input.w2s),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];

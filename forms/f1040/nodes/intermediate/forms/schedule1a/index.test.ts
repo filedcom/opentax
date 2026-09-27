@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule1a } from "./index.ts";
@@ -53,6 +53,35 @@ Deno.test("schedule1a: TY2026 routes lines 43 and 44 to deduction resolution", (
   assertEquals(schedule?.fields.line43_enhanced_senior, 6_000);
   assertEquals(schedule?.fields.line44_total_additional_deductions, 11_000);
   assertEquals(result.outputs.some((item) => item.nodeType === "f1040"), false);
+});
+
+Deno.test("schedule1a: TY2026 combines W-2 code TT and separate non-W-2 overtime", () => {
+  const result = schedule1a.compute({ taxYear: 2026, formType: "f1040" }, {
+    filing_status: FilingStatus.Single,
+    magi: 70_000,
+    taxpayer_ssn: TAXPAYER_SSN,
+    taxpayer_has_valid_ssn: true,
+    qualified_employee_overtime: [
+      { employee_ssn: TAXPAYER_SSN, amount: 2_000 },
+      { employee_ssn: TAXPAYER_SSN, amount: 1_000 },
+    ],
+    taxpayer_non_w2_qualified_overtime_compensation: 500,
+  });
+  const schedule = result.outputs.find((item) =>
+    item.nodeType === "schedule1a"
+  );
+  assertEquals(schedule?.fields.line27_qualified_overtime, 3_500);
+  assertThrows(
+    () =>
+      schedule1a.compute({ taxYear: 2026, formType: "f1040" }, {
+        filing_status: FilingStatus.Single,
+        magi: 70_000,
+        taxpayer_has_valid_ssn: true,
+        taxpayer_qualified_overtime_compensation: 3_500,
+      }),
+    Error,
+    "distinguish W-2",
+  );
 });
 
 Deno.test("schedule1a: caps qualified tips at $25,000", () => {

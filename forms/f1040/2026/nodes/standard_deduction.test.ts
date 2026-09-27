@@ -261,3 +261,49 @@ Deno.test("2026 Schedule 1-A line 44 reduces taxable income in graph", () => {
   assertEquals(result.pending.f1040.line15_taxable_income, 42_900);
   assertEquals(result.pending.f1040.line16_income_tax, 4_900);
 });
+
+Deno.test("2026 W-2 TP and TT amounts reach Schedule 1-A and Form 1040", () => {
+  const start = buildStartNode([
+    { node: w2, itemSchema: w2ItemSchema, isArray: true },
+    {
+      node: agi_aggregator,
+      inputSchema: agi_aggregator.inputSchema,
+      isArray: false,
+    },
+    { node: schedule1a, inputSchema: schedule1a.inputSchema, isArray: false },
+  ]);
+  const registry: NodeRegistry = {
+    start,
+    w2,
+    agi_aggregator,
+    schedule1a,
+    standard_deduction: standard_deduction_2026,
+    income_tax_calculation,
+    f1040: f1040_2026_node,
+    schedule3a,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    w2: [{
+      employee_ssn: "111223333",
+      box1_wages: 70_000,
+      box2_fed_withheld: 5_000,
+      box14b_tipped_codes: ["102"],
+      box12_entries: [
+        { code: "TP", amount: 5_000 },
+        { code: "TT", amount: 2_000 },
+      ],
+    }],
+    agi_aggregator: { filing_status: FilingStatus.Single },
+    schedule1a: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: "111223333",
+      taxpayer_has_valid_ssn: true,
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line15_qualified_tips, 5_000);
+  assertEquals(result.pending.schedule1a.line27_qualified_overtime, 2_000);
+  assertEquals(result.pending.f1040.line13a_schedule1a, 7_000);
+  assertEquals(result.pending.f1040.line15_taxable_income, 46_900);
+  assertEquals(result.pending.f1040.line16_income_tax, 5_380);
+});

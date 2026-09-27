@@ -45,7 +45,9 @@ QBI edges still need to be wired into the 2026 graph.
 The shared Schedule 1-A calculation now emits 2026 form lines 15, 27, 36,
 43, and 44; it passes lines 43 and 44 to the 2026 deduction node. The AGI
 node adds back Form 2555 exclusions for its 2026 MAGI. Puerto Rico/Form 4563
-addbacks and the draft W-2 TP/TT source records remain to implement.
+addbacks remain to implement. W-2 box 12 TP/TT now supplies employee tip and
+overtime facts, with an end-to-end calculation-graph test. Form 4137
+employer-level tip reconciliation and mixed-occupation allocation remain.
 The shared AGI aggregator now emits a TY2026 income/adjustment pair to this
 node while retaining its TY2025 output contract. A graph test runs income
 facts → AGI → deduction choice → tax → 1040 and checks Social Security and

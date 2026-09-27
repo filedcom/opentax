@@ -122,6 +122,81 @@ Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1
   assertEquals(fieldsOf(result.outputs, schedule1a), undefined);
 });
 
+Deno.test("TY2026 W-2 codes TP and TT route reported tips and overtime", () => {
+  const result = compute2026([minimalItem({
+    employee_ssn: "111223333",
+    box1_wages: 70_000,
+    box7_ss_tips: 3_000,
+    box14b_tipped_codes: ["102"],
+    box12_entries: [
+      { code: Box12Code.TP, amount: 5_000 },
+      { code: Box12Code.TT, amount: 2_000 },
+    ],
+  })]);
+  const schedule = findOutput(result, "schedule1a")?.fields;
+  assertEquals(schedule?.qualified_employee_tips, [{
+    employee_ssn: "111223333",
+    amount: 5_000,
+  }]);
+  const overtime = result.outputs.filter((item) =>
+    item.nodeType === "schedule1a"
+  )
+    .flatMap((item) =>
+      (item.fields.qualified_employee_overtime ?? []) as unknown[]
+    );
+  assertEquals(overtime, [{ employee_ssn: "111223333", amount: 2_000 }]);
+});
+
+Deno.test("TY2026 W-2 code TP needs a qualifying occupation and employee SSN", () => {
+  assertThrows(
+    () =>
+      compute2026([minimalItem({
+        employee_ssn: "111223333",
+        box12_entries: [{ code: Box12Code.TP, amount: 100 }],
+      })]),
+    Error,
+    "occupation code",
+  );
+  assertThrows(
+    () =>
+      compute2026([minimalItem({
+        employee_ssn: "111223333",
+        box14b_tipped_codes: ["000"],
+        box12_entries: [{ code: Box12Code.TP, amount: 100 }],
+      })]),
+    Error,
+    "breakdown",
+  );
+  assertThrows(
+    () =>
+      compute2026([minimalItem({
+        box14b_tipped_codes: ["102"],
+        box12_entries: [{ code: Box12Code.TP, amount: 100 }],
+      })]),
+    Error,
+    "employee SSN",
+  );
+});
+
+Deno.test("W-2 codes TP and TT are rejected on TY2025", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box12_entries: [{ code: Box12Code.TP, amount: 100 }],
+      })]),
+    Error,
+    "require tax year 2026",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box12_entries: [{ code: Box12Code.TT, amount: 100 }],
+      })]),
+    Error,
+    "require tax year 2026",
+  );
+});
+
 Deno.test("qualified tips are summed across eligible W-2s only", () => {
   const result = compute([
     minimalItem({
@@ -857,32 +932,44 @@ Deno.test("enhanced SIMPLE plan uses its own age-specific limit", () => {
     simple_plan_limit: "enhanced",
   })]);
   assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 60_000);
-  assertThrows(() => compute([minimalItem({
-    box1_wages: 60_000,
-    box12_entries: [{ code: Box12Code.S, amount: 22_851 }],
-    taxpayer_age: 62,
-    simple_plan_limit: "enhanced",
-  })]));
+  assertThrows(() =>
+    compute([minimalItem({
+      box1_wages: 60_000,
+      box12_entries: [{ code: Box12Code.S, amount: 22_851 }],
+      taxpayer_age: 62,
+      simple_plan_limit: "enhanced",
+    })])
+  );
 });
 
 Deno.test("TY2026 W-2 enforces standard and enhanced SIMPLE limits", () => {
-  const item = (amount: number, tier?: "enhanced") => minimalItem({
-    box1_wages: 60_000,
-    box12_entries: [{ code: Box12Code.S, amount }],
-    taxpayer_age: 40,
-    simple_plan_limit: tier,
-  });
-  assertEquals(fieldsOf(compute2026([item(17_000)]).outputs, f1040)!.line1a_wages, 60_000);
+  const item = (amount: number, tier?: "enhanced") =>
+    minimalItem({
+      box1_wages: 60_000,
+      box12_entries: [{ code: Box12Code.S, amount }],
+      taxpayer_age: 40,
+      simple_plan_limit: tier,
+    });
+  assertEquals(
+    fieldsOf(compute2026([item(17_000)]).outputs, f1040)!.line1a_wages,
+    60_000,
+  );
   assertThrows(() => compute2026([item(17_001)]));
-  assertEquals(fieldsOf(compute2026([item(18_100, "enhanced")]).outputs, f1040)!.line1a_wages, 60_000);
+  assertEquals(
+    fieldsOf(compute2026([item(18_100, "enhanced")]).outputs, f1040)!
+      .line1a_wages,
+    60_000,
+  );
   assertThrows(() => compute2026([item(18_101, "enhanced")]));
 });
 
 Deno.test("W-2 catch-up deferral needs an age", () => {
-  assertThrows(() => compute2026([minimalItem({
-    box1_wages: 60_000,
-    box12_entries: [{ code: Box12Code.D, amount: 24_501 }],
-  })]));
+  assertThrows(() =>
+    compute2026([minimalItem({
+      box1_wages: 60_000,
+      box12_entries: [{ code: Box12Code.D, amount: 24_501 }],
+    })])
+  );
 });
 
 // ============================================================

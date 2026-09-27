@@ -762,6 +762,15 @@
       "status": "downloaded",
       "bytes": 119937,
       "sha256": "00494bed582487f24963cf664540bd18f42a1ff924d43215eef2a971d975bc1b"
+    },
+    {
+      "path": "authorities/iw2w3--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/iw2w3.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 527838,
+      "sha256": "d16b9f506f039f5af24f01fad699b0b60d392ac7920fcff528c7d97740c792b6",
+      "retrieved_utc": "2026-09-27T04:39:59Z"
     }
   ]
 }
