@@ -30,6 +30,12 @@ baseline. The 48 ignored tests are disabled live-IRS-PDF field-name checks (one
 per registered PDF descriptor). This remains a partial coverage result, not a
 release gate or ATS acceptance.
 
+ATS Form 1040 Scenario 8 now has a source-backed full-return calculation input
+and written but unrun expected-line and v5.4 XML cases. The source PDF's QCD and
+rollover marks do not match its 1099-R IRA indicators, so the fixture keeps the
+marks as source evidence without inventing transactions. This does not count as
+IRS ATS acceptance.
+
 The current build pass also adds Form 8962 Part IV Situation 1 agreed and
 no-agreement allocations, Situation 3 no-APTC allocations, and Situation 4
 agreed and no-agreement allocations. Source-to-XML cases are written but not yet
