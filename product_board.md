@@ -200,15 +200,15 @@ above the IRS $5,000 limit; its case is written but unrun.
 Estate/trust K-1 code ZZ disabled-access amounts now enter the Form 3800
 source graph when marked nonpassive, retaining separate K-1 and statement
 references. The input and graph cases are written but unrun. The filed Form
-3800 XML path still expects a Form 8826 source and does not yet emit this
-direct pass-through route; it must remain blocked until that bridge is built.
-The filed line 1e bridge must reconcile the direct entry to the entered K-1
-code ZZ amount and its named statement, combine it with any own, partnership,
-or S-corporation Form 8826 credit under the single $5,000 line cap, allocate
-the shared Part II tax use across all line 1e sources, and emit one Part III
-row with the required Part V source details. It must omit IRS8826 when the
-recipient has only pass-through credit, as the
-[2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800) allow.
+3800 XML path now reconciles direct estate/trust code ZZ source amounts against
+the entered K-1 and named statement, joins them with own, partnership, and
+S-corporation sources under one line 1e row, and uses the shared Part II tax-use
+allocation and Part V detail path. A pass-through-only recipient omits IRS8826,
+as the [2025 Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+allow. Direct, mismatch, and local XSD cases are written but unrun. A mixed
+source set whose gross credit exceeds the $5,000 cap still stops; its
+cross-source cap allocation is not built yet, and input-to-input K-1 matching
+does not authenticate the K-1 or statement.
 The Part V draft now apportions whole-dollar source and applied amounts so the
 printed rows add back to the rounded Part III and Part II totals; its rounding
 case is written but unrun. Solo, combined, and negative cases are written but

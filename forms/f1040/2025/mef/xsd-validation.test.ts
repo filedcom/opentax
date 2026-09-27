@@ -1656,6 +1656,59 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: direct trust disabled-access code ZZ files Form 3800 without Form 8826",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 1_000 },
+      schedule3: { line6a_total: 500, line7_total: 500 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Access trust",
+          entity_type: "trust",
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 Trust K-1",
+          box13_code_zz_disabled_access_credit: 500,
+          box13_code_zz_disabled_access_statement_reference:
+            "2025 access statement",
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      f3800: {
+        f8826_credit_entries: [{
+          source_type: "trust",
+          source_ein: "123456789",
+          source_document_reference: "2025 Trust K-1",
+          source_statement_reference: "2025 access statement",
+          credit_amount: 500,
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 1_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 500,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 500,
+      },
+    } satisfies MefFormsPending & { k1_trust: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertEquals(xml.includes("<IRS8826 "), false);
+  await validateXsd(xml, "direct trust disabled-access K-1 code ZZ");
+});
+
+Deno.test({
+  name:
     "XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826",
   sanitizeOps: false,
   sanitizeResources: false,

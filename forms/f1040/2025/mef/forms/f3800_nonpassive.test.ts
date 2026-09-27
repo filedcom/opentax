@@ -1,6 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../nodes/inputs/f3800/calculation.ts";
+import {
+  calculateForm8826,
+  type F8826Input,
+} from "../../../nodes/inputs/f8826/index.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 import {
   buildForm3800NonpassiveParts,
@@ -15,6 +19,30 @@ function buildFiledNonpassive(
     passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
     passiveApplied: { standard: 0, specified: 0 },
   }));
+}
+
+function disabledAccessFromForm(
+  source: F8826Input,
+  appliedCredit: number,
+  documentId?: string,
+  appliedCreditsBySource?: readonly number[],
+): NonNullable<Form3800NonpassiveXmlInput["disabledAccess"]> {
+  const lines = calculateForm8826(source);
+  return {
+    credit: lines.line8,
+    documentId,
+    appliedCredit,
+    sources: [
+      ...(lines.selfCreditAfterCap > 0
+        ? [{ credit: lines.selfCreditAfterCap }]
+        : []),
+      ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
+        const credit = lines.passThroughCreditsAfterCap[index] ?? 0;
+        return credit > 0 ? [{ credit, ein: entry.entity_ein }] : [];
+      }),
+    ],
+    appliedCreditsBySource,
+  };
 }
 
 const ordinary = {
@@ -33,16 +61,16 @@ const specified = {
   transfer_election_statement_file_name: "Transfer Election Statement.pdf",
 };
 
-const disabledAccess = {
-  source: {
+const disabledAccess = disabledAccessFromForm(
+  {
     eligible_expenditures: 20_000,
     prior_year_gross_receipts: 900_000,
     prior_year_full_time_employee_count: 40,
     subject_to_passive_activity_limit: false,
   },
-  documentId: "IRS8826_1",
-  appliedCredit: 5_000,
-};
+  5_000,
+  "IRS8826_1",
+);
 
 const tax = {
   filingStatus: FilingStatus.Single as const,
@@ -60,7 +88,7 @@ Deno.test("Form 3800 nonpassive source builder exposes structured document parts
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
     passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
     passiveApplied: { standard: 0, specified: 0 },
-    form8826: disabledAccess,
+    disabledAccess: disabledAccess,
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -155,7 +183,7 @@ Deno.test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to 
 Deno.test("Form 3800 XML: Form 8826 line 1e alone reconciles with Part II", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
-    form8826: disabledAccess,
+    disabledAccess: disabledAccess,
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -368,20 +396,17 @@ Deno.test("Form 3800 XML: Form 8936 commercial vehicle credit uses line 1aa", ()
 Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8826 document", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
-    form8826: {
-      source: {
-        eligible_expenditures: 0,
+    disabledAccess: disabledAccessFromForm({
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [{
+        entity_type: "partnership",
+        entity_ein: "123456789",
+        source_document_reference: "2025 disabled-access K-1",
+        credit_amount: 1_250,
         subject_to_passive_activity_limit: false,
-        pass_through_credits: [{
-          entity_type: "partnership",
-          entity_ein: "123456789",
-          source_document_reference: "2025 disabled-access K-1",
-          credit_amount: 1_250,
-          subject_to_passive_activity_limit: false,
-        }],
-      },
-      appliedCredit: 1_250,
-    },
+      }],
+    }, 1_250),
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -396,6 +421,37 @@ Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8
     xml,
     "<CurrentYearCreditAllowedAmt>1250</CurrentYearCreditAllowedAmt>",
   );
+});
+
+Deno.test("Form 3800 XML: direct estate and trust disabled-access sources share one line 1e row", () => {
+  const xml = buildFiledNonpassive({
+    tax: {
+      ...tax,
+      regularTax: 22_500,
+      standardCredit: 3_000,
+      specifiedCredit: 0,
+    },
+    disabledAccess: {
+      credit: 3_000,
+      sources: [
+        { ein: "123456789", credit: 1_000 },
+        { ein: "987654321", credit: 2_000 },
+      ],
+      appliedCredit: 2_500,
+      appliedCreditsBySource: [1_000, 1_500],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertEquals([...xml.matchAll(/<Form8826CYCreditsGrp/g)].length, 1);
+  assertEquals([...xml.matchAll(/<Frm8826CYAggrgtAmtGrp/g)].length, 2);
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
 });
 
 Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and applied credit", () => {
@@ -419,12 +475,12 @@ Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and
       standardCredit: 5_000,
       specifiedCredit: 0,
     },
-    form8826: {
+    disabledAccess: disabledAccessFromForm(
       source,
-      documentId: "IRS8826_1",
-      appliedCredit: 2_000,
-      appliedCreditsBySource: [1_000, 1_000],
-    },
+      2_000,
+      "IRS8826_1",
+      [1_000, 1_000],
+    ),
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -460,8 +516,8 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
       standardCredit: 5_000,
       specifiedCredit: 0,
     },
-    form8826: {
-      source: {
+    disabledAccess: disabledAccessFromForm(
+      {
         eligible_expenditures: 0,
         subject_to_passive_activity_limit: false,
         pass_through_credits: [{
@@ -478,9 +534,10 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
           subject_to_passive_activity_limit: false,
         }],
       },
-      appliedCredit: 3_000,
-      appliedCreditsBySource: [1_000, 2_000],
-    },
+      3_000,
+      undefined,
+      [1_000, 2_000],
+    ),
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -507,7 +564,10 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
     () =>
       buildFiledNonpassive({
         ...base,
-        form8826: { ...base.form8826, appliedCreditsBySource: undefined },
+        disabledAccess: {
+          ...base.disabledAccess,
+          appliedCreditsBySource: undefined,
+        },
       }),
     Error,
     "applied credit for each Form 8826 Part V source",
@@ -516,7 +576,10 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
     () =>
       buildFiledNonpassive({
         ...base,
-        form8826: { ...base.form8826, appliedCreditsBySource: [3_000, 0] },
+        disabledAccess: {
+          ...base.disabledAccess,
+          appliedCreditsBySource: [3_000, 0],
+        },
       }),
     Error,
     "invalid applied credit",
@@ -525,7 +588,10 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
     () =>
       buildFiledNonpassive({
         ...base,
-        form8826: { ...base.form8826, appliedCreditsBySource: [1_000, 1_000] },
+        disabledAccess: {
+          ...base.disabledAccess,
+          appliedCreditsBySource: [1_000, 1_000],
+        },
       }),
     Error,
     "do not reconcile",
@@ -541,8 +607,8 @@ Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after sou
       standardCredit: 4.47,
       specifiedCredit: 0,
     },
-    form8826: {
-      source: {
+    disabledAccess: disabledAccessFromForm(
+      {
         eligible_expenditures: 0,
         subject_to_passive_activity_limit: false,
         pass_through_credits: [
@@ -569,9 +635,10 @@ Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after sou
           },
         ],
       },
-      appliedCredit: 2,
-      appliedCreditsBySource: [0.49, 1.49, 0.02],
-    },
+      2,
+      undefined,
+      [0.49, 1.49, 0.02],
+    ),
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -624,7 +691,7 @@ Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-thro
       buildFiledNonpassive({
         ...base,
         tax: { ...base.tax, standardCredit: 5_000 },
-        form8826: { ...disabledAccess, documentId: undefined },
+        disabledAccess: { ...disabledAccess, documentId: undefined },
       }),
     Error,
     "source document",
@@ -633,8 +700,8 @@ Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-thro
     () =>
       buildFiledNonpassive({
         ...base,
-        form8826: {
-          source: {
+        disabledAccess: disabledAccessFromForm(
+          {
             eligible_expenditures: 0,
             subject_to_passive_activity_limit: false,
             pass_through_credits: [{
@@ -645,9 +712,9 @@ Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-thro
               subject_to_passive_activity_limit: false,
             }],
           },
-          documentId: "IRS8826_1",
-          appliedCredit: 1_250,
-        },
+          1_250,
+          "IRS8826_1",
+        ),
       }),
     Error,
     "source document",
@@ -657,7 +724,7 @@ Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-thro
 Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limit", () => {
   const xml = buildFiledNonpassive({
     tax: { ...tax, standardCredit: 23_000 },
-    form8826: disabledAccess,
+    disabledAccess: disabledAccess,
     facilities: [ordinary, specified],
     form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
     appliedCreditsByFacility: [15_000, 15_000],
@@ -674,7 +741,7 @@ Deno.test("Form 3800 XML: Form 8826 and Form 8835 share the standard-credit limi
   assertThrows(() =>
     buildFiledNonpassive({
       tax: { ...tax, standardCredit: 23_000 },
-      form8826: disabledAccess,
+      disabledAccess: disabledAccess,
       facilities: [ordinary, specified],
       form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
       appliedCreditsByFacility: [18_000, 15_000],
@@ -715,10 +782,10 @@ Deno.test("Form 3800 XML: Form 8820 and Form 8835 share a limited standard-credi
   );
 });
 
-Deno.test("Form 3800 XML: Form 8826 rejects passive, unmatched, and over-applied credit", () => {
+Deno.test("Form 3800 XML: disabled-access source totals and applied credit reconcile", () => {
   const base = {
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
-    form8826: disabledAccess,
+    disabledAccess: disabledAccess,
     facilities: [],
     form8835DocumentIds: [],
     appliedCreditsByFacility: [],
@@ -727,13 +794,7 @@ Deno.test("Form 3800 XML: Form 8826 rejects passive, unmatched, and over-applied
   assertThrows(() =>
     buildFiledNonpassive({
       ...base,
-      form8826: {
-        ...disabledAccess,
-        source: {
-          ...disabledAccess.source,
-          subject_to_passive_activity_limit: true,
-        },
-      },
+      disabledAccess: { ...disabledAccess, sources: [{ credit: 4_999 }] },
     })
   );
   assertThrows(() =>
@@ -745,7 +806,7 @@ Deno.test("Form 3800 XML: Form 8826 rejects passive, unmatched, and over-applied
   assertThrows(() =>
     buildFiledNonpassive({
       ...base,
-      form8826: { ...disabledAccess, appliedCredit: 5_001 },
+      disabledAccess: { ...disabledAccess, appliedCredit: 5_001 },
     })
   );
 });
@@ -763,7 +824,7 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
   const documents = [
     buildFiledNonpassive({
       tax: { ...tax, standardCredit: 23_000 },
-      form8826: disabledAccess,
+      disabledAccess: disabledAccess,
       facilities: [ordinary, specified],
       form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
       appliedCreditsByFacility: [15_000, 15_000],
@@ -773,20 +834,17 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
     }),
     buildFiledNonpassive({
       tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
-      form8826: {
-        source: {
-          eligible_expenditures: 0,
+      disabledAccess: disabledAccessFromForm({
+        eligible_expenditures: 0,
+        subject_to_passive_activity_limit: false,
+        pass_through_credits: [{
+          entity_type: "partnership",
+          entity_ein: "123456789",
+          source_document_reference: "2025 disabled-access K-1",
+          credit_amount: 1_250,
           subject_to_passive_activity_limit: false,
-          pass_through_credits: [{
-            entity_type: "partnership",
-            entity_ein: "123456789",
-            source_document_reference: "2025 disabled-access K-1",
-            credit_amount: 1_250,
-            subject_to_passive_activity_limit: false,
-          }],
-        },
-        appliedCredit: 1_250,
-      },
+        }],
+      }, 1_250),
       facilities: [],
       form8835DocumentIds: [],
       appliedCreditsByFacility: [],
@@ -841,8 +899,8 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
         standardCredit: 5_000,
         specifiedCredit: 0,
       },
-      form8826: {
-        source: {
+      disabledAccess: disabledAccessFromForm(
+        {
           eligible_expenditures: 0,
           subject_to_passive_activity_limit: false,
           pass_through_credits: [{
@@ -859,9 +917,10 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
             subject_to_passive_activity_limit: false,
           }],
         },
-        appliedCredit: 3_000,
-        appliedCreditsBySource: [1_000, 2_000],
-      },
+        3_000,
+        undefined,
+        [1_000, 2_000],
+      ),
       facilities: [],
       form8835DocumentIds: [],
       appliedCreditsByFacility: [],

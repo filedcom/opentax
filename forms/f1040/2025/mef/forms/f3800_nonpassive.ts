@@ -6,12 +6,6 @@ import {
   type Form3800PassiveActivityLines,
   type Form8835CreditEntry,
 } from "../../../nodes/inputs/f3800/calculation.ts";
-import {
-  calculateForm8826,
-  type F8826Input,
-  inputSchema as form8826InputSchema,
-  isEligible as isEligibleForForm8826,
-} from "../../../nodes/inputs/f8826/index.ts";
 import type { Form3800DocumentParts } from "./f3800_document.ts";
 import type { Form3800PassiveXmlRow } from "./f3800_passive_rows.ts";
 import {
@@ -99,12 +93,13 @@ export type Form3800NonpassiveXmlInput = {
     /** Self-earned source first, then positive pass-through sources. */
     readonly appliedCreditsBySource?: readonly number[];
   };
-  readonly form8826?: {
-    readonly source: F8826Input;
-    /** Required when the taxpayer has a self-earned Form 8826 credit. */
+  readonly disabledAccess?: {
+    readonly credit: number;
+    /** Present only when the taxpayer has a self-earned Form 8826 credit. */
     readonly documentId?: string;
     readonly appliedCredit: number;
     /** Self-earned source first, then positive K-1 sources in input order. */
+    readonly sources: readonly Form8826PartVSource[];
     readonly appliedCreditsBySource?: readonly number[];
   };
   readonly form8820?: {
@@ -222,16 +217,14 @@ export function buildForm3800NonpassiveParts(
 ): Form3800DocumentParts {
   const credits = classifyForm8835Credits(input.facilities);
   if (
-    !input.form8826 && !input.form8820 && !input.form5884 && !input.form8936 &&
+    !input.disabledAccess && !input.form8820 && !input.form5884 &&
+    !input.form8936 &&
     !input.form8936Commercial &&
     input.facilities.length === 0
   ) {
     throw new Error("Form 3800 needs a source credit document");
   }
-  const form8826Lines = input.form8826
-    ? calculateForm8826(form8826InputSchema.parse(input.form8826.source))
-    : undefined;
-  const form8826Credit = form8826Lines?.line8 ?? 0;
+  const form8826Credit = input.disabledAccess?.credit ?? 0;
   const form8820Credit = input.form8820?.credit ?? 0;
   const form5884Credit = input.form5884?.credit ?? 0;
   const form8936Credit = input.form8936?.credit ?? 0;
@@ -301,31 +294,33 @@ export function buildForm3800NonpassiveParts(
       );
     }
   }
-  if (input.form8826) {
-    const source = input.form8826.source;
-    const selfEarned = calculateForm8826(source).line6 > 0;
-    if (
-      (selfEarned && source.subject_to_passive_activity_limit) ||
-      (source.pass_through_credits ?? []).some((entry) =>
-        entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
-      )
-    ) {
-      throw new Error("Form 8826 passive credit needs Form 8582-CR");
-    }
-    if (source.eligible_expenditures > 0 && !isEligibleForForm8826(source)) {
-      throw new Error(
-        "Form 3800 has an ineligible self-earned Form 8826 credit",
-      );
-    }
+  if (input.disabledAccess) {
+    const source = input.disabledAccess;
+    const selfEarned = source.sources.some((entry) => !entry.ein);
     if (
       form8826Credit <= 0 ||
-      (selfEarned && !input.form8826.documentId) ||
-      (!selfEarned && input.form8826.documentId)
+      source.sources.length === 0 || source.sources.length > 999 ||
+      source.sources.filter((entry) => !entry.ein).length > 1 ||
+      source.sources.some((entry) =>
+        cents(entry.credit, "Form 8826 source credit") <= 0 ||
+        (entry.ein !== undefined && !/^\d{9}$/.test(entry.ein))
+      ) ||
+      cents(source.credit, "Form 8826 credit") !==
+        source.sources.reduce(
+          (sum, entry) => sum + cents(entry.credit, "Form 8826 source credit"),
+          0,
+        ) ||
+      (selfEarned && !source.documentId) ||
+      (!selfEarned && source.documentId)
     ) {
       throw new Error("Form 3800 needs an eligible Form 8826 source document");
     }
-    const applied = input.form8826.appliedCredit;
-    if (!Number.isFinite(applied) || applied < 0 || applied > form8826Credit) {
+    const applied = source.appliedCredit;
+    if (
+      cents(applied, "Form 8826 applied credit") < 0 ||
+      cents(applied, "Form 8826 applied credit") >
+        cents(form8826Credit, "Form 8826 credit")
+    ) {
       throw new Error("Form 3800 has an invalid Form 8826 applied credit");
     }
   }
@@ -413,20 +408,7 @@ export function buildForm3800NonpassiveParts(
   ) {
     throw new Error("Form 3800 passive tax use exceeds Part II");
   }
-  const form8826Sources: Form8826PartVSource[] = input.form8826 &&
-      form8826Lines
-    ? [
-      ...(form8826Lines.selfCreditAfterCap > 0
-        ? [{ credit: form8826Lines.selfCreditAfterCap }]
-        : []),
-      ...(input.form8826.source.pass_through_credits ?? []).flatMap(
-        (source, index) => {
-          const credit = form8826Lines.passThroughCreditsAfterCap[index] ?? 0;
-          return credit > 0 ? [{ credit, ein: source.entity_ein }] : [];
-        },
-      ),
-    ]
-    : [];
+  const form8826Sources = input.disabledAccess?.sources ?? [];
   const form8826PassThroughSources = form8826Sources.filter((source) =>
     source.ein !== undefined
   );
@@ -435,7 +417,7 @@ export function buildForm3800NonpassiveParts(
     throw new Error("Form 3800 Part V exceeds the Form 8826 item count");
   }
   if (
-    input.form8826?.appliedCreditsBySource !== undefined &&
+    input.disabledAccess?.appliedCreditsBySource !== undefined &&
     !form8826NeedsPartV
   ) {
     throw new Error(
@@ -444,14 +426,15 @@ export function buildForm3800NonpassiveParts(
   }
   if (
     form8826NeedsPartV &&
-    input.form8826?.appliedCreditsBySource?.length !== form8826Sources.length
+    input.disabledAccess?.appliedCreditsBySource?.length !==
+      form8826Sources.length
   ) {
     throw new Error(
       "Form 3800 needs an applied credit for each Form 8826 Part V source",
     );
   }
   const form8826AppliedSources = form8826NeedsPartV
-    ? input.form8826!.appliedCreditsBySource!
+    ? input.disabledAccess!.appliedCreditsBySource!
     : [];
   if (form8826NeedsPartV) {
     for (const [index, source] of form8826Sources.entries()) {
@@ -472,19 +455,20 @@ export function buildForm3800NonpassiveParts(
         (sum, amount, index) =>
           sum + cents(amount, `Form 8826 source ${index + 1} applied credit`),
         0,
-      ) !== cents(input.form8826!.appliedCredit, "Form 8826 applied credit")
+      ) !==
+        cents(input.disabledAccess!.appliedCredit, "Form 8826 applied credit")
     ) {
       throw new Error(
         "Form 3800 Form 8826 Part V applied credits do not reconcile",
       );
     }
   }
-  const filedForm8826PartV = input.form8826
+  const filedForm8826PartV = input.disabledAccess
     ? filedForm8826Sources(
       form8826Sources,
       form8826NeedsPartV
         ? form8826AppliedSources
-        : [input.form8826.appliedCredit],
+        : [input.disabledAccess.appliedCredit],
     )
     : [];
   const appliedAt = (index: number): number => {
@@ -512,7 +496,7 @@ export function buildForm3800NonpassiveParts(
       );
     }
   }
-  const form8826Applied = input.form8826?.appliedCredit ?? 0;
+  const form8826Applied = input.disabledAccess?.appliedCredit ?? 0;
   const standardApplied = input.facilities.reduce(
     (sum, facility, index) =>
       sum + (facility.form3800_line === "1f" ? appliedAt(index) : 0),
@@ -540,7 +524,7 @@ export function buildForm3800NonpassiveParts(
       "Form 3800 Part III applied credits do not reconcile to Part II",
     );
   }
-  const form8826DocumentId = input.form8826?.documentId;
+  const form8826DocumentId = input.disabledAccess?.documentId;
   const form8826PartVGroups = filedForm8826PartV.map((source) =>
     elements("Frm8826CYAggrgtAmtGrp", [
       source.ein ? element("PassThroughEntityEIN", source.ein) : "",
@@ -727,7 +711,7 @@ export function buildForm3800NonpassiveParts(
     form5884PassThroughSources,
   );
   const currentRows: Form3800CurrentXmlRow[] = [
-    ...(input.form8826
+    ...(input.disabledAccess
       ? [
         nontransferableCurrentRow(
           "1e",
@@ -736,8 +720,8 @@ export function buildForm3800NonpassiveParts(
           {
             sourceCount: form8826Sources.length,
             entity: largestForm3800CurrentEntity(form8826EntityCredits),
-            referenceDocumentId: input.form8826.documentId,
-            referenceDocumentName: input.form8826.documentId
+            referenceDocumentId: input.disabledAccess.documentId,
+            referenceDocumentName: input.disabledAccess.documentId
               ? "IRS8826"
               : undefined,
           },
@@ -813,7 +797,7 @@ export function buildForm3800NonpassiveParts(
     ...(specifiedGroup ? [specifiedGroup] : []),
   ];
   const currentAmounts = combineForm3800CurrentCreditAmounts([
-    ...(input.form8826
+    ...(input.disabledAccess
       ? [{
         line: "1e" as const,
         grossCredit: form8826Credit,

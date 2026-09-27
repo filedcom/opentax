@@ -119,8 +119,11 @@ allowed-credit route is written but unrun. The passive Form 8582-CR to Form
 disabled-access credits now require matching K-1 code K source evidence for
 both passive and nonpassive filing routes, with unrun source and full-return
 XSD cases. The passive route also matches distinct estate/trust K-1 and named
-code ZZ statement references, with unrun source and XSD cases. The underlying statement
-attachment, nonpassive estate/trust route, prior-year evidence, Form 8826 PDF,
+code ZZ statement references, with unrun source and XSD cases. The nonpassive
+estate/trust amount now enters Form 3800 directly, matches both K-1 and
+statement references in the filed descriptor, and omits IRS8826 for a
+pass-through-only recipient; its direct and XSD cases are unrun. The underlying statement
+attachment, mixed-source credit above the $5,000 cap, prior-year evidence, Form 8826 PDF,
 and ATS acceptance remain open.
 
 Form 8820 is also in scope outside the Scenario 4 rows. The current build pass

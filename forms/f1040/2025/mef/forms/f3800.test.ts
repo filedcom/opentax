@@ -973,6 +973,161 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
   );
 });
 
+Deno.test("Form 3800 files direct estate/trust disabled-access code ZZ without Form 8826", () => {
+  for (const source_type of ["estate", "trust"] as const) {
+    const taxContext = { ...tax, standardCredit: 1_250 };
+    const entry = {
+      source_type,
+      source_ein: "123456789",
+      source_document_reference: `2025 ${source_type} K-1`,
+      source_statement_reference: `${source_type} disabled-access statement`,
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    };
+    const k1 = {
+      estate_trust_name: `Access ${source_type}`,
+      entity_type: source_type,
+      estate_trust_ein: "123456789",
+      source_document_reference: entry.source_document_reference,
+      box13_code_zz_disabled_access_credit: 1_250,
+      box13_code_zz_disabled_access_statement_reference:
+        entry.source_statement_reference,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    };
+    const fields = {
+      f8826_credit_entries: [entry],
+      tax_context: taxContext,
+      allowed_credit: 1_250,
+    };
+    const context = {
+      pending: {
+        ...filedPending(taxContext, 1_250),
+        k1_trust: { k1_trusts: [k1] },
+      },
+      documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+    };
+    const xml = form3800.build(fields, context);
+    assertStringIncludes(xml, "<Form8826CYCreditsGrp>");
+    assertStringIncludes(
+      xml,
+      "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+    );
+    assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
+    assertThrows(
+      () =>
+        form3800.build(fields, {
+          ...context,
+          pending: {
+            ...context.pending,
+            k1_trust: {
+              k1_trusts: [{
+                ...k1,
+                source_document_reference: "Unclaimed K-1",
+              }],
+            },
+          },
+        }),
+      Error,
+      "does not reconcile to K-1 box 13 code ZZ statement",
+    );
+    assertThrows(
+      () =>
+        form3800.build(fields, {
+          ...context,
+          pending: {
+            ...context.pending,
+            k1_trust: {
+              k1_trusts: [{
+                ...k1,
+                box13_code_zz_disabled_access_statement_reference:
+                  "Unclaimed statement",
+              }],
+            },
+          },
+        }),
+      Error,
+      "does not reconcile to K-1 box 13 code ZZ statement",
+    );
+  }
+});
+
+Deno.test("Form 3800 combines self-earned and trust disabled-access credits on one line 1e", () => {
+  const own = { ...selfEarned, eligible_expenditures: 5_000 };
+  const taxContext = { ...tax, standardCredit: 3_375 };
+  const trust = {
+    estate_trust_name: "Access trust",
+    entity_type: "trust" as const,
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 Trust K-1",
+    box13_code_zz_disabled_access_credit: 1_000,
+    box13_code_zz_disabled_access_statement_reference: "2025 access statement",
+    disabled_access_credit_subject_to_passive_activity_limit: false,
+  };
+  const fields = {
+    f8826_credit_entries: [{
+      source_type: "self" as const,
+      credit_amount: 2_375,
+      subject_to_passive_activity_limit: false,
+    }, {
+      source_type: "trust" as const,
+      source_ein: "123456789",
+      source_document_reference: "2025 Trust K-1",
+      source_statement_reference: "2025 access statement",
+      credit_amount: 1_000,
+      subject_to_passive_activity_limit: false,
+    }],
+    tax_context: taxContext,
+    allowed_credit: 3_375,
+  };
+  const context = {
+    pending: {
+      ...filedPending(taxContext, 3_375),
+      f8826: own,
+      k1_trust: { k1_trusts: [trust] },
+    },
+    documentIdsByPendingKey: {
+      f8826: ["IRS8826_1"],
+      form6251: ["IRS6251_1"],
+    },
+  };
+  const xml = form3800.build(fields, context);
+  assertEquals([...xml.matchAll(/<Form8826CYCreditsGrp/g)].length, 1);
+  assertEquals([...xml.matchAll(/<Frm8826CYAggrgtAmtGrp/g)].length, 2);
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8826_credit_entries: [{
+          ...fields.f8826_credit_entries[0],
+        }, {
+          ...fields.f8826_credit_entries[1],
+          credit_amount: 3_000,
+        }],
+      }, {
+        ...context,
+        pending: {
+          ...context.pending,
+          k1_trust: {
+            k1_trusts: [{
+              ...trust,
+              box13_code_zz_disabled_access_credit: 3_000,
+            }],
+          },
+        },
+      }),
+    Error,
+    "exceed the $5,000 cap",
+  );
+});
+
 Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources are partly limited", () => {
   const source = {
     eligible_expenditures: 0,

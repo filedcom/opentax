@@ -41,6 +41,7 @@ import { joinForm3800DocumentParts } from "./f3800_join.ts";
 import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
+import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -176,41 +177,50 @@ function sourceForm8826(
   context: MefBuildContext,
 ) {
   if (!fields.f8826_credit_entries?.length) return undefined;
+  const actual = fields.f8826_credit_entries;
+  const formSources = actual.filter((entry) =>
+    entry.source_type === "self" || entry.source_type === "partnership" ||
+    entry.source_type === "s_corporation"
+  );
+  const directSources = actual.filter((entry) =>
+    entry.source_type === "estate" || entry.source_type === "trust"
+  );
   const raw = context.pending?.f8826;
-  if (!raw) {
+  if (formSources.length > 0 && !raw) {
     throw new Error(
       "Form 3800 disabled-access credit needs Form 8826 source facts",
     );
   }
-  const source = f8826InputSchema.parse(raw);
-  const lines = calculateForm8826(source);
-  const expected = [
-    ...(lines.selfCreditAfterCap > 0
-      ? [{
-        source_type: "self",
-        source_ein: undefined,
-        credit_amount: lines.selfCreditAfterCap,
-        subject_to_passive_activity_limit:
-          source.subject_to_passive_activity_limit,
-      }]
-      : []),
-    ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
-      const credit = lines.passThroughCreditsAfterCap[index] ?? 0;
-      return credit > 0
+  const source = raw ? f8826InputSchema.parse(raw) : undefined;
+  const lines = source ? calculateForm8826(source) : undefined;
+  const expected = source && lines
+    ? [
+      ...(lines.selfCreditAfterCap > 0
         ? [{
-          source_type: entry.entity_type,
-          source_ein: entry.entity_ein,
-          credit_amount: credit,
+          source_type: "self",
+          source_ein: undefined,
+          credit_amount: lines.selfCreditAfterCap,
           subject_to_passive_activity_limit:
-            entry.subject_to_passive_activity_limit,
+            source.subject_to_passive_activity_limit,
         }]
-        : [];
-    }),
-  ];
-  const actual = fields.f8826_credit_entries;
+        : []),
+      ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
+        const credit = lines.passThroughCreditsAfterCap[index] ?? 0;
+        return credit > 0
+          ? [{
+            source_type: entry.entity_type,
+            source_ein: entry.entity_ein,
+            credit_amount: credit,
+            subject_to_passive_activity_limit:
+              entry.subject_to_passive_activity_limit,
+          }]
+          : [];
+      }),
+    ]
+    : [];
   if (
-    actual.length !== expected.length ||
-    actual.some((entry, index) => {
+    formSources.length !== expected.length ||
+    formSources.some((entry, index) => {
       const sourceEntry = expected[index];
       return !sourceEntry || entry.source_type !== sourceEntry.source_type ||
         entry.source_ein !== sourceEntry.source_ein ||
@@ -223,7 +233,46 @@ function sourceForm8826(
       "Form 3800 disabled-access entries do not reconcile to Form 8826 sources",
     );
   }
-  return { source, lines };
+  if (directSources.length > 0) {
+    if (!context.pending) {
+      throw new Error("Form 3800 estate/trust credit needs its K-1 source");
+    }
+    reconcileDisabledAccessK1Credits(
+      directSources.map((entry) => {
+        if (
+          !entry.source_ein || !entry.source_document_reference ||
+          !entry.source_statement_reference
+        ) {
+          throw new Error(
+            "Form 3800 estate/trust disabled-access source is incomplete",
+          );
+        }
+        return {
+          source_type: entry.source_type,
+          entity_ein: entry.source_ein,
+          source_document_reference: entry.source_document_reference,
+          source_statement_reference: entry.source_statement_reference,
+          credit_amount: entry.credit_amount,
+          subject_to_passive_activity_limit:
+            entry.subject_to_passive_activity_limit,
+        };
+      }),
+      context.pending,
+    );
+  }
+  const credit = actual.reduce((sum, entry) => sum + entry.credit_amount, 0);
+  if (!Number.isFinite(credit) || credit > 5_000) {
+    throw new Error("Form 3800 disabled-access sources exceed the $5,000 cap");
+  }
+  return {
+    source,
+    lines,
+    credit,
+    sources: actual.map((entry) => ({
+      credit: entry.credit_amount,
+      ein: entry.source_ein,
+    })),
+  };
 }
 
 function sourceForm8820(
@@ -418,16 +467,11 @@ function form8826SourceAllocations(
     }
     return undefined;
   }
-  const amounts = [
-    ...(source.lines.selfCreditAfterCap > 0
-      ? [source.lines.selfCreditAfterCap]
-      : []),
-    ...source.lines.passThroughCreditsAfterCap.filter((credit) => credit > 0),
-  ];
+  const amounts = source.sources.map((entry) => entry.credit);
   if (amounts.length <= 1) return explicit;
   if (explicit !== undefined) return explicit;
   if (sameMoney(appliedCredit, 0)) return amounts.map(() => 0);
-  if (sameMoney(appliedCredit, source.lines.line8)) return amounts;
+  if (sameMoney(appliedCredit, source.credit)) return amounts;
   throw new Error(
     "Form 3800 needs Part V applied amounts for each Form 8826 source",
   );
@@ -588,7 +632,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const form5884 = sourceForm5884(parsed, context);
     const form8936 = sourceForm8936(parsed, context);
     const form8936Commercial = sourceForm8936Commercial(parsed, context);
-    const form8826Credit = form8826?.lines.line8 ?? 0;
+    const form8826Credit = form8826?.credit ?? 0;
     const form8820Credit = form8820?.lines.line4 ?? 0;
     const nonpassiveSources = form3800NonpassiveCreditUseRows({
       form8826Credit,
@@ -658,7 +702,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const form8826Applied = applied("nonpassive:8826");
     const form8826Ids = context.documentIdsByPendingKey.f8826 ?? [];
-    const selfEarned = (form8826?.lines.line6 ?? 0) > 0;
+    const selfEarned = (form8826?.lines?.line6 ?? 0) > 0;
     if (selfEarned ? form8826Ids.length !== 1 : form8826Ids.length !== 0) {
       throw new Error(
         "Form 3800 Form 8826 document count does not match self-earned source",
@@ -724,9 +768,10 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
             ),
           }
           : undefined,
-        form8826: form8826
+        disabledAccess: form8826
           ? {
-            source: form8826.source,
+            credit: form8826.credit,
+            sources: form8826.sources,
             documentId: form8826Ids[0],
             appliedCredit: form8826Applied,
             appliedCreditsBySource: form8826SourceAllocations(
