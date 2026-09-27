@@ -225,6 +225,13 @@ distribution, and Form 1040 line 7a in a four-page bundle that passed visual
 QA. QOF and unmodeled activity still produce diagnostics. Special-rate
 capital gains, QBI, foreign tax, state withholding, nominee,
 and basis routes currently fail with named diagnostics. MeF remains open.
+The [capital transaction contract](TRANSACTION-GRAPH.md) now pins final 2026
+Forms 1099-B/1099-DA and their instructions, the draft Form 8949 field map,
+and a marked 2025 Form 8949 instruction comparator. A dedicated 2026 1099-B
+source node fixes the shared node's box-12/QOF mislabel and computes ordinary
+short/long trades with basis, selling-expense, and wash-sale adjustments. It
+is tested but remains outside the public 2026 registry until the Form 8949
+and expanded Schedule D print routes are present.
 Progress update: 1099-INT and Schedule B Part III answers are now registered
 TY2026 inputs. A public graph test carries taxable interest, box 2 penalty,
 and withholding to Schedule B, Schedule 1, Form 1040, and the combined PDF.

@@ -34,8 +34,11 @@ record per disposition and reconcile the two printed layers to it.
 ## Implementation order
 
 1. Define dedicated TY2026 1099-B and 1099-DA input schemas with the actual
-   2026 box meanings. Reject unsupported ordinary, QOF, collectibles,
-   aggregate, foreign, or state branches by name until their routes exist.
+   2026 box meanings. The new `f1099b_2026` node now handles individual
+   short/long trades, reported versus taxpayer basis, codes B/E/W, and federal
+   withholding in isolation; it is not yet registered in the 2026 graph.
+   Build the analogous 1099-DA source. Reject unsupported ordinary, QOF,
+   collectibles, aggregate, foreign, or state branches by name until their routes exist.
    Keep reported basis separate from taxpayer tax basis and require term and
    acquisition evidence before calculating a gain.
 2. Route supported individual trades through one Form 8949 transaction shape.
