@@ -23,6 +23,10 @@ The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared
 filing path is TY2025-only and needs a 2026 form/output route.
+The [Form 8936 contract](../../../docs/ty2026/FORM8936-GRAPH.md) maps the
+2025 acquisition cutoff and eligible 2026 service date, dealer transfers,
+new/used/commercial credits, 96 PDF fields, and downstream Schedule 2/3
+and Form 3800 routes. The shared node rejects 2026 service dates.
 The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
 [business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
 map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.

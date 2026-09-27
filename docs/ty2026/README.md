@@ -60,6 +60,9 @@ for the implementation contract.
 - [`FORM2555-GRAPH.md`](FORM2555-GRAPH.md) and `pdf-fields-f2555.csv`:
   2026 foreign earned income and housing exclusions/deduction, Notice
   2026-25 limits, 160 PDF widgets, and Schedule 1/SE/1116/MeF handoffs.
+- [`FORM8936-GRAPH.md`](FORM8936-GRAPH.md), `pdf-fields-f8936.csv`, and
+  `pdf-fields-f8936sa.csv`: clean vehicle acquisition and 2026 service
+  eligibility, dealer transfers, personal/business routes, and PDF fields.
 - [`FORM2441-GRAPH.md`](FORM2441-GRAPH.md): dependent-care benefits before
   AGI, 2026 credit phaseout and limit, provider detail, PDF, and MeF order.
 - [`FORM8862-8863-EIC-GRAPH.md`](FORM8862-8863-EIC-GRAPH.md),

@@ -34,6 +34,10 @@ exclusion, Notice 2026-25 housing limits, 160 PDF fields and distinct
 Schedule 1 line 8d/24j destinations. The shared structured filing path
 rejects TY2026 and the aggregate housing path conflicts with the 2026
 Schedule 1 node.
+The [Form 8936 contract](FORM8936-GRAPH.md) pins the 2025 acquisition
+cutoff with 2026 placed-in-service eligibility, all four credit routes,
+dealer-transfer repayment, 96 PDF fields, and Form 3800/Schedule 2/3
+handoffs. The shared node currently rejects 2026 service dates.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

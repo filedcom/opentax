@@ -24,6 +24,7 @@ NODE_PROGRESS = {
     "form8962": "2026 percentage and repayment paths updated; verify final instructions",
     "form_1116": "2026 line 18 adds Schedule 1-A line 43 and line 20 needs Schedule 2 line 1z; shared node omits full category/carryover and new PDF/MeF route; see FORM1116-GRAPH.md",
     "form2555": "2026 form/instructions and Notice 2026-25 pinned; structured filing rejects 2026 and housing route uses legacy Schedule 1 key; see FORM2555-GRAPH.md",
+    "f8936": "2026 form/combined instructions pinned; shared node rejects eligible 2026 service and lacks commercial/dealer/business routes; see FORM8936-GRAPH.md",
     "form2441": "2026 benefit and credit rules updated; verify final instructions",
     "form982": "2026 qualified-residence debt date gate updated; audit remaining rules",
     "form8839": "2025/2026 refundable split, indexed caps, and origin-year carryforward updated; add full credit-limit worksheet",

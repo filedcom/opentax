@@ -38,7 +38,7 @@ schedule_r,forms/f1040/nodes/inputs/schedule_r/index.ts,inputs,2,no,no,no,n/a,P1
 f2210,forms/f1040/nodes/inputs/f2210/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f3903,forms/f1040/nodes/inputs/f3903/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f5695,forms/f1040/nodes/inputs/f5695/index.ts,inputs,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-f8936,forms/f1040/nodes/inputs/f8936/index.ts,inputs,4,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
+f8936,forms/f1040/nodes/inputs/f8936/index.ts,inputs,4,no,yes,yes,yes,P0,audit-required,2026 form/combined instructions pinned; shared node rejects eligible 2026 service and lacks commercial/dealer/business routes; see FORM8936-GRAPH.md
 f8862,forms/f1040/nodes/inputs/f8862/index.ts,inputs,2,no,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8958,forms/f1040/nodes/inputs/f8958/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8994,forms/f1040/nodes/inputs/f8994/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
