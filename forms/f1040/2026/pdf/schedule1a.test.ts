@@ -81,6 +81,7 @@ Deno.test("TY2026 Schedule 1-A PDF continues non-W-2 overtime beyond five rows",
       },
       { line11b_agi: 72_000, line13a_schedule1a: 3_000 },
       filer,
+      { nonW2OvertimeIncomeReconciled: true },
     ),
   );
   assertEquals(pdf.getPageCount(), 4);
@@ -128,6 +129,26 @@ Deno.test("TY2026 Schedule 1-A PDF prints Form 2555 MAGI addbacks", async () => 
 });
 
 Deno.test("TY2026 Schedule 1-A PDF rejects unsupported source detail", async () => {
+  await assertRejects(
+    () =>
+      buildSchedule1APdfBytes2026(
+        {
+          ...base,
+          non_w2_qualified_overtime_rows_2026: [{
+            recipient: "taxpayer",
+            business_name: "Consulting",
+            payer_tin: "98-7654321",
+            amount: 500,
+          }],
+          line27_qualified_overtime: 500,
+          line44_total_additional_deductions: 500,
+        },
+        { line11b_agi: 72_000, line13a_schedule1a: 500 },
+        filer,
+      ),
+    Error,
+    "needs matching Form 1099 and business income",
+  );
   await assertRejects(
     () =>
       buildSchedule1APdfBytes2026(

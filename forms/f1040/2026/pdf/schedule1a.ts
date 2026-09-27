@@ -386,6 +386,7 @@ export async function buildSchedule1APdfBytes2026(
   rawFields: Record<string, unknown>,
   f1040: Record<string, unknown>,
   filer: { name: string; ssn: string },
+  sourceChecks: { nonW2OvertimeIncomeReconciled?: boolean } = {},
 ): Promise<Uint8Array> {
   const fields = printSchema.parse(rawFields);
   if (!filer.name || !filer.ssn) {
@@ -466,6 +467,14 @@ export async function buildSchedule1APdfBytes2026(
         : fields.filing_status === FilingStatus.MFJ &&
           fields.spouse_has_valid_ssn
     );
+  if (
+    fields.line27_qualified_overtime > 0 && nonW2Overtime.length > 0 &&
+    sourceChecks.nonW2OvertimeIncomeReconciled !== true
+  ) {
+    throw new Error(
+      "TY2026 Schedule 1-A PDF needs matching Form 1099 and business income for non-W-2 overtime",
+    );
+  }
   const nonW2OvertimeTotal = nonW2Overtime.reduce(
     (sum, row) => sum + row.amount,
     0,

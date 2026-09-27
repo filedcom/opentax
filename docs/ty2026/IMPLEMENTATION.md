@@ -220,12 +220,14 @@ with Form 1040 line 1c and Schedule 2 line 16a. The March 2026 draft
 Form 4137 still names Schedule 2 line 5 beside its line 13; the draft
 Schedule 2 itself places Form 4137 tax on line 16a. Keep that source
 inconsistency visible until the IRS publishes aligned final forms.
-The pinned draft Schedule 1-A now prints employee tips, W-2 and non-W-2
-overtime, and senior deductions. It reconciles the final deduction with Form
+The pinned draft Schedule 1-A now prints employee tips, W-2 overtime,
+vehicle interest, and senior deductions. It reconciles the final deduction with Form
 1040 line 13a and appends row statements beyond five employers or payers.
 Positive W-2 overtime carries employer name and EIN; non-W-2 overtime has a
-2026 row input with recipient, business, payer TIN, and amount. The
-calculation rejects an amount-only claim for the same recipient alongside
+2026 row input with recipient, business, payer TIN, and amount. Its PDF
+renderer is mapped, but the public PDF boundary rejects a positive non-W-2
+claim until matching Form 1099 and Schedule C/E/F income can be reconciled.
+The calculation rejects an amount-only claim for the same recipient alongside
 rows. Earlier amount-only overtime inputs remain calculable but cannot print
 a positive overtime deduction. Vehicle-interest input now records original
 use and US assembly answers. Positive claims print VINs, interest allocation,

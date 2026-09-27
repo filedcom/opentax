@@ -165,7 +165,7 @@ Deno.test("TY2026 PDF boundary includes Schedule 1-A W-2 overtime", async () => 
   assertEquals(pdf.getPageCount(), 5);
 });
 
-Deno.test("TY2026 PDF boundary includes Schedule 1-A non-W-2 overtime", async () => {
+Deno.test("TY2026 PDF boundary blocks non-W-2 overtime without matching income", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,
     w2: [{ box1_wages: 50_000, box2_fed_withheld: 5_000 }],
@@ -181,8 +181,11 @@ Deno.test("TY2026 PDF boundary includes Schedule 1-A non-W-2 overtime", async ()
   }, { taxYear: 2026, formType: "f1040" });
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1a.line27_qualified_overtime, 1_000);
-  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
-  assertEquals(pdf.getPageCount(), 5);
+  await assertRejects(
+    () => buildPdfBytes2026(result.pending),
+    Error,
+    "needs matching Form 1099 and business income",
+  );
 });
 
 Deno.test("TY2026 PDF boundary includes Schedule 1-A vehicle interest", async () => {
