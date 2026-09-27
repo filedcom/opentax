@@ -172,6 +172,79 @@ Deno.test("TY2026 1099-G RTAA and taxable grants get a typed line 8z statement",
   assertEquals(singlePdf.getPageCount(), 4);
 });
 
+Deno.test("TY2026 registered 1099-INT reaches Schedule B, Schedule 1, 1040, and PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099int: [{
+      payer_name: "Test Bank",
+      box1: 2_000,
+      box2: 100,
+      box4: 50,
+    }],
+    schedule_b: { foreign_account: false, foreign_trust: false },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b.print_line4_total, 2_000);
+  assertEquals(result.pending.schedule1.line18_early_withdrawal, 100);
+  assertEquals(result.pending.f1040.line2b_taxable_interest, 2_000);
+  assertEquals(result.pending.f1040.line10_adjustments, 100);
+  assertEquals(result.pending.f1040.line11b_agi, 1_900);
+  assertEquals(result.pending.f1040.line25b_withheld_1099, 50);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule1: result.pending.schedule1,
+      scheduleB: result.pending.schedule_b,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 5);
+});
+
+Deno.test("TY2026 1099-INT rejects unfiled or unelected routes", () => {
+  for (
+    const [fields, message] of [
+      [{ box6: 20 }, /foreign tax/],
+      [{ investment_property_for_form4952: true }, /investment interest/],
+      [{ box3: 100, box12: 20 }, /amortization election/],
+    ] as const
+  ) {
+    const result = execute(buildExecutionPlan(registry), registry, {
+      general: filer,
+      f1099int: [{ payer_name: "Test Bank", box1: 100, ...fields }],
+    }, context);
+    assertEquals(result.diagnostics[0].nodeType, "f1099int");
+    assertMatch(result.diagnostics[0].message, message);
+    assertEquals(result.pending.schedule_b, undefined);
+  }
+});
+
+Deno.test("TY2026 1099-INT private-activity bond interest reaches Form 6251 and PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 100_000, box2_fed_withheld: 10_000 }],
+    f1099int: [{
+      payer_name: "Municipal Bond Fund",
+      box8: 300_000,
+      box9: 300_000,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line2a_tax_exempt, 300_000);
+  assertEquals(result.pending.form6251.private_activity_bond_interest, 300_000);
+  const amt = Number(result.pending.form6251.line11_amt);
+  assertEquals(amt > 0, true);
+  assertEquals(result.pending.schedule2.line2_amt, amt);
+  assertEquals(result.pending.f1040.line17_additional_taxes, amt);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule2: result.pending.schedule2,
+      form6251: result.pending.form6251,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 6);
+});
+
 Deno.test("TY2026 registry executes a wages-only return", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

@@ -154,12 +154,32 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
     form4952,
   ]);
 
-  compute(_ctx: NodeContext, input: INTInput): NodeResult {
+  compute(ctx: NodeContext, input: INTInput): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099ints: int1099s } = parsed;
 
     for (const item of int1099s) {
       validateIntItem(item);
+      if (ctx.taxYear === 2026) {
+        if ((item.box6 ?? 0) > 0) {
+          throw new Error(
+            "TY2026 1099-INT foreign tax has no complete filed route",
+          );
+        }
+        if (item.investment_property_for_form4952 === true) {
+          throw new Error(
+            "TY2026 1099-INT investment interest has no complete filed route",
+          );
+        }
+        if (
+          (item.box12 ?? 0) > 0 &&
+          item.elect_bond_premium_amortization !== true
+        ) {
+          throw new Error(
+            "TY2026 1099-INT Treasury bond premium needs amortization election",
+          );
+        }
+      }
     }
 
     const totalBox2 = int1099s.reduce((sum, item) => sum + (item.box2 ?? 0), 0);

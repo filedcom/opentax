@@ -189,8 +189,16 @@ with 1099-INT and W-2 inputs executes through Schedule 2. The
 [Schedule B PDF field map](PDF-SCHEDULEB-MAP.md) inventories 72 draft widgets.
 The PDF filler now renders the filed page plus payer, seller-financed, and
 country continuations. The core PDF builder appends it and reconciles lines
-4/6 to 1040 lines 2b/3b. MeF, direct disclosure input, and exceptional
-interest routes remain to implement.
+4/6 to 1040 lines 2b/3b. MeF and exceptional interest routes remain to
+implement.
+Progress update: 1099-INT and Schedule B Part III answers are now registered
+TY2026 inputs. A public graph test carries taxable interest, box 2 penalty,
+and withholding to Schedule B, Schedule 1, Form 1040, and the combined PDF.
+Foreign tax and affirmed investment-property cases fail before routing until
+their Form 1116/4952 attachment paths exist. Treasury bond premium requires an
+amortization election for TY2026. A private-activity bond test reaches
+Form 6251, Schedule 2, Form 1040, and a six-page PDF. MeF and the remaining
+Schedule B disclosures still need end-to-end checks.
 
 ## 0. Freeze source versions and establish the baseline
 

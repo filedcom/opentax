@@ -9,6 +9,11 @@ import {
   f1099g,
   itemSchema as f1099gItemSchema,
 } from "../nodes/inputs/f1099g/index.ts";
+import {
+  f1099int,
+  itemSchema as f1099intItemSchema,
+} from "../nodes/inputs/f1099int/index.ts";
+import { schedule_b_2026 } from "./nodes/schedule_b.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import {
   claimInputSchema as schedule1AClaimInputSchema,
@@ -27,6 +32,17 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: w2, itemSchema: w2ItemSchema, isArray: true },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   { node: f1099g, itemSchema: f1099gItemSchema2026, isArray: true },
+  { node: f1099int, itemSchema: f1099intItemSchema.strict(), isArray: true },
+  {
+    node: schedule_b_2026,
+    inputSchema: schedule_b_2026.inputSchema.pick({
+      foreign_account: true,
+      fbar_required: true,
+      foreign_countries: true,
+      foreign_trust: true,
+    }).strict(),
+    isArray: false,
+  },
   { node: form4137, inputSchema: form4137.inputSchema, isArray: false },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
 ];

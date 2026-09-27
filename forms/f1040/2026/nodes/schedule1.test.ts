@@ -2,18 +2,10 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { PDFDocument } from "pdf-lib";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
-import type { InputNodeEntry } from "../../../../core/types/form-definition.ts";
-import { buildStartNode } from "../../start.ts";
-import {
-  f1099int,
-  itemSchema as f1099intItemSchema,
-} from "../../nodes/inputs/f1099int/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
-import { inputNodes } from "../inputs.ts";
 import { registry } from "../registry.ts";
 import { buildCorePdfBytes2026 } from "../pdf/core.ts";
 import { schedule1_2026 } from "./schedule1.ts";
-import { schedule_b_2026 } from "./schedule_b.ts";
 
 const context = { taxYear: 2026, formType: "f1040" };
 
@@ -50,22 +42,7 @@ Deno.test("TY2026 Schedule 1 maps box 2 penalty and adjusted student loan intere
 });
 
 Deno.test("TY2026 1099-INT box 2 reaches Schedule 1, 1040 AGI, and PDF", async () => {
-  const directInputs: readonly InputNodeEntry[] = [
-    ...inputNodes,
-    { node: f1099int, itemSchema: f1099intItemSchema, isArray: true },
-    {
-      node: schedule_b_2026,
-      inputSchema: schedule_b_2026.inputSchema.pick({
-        foreign_account: true,
-        fbar_required: true,
-        foreign_countries: true,
-        foreign_trust: true,
-      }),
-      isArray: false,
-    },
-  ];
-  const graph = { ...registry, start: buildStartNode(directInputs), f1099int };
-  const result = execute(buildExecutionPlan(graph), graph, {
+  const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
       taxpayer_first_name: "Ada",

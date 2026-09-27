@@ -1,14 +1,8 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
-import type { InputNodeEntry } from "../../../../core/types/form-definition.ts";
-import { buildStartNode } from "../../start.ts";
-import {
-  f1099int,
-  itemSchema as f1099intItemSchema,
-} from "../../nodes/inputs/f1099int/index.ts";
+import { f1099int } from "../../nodes/inputs/f1099int/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
-import { inputNodes } from "../inputs.ts";
 import { registry } from "../registry.ts";
 import { schedule_b_2026 } from "./schedule_b.ts";
 
@@ -130,22 +124,7 @@ Deno.test("TY2026 Schedule B records foreign-account and FBAR answers", () => {
 });
 
 Deno.test("TY2026 interest reaches AGI, NIIT, Schedule 2, and Form 1040", () => {
-  const directInputs: readonly InputNodeEntry[] = [
-    ...inputNodes,
-    { node: f1099int, itemSchema: f1099intItemSchema, isArray: true },
-    {
-      node: schedule_b_2026,
-      inputSchema: schedule_b_2026.inputSchema.pick({
-        foreign_account: true,
-        fbar_required: true,
-        foreign_countries: true,
-        foreign_trust: true,
-      }),
-      isArray: false,
-    },
-  ];
-  const graph = { ...registry, start: buildStartNode(directInputs), f1099int };
-  const result = execute(buildExecutionPlan(graph), graph, {
+  const result = execute(buildExecutionPlan(registry), registry, {
     general: {
       filing_status: FilingStatus.Single,
       taxpayer_first_name: "Ada",
