@@ -1,5 +1,8 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { PassiveCreditCategory } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
+import {
+  PassiveCreditCategory,
+  PassiveCreditReportingRoute,
+} from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { form8582cr } from "./f8582cr.ts";
 
 const otherCredit = {
@@ -7,6 +10,7 @@ const otherCredit = {
   source_form: "Form 8820",
   source_document_reference: "2025 clinical credit statement",
   category: PassiveCreditCategory.Other,
+  reporting_route: PassiveCreditReportingRoute.Form3800Line3,
   current_year_credit: 1_500,
   prior_unallowed_credits: [{
     originating_tax_year: 2024,
@@ -21,6 +25,7 @@ const rentalCredit = {
   source_form: "Form 8835",
   source_document_reference: "2025 rental credit statement",
   category: PassiveCreditCategory.ActiveRental,
+  reporting_route: PassiveCreditReportingRoute.Form3800Line3,
   current_year_credit: 3_000,
   prior_unallowed_credits: [],
   publicly_traded_partnership: false,
@@ -150,5 +155,22 @@ Deno.test("Form 8582-CR: missing worksheet tax stops XML generation", () => {
       }),
     Error,
     "line 35 needs tax",
+  );
+});
+
+Deno.test("Form 8582-CR: Form 8834 credit does not export without its filing route", () => {
+  assertThrows(
+    () =>
+      form8582cr.build({
+        credit_sources: [{
+          ...otherCredit,
+          source_form: "Form 8834",
+          reporting_route: PassiveCreditReportingRoute.Form8834,
+        }],
+        regular_tax_all_income: 10_000,
+        regular_tax_without_passive: 8_000,
+      }),
+    Error,
+    "separate filing route",
   );
 });

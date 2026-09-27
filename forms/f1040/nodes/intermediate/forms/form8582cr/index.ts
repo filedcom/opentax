@@ -32,11 +32,19 @@ export enum PassiveCreditCategory {
   Other = "other",
 }
 
+export enum PassiveCreditReportingRoute {
+  Form3800Line3 = "form3800_line3",
+  Form3800Line24 = "form3800_line24",
+  Form3800Line33 = "form3800_line33",
+  Form8834 = "form8834",
+}
+
 const creditSourceSchema = z.object({
   activity_reference: z.string().trim().min(1),
   source_form: z.string().trim().min(1),
   source_document_reference: z.string().trim().min(1),
   category: z.nativeEnum(PassiveCreditCategory),
+  reporting_route: z.nativeEnum(PassiveCreditReportingRoute),
   current_year_credit: z.number().int().nonnegative(),
   prior_unallowed_credits: z.array(z.object({
     originating_tax_year: z.number().int().min(1900).max(2024),
@@ -172,6 +180,7 @@ function allocateCreditsToSources(
     source_form: source.source_form,
     source_document_reference: source.source_document_reference,
     category: source.category,
+    reporting_route: source.reporting_route,
     current_year_credit: source.current_year_credit,
     prior_unallowed_credits: source.prior_unallowed_credits,
     total_credit: totals[index],
@@ -227,6 +236,7 @@ export const inputSchema = z.object({
       source.source_form,
       source.source_document_reference,
       source.category,
+      source.reporting_route,
     ]);
     if (sourceIds.has(id)) {
       ctx.addIssue({
@@ -236,6 +246,16 @@ export const inputSchema = z.object({
       });
     }
     sourceIds.add(id);
+    if (
+      (source.reporting_route === PassiveCreditReportingRoute.Form8834) !==
+        (source.source_form === "Form 8834")
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["credit_sources", index, "reporting_route"],
+        message: "Form 8582-CR Form 8834 route must match its source form",
+      });
+    }
     if (
       source.category === PassiveCreditCategory.ActiveRental &&
       !(input.filing_status === FilingStatus.MFS &&
@@ -556,6 +576,12 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
       line37: 0,
       suspendedCredit: 0,
       sourceAllocations: [],
+      allowedByReportingRoute: {
+        [PassiveCreditReportingRoute.Form3800Line3]: 0,
+        [PassiveCreditReportingRoute.Form3800Line24]: 0,
+        [PassiveCreditReportingRoute.Form3800Line33]: 0,
+        [PassiveCreditReportingRoute.Form8834]: 0,
+      },
     };
   }
 
@@ -593,6 +619,15 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
     },
     suspendedCredit,
   );
+  const allowedByReportingRoute = {
+    [PassiveCreditReportingRoute.Form3800Line3]: 0,
+    [PassiveCreditReportingRoute.Form3800Line24]: 0,
+    [PassiveCreditReportingRoute.Form3800Line33]: 0,
+    [PassiveCreditReportingRoute.Form8834]: 0,
+  };
+  for (const source of sourceAllocations) {
+    allowedByReportingRoute[source.reporting_route] += source.allowed_credit;
+  }
   return {
     partI,
     partII,
@@ -601,6 +636,7 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
     line37,
     suspendedCredit,
     sourceAllocations,
+    allowedByReportingRoute,
   };
 }
 
@@ -624,6 +660,13 @@ class Form8582CRNode extends TaxNode<typeof inputSchema> {
 
     const lines = calculateForm8582CR(input);
     if (lines.partI.line5 === 0) return { outputs: [] };
+    if (
+      lines.allowedByReportingRoute[PassiveCreditReportingRoute.Form8834] > 0
+    ) {
+      throw new Error(
+        "Form 8582-CR allowed Form 8834 credit needs its separate filing route and tax limit",
+      );
+    }
     return {
       outputs: schedule3Output(lines.line37),
       ...(lines.suspendedCredit > 0

@@ -16,6 +16,7 @@ Form 8582-CR limits passive activity credits. The current build pass calculates 
 | Field | Type | Required | Source / Label | Description | IRS Reference | URL |
 | ----- | ---- | -------- | -------------- | ----------- | ------------- | --- |
 | credit_sources | array | yes | Activity credit sources | Each source identifies its activity, source form/document, Part I category, current-year amount, year-stamped prior unallowed credit rows, and PTP status | Form 8582-CR Worksheets 1-4 | https://www.irs.gov/instructions/i8582cr |
+| credit_sources[].reporting_route | enum(form3800_line3, form3800_line24, form3800_line33, form8834) | yes | Credit filing destination | Retains the applicable Form 3800 passive-credit line or the separate Form 8834 route; no route is inferred from the source-form name | Form 8582-CR line 37; Form 3800 lines 3, 24, 33 | https://www.irs.gov/instructions/i8582cr |
 | credit_sources[].prior_unallowed_credits[].actively_participated_origin_year | boolean | required for a prior ActiveRental worksheet-1 credit | Prior activity record | A prior rental credit enters Worksheet 1 only if active participation occurred both then and now; otherwise it must be a separate Other-category source | Form 8582-CR Worksheet 1 | https://www.irs.gov/instructions/i8582cr |
 | regular_tax_all_income | number >= 0 | yes | Regular Tax (All Income) | Regular tax computed on all income including passive | Form 8582-CR Part I Line 6 computation | https://www.irs.gov/instructions/i8582cr |
 | regular_tax_without_passive | number >= 0 | yes | Regular Tax (Ex. Passive) | Regular tax computed on income excluding net passive income | Form 8582-CR Part I Line 6 computation | https://www.irs.gov/instructions/i8582cr |
@@ -64,7 +65,7 @@ balances. Per-source allowed credit is total less suspended credit. Exact
 whole-dollar apportionment uses largest remainders and stable source order.
 
 ### Step 6 — Route Allowed Credit
-The current node still routes directly to Schedule 3 line 6a; this is an open correctness gap. The intended route is each calculated source-level allowed credit to Form 3800 (or another applicable credit form), then its separate limit and Schedule 3. The source allocations are not yet passed into that route or persisted as per-source carryforwards.
+The current node still routes Form 3800-designated credits directly to Schedule 3 line 6a; this is an open correctness gap. The pure calculation now totals allowed credit separately for Form 3800 lines 3, 24, and 33, and Form 8834. A positive Form 8834 route stops both node computation and MeF output until its separate tax limit and Schedule 3 line 6i handoff are wired. The intended general-business route is each calculated source-level allowed credit to Form 3800, then its separate limit and Schedule 3. The source allocations are not yet passed into that route or persisted as per-source carryforwards.
 
 ---
 

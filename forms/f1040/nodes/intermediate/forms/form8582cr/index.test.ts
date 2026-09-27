@@ -5,6 +5,7 @@ import {
   form8582cr,
   inputSchema,
   PassiveCreditCategory,
+  PassiveCreditReportingRoute,
 } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
@@ -21,6 +22,7 @@ function source(
     source_form: "Form 8820",
     source_document_reference: `2025 ${activity} credit statement`,
     category,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
     current_year_credit: current,
     prior_unallowed_credits: prior > 0
       ? [{
@@ -77,6 +79,26 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
     inputSchema.safeParse({
       ...parsed,
       credit_sources: [other(-1)],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(100),
+        reporting_route: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(100),
+        reporting_route: PassiveCreditReportingRoute.Form8834,
+      }],
     }).success,
     false,
   );
@@ -572,5 +594,46 @@ Deno.test("Form 8582-CR keeps carryover vintages on their activity source", () =
       credit.originating_tax_year
     ),
     [2022, 2024],
+  );
+});
+
+Deno.test("Form 8582-CR keeps allowed credits in their explicit filing routes", () => {
+  const lines = calculateForm8582CR(inputSchema.parse({
+    credit_sources: [
+      other(200, 0, "Standard credit"),
+      {
+        ...other(300, 0, "Specified credit"),
+        reporting_route: PassiveCreditReportingRoute.Form3800Line33,
+      },
+      {
+        ...other(100, 0, "Empowerment credit"),
+        reporting_route: PassiveCreditReportingRoute.Form3800Line24,
+      },
+    ],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_400,
+  }));
+  assertEquals(lines.allowedByReportingRoute, {
+    [PassiveCreditReportingRoute.Form3800Line3]: 200,
+    [PassiveCreditReportingRoute.Form3800Line24]: 100,
+    [PassiveCreditReportingRoute.Form3800Line33]: 300,
+    [PassiveCreditReportingRoute.Form8834]: 0,
+  });
+});
+
+Deno.test("Form 8582-CR does not send Form 8834 allowed credit to Schedule 3 line 6a", () => {
+  assertThrows(
+    () =>
+      compute({
+        credit_sources: [{
+          ...other(100),
+          source_form: "Form 8834",
+          reporting_route: PassiveCreditReportingRoute.Form8834,
+        }],
+        regular_tax_all_income: 10_000,
+        regular_tax_without_passive: 9_900,
+      }),
+    Error,
+    "separate filing route",
   );
 });

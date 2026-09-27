@@ -2,6 +2,7 @@ import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8582CR,
   inputSchema,
+  PassiveCreditReportingRoute,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -15,6 +16,13 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
     }
     const lines = calculateForm8582CR(inputSchema.parse(raw));
     if (lines.partI.line5 === 0) return "";
+    if (
+      lines.allowedByReportingRoute[PassiveCreditReportingRoute.Form8834] > 0
+    ) {
+      throw new Error(
+        "Form 8582-CR allowed Form 8834 credit needs its separate filing route and tax limit",
+      );
+    }
     const { rental, rehabilitation, housing, other } = lines.partI;
     return elements("IRS8582CR", [
       rental.total > 0

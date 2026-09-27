@@ -455,7 +455,12 @@ separate worksheet tax inputs; PTP credits still stop pending their per-partners
 limitation. The next unrun pass allocates the three special allowances and the
 remaining suspended credit across named sources using Worksheets 5-9. The node
 still returns only an aggregate carryforward, and allowed versus suspended
-amounts have not been split by prior-year vintage for Form 3800 Part IV.
+amounts have not been split by prior-year vintage for Form 3800 Part IV. Each
+source now explicitly identifies its reporting route as Form 3800 line 3, 24,
+or 33, or Form 8834, and the calculation totals allowed credits by route. A
+positive Form 8834 route stops node and XML output until its separate filing
+path is built; the remaining Form 3800 routes still use the incorrect direct
+Schedule 3 deposit.
 The native `IRS8582CR` MeF descriptor now serializes Parts I-IV, with direct XML
 and local XSD cases written but unrun. The existing Form 3800 calculation and
 XML builder cover nonpassive credits only. Passive Form 3800 Part I lines 2/3,

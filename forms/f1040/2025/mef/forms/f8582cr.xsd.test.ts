@@ -1,5 +1,8 @@
 import { assertEquals } from "@std/assert";
-import { PassiveCreditCategory } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
+import {
+  PassiveCreditCategory,
+  PassiveCreditReportingRoute,
+} from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { form8582cr } from "./f8582cr.ts";
 
 const XSD_PATH = new URL(
@@ -27,6 +30,7 @@ Deno.test({
       source_form: "Form 8835",
       source_document_reference: "2025 rental credit statement",
       category: PassiveCreditCategory.ActiveRental,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
       current_year_credit: 3_000,
       prior_unallowed_credits: [{
         originating_tax_year: 2024,
@@ -69,6 +73,7 @@ Deno.test({
       source_form: "Form 3468",
       source_document_reference: "2025 rehabilitation credit statement",
       category: PassiveCreditCategory.RehabilitationOrPre1990Housing,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
       current_year_credit: 2_000,
       prior_unallowed_credits: [],
       publicly_traded_partnership: false,
@@ -77,6 +82,7 @@ Deno.test({
       source_form: "Form 8586",
       source_document_reference: "2025 low-income housing credit statement",
       category: PassiveCreditCategory.LowIncomeHousing,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line33,
       current_year_credit: 2_000,
       prior_unallowed_credits: [],
       publicly_traded_partnership: false,
