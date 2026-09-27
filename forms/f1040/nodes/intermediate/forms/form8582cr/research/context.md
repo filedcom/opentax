@@ -1,7 +1,7 @@
 # Form 8582-CR — Passive Activity Credit Limitations
 
 ## Overview
-Form 8582-CR limits passive activity credits. The current node calculates a Part I and active-rental Part II slice, but still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. Source-level allocation, Parts III/IV, and native Form 8582-CR output are still open. Unallowed credits carry forward by activity and credit identity.
+Form 8582-CR limits passive activity credits. The current node calculates a Part I and active-rental Part II slice, and a native MeF descriptor serializes those lines. The node still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. Source-level allocation and Parts III/IV are still open. The current carryforward is aggregate, not yet by activity and credit identity. The native MeF cases are written but unrun.
 
 **IRS Form:** Form 8582-CR
 **Drake Screen:** CR
@@ -86,7 +86,7 @@ The current node still routes directly to Schedule 3 line 6a; this is an open co
 ```
 flowchart LR
   subgraph inputs["Upstream Inputs"]
-    A[total_passive_credits, regular_tax_all_income, regular_tax_without_passive, modified_agi, rental_real_estate_credits, filing_status, prior_unallowed_credits]
+    A[credit_sources, regular_tax_all_income, regular_tax_without_passive, modified_agi, filing_status]
   end
   subgraph node["form8582cr"]
     B[tax_attributable = all_income_tax - ex_passive_tax]
@@ -109,7 +109,7 @@ flowchart LR
 
 ## Edge Cases & Special Rules
 
-1. **No passive credits**: If total_passive_credits = 0 and prior_unallowed_credits = 0, output nothing.
+1. **No passive credits**: If `credit_sources` is empty, output nothing.
 2. **Tax attributable can be zero**: If regular_tax_all_income = regular_tax_without_passive, no credit allowed from base computation (passive income tax = 0). Special allowance may still apply.
 3. **MFS special allowance**: MFS lived apart all year uses a $12,500 maximum and $75,000 MAGI threshold; MFS who lived with a spouse are ineligible.
 4. **Real estate professional**: taxpayer status alone is not enough; activity-level material participation is required before a credit is treated as nonpassive.
