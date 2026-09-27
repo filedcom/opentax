@@ -116,6 +116,9 @@ for the implementation contract.
 - [`FORM8815-GRAPH.md`](FORM8815-GRAPH.md) and `pdf-fields-f8815.csv`:
   savings-bond education exclusion, QSS phaseout, Schedule B line 3,
   and all 23 draft PDF widgets.
+- [`FORM8915F-GRAPH.md`](FORM8915F-GRAPH.md) and `pdf-fields-f8915f.csv`:
+  2026 disaster distribution/repayment ledger, account-specific 1040 routes,
+  2025 instruction comparator, and all 102 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

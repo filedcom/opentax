@@ -29,7 +29,7 @@ FORM_SLUGS = [
     "f4797", "f4835", "f4952", "f4972", "f5329", "f5695", "f6198", "f6252",
     "f6781", "f7206", "f8396", "f8582", "f8606", "f8615", "f8814",
     "f8815", "f8824", "f8829", "f8834", "f8853", "f8859", "f8880",
-    "f8912", "f8919", "f8936", "f8936sa", "f8949", "f8959", "f8960",
+    "f8912", "f8915f", "f8919", "f8936", "f8936sa", "f8949", "f8959", "f8960",
     "f8990", "f982", "f172",
 ]
 
@@ -136,6 +136,7 @@ sources += [
     ("authorities/f1099r--2026.pdf", IRS + "/pub/irs-prior/f1099r--2026.pdf", "final-authority"),
     ("authorities/i1099r--2026.pdf", IRS + "/pub/irs-prior/i1099r--2026.pdf", "final-authority"),
     ("authorities/i8949--2025.pdf", IRS + "/pub/irs-prior/i8949--2025.pdf", "prior-year-comparator"),
+    ("authorities/i8915f--2025.pdf", IRS + "/pub/irs-prior/i8915f--2025.pdf", "prior-year-comparator"),
     ("authorities/p505--2026.pdf", IRS + "/pub/irs-prior/p505--2026.pdf", "final-authority"),
     ("authorities/rp-25-32.pdf", IRS + "/pub/irs-drop/rp-25-32.pdf", "final-authority"),
     ("authorities/rp-25-19.pdf", IRS + "/pub/irs-drop/rp-25-19.pdf", "final-authority"),

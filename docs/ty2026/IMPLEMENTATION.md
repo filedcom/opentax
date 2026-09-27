@@ -130,6 +130,11 @@ education exclusion, Schedule B line 3 and 23 PDF widgets. The shared
 calculator uses MFJ thresholds for QSS despite the printed single/HOH/QSS
 range; the TY2025 PDF descriptor also maps amounts into line 1 identity
 fields, so both routes need correction before 2026 registration.
+The [Form 8915-F contract](FORM8915F-GRAPH.md) pins the newly found
+December 2026 draft and a prior-year instruction comparator. Its 102 widgets
+and Parts I–IV require a per-disaster distribution/repayment ledger; the
+shared node's $100,000 cap and Schedule 1 line 8z output conflict with the
+draft's $22,000-per-disaster limit and 1040 lines 4b/5b destinations.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

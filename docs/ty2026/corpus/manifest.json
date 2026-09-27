@@ -543,6 +543,16 @@
       "year_check": "2026-not-found"
     },
     {
+      "path": "draft/f8915f.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8915f--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 185952,
+      "sha256": "fc0b5061b2f868a766b681f70953eea888085dd5301a8489d79fa4b949a7f556",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T14:57:19.295996+00:00"
+    },
+    {
       "path": "draft/f8919.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/f8919--dft.pdf",
       "kind": "draft-form",
@@ -897,6 +907,15 @@
       "bytes": 255808,
       "sha256": "f077991c83b086810c46cbad3755e0f126cb8dfd88cf8bf8ab2d5605d6e7ab45",
       "retrieved_utc": "2026-09-27T08:46:31.446292+00:00"
+    },
+    {
+      "path": "authorities/i8915f--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8915f--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 981676,
+      "sha256": "01720eac68072a62e76b8ef55df4740cefde28aa9623ccc73d3f4fd0d7af654a",
+      "retrieved_utc": "2026-09-27T14:57:19.297077+00:00"
     },
     {
       "path": "draft/i5695.pdf",

@@ -48,6 +48,10 @@ The [Form 8815 contract](../../../docs/ty2026/FORM8815-GRAPH.md) maps
 Series EE/I savings-bond education interest exclusion through Schedule B
 line 3. The shared QSS phaseout and TY2025 PDF fields are wrong for its
 2026 draft; 23 widgets and a current MeF route remain to implement.
+The [Form 8915-F contract](../../../docs/ty2026/FORM8915F-GRAPH.md) maps
+disaster retirement distributions by FEMA event, owner and account to
+1040 lines 4b/5b. The newly pinned 2026 draft has 102 PDF widgets; its
+instructions and current MeF package remain to obtain.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared
