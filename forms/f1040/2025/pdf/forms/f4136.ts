@@ -55,8 +55,11 @@ const creditReferenceNumber: Record<Line, string> = {
   "4d": "414",
   "4e": "377",
   "4f": "369",
+  "5a": "417",
+  "5b": "355",
   "5c": "346",
   "5d": "369",
+  "5e": "433",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -147,12 +150,24 @@ function fieldPath(p: number, n: number): string {
             n >= 41 && n <= 42
         ? "ColE"
         : "";
-    } else if (n >= 60 && n <= 75) {
+    } else if (n >= 44 && n <= 83) {
       table = "Table_Line5";
-      line = n <= 67 ? "Line5c" : "Line5d";
-      column = n >= 63 && n <= 64 || n >= 71 && n <= 72
+      line = n <= 51
+        ? "Line5a"
+        : n <= 59
+        ? "Line5b"
+        : n <= 67
+        ? "Line5c"
+        : n <= 75
+        ? "Line5d"
+        : "Line5e";
+      column = n >= 47 && n <= 48 || n >= 55 && n <= 56 ||
+          n >= 63 && n <= 64 || n >= 71 && n <= 72 ||
+          n >= 79 && n <= 80
         ? "ColD"
-        : n >= 65 && n <= 66 || n >= 73 && n <= 74
+        : n >= 49 && n <= 50 || n >= 57 && n <= 58 ||
+            n >= 65 && n <= 66 || n >= 73 && n <= 74 ||
+            n >= 81 && n <= 82
         ? "ColE"
         : "";
     }
@@ -259,6 +274,12 @@ const fields: PdfFieldEntry[] = [
   text("line4f_quantity", 2, 38),
   ...moneyFields("line4f_cost", 2, 39),
   ...moneyFields("line4f_credit", 2, 41),
+  text("line5a_quantity", 2, 46),
+  ...moneyFields("line5a_cost", 2, 47),
+  ...moneyFields("line5a_credit", 2, 49),
+  text("line5b_quantity", 2, 54),
+  ...moneyFields("line5b_cost", 2, 55),
+  ...moneyFields("line5b_credit", 2, 57),
   text("line5c_type", 2, 60),
   text("line5c_quantity", 2, 62),
   ...moneyFields("line5c_cost", 2, 63),
@@ -267,6 +288,9 @@ const fields: PdfFieldEntry[] = [
   text("line5d_quantity", 2, 70),
   ...moneyFields("line5d_cost", 2, 71),
   ...moneyFields("line5d_credit", 2, 73),
+  text("line5e_quantity", 2, 78),
+  ...moneyFields("line5e_cost", 2, 79),
+  ...moneyFields("line5e_credit", 2, 81),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -471,8 +495,11 @@ export function projectForm4136Fields(
       "4d",
       "4e",
       "4f",
+      "5a",
+      "5b",
       "5c",
       "5d",
+      "5e",
       ...alternativeFuelLines,
     ] as const
   ) {
@@ -491,7 +518,16 @@ export function projectForm4136Fields(
   for (const line of ["4c", "4d", "4e", "4f"] as const) {
     putClaimGroup(out, input, [line], `line${line}`);
   }
-  for (const line of ["5c", "5d", ...alternativeFuelLines] as const) {
+  for (
+    const line of [
+      "5a",
+      "5b",
+      "5c",
+      "5d",
+      "5e",
+      ...alternativeFuelLines,
+    ] as const
+  ) {
     putClaimGroup(out, input, [line], `line${line}`);
   }
   putMoney(out, "line17_total", total);

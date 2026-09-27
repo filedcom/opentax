@@ -27,8 +27,11 @@ export const FORM4136_RATES = {
   "4d": 0.244,
   "4e": 0.043,
   "4f": 0.218,
+  "5a": 0.2,
+  "5b": 0.175,
   "5c": 0.243,
   "5d": 0.218,
+  "5e": 0.001,
   "11a": 0.183,
   "11b": 0.183,
   "11c": 0.183,
@@ -70,8 +73,11 @@ const fuelLine = z.enum([
   "4d",
   "4e",
   "4f",
+  "5a",
+  "5b",
   "5c",
   "5d",
+  "5e",
   "11a",
   "11b",
   "11c",
@@ -205,8 +211,8 @@ const activitySchema = z.object({
           .includes(claim.line)
         ? ["undyed_fuel_confirmed"] as const
         : []),
-      ...(claim.line === "3d" || claim.line === "4c" || claim.line === "5c" ||
-          claim.line === "5d" ||
+      ...(claim.line === "3d" || claim.line === "4c" ||
+          claim.line.startsWith("5") ||
           (claim.line === "1c" &&
             ["13", "14"].includes(claim.type_of_use ?? "")) ||
           (claim.line === "2b" &&
@@ -222,10 +228,10 @@ const activitySchema = z.object({
           claim.line === "4d"
         ? ["exported_fuel_confirmed"] as const
         : []),
-      ...(claim.line === "2a"
+      ...(claim.line === "2a" || claim.line === "5a" || claim.line === "5b"
         ? ["commercial_aviation_nonforeign_trade_confirmed"] as const
         : []),
-      ...(claim.line === "2d"
+      ...(claim.line === "2d" || claim.line === "5e"
         ? ["foreign_trade_lust_tax_paid_confirmed"] as const
         : []),
       ...(claim.line === "3c" ? ["train_use_confirmed"] as const : []),
@@ -247,8 +253,10 @@ const activitySchema = z.object({
     }
     const expectedKeroseneRate = claim.line === "4e"
       ? 0.044
-      : claim.line === "4f"
+      : claim.line === "4f" || claim.line === "5b" || claim.line === "5d"
       ? 0.219
+      : claim.line === "5a" || claim.line === "5c"
+      ? 0.244
       : undefined;
     if (
       expectedKeroseneRate !== undefined &&

@@ -166,8 +166,11 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l4d = onLine(input, "4d");
     const l4e = onLine(input, "4e");
     const l4f = onLine(input, "4f");
+    const l5a = onLine(input, "5a");
+    const l5b = onLine(input, "5b");
     const l5c = onLine(input, "5c");
     const l5d = onLine(input, "5d");
+    const l5e = onLine(input, "5e");
     const business = input.claimant_context === "business"
       ? input.business
       : undefined;
@@ -349,6 +352,20 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         l4f.length
           ? credit("NontxUseUndyedKrsnTxd219CrAmt", lineAmount(l4f), "369")
           : "",
+        elements("KrsnUsedInCmrclAvnTxdAt244Grp", [
+          element("KeroseneUsedInAvnTxd244GalsQty", qty(l5a)),
+          l5a.length ? element("ActualFuelCostAmt", cost(l5a)) : "",
+          l5a.length
+            ? credit("KeroseneUsedInAvnTxd244CrAmt", lineAmount(l5a), "417")
+            : "",
+        ]),
+        elements("KrsnUsedInCmrclAvnTxdAt219Grp", [
+          element("KeroseneUsedInAvnTxd219GalsQty", qty(l5b)),
+          l5b.length ? element("ActualFuelCostAmt", cost(l5b)) : "",
+          l5b.length
+            ? credit("KeroseneUsedInAvnTxd219CrAmt", lineAmount(l5b), "355")
+            : "",
+        ]),
         ...l5c.map((claim) => detail("NontxKrsnUsedAvnTxd244Grp", claim)),
         l5c.length ? element("NontxKrsnAvnTxd244ActlFlCstAmt", cost(l5c)) : "",
         l5c.length
@@ -359,6 +376,13 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         l5d.length
           ? credit("NonTxKrsnUsedInAvnTxd219CrAmt", lineAmount(l5d), "369")
           : "",
+        elements("LUSTTxKrsnAvnFrgnTrdGrp", [
+          element("LUSTTxKrsnAvnFrgnTrdGalsQty", qty(l5e)),
+          l5e.length ? element("ActualFuelCostAmt", cost(l5e)) : "",
+          l5e.length
+            ? credit("LUSTTxKrsnAvnFrgnTrdCrAmt", lineAmount(l5e), "433")
+            : "",
+        ]),
         ...alternativeFuelTags.flatMap(
           ([line, groupTag, costTag, creditTag, crn, busTag]) => {
             const claims = onLine(input, line);

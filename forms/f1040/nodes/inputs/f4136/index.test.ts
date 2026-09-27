@@ -98,8 +98,11 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     ["4d", undefined, 24.4],
     ["4e", "02", 4.3],
     ["4f", "02", 21.8],
+    ["5a", undefined, 20],
+    ["5b", undefined, 17.5],
     ["5c", "01", 24.3],
     ["5d", "01", 21.8],
+    ["5e", undefined, 0.1],
     ["11a", "02", 18.3],
     ["11b", "02", 18.3],
     ["11c", "02", 18.3],
@@ -125,8 +128,10 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
         actual_fuel_cost: 200,
         excise_tax_rate_per_gallon: line === "4e"
           ? 0.044
-          : line === "4f"
+          : line === "4f" || line === "5b" || line === "5d"
           ? 0.219
+          : line === "5a" || line === "5c"
+          ? 0.244
           : undefined,
       }],
     });
@@ -333,6 +338,54 @@ Deno.test("Form 4136: other-use and exported gasoline require their source confi
   );
 });
 
+Deno.test("Form 4136: aviation kerosene requires rate, use, and no-waiver proof", () => {
+  const claim = {
+    ...certifications,
+    line: "5a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    excise_tax_rate_per_gallon: 0.244,
+  };
+  assertEquals(parseInput({ business, claims: [claim] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, excise_tax_rate_per_gallon: 0.219 }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        commercial_aviation_nonforeign_trade_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, right_to_claim_not_waived: undefined }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        line: "5e",
+        excise_tax_rate_per_gallon: undefined,
+        foreign_trade_lust_tax_paid_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: credit rounds to cents", () => {
   assertEquals(
     compute({
@@ -460,6 +513,7 @@ Deno.test("Form 4136: aviation claims require no-waiver and credit-card certific
         ...aviation,
         line: "5c",
         type_of_use: "01",
+        excise_tax_rate_per_gallon: 0.244,
         right_to_claim_not_waived: undefined,
       }],
     }).success,
