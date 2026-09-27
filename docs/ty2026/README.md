@@ -31,6 +31,8 @@ for the implementation contract.
   acceptance order.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
+- [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
+  queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
   `instruction-coverage.csv`: available 2026 instructions, URLs still serving
   2025, and source refresh gates for the full form inventory.

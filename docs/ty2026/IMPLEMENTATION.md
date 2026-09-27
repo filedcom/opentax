@@ -20,6 +20,9 @@ an authorized e-Services/SOR mailbox. Use the current
 [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) for active route status. The progress
 notes below record the order in which work landed and may describe an earlier
 state of a node.
+The [parity queue](PARITY-QUEUE.md) groups retained TY2025 PDF/MeF surfaces
+and TY2026-only attachments into coding waves, with the cross-form evidence
+required to close each route.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
