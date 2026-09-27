@@ -23,6 +23,8 @@ export const inputSchema = z.object({
   line8e_archer_msa_dist: nonnegative.optional(),
   line8i_prizes_awards: signed.optional(),
   line8p_excess_business_loss: nonnegative.optional(),
+  line8z_rtaa: nonnegative.optional(),
+  line8z_taxable_grants: nonnegative.optional(),
   line8z_other: signed.optional(),
   line8z_description: z.string().trim().min(1).optional(),
   line11_educator_expenses: nonnegative.optional(),
@@ -85,6 +87,21 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
     if ((input.line8z_other ?? 0) !== 0 && !input.line8z_description) {
       throw new Error("TY2026 Schedule 1 line 8z needs an income type");
     }
+    const line8zRows = [
+      { description: "RTAA payments", amount: input.line8z_rtaa ?? 0 },
+      {
+        description: "Taxable grants",
+        amount: input.line8z_taxable_grants ?? 0,
+      },
+      {
+        description: input.line8z_description ?? "",
+        amount: input.line8z_other ?? 0,
+      },
+    ].filter((row) => row.amount !== 0);
+    const line8zTotal = line8zRows.reduce(
+      (total, row) => total + row.amount,
+      0,
+    );
     if (
       (input.line7_repaid ?? 0) > 0 &&
       input.line7_unemployment === undefined
@@ -105,7 +122,7 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
       (input.line8e_archer_msa_dist ?? 0) +
       (input.line8i_prizes_awards ?? 0) +
       (input.line8p_excess_business_loss ?? 0) +
-      (input.line8z_other ?? 0);
+      line8zTotal;
     const line10 = (input.line1_state_refund ?? 0) +
       (input.line2a_alimony_received ?? 0) +
       (input.line3_schedule_c ?? 0) +
@@ -163,6 +180,11 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
             input.line8d_foreign_earned_income_exclusion === undefined
               ? undefined
               : -input.line8d_foreign_earned_income_exclusion,
+          line8z_total: line8zTotal,
+          line8z_print_description: line8zRows.length > 1
+            ? "See attached statement"
+            : line8zRows[0]?.description,
+          line8z_statement_rows: line8zRows.length > 1 ? line8zRows : undefined,
           line9_total_other_income: line9,
           line10_total_additional_income: line10,
           line21_student_loan_interest: adjustedSli,

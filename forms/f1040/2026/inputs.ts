@@ -16,11 +16,17 @@ import {
 } from "../nodes/intermediate/forms/schedule1a/index.ts";
 
 /** Input surface backed by the currently verified TY2026 calculation graph. */
+const f1099gItemSchema2026 = f1099gItemSchema.omit({
+  box_10a_state: true,
+  box_10b_state_id: true,
+  box_11_state_withheld: true,
+}).strict();
+
 export const inputNodes: readonly InputNodeEntry[] = [
   { node: general, inputSchema: general.inputSchema, isArray: false },
   { node: w2, itemSchema: w2ItemSchema, isArray: true },
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
-  { node: f1099g, itemSchema: f1099gItemSchema, isArray: true },
+  { node: f1099g, itemSchema: f1099gItemSchema2026, isArray: true },
   { node: form4137, inputSchema: form4137.inputSchema, isArray: false },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
 ];

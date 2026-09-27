@@ -58,10 +58,9 @@ Deno.test("TY2026 registered 1099-G reaches Schedule 1, 1040, and the PDF bundle
 Deno.test("TY2026 1099-G rejects unfiled branches before routing any amounts", () => {
   for (
     const key of [
-      "box_5_rtaa",
-      "box_6_taxable_grants",
       "box_7_agriculture",
       "box_9_market_gain",
+      "box_10_family_leave",
     ]
   ) {
     const result = execute(buildExecutionPlan(registry), registry, {
@@ -73,6 +72,23 @@ Deno.test("TY2026 1099-G rejects unfiled branches before routing any amounts", (
     assertMatch(result.diagnostics[0].message, new RegExp(key));
     assertEquals(result.pending.schedule1, undefined);
   }
+  const businessRefund = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{
+      box_2_state_refund: 100,
+      box_2_taxable_amount: 100,
+      box_8_trade_or_business: true,
+    }],
+  }, context);
+  assertMatch(businessRefund.diagnostics[0].message, /business refund/);
+  assertEquals(businessRefund.pending.schedule1, undefined);
+
+  const staleStateBoxes = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{ box_1_unemployment: 100, box_10a_state: "MA" }],
+  }, context);
+  assertEquals(staleStateBoxes.diagnostics[0].nodeType, "start");
+  assertMatch(staleStateBoxes.diagnostics[0].message, /box_10a_state/);
 });
 
 Deno.test("TY2026 1099-G prints same-year unemployment repayment", async () => {
@@ -108,6 +124,52 @@ Deno.test("TY2026 1099-G prints same-year unemployment repayment", async () => {
   assertEquals(fullyRepaid.pending.schedule1.line7_unemployment, 0);
   assertEquals(fullyRepaid.pending.schedule1.line7_repaid, 100);
   assertEquals(fullyRepaid.pending.schedule1.file_schedule1, true);
+});
+
+Deno.test("TY2026 1099-G RTAA and taxable grants get a typed line 8z statement", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{ box_5_rtaa: 599, box_6_taxable_grants: 750 }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1.line8z_rtaa, 599);
+  assertEquals(result.pending.schedule1.line8z_taxable_grants, 750);
+  assertEquals(result.pending.schedule1.line8z_total, 1_349);
+  assertEquals(
+    result.pending.schedule1.line8z_print_description,
+    "See attached statement",
+  );
+  assertEquals(result.pending.schedule1.line8z_statement_rows, [
+    { description: "RTAA payments", amount: 599 },
+    { description: "Taxable grants", amount: 750 },
+  ]);
+  assertEquals(result.pending.schedule1.line9_total_other_income, 1_349);
+  assertEquals(result.pending.f1040.line8_additional_income, 1_349);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule1: result.pending.schedule1,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 5);
+
+  const rtaaOnly = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{ box_5_rtaa: 599 }],
+  }, context);
+  assertEquals(rtaaOnly.diagnostics, []);
+  assertEquals(
+    rtaaOnly.pending.schedule1.line8z_print_description,
+    "RTAA payments",
+  );
+  assertEquals(rtaaOnly.pending.schedule1.line8z_statement_rows, undefined);
+  const singlePdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: rtaaOnly.pending.f1040,
+      schedule1: rtaaOnly.pending.schedule1,
+    }),
+  );
+  assertEquals(singlePdf.getPageCount(), 4);
 });
 
 Deno.test("TY2026 registry executes a wages-only return", () => {

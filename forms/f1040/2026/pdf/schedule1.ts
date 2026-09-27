@@ -10,6 +10,7 @@ const pinnedDraftSha256 =
   "a017a1b717d1c70ff8d831ef8b73c730e5b24f147c394c37f792035a9df22fad";
 
 type Filer = { name: string; ssn: string };
+type Line8zRow = { description: string; amount: number };
 
 function optionalAmount(fields: Record<string, unknown>, key: string): number {
   const value = fields[key];
@@ -18,6 +19,31 @@ function optionalAmount(fields: Record<string, unknown>, key: string): number {
     throw new Error(`TY2026 Schedule 1 PDF needs numeric ${key}`);
   }
   return value;
+}
+
+function line8zRows(fields: Record<string, unknown>): Line8zRow[] {
+  const other = optionalAmount(fields, "line8z_other");
+  const description = fields.line8z_description;
+  if (
+    other !== 0 &&
+    (typeof description !== "string" || !description.trim())
+  ) {
+    throw new Error("TY2026 Schedule 1 PDF line 8z needs an income type");
+  }
+  return [
+    {
+      description: "RTAA payments",
+      amount: optionalAmount(fields, "line8z_rtaa"),
+    },
+    {
+      description: "Taxable grants",
+      amount: optionalAmount(fields, "line8z_taxable_grants"),
+    },
+    {
+      description: typeof description === "string" ? description : "",
+      amount: other,
+    },
+  ].filter((row) => row.amount !== 0);
 }
 
 function validate(
@@ -31,12 +57,16 @@ function validate(
   if (!filer.name.trim() || !filer.ssn.trim()) {
     throw new Error("TY2026 Schedule 1 PDF needs filer name and SSN");
   }
+  const rows = line8zRows(fields);
+  const line8zTotal = rows.reduce((total, row) => total + row.amount, 0);
   if (
-    optionalAmount(fields, "line8z_other") !== 0 &&
-    (typeof fields.line8z_description !== "string" ||
-      !fields.line8z_description.trim())
+    line8zTotal !== optionalAmount(fields, "line8z_total") ||
+    fields.line8z_print_description !==
+      (rows.length > 1 ? "See attached statement" : rows[0]?.description) ||
+    JSON.stringify(fields.line8z_statement_rows) !==
+      JSON.stringify(rows.length > 1 ? rows : undefined)
   ) {
-    throw new Error("TY2026 Schedule 1 PDF line 8z needs an income type");
+    throw new Error("TY2026 Schedule 1 PDF line 8z detail does not reconcile");
   }
   if (
     optionalAmount(fields, "line7_repaid") > 0 &&
@@ -51,7 +81,7 @@ function validate(
     "line8e_archer_msa_dist",
     "line8i_prizes_awards",
     "line8p_excess_business_loss",
-    "line8z_other",
+    "line8z_total",
   ].reduce((total, key) => total + optionalAmount(fields, key), 0);
   const line10 = [
     "line1_state_refund",
@@ -145,5 +175,39 @@ export async function buildSchedule1PdfBytes2026(
   const document = await PDFDocument.create();
   const pages = await document.copyPages(draft, [1, 2]);
   for (const page of pages) document.addPage(page);
+  const rows = line8zRows(fields);
+  if (rows.length > 1) {
+    const statement = document.addPage([612, 792]);
+    const bold = await document.embedFont(StandardFonts.HelveticaBold);
+    const regular = await document.embedFont(StandardFonts.Helvetica);
+    const draw = (label: string, x: number, y: number, size = 11) =>
+      statement.drawText(label, { x, y, size, font: regular });
+    statement.drawText("2026 Schedule 1, line 8z — Other income statement", {
+      x: 50,
+      y: 742,
+      size: 14,
+      font: bold,
+    });
+    draw(`Name: ${filer.name}`, 50, 712);
+    draw(`SSN: ${filer.ssn}`, 365, 712);
+    statement.drawText("Income type", { x: 50, y: 675, size: 11, font: bold });
+    statement.drawText("Amount", { x: 475, y: 675, size: 11, font: bold });
+    rows.forEach((row, index) => {
+      const y = 650 - index * 23;
+      draw(row.description, 50, y);
+      draw(String(Math.round(row.amount)), 475, y);
+    });
+    statement.drawText("Total included on Schedule 1, line 8z", {
+      x: 50,
+      y: 650 - rows.length * 23 - 10,
+      size: 11,
+      font: bold,
+    });
+    draw(
+      String(Math.round(rows.reduce((total, row) => total + row.amount, 0))),
+      475,
+      650 - rows.length * 23 - 10,
+    );
+  }
   return document.save();
 }

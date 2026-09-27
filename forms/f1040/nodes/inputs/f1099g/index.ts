@@ -31,9 +31,13 @@ export const itemSchema = z.object({
   box_8_trade_or_business: z.boolean().optional(),
   box_9_market_gain: z.number().nonnegative().optional(),
   farm_id: z.string().min(1).optional(),
+  box_10_family_leave: z.number().nonnegative().optional(),
   box_10a_state: z.string().optional(),
   box_10b_state_id: z.string().optional(),
   box_11_state_withheld: z.number().nonnegative().optional(),
+  box_11a_state: z.string().optional(),
+  box_11b_state_id: z.string().optional(),
+  box_12_state_withheld: z.number().nonnegative().optional(),
   payer_name: z.string().optional(),
   payer_tin: z.string().optional(),
   account_number: z.string().optional(),
@@ -198,12 +202,19 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
         );
       }
       for (const item of g99s) {
+        if (
+          item.box_8_trade_or_business === true &&
+          (item.box_2_state_refund ?? 0) > 0
+        ) {
+          throw new Error(
+            "TY2026 1099-G box 8 business refund has no complete filed route",
+          );
+        }
         for (
           const key of [
-            "box_5_rtaa",
-            "box_6_taxable_grants",
             "box_7_agriculture",
             "box_9_market_gain",
+            "box_10_family_leave",
           ] as const
         ) {
           if ((item[key] ?? 0) > 0) {

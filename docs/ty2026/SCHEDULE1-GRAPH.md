@@ -72,11 +72,17 @@ TY2025 `box_2_prior_year_itemized` behavior remains for existing callers,
 but should be replaced with an explicit tax-benefit calculation there too.
 Form 1099-G is now a registered TY2026 input for unemployment, including a
 same-year repayment and the draft Schedule 1 repayment checkbox/amount;
-tax-benefit-adjusted state refunds; and federal withholding. RTAA,
-taxable-grant, agricultural-payment, and CCC market-gain branches raise a
-TY2026 diagnostic before routing any amount. Those branches still need
-complete graph and print routes. A registered
-integration test reconciles Schedule 1 line 10 to Form 1040 line 8, checks
-withholding on line 25b, and builds the four-page 1040/Schedule 1 PDF.
+tax-benefit-adjusted state refunds; federal withholding; RTAA payments; and
+taxable grants. The latter two sources are typed Schedule 1 line 8z entries.
+One type prints directly; multiple types print a reconciled total and a
+continuation statement. Agricultural payments, CCC market gain, box 8
+business refunds, and the new 2026 box 10 family-leave benefits raise a
+TY2026 diagnostic before routing any amount. The TY2026 input schema accepts
+renumbered state boxes 11a/11b/12 and rejects the older 10a/10b/11 names.
+Those unsupported branches still need complete graph and print routes.
+Registered integration tests reconcile Schedule 1 line 10 to Form 1040 line 8,
+check withholding on line 25b, and build the 1040/Schedule 1 PDF, including
+the five-page version with a line 8z statement. The statement page was also
+checked by PDF text extraction and rendering.
 IRS references: [Form 1099-G instructions](https://www.irs.gov/instructions/i1099g),
 [Publication 525](https://www.irs.gov/publications/p525).
