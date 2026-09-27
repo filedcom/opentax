@@ -590,6 +590,141 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 noncommercial aviation lines 8d through 8f validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const claims = [
+    { line: "8d", type_of_use: "09", taxRate: 0.244 },
+    { line: "8e", type_of_use: "10", taxRate: 0.219 },
+  ].map((route, index) => ({
+    line: route.line,
+    type_of_use: route.type_of_use,
+    unit: "gallons",
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 3_000,
+    excise_tax_rate_per_gallon: route.taxRate,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price",
+    nontaxable_noncommercial_aviation_sales: [{
+      proof_kind: "waiver_l",
+      sale_record_reference: `AV-${index + 1}`,
+      sale_date: "2025-06-12",
+      buyer_name: "Example Aircraft Operator",
+      buyer_address: "10 Airport Road, Wilmington, DE 19801",
+      gallons: 1_000,
+      noncommercial_aviation_confirmed: true,
+      type_of_use: route.type_of_use,
+      waiver_l_selected_use_code: route.type_of_use,
+      waiver_l: {
+        kind: "single_purchase",
+        record_reference: `Waiver L-${index + 1}`,
+        invoice_or_delivery_ticket_number: `AV-${index + 1}`,
+        waived_gallons: 1_000,
+        signed_by_buyer_confirmed: true,
+        held_unexpired_when_claimed_confirmed: true,
+      },
+    }],
+  }));
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 462 },
+    schedule3: { line12_fuel_tax_credit: 462, line15_total: 462 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Aviation Vendor",
+        principal_activity_code: "424720",
+        equipment_make: "Example",
+        equipment_model: "Fuel Truck",
+        equipment_type: "aviation refueler",
+        sales_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [...claims, {
+        line: "8f",
+        unit: "gallons",
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 3_000,
+        vendor_registration_number: "UA123456789",
+        vendor_tax_settlement: "tax_excluded_price",
+        foreign_trade_lust_tax_paid_confirmed: true,
+        foreign_trade_aviation_sale_references: ["AV-1"],
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<KrsnOthNontxTxdAt244Grp>");
+  assertStringIncludes(xml, "<KrsnOthNontxTxdAt219Grp>");
+  assertStringIncludes(xml, "<LUSTTxSlsKrsnAvnFrgnTrdGrp>");
+  await validateXsd(xml, "Form 4136 aviation vendor lines 8d-8f");
+});
+
+Deno.test({
+  name: "XSD: Form 4136 government aviation line 8e type 14 validates",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 218 },
+    schedule3: { line12_fuel_tax_credit: 218, line15_total: 218 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Aviation Vendor",
+        principal_activity_code: "424720",
+        equipment_make: "Example",
+        equipment_model: "Fuel Truck",
+        equipment_type: "aviation refueler",
+        sales_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [{
+        line: "8e",
+        type_of_use: "14",
+        unit: "gallons",
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 3_000,
+        excise_tax_rate_per_gallon: 0.219,
+        vendor_registration_number: "UV123456789",
+        vendor_tax_settlement: "tax_excluded_price",
+        nontaxable_noncommercial_aviation_sales: [{
+          proof_kind: "certificate_p",
+          sale_record_reference: "AV-GOV-001",
+          sale_date: "2025-06-12",
+          buyer_name: "Example City",
+          buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+          buyer_ein: "123456789",
+          gallons: 1_000,
+          noncommercial_aviation_confirmed: true,
+          type_of_use: "14",
+          certificate_p_record_reference: "Certificate P-001",
+          certificate_p_unexpired_at_claim_confirmed: true,
+          certificate_information_believed_true: true,
+          state_credit_card_not_used_confirmed: true,
+          exclusive_government_use_confirmed: true,
+        }],
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(
+    xml,
+    "<NontaxableUseOfFuelTypeCd>14</NontaxableUseOfFuelTypeCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<KeroseneForAvnRegistrationNum>UV123456789</KeroseneForAvnRegistrationNum>",
+  );
+  await validateXsd(xml, "Form 4136 government aviation line 8e type 14");
+});
+
+Deno.test({
   name:
     "XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate",
   sanitizeOps: false,

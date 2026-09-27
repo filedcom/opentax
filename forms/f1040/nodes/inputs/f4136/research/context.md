@@ -64,8 +64,16 @@ UA registration, kerosene taxed at $.244, reconciled sale records for nonexempt
 noncommercial aviation, tax settlement, and a signed, unexpired Model
 Certificate Q for the sale or a covering account period. It maps to the native
 MeF group and parent/Schedule A PDF row, with source, XML, XSD, and PDF cases
-written but unrun. Noncommercial aviation lines 8d-8f and IRS business-rule
-review remain open.
+written but unrun. Lines 8d/8e now separate $.244 and $.219 nontaxable
+noncommercial aviation sales, require the applicable UA registration or UV
+registration for type 14, reconcile each type of use to distinct sale records,
+and require Model Waiver L with the matching selected use or government
+Certificate P as appropriate. Their
+native repeated-use MeF groups and parent/Schedule A PDF rows are mapped.
+Line 8f links the foreign-trade LUST credit to those exact type 09 sales on
+8d/8e; its gallons, cost, registration, and vendor settlement must agree with
+the base claims. Source, XML, XSD, and PDF cases are written but unrun. Filled
+PDFs, IRS business-rule review, and ATS acceptance remain open.
 Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
 the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage

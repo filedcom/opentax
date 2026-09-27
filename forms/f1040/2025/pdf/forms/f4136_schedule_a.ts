@@ -193,6 +193,17 @@ const fields: PdfFieldEntry[] = [
   text("line8c_quantity", 2, 92),
   ...money("line8c_cost", 2, 93),
   ...money("line8c_credit", 2, 95),
+  text("line8d_type", 2, 98),
+  text("line8d_quantity", 2, 100),
+  ...money("line8d_cost", 2, 101),
+  ...money("line8d_credit", 2, 103),
+  text("line8e_type", 2, 106),
+  text("line8e_quantity", 2, 108),
+  ...money("line8e_cost", 2, 109),
+  ...money("line8e_credit", 2, 111),
+  text("line8f_quantity", 2, 116),
+  ...money("line8f_cost", 2, 117),
+  ...money("line8f_credit", 2, 119),
   ...line11.flatMap((line, index) => {
     const base = 29 + index * 8;
     return [

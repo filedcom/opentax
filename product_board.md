@@ -315,9 +315,13 @@ and distinctly identified sale records, the correct $.219/$.244 tax source,
 and invoice-specific or account-period Model Waiver L facts. Line 8c now
 separately requires nonexempt noncommercial aviation sales, UA registration,
 the $.244 source tax, and a signed Model Certificate Q tied to an invoice or
-account period. Their native MeF and parent/Schedule A PDF rows have unrun
-source, XML, PDF, and local XSD cases. Lines 8d-8f, filled rendering, and IRS
-business rules remain open.
+account period. Lines 8d/8e now require noncommercial aviation sale records
+with the claimed use code, the $.244/$.219 source tax, and either Model Waiver
+L or, for government type 14, Certificate P and UV registration. Line 8f links
+the foreign-trade LUST credit to the exact type 09 sales already claimed on
+8d/8e. Their native MeF and parent/Schedule A PDF rows have unrun source,
+XML, PDF, and local XSD cases. Filled rendering, IRS business rules, and ATS
+acceptance remain open.
 Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
 facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are

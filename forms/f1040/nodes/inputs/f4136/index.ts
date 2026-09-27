@@ -40,6 +40,9 @@ export const FORM4136_RATES = {
   "8a": 0.175,
   "8b": 0.2,
   "8c": 0.025,
+  "8d": 0.243,
+  "8e": 0.218,
+  "8f": 0.001,
   "11a": 0.183,
   "11b": 0.183,
   "11c": 0.183,
@@ -100,6 +103,9 @@ const fuelLine = z.enum([
   "8a",
   "8b",
   "8c",
+  "8d",
+  "8e",
+  "8f",
   "11a",
   "11b",
   "11c",
@@ -190,6 +196,40 @@ const modelCertificateQ = z.discriminatedUnion("kind", [
     held_unexpired_when_claimed_confirmed: z.literal(true),
   }),
 ]);
+const noncommercialAviationSaleBase = z.object({
+  sale_record_reference: z.string().trim().min(1),
+  sale_date: saleDate,
+  buyer_name: z.string().trim().min(1),
+  buyer_address: z.string().trim().min(1),
+  gallons: z.number().int().positive(),
+  noncommercial_aviation_confirmed: z.literal(true),
+});
+const nontaxableNoncommercialAviationSale = z.discriminatedUnion("proof_kind", [
+  noncommercialAviationSaleBase.extend({
+    proof_kind: z.literal("waiver_l"),
+    type_of_use: z.enum(["01", "09", "10", "11", "13", "15", "16"]),
+    waiver_l_selected_use_code: z.enum([
+      "01",
+      "09",
+      "10",
+      "11",
+      "13",
+      "15",
+      "16",
+    ]),
+    waiver_l: modelWaiverL,
+  }),
+  noncommercialAviationSaleBase.extend({
+    proof_kind: z.literal("certificate_p"),
+    type_of_use: z.literal("14"),
+    buyer_ein: z.string().regex(/^\d{9}$/),
+    certificate_p_record_reference: z.string().trim().min(1),
+    certificate_p_unexpired_at_claim_confirmed: z.literal(true),
+    certificate_information_believed_true: z.literal(true),
+    state_credit_card_not_used_confirmed: z.literal(true),
+    exclusive_government_use_confirmed: z.literal(true),
+  }),
+]);
 const allowedUseCodes: Partial<
   Record<z.infer<typeof fuelLine>, readonly string[]>
 > = {
@@ -201,6 +241,8 @@ const allowedUseCodes: Partial<
   "4f": ["02"],
   "5c": ["01", "09", "10", "11", "13", "15", "16"],
   "5d": ["01", "09", "10", "11", "13", "15", "16"],
+  "8d": ["01", "09", "10", "11", "13", "14", "15", "16"],
+  "8e": ["01", "09", "10", "11", "13", "14", "15", "16"],
   "11a": alternativeFuelUseCodes,
   "11b": alternativeFuelUseCodes,
   "11c": alternativeFuelUseCodes,
@@ -296,6 +338,13 @@ export const fuelClaimSchema = z.object({
     nonexempt_noncommercial_aviation_confirmed: z.literal(true),
     certificate_q: modelCertificateQ,
   })).min(1).optional(),
+  nontaxable_noncommercial_aviation_sales: z.array(
+    nontaxableNoncommercialAviationSale,
+  ).min(1).optional(),
+  foreign_trade_aviation_sale_references: z.array(z.string().trim().min(1)).min(
+    1,
+  )
+    .optional(),
   emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
   emulsion_epa_additive_record_reference: z.string().trim().min(1).max(100)
     .optional(),
@@ -692,6 +741,201 @@ const activitySchema = z.object({
           path: ["business", "sales_records_confirmed"],
         });
       }
+    } else if (claim.line === "8d" || claim.line === "8e") {
+      const governmentUse = claim.type_of_use === "14";
+      const registrationPrefix = governmentUse ? "UV" : "UA";
+      if (
+        !(new RegExp(`^${registrationPrefix}[A-Z0-9]{1,18}$`)).test(
+          claim.vendor_registration_number ?? "",
+        )
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Form 4136 line ${claim.line} type ${
+            claim.type_of_use ?? "?"
+          } needs an IRS-issued ${registrationPrefix} registration number`,
+          path: ["claims", index, "vendor_registration_number"],
+        });
+      }
+      if (!claim.vendor_tax_settlement) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} needs the vendor tax-settlement method`,
+          path: ["claims", index, "vendor_tax_settlement"],
+        });
+      }
+      const expectedTaxRate = claim.line === "8d" ? 0.244 : 0.219;
+      if (claim.excise_tax_rate_per_gallon !== expectedTaxRate) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Form 4136 line ${claim.line} needs kerosene taxed at $${
+            expectedTaxRate.toFixed(3)
+          } per gallon`,
+          path: ["claims", index, "excise_tax_rate_per_gallon"],
+        });
+      }
+      const sales = claim.nontaxable_noncommercial_aviation_sales ?? [];
+      if (
+        !sales.length ||
+        sales.reduce((sum, sale) => sum + sale.gallons, 0) !==
+          claim.qualified_quantity
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            `Form 4136 line ${claim.line} sales must reconcile to claimed gallons`,
+          path: ["claims", index, "nontaxable_noncommercial_aviation_sales"],
+        });
+      }
+      for (const [saleIndex, sale] of sales.entries()) {
+        if (sale.type_of_use !== claim.type_of_use) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              `Form 4136 line ${claim.line} sale use must match the claimed type of use`,
+            path: [
+              "claims",
+              index,
+              "nontaxable_noncommercial_aviation_sales",
+              saleIndex,
+              "type_of_use",
+            ],
+          });
+        }
+        if (sale.proof_kind === "waiver_l") {
+          if (sale.waiver_l_selected_use_code !== sale.type_of_use) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                `Form 4136 line ${claim.line} Model Waiver L selected use must match the sale`,
+              path: [
+                "claims",
+                index,
+                "nontaxable_noncommercial_aviation_sales",
+                saleIndex,
+                "waiver_l_selected_use_code",
+              ],
+            });
+          }
+          const waiver = sale.waiver_l;
+          if (
+            waiver.kind === "single_purchase" &&
+            waiver.waived_gallons !== sale.gallons
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                `Form 4136 line ${claim.line} Model Waiver L gallons must match the sale`,
+              path: [
+                "claims",
+                index,
+                "nontaxable_noncommercial_aviation_sales",
+                saleIndex,
+                "waiver_l",
+              ],
+            });
+          } else if (waiver.kind === "account_period") {
+            const latestExpiration = new Date(
+              `${waiver.effective_date}T00:00:00.000Z`,
+            );
+            latestExpiration.setUTCFullYear(
+              latestExpiration.getUTCFullYear() + 1,
+            );
+            if (
+              waiver.effective_date > sale.sale_date ||
+              sale.sale_date > waiver.expiration_date ||
+              waiver.expiration_date >
+                latestExpiration.toISOString().slice(0, 10)
+            ) {
+              ctx.addIssue({
+                code: "custom",
+                message:
+                  `Form 4136 line ${claim.line} Model Waiver L must cover the sale and last no longer than one year`,
+                path: [
+                  "claims",
+                  index,
+                  "nontaxable_noncommercial_aviation_sales",
+                  saleIndex,
+                  "waiver_l",
+                ],
+              });
+            }
+          }
+        }
+      }
+      if (input.business.sales_records_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Form 4136 line ${claim.line} needs confirmed sales records`,
+          path: ["business", "sales_records_confirmed"],
+        });
+      }
+    } else if (claim.line === "8f") {
+      if (!/^UA[A-Z0-9]{1,18}$/.test(claim.vendor_registration_number ?? "")) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 8f needs an IRS-issued UA registration number",
+          path: ["claims", index, "vendor_registration_number"],
+        });
+      }
+      if (!claim.vendor_tax_settlement) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 8f needs the vendor tax-settlement method",
+          path: ["claims", index, "vendor_tax_settlement"],
+        });
+      }
+      if (claim.foreign_trade_lust_tax_paid_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 8f needs the foreign-trade LUST-tax fact",
+          path: ["claims", index, "foreign_trade_lust_tax_paid_confirmed"],
+        });
+      }
+      const baseClaims = input.claims.filter((base) =>
+        (base.line === "8d" || base.line === "8e") &&
+        base.type_of_use === "09"
+      );
+      const baseSales = baseClaims.flatMap((base) =>
+        base.nontaxable_noncommercial_aviation_sales ?? []
+      );
+      const expectedReferences = baseSales.map((sale) =>
+        sale.sale_record_reference
+      );
+      const references = claim.foreign_trade_aviation_sale_references ?? [];
+      if (
+        !references.length ||
+        new Set(references).size !== references.length ||
+        references.length !== expectedReferences.length ||
+        references.some((reference) =>
+          !expectedReferences.includes(reference)
+        ) ||
+        baseClaims.some((base) =>
+          base.vendor_registration_number !==
+            claim.vendor_registration_number ||
+          base.vendor_tax_settlement !== claim.vendor_tax_settlement
+        ) ||
+        baseSales.reduce((sum, sale) => sum + sale.gallons, 0) !==
+          claim.qualified_quantity ||
+        baseClaims.reduce((sum, base) => sum + base.actual_fuel_cost, 0) !==
+          claim.actual_fuel_cost
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 8f must match the line 8d/8e type 09 sales, gallons, cost, registration, and settlement",
+          path: ["claims", index, "foreign_trade_aviation_sale_references"],
+        });
+      }
+      if (input.business.sales_records_confirmed !== true) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Form 4136 line 8f needs confirmed sales records",
+          path: ["business", "sales_records_confirmed"],
+        });
+      }
     } else if (claim.line === "15a") {
       if (
         !claim.blender_registration_number ||
@@ -916,9 +1160,11 @@ const activitySchema = z.object({
       });
     }
     seen.add(key);
-    if (claim.line === "8a" || claim.line === "8b" || claim.line === "8c") {
+    if (["8a", "8b", "8c", "8d", "8e"].includes(claim.line)) {
       const sales = claim.line === "8c"
         ? claim.nonexempt_noncommercial_aviation_sales ?? []
+        : claim.line === "8d" || claim.line === "8e"
+        ? claim.nontaxable_noncommercial_aviation_sales ?? []
         : claim.aviation_vendor_sales ?? [];
       for (const [saleIndex, sale] of sales.entries()) {
         if (aviationSaleRecords.has(sale.sale_record_reference)) {
@@ -931,6 +1177,8 @@ const activitySchema = z.object({
               index,
               claim.line === "8c"
                 ? "nonexempt_noncommercial_aviation_sales"
+                : claim.line === "8d" || claim.line === "8e"
+                ? "nontaxable_noncommercial_aviation_sales"
                 : "aviation_vendor_sales",
               saleIndex,
               "sale_record_reference",
@@ -1084,7 +1332,7 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
   const line8Registrations = new Set(
     activities.flatMap((activity) => activity.claims)
       .filter((claim) =>
-        claim.line === "8a" || claim.line === "8b" || claim.line === "8c"
+        ["8a", "8b", "8c", "8d", "8e", "8f"].includes(claim.line)
       )
       .map((claim) => claim.vendor_registration_number),
   );

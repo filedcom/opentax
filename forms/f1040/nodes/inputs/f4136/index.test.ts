@@ -758,6 +758,240 @@ Deno.test("Form 4136: nonexempt noncommercial aviation line 8c requires Certific
   }
 });
 
+Deno.test("Form 4136: noncommercial aviation lines 8d and 8e separate Waiver L from government Certificate P", () => {
+  const vendorBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Aviation Vendor",
+    principal_activity_code: "424720",
+    equipment_make: "Example",
+    equipment_model: "Fuel Truck",
+    equipment_type: "aviation refueler",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const waiverSale = {
+    proof_kind: "waiver_l" as const,
+    sale_record_reference: "AV-09-001",
+    sale_date: "2025-06-12",
+    buyer_name: "Example Aircraft Operator",
+    buyer_address: "10 Airport Road, Wilmington, DE 19801",
+    gallons: 100,
+    noncommercial_aviation_confirmed: true as const,
+    type_of_use: "09" as const,
+    waiver_l_selected_use_code: "09" as const,
+    waiver_l: {
+      kind: "single_purchase" as const,
+      record_reference: "Waiver L-09-001",
+      invoice_or_delivery_ticket_number: "AV-09-001",
+      waived_gallons: 100,
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+    },
+  };
+  const waiverClaim = {
+    line: "8d" as const,
+    type_of_use: "09",
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    excise_tax_rate_per_gallon: 0.244,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    nontaxable_noncommercial_aviation_sales: [waiverSale],
+  };
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [waiverClaim] }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: vendorBusiness, claims: [waiverClaim] }).outputs[0]
+      .fields.line12_fuel_tax_credit,
+    24.3,
+  );
+  const secondWaiverClaim = {
+    ...waiverClaim,
+    type_of_use: "10",
+    nontaxable_noncommercial_aviation_sales: [{
+      ...waiverSale,
+      sale_record_reference: "AV-10-001",
+      type_of_use: "10" as const,
+      waiver_l_selected_use_code: "10" as const,
+      waiver_l: {
+        kind: "account_period" as const,
+        record_reference: "Waiver L-10-001",
+        account_or_order_number: "ACCT-10",
+        effective_date: "2025-01-01",
+        expiration_date: "2025-12-31",
+        signed_by_buyer_confirmed: true as const,
+        held_unexpired_when_claimed_confirmed: true as const,
+      },
+    }],
+  };
+  assertEquals(
+    parseInput({
+      business: vendorBusiness,
+      claims: [waiverClaim, secondWaiverClaim],
+    }).success,
+    true,
+  );
+  assertEquals(
+    compute({
+      business: vendorBusiness,
+      claims: [waiverClaim, secondWaiverClaim],
+    })
+      .outputs[0].fields.line12_fuel_tax_credit,
+    48.6,
+  );
+  const governmentSale = {
+    proof_kind: "certificate_p" as const,
+    sale_record_reference: "AV-GOV-001",
+    sale_date: "2025-06-12",
+    buyer_name: "Example City",
+    buyer_address: "20 City Hall Road, Wilmington, DE 19801",
+    buyer_ein: "123456789",
+    gallons: 100,
+    noncommercial_aviation_confirmed: true as const,
+    type_of_use: "14" as const,
+    certificate_p_record_reference: "Certificate P-001",
+    certificate_p_unexpired_at_claim_confirmed: true as const,
+    certificate_information_believed_true: true as const,
+    state_credit_card_not_used_confirmed: true as const,
+    exclusive_government_use_confirmed: true as const,
+  };
+  const governmentClaim = {
+    ...waiverClaim,
+    line: "8e" as const,
+    type_of_use: "14",
+    excise_tax_rate_per_gallon: 0.219,
+    vendor_registration_number: "UV123456789",
+    nontaxable_noncommercial_aviation_sales: [governmentSale],
+  };
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [governmentClaim] }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: vendorBusiness, claims: [governmentClaim] }).outputs[0]
+      .fields.line12_fuel_tax_credit,
+    21.8,
+  );
+  for (
+    const invalid of [
+      { ...waiverClaim, vendor_registration_number: "UV123456789" },
+      { ...waiverClaim, vendor_tax_settlement: undefined },
+      { ...waiverClaim, excise_tax_rate_per_gallon: 0.219 },
+      {
+        ...waiverClaim,
+        nontaxable_noncommercial_aviation_sales: [{
+          ...waiverSale,
+          type_of_use: "10",
+        }],
+      },
+      {
+        ...waiverClaim,
+        nontaxable_noncommercial_aviation_sales: [{
+          ...waiverSale,
+          waiver_l_selected_use_code: "10",
+        }],
+      },
+      {
+        ...waiverClaim,
+        nontaxable_noncommercial_aviation_sales: [{
+          ...waiverSale,
+          waiver_l: { ...waiverSale.waiver_l, waived_gallons: 99 },
+        }],
+      },
+      { ...waiverClaim, nontaxable_noncommercial_aviation_sales: [] },
+      { ...governmentClaim, vendor_registration_number: "UA123456789" },
+      {
+        ...governmentClaim,
+        nontaxable_noncommercial_aviation_sales: [{
+          ...governmentSale,
+          certificate_p_record_reference: " ",
+        }],
+      },
+      {
+        ...governmentClaim,
+        nontaxable_noncommercial_aviation_sales: [{
+          ...governmentSale,
+          state_credit_card_not_used_confirmed: undefined,
+        }],
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [invalid] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: vendorBusiness,
+      claims: [waiverClaim, governmentClaim],
+    }).success,
+    false,
+  );
+  const foreignTradeClaim = {
+    line: "8f" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    foreign_trade_lust_tax_paid_confirmed: true as const,
+    foreign_trade_aviation_sale_references: ["AV-09-001"],
+  };
+  assertEquals(
+    parseInput({
+      business: vendorBusiness,
+      claims: [waiverClaim, foreignTradeClaim],
+    }).success,
+    true,
+  );
+  assertEquals(
+    compute({
+      business: vendorBusiness,
+      claims: [waiverClaim, foreignTradeClaim],
+    })
+      .outputs[0].fields.line12_fuel_tax_credit,
+    24.4,
+  );
+  for (
+    const invalid of [
+      {
+        ...foreignTradeClaim,
+        foreign_trade_lust_tax_paid_confirmed: undefined,
+      },
+      {
+        ...foreignTradeClaim,
+        foreign_trade_aviation_sale_references: ["AV-OTHER"],
+      },
+      {
+        ...foreignTradeClaim,
+        foreign_trade_aviation_sale_references: ["AV-09-001", "AV-09-001"],
+      },
+      { ...foreignTradeClaim, qualified_quantity: 99 },
+      { ...foreignTradeClaim, actual_fuel_cost: 299 },
+      { ...foreignTradeClaim, vendor_registration_number: "UA987654321" },
+      {
+        ...foreignTradeClaim,
+        vendor_tax_settlement: "tax_repaid_to_buyer" as const,
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [waiverClaim, invalid] })
+        .success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [foreignTradeClaim] })
+      .success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],

@@ -143,6 +143,18 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page3[0].Table_Line8[0].Line8c[0].ColE[0].f3_23[0]",
   );
   assertEquals(
+    names.line8d_type,
+    "topmostSubform[0].Page3[0].Table_Line8[0].Line8d[0].f3_26[0]",
+  );
+  assertEquals(
+    names.line8e_credit_dollars,
+    "topmostSubform[0].Page3[0].Table_Line8[0].Line8e[0].ColE[0].f3_39[0]",
+  );
+  assertEquals(
+    names.line8f_credit_dollars,
+    "topmostSubform[0].Page3[0].Table_Line8[0].Line8f[0].ColE[0].f3_47[0]",
+  );
+  assertEquals(
     names.line11c_quantity,
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
   );
@@ -274,6 +286,74 @@ Deno.test("Form 4136 PDF projects Certificate Q vendor line 8c", () => {
   assertEquals(result?.line8_registration_number, "UA123456789");
   assertEquals(result?.line8c_quantity, 1_000);
   assertEquals(result?.line8c_credit_dollars, "25");
+});
+
+Deno.test("Form 4136 PDF projects noncommercial aviation lines 8d through 8f with multi-use detail", () => {
+  const routes = [
+    { line: "8d", use: "09", rate: 0.244, reference: "AV-09" },
+    { line: "8d", use: "10", rate: 0.244, reference: "AV-10" },
+    { line: "8e", use: "11", rate: 0.219, reference: "AV-11" },
+  ] as const;
+  const claims = routes.map((route) => ({
+    line: route.line,
+    type_of_use: route.use,
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 3_000,
+    excise_tax_rate_per_gallon: route.rate,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    nontaxable_noncommercial_aviation_sales: [{
+      proof_kind: "waiver_l" as const,
+      sale_record_reference: route.reference,
+      sale_date: "2025-06-12",
+      buyer_name: "Example Aircraft Operator",
+      buyer_address: "10 Airport Road, Wilmington, DE 19801",
+      gallons: 1_000,
+      noncommercial_aviation_confirmed: true as const,
+      type_of_use: route.use,
+      waiver_l_selected_use_code: route.use,
+      waiver_l: {
+        kind: "single_purchase" as const,
+        record_reference: `Waiver L-${route.reference}`,
+        invoice_or_delivery_ticket_number: route.reference,
+        waived_gallons: 1_000,
+        signed_by_buyer_confirmed: true as const,
+        held_unexpired_when_claimed_confirmed: true as const,
+      },
+    }],
+  }));
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Aviation Vendor",
+      principal_activity_code: "424720",
+      equipment_make: "Example",
+      equipment_model: "Fuel Truck",
+      equipment_type: "aviation refueler",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [...claims, {
+      line: "8f",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      vendor_registration_number: "UA123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      foreign_trade_lust_tax_paid_confirmed: true,
+      foreign_trade_aviation_sale_references: ["AV-09"],
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 705 } });
+  assertEquals(result?.line8_registration_number, "UA123456789");
+  assertEquals(result?.line8d_type, "STMT");
+  assertEquals(result?.line8d_quantity, "STMT");
+  assertEquals(result?.line8d_credit_dollars, "486");
+  assertEquals(result?.line8e_type, "11");
+  assertEquals(result?.line8e_credit_dollars, "218");
+  assertEquals(result?.line8f_quantity, 1_000);
+  assertEquals(result?.line8f_credit_dollars, "1");
 });
 
 Deno.test("Form 4136 PDF maps line 7a government kerosene and appends buyers", async () => {

@@ -69,6 +69,9 @@ const creditReferenceNumber: Record<Line, string> = {
   "8a": "355",
   "8b": "417",
   "8c": "418",
+  "8d": "346",
+  "8e": "369",
+  "8f": "433",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -380,6 +383,17 @@ const fields: PdfFieldEntry[] = [
   text("line8c_quantity", 3, 20),
   ...moneyFields("line8c_cost", 3, 21),
   ...moneyFields("line8c_credit", 3, 23),
+  text("line8d_type", 3, 26),
+  text("line8d_quantity", 3, 28),
+  ...moneyFields("line8d_cost", 3, 29),
+  ...moneyFields("line8d_credit", 3, 31),
+  text("line8e_type", 3, 34),
+  text("line8e_quantity", 3, 36),
+  ...moneyFields("line8e_cost", 3, 37),
+  ...moneyFields("line8e_credit", 3, 39),
+  text("line8f_quantity", 3, 44),
+  ...moneyFields("line8f_cost", 3, 45),
+  ...moneyFields("line8f_credit", 3, 47),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -738,6 +752,9 @@ export function projectForm4136Fields(
       "8a",
       "8b",
       "8c",
+      "8d",
+      "8e",
+      "8f",
       "14a",
       "14b",
       "15a",
@@ -780,6 +797,9 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["8a"], "line8a");
   putClaimGroup(out, input, ["8b"], "line8b");
   putClaimGroup(out, input, ["8c"], "line8c");
+  putClaimGroup(out, input, ["8d"], "line8d");
+  putClaimGroup(out, input, ["8e"], "line8e");
+  putClaimGroup(out, input, ["8f"], "line8f");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
   putClaimGroup(out, input, ["15a"], "line15a");
@@ -792,7 +812,7 @@ export function projectForm4136Fields(
     claim.line === "7a" || claim.line === "7b" || claim.line === "7c"
   )?.vendor_registration_number;
   out.line8_registration_number = allForm4136Claims(input).find((claim) =>
-    claim.line === "8a" || claim.line === "8b" || claim.line === "8c"
+    ["8a", "8b", "8c", "8d", "8e", "8f"].includes(claim.line)
   )?.vendor_registration_number;
   out.line15_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "15a"

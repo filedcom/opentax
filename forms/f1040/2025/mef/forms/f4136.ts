@@ -179,6 +179,9 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l8a = onLine(input, "8a");
     const l8b = onLine(input, "8b");
     const l8c = onLine(input, "8c");
+    const l8d = onLine(input, "8d");
+    const l8e = onLine(input, "8e");
+    const l8f = onLine(input, "8f");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
     const l15a = onLine(input, "15a");
@@ -468,7 +471,8 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         ]),
         element(
           "KeroseneForAvnRegistrationNum",
-          [...l8a, ...l8b, ...l8c][0]?.vendor_registration_number,
+          [...l8a, ...l8b, ...l8c, ...l8d, ...l8e, ...l8f][0]
+            ?.vendor_registration_number,
         ),
         elements("KrsnUseCmrclAvnTxdAt219Grp", [
           element("SlsKrsnUsedInAvnTxd219GalsQty", qty(l8a)),
@@ -489,6 +493,23 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
           l8c.length ? element("ActualFuelCostAmt", cost(l8c)) : "",
           l8c.length
             ? credit("SlsKrsnNnxmptUseInAvnCrAmt", lineAmount(l8c), "418")
+            : "",
+        ]),
+        ...l8d.map((claim) => detail("KrsnOthNontxTxdAt244Grp", claim)),
+        l8d.length ? element("KrsnOthNontxTxd244ActlFlCstAmt", cost(l8d)) : "",
+        l8d.length
+          ? credit("SlsKrsnOthNontxTxd244CrAmt", lineAmount(l8d), "346")
+          : "",
+        ...l8e.map((claim) => detail("KrsnOthNontxTxdAt219Grp", claim)),
+        l8e.length ? element("KrsnOthNontxTxd219ActlFlCstAmt", cost(l8e)) : "",
+        l8e.length
+          ? credit("SlsKrsnOthNontxTxd219CrAmt", lineAmount(l8e), "369")
+          : "",
+        elements("LUSTTxSlsKrsnAvnFrgnTrdGrp", [
+          element("LUSTTxSlsKrsnAvnFrgnTrdGalsQty", qty(l8f)),
+          l8f.length ? element("ActualFuelCostAmt", cost(l8f)) : "",
+          l8f.length
+            ? credit("LUSTTxSlsKrsnAvnFrgnTrdCrAmt", lineAmount(l8f), "433")
             : "",
         ]),
         ...alternativeFuelTags.flatMap(

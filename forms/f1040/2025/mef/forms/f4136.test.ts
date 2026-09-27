@@ -659,6 +659,137 @@ Deno.test("Form 4136 XML emits nonexempt noncommercial aviation line 8c", () => 
   );
 });
 
+Deno.test("Form 4136 XML separates noncommercial aviation vendor tax rates on lines 8d and 8e", () => {
+  const claims = [
+    { line: "8d" as const, type_of_use: "09" as const, taxRate: 0.244 },
+    { line: "8e" as const, type_of_use: "10" as const, taxRate: 0.219 },
+  ].map((route, index) => ({
+    line: route.line,
+    type_of_use: route.type_of_use,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    excise_tax_rate_per_gallon: route.taxRate,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    nontaxable_noncommercial_aviation_sales: [{
+      proof_kind: "waiver_l" as const,
+      sale_record_reference: `AV-${index + 1}`,
+      sale_date: "2025-06-12",
+      buyer_name: "Example Aircraft Operator",
+      buyer_address: "10 Airport Road, Wilmington, DE 19801",
+      gallons: 100,
+      noncommercial_aviation_confirmed: true as const,
+      type_of_use: route.type_of_use,
+      waiver_l_selected_use_code: route.type_of_use,
+      waiver_l: {
+        kind: "single_purchase" as const,
+        record_reference: `Waiver L-${index + 1}`,
+        invoice_or_delivery_ticket_number: `AV-${index + 1}`,
+        waived_gallons: 100,
+        signed_by_buyer_confirmed: true as const,
+        held_unexpired_when_claimed_confirmed: true as const,
+      },
+    }],
+  }));
+  const xml = form4136.build({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Aviation Vendor",
+      principal_activity_code: "424720",
+      equipment_make: "Example",
+      equipment_model: "Fuel Truck",
+      equipment_type: "aviation refueler",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims,
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 46.1 } } });
+  assertStringIncludes(xml, "<KrsnOthNontxTxdAt244Grp>");
+  assertStringIncludes(xml, "<KrsnOthNontxTxdAt219Grp>");
+  assertStringIncludes(
+    xml,
+    "<NontaxableUseOfFuelTypeCd>09</NontaxableUseOfFuelTypeCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<NontaxableUseOfFuelTypeCd>10</NontaxableUseOfFuelTypeCd>",
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsKrsnOthNontxTxd244CrAmt creditReferenceNum="346">24</SlsKrsnOthNontxTxd244CrAmt>',
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsKrsnOthNontxTxd219CrAmt creditReferenceNum="369">22</SlsKrsnOthNontxTxd219CrAmt>',
+  );
+});
+
+Deno.test("Form 4136 XML links line 8f LUST credit to foreign-trade line 8d sales", () => {
+  const base = {
+    line: "8d" as const,
+    type_of_use: "09",
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 3_000,
+    excise_tax_rate_per_gallon: 0.244,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    nontaxable_noncommercial_aviation_sales: [{
+      proof_kind: "waiver_l" as const,
+      sale_record_reference: "AV-FT-001",
+      sale_date: "2025-06-12",
+      buyer_name: "Example Aircraft Operator",
+      buyer_address: "10 Airport Road, Wilmington, DE 19801",
+      gallons: 1_000,
+      noncommercial_aviation_confirmed: true as const,
+      type_of_use: "09" as const,
+      waiver_l_selected_use_code: "09" as const,
+      waiver_l: {
+        kind: "single_purchase" as const,
+        record_reference: "Waiver L-FT-001",
+        invoice_or_delivery_ticket_number: "AV-FT-001",
+        waived_gallons: 1_000,
+        signed_by_buyer_confirmed: true as const,
+        held_unexpired_when_claimed_confirmed: true as const,
+      },
+    }],
+  };
+  const xml = form4136.build({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Aviation Vendor",
+      principal_activity_code: "424720",
+      equipment_make: "Example",
+      equipment_model: "Fuel Truck",
+      equipment_type: "aviation refueler",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [base, {
+      line: "8f",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      vendor_registration_number: "UA123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      foreign_trade_lust_tax_paid_confirmed: true,
+      foreign_trade_aviation_sale_references: ["AV-FT-001"],
+    }],
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 244 } } });
+  assertStringIncludes(xml, "<LUSTTxSlsKrsnAvnFrgnTrdGrp>");
+  assertStringIncludes(
+    xml,
+    "<LUSTTxSlsKrsnAvnFrgnTrdGalsQty>1000</LUSTTxSlsKrsnAvnFrgnTrdGalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    '<LUSTTxSlsKrsnAvnFrgnTrdCrAmt creditReferenceNum="433">1</LUSTTxSlsKrsnAvnFrgnTrdCrAmt>',
+  );
+});
+
 Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
   const xml = form4136.build({
     ...activityContext,
