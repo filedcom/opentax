@@ -1,0 +1,402 @@
+{
+  "snapshot_utc": "2026-09-27T02:44:27.113530+00:00",
+  "source_pages": [
+    "https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information",
+    "https://www.irs.gov/tax-professionals/tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions"
+  ],
+  "files": [
+    {
+      "path": "draft/f1040.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 408372,
+      "sha256": "e044e765ace334c76bda7910bd3193fc813c7789d06340124359b885c98d58d0",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040s1.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040s1--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 285998,
+      "sha256": "a017a1b717d1c70ff8d831ef8b73c730e5b24f147c394c37f792035a9df22fad",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040s1a.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040s1a--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 167291,
+      "sha256": "e22aec7feb2f5b734e16ee74d70acfdfdc0d66a5292f69cf0ced3b87543d95ac",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040s2.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040s2--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 220330,
+      "sha256": "0e3d4faa4b96f692bc31119d2c86189c3d8b9263e8f3aaaf7c3da371887ebc56",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040s3.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040s3--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 235422,
+      "sha256": "5feb6f8d0f08191a2da153573d195fc354f385e26915b99b57d4588893b7cef0",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040s3a.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040s3a--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 148642,
+      "sha256": "787e1ae1eaa3e23a184074d0f437f6b2a8fe3f01290f366201f14eeecc82b8db",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sa.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sa--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 268032,
+      "sha256": "d49acff9afc2faa178b7bf1f70d826d03c2c6def43700880f8ae5bb8bb5a0ffa",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sb.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sb--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 244683,
+      "sha256": "aa6272f6b3b8a8c6a2aa6ef9d1069f1edb88fb9df4df60278d198da89cdfd93f",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sc.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sc--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 306693,
+      "sha256": "287b4510dd847c11f6cbbcc98fee05ac5ff187cc18e1413f8759a4a7cd802224",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sd.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sd--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 212300,
+      "sha256": "0df9af0711964b3198ea04bb0037b29d6afa85578a671553daed46251630b5f1",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040se.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040se--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 258978,
+      "sha256": "0bee231f1ecb2470fb884b1f9cee7707eddee8994ce479fc563850b2dd3c5aed",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sei.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sei--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 281944,
+      "sha256": "fc9784fd1f64b2ea53e86d9a23a2b946f317c1bb92885e18f8a614252dcf7ef3",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sse.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sse--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 254304,
+      "sha256": "a59fa5dcf2f0a8a5a71c46aa3837e9e8e605eeecc0a666bcb784a368900d141c",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sh.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sh--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 281622,
+      "sha256": "0fbdf600ded379d23f381286a3f9b35d15af062c83072b50de149d5c5afb3077",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040sf.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040sf--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 301343,
+      "sha256": "a8e1d7845b56c8aab175a5b721993569b74f9e850c24874ff6a739174d94bcc7",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1040s8.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1040s8--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 65489,
+      "sha256": "0638b2863bdaeadfd3fccee12a9145bf92a442d8de156584c5602cc7e3881422",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f2441.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f2441--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 296519,
+      "sha256": "67eca7567ce5ff06e72d40a07db487f406da33139e664c0c0d9c67a4e31e9385",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f4562.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f4562--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 300941,
+      "sha256": "c76264c1ecc0792abc12315eed87802cd934dc18d072c2d72e94180591ca94ef",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f6251.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f6251--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 295209,
+      "sha256": "a547fc9d629e1f04bdc30e088214c716667b88cb1b45447c580c0ae33095b5cc",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f8839.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8839--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 264780,
+      "sha256": "b8eefaaeb9faad7972f65d9f1457d8eb15ce9b2b2c84ee042620e95614384770",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f8889.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8889--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 244837,
+      "sha256": "c94550b7d4b735b11e9901c5dbff5dab0aa6dcbbefab04864c61cd5275cafec8",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f8962.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8962--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 226489,
+      "sha256": "5b692171ee43a4596eabfcaad83bea920e6356c492656a1648f2aaf018cd1d35",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f8995.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8995--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 237458,
+      "sha256": "d698390e2990de21b8df9ccb485f9309b817707d4871581118337bf7c1b14fd8",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f8995a.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f8995a--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 300051,
+      "sha256": "ab37e54f8be99cbc3a2e3c338324b9450e51c4ea8ebbd8fc9a752ce7fab43a49",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "draft/f1062.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/f1062--dft.pdf",
+      "kind": "draft-form",
+      "status": "downloaded",
+      "bytes": 120028,
+      "sha256": "c0fd780deeeced1dabbc2298ebcedbf2ebdd44261c5afe33b5fca7b28ffc4165",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "ats/1040-scenario-01.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-1-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 190811,
+      "sha256": "9c50096468515ff0e46698cf24c342cf68acdf59dca6cb884e01dfa1603cf5c4"
+    },
+    {
+      "path": "ats/1040-scenario-02.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-%20scenario-2-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 431073,
+      "sha256": "b2d58c490b489294cb80137c5755e28f2bba806aa9329248311b81e58d932915"
+    },
+    {
+      "path": "ats/1040-scenario-03.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-3-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 537503,
+      "sha256": "c52160656064f83aed27b72683d3247b654f3c81b30f02a4c50ac76041c1bc79"
+    },
+    {
+      "path": "ats/1040-scenario-04.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-4-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 471480,
+      "sha256": "ae8c0996690b9dc0430f2ecb86a6cf6d5f907be18a80a4c17719ee597bb1599f"
+    },
+    {
+      "path": "ats/1040-scenario-05.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-5-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 291834,
+      "sha256": "fb94f6a34c6419243e2ca55a94e060a6664bc2730ebfc20cbaef1a893031b30b"
+    },
+    {
+      "path": "ats/1040-scenario-06.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-6-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 548379,
+      "sha256": "43e5eeb8eb511cab7eda09148c57df9cdc962b0dcdb88365236536a408ba01fa"
+    },
+    {
+      "path": "ats/4868-scenario-07.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-7-09012026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 254913,
+      "sha256": "d1ae6dab30474fee750fa7be5b349c206a8cd99a08d5c7504ff543e696b3a9a4"
+    },
+    {
+      "path": "ats/1040ss-scenario-08.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-SS-mef-ats-scenario-8-09012026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 518922,
+      "sha256": "b9e39ec27716f65bd8764be89c064c13d0b2a4b121eb47af48d5d6ffa1331e11"
+    },
+    {
+      "path": "ats/1040ss-scenario-09.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-SS-mef-ats-scenario-9-09012026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 374851,
+      "sha256": "7653b9a2a37de218395fd522f78441210089b4ed11e454bc94e10f1079a64844"
+    },
+    {
+      "path": "ats/1040-scenario-12.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/ty26-1040-ats-scenario-12.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 2139278,
+      "sha256": "6d44ae53fe842b804258ca1a49400f0cc5d15a17b6fdb0cc74c016927b54c9bf"
+    },
+    {
+      "path": "ats/1040nr-scenario-01.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040NR-mef-ats-scenario-1-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 426337,
+      "sha256": "7a853d8dc4bcecc4369c16dbfe3eee23435a7038298247d55b23c05998fc6761"
+    },
+    {
+      "path": "ats/1040nr-scenario-02.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-NR-mef-ats-scenario-2-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 588857,
+      "sha256": "2054e79364a18afd0a6ed34ec08e23915f529e7c67440aeea9c1c97222dde9ad"
+    },
+    {
+      "path": "ats/1040nr-scenario-03.pdf",
+      "url": "https://www.irs.gov/pub/irs-efile/1040-NR-mef-ats-scenario-3-09222026.pdf",
+      "kind": "draft-ats",
+      "status": "downloaded",
+      "bytes": 355496,
+      "sha256": "5ee9bb55a0acd9b00c6e0d8f76138edaa1799ade51610e483846d017d76de447"
+    },
+    {
+      "path": "mef/accepted-forms.xlsx",
+      "url": "https://www.irs.gov/pub/irs-efile/tax-year-2026-accepted-forms-schedules-individual-tax-returns-extensions.xlsx",
+      "kind": "mef-inventory",
+      "status": "downloaded",
+      "bytes": 33414,
+      "sha256": "78fb38665d0d9c39158e1c459b5ff0f46d43c29da23691048d86951d3c6ed106"
+    },
+    {
+      "path": "mef/forms-attachments.xlsx",
+      "url": "https://www.irs.gov/pub/irs-efile/tax-year-2026-forms-attachments-1040-series-extensions-09242026.xlsx",
+      "kind": "mef-inventory",
+      "status": "downloaded",
+      "bytes": 218747,
+      "sha256": "5988888eb2a95c528084ed2d6320600701fc4dca47d2ac49772ffa4d25c0aec9"
+    },
+    {
+      "path": "authorities/rp-25-32.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 260406,
+      "sha256": "e9ada115fb43a4af5ea326ca91edd40ab0bf29b9be01d2c13d7b8fa96214635b"
+    },
+    {
+      "path": "authorities/rp-25-19.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-25-19.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 65328,
+      "sha256": "ff2ba4bac62ef6940c57578d70f8be88ff3898ac806e921ad52787c11da35bf4"
+    },
+    {
+      "path": "authorities/rp-25-25.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-25-25.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 110035,
+      "sha256": "ba950034c6d6d7f6ca70b9dc94754d923acc34f3d5646593fd12340fb6b67697"
+    },
+    {
+      "path": "authorities/n-25-67.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 133701,
+      "sha256": "1eea8f141b0cddd182f9f09b3bc8ffad683d27ceb806dfc6da126811dc0a1f8d"
+    },
+    {
+      "path": "authorities/n-26-10.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n-26-10.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 105177,
+      "sha256": "8fdda8f02245c38134e08fca50238732c74b0ae693c408252dedf96623d4977a"
+    },
+    {
+      "path": "authorities/irb26-29.pdf",
+      "url": "https://www.irs.gov/pub/irs-irbs/irb26-29.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 944507,
+      "sha256": "ba14ab76bf382cad90b7feb20fc443c4bda5e3743878fb4f6b2d79b8c8ef18cd"
+    }
+  ]
+}
