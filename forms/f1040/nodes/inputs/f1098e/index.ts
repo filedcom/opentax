@@ -9,10 +9,10 @@ import { schedule1 } from "../../outputs/schedule1/index.ts";
 import { agi_aggregator } from "../../intermediate/aggregation/agi_aggregator/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// TY2025 — Form 1098-E: Student Loan Interest Statement
-// Deduction flows to Schedule 1 Part II Line 19 and AGI Aggregator.
+// Form 1098-E: Student Loan Interest Statement. The source uses a stable
+// semantic key; the year-specific Schedule 1 node chooses the printed line.
 // IRC §221: student loan interest deduction, capped at $2,500.
-// MAGI phaseout is handled separately (phaseout node not yet implemented).
+// The AGI aggregator applies the configured tax-year MAGI phaseout.
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 

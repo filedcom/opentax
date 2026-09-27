@@ -18,6 +18,9 @@ for the implementation contract.
 - [`PDF-SCHEDULE2-6251-MAP.md`](PDF-SCHEDULE2-6251-MAP.md),
   `pdf-fields-f1040s2.csv`, and `pdf-fields-f6251.csv`: the 2026 additional-tax
   and AMT attachment field maps and remaining print-detail gaps.
+- [`SCHEDULE1-GRAPH.md`](SCHEDULE1-GRAPH.md) and
+  `pdf-fields-f1040s1.csv`: the 2026 Schedule 1 source/AGI contract, changed
+  line meanings, and 73 draft PDF widgets.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
 - [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated

@@ -174,6 +174,14 @@ The shared 1099-INT node now sends box 2 early-withdrawal penalties to AGI as
 well as printed Schedule 1; its focused TY2025 and TY2026-related tests pass.
 Full 1099-INT input registration awaits the Schedule B disclosure and
 dependent-node work in that contract.
+The [Schedule 1 graph contract](SCHEDULE1-GRAPH.md) inventories 73 draft PDF
+widgets and the source fields whose old line names no longer describe 2026.
+The dedicated 2026 Schedule 1 sink and draft PDF now reconcile a 1099-INT
+box 2 penalty to 1040 line 10. A graph-generated five-page
+1040/Schedule 1/Schedule B PDF passed visual QA. Public 1099-INT input,
+other Schedule 1 source lines, and MeF remain open. Form 1098-E is now a
+registered TY2026 input: its raw student-loan deduction is phased out in
+AGI, printed on 2026 Schedule 1 line 21, and reconciled to 1040 line 10.
 The dedicated 2026 Schedule B node preserves gross interest and labeled
 adjustments, validates its line 2/4 totals and required Part III answers, and
 routes taxable interest to AGI, NIIT, and the final 1040. A temporary graph

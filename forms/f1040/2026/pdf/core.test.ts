@@ -27,19 +27,19 @@ Deno.test("TY2026 core PDF appends required Schedule 3-A from a calculated credi
     .fields;
   const schedule =
     result.outputs.find((output) => output.nodeType === "schedule3a")!.fields;
-  const bytes = await buildCorePdfBytes2026(f1040, schedule);
+  const bytes = await buildCorePdfBytes2026({ f1040, schedule3a: schedule });
   const pdf = await PDFDocument.load(bytes);
   assertEquals(pdf.getPageCount(), 3);
   await assertRejects(
-    () => buildCorePdfBytes2026(f1040),
+    () => buildCorePdfBytes2026({ f1040 }),
     Error,
     "presence disagrees",
   );
   await assertRejects(
     () =>
-      buildCorePdfBytes2026(f1040, {
-        ...schedule,
-        line6_federal_public_benefit: 601,
+      buildCorePdfBytes2026({
+        f1040,
+        schedule3a: { ...schedule, line6_federal_public_benefit: 601 },
       }),
     Error,
     "line 32b",
@@ -59,7 +59,7 @@ Deno.test("TY2026 core PDF omits Schedule 3-A without a relevant credit", async 
   });
   const f1040 = result.outputs.find((output) => output.nodeType === "f1040")!
     .fields;
-  const pdf = await PDFDocument.load(await buildCorePdfBytes2026(f1040));
+  const pdf = await PDFDocument.load(await buildCorePdfBytes2026({ f1040 }));
   assertEquals(pdf.getPageCount(), 2);
 });
 
@@ -93,19 +93,19 @@ Deno.test("TY2026 core PDF appends and reconciles required Schedule B", async ()
   const f1040 = result.outputs.find((output) => output.nodeType === "f1040")!
     .fields;
   const pdf = await PDFDocument.load(
-    await buildCorePdfBytes2026(f1040, undefined, schedule),
+    await buildCorePdfBytes2026({ f1040, scheduleB: schedule }),
   );
   assertEquals(pdf.getPageCount(), 3);
   await assertRejects(
-    () => buildCorePdfBytes2026(f1040),
+    () => buildCorePdfBytes2026({ f1040 }),
     Error,
     "needs Schedule B",
   );
   await assertRejects(
     () =>
-      buildCorePdfBytes2026(f1040, undefined, {
-        ...schedule,
-        print_line4_total: 1_800,
+      buildCorePdfBytes2026({
+        f1040,
+        scheduleB: { ...schedule, print_line4_total: 1_800 },
       }),
     Error,
     "disagrees with Form 1040",
@@ -142,16 +142,16 @@ Deno.test("TY2026 core PDF appends Schedule 2 and Form 6251 for AMT", async () =
     taking_standard_deduction: true,
   }).outputs.find((entry) => entry.nodeType === "form6251")!.fields;
   const pdf = await PDFDocument.load(
-    await buildCorePdfBytes2026(f1040, undefined, undefined, schedule2, filed),
+    await buildCorePdfBytes2026({ f1040, schedule2, form6251: filed }),
   );
   assertEquals(pdf.getPageCount(), 6);
   await assertRejects(
-    () => buildCorePdfBytes2026(f1040),
+    () => buildCorePdfBytes2026({ f1040 }),
     Error,
     "needs Schedule 2",
   );
   await assertRejects(
-    () => buildCorePdfBytes2026(f1040, undefined, undefined, schedule2),
+    () => buildCorePdfBytes2026({ f1040, schedule2 }),
     Error,
     "Form 6251 disagrees",
   );

@@ -28,6 +28,7 @@ import { form_1116 } from "../../forms/form_1116/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { schedule1a } from "../../forms/schedule1a/index.ts";
+import { schedule1 } from "../../../outputs/schedule1/index.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
 // executor pending dict. Declaring them accumulable prevents Zod parse failure.
@@ -487,6 +488,7 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     form8582,
     form_1116,
     schedule1a,
+    schedule1,
   ]);
 
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
@@ -520,6 +522,20 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
         },
         ...(line8 !== 0
           ? [{ nodeType: "f1040", fields: { line8_additional_income: line8 } }]
+          : []),
+        ...(line8 !== 0 || line10 !== 0 ||
+            input.line19_student_loan_interest !== undefined
+          ? [{
+            nodeType: "schedule1",
+            fields: {
+              agi_schedule1_line10: line8,
+              agi_schedule1_line26: line10,
+              line21_student_loan_interest_from_agi: computeAdjustedSli(
+                input,
+                cfg,
+              ),
+            },
+          }]
           : []),
       ]
       : [

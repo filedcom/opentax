@@ -7,7 +7,7 @@ from pypdf import PdfReader
 
 
 ROOT = Path(__file__).resolve().parent
-SLUGS = ("f1040", "f1040s2", "f1040s3a", "f1040sb", "f6251")
+SLUGS = ("f1040", "f1040s1", "f1040s2", "f1040s3a", "f1040sb", "f6251")
 
 
 def full_name(annotation):

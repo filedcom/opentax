@@ -116,6 +116,15 @@ The [interest graph contract](../../../docs/ty2026/INTEREST-GRAPH.md) uses
 the pinned 2026 Schedule B instructions to map every 1099-INT branch and the
 filing decision before that source is exposed as a TY2026 input. Box 2 now
 reaches AGI as well as Schedule 1 in the shared source node.
+`nodes/schedule1.ts` maps that penalty and AGI-adjusted student-loan
+interest to the 2026 printed lines. It rejects identified legacy source
+keys whose old names would print the wrong line. `pdf/schedule1.ts` fills
+the two printed draft pages and reconciles lines 10/26 to Form 1040 lines
+8/10; the core PDF builder takes a named attachment object. The
+[Schedule 1 contract](../../../docs/ty2026/SCHEDULE1-GRAPH.md) records the
+remaining source and print-detail work.
+Form 1098-E is a registered TY2026 input. The AGI calculation applies its
+2026 phaseout before Schedule 1 line 21 and Form 1040 line 10 are printed.
 The dedicated `nodes/schedule_b.ts` is registered and now consumes gross
 interest with labeled adjustments, reconciles its lines, determines the
 modeled filing and Part III triggers, and sends taxable interest through AGI

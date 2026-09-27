@@ -12,7 +12,7 @@ before calling this an accepted return path.
 | --- | --- | --- |
 | 1099-INT boxes 1, 3, 10, taxable bond premium election, nominee/accrued-interest/OID adjustments | `f1099int` → `schedule_b` → AGI line 2b and 1040 line 2b | The source emits gross payer and labeled adjustment data; the 2026 Schedule B node reconciles it. Its draft PDF fills the printed schedule and continuation pages. Finish MeF and the public input route for filing and disclosures. |
 | Box 8 less box 13 tax-exempt bond premium | `f1099int` → 1040 line 2a and AGI Social Security worksheet input | Verify gross and net tax-exempt amounts and any 1099-OID or 1099-DIV contributions before calculating Social Security taxability. |
-| Box 2 early-withdrawal penalty | `f1099int` → Schedule 1 line 18 and AGI adjustments | Both destinations now receive box 2; test line 10, AGI, tax, and printed Schedule 1 in the registered graph. |
+| Box 2 early-withdrawal penalty | `f1099int` → Schedule 1 line 18 and AGI adjustments | A focused graph now reaches 1040 line 10 and AGI; the five-page 1040/Schedule 1/Schedule B PDF passed visual QA. The public 1099-INT input and MeF attachments remain open. |
 | Box 4 federal withholding | `f1099int` → 1040 line 25b | Reconcile all 1099 withholding, line 25d, and refund or balance. |
 | Box 9 private-activity bond interest | `f1099int` → Form 6251 line 2g; Form 4952 when investment property is affirmed | Audit 2026 AMT fields, source restrictions, and tax feedback before registering this route. |
 | Box 6 foreign tax | `f1099int` → Form 1116 with verified foreign-source interest and IRS country code | Finish 2026 credit, Schedule 3, and 1040 line 20; map the attachment to the selected MeF schema. |

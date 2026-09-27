@@ -1,6 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 import { buildForm6251PdfBytes2026 } from "./f6251.ts";
+import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
@@ -13,14 +14,24 @@ function amount(fields: Record<string, unknown>, key: string): number {
   return value;
 }
 
+interface CorePdfInput2026 {
+  readonly f1040: Record<string, unknown>;
+  readonly schedule1?: Record<string, unknown>;
+  readonly schedule2?: Record<string, unknown>;
+  readonly schedule3a?: Record<string, unknown>;
+  readonly scheduleB?: Record<string, unknown>;
+  readonly form6251?: Record<string, unknown>;
+}
+
 /** The current main-form and checked TY2026 attachment PDF slice. */
-export async function buildCorePdfBytes2026(
-  f1040: Record<string, unknown>,
-  schedule3a?: Record<string, unknown>,
-  scheduleB?: Record<string, unknown>,
-  schedule2?: Record<string, unknown>,
-  form6251?: Record<string, unknown>,
-): Promise<Uint8Array> {
+export async function buildCorePdfBytes2026({
+  f1040,
+  schedule1,
+  schedule2,
+  schedule3a,
+  scheduleB,
+  form6251,
+}: CorePdfInput2026): Promise<Uint8Array> {
   const claimsRelevantCredit = [
     "line27a_eic",
     "line28_actc",
@@ -63,6 +74,15 @@ export async function buildCorePdfBytes2026(
   }
   const optionalAmount = (fields: Record<string, unknown>, key: string) =>
     fields[key] === undefined ? 0 : amount(fields, key);
+  if (
+    !schedule1 &&
+    (optionalAmount(f1040, "line8_additional_income") !== 0 ||
+      optionalAmount(f1040, "line10_adjustments") !== 0)
+  ) {
+    throw new Error(
+      "TY2026 core PDF needs Schedule 1 for income or adjustments",
+    );
+  }
   if (
     !scheduleB &&
     (optionalAmount(f1040, "line2b_taxable_interest") > 1_500 ||
@@ -113,6 +133,11 @@ export async function buildCorePdfBytes2026(
   const ssn = String(f1040.taxpayer_ssn ?? "");
   const mainBytes = await buildF1040PdfBytes2026(f1040);
   const parts = [mainBytes];
+  if (schedule1) {
+    parts.push(
+      await buildSchedule1PdfBytes2026(schedule1, f1040, { name, ssn }),
+    );
+  }
   if (schedule2) {
     parts.push(await buildSchedule2PdfBytes2026(schedule2, { name, ssn }));
   }
