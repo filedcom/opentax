@@ -141,10 +141,10 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
   if (
     (input.federal_estate_tax ?? 0) > 0 &&
     input.elect_capital_gain === true &&
-    capGain > 0
+    input.elect_10yr_averaging !== true
   ) {
     throw new Error(
-      "form4972: allocate federal estate tax to capital gain before making both elections",
+      "form4972: Part II-only estate tax needs ordinary-income reporting review",
     );
   }
 }
@@ -251,10 +251,24 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       ? Math.round(deathBenefit * capitalGain / taxableAmount)
       : 0;
     const ordinaryDeathBenefit = deathBenefit - deathBenefitCapitalShare;
+    const federalEstateTax = Math.round(input.federal_estate_tax ?? 0);
+    const estateTaxCapitalShare = electCapGain && taxableAmount > 0
+      ? Math.round(federalEstateTax * capitalGain / taxableAmount)
+      : 0;
+    const ordinaryEstateTax = federalEstateTax - estateTaxCapitalShare;
+    if (
+      deathBenefitCapitalShare + estateTaxCapitalShare > capitalGain ||
+      ordinaryDeathBenefit + ordinaryEstateTax >
+        taxableAmount - (electCapGain ? capitalGain : 0)
+    ) {
+      throw new Error(
+        "form4972: death benefit and estate tax exceed their allocated distribution portions",
+      );
+    }
 
     // Part II: 20% tax on pre-1974 capital gain (only if elected and > 0)
     const capitalGainElected = electCapGain
-      ? capitalGain - deathBenefitCapitalShare
+      ? capitalGain - deathBenefitCapitalShare - estateTaxCapitalShare
       : 0;
     const partIITaxAmt = electCapGain ? partIITax(capitalGainElected) : 0;
 
@@ -269,7 +283,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
         ordinaryIncome,
         ordinaryDeathBenefit,
         Math.round(input.annuity_actuarial_value ?? 0),
-        Math.round(input.federal_estate_tax ?? 0),
+        ordinaryEstateTax,
       )
       : undefined;
     const totalTax = Math.round(partIITaxAmt + (partIII?.line29 ?? 0));
@@ -306,7 +320,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
                 }
                 : {}),
               line17: partIII.line17,
-              line18: Math.round(input.federal_estate_tax ?? 0),
+              line18: ordinaryEstateTax,
               line19: partIII.line19,
               ...(partIII.line20 > 0
                 ? { line20: partIII.line20, line21: partIII.line21 }

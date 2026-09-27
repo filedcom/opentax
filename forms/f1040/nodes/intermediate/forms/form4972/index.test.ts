@@ -168,6 +168,53 @@ Deno.test("Form 4972 estate tax reduces line 19 before averaging", () => {
   assertEquals(result.tax, 440);
 });
 
+Deno.test("Form 4972 combined election allocates federal estate tax to lines 6 and 18", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    federal_estate_tax: 4_000,
+    beneficiary_distribution: true,
+    elect_capital_gain: true,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line6, 28_800);
+  assertEquals(result.lines?.line7, 5_760);
+  assertEquals(result.lines?.line18, 2_800);
+  assertEquals(result.lines?.line19, 67_200);
+  assertEquals(result.agi, undefined);
+});
+
+Deno.test("Form 4972 combined election allocates death benefit and estate tax separately", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    death_benefit_exclusion: 5_000,
+    federal_estate_tax: 4_000,
+    beneficiary_distribution: true,
+    participant_died_before_1996_08_21: true,
+    elect_capital_gain: true,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line6, 27_300);
+  assertEquals(result.lines?.line9, 3_500);
+  assertEquals(result.lines?.line18, 2_800);
+});
+
+Deno.test("Form 4972 Part II-only estate tax remains stopped", () => {
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 100_000,
+        capital_gain_amount: 30_000,
+        federal_estate_tax: 4_000,
+        beneficiary_distribution: true,
+        elect_capital_gain: true,
+      }),
+    Error,
+    "Part II-only estate tax needs ordinary-income reporting review",
+  );
+});
+
 Deno.test("Form 4972 rejects capital gain above taxable distribution", () => {
   assertThrows(() =>
     calculated({
