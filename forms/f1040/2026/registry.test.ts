@@ -48,16 +48,15 @@ const dependentChild = {
   filed_joint_return_except_refund_only: false,
 };
 
-const creditLimitWorksheet = {
-  schedule3_line1: 0,
-  schedule3_line2: 0,
-  schedule3_line3: 0,
-  schedule3_line4: 0,
-  schedule3_line6d: 0,
-  schedule3_line6f: 0,
-  schedule3_line6l: 0,
-  schedule3_line6m: 0,
-  worksheet_b_applies: false,
+const earnedIncomeWorksheet = {
+  form1040_line1z_wages: 70_000,
+  nontaxable_combat_pay: 0,
+  schedule_c_statutory_employee_income: 0,
+  nonfarm_schedule_c_and_k1_net: 0,
+  farm_schedule_f_and_k1_net: 0,
+  farm_optional_method_used: false,
+  excluded_medicaid_waiver_payments: 0,
+  schedule1_line15_se_deduction: 0,
 };
 
 Deno.test("TY2026 Form 5695 carryforward reaches Schedule 3, Form 1040, and PDFs", async () => {
@@ -95,21 +94,22 @@ Deno.test("TY2026 zero tax preserves the Form 5695 carryforward to 2027", async 
   assertEquals(pdf.getPageCount(), 4);
 });
 
-Deno.test("TY2026 Form 5695 with a dependent waits for provisional child credit", () => {
+Deno.test("TY2026 Form 5695 uses Worksheet B before final child credit", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: { ...filer, dependents: [dependentChild] },
     w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
     f5695: { source_tax_year: 2025, line16_unused_credit: 200 },
-    f8812: { credit_limit_worksheet_2026: creditLimitWorksheet },
+    f8812_facts: { earned_income_worksheet: earnedIncomeWorksheet },
   }, context);
-  assertEquals(
-    result.diagnostics.some((diagnostic) =>
-      diagnostic.nodeType === "credit_resolution" &&
-      diagnostic.message.includes("provisional Schedule 8812")
-    ),
-    true,
-  );
-  assertEquals(result.pending.form5695, undefined);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form5695.line3_credit, 200);
+  assertEquals(result.pending.f8812.worksheetBLine14, 500);
+  assertEquals(result.pending.f8812.line14, 2_200);
+  assertEquals(result.pending.schedule3.line5a_residential_clean_energy, 200);
+  assertEquals(result.pending.f1040.line19_child_tax_credit, 2_200);
+  assertEquals(result.pending.f1040.line20_nonrefundable_credits, 200);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 6);
 });
 
 Deno.test("TY2026 broker and digital asset trades reach Schedule D and Form 8949 PDFs", async () => {
@@ -481,9 +481,6 @@ Deno.test("TY2026 registered dependent reaches Schedule 8812, Form 1040, and PDF
       dependents: [dependentChild],
     },
     w2: [{ box1_wages: 80_000, box2_fed_withheld: 10_000 }],
-    f8812: {
-      credit_limit_worksheet_2026: creditLimitWorksheet,
-    },
   }, context);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f8812.line4, 1);
@@ -529,7 +526,6 @@ Deno.test("TY2026 phased-out CTC keeps the dependent row without Schedule 8812 P
   const result = execute(buildExecutionPlan(registry), registry, {
     general: { ...filer, dependents: [dependentChild] },
     w2: [{ box1_wages: 300_000, box2_fed_withheld: 60_000 }],
-    f8812: { credit_limit_worksheet_2026: creditLimitWorksheet },
   }, context);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.f8812.file_schedule_8812, false);

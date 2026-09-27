@@ -121,6 +121,7 @@ class Schedule3Node2026 extends TaxNode<typeof schedule3Input2026Schema> {
           line6m_prev_owned_clean_vehicle_credit: lines.line6m,
           line8_before_form5695: lines.line8,
           line15_total: lines.line15,
+          line11_excess_ss: input.line11_excess_ss ?? 0,
         },
       },
     )];

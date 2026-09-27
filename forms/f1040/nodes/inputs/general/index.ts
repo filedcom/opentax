@@ -915,6 +915,7 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
         fields: {
           qualifying_children_count: counts.qualifying_child_tax_credit_count,
           other_dependents_count: counts.other_dependent_count,
+          filing_status: parsed.filing_status,
         },
       });
     }

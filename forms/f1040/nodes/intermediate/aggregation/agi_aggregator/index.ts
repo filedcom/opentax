@@ -491,6 +491,10 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     schedule1,
   ]);
 
+  override get outputNodeTypes(): readonly string[] {
+    return [...super.outputNodeTypes, "credit_resolution"];
+  }
+
   compute(ctx: NodeContext, rawInput: AgiInput): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
@@ -556,6 +560,9 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
 
     const outputs: NodeOutput[] = [
       ...yearOutputs,
+      ...(ctx.taxYear === 2026
+        ? [{ nodeType: "credit_resolution", fields: { agi } }]
+        : []),
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation

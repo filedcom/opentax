@@ -200,6 +200,11 @@ export const inputSchema = z.object({
   auto_earned_income: z.number().nonnegative().optional(),
   // Net self-employment profit for ACTC earned income (from schedule_c node)
   auto_se_earned_income: z.number().nonnegative().optional(),
+  auto_puerto_rico_excluded_income: z.number().nonnegative().optional(),
+  auto_form_2555_amounts: z.number().nonnegative().optional(),
+  auto_form_4563_amount: z.number().nonnegative().optional(),
+  auto_has_form_2555: z.boolean().optional(),
+  auto_bona_fide_pr_resident: z.boolean().optional(),
   auto_schedule2_line16c: z.number().nonnegative().optional(),
   auto_schedule2_line17c: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
@@ -358,6 +363,11 @@ function buildAutoItem(input: F8812Input): F8812Item | null {
     earned_income:
       (input.auto_earned_income ?? 0) + (input.auto_se_earned_income ?? 0) ||
       undefined,
+    puerto_rico_excluded_income: input.auto_puerto_rico_excluded_income,
+    form_2555_amounts: input.auto_form_2555_amounts,
+    form_4563_amount: input.auto_form_4563_amount,
+    has_form_2555: input.auto_has_form_2555,
+    bona_fide_pr_resident: input.auto_bona_fide_pr_resident,
   };
 }
 

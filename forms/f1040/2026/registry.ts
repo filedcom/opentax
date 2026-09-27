@@ -14,6 +14,7 @@ import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_
 import { start } from "./start.ts";
 import { f1040_2026_node } from "./nodes/f1040.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
+import { f8812_facts_2026 } from "./nodes/f8812_facts.ts";
 import { f1099div_2026 } from "./nodes/f1099div.ts";
 import { f1099b_2026 } from "./nodes/f1099b.ts";
 import { f1099da_2026 } from "./nodes/f1099da.ts";
@@ -57,6 +58,7 @@ export const registry: NodeRegistry = {
   standard_deduction: standard_deduction_2026,
   income_tax_calculation,
   f8812: f8812_2026,
+  f8812_facts: f8812_facts_2026,
   f1040: f1040_2026_node,
   schedule1: schedule1_2026,
   schedule3a,

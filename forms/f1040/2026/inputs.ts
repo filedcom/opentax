@@ -23,7 +23,7 @@ import { f8949_2026, f8949Item2026Schema } from "./nodes/f8949.ts";
 import { schedule_h_2026 } from "./nodes/schedule_h.ts";
 import { f5695_2026 } from "./nodes/f5695.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
-import { f8812_2026 } from "./nodes/f8812.ts";
+import { f8812_facts_2026 } from "./nodes/f8812_facts.ts";
 import {
   claimInputSchema as schedule1AClaimInputSchema,
   schedule1a,
@@ -80,13 +80,8 @@ export const inputNodes: readonly InputNodeEntry[] = [
   },
   { node: form4137, inputSchema: form4137.inputSchema, isArray: false },
   {
-    node: f8812_2026,
-    inputSchema: f8812_2026.inputSchema.pick({
-      credit_limit_worksheet_2026: true,
-      line18a_earned_income: true,
-      earned_income_worksheet: true,
-      part_iib_2026: true,
-    }).strict(),
+    node: f8812_facts_2026,
+    inputSchema: f8812_facts_2026.inputSchema,
     isArray: false,
   },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },

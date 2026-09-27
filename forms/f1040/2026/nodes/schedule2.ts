@@ -46,6 +46,8 @@ class Schedule2Node2026 extends TaxNode<typeof schedule2Input2026Schema> {
       }),
       this.outputNodes.output(credit_resolution_2026, {
         schedule2_line3: lines.line3_part1_tax,
+        schedule2_line16c: lines.line16c_additional_fica,
+        schedule2_line17c: input.line17c_w2_uncollected_fica ?? 0,
       }),
       { nodeType: this.nodeType, fields: { ...input, ...lines } },
     ];

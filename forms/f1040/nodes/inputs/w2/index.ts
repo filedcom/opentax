@@ -605,6 +605,10 @@ class W2Node extends TaxNode<typeof inputSchema> {
     schedule1a,
   ]);
 
+  override get outputNodeTypes(): readonly string[] {
+    return [...super.outputNodeTypes, "credit_resolution"];
+  }
+
   compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
@@ -697,6 +701,12 @@ class W2Node extends TaxNode<typeof inputSchema> {
       outputs.push(
         this.outputNodes.output(f8812, { auto_earned_income: earnedIncome }),
       );
+      if (ctx.taxYear === 2026) {
+        outputs.push({
+          nodeType: "credit_resolution",
+          fields: { w2_earned_income: earnedIncome },
+        });
+      }
     }
 
     return { outputs };

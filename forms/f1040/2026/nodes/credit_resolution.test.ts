@@ -1,4 +1,5 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
+import { FilingStatus } from "../../nodes/types.ts";
 import { credit_resolution_2026 } from "./credit_resolution.ts";
 
 const base = {
@@ -15,6 +16,7 @@ const base = {
   line6m_prev_owned_clean_vehicle_credit: 0,
   line8_before_form5695: 80,
   line15_total: 0,
+  line11_excess_ss: 0,
 };
 
 Deno.test("TY2026 credit stage limits Form 5695 after earlier Schedule 3 credits", () => {
@@ -59,4 +61,25 @@ Deno.test("TY2026 credit stage includes Schedule 2 line 3 in Form 5695 limit", (
     result.outputs.find((output) => output.nodeType === "form5695")!.fields;
   assertEquals(form5695.line2_limit, 100);
   assertEquals(form5695.line3_credit, 100);
+});
+
+Deno.test("TY2026 Worksheet B requires complete earned-income facts", () => {
+  assertThrows(
+    () =>
+      credit_resolution_2026.compute(
+        { taxYear: 2026, formType: "f1040" },
+        {
+          schedule3_base: base,
+          carryforward_from_2025_line16: 200,
+          line16_income_tax: 4_000,
+          qualifying_children_count: 1,
+          other_dependents_count: 0,
+          filing_status: FilingStatus.Single,
+          agi: 70_000,
+          w2_earned_income: 70_000,
+        },
+      ),
+    Error,
+    "Earned Income Worksheet source facts",
+  );
 });
