@@ -392,7 +392,52 @@ Deno.test("form6251: zero line 6 skips the Form 2555 worksheet", () => {
   assertEquals(filed?.fields.line11_amt, 0);
 });
 
-Deno.test("form6251: Form 2555 with preferred gain still needs Part III refigure", () => {
+Deno.test("form6251: Form 2555 qualified dividends stack Part III before subtracting excluded-income tax", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 300_000,
+    regular_taxable_income: 300_000,
+    regular_tax: 40_000,
+    foreign_earned_income_exclusion: 100_000,
+    foreign_exclusion_disallowed_deductions: 0,
+    qualified_dividends: 1_000,
+    must_file_for_credit: true,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.line12, 311_900);
+  assertEquals(filed?.fields.line13, 1_000);
+  assertEquals(filed?.fields.line20, 399_000);
+  assertEquals(filed?.fields.line27, 399_000);
+  assertEquals(
+    filed?.fields.tentative_tax,
+    (filed?.fields.line40 as number) - 26_000,
+  );
+});
+
+Deno.test("form6251: Form 2555 AMT gain excess changes Part III preference but not regular-tax lines 20 and 27", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 500,
+    other_adjustments: 89_500,
+    regular_taxable_income: 500,
+    regular_tax: 0,
+    foreign_earned_income_exclusion: 100_000,
+    foreign_exclusion_disallowed_deductions: 0,
+    qualified_dividends: 3_000,
+    net_capital_gain: 1_000,
+    must_file_for_credit: true,
+  });
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  // Form 6251 line 6 is $1,900, so AMT gain excess is $2,100. Regular
+  // capital gain excess is $3,500, independently fixing lines 20 and 27.
+  assertEquals(filed?.fields.line12, 101_900);
+  assertEquals(filed?.fields.line13, 1_900);
+  assertEquals(filed?.fields.line15, 1_900);
+  assertEquals(filed?.fields.line20, 100_000);
+  assertEquals(filed?.fields.line27, 100_000);
+});
+
+Deno.test("form6251: Form 2555 Schedule D special-rate gain still needs its Part III refigure", () => {
   assertThrows(
     () =>
       compute({
@@ -402,10 +447,11 @@ Deno.test("form6251: Form 2555 with preferred gain still needs Part III refigure
         regular_tax: 40_000,
         foreign_earned_income_exclusion: 100_000,
         foreign_exclusion_disallowed_deductions: 0,
-        qualified_dividends: 1_000,
+        net_capital_gain: 1_000,
+        unrecaptured_1250_gain: 500,
       }),
     Error,
-    "Part III capital-gain-excess refigure",
+    "Part III Schedule D refigure",
   );
 });
 

@@ -70,6 +70,67 @@ Deno.test("passive property sale source routes dated Part I and Part II gains", 
   );
 });
 
+Deno.test("mixed retained passive sale nets prior Part I and II PAL once", () => {
+  const activity = {
+    name: "Land rental",
+    activity_type: "B",
+    property_type: 1,
+    reporting_form: "schedule_e",
+    current_net: 0,
+    prior_unallowed_operating: 1_000,
+    prior_unallowed_4797_part1: 3_000,
+    prior_unallowed_4797_part2: 1_000,
+  };
+  const result = compute({
+    passive_activity_sources: [activity],
+    passive_disposed_activity_names: [activity.name],
+    passive_property_sales: [
+      {
+        activity_name: activity.name,
+        part: "I",
+        property_description: "Long-held parcel",
+        acquired_on: "2023-04-01",
+        sold_on: "2025-05-01",
+        gross_sales_price: 20_000,
+        cost_or_other_basis: 12_000,
+        depreciation_allowed: 0,
+        entire_activity_interest_disposed: false,
+      },
+      {
+        activity_name: activity.name,
+        part: "II",
+        property_description: "Short-held parcel",
+        acquired_on: "2025-01-01",
+        sold_on: "2025-06-01",
+        gross_sales_price: 9_000,
+        cost_or_other_basis: 7_000,
+        depreciation_allowed: 0,
+        entire_activity_interest_disposed: false,
+      },
+    ],
+  });
+  assertEquals(
+    findOutput(result, "schedule_d")?.fields.line_11_form2439,
+    5_000,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    1_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.pal_4797_preapplied_loss,
+    4_000,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.pal_current_4797_gain,
+    10_000,
+  );
+  assertEquals(findOutput(result, "form8582")?.fields.current_4797_sale_gains, [
+    { activity_name: activity.name, part: "I", gain: 8_000 },
+    { activity_name: activity.name, part: "II", gain: 2_000 },
+  ]);
+});
+
 Deno.test("passive property sale source rejects duplicate aggregate and unsupported sale facts", () => {
   const sale = {
     activity_name: "Land rental",

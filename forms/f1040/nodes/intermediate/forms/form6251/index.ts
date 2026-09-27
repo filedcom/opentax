@@ -176,9 +176,7 @@ function computeTentativeMinimumTax(
   return Math.floor(taxableExcess * 0.28 - adjustment);
 }
 
-// 2025 Form 6251 Foreign Earned Income Tax Worksheet, lines 2c through 6.
-// This is the ordinary-income branch only. Preferential income additionally
-// requires the AMT capital-gain-excess refigure of Part III.
+// 2025 Form 6251 Foreign Earned Income Tax Worksheet, ordinary-income branch.
 function computeForeignEarnedIncomeTax(
   taxableExcess: number,
   excludedIncome: number,
@@ -404,12 +402,16 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     const qualDiv = input.qualified_dividends ?? 0;
     const netCg = input.net_capital_gain ?? 0;
     const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
+    const hasPreferentialIncome = qualDiv > 0 || netCg > 0;
+    const hasForeignWorksheet = foreignExclusion > 0 && taxableExcess > 0;
     if (
-      taxableExcess > 0 && foreignExclusion > 0 &&
-      (qualDiv > 0 || netCg > 0)
+      hasForeignWorksheet && hasPreferentialIncome &&
+      ((input.form4952_amt_election ?? 0) > 0 ||
+        (input.unrecaptured_1250_gain ?? 0) > 0 ||
+        (input.rate_28_gain ?? 0) > 0)
     ) {
       throw new Error(
-        "Form 6251 with Form 2555 and preferential income requires the Part III capital-gain-excess refigure",
+        "Form 6251 with Form 2555 and Schedule D special-rate gain needs the Part III Schedule D refigure",
       );
     }
     if (
@@ -420,19 +422,64 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
         "Form 6251 Part III requires Form 1040 line 15 taxable income",
       );
     }
-    const partThree = taxableExcess > 0 && (qualDiv > 0 || netCg > 0)
+    if (
+      hasForeignWorksheet &&
+      input.foreign_exclusion_disallowed_deductions === undefined
+    ) {
+      throw new Error(
+        "Form 6251 Foreign Earned Income Tax Worksheet needs line 2b disallowed deductions, including an explicit zero",
+      );
+    }
+    const foreignLine2c = Math.max(
+      0,
+      foreignExclusion - (input.foreign_exclusion_disallowed_deductions ?? 0),
+    );
+    const regularCapitalGainExcess = Math.max(
+      0,
+      qualDiv + netCg - (input.regular_taxable_income ?? 0),
+    );
+    const regularAdjustedNetCg = Math.max(0, netCg - regularCapitalGainExcess);
+    const regularAdjustedQualDiv = Math.max(
+      0,
+      qualDiv - Math.max(0, regularCapitalGainExcess - netCg),
+    );
+    const amtCapitalGainExcess = Math.max(
+      0,
+      qualDiv + netCg - taxableExcess,
+    );
+    const amtAdjustedNetCg = Math.max(0, netCg - amtCapitalGainExcess);
+    const amtAdjustedQualDiv = Math.max(
+      0,
+      qualDiv - Math.max(0, amtCapitalGainExcess - netCg),
+    );
+    const partThree = taxableExcess > 0 && hasPreferentialIncome
       ? computePartThree(
-        taxableExcess,
-        partThreeWorksheetInputs(
-          input.regular_taxable_income!,
-          qualDiv,
-          netCg,
-          input.unrecaptured_1250_gain ?? 0,
-          input.rate_28_gain ?? 0,
-          input.filing_status,
-          input.form4952_amt_election ?? 0,
-          input.form4952_amt_elected_capital_gain ?? 0,
-        ),
+        taxableExcess + (hasForeignWorksheet ? foreignLine2c : 0),
+        hasForeignWorksheet
+          ? {
+            ...partThreeWorksheetInputs(
+              input.regular_taxable_income! + foreignLine2c,
+              regularAdjustedQualDiv,
+              regularAdjustedNetCg,
+              0,
+              0,
+              input.filing_status,
+              0,
+              0,
+            ),
+            line13: amtAdjustedQualDiv + amtAdjustedNetCg,
+            line15: amtAdjustedQualDiv + amtAdjustedNetCg,
+          }
+          : partThreeWorksheetInputs(
+            input.regular_taxable_income!,
+            qualDiv,
+            netCg,
+            input.unrecaptured_1250_gain ?? 0,
+            input.rate_28_gain ?? 0,
+            input.filing_status,
+            input.form4952_amt_election ?? 0,
+            input.form4952_amt_elected_capital_gain ?? 0,
+          ),
         input.filing_status,
         cfg.qdcgtZeroCeiling,
         cfg.qdcgtTwentyFloor,
@@ -443,23 +490,27 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       )
       : undefined;
     let tmt: number;
-    if (foreignExclusion > 0 && taxableExcess > 0) {
-      const disallowed = input.foreign_exclusion_disallowed_deductions;
-      if (disallowed === undefined) {
-        throw new Error(
-          "Form 6251 Foreign Earned Income Tax Worksheet needs line 2b disallowed deductions, including an explicit zero",
-        );
-      }
-      tmt = computeForeignEarnedIncomeTax(
-        taxableExcess,
-        foreignExclusion,
-        disallowed,
+    if (hasForeignWorksheet) {
+      const excludedIncomeTax = computeTentativeMinimumTax(
+        foreignLine2c,
         input.filing_status,
         cfg.amtBracket26ThresholdStandard,
         cfg.amtBracket26ThresholdMfs,
         cfg.amtBracketAdjustmentStandard,
         cfg.amtBracketAdjustmentMfs,
       );
+      tmt = hasPreferentialIncome
+        ? Math.max(0, partThree!.line40 - excludedIncomeTax)
+        : computeForeignEarnedIncomeTax(
+          taxableExcess,
+          foreignExclusion,
+          input.foreign_exclusion_disallowed_deductions!,
+          input.filing_status,
+          cfg.amtBracket26ThresholdStandard,
+          cfg.amtBracket26ThresholdMfs,
+          cfg.amtBracketAdjustmentStandard,
+          cfg.amtBracketAdjustmentMfs,
+        );
     } else {
       tmt = partThree?.line40 ?? computeTentativeMinimumTax(
         taxableExcess,

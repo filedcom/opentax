@@ -3,6 +3,7 @@ import { form1116, IncomeCategory } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 
@@ -18,17 +19,64 @@ Deno.test("form1116: no foreign tax items produces no output", () => {
   );
 });
 
-Deno.test("form1116: missing limitation inputs never grants full credit", () => {
-  assertEquals(
-    credit({
-      foreign_tax_items: [{
-        foreign_tax_paid: 500,
-        foreign_gross_income: 1_000,
-        income_category: IncomeCategory.Passive,
-      }],
-    }),
-    0,
+Deno.test("form1116: missing return limitation inputs fail closed", () => {
+  assertThrows(
+    () =>
+      credit({
+        foreign_tax_items: [{
+          foreign_tax_paid: 500,
+          foreign_gross_income: 1_000,
+          income_category: IncomeCategory.Passive,
+        }],
+      }),
+    Error,
+    "needs the sourced Form 1040",
   );
+});
+
+Deno.test("form1116: line 18 adds back only Schedule 1-A senior deduction", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 2_000,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 40_000,
+    enhanced_senior_deduction: 6_000,
+    us_tax_before_credits: 4_000,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form1116_line18_worldwide_taxable_income,
+    46_000,
+  );
+  assertEquals(fieldsOf(result.outputs, f1040)?.form1116_line20_us_tax, 4_000);
+  assertEquals(
+    result.outputs.find((item) => item.nodeType === "form_1116")?.fields
+      .total_income,
+    46_000,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
+    870,
+  );
+});
+
+Deno.test("form1116: line 18 floors the signed return amount after the senior addback", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 100,
+      foreign_gross_income: 1_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: -5_750,
+    enhanced_senior_deduction: 6_000,
+    us_tax_before_credits: 0,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form1116_line18_worldwide_taxable_income,
+    250,
+  );
+  assertEquals(fieldsOf(result.outputs, schedule3), undefined);
 });
 
 Deno.test("form1116: applies taxable-income ratio", () => {

@@ -74,9 +74,7 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
       fields.recapture_form6252 !== undefined ||
       fields.nonrecaptured_1231_loss !== undefined ||
       fields.unrecaptured_section_1250_gain !== undefined ||
-      (fields.k1_1231_rows?.length ?? 0) > 0 ||
-      (Array.isArray(fields.passive_property_sales) &&
-        fields.passive_property_sales.length > 0))
+      (fields.k1_1231_rows?.length ?? 0) > 0)
   ) {
     throw new Error(
       "Form 4797 prior passive losses cannot overlap current Form 4797 transactions",
@@ -118,14 +116,20 @@ function buildIRS4797(fields: Input, context?: MefBuildContext): string {
         );
       }
       const activity = matches[0];
-      if (
-        computePropertyNet(activity) < 0 ||
+      const hasPassiveLoss = computePropertyNet(activity) < 0 ||
         (activity.prior_unallowed_passive_operating ?? 0) > 0 ||
         (activity.prior_unallowed_passive_4797_part1 ?? 0) > 0 ||
-        (activity.prior_unallowed_passive_4797_part2 ?? 0) > 0
+        (activity.prior_unallowed_passive_4797_part2 ?? 0) > 0;
+      if (
+        hasPassiveLoss &&
+        !passiveLedger?.current_4797_sale_gains?.some((row) =>
+          row.activity_name === sale.activity_name &&
+          row.part === sale.part &&
+          row.gain === passiveSaleGain(sale)
+        )
       ) {
         throw new Error(
-          "Form 4797 passive sale with passive losses needs completed Form 8582 allocation",
+          "Form 4797 passive sale with passive losses needs a matching Form 8582 sale allocation",
         );
       }
     }

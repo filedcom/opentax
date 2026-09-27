@@ -47,6 +47,81 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line35a_refund, 0);
 });
 
+Deno.test("f1040: verifies Form 1116 lines 18 and 20 against filed return sources", () => {
+  const f = fields({
+    line11_agi: 80_000,
+    line12a_standard_deduction: 15_750,
+    line13_qbi_deduction: 2_000,
+    line13b_additional_deductions: 8_000,
+    schedule1a_line37_senior_deduction: 6_000,
+    line16_income_tax: 8_000,
+    form1116_line18_worldwide_taxable_income: 60_250,
+    form1116_line20_us_tax: 8_000,
+  });
+  assertEquals(f.line14_deductions_qbi_total, 25_750);
+  assertEquals(f.line11_agi, 80_000);
+});
+
+Deno.test("f1040: Form 1116 line 18 cannot add back all Schedule 1-A deductions", () => {
+  assertThrows(
+    () =>
+      fields({
+        line11_agi: 80_000,
+        line12a_standard_deduction: 15_750,
+        line13b_additional_deductions: 8_000,
+        schedule1a_line37_senior_deduction: 6_000,
+        line16_income_tax: 8_000,
+        form1116_line18_worldwide_taxable_income: 64_250,
+        form1116_line20_us_tax: 8_000,
+      }),
+    Error,
+    "line 18 does not match",
+  );
+});
+
+Deno.test("f1040: Form 1116 line 18 floors the signed total after the senior addback", () => {
+  const f = fields({
+    line11_agi: 10_000,
+    line12a_standard_deduction: 15_750,
+    line13b_additional_deductions: 6_000,
+    schedule1a_line37_senior_deduction: 6_000,
+    line16_income_tax: 0,
+    form1116_line18_worldwide_taxable_income: 0,
+    form1116_line20_us_tax: 0,
+  });
+  assertEquals(f.line15_taxable_income, 0);
+});
+
+Deno.test("f1040: Form 1116 line 20 rejects an omitted Schedule 2 line 1z", () => {
+  assertThrows(
+    () =>
+      fields({
+        line11_agi: 80_000,
+        line12a_standard_deduction: 15_750,
+        line16_income_tax: 8_000,
+        credit_limit_schedule2_line1z: 500,
+        form1116_line18_worldwide_taxable_income: 64_250,
+        form1116_line20_us_tax: 8_000,
+      }),
+    Error,
+    "line 20 does not match",
+  );
+});
+
+Deno.test("f1040: Form 1116 limitation requires the actual Form 1040 tax source", () => {
+  assertThrows(
+    () =>
+      fields({
+        line11_agi: 80_000,
+        line12a_standard_deduction: 15_750,
+        form1116_line18_worldwide_taxable_income: 64_250,
+        form1116_line20_us_tax: 0,
+      }),
+    Error,
+    "sourced Form 1040 line 16",
+  );
+});
+
 Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3", () => {
   const result = compute({
     line16_income_tax: 1_500,

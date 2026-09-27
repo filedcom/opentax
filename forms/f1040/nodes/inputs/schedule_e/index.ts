@@ -568,11 +568,23 @@ function form8995Outputs(items: EItems): NodeOutput[] {
   ];
 }
 
-function form4797Outputs(items: EItems): NodeOutput[] {
+function form4797Outputs(
+  items: EItems,
+  farms: readonly FarmActivity[],
+): NodeOutput[] {
   const disposedItems = items.filter((item) => item.disposed_of === true);
   if (disposedItems.length === 0) return [];
-
-  return [output(form4797, { disposed_properties: disposedItems.length })];
+  const passiveLedger = form8582Outputs(items, farms)[0]?.fields;
+  const activities = passiveLedger?.activities as
+    | z.infer<typeof form8582.inputSchema>["activities"]
+    | undefined;
+  return [output(form4797, {
+    disposed_properties: disposedItems.length,
+    passive_disposed_activity_names: disposedItems.map((item) =>
+      item.property_description
+    ),
+    ...(activities ? { passive_activity_sources: activities } : {}),
+  })];
 }
 
 function form6251Outputs(items: EItems): NodeOutput[] {
@@ -711,7 +723,7 @@ class ScheduleENode extends TaxNode<typeof inputSchema> {
       ...form8960Outputs(schedule_es),
       ...scheduleAOutputs(schedule_es),
       ...form8995Outputs(schedule_es),
-      ...form4797Outputs(schedule_es),
+      ...form4797Outputs(schedule_es, farms),
       ...form6251Outputs(schedule_es),
       ...form4562Outputs(schedule_es),
       ...form8990Outputs(schedule_es),

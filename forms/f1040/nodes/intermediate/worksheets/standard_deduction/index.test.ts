@@ -265,6 +265,15 @@ Deno.test("Form 6251 line 1b adds back only Schedule 1-A senior deduction", () =
   const incomeTax = findOutput(result, "income_tax_calculation");
   assertEquals(incomeTax?.fields.taxable_income, 6_250);
   assertEquals(incomeTax?.fields.form6251_line1b, 12_250);
+  assertEquals(
+    findOutput(result, "form_1116")?.fields.enhanced_senior_deduction,
+    6_000,
+  );
+  assertEquals(findOutput(result, "form_1116")?.fields.other_deductions, 2_000);
+  assertEquals(
+    findOutput(result, "form_1116")?.fields.general_deductions,
+    17_750,
+  );
 });
 
 Deno.test("Form 6251 line 1b keeps negative income before line 15's zero floor", () => {

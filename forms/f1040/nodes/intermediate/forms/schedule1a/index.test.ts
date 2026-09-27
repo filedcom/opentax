@@ -275,6 +275,10 @@ Deno.test("schedule1a: routes the enhanced senior amount separately for AMT", ()
   const deductionFields = fieldsOf(result.outputs, standard_deduction);
   assertEquals(deductionFields?.additional_deductions, 8_000);
   assertEquals(deductionFields?.enhanced_senior_deduction, 6_000);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.schedule1a_line37_senior_deduction,
+    6_000,
+  );
 });
 
 Deno.test("schedule1a: senior phaseout is calculated per eligible person", () => {

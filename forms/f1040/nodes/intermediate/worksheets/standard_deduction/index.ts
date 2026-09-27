@@ -152,6 +152,9 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
       );
     }
     const nol = input.nol_deduction ?? 0;
+    // The 2025 Form 1116 line 3b instructions exclude Schedule 1-A line 37.
+    const form1116OtherDeductions = qbi + additionalDeductions -
+      enhancedSeniorDeduction + nol;
     const taxableIncome = Math.max(
       0,
       Math.max(0, input.agi - deduction) - qbi - additionalDeductions - nol,
@@ -217,9 +220,13 @@ class StandardDeductionNode extends TaxNode<typeof inputSchema> {
           : {}),
       }),
       this.outputNodes.output(form_1116, {
-        general_deductions: deduction + qbi + additionalDeductions + nol,
+        // Form 1116 starts from the filed whole-dollar lines 11b and 14.
+        worldwide_taxable_income: Math.round(input.agi) -
+          Math.round(deduction + qbi + additionalDeductions),
+        general_deductions: deduction + form1116OtherDeductions,
         standard_or_itemized_deduction: deduction,
-        other_deductions: qbi + additionalDeductions + nol,
+        other_deductions: form1116OtherDeductions,
+        enhanced_senior_deduction: enhancedSeniorDeduction,
       }),
     );
 

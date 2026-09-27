@@ -13,6 +13,11 @@ import {
   calculateForm4835AtRiskNet,
   inputSchema as form4835InputSchema,
 } from "../../../nodes/inputs/f4835/index.ts";
+import {
+  passivePropertySaleSchema,
+  passiveSaleGain,
+} from "../../../nodes/intermediate/forms/form4797/index.ts";
+import { z } from "zod";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 type Input = Record<string, unknown>;
@@ -124,6 +129,29 @@ function assertLinkedActivities(
   }
 }
 
+function assertLinkedSales(
+  input: ReturnType<typeof inputSchema.parse>,
+  context: MefBuildContext | undefined,
+): void {
+  if (!context?.pending) return;
+  const sales = z.array(passivePropertySaleSchema).parse(
+    context.pending.form4797?.passive_property_sales ?? [],
+  );
+  const actual = input.current_4797_sale_gains ?? [];
+  if (
+    sales.length !== actual.length ||
+    sales.some((sale, index) =>
+      sale.activity_name !== actual[index]?.activity_name ||
+      sale.part !== actual[index]?.part ||
+      passiveSaleGain(sale) !== actual[index]?.gain
+    )
+  ) {
+    throw new Error(
+      "Form 8582 current Form 4797 gains do not match property-sale sources",
+    );
+  }
+}
+
 function reportingForm(
   context: MefBuildContext | undefined,
   index: number,
@@ -156,8 +184,18 @@ function buildOtherPassive(
   context: MefBuildContext | undefined,
 ): string {
   const activities = input.activities ?? [];
-  const currentIncome = activities.reduce(
+  const operatingIncome = activities.reduce(
     (sum, activity) => sum + Math.max(0, activity.current_net),
+    0,
+  );
+  const saleGains = input.current_4797_sale_gains ?? [];
+  const saleGainFor = (name: string) =>
+    saleGains.filter((sale) => sale.activity_name === name).reduce(
+      (sum, sale) => sum + sale.gain,
+      0,
+    );
+  const currentIncome = operatingIncome + saleGains.reduce(
+    (sum, sale) => sum + sale.gain,
     0,
   );
   const currentLoss = activities.reduce(
@@ -195,7 +233,7 @@ function buildOtherPassive(
     ) ||
     !Number.isSafeInteger(currentIncome) ||
     !Number.isSafeInteger(totalLoss) || totalLoss <= 0 ||
-    (input.current_income ?? 0) !== currentIncome ||
+    (input.current_income ?? 0) !== operatingIncome ||
     (input.current_loss ?? 0) !== currentLoss ||
     (input.prior_unallowed ?? 0) !== priorLoss ||
     (input.rental_current_income ?? 0) !== 0 ||
@@ -212,6 +250,7 @@ function buildOtherPassive(
     );
   }
   assertLinkedActivities(activities, context);
+  assertLinkedSales(input, context);
   const prior4797Allocation = hasPrior4797
     ? allocateOtherPassivePrior4797(input)
     : undefined;
@@ -231,7 +270,7 @@ function buildOtherPassive(
   );
   const allocation = allocatePassiveActivityLosses(
     activities.map((activity) => ({
-      currentNet: activity.current_net,
+      currentNet: activity.current_net + saleGainFor(activity.name),
       priorUnallowed: activity.prior_unallowed_operating +
         activity.prior_unallowed_4797_part1 +
         activity.prior_unallowed_4797_part2,
@@ -272,8 +311,11 @@ function buildOtherPassive(
       ...activities.map((activity) =>
         elements("WrkshtPassiveGrp", [
           element("NonParticipateActivityNm", activity.name),
-          activity.current_net > 0
-            ? element("CurrentYearNetIncomeAmt", activity.current_net)
+          Math.max(0, activity.current_net) + saleGainFor(activity.name) > 0
+            ? element(
+              "CurrentYearNetIncomeAmt",
+              Math.max(0, activity.current_net) + saleGainFor(activity.name),
+            )
             : "",
           activity.current_net < 0
             ? element("CurrentYearNetLossAmt", -activity.current_net)
@@ -289,18 +331,19 @@ function buildOtherPassive(
                 activity.prior_unallowed_4797_part2,
             )
             : "",
-          activity.current_net >
+          activity.current_net + saleGainFor(activity.name) >
               activity.prior_unallowed_operating +
                 activity.prior_unallowed_4797_part1 +
                 activity.prior_unallowed_4797_part2
             ? element(
               "OverallGainAmt",
-              activity.current_net - activity.prior_unallowed_operating -
+              activity.current_net + saleGainFor(activity.name) -
+                activity.prior_unallowed_operating -
                 activity.prior_unallowed_4797_part1 -
                 activity.prior_unallowed_4797_part2,
             )
             : "",
-          activity.current_net <
+          activity.current_net + saleGainFor(activity.name) <
               activity.prior_unallowed_operating +
                 activity.prior_unallowed_4797_part1 +
                 activity.prior_unallowed_4797_part2
@@ -308,7 +351,8 @@ function buildOtherPassive(
               "OverallLossAmt",
               activity.prior_unallowed_operating +
                 activity.prior_unallowed_4797_part1 +
-                activity.prior_unallowed_4797_part2 - activity.current_net,
+                activity.prior_unallowed_4797_part2 - activity.current_net -
+                saleGainFor(activity.name),
             )
             : "",
         ])

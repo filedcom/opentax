@@ -41,8 +41,14 @@ export const inputSchema = z.object({
     prior_unallowed_4797_part1: z.number().nonnegative(),
     prior_unallowed_4797_part2: z.number().nonnegative(),
   })).optional(),
-  // Form 4797 reports this source fact before Form 8582 runs. A current sale
-  // and a prior Form 4797 PAL need a separate character-allocation route.
+  // Positive, activity-linked Form 4797 gains. Keep Parts I and II separate
+  // for Part IX same-part offsets and final reporting character.
+  current_4797_sale_gains: z.array(z.object({
+    activity_name: z.string().min(1),
+    part: z.enum(["I", "II"]),
+    gain: z.number().int().positive(),
+  })).optional(),
+  // Form 4797 reports this source fact before Form 8582 runs.
   has_current_4797_transaction: z.boolean().optional(),
   // Per-activity passthrough fields (merged by executor; stored for traceability)
   // schedule_c passive net profit/loss
@@ -278,7 +284,11 @@ export function allocatePassiveActivityLosses(
 }
 
 function totalPassiveIncome(input: Form8582Input): number {
-  return input.current_income ?? 0;
+  return (input.current_income ?? 0) +
+    (input.current_4797_sale_gains ?? []).reduce(
+      (sum, sale) => sum + sale.gain,
+      0,
+    );
 }
 
 function totalPassiveLoss(input: Form8582Input): number {
@@ -286,9 +296,29 @@ function totalPassiveLoss(input: Form8582Input): number {
 }
 
 function assertActivityTotals(input: Form8582Input): void {
-  if (input.activities === undefined) return;
+  if (input.activities === undefined) {
+    if ((input.current_4797_sale_gains?.length ?? 0) > 0) {
+      throw new Error(
+        "Form 8582 current Form 4797 gains need linked activity rows",
+      );
+    }
+    return;
+  }
 
   const activities = input.activities;
+  const sales = input.current_4797_sale_gains ?? [];
+  if (
+    sales.length > 0 &&
+    (input.has_current_4797_transaction !== true ||
+      sales.some((sale) =>
+        activities.filter((activity) => activity.name === sale.activity_name)
+          .length !== 1
+      ))
+  ) {
+    throw new Error(
+      "Form 8582 current Form 4797 gains need one linked passive activity",
+    );
+  }
   const sum = (select: (activity: typeof activities[number]) => number) =>
     activities.reduce((total, activity) => total + select(activity), 0);
   const currentIncome = sum((activity) => Math.max(0, activity.current_net));
@@ -355,12 +385,14 @@ export type OtherPassivePrior4797Allocation = {
     readonly grossOperating: number;
     readonly grossPartI: number;
     readonly grossPartII: number;
+    readonly currentPartIGain: number;
+    readonly currentPartIIGain: number;
     readonly suspended: number;
     readonly partIX: readonly PartIXAllocatedLine[];
   }[];
 };
 
-/** B-activity prior Form 4797 PALs with no current Form 4797 transaction. */
+/** B-activity prior Form 4797 PALs, with separately sourced current gains. */
 export function allocateOtherPassivePrior4797(
   input: Form8582Input,
 ): OtherPassivePrior4797Allocation {
@@ -376,16 +408,22 @@ export function allocateOtherPassivePrior4797(
       activities.length ||
     activities.some((activity) => activity.activity_type !== "B") ||
     activities.some((activity) => activity.reporting_form === undefined) ||
-    input.has_current_4797_transaction === true
+    (input.has_current_4797_transaction === true &&
+      (input.current_4797_sale_gains?.length ?? 0) === 0)
   ) {
     throw new Error(
-      "Form 8582 prior Form 4797 loss route needs only other-passive activities and no current Form 4797 transaction",
+      "Form 8582 prior Form 4797 loss route needs identified other-passive activities and sourced current Form 4797 gains",
     );
   }
+  const gainsFor = (name: string, part: "I" | "II") =>
+    (input.current_4797_sale_gains ?? [])
+      .filter((sale) => sale.activity_name === name && sale.part === part)
+      .reduce((sum, sale) => sum + sale.gain, 0);
   const limit = passiveLossLimit(passiveActivity(input));
   const allocation = allocatePassiveActivityLosses(
     activities.map((activity) => ({
-      currentNet: activity.current_net,
+      currentNet: activity.current_net + gainsFor(activity.name, "I") +
+        gainsFor(activity.name, "II"),
       priorUnallowed: activity.prior_unallowed_operating +
         activity.prior_unallowed_4797_part1 +
         activity.prior_unallowed_4797_part2,
@@ -399,6 +437,8 @@ export function allocateOtherPassivePrior4797(
       activity.prior_unallowed_operating;
     const grossPartI = activity.prior_unallowed_4797_part1;
     const grossPartII = activity.prior_unallowed_4797_part2;
+    const currentPartIGain = gainsFor(activity.name, "I");
+    const currentPartIIGain = gainsFor(activity.name, "II");
     const lines: PartIXLossLine[] = [
       ...(grossOperating > 0
         ? [{
@@ -413,14 +453,14 @@ export function allocateOtherPassivePrior4797(
         ? [{
           reportingForm: "Form 4797, Part I",
           lossIncludingPrior: grossPartI,
-          currentSamePartGain: 0,
+          currentSamePartGain: currentPartIGain,
         }]
         : []),
       ...(grossPartII > 0
         ? [{
           reportingForm: "Form 4797, Part II",
           lossIncludingPrior: grossPartII,
-          currentSamePartGain: 0,
+          currentSamePartGain: currentPartIIGain,
         }]
         : []),
     ];
@@ -435,6 +475,8 @@ export function allocateOtherPassivePrior4797(
       grossOperating,
       grossPartI,
       grossPartII,
+      currentPartIGain,
+      currentPartIIGain,
       suspended: allocation.suspended[index],
       partIX,
     };
@@ -612,10 +654,14 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
     if (hasPrior4797) {
       const allocation = allocateOtherPassivePrior4797(input);
       const line4 = allocation.allowedPartI + allocation.allowedPartII;
+      const mixedCurrentSale = (input.current_4797_sale_gains?.length ?? 0) > 0;
       return {
-        outputs: line4 + allocation.allowedOperating > 0
+        outputs: (mixedCurrentSale ? allocation.allowedOperating : line4 +
+            allocation.allowedOperating) > 0
           ? [output(schedule1, {
-            ...(line4 > 0 ? { line4_other_gains: -line4 } : {}),
+            ...(!mixedCurrentSale && line4 > 0
+              ? { line4_other_gains: -line4 }
+              : {}),
             ...(allocation.allowedOperating > 0
               ? { line5_schedule_e: -allocation.allowedOperating }
               : {}),

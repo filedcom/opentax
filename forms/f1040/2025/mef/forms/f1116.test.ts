@@ -2,6 +2,7 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
+  form1116 as form1116Node,
   IncomeCategory,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { form1116 } from "./f1116.ts";
@@ -77,6 +78,41 @@ Deno.test("Form 1116 uses the IRS passive category and actual limitation tags", 
     "<MaxAllowedForeignTaxCreditAmt>450</MaxAllowedForeignTaxCreditAmt>",
   );
   assertStringIncludes(xml, "<ForeignTaxCreditAmt>450</ForeignTaxCreditAmt>");
+});
+
+Deno.test("Form 1116 MeF line 18 carries the computed senior addback", () => {
+  const calculated = form1116Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      foreign_tax_items: [{
+        foreign_tax_paid: 2_000,
+        foreign_gross_income: 10_000,
+        income_category: IncomeCategory.Passive,
+        irs_country_code: "CA",
+        tax_paid_or_accrued_date: "2025-11-01",
+        tax_kind: ForeignTaxKind.Interest,
+        tax_credit_method: ForeignTaxCreditMethod.Paid,
+      }],
+      worldwide_taxable_income: 40_000,
+      enhanced_senior_deduction: 6_000,
+      us_tax_before_credits: 4_000,
+    },
+  );
+  const formFields = calculated.outputs.find((item) =>
+    item.nodeType === "form_1116"
+  )?.fields;
+  const [xml] = form1116.build(
+    (formFields ?? {}) as Parameters<typeof form1116.build>[0],
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTxblIncomeAftrExemptAmt>46000</ForeignTxblIncomeAftrExemptAmt>",
+  );
+  assertStringIncludes(xml, "<TaxFromTaxReturnAmt>4000</TaxFromTaxReturnAmt>");
+  assertStringIncludes(
+    xml,
+    "<GrossForeignTaxCreditAmt>870</GrossForeignTaxCreditAmt>",
+  );
 });
 
 Deno.test("Form 1116 source details must reconcile with category totals", () => {

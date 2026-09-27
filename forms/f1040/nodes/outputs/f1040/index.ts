@@ -115,6 +115,7 @@ const inputSchema = z.object({
   line13_qbi_deduction: z.number().nonnegative().optional(),
   // Line 13b — Additional deductions from Schedule 1-A
   line13b_additional_deductions: z.number().nonnegative().optional(),
+  schedule1a_line37_senior_deduction: z.number().nonnegative().optional(),
   // Line 14 — Sum of 12c (or 12e) + 13
   line14_deductions_qbi_total: z.number().nonnegative().optional(),
   // Line 15 — Taxable income (line 11 - line 14)
@@ -160,6 +161,9 @@ const inputSchema = z.object({
   credit_limit_form6251_line9: z.number().finite().nonnegative().optional(),
   credit_limit_form6251_line11: z.number().finite().nonnegative().optional(),
   credit_limit_schedule2_line1z: z.number().finite().nonnegative().optional(),
+  form1116_line18_worldwide_taxable_income: z.number().finite().nonnegative()
+    .optional(),
+  form1116_line20_us_tax: z.number().finite().nonnegative().optional(),
   credit_limit_schedule3_lines: z.object({
     line1: z.number().finite().nonnegative(),
     line2: z.number().finite().nonnegative(),
@@ -924,6 +928,50 @@ function assembleReturn(
   return result;
 }
 
+function verifyForm1116Limitation(
+  input: F1040Input,
+  assembled: Record<string, number>,
+): void {
+  const form1116Line18 = input.form1116_line18_worldwide_taxable_income;
+  const form1116Line20 = input.form1116_line20_us_tax;
+  if (form1116Line18 === undefined && form1116Line20 === undefined) return;
+  if (
+    form1116Line18 === undefined || form1116Line20 === undefined ||
+    input.line16_income_tax === undefined
+  ) {
+    throw new Error(
+      "Form 1116 limitation needs both lines 18 and 20 and sourced Form 1040 line 16",
+    );
+  }
+
+  const seniorDeduction = input.schedule1a_line37_senior_deduction ?? 0;
+  if (seniorDeduction > (input.line13b_additional_deductions ?? 0)) {
+    throw new Error(
+      "Form 1116 Schedule 1-A line 37 exceeds Form 1040 line 13b",
+    );
+  }
+  // Compare the printed whole-dollar operands, not the unrounded intermediate
+  // difference: 2025 Form 1116 lines 18 and 20 explicitly cite these lines.
+  const expectedLine18 = Math.max(
+    0,
+    Math.round(assembled.line11_agi) -
+      Math.round(assembled.line14_deductions_qbi_total) +
+      Math.round(seniorDeduction),
+  );
+  const expectedLine20 = Math.round(input.line16_income_tax) +
+    Math.round(input.credit_limit_schedule2_line1z ?? 0);
+  if (Math.round(form1116Line18) !== expectedLine18) {
+    throw new Error(
+      "Form 1116 line 18 does not match Form 1040 lines 11b and 14 plus Schedule 1-A line 37",
+    );
+  }
+  if (Math.round(form1116Line20) !== expectedLine20) {
+    throw new Error(
+      "Form 1116 line 20 does not match Form 1040 line 16 plus Schedule 2 line 1z",
+    );
+  }
+}
+
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class F1040Node extends TaxNode<typeof inputSchema> {
@@ -961,6 +1009,7 @@ class F1040Node extends TaxNode<typeof inputSchema> {
       businessCredit,
       bondCredit,
     );
+    verifyForm1116Limitation(input, assembled);
     const schedule3Finalization = cleanVehicles === undefined &&
         mortgage === undefined &&
         homebuyer === undefined &&

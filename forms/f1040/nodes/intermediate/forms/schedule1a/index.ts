@@ -195,6 +195,7 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
       outputs: [
         this.outputNodes.output(f1040, {
           line13b_additional_deductions: deduction,
+          schedule1a_line37_senior_deduction: enhancedSeniorDeduction,
         }),
         this.outputNodes.output(standard_deduction, {
           additional_deductions: deduction,

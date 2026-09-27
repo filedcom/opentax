@@ -17,7 +17,10 @@ import { inputSchema as form8615SourceSchema } from "../../../inputs/f8615/schem
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { ordinaryTax2025 } from "../tax_table_2025.ts";
-import { preferentialTax } from "./preferential_tax.ts";
+import {
+  foreignEarnedIncomeQualifiedDividendTax,
+  preferentialTax,
+} from "./preferential_tax.ts";
 
 // ─── Accumulable helper ───────────────────────────────────────────────────────
 
@@ -92,9 +95,8 @@ export const inputSchema = z.object({
 
   // ── §911(f) stacking rule (optional) ─────────────────────────────────────
   // Total foreign earned income exclusion (FEIE + housing) from Form 2555.
-  // When present, applies the §911(f) stacking rule: the tax on non-excluded
-  // income is computed as Tax(taxable_income + exclusion) - Tax(exclusion),
-  // which pushes non-excluded income into the correct marginal brackets.
+  // The worksheet's line 2c subtracts deductions allocable to excluded
+  // income from the Form 2555 exclusions before stacking.
   // IRC §911(f); Form 2555 Instructions "Tax on Income Not Excluded".
   foreign_earned_income_exclusion: z.number().nonnegative().optional(),
   foreign_exclusion_disallowed_deductions: z.number().nonnegative().optional(),
@@ -124,7 +126,20 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
 
     const input = inputSchema.parse(rawInput);
 
-    const floor = input.foreign_earned_income_exclusion ?? 0;
+    const foreignExclusion = input.foreign_earned_income_exclusion ?? 0;
+    if (
+      foreignExclusion > 0 &&
+      input.foreign_exclusion_disallowed_deductions === undefined
+    ) {
+      throw new Error(
+        "Form 2555 Foreign Earned Income Tax Worksheet needs an explicit line 2b disallowed-deductions total, including zero",
+      );
+    }
+    const floor = Math.max(
+      0,
+      foreignExclusion -
+        (input.foreign_exclusion_disallowed_deductions ?? 0),
+    );
 
     // Apply QDCGT / Schedule D Tax Worksheet when preferential income is present.
     // qualified_dividends is accumulable: multiple upstream nodes (f1099div, k1_partnership, etc.)
@@ -151,21 +166,31 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     // both the stacked income and excluded-income base below $100,000. A
     // preferential return needs its capital-gain-excess adjustments first.
     let tax: number;
-    if (floor > 0) {
+    if (foreignExclusion > 0) {
       if (input.taxable_income <= 0) {
         tax = 0;
       } else {
         if (hasPrefIncome) {
-          throw new Error(
-            "Form 2555 with qualified dividends or capital gain needs the Foreign Earned Income Tax Worksheet capital-gain-excess adjustment",
+          tax = foreignEarnedIncomeQualifiedDividendTax({
+            taxableIncome: input.taxable_income,
+            qualifiedDividends: qualDiv,
+            netCapitalGain: netCg,
+            filingStatus: input.filing_status,
+            zeroCeiling: cfg.qdcgtZeroCeiling,
+            twentyFloor: cfg.qdcgtTwentyFloor,
+            unrecaptured1250Gain: unrecaptured1250,
+            rate28Gain: rate28,
+            form4952Election,
+            electedCapitalGain,
+          }, floor);
+        } else {
+          const stackedTax = ordinaryTax2025(
+            input.taxable_income + floor,
+            input.filing_status,
           );
+          const floorTax = ordinaryTax2025(floor, input.filing_status);
+          tax = Math.max(0, stackedTax - floorTax);
         }
-        const stackedTax = ordinaryTax2025(
-          input.taxable_income + floor,
-          input.filing_status,
-        );
-        const floorTax = ordinaryTax2025(floor, input.filing_status);
-        tax = Math.max(0, stackedTax - floorTax);
       }
     } else if (hasPrefIncome) {
       tax = preferentialTax({
@@ -212,7 +237,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
           form4952Election > 0,
         childAdjustedGrossIncome: input.form8615_child_agi,
         childDeduction: input.form8615_child_deduction,
-        childForeignEarnedIncomeExclusion: floor,
+        childForeignEarnedIncomeExclusion: foreignExclusion,
         brackets: cfg,
       });
     }
@@ -269,7 +294,9 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
         ...(input.taking_standard_deduction !== undefined
           ? { taking_standard_deduction: input.taking_standard_deduction }
           : {}),
-        ...(floor > 0 ? { foreign_earned_income_exclusion: floor } : {}),
+        ...(foreignExclusion > 0
+          ? { foreign_earned_income_exclusion: foreignExclusion }
+          : {}),
         ...(input.foreign_exclusion_disallowed_deductions !== undefined
           ? {
             foreign_exclusion_disallowed_deductions:
@@ -282,7 +309,6 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       // Form 1116 Part III line 20 — the base the §904(a) limitation multiplies.
       this.outputNodes.output(form_1116, {
         us_tax_before_credits: tax,
-        worldwide_taxable_income: input.taxable_income,
       }),
     ];
 

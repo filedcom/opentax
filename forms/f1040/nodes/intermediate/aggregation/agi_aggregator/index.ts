@@ -117,6 +117,12 @@ export const inputSchema = z.object({
   pal_current_loss: z.number().nonnegative().optional(),
   // Current-year net income from passive activities
   pal_current_income: z.number().nonnegative().optional(),
+  // Gross current Form 4797 passive sale gain, before any prior PAL netted on
+  // Form 4797. It is income available for the §469 limitation.
+  pal_current_4797_gain: z.number().nonnegative().optional(),
+  // Part I/II prior PAL already netted on Form 4797; only the remaining
+  // allowed PAL is subtracted from AGI here.
+  pal_4797_preapplied_loss: z.number().nonnegative().optional(),
   // Current income from actively participated rental real estate, for Form 8582 line 1a.
   pal_rental_income: z.number().nonnegative().optional(),
   // Prior-year unallowed passive loss carryforward
@@ -409,7 +415,8 @@ function aboveLineDeductions(
 // activity loss, taxable social security, the IRA deduction, or the student loan
 // interest deduction. Not less than zero.
 function modifiedAgiFor8582(input: AgiInput): number {
-  const magi = nonSsaIncomeBeforePal(input) -
+  const magi = nonSsaIncomeBeforePal(input) +
+    (input.pal_4797_preapplied_loss ?? 0) -
     aboveLineDeductionsExceptSli(input) +
     (input.line20_ira_deduction ?? 0);
   return Math.max(0, magi);
@@ -432,7 +439,8 @@ function allowedPassiveLoss(input: AgiInput): number {
   }
 
   const activity: PassiveActivity = {
-    currentIncome: input.pal_current_income ?? 0,
+    currentIncome: (input.pal_current_income ?? 0) +
+      (input.pal_current_4797_gain ?? 0),
     currentLoss,
     priorUnallowed,
     rentalLoss: input.pal_rental_loss ?? 0,
@@ -445,10 +453,21 @@ function allowedPassiveLoss(input: AgiInput): number {
   return passiveLossLimit(activity).allowed;
 }
 
+function remainingAllowedPassiveLoss(input: AgiInput): number {
+  const allowed = allowedPassiveLoss(input);
+  const preapplied = input.pal_4797_preapplied_loss ?? 0;
+  if (preapplied > allowed) {
+    throw new Error(
+      "Form 4797 netted passive losses exceed the Form 8582 allowance",
+    );
+  }
+  return allowed - preapplied;
+}
+
 // Sum all non-SSA income items, net of the passive loss §469 allows.
 // This is what "other income" means for the provisional income calculation.
 function nonSsaIncome(input: AgiInput): number {
-  return nonSsaIncomeBeforePal(input) - allowedPassiveLoss(input);
+  return nonSsaIncomeBeforePal(input) - remainingAllowedPassiveLoss(input);
 }
 
 // Sum Schedule 1 Part I items (Additional Income) net of exclusions.
@@ -474,7 +493,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.at_risk_recapture ?? 0) +
     (input.biz_interest_disallowed_add_back ?? 0) +
     (input.basis_disallowed_add_back ?? 0) -
-    allowedPassiveLoss(input) -
+    remainingAllowedPassiveLoss(input) -
     (input.line8d_foreign_earned_income_exclusion ?? 0) -
     (input.line8d_foreign_housing_deduction ?? 0) -
     (input.line8b_savings_bond_exclusion ?? 0)

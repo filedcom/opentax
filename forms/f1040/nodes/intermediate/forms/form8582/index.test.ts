@@ -162,7 +162,48 @@ Deno.test("prior Form 4797 PAL reaches Schedule 1 line 4 while operating PAL sta
   assertThrows(
     () => compute({ ...input, has_current_4797_transaction: true }),
     Error,
-    "no current Form 4797 transaction",
+    "sourced current Form 4797 gains",
+  );
+});
+
+Deno.test("retained passive sale gain releases prior Form 4797 PAL by part", () => {
+  const input = {
+    activities: [{
+      name: "Land rental",
+      activity_type: "B",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: 0,
+      prior_unallowed_operating: 1_000,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 1_000,
+    }],
+    current_income: 0,
+    prior_unallowed: 5_000,
+    has_other_passive: true,
+    has_current_4797_transaction: true,
+    current_4797_sale_gains: [
+      { activity_name: "Land rental", part: "I", gain: 8_000 },
+      { activity_name: "Land rental", part: "II", gain: 2_000 },
+    ],
+  };
+  const ledger = allocateOtherPassivePrior4797(inputSchema.parse(input));
+  assertEquals(ledger.allowedOperating, 1_000);
+  assertEquals(ledger.allowedPartI, 3_000);
+  assertEquals(ledger.allowedPartII, 1_000);
+  assertEquals(ledger.suspendedTotal, 0);
+  assertEquals(
+    ledger.byActivity[0].partIX.map((line) => line.currentSamePartGain),
+    [0, 8_000, 2_000],
+  );
+  const result = compute(input);
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line4_other_gains,
+    undefined,
+  );
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line5_schedule_e,
+    -1_000,
   );
 });
 

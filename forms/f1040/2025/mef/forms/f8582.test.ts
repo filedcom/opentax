@@ -76,6 +76,43 @@ Deno.test("Form 8582: prior Form 4797 Part I and II losses stay separate in Part
   assertEquals(xml.includes("<ParentWrkshtListActivityGrp>"), false);
 });
 
+Deno.test("Form 8582: current Form 4797 gain appears in the matching Part IX row", () => {
+  const xml = form8582.build({
+    activities: [{
+      name: "Land rental",
+      activity_type: "B",
+      property_type: 1,
+      reporting_form: "schedule_e",
+      current_net: 0,
+      prior_unallowed_operating: 1_000,
+      prior_unallowed_4797_part1: 3_000,
+      prior_unallowed_4797_part2: 1_000,
+    }],
+    current_income: 0,
+    prior_unallowed: 5_000,
+    has_other_passive: true,
+    has_current_4797_transaction: true,
+    current_4797_sale_gains: [
+      { activity_name: "Land rental", part: "I", gain: 1_000 },
+      { activity_name: "Land rental", part: "II", gain: 500 },
+    ],
+  });
+  assertStringIncludes(
+    xml,
+    "<OtherActivityIncomeAmt>1500</OtherActivityIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReportingFormOrScheduleNm>Form 4797, Part I</ReportingFormOrScheduleNm><NetLossAmt>3000</NetLossAmt><NetIncomeAmt>1000</NetIncomeAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReportingFormOrScheduleNm>Form 4797, Part II</ReportingFormOrScheduleNm><NetLossAmt>1000</NetLossAmt><NetIncomeAmt>500</NetIncomeAmt>",
+  );
+  assertStringIncludes(xml, "<TotalUnallowedAmt>3500</TotalUnallowedAmt>");
+  assertStringIncludes(xml, "<TotalAllowedAmt>1500</TotalAllowedAmt>");
+});
+
 const singleRental = {
   activities: [{
     name: "Rental house",

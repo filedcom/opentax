@@ -6,6 +6,10 @@ import { form6251 } from "../../forms/form6251/index.ts";
 import { form_1116 } from "../../forms/form_1116/index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { FilingStatus } from "../../../types.ts";
+import {
+  ordinaryTax2025,
+  qualifiedDividendTax2025,
+} from "../tax_table_2025.ts";
 
 function compute(input: Record<string, unknown>) {
   return income_tax_calculation.compute(
@@ -466,11 +470,12 @@ Deno.test("Form 4952 election taxes elected qualified dividends at ordinary rate
   assertEquals(f1040Fields(elected)?.line16_income_tax, 4_565);
 });
 
-Deno.test("Form 2555 plain stacking uses Tax Table cells and stops for preferential income", () => {
+Deno.test("Form 2555 plain stacking uses Tax Table cells and explicit worksheet line 2b", () => {
   const plain = compute({
     taxable_income: 1,
     filing_status: FilingStatus.Single,
     foreign_earned_income_exclusion: 20_000,
+    foreign_exclusion_disallowed_deductions: 0,
   });
   // $20,001 and $20,000 occupy the same Tax Table range.
   assertEquals(f1040Fields(plain)?.line16_income_tax, 0);
@@ -480,10 +485,57 @@ Deno.test("Form 2555 plain stacking uses Tax Table cells and stops for preferent
         taxable_income: 40_000,
         filing_status: FilingStatus.Single,
         foreign_earned_income_exclusion: 20_000,
-        qualified_dividends: 5_000,
       }),
     Error,
-    "capital-gain-excess adjustment",
+    "explicit line 2b",
+  );
+  const deductions = compute({
+    taxable_income: 40_000,
+    filing_status: FilingStatus.Single,
+    foreign_earned_income_exclusion: 20_000,
+    foreign_exclusion_disallowed_deductions: 5_000,
+  });
+  assertEquals(
+    f1040Fields(deductions)?.line16_income_tax,
+    ordinaryTax2025(55_000, FilingStatus.Single) -
+      ordinaryTax2025(15_000, FilingStatus.Single),
+  );
+});
+
+Deno.test("Form 2555 qualified-dividend stacking removes capital-gain excess in IRS worksheet order", () => {
+  const result = compute({
+    taxable_income: 4_000,
+    filing_status: FilingStatus.Single,
+    foreign_earned_income_exclusion: 20_000,
+    foreign_exclusion_disallowed_deductions: 0,
+    qualified_dividends: 5_000,
+    net_capital_gain: 2_000,
+  });
+  // Worksheet line 4 is $7,000, $3,000 above Form 1040 line 15. The
+  // $2,000 Schedule D gain is removed first, then $1,000 of dividends.
+  assertEquals(
+    f1040Fields(result)?.line16_income_tax,
+    Math.max(
+      0,
+      qualifiedDividendTax2025(24_000, 4_000, 0, FilingStatus.Single) -
+        ordinaryTax2025(20_000, FilingStatus.Single),
+    ),
+  );
+});
+
+Deno.test("Form 2555 Schedule D special-rate route remains closed until its separate refigure is supported", () => {
+  assertThrows(
+    () =>
+      compute({
+        taxable_income: 40_000,
+        filing_status: FilingStatus.Single,
+        foreign_earned_income_exclusion: 20_000,
+        foreign_exclusion_disallowed_deductions: 0,
+        net_capital_gain: 5_000,
+        unrecaptured_1250_gain: 2_000,
+      }),
+    Error,
+    "Schedule D refigure",
   );
 });
 

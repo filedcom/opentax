@@ -7,6 +7,7 @@ import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 export enum IncomeCategory {
@@ -47,7 +48,9 @@ export const foreignTaxItemSchema = z.object({
 
 export const inputSchema = z.object({
   foreign_tax_items: z.array(foreignTaxItemSchema).optional(),
-  worldwide_taxable_income: z.number().nonnegative().optional(),
+  // Signed Form 1040 lines 11b minus 14, before the line 15 zero floor.
+  worldwide_taxable_income: z.number().optional(),
+  enhanced_senior_deduction: z.number().nonnegative().optional(),
   worldwide_gross_income: z.number().nonnegative().optional(),
   general_deductions: z.number().nonnegative().optional(),
   standard_or_itemized_deduction: z.number().nonnegative().optional(),
@@ -154,16 +157,11 @@ function fraction(
 
 function allowedCredit(
   category: Omit<CategorySummary, "allowedCredit">,
-  input: Form1116Input,
+  line20UsTax: number,
+  line18WorldwideTaxableIncome: number,
 ): number {
-  if (
-    input.us_tax_before_credits === undefined ||
-    input.worldwide_taxable_income === undefined
-  ) {
-    return 0;
-  }
-  const limit = input.us_tax_before_credits *
-    fraction(category.foreignTaxableIncome, input.worldwide_taxable_income);
+  const limit = line20UsTax *
+    fraction(category.foreignTaxableIncome, line18WorldwideTaxableIncome);
   return Math.min(Math.round(category.foreignTaxPaid), Math.round(limit));
 }
 
@@ -185,7 +183,7 @@ function allowedAmtCredit(
 class Form1116Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form_1116";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3, form6251]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251, f1040]);
 
   compute(_ctx: NodeContext, rawInput: Form1116Input): NodeResult {
     const input = inputSchema.parse(rawInput);
@@ -205,10 +203,29 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       input.general_deductions ?? 0,
     );
     if (totals.length === 0) return { outputs: [] };
+    if (
+      input.worldwide_taxable_income === undefined ||
+      input.us_tax_before_credits === undefined
+    ) {
+      throw new Error(
+        "Form 1116 needs the sourced Form 1040 taxable-income and line 16 amounts",
+      );
+    }
+    // The selected deduction path supplies signed Form 1040 lines 11b minus
+    // 14. Add Schedule 1-A line 37, then floor the total as line 18 directs.
+    const line18WorldwideTaxableIncome = Math.max(
+      0,
+      input.worldwide_taxable_income +
+        (input.enhanced_senior_deduction ?? 0),
+    );
 
     const categories: CategorySummary[] = totals.map((category) => ({
       ...category,
-      allowedCredit: allowedCredit(category, input),
+      allowedCredit: allowedCredit(
+        category,
+        input.us_tax_before_credits,
+        line18WorldwideTaxableIncome,
+      ),
     }));
 
     const summedCredit = categories.reduce(
@@ -229,6 +246,10 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       0,
     );
     const outputs: NodeOutput[] = [];
+    outputs.push(output(f1040, {
+      form1116_line18_worldwide_taxable_income: line18WorldwideTaxableIncome,
+      form1116_line20_us_tax: input.us_tax_before_credits,
+    }));
     if (credit > 0) {
       outputs.push(output(schedule3, { line1_foreign_tax_credit: credit }));
       outputs.push(output(form6251, {
@@ -241,7 +262,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
       fields: {
         foreign_tax_paid: foreignTaxPaid,
         foreign_income: foreignIncome,
-        total_income: input.worldwide_taxable_income ?? 0,
+        total_income: line18WorldwideTaxableIncome,
         worldwide_gross_income: input.worldwide_gross_income,
         general_deductions: input.general_deductions,
         standard_or_itemized_deduction: input.standard_or_itemized_deduction,
