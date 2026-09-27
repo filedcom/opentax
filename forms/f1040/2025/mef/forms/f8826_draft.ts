@@ -6,6 +6,7 @@ import {
   isEligible,
 } from "../../../nodes/inputs/f8826/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 
 /**
  * TY2025 Form 8826 source document. Pass-through-only recipients report the
@@ -68,15 +69,33 @@ export const form8826: MefFormDescriptor<"f8826", Input> = {
     if (fields.eligible_expenditures === undefined) return "";
     const source = inputSchema.parse(fields);
     const lines = calculateForm8826(source);
+    if (context?.documentIdsByPendingKey) {
+      if (
+        lines.line8 > 0 &&
+        context.documentIdsByPendingKey.f3800?.length !== 1
+      ) {
+        throw new Error("Form 8826 credit needs one attached Form 3800");
+      }
+      if ((source.pass_through_credits?.length ?? 0) > 0) {
+        if (!context.pending) {
+          throw new Error("Form 8826 K-1 source needs the filed return");
+        }
+        reconcileDisabledAccessK1Credits(
+          (source.pass_through_credits ?? []).map((entry) => ({
+            source_type: entry.entity_type,
+            entity_ein: entry.entity_ein,
+            source_document_reference: entry.source_document_reference,
+            credit_amount: entry.credit_amount,
+            subject_to_passive_activity_limit:
+              entry.subject_to_passive_activity_limit,
+          })),
+          context.pending,
+        );
+      }
+    }
     if (lines.line6 <= 0) return "";
     if (!isEligible(source)) {
       throw new Error("Form 8826 self-earned credit lacks eligibility");
-    }
-    if (
-      context?.documentIdsByPendingKey &&
-      context.documentIdsByPendingKey.f3800?.length !== 1
-    ) {
-      throw new Error("Form 8826 self-earned credit needs attached Form 3800");
     }
     return buildForm8826Document(source);
   },

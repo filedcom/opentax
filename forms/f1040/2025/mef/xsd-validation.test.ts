@@ -1519,53 +1519,124 @@ Deno.test({
     prior_unallowed_credits: [],
     publicly_traded_partnership: false,
   };
-  const xml = buildMefXml({
-    f1040: { line16_income_tax: 1_000 },
-    schedule3: { line6a_total: 600, line7_total: 600 },
-    form6251: { line11_amt: 0, net_tmt: 0 },
-    form8582cr: {
-      credit_sources: [source],
-      regular_tax_all_income: 1_000,
-      regular_tax_without_passive: 500,
-    },
-    f8826: {
-      eligible_expenditures: 450,
-      prior_year_gross_receipts: 500_000,
-      prior_year_full_time_employee_count: 20,
-      subject_to_passive_activity_limit: false,
-    },
-    f3800: {
-      passive_source_allocations: [{
-        ...source,
-        total_credit: 500,
-        special_allowed_credit: 0,
-        unallowed_credit: 0,
-        allowed_credit: 500,
-      }],
-      f8826_credit_entries: [{
-        source_type: "self",
-        credit_amount: 100,
-        subject_to_passive_activity_limit: false,
-      }],
-      tax_context: {
-        filingStatus: FilingStatus.Single,
-        regularTax: 1_000,
-        alternativeMinimumTax: 0,
-        foreignTaxCredit: 0,
-        priorAllowableCredits: 0,
-        tentativeMinimumTax: 0,
-        standardCredit: 100,
-        specifiedCredit: 0,
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 1_000 },
+      schedule3: { line6a_total: 600, line7_total: 600 },
+      form6251: { line11_amt: 0, net_tmt: 0 },
+      form8582cr: {
+        credit_sources: [source],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 500,
       },
-      allowed_credit: 600,
-    },
-  }, extractFilerIdentity(singleGeneral()));
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Access partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "2025 Schedule K-1 access credit",
+          box15_code_k_disabled_access_credit: 500,
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+      f8826: {
+        eligible_expenditures: 450,
+        prior_year_gross_receipts: 500_000,
+        prior_year_full_time_employee_count: 20,
+        subject_to_passive_activity_limit: false,
+      },
+      f3800: {
+        passive_source_allocations: [{
+          ...source,
+          total_credit: 500,
+          special_allowed_credit: 0,
+          unallowed_credit: 0,
+          allowed_credit: 500,
+        }],
+        f8826_credit_entries: [{
+          source_type: "self",
+          credit_amount: 100,
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 1_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 0,
+          standardCredit: 100,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 600,
+      },
+    } satisfies MefFormsPending & { k1_partnership: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
   assertStringIncludes(
     xml,
     "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
   );
   assertStringIncludes(xml, "<Form8826CYCreditsGrp");
   await validateXsd(xml, "mixed Form 8826 credit on Part III line 1e");
+});
+
+Deno.test({
+  name:
+    "XSD: pass-through-only Form 8826 code K reaches Form 3800 without IRS8826",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml(
+    {
+      f1040: { line16_income_tax: 40_000 },
+      schedule3: { line6a_total: 1_250, line7_total: 1_250 },
+      form6251: { line11_amt: 0, net_tmt: 20_000 },
+      k1_s_corp: {
+        k1_s_corps: [{
+          corporation_name: "Access S corporation",
+          corporation_ein: "987654321",
+          source_document_reference: "2025 disabled-access K-1",
+          box13_code_k_disabled_access_credit: 1_250,
+          disabled_access_credit_subject_to_passive_activity_limit: false,
+        }],
+      },
+      f8826: {
+        eligible_expenditures: 0,
+        subject_to_passive_activity_limit: false,
+        pass_through_credits: [{
+          entity_type: "s_corporation",
+          entity_ein: "987654321",
+          source_document_reference: "2025 disabled-access K-1",
+          credit_amount: 1_250,
+          subject_to_passive_activity_limit: false,
+        }],
+      },
+      f3800: {
+        f8826_credit_entries: [{
+          source_type: "s_corporation",
+          source_ein: "987654321",
+          credit_amount: 1_250,
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: {
+          filingStatus: FilingStatus.Single,
+          regularTax: 40_000,
+          alternativeMinimumTax: 0,
+          foreignTaxCredit: 0,
+          priorAllowableCredits: 0,
+          tentativeMinimumTax: 20_000,
+          standardCredit: 1_250,
+          specifiedCredit: 0,
+        },
+        allowed_credit: 1_250,
+      },
+    } satisfies MefFormsPending & { k1_s_corp: unknown },
+    extractFilerIdentity(singleGeneral()),
+  );
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertEquals(xml.includes("<IRS8826 "), false);
+  await validateXsd(xml, "K-1 code K Form 3800 without IRS8826");
 });
 
 Deno.test({

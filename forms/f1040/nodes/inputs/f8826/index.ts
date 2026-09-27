@@ -42,6 +42,7 @@ export const inputSchema = z.object({
   pass_through_credits: z.array(z.object({
     entity_type: z.enum(["partnership", "s_corporation"]),
     entity_ein: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1),
     credit_amount: money,
     subject_to_passive_activity_limit: z.boolean(),
   })).optional(),

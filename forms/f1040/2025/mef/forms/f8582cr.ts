@@ -9,6 +9,44 @@ import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/ind
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
+import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
+
+function reconcilePassiveDisabledAccessSources(
+  sourceAllocations: ReturnType<
+    typeof calculateForm8582CR
+  >["sourceAllocations"],
+  context: MefBuildContext,
+): void {
+  if (!context.documentIdsByPendingKey) return;
+  if (!context.pending) {
+    throw new Error("Form 8582-CR source evidence needs the filed return");
+  }
+  const credits = sourceAllocations.flatMap((source) => {
+    if (
+      source.form3800_credit_line !== "1e" ||
+      source.current_year_credit === 0
+    ) return [];
+    const origin = source.source_origin;
+    if (origin.kind === PassiveCreditSourceOrigin.Self) return [];
+    if (
+      (origin.kind !== PassiveCreditSourceOrigin.Partnership &&
+        origin.kind !== PassiveCreditSourceOrigin.SCorporation) ||
+      !origin.ein || source.source_form !== "Form 8826"
+    ) {
+      throw new Error(
+        "Form 8582-CR passive disabled-access credit needs identifiable Form 8826 K-1 evidence",
+      );
+    }
+    return [{
+      source_type: origin.kind,
+      entity_ein: origin.ein,
+      source_document_reference: source.source_document_reference,
+      credit_amount: source.current_year_credit,
+      subject_to_passive_activity_limit: true,
+    }];
+  });
+  reconcileDisabledAccessK1Credits(credits, context.pending);
+}
 
 function reconcilePassiveOrphanDrugSources(
   sourceAllocations: ReturnType<
@@ -89,6 +127,7 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
     if (context) {
       reconcileFiledBusinessCredits(lines.sourceAllocations, context);
       reconcilePassiveOrphanDrugSources(lines.sourceAllocations, context);
+      reconcilePassiveDisabledAccessSources(lines.sourceAllocations, context);
     }
     if (
       lines.allowedByReportingRoute[PassiveCreditReportingRoute.Form8834] > 0

@@ -917,6 +917,7 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
     pass_through_credits: [{
       entity_type: "s_corporation" as const,
       entity_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 1_250,
       subject_to_passive_activity_limit: false,
     }],
@@ -939,6 +940,37 @@ Deno.test("Form 3800 descriptor preserves a pass-through-only Form 8826 source",
     "<PassThroughEntityEIN>987654321</PassThroughEntityEIN>",
   );
   assertEquals(xml.includes('referenceDocumentName="IRS8826"'), false);
+  assertThrows(
+    () =>
+      form3800.build({
+        f8826_credit_entries: [{
+          source_type: "s_corporation",
+          source_ein: "987654321",
+          credit_amount: 1_250,
+          subject_to_passive_activity_limit: false,
+        }],
+        tax_context: { ...tax, standardCredit: 1_250 },
+        allowed_credit: 1_250,
+      }, {
+        pending: {
+          ...filedPending(tax, 1_250),
+          f8826: {
+            ...source,
+            pass_through_credits: [{
+              ...source.pass_through_credits[0],
+              subject_to_passive_activity_limit: true,
+            }],
+          },
+        },
+        documentIdsByPendingKey: {
+          f8826: [],
+          f8835: [],
+          form6251: ["IRS6251_1"],
+        },
+      }),
+    Error,
+    "disabled-access entries do not reconcile",
+  );
 });
 
 Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources are partly limited", () => {
@@ -948,11 +980,13 @@ Deno.test("Form 3800 descriptor requires chosen Part V use when two K-1 sources 
     pass_through_credits: [{
       entity_type: "partnership" as const,
       entity_ein: "111111111",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 2_000,
       subject_to_passive_activity_limit: false,
     }, {
       entity_type: "s_corporation" as const,
       entity_ein: "222222222",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     }],

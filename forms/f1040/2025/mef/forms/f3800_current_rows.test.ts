@@ -89,6 +89,31 @@ Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on 
   );
 });
 
+Deno.test("Form 3800 line 1e caps the combined passive and nonpassive access credit", () => {
+  const amounts = combineForm3800CurrentCreditAmounts(
+    [{
+      line: "1e",
+      grossCredit: 3_000,
+      transferOutCredit: 0,
+      appliedCredit: 3_000,
+    }],
+    [{
+      line: "1e",
+      beforePassiveLimit: 2_001,
+      afterPassiveLimit: 2_001,
+      appliedCredit: 2_001,
+    }],
+  );
+  assertThrows(
+    () =>
+      buildForm3800CurrentCreditRowXml(amounts[0], {
+        sourceCount: 2,
+      }),
+    Error,
+    "disabled-access line 1e exceeds $5,000",
+  );
+});
+
 Deno.test("Form 3800 current-year rows reject duplicate and unreconciled source amounts", () => {
   assertThrows(
     () =>

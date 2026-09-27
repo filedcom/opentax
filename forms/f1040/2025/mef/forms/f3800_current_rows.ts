@@ -213,6 +213,9 @@ export function buildForm3800CurrentCreditRowXml(
   ) {
     throw new Error("Form 3800 current-year XML row does not reconcile");
   }
+  if (row.line === "1e" && cents(row.totalCredit) > 500_000) {
+    throw new Error("Form 3800 disabled-access line 1e exceeds $5,000");
+  }
   const attrs = metadata.referenceDocumentId &&
       metadata.referenceDocumentName
     ? {

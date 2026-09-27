@@ -52,6 +52,7 @@ Deno.test("pass-through-only disabled-access credit reaches Form 3800 without se
       pass_through_credits: [{
         entity_type: "s_corporation",
         entity_ein: "987654321",
+        source_document_reference: "2025 disabled-access K-1",
         credit_amount: 1_250,
         subject_to_passive_activity_limit: false,
       }],

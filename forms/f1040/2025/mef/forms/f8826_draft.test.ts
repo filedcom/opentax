@@ -69,11 +69,62 @@ Deno.test("Form 8826 descriptor emits a self-earned form only with a Form 3800 b
       pass_through_credits: [{
         entity_type: "partnership",
         entity_ein: "123456789",
+        source_document_reference: "2025 disabled-access K-1",
         credit_amount: 1_000,
         subject_to_passive_activity_limit: false,
       }],
     }),
     "",
+  );
+});
+
+Deno.test("pass-through-only Form 8826 requires matching K-1 code K and Form 3800", () => {
+  const passThrough = {
+    eligible_expenditures: 0,
+    subject_to_passive_activity_limit: false,
+    pass_through_credits: [{
+      entity_type: "s_corporation" as const,
+      entity_ein: "987654321",
+      source_document_reference: "2025 access credit K-1",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+  };
+  const pending = {
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Access S corporation",
+        corporation_ein: "987654321",
+        source_document_reference: "2025 access credit K-1",
+        box13_code_k_disabled_access_credit: 1_250,
+        disabled_access_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+  };
+  assertEquals(
+    form8826.build(passThrough, {
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      pending,
+    }),
+    "",
+  );
+  assertThrows(
+    () =>
+      form8826.build(passThrough, {
+        documentIdsByPendingKey: {},
+        pending,
+      }),
+    Error,
+    "needs one attached Form 3800",
+  );
+  assertThrows(
+    () =>
+      form8826.build(passThrough, {
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+        pending: {},
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code K",
   );
 });
 
@@ -84,6 +135,7 @@ Deno.test("Form 8826 draft: line 7 pass-through credit and combined $5,000 cap",
     pass_through_credits: [{
       entity_type: "partnership" as const,
       entity_ein: "123456789",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     }],
@@ -129,6 +181,7 @@ Deno.test("Form 8826 draft: pass-through-only source goes to Form 3800 without F
     pass_through_credits: [{
       entity_type: "s_corporation" as const,
       entity_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 1_250,
       subject_to_passive_activity_limit: false,
     }],
@@ -153,6 +206,7 @@ Deno.test("Form 8826 draft: passive K-1 credit and ineligible self-credit stop",
   const passThrough = {
     entity_type: "partnership" as const,
     entity_ein: "123456789",
+    source_document_reference: "2025 disabled-access K-1",
     credit_amount: 1_000,
     subject_to_passive_activity_limit: true,
   };
@@ -235,6 +289,7 @@ Deno.test("Form 8826 draft: local TY2025 MeF source schema", async () => {
         pass_through_credits: [{
           entity_type: "partnership" as const,
           entity_ein: "123456789",
+          source_document_reference: "2025 disabled-access K-1",
           credit_amount: 3_000,
           subject_to_passive_activity_limit: false,
         }],

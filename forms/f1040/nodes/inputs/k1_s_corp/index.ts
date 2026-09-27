@@ -47,6 +47,14 @@ export const itemSchema = z.object({
   // Box 13 code Z is the shareholder's orphan-drug credit.
   box13_code_z_orphan_drug_credit: z.number().int().positive().optional(),
   orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
+  box13_code_k_disabled_access_credit: z.number().finite().positive().refine(
+    (amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+    { message: "K-1 disabled-access credit needs cent precision" },
+  ).optional(),
+  disabled_access_credit_subject_to_passive_activity_limit: z.boolean()
+    .optional(),
   // Affirm portfolio boxes 4/5 are investment-property income not already
   // included in Form 4952's manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
@@ -175,6 +183,23 @@ export const itemSchema = z.object({
           code: "custom",
           path: [key],
           message: `K-1 box 13 code Z needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box13_code_k_disabled_access_credit !== undefined) {
+    for (
+      const key of [
+        "corporation_ein",
+        "source_document_reference",
+        "disabled_access_credit_subject_to_passive_activity_limit",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 13 code K needs ${key}`,
         });
       }
     }

@@ -183,17 +183,24 @@ cases. The build pass now accepts identified partnership and S-corporation line
 7 sources, caps their combined line 8 with self-earned credit at $5,000, and
 lets pass-through-only credit reach Form 3800 without requiring the recipient's
 own eligibility facts or an `IRS8826` document. Passive K-1 credits stop pending
-Form 8582-CR. Source and XML cases are written but unrun. The combined cap now
+Form 8582-CR. Each pass-through source now requires a document reference; the
+filed path matches current-year partnership and S-corporation code K K-1 facts
+to its EIN, reference, gross credit, and passive flag, and requires Form 3800
+even when the recipient has no Form 8826 document. These source, missing-link,
+and XML cases are written but unrun. The filed Form 3800 path also rejects
+passive Form 8826 source facts mislabeled as nonpassive. The combined cap now
 allocates credit pro rata in cents to each identified source before the Form
 3800 handoff. The registered Form 3800 nonpassive XML path now includes Form
 8826's distinct Part III line 1e group and Part V rows for multiple Form 8826
 sources. Part V retains the K-1 EIN, capped source credit, explicit
 applied-credit split, and remaining amount. Its Part III applied credit
 reconciles with Form 8835's line 1f and 4e groups and the shared Part II limit.
+The combined passive and nonpassive line 1e now rejects a current-year total
+above the IRS $5,000 limit; its case is written but unrun.
 The Part V draft now apportions whole-dollar source and applied amounts so the
 printed rows add back to the rounded Part III and Part II totals; its rounding
 case is written but unrun. Solo, combined, and negative cases are written but
-unrun. K-1 document reconciliation, filed source attribution, and carryforward
+unrun. Estate/trust K-1 statement reconciliation, filed source attribution, and carryforward
 identity remain open. Its source graph now calculates the nonpassive limit, and
 the XML document bundle is linked but unverified. Schedule 3 line 6a now
 requires and references the Form 3800 document in the linked MeF bundle. The
@@ -594,8 +601,11 @@ their allocation against Form 8582-CR. Current-year pass-through orphan-drug
 credits on line 1h now reconcile to one K-1 box 15/13 credit with matching EIN,
 reference, amount, and passive flag, using the same check as Form 8820.
 Those direct and full-return XSD cases are written but unrun. Other credit
-types, prior-year source documents, self-earned passive credits, and missing-EIN
-source evidence still need reconciliation.
+types, prior-year source documents, self-earned passive credits, estate/trust
+disabled-access statements, and missing-EIN source evidence still need
+reconciliation. Current-year passive disabled-access credits on line 1e now
+match partnership or S-corporation K-1 code K evidence; its direct and
+full-return XSD cases are written but unrun.
 Pass-through sources also carry a stable entity reference so the passive
 Part IV summary chooses the entity with the greatest combined credit across
 its source years. Conflicting EINs for one entity stop XML generation. The

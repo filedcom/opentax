@@ -51,6 +51,7 @@ Deno.test("schema rejects sub-cent source amounts and calculation rounds a half-
       pass_through_credits: [{
         entity_type: "partnership",
         entity_ein: "123456789",
+        source_document_reference: "2025 disabled-access K-1",
         credit_amount: 0.001,
         subject_to_passive_activity_limit: false,
       }],
@@ -103,6 +104,7 @@ Deno.test("pass-through-only credit does not require the recipient's self-earned
     pass_through_credits: [{
       entity_type: "partnership" as const,
       entity_ein: "123456789",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 1_250,
       subject_to_passive_activity_limit: false,
     }],
@@ -115,6 +117,7 @@ Deno.test("pass-through credit keeps entity identity and rejects duplicates", ()
   const source = {
     entity_type: "partnership" as const,
     entity_ein: "123456789",
+    source_document_reference: "2025 disabled-access K-1",
     credit_amount: 1_250,
     subject_to_passive_activity_limit: false,
   };
@@ -134,6 +137,15 @@ Deno.test("pass-through credit keeps entity identity and rejects duplicates", ()
     }).success,
     false,
   );
+  const { source_document_reference: _reference, ...withoutReference } = source;
+  assertEquals(
+    f8826.inputSchema.safeParse({
+      eligible_expenditures: 0,
+      subject_to_passive_activity_limit: false,
+      pass_through_credits: [withoutReference],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", () => {
@@ -143,11 +155,13 @@ Deno.test("combined $5,000 cap allocates all source credits pro rata to cents", 
     pass_through_credits: [{
       entity_type: "partnership" as const,
       entity_ein: "123456789",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 2_000,
       subject_to_passive_activity_limit: false,
     }, {
       entity_type: "s_corporation" as const,
       entity_ein: "987654321",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     }],

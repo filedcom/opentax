@@ -190,6 +190,8 @@ function sourceForm8826(
         source_type: "self",
         source_ein: undefined,
         credit_amount: lines.selfCreditAfterCap,
+        subject_to_passive_activity_limit:
+          source.subject_to_passive_activity_limit,
       }]
       : []),
     ...(source.pass_through_credits ?? []).flatMap((entry, index) => {
@@ -199,6 +201,8 @@ function sourceForm8826(
           source_type: entry.entity_type,
           source_ein: entry.entity_ein,
           credit_amount: credit,
+          subject_to_passive_activity_limit:
+            entry.subject_to_passive_activity_limit,
         }]
         : [];
     }),
@@ -211,6 +215,7 @@ function sourceForm8826(
       return !sourceEntry || entry.source_type !== sourceEntry.source_type ||
         entry.source_ein !== sourceEntry.source_ein ||
         !sameMoney(entry.credit_amount, sourceEntry.credit_amount) ||
+        sourceEntry.subject_to_passive_activity_limit ||
         entry.subject_to_passive_activity_limit;
     })
   ) {

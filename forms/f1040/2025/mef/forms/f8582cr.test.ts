@@ -178,6 +178,83 @@ Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () 
   );
 });
 
+Deno.test("Form 8582-CR passive disabled-access credit matches K-1 code K", () => {
+  for (
+    const entry of [
+      {
+        kind: PassiveCreditSourceOrigin.Partnership,
+        pendingKey: "k1_partnership" as const,
+        item: {
+          partnership_name: "Access partnership",
+          partnership_ein: "123456789",
+          source_document_reference: "2025 access K-1",
+          box15_code_k_disabled_access_credit: 1_500,
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        },
+      },
+      {
+        kind: PassiveCreditSourceOrigin.SCorporation,
+        pendingKey: "k1_s_corp" as const,
+        item: {
+          corporation_name: "Access S corporation",
+          corporation_ein: "123456789",
+          source_document_reference: "2025 access K-1",
+          box13_code_k_disabled_access_credit: 1_500,
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        },
+      },
+    ]
+  ) {
+    const source = {
+      ...otherCredit,
+      source_form: "Form 8826",
+      form3800_credit_line: "1e",
+      source_document_reference: "2025 access K-1",
+      source_origin: {
+        kind: entry.kind,
+        entity_reference: "Access entity",
+        ein: "123456789",
+      },
+    };
+    const input = {
+      credit_sources: [source],
+      regular_tax_all_income: 10_000,
+      regular_tax_without_passive: 9_000,
+    };
+    const allocation = calculateForm8582CR(inputSchema.parse(input))
+      .sourceAllocations[0];
+    const pending = {
+      f3800: { passive_source_allocations: [allocation] },
+      [entry.pendingKey]: {
+        [
+          entry.pendingKey === "k1_partnership"
+            ? "k1_partnerships"
+            : "k1_s_corps"
+        ]: [entry.item],
+      },
+    };
+    const context = {
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      pending,
+    };
+    assertStringIncludes(
+      form8582cr.build(input, context),
+      "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
+    );
+    assertThrows(
+      () =>
+        form8582cr.build(input, {
+          ...context,
+          pending: { f3800: pending.f3800 },
+        }),
+      Error,
+      entry.kind === PassiveCreditSourceOrigin.Partnership
+        ? "K-1 box 15 code K"
+        : "K-1 box 13 code K",
+    );
+  }
+});
+
 Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", () => {
   const xml = form8582cr.build({
     credit_sources: [rentalCredit],

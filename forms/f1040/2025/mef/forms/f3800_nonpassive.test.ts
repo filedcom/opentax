@@ -375,6 +375,7 @@ Deno.test("Form 3800 XML: pass-through-only disabled-access credit has no Form 8
         pass_through_credits: [{
           entity_type: "partnership",
           entity_ein: "123456789",
+          source_document_reference: "2025 disabled-access K-1",
           credit_amount: 1_250,
           subject_to_passive_activity_limit: false,
         }],
@@ -406,6 +407,7 @@ Deno.test("Form 3800 XML: Form 8826 source rows preserve capped K-1 identity and
     pass_through_credits: [{
       entity_type: "partnership" as const,
       entity_ein: "123456789",
+      source_document_reference: "2025 disabled-access K-1",
       credit_amount: 3_000,
       subject_to_passive_activity_limit: false,
     }],
@@ -465,11 +467,13 @@ Deno.test("Form 3800 XML: multiple Form 8826 K-1 sources need exact Part V appli
         pass_through_credits: [{
           entity_type: "partnership" as const,
           entity_ein: "123456789",
+          source_document_reference: "2025 disabled-access K-1",
           credit_amount: 2_000,
           subject_to_passive_activity_limit: false,
         }, {
           entity_type: "s_corporation" as const,
           entity_ein: "987654321",
+          source_document_reference: "2025 disabled-access K-1",
           credit_amount: 3_000,
           subject_to_passive_activity_limit: false,
         }],
@@ -545,18 +549,21 @@ Deno.test("Form 3800 XML: whole-dollar Form 8826 Part V rows reconcile after sou
           {
             entity_type: "partnership",
             entity_ein: "111111111",
+            source_document_reference: "2025 disabled-access K-1",
             credit_amount: 1.49,
             subject_to_passive_activity_limit: false,
           },
           {
             entity_type: "partnership",
             entity_ein: "222222222",
+            source_document_reference: "2025 disabled-access K-1",
             credit_amount: 1.49,
             subject_to_passive_activity_limit: false,
           },
           {
             entity_type: "partnership",
             entity_ein: "333333333",
+            source_document_reference: "2025 disabled-access K-1",
             credit_amount: 1.49,
             subject_to_passive_activity_limit: false,
           },
@@ -633,6 +640,7 @@ Deno.test("Form 3800 XML: self-earned credit needs Form 8826 document, pass-thro
             pass_through_credits: [{
               entity_type: "s_corporation",
               entity_ein: "987654321",
+              source_document_reference: "2025 disabled-access K-1",
               credit_amount: 1_250,
               subject_to_passive_activity_limit: false,
             }],
@@ -772,6 +780,7 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
           pass_through_credits: [{
             entity_type: "partnership",
             entity_ein: "123456789",
+            source_document_reference: "2025 disabled-access K-1",
             credit_amount: 1_250,
             subject_to_passive_activity_limit: false,
           }],
@@ -839,11 +848,13 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
           pass_through_credits: [{
             entity_type: "partnership",
             entity_ein: "123456789",
+            source_document_reference: "2025 disabled-access K-1",
             credit_amount: 2_000,
             subject_to_passive_activity_limit: false,
           }, {
             entity_type: "s_corporation",
             entity_ein: "987654321",
+            source_document_reference: "2025 disabled-access K-1",
             credit_amount: 3_000,
             subject_to_passive_activity_limit: false,
           }],

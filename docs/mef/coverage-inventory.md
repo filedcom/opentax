@@ -114,8 +114,12 @@ recipient claims. The registered nonpassive Form 3800 path has a linked Part III
 line 1e, Part II nonpassive reconciliation, and Part V rows for multiple Form
 8826 sources. Those rows retain capped source credit, K-1 EIN, explicit applied
 amount, and remaining amount; their cases are unrun. The graph-level nonpassive
-allowed-credit route is written but unrun. No Form 8826 PDF, passive Form
-8582-CR path, K-1 document reconciliation, or ATS evidence exists yet.
+allowed-credit route is written but unrun. The passive Form 8582-CR to Form
+3800 path is built but unverified. Current-year partnership and S-corporation
+disabled-access credits now require matching K-1 code K source evidence for
+both passive and nonpassive filing routes, with unrun source and full-return
+XSD cases. Estate/trust source statements, prior-year evidence, Form 8826 PDF,
+and ATS acceptance remain open.
 
 Form 8820 is also in scope outside the Scenario 4 rows. The current build pass
 registers an `IRS8820` document with identified orphan-drug details, the section
