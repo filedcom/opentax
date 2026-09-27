@@ -70,6 +70,10 @@ The [Form 8582 contract](FORM8582-GRAPH.md) maps the active-rental and
 other-passive partitions, modified-AGI allowance, Parts IV–IX loss allocation,
 source-schedule destinations and 205 draft PDF widgets. The current node
 collapses carryforwards and excludes every MFS filer from Part II.
+The [Form 6198 contract](FORM6198-GRAPH.md) pins the current continuous-use
+form/instructions and maps the at-risk stage ahead of Forms 8582 and 461.
+Its 34-widget PDF has no tooltips; the current TY2025 descriptor puts income
+in the activity-description field and the shared node loses per-item losses.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

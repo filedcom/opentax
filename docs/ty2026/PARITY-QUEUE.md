@@ -38,6 +38,9 @@ printed 2026 worksheet and Schedule 1 line 8p/NOL handoff.
 The [Form 8582 passive-loss contract](FORM8582-GRAPH.md) supplies the
 preceding per-activity allowance and allocation, so allowed business losses
 can enter Form 461 without losing their source or prior-year character.
+The [Form 6198 at-risk contract](FORM6198-GRAPH.md) supplies the first
+activity-level loss limit, with a current continuous-use form and instructions
+and explicit per-item handoffs to Form 8582.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

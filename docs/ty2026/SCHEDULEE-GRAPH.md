@@ -1,7 +1,8 @@
 # TY2026 Schedule E implementation contract
 
-The activity-level [Form 8582 passive-loss contract](FORM8582-GRAPH.md)
-allocates allowed Schedule E loss before the return-wide
+The activity-level [Form 6198 at-risk contract](FORM6198-GRAPH.md) and
+[Form 8582 passive-loss contract](FORM8582-GRAPH.md)
+allocate allowed Schedule E loss before the return-wide
 [Form 461 limit](FORM461-GRAPH.md). Preserve the originating activity and
 reporting form through both stages.
 

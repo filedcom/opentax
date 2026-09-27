@@ -110,6 +110,10 @@ The [Form 8582 contract](../../../docs/ty2026/FORM8582-GRAPH.md) maps the
 reporting-form allocations, and 205 PDF widgets. The shared aggregate
 carryforward and all-MFS exclusion cannot cover its full filed surface;
 current instructions and MeF are still needed.
+The [Form 6198 contract](../../../docs/ty2026/FORM6198-GRAPH.md) uses the
+current November 2025 continuous-use form and instructions to map basis,
+financing, recapture and per-item allowed losses before Form 8582 and 461.
+Its 34 PDF widgets and activity-linked MeF instances remain to implement.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit

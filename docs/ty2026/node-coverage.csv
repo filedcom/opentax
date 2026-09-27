@@ -145,7 +145,7 @@ form4972,forms/f1040/nodes/intermediate/forms/form4972/index.ts,intermediate,1,y
 form5329,forms/f1040/nodes/intermediate/forms/form5329/index.ts,intermediate,7,no,yes,yes,yes,P1,audit-required,"dedicated 2026 Part I early SIMPLE 25% graph and PDF route; add exceptions, other parts, separate spouse forms, MeF; see FORM5329-GRAPH.md"
 form5695,forms/f1040/nodes/intermediate/forms/form5695/index.ts,intermediate,7,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 jointOccupancyStatementNode,forms/f1040/nodes/intermediate/forms/joint_occupancy_statement/index.ts,intermediate,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-form6198,forms/f1040/nodes/intermediate/forms/form6198/index.ts,intermediate,0,no,yes,yes,no,P2,audit-required,"verify 2026 law, node outputs, and graph route"
+form6198,forms/f1040/nodes/intermediate/forms/form6198/index.ts,intermediate,0,no,yes,yes,no,P2,audit-required,"Continuous-use 2025 form/instructions pinned for TY2026; activity basis/financing, Part III, recapture, per-item carryforward, 34 PDF widgets and current MeF remain"
 form6251,forms/f1040/nodes/intermediate/forms/form6251/index.ts,intermediate,3,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 form6252,forms/f1040/nodes/intermediate/forms/form6252/index.ts,intermediate,1,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 form6781,forms/f1040/nodes/intermediate/forms/form6781/index.ts,intermediate,2,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"

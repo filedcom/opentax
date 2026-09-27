@@ -24,7 +24,7 @@ entire-interest disposition, credit under Form 8582-CR, or NIIT regrouping
 needs its own source-backed treatment; do not put every Schedule E amount
 into this form.
 
-Resolve basis, Form 6198 at-risk and any other
+Resolve basis, [Form 6198 at-risk](FORM6198-GRAPH.md) and any other
 activity-level limits before passive-loss arithmetic. Then determine the
 allowed and suspended amounts by activity and by reporting form; send only
 allowed losses to Schedule C/E/F, Form 4835, Form 4797, Form 4684,

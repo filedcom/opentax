@@ -31,6 +31,7 @@ NODE_PROGRESS = {
     "form4562": "Asset/activity ledger, 2026 Part I-V, Schedule C/E/F/4835/8829 routes, 271 PDF widgets and current MeF remain; shared node sends depreciation to obsolete Schedule 1 line 13",
     "form461": "Return-wide 2026 business-loss worksheet, source classification, NOL carryover, 18 PDF widgets and current MeF remain; shared node sums precomputed per-source excesses",
     "form8582": "2026 activity-level passive loss, MFS lived-apart branch, per-form allocations, 205 PDF widgets and current MeF remain; shared node collapses carryforwards",
+    "form6198": "Continuous-use 2025 form/instructions pinned for TY2026; activity basis/financing, Part III, recapture, per-item carryforward, 34 PDF widgets and current MeF remain",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",

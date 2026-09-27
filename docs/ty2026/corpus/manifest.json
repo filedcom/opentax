@@ -1513,6 +1513,24 @@
       "bytes": 253960,
       "sha256": "76787e11a385d1205faf70a07924cdec4efd5e66628e6f47e5316d29e6035f71",
       "retrieved_utc": "2026-09-27T14:05:10Z"
+    },
+    {
+      "path": "authorities/f6198--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f6198--2025.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 82547,
+      "sha256": "8ae169186ad9f62910e73205ebaeb02a73bc74bb1a47954074ec14e4645a6389",
+      "retrieved_utc": "2026-09-27T14:08:31Z"
+    },
+    {
+      "path": "authorities/i6198--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i6198.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 202650,
+      "sha256": "444d8002c734359b0f75235bd5461c9019cf4e871742243de1021ec14ceb0e1d",
+      "retrieved_utc": "2026-09-27T14:08:40Z"
     }
   ]
 }
