@@ -5,12 +5,13 @@ import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { balanceSheetSchema, calculateBalanceSheet } from "./balance-sheet.ts";
 import { sectionCSchema } from "./section-c.ts";
+import { sectionDSchema } from "./section-d.ts";
+export { MARK_TO_MARKET_EXCLUSION_2025 } from "./constants.ts";
 
 // 2025 Form 8854 and instructions. The $206,000 average-tax threshold and
 // $890,000 mark-to-market exclusion apply to TY2025, not the 2024 amounts.
 export const AVG_ANNUAL_TAX_THRESHOLD_2025 = 206_000;
 export const NET_WORTH_THRESHOLD = 2_000_000;
-export const MARK_TO_MARKET_EXCLUSION_2025 = 890_000;
 
 export enum ExpatriateType {
   CITIZEN = "CITIZEN",
@@ -121,6 +122,7 @@ export const inputSchema = z.object({
   significant_asset_liability_changes_prior_5_years: z.boolean(),
   significant_change_explanation: z.string().trim().min(1).optional(),
   section_c: sectionCSchema.nullable(),
+  section_d: sectionDSchema,
 }).strict().superRefine((input, ctx) => {
   const partI = input.part_i;
   const citizen = input.expatriate_type === ExpatriateType.CITIZEN;

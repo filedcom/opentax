@@ -1126,10 +1126,17 @@ statements, and refuses to serialize over 20 property rows because the MeF
 schema has no demonstrated continuation path. It also requires a linked
 computation statement for property rows. These declarations do not yet prove
 that the deemed gains, losses, compensation, and account amounts are present on
-the correct income forms, so filing remains blocked. Annual statement facts,
-exception source corroboration, property-character gain/loss routing, deferral,
-remaining statements, PDF, complete MeF serialization, source reconciliation,
-and IRS business rules remain open. The calculation and rejection cases are
+the correct income forms, so filing remains blocked. Section D now has an
+explicit no-election/election source. An elected deferral takes the line 24 tax
+from each of two distinct hypothetical returns, derives eligible tax, allocates
+it across all positive-gain properties before selecting deferred properties,
+and emits unregistered Section D, Section C column (g), and native per-property
+allocation XML. The document IDs, security, agent, and waiver confirmations are
+source assertions; the hypothetical return PDFs, agreement copy, original
+mailing, and IRS acceptance are not authenticated or attached. Annual statement
+facts, exception source corroboration, property-character gain/loss routing,
+PDF, complete MeF serialization, source reconciliation, and IRS business rules
+remain open. The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 

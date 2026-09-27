@@ -1,7 +1,8 @@
-import { MARK_TO_MARKET_EXCLUSION_2025 } from "./index.ts";
+import { MARK_TO_MARKET_EXCLUSION_2025 } from "./constants.ts";
 import {
   type MarkToMarketAsset,
   markToMarketAssetSchema,
+  type SectionC,
 } from "./section-c.ts";
 
 export type MarkToMarketAssetAllocation = {
@@ -11,6 +12,18 @@ export type MarkToMarketAssetAllocation = {
   exclusionAllocated: number;
   gainAfterExclusion: number;
 };
+
+// The Form 8854 MeF amounts are integer dollars. Use the same rounded FMV and
+// basis for every displayed gain, exclusion, and deferral computation.
+export function wholeDollarAssets(section: SectionC): MarkToMarketAsset[] {
+  return section.mark_to_market_assets.map((asset) => ({
+    ...asset,
+    fmv_day_before_expatriation: Math.round(
+      asset.fmv_day_before_expatriation,
+    ),
+    us_adjusted_basis: Math.round(asset.us_adjusted_basis),
+  }));
+}
 
 // Part II, Section C, line 2: only properties with built-in gain share the
 // $890,000 exclusion. This returns the per-property amounts needed for the

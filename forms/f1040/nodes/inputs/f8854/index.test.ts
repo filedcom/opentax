@@ -26,6 +26,11 @@ import {
   buildForm8854SectionC,
   buildForm8854SectionCStatements,
 } from "../../../2025/mef/forms/f8854_section_c.ts";
+import {
+  buildForm8854DeferredPropertyStatement,
+  buildForm8854SectionD,
+} from "../../../2025/mef/forms/f8854_section_d.ts";
+import { calculateSectionDDeferral } from "./section-d.ts";
 
 function asset(
   assetId: string,
@@ -54,6 +59,25 @@ function sectionC(markToMarketAssets: ReturnType<typeof asset>[] = []) {
   };
 }
 
+function electedDeferral(ids: string[] = ["stock"]) {
+  return {
+    elect_deferral: true,
+    hypothetical_return_with_877a: {
+      document_id: "DOC-HYP-WITH",
+      form_1040_line_24_tax: 600_000,
+    },
+    hypothetical_return_without_877a: {
+      document_id: "DOC-HYP-WITHOUT",
+      form_1040_line_24_tax: 100_000,
+    },
+    deferred_property_item_ids: ids,
+    tax_deferral_agreement_copy_document_id: "DOC-AGREEMENT",
+    adequate_security_confirmed: true,
+    us_limited_agent_appointed_confirmed: true,
+    treaty_collection_waiver_confirmed: true,
+  };
+}
+
 function input(overrides: Record<string, unknown> = {}) {
   return {
     expatriation_date: "2025-06-15",
@@ -79,6 +103,7 @@ function input(overrides: Record<string, unknown> = {}) {
     prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(0),
     balance_sheet: balanceSheetWithNetWorth(0),
     section_c: null,
+    section_d: { elect_deferral: false },
     certified_tax_compliance: true,
     ...overrides,
   };
@@ -946,6 +971,139 @@ Deno.test("Form 8854 Section C XML uses consistent whole-dollar property math", 
   assertStringIncludes(
     statements.computation,
     "<TotalBuiltInGainAmt>900012</TotalBuiltInGainAmt>",
+  );
+});
+
+Deno.test("Form 8854 Section D allocates tax over all gain property before partial election", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([
+      asset("business", 2_000_000, 200_000),
+      asset("stock", 1_000_000, 800_000),
+      asset("loss", 500_000, 800_000),
+    ]),
+    section_d: electedDeferral(["stock"]),
+  }));
+  const allocation = calculateSectionDDeferral(
+    parsed.section_c!,
+    parsed.section_d,
+  );
+  assertEquals(allocation?.taxEligibleForDeferral, 500_000);
+  assertEquals(allocation?.totalDeferredTax, 50_000);
+  assertEquals(
+    allocation?.properties.map((row) => [row.itemId, row.deferredTax]),
+    [
+      ["business", 0],
+      ["stock", 50_000],
+    ],
+  );
+  const sectionCXml = buildForm8854SectionC(parsed, {
+    computation: "DOC-COMP",
+    deferredPropertyTaxElection: "DOC-DEFERRED",
+  });
+  assertEquals((sectionCXml.match(/<DeferredTaxAmt/g) ?? []).length, 1);
+  assertStringIncludes(
+    sectionCXml,
+    "<TotalTaxDeferredAmt>50000</TotalTaxDeferredAmt>",
+  );
+  const sectionDXml = buildForm8854SectionD(parsed);
+  assertStringIncludes(
+    sectionDXml,
+    "<TotalTaxWithSect877AaAmt>600000</TotalTaxWithSect877AaAmt>",
+  );
+  assertStringIncludes(
+    sectionDXml,
+    "<TaxEligibleForDeferralAmt>500000</TaxEligibleForDeferralAmt>",
+  );
+  const statement = buildForm8854DeferredPropertyStatement(parsed);
+  assertEquals(
+    (statement.match(/<DeferredPropertyTaxElectGrp>/g) ?? []).length,
+    1,
+  );
+  assertStringIncludes(
+    statement,
+    "<GainAfterAllocationExclAmt>111000</GainAfterAllocationExclAmt>",
+  );
+  assertStringIncludes(
+    statement,
+    "<TotalBuiltInGainAmt>1110000</TotalBuiltInGainAmt>",
+  );
+  assertStringIncludes(statement, "<DeferredTaxAmt>50000</DeferredTaxAmt>");
+});
+
+Deno.test("Form 8854 Section D rejects invalid elections and emits a no-deferral answer", () => {
+  assertEquals(buildForm8854SectionD(inputSchema.parse(input())), "");
+  const covered = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+  }));
+  assertStringIncludes(
+    buildForm8854SectionD(covered),
+    "<TaxDeferSect877AbElectionInd>false</TaxDeferSect877AbElectionInd>",
+  );
+  const section = sectionC([
+    asset("business", 2_000_000, 200_000),
+    asset("stock", 1_000_000, 800_000),
+    asset("loss", 500_000, 800_000),
+  ]);
+  assertEquals(
+    inputSchema.safeParse(input({
+      balance_sheet: balanceSheetWithNetWorth(2_000_000),
+      section_c: section,
+      section_d: {
+        ...electedDeferral(),
+        hypothetical_return_without_877a: {
+          document_id: "DOC-HYP-WITH",
+          form_1040_line_24_tax: 100_000,
+        },
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      balance_sheet: balanceSheetWithNetWorth(2_000_000),
+      section_c: section,
+      section_d: {
+        ...electedDeferral(),
+        hypothetical_return_without_877a: {
+          document_id: "DOC-HYP-WITHOUT",
+          form_1040_line_24_tax: 600_000,
+        },
+      },
+    })).success,
+    false,
+  );
+  const lossElection = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: section,
+    section_d: electedDeferral(["loss"]),
+  }));
+  assertThrows(
+    () => buildForm8854SectionD(lossElection),
+    Error,
+    "absent or has no gain",
+  );
+  assertThrows(
+    () =>
+      buildForm8854SectionC(lossElection, {
+        computation: "DOC-COMP",
+        deferredPropertyTaxElection: "DOC-DEFERRED",
+      }),
+    Error,
+    "absent or has no gain",
+  );
+  assertThrows(
+    () =>
+      buildForm8854SectionC(
+        inputSchema.parse(input({
+          balance_sheet: balanceSheetWithNetWorth(2_000_000),
+          section_c: section,
+          section_d: electedDeferral(),
+        })),
+        { computation: "DOC-COMP" },
+      ),
+    Error,
+    "linked statement document",
   );
 });
 

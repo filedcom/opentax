@@ -4,13 +4,16 @@ import {
   inputSchema,
   isCoveredExpatriate,
 } from "../../../nodes/inputs/f8854/index.ts";
-import { allocateMarkToMarketExclusion } from "../../../nodes/inputs/f8854/mark-to-market.ts";
 import {
-  type MarkToMarketAsset,
+  allocateMarkToMarketExclusion,
+  wholeDollarAssets,
+} from "../../../nodes/inputs/f8854/mark-to-market.ts";
+import {
   NongrantorTrustTreatment,
   type SectionC,
   sectionCSchema,
 } from "../../../nodes/inputs/f8854/section-c.ts";
+import { calculateSectionDDeferral } from "../../../nodes/inputs/f8854/section-d.ts";
 
 export type Form8854SectionCStatementIds = {
   eligibleDeferredCompensation?: string;
@@ -18,6 +21,7 @@ export type Form8854SectionCStatementIds = {
   specifiedTaxDeferredAccounts?: string;
   nongrantorTrust?: string;
   computation?: string;
+  deferredPropertyTaxElection?: string;
 };
 
 const names = {
@@ -26,6 +30,7 @@ const names = {
   specifiedTaxDeferredAccounts: "SpecifiedTaxDeferredAccountsStatement",
   nongrantorTrust: "NongrantorTrustStatement",
   computation: "Form8854ComputationStatement",
+  deferredPropertyTaxElection: "DeferredPropertyTaxElectionStatement",
 } as const;
 
 // The MeF XSD enumerations contain these spellings, including their typos.
@@ -64,18 +69,6 @@ function sumMoney(values: readonly number[]): number {
     throw new Error("Form 8854 Section C total exceeds safe cent precision");
   }
   return Number(cents) / 100;
-}
-
-// MeF USAmountType is an integer. Calculate the displayed gain and exclusion
-// from the same whole-dollar FMV and basis that the XML sends to the IRS.
-function wholeDollarAssets(section: SectionC): MarkToMarketAsset[] {
-  return section.mark_to_market_assets.map((asset) => ({
-    ...asset,
-    fmv_day_before_expatriation: Math.round(
-      asset.fmv_day_before_expatriation,
-    ),
-    us_adjusted_basis: Math.round(asset.us_adjusted_basis),
-  }));
 }
 
 /** Native Section C statements. Empty categories do not produce documents. */
@@ -174,6 +167,9 @@ export function buildForm8854SectionC(
   const input = inputSchema.parse(rawInput);
   const covered = isCoveredExpatriate(input);
   if (!covered) {
+    if (input.section_d.elect_deferral) {
+      throw new Error("Only covered expatriates can elect Section D deferral");
+    }
     if (input.section_c !== null) {
       throw new Error("Form 8854 Section C is only for covered expatriates");
     }
@@ -217,9 +213,21 @@ export function buildForm8854SectionC(
       statementIds.computation,
       names.computation,
     ),
+    deferredPropertyTaxElection: linkedAttrs(
+      input.section_d.elect_deferral,
+      statementIds.deferredPropertyTaxElection,
+      names.deferredPropertyTaxElection,
+    ),
   };
   const assets = wholeDollarAssets(section);
   const allocations = allocateMarkToMarketExclusion(assets);
+  const deferral = calculateSectionDDeferral(section, input.section_d);
+  const deferredById = new Map<string, number>(
+    deferral?.properties.map((row): [string, number] => [
+      row.itemId,
+      row.deferredTax,
+    ]) ?? [],
+  );
   return elements("PropertyOwnedDtExpatriationGrp", [
     section.eligible_deferred_compensation.length
       ? element(
@@ -271,6 +279,13 @@ export function buildForm8854SectionC(
           attrs.computation,
         ),
         element("FormOrSchGainAssetReportedCd", asset.reported_form_code),
+        (deferredById.get(asset.item_id) ?? 0) > 0
+          ? element(
+            "DeferredTaxAmt",
+            deferredById.get(asset.item_id),
+            attrs.deferredPropertyTaxElection,
+          )
+          : "",
       ]);
     }),
     element(
@@ -281,5 +296,6 @@ export function buildForm8854SectionC(
       "TotGainAfterAllocationExclAmt",
       sumMoney(allocations.map((row) => row.gainAfterExclusion)),
     ),
+    deferral ? element("TotalTaxDeferredAmt", deferral.totalDeferredTax) : "",
   ]);
 }
