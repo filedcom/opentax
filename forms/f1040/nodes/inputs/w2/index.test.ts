@@ -463,6 +463,24 @@ Deno.test("box12_code_m_n_routes_to_schedule2_uncollected_fica_gtl: M = $200 + N
   assertEquals(fieldsOf(result.outputs, schedule2)!.uncollected_fica_gtl, 300);
 });
 
+Deno.test("statutory employee box 12 A/B/M/N still reaches Schedule 2 line 13", () => {
+  const result = compute([minimalItem({
+    box13_statutory_employee: true,
+    box1_wages: 50_000,
+    box5_medicare_wages: 50_000,
+    box12_entries: [
+      { code: Box12Code.A, amount: 100 },
+      { code: Box12Code.B, amount: 20 },
+      { code: Box12Code.M, amount: 40 },
+      { code: Box12Code.N, amount: 10 },
+    ],
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 50_000);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.uncollected_fica, 120);
+  assertEquals(fieldsOf(result.outputs, schedule2)?.uncollected_fica_gtl, 50);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 30);
+});
+
 Deno.test("box12_multiple_entries_on_one_w2: D + W + T all route to separate nodes with exact amounts", () => {
   const result = compute([minimalItem({
     box1_wages: 80000,

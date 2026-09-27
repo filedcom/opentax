@@ -106,7 +106,8 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 
 The `form8959` row also has a new, unrun CT-2 employee-representative source:
 four quarters per recipient feed Form 8959 lines 14 and 23. W-2 box 12 codes B
-and N now feed line 19 for FICA but not RRTA. Source-to-return and CT-2 XML/XSD
+and N now feed line 19 for FICA but not RRTA. Statutory-employee W-2 box 12
+A/B/M/N amounts now reach Schedule 2 line 13. Source-to-return and CT-2 XML/XSD
 cases are written, not yet verified. Actual CT-2 payment evidence and IRS
 business rules remain open.
 

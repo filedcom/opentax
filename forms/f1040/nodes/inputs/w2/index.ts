@@ -505,8 +505,14 @@ function qualifiedTipsOutput(w2s: W2Items): NodeOutput[] {
 
 function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
+  const allEntries = w2s.flatMap((item) => item.box12_entries ?? []);
   const sum = (...codes: Box12Code[]) =>
     entries.filter((e) => codes.includes(e.code)).reduce(
+      (s, e) => s + e.amount,
+      0,
+    );
+  const sumUncollected = (...codes: Box12Code[]) =>
+    allEntries.filter((e) => codes.includes(e.code)).reduce(
       (s, e) => s + e.amount,
       0,
     );
@@ -529,9 +535,9 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
   if (deg > 0) outputs.push(output(form8880, { elective_deferrals: deg }));
 
   const schedule2Input: Partial<z.infer<typeof schedule2["inputSchema"]>> = {};
-  const ab = sum(Box12Code.A, Box12Code.B);
+  const ab = sumUncollected(Box12Code.A, Box12Code.B);
   if (ab > 0) schedule2Input.uncollected_fica = ab;
-  const mn = sum(Box12Code.M, Box12Code.N);
+  const mn = sumUncollected(Box12Code.M, Box12Code.N);
   if (mn > 0) schedule2Input.uncollected_fica_gtl = mn;
   const k = sum(Box12Code.K);
   if (k > 0) schedule2Input.golden_parachute_excise = k;

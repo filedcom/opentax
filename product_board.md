@@ -956,15 +956,18 @@ review remain open.
 
 The Form 8959 line 19 source audit now adds W-2 box 12 codes B and N to box 6
 for FICA wages, as the 2025 instructions require, and excludes those codes on
-RRTA W-2s. Source and full-return cases are written but unrun. Form CT-2
-employee-representative input now takes four quarters per recipient, checks the
-annual $200,000 line 3 threshold, binds the recipient SSN to Form 1040, and
-routes line 2 compensation and confirmed line 3 tax paid to Form 8959 lines 14
-and 23. Source, full-return, and local XSD cases are written but unrun. A paid
-line 3 amount needs a payment reference and must match the full calculated tax;
-partial payments remain unsupported pending an allocation rule. Actual CT-2
-payment evidence, income-source reconciliation, and the Schedule 2 line 13 RRTA
-route still need review.
+RRTA W-2s. Source and full-return cases are written but unrun. The W-2 source
+audit also now routes box 12 codes A/B/M/N from statutory- employee W-2s to
+Schedule 2 line 13 while retaining their separate Form 8959 line 19 treatment;
+the source case is written but unrun. Form CT-2 employee-representative input
+now takes four quarters per recipient, checks the annual $200,000 line 3
+threshold, binds the recipient SSN to Form 1040, and routes line 2 compensation
+and confirmed line 3 tax paid to Form 8959 lines 14 and 23. Source, full-return,
+and local XSD cases are written but unrun. A paid line 3 amount needs a payment
+reference and must match the full calculated tax; partial payments remain
+unsupported pending an allocation rule. Actual CT-2 payment evidence,
+income-source reconciliation, and the Schedule 2 line 13 RRTA route still need
+review.
 
 ## Workstreams
 
