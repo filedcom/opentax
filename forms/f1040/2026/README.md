@@ -56,6 +56,11 @@ The [Forms 5884/6765/8994 contract](../../../docs/ty2026/FORM5884-6765-8994-GRAP
 pins three business-credit sources and maps the 2026 hire cutoff, research
 Section G reporting and paid-leave premium method to Form 3800. Their
 shared nodes currently bypass the credit form and lack filed outputs.
+The [Form 3468 contract](../../../docs/ty2026/FORM3468-GRAPH.md) replaces
+the flat investment-credit shortcut with per-facility Part I–VII facts,
+PFE/bonus/election evidence and distinct Form 3800 rows. Its current
+published form is a 2025 comparator, so final 2026 PDF/MeF mapping waits
+for the matching release.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

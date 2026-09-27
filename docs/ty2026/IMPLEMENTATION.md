@@ -36,6 +36,9 @@ work, including Form 3800 bypasses and filing-only metadata.
 The [Forms 5884/6765/8994 contract](FORM5884-6765-8994-GRAPH.md) pins
 source forms and Notice 2026-28, and records the 2026 hire, research
 disclosure and paid-leave method changes before Form 3800 routing.
+The [Form 3468 contract](FORM3468-GRAPH.md) maps its 2025 comparator's
+Parts I–VII to per-facility 2026 eligibility, credit/election evidence,
+Form 3800 rows and Form 4255 recapture.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

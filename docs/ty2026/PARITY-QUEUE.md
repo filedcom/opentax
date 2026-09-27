@@ -19,6 +19,8 @@ The [boundary audit](NODE-BOUNDARY-AUDIT.md) maps the other 85 TY2025
 registry nodes to route owners; it does not certify those routes for 2026.
 The [Forms 5884/6765/8994 plan](FORM5884-6765-8994-GRAPH.md) gives the
 first source-level business-credit decisions behind Form 3800.
+The [Form 3468 plan](FORM3468-GRAPH.md) covers the multi-facility investment
+credit and its 2026 authority/MeF release gates.
 
 ## Coding sequence
 

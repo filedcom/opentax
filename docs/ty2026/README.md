@@ -62,6 +62,9 @@ for the implementation contract.
 - [`FORM5884-6765-8994-GRAPH.md`](FORM5884-6765-8994-GRAPH.md) and three
   PDF field inventories: work opportunity hire cutoff, required research
   Section G, and expanded paid-leave credit/Notice 2026-28.
+- [`FORM3468-GRAPH.md`](FORM3468-GRAPH.md) and `pdf-fields-f3468.csv`:
+  seven-part investment-credit facility ledger, Form 3800/4255 links,
+  Notice 2026-15 and 321 comparator widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

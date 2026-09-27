@@ -30,6 +30,10 @@ retain a TY2025 regression.
 
 ## Highest-risk source-code findings to resolve before bulk registration
 
+The [Form 3468 facility plan](FORM3468-GRAPH.md) now specifies the largest
+investment-credit source in the business-credit row, including its seven
+printed parts and distinct Form 3800 destinations.
+
 1. The business credit group contains direct `schedule3` outputs, including
    [`f8994`](../../forms/f1040/nodes/inputs/f8994/index.ts). The 2026 route
    must build a Form 3800 source record and its filed evidence before the
