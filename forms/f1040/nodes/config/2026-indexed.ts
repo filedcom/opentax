@@ -13,6 +13,10 @@ type IndexedKeys =
   | "bracketsMfs"
   | "standardDeductionBase"
   | "standardDeductionAdditional"
+  | "seniorDeductionMax"
+  | "seniorDeductionPhaseoutSingle"
+  | "seniorDeductionPhaseoutMfj"
+  | "seniorDeductionPhaseoutRate"
   | "kiddieUnearnedIncomeThreshold"
   | "kiddieStandardDeductionFloor"
   | "qdcgtZeroCeiling"
@@ -47,6 +51,9 @@ type IndexedKeys =
   | "eitcPhaseoutStart"
   | "eitcIncomeLimit"
   | "eitcInvestmentIncomeLimit"
+  | "ctcPerChild"
+  | "actcMaxPerChild"
+  | "saversCreditContributionCap"
   | "saversCreditAgiSingle"
   | "saversCreditAgiHoh"
   | "saversCreditAgiMfj"
@@ -124,6 +131,12 @@ export const INDEXED_CONFIG_2026 = {
     [FilingStatus.HOH]: 2_050,
     [FilingStatus.QSS]: 1_650,
   },
+
+  // 2026 draft Schedule 1-A Part V, lines 38–43.
+  seniorDeductionMax: 6_000,
+  seniorDeductionPhaseoutSingle: 75_000,
+  seniorDeductionPhaseoutMfj: 150_000,
+  seniorDeductionPhaseoutRate: 0.06,
 
   // Rev. Proc. 2025-32 §4.02 and §4.14(2).
   kiddieUnearnedIncomeThreshold: 1_350,
@@ -210,7 +223,13 @@ export const INDEXED_CONFIG_2026 = {
   },
   eitcInvestmentIncomeLimit: 12_200,
 
+  // Rev. Proc. 2025-32 §4.05(1)–(2).
+  ctcPerChild: 2_200,
+  actcMaxPerChild: 1_700,
+
   // Notice 2025-67, pages 3–4, §25B retirement savings credit limits.
+  // Per-person contribution cap: 2026 draft Form 8880, line 6.
+  saversCreditContributionCap: 2_000,
   saversCreditAgiSingle: { rate50: 24_250, rate20: 26_250, rate10: 40_250 },
   saversCreditAgiHoh: { rate50: 36_375, rate20: 39_375, rate10: 60_375 },
   saversCreditAgiMfj: { rate50: 48_500, rate20: 52_500, rate10: 80_500 },

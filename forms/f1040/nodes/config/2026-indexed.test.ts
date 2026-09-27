@@ -38,6 +38,8 @@ Deno.test("2026 standard deduction and kiddie floor use published amounts", () =
     1_650,
   );
   assertEquals(INDEXED_CONFIG_2026.kiddieStandardDeductionFloor, 1_350);
+  assertEquals(INDEXED_CONFIG_2026.seniorDeductionMax, 6_000);
+  assertEquals(INDEXED_CONFIG_2026.seniorDeductionPhaseoutRate, 0.06);
 });
 
 Deno.test("2026 QBI threshold distinguishes MFS from other nonjoint returns", () => {
@@ -91,4 +93,7 @@ Deno.test("2026 HSA, IRA, and Social Security amounts use their own sources", ()
   assertEquals(INDEXED_CONFIG_2026.hsaFamilyLimit, 8_750);
   assertEquals(INDEXED_CONFIG_2026.iraContributionLimitAge50, 8_600);
   assertEquals(INDEXED_CONFIG_2026.ssTaxPerEmployer, 184_500 * 0.062);
+  assertEquals(INDEXED_CONFIG_2026.ctcPerChild, 2_200);
+  assertEquals(INDEXED_CONFIG_2026.actcMaxPerChild, 1_700);
+  assertEquals(INDEXED_CONFIG_2026.saversCreditContributionCap, 2_000);
 });
