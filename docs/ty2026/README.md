@@ -35,6 +35,9 @@ for the implementation contract.
   current TY2026 income/withholding route, and dependent-form worklist.
 - [`CAPITAL-GAIN-GRAPH.md`](CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
   decision, Schedule D/8949 dependencies, and PDF/MeF work order.
+- [`PDF-SCHEDULED-MAP.md`](PDF-SCHEDULED-MAP.md) and
+  `pdf-fields-f1040sd.csv`: all 55 draft Schedule D widgets, the six Form 8949
+  summary rows, and the reconciliation work required for a filed attachment.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft

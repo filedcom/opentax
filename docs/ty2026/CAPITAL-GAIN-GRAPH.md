@@ -29,6 +29,8 @@ carryover must reduce the long-term net gain. The existing Schedule D tests
 cover this correction, and the TY2025 Schedule D MeF and PDF tests pass.
 The current PDF boundary rejects nonzero 1040 line 7a when the direct-case
 line 7b checkbox is false: the 2026 Schedule D attachment is not built yet.
+The [draft PDF field map](PDF-SCHEDULED-MAP.md) inventories all 55 widgets and
+the print/detail reconciliation needed before enabling that attachment.
 The 2026 public `schedule_d` facts are `line_6_carryover`,
 `line_14_carryover`, `qof_disposition`, `qof_deferral_or_inclusion`, and
 `other_capital_activity`. All five must be supplied when the return contains
@@ -39,12 +41,12 @@ and Form 1099-B QOF nodes remain outside the dedicated 2026 registry.
 
 ## End-to-end implementation order
 
-1. Define public capital-activity facts: carryovers by origin year, QOF
-   elections/inclusions/dispositions, and other transactions. Reconcile the
-   entire return before deciding whether Schedule D is required; source-by-source
-   absence is not proof of eligibility. Replace the shared node's hardcoded
-   QOF disposition answer with the collected fact, and require affirmative
-   evidence before taking the direct line 7b route.
+1. Extend the required public capital-activity declarations with carryover
+   provenance by origin year, supported QOF events, and transaction details.
+   Reconcile the entire return before deciding whether Schedule D is required;
+   source-by-source absence is not proof of eligibility. The direct line 7b
+   route already requires explicit zero carryovers and negative activity
+   answers, and the shared print record consumes the explicit QOF answer.
 2. Audit the shared Schedule D node against the final 2026 form and
    instructions, including lines 17–22, loss limits, Form 8949 aggregation,
    28% and unrecaptured §1250 gain worksheets, and AMT preferential rates.
