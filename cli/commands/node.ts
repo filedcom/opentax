@@ -1,18 +1,24 @@
 import { catalog } from "../../catalog.ts";
 import { zodToLines } from "../utils/zod-doc.ts";
 
-const defaultDef = catalog["f1040:2025"];
+function definitionForYear(year: number) {
+  const key = `f1040:${year}`;
+  const def = catalog[key];
+  if (!def) throw new Error(`Unsupported form: ${key}`);
+  return def;
+}
 
 export type NodeInspectArgs = {
   readonly nodeType: string;
   readonly json: boolean;
+  readonly year?: number;
 };
 
 /**
  * Prints all registered node types in sorted columns.
  */
-export function nodeListCommand(): void {
-  const types = Object.keys(defaultDef.registry).sort();
+export function nodeListCommand(year = 2025): void {
+  const types = Object.keys(definitionForYear(year).registry).sort();
   console.log(`Registered Nodes (${types.length})\n`);
 
   const COL_WIDTH = 28;
@@ -30,7 +36,7 @@ export function nodeListCommand(): void {
  * With --json, prints structured JSON instead.
  */
 export function nodeInspectCommand(args: NodeInspectArgs): void {
-  const node = defaultDef.registry[args.nodeType];
+  const node = definitionForYear(args.year ?? 2025).registry[args.nodeType];
   if (!node) throw new Error(`Unknown node type: ${args.nodeType}`);
 
   if (args.json) {

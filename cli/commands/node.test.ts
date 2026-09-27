@@ -45,6 +45,40 @@ Deno.test("nodeListCommand: output is sorted alphabetically", () => {
   assertEquals(firstPos < lastPos, true);
 });
 
+Deno.test("node and graph commands select the requested year's registry", () => {
+  const key = "f1040:2026";
+  const prior = catalog[key];
+  catalog[key] = {
+    ...catalog["f1040:2025"],
+    taxYear: 2026,
+    registry: { w2: registry.w2 },
+  };
+
+  try {
+    assertStringIncludes(
+      captureLog(() => nodeListCommand(2026)),
+      "Registered Nodes (1)",
+    );
+    assertThrows(
+      () => nodeInspectCommand({ nodeType: "f1040", json: false, year: 2026 }),
+      Error,
+      "Unknown node type: f1040",
+    );
+    assertEquals(
+      (graphViewCommand({
+        nodeType: "w2",
+        depth: 0,
+        json: true,
+        year: 2026,
+      }) as GraphNode).nodeType,
+      "w2",
+    );
+  } finally {
+    if (prior) catalog[key] = prior;
+    else delete catalog[key];
+  }
+});
+
 // ---------------------------------------------------------------------------
 // nodeInspectCommand — unknown node
 // ---------------------------------------------------------------------------

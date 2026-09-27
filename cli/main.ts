@@ -44,21 +44,31 @@ function requireArg(
   return value;
 }
 
+function nodeTaxYear(value: string | undefined): number {
+  if (value === undefined) return 2025;
+  const year = Number(value);
+  if (!Number.isInteger(year) || year <= 0) {
+    throw new Error("--year must be a positive integer");
+  }
+  return year;
+}
+
 const COMMANDS: readonly CommandDef[] = [
   {
     cmd: "node",
     sub: "list",
     description: "List all registered nodes",
-    usage: "opentax node list",
-    handler: async (_args) => {
-      await run(() => Promise.resolve(nodeListCommand()));
+    usage: "opentax node list [--year <year>]",
+    options: [{ flag: "--year", description: "Tax year (default: 2025)" }],
+    handler: async (args) => {
+      await run(() => Promise.resolve(nodeListCommand(nodeTaxYear(args.year))));
     },
   },
   {
     cmd: "node",
     sub: "inspect",
     description: "Inspect a node's input schema and output nodes",
-    usage: "opentax node inspect --node_type <type>",
+    usage: "opentax node inspect --node_type <type> [--year <year>]",
     options: [
       {
         flag: "--node_type",
@@ -66,12 +76,17 @@ const COMMANDS: readonly CommandDef[] = [
         required: true,
       },
       { flag: "--json", description: "Output as JSON" },
+      { flag: "--year", description: "Tax year (default: 2025)" },
     ],
     handler: async (args) => {
       const nodeType = requireArg("node_type", args.node_type);
       await run(() =>
         Promise.resolve(
-          nodeInspectCommand({ nodeType, json: args.json === true }),
+          nodeInspectCommand({
+            nodeType,
+            json: args.json === true,
+            year: nodeTaxYear(args.year),
+          }),
         )
       );
     },
@@ -319,7 +334,8 @@ const COMMANDS: readonly CommandDef[] = [
     cmd: "node",
     sub: "graph",
     description: "View node dependency graph (Mermaid or JSON)",
-    usage: "opentax node graph --node_type start [--depth <n>] [--json]",
+    usage:
+      "opentax node graph --node_type start [--year <year>] [--depth <n>] [--json]",
     options: [
       { flag: "--node_type", description: "Root node type", required: true },
       {
@@ -327,6 +343,7 @@ const COMMANDS: readonly CommandDef[] = [
         description: "Max traversal depth (default: unlimited)",
       },
       { flag: "--json", description: "Output as JSON instead of Mermaid" },
+      { flag: "--year", description: "Tax year (default: 2025)" },
     ],
     handler: async (args) => {
       const nodeType = requireArg("node_type", args.node_type);
@@ -337,7 +354,12 @@ const COMMANDS: readonly CommandDef[] = [
       }
       await run(() =>
         Promise.resolve(
-          graphViewCommand({ nodeType, depth, json: args.json === true }),
+          graphViewCommand({
+            nodeType,
+            depth,
+            json: args.json === true,
+            year: nodeTaxYear(args.year),
+          }),
         )
       );
     },

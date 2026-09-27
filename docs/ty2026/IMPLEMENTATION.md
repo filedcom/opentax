@@ -19,6 +19,9 @@ are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
 `forms/f1040/2026/deductions.ts` implements the new 1040 lines 12e–15, and
 the prior CLI type-check errors have been cleared. Neither pure 2026
 calculator is connected to a registered graph yet.
+The CLI node list, inspect, and graph commands now accept `--year` and select
+the registered definition for that year. They still default to TY2025 for
+existing CLI calls; an unregistered year fails explicitly.
 
 ## 0. Freeze source versions and establish the baseline
 
@@ -79,7 +82,7 @@ still pass. Test both sides of each threshold and July 1 mileage boundary.
    `cli/commands/validate.ts` and `cli/commands/export.ts` through the selected
    `FormDefinition` (completed for the existing TY2025 definition). Fix
    `cli/commands/node.ts` and `cli/commands/graph.ts` to use the selected
-   year's registry rather than the hardcoded 2025 one. Review benchmark year
+   year's registry rather than the hardcoded 2025 one (completed). Review benchmark year
    selection and CLI summaries for `line24_total_tax`/new 24c and 32c.
 3. Register `"f1040:2026"` in `catalog.ts` after one executable 2026 return
    completes the calculation and validation path. Registration is a milestone,
