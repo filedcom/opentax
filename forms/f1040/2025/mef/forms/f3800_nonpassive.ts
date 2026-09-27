@@ -12,6 +12,7 @@ import {
   inputSchema as form8826InputSchema,
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
+import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
 
 /** Source-backed nonpassive Form 8826, 8835, 5884, and 8936 rows. */
 export type Form3800NonpassiveXmlInput = {
@@ -644,28 +645,7 @@ export function buildIRS3800Nonpassive(
         referenceDocumentName: "BinaryAttachment",
       })
       : "",
-    element("GeneralBusCrFromNnPssvActyAmt", lines.line6),
-    element("CYCreditsNotAllwAgainstTMTAmt", lines.line6),
-    element("RegularTaxBeforeCreditsAmt", lines.line7),
-    element("AlternativeMinimumTaxAmt", lines.line8),
-    element("AdjustedRegTaxBeforeCreditAmt", lines.line9),
-    element("ForeignTaxCreditAmt", lines.line10a),
-    element("CertainAllowableCreditsAmt", lines.line10b),
-    element("TotalTaxCreditsAmt", lines.line10c),
-    element("NetIncomeTaxAmt", lines.line11),
-    element("NetRegularTaxAmt", lines.line12),
-    element("ExcessNetRegularTaxAmt", lines.line13),
-    element("TentativeMinimumTaxAmt", lines.line14),
-    element("AdjustedExcessNetRegularTaxAmt", lines.line15),
-    element("AdjustedNetIncomeTaxAmt", lines.line16),
-    element("SmllrCYNotAllwTMTOrTotAdjAmt", lines.line17),
-    element("NetIncomeTaxLessPctExcessAmt", lines.line27),
-    element("SumSmllrEmpwrZnEmplmnCrAmt", lines.line28),
-    element("NetSmllrAndEmpwrZnEmplmnCrAmt", lines.line29),
-    element("AllwGenBusCrFromNonPssvActyAmt", lines.line36),
-    element("TotAllwGenAndEligSmllBusCrAmt", lines.line36),
-    element("SmllrGenBusCrOrTotGenEligCrAmt", lines.line37),
-    element("CurrentYearCreditAllowedAmt", lines.line38),
+    ...form3800PartIAndIIXml(lines),
     input.form8826
       ? elements(
         "Form8826CYCreditsGrp",
