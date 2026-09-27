@@ -105,6 +105,22 @@ export const itemSchema = z.object({
   annual_premium: z.number().nonnegative().optional(),
   annual_slcsp: z.number().nonnegative().optional(),
   annual_aptc: z.number().nonnegative().optional(),
+  // Form 8962 instructions, line 10: column B may not describe the actual
+  // coverage family after an unreported change, a move, or a no-APTC month.
+  // These are independently determined applicable SLCSP amounts, not amended
+  // values on the Marketplace statement.
+  slcsp_corrections: z.array(
+    z.object({
+      month: z.number().int().min(1).max(12),
+      basis: z.enum([
+        "coverage_family_change",
+        "move",
+        "no_aptc",
+        "marketplace_error",
+      ]),
+      corrected_slcsp: z.number().nonnegative(),
+    }).strict(),
+  ).min(1).optional(),
   shared_policy_periods: z.array(sharedPolicySchema).min(1).refine(
     (periods) => periods.some((period) => period.basis !== "family_only"),
     "Shared policy periods need at least one allocation period",
@@ -207,10 +223,64 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
         }
       }
     }
+    const correctedItems = f1095as.map((item) => {
+      const corrections = item.slcsp_corrections;
+      if (!corrections) return item;
+      if (!item.monthly_premiums || !item.monthly_aptcs) {
+        throw new Error(
+          "Form 1095-A SLCSP corrections need monthly premiums and APTC",
+        );
+      }
+      const slcsps = item.monthly_slcsps
+        ? [...item.monthly_slcsps]
+        : Array<number>(12).fill(0);
+      const correctedMonths = new Set<number>();
+      for (const correction of corrections) {
+        const month = correction.month - 1;
+        if (correctedMonths.has(month)) {
+          throw new Error("Form 1095-A SLCSP corrections repeat a month");
+        }
+        correctedMonths.add(month);
+        if (
+          item.monthly_premiums[month] === 0 &&
+          item.monthly_aptcs[month] === 0
+        ) {
+          throw new Error(
+            "Form 1095-A SLCSP correction has no coverage in its month",
+          );
+        }
+        if (
+          correction.basis === "no_aptc" && item.monthly_aptcs[month] > 0
+        ) {
+          throw new Error(
+            "Form 1095-A no-APTC SLCSP correction conflicts with paid APTC",
+          );
+        }
+        slcsps[month] = correction.corrected_slcsp;
+      }
+      if (
+        !item.monthly_slcsps &&
+        item.monthly_premiums.some((premium, month) =>
+          (premium > 0 || item.monthly_aptcs![month] > 0) &&
+          !correctedMonths.has(month)
+        )
+      ) {
+        throw new Error(
+          "Form 1095-A missing column B needs corrected SLCSP for every covered month",
+        );
+      }
+      return {
+        ...item,
+        monthly_slcsps: slcsps,
+        // The reported annual column B was checked against the reported
+        // monthly column above; it does not total the corrected SLCSP series.
+        annual_slcsp: undefined,
+      };
+    });
     const sharedAllocations: Array<
       z.infer<typeof sharedPolicyAllocationSchema>
     > = [];
-    const allocatedItems = f1095as.map((item) => {
+    const allocatedItems = correctedItems.map((item) => {
       const periods = item.shared_policy_periods;
       if (!periods) return item;
       if (

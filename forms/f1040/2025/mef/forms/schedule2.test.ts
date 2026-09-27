@@ -63,6 +63,28 @@ Deno.test("2025 Schedule 2 line 1a and line 2 retain distinct amounts in XSD ord
   assertEquals(result.indexOf(repayment) < result.indexOf(amt), true);
 });
 
+Deno.test("2025 Schedule 2 carries Part I totals through lines 1z and 3", () => {
+  const result = schedule2.build({
+    line1a_excess_advance_premium: 1_200,
+    line2_amt: 5_000,
+  });
+  assertStringIncludes(
+    result,
+    "<TotalTaxAdditionsAmt>1200</TotalTaxAdditionsAmt>",
+  );
+  assertStringIncludes(result, "<AdditionalTaxAmt>6200</AdditionalTaxAmt>");
+  assertEquals(
+    result.indexOf("<TotalTaxAdditionsAmt>") <
+      result.indexOf("<AlternativeMinimumTaxAmt>"),
+    true,
+  );
+  assertEquals(
+    result.indexOf("<AlternativeMinimumTaxAmt>") <
+      result.indexOf("<AdditionalTaxAmt>"),
+    true,
+  );
+});
+
 Deno.test("dealer-transfer repayments reference the parent Form 8936, not its Schedule A", () => {
   const xml = schedule2.build({
     line1b_new_clean_vehicle_repayment: 7_500,
@@ -280,6 +302,54 @@ Deno.test("section 965 installment stays on Schedule 2 line 20, outside line 21"
     "<Section965TaxInstallmentAmt>8000</Section965TaxInstallmentAmt>",
   );
   assertEquals(result.includes("<TotalOtherTaxesAmt>"), false);
+});
+
+Deno.test("2025 Schedule 2 line 7, 18, and 21 reconcile to supported tax sources", () => {
+  const result = schedule2.build({
+    line4_se_tax: 1_000,
+    line5_unreported_tip_tax: 100,
+    line6_uncollected_8919: 200,
+    uncollected_fica: 50,
+    line17c_hsa_penalty: 300,
+    line20_965_tax_installment: 8_000,
+  });
+  assertStringIncludes(
+    result,
+    "<UnrprtdSocSecAndMedcrTaxAmt>300</UnrprtdSocSecAndMedcrTaxAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalOtherAdditionalTaxesAmt>300</TotalOtherAdditionalTaxesAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalOtherTaxesAmt>1650</TotalOtherTaxesAmt>",
+  );
+  assertEquals(
+    result.indexOf("<UncollectedSocSecMedTaxAmt>") <
+      result.indexOf("<UnrprtdSocSecAndMedcrTaxAmt>"),
+    true,
+  );
+});
+
+Deno.test("negative Form 8978 adjustment reduces lines 17z, 18, and 21 together", () => {
+  const result = schedule2.build({ line17c_hsa_penalty: 400 }, {
+    pending: {
+      form8978_reporting_year: {
+        schedule2_line17z_reduction: 250,
+        schedule2_line21: 150,
+      },
+    },
+  });
+  assertStringIncludes(
+    result,
+    "<TotalAnyOtherTaxesAmt>-250</TotalAnyOtherTaxesAmt>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalOtherAdditionalTaxesAmt>150</TotalOtherAdditionalTaxesAmt>",
+  );
+  assertStringIncludes(result, "<TotalOtherTaxesAmt>150</TotalOtherTaxesAmt>");
 });
 
 Deno.test("every mapped Schedule 2 field survives the schema-order builder", () => {

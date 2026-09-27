@@ -72,6 +72,56 @@ Deno.test("annual Form 8962 uses the TY2025 group and line 24-29 tags", () => {
   assertEquals(xml.includes("<TotalPremiumAmt>"), false);
 });
 
+Deno.test("marriage election serializes 2025 Part V after monthly and Part IV groups", () => {
+  const xml = form8962.build({
+    ...annual,
+    household_size: 2,
+    federal_poverty_line: 20_440,
+    federal_poverty_pct: 391,
+    monthly_ptc_rows: [{
+      month_code: "JANUARY",
+      premium: 1_000,
+      slcsp: 1_200,
+      contribution: 153,
+      max_assistance: 1_047,
+      allowed_credit: 1_000,
+      aptc: 1_000,
+    }],
+    total_premium_tax_credit: 9_888,
+    total_advance_ptc: 12_000,
+    net_premium_tax_credit: 0,
+    excess_advance_payment: 2_112,
+    excess_advance_premium: 2_112,
+    alternative_marriage_primary: {
+      family_size: 1,
+      monthly_contribution: 153,
+      start_month: 1,
+      end_month: 6,
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<SharePolicyMarriedAltCalcInd>true</SharePolicyMarriedAltCalcInd>",
+  );
+  assertStringIncludes(xml, "<AltCalcForMarriagePrimaryGrp>");
+  assertStringIncludes(
+    xml,
+    "<ReconciledPremiumTaxCreditAmt>0</ReconciledPremiumTaxCreditAmt>",
+  );
+  assertStringIncludes(xml, "<FamilySizeCnt>1</FamilySizeCnt>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyContributionAmt>153</MonthlyContributionAmt>",
+  );
+  assertStringIncludes(xml, "<StartMonthNumberCd>01</StartMonthNumberCd>");
+  assertStringIncludes(xml, "<EndMonthNumberCd>06</EndMonthNumberCd>");
+  assertEquals(xml.includes("<AltCalcForMarriageSpouseGrp>"), false);
+  assertEquals(
+    xml.indexOf("<AltCalcForMarriagePrimaryGrp>"),
+    xml.lastIndexOf("<AltCalcForMarriagePrimaryGrp>"),
+  );
+});
+
 Deno.test("Form 8962 distinguishes taxpayer, dependent, and household income", () => {
   const xml = form8962.build({
     ...annual,

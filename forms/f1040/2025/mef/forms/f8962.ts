@@ -29,6 +29,13 @@ interface SharedPolicyAllocation {
   aptc_pct?: number;
 }
 
+interface AlternativeMarriageGroup {
+  family_size: number;
+  monthly_contribution: number;
+  start_month: number;
+  end_month: number;
+}
+
 export interface Fields {
   qsehra_ind?: boolean | null;
   mfs_exception_ind?: boolean | null;
@@ -49,6 +56,8 @@ export interface Fields {
   annual_aptc?: number | null;
   monthly_ptc_rows?: readonly MonthlyRow[] | null;
   shared_policy_allocations?: readonly SharedPolicyAllocation[] | null;
+  alternative_marriage_primary?: AlternativeMarriageGroup | null;
+  alternative_marriage_spouse?: AlternativeMarriageGroup | null;
   total_premium_tax_credit?: number | null;
   total_advance_ptc?: number | null;
   net_premium_tax_credit?: number | null;
@@ -99,9 +108,24 @@ function monthlyXml(rows: readonly MonthlyRow[]): string[] {
     );
 }
 
+function alternativeMarriageXml(
+  tag: string,
+  group: AlternativeMarriageGroup | null | undefined,
+): string {
+  if (!group) return "";
+  return elements(tag, [
+    element("FamilySizeCnt", group.family_size),
+    element("MonthlyContributionAmt", group.monthly_contribution),
+    element("StartMonthNumberCd", String(group.start_month).padStart(2, "0")),
+    element("EndMonthNumberCd", String(group.end_month).padStart(2, "0")),
+  ]);
+}
+
 function buildIRS8962(fields: Input): string {
   const monthlyRows = fields.monthly_ptc_rows;
   const allocations = fields.shared_policy_allocations ?? [];
+  const marriagePrimary = fields.alternative_marriage_primary;
+  const marriageSpouse = fields.alternative_marriage_spouse;
   const hasSource = Array.isArray(monthlyRows) ||
     typeof fields.annual_premium === "number" ||
     typeof fields.annual_slcsp === "number" ||
@@ -123,10 +147,11 @@ function buildIRS8962(fields: Input): string {
   }
   if (
     allocations.length > 99 ||
-    (allocations.length > 0 && !Array.isArray(monthlyRows))
+    (allocations.length > 0 && !Array.isArray(monthlyRows)) ||
+    ((marriagePrimary || marriageSpouse) && !Array.isArray(monthlyRows))
   ) {
     throw new Error(
-      "Form 8962 shared policies need at most 99 MeF allocations and monthly rows",
+      "Form 8962 Part IV/V needs monthly rows and at most 99 MeF allocations",
     );
   }
   if (
@@ -187,7 +212,7 @@ function buildIRS8962(fields: Input): string {
       "MonthlyContriHealthCareCvrAmt",
       fields.monthly_applicable_contribution,
     ),
-    allocations.length > 0
+    allocations.length > 0 || marriagePrimary || marriageSpouse
       ? element("SharePolicyMarriedAltCalcInd", "true")
       : "",
     element(
@@ -227,6 +252,8 @@ function buildIRS8962(fields: Input): string {
         allocations.length <= 4 ? "true" : "false",
       )
       : "",
+    alternativeMarriageXml("AltCalcForMarriagePrimaryGrp", marriagePrimary),
+    alternativeMarriageXml("AltCalcForMarriageSpouseGrp", marriageSpouse),
   ]);
 }
 

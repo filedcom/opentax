@@ -73,10 +73,13 @@ const ELEMENT_ORDER = [
   "PremiumTaxCreditTaxLiabAmt",
   "CrTrnsfrDlrSaleAmt",
   "PrevOwnCrTrnsfrDlrSaleAmt",
+  "TotalTaxAdditionsAmt",
   "AlternativeMinimumTaxAmt",
+  "AdditionalTaxAmt",
   "SelfEmploymentTaxAmt",
   "SocSecMedicareTaxUnrptdTipAmt",
   "UncollectedSocSecMedTaxAmt",
+  "UnrprtdSocSecAndMedcrTaxAmt",
   "TaxOnIRAsAmt",
   "HouseholdEmploymentTaxAmt",
   "TotalAMRRTTaxAmt",
@@ -93,6 +96,7 @@ const ELEMENT_ORDER = [
   "ExcessParachutePaymentAmt",
   "InterestOnEachNetIncrInTaxAmt",
   "TotalAnyOtherTaxesAmt",
+  "TotalOtherAdditionalTaxesAmt",
   "Section965TaxInstallmentAmt",
   "TotalOtherTaxesAmt",
 ] as const;
@@ -167,6 +171,34 @@ function buildIRS1040Schedule2(
     if (values.length === 0) continue;
     const sum = values.reduce((a, b) => a + b, 0);
     childrenByTag.set(tag, element(tag, sum));
+  }
+
+  // The printed 2025 form carries lines 1z, 3, and 7 even though their
+  // component amounts have separate MeF elements.
+  const amount = (key: keyof Fields): number => {
+    const value = fields[key];
+    return typeof value === "number" ? value : 0;
+  };
+  const line1z = amount("line1a_excess_advance_premium") +
+    amount("line1b_new_clean_vehicle_repayment") +
+    amount("line1c_prev_owned_clean_vehicle_repayment");
+  if (line1z > 0) {
+    childrenByTag.set(
+      "TotalTaxAdditionsAmt",
+      element("TotalTaxAdditionsAmt", line1z),
+    );
+  }
+  const line3 = line1z + amount("line2_amt");
+  if (line3 > 0) {
+    childrenByTag.set("AdditionalTaxAmt", element("AdditionalTaxAmt", line3));
+  }
+  const line7 = amount("line5_unreported_tip_tax") +
+    amount("line6_uncollected_8919");
+  if (line7 > 0) {
+    childrenByTag.set(
+      "UnrprtdSocSecAndMedcrTaxAmt",
+      element("UnrprtdSocSecAndMedcrTaxAmt", line7),
+    );
   }
 
   const form8621Interest = fields.line17p_form8621_interest;
@@ -254,16 +286,40 @@ function buildIRS1040Schedule2(
       ),
     );
   }
+  const line18 = amount("line17a_investment_credit_recapture") +
+    amount("line17a_new_markets_credit_recapture") +
+    amount("line17b_mortgage_subsidy_recapture") +
+    amount("line17c_hsa_penalty") +
+    amount("line17e_archer_msa_tax") +
+    amount("line17f_medicare_advantage_msa_tax") +
+    amount("section409a_excise") +
+    amount("line17h_nqdc_tax") +
+    amount("golden_parachute_excise") +
+    amount("line17k_golden_parachute_excise") +
+    amount("line17p_form8621_interest") + line17z;
+  if (line18 > 0) {
+    childrenByTag.set(
+      "TotalOtherAdditionalTaxesAmt",
+      element("TotalOtherAdditionalTaxesAmt", line18),
+    );
+  }
+  const calculatedPart2 = amount("line4_se_tax") + line7 +
+    amount("line8_form5329_tax") + amount("line9_household_employment") +
+    amount("line11_additional_medicare") + amount("line12_niit") +
+    amount("uncollected_fica") + amount("uncollected_fica_gtl") +
+    amount("line16_lihtc_recapture") + line18;
   const adjustedPart2 = adjustment && typeof adjustment === "object"
     ? (adjustment as Record<string, unknown>).schedule2_line21
     : undefined;
+  const line21 = typeof adjustedPart2 === "number"
+    ? adjustedPart2
+    : calculatedPart2;
   if (
-    typeof adjustedPart2 === "number" &&
-    (adjustedPart2 > 0 || (typeof reduction === "number" && reduction > 0))
+    line21 > 0 || (typeof reduction === "number" && reduction > 0)
   ) {
     childrenByTag.set(
       "TotalOtherTaxesAmt",
-      element("TotalOtherTaxesAmt", adjustedPart2),
+      element("TotalOtherTaxesAmt", line21),
     );
   }
 

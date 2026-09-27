@@ -81,11 +81,29 @@ const sectionAItemSchema = z.object({
   is_vehicle: z.boolean().optional(),
   vehicle_vin: z.string().regex(/^[A-Z0-9]{1,17}$|^[A-Z0-9]{19}$/).optional(),
   vehicle_sale_acknowledgment: vehicleSaleAcknowledgmentSchema.optional(),
+  // Name of the actual donee-issued Form 1098-C or contemporaneous written
+  // acknowledgment PDF supplied to the MeF bundle. The native statement is
+  // not a substitute for this binary attachment under F8283-029/031/032/033.
+  vehicle_acknowledgment_attachment_file_name: z.string().min(1).optional(),
   // Clothing/household — must be in good used condition or better
   is_clothing_household: z.boolean().optional(),
 }).superRefine((item, ctx) => {
-  if (!item.is_vehicle) return;
-  if (item.fmv === undefined) return;
+  if (item.deduction_claimed !== undefined && item.fmv === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8283 Section A claimed deduction needs fair market value",
+    });
+  }
+  if (
+    item.deduction_claimed !== undefined && item.fmv !== undefined &&
+    item.deduction_claimed > item.fmv
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 8283 Section A deduction exceeds FMV",
+    });
+  }
+  if (!item.is_vehicle || item.fmv === undefined) return;
   if (!item.vehicle_vin) {
     ctx.addIssue({ code: "custom", message: "Form 8283 vehicle needs VIN" });
   }
@@ -96,12 +114,6 @@ const sectionAItemSchema = z.object({
     });
   }
   const claimed = item.deduction_claimed ?? item.fmv;
-  if (claimed > item.fmv) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Form 8283 vehicle deduction exceeds FMV",
-    });
-  }
   if (claimed <= 500) return;
   const ack = item.vehicle_sale_acknowledgment;
   if (!ack) {
@@ -211,11 +223,7 @@ export type F8283Input = z.infer<typeof inputSchema>;
 
 function totalSectionAContributions(items: SectionAItem[]): number {
   return items.reduce(
-    (sum, item) =>
-      sum +
-      (item.is_vehicle
-        ? (item.deduction_claimed ?? item.fmv ?? 0)
-        : (item.fmv ?? 0)),
+    (sum, item) => sum + (item.deduction_claimed ?? item.fmv ?? 0),
     0,
   );
 }

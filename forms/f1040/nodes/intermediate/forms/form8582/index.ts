@@ -234,6 +234,73 @@ function totalPassiveLoss(input: Form8582Input): number {
   return (input.current_loss ?? 0) + (input.prior_unallowed ?? 0);
 }
 
+function assertActivityTotals(input: Form8582Input): void {
+  if (input.activities === undefined) return;
+
+  // Form 4797 losses must be allocated separately in Form 8582 Part IX and
+  // reported back on Form 4797. The current Schedule 1 route only handles
+  // Schedule E/Form 4835 operating losses, so never combine the two origins.
+  if (
+    input.activities.some((activity) =>
+      activity.prior_unallowed_4797_part1 > 0 ||
+      activity.prior_unallowed_4797_part2 > 0
+    )
+  ) {
+    throw new Error(
+      "Form 8582 prior Form 4797 losses need Part IX allocation and Form 4797 reporting",
+    );
+  }
+
+  const activities = input.activities;
+  const sum = (select: (activity: typeof activities[number]) => number) =>
+    activities.reduce((total, activity) => total + select(activity), 0);
+  const currentIncome = sum((activity) => Math.max(0, activity.current_net));
+  const currentLoss = sum((activity) => Math.max(0, -activity.current_net));
+  const priorLoss = sum((activity) => activity.prior_unallowed_operating);
+  const rentalIncome = sum((activity) =>
+    activity.activity_type === "A" ? Math.max(0, activity.current_net) : 0
+  );
+  const rentalLoss = sum((activity) =>
+    activity.activity_type === "A" ? Math.max(0, -activity.current_net) : 0
+  );
+  const eligibleRentalPrior = sum((activity) =>
+    activity.activity_type === "A" &&
+      activity.prior_active_participation === true
+      ? activity.prior_unallowed_operating
+      : 0
+  );
+  const hasActiveRental = activities.some((activity) =>
+    activity.activity_type === "A"
+  );
+  const hasOtherPassive = activities.some((activity) =>
+    activity.activity_type === "B" ||
+    (activity.activity_type === "A" &&
+      activity.prior_unallowed_operating > 0 &&
+      activity.prior_active_participation === false)
+  );
+  if (
+    activities.some((activity) =>
+      !Number.isSafeInteger(activity.current_net) ||
+      !Number.isSafeInteger(activity.prior_unallowed_operating) ||
+      (activity.activity_type === "A" &&
+        activity.prior_unallowed_operating > 0 &&
+        activity.prior_active_participation === undefined)
+    ) ||
+    (input.current_income ?? 0) !== currentIncome ||
+    (input.current_loss ?? 0) !== currentLoss ||
+    (input.prior_unallowed ?? 0) !== priorLoss ||
+    (input.rental_current_income ?? 0) !== rentalIncome ||
+    (input.rental_current_loss ?? 0) !== rentalLoss ||
+    (input.rental_prior_eligible_loss ?? 0) !== eligibleRentalPrior ||
+    (input.has_active_rental ?? false) !== hasActiveRental ||
+    (input.has_other_passive ?? false) !== hasOtherPassive
+  ) {
+    throw new Error(
+      "Form 8582 activity amounts do not reconcile to passive-loss totals",
+    );
+  }
+}
+
 // MFS filer who lived with spouse any time during the year cannot use Part II
 function isMfsIneligible(activity: PassiveActivity): boolean {
   return activity.filingStatus === FilingStatus.MFS;
@@ -365,6 +432,8 @@ class Form8582Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Form8582Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+
+    assertActivityTotals(input);
 
     if (
       input.has_active_rental === true &&

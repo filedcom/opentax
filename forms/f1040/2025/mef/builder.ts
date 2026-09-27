@@ -168,9 +168,13 @@ function buildReturnXml(
     throw new Error("MeF export requires a real filer identity");
   }
   const binaryAttachmentFileNames = attachments.map((item) => item.fileName);
+  const attachmentDescriptionsByFileName = Object.fromEntries(
+    attachments.map((item) => [item.fileName, item.description]),
+  );
   const initial = buildFragments(pending, {
     filer,
     binaryAttachmentFileNames,
+    attachmentDescriptionsByFileName,
     pending,
   });
   const documentIdsByPendingKey = Object.fromEntries(
@@ -200,6 +204,7 @@ function buildReturnXml(
   const linked = buildFragments(pending, {
     filer,
     binaryAttachmentFileNames,
+    attachmentDescriptionsByFileName,
     documentIdsByPendingKey,
     documentIdsByTag,
     documentIdsByAttachmentFileName,

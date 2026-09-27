@@ -77,6 +77,137 @@ Deno.test("Form 8962 clears an all-zero 1095-A instead of exporting raw source f
   assertEquals(fields(result, "form8962")?.filing_required, false);
 });
 
+const marriageAlternative = {
+  both_unmarried_january_1: true,
+  married_december_31: true,
+  alternative_family_sizes_verified: true,
+  marriage_month: 6,
+  primary: {
+    family_size: 1,
+    monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
+    monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
+  },
+} as const;
+
+Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    monthly_premiums: Array(12).fill(1_000),
+    monthly_slcsps: Array(12).fill(1_200),
+    monthly_aptcs: Array(12).fill(1_000),
+    annual_line11_eligible: true,
+    alternative_marriage: marriageAlternative,
+  });
+  const calculated = fields(result, "form8962");
+  const rows = calculated?.monthly_ptc_rows as Array<{
+    contribution: number;
+    allowed_credit: number;
+  }>;
+  assertEquals(rows.length, 12);
+  assertEquals(rows[0].contribution, 153);
+  assertEquals(rows[0].allowed_credit, 1_000);
+  assertEquals(rows[6].contribution, 552);
+  assertEquals(rows[6].allowed_credit, 648);
+  assertEquals(calculated?.total_premium_tax_credit, 9_888);
+  assertEquals(calculated?.total_advance_ptc, 12_000);
+  assertEquals(calculated?.net_premium_tax_credit, 0);
+  assertEquals(calculated?.excess_advance_premium, 2_112);
+  assertEquals(calculated?.alternative_marriage_primary, {
+    family_size: 1,
+    monthly_contribution: 153,
+    start_month: 1,
+    end_month: 6,
+  });
+  assertEquals(calculated?.alternative_marriage_spouse, undefined);
+});
+
+Deno.test("marriage alternative requires MFJ and reconciled pre-marriage worksheets", () => {
+  const base = {
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    monthly_premiums: Array(12).fill(1_000),
+    monthly_slcsps: Array(12).fill(1_200),
+    monthly_aptcs: Array(12).fill(1_000),
+    alternative_marriage: marriageAlternative,
+  };
+  assertThrows(
+    () => compute({ ...base, filing_status: FilingStatus.Single }),
+    Error,
+    "requires a joint return",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        filing_status: FilingStatus.MFJ,
+        alternative_marriage: {
+          ...marriageAlternative,
+          primary: {
+            ...marriageAlternative.primary,
+            monthly_premiums: [...Array(6).fill(900), ...Array(6).fill(0)],
+          },
+        },
+      }),
+    Error,
+    "must reconcile",
+  );
+});
+
+Deno.test("marriage Worksheets II and IV add two separate pre-marriage families", () => {
+  const group = {
+    family_size: 1,
+    monthly_premiums: [...Array(6).fill(500), ...Array(6).fill(0)],
+    monthly_slcsps: [...Array(6).fill(600), ...Array(6).fill(0)],
+  };
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    monthly_premiums: Array(12).fill(1_000),
+    monthly_slcsps: Array(12).fill(1_200),
+    monthly_aptcs: Array(12).fill(1_000),
+    alternative_marriage: {
+      ...marriageAlternative,
+      primary: group,
+      spouse: group,
+    },
+  });
+  const calculated = fields(result, "form8962");
+  const rows = calculated?.monthly_ptc_rows as Array<{
+    contribution: number;
+    allowed_credit: number;
+  }>;
+  assertEquals(rows[0].contribution, 306);
+  assertEquals(rows[0].allowed_credit, 894);
+  assertEquals(rows[6].contribution, 552);
+  assertEquals(calculated?.total_premium_tax_credit, 9_252);
+  assertEquals(calculated?.alternative_marriage_spouse, {
+    family_size: 1,
+    monthly_contribution: 153,
+    start_month: 1,
+    end_month: 6,
+  });
+});
+
+Deno.test("marriage alternative is not elected without excess APTC", () => {
+  assertThrows(
+    () =>
+      compute({
+        filing_status: FilingStatus.MFJ,
+        household_size: 2,
+        taxpayer_modified_agi: 80_000,
+        monthly_premiums: Array(12).fill(1_000),
+        monthly_slcsps: Array(12).fill(1_200),
+        monthly_aptcs: Array(12).fill(100),
+        alternative_marriage: marriageAlternative,
+      }),
+    Error,
+    "requires excess APTC",
+  );
+});
+
 Deno.test("annual totals alone do not establish Form 8962 line 11 eligibility", () => {
   assertThrows(
     () =>

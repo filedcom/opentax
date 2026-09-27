@@ -47,6 +47,7 @@ export interface MefBuildContext {
   /** IDs grouped by exact IRS XML root, for references to one document type. */
   readonly documentIdsByTag?: Readonly<Record<string, readonly string[]>>;
   readonly documentIdsByAttachmentFileName?: Readonly<Record<string, string>>;
+  readonly attachmentDescriptionsByFileName?: Readonly<Record<string, string>>;
 }
 
 export interface MefPdfAttachment {

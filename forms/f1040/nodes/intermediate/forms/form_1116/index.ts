@@ -52,6 +52,9 @@ export const inputSchema = z.object({
   general_deductions: z.number().nonnegative().optional(),
   standard_or_itemized_deduction: z.number().nonnegative().optional(),
   other_deductions: z.number().nonnegative().optional(),
+  // Separate expenses on Form 1116 Part I line 3b, required by the 2025
+  // instructions and retained for its linked MeF supporting statement.
+  other_deductions_explanation: z.string().trim().min(1).max(9000).optional(),
   us_tax_before_credits: z.number().nonnegative().optional(),
   tentative_minimum_tax: z.number().nonnegative().optional(),
 });
@@ -233,6 +236,7 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
         general_deductions: input.general_deductions,
         standard_or_itemized_deduction: input.standard_or_itemized_deduction,
         other_deductions: input.other_deductions,
+        other_deductions_explanation: input.other_deductions_explanation,
         us_tax_before_credits: input.us_tax_before_credits,
         category_summaries: categories,
       },

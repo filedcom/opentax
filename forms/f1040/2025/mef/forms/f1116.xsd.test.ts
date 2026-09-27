@@ -194,6 +194,33 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 1116 line 3b links its other-deductions statement",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    form_1116: {
+      ...computedFields(),
+      standard_or_itemized_deduction: 8_000,
+      other_deductions: 2_000,
+      other_deductions_explanation:
+        "Student loan interest adjustment $1,000; IRA deduction $1,000",
+    },
+    schedule3: { line1_total: 1_350 },
+  }, filer);
+  const statementId = /<OtherDeductionsNotRelatedStmt documentId="([^"]+)"/
+    .exec(xml)?.[1];
+  assertEquals(typeof statementId, "string");
+  assertStringIncludes(
+    xml,
+    `<OtherDeductionsNotRelatedAmt referenceDocumentId="${statementId}" referenceDocumentName="OtherDeductionsNotRelatedStatement">2000</OtherDeductionsNotRelatedAmt>`,
+  );
+  assertStringIncludes(xml, "Student loan interest adjustment");
+  await validateXsd(xml);
+});
+
+Deno.test({
   name:
     "XSD: foreign-employer tax reaches Form 1116 and Schedule 3 through the graph",
   sanitizeOps: false,

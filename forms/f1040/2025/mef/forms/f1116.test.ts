@@ -5,6 +5,7 @@ import {
   IncomeCategory,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import { form1116 } from "./f1116.ts";
+import { form1116OtherDeductionsStatement } from "./f1116_other_deductions_statement.ts";
 
 const passive = {
   category: IncomeCategory.Passive,
@@ -105,5 +106,62 @@ Deno.test("Form 1116 never emits unsupported direct expenses without their state
       }),
     Error,
     "supporting statement",
+  );
+});
+
+Deno.test("Form 1116 line 3b uses a linked source-specific deductions statement", () => {
+  const withOther = {
+    ...fields,
+    standard_or_itemized_deduction: 8_000,
+    other_deductions: 2_000,
+    other_deductions_explanation:
+      "Student loan interest adjustment $1,000; IRA deduction $1,000",
+  };
+  const statement = form1116OtherDeductionsStatement.build({}, {
+    pending: { form_1116: withOther },
+  });
+  assertStringIncludes(
+    statement,
+    "<OtherDeductionsNotRelatedStmt>",
+  );
+  assertStringIncludes(statement, "Student loan interest adjustment");
+  const [xml] = form1116.build(withOther, {
+    documentIdsByPendingKey: {
+      form1116_other_deductions_statement: ["STMT1"],
+    },
+  });
+  assertStringIncludes(
+    xml,
+    '<OtherDeductionsNotRelatedAmt referenceDocumentId="STMT1" referenceDocumentName="OtherDeductionsNotRelatedStatement">2000</OtherDeductionsNotRelatedAmt>',
+  );
+});
+
+Deno.test("Form 1116 line 3b rejects a missing explanation or missing linked document", () => {
+  const withOther = {
+    ...fields,
+    standard_or_itemized_deduction: 8_000,
+    other_deductions: 2_000,
+  };
+  assertThrows(
+    () => form1116.build(withOther),
+    Error,
+    "source explanation",
+  );
+  assertThrows(
+    () =>
+      form1116OtherDeductionsStatement.build({}, {
+        pending: { form_1116: withOther },
+      }),
+    Error,
+    "source explanation",
+  );
+  assertThrows(
+    () =>
+      form1116.build({
+        ...withOther,
+        other_deductions_explanation: "IRA deduction $2,000",
+      }, { documentIdsByPendingKey: {} }),
+    Error,
+    "statement count",
   );
 });

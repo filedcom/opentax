@@ -158,6 +158,95 @@ Deno.test("invalid_current_loss_type: current_loss is string '30000' throws", ()
   assertThrows(() => compute({ current_loss: "30000" }));
 });
 
+Deno.test("Form 8582 reconciles Schedule E and Form 4835 activity totals before routing a loss", () => {
+  const activities = [
+    {
+      name: "Rental house",
+      activity_type: "A",
+      property_type: 1,
+      current_net: -8_000,
+      prior_unallowed_operating: 2_000,
+      prior_active_participation: true,
+      prior_unallowed_4797_part1: 0,
+      prior_unallowed_4797_part2: 0,
+    },
+    {
+      name: "Farm rental",
+      activity_type: "B",
+      property_type: 5,
+      current_net: 3_000,
+      prior_unallowed_operating: 0,
+      prior_unallowed_4797_part1: 0,
+      prior_unallowed_4797_part2: 0,
+    },
+  ];
+  const input = {
+    activities,
+    current_income: 3_000,
+    current_loss: 8_000,
+    prior_unallowed: 2_000,
+    rental_current_income: 0,
+    rental_current_loss: 8_000,
+    rental_prior_eligible_loss: 2_000,
+    has_active_rental: true,
+    has_other_passive: true,
+    active_participation: true,
+    modified_agi: 80_000,
+  };
+  const result = compute(input);
+  assertEquals(result.carryforwards, undefined);
+  assertThrows(
+    () => compute({ ...input, prior_unallowed: 1_000 }),
+    Error,
+    "activity amounts do not reconcile",
+  );
+  assertThrows(
+    () => compute({ ...input, rental_prior_eligible_loss: 0 }),
+    Error,
+    "activity amounts do not reconcile",
+  );
+  assertThrows(
+    () => compute({ ...input, current_income: 4_000 }),
+    Error,
+    "activity amounts do not reconcile",
+  );
+  assertThrows(
+    () => compute({ ...input, has_active_rental: false }),
+    Error,
+    "activity amounts do not reconcile",
+  );
+});
+
+Deno.test("Form 8582 does not route prior Form 4797 losses to Schedule 1", () => {
+  const activity = {
+    name: "Rental business",
+    activity_type: "B",
+    property_type: 1,
+    current_net: 0,
+    prior_unallowed_operating: 0,
+    prior_unallowed_4797_part1: 4_000,
+    prior_unallowed_4797_part2: 0,
+  };
+  assertThrows(
+    () => compute({ activities: [activity], prior_unallowed: 4_000 }),
+    Error,
+    "prior Form 4797 losses need Part IX allocation",
+  );
+  assertThrows(
+    () =>
+      compute({
+        activities: [{
+          ...activity,
+          prior_unallowed_4797_part1: 0,
+          prior_unallowed_4797_part2: 4_000,
+        }],
+        prior_unallowed: 4_000,
+      }),
+    Error,
+    "prior Form 4797 losses need Part IX allocation",
+  );
+});
+
 Deno.test("invalid_prior_unallowed_type: prior_unallowed is string '10000' throws", () => {
   assertThrows(() => compute({ prior_unallowed: "10000" }));
 });

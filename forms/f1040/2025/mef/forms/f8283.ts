@@ -294,6 +294,38 @@ export const form8283: MefFormDescriptor<
     const parsed = inputSchema.parse(fields);
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
+    const vehicleAttachmentNames = sectionA.filter((item) => item.is_vehicle)
+      .map((item) => {
+        const fileName = item.vehicle_acknowledgment_attachment_file_name;
+        if (!fileName) {
+          throw new Error(
+            "Form 8283 vehicle needs its donee-issued Form 1098-C or written acknowledgment PDF",
+          );
+        }
+        const description = context.attachmentDescriptionsByFileName
+          ?.[fileName];
+        if (
+          description === undefined ||
+          !/^(?:Form1098C|DoneeOrganizationContemporaneousWrittenAcknowledgment)/
+            .test(description)
+        ) {
+          throw new Error(
+            "Form 8283 vehicle attachment needs an IRS-approved description and matching PDF",
+          );
+        }
+        return fileName;
+      });
+    const attachmentIds = [...new Set(vehicleAttachmentNames)].map(
+      (fileName) => {
+        const id = context.documentIdsByAttachmentFileName?.[fileName];
+        if (context.documentIdsByPendingKey && !id) {
+          throw new Error(
+            "Form 8283 vehicle acknowledgment PDF has no linked MeF document",
+          );
+        }
+        return id;
+      },
+    ).filter((id): id is string => id !== undefined);
     const statementIds = context.documentIdsByPendingKey
       ?.form8283_vehicle_statement ?? [];
     const requiredStatements = sectionA.filter(needsVehicleStatement).length;
@@ -319,6 +351,13 @@ export const form8283: MefFormDescriptor<
                 : undefined,
             )
           ),
+          attachmentIds.length > 0
+            ? {
+              referenceDocumentId: attachmentIds.join(" "),
+              referenceDocumentName:
+                "BinaryAttachment DeductionsTakenUnderSection170Stmt DoneesSignatureUnavailableStmt",
+            }
+            : undefined,
         )]
         : []),
       ...sectionB.map(buildSectionBItem),

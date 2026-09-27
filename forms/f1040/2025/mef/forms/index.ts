@@ -7,6 +7,7 @@ import { irs1040 } from "./f1040.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
 import { form1116DirectExpenseStatement } from "./f1116_direct_expense_statement.ts";
+import { form1116OtherDeductionsStatement } from "./f1116_other_deductions_statement.ts";
 import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
@@ -268,6 +269,7 @@ export const ALL_MEF_FORMS = [
   form965aMultipleTransfereeStatement,
   // Form 1116 Part I line 2 statement precedes joint occupancy in ReturnData.
   form1116DirectExpenseStatement,
+  form1116OtherDeductionsStatement,
   form4136EmulsionBlendingStatement,
   form4136CreditCardUsersStatement,
   form4136DieselGovernmentSalesStatement,

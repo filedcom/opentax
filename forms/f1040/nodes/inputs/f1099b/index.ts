@@ -3,12 +3,16 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
-import { form8949, type Form8949Part } from "../../intermediate/forms/form8949/index.ts";
+import {
+  form8949,
+  type Form8949Part,
+} from "../../intermediate/forms/form8949/index.ts";
 import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { form8997 } from "../../intermediate/forms/form8997/index.ts";
+import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 const LONG_TERM_PARTS = new Set(["D", "E", "F"]);
@@ -36,21 +40,32 @@ export const itemSchema = z.object({
   // When present, this amount should be treated as interest income on Schedule B,
   // and the corresponding capital gain reduced by this amount.
   box1f_accrued_market_discount: z.number().nonnegative().optional(),
+  // Affirm that this bond was held for investment and that its market
+  // discount is not already included in Form 4952's manual other income.
+  investment_property_for_form4952: z.boolean().optional(),
   // Box 1g: wash sale loss disallowed (IRC §1091) — added back to cost basis
   // as adjustment code "W". When provided explicitly, upstream can auto-populate
   // adjustment_codes and adjustment_amount rather than requiring manual entry.
-  box1g_wash_sale_loss_disallowed: z.number().nonnegative().optional().describe("Box 1g: wash sale loss disallowed (IRC §1091) — increases cost basis via adjustment code W"),
+  box1g_wash_sale_loss_disallowed: z.number().nonnegative().optional().describe(
+    "Box 1g: wash sale loss disallowed (IRC §1091) — increases cost basis via adjustment code W",
+  ),
   // Box 3: indicates proceeds are from collectibles (28% rate assets per IRC §1(h)(5))
   // or from a QOF investment (IRC §1400Z-2). Collectibles are taxed at a max 28% rate
   // rather than the standard 0/15/20% long-term capital gains rates.
-  box3_collectibles: z.boolean().optional().describe("Box 3: collectibles gain subject to 28% maximum rate (IRC §1(h)(5))"),
+  box3_collectibles: z.boolean().optional().describe(
+    "Box 3: collectibles gain subject to 28% maximum rate (IRC §1(h)(5))",
+  ),
   // Box 12: indicates this is a QOF (Qualified Opportunity Fund) investment
   // under IRC §1400Z-2. Gain may be deferred and is reported on Form 8997.
-  box12_qof_investment: z.boolean().optional().describe("Box 12: proceeds from QOF (Qualified Opportunity Fund) — deferred gain per IRC §1400Z-2"),
+  box12_qof_investment: z.boolean().optional().describe(
+    "Box 12: proceeds from QOF (Qualified Opportunity Fund) — deferred gain per IRC §1400Z-2",
+  ),
   // Noncovered security flag — basis was NOT reported to IRS (broker not required to report).
   // Transactions involving noncovered securities must use Form 8949 Part B (short-term)
   // or Part E (long-term) rather than Parts A/D.
-  noncovered_security: z.boolean().optional().describe("Security acquired before broker cost-basis reporting rules apply — basis not reported to IRS"),
+  noncovered_security: z.boolean().optional().describe(
+    "Security acquired before broker cost-basis reporting rules apply — basis not reported to IRS",
+  ),
 });
 
 export const inputSchema = z.object({
@@ -61,9 +76,14 @@ type B99Item = z.infer<typeof itemSchema>;
 
 // box1g_wash_sale_loss_disallowed: convenience field that auto-populates
 // adjustment_codes "W" and adjustment_amount when not already set by the caller.
-function resolveWashSale(item: B99Item): { codes: string | undefined; amount: number | undefined } {
+function resolveWashSale(
+  item: B99Item,
+): { codes: string | undefined; amount: number | undefined } {
   const washAmount = item.box1g_wash_sale_loss_disallowed ?? 0;
-  if (washAmount <= 0 || item.adjustment_codes !== undefined || item.adjustment_amount !== undefined) {
+  if (
+    washAmount <= 0 || item.adjustment_codes !== undefined ||
+    item.adjustment_amount !== undefined
+  ) {
     return { codes: item.adjustment_codes, amount: item.adjustment_amount };
   }
   return { codes: "W", amount: washAmount };
@@ -80,7 +100,27 @@ function resolvedPart(item: B99Item): Form8949Part {
 }
 
 function processItem(item: B99Item): NodeOutput[] {
-  const { codes: adjustmentCodes, amount: adjustmentAmount } = resolveWashSale(item);
+  const washSale = resolveWashSale(item);
+  const hasMarketDiscount = (item.box1f_accrued_market_discount ?? 0) > 0;
+  if (hasMarketDiscount && washSale.codes?.includes("D")) {
+    throw new Error(
+      "1099-B market discount is already present in Form 8949 adjustment code D",
+    );
+  }
+  // 2025 Form 8949 accrued-market-discount worksheet, lines 3–5: only the
+  // lesser of box 1f and positive proceeds less basis becomes ordinary interest.
+  const taxableMarketDiscount = hasMarketDiscount
+    ? Math.min(
+      Math.max(0, item.proceeds - item.cost_basis),
+      item.box1f_accrued_market_discount!,
+    )
+    : 0;
+  const adjustmentCodes = hasMarketDiscount
+    ? `${washSale.codes ?? ""}D`
+    : washSale.codes;
+  const adjustmentAmount = hasMarketDiscount
+    ? (washSale.amount ?? 0) - taxableMarketDiscount
+    : washSale.amount;
   const part = resolvedPart(item);
   const gainLoss = item.proceeds - item.cost_basis + (adjustmentAmount ?? 0);
   const isLongTerm = LONG_TERM_PARTS.has(part);
@@ -104,15 +144,22 @@ function processItem(item: B99Item): NodeOutput[] {
   ];
 
   if ((item.federal_withheld ?? 0) > 0) {
-    outputs.push(output(f1040, { line25b_withheld_1099: item.federal_withheld! }));
+    outputs.push(
+      output(f1040, { line25b_withheld_1099: item.federal_withheld! }),
+    );
   }
 
-  // Market discount (box 1f) = ordinary interest income per IRC §1278
-  if ((item.box1f_accrued_market_discount ?? 0) > 0) {
+  // Code D removes this ordinary-interest share from Form 8949 capital gain.
+  if (taxableMarketDiscount > 0) {
     outputs.push(output(schedule_b, {
       payer_name: item.description,
-      taxable_interest_net: item.box1f_accrued_market_discount!,
+      taxable_interest_net: taxableMarketDiscount,
     }));
+    if (item.investment_property_for_form4952 === true) {
+      outputs.push(output(form4952, {
+        source_1099_interest: taxableMarketDiscount,
+      }));
+    }
   }
 
   // box3_collectibles: wired — collectibles flag is passed to form8949's transactionSchema,
@@ -138,7 +185,13 @@ function processItem(item: B99Item): NodeOutput[] {
 class F1099bNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f1099b";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([form8949, f1040, schedule_b, form8997]);
+  readonly outputNodes = new OutputNodes([
+    form8949,
+    f1040,
+    schedule_b,
+    form8997,
+    form4952,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

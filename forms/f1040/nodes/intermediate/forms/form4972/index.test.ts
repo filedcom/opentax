@@ -3,6 +3,7 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { form4972, inputSchema } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -29,6 +30,7 @@ function calculated(input: Record<string, unknown>) {
     lines: outputs.find((item) => item.nodeType === "form4972")?.fields,
     agi: fieldsOf(outputs, agi_aggregator),
     f1040: fieldsOf(outputs, f1040),
+    scheduleA: fieldsOf(outputs, scheduleA),
   };
 }
 
@@ -311,19 +313,34 @@ Deno.test("Form 4972 combined election allocates death benefit and estate tax se
   assertEquals(result.lines?.line18, 2_800);
 });
 
-Deno.test("Form 4972 Part II-only estate tax remains stopped", () => {
-  assertThrows(
-    () =>
-      calculated({
-        lump_sum_amount: 100_000,
-        capital_gain_amount: 30_000,
-        federal_estate_tax: 4_000,
-        beneficiary_distribution: true,
-        elect_capital_gain: true,
-      }),
-    Error,
-    "Part II-only estate tax needs ordinary-income reporting review",
-  );
+Deno.test("Form 4972 Part II-only estate tax reduces capital gain and sends ordinary IRD deduction to Schedule A", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    federal_estate_tax: 4_000,
+    beneficiary_distribution: true,
+    elect_capital_gain: true,
+  });
+  assertEquals(result.lines?.line6, 28_800);
+  assertEquals(result.lines?.line7, 5_760);
+  assertEquals(result.lines?.line18, undefined);
+  assertEquals(result.tax, 5_760);
+  assertEquals(result.agi?.line5b_form4972_ordinary, 70_000);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 70_000);
+  assertEquals(result.scheduleA?.line_16_other_deductions, 2_800);
+});
+
+Deno.test("Form 4972 combined election keeps ordinary estate tax inside Part III, not Schedule A", () => {
+  const result = calculated({
+    lump_sum_amount: 100_000,
+    capital_gain_amount: 30_000,
+    federal_estate_tax: 4_000,
+    beneficiary_distribution: true,
+    elect_capital_gain: true,
+    elect_10yr_averaging: true,
+  });
+  assertEquals(result.lines?.line18, 2_800);
+  assertEquals(result.scheduleA, undefined);
 });
 
 Deno.test("Form 4972 rejects capital gain above taxable distribution", () => {

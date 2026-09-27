@@ -845,3 +845,93 @@ Deno.test("five Part IV periods remain separate source allocations", () => {
   assertEquals(rows.length, 5);
   assertEquals(rows.map((row) => row.premium_pct), [0.1, 0.2, 0.3, 0.4, 0.5]);
 });
+
+Deno.test("coverage-family change replaces reported SLCSP for affected months", () => {
+  // IRS Form 8962 instructions, line 10, Example 3: MEC eligibility starts
+  // in August, but Form 1095-A column B still reflects the old family.
+  const result = compute([minimalItem({
+    monthly_premiums: Array(12).fill(800),
+    monthly_slcsps: Array(12).fill(850),
+    monthly_aptcs: Array(12).fill(700),
+    annual_slcsp: 10_200,
+    slcsp_corrections: Array.from({ length: 5 }, (_, index) => ({
+      month: index + 8,
+      basis: "coverage_family_change",
+      corrected_slcsp: 400,
+    })),
+  })]);
+  const fields = findOutput(result, "form8962")?.fields;
+  assertEquals(fields?.monthly_slcsps, [
+    ...Array(7).fill(850),
+    ...Array(5).fill(400),
+  ]);
+  assertEquals(fields?.annual_line11_eligible, undefined);
+  assertEquals(fields?.annual_slcsp, undefined);
+});
+
+Deno.test("missing column B can be supplied for every covered no-APTC month", () => {
+  const result = compute([minimalItem({
+    monthly_premiums: [600, 600, ...Array(10).fill(0)],
+    monthly_aptcs: Array(12).fill(0),
+    slcsp_corrections: [1, 2].map((month) => ({
+      month,
+      basis: "no_aptc",
+      corrected_slcsp: 750,
+    })),
+  })]);
+  assertEquals(findOutput(result, "form8962")?.fields.monthly_slcsps, [
+    750,
+    750,
+    ...Array(10).fill(0),
+  ]);
+});
+
+Deno.test("missing column B cannot leave a covered month uncorrected", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        monthly_premiums: [600, 600, ...Array(10).fill(0)],
+        monthly_aptcs: Array(12).fill(0),
+        slcsp_corrections: [{
+          month: 1,
+          basis: "no_aptc",
+          corrected_slcsp: 750,
+        }],
+      })]),
+    Error,
+    "corrected SLCSP for every covered month",
+  );
+});
+
+Deno.test("SLCSP corrections reject duplicate months and no-APTC contradictions", () => {
+  const source = {
+    monthly_premiums: Array(12).fill(600),
+    monthly_slcsps: Array(12).fill(700),
+    monthly_aptcs: Array(12).fill(300),
+  };
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        slcsp_corrections: [
+          { month: 8, basis: "move", corrected_slcsp: 650 },
+          { month: 8, basis: "move", corrected_slcsp: 650 },
+        ],
+      })]),
+    Error,
+    "repeat a month",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        ...source,
+        slcsp_corrections: [{
+          month: 8,
+          basis: "no_aptc",
+          corrected_slcsp: 650,
+        }],
+      })]),
+    Error,
+    "conflicts with paid APTC",
+  );
+});

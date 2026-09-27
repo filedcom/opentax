@@ -15,6 +15,7 @@ interface Fields {
   general_deductions?: number;
   standard_or_itemized_deduction?: number;
   other_deductions?: number;
+  other_deductions_explanation?: string;
   us_tax_before_credits?: number;
   foreign_tax_paid?: number;
 }
@@ -50,6 +51,7 @@ function sourceXml(
   standardOrItemizedDeduction: number,
   otherDeductions: number,
   directExpenseStatementId?: string,
+  otherDeductionsStatementId?: string,
 ): string {
   const first = items[0];
   if (
@@ -126,7 +128,14 @@ function sourceXml(
       ? element("ItemizedOrStandardDeductionAmt", standardOrItemizedDeduction)
       : "",
     otherDeductions > 0
-      ? element("OtherDeductionsNotRelatedAmt", otherDeductions)
+      ? element("OtherDeductionsNotRelatedAmt", otherDeductions, {
+        ...(otherDeductionsStatementId
+          ? {
+            referenceDocumentId: otherDeductionsStatementId,
+            referenceDocumentName: "OtherDeductionsNotRelatedStatement",
+          }
+          : {}),
+      })
       : "",
     generalDeductions > 0
       ? element("TotalDeductionAmt", generalDeductions)
@@ -191,6 +200,7 @@ function categoryXml(
   fields: Fields,
   partIV: string[],
   nextDirectExpenseStatementId: () => string | undefined,
+  otherDeductionsStatementId?: string,
 ): string {
   const categoryTag = CATEGORY_INDICATOR[summary.category];
   if (!categoryTag) {
@@ -219,9 +229,9 @@ function categoryXml(
       "Form 1116 deduction categories do not add to total general deductions",
     );
   }
-  if (otherDeductions > 0) {
+  if (otherDeductions > 0 && !fields.other_deductions_explanation?.trim()) {
     throw new Error(
-      "Form 1116 other deductions need a supporting statement before e-filing",
+      "Form 1116 other deductions need a source explanation for their supporting statement",
     );
   }
   const worldwideTaxableIncome = fields.total_income;
@@ -254,6 +264,7 @@ function categoryXml(
         items.some((item) => (item.directly_allocable_deductions ?? 0) > 0)
           ? nextDirectExpenseStatementId()
           : undefined,
+        otherDeductionsStatementId,
       )
     ),
     element("TotalForeignGrossIncomeAmt", summary.includedForeignIncome),
@@ -308,6 +319,17 @@ function buildIRS1116(
     );
   }
   let nextStatement = 0;
+  const otherDeductionsStatementIds = context?.documentIdsByPendingKey
+    ?.form1116_other_deductions_statement ?? [];
+  if (
+    context?.documentIdsByPendingKey &&
+    otherDeductionsStatementIds.length !==
+      ((fields.other_deductions ?? 0) > 0 ? 1 : 0)
+  ) {
+    throw new Error(
+      "Form 1116 other-deductions statement count does not match linked documents",
+    );
+  }
   if (
     new Set(summaries.map((summary) => summary.category)).size !==
       summaries.length
@@ -395,6 +417,7 @@ function buildIRS1116(
       fields,
       index === mainIndex ? partIV : [],
       () => statementIds[nextStatement++],
+      otherDeductionsStatementIds[0],
     )
   );
 }

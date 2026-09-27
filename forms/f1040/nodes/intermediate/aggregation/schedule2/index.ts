@@ -69,8 +69,6 @@ export const inputSchema = z.object({
   // Line 5 — Unreported social security and Medicare tax from Form 4137
   // IRC §3101; Form 4137 line 13 → Schedule 2 line 5
   line5_unreported_tip_tax: z.number().nonnegative().optional(),
-  // Line 17c — Tax on lump-sum distributions (from Form 4972)
-  // IRC §402(e)(1); Form 4972 → Schedule 2 line 17c
   // Line 1a — Excess advance premium tax credit repayment (Form 8962 line 29).
   // IRC §36B(f); 2025 Schedule 2 line 1a.
   line1a_excess_advance_premium: z.number().nonnegative().optional(),
@@ -82,8 +80,8 @@ export const inputSchema = z.object({
     z.number().nonnegative(),
   )
     .optional(),
-  // Line 7a — Household employment taxes (Schedule H line 26)
-  // IRC §3510; Schedule H line 26 → Schedule 2 line 7a
+  // Line 9 — Household employment taxes (Schedule H line 26).
+  // IRC §3510; Schedule H line 26 → Schedule 2 line 9.
   line9_household_employment: z.number().nonnegative().optional(),
   // Line 17a — Recapture of investment credit (Form 4255)
   // IRC §50(a); Form 4255 → Schedule 2 line 17a

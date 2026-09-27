@@ -85,6 +85,35 @@ Deno.test("f8283.compute: section A item routes fmv to schedule_a line_12_noncas
   assertEquals(fields.line_12_noncash_contributions, 300);
 });
 
+Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher FMV", () => {
+  const result = compute({
+    section_a_items: [
+      { fmv: 1_200, deduction_claimed: 700 },
+      { fmv: 400, deduction_claimed: 250 },
+    ],
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule_a)?.line_12_noncash_contributions,
+    950,
+  );
+});
+
+Deno.test("f8283.compute: Section A rejects claimed amounts without FMV or above FMV", () => {
+  assertThrows(
+    () => compute({ section_a_items: [{ deduction_claimed: 200 }] }),
+    Error,
+    "claimed deduction needs fair market value",
+  );
+  assertThrows(
+    () =>
+      compute({
+        section_a_items: [{ fmv: 200, deduction_claimed: 250 }],
+      }),
+    Error,
+    "deduction exceeds FMV",
+  );
+});
+
 Deno.test("f8283.compute: section B item routes claimed deduction to schedule_a line 12", () => {
   const result = compute({
     section_b_items: [{ fmv: 7000, deduction_claimed: 6000 }],

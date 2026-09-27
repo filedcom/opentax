@@ -8,6 +8,7 @@ import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { income_tax_calculation } from "../../worksheets/income_tax_calculation/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { tsSchema } from "../../../types.ts";
@@ -30,7 +31,7 @@ const TAX_RATE_SCHEDULE: ReadonlyArray<{
   { over: 4_530, upTo: 6_690, base: 576.90, rate: 0.15 },
   { over: 6_690, upTo: 9_170, base: 900.90, rate: 0.16 },
   { over: 9_170, upTo: 11_440, base: 1_297.70, rate: 0.18 },
-  { over: 11_440, upTo: 13_710, base: 1_706.30, rate: 0.20 },
+  { over: 11_440, upTo: 13_710, base: 1_706.40, rate: 0.20 },
   { over: 13_710, upTo: 17_160, base: 2_160.30, rate: 0.23 },
   { over: 17_160, upTo: 22_880, base: 2_953.80, rate: 0.26 },
   { over: 22_880, upTo: 28_600, base: 4_441, rate: 0.30 },
@@ -157,15 +158,6 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       "form4972: NUA inclusion election needs a positive Form 1099-R box 6 amount",
     );
   }
-  if (
-    (input.federal_estate_tax ?? 0) > 0 &&
-    input.elect_capital_gain === true &&
-    input.elect_10yr_averaging !== true
-  ) {
-    throw new Error(
-      "form4972: Part II-only estate tax needs ordinary-income reporting review",
-    );
-  }
 }
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -240,6 +232,7 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     income_tax_calculation,
     agi_aggregator,
     f1040,
+    scheduleA,
   ]);
 
   compute(ctx: NodeContext, rawInput: Form4972Input): NodeResult {
@@ -390,6 +383,16 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
           this.outputNodes.output(f1040, {
             line5b_form4972_ordinary: ordinaryIncomeOn1040,
           }),
+          ...(ordinaryEstateTax > 0
+            ? [
+              // Unlike the 10-year option's line 18 adjustment, the ordinary
+              // portion is IRD taxed on Form 1040 line 5b. Its estate-tax
+              // deduction is a Schedule A line 16 item, not an AGI reduction.
+              this.outputNodes.output(scheduleA, {
+                line_16_other_deductions: ordinaryEstateTax,
+              }),
+            ]
+            : []),
         ]
         : []),
     ];

@@ -125,6 +125,23 @@ export const sharedPolicyAllocationSchema = z.object({
   aptc_pct: allocationPctSchema.optional(),
 }).strict();
 
+const alternativeMarriageCoverageSchema = z.object({
+  family_size: z.number().int().positive(),
+  // Pub. 974 Worksheets II and IV, columns A and B, after any Part IV
+  // allocation and any correction to the applicable SLCSP premium.
+  monthly_premiums: z.array(z.number().nonnegative()).length(12),
+  monthly_slcsps: z.array(z.number().nonnegative()).length(12),
+}).strict();
+
+export const alternativeMarriageSchema = z.object({
+  both_unmarried_january_1: z.literal(true),
+  married_december_31: z.literal(true),
+  alternative_family_sizes_verified: z.literal(true),
+  marriage_month: z.number().int().min(1).max(12),
+  primary: alternativeMarriageCoverageSchema.optional(),
+  spouse: alternativeMarriageCoverageSchema.optional(),
+}).strict();
+
 export const inputSchema = z.object({
   // Household size for FPL calculation
   household_size: z.number().int().positive().optional(),
@@ -143,6 +160,7 @@ export const inputSchema = z.object({
   mfs_ptc_status: mfsPtcStatusSchema.optional(),
   shared_policy_allocations: z.array(sharedPolicyAllocationSchema).max(99)
     .optional(),
+  alternative_marriage: alternativeMarriageSchema.optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -261,6 +279,138 @@ function repaymentCap(
   return null; // ≥ 400% FPL — no cap
 }
 
+interface AlternativeMarriageGroup {
+  family_size: number;
+  monthly_contribution: number;
+  start_month: number;
+  end_month: number;
+}
+
+function alternativeMarriageCalculation(
+  input: Form8962Input,
+  income: number,
+  cfg: F1040Config,
+): {
+  primary?: AlternativeMarriageGroup;
+  spouse?: AlternativeMarriageGroup;
+  coveredMonths: boolean[];
+  contributions: number[];
+  credits: number[];
+} | undefined {
+  const election = input.alternative_marriage;
+  if (!election) return undefined;
+  if (
+    !input.monthly_premiums || !input.monthly_slcsps ||
+    !input.monthly_aptcs
+  ) {
+    throw new Error(
+      "Form 8962 marriage alternative requires monthly 1095-A columns",
+    );
+  }
+  const groups = [election.primary, election.spouse].filter((group) =>
+    group !== undefined
+  );
+  if (groups.length === 0) {
+    throw new Error(
+      "Form 8962 marriage alternative needs pre-marriage coverage",
+    );
+  }
+  if (
+    groups.length === 2 &&
+    groups[0].family_size + groups[1].family_size !== input.household_size
+  ) {
+    throw new Error(
+      "Form 8962 alternative family sizes must total the tax family size",
+    );
+  }
+  const coveredMonths = Array<boolean>(12).fill(false);
+  const contributions = Array<number>(12).fill(0);
+  const credits = Array<number>(12).fill(0);
+  const halfIncome = Math.round(income / 2);
+  const result: {
+    primary?: AlternativeMarriageGroup;
+    spouse?: AlternativeMarriageGroup;
+    coveredMonths: boolean[];
+    contributions: number[];
+    credits: number[];
+  } = { coveredMonths, contributions, credits };
+  for (
+    const [role, coverage] of [
+      ["primary", election.primary],
+      ["spouse", election.spouse],
+    ] as const
+  ) {
+    if (!coverage) continue;
+    if (coverage.family_size >= input.household_size!) {
+      throw new Error(
+        "Form 8962 alternative family size must be smaller than the joint family",
+      );
+    }
+    const coveredMonths = coverage.monthly_premiums.flatMap((premium, month) =>
+      premium > 0 ? [month] : []
+    );
+    if (
+      coveredMonths.length === 0 ||
+      coveredMonths.at(-1)! >= election.marriage_month ||
+      coverage.monthly_slcsps.some((slcsp, month) =>
+        slcsp > 0 && coverage.monthly_premiums[month] === 0
+      ) ||
+      coveredMonths.some((month) => coverage.monthly_slcsps[month] === 0)
+    ) {
+      throw new Error(
+        "Form 8962 marriage alternative needs covered pre-marriage months and their applicable SLCSP",
+      );
+    }
+    const alternativeFpl = federalPovertyLevel(
+      coverage.family_size,
+      input.fpl_region!,
+      cfg,
+    );
+    const alternativePct = halfIncome > 4 * alternativeFpl
+      ? 401
+      : Math.floor(halfIncome / alternativeFpl * 100);
+    const contribution = Math.round(
+      Math.round(
+        halfIncome * applicableContributionPct(alternativePct),
+      ) / 12,
+    );
+    result[role] = {
+      family_size: coverage.family_size,
+      monthly_contribution: contribution,
+      start_month: coveredMonths[0] + 1,
+      end_month: coveredMonths.at(-1)! + 1,
+    };
+    for (const month of coveredMonths) {
+      result.coveredMonths[month] = true;
+      contributions[month] += contribution;
+      credits[month] += allowedPtc(
+        coverage.monthly_slcsps[month],
+        coverage.monthly_premiums[month],
+        contribution,
+      );
+    }
+  }
+  for (let month = 0; month < election.marriage_month; month++) {
+    const premium = groups.reduce(
+      (sum, group) => sum + group.monthly_premiums[month],
+      0,
+    );
+    const slcsp = groups.reduce(
+      (sum, group) => sum + group.monthly_slcsps[month],
+      0,
+    );
+    if (
+      Math.abs(premium - input.monthly_premiums[month]) > 0.01 ||
+      Math.abs(slcsp - input.monthly_slcsps[month]) > 0.01
+    ) {
+      throw new Error(
+        "Form 8962 marriage worksheet amounts must reconcile to allocated monthly 1095-A columns",
+      );
+    }
+  }
+  return result;
+}
+
 function buildOutputs(
   line26: number,
   line29: number,
@@ -351,6 +501,21 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+
+    if (
+      input.alternative_marriage &&
+      input.filing_status !== FilingStatus.MFJ
+    ) {
+      throw new Error("Form 8962 marriage alternative requires a joint return");
+    }
+    if (
+      input.alternative_marriage &&
+      input.below_100_fpl_status?.basis === "not_applicable"
+    ) {
+      throw new Error(
+        "Form 8962 below-100% no-exception facts conflict with marriage alternative",
+      );
+    }
 
     const premium = totalPremium(input);
     const slcsp = totalSlcsp(input);
@@ -532,8 +697,15 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         "Form 8962 annual line 11 needs verified full-year unchanged monthly coverage",
       );
     }
-    const monthly = hasMonthlyColumns && input.annual_line11_eligible !== true;
+    const monthly = hasMonthlyColumns &&
+      (input.annual_line11_eligible !== true ||
+        input.alternative_marriage !== undefined);
     const qsehraFacts = input.qsehra_monthly_facts;
+    if (input.alternative_marriage && qsehraFacts) {
+      throw new Error(
+        "Form 8962 marriage alternative with QSEHRA needs separate Publication 974 calculation",
+      );
+    }
     if (
       input.qsehra_amount_offered !== undefined &&
       input.qsehra_w2_reported_benefit !== undefined &&
@@ -574,21 +746,73 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const monthlyContribution = annualContribution === undefined
       ? undefined
       : Math.round(annualContribution / 12);
+    const alternativeMarriage = alternativeMarriageCalculation(
+      input,
+      income,
+      cfg,
+    );
+    if (alternativeMarriage) {
+      const regularCredit = input.monthly_premiums!.reduce(
+        (sum, monthPremium, index) =>
+          sum + allowedPtc(
+            input.monthly_slcsps![index],
+            monthPremium,
+            monthlyContribution!,
+          ),
+        0,
+      );
+      const regularPreMarriageCredit = input.monthly_premiums!.reduce(
+        (sum, monthPremium, index) =>
+          sum + (alternativeMarriage.coveredMonths[index]
+            ? allowedPtc(
+              input.monthly_slcsps![index],
+              monthPremium,
+              monthlyContribution!,
+            )
+            : 0),
+        0,
+      );
+      const alternativePreMarriageCredit = alternativeMarriage.credits.reduce(
+        (sum, credit) => sum + credit,
+        0,
+      );
+      if (
+        aptc <= regularCredit ||
+        alternativePreMarriageCredit <= regularPreMarriageCredit
+      ) {
+        throw new Error(
+          "Form 8962 marriage alternative requires excess APTC and a beneficial Worksheet V election",
+        );
+      }
+    }
     const monthlyRows = monthly
       ? input.monthly_premiums!.map((monthPremium, index) => {
         const monthSlcsp = input.monthly_slcsps![index];
         const monthAptc = input.monthly_aptcs![index];
-        const maxAssistance = annualContribution === undefined
+        const regularMaxAssistance = annualContribution === undefined
           ? 0
           : Math.max(0, monthSlcsp - monthlyContribution!);
+        const preMarriage = alternativeMarriage !== undefined &&
+          index < input.alternative_marriage!.marriage_month;
+        const maxAssistance = preMarriage
+          ? Math.max(
+            0,
+            monthSlcsp - alternativeMarriage.contributions[index],
+          )
+          : regularMaxAssistance;
+        const tentativeCredit = preMarriage
+          ? alternativeMarriage.credits[index]
+          : Math.min(monthPremium, maxAssistance);
         return {
           month_code: MONTH_CODES[index],
           premium: monthPremium,
           slcsp: monthSlcsp,
-          contribution: monthlyContribution,
+          contribution: preMarriage
+            ? alternativeMarriage.contributions[index]
+            : monthlyContribution,
           max_assistance: maxAssistance,
           allowed_credit: qsehraMonthlyCredit(
-            Math.min(monthPremium, maxAssistance),
+            tentativeCredit,
             income,
             qsehraFacts?.[index] ?? null,
           ),
@@ -622,7 +846,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     if (qsehraFacts && line24 === 0 && line25 === 0) {
       return noForm8962Required();
     }
-    const line26 = Math.max(0, line24 - line25);
+    const line26 = alternativeMarriage ? 0 : Math.max(0, line24 - line25);
     const line27 = Math.max(0, line25 - line24);
     const cap = line27 > 0
       ? repaymentCap(incomePct, input.filing_status)
@@ -635,6 +859,12 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       ...(qsehraFacts ? { qsehra_ind: true } : {}),
       ...(allocations.length > 0
         ? { shared_policy_allocations: allocations }
+        : {}),
+      ...(alternativeMarriage
+        ? {
+          alternative_marriage_primary: alternativeMarriage.primary,
+          alternative_marriage_spouse: alternativeMarriage.spouse,
+        }
         : {}),
       total_premium_tax_credit: line24,
       total_advance_ptc: line25,
@@ -650,7 +880,9 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         annual_ptc_allowed: line24,
         annual_aptc: aptc,
       }),
-      ...(line26 > 0 && { net_premium_tax_credit: line26 }),
+      ...((alternativeMarriage || line26 > 0) && {
+        net_premium_tax_credit: line26,
+      }),
       ...(line27 > 0 && {
         excess_advance_payment: line27,
         ...(cap !== null && { repayment_limitation: cap }),

@@ -1,6 +1,7 @@
 import { assertEquals } from "@std/assert";
+import { PDFDocument } from "pdf-lib";
 import { calculateForm8814 } from "../../../nodes/inputs/f8814/index.ts";
-import { form8814Pdf } from "./f8814.ts";
+import { form8814DottedNotes, form8814Pdf } from "./f8814.ts";
 import { schedule1Pdf } from "./schedule1.ts";
 
 const election = {
@@ -35,4 +36,48 @@ Deno.test("Schedule 1 PDF prints Form 8814 on line 8z amount field", () => {
     field.domainKey === "line8z_other"
   );
   assertEquals(amount?.pdfField, "topmostSubform[0].Page1[0].f1_36[0]");
+});
+
+Deno.test("Form 8814 PDF prints child nominee amounts beside lines 1a, 2a, and 3", () => {
+  const line = calculateForm8814({
+    ...election,
+    interest_adjustments: { nominee_distribution: 120 },
+    dividend_nominee_distribution: 90,
+    capital_gain_nominee_distribution: 75,
+  });
+  const instance = form8814Pdf.instances?.({ items: [line] })[0] ?? {};
+  assertEquals(form8814DottedNotes(instance), {
+    interest: "ND $120",
+    interestAttachment: [],
+    dividends: "ND $90",
+    capitalGains: "ND $75",
+  });
+});
+
+Deno.test("Form 8814 PDF adds a child-specific line 1a continuation when adjustments do not fit", async () => {
+  const line = calculateForm8814({
+    ...election,
+    interest_adjustments: {
+      nominee_distribution: 120,
+      accrued_interest: 30,
+      abp_adjustment: 15,
+      oid_adjustment: 5,
+    },
+  });
+  const instance = form8814Pdf.instances?.({ items: [line] })[0] ?? {};
+  assertEquals(form8814DottedNotes(instance), {
+    interest: "See attached interest adjustments",
+    interestAttachment: [
+      "ND $120",
+      "Accrued interest $30",
+      "ABP adjustment $15",
+      "OID adjustment $5",
+    ],
+    dividends: undefined,
+    capitalGains: undefined,
+  });
+  const document = await PDFDocument.create();
+  document.addPage([612, 792]);
+  await form8814Pdf.appendSupplementalPages?.(document, instance, undefined);
+  assertEquals(document.getPageCount(), 2);
 });

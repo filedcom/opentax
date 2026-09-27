@@ -26,6 +26,30 @@ TY2025 Form 1040 calculation and MeF export changes are saved on the pushed
 there. No PR, merge, deployment, IRS ATS transmission, or ATS acknowledgment is
 recorded for this work.
 
+The parallel 2026-09-27 build pass is still unverified. Schedule 2 now writes
+the calculated 2025 totals on lines 1z, 3, 7, 18, and 21 for its supported
+sources, including the negative Form 8978 adjustment and excluding the section
+965 installment from line 21. Source and XML cases are written but not run.
+Form 8283 Section A now routes the claimed deduction instead of FMV and
+requires a linked, donee-issued vehicle acknowledgment PDF with an IRS-approved
+MeF description when a vehicle row is filed. Form 1095-A has an explicit
+corrected monthly SLCSP path for coverage-family and related changes. Form 8582
+now rejects unsupported prior Form 4797 passive losses instead of routing them
+to Schedule 1, and reconciles identified activity amounts with its aggregate
+inputs. Form 8814 PDF dotted-line income annotations are being built. All
+these cases remain unrun under the agreed implementation-first test sequence;
+none closes its entire gap or clears the release gate.
+
+The same parallel pass writes Form 8962's guarded alternative year-of-marriage
+calculation and native Part V groups, with line 26 zero on an election. It does
+not yet derive spouse-specific pre-marriage policy groups from 1095-A, map the
+Part V PDF, or handle the combined QSEHRA case. Form 4952 can now receive
+affirmed taxable market discount from 1099-B after the matching Form 8949
+code-D adjustment. Part-II-only Form 4972 federal estate tax now splits between
+capital-gain reduction and a Schedule A line 16 ordinary-income deduction.
+Form 1116 line 3b now has a linked other-deductions statement. Source cases are
+written for each route, but none has passed the deferred test or XSD batch.
+
 The Form 8949 MeF build pass now preserves all twelve TY2025 paper boxes
 separately instead of merging 1099-DA digital-asset categories into 1099-B
 categories. It emits the six short-term groups before the six long-term groups,
