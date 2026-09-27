@@ -35,6 +35,9 @@ and written but unrun expected-line and v5.4 XML cases. The source PDF's QCD and
 rollover marks do not match its 1099-R IRA indicators, so the fixture keeps the
 marks as source evidence without inventing transactions. This does not count as
 IRS ATS acceptance.
+The MFS lived-apart answer is now routed to the Social Security calculation and
+1040 line 6d XML; an omitted answer with MFS Social Security is rejected rather
+than silently treated as lived apart. These cases are also unrun.
 
 The current build pass also adds Form 8962 Part IV Situation 1 agreed and
 no-agreement allocations, Situation 3 no-APTC allocations, and Situation 4

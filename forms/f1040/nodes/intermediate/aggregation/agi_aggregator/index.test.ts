@@ -528,14 +528,23 @@ Deno.test("agi_aggregator: MFS lived-with-spouse → 85% of SS always taxable", 
 });
 
 Deno.test("agi_aggregator: MFS not-lived-with-spouse → normal worksheet applies", () => {
-  // No mfs_lived_with_spouse flag → uses normal $25k/$34k thresholds
+  // An explicit no answer uses the normal $25k/$34k thresholds.
   // provisional = 5_000 + 10_000 = 15_000 < 25_000 → $0 taxable
   const result = compute({
     line1a_wages: 5_000,
     line6a_ss_gross: 20_000,
     filing_status: "mfs",
+    mfs_lived_with_spouse: false,
   });
   assertEquals(agi(result), 5_000);
+});
+
+Deno.test("agi_aggregator: MFS Social Security needs a lived-with-spouse answer", () => {
+  assertThrows(
+    () => compute({ line6a_ss_gross: 20_000, filing_status: "mfs" }),
+    Error,
+    "MFS Social Security taxability requires whether the filer lived with their spouse",
+  );
 });
 
 // ─── AGI can be negative in NOL scenarios (IRC §172) ─────────────────────────

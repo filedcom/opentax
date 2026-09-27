@@ -18,6 +18,8 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   assertEquals(form?.line5b_pension_taxable, 10_300);
   assertEquals(form?.line6a_ss_gross, 1_000);
   assertEquals(form?.line6b_ss_taxable ?? 0, 0);
+  assertEquals(form?.mfs_spouse_lived_with_taxpayer, false);
+  assertEquals(result.pending.agi_aggregator?.mfs_lived_with_spouse, false);
   assertEquals(form?.line7a_cap_gain_distrib, 7_500);
   assertEquals(form?.line9_total_income, 17_800);
   assertEquals(form?.line12a_standard_deduction, 17_350);
@@ -29,6 +31,19 @@ Deno.test("ATS 1040 Scenario 8: source-backed return calculates age deduction an
   assertEquals(form?.line33_total_payments, 2_555);
   assertEquals(form?.line35a_refund, 2_555);
   assertEquals(result.pending.schedule_d, undefined);
+});
+
+Deno.test("ATS 1040 Scenario 8: MFS cohabitation answer changes Social Security taxability", () => {
+  const input = scenario104008Input();
+  (input.general as Record<string, unknown>).mfs_spouse_lived_with_taxpayer =
+    true;
+  const result = execute(plan, registry, input, {
+    taxYear: 2025,
+    formType: "f1040",
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line6b_ss_taxable, 850);
+  assertEquals(result.pending.f1040?.mfs_spouse_lived_with_taxpayer, true);
 });
 
 Deno.test("ATS 1040 Scenario 8: printed QCD and rollover marks stay distinct from 1099-R source codes", () => {

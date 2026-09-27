@@ -285,6 +285,15 @@ function resolveSsaTaxable(
   const ssaGross = input.line6a_ss_gross ?? 0;
   if (ssaGross === 0) return 0;
 
+  if (
+    input.filing_status === "mfs" &&
+    input.mfs_lived_with_spouse === undefined
+  ) {
+    throw new Error(
+      "MFS Social Security taxability requires whether the filer lived with their spouse during the year",
+    );
+  }
+
   // IRC §86(c)(2): MFS filer who lived with spouse at any time during the year —
   // 85% of benefits are always taxable; no threshold applies.
   if (input.filing_status === "mfs" && input.mfs_lived_with_spouse === true) {

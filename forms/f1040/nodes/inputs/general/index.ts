@@ -635,6 +635,11 @@ function buildF1040Input(input: GeneralInput): Record<string, unknown> {
   addIfDefined(fields, "mfs_spouse_itemizing", input.mfs_spouse_itemizing);
   addIfDefined(
     fields,
+    "mfs_spouse_lived_with_taxpayer",
+    input.mfs_spouse_lived_with_taxpayer,
+  );
+  addIfDefined(
+    fields,
     "taxpayer_can_be_claimed_as_dependent",
     input.taxpayer_can_be_claimed_as_dependent,
   );
@@ -787,6 +792,9 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       // Pass filing_status to agi_aggregator for SSA taxability worksheet thresholds
       this.outputNodes.output(agi_aggregator, {
         filing_status: parsed.filing_status,
+        ...(parsed.mfs_spouse_lived_with_taxpayer !== undefined && {
+          mfs_lived_with_spouse: parsed.mfs_spouse_lived_with_taxpayer,
+        }),
       }),
       // Pass filing_status to form8959 so Additional Medicare Tax threshold is known
       this.outputNodes.output(form8959, {

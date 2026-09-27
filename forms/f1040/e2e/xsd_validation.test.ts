@@ -705,6 +705,10 @@ Deno.test({
   );
   assertEquals(xml.includes("<TotalIncomeAmt>17800</TotalIncomeAmt>"), true);
   assertEquals(
+    xml.includes("<MFSLiveApartEntireYrInd>X</MFSLiveApartEntireYrInd>"),
+    true,
+  );
+  assertEquals(
     xml.includes("<TotalItemizedOrStandardDedAmt>17350</TotalItemizedOrStandardDedAmt>"),
     true,
   );

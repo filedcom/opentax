@@ -46,6 +46,7 @@ export interface Fields {
   line5b_pension_taxable?: number | null;
   line6a_ss_gross?: number | null;
   line6b_ss_taxable?: number | null;
+  mfs_spouse_lived_with_taxpayer?: boolean;
   line7_capital_gain?: number | null;
   line7a_cap_gain_distrib?: number | null;
   line8_additional_income?: number | null;
@@ -462,6 +463,13 @@ function buildIRS1040(fields: Input, context?: MefBuildContext): string {
 
   const incomeChildren = FIELD_MAP.map(([key, tag]) => {
     const value = resolveNumber(fields[key]);
+    if (key === "line6b_ss_taxable") {
+      return (value === undefined ? "" : element(tag, value)) +
+        (statusCode === "3" &&
+            fields.mfs_spouse_lived_with_taxpayer === false
+          ? element("MFSLiveApartEntireYrInd", "X")
+          : "");
+    }
     if (value === undefined) return "";
     if (key === "line7a_cap_gain_distrib") {
       return value > 0
