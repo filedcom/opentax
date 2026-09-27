@@ -79,6 +79,23 @@ function buildIRS1040Schedule3(
   for (const [key, tag] of FIELD_MAP) {
     const value = fields[key];
     if (typeof value !== "number") continue;
+    if (key === "line6a_total" && value > 0) {
+      const formIds = context?.documentIdsByPendingKey?.f3800 ?? [];
+      if (context?.documentIdsByPendingKey && formIds.length !== 1) {
+        throw new Error("Schedule 3 line 6a needs one attached Form 3800");
+      }
+      children.push(element(
+        tag,
+        value,
+        formIds[0]
+          ? {
+            referenceDocumentId: formIds[0],
+            referenceDocumentName: "IRS3800",
+          }
+          : undefined,
+      ));
+      continue;
+    }
     if (key === "line1_total") {
       const form1116Ids = context?.documentIdsByPendingKey?.form_1116 ?? [];
       children.push(element(

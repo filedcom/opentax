@@ -1,13 +1,15 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm8826,
+  type F8826Input,
   inputSchema,
   isEligible,
 } from "../../../nodes/inputs/f8826/index.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 /**
- * TY2025 Form 8826 source document. Do not register until Form 3800's
- * allowed-credit route and source-document reconciliation are assembled.
+ * TY2025 Form 8826 source document. Pass-through-only recipients report the
+ * credit directly on Form 3800 and do not attach their own Form 8826.
  */
 export function buildForm8826Document(rawInput: unknown): string {
   const input = inputSchema.parse(rawInput);
@@ -55,3 +57,27 @@ export function buildForm8826Document(rawInput: unknown): string {
     element("PrtshpandSCorpReportAmt", lines.line8),
   ]);
 }
+
+type Input = Partial<F8826Input> & Record<string, unknown>;
+
+export const form8826: MefFormDescriptor<"f8826", Input> = {
+  pendingKey: "f8826",
+  FIELD_MAP: [],
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8826.pdf",
+  build(fields, context) {
+    if (fields.eligible_expenditures === undefined) return "";
+    const source = inputSchema.parse(fields);
+    const lines = calculateForm8826(source);
+    if (lines.line6 <= 0) return "";
+    if (!isEligible(source)) {
+      throw new Error("Form 8826 self-earned credit lacks eligibility");
+    }
+    if (
+      context?.documentIdsByPendingKey &&
+      context.documentIdsByPendingKey.f3800?.length !== 1
+    ) {
+      throw new Error("Form 8826 self-earned credit needs attached Form 3800");
+    }
+    return buildForm8826Document(source);
+  },
+};
