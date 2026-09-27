@@ -20,6 +20,10 @@ pinned 2026 form and instructions to the existing property and K-1 nodes.
 It identifies new line 13a vehicle-loan interest, the three-page Part I–V
 attachment, downstream passive/at-risk/interest limits, and ATS scenarios 3
 and 6. Schedule E is not registered in the TY2026 graph yet.
+The [ATS scenario 6 plan](../../../docs/ty2026/ATS-SCENARIO-06.md) adds the
+partnership Part II acceptance case. It also exposes a stale shared W-2G box
+contract and missing 2026 Schedule 1 gambling line 8b route, while W-2 code
+TT and the dependent standard deduction need source-backed reconciliation.
 The [Schedule F contract](../../../docs/ty2026/SCHEDULEF-GRAPH.md) maps the
 cash/accrual farm route and its attached forms. Its shared TY2025 input names
 other interest as line 21b; the 2026 form uses that line for vehicle-loan

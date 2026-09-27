@@ -24,6 +24,10 @@ The [Schedule E implementation contract](SCHEDULEE-GRAPH.md) now gives the
 next property/K-1 activity build order and the new line 13a split from other
 interest. It covers PDF, MeF, and ATS 3/6 acceptance; the route remains
 `audit-required` in the ledger.
+The [ATS scenario 6 contract](ATS-SCENARIO-06.md) identifies the W-2G box
+contract and Schedule 1 line 8b route, the partnership Part II income/loss
+columns, dependent earned-income and overtime decisions, and missing K-1
+evidence. Its provisional total-income bridge is $5,700.
 The [Schedule F contract](SCHEDULEF-GRAPH.md) isolates the 2026 line 21b
 vehicle-interest change from the shared TY2025 21b other-interest input and
 maps the farm calculation, PDF, MeF, and ATS scenario 3 gates.

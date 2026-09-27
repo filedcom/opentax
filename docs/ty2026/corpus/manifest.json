@@ -1211,6 +1211,24 @@
       "bytes": 248825,
       "sha256": "6df1301c1ce74ef391219094831accd22cfeac26ce510f4499c4834484f55d97",
       "retrieved_utc": "2026-09-27T12:17:33.015566+00:00"
+    },
+    {
+      "path": "authorities/fw2g--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/fw2g--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 156047,
+      "sha256": "2d75e44d5ea6574aec1c5b68884cdf1bd2bcc96f9f897a57c3b15cc691631168",
+      "retrieved_utc": "2026-09-27T12:25:40.400204+00:00"
+    },
+    {
+      "path": "authorities/iw2g--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/iw2g--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 179936,
+      "sha256": "79246b47e0e8a1224d56eb55cb85c15ee590c787f3551117550c83827e138115",
+      "retrieved_utc": "2026-09-27T12:25:40.400685+00:00"
     }
   ]
 }

@@ -8,6 +8,9 @@ The [TY2026 ATS scenarios 3 and 6](ATS.md) include Schedule E pages; scenario
 6 has a partnership Part II row. Refresh the draft and the current MeF package
 before filing acceptance. The May MeF v1 download does not settle current XML
 names or business rules.
+The [scenario 6 page-level fixture](ATS-SCENARIO-06.md) independently derives
+Part II line 32 and Part V line 41 as $1,200 from the printed $2,200
+nonpassive income and $1,000 allowed nonpassive loss; its K-1 is absent.
 
 ## 2026 line and fact changes
 

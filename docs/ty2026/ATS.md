@@ -44,3 +44,7 @@ The [scenario 3 fixture plan](ATS-SCENARIO-03.md) now maps all 18 packet
 pages, including the $11,908 Form 4835 farm rent and the elected Schedule SE
 farm optional method. Its missing source evidence and blank computed lines
 remain explicit fixture gates.
+The [scenario 6 fixture plan](ATS-SCENARIO-06.md) maps all 10 pages and the
+$5,700 provisional income bridge from W-2 wages, W-2G winnings, and the
+Schedule E partnership row. It records the dependent standard deduction,
+overtime, missing K-1, and 2026 gambling-line gates.

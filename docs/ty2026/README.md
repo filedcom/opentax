@@ -84,6 +84,9 @@ for the implementation contract.
 - [`ATS-SCENARIO-03.md`](ATS-SCENARIO-03.md): page-level retirement, capital
   gain, farm, farm-rent, and optional self-employment method facts with
   independently derived intermediate amounts and filing gates.
+- [`ATS-SCENARIO-06.md`](ATS-SCENARIO-06.md): page-level W-2, W-2G, partnership,
+  dependent, and overtime facts with the Schedule 1/1040 income bridge and
+  unresolved source gates.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **60 TY2026 IRS draft forms**, **25 verified 2026
@@ -94,7 +97,8 @@ for the implementation contract.
   2026-29 and 2026 W-2/W-3 instructions), continuous-use Form 1099-DIV and
   its instructions, continuous-use Form 1099-PATR and Form 8995-A Schedules
   B/C/D, final 2026 Forms 1099-B/1099-DA/1099-R with instructions, the
-  2025 Form 1040 and Form 8949 instructions as marked comparators,
+  2025 Form 1040 and Form 8949 instructions as marked comparators, final
+  January 2026 Form W-2G and its instructions,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash
