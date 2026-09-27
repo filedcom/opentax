@@ -97,3 +97,23 @@ Deno.test("2026 HSA, IRA, and Social Security amounts use their own sources", ()
   assertEquals(INDEXED_CONFIG_2026.actcMaxPerChild, 1_700);
   assertEquals(INDEXED_CONFIG_2026.saversCreditContributionCap, 2_000);
 });
+
+Deno.test("2026 SALT and FPL amounts use the pinned forms and guideline tables", () => {
+  assertEquals(INDEXED_CONFIG_2026.saltCap, 40_400);
+  assertEquals(INDEXED_CONFIG_2026.saltPhaseoutThresholdMfs, 252_500);
+  assertEquals(INDEXED_CONFIG_2026.fplBase, 15_650);
+  assertEquals(
+    INDEXED_CONFIG_2026.fplBase + 3 * INDEXED_CONFIG_2026.fplIncrement,
+    32_150,
+  );
+  assertEquals(
+    INDEXED_CONFIG_2026.fplAlaskaBase +
+      3 * INDEXED_CONFIG_2026.fplAlaskaIncrement,
+    40_190,
+  );
+  assertEquals(
+    INDEXED_CONFIG_2026.fplHawaiiBase +
+      3 * INDEXED_CONFIG_2026.fplHawaiiIncrement,
+    36_980,
+  );
+});

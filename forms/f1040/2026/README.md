@@ -17,7 +17,7 @@ repayment, affordability, and FPL paths, with boundary tests. These pieces
 still require a complete 2026 config and final output wiring.
 The shared Form 2441 calculations now select explicit TY2026 employer benefit
 limits and credit rates; their 2026 output mappings remain to build.
-The `forms/f1040/nodes/config/2026-indexed.ts` module contains 69 verified TY2026 config
+The `forms/f1040/nodes/config/2026-indexed.ts` module contains 78 verified TY2026 config
 members and adds the distinct MFS QBI threshold. It must be completed to the
 full `F1040Config` contract before the 2026 graph can use it.
 `nodes/f1040.ts` is a dedicated 2026 core output node: it computes the revised

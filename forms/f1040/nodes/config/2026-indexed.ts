@@ -65,6 +65,15 @@ type IndexedKeys =
   | "feieHousingBase"
   | "section179Limit"
   | "section179PhaseoutThreshold"
+  | "saltCap"
+  | "saltPhaseoutThreshold"
+  | "saltPhaseoutThresholdMfs"
+  | "fplBase"
+  | "fplIncrement"
+  | "fplAlaskaBase"
+  | "fplAlaskaIncrement"
+  | "fplHawaiiBase"
+  | "fplHawaiiIncrement"
   | "qcdAnnualLimit"
   | "eblThresholdSingle"
   | "eblThresholdMfj"
@@ -245,6 +254,19 @@ export const INDEXED_CONFIG_2026 = {
   feieHousingBase: 21_264, // §911(c)(1)(B): 16% × $132,900.
   section179Limit: 2_560_000,
   section179PhaseoutThreshold: 4_090_000,
+  // Pinned 2026 draft Schedule A, line 5e.
+  saltCap: 40_400,
+  saltPhaseoutThreshold: 505_000,
+  saltPhaseoutThresholdMfs: 252_500,
+
+  // 2025 HHS poverty guideline tables: TY2026 Form 8962 uses prior-year FPL.
+  fplBase: 15_650,
+  fplIncrement: 5_500,
+  fplAlaskaBase: 19_550,
+  fplAlaskaIncrement: 6_880,
+  fplHawaiiBase: 17_990,
+  fplHawaiiIncrement: 6_330,
+
   eblThresholdSingle: 256_000,
   eblThresholdMfj: 512_000,
   smallBizGrossReceipts: 32_000_000,
