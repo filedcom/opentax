@@ -7,7 +7,11 @@ import { FilingStatus, TS } from "../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-function electedReturn(elect10yr: boolean, includeOtherPension = false) {
+function electedReturn(
+  elect10yr: boolean,
+  includeOtherPension = false,
+  deathBenefit = 0,
+) {
   return execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -45,6 +49,13 @@ function electedReturn(elect10yr: boolean, includeOtherPension = false) {
       prior_election_after_1986: false,
       elect_capital_gain: true,
       elect_10yr_averaging: elect10yr,
+      ...(deathBenefit > 0
+        ? {
+          death_benefit_exclusion: deathBenefit,
+          beneficiary_distribution: true,
+          participant_died_before_1996_08_21: true,
+        }
+        : {}),
     },
   }, { taxYear: 2025, formType: "f1040" });
 }
@@ -71,4 +82,13 @@ Deno.test("Form 4972 Part II ordinary income combines with a separate pension", 
   assertEquals(result.pending.f1040?.line5a_pension_gross, 71_000);
   assertEquals(result.pending.f1040?.line5b_pension_taxable, 71_000);
   assertEquals(result.pending.f1040?.line9_total_income, 71_000);
+});
+
+Deno.test("Form 4972 Part II death benefit reduces the 1040 ordinary-income share", () => {
+  const result = electedReturn(false, false, 5_000);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4972?.line6, 28_500);
+  assertEquals(result.pending.form4972?.line7, 5_700);
+  assertEquals(result.pending.f1040?.line5b_pension_taxable, 66_500);
+  assertEquals(result.pending.f1040?.line9_total_income, 66_500);
 });

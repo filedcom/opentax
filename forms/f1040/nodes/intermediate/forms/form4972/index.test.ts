@@ -131,6 +131,21 @@ Deno.test("Form 4972 Part II retains ordinary income when the special tax rounds
   assertEquals(result.f1040?.line5b_form4972_ordinary, 100);
 });
 
+Deno.test("Form 4972 Part II allocates a death benefit between capital gain and ordinary income", () => {
+  const result = calculated({
+    lump_sum_amount: 20_000,
+    capital_gain_amount: 5_000,
+    death_benefit_exclusion: 5_000,
+    beneficiary_distribution: true,
+    participant_died_before_1996_08_21: true,
+    elect_capital_gain: true,
+  });
+  assertEquals(result.lines?.line6, 3_750);
+  assertEquals(result.tax, 750);
+  assertEquals(result.agi?.line5b_form4972_ordinary, 11_250);
+  assertEquals(result.f1040?.line5b_form4972_ordinary, 11_250);
+});
+
 Deno.test("Form 4972 annuity value goes through the actuarial adjustment", () => {
   const result = calculated({
     lump_sum_amount: 20_000,
@@ -170,5 +185,21 @@ Deno.test("Form 4972 rejects a death benefit above $5,000", () => {
       death_benefit_exclusion: 6_000,
       elect_10yr_averaging: true,
     })
+  );
+});
+
+Deno.test("Form 4972 rejects a death benefit larger than the taxable distribution", () => {
+  assertThrows(
+    () =>
+      calculated({
+        lump_sum_amount: 2_000,
+        capital_gain_amount: 500,
+        death_benefit_exclusion: 3_000,
+        beneficiary_distribution: true,
+        participant_died_before_1996_08_21: true,
+        elect_capital_gain: true,
+      }),
+    Error,
+    "death benefit exclusion cannot exceed the taxable distribution",
   );
 });

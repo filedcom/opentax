@@ -116,6 +116,11 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
       `form4972: death_benefit_exclusion (${deathBenefit}) cannot exceed ${deathBenefitMax}`,
     );
   }
+  if (deathBenefit > input.lump_sum_amount) {
+    throw new Error(
+      "form4972: death benefit exclusion cannot exceed the taxable distribution",
+    );
+  }
   if (
     deathBenefit > 0 &&
     (input.beneficiary_distribution !== true ||
@@ -242,14 +247,10 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
         "form4972: Part II election needs a positive box 3 capital gain",
       );
     }
-    if (electCapGain && !elect10yr && deathBenefit > 0) {
-      throw new Error(
-        "form4972: Part II-only death benefit requires ordinary-income exclusion review",
-      );
-    }
     const deathBenefitCapitalShare = electCapGain && taxableAmount > 0
       ? Math.round(deathBenefit * capitalGain / taxableAmount)
       : 0;
+    const ordinaryDeathBenefit = deathBenefit - deathBenefitCapitalShare;
 
     // Part II: 20% tax on pre-1974 capital gain (only if elected and > 0)
     const capitalGainElected = electCapGain
@@ -259,10 +260,14 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
 
     const ordinaryIncome = taxableAmount -
       (electCapGain ? capitalGain : 0);
+    const ordinaryIncomeOn1040 = Math.max(
+      0,
+      ordinaryIncome - ordinaryDeathBenefit,
+    );
     const partIII = elect10yr
       ? partIIILines(
         ordinaryIncome,
-        deathBenefit - deathBenefitCapitalShare,
+        ordinaryDeathBenefit,
         Math.round(input.annuity_actuarial_value ?? 0),
         Math.round(input.federal_estate_tax ?? 0),
       )
@@ -270,7 +275,10 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
     const totalTax = Math.round(partIITaxAmt + (partIII?.line29 ?? 0));
 
     // A rounded-zero Part II tax cannot erase ordinary income from line 5b.
-    if (totalTax === 0 && !(electCapGain && !elect10yr && ordinaryIncome > 0)) {
+    if (
+      totalTax === 0 &&
+      !(electCapGain && !elect10yr && ordinaryIncomeOn1040 > 0)
+    ) {
       return { outputs: [] };
     }
 
@@ -323,10 +331,10 @@ class Form4972Node extends TaxNode<typeof inputSchema> {
       ...(electCapGain && !elect10yr
         ? [
           this.outputNodes.output(agi_aggregator, {
-            line5b_form4972_ordinary: ordinaryIncome,
+            line5b_form4972_ordinary: ordinaryIncomeOn1040,
           }),
           this.outputNodes.output(f1040, {
-            line5b_form4972_ordinary: ordinaryIncome,
+            line5b_form4972_ordinary: ordinaryIncomeOn1040,
           }),
         ]
         : []),
