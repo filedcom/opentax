@@ -17,6 +17,14 @@ const taxId = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("ein"), value: z.string().regex(/^\d{9}$/) }),
   z.object({ kind: z.literal("ssn"), value: z.string().regex(/^\d{9}$/) }),
 ]);
+const agreementFileName = z.string().regex(/^[A-Za-z0-9_.-]+\.pdf$/);
+
+const transferAgreementSchema = z.object({
+  agreement_type: z.enum(["965-C", "965-D", "965-E"]),
+  file_name: agreementFileName,
+  signed_pdf_base64: z.string().regex(/^[A-Za-z0-9+/]+={0,2}$/),
+  source_document_reference: z.string().trim().min(1),
+});
 
 export const sCorpCalculationSchema = z.object({
   inclusion_year: z.number().int().min(2017).max(2020),
@@ -40,6 +48,7 @@ export const sCorpDeferredRowSchema = z.object({
   triggered_liability: amount,
   transferred_liability: signedAmount,
   counterparty_tax_id: taxId.optional(),
+  transfer_agreement_file_name: agreementFileName.optional(),
   multiple_transferees: z.array(z.object({
     tax_id: taxId,
     transferred_amount: amount.positive(),
@@ -89,6 +98,7 @@ const common = z.object({
   tax_year_of_inclusion: year,
   // Part I col (j): signed transfer or subsequent adjustment.
   net_tax_adjustment: signedAmount,
+  transfer_agreement_file_name: agreementFileName.optional(),
   net_tax_adjustment_kind: z.enum([
     "subsequent_adjustment",
     "transfer_out",
@@ -123,6 +133,8 @@ const triggeredLiability = common.extend({
   entry_type: z.literal("triggered_s_corp"),
   installment_election: z.boolean(),
   triggered_liability: amount.positive(),
+  requires_965e_consent: z.boolean(),
+  consent_agreement_file_name: agreementFileName.optional(),
 });
 
 export const itemSchema = z.discriminatedUnion("entry_type", [
@@ -137,7 +149,23 @@ export const inputSchema = z.object({
   f965s: z.array(itemSchema).min(1).max(28),
   s_corp_calculations: z.array(sCorpCalculationSchema),
   s_corp_deferred_rows: z.array(sCorpDeferredRowSchema),
+  transfer_agreements: z.array(transferAgreementSchema),
 }).superRefine((input, ctx) => {
+  const agreementFiles = new Set<string>();
+  for (const [index, agreement] of input.transfer_agreements.entries()) {
+    if (agreementFiles.has(agreement.file_name)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["transfer_agreements", index],
+        message: "Form 965-A transfer agreement file names must be unique",
+      });
+    }
+    agreementFiles.add(agreement.file_name);
+  }
+  const agreementMatches = (fileName: string | undefined, type: "965-C" | "965-D" | "965-E") =>
+    fileName !== undefined && input.transfer_agreements.some((agreement) =>
+      agreement.file_name === fileName && agreement.agreement_type === type
+    );
   const triggeredInPartI = input.f965s
     .filter((row) => row.entry_type === "triggered_s_corp")
     .reduce((sum, row) => sum + row.triggered_liability, 0);
@@ -170,6 +198,27 @@ export const inputSchema = z.object({
     }
   }
   for (const [index, row] of input.f965s.entries()) {
+    if (
+      (row.entry_type === "assumed" ||
+        row.net_tax_adjustment_kind === "transfer_out" ||
+        row.net_tax_adjustment_kind === "netted_adjustment_and_transfer") &&
+      !agreementMatches(row.transfer_agreement_file_name, "965-C")
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message: "Form 965-A installment transfer needs the signed Form 965-C copy",
+      });
+    }
+    if (row.entry_type === "triggered_s_corp" &&
+      row.requires_965e_consent &&
+      !agreementMatches(row.consent_agreement_file_name, "965-E")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index],
+        message: "Form 965-A consent-triggered installment needs the signed Form 965-E copy",
+      });
+    }
     if (
       row.entry_type !== "assumed" &&
       ((row.net_tax_adjustment !== 0 && !row.net_tax_adjustment_kind) ||
@@ -282,6 +331,16 @@ export const inputSchema = z.object({
       });
     }
   }
+  input.s_corp_deferred_rows.forEach((row, index) => {
+    if (row.transferred_liability !== 0 &&
+      !agreementMatches(row.transfer_agreement_file_name, "965-D")) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["s_corp_deferred_rows", index],
+        message: "Form 965-A S corporation transfer needs the signed Form 965-D copy",
+      });
+    }
+  });
 });
 
 export type F965Input = z.infer<typeof inputSchema>;
