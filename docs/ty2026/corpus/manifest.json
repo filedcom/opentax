@@ -954,6 +954,24 @@
       "retrieved_utc": "2026-09-27T15:03:21.649639+00:00"
     },
     {
+      "path": "authorities/f982--2018.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f982.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 70042,
+      "sha256": "2ef53d44f52617e93b7fc2b987e84986fcde26b6a5cf45415f5679299d1e8678",
+      "retrieved_utc": "2026-09-27T15:06:03.328346+00:00"
+    },
+    {
+      "path": "authorities/i982--2021.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i982.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 152979,
+      "sha256": "638f899cf49c04265f20f5c3bacbc53f1d0270118a3311555c8551847a54b7a0",
+      "retrieved_utc": "2026-09-27T15:06:03.328880+00:00"
+    },
+    {
       "path": "draft/i5695.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/i5695--dft.pdf",
       "kind": "draft-instructions",

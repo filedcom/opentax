@@ -125,6 +125,9 @@ for the implementation contract.
 - [`FORM8912-GRAPH.md`](FORM8912-GRAPH.md) and `pdf-fields-f8912.csv`:
   continuous-use bond-credit form, 2026 Schedule 3 line 6k, carryforward
   and credit-order work, and all 218 current PDF widgets.
+- [`FORM982-GRAPH.md`](FORM982-GRAPH.md) and `pdf-fields-f982.csv`:
+  current cancellation-of-debt exclusion form, 2026 QPRI written-agreement
+  gate, tax-attribute ledger, and all 27 current PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

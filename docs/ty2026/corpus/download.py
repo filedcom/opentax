@@ -141,6 +141,8 @@ sources += [
     ("authorities/i8915d--2024.pdf", IRS + "/pub/irs-prior/i8915d--2024.pdf", "prior-year-comparator"),
     ("authorities/f8912--2024.pdf", IRS + "/pub/irs-pdf/f8912.pdf", "final-authority"),
     ("authorities/i8912--2024.pdf", IRS + "/pub/irs-pdf/i8912.pdf", "final-authority"),
+    ("authorities/f982--2018.pdf", IRS + "/pub/irs-pdf/f982.pdf", "final-authority"),
+    ("authorities/i982--2021.pdf", IRS + "/pub/irs-pdf/i982.pdf", "final-authority"),
     ("authorities/p505--2026.pdf", IRS + "/pub/irs-prior/p505--2026.pdf", "final-authority"),
     ("authorities/rp-25-32.pdf", IRS + "/pub/irs-drop/rp-25-32.pdf", "final-authority"),
     ("authorities/rp-25-19.pdf", IRS + "/pub/irs-drop/rp-25-19.pdf", "final-authority"),

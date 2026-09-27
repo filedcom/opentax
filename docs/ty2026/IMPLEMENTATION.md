@@ -144,6 +144,11 @@ The [Form 8912 contract](FORM8912-GRAPH.md) pins its current continuous-use
 form/instructions and 218 PDF widgets. Schedule 3 line 6k persists in the
 2026 draft; the existing shared schema blocks 2025-origin carryforwards and
 does not calculate pass-through CREB, while current MeF remains to verify.
+The [Form 982 contract](FORM982-GRAPH.md) pins the current 2018 form and
+2021 instructions, 27 PDF widgets and the 2026 written-agreement QPRI gate.
+The shared 1099-C source lacks that agreement date, the calculator drops
+fully excluded attachments, and TY2025 PDF fields point at wrong lines;
+Part II attribute reductions and current MeF remain to build.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
