@@ -42,6 +42,7 @@ const sampleForm1116 = {
     automaticallyApportionedDeductions: 0,
     foreignTaxableIncome: 10_000,
     allowedCredit: 800,
+    currentYearExcessTax: 0,
   }],
 };
 

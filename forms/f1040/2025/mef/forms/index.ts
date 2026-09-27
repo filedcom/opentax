@@ -6,6 +6,7 @@ import { jointOccupancyStatement } from "./joint_occupancy_statement.ts";
 import { irs1040 } from "./f1040.ts";
 import { f1099r } from "./f1099r.ts";
 import { form1116 } from "./f1116.ts";
+import { form1116ScheduleB } from "./f1116_schedule_b.ts";
 import { form1116DirectExpenseStatement } from "./f1116_direct_expense_statement.ts";
 import { form1116OtherDeductionsStatement } from "./f1116_other_deductions_statement.ts";
 import { form2441 } from "./f2441.ts";
@@ -141,6 +142,8 @@ export const ALL_MEF_FORMS = [
   f1099r,
   // 26. Form 1116
   form1116,
+  // Form 1116 Schedule B follows Form 1116 in ReturnData1040.xsd.
+  form1116ScheduleB,
   // Form 2441
   form2441,
   // Form 2555

@@ -7,6 +7,7 @@ import {
   IncomeCategory,
 } from "../../../nodes/intermediate/forms/form_1116/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
+import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
 
 interface Fields {
   category_summaries?: readonly CategorySummary[];
@@ -370,9 +371,34 @@ function buildIRS1116(
     if (
       Math.abs(summary.foreignTaxPaid - paid) > 0.01 ||
       Math.abs(summary.foreignGrossIncome - gross) > 0.01 ||
-      Math.abs(summary.includedForeignIncome - (gross - excluded)) > 0.01
+      Math.abs(summary.includedForeignIncome - (gross - excluded)) > 0.01 ||
+      summary.currentYearExcessTax !==
+        Math.max(0, Math.round(paid) - summary.allowedCredit)
     ) {
       throw new Error("Form 1116 category totals differ from source items");
+    }
+  }
+  const excess = summaries.filter((summary) =>
+    summary.currentYearExcessTax > 0
+  );
+  if (excess.length > 0) {
+    if (excess.length !== 1) {
+      throw new Error(
+        "Form 1116 excess taxes need separate Schedule B reconciliation by category",
+      );
+    }
+    const companion = scheduleBFieldsSchema.safeParse(
+      context?.pending?.form1116_schedule_b,
+    );
+    if (
+      !companion.success ||
+      companion.data.category !== excess[0].category ||
+      companion.data.current_year_excess_tax !==
+        excess[0].currentYearExcessTax
+    ) {
+      throw new Error(
+        "Form 1116 excess foreign tax needs the matching sourced Schedule B carryover",
+      );
     }
   }
   const methodSet = new Set(

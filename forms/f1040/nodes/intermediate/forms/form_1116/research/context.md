@@ -149,6 +149,29 @@ amount (Part I less line 1z), or a positive Form 6251 line 11 audit field; this
 still does not implement the AMT foreign-tax-credit limitation. No current-run
 test, XSD, PDF render, business-rule, or ATS pass has been performed.
 
+### TY2025 current-year excess carryover slice (written, unrun)
+
+The [2025 Form 1116 instructions](https://www.irs.gov/instructions/i1116)
+require Schedule B for a category that generates a foreign-tax carryover in
+2025. The [Schedule B instructions](https://www.irs.gov/instructions/i1116sb)
+separate line 6, current-year excess taxes, from line 7, the amount carried back
+to 2024, and line 8, the amount remaining for future years. The 2025
+IRS1116ScheduleB schema places `ForeignTxCyovGenCurrTYGrp` (line 6) before
+`ForeignTxCyovFollowingTYGrp` (line 8), both with current-year and total
+amounts. `ReturnData1040.xsd` places Schedule B immediately after IRS1116.
+
+This build slice computes line 6 from one passive or general category's
+current-year foreign tax less the category's limitation. It emits equal line 8
+only when reviewed 2024 Form 1116 line 24 has used the full line 23 limitation,
+the reviewed 2024 Schedule B ending balance is zero, and no foreign-tax
+redetermination or special adjustment is unresolved. The review retains source
+document references. A missing review or unused prior-year limitation fails
+closed rather than silently treating the carryback as zero. Prior carryover
+balances, nonzero carrybacks, multiple excess categories, foreign-tax
+reductions, section 951A, and other category-specific rules remain open. Native
+Schedule B XML and focused cases are written; no test, XSD, business-rule, PDF,
+or ATS gate has run.
+
 | Document                   | Year | Section        | URL                                            | Saved as  |
 | -------------------------- | ---- | -------------- | ---------------------------------------------- | --------- |
 | Instructions for Form 1116 | 2025 | All parts      | https://www.irs.gov/pub/irs-pdf/i1116.pdf      | i1116.pdf |

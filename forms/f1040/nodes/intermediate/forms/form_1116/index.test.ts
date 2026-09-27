@@ -8,6 +8,23 @@ import { FilingStatus } from "../../../types.ts";
 import { qualifiedDividendTax2025 } from "../../worksheets/tax_table_2025.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
+const zeroPriorPassive = {
+  income_category: IncomeCategory.Passive,
+  prior_year_form1116_line23_limit: 500,
+  prior_year_form1116_line24_allowed_credit: 500,
+  prior_year_schedule_b_line8_balance: 0 as const,
+  source_document_references: [
+    "Filed 2024 Form 1116 passive basket, lines 23 and 24; filed Schedule B line 8",
+  ],
+  no_foreign_tax_redetermination_or_special_adjustment: true as const,
+};
+const zeroPriorGeneral = {
+  ...zeroPriorPassive,
+  income_category: IncomeCategory.General,
+  source_document_references: [
+    "Filed 2024 Form 1116 general basket, lines 23 and 24; filed Schedule B line 8",
+  ],
+};
 
 function credit(input: Parameters<typeof form1116.compute>[1]): number {
   const result = form1116.compute(ctx, input);
@@ -44,6 +61,7 @@ Deno.test("form1116: missing return limitation inputs fail closed", () => {
 
 Deno.test("form1116: line 18 adds back only Schedule 1-A senior deduction", () => {
   const result = form1116.compute(ctx, {
+    carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
       foreign_tax_paid: 2_000,
       foreign_gross_income: 10_000,
@@ -97,6 +115,7 @@ const zeroForeignPreference = {
 
 Deno.test("form1116: sourced QDCGT worksheet adjusts line 18, not ordinary foreign numerator", () => {
   const result = form1116.compute(ctx, {
+    carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
       foreign_tax_paid: 2_000,
       foreign_gross_income: 10_000,
@@ -185,6 +204,7 @@ Deno.test("form1116: preferential denominator fails closed without source review
 
 Deno.test("form1116: documented all-asset method puts vehicle interest on line 4b", () => {
   const result = form1116.compute(ctx, {
+    carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
       foreign_tax_paid: 3_000,
       foreign_gross_income: 20_000,
@@ -250,6 +270,7 @@ Deno.test("form1116: vehicle-interest claim without complete asset facts fails c
 
 Deno.test("form1116: line 18 floors the signed return amount after the senior addback", () => {
   const result = form1116.compute(ctx, {
+    carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
       foreign_tax_paid: 100,
       foreign_gross_income: 1_000,
@@ -269,6 +290,7 @@ Deno.test("form1116: line 18 floors the signed return amount after the senior ad
 Deno.test("form1116: applies taxable-income ratio", () => {
   assertEquals(
     credit({
+      carryover_reviews: [zeroPriorPassive],
       foreign_tax_items: [{
         foreign_tax_paid: 500,
         foreign_gross_income: 1_000,
@@ -284,6 +306,7 @@ Deno.test("form1116: applies taxable-income ratio", () => {
 
 Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line 10", () => {
   const result = form1116.compute(ctx, {
+    carryover_reviews: [zeroPriorPassive],
     foreign_tax_items: [{
       foreign_tax_paid: 500,
       foreign_gross_income: 1_000,
@@ -306,6 +329,7 @@ Deno.test("Form 1116 sends the same allowed foreign tax credit to Form 6251 line
 Deno.test("form1116: directly allocable deductions reduce the limit", () => {
   assertEquals(
     credit({
+      carryover_reviews: [zeroPriorPassive],
       foreign_tax_items: [{
         foreign_tax_paid: 500,
         foreign_gross_income: 10_000,
@@ -322,6 +346,7 @@ Deno.test("form1116: directly allocable deductions reduce the limit", () => {
 Deno.test("form1116: computes passive and general category limits separately", () => {
   assertEquals(
     credit({
+      carryover_reviews: [zeroPriorPassive],
       foreign_tax_items: [
         {
           foreign_tax_paid: 2_000,
@@ -344,6 +369,7 @@ Deno.test("form1116: computes passive and general category limits separately", (
 Deno.test("form1116: excluded wages reduce eligible income and credit", () => {
   assertEquals(
     credit({
+      carryover_reviews: [zeroPriorGeneral],
       foreign_tax_items: [{
         foreign_tax_paid: 1_000,
         foreign_gross_income: 20_000,
@@ -360,6 +386,7 @@ Deno.test("form1116: excluded wages reduce eligible income and credit", () => {
 Deno.test("form1116: same-category items aggregate before applying the limit", () => {
   assertEquals(
     credit({
+      carryover_reviews: [zeroPriorPassive],
       foreign_tax_items: [
         {
           foreign_tax_paid: 300,
@@ -377,6 +404,63 @@ Deno.test("form1116: same-category items aggregate before applying the limit", (
     }),
     500,
   );
+});
+
+Deno.test("form1116: current-year excess needs a sourced prior-year review", () => {
+  const base = {
+    foreign_tax_items: [{
+      foreign_tax_paid: 500,
+      foreign_gross_income: 5_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 80_000,
+    us_tax_before_credits: 7_200,
+  };
+  assertThrows(
+    () => form1116.compute(ctx, base),
+    Error,
+    "sourced prior-year carryback and carryover review",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        carryover_reviews: [{
+          ...zeroPriorPassive,
+          prior_year_form1116_line23_limit: 600,
+        }],
+      }),
+    Error,
+    "one-year carryback must be determined",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        carryover_reviews: [{
+          ...zeroPriorPassive,
+          prior_year_form1116_line24_allowed_credit: 600,
+        }],
+      }),
+    Error,
+    "line 24 cannot exceed line 23",
+  );
+  const result = form1116.compute(ctx, {
+    ...base,
+    carryover_reviews: [{
+      ...zeroPriorPassive,
+      // The filed line 24 can include carryovers used on line 10. The
+      // prior-year capacity is tested after those credits, not from current
+      // taxes alone.
+      prior_year_form1116_line23_limit: 600,
+      prior_year_form1116_line24_allowed_credit: 600,
+    }],
+  });
+  const scheduleB = result.outputs.find((row) =>
+    row.nodeType === "form1116_schedule_b"
+  )?.fields;
+  assertEquals(scheduleB?.current_year_excess_tax, 50);
+  assertEquals(scheduleB?.category, IncomeCategory.Passive);
 });
 
 Deno.test("form1116: Part IV caps combined category credits at U.S. tax", () => {

@@ -1,5 +1,9 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import {
+  form1116_carryover_review,
+  inputSchema as form1116CarryoverReviewInputSchema,
+} from "../nodes/inputs/form1116_carryover_review/index.ts";
+import {
   form1116_review,
   inputSchema as form1116ReviewInputSchema,
 } from "../nodes/inputs/form1116_review/index.ts";
@@ -649,6 +653,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   {
     node: form1116_review,
     inputSchema: form1116ReviewInputSchema,
+    isArray: false,
+  },
+  {
+    node: form1116_carryover_review,
+    inputSchema: form1116CarryoverReviewInputSchema,
     isArray: false,
   },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },

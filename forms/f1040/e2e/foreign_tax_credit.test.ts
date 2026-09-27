@@ -75,19 +75,56 @@ Deno.test("Form 1116: 1099-INT box 6 credit is capped by the §904 ratio, not ta
       foreign_source_interest_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
     }],
+    form1116_carryover_review: {
+      reviews: [{
+        income_category: "passive",
+        prior_year_form1116_line23_limit: 500,
+        prior_year_form1116_line24_allowed_credit: 500,
+        prior_year_schedule_b_line8_balance: 0,
+        source_document_references: [
+          "Filed 2024 Form 1116 passive lines 23 and 24; Schedule B line 8",
+        ],
+        no_foreign_tax_redetermination_or_special_adjustment: true,
+      }],
+    },
   });
 
   const f1116 = result.pending["form_1116"] ?? {};
-  assertEquals(f1116["foreign_tax_paid"], 500, "Part II line 8 — foreign tax paid");
-  assertEquals(f1116["foreign_income"], 1_000, "Part I line 1a — gross foreign source income");
-  assertEquals(f1116["total_income"], 85_250, "Part III line 18, worldwide taxable income");
-  assertEquals(f1116["us_tax_before_credits"], 13_669, "Part III line 20 — Form 1040 line 16");
+  assertEquals(
+    f1116["foreign_tax_paid"],
+    500,
+    "Part II line 8 — foreign tax paid",
+  );
+  assertEquals(
+    f1116["foreign_income"],
+    1_000,
+    "Part I line 1a — gross foreign source income",
+  );
+  assertEquals(
+    f1116["total_income"],
+    85_250,
+    "Part III line 18, worldwide taxable income",
+  );
+  assertEquals(
+    f1116["us_tax_before_credits"],
+    13_669,
+    "Part III line 20 — Form 1040 line 16",
+  );
 
-  const credit = result.pending["schedule3"]?.["line1_foreign_tax_credit"] as number;
-  assertEquals(r2(credit), 135, "Part III line 24 — whole-dollar credit limited to line 21");
+  const credit = result.pending["schedule3"]
+    ?.["line1_foreign_tax_credit"] as number;
+  assertEquals(
+    r2(credit),
+    135,
+    "Part III line 24 — whole-dollar credit limited to line 21",
+  );
 
   const f = result.pending["f1040"] ?? {};
-  assertEquals(r2(f["line24_total_tax"] as number), 13_534, "total tax = 13,669 − 135");
+  assertEquals(
+    r2(f["line24_total_tax"] as number),
+    13_534,
+    "total tax = 13,669 − 135",
+  );
 });
 
 // ── General category: foreign tax on wages reaches Form 1116 ─────────────────
@@ -112,10 +149,24 @@ Deno.test("Form 1116: foreign tax on foreign-employer wages routes as general ca
   });
 
   const f1116 = result.pending["form_1116"] ?? {};
-  assertEquals(f1116["foreign_tax_paid"], 9_000, "Part II line 8 — foreign tax on wages");
-  assertEquals(f1116["foreign_income"], 80_000, "Part I line 1a — the wages themselves");
-  const categories = f1116["category_summaries"] as Array<Record<string, unknown>>;
-  assertEquals(categories[0].category, "general", "Part I box d, general category");
+  assertEquals(
+    f1116["foreign_tax_paid"],
+    9_000,
+    "Part II line 8 — foreign tax on wages",
+  );
+  assertEquals(
+    f1116["foreign_income"],
+    80_000,
+    "Part I line 1a — the wages themselves",
+  );
+  const categories = f1116["category_summaries"] as Array<
+    Record<string, unknown>
+  >;
+  assertEquals(
+    categories[0].category,
+    "general",
+    "Part I box d, general category",
+  );
 });
 
 Deno.test("Form 1116: passive and general income remain separate through the full return", () => {
@@ -125,7 +176,7 @@ Deno.test("Form 1116: passive and general income remain separate through the ful
     f1099int: [{
       payer_name: "FOREIGN BANK",
       box1: 1_000,
-      box6: 500,
+      box6: 100,
       box7: "Canada",
       foreign_source_interest_usd: 1_000,
       foreign_tax_irs_country_code: "CA",
@@ -140,9 +191,18 @@ Deno.test("Form 1116: passive and general income remain separate through the ful
     }],
   });
 
-  const categories = result.pending["form_1116"]?.["category_summaries"] as Array<Record<string, unknown>>;
-  assertEquals(categories.map((category) => category.category).sort(), ["general", "passive"]);
-  assertEquals(categories.map((category) => category.foreignTaxPaid).sort((a, b) => Number(a) - Number(b)), [500, 900]);
+  const categories = result.pending["form_1116"]
+    ?.["category_summaries"] as Array<Record<string, unknown>>;
+  assertEquals(categories.map((category) => category.category).sort(), [
+    "general",
+    "passive",
+  ]);
+  assertEquals(
+    categories.map((category) => category.foreignTaxPaid).sort((a, b) =>
+      Number(a) - Number(b)
+    ),
+    [100, 900],
+  );
 });
 
 Deno.test("Form 1116: K-1 foreign tax requires and preserves its income category", () => {
@@ -152,15 +212,16 @@ Deno.test("Form 1116: K-1 foreign tax requires and preserves its income category
     k1_trust: [{
       estate_trust_name: "Foreign Income Trust",
       box1_interest: 5_000,
-      box14_foreign_tax: 800,
+      box14_foreign_tax: 500,
       box14_foreign_income: 5_000,
       box14_foreign_income_category: "passive",
     }],
   });
 
-  const categories = result.pending["form_1116"]?.["category_summaries"] as Array<Record<string, unknown>>;
+  const categories = result.pending["form_1116"]
+    ?.["category_summaries"] as Array<Record<string, unknown>>;
   assertEquals(categories.length, 1);
   assertEquals(categories[0].category, "passive");
-  assertEquals(categories[0].foreignTaxPaid, 800);
+  assertEquals(categories[0].foreignTaxPaid, 500);
   assertEquals(categories[0].foreignGrossIncome, 5_000);
 });

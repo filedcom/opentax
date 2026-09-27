@@ -11,6 +11,7 @@ import {
 import { buildMefXml } from "../builder.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { form1116 } from "./f1116.ts";
+import { scheduleBFieldsSchema } from "./f1116_schedule_b.ts";
 
 const XSD_PATH = new URL(
   "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
@@ -37,7 +38,7 @@ const filer: FilerIdentity = {
 
 const sourceItems = [
   {
-    foreign_tax_paid: 500,
+    foreign_tax_paid: 450,
     foreign_gross_income: 5_000,
     income_category: IncomeCategory.Passive,
     irs_country_code: "CA",
@@ -46,7 +47,7 @@ const sourceItems = [
     tax_credit_method: ForeignTaxCreditMethod.Paid,
   },
   {
-    foreign_tax_paid: 2_000,
+    foreign_tax_paid: 900,
     foreign_gross_income: 10_000,
     income_category: IncomeCategory.General,
     irs_country_code: "GM",
@@ -238,6 +239,64 @@ Deno.test({
 
 Deno.test({
   name:
+    "XSD: Form 1116 current-year excess includes native Schedule B lines 6 and 8",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const result = form1116Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    {
+      foreign_tax_items: [{
+        foreign_tax_paid: 500,
+        foreign_gross_income: 5_000,
+        income_category: IncomeCategory.Passive,
+        irs_country_code: "CA",
+        tax_paid_or_accrued_date: "2025-11-01",
+        tax_kind: ForeignTaxKind.Interest,
+        tax_credit_method: ForeignTaxCreditMethod.Paid,
+      }],
+      worldwide_taxable_income: 80_000,
+      us_tax_before_credits: 7_200,
+      carryover_reviews: [{
+        income_category: IncomeCategory.Passive,
+        prior_year_form1116_line23_limit: 500,
+        prior_year_form1116_line24_allowed_credit: 500,
+        prior_year_schedule_b_line8_balance: 0,
+        source_document_references: [
+          "Filed 2024 Form 1116 passive lines 23 and 24; Schedule B line 8",
+        ],
+        no_foreign_tax_redetermination_or_special_adjustment: true,
+      }],
+    },
+  );
+  const formFields = result.outputs.find((output) =>
+    output.nodeType === "form_1116"
+  )?.fields;
+  const scheduleBFields = result.outputs.find((output) =>
+    output.nodeType === "form1116_schedule_b"
+  )?.fields;
+  assertEquals(formFields !== undefined, true);
+  assertEquals(scheduleBFields?.current_year_excess_tax, 50);
+  const xml = buildMefXml({
+    form_1116: formFields as Parameters<typeof form1116.build>[0],
+    form1116_schedule_b: scheduleBFieldsSchema.parse(scheduleBFields),
+    schedule3: {
+      line1_foreign_tax_credit: 450,
+      line1_total: 450,
+    },
+  }, filer);
+  assertStringIncludes(xml, "<ForeignTxCyovGenCurrTYGrp>");
+  assertStringIncludes(xml, "<ForeignTxCyovFollowingTYGrp>");
+  assertEquals(
+    xml.indexOf("<IRS1116 ") < xml.indexOf("<IRS1116ScheduleB "),
+    true,
+  );
+  await validateXsd(xml);
+});
+
+Deno.test({
+  name:
     "XSD: Form 1116 direct foreign expense has a linked explanation statement",
   sanitizeOps: false,
   sanitizeResources: false,
@@ -251,13 +310,16 @@ Deno.test({
       ...passive,
       items: [{
         ...passive.items[0],
+        foreign_tax_paid: 440,
         directly_allocable_deductions: 100,
         direct_expense_explanation:
           "Custody fee directly attributable to Canadian interest",
       }],
       directlyAllocableDeductions: 100,
+      foreignTaxPaid: 440,
       foreignTaxableIncome: 4_400,
       allowedCredit: 440,
+      currentYearExcessTax: 0,
     }, general],
   };
   const xml = buildMefXml({

@@ -11,7 +11,7 @@ import { form1116OtherDeductionsStatement } from "./f1116_other_deductions_state
 const passive = {
   category: IncomeCategory.Passive,
   items: [{
-    foreign_tax_paid: 500,
+    foreign_tax_paid: 450,
     income_category: IncomeCategory.Passive,
     foreign_gross_income: 5_000,
     irs_country_code: "CA",
@@ -19,7 +19,7 @@ const passive = {
     tax_kind: ForeignTaxKind.Interest,
     tax_credit_method: ForeignTaxCreditMethod.Paid,
   }],
-  foreignTaxPaid: 500,
+  foreignTaxPaid: 450,
   foreignGrossIncome: 5_000,
   includedForeignIncome: 5_000,
   directlyAllocableDeductions: 0,
@@ -27,6 +27,7 @@ const passive = {
   automaticallyApportionedDeductions: 500,
   foreignTaxableIncome: 4_500,
   allowedCredit: 450,
+  currentYearExcessTax: 0,
 };
 
 const fields = {
@@ -85,7 +86,7 @@ Deno.test("Form 1116 MeF line 18 carries the computed senior addback", () => {
     { taxYear: 2025, formType: "f1040" },
     {
       foreign_tax_items: [{
-        foreign_tax_paid: 2_000,
+        foreign_tax_paid: 870,
         foreign_gross_income: 10_000,
         income_category: IncomeCategory.Passive,
         irs_country_code: "CA",
@@ -120,7 +121,7 @@ Deno.test("Form 1116 MeF places documented vehicle interest on line 4b, not 3b",
     { taxYear: 2025, formType: "f1040" },
     {
       foreign_tax_items: [{
-        foreign_tax_paid: 3_000,
+        foreign_tax_paid: 1_880,
         foreign_gross_income: 20_000,
         income_category: IncomeCategory.Passive,
         irs_country_code: "CA",
@@ -190,10 +191,16 @@ Deno.test("Form 1116 never emits unsupported direct expenses without their state
         ...fields,
         category_summaries: [{
           ...passive,
-          items: [{ ...passive.items[0], directly_allocable_deductions: 100 }],
+          items: [{
+            ...passive.items[0],
+            foreign_tax_paid: 440,
+            directly_allocable_deductions: 100,
+          }],
+          foreignTaxPaid: 440,
           directlyAllocableDeductions: 100,
           foreignTaxableIncome: 4_400,
           allowedCredit: 440,
+          currentYearExcessTax: 0,
         }],
       }),
     Error,
