@@ -47,6 +47,9 @@ export const inputSchema = z.object({
   line_8a_mortgage_interest_1098: z.number().nonnegative().optional(),
   line_8b_mortgage_interest_no_1098: z.number().nonnegative().optional(),
   line_8c_points_no_1098: z.number().nonnegative().optional(),
+  form8396_interest_credit_reduction: z.number().int().nonnegative()
+    .optional(),
+  form8396_interest_reporting_line: z.enum(["8a", "8b"]).optional(),
   line_9_investment_interest: z.number().nonnegative().optional(),
   prior_year_investment_interest_carryforward: z.number().nonnegative().optional(),
   investment_interest_taxable_interest: amounts.optional(),
@@ -119,9 +122,11 @@ function computeSALT(input: ScheduleAInput, cfg: F1040Config): number {
   return Math.min(saltTotal, effectiveSaltCap(input, cfg));
 }
 
-function computeInterestTotal(input: ScheduleAInput, allowedInvestmentInterest: number): number {
-  return (input.line_8a_mortgage_interest_1098 ?? 0) +
-    (input.line_8b_mortgage_interest_no_1098 ?? 0) +
+function computeInterestTotal(input: ScheduleAInput): number {
+  const mortgage = (input.line_8a_mortgage_interest_1098 ?? 0) +
+    (input.line_8b_mortgage_interest_no_1098 ?? 0);
+  return Math.max(0, mortgage -
+      (input.form8396_interest_credit_reduction ?? 0)) +
     (input.line_8c_points_no_1098 ?? 0) +
     allowedInvestmentInterest;
 }

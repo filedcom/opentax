@@ -1,0 +1,169 @@
+import { z } from "zod";
+
+const wholeDollars = z.number().finite().int().nonnegative();
+const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+});
+
+/** Source facts for the 2025 Form 8396, not a precomputed Schedule 3 credit. */
+export const form8396SourceSchema = z.object({
+  certificate_issuer_name: z.string().trim().min(1),
+  certificate_number: z.string().trim().min(1).max(22),
+  certificate_issue_date: date,
+  mortgage_interest_paid: wholeDollars,
+  interest_reporting_line: z.enum(["8a", "8b"]).optional(),
+  mcc_rate: z.number().finite().min(0.1).max(0.5).refine((rate) =>
+    Math.abs(rate * 100_000 - Math.round(rate * 100_000)) < 0.000001
+  ).optional(),
+  home_is_main_residence: z.boolean().optional(),
+  home_in_issuer_jurisdiction: z.boolean().optional(),
+  interest_paid_to_related_person: z.boolean().optional(),
+  certificate_is_reissued: z.boolean().optional(),
+  nonspouse_coowner: z.boolean().optional(),
+  nonspouse_coowner_share: z.number().finite().positive().lt(1).optional(),
+  carryforward_vintages: z.array(z.object({
+    originating_tax_year: z.union([
+      z.literal(2022),
+      z.literal(2023),
+      z.literal(2024),
+    ]),
+    amount: wholeDollars.refine((value) => value > 0),
+    prior_form8396_reference: z.string().trim().min(1),
+  }).strict()),
+}).strict().superRefine((source, ctx) => {
+  if (source.certificate_issue_date > "2025-12-31") {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["certificate_issue_date"],
+      message: "The MCC must be issued by the 2025 tax year",
+    });
+  }
+  if (source.mortgage_interest_paid > 0) {
+    if (
+      source.mcc_rate === undefined ||
+      source.interest_reporting_line === undefined ||
+      source.home_is_main_residence !== true ||
+      source.home_in_issuer_jurisdiction !== true ||
+      source.interest_paid_to_related_person !== false ||
+      source.certificate_is_reissued !== false ||
+      typeof source.nonspouse_coowner !== "boolean"
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["mortgage_interest_paid"],
+        message:
+          "Current-year MCC credit needs its rate, qualified-home, unrelated-lender, and refinance facts",
+      });
+    }
+  }
+  if (
+    source.nonspouse_coowner === true &&
+    source.nonspouse_coowner_share === undefined ||
+    source.nonspouse_coowner === false &&
+    source.nonspouse_coowner_share !== undefined
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["nonspouse_coowner_share"],
+      message: "A nonspouse co-owner needs an explicit share of the $2,000 cap",
+    });
+  }
+  const years = new Set<number>();
+  source.carryforward_vintages.forEach((vintage, index) => {
+    if (years.has(vintage.originating_tax_year)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["carryforward_vintages", index],
+        message: "Duplicate Form 8396 carryforward origin year",
+      });
+    }
+    years.add(vintage.originating_tax_year);
+  });
+});
+
+export type Form8396Source = z.infer<typeof form8396SourceSchema>;
+
+export function calculateForm8396Line3(raw: Form8396Source): number {
+  const source = form8396SourceSchema.parse(raw);
+  if (source.mortgage_interest_paid === 0) return 0;
+  const rate = source.mcc_rate;
+  if (rate === undefined) throw new Error("Form 8396 MCC rate is missing");
+  const tentative = Math.round(source.mortgage_interest_paid * rate);
+  const cap = rate > 0.2
+    ? Math.round(2_000 * (source.nonspouse_coowner_share ?? 1))
+    : Number.MAX_SAFE_INTEGER;
+  return Math.min(tentative, cap);
+}
+
+/** Printed 2025 Form 8396 lines 1-17 after its Credit Limit Worksheet. */
+export function calculateForm8396(
+  raw: Form8396Source,
+  taxLiabilityLimit: number,
+) {
+  const source = form8396SourceSchema.parse(raw);
+  if (!Number.isSafeInteger(taxLiabilityLimit) || taxLiabilityLimit < 0) {
+    throw new Error("Form 8396 line 8 needs a nonnegative whole-dollar limit");
+  }
+  const carry = (year: 2022 | 2023 | 2024): number =>
+    source.carryforward_vintages.find((vintage) =>
+      vintage.originating_tax_year === year
+    )?.amount ?? 0;
+  const line3 = calculateForm8396Line3(source);
+  const line4 = carry(2022);
+  const line5 = carry(2023);
+  const line6 = carry(2024);
+  const line7 = line3 + line4 + line5 + line6;
+  const line8 = taxLiabilityLimit;
+  const line9 = Math.min(line7, line8);
+  if (!Number.isSafeInteger(line7)) {
+    throw new Error("Form 8396 credit exceeds safe whole dollars");
+  }
+  if (line9 >= line7) {
+    return {
+      line1: source.mortgage_interest_paid,
+      line2: source.mcc_rate,
+      line3,
+      line4,
+      line5,
+      line6,
+      line7,
+      line8,
+      line9,
+      carryforwardTo2026: { year2023: 0, year2024: 0, year2025: 0 },
+    };
+  }
+  const line10 = line3 + line4;
+  const line11 = line7;
+  const line12 = Math.max(line9, line10);
+  const line13 = line11 - line12;
+  const line14 = Math.min(line6, line13);
+  const line15 = line13 - line14;
+  const line16 = Math.min(line5, line15);
+  const line17 = Math.max(0, line3 - line9);
+  return {
+    line1: source.mortgage_interest_paid,
+    line2: source.mcc_rate,
+    line3,
+    line4,
+    line5,
+    line6,
+    line7,
+    line8,
+    line9,
+    line10,
+    line11,
+    line12,
+    line13,
+    line14,
+    line15,
+    line16,
+    line17,
+    carryforwardTo2026: {
+      year2023: line16,
+      year2024: line14,
+      year2025: line17,
+    },
+  };
+}

@@ -1,111 +1,44 @@
-import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
+import type { NodeResult } from "../../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../../core/types/tax-node.ts";
+import { schedule_a } from "../../../inputs/schedule_a/index.ts";
+import { schedule3 } from "../../aggregation/schedule3/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
+import {
+  calculateForm8396Line3,
+  form8396SourceSchema,
+  type Form8396Source,
+} from "./calculation.ts";
 
-// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+export { form8396SourceSchema as inputSchema } from "./calculation.ts";
 
-// MCC rate threshold above which the $2,000 cap applies (IRC §25(a)(2)).
-const HIGH_RATE_THRESHOLD = 0.20;
-
-// ─── Schema ───────────────────────────────────────────────────────────────────
-
-// Form 8396 — Mortgage Interest Credit
-// IRC §25; TY2025 instructions.
-//
-// Homeowners who received a Mortgage Credit Certificate (MCC) from a state or
-// local government may claim a nonrefundable credit equal to:
-//   credit = mortgage interest paid × MCC rate
-// capped at $2,000 when the MCC rate exceeds 20%.
-//
-// The allowed credit reduces the deductible mortgage interest on Schedule A.
-
-export const inputSchema = z.object({
-  // Mortgage interest paid during the year on the certified indebtedness.
-  // Form 8396 line 1 — sourced from Form 1098 box 1 or equivalent.
-  mortgage_interest_paid: z.number().nonnegative().optional(),
-
-  // Credit rate stated on the Mortgage Credit Certificate (e.g., 0.20 = 20%).
-  // Form 8396 line 2; IRC §25(a).
-  mcc_rate: z.number().min(0).max(1).optional(),
-
-  // Prior-year mortgage interest credit carryforward (Form 8396 line 3).
-  // Unused prior-year credits can be carried forward up to 3 years.
-  // IRC §25(e)(1)
-  prior_year_credit_carryforward: z.number().nonnegative().optional(),
-});
-
-type Form8396Input = z.infer<typeof inputSchema>;
-
-// ─── Pure helpers ─────────────────────────────────────────────────────────────
-
-// Current-year tentative credit: interest paid × MCC rate.
-// Form 8396 line 3 (before cap).
-// IRC §25(a)(1)
-function tentativeCredit(
-  interest: number,
-  rate: number,
-): number {
-  return interest * rate;
-}
-
-// Apply $2,000 cap when MCC rate > 20%.
-// IRC §25(a)(2)
-function applyRateCap(tentative: number, rate: number, maxCreditHighRate: number): number {
-  if (rate > HIGH_RATE_THRESHOLD) {
-    return Math.min(tentative, maxCreditHighRate);
-  }
-  return tentative;
-}
-
-// Total credit including any carryforward.
-function totalCredit(capped: number, carryforward: number): number {
-  return capped + carryforward;
-}
-
-// ─── Node class ───────────────────────────────────────────────────────────────
-
-class Form8396Node extends TaxNode<typeof inputSchema> {
+class Form8396Node extends TaxNode<typeof form8396SourceSchema> {
   readonly nodeType = "form8396";
-  readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly inputSchema = form8396SourceSchema;
+  readonly outputNodes = new OutputNodes([schedule_a, schedule3, f1040]);
 
-  compute(ctx: NodeContext, rawInput: Form8396Input): NodeResult {
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
-    const input = inputSchema.parse(rawInput);
-
-    const interest = input.mortgage_interest_paid ?? 0;
-    const rate = input.mcc_rate ?? 0;
-    const carryforward = input.prior_year_credit_carryforward ?? 0;
-
-    // No interest, no rate, no carryforward → no credit
-    if (interest === 0 && carryforward === 0) {
-      return { outputs: [] };
-    }
-
-    const tentative = tentativeCredit(interest, rate);
-    const capped = applyRateCap(tentative, rate, cfg.mccMaxCreditHighRate);
-    const total = totalCredit(capped, carryforward);
-
-    if (total <= 0) {
-      return { outputs: [] };
-    }
-
-    const outputs: NodeOutput[] = [
-      output(schedule3, { line6g_mortgage_interest_credit: total }),
-    ];
-
-    return { outputs };
+  compute(_ctx: NodeContext, rawInput: Form8396Source): NodeResult {
+    const source = form8396SourceSchema.parse(rawInput);
+    const line3 = calculateForm8396Line3(source);
+    const priorCarryforward = source.carryforward_vintages.reduce(
+      (sum, vintage) => sum + vintage.amount,
+      0,
+    );
+    if (line3 + priorCarryforward === 0) return { outputs: [] };
+    return {
+      outputs: [
+        output(f1040, { form8396_source: source }),
+        output(schedule3, { form8396_source_credit_pending: true }),
+        ...(line3 > 0
+          ? [output(schedule_a, {
+            form8396_interest_credit_reduction: line3,
+            form8396_interest_reporting_line: source.interest_reporting_line,
+          })]
+          : []),
+      ],
+    };
   }
 }
-
-// ─── Singleton export ─────────────────────────────────────────────────────────
 
 export const form8396 = new Form8396Node();

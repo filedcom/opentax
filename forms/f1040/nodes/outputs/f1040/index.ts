@@ -19,6 +19,10 @@ import {
   deriveForm8912IndividualLimitInput,
   type Form8912IndividualLimitLines,
 } from "../../inputs/f8912/calculation.ts";
+import {
+  calculateForm8396,
+  form8396SourceSchema,
+} from "../../intermediate/forms/form8396/calculation.ts";
 import { FilingStatus } from "../../types.ts";
 
 // Fields that may arrive from multiple upstream nodes accumulate as arrays in the
@@ -147,6 +151,7 @@ const inputSchema = z.object({
   form8859_worksheet_b_applies: z.boolean().optional(),
   form8859_worksheet_b_line14: z.number().finite().nonnegative().optional(),
   form8834_source_credit: z.number().finite().nonnegative().optional(),
+  form8396_source: form8396SourceSchema.optional(),
   form3800_source_credits: z.object({
     standardCredit: z.number().finite().nonnegative(),
     specifiedCredit: z.number().finite().nonnegative(),
@@ -397,9 +402,69 @@ type HomebuyerAllowance = {
   readonly schedule3Credits: number;
 };
 
+type MortgageAllowance = {
+  readonly lines: ReturnType<typeof calculateForm8396>;
+  readonly worksheetLine1: number;
+  readonly worksheetLine2: number;
+  readonly schedule3Line7: number;
+  readonly schedule3Credits: number;
+};
+
+function mortgageAllowance(
+  input: F1040Input,
+  cleanVehicles: CleanVehicleAllowance | undefined,
+): MortgageAllowance | undefined {
+  const source = input.form8396_source;
+  if (!source) return undefined;
+  const schedule3 = input.credit_limit_schedule3_lines;
+  if (input.line16_income_tax === undefined || !schedule3) {
+    throw new Error(
+      "Form 8396 needs finalized Form 1040 tax and Schedule 3 credit lines",
+    );
+  }
+  if ((schedule3.line6gMortgage ?? 0) > 0) {
+    throw new Error(
+      "Form 8396 source cannot combine with prefilled Schedule 3 line 6g",
+    );
+  }
+  const worksheetB = input.form8859_worksheet_b_applies === true;
+  if (worksheetB && input.form8859_worksheet_b_line14 === undefined) {
+    throw new Error(
+      "Form 8396 needs Schedule 8812 Credit Limit Worksheet B line 14",
+    );
+  }
+  const childCredit = worksheetB
+    ? input.form8859_worksheet_b_line14 ?? 0
+    : input.line19_child_tax_credit ?? 0;
+  const worksheetLine1 = Math.round(totalTaxBeforeCredits(input));
+  const worksheetLine2 = Math.round(
+    childCredit + schedule3.line1 + schedule3.line2 + schedule3.line3 +
+      schedule3.line4 + (schedule3.line6dElderlyDisabled ?? 0) +
+      (cleanVehicles?.newCredit ?? schedule3.line6fCleanVehicle ?? 0) +
+      (schedule3.line6lForm8978 ?? 0) +
+      (cleanVehicles?.usedCredit ?? schedule3.line6mUsedCleanVehicle ?? 0) +
+      schedule3.line5b,
+  );
+  const lines = calculateForm8396(
+    source,
+    Math.max(0, worksheetLine1 - worksheetLine2),
+  );
+  const priorLine7 = cleanVehicles?.schedule3Line7 ?? schedule3.line7;
+  const priorCredits = cleanVehicles?.schedule3Credits ??
+    (input.line20_nonrefundable_credits ?? 0);
+  return {
+    lines,
+    worksheetLine1,
+    worksheetLine2,
+    schedule3Line7: priorLine7 + lines.line9,
+    schedule3Credits: priorCredits + lines.line9,
+  };
+}
+
 function homebuyerAllowance(
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
+  mortgage: MortgageAllowance | undefined,
 ): HomebuyerAllowance | undefined {
   const line1 = input.form8859_source_carryforward;
   if (line1 === undefined || line1 <= 0) return undefined;
@@ -428,16 +493,18 @@ function homebuyerAllowance(
     (schedule3.line6cAdoption ?? 0) +
     (schedule3.line6dElderlyDisabled ?? 0) +
     (cleanVehicles?.newCredit ?? schedule3.line6fCleanVehicle ?? 0) +
-    (schedule3.line6gMortgage ?? 0) +
+    (mortgage?.lines.line9 ?? schedule3.line6gMortgage ?? 0) +
     (schedule3.line6lForm8978 ?? 0) +
     (cleanVehicles?.usedCredit ?? schedule3.line6mUsedCleanVehicle ?? 0) +
     childCredit;
   const worksheetLine1 = totalTaxBeforeCredits(input);
   const line2 = Math.max(0, worksheetLine1 - precedingCredits);
   const line3 = Math.min(line1, line2);
-  const previousCredits = cleanVehicles?.schedule3Credits ??
+  const previousCredits = mortgage?.schedule3Credits ??
+    cleanVehicles?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
-  const previousLine7 = cleanVehicles?.schedule3Line7 ?? schedule3.line7;
+  const previousLine7 = mortgage?.schedule3Line7 ??
+    cleanVehicles?.schedule3Line7 ?? schedule3.line7;
   return {
     worksheetLine1,
     worksheetLine2: precedingCredits,
@@ -499,6 +566,7 @@ function cleanVehicleAllowance(
 function businessCreditAllowance(
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
+  mortgage: MortgageAllowance | undefined,
   homebuyer: HomebuyerAllowance | undefined,
   electric: QualifiedElectricAllowance | undefined,
 ): BusinessCreditAllowance | undefined {
@@ -525,7 +593,8 @@ function businessCreditAllowance(
     );
   }
   const schedule3Line7 = homebuyer?.schedule3Line7 ??
-    cleanVehicles?.schedule3Line7 ?? electric?.schedule3Line7 ??
+    mortgage?.schedule3Line7 ?? cleanVehicles?.schedule3Line7 ??
+    electric?.schedule3Line7 ??
     schedule3.line7;
   const tax = deriveForm3800NonpassiveInput({
     filingStatus: input.filing_status,
@@ -555,7 +624,8 @@ function businessCreditAllowance(
     credits.passiveLines,
   );
   const originalSchedule3Credits = homebuyer?.schedule3Credits ??
-    cleanVehicles?.schedule3Credits ?? electric?.schedule3Credits ??
+    mortgage?.schedule3Credits ?? cleanVehicles?.schedule3Credits ??
+    electric?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
   return {
     tax,
@@ -569,6 +639,7 @@ function businessCreditAllowance(
 function bondCreditAllowance(
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
+  mortgage: MortgageAllowance | undefined,
   homebuyer: HomebuyerAllowance | undefined,
   electric: QualifiedElectricAllowance | undefined,
   businessCredit: BusinessCreditAllowance | undefined,
@@ -594,11 +665,13 @@ function bondCreditAllowance(
     throw new Error("Form 8912 needs source-backed allowed Form 3800 credit");
   }
   const priorSchedule3Credits = businessCredit?.schedule3Credits ??
-    homebuyer?.schedule3Credits ?? electric?.schedule3Credits ??
+    homebuyer?.schedule3Credits ?? mortgage?.schedule3Credits ??
+    electric?.schedule3Credits ??
     cleanVehicles?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
   const priorSchedule3Line7 = businessCredit?.schedule3Line7 ??
-    homebuyer?.schedule3Line7 ?? electric?.schedule3Line7 ??
+    homebuyer?.schedule3Line7 ?? mortgage?.schedule3Line7 ??
+    electric?.schedule3Line7 ??
     cleanVehicles?.schedule3Line7 ?? schedule3.line7;
   const allowedBusinessCredit = businessCredit?.lines.line38 ?? 0;
   const lines = calculateForm8912IndividualLimit(
@@ -652,6 +725,7 @@ function totalPayments(input: F1040Input): number {
 function assembleReturn(
   input: F1040Input,
   cleanVehicles: CleanVehicleAllowance | undefined,
+  mortgage: MortgageAllowance | undefined,
   homebuyer: HomebuyerAllowance | undefined,
   electric: QualifiedElectricAllowance | undefined,
   businessCredit: BusinessCreditAllowance | undefined,
@@ -669,7 +743,8 @@ function assembleReturn(
   const computed_line20 = bondCredit?.schedule3Credits ??
     businessCredit?.schedule3Credits ??
     homebuyer?.schedule3Credits ??
-    cleanVehicles?.schedule3Credits ?? electric?.schedule3Credits ??
+    mortgage?.schedule3Credits ?? cleanVehicles?.schedule3Credits ??
+    electric?.schedule3Credits ??
     (input.line20_nonrefundable_credits ?? 0);
   const computed_line21 = creditsTotal(input, computed_line20);
   const computed_line22 = Math.max(0, computed_line18 - computed_line21);
@@ -727,6 +802,7 @@ function assembleReturn(
   result.line32_refundable_credits_total = computed_line32;
   if (
     cleanVehicles !== undefined || homebuyer !== undefined ||
+    mortgage !== undefined ||
     electric !== undefined ||
     businessCredit !== undefined ||
     bondCredit !== undefined
@@ -859,16 +935,19 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const electric = qualifiedElectricAllowance(input);
     const cleanVehicles = cleanVehicleAllowance(input);
-    const homebuyer = homebuyerAllowance(input, cleanVehicles);
+    const mortgage = mortgageAllowance(input, cleanVehicles);
+    const homebuyer = homebuyerAllowance(input, cleanVehicles, mortgage);
     const businessCredit = businessCreditAllowance(
       input,
       cleanVehicles,
+      mortgage,
       homebuyer,
       electric,
     );
     const bondCredit = bondCreditAllowance(
       input,
       cleanVehicles,
+      mortgage,
       homebuyer,
       electric,
       businessCredit,
@@ -876,12 +955,14 @@ class F1040Node extends TaxNode<typeof inputSchema> {
     const assembled = assembleReturn(
       input,
       cleanVehicles,
+      mortgage,
       homebuyer,
       electric,
       businessCredit,
       bondCredit,
     );
     const schedule3Finalization = cleanVehicles === undefined &&
+        mortgage === undefined &&
         homebuyer === undefined &&
         electric === undefined &&
         businessCredit === undefined && bondCredit === undefined
@@ -902,6 +983,10 @@ class F1040Node extends TaxNode<typeof inputSchema> {
           line6m_total: cleanVehicles && cleanVehicles.usedCredit > 0
             ? cleanVehicles.usedCredit
             : undefined,
+          line6g_mortgage_interest_credit: mortgage &&
+              mortgage.lines.line9 > 0
+            ? mortgage.lines.line9
+            : undefined,
           line6h_dc_homebuyer_credit: homebuyer && homebuyer.line3 > 0
             ? homebuyer.line3
             : undefined,
@@ -915,21 +1000,25 @@ class F1040Node extends TaxNode<typeof inputSchema> {
           line7_total:
             (bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
                 homebuyer?.schedule3Line7 ??
+                mortgage?.schedule3Line7 ??
                 electric?.schedule3Line7 ??
                 cleanVehicles?.schedule3Line7 ?? 0) > 0
               ? bondCredit?.schedule3Line7 ?? businessCredit?.schedule3Line7 ??
                 homebuyer?.schedule3Line7 ??
+                mortgage?.schedule3Line7 ??
                 electric?.schedule3Line7 ??
                 cleanVehicles?.schedule3Line7
               : undefined,
           line8_total:
             (bondCredit?.schedule3Credits ?? businessCredit?.schedule3Credits ??
                 homebuyer?.schedule3Credits ??
+                mortgage?.schedule3Credits ??
                 electric?.schedule3Credits ??
                 cleanVehicles?.schedule3Credits ?? 0) > 0
               ? bondCredit?.schedule3Credits ??
                 businessCredit?.schedule3Credits ??
                 homebuyer?.schedule3Credits ??
+                mortgage?.schedule3Credits ??
                 electric?.schedule3Credits ??
                 cleanVehicles?.schedule3Credits
               : undefined,
@@ -957,6 +1046,16 @@ class F1040Node extends TaxNode<typeof inputSchema> {
             fields: {
               allowed_credit: bondCredit.lines.line12,
               unused_credit: bondCredit.lines.unusedCredit,
+            },
+          }]
+          : []),
+        ...(mortgage
+          ? [{
+            nodeType: "form8396",
+            fields: {
+              ...mortgage.lines,
+              credit_limit_worksheet_line1: mortgage.worksheetLine1,
+              credit_limit_worksheet_line2: mortgage.worksheetLine2,
             },
           }]
           : []),

@@ -77,7 +77,9 @@ facts, the Section 39 carryover adjustment is now an explicit per-vintage
 before/removed/after ledger with referenced year-by-year credit use that must
 reconcile to the generated amount, but is not yet posted to Form 3800 Part IV.
 Historical carryback and carryforward use still need actual return
-reconciliation, and interest rounding and leap-year handling need IRS example
+reconciliation. The Part I/II tax-use calculation also needs to reconcile a
+Part IV column (h) recapture against column (f) before this can be filed.
+Interest rounding and leap-year handling need IRS example
 reconciliation, and filled PDF, local XSD, business-rule, and ATS checks remain
 open.
 
@@ -170,6 +172,14 @@ after Form 1040 line 18 is known, then replaces the tentative Schedule 3 lines
 6f, 6m, 7, and 8. The new-vehicle nonpassive business-use slice now reaches Form
 3800 line 1y; other Form 8936 eligibility and source reconciliation remain open.
 None of these changes has passed the deferred full test batch.
+
+The current Form 8396 build pass replaces a gross Schedule 3 deposit with
+source-backed certificate and 2022-2024 carryforward vintages. It computes
+printed lines 1-17, limits line 9 after Form 1040 tax is known, and reduces
+Schedule A mortgage-interest deduction by the full line 3, not merely the
+allowed credit. Native MeF and source-to-XSD cases are written but unrun.
+Reissued MCCs, interest-document reconciliation, different-home address,
+filled PDF mapping, and IRS business-rule/ATS checks remain open.
 
 The current Schedule 2 audit moves HSA distribution tax to the correct 2025 line
 17c, Form 8828 mortgage-subsidy recapture to 17b, and Form 8611

@@ -200,6 +200,15 @@ Deno.test("scheduleA.compute: interest aggregates all four interest lines", () =
   assertEquals(deductionInput(result).itemized_deductions, 18_000);
 });
 
+Deno.test("scheduleA.compute: Form 8396 line 3 reduces deductible mortgage interest", () => {
+  const result = compute({
+    line_8a_mortgage_interest_1098: 15_000,
+    form8396_interest_credit_reduction: 2_000,
+    form8396_interest_reporting_line: "8a",
+  });
+  assertEquals(deductionInput(result).itemized_deductions, 13_000);
+});
+
 // =============================================================================
 // 6. CHARITABLE CONTRIBUTIONS — 60% AGI cap
 // =============================================================================

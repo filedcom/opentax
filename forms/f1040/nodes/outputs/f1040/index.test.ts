@@ -46,6 +46,54 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line35a_refund, 0);
 });
 
+Deno.test("f1040: Form 8396 uses its tax-liability worksheet before Schedule 3", () => {
+  const result = compute({
+    line16_income_tax: 1_500,
+    line19_child_tax_credit: 100,
+    line20_nonrefundable_credits: 300,
+    form8396_source: {
+      certificate_issuer_name: "Austin Housing Finance Corporation",
+      certificate_number: "MCC-2022-104",
+      certificate_issue_date: "2022-03-15",
+      mortgage_interest_paid: 15_000,
+      interest_reporting_line: "8a",
+      mcc_rate: 0.25,
+      home_is_main_residence: true,
+      home_in_issuer_jurisdiction: true,
+      interest_paid_to_related_person: false,
+      certificate_is_reissued: false,
+      nonspouse_coowner: false,
+      carryforward_vintages: [{
+        originating_tax_year: 2024,
+        amount: 300,
+        prior_form8396_reference: "2024 Form 8396 line 17",
+      }],
+    },
+    credit_limit_schedule3_lines: {
+      ...emptySchedule3ForBusinessCredit,
+      line1: 100,
+      line5b: 50,
+      line6dElderlyDisabled: 50,
+      line6lForm8978: 100,
+      line7: 150,
+    },
+  });
+  const mortgage = result.finalizations?.find((item) =>
+    item.nodeType === "form8396"
+  );
+  const schedule = result.finalizations?.find((item) =>
+    item.nodeType === "schedule3"
+  );
+  assertEquals(mortgage?.fields.credit_limit_worksheet_line1, 1_500);
+  assertEquals(mortgage?.fields.credit_limit_worksheet_line2, 400);
+  assertEquals(mortgage?.fields.line3, 2_000);
+  assertEquals(mortgage?.fields.line8, 1_100);
+  assertEquals(mortgage?.fields.line9, 1_100);
+  assertEquals(mortgage?.fields.line17, 900);
+  assertEquals(schedule?.fields.line6g_mortgage_interest_credit, 1_100);
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 1_400);
+});
+
 Deno.test("f1040: Form 8859 limits carryforward after the listed prior credits", () => {
   const result = compute({
     line16_income_tax: 1_000,

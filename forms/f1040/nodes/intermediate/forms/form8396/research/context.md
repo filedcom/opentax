@@ -1,35 +1,30 @@
-# Form 8396 — Mortgage Interest Credit
+# TY2025 Form 8396, mortgage interest credit
 
-## Purpose
-Nonrefundable credit for homeowners who received a **Mortgage Credit Certificate (MCC)** from a state or local government. Credit = mortgage interest paid × MCC rate, capped at $2,000 when rate > 20%. Routes to **Schedule 3 line 6f**.
+The previous node added a gross current credit and one unexplained carryforward
+directly to Schedule 3. That omitted the printed tax-liability limit and
+separate 2022, 2023, and 2024 carryforward lines. The current build pass
+replaces it with source certificate identity, eligibility facts, and referenced
+carryforward vintages. It computes the 2025 printed Form 8396 lines 1-17 and
+finalizes line 9 after Form 1040 line 18 and the Credit Limit Worksheet's
+earlier credits are known. The allowed amount goes to Schedule 3 line 6g.
 
-## IRS References
-- Form 8396 and Instructions (TY2025)
-- IRC §25 — Interest on Certain Home Mortgages
-- IRC §25(a)(2) — $2,000 cap when MCC rate > 20%
-- IRC §25(e)(1) — 3-year carryforward
+The current-year line 3 reduces deductible Schedule A mortgage interest even
+when tax liability allows less than the full credit. The Schedule A calculator
+and MeF serializer use that amount separately from line 9. The local
+`IRS8396.xsd` line sequence is in
+`.state/research/docs/IMF_Series_2025v5.4/.../Common/IRS8396/IRS8396.xsd`.
 
-## TY2025 Constants
-- **High-rate cap:** $2,000 (when MCC rate > 20%)
-- **High-rate threshold:** 20%
+The IRS permits an MCC rate from 10% through 50%. A rate over 20% caps line 3
+at $2,000, prorated for a nonspouse co-owner. A reissued certificate can have
+an additional original-loan annual cap and, if rates differ in the refinance
+year, a linked calculation statement. The current source model explicitly
+rejects a reissued certificate rather than awarding an unsupported amount.
+That calculation and statement remain to be built. Other work still open:
+reconcile certified interest to Form 1098 or equivalent source documents;
+support the different-home-address field; verify the 2024 Form 8396 carryover
+references; fill and inspect the PDF; run local XSD and IRS business-rule
+checks in the requested full batch; and obtain ATS acceptance when available.
 
-## Input Schema
-- `mortgage_interest_paid` — interest paid on certified indebtedness (Form 8396 line 1; from Form 1098)
-- `mcc_rate` — credit rate on the MCC (e.g., 0.20 = 20%)
-- `prior_year_credit_carryforward` — unused prior-year credits (up to 3 years; IRC §25(e)(1))
-
-## Compute Logic
-1. If `mortgage_interest = 0` and `carryforward = 0` → `{ outputs: [] }`
-2. `tentative = mortgage_interest × mcc_rate`
-3. If `mcc_rate > 0.20`: `capped = min(tentative, $2,000)`; else `capped = tentative`
-4. `total = capped + carryforward`
-5. If `total ≤ 0` → `{ outputs: [] }`
-6. Routes to `schedule3.line6f_mortgage_interest_credit`
-
-## Output Nodes
-- `schedule3` (line 6f)
-
-## Key Design Notes
-- The allowed credit **reduces deductible mortgage interest** on Schedule A (not computed here — handled at Schedule A level).
-- MCC rate stored as a decimal (0.20 = 20%), not percentage points.
-- Carryforward is from prior years; the engine does not compute the current-year unused portion (that's the difference between allowed and tax liability).
+Primary source: [2025 Form 8396 and its instructions](https://www.irs.gov/pub/irs-pdf/f8396.pdf),
+especially lines 1-17, the Credit Limit Worksheet, and the reissued-certificate
+instructions.

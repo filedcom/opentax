@@ -12,6 +12,10 @@ export interface Fields {
   line_5c_personal_property_tax?: number | null;
   line_6_other_taxes?: number | null;
   line_8a_mortgage_interest_1098?: number | null;
+  line_8b_mortgage_interest_no_1098?: number | null;
+  line_8c_points_no_1098?: number | null;
+  form8396_interest_credit_reduction?: number | null;
+  form8396_interest_reporting_line?: "8a" | "8b" | null;
   line_9_investment_interest?: number | null;
   line_11_cash_contributions?: number | null;
   line_12_noncash_contributions?: number | null;
@@ -40,6 +44,8 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"],
   ["line_6_other_taxes", "OtherTaxesAmt"],
   ["line_8a_mortgage_interest_1098", "RptHomeMortgIntAndPointsAmt"],
+  ["line_8b_mortgage_interest_no_1098", "Form1098HomeMortgIntNotRptAmt"],
+  ["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"],
   ["line_9_investment_interest", "InvestmentInterestAmt"],
   ["line_11_cash_contributions", "GiftsByCashOrCheckAmt"],
   ["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"],
@@ -61,6 +67,27 @@ function buildIRS1040ScheduleA(
   ) {
     return "";
   }
+  const reduction = fields.form8396_interest_credit_reduction ?? 0;
+  const gross8a = fields.line_8a_mortgage_interest_1098 ?? 0;
+  const gross8b = fields.line_8b_mortgage_interest_no_1098 ?? 0;
+  const reportingLine = fields.form8396_interest_reporting_line;
+  if (reduction > 0) {
+    const form8396 = context?.pending?.form8396 as
+      | Record<string, unknown>
+      | undefined;
+    if (
+      form8396?.line3 !== reduction ||
+      form8396.interest_reporting_line !== reportingLine ||
+      (reportingLine !== "8a" && reportingLine !== "8b") ||
+      reduction > (reportingLine === "8a" ? gross8a : gross8b)
+    ) {
+      throw new Error(
+        "Schedule A mortgage-interest reduction differs from Form 8396 line 3 or deductible interest",
+      );
+    }
+  }
+  const net8a = gross8a - (reportingLine === "8a" ? reduction : 0);
+  const net8b = gross8b - (reportingLine === "8b" ? reduction : 0);
   // Combine the mutually exclusive line 5a fields into a single XSD element.
   // Only one will be nonzero (enforced by schedule_a inputSchema superRefine).
   const line5a = (fields.line_5a_state_income_tax ?? 0) +
@@ -86,7 +113,13 @@ function buildIRS1040ScheduleA(
     mapField(["line_5b_real_estate_tax", "RealEstateTaxesAmt"]),
     mapField(["line_5c_personal_property_tax", "PersonalPropertyTaxesAmt"]),
     mapField(["line_6_other_taxes", "OtherTaxesAmt"]),
-    mapField(["line_8a_mortgage_interest_1098", "RptHomeMortgIntAndPointsAmt"]),
+    fields.line_8a_mortgage_interest_1098 !== undefined
+      ? element("RptHomeMortgIntAndPointsAmt", net8a)
+      : "",
+    fields.line_8b_mortgage_interest_no_1098 !== undefined
+      ? element("Form1098HomeMortgIntNotRptAmt", net8b)
+      : "",
+    mapField(["line_8c_points_no_1098", "Form1098PointsNotReportedAmt"]),
     mapField(["line_9_investment_interest", "InvestmentInterestAmt"]),
     mapField(["line_11_cash_contributions", "GiftsByCashOrCheckAmt"]),
     mapField(["line_12_noncash_contributions", "OtherThanByCashOrCheckAmt"]),

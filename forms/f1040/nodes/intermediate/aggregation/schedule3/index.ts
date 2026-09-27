@@ -88,9 +88,9 @@ export const inputSchema = z.object({
   // IRC §22; Schedule R line 22 → Schedule 3 line 6d
   line6d_elderly_disabled_credit: z.number().nonnegative().optional(),
 
-  // Line 6g — Mortgage interest credit (Form 8396 line 11)
-  // IRC §25; Form 8396 line 11 → Schedule 3 line 6g
+  // Line 6g — allowed mortgage interest credit (Form 8396 line 9).
   line6g_mortgage_interest_credit: z.number().nonnegative().optional(),
+  form8396_source_credit_pending: z.boolean().optional(),
   // Line 6h — District of Columbia first-time homebuyer credit (Form 8859).
   line6h_dc_homebuyer_credit: z.number().nonnegative().optional(),
   // Line 6i — qualified electric vehicle credit that precedes Form 8936
@@ -201,7 +201,8 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
       input.form3800_source_credit_pending !== true &&
       input.form8912_source_credit_pending !== true &&
       input.form8859_source_credit_pending !== true &&
-      input.form8834_source_credit_pending !== true
+      input.form8834_source_credit_pending !== true &&
+      input.form8396_source_credit_pending !== true
     ) return { outputs: [] };
 
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
@@ -215,7 +216,8 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
       input.form3800_source_credit_pending === true ||
       input.form8912_source_credit_pending === true ||
       input.form8859_source_credit_pending === true ||
-      input.form8834_source_credit_pending === true
+      input.form8834_source_credit_pending === true ||
+      input.form8396_source_credit_pending === true
     ) {
       f1040Input.credit_limit_schedule3_lines = {
         line1: line1(input),

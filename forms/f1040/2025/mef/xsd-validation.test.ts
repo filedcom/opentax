@@ -23,6 +23,10 @@ import {
 } from "../../nodes/intermediate/forms/form8582cr/index.ts";
 import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { calculateForm8874Recapture } from "../../nodes/inputs/f8874/recapture_node.ts";
+import {
+  calculateForm8396,
+  form8396SourceSchema,
+} from "../../nodes/intermediate/forms/form8396/calculation.ts";
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
@@ -501,6 +505,62 @@ Deno.test({
   assertStringIncludes(xml, "<IRS8859 ");
   assertStringIncludes(xml, 'referenceDocumentName="IRS8859"');
   await validateXsd(xml, "Form 8859 Schedule 3 line 6h");
+});
+
+Deno.test({
+  name: "XSD: Form 8396 credit limit and Schedule A interest reduction",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const source = form8396SourceSchema.parse({
+    certificate_issuer_name: "Austin Housing Finance Corporation",
+    certificate_number: "MCC-2022-104",
+    certificate_issue_date: "2022-03-15",
+    mortgage_interest_paid: 15_000,
+    interest_reporting_line: "8a",
+    mcc_rate: 0.25,
+    home_is_main_residence: true,
+    home_in_issuer_jurisdiction: true,
+    interest_paid_to_related_person: false,
+    certificate_is_reissued: false,
+    nonspouse_coowner: false,
+    carryforward_vintages: [{
+      originating_tax_year: 2024,
+      amount: 300,
+      prior_form8396_reference: "2024 Form 8396 line 17",
+    }],
+  });
+  const lines = calculateForm8396(source, 1_100);
+  const xml = buildMefXml({
+    f1040: {
+      line12e_itemized_deductions: 13_000,
+      line16_income_tax: 1_500,
+      line20_nonrefundable_credits: 1_100,
+    },
+    schedule3: {
+      line6g_mortgage_interest_credit: 1_100,
+      line7_total: 1_100,
+      line8_total: 1_100,
+    },
+    schedule_a: {
+      line_8a_mortgage_interest_1098: 15_000,
+      form8396_interest_credit_reduction: 2_000,
+      form8396_interest_reporting_line: "8a",
+    },
+    form8396: {
+      ...source,
+      ...lines,
+      credit_limit_worksheet_line1: 1_500,
+      credit_limit_worksheet_line2: 400,
+    },
+  } as MefFormsPending, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<MortgageInterestCreditAmt>1100</MortgageInterestCreditAmt>");
+  assertStringIncludes(
+    xml,
+    "<RptHomeMortgIntAndPointsAmt>13000</RptHomeMortgIntAndPointsAmt>",
+  );
+  await validateXsd(xml, "Form 8396 with Schedule A interest reduction");
 });
 
 Deno.test({
