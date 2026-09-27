@@ -196,15 +196,18 @@ businesses or credits exceeding gross wages. Source and XML cases are written
 but unrun. Schedule F now similarly derives line 22 labor hired after a
 farm-linked Form 5884 reduction and other employment credits; its calculation
 and MeF cases are also written but unrun. Form 5884 now requires an explicit
-business or farm destination for direct employer wages, allocates direct
-line 2 credit by capped wage contribution and a controlled-group taxpayer
+business or farm destination on each claimed payroll row, allowing one
+employee to split wages between businesses. It allocates direct line 2 credit
+by capped wage contribution and a controlled-group taxpayer
 share by that member's capped wages, then routes whole-dollar reductions
 to Schedule C or F. The full MeF bundle reconciles the deduction to the
 source; line 3 pass-through credit and the Form 3800 tax limit do not alter the
 employer's reduction. The controlled-group taxpayer member must identify a
 Schedule C or F destination; other members may identify separate entity
 returns. Source-to-return, XML, and rejection cases are written
-but unrun. Capitalized wage costs, other business forms, entity-return
+but unrun. Mixed destinations with wages above a cap now stop pending exact
+row-level claimed-wage attribution. Capitalized inventory/asset costs,
+sold-versus-ending-inventory basis, other business forms, entity-return
 reconciliation, and payroll-document matching remain open. The
 controlled-group pass now allocates the group credit by members' capped
 qualified wages, requires a group-classification document reference, and sends

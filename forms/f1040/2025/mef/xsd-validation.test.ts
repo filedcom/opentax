@@ -1433,10 +1433,6 @@ Deno.test({
       subject_to_passive_activity_limit: false,
       f5884s: [{
         employee_reference: "EMP-001",
-        wage_deduction_location: {
-          kind: "schedule_c",
-          business_reference: "BUSINESS-1",
-        },
         target_group: TargetGroup.TanfRecipient,
         hired_on: "2025-01-15",
         certification: {
@@ -1453,6 +1449,10 @@ Deno.test({
         excluded_wages_removed_confirmed: true,
         wage_records: [{
           payroll_record_reference: "PAY-001",
+          deduction_location: {
+            kind: "schedule_c",
+            business_reference: "BUSINESS-1",
+          },
           service_period_start_on: "2025-02-01",
           service_period_end_on: "2025-02-28",
           paid_or_incurred_on: "2025-02-28",
@@ -1496,10 +1496,6 @@ Deno.test({
 }, async () => {
   const employee = {
     target_group: TargetGroup.TanfRecipient,
-    wage_deduction_location: {
-      kind: "schedule_c",
-      business_reference: "BUSINESS-1",
-    },
     hired_on: "2025-01-15",
     certification: {
       path: "certified_by_start",
@@ -1515,6 +1511,10 @@ Deno.test({
     excluded_wages_removed_confirmed: true,
     wage_records: [{
       payroll_record_reference: "PAY-001",
+      deduction_location: {
+        kind: "schedule_c",
+        business_reference: "BUSINESS-1",
+      },
       service_period_start_on: "2025-02-01",
       service_period_end_on: "2025-02-28",
       paid_or_incurred_on: "2025-02-28",
@@ -1563,7 +1563,10 @@ Deno.test({
           ...employee,
           employee_reference: "GROUP-2",
           employer_ein: "987654321",
-          wage_deduction_location: { kind: "entity_return" },
+          wage_records: [{
+            ...employee.wage_records[0],
+            deduction_location: { kind: "entity_return" },
+          }],
           hours_worked: 400,
         },
       ],
@@ -1674,10 +1677,6 @@ Deno.test({
       subject_to_passive_activity_limit: false,
       f5884s: [{
         employee_reference: "EMP-001",
-        wage_deduction_location: {
-          kind: "schedule_c",
-          business_reference: "BUSINESS-1",
-        },
         target_group: TargetGroup.TanfRecipient,
         hired_on: "2025-01-15",
         certification: {
@@ -1694,6 +1693,10 @@ Deno.test({
         excluded_wages_removed_confirmed: true,
         wage_records: [{
           payroll_record_reference: "PAY-001",
+          deduction_location: {
+            kind: "schedule_c",
+            business_reference: "BUSINESS-1",
+          },
           service_period_start_on: "2025-02-01",
           service_period_end_on: "2025-02-28",
           paid_or_incurred_on: "2025-02-28",

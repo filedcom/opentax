@@ -63,8 +63,31 @@ const revocationSchema = z.discriminatedUnion("status", [
   }).strict(),
 ]);
 
+const wageDeductionLocationSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("schedule_c"),
+    business_reference: z.string().trim().min(1),
+  }).strict(),
+  z.object({
+    kind: z.literal("schedule_f"),
+    farm_id: z.string().trim().min(1),
+  }).strict(),
+  z.object({ kind: z.literal("entity_return") }).strict(),
+]);
+
+function wageLocationKey(
+  location: z.infer<typeof wageDeductionLocationSchema>,
+): string {
+  return location.kind === "schedule_c"
+    ? `schedule_c:${location.business_reference}`
+    : location.kind === "schedule_f"
+    ? `schedule_f:${location.farm_id}`
+    : "entity_return";
+}
+
 const wageRecordSchema = z.object({
   payroll_record_reference: z.string().trim().min(1),
+  deduction_location: wageDeductionLocationSchema,
   service_period_start_on: z.string().date(),
   service_period_end_on: z.string().date(),
   paid_or_incurred_on: z.string().date().refine(
@@ -121,23 +144,10 @@ const successorEmployerSchema = z.object({
   wage_periods_start_at_predecessor_confirmed: z.literal(true),
 });
 
-const wageDeductionLocationSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("schedule_c"),
-    business_reference: z.string().trim().min(1),
-  }).strict(),
-  z.object({
-    kind: z.literal("schedule_f"),
-    farm_id: z.string().trim().min(1),
-  }).strict(),
-  z.object({ kind: z.literal("entity_return") }).strict(),
-]);
-
 // Per-item schema — one entry per employee
 export const itemSchema = z.object({
   employee_reference: z.string().trim().min(1),
   employer_ein: z.string().regex(/^\d{9}$/).optional(),
-  wage_deduction_location: wageDeductionLocationSchema,
   target_group: z.nativeEnum(TargetGroup),
   hired_on: z.string().date().refine((date) => date < "2026-01-01", {
     message:
@@ -231,6 +241,52 @@ export const itemSchema = z.object({
       });
     }
   });
+  const combinedHours = item.hours_worked +
+    (item.successor_employer?.predecessor_hours_worked ?? 0);
+  if (combinedHours >= 120) {
+    for (
+      const [records, cap] of [
+        [
+          item.wage_records.filter((record) =>
+            record.service_period_start_on < firstAnniversary
+          ),
+          Math.max(
+            0,
+            wageCap(item) -
+              (item.successor_employer
+                ?.predecessor_first_year_qualified_wages ?? 0),
+          ),
+        ],
+        [
+          item.wage_records.filter((record) =>
+            record.service_period_start_on >= firstAnniversary
+          ),
+          Math.max(
+            0,
+            WAGE_CAP_LTFA_SECOND -
+              (item.successor_employer
+                ?.predecessor_second_year_qualified_wages ?? 0),
+          ),
+        ],
+      ] as const
+    ) {
+      if (
+        cap > 0 &&
+        records.reduce((sum, record) => sum + record.qualified_wages, 0) >
+          cap &&
+        new Set(
+            records.map((record) => wageLocationKey(record.deduction_location)),
+          ).size > 1
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["wage_records"],
+          message:
+            "Capped wages across deduction locations need row-level claimed-wage attribution",
+        });
+      }
+    }
+  }
   if (
     certification.path === "certified_by_start" &&
     certification.certification_received_on > firstWorkday
@@ -411,25 +467,25 @@ export const inputSchema = z.object({
         message: "Employer EIN is for a controlled group claim only",
       });
     }
-    if (!group && item.wage_deduction_location.kind === "entity_return") {
-      ctx.addIssue({
-        code: "custom",
-        path: ["f5884s", index, "wage_deduction_location"],
-        message:
-          "A direct Form 1040 employer credit needs its business wage deduction",
-      });
-    }
-    if (
-      group && item.employer_ein === group.taxpayer_member_ein &&
-      item.wage_deduction_location.kind === "entity_return"
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["f5884s", index, "wage_deduction_location"],
-        message:
-          "The Form 1040 taxpayer member needs a Schedule C or F wage deduction",
-      });
-    }
+    item.wage_records.forEach((record, recordIndex) => {
+      if (
+        record.deduction_location.kind === "entity_return" &&
+        (!group || item.employer_ein === group.taxpayer_member_ein)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: [
+            "f5884s",
+            index,
+            "wage_records",
+            recordIndex,
+            "deduction_location",
+          ],
+          message:
+            "The Form 1040 employer needs a Schedule C or F wage deduction",
+        });
+      }
+    });
     if (references.has(item.employee_reference)) {
       ctx.addIssue({
         code: "custom",
@@ -550,6 +606,7 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     return {
       item,
       totalHours,
+      firstAnniversary,
       firstYearWages: totalHours < 120 ? 0 : Math.min(
         firstYearPaid,
         Math.max(
@@ -603,7 +660,8 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
     (sum, entry) => sum + entry.credit_amount,
     0,
   );
-  const deductionShares = rows.map(() => 0);
+  const firstYearDeductionShares = rows.map(() => 0);
+  const secondYearDeductionShares = rows.map(() => 0);
   if (group) {
     const shares = allocateWholeDollars(
       line2,
@@ -613,48 +671,67 @@ export function calculateForm5884(input: z.infer<typeof inputSchema>) {
           : 0
       ),
     );
-    shares.forEach((share, index) => deductionShares[index] += share);
+    shares.forEach((share, index) => {
+      const [first, second] = allocateWholeDollars(share, [
+        rows[index].firstYearWages,
+        rows[index].secondYearWages,
+      ]);
+      firstYearDeductionShares[index] = first;
+      secondYearDeductionShares[index] = second;
+    });
   } else {
-    for (
-      const [credit, weights] of [
-        [
-          line1aCredit,
-          rows.map((row) =>
-            row.totalHours >= 120 && row.totalHours < 400
-              ? row.firstYearWages
-              : 0
-          ),
-        ],
-        [
-          line1bCredit,
-          rows.map((row) => row.totalHours >= 400 ? row.firstYearWages : 0),
-        ],
-        [line1cCredit, rows.map((row) => row.secondYearWages)],
-      ] as const
-    ) {
-      allocateWholeDollars(credit, weights).forEach((share, index) =>
-        deductionShares[index] += share
-      );
-    }
+    const low = allocateWholeDollars(
+      line1aCredit,
+      rows.map((row) =>
+        row.totalHours >= 120 && row.totalHours < 400 ? row.firstYearWages : 0
+      ),
+    );
+    const high = allocateWholeDollars(
+      line1bCredit,
+      rows.map((row) => row.totalHours >= 400 ? row.firstYearWages : 0),
+    );
+    const second = allocateWholeDollars(
+      line1cCredit,
+      rows.map((row) => row.secondYearWages),
+    );
+    rows.forEach((_, index) => {
+      firstYearDeductionShares[index] = low[index] + high[index];
+      secondYearDeductionShares[index] = second[index];
+    });
   }
   const deductions = new Map<string, {
-    location: F5884Item["wage_deduction_location"];
+    location: F5884Item["wage_records"][number]["deduction_location"];
     credit_amount: number;
   }>();
-  rows.forEach((row, index) => {
-    const share = deductionShares[index];
+  const addDeduction = (
+    location: F5884Item["wage_records"][number]["deduction_location"],
+    share: number,
+  ) => {
     if (share === 0) return;
-    const location = row.item.wage_deduction_location;
-    const key = location.kind === "schedule_c"
-      ? `schedule_c:${location.business_reference}`
-      : location.kind === "schedule_f"
-      ? `schedule_f:${location.farm_id}`
-      : "entity_return";
+    const key = wageLocationKey(location);
     const existing = deductions.get(key);
     deductions.set(key, {
       location,
       credit_amount: (existing?.credit_amount ?? 0) + share,
     });
+  };
+  rows.forEach((row, index) => {
+    for (
+      const [isFirstYear, share] of [
+        [true, firstYearDeductionShares[index]],
+        [false, secondYearDeductionShares[index]],
+      ] as const
+    ) {
+      const records = row.item.wage_records.filter((record) =>
+        (record.service_period_start_on < row.firstAnniversary) === isFirstYear
+      );
+      allocateWholeDollars(
+        share,
+        records.map((record) => record.qualified_wages),
+      ).forEach((allocated, recordIndex) =>
+        addDeduction(records[recordIndex].deduction_location, allocated)
+      );
+    }
   });
   const wageDeductionAllocations = [...deductions.values()];
   return {

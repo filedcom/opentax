@@ -47,18 +47,22 @@ Only LTFA can have second-year wages. Duplicate payroll references within an
 employee claim are rejected. The previous undated year-one and year-two wage
 totals are no longer accepted as input.
 
-Each self-earned employee row now identifies the Schedule C business or
-Schedule F farm whose gross payroll contains the wages. Form 5884 allocates its
-whole-dollar line 2 credit across those destinations, passes the reduction to
+Each claimed payroll row now identifies the Schedule C business or Schedule F
+farm whose gross payroll contains those wages. One employee may split payroll
+between these destinations. Form 5884 allocates its whole-dollar line 2 credit
+across the dated rows, passes the reduction to
 the business-profit graph, and reconciles the reduction in a full MeF bundle.
 Form 3800's current-year tax limit does not reduce this wage adjustment.
 Pass-through line 3 credit does not cause a wage reduction on the recipient's
 Schedule C or F. Controlled-group rows for other members may identify a
 separate entity return; the Form 1040 taxpayer member must identify Schedule C
-or F for its line 2 share. The
-business-location, graph, XML, and negative cases are written but unrun.
-Capitalized wage costs and wage deductions on business forms other than
-Schedules C and F still need a separate, source-backed destination.
+or F for its line 2 share. The business-location, graph, XML, and negative
+cases are written but unrun. When eligible wages exceed a first- or
+second-year cap across different locations, the input stops because it does
+not yet identify which payroll rows were used under the cap. Capitalized labor
+in inventory, capitalized asset costs, and wage deductions on business forms
+other than Schedules C and F still need separate, source-backed destinations
+and sold-versus-ending-basis allocation.
 
 `pass_through_credits` separately identifies partnership, S corporation,
 cooperative, estate, and trust allocations by entity EIN, source document

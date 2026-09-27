@@ -7,10 +7,6 @@ const source = {
   subject_to_passive_activity_limit: false,
   f5884s: [{
     employee_reference: "EMP-001",
-    wage_deduction_location: {
-      kind: "schedule_c",
-      business_reference: "BUSINESS-1",
-    },
     target_group: TargetGroup.TanfRecipient,
     hired_on: "2025-01-15",
     certification: {
@@ -27,6 +23,10 @@ const source = {
     excluded_wages_removed_confirmed: true,
     wage_records: [{
       payroll_record_reference: "PAY-001",
+      deduction_location: {
+        kind: "schedule_c",
+        business_reference: "BUSINESS-1",
+      },
       service_period_start_on: "2025-02-01",
       service_period_end_on: "2025-02-28",
       paid_or_incurred_on: "2025-02-28",
@@ -132,7 +132,10 @@ Deno.test("Form 5884 PDF prints controlled-group share and appends its calculati
         ...source.f5884s[0],
         employee_reference: "GROUP-2",
         employer_ein: "987654321",
-        wage_deduction_location: { kind: "entity_return" },
+        wage_records: [{
+          ...source.f5884s[0].wage_records[0],
+          deduction_location: { kind: "entity_return" },
+        }],
         hours_worked: 400,
       },
     ],
