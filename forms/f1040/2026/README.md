@@ -37,6 +37,10 @@ to the 1040 node, and routes taxable income plus draft 2026 Form 6251 lines 1b
 and 2a to the shared income-tax calculator. A focused graph test now executes
 deduction choice → tax → 1040. Upstream income, Schedule A, Schedule 1-A, and
 QBI edges still need to be wired into the 2026 graph.
+The shared AGI aggregator now emits a TY2026 income/adjustment pair to this
+node while retaining its TY2025 output contract. A graph test runs income
+facts → AGI → deduction choice → tax → 1040 and checks Social Security and
+Schedule 1 income pass-through. The rest of the 2026 input graph is pending.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

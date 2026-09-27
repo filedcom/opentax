@@ -20,6 +20,24 @@ Deno.test("agi_aggregator: wages only", () => {
   assertEquals(agi(result), 60_000);
 });
 
+Deno.test("agi_aggregator: TY2026 routes total income and adjustments to deduction node", () => {
+  const result = agi_aggregator.compute({ taxYear: 2026, formType: "f1040" }, {
+    filing_status: "single",
+    line1a_wages: 80_000,
+    line11_educator_expenses: 1_000,
+  });
+  const deduction = result.outputs.find((item) =>
+    item.nodeType === "standard_deduction"
+  );
+  assertEquals(deduction?.fields.line9_total_income, 80_000);
+  assertEquals(deduction?.fields.line10_adjustments, 1_000);
+  assertEquals(deduction?.fields.filing_status, "single");
+  assertEquals(
+    result.outputs.some((item) => item.nodeType === "f1040"),
+    false,
+  );
+});
+
 Deno.test("agi_aggregator: Form 8962 modified AGI adds Worksheet 1-1 amounts", () => {
   const result = compute({
     line1a_wages: 30_000,

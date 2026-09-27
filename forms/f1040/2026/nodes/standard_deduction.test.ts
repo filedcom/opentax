@@ -3,6 +3,7 @@ import { execute } from "../../../../core/runtime/executor.ts";
 import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import type { NodeRegistry } from "../../../../core/types/node-registry.ts";
 import { buildStartNode } from "../../2025/start.ts";
+import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { f1040_2026_node } from "./f1040.ts";
@@ -123,4 +124,62 @@ Deno.test("2026 deduction, tax, and 1040 nodes execute in graph order", () => {
   assertEquals(result.pending.f1040.line12f_nonitemizer_charity, 1_000);
   assertEquals(result.pending.f1040.line15_taxable_income, 62_900);
   assertEquals(result.pending.f1040.line16_income_tax, 8_550);
+});
+
+Deno.test("2026 AGI, deduction, tax, and 1040 run from income facts", () => {
+  const start = buildStartNode([{
+    node: agi_aggregator,
+    inputSchema: agi_aggregator.inputSchema,
+    isArray: false,
+  }]);
+  const registry: NodeRegistry = {
+    start,
+    agi_aggregator,
+    standard_deduction: standard_deduction_2026,
+    income_tax_calculation,
+    f1040: f1040_2026_node,
+    schedule3a,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    agi_aggregator: {
+      filing_status: FilingStatus.Single,
+      line1a_wages: 80_000,
+      line11_educator_expenses: 1_000,
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line9_total_income, 80_000);
+  assertEquals(result.pending.f1040.line10_adjustments, 1_000);
+  assertEquals(result.pending.f1040.line11a_agi, 79_000);
+  assertEquals(result.pending.f1040.line15_taxable_income, 62_900);
+  assertEquals(result.pending.f1040.line16_income_tax, 8_550);
+});
+
+Deno.test("2026 AGI preserves taxable Social Security and Schedule 1 income", () => {
+  const start = buildStartNode([{
+    node: agi_aggregator,
+    inputSchema: agi_aggregator.inputSchema,
+    isArray: false,
+  }]);
+  const registry: NodeRegistry = {
+    start,
+    agi_aggregator,
+    standard_deduction: standard_deduction_2026,
+    income_tax_calculation,
+    f1040: f1040_2026_node,
+    schedule3a,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    agi_aggregator: {
+      filing_status: FilingStatus.Single,
+      line1a_wages: 60_000,
+      line6a_ss_gross: 10_000,
+      line6b_ss_taxable: 8_000,
+      line1_state_refund: 2_000,
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line6b_ss_taxable, 8_000);
+  assertEquals(result.pending.f1040.line8_additional_income, 2_000);
+  assertEquals(result.pending.f1040.line9_total_income, 70_000);
 });

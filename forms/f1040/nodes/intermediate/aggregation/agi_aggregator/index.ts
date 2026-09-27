@@ -503,25 +503,43 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
     const line8 = scheduleOnePartI(input);
     const line10 = aboveLineDeductions(input, cfg);
 
-    const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {
-      line11_agi: agi,
-    };
-    if (line8 !== 0) f1040Fields.line8_additional_income = line8;
-    if (line10 > 0) f1040Fields.line10_adjustments = line10;
+    // The downstream node type is stable, but its 2026 input contract is not.
+    // Route the income/adjustment pair through the 2026 deduction node so tax
+    // and the final 1040 derive AGI from identical numbers. TY2025 retains its
+    // existing AGI and worksheet fields.
+    const yearOutputs: NodeOutput[] = ctx.taxYear === 2026
+      ? [
+        {
+          nodeType: "standard_deduction",
+          fields: {
+            line9_total_income: totalIncome,
+            line10_adjustments: line10,
+            ...(input.filing_status !== undefined &&
+              { filing_status: input.filing_status }),
+          },
+        },
+        ...(line8 !== 0
+          ? [{ nodeType: "f1040", fields: { line8_additional_income: line8 } }]
+          : []),
+      ]
+      : [
+        this.outputNodes.output(f1040, {
+          line11_agi: agi,
+          ...(line8 !== 0 && { line8_additional_income: line8 }),
+          ...(line10 > 0 && { line10_adjustments: line10 }),
+        }),
+        this.outputNodes.output(standard_deduction, {
+          agi,
+          form8615_total_income: totalIncome,
+          form8615_early_withdrawal_penalty: Math.max(
+            0,
+            input.line18_early_withdrawal ?? 0,
+          ),
+        }),
+      ];
 
     const outputs: NodeOutput[] = [
-      this.outputNodes.output(
-        f1040,
-        f1040Fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
-      ),
-      this.outputNodes.output(standard_deduction, {
-        agi,
-        form8615_total_income: totalIncome,
-        form8615_early_withdrawal_penalty: Math.max(
-          0,
-          input.line18_early_withdrawal ?? 0,
-        ),
-      }),
+      ...yearOutputs,
       this.outputNodes.output(scheduleA, { agi }),
       this.outputNodes.output(eitc, { agi }),
       // Pass AGI to f8812 for CTC/ACTC phase-out computation

@@ -67,6 +67,11 @@ charitable deduction, and feeds taxable income and draft 2026 Form 6251 values
 to the shared income-tax node. A focused calculation graph reaches the 2026
 1040 with no direct 1040 input. Income and deduction source nodes are not yet
 connected to that graph.
+The shared AGI aggregator now has explicit 2025/2026 downstream shapes. For
+2026 it sends total income and adjustments to the 2026 deduction node, so that
+node and the final 1040 derive the same AGI. A graph test reaches the 2026
+1040 from income facts and preserves taxable Social Security and Schedule 1
+additional income. It does not yet include the full W-2/general input graph.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable
