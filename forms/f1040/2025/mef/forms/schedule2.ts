@@ -20,6 +20,7 @@ export interface Fields {
   golden_parachute_excise?: number | null;
   line17k_golden_parachute_excise?: number | null;
   line17c_hsa_penalty?: number | null;
+  line17a_investment_credit_recapture?: number | null;
   line17b_mortgage_subsidy_recapture?: number | null;
   line16_lihtc_recapture?: number | null;
   line17e_archer_msa_tax?: number | null;
@@ -79,6 +80,8 @@ const ELEMENT_ORDER = [
   "IndivNetInvstIncomeTaxAmt",
   "UncollSSMedcrRRTAGrpInsTxAmt",
   "RecaptureTaxAmt",
+  "RecaptureOtherCreditsGrp",
+  "TotalRecaptureOtherCreditsAmt",
   "MortgSbsdyRecaptureTaxAmt",
   "HSADistriAddnlPercentTaxAmt",
   "ArcherMSAAddnlDistriTaxAmt",
@@ -164,6 +167,20 @@ function buildIRS1040Schedule2(
   }
 
   const form8621Interest = fields.line17p_form8621_interest;
+  const investmentRecapture = fields.line17a_investment_credit_recapture;
+  if (typeof investmentRecapture === "number" && investmentRecapture > 0) {
+    childrenByTag.set(
+      "RecaptureOtherCreditsGrp",
+      elements("RecaptureOtherCreditsGrp", [
+        element("OtherCreditsCd", "3468"),
+        element("OtherCreditsAmt", investmentRecapture),
+      ]),
+    );
+    childrenByTag.set(
+      "TotalRecaptureOtherCreditsAmt",
+      element("TotalRecaptureOtherCreditsAmt", investmentRecapture),
+    );
+  }
   if (typeof form8621Interest === "number" && form8621Interest > 0) {
     const formIds = context?.documentIdsByPendingKey?.form8621 ?? [];
     if (context?.documentIdsByPendingKey && formIds.length === 0) {

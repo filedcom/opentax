@@ -185,6 +185,32 @@ Deno.test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
   );
 });
 
+Deno.test("2025 Schedule 2 line 17a identifies investment-credit recapture", () => {
+  const result = schedule2.build({
+    line16_lihtc_recapture: 750,
+    line17a_investment_credit_recapture: 2_500,
+    line17b_mortgage_subsidy_recapture: 1_000,
+  });
+  assertStringIncludes(
+    result,
+    "<RecaptureOtherCreditsGrp><OtherCreditsCd>3468</OtherCreditsCd><OtherCreditsAmt>2500</OtherCreditsAmt></RecaptureOtherCreditsGrp>",
+  );
+  assertStringIncludes(
+    result,
+    "<TotalRecaptureOtherCreditsAmt>2500</TotalRecaptureOtherCreditsAmt>",
+  );
+  assertEquals(
+    result.indexOf("<RecaptureTaxAmt>") <
+      result.indexOf("<RecaptureOtherCreditsGrp>"),
+    true,
+  );
+  assertEquals(
+    result.indexOf("<TotalRecaptureOtherCreditsAmt>") <
+      result.indexOf("<MortgSbsdyRecaptureTaxAmt>"),
+    true,
+  );
+});
+
 Deno.test("section 965 installment stays on Schedule 2 line 20, outside line 21", () => {
   const result = schedule2.build({ line20_965_tax_installment: 8_000 });
   assertStringIncludes(

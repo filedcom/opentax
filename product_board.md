@@ -150,7 +150,11 @@ None of these changes has passed the deferred full test batch.
 The current Schedule 2 audit moves HSA distribution tax to the correct 2025 line
 17c, Form 8828 mortgage-subsidy recapture to 17b, and Form 8611
 low-income-housing recapture to 16. The MeF builder now orders these and the
-line 13 aggregate in schema order. Form 5405 repayment is rejected for TY2025
+line 13 aggregate in schema order. The existing Form 4255 recapture output now
+also reaches a line 17a MeF `3468` group and the printed line 17a code and
+amount fields, with XML, XSD, and PDF mapping cases written but unrun. Its
+source calculation and native Form 4255 attachment still need a separate audit.
+Form 5405 repayment is rejected for TY2025
 because the IRS ended that form after TY2024. The source and XSD cases are
 written but unrun. Form 8611 now has a per-building source model, printed-form
 line calculation including the per-year Form 8609-A line 2 worksheet, one

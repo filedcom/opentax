@@ -62,6 +62,17 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   },
   {
     kind: "text",
+    domainKey: "line17a_description",
+    pdfField:
+      "form1[0].Page2[0].Line17a_ReadOrder[0].Line17_ReadOrder[0].f2_01[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "line17a_investment_credit_recapture",
+    pdfField: "form1[0].Page2[0].Line17a_ReadOrder[0].f2_02[0]",
+  },
+  {
+    kind: "text",
     domainKey: "line17z_description",
     pdfField: "form1[0].Page2[0].Line17z_ReadOrder[0].f2_19[0]",
   },
@@ -82,16 +93,20 @@ export const schedule2Pdf: PdfFormDescriptor = {
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf",
   fields,
   projectFields(fields, allPending) {
+    const projected = typeof fields.line17a_investment_credit_recapture ===
+          "number" && fields.line17a_investment_credit_recapture > 0
+      ? { ...fields, line17a_description: "3468" }
+      : fields;
     const worksheet = allPending.form8978_reporting_year;
     const reduction = worksheet?.schedule2_line17z_reduction;
     const line21 = worksheet?.schedule2_line21;
     if (typeof reduction !== "number" || reduction <= 0) {
       return typeof line21 === "number" && line21 > 0
-        ? { ...fields, line21_total: line21 }
-        : fields;
+        ? { ...projected, line21_total: line21 }
+        : projected;
     }
     return {
-      ...fields,
+      ...projected,
       line17z_description: "Form 8978 ADJ",
       line17z_amount: `(${Math.round(reduction)})`,
       line21_total: line21,
