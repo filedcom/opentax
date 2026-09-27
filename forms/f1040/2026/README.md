@@ -27,6 +27,10 @@ The [Form 8615 contract](../../../docs/ty2026/FORM8615-GRAPH.md) maps
 child unearned-income eligibility, parent/sibling tax worksheets and the
 child's 1040 line 16. The shared calculator supports only ordinary-rate
 cases; its 32 PDF widgets and current MeF route remain to implement.
+The alternative [Form 8814 parent election](../../../docs/ty2026/FORM8814-GRAPH.md)
+maps per-child eligibility, dividend/capital-gain allocation and parent
+tax/credit effects. Its 26 PDF widgets, source validation and current MeF
+route remain outside this registry.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared

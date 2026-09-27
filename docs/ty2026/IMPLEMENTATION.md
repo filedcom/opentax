@@ -106,6 +106,10 @@ The [Form 8615 contract](FORM8615-GRAPH.md) maps child eligibility and
 unearned-income sources, parent and sibling return facts, preferential-rate
 tax worksheets, Form 2555 and the child's Form 1040 line 16. Its 32 draft
 PDF widgets are inventoried; the shared calculator covers ordinary tax only.
+The [Form 8814 contract](FORM8814-GRAPH.md) maps the alternative parent
+election, per-child eligible source income, allocated dividend/capital gain,
+tax and AMT/NIIT/PTC effects. Its 26 draft PDF widgets are inventoried;
+eligibility and specialist source details need 2026 graph/MeF work.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

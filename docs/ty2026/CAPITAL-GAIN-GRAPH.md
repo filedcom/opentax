@@ -30,6 +30,9 @@ destinations. Its simple shared calculator cannot yet file the full form.
 The [Form 8615 contract](FORM8615-GRAPH.md) requires the child's and parent's
 qualified dividends and capital-gain character in its family tax worksheets;
 Schedule D totals alone do not establish the child's line 16 tax.
+The alternative [Form 8814 parent election](FORM8814-GRAPH.md) allocates a
+child's capital gain distributions to Schedule D line 13 or direct Form 1040
+line 7a and retains special-rate gain character for the tax worksheets.
 
 The shared Schedule D calculator already distinguishes the direct
 distribution case from a filed schedule and routes net capital gain into the
