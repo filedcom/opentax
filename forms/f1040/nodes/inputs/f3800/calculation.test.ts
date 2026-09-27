@@ -7,6 +7,7 @@ import {
   PassiveCreditReportingRoute,
 } from "../../intermediate/forms/form8582cr/index.ts";
 import {
+  allocateForm3800CreditUse,
   calculateForm3800Nonpassive,
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
@@ -261,6 +262,122 @@ Deno.test("Form 3800: groups same-line passive sources without losing activity o
         activities: ["B", "A"],
       },
     ],
+  );
+});
+
+Deno.test("Form 3800 tax use applies oldest carryovers before current-year credit", () => {
+  const sources = [
+    {
+      sourceKey: "current",
+      form3800CreditLine: "1h" as const,
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 300,
+    },
+    {
+      sourceKey: "oldest",
+      form3800CreditLine: "1h" as const,
+      originatingTaxYear: 2022,
+      availableAfterPassiveLimit: 100,
+    },
+    {
+      sourceKey: "prior",
+      form3800CreditLine: "1h" as const,
+      originatingTaxYear: 2024,
+      availableAfterPassiveLimit: 200,
+    },
+  ];
+  const allocated = allocateForm3800CreditUse(sources, {
+    line6: 600,
+    line17: 250,
+    line25: 0,
+    line26: 0,
+    line36: 0,
+    line37: 0,
+  });
+  assertEquals(
+    allocated.map(({ sourceKey, appliedAgainstTax, unusedAfterTaxLimit }) => ({
+      sourceKey,
+      appliedAgainstTax,
+      unusedAfterTaxLimit,
+    })),
+    [
+      { sourceKey: "current", appliedAgainstTax: 0, unusedAfterTaxLimit: 300 },
+      { sourceKey: "oldest", appliedAgainstTax: 100, unusedAfterTaxLimit: 0 },
+      { sourceKey: "prior", appliedAgainstTax: 150, unusedAfterTaxLimit: 50 },
+    ],
+  );
+});
+
+Deno.test("Form 3800 tax use follows the named same-year credit-type order", () => {
+  const sources = [
+    {
+      sourceKey: "orphan",
+      form3800CreditLine: "1h" as const,
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 200,
+    },
+    {
+      sourceKey: "access",
+      form3800CreditLine: "1e" as const,
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 300,
+    },
+  ];
+  const lines = {
+    line6: 500,
+    line17: 250,
+    line25: 0,
+    line26: 0,
+    line36: 0,
+    line37: 0,
+  };
+  assertEquals(
+    allocateForm3800CreditUse(sources, lines).map((row) =>
+      row.appliedAgainstTax
+    ),
+    [0, 250],
+  );
+  assertEquals(
+    allocateForm3800CreditUse(sources, {
+      ...lines,
+      line17: 500,
+    }).map((row) => row.appliedAgainstTax),
+    [200, 300],
+  );
+  assertThrows(
+    () => allocateForm3800CreditUse(sources, { ...lines, line6: 499 }),
+    Error,
+    "does not reconcile",
+  );
+});
+
+Deno.test("Form 3800 tax use stops an ambiguous partial same-year source order", () => {
+  const sources = [
+    {
+      sourceKey: "other",
+      form3800CreditLine: "1zz" as const,
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 200,
+    },
+    {
+      sourceKey: "access",
+      form3800CreditLine: "1e" as const,
+      originatingTaxYear: 2025,
+      availableAfterPassiveLimit: 300,
+    },
+  ];
+  assertThrows(
+    () =>
+      allocateForm3800CreditUse(sources, {
+        line6: 500,
+        line17: 250,
+        line25: 0,
+        line26: 0,
+        line36: 0,
+        line37: 0,
+      }),
+    Error,
+    "need the IRS credit-type order",
   );
 });
 

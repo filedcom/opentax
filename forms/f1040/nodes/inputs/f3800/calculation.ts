@@ -33,6 +33,185 @@ export type Form3800PassiveCreditRow = {
   readonly sources: readonly Form3800PassiveCreditVintage[];
 };
 
+export type Form3800CreditUseRow = {
+  readonly sourceKey: string;
+  readonly form3800CreditLine:
+    Form3800PassiveCreditVintage["form3800CreditLine"];
+  readonly originatingTaxYear: number;
+  readonly availableAfterPassiveLimit: number;
+};
+
+export type Form3800CreditUseAllocation = Form3800CreditUseRow & {
+  readonly appliedAgainstTax: number;
+  readonly unusedAfterTaxLimit: number;
+};
+
+/** Order of named 2025 credit types within a tax year, from Form 3800 instructions. */
+const CREDIT_TYPE_ORDER = [
+  "1a",
+  "1d",
+  "1o",
+  "1v",
+  "4a",
+  "4k", // Investment credits.
+  "4b", // Work opportunity.
+  "4c",
+  "1c",
+  "4i", // Biofuel and research.
+  "4d",
+  "1t",
+  "1e",
+  "1f",
+  "4e",
+  "3", // Housing through empowerment.
+  "4f",
+  "1h",
+  "1i",
+  "1j",
+  "1k",
+  "4g",
+  "1l",
+  "1m",
+  "1bb",
+  "1n",
+  "1cc",
+  "1p",
+  "1s",
+  "1w",
+  "1x",
+  "1y",
+  "4h",
+  "4j",
+  "1dd",
+  "1u",
+  "1ff",
+  "1g",
+  "1aa",
+  "1b",
+  "1gg",
+  "1q",
+  "1ee",
+] as const;
+
+/** Allocate the three Part II caps with carryforwards before 2025 credits. */
+export function allocateForm3800CreditUse(
+  sources: readonly Form3800CreditUseRow[],
+  lines: Pick<
+    Form3800NonpassiveLines,
+    "line6" | "line17" | "line25" | "line26" | "line36" | "line37"
+  >,
+): Form3800CreditUseAllocation[] {
+  const validLines = [
+    ...form3800StandardCreditLineSchema.options,
+    "3",
+    ...form3800SpecifiedCreditLineSchema.options,
+  ];
+  if (
+    new Set(sources.map((source) => source.sourceKey)).size !== sources.length
+  ) {
+    throw new Error("Form 3800 tax-use source keys must be unique");
+  }
+  for (const source of sources) {
+    if (
+      !source.sourceKey || !validLines.includes(source.form3800CreditLine) ||
+      !Number.isInteger(source.originatingTaxYear) ||
+      source.originatingTaxYear < 1900 || source.originatingTaxYear > 2026 ||
+      !Number.isSafeInteger(source.availableAfterPassiveLimit) ||
+      source.availableAfterPassiveLimit < 0
+    ) {
+      throw new Error(
+        "Form 3800 tax-use source has invalid line, year, or amount",
+      );
+    }
+  }
+  const bucket = (line: Form3800CreditUseRow["form3800CreditLine"]) =>
+    line === "3"
+      ? "empowerment"
+      : line.startsWith("4")
+      ? "specified"
+      : "standard";
+  const allocateBucket = (
+    name: "standard" | "empowerment" | "specified",
+    available: number,
+    limit: number,
+  ): Form3800CreditUseAllocation[] => {
+    const rows = sources.filter((source) =>
+      bucket(source.form3800CreditLine) === name
+    );
+    if (
+      !Number.isSafeInteger(available) || !Number.isSafeInteger(limit) ||
+      available < 0 || limit < 0 || limit > available ||
+      rows.reduce((sum, row) => sum + row.availableAfterPassiveLimit, 0) !==
+        available
+    ) {
+      throw new Error(
+        `Form 3800 ${name} source total does not reconcile to Part II`,
+      );
+    }
+    const ordered = [...rows].sort((a, b) =>
+      a.originatingTaxYear - b.originatingTaxYear ||
+      CREDIT_TYPE_ORDER.indexOf(
+          a.form3800CreditLine as typeof CREDIT_TYPE_ORDER[number],
+        ) - CREDIT_TYPE_ORDER.indexOf(
+          b.form3800CreditLine as typeof CREDIT_TYPE_ORDER[number],
+        )
+    );
+    const years = [...new Set(ordered.map((row) => row.originatingTaxYear))];
+    for (const year of years) {
+      const older = ordered.filter((row) => row.originatingTaxYear < year)
+        .reduce((sum, row) => sum + row.availableAfterPassiveLimit, 0);
+      const sameYear = ordered.filter((row) =>
+        row.originatingTaxYear === year &&
+        row.availableAfterPassiveLimit > 0
+      );
+      const yearAmount = sameYear.reduce(
+        (sum, row) => sum + row.availableAfterPassiveLimit,
+        0,
+      );
+      const orderRanks = sameYear.map((row) =>
+        CREDIT_TYPE_ORDER.indexOf(
+          row.form3800CreditLine as typeof CREDIT_TYPE_ORDER[number],
+        )
+      );
+      if (
+        sameYear.length > 1 && limit > older && limit < older + yearAmount &&
+        (orderRanks.some((rank) => rank < 0) ||
+          new Set(orderRanks).size !== orderRanks.length)
+      ) {
+        throw new Error(
+          `Form 3800 ${name} partial same-year credits need the IRS credit-type order`,
+        );
+      }
+    }
+    return ordered.reduce<Form3800CreditUseAllocation[]>((allocated, row) => {
+      const used = allocated.reduce(
+        (sum, prior) => sum + prior.appliedAgainstTax,
+        0,
+      );
+      const appliedAgainstTax = Math.min(
+        row.availableAfterPassiveLimit,
+        Math.max(0, limit - used),
+      );
+      return [...allocated, {
+        ...row,
+        appliedAgainstTax,
+        unusedAfterTaxLimit: row.availableAfterPassiveLimit -
+          appliedAgainstTax,
+      }];
+    }, []);
+  };
+  const allocated = [
+    ...allocateBucket("standard", lines.line6, lines.line17),
+    ...allocateBucket("empowerment", lines.line25, lines.line26),
+    ...allocateBucket("specified", lines.line36, lines.line37),
+  ];
+  return sources.map((source) => {
+    const match = allocated.find((row) => row.sourceKey === source.sourceKey);
+    if (!match) throw new Error("Form 3800 tax-use source was not allocated");
+    return match;
+  });
+}
+
 /** Keep one aggregate per XML line and year while retaining its source detail. */
 export function groupForm3800PassiveCreditVintages(
   vintages: readonly Form3800PassiveCreditVintage[],

@@ -488,6 +488,13 @@ allocation and carryover statement generation remain open. An unrun XML-row
 plan now collapses multiple carryover years into one schema group per credit
 line, records the latest origin year, and retains each source for the required
 detail. It does not yet serialize those rows into the filed Form 3800.
+A pure tax-use allocator now reconciles the source totals with the three Part II
+caps and applies older credit years first. It stops a partially used year with
+multiple source rows unless their named credit types have an explicit IRS
+ordering rank, instead of assigning the limit by input order. The named 2025
+credit types now have that ordering; other/legacy rows and multiple same-line
+sources under a partial cap still stop. Its cases are written but unrun, and
+the allocator is not yet connected to the return or XML builder.
 Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
