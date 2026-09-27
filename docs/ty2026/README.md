@@ -3,6 +3,8 @@
 Snapshot date: 2026-09-27. This is the source map for full TY2026 1040 end-to-end
 work. Start at [`forms/f1040/2026/README.md`](../../forms/f1040/2026/README.md)
 for the implementation contract.
+The [research handoff audit](READINESS-AUDIT.md) records coverage and the
+remaining IRS publication, MeF and ATS gates.
 
 ## What is in this snapshot
 
