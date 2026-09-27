@@ -4,10 +4,37 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "./registry.ts";
 import {
+  form8582cr,
+  inputSchema as form8582crInputSchema,
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
   PassiveCreditSourceOrigin,
 } from "../nodes/intermediate/forms/form8582cr/index.ts";
+
+Deno.test("start node routes an explicit public input key to its declared node", () => {
+  const startNode = buildStartNode([{
+    node: form8582cr,
+    inputKey: "passive_credit_facts",
+    inputSchema: form8582crInputSchema,
+    isArray: false,
+  }]);
+  const facts = {
+    credit_sources: [],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+  };
+  assertEquals(
+    startNode.inputSchema.safeParse({ passive_credit_facts: facts }).success,
+    true,
+  );
+  assertEquals(
+    startNode.compute(
+      { taxYear: 2025, formType: "f1040" },
+      { passive_credit_facts: facts },
+    ).outputs,
+    [{ nodeType: "form8582cr", fields: facts }],
+  );
+});
 
 Deno.test("inputNodes has expected structure (array + singleton entries)", () => {
   const arrayEntries = inputNodes.filter((e) => e.isArray === true);

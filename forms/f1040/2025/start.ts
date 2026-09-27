@@ -10,16 +10,22 @@ export { inputNodes };
 
 /**
  * Builds a Zod schema for the start node from the inputNodes list.
- * Array entries: key = nodeType, value = z.array(itemSchema).optional()
- * Singleton entries: key = nodeType, value = inputSchema.optional()
+ * Array entries: key = public input key, value = z.array(itemSchema).optional()
+ * Singleton entries: key = public input key, value = inputSchema.optional()
  */
-function buildInputSchema(entries: readonly InputNodeEntry[]): z.ZodObject<z.ZodRawShape> {
+function buildInputSchema(
+  entries: readonly InputNodeEntry[],
+): z.ZodObject<z.ZodRawShape> {
   const shape: z.ZodRawShape = {};
   for (const entry of entries) {
+    const key = entry.inputKey ?? entry.node.nodeType;
+    if (Object.hasOwn(shape, key)) {
+      throw new Error(`Duplicate public input key ${key}`);
+    }
     if (entry.isArray) {
-      shape[entry.node.nodeType] = z.array(entry.itemSchema).optional();
+      shape[key] = z.array(entry.itemSchema).optional();
     } else {
-      shape[entry.node.nodeType] = entry.inputSchema.optional();
+      shape[key] = entry.inputSchema.optional();
     }
   }
   return z.object(shape);
@@ -29,7 +35,9 @@ function buildInputSchema(entries: readonly InputNodeEntry[]): z.ZodObject<z.Zod
  * Gets the pluralized key that a downstream array node expects in its inputSchema.
  * For example, the w2 node expects { w2s: [...] }, so this returns "w2s".
  */
-function getArrayNodeKey(entry: Extract<InputNodeEntry, { isArray: true }>): string {
+function getArrayNodeKey(
+  entry: Extract<InputNodeEntry, { isArray: true }>,
+): string {
   const nodeInputSchema = entry.node.inputSchema as z.ZodObject<z.ZodRawShape>;
   const keys = Object.keys(nodeInputSchema.shape);
   return keys[0];
@@ -37,8 +45,8 @@ function getArrayNodeKey(entry: Extract<InputNodeEntry, { isArray: true }>): str
 
 /**
  * Factory that creates a StartNode class from an inputNodes list and returns a singleton.
- * The generated start node uses nodeType (non-pluralized) as schema keys,
- * and routes each present input to the correct downstream node.
+ * The generated start node uses the public input key and routes each present
+ * input to the declared downstream node. The key defaults to nodeType.
  */
 export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
   const generatedSchema = buildInputSchema(entries);
@@ -47,12 +55,14 @@ export function buildStartNode(entries: readonly InputNodeEntry[]): TaxNode {
   class GeneratedStartNode extends TaxNode<typeof generatedSchema> {
     readonly nodeType = "start";
     readonly inputSchema = generatedSchema;
-    readonly outputNodes = new OutputNodes(entries.map((e) => e.node) as TaxNode[]);
+    readonly outputNodes = new OutputNodes(
+      entries.map((e) => e.node) as TaxNode[],
+    );
 
     compute(_ctx: NodeContext, input: StartInput): NodeResult {
       const outputs: NodeOutput[] = [];
       for (const entry of entries) {
-        const key = entry.node.nodeType;
+        const key = entry.inputKey ?? entry.node.nodeType;
         const value = (input as Record<string, unknown>)[key];
         if (value == null) continue;
         if (entry.isArray) {

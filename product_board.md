@@ -59,6 +59,12 @@ retain gross K-1 source amounts for reconciliation, cap current-year source
 amounts before Form 8582-CR applies its passive tax limit, and pass the same
 capped nonpassive amounts into Form 3800 and its Part V source rows. No such
 upstream step is implemented yet.
+The build pass now includes a pure mixed-source pro-rata allocator that assigns
+whole-dollar passive shares and cent-precision nonpassive shares, plus an
+explicit public-input-key facility for routing Form 8582-CR facts to a future
+upstream source node. Neither is wired to the return graph yet, and their cases
+are written but unrun. The per-source rounding policy still needs IRS
+business-rule review.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
