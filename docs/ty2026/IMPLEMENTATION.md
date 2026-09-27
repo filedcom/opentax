@@ -181,6 +181,11 @@ credit ledger, DC carryforward-only limitation, and 2026 saver-credit
 eligibility/distribution window. Their draft forms include instructions and
 26/9/23 PDF widgets; the shared nodes have unbounded or unresolved
 credit-limit paths and no complete 2026 filing output.
+The [Form 7217 contract](FORM7217-GRAPH.md) adds the current 2024+ form,
+instructions and April 2026 K-1 box 19 correction to the partnership
+distribution ledger. The shared node blocks recognized gain and does not
+derive the property-basis handoff; the 306-widget PDF and TY2026 MeF route
+remain to build, with the ATS 12 source inconsistency held as a failing case.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

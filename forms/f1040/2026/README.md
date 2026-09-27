@@ -34,6 +34,11 @@ maps the mortgage credit's Schedule A reduction and three-year ledger,
 the DC credit's carryforward-only route, and 2026 saver-credit eligibility
 and contribution/distribution windows. Their draft forms embed instructions;
 current graph/PDF/MeF finalization remains to build.
+The [Form 7217 contract](../../../docs/ty2026/FORM7217-GRAPH.md) pins its
+current continuous-use form/instructions and the later IRS correction to
+K-1 box 19 source codes. It requires one form per property-distribution
+date, a reconciled property basis ledger and gain route; TY2026 PDF/MeF
+are still absent.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

@@ -4,9 +4,9 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-71 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
+72 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
-in their form drafts**, **1 covered by a combined 2026 booklet**, **3 with
+in their form drafts**, **1 covered by a combined 2026 booklet**, **4 with
 current continuous-use instructions**, **1 current older-revision
 form/instruction pair**, and **1 current form with embedded instructions**. The
 missing and unverified groups are research gates, not unsupported-form
@@ -25,6 +25,8 @@ Form 982 remains on its March 2018 form and December 2021 instructions;
 those current products are pinned, with 2026 COD law and MeF still to check.
 Form 8834's October 2024 revision explicitly applies to tax years beginning
 in 2024 or later and includes its own instructions; the current PDF is pinned.
+Form 7217's December 2024 revision and instructions apply to 2024 and later;
+the April 2026 IRS update changes its K-1 box 19 source codes for 2025 onward.
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.

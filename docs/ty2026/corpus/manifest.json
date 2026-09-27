@@ -1772,6 +1772,22 @@
       "status": "downloaded",
       "bytes": 239505,
       "sha256": "90dd5f4de0ca435d4e92666b5b50434e1ece488c67fc43a8c6697765bfb684eb"
+    },
+    {
+      "path": "authorities/f7217--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f7217.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 285594,
+      "sha256": "9b16ed91da1ea50b4ea1ba59363726bee7b7b4576d77307cd507c3bd19dba02d"
+    },
+    {
+      "path": "authorities/i7217--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i7217.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 142891,
+      "sha256": "a00432e6260a82bc58b90356c5e1abfa528e668694a45e5e88b3322da596925d"
     }
   ]
 }
