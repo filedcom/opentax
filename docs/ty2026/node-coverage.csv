@@ -15,7 +15,7 @@ f1099r,forms/f1040/nodes/inputs/f1099r/index.ts,inputs,1,yes,yes,no,n/a,P1,audit
 f1095a,forms/f1040/nodes/inputs/f1095a/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f4835,forms/f1040/nodes/inputs/f4835/index.ts,inputs,0,no,yes,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f2441,forms/f1040/nodes/inputs/f2441/index.ts,inputs,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-f8812,forms/f1040/nodes/inputs/f8812/index.ts,inputs,0,yes,yes,no,n/a,P0,audit-required,"verify 2026 law, node outputs, and graph route"
+f8812,forms/f1040/nodes/inputs/f8812/index.ts,inputs,0,yes,yes,no,n/a,P0,audit-required,2026 Part II-B uses Schedule 2 lines 16c/17c; finish credit graph
 f8863,forms/f1040/nodes/inputs/f8863/index.ts,inputs,4,no,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8949,forms/f1040/nodes/inputs/f8949/index.ts,inputs,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 general,forms/f1040/nodes/inputs/general/index.ts,inputs,4,yes,no,no,n/a,P0,audit-required,"2026 ages, relative limit, and no-dependent identity graph updated; audit credits"

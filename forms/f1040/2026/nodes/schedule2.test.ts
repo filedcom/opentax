@@ -12,11 +12,14 @@ Deno.test("2026 Schedule 2 sends filed totals to Form 1040", () => {
   const schedule2 = result.outputs.find((item) =>
     item.nodeType === "schedule2"
   );
+  const f8812 = result.outputs.find((item) => item.nodeType === "f8812");
   assertEquals(f1040?.fields.line17_additional_taxes, 0);
   assertEquals(f1040?.fields.line23_other_taxes, 203);
   assertEquals(f1040?.fields.schedule2_line20, 203);
   assertEquals(schedule2?.fields.line16c_additional_fica, 153);
   assertEquals(schedule2?.fields.line17c_w2_uncollected_fica, 50);
+  assertEquals(f8812?.fields.auto_schedule2_line16c, 153);
+  assertEquals(f8812?.fields.auto_schedule2_line17c, 50);
 });
 
 Deno.test("2026 Schedule 2 rejects a 2025 context and empty activity", () => {

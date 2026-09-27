@@ -3,6 +3,7 @@ import {
   calculateCreditLimitWorksheetALine5,
   calculateEarnedIncomeWorksheet,
   calculatePartIIBLines,
+  calculatePartIIBLines2026,
   calculateSchedule8812Lines,
   f8812,
   type F8812Input,
@@ -85,6 +86,70 @@ Deno.test("schema: empty array produces no outputs", () => {
     f8812s: [],
   });
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("TY2026 Part II-B uses Schedule 2 lines 16c and 17c", () => {
+  const partIIB = {
+    line21_w2_withheld_social_security_medicare: 1_000,
+    schedule1_line15: 100,
+    schedule2_line16c: 200,
+    schedule2_line17c: 50,
+    form1040_line27a_eic: 100,
+    schedule3_line11_adoption_credit: 0,
+  };
+  assertEquals(calculatePartIIBLines2026(partIIB, 0), {
+    line21: 1_000,
+    line22: 350,
+    line23: 1_350,
+    line24: 100,
+    line25: 1_250,
+    line26: 1_250,
+  });
+  const input = {
+    f8812s: [minimalItem({
+      qualifying_children_count: 3,
+      income_tax_liability: 0,
+      earned_income: 2_500,
+    })],
+    line18a_earned_income: 2_500,
+    credit_limit_worksheet: zeroCreditWorksheet,
+    part_iib_2026: partIIB,
+  };
+  const result = calculateSchedule8812Lines(2026, input);
+  assertEquals(result?.line27, 1_250);
+  assertEquals(result?.partIIBLines?.line22, 350);
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2026, {
+        ...input,
+        auto_schedule2_line16c: 201,
+      }),
+    Error,
+    "disagrees with Schedule 2 line 16c",
+  );
+  assertThrows(
+    () => calculateSchedule8812Lines(2025, input),
+    Error,
+    "requires TY2026",
+  );
+  assertThrows(
+    () =>
+      calculateSchedule8812Lines(2026, {
+        ...input,
+        part_iib_2026: undefined,
+        part_iib: {
+          line21_w2_withheld_social_security_medicare: 1_000,
+          schedule1_line15: 100,
+          schedule2_line5: 200,
+          schedule2_line6: 0,
+          schedule2_line13: 50,
+          form1040_line27a_eic: 100,
+          schedule3_line11_adoption_credit: 0,
+        },
+      }),
+    Error,
+    "needs part_iib_2026",
+  );
 });
 
 Deno.test("schema: zero children and zero dependents produces no outputs", () => {

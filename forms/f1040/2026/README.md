@@ -70,7 +70,10 @@ line numbers, and `nodes/schedule2.ts` routes its totals into the focused 1040
 graph. The [Schedule 2 and 8812 map](../../../docs/ty2026/SCHEDULE2-8812.md)
 lists the remaining source splits and Part II-B dependency. Form 4137 tip tax
 and W-2 box 12 A/B/M/N and K are routed; code Z requires its separate 409A
-tax and interest calculation.
+tax and interest calculation. Schedule 8812's `part_iib_2026` input now uses
+Schedule 2 lines 16c and 17c and checks them against amounts calculated in
+the graph. Its credit-limit and earned-income sources still need a complete
+2026 return path.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

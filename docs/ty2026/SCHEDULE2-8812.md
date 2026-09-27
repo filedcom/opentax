@@ -23,8 +23,8 @@ source amounts and publish the actual 2026 lines below. Never serialize a
 | 6, 9, 13b–13h, 13k, 13n, 13z | NIIT, LIHTC recapture, and other existing tax sources | Rebind each source to its filed 2026 line; audit types currently collapsed into the generic other-taxes field. |
 | 11 and 17b | Form 8959 Additional Medicare tax on self-employment versus wages/RRTA | Split the Form 8959 result; its old combined output cannot identify the new lines. |
 | 12 | Section 965 installment | The draft prints line 12 but says line 15 adds lines 4–11 and 14. The 2026 calculator rejects a positive line 12 until final placement is confirmed. |
-| 16a–16c | Form 4137 tips and Form 8919 wages | Form 4137 now routes to 16a and the 2026 node computes 16c. Form 8919 and the Schedule 8812 edge remain. |
-| 17a–17d | Schedule H, Form 8959 wages/RRTA, W-2 box 12 A/B/M/N | W-2 A/B/M/N now route to 17c. Other sources and the Schedule 8812 edge remain. |
+| 16a–16c | Form 4137 tips and Form 8919 wages | Form 4137 now routes to 16a and the 2026 node computes 16c and sends it to Schedule 8812. Form 8919 remains. |
+| 17a–17d | Schedule H, Form 8959 wages/RRTA, W-2 box 12 A/B/M/N | W-2 A/B/M/N now route to 17c, which reaches Schedule 8812. Other sources remain. |
 | 19a–19c | Form 8621 interest | Add its line 24 interest source and keep it separate from line 16f. |
 | 15, 20, 21 | 2026 subtotals | Send line 21 to Form 1040 line 23; use line 15/20 for chapter 1 and Form 8978 review. |
 
@@ -32,8 +32,9 @@ source amounts and publish the actual 2026 lines below. Never serialize a
 
 The draft 2026 Schedule 8812 line 22 adds Schedule 1 line 15, **Schedule 2
 line 16c**, and **Schedule 2 line 17c**. The shared 2025 input shape instead
-names Schedule 2 lines 5, 6, and 13. Add a 2026 Part II-B input contract that
-consumes the finalized 2026 line amounts. Its line 21 also needs W-2 boxes 4
+names Schedule 2 lines 5, 6, and 13. `part_iib_2026` now takes lines 16c and
+17c, rejects the 2025 shape, and checks any amounts arriving from the 2026
+Schedule 2 graph against the supplied line sources. Its line 21 also needs W-2 boxes 4
 and 6 (plus the documented RRTA/Additional Medicare cases); line 24 needs
 Form 1040 line 27a and Schedule 3 line 11. Keep the 2025 contract intact.
 

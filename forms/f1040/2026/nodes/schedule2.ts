@@ -11,11 +11,12 @@ import {
   schedule2Input2026Schema,
 } from "../schedule2.ts";
 import { f1040_2026_node } from "./f1040.ts";
+import { f8812 } from "../../nodes/inputs/f8812/index.ts";
 
 class Schedule2Node2026 extends TaxNode<typeof schedule2Input2026Schema> {
   readonly nodeType = "schedule2";
   readonly inputSchema = schedule2Input2026Schema;
-  readonly outputNodes = new OutputNodes([f1040_2026_node]);
+  readonly outputNodes = new OutputNodes([f1040_2026_node, f8812]);
 
   compute(ctx: NodeContext, rawInput: Schedule2Input2026): NodeResult {
     if (ctx.taxYear !== 2026 || ctx.formType !== "f1040") {
@@ -32,6 +33,10 @@ class Schedule2Node2026 extends TaxNode<typeof schedule2Input2026Schema> {
         line23_other_taxes: lines.line21_total_additional_taxes,
         schedule2_line20: lines.line20_employment_and_other_taxes,
         credit_limit_schedule2_line1z: lines.line1z_additions,
+      }),
+      this.outputNodes.output(f8812, {
+        auto_schedule2_line16c: lines.line16c_additional_fica,
+        auto_schedule2_line17c: input.line17c_w2_uncollected_fica ?? 0,
       }),
       { nodeType: this.nodeType, fields: { ...input, ...lines } },
     ];

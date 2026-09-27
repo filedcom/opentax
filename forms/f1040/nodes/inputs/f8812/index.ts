@@ -133,6 +133,14 @@ export const inputSchema = z.object({
     form1040_line27a_eic: z.number().nonnegative(),
     schedule3_line11_adoption_credit: z.number().nonnegative(),
   }).optional(),
+  part_iib_2026: z.object({
+    line21_w2_withheld_social_security_medicare: z.number().nonnegative(),
+    schedule1_line15: z.number().nonnegative(),
+    schedule2_line16c: z.number().nonnegative(),
+    schedule2_line17c: z.number().nonnegative(),
+    form1040_line27a_eic: z.number().nonnegative(),
+    schedule3_line11_adoption_credit: z.number().nonnegative(),
+  }).strict().optional(),
   line18a_earned_income: z.number().optional(),
   earned_income_worksheet: earnedIncomeWorksheetSchema.optional(),
   // ── Auto-populated fields (used when f8812s is empty) ──────────────────────
@@ -148,6 +156,8 @@ export const inputSchema = z.object({
   auto_earned_income: z.number().nonnegative().optional(),
   // Net self-employment profit for ACTC earned income (from schedule_c node)
   auto_se_earned_income: z.number().nonnegative().optional(),
+  auto_schedule2_line16c: z.number().nonnegative().optional(),
+  auto_schedule2_line17c: z.number().nonnegative().optional(),
   // Number of other qualifying dependents for ODC (from general node)
   auto_other_dependents: z.number().int().nonnegative().optional(),
 });
@@ -163,6 +173,7 @@ export type CreditLimitWorksheet = NonNullable<
   F8812Input["credit_limit_worksheet"]
 >;
 export type PartIIBDetails = NonNullable<F8812Input["part_iib"]>;
+export type PartIIBDetails2026 = NonNullable<F8812Input["part_iib_2026"]>;
 export type EarnedIncomeWorksheet = z.infer<typeof earnedIncomeWorksheetSchema>;
 
 export function calculateEarnedIncomeWorksheet(
@@ -211,6 +222,21 @@ export function calculatePartIIBLines(
   const line21 = details.line21_w2_withheld_social_security_medicare;
   const line22 = details.schedule1_line15 + details.schedule2_line5 +
     details.schedule2_line6 + details.schedule2_line13;
+  const line23 = line21 + line22;
+  const line24 = details.form1040_line27a_eic +
+    details.schedule3_line11_adoption_credit;
+  const line25 = Math.max(0, line23 - line24);
+  const line26 = Math.max(line20, line25);
+  return { line21, line22, line23, line24, line25, line26 };
+}
+
+export function calculatePartIIBLines2026(
+  details: PartIIBDetails2026,
+  line20: number,
+) {
+  const line21 = details.line21_w2_withheld_social_security_medicare;
+  const line22 = details.schedule1_line15 + details.schedule2_line16c +
+    details.schedule2_line17c;
   const line23 = line21 + line22;
   const line24 = details.form1040_line27a_eic +
     details.schedule3_line11_adoption_credit;
@@ -314,6 +340,37 @@ export function calculateSchedule8812Lines(
   const cfg = CONFIG_BY_YEAR[taxYear];
   if (!cfg) throw new Error(`No f1040 config for year ${taxYear}`);
   const input = inputSchema.parse(rawInput);
+  if (taxYear === 2026 && input.part_iib !== undefined) {
+    throw new Error("TY2026 Schedule 8812 needs part_iib_2026 line sources");
+  }
+  if (taxYear !== 2026 && input.part_iib_2026 !== undefined) {
+    throw new Error("Schedule 8812 part_iib_2026 requires TY2026");
+  }
+  if (
+    taxYear !== 2026 &&
+    (input.auto_schedule2_line16c !== undefined ||
+      input.auto_schedule2_line17c !== undefined)
+  ) {
+    throw new Error("Schedule 2 lines 16c/17c require TY2026");
+  }
+  if (taxYear === 2026 && input.part_iib_2026) {
+    if (
+      input.auto_schedule2_line16c !== undefined &&
+      input.auto_schedule2_line16c !== input.part_iib_2026.schedule2_line16c
+    ) {
+      throw new Error(
+        "Schedule 8812 line 22 disagrees with Schedule 2 line 16c",
+      );
+    }
+    if (
+      input.auto_schedule2_line17c !== undefined &&
+      input.auto_schedule2_line17c !== input.part_iib_2026.schedule2_line17c
+    ) {
+      throw new Error(
+        "Schedule 8812 line 22 disagrees with Schedule 2 line 17c",
+      );
+    }
+  }
   const explicitItems = input.f8812s ?? [];
   if (explicitItems.length > 0) {
     const explicitChildren = explicitItems.reduce(
@@ -485,12 +542,15 @@ export function calculateSchedule8812Lines(
     (isPrResident || (line4 >= 3 && line20 < line17));
   let partIIBLines = null;
   if (needsPartIIB) {
-    if (!input.part_iib) {
+    const partIIB = taxYear === 2026 ? input.part_iib_2026 : input.part_iib;
+    if (!partIIB) {
       throw new Error(
         "Schedule 8812 Part II-B needs its W-2, Schedule 1, Schedule 2, EIC, and adoption-credit line sources",
       );
     }
-    partIIBLines = calculatePartIIBLines(input.part_iib, line20);
+    partIIBLines = taxYear === 2026
+      ? calculatePartIIBLines2026(partIIB as PartIIBDetails2026, line20)
+      : calculatePartIIBLines(partIIB as PartIIBDetails, line20);
   }
   const line27 = Math.min(
     line17,
