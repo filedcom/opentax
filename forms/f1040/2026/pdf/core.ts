@@ -18,6 +18,7 @@ import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
 import { buildSchedule3PdfBytes2026 } from "./schedule3.ts";
 import { buildSchedule8812PdfBytes2026 } from "./schedule_8812.ts";
+import { buildScheduleHPdfBytes2026 } from "./schedule_h.ts";
 
 function amount(fields: Record<string, unknown>, key: string): number {
   const value = fields[key];
@@ -41,6 +42,7 @@ interface CorePdfInput2026 {
   readonly form5695?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
+  readonly scheduleH?: Record<string, unknown>;
   readonly f8812?: Record<string, unknown>;
 }
 
@@ -59,6 +61,7 @@ export async function buildCorePdfBytes2026({
   form5695,
   form4137,
   form8960,
+  scheduleH,
   f8812,
 }: CorePdfInput2026): Promise<Uint8Array> {
   const creditDependentCount =
@@ -244,6 +247,14 @@ export async function buildCorePdfBytes2026({
     throw new Error("TY2026 core PDF Form 8960 disagrees with Schedule 2");
   }
   if (
+    optionalAmount(schedule2 ?? {}, "line17a_household_employment_tax") > 0 &&
+    !scheduleH
+  ) {
+    throw new Error(
+      "TY2026 core PDF needs Schedule H for household employment tax",
+    );
+  }
+  if (
     !form4137 &&
     (optionalAmount(f1040, "line1c_unreported_tips") > 0 ||
       optionalAmount(schedule2 ?? {}, "line16a_form4137_tip_tax") > 0)
@@ -317,6 +328,14 @@ export async function buildCorePdfBytes2026({
         f1040,
         schedule2 ?? { line16a_form4137_tip_tax: 0 },
       ),
+    );
+  }
+  if (scheduleH) {
+    if (!schedule2) {
+      throw new Error("TY2026 core PDF Schedule H needs Schedule 2");
+    }
+    parts.push(
+      await buildScheduleHPdfBytes2026(scheduleH, schedule2, { name, ssn }),
     );
   }
   const merged = await PDFDocument.create();

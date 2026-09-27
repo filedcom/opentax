@@ -26,6 +26,16 @@ Section A, then implement Section B with a dated credit-reduction table. Until S
 2026 rates are verified, an eligible Section B return must receive an explicit
 diagnostic.
 
+Current slice: `nodes/schedule_h.ts` accepts entered, already-qualified Part I
+wage amounts and explicit filing/FUTA answers. It computes Part I and Section A,
+emits Schedule 2 line 17a, and rejects Section B with a named diagnostic.
+`pdf/schedule_h.ts` fills both printed pages of the pinned draft and reconciles
+the calculated tax to Schedule 2. The ATS line 9 No page and a Section A page
+were rendered and visually checked. Employee payroll records, relationship
+exclusions, the Social Security wage-base calculation, and quarter-level FUTA
+evidence are still needed to derive the form entries from source facts. XML
+attachment and active MeF rules also remain open.
+
 ## Completion checks
 
 1. From the scenario's $4,100 taxable wages, independently compute line 2

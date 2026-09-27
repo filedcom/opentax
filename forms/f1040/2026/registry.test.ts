@@ -803,6 +803,51 @@ Deno.test("TY2026 registry routes W-2 and Form 4137 tips through Schedule 2", ()
   assertEquals(result.pending.f1040.line23_other_taxes, 153);
 });
 
+Deno.test("TY2026 Schedule H reaches Schedule 2, Form 1040, and its PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Ada",
+      taxpayer_last_name: "Rivera",
+      taxpayer_ssn: "111223333",
+      taxpayer_dob: "1990-07-12",
+      taxpayer_tin_issued_by_due_date: true,
+      taxpayer_ssn_valid_for_employment: true,
+      taxpayer_ssn_issued_before_due_date: true,
+      taxpayer_citizen_national_or_work_authorized: true,
+      digital_assets: false,
+      address_line1: "10 Main St",
+      address_city: "Boston",
+      address_state: "MA",
+      address_zip: "02108",
+    },
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    schedule_h: {
+      employer_ein: "123456789",
+      line_a_any_employee_3000: true,
+      line1_ss_wages: 4_100,
+      line3_medicare_wages: 4_100,
+      line9_futa_quarter: false,
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_h.line8_fica_and_withholding, 627);
+  assertEquals(result.pending.schedule2.line17a_household_employment_tax, 627);
+  assertEquals(result.pending.f1040.line23_other_taxes, 627);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 6);
+  assertEquals(pdf.getForm().getFields().length, 0);
+  await assertRejects(
+    () =>
+      buildCorePdfBytes2026({
+        f1040: result.pending.f1040,
+        schedule2: result.pending.schedule2,
+      }),
+    Error,
+    "needs Schedule H",
+  );
+});
+
 Deno.test("TY2026 AMT reaches Schedule 2 and Form 1040 from an ISO adjustment", () => {
   const directInputs: readonly InputNodeEntry[] = [
     ...inputNodes,

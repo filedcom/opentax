@@ -34,6 +34,7 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
   const form5695 = record(pending, "form5695");
   const form8960 = record(pending, "form8960");
   const form4137 = record(pending, "form4137");
+  const scheduleH = record(pending, "schedule_h");
   return buildCorePdfBytes2026({
     f1040,
     schedule1: schedule1?.file_schedule1 === true ? schedule1 : undefined,
@@ -58,5 +59,6 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
         amount(schedule2, "line16a_form4137_tip_tax") > 0
       ? form4137
       : undefined,
+    scheduleH,
   });
 }

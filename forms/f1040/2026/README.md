@@ -7,6 +7,12 @@ calculation → validation → MeF XML → PDF → ATS/XSD workflow as TY2025, a
 the supported 1040 form surface.** Do not call registration alone TY2026
 support.
 
+The dedicated 2026 Schedule H node now calculates Part I and FUTA Section A,
+routes household employment tax to Schedule 2 line 17a, and has a two-page
+draft PDF attachment. Its ATS line 9 No case reconciles $627 through Form
+1040 line 23. Section B, payroll-to-form wage derivation, and MeF remain open;
+see [the Schedule H contract](../../../docs/ty2026/SCHEDULEH-GRAPH.md).
+
 The first executable 2026 calculation is `settlement.ts`: it assembles 1040
 lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount
 owed from upstream figures. Its source-backed tests cover the Form 1062 amount,
