@@ -69,3 +69,94 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name: "XSD: Form 8814 child interest statement links only the adjusted child",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const child = {
+    child_name: "Alex Rivera",
+    child_name_control: "RIVE",
+    child_ssn: "987654321",
+    child_age_eligible: true,
+    child_required_to_file: true,
+    child_income_only_permitted_types: true,
+    child_no_joint_return: true,
+    child_no_estimated_payments: true,
+    child_no_withholding: true,
+    parent_eligible_to_elect: true,
+    interest_income: 3000,
+  } as const;
+  const xml = buildMefXml({
+    f1040: {
+      filing_status: "single",
+      form8814_tax: 270,
+      line16_income_tax: 270,
+    },
+    form8814: {
+      items: [
+        calculateForm8814(child),
+        calculateForm8814({
+          ...child,
+          child_name: "Jamie Rivera",
+          child_ssn: "987654322",
+          interest_adjustments: {
+            nominee_distribution: 500,
+            accrued_interest: 100,
+            abp_adjustment: 50,
+            oid_adjustment: 25,
+          },
+          dividend_income: 300,
+          dividend_nominee_distribution: 200,
+          capital_gain_distributions: 100,
+          capital_gain_nominee_distribution: 50,
+        }),
+      ],
+    },
+  }, filer);
+  assertStringIncludes(xml, "<ChildTaxableInterestStmt documentId=");
+  assertStringIncludes(
+    xml,
+    "<NomineeDistributionCd>ND</NomineeDistributionCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ChildNonTaxableInterestTypeCd>ABP ADJUSTMENT</ChildNonTaxableInterestTypeCd>",
+  );
+  const forms = [
+    ...xml.matchAll(/<IRS8814 documentId="[^"]+">([\s\S]*?)<\/IRS8814>/g),
+  ];
+  assertEquals(forms.length, 2);
+  assertEquals(
+    forms[0][1].includes(
+      'referenceDocumentName="ChildTaxableInterestStatement"',
+    ),
+    false,
+  );
+  assertStringIncludes(
+    forms[1][1],
+    'referenceDocumentName="ChildTaxableInterestStatement"',
+  );
+  assertStringIncludes(
+    forms[1][1],
+    'nomineeDistributionCd="ND" nomineeDistributionAmt="200"',
+  );
+  assertStringIncludes(
+    forms[1][1],
+    'nomineeDistributionCd="ND" nomineeDistributionAmt="50"',
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

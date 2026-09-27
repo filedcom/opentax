@@ -44,6 +44,7 @@ import { form8615 } from "./f8615.ts";
 import { form8621 } from "./f8621.ts";
 import { form8621ExcessStatement } from "./f8621_excess_statement.ts";
 import { form8814 } from "./f8814.ts";
+import { childTaxableInterestStatement } from "./child_taxable_interest_statement.ts";
 import { form8815 } from "./f8815.ts";
 import { form8824 } from "./f8824.ts";
 import { form8826 } from "./f8826_draft.ts";
@@ -255,4 +256,6 @@ export const ALL_MEF_FORMS = [
   form8283VehicleStatement,
   // Form 8621 Part V holding-period computation statements follow numbered forms.
   form8621ExcessStatement,
+  // Form 8814 line 1a nominee and interest-adjustment statement.
+  childTaxableInterestStatement,
 ] as const;

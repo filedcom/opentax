@@ -15,6 +15,7 @@ import { income_tax_calculation } from "../../intermediate/worksheets/income_tax
 import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 
 // 2025 Form 8814, Parts I and II.
 const UNTAXED_AMOUNT = 1_350;
@@ -34,10 +35,24 @@ export const itemSchema = z.object({
   child_no_withholding: z.literal(true),
   parent_eligible_to_elect: z.literal(true),
   interest_income: z.number().nonnegative().optional(),
+  // These amounts are already excluded from interest_income (Form 8814 line 1a).
+  // MeF requires them on a linked ChildTaxableInterestStmt.
+  interest_adjustments: z.object({
+    nominee_distribution: z.number().positive().optional(),
+    accrued_interest: z.number().positive().optional(),
+    abp_adjustment: z.number().positive().optional(),
+    oid_adjustment: z.number().positive().optional(),
+  }).optional(),
   tax_exempt_interest: z.number().nonnegative().optional(),
+  // Portion of line 1b that is a private-activity-bond AMT preference.
+  private_activity_bond_interest: z.number().nonnegative().optional(),
   dividend_income: z.number().nonnegative().optional(),
+  // Already excluded from dividend_income (Form 8814 line 2a).
+  dividend_nominee_distribution: z.number().positive().optional(),
   qualified_dividends: z.number().nonnegative().optional(),
   capital_gain_distributions: z.number().nonnegative().optional(),
+  // Already excluded from capital_gain_distributions (line 3).
+  capital_gain_nominee_distribution: z.number().positive().optional(),
   alaska_pfd: z.number().nonnegative().optional(),
   nontaxable_social_security: z.number().nonnegative().optional(),
 }).superRefine((item, ctx) => {
@@ -45,6 +60,15 @@ export const itemSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Qualified dividends exceed ordinary dividends",
+    });
+  }
+  if (
+    (item.private_activity_bond_interest ?? 0) >
+      (item.tax_exempt_interest ?? 0)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Private-activity-bond interest exceeds tax-exempt interest",
     });
   }
 });
@@ -131,6 +155,7 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     form8962,
     form8960,
     form4952,
+    form6251,
   ]);
 
   compute(_ctx: NodeContext, rawInput: F8814Input): NodeResult {
@@ -181,6 +206,15 @@ class F8814Node extends TaxNode<typeof inputSchema> {
         },
       },
     ];
+    const privateActivityBondInterest = sum((line) =>
+      line.item.private_activity_bond_interest ?? 0
+    );
+    if (privateActivityBondInterest > 0) {
+      outputs.push({
+        nodeType: form6251.nodeType,
+        fields: { line2g_pab_interest: privateActivityBondInterest },
+      });
+    }
     if (line9 > 0) {
       outputs.push({
         nodeType: form4952.nodeType,

@@ -1,5 +1,10 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { calculateForm8814, f8814, type F8814Item } from "./index.ts";
+import {
+  calculateForm8814,
+  f8814,
+  type F8814Item,
+  type Form8814Lines,
+} from "./index.ts";
 
 const child: F8814Item = {
   child_name: "Alex Rivera",
@@ -158,4 +163,55 @@ Deno.test("f8814: PTC worksheet special amount includes tax-exempt interest and 
     nontaxable_social_security: 700,
   });
   assertEquals(lines.dependentPtcMagi, 3600);
+});
+
+Deno.test("f8814: interest adjustments do not add back to taxable interest", () => {
+  const result = compute([{
+    ...child,
+    interest_income: 3000,
+    interest_adjustments: {
+      nominee_distribution: 500,
+      accrued_interest: 100,
+      abp_adjustment: 50,
+      oid_adjustment: 25,
+    },
+  }]);
+  const line = (field(result, "form8814", "items") as Form8814Lines[])[0];
+  assertEquals(line.line4, 3000);
+  assertEquals(line.line12, 300);
+});
+
+Deno.test("f8814: nominee dividends and capital gains stay outside income", () => {
+  const item = {
+    ...child,
+    dividend_income: 2000,
+    dividend_nominee_distribution: 700,
+    capital_gain_distributions: 1000,
+    capital_gain_nominee_distribution: 400,
+  };
+  const lines = calculateForm8814(item);
+  assertEquals(lines.line2a, 2000);
+  assertEquals(lines.line4, 3000);
+  assertEquals(lines.line6, 300);
+});
+
+Deno.test("f8814: child's private-activity-bond interest enters parent AMT", () => {
+  const result = compute([{
+    ...child,
+    interest_income: 3000,
+    tax_exempt_interest: 300,
+    private_activity_bond_interest: 200,
+  }]);
+  assertEquals(field(result, "form6251", "line2g_pab_interest"), 200);
+  assertEquals(
+    f8814.inputSchema.safeParse({
+      f8814s: [{
+        ...child,
+        interest_income: 3000,
+        tax_exempt_interest: 100,
+        private_activity_bond_interest: 200,
+      }],
+    }).success,
+    false,
+  );
 });
