@@ -47,6 +47,10 @@ export type Form3800CreditUseAllocation = Form3800CreditUseRow & {
   readonly unusedAfterTaxLimit: number;
 };
 
+export type Form3800PassiveTaxUseVintage =
+  & Form3800PassiveCreditVintage
+  & Form3800CreditUseAllocation;
+
 /** Order of named 2025 credit types within a tax year, from Form 3800 instructions. */
 const CREDIT_TYPE_ORDER = [
   "1a",
@@ -337,6 +341,50 @@ export function splitForm3800PassiveCreditVintages(
     },
     [],
   );
+}
+
+/** Apply the filed Part II caps to each passive source year, alongside other credits. */
+export function allocateForm3800PassiveCreditVintages(
+  sources: readonly Form8582CRSourceAllocation[],
+  otherSources: readonly Form3800CreditUseRow[],
+  lines: Form3800NonpassiveLines,
+): Form3800PassiveTaxUseVintage[] {
+  const passiveLines = classifyForm3800PassiveCredits(sources);
+  if (
+    passiveLines.line2 !== lines.line2 ||
+    passiveLines.line3 !== lines.line3 ||
+    passiveLines.line23 !== lines.line23 ||
+    passiveLines.line24 !== lines.line24 ||
+    passiveLines.line32 !== lines.line32 ||
+    passiveLines.line33 !== lines.line33
+  ) {
+    throw new Error(
+      "Form 3800 passive source totals do not reconcile to Part I and II",
+    );
+  }
+  const vintages = sources.flatMap((source, sourceIndex) =>
+    splitForm3800PassiveCreditVintages(source).map((vintage, vintageIndex) => ({
+      ...vintage,
+      sourceKey: `passive:${sourceIndex}:${vintageIndex}`,
+    }))
+  );
+  const allocated = allocateForm3800CreditUse([
+    ...vintages.map((vintage) => ({
+      sourceKey: vintage.sourceKey,
+      form3800CreditLine: vintage.form3800CreditLine,
+      originatingTaxYear: vintage.originatingTaxYear,
+      availableAfterPassiveLimit: vintage.afterPassiveLimit,
+    })),
+    ...otherSources,
+  ], lines);
+  const passiveUse = new Map(
+    allocated.map((row) => [row.sourceKey, row] as const),
+  );
+  return vintages.map((vintage) => {
+    const use = passiveUse.get(vintage.sourceKey);
+    if (!use) throw new Error("Form 3800 passive source was not allocated");
+    return { ...vintage, ...use };
+  });
 }
 
 export const form3800PassiveActivityLinesSchema = z.object({

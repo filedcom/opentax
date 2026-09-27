@@ -501,7 +501,11 @@ multiple source rows unless their named credit types have an explicit IRS
 ordering rank, instead of assigning the limit by input order. The named 2025
 credit types now have that ordering; other/legacy rows and multiple same-line
 sources under a partial cap still stop. Its cases are written but unrun, and
-the allocator is not yet connected to the return or XML builder.
+the allocator is not yet connected to the return or XML builder. A pure
+source-year bridge now checks the Form 8582-CR passive totals against Part I/II,
+allocates passive vintages alongside nonpassive source rows, and retains used
+and unused amounts per vintage. Its mixed-source case is written but unrun;
+the MeF builder does not yet consume the bridge.
 Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025

@@ -8,6 +8,7 @@ import {
 } from "../../intermediate/forms/form8582cr/index.ts";
 import {
   allocateForm3800CreditUse,
+  allocateForm3800PassiveCreditVintages,
   calculateForm3800Nonpassive,
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
@@ -16,6 +17,7 @@ import {
   splitForm3800PassiveCreditVintages,
   ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "./calculation.ts";
+import { sourceAllocationSchema } from "../../intermediate/forms/form8582cr/source.ts";
 
 Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33", () => {
   const source = (
@@ -378,6 +380,64 @@ Deno.test("Form 3800 tax use stops an ambiguous partial same-year source order",
       }),
     Error,
     "need the IRS credit-type order",
+  );
+});
+
+Deno.test("Form 3800 passive source years reconcile with nonpassive credit ordering", () => {
+  const source = sourceAllocationSchema.parse({
+    activity_reference: "Clinical activity",
+    source_form: "Form 8820",
+    source_document_reference: "2025 clinical statement",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h",
+    current_year_credit: 300,
+    prior_unallowed_credits: [{
+      originating_tax_year: 2023,
+      credit_amount: 200,
+      source_document_reference: "2023 clinical statement",
+    }],
+    publicly_traded_partnership: false,
+    total_credit: 500,
+    special_allowed_credit: 0,
+    unallowed_credit: 200,
+    allowed_credit: 300,
+  });
+  const lines = calculateForm3800Nonpassive({
+    filingStatus: FilingStatus.Single,
+    regularTax: 250,
+    alternativeMinimumTax: 0,
+    foreignTaxCredit: 0,
+    priorAllowableCredits: 0,
+    tentativeMinimumTax: 0,
+    standardCredit: 100,
+    specifiedCredit: 0,
+  }, classifyForm3800PassiveCredits([source]));
+  const otherSources = [{
+    sourceKey: "disabled-access",
+    form3800CreditLine: "1e" as const,
+    originatingTaxYear: 2025,
+    availableAfterPassiveLimit: 100,
+  }];
+  assertEquals(
+    allocateForm3800PassiveCreditVintages([source], otherSources, lines).map(
+      (row) => ({
+        year: row.originatingTaxYear,
+        before: row.beforePassiveLimit,
+        after: row.afterPassiveLimit,
+        applied: row.appliedAgainstTax,
+        unused: row.unusedAfterTaxLimit,
+      }),
+    ),
+    [
+      { year: 2023, before: 200, after: 200, applied: 200, unused: 0 },
+      { year: 2025, before: 300, after: 100, applied: 0, unused: 100 },
+    ],
+  );
+  assertThrows(
+    () => allocateForm3800PassiveCreditVintages([source], [], lines),
+    Error,
+    "does not reconcile",
   );
 });
 
