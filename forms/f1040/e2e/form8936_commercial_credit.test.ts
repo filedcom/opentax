@@ -6,7 +6,7 @@ import { FilingStatus } from "../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
 
-Deno.test("Form 8936 mixed-use new vehicle routes its business share through Form 3800", () => {
+Deno.test("Form 8936 qualified commercial clean vehicle reaches Form 3800 line 1aa", () => {
   const result = execute(plan, registry, {
     general: {
       filing_status: FilingStatus.Single,
@@ -32,38 +32,48 @@ Deno.test("Form 8936 mixed-use new vehicle routes its business share through For
       filing_status: FilingStatus.Single,
       prior_year_filing_status: FilingStatus.Single,
       f8936s: [{
+        credit_kind: "qualified_commercial_clean_vehicle",
         vin: "1HGCM82633A004352",
         vehicle_year: 2025,
         vehicle_make: "Example",
-        vehicle_model: "EV",
-        placed_in_service_date: "2025-09-30",
+        vehicle_model: "Electric Van",
         acquisition_date: "2025-09-30",
+        placed_in_service_date: "2025-09-30",
         seller_report_received: true,
         transferred_to_dealer: false,
         resold_within_30_days: false,
         acquired_for_use_not_resale: true,
-        credit_kind: "new_clean_vehicle",
-        credit_amount: 7_500,
-        msrp: 45_000,
-        vehicle_type: "other",
         business_credit_subject_to_passive_activity_limit: false,
-        business_use: {
-          kind: "mileage",
-          business_miles: 250,
-          commuting_miles: 0,
-          total_miles: 1_000,
-          months_in_business_use: 12,
+        commercial: {
+          owned_by_taxpayer: true,
+          qualified_manufacturer: true,
+          original_use_begins_with_taxpayer: true,
+          claimed_new_clean_credit_for_vin: false,
+          primarily_used_in_us: true,
+          subject_to_depreciation: true,
+          vehicle_design: "street_vehicle",
+          powered_partly_by_gas_or_diesel: false,
+          gvwr_pounds: 10_000,
+          cost_or_other_basis: 60_000,
+          section179_expense_deduction: 0,
+          incremental_cost: {
+            kind: "2025_light_street_safe_harbor",
+            is_compact_car_phev: false,
+          },
+          propulsion: {
+            kind: "plug_in_electric",
+            battery_capacity_kwh: 80,
+            externally_rechargeable: true,
+          },
         },
       }],
     },
   }, { taxYear: 2025, formType: "f1040" });
   assertEquals(result.diagnostics, []);
-  assertEquals(result.pending.f3800?.f8936_new_vehicle_credit, {
-    credit_amount: 1_875,
+  assertEquals(result.pending.f3800?.f8936_commercial_vehicle_credit, {
+    credit_amount: 7_500,
     subject_to_passive_activity_limit: false,
   });
-  assertEquals(result.pending.f3800?.allowed_credit, 1_875);
-  assertEquals(result.pending.schedule3?.line6f_total, 5_625);
-  assertEquals(result.pending.schedule3?.line6a_total, 1_875);
-  assertEquals(result.pending.f1040?.line20_nonrefundable_credits, 7_500);
+  assertEquals(result.pending.f3800?.allowed_credit, 7_500);
+  assertEquals(result.pending.schedule3?.line6a_total, 7_500);
 });

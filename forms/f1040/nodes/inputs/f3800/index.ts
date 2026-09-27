@@ -104,7 +104,9 @@ export const inputSchema = z.object({
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
   f5884_credit: f5884CreditSchema.optional(),
   f8936_new_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
+  f8936_commercial_vehicle_credit: f8936NewVehicleCreditSchema.optional(),
   form8936_applied_credit: appliedSourceCreditSchema.optional(),
+  form8936_commercial_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),
@@ -119,7 +121,8 @@ export const inputSchema = z.object({
     input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
     input.f8826_credit_entries !== undefined ||
     input.f5884_credit !== undefined ||
-    input.f8936_new_vehicle_credit !== undefined,
+    input.f8936_new_vehicle_credit !== undefined ||
+    input.f8936_commercial_vehicle_credit !== undefined,
   {
     message: "Form 3800 needs a credit source",
   },
@@ -168,6 +171,9 @@ function schedule3Output(
   f8826Entries: z.infer<typeof f8826CreditEntrySchema>[],
   f5884Credit: z.infer<typeof f5884CreditSchema> | undefined,
   f8936Credit: z.infer<typeof f8936NewVehicleCreditSchema> | undefined,
+  f8936CommercialCredit:
+    | z.infer<typeof f8936NewVehicleCreditSchema>
+    | undefined,
 ): NodeOutput[] {
   const f8835Credit = f8835Entries.length > 0
     ? classifyForm8835Credits(f8835Entries)
@@ -190,8 +196,10 @@ function schedule3Output(
     );
   }
   if (
-    f8936Credit && f8936Credit.credit_amount > 0 &&
-    f8936Credit.subject_to_passive_activity_limit
+    (f8936Credit && f8936Credit.credit_amount > 0 &&
+      f8936Credit.subject_to_passive_activity_limit) ||
+    (f8936CommercialCredit && f8936CommercialCredit.credit_amount > 0 &&
+      f8936CommercialCredit.subject_to_passive_activity_limit)
   ) {
     throw new Error(
       "Form 8936 passive business credit needs Form 8582-CR before Form 3800",
@@ -216,7 +224,8 @@ function schedule3Output(
     (f8835Credit?.standardCredit ?? 0) > 0 ||
     (f8835Credit?.specifiedCredit ?? 0) > 0 ||
     (f5884Credit?.credit_amount ?? 0) > 0 ||
-    (f8936Credit?.credit_amount ?? 0) > 0;
+    (f8936Credit?.credit_amount ?? 0) > 0 ||
+    (f8936CommercialCredit?.credit_amount ?? 0) > 0;
   if (hasSourceCredit && totalGbc(items) > 0) {
     throw new Error(
       "Source-backed Form 3800 credit cannot mix with unbounded legacy f3800s credit",
@@ -228,6 +237,7 @@ function schedule3Output(
         form3800_source_credits: {
           standardCredit: form8826Credit +
             (f8936Credit?.credit_amount ?? 0) +
+            (f8936CommercialCredit?.credit_amount ?? 0) +
             (f8835Credit?.standardCredit ?? 0),
           specifiedCredit: (f8835Credit?.specifiedCredit ?? 0) +
             (f5884Credit?.credit_amount ?? 0),
@@ -256,6 +266,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
         parsed.f8826_credit_entries ?? [],
         parsed.f5884_credit,
         parsed.f8936_new_vehicle_credit,
+        parsed.f8936_commercial_vehicle_credit,
       ),
     };
   }

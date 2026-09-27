@@ -73,6 +73,12 @@ function buildIRS8936(input: F8936Input, context?: MefBuildContext): string {
         element("MaxPrevOwnedCleanVehCrAmt", lines.line18AllowedUsed),
       ])
       : "",
+    lines.line19Commercial > 0
+      ? element("QlfyCmrclCleanVehicleCrAmt", lines.line19Commercial)
+      : "",
+    lines.line19Commercial > 0
+      ? element("TotalQlfyCmrclCleanVehCrAmt", lines.line19Commercial)
+      : "",
   ]);
 }
 

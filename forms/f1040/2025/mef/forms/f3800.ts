@@ -17,6 +17,7 @@ import {
   inputSchema as f5884InputSchema,
 } from "../../../nodes/inputs/f5884/index.ts";
 import {
+  computeCommercialVehicleCreditLines,
   computeNewVehicleCreditParts,
   inputSchema as f8936InputSchema,
 } from "../../../nodes/inputs/f8936/index.ts";
@@ -276,7 +277,7 @@ function sourceForm8936(
   }
   const source = f8936InputSchema.parse(raw);
   const credit = source.f8936s.reduce((sum, item) => {
-    if (item.is_new_vehicle !== true) return sum;
+    if (item.credit_kind !== "new_clean_vehicle") return sum;
     const amount = computeNewVehicleCreditParts(item, source).business;
     if (amount <= 0) return sum;
     if (
@@ -295,6 +296,41 @@ function sourceForm8936(
   ) {
     throw new Error(
       "Form 3800 line 1y does not reconcile to Form 8936 business credit",
+    );
+  }
+  return { source, credit };
+}
+
+function sourceForm8936Commercial(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+) {
+  const claimed = fields.f8936_commercial_vehicle_credit;
+  if (!claimed || claimed.credit_amount <= 0) return undefined;
+  const raw = context.pending?.f8936;
+  if (!raw) {
+    throw new Error(
+      "Form 3800 commercial vehicle credit needs Form 8936 source facts",
+    );
+  }
+  const source = f8936InputSchema.parse(raw);
+  const credit = source.f8936s.reduce((sum, item) => {
+    if (item.credit_kind !== "qualified_commercial_clean_vehicle") return sum;
+    const amount = computeCommercialVehicleCreditLines(item).line26Credit;
+    if (amount <= 0) return sum;
+    if (item.business_credit_subject_to_passive_activity_limit !== false) {
+      throw new Error(
+        "Form 3800 commercial vehicle source needs nonpassive business use",
+      );
+    }
+    return sum + amount;
+  }, 0);
+  if (
+    claimed.subject_to_passive_activity_limit ||
+    !sameMoney(claimed.credit_amount, credit)
+  ) {
+    throw new Error(
+      "Form 3800 line 1aa does not reconcile to Form 8936 commercial credit",
     );
   }
   return { source, credit };
@@ -411,7 +447,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       (fields.f5884_credit?.credit_amount ?? 0) > 0 ||
-      (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0;
+      (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0 ||
+      (fields.f8936_commercial_vehicle_credit?.credit_amount ?? 0) > 0;
     if (!hasSourceCredit) return "";
     if (
       fields.tax_context === undefined || fields.allowed_credit === undefined
@@ -443,6 +480,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const facilities = sourceForm8835(parsed, context);
     const form5884 = sourceForm5884(parsed, context);
     const form8936 = sourceForm8936(parsed, context);
+    const form8936Commercial = sourceForm8936Commercial(parsed, context);
     const form8826Credit = form8826?.lines.line8 ?? 0;
     const otherOrdinaryCredit = form8826Credit + facilities.reduce(
       (sum, facility) =>
@@ -454,7 +492,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     );
     let form8936Applied = parsed.form8936_applied_credit;
     if (form8936 && form8936Applied === undefined) {
-      const sharedPartialLimit = otherOrdinaryCredit > 0 &&
+      const sharedPartialLimit =
+        (otherOrdinaryCredit > 0 || form8936Commercial !== undefined) &&
         lines.line17 > 0 && !sameMoney(lines.line17, tax.standardCredit);
       if (sharedPartialLimit) {
         throw new Error(
@@ -466,9 +505,36 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     if (!form8936 && parsed.form8936_applied_credit !== undefined) {
       throw new Error("Form 3800 has a Form 8936 allocation without a source");
     }
+    let form8936CommercialApplied = parsed.form8936_commercial_applied_credit;
+    if (form8936Commercial && form8936CommercialApplied === undefined) {
+      const otherCredit = otherOrdinaryCredit + (form8936?.credit ?? 0);
+      const partialLimit = otherCredit > 0 && lines.line17 > 0 &&
+        !sameMoney(lines.line17, tax.standardCredit);
+      if (partialLimit) {
+        throw new Error(
+          "Form 3800 needs the applied-credit split for Form 8936 line 1aa",
+        );
+      }
+      form8936CommercialApplied = Math.min(
+        form8936Commercial.credit,
+        Math.max(0, lines.line17 - (form8936Applied ?? 0)),
+      );
+    }
+    if (
+      !form8936Commercial &&
+      parsed.form8936_commercial_applied_credit !== undefined
+    ) {
+      throw new Error(
+        "Form 3800 has a commercial Form 8936 allocation without a source",
+      );
+    }
     const form8826Applied = Math.min(
       form8826Credit,
-      Math.max(0, lines.line17 - (form8936Applied ?? 0)),
+      Math.max(
+        0,
+        lines.line17 - (form8936Applied ?? 0) -
+          (form8936CommercialApplied ?? 0),
+      ),
     );
     const form8826Ids = context.documentIdsByPendingKey.f8826 ?? [];
     const selfEarned = (form8826?.lines.line6 ?? 0) > 0;
@@ -491,7 +557,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       );
     }
     const form8936Ids = context.documentIdsByPendingKey.f8936 ?? [];
-    if (form8936 && form8936Ids.length !== 1) {
+    if ((form8936 || form8936Commercial) && form8936Ids.length !== 1) {
       throw new Error(
         "Form 3800 Form 8936 document count does not match its source",
       );
@@ -555,11 +621,19 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
           appliedCredit: form8936Applied!,
         }
         : undefined,
+      form8936Commercial: form8936Commercial
+        ? {
+          credit: form8936Commercial.credit,
+          documentId: form8936Ids[0],
+          appliedCredit: form8936CommercialApplied!,
+        }
+        : undefined,
       facilities,
       form8835DocumentIds: form8835Ids,
       appliedCreditsByFacility: form8835FacilityAllocations(
         facilities,
-        lines.line17 - form8826Applied - (form8936Applied ?? 0),
+        lines.line17 - form8826Applied - (form8936Applied ?? 0) -
+          (form8936CommercialApplied ?? 0),
         lines.line37 - (form5884Applied ?? 0),
         parsed.form8835_applied_credits_by_facility,
       ),

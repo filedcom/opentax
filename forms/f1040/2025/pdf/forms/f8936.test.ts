@@ -14,7 +14,7 @@ const vehicle = {
   transferred_to_dealer: false,
   resold_within_30_days: false,
   acquired_for_use_not_resale: true,
-  is_new_vehicle: true,
+  credit_kind: "new_clean_vehicle",
   credit_amount: 7_500,
   msrp: 45_000,
   vehicle_type: "other",
@@ -104,12 +104,69 @@ Deno.test("Form 8936 PDF: parent Part II business fields match Form 3800 source"
   assertEquals(fields.line9, undefined);
 });
 
+Deno.test("Form 8936 PDF: commercial Part V fields match Form 3800 line 1aa", () => {
+  const commercial = {
+    ...vehicle,
+    credit_kind: "qualified_commercial_clean_vehicle",
+    credit_amount: undefined,
+    business_credit_subject_to_passive_activity_limit: false,
+    commercial: {
+      owned_by_taxpayer: true,
+      qualified_manufacturer: true,
+      original_use_begins_with_taxpayer: true,
+      claimed_new_clean_credit_for_vin: false,
+      primarily_used_in_us: true,
+      subject_to_depreciation: true,
+      vehicle_design: "street_vehicle" as const,
+      powered_partly_by_gas_or_diesel: true,
+      gvwr_pounds: 10_000,
+      cost_or_other_basis: 50_000,
+      section179_expense_deduction: 10_000,
+      incremental_cost: {
+        kind: "comparable_vehicle" as const,
+        purchase_price: 50_000,
+        comparable_vehicle_price: 43_000,
+        comparable_vehicle_description: "Comparable diesel van",
+        comparable_in_size_and_use: true,
+      },
+      propulsion: {
+        kind: "plug_in_electric" as const,
+        battery_capacity_kwh: 8,
+        externally_rechargeable: true,
+      },
+    },
+  };
+  const commercialSource = { ...source, f8936s: [commercial] };
+  const finalized = {
+    f1040: { line11_agi: 50_000, line18_total_tax_before_credits: 9_000 },
+    f3800: {
+      f8936_commercial_vehicle_credit: {
+        credit_amount: 6_000,
+        subject_to_passive_activity_limit: false,
+      },
+    },
+  };
+  const parent = form8936Pdf.projectFields!(commercialSource, finalized);
+  assertEquals(parent.line19, 6_000);
+  assertEquals(parent.line21, 6_000);
+  const projected = form8936ScheduleAPdf.projectFields!(
+    commercialSource,
+    finalized,
+  );
+  const instances = form8936ScheduleAPdf.instances!(projected);
+  assertEquals(instances.length, 1);
+  assertEquals(instances[0].is_commercial_vehicle, true);
+  assertEquals(instances[0].commercial_adjusted_basis, 40_000);
+  assertEquals(instances[0].commercial_basis_percentage, 6_000);
+  assertEquals(instances[0].commercial_credit, 6_000);
+});
+
 Deno.test("Form 8936 Schedule A PDF: one page per vehicle, with previously owned Part IV", () => {
   const used = {
     ...vehicle,
     vin: "5YJSA1E26HF000337",
     vehicle_year: 2022,
-    is_new_vehicle: false,
+    credit_kind: "previously_owned_clean_vehicle",
     credit_amount: undefined,
     sale_price: 15_000,
     claimed_as_dependent: false,

@@ -55,6 +55,16 @@ after Form 1040 line 18 is known, then replaces the tentative Schedule 3 lines
 3800 line 1y; other Form 8936 eligibility and source reconciliation remain open.
 None of these changes has passed the deferred full test batch.
 
+The current untested Form 8936 commercial-vehicle pass replaces the new/used
+boolean with one three-way credit type and adds Schedule A Part V basis, Section
+179, incremental-cost, 15%/30% rate, and $7,500/$40,000 cap calculations. A 2025
+light street-vehicle safe harbor or a documented comparable vehicle price
+supplies incremental cost. The nonpassive amount routes through parent Form 8936
+line 19 to Form 3800 Part III line 1aa, with MeF and PDF mappings and written
+cases. These routes have not run in the deferred full test batch, and no filled
+PDF or ATS transmission has been verified. Passive credits, pass-through-only
+commercial credits, recapture, and cross-form basis reduction remain open.
+
 The Form 8936 calculation pass now distinguishes the $75,000/$112,500/$150,000
 previously owned vehicle MAGI limits from the new-vehicle limits, applies
 current-or-prior-year MAGI with each year's filing status, and refuses to award

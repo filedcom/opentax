@@ -1,6 +1,7 @@
 import { form8936Lines } from "../../form8936_lines.ts";
 import {
   businessUsePercentage,
+  computeCommercialVehicleCreditLines,
   computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   incomeLimit,
@@ -11,6 +12,7 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 const p1 = "topmostSubform[0].Page1[0].";
 const p2 = "topmostSubform[0].Page2[0].";
+const p3 = "topmostSubform[0].Page3[0].";
 const text = (domainKey: string, pdfField: string): PdfFieldEntry => ({
   kind: "text",
   domainKey,
@@ -62,6 +64,18 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
   text("used_sale_price_30pct", `${p2}f2_6[0]`),
   text("used_credit_cap", `${p2}f2_7[0]`),
   text("used_personal_credit", `${p2}f2_8[0]`),
+  ...yesNo("commercial_subject_to_depreciation", p3, "c3_1"),
+  ...yesNo("commercial_acquired_for_use", p3, "c3_2"),
+  ...yesNo("commercial_gas_or_diesel", p3, "c3_3"),
+  text("commercial_gvwr", `${p3}f3_2[0]`),
+  text("commercial_basis", `${p3}f3_3[0]`),
+  text("commercial_section179", `${p3}f3_4[0]`),
+  text("commercial_adjusted_basis", `${p3}f3_5[0]`),
+  text("commercial_basis_percentage", `${p3}f3_6[0]`),
+  text("commercial_incremental_cost", `${p3}f3_7[0]`),
+  text("commercial_lesser_cost", `${p3}f3_8[0]`),
+  text("commercial_maximum_credit", `${p3}f3_9[0]`),
+  text("commercial_credit", `${p3}f3_10[0]`),
 ];
 
 function formatServiceDate(date: string): string {
@@ -91,8 +105,10 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
     const input = source.data;
     return input.f8936s.flatMap((item) => {
       const personalCredit = computeVehiclePersonalCredit(item, input);
-      const businessCredit = item.is_new_vehicle === true
+      const businessCredit = item.credit_kind === "new_clean_vehicle"
         ? computeNewVehicleCreditParts(item, input).business
+        : item.credit_kind === "qualified_commercial_clean_vehicle"
+        ? computeCommercialVehicleCreditLines(item).line26Credit
         : 0;
       if (
         personalCredit === 0 && businessCredit === 0 &&
@@ -102,14 +118,15 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
       }
       if (
         item.vehicle_year === undefined || !item.vehicle_make ||
-        !item.vehicle_model || !item.vin || !item.placed_in_service_date ||
-        item.is_new_vehicle === undefined
+        !item.vehicle_model || !item.vin || !item.placed_in_service_date
       ) {
         throw new Error(
           "Form 8936 Schedule A PDF needs complete vehicle details",
         );
       }
-      const used = !item.is_new_vehicle;
+      const used = item.credit_kind === "previously_owned_clean_vehicle";
+      const commercial =
+        item.credit_kind === "qualified_commercial_clean_vehicle";
       const currentOver = modifiedAgi(input.current_year_magi) >
         incomeLimit(input.filing_status, used);
       const priorOver = modifiedAgi(input.prior_year_magi) >
@@ -129,13 +146,34 @@ export const form8936ScheduleAPdf: PdfFormDescriptor = {
           ? item.transferred_amount
           : undefined,
         dealer_transfer_repayment: directedRepaymentBox,
-        is_new_vehicle: item.is_new_vehicle,
+        is_new_vehicle: item.credit_kind === "new_clean_vehicle",
         is_used_vehicle: used,
-        is_commercial_vehicle: false,
+        is_commercial_vehicle: commercial,
       };
       return [{
         ...common,
-        ...(item.is_new_vehicle
+        ...(commercial
+          ? (() => {
+            const facts = item.commercial!;
+            const lines = computeCommercialVehicleCreditLines(item);
+            return {
+              commercial_subject_to_depreciation: facts.subject_to_depreciation,
+              commercial_acquired_for_use: item.acquired_for_use_not_resale,
+              commercial_gas_or_diesel: facts.powered_partly_by_gas_or_diesel,
+              commercial_gvwr: facts.gvwr_pounds,
+              commercial_basis: lines.line19Basis,
+              commercial_section179: lines.line20Section179,
+              commercial_adjusted_basis: lines.line21AdjustedBasis,
+              commercial_basis_percentage: Math.round(
+                lines.line22BasisPercentage,
+              ),
+              commercial_incremental_cost: lines.line23IncrementalCost,
+              commercial_lesser_cost: Math.round(lines.line24LesserCost),
+              commercial_maximum_credit: lines.line25MaximumCredit,
+              commercial_credit: lines.line26Credit,
+            };
+          })()
+          : item.credit_kind === "new_clean_vehicle"
           ? {
             new_resold_within_30_days: item.resold_within_30_days,
             new_individual_return: !resold ? true : undefined,

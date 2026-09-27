@@ -56,6 +56,8 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     pdfField: `${page}f1_28[0]`,
     printZero: true,
   },
+  text("line19", "f1_29[0]"),
+  text("line21", "f1_31[0]"),
 ];
 
 const printedStatus: Readonly<Record<FilingStatus, string>> = {
@@ -117,6 +119,8 @@ export const form8936Pdf: PdfFormDescriptor = {
           line18: lines.line18AllowedUsed,
         }
         : {}),
+      line19: lines.line19Commercial > 0 ? lines.line19Commercial : undefined,
+      line21: lines.line19Commercial > 0 ? lines.line19Commercial : undefined,
     };
   },
 };

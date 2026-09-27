@@ -27,7 +27,7 @@ Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service d
     ...taxpayer,
     f8936s: [{
       ...vehicle,
-      is_new_vehicle: true,
+      credit_kind: "new_clean_vehicle",
       credit_amount: 7_500,
       msrp: 45_000,
       vehicle_type: "other",
@@ -66,7 +66,7 @@ Deno.test("Form 8936 Schedule A: fully business-use vehicle still has its own do
     ...taxpayer,
     f8936s: [{
       ...vehicle,
-      is_new_vehicle: true,
+      credit_kind: "new_clean_vehicle",
       credit_amount: 7_500,
       msrp: 45_000,
       vehicle_type: "other",
@@ -87,12 +87,66 @@ Deno.test("Form 8936 Schedule A: fully business-use vehicle still has its own do
   assertEquals(xml[0].includes("<PrsnlUseNewCleanVehicleCrAmt>"), false);
 });
 
+Deno.test("Form 8936 Schedule A: commercial Part V includes source-backed basis and incremental cost", () => {
+  const xml = form8936ScheduleA.build({
+    ...taxpayer,
+    f8936s: [{
+      ...vehicle,
+      credit_kind: "qualified_commercial_clean_vehicle",
+      business_credit_subject_to_passive_activity_limit: false,
+      commercial: {
+        owned_by_taxpayer: true,
+        qualified_manufacturer: true,
+        original_use_begins_with_taxpayer: true,
+        claimed_new_clean_credit_for_vin: false,
+        primarily_used_in_us: true,
+        subject_to_depreciation: true,
+        vehicle_design: "street_vehicle",
+        powered_partly_by_gas_or_diesel: true,
+        gvwr_pounds: 10_000,
+        cost_or_other_basis: 50_000,
+        section179_expense_deduction: 10_000,
+        incremental_cost: {
+          kind: "comparable_vehicle",
+          purchase_price: 50_000,
+          comparable_vehicle_price: 43_000,
+          comparable_vehicle_description: "Comparable diesel van",
+          comparable_in_size_and_use: true,
+        },
+        propulsion: {
+          kind: "plug_in_electric",
+          battery_capacity_kwh: 8,
+          externally_rechargeable: true,
+        },
+      },
+    }],
+  });
+  assertEquals(xml.length, 1);
+  assertStringIncludes(xml[0], "<QlfyCmrclCleanVehicleYesGrp>");
+  assertStringIncludes(
+    xml[0],
+    "<NetSect179ExpenseDedAmt>40000</NetSect179ExpenseDedAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<NetSect179ExpenseDedPctAmt>6000</NetSect179ExpenseDedPctAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<VehicleIncrementalCostAmt>7000</VehicleIncrementalCostAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<QlfyCmrclCleanVehicleCrAmt>6000</QlfyCmrclCleanVehicleCrAmt>",
+  );
+});
+
 Deno.test("Form 8936 Schedule A: odd-dollar business split stays additive", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,
     f8936s: [{
       ...vehicle,
-      is_new_vehicle: true,
+      credit_kind: "new_clean_vehicle",
       credit_amount: 1_001,
       msrp: 45_000,
       vehicle_type: "other",
@@ -121,7 +175,7 @@ Deno.test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", (
     f8936s: [{
       ...vehicle,
       vehicle_year: 2022,
-      is_new_vehicle: false,
+      credit_kind: "previously_owned_clean_vehicle",
       sale_price: 15_000,
       claimed_as_dependent: false,
       claimed_prev_owned_credit_last_3_years: false,
@@ -143,7 +197,7 @@ Deno.test("Form 8936 Schedule A: dealer transfer retains filing document", () =>
     ...taxpayer,
     f8936s: [{
       ...vehicle,
-      is_new_vehicle: true,
+      credit_kind: "new_clean_vehicle",
       credit_amount: 7_500,
       msrp: 45_000,
       vehicle_type: "other",
@@ -163,7 +217,7 @@ Deno.test("Form 8936 Schedule A: ineligible dealer transfer marks the directed r
     prior_year_magi: { adjusted_gross_income: 200_000 },
     f8936s: [{
       ...vehicle,
-      is_new_vehicle: true,
+      credit_kind: "new_clean_vehicle",
       credit_amount: 7_500,
       msrp: 45_000,
       vehicle_type: "other",
@@ -191,7 +245,7 @@ Deno.test("Form 8936 Schedule A: post-cutoff acquisition with no transfer emits 
     ...taxpayer,
     f8936s: [{
       ...vehicle,
-      is_new_vehicle: true,
+      credit_kind: "new_clean_vehicle",
       acquisition_date: "2025-10-01",
       credit_amount: 7_500,
       msrp: 45_000,

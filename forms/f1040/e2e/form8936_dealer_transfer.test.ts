@@ -43,7 +43,7 @@ Deno.test("E2E: ineligible dealer-transferred new clean vehicle reaches Schedule
         transferred_amount: 7_500,
         resold_within_30_days: false,
         acquired_for_use_not_resale: true,
-        is_new_vehicle: true,
+        credit_kind: "new_clean_vehicle",
         credit_amount: 7_500,
         msrp: 45_000,
         vehicle_type: "other",

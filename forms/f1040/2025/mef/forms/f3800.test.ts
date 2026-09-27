@@ -105,7 +105,7 @@ Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
     transferred_to_dealer: false,
     resold_within_30_days: false,
     acquired_for_use_not_resale: true,
-    is_new_vehicle: true,
+    credit_kind: "new_clean_vehicle",
     credit_amount: 7_500,
     msrp: 45_000,
     vehicle_type: "other" as const,
@@ -159,6 +159,82 @@ Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
       }, context),
     Error,
     "does not reconcile",
+  );
+});
+
+Deno.test("Form 3800 links qualified commercial clean vehicle credit to line 1aa", () => {
+  const vehicle = {
+    vin: "1HGCM82633A004352",
+    vehicle_year: 2025,
+    vehicle_make: "Example",
+    vehicle_model: "Electric Van",
+    acquisition_date: "2025-09-30",
+    placed_in_service_date: "2025-09-30",
+    transferred_to_dealer: false,
+    resold_within_30_days: false,
+    acquired_for_use_not_resale: true,
+    credit_kind: "qualified_commercial_clean_vehicle",
+    business_credit_subject_to_passive_activity_limit: false,
+    commercial: {
+      owned_by_taxpayer: true,
+      qualified_manufacturer: true,
+      original_use_begins_with_taxpayer: true,
+      claimed_new_clean_credit_for_vin: false,
+      primarily_used_in_us: true,
+      subject_to_depreciation: true,
+      vehicle_design: "street_vehicle",
+      powered_partly_by_gas_or_diesel: false,
+      gvwr_pounds: 10_000,
+      cost_or_other_basis: 60_000,
+      section179_expense_deduction: 0,
+      incremental_cost: {
+        kind: "2025_light_street_safe_harbor",
+        is_compact_car_phev: false,
+      },
+      propulsion: {
+        kind: "plug_in_electric",
+        battery_capacity_kwh: 80,
+        externally_rechargeable: true,
+      },
+    },
+  };
+  const source = {
+    current_year_magi: { adjusted_gross_income: 50_000 },
+    prior_year_magi: { adjusted_gross_income: 48_000 },
+    filing_status: FilingStatus.Single,
+    prior_year_filing_status: FilingStatus.Single,
+    f8936s: [vehicle],
+  };
+  const businessTax = { ...tax, standardCredit: 7_500 };
+  const fields = {
+    f8936_commercial_vehicle_credit: {
+      credit_amount: 7_500,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: businessTax,
+    allowed_credit: 7_500,
+  };
+  const context = {
+    pending: { ...filedPending(businessTax, 7_500), f8936: source },
+    documentIdsByPendingKey: {
+      f8936: ["IRS8936_1"],
+      form6251: ["IRS6251_1"],
+    },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form8936PartVCYCreditsGrp");
+  assertStringIncludes(xml, 'referenceDocumentId="IRS8936_1"');
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f8936_commercial_vehicle_credit: {
+          ...fields.f8936_commercial_vehicle_credit,
+          credit_amount: 7_499,
+        },
+      }, context),
+    Error,
+    "line 1aa does not reconcile",
   );
 });
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  computeCommercialVehicleCreditLines,
   computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   type F8936Input,
@@ -30,6 +31,10 @@ const pendingSchema = z.object({
       credit_amount: z.number().nonnegative(),
       subject_to_passive_activity_limit: z.literal(false),
     }).optional(),
+    f8936_commercial_vehicle_credit: z.object({
+      credit_amount: z.number().nonnegative(),
+      subject_to_passive_activity_limit: z.literal(false),
+    }).optional(),
   }).optional(),
 });
 
@@ -46,6 +51,7 @@ export type Form8936Lines = {
   readonly line16OtherCredits: number;
   readonly line17UsedAvailable: number;
   readonly line18AllowedUsed: number;
+  readonly line19Commercial: number;
 };
 
 /** Derive the filed Form 8936 lines from source vehicles and finalized return amounts. */
@@ -56,8 +62,10 @@ export function form8936Lines(
   const active = input.f8936s.filter((item) =>
     item.transferred_to_dealer === true ||
     computeVehiclePersonalCredit(item, input) > 0 ||
-    (item.is_new_vehicle === true &&
-      computeNewVehicleCreditParts(item, input).business > 0)
+    (item.credit_kind === "new_clean_vehicle" &&
+      computeNewVehicleCreditParts(item, input).business > 0) ||
+    (item.credit_kind === "qualified_commercial_clean_vehicle" &&
+      computeCommercialVehicleCreditLines(item).line26Credit > 0)
   );
   if (active.length === 0) return undefined;
   const transferred = active.filter((item) =>
@@ -74,7 +82,7 @@ export function form8936Lines(
 
   if (
     transferred.some((item) =>
-      item.is_new_vehicle === true &&
+      item.credit_kind === "new_clean_vehicle" &&
       computeNewVehicleCreditParts(item, input).business > 0
     )
   ) {
@@ -95,7 +103,7 @@ export function form8936Lines(
   }
   const schedule3 = finalized.schedule3 ?? {};
   const businessCredit = claimable.filter((item) =>
-    item.is_new_vehicle === true
+    item.credit_kind === "new_clean_vehicle"
   ).reduce(
     (sum, item) => {
       const amount = computeNewVehicleCreditParts(item, input).business;
@@ -119,12 +127,35 @@ export function form8936Lines(
       "Form 8936 business credit does not reconcile to Form 3800 line 1y source",
     );
   }
+  const commercialCredit = claimable.filter((item) =>
+    item.credit_kind === "qualified_commercial_clean_vehicle"
+  ).reduce((sum, item) => {
+    const amount = computeCommercialVehicleCreditLines(item).line26Credit;
+    if (
+      amount > 0 &&
+      item.business_credit_subject_to_passive_activity_limit !== false
+    ) {
+      throw new Error(
+        "Form 8936 commercial credit needs a nonpassive activity source",
+      );
+    }
+    return sum + amount;
+  }, 0);
+  if (
+    commercialCredit > 0 &&
+    finalized.f3800?.f8936_commercial_vehicle_credit?.credit_amount !==
+      commercialCredit
+  ) {
+    throw new Error(
+      "Form 8936 commercial credit does not reconcile to Form 3800 line 1aa source",
+    );
+  }
   const repaymentNew = transferred.filter((item) =>
-    item.is_new_vehicle === true &&
+    item.credit_kind === "new_clean_vehicle" &&
     computeVehiclePersonalCredit(item, input) === 0
   ).reduce((sum, item) => sum + (item.transferred_amount ?? 0), 0);
   const repaymentUsed = transferred.filter((item) =>
-    item.is_new_vehicle === false &&
+    item.credit_kind === "previously_owned_clean_vehicle" &&
     computeVehiclePersonalCredit(item, input) === 0
   ).reduce((sum, item) => sum + (item.transferred_amount ?? 0), 0);
   if (
@@ -144,10 +175,12 @@ export function form8936Lines(
     (schedule3.line5b_energy_efficient_home ?? 0) +
     (schedule3.line6d_elderly_disabled_credit ?? 0) +
     (schedule3.line6i_qualified_electric_vehicle_credit ?? 0);
-  const tentativeNew = claimable.filter((item) => item.is_new_vehicle === true)
+  const tentativeNew = claimable.filter((item) =>
+    item.credit_kind === "new_clean_vehicle"
+  )
     .reduce((sum, item) => sum + computeVehiclePersonalCredit(item, input), 0);
   const tentativeUsed = claimable.filter((item) =>
-    item.is_new_vehicle === false
+    item.credit_kind === "previously_owned_clean_vehicle"
   )
     .reduce((sum, item) => sum + computeVehiclePersonalCredit(item, input), 0);
   const usedAvailable = Math.max(0, line18 - otherCredits);
@@ -175,5 +208,6 @@ export function form8936Lines(
     line16OtherCredits: otherCredits,
     line17UsedAvailable: usedAvailable,
     line18AllowedUsed: usedCredit,
+    line19Commercial: commercialCredit,
   };
 }

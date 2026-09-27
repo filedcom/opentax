@@ -13,7 +13,7 @@ const vehicle = {
   transferred_to_dealer: false,
   resold_within_30_days: false,
   acquired_for_use_not_resale: true,
-  is_new_vehicle: true,
+  credit_kind: "new_clean_vehicle" as const,
   credit_amount: 7_500,
   msrp: 45_000,
   vehicle_type: "other" as const,
@@ -70,10 +70,60 @@ Deno.test("Form 8936: current/prior MAGI groups and new credit follow 2025 XSD l
   );
 });
 
+Deno.test("Form 8936: commercial credit reaches Part V lines 19 and 21", () => {
+  const commercial = {
+    ...vehicle,
+    credit_kind: "qualified_commercial_clean_vehicle" as const,
+    credit_amount: undefined,
+    commercial: {
+      owned_by_taxpayer: true,
+      qualified_manufacturer: true,
+      original_use_begins_with_taxpayer: true,
+      claimed_new_clean_credit_for_vin: false,
+      primarily_used_in_us: true,
+      subject_to_depreciation: true,
+      vehicle_design: "street_vehicle" as const,
+      powered_partly_by_gas_or_diesel: false,
+      gvwr_pounds: 10_000,
+      cost_or_other_basis: 60_000,
+      section179_expense_deduction: 0,
+      incremental_cost: {
+        kind: "2025_light_street_safe_harbor" as const,
+        is_compact_car_phev: false,
+      },
+      propulsion: {
+        kind: "plug_in_electric" as const,
+        battery_capacity_kwh: 80,
+        externally_rechargeable: true,
+      },
+    },
+    business_credit_subject_to_passive_activity_limit: false,
+  };
+  const xml = form8936.build({ ...source, f8936s: [commercial] }, {
+    pending: {
+      f1040: { line11_agi: 50_000, line18_total_tax_before_credits: 10_000 },
+      f3800: {
+        f8936_commercial_vehicle_credit: {
+          credit_amount: 7_500,
+          subject_to_passive_activity_limit: false,
+        },
+      },
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<QlfyCmrclCleanVehicleCrAmt>7500</QlfyCmrclCleanVehicleCrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalQlfyCmrclCleanVehCrAmt>7500</TotalQlfyCmrclCleanVehCrAmt>",
+  );
+});
+
 Deno.test("Form 8936: previously owned credit uses Part IV and prior MFJ status code", () => {
   const used = {
     ...vehicle,
-    is_new_vehicle: false,
+    credit_kind: "previously_owned_clean_vehicle" as const,
     vehicle_year: 2022,
     credit_amount: undefined,
     sale_price: 15_000,

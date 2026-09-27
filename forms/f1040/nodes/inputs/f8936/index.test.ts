@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   businessUsePercentage,
+  computeCommercialVehicleCreditLines,
   computeNewVehicleCreditParts,
   f8936,
   type F8936Input,
@@ -12,7 +13,7 @@ import { f3800 } from "../f3800/index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 
 const newVehicle: F8936Item = {
-  is_new_vehicle: true,
+  credit_kind: "new_clean_vehicle",
   vin: "1HGCM82633A004352",
   vehicle_year: 2025,
   vehicle_make: "Example",
@@ -30,7 +31,8 @@ const newVehicle: F8936Item = {
 
 const usedVehicle: F8936Item = {
   ...newVehicle,
-  is_new_vehicle: false,
+  vin: "1HGCM82633A004353",
+  credit_kind: "previously_owned_clean_vehicle",
   vehicle_year: 2022,
   credit_amount: undefined,
   sale_price: 15_000,
@@ -40,6 +42,38 @@ const usedVehicle: F8936Item = {
   claimed_prev_owned_credit_last_3_years: false,
   purchased_from_dealer: true,
   previously_owned_first_eligible_transfer: true,
+};
+
+const commercialVehicle: F8936Item = {
+  ...newVehicle,
+  credit_kind: "qualified_commercial_clean_vehicle",
+  vin: "1HGCM82633A004354",
+  business_credit_subject_to_passive_activity_limit: false,
+  credit_amount: undefined,
+  msrp: undefined,
+  vehicle_type: undefined,
+  commercial: {
+    owned_by_taxpayer: true,
+    qualified_manufacturer: true,
+    original_use_begins_with_taxpayer: true,
+    claimed_new_clean_credit_for_vin: false,
+    primarily_used_in_us: true,
+    subject_to_depreciation: true,
+    vehicle_design: "street_vehicle",
+    powered_partly_by_gas_or_diesel: false,
+    gvwr_pounds: 10_000,
+    cost_or_other_basis: 60_000,
+    section179_expense_deduction: 0,
+    incremental_cost: {
+      kind: "2025_light_street_safe_harbor",
+      is_compact_car_phev: false,
+    },
+    propulsion: {
+      kind: "plug_in_electric",
+      battery_capacity_kwh: 80,
+      externally_rechargeable: true,
+    },
+  },
 };
 
 function mileageUse(businessMiles: number) {
@@ -552,5 +586,152 @@ Deno.test("Form 8936: two qualifying vehicles route to their separate Schedule 3
   assertEquals(
     result.outputs[1].fields.line6m_prev_owned_clean_vehicle_credit,
     4_000,
+  );
+});
+
+Deno.test("Form 8936: commercial light EV uses the 2025 $7,500 incremental-cost safe harbor", () => {
+  const lines = computeCommercialVehicleCreditLines(commercialVehicle);
+  assertEquals(lines.line22BasisPercentage, 18_000);
+  assertEquals(lines.line23IncrementalCost, 7_500);
+  assertEquals(lines.line26Credit, 7_500);
+  assertEquals(fieldsOf(compute(source([commercialVehicle])).outputs, f3800), {
+    f8936_commercial_vehicle_credit: {
+      credit_amount: 7_500,
+      subject_to_passive_activity_limit: false,
+    },
+  });
+});
+
+Deno.test("Form 8936: commercial PHEV uses 15% basis after Section 179", () => {
+  const vehicle: F8936Item = {
+    ...commercialVehicle,
+    commercial: {
+      ...commercialVehicle.commercial!,
+      powered_partly_by_gas_or_diesel: true,
+      cost_or_other_basis: 50_000,
+      section179_expense_deduction: 10_000,
+      incremental_cost: {
+        kind: "comparable_vehicle",
+        purchase_price: 50_000,
+        comparable_vehicle_price: 43_000,
+        comparable_vehicle_description: "Same-size diesel van",
+        comparable_in_size_and_use: true,
+      },
+    },
+  };
+  const lines = computeCommercialVehicleCreditLines(vehicle);
+  assertEquals(lines.line21AdjustedBasis, 40_000);
+  assertEquals(lines.line22BasisPercentage, 6_000);
+  assertEquals(lines.line23IncrementalCost, 7_000);
+  assertEquals(lines.line26Credit, 6_000);
+});
+
+Deno.test("Form 8936: commercial heavy vehicle uses the $40,000 cap", () => {
+  const vehicle: F8936Item = {
+    ...commercialVehicle,
+    commercial: {
+      ...commercialVehicle.commercial!,
+      gvwr_pounds: 14_000,
+      cost_or_other_basis: 200_000,
+      incremental_cost: {
+        kind: "comparable_vehicle",
+        purchase_price: 200_000,
+        comparable_vehicle_price: 150_000,
+        comparable_vehicle_description: "Same-size diesel truck",
+        comparable_in_size_and_use: true,
+      },
+      propulsion: {
+        kind: "plug_in_electric",
+        battery_capacity_kwh: 20,
+        externally_rechargeable: true,
+      },
+    },
+  };
+  assertEquals(
+    computeCommercialVehicleCreditLines(vehicle).line26Credit,
+    40_000,
+  );
+});
+
+Deno.test("Form 8936: commercial vehicle rejects unsupported safe harbor and too-small battery", () => {
+  assertThrows(
+    () =>
+      computeCommercialVehicleCreditLines({
+        ...commercialVehicle,
+        commercial: {
+          ...commercialVehicle.commercial!,
+          gvwr_pounds: 14_000,
+        },
+      }),
+    Error,
+    "safe harbor",
+  );
+  assertThrows(
+    () =>
+      computeCommercialVehicleCreditLines({
+        ...commercialVehicle,
+        commercial: {
+          ...commercialVehicle.commercial!,
+          propulsion: {
+            kind: "plug_in_electric",
+            battery_capacity_kwh: 6,
+            externally_rechargeable: true,
+          },
+        },
+      }),
+    Error,
+    "battery requirements",
+  );
+  assertThrows(
+    () =>
+      computeCommercialVehicleCreditLines({
+        ...commercialVehicle,
+        acquisition_date: "2022-12-31",
+      }),
+    Error,
+    "after 2022",
+  );
+});
+
+Deno.test("Form 8936: commercial vehicle cannot claim a duplicate VIN or a new-vehicle credit for the same VIN", () => {
+  assertEquals(
+    f8936.inputSchema.safeParse(source([newVehicle, {
+      ...commercialVehicle,
+      vin: newVehicle.vin,
+    }])).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      computeCommercialVehicleCreditLines({
+        ...commercialVehicle,
+        commercial: {
+          ...commercialVehicle.commercial!,
+          claimed_new_clean_credit_for_vin: true,
+        },
+      }),
+    Error,
+    "same VIN",
+  );
+});
+
+Deno.test("Form 8936: commercial credit needs nonpassive source classification", () => {
+  assertThrows(
+    () =>
+      compute(source([{
+        ...commercialVehicle,
+        business_credit_subject_to_passive_activity_limit: undefined,
+      }])),
+    Error,
+    "passive-activity answer",
+  );
+  assertThrows(
+    () =>
+      compute(source([{
+        ...commercialVehicle,
+        business_credit_subject_to_passive_activity_limit: true,
+      }])),
+    Error,
+    "Form 8582-CR",
   );
 });

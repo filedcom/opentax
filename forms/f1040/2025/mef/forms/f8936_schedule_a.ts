@@ -1,6 +1,7 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
   businessUsePercentage,
+  computeCommercialVehicleCreditLines,
   computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   type F8936Input,
@@ -144,10 +145,49 @@ function previouslyOwnedGroup(
   ]);
 }
 
+function commercialGroup(item: F8936Item): string {
+  const facts = item.commercial!;
+  const lines = computeCommercialVehicleCreditLines(item);
+  return elements("QlfyCmrclCleanVehicleYesGrp", [
+    element("NewClnVehServiceTYNoInd", "X"),
+    element("PrevOwnClnVehServiceTYNoInd", "X"),
+    element("QlfyCmrclClnVehSrvcTYYesInd", "X"),
+    element(
+      "VehOfCharSubjToAllwncDeprecInd",
+      String(facts.subject_to_depreciation),
+    ),
+    element(
+      "AcqCmrclClnVehUseNotResaleInd",
+      String(item.acquired_for_use_not_resale),
+    ),
+    element(
+      "VehiclePoweredByGasOrDieselInd",
+      String(facts.powered_partly_by_gas_or_diesel),
+    ),
+    element("GrossVehicleWeightRatingNum", facts.gvwr_pounds),
+    element("VehicleCostOrOtherBasisAmt", lines.line19Basis),
+    element("Section179ExpenseDeductionAmt", lines.line20Section179),
+    element("NetSect179ExpenseDedAmt", lines.line21AdjustedBasis),
+    element(
+      "NetSect179ExpenseDedPctAmt",
+      Math.round(lines.line22BasisPercentage),
+    ),
+    element("VehicleIncrementalCostAmt", lines.line23IncrementalCost),
+    element(
+      "TentQlfyCmrclCleanVehicleCrAmt",
+      Math.round(lines.line24LesserCost),
+    ),
+    element("MaxQlfyCmrclCleanVehCrAmt", lines.line25MaximumCredit),
+    element("QlfyCmrclCleanVehicleCrAmt", lines.line26Credit),
+  ]);
+}
+
 function buildScheduleA(item: F8936Item, input: F8936Input): string {
   const personalCredit = computeVehiclePersonalCredit(item, input);
-  const businessCredit = item.is_new_vehicle === true
+  const businessCredit = item.credit_kind === "new_clean_vehicle"
     ? computeNewVehicleCreditParts(item, input).business
+    : item.credit_kind === "qualified_commercial_clean_vehicle"
+    ? computeCommercialVehicleCreditLines(item).line26Credit
     : 0;
   if (
     personalCredit === 0 && businessCredit === 0 &&
@@ -162,7 +202,7 @@ function buildScheduleA(item: F8936Item, input: F8936Input): string {
   }
   const { currentOver, priorOver } = incomeAnswers(
     input,
-    item.is_new_vehicle === false,
+    item.credit_kind === "previously_owned_clean_vehicle",
   );
   const directedRepaymentBox = item.transferred_to_dealer === true &&
     (item.resold_within_30_days === true || (currentOver && priorOver));
@@ -179,9 +219,11 @@ function buildScheduleA(item: F8936Item, input: F8936Input): string {
       ? element("CrTrnsfrDlrSaleAmt", item.transferred_amount)
       : "",
     directedRepaymentBox ? element("NotAllowedClaimClnVehCrInd", "X") : "",
-    item.is_new_vehicle === true
+    item.credit_kind === "new_clean_vehicle"
       ? newVehicleGroup(item, input, personalCredit)
-      : previouslyOwnedGroup(item, input, personalCredit),
+      : item.credit_kind === "previously_owned_clean_vehicle"
+      ? previouslyOwnedGroup(item, input, personalCredit)
+      : commercialGroup(item),
   ]);
 }
 

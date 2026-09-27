@@ -91,7 +91,7 @@ Deno.test("singleton Form 8936 keeps one MAGI record with its vehicle array", ()
     prior_year_magi: { adjusted_gross_income: 85_000 },
     filing_status: "single" as const,
     prior_year_filing_status: "single" as const,
-    f8936s: [{ is_new_vehicle: true, vin: "1HGCM82633A004352" }],
+    f8936s: [{ credit_kind: "new_clean_vehicle", vin: "1HGCM82633A004352" }],
   };
   const result = startNode.compute(
     { taxYear: 2025, formType: "f1040" },
