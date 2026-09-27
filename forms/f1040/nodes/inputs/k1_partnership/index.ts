@@ -41,6 +41,11 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   // Identification
   partnership_name: z.string().min(1),
+  partnership_ein: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  // Box 15 code Z is the partner's orphan-drug credit, not a generic credit.
+  box15_code_z_orphan_drug_credit: z.number().int().positive().optional(),
+  orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
   // Affirm portfolio boxes 5/6 are investment-property income not already
   // included in Form 4952's manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
@@ -238,6 +243,24 @@ export const itemSchema = z.object({
 
   // Pre-2018 other losses suspended under at-risk rules
   pre2018_atrisk_other_loss: z.number().nonnegative().optional(),
+}).superRefine((item, ctx) => {
+  if (item.box15_code_z_orphan_drug_credit !== undefined) {
+    for (
+      const key of [
+        "partnership_ein",
+        "source_document_reference",
+        "orphan_drug_credit_subject_to_passive_activity_limit",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 15 code Z needs ${key}`,
+        });
+      }
+    }
+  }
 });
 
 export const inputSchema = z.object({

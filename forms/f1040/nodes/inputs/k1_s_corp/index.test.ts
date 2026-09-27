@@ -37,6 +37,18 @@ Deno.test("S corporation K-1 portfolio boxes feed Form 4952 only when affirmed",
   ]);
 });
 
+Deno.test("S corporation K-1 box 13 code Z needs source identity and passive classification", () => {
+  assertThrows(() =>
+    compute([minimalItem({ box13_code_z_orphan_drug_credit: 1_250 })])
+  );
+  compute([minimalItem({
+    corporation_ein: "123456789",
+    source_document_reference: "2025 S corporation K-1",
+    box13_code_z_orphan_drug_credit: 1_250,
+    orphan_drug_credit_subject_to_passive_activity_limit: false,
+  })]);
+});
+
 Deno.test("box 9 retains each S-corp's Form 4797 line 2 amount", () => {
   const result = compute([
     minimalItem({ corporation_name: "Corp One", box9_net_1231: 3_000 }),

@@ -37,6 +37,18 @@ Deno.test("partnership K-1 portfolio boxes feed Form 4952 only when affirmed", (
   ]);
 });
 
+Deno.test("partnership K-1 box 15 code Z needs source identity and passive classification", () => {
+  assertThrows(() =>
+    compute([minimalItem({ box15_code_z_orphan_drug_credit: 1_250 })])
+  );
+  compute([minimalItem({
+    partnership_ein: "123456789",
+    source_document_reference: "2025 Partnership K-1",
+    box15_code_z_orphan_drug_credit: 1_250,
+    orphan_drug_credit_subject_to_passive_activity_limit: false,
+  })]);
+});
+
 Deno.test("box 10 retains each partnership's Form 4797 line 2 amount", () => {
   const result = compute([
     minimalItem({ partnership_name: "Partner One", box10_net_1231: 10_000 }),

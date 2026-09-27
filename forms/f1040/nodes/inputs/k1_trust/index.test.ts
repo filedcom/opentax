@@ -38,6 +38,31 @@ Deno.test("trust K-1 uses DNI-limited portfolio income for affirmed Form 4952 so
   ]);
 });
 
+Deno.test("estate or trust K-1 orphan-drug code ZZ needs its source statement", () => {
+  assertThrows(() =>
+    compute([minimalItem({ box13_code_zz_orphan_drug_credit: 500 })])
+  );
+  compute([minimalItem({
+    entity_type: "trust",
+    estate_trust_ein: "123456789",
+    source_document_reference: "2025 Trust K-1",
+    box13_code_zz_orphan_drug_credit: 500,
+    box13_code_zz_orphan_drug_statement_reference: "Box 13 ZZ orphan drug",
+    orphan_drug_credit_subject_to_passive_activity_limit: false,
+  })]);
+  assertThrows(() =>
+    compute([minimalItem({
+      entity_type: "estate",
+      estate_trust_ein: "123456789",
+      source_document_reference: "2025 Estate K-1",
+      box13_credits: 499,
+      box13_code_zz_orphan_drug_credit: 500,
+      box13_code_zz_orphan_drug_statement_reference: "Box 13 ZZ orphan drug",
+      orphan_drug_credit_subject_to_passive_activity_limit: false,
+    })])
+  );
+});
+
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {

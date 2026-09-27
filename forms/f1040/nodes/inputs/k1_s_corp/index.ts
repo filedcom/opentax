@@ -42,6 +42,11 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 export const itemSchema = z.object({
   // Identification
   corporation_name: z.string().min(1),
+  corporation_ein: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  // Box 13 code Z is the shareholder's orphan-drug credit.
+  box13_code_z_orphan_drug_credit: z.number().int().positive().optional(),
+  orphan_drug_credit_subject_to_passive_activity_limit: z.boolean().optional(),
   // Affirm portfolio boxes 4/5 are investment-property income not already
   // included in Form 4952's manual "other" facts.
   investment_property_for_form4952: z.boolean().optional(),
@@ -156,6 +161,24 @@ export const itemSchema = z.object({
   pre2018_suspended_losses: z.number().nonnegative().optional(),
   // At-risk suspended losses from pre-2018 years (K1S > "Pre-2018 At-Risk" tab)
   pre2018_at_risk_suspended: z.number().nonnegative().optional(),
+}).superRefine((item, ctx) => {
+  if (item.box13_code_z_orphan_drug_credit !== undefined) {
+    for (
+      const key of [
+        "corporation_ein",
+        "source_document_reference",
+        "orphan_drug_credit_subject_to_passive_activity_limit",
+      ] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 13 code Z needs ${key}`,
+        });
+      }
+    }
+  }
 });
 
 export const inputSchema = z.object({

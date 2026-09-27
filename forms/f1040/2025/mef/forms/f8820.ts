@@ -7,8 +7,75 @@ import {
 } from "../../../nodes/inputs/f8820/index.ts";
 import { inputSchema as scheduleCInputSchema } from "../../../nodes/inputs/schedule_c/index.ts";
 import { inputSchema as scheduleFInputSchema } from "../../../nodes/intermediate/forms/schedule_f/index.ts";
+import { inputSchema as partnershipK1InputSchema } from "../../../nodes/inputs/k1_partnership/index.ts";
+import { inputSchema as sCorpK1InputSchema } from "../../../nodes/inputs/k1_s_corp/index.ts";
+import { inputSchema as trustK1InputSchema } from "../../../nodes/inputs/k1_trust/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 import { appendForm8820ExpenseStatement } from "../../pdf/forms/f8820_expense_statement.ts";
+
+function reconcilePassThroughCredits(
+  input: F8820Input,
+  pending: Readonly<Record<string, unknown>>,
+): void {
+  const partnership = pending.k1_partnership === undefined
+    ? []
+    : partnershipK1InputSchema.parse(pending.k1_partnership).k1_partnerships;
+  const sCorporations = pending.k1_s_corp === undefined
+    ? []
+    : sCorpK1InputSchema.parse(pending.k1_s_corp).k1_s_corps;
+  const estatesAndTrusts = pending.k1_trust === undefined
+    ? []
+    : trustK1InputSchema.parse(pending.k1_trust).k1_trusts;
+  for (const credit of input.pass_through_credits ?? []) {
+    if (credit.source_type === "partnership") {
+      const matches = partnership.filter((k1) =>
+        k1.partnership_ein === credit.entity_ein &&
+        k1.source_document_reference === credit.source_document_reference
+      );
+      if (
+        matches.length !== 1 ||
+        matches[0].box15_code_z_orphan_drug_credit !== credit.credit_amount ||
+        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+          credit.subject_to_passive_activity_limit
+      ) {
+        throw new Error(
+          "Form 8820 partnership credit does not reconcile to K-1 box 15 code Z",
+        );
+      }
+    } else if (credit.source_type === "s_corporation") {
+      const matches = sCorporations.filter((k1) =>
+        k1.corporation_ein === credit.entity_ein &&
+        k1.source_document_reference === credit.source_document_reference
+      );
+      if (
+        matches.length !== 1 ||
+        matches[0].box13_code_z_orphan_drug_credit !== credit.credit_amount ||
+        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+          credit.subject_to_passive_activity_limit
+      ) {
+        throw new Error(
+          "Form 8820 S-corporation credit does not reconcile to K-1 box 13 code Z",
+        );
+      }
+    } else {
+      const matches = estatesAndTrusts.filter((k1) =>
+        k1.entity_type === credit.source_type &&
+        k1.estate_trust_ein === credit.entity_ein &&
+        k1.source_document_reference === credit.source_document_reference
+      );
+      if (
+        matches.length !== 1 ||
+        matches[0].box13_code_zz_orphan_drug_credit !== credit.credit_amount ||
+        matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
+          credit.subject_to_passive_activity_limit
+      ) {
+        throw new Error(
+          "Form 8820 estate/trust credit does not reconcile to K-1 box 13 code ZZ",
+        );
+      }
+    }
+  }
+}
 
 function reconcileFiledExpenseReductions(
   input: F8820Input,
@@ -126,6 +193,9 @@ export const form8820: MefFormDescriptor<"f8820", Input> = {
     if (fields.f8820s === undefined) return "";
     const source = inputSchema.parse(fields);
     const lines = calculateForm8820(source);
+    if (context?.pending) {
+      reconcilePassThroughCredits(source, context.pending);
+    }
     if (lines.line2c <= 0 && !source.reduced_section280c_credit_election) {
       return "";
     }

@@ -51,9 +51,15 @@ Form 8911 business use also needs the shared Form 3800 treatment.
 3800 Part III line 1h instead of depositing its gross 25% credit in Schedule 3.
 The source calculation distinguishes the section 280C reduced-credit election,
 the Form 8932 overlapping wage-credit offset, and the required drug identity.
-The linked IRS8820 and IRS3800 XML cases are written but unrun. Expense or basis
-reduction, controlled groups, pass-through and passive sources, PDF output, and
-IRS business rules remain open.
+The linked IRS8820 and IRS3800 XML cases are written but unrun. The current
+build pass also has structured section 280C deduction or basis reductions,
+controlled-group allocation statements, pass-through source identities, and a
+paper Form 8820 PDF builder. Partnership K-1 box 15 code Z and S-corporation
+K-1 box 13 code Z amounts, plus estate/trust K-1 box 13 code ZZ orphan-drug
+statement amounts, now reconcile to the claimed pass-through credit during MeF
+export, with written but unrun cases. This compares entered source facts;
+actual K-1 documents and their attached statements, automatic K-1 credit
+routing, passive credits, filled-PDF output, and IRS business rules remain open.
 
 `f8826` now forwards its line 8 source amount to `f3800` as a separate line 1e
 entry. A positive nonpassive credit is limited at final Form 1040 assembly; a

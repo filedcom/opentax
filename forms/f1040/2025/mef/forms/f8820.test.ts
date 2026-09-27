@@ -250,6 +250,141 @@ Deno.test("Form 8820 MeF includes mixed line 3 but omits a pass-through-only for
   );
 });
 
+Deno.test("Form 8820 pass-through credit reconciles to partnership and S-corp K-1 code Z", () => {
+  const partnershipCredit = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 Partnership K-1",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const sCorpCredit = {
+    source_type: "s_corporation" as const,
+    entity_ein: "987654321",
+    source_document_reference: "2025 S corporation K-1",
+    credit_amount: 750,
+    subject_to_passive_activity_limit: false,
+  };
+  const passThroughOnly = {
+    ...source,
+    f8820s: [],
+    reduced_section280c_credit_election: false,
+    form8932_overlapping_wage_credit: 0,
+    pass_through_credits: [partnershipCredit, sCorpCredit],
+  };
+  const pending = {
+    f8820: passThroughOnly,
+    k1_partnership: {
+      k1_partnerships: [{
+        partnership_name: "Partner One",
+        partnership_ein: "123456789",
+        source_document_reference: "2025 Partnership K-1",
+        box15_code_z_orphan_drug_credit: 1_250,
+        orphan_drug_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Corp One",
+        corporation_ein: "987654321",
+        source_document_reference: "2025 S corporation K-1",
+        box13_code_z_orphan_drug_credit: 750,
+        orphan_drug_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+  };
+  assertEquals(form8820.build(passThroughOnly, { pending }), "");
+  assertThrows(
+    () =>
+      form8820.build(passThroughOnly, {
+        pending: {
+          ...pending,
+          k1_partnership: {
+            k1_partnerships: [{
+              ...pending.k1_partnership.k1_partnerships[0],
+              box15_code_z_orphan_drug_credit: 1_249,
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 15 code Z",
+  );
+  assertThrows(
+    () =>
+      form8820.build(passThroughOnly, {
+        pending: { ...pending, k1_s_corp: undefined },
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code Z",
+  );
+  assertThrows(
+    () =>
+      form8820.build(passThroughOnly, {
+        pending: {
+          ...pending,
+          k1_s_corp: {
+            k1_s_corps: [{
+              ...pending.k1_s_corp.k1_s_corps[0],
+              orphan_drug_credit_subject_to_passive_activity_limit: true,
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code Z",
+  );
+});
+
+Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code ZZ", () => {
+  const credits = ["estate", "trust"].map((type, index) => ({
+    source_type: type as "estate" | "trust",
+    entity_ein: String(123_456_789 + index),
+    source_document_reference: `2025 ${type} K-1`,
+    credit_amount: 500 + index,
+    subject_to_passive_activity_limit: false,
+  }));
+  const passThroughOnly = {
+    ...source,
+    f8820s: [],
+    reduced_section280c_credit_election: false,
+    form8932_overlapping_wage_credit: 0,
+    pass_through_credits: credits,
+  };
+  const k1_trusts = credits.map((credit) => ({
+    estate_trust_name: `Example ${credit.source_type}`,
+    entity_type: credit.source_type,
+    estate_trust_ein: credit.entity_ein,
+    source_document_reference: credit.source_document_reference,
+    box13_code_zz_orphan_drug_credit: credit.credit_amount,
+    box13_code_zz_orphan_drug_statement_reference:
+      `${credit.source_type} orphan-drug allocation statement`,
+    orphan_drug_credit_subject_to_passive_activity_limit: false,
+  }));
+  assertEquals(
+    form8820.build(passThroughOnly, {
+      pending: { f8820: passThroughOnly, k1_trust: { k1_trusts } },
+    }),
+    "",
+  );
+  assertThrows(
+    () =>
+      form8820.build(passThroughOnly, {
+        pending: {
+          f8820: passThroughOnly,
+          k1_trust: {
+            k1_trusts: [
+              { ...k1_trusts[0], entity_type: "trust" },
+              k1_trusts[1],
+            ],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code ZZ",
+  );
+});
+
 Deno.test("Form 8820 MeF reconciles a section 280C reduction to filed Schedule C", () => {
   const fullCredit = {
     ...source,
