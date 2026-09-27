@@ -78,9 +78,9 @@ suite still needs a separate run before that release gate is green.
    Diff 2026v1→current and TY2025v5.4→current by XSD element, form namespace,
    document order, required attachment, and active rule ID. Keep raw packages
    in ignored `.state/research/docs/` because this repository is public.
-3. Build a coverage ledger from `pdf-coverage.csv` (56 descriptors: 51 current
-   drafts, five older-year URLs),
-   `mef-coverage.csv` (84 serializers), `year-literals.csv` (230 non-test
+3. Use `node-coverage.csv` (191 registered TY2025 nodes),
+   `pdf-coverage.csv` (56 descriptors: 51 current drafts, five older-year
+   URLs), `mef-coverage.csv` (84 serializers), `year-literals.csv` (230 non-test
    occurrences), and the current MeF accepted-form XLSX. Give each existing
    component one disposition: **2026 updated**, **2026 verified unchanged**,
    **replaced**, or **unsupported with explicit diagnostic**. Add Schedule 3-A

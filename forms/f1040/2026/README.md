@@ -67,7 +67,9 @@ and cannot be the final validation target.
    records the values and conditional rules; config registration alone does not
    make a shared node TY2026 correct.
 2. Audit every shared node listed in
-   [`year-literals.csv`](../../../docs/ty2026/year-literals.csv). A year literal
+   [`node-coverage.csv`](../../../docs/ty2026/node-coverage.csv), using
+   [`year-literals.csv`](../../../docs/ty2026/year-literals.csv) to find
+   literal-driven paths. A year literal
    that changes behavior must use `ctx.taxYear` or a year-specific node;
    comments alone still need source review. The highest-risk files are
    `general`, `f8835`, `f8936`, `form5695`, `form8962`, `form_8829`,

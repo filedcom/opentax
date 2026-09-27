@@ -20,9 +20,14 @@ for the implementation contract.
   Current result: 51 of 56 descriptors have a 2026 draft; five IRS draft
   URLs still serve older years and are recorded as `wrong-year` in the manifest.
 - [`mef-coverage.csv`](mef-coverage.csv): each TY2025 MeF serializer module.
+- [`node-coverage.csv`](node-coverage.csv): all 191 registered TY2025 graph
+  nodes, their source modules, 2025 year mentions, tax-year dispatch, matching
+  MeF/PDF surface, available 2026 draft, and review priority. Every row remains
+  `audit-required` until its TY2026 behavior and output route are proved;
+  progress notes do not mean a node is ready for the 2026 registry.
 - [`year-literals.csv`](year-literals.csv): all `2025` occurrences in non-test
   calculation node source, including comments. These are review leads, not
-  proof of a bug. Regenerate the three CSVs with `python3
+  proof of a bug. Regenerate the four CSVs with `python3
   docs/ty2026/build_inventory.py` after a source or code change.
 - [`FORM-DELTA.md`](FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`ATS.md`](ATS.md): scenario inventory and fixture extraction rules.

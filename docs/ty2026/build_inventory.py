@@ -11,6 +11,31 @@ OUT = Path(__file__).resolve().parent
 PDF = ROOT / "forms/f1040/2025/pdf/forms"
 MEF = ROOT / "forms/f1040/2025/mef/forms"
 NODES = ROOT / "forms/f1040/nodes"
+REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
+
+# A node stays unverified until its 2026 behavior, outputs, and form route are
+# checked. These notes identify work already started without marking it done.
+NODE_PROGRESS = {
+    "general": "dependent ages and qualifying-relative income updated; audit other fields",
+    "w2": "2026 SIMPLE and elective deferral limits updated; audit remaining outputs",
+    "auto_expense": "2026 business mileage periods updated; audit remaining rules",
+    "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",
+    "f8621": "2026 event-year allocation updated; audit remaining rules",
+    "form8962": "2026 percentage and repayment paths updated; verify final instructions",
+    "form2441": "2026 benefit and credit rules updated; verify final instructions",
+    "form982": "2026 qualified-residence debt date gate updated; audit remaining rules",
+    "form4562": "2026 caps configured; choose passenger-auto cap by placed-in-service year",
+    "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
+    "schedule1a": "2026 config updated; reconcile 1040 line 13a and source form",
+}
+
+P0_NODES = {
+    "f1040", "general", "schedule_a", "schedule1a", "schedule1", "schedule2",
+    "schedule3", "form8839", "form8962", "form5695", "f8936", "f8812",
+    "eitc", "income_tax_calculation", "agi_aggregator", "standard_deduction",
+    "form4562", "form8995", "form8995a", "form_8829", "schedule_h",
+    "f8835", "form1062",
+}
 
 manifest = json.loads((OUT / "corpus/manifest.json").read_text())
 drafts = {Path(f["path"]).stem for f in manifest["files"]
@@ -35,6 +60,8 @@ with (OUT / "pdf-coverage.csv").open("w", newline="") as handle:
 
 mef_index = (MEF / "index.ts").read_text()
 mef_names = sorted(set(re.findall(r'from "\./([^"/]+)\.ts"', mef_index)))
+mef_components = set(mef_names)
+pdf_components = {row["component"]: row for row in pdf_rows}
 with (OUT / "mef-coverage.csv").open("w", newline="") as handle:
     writer = csv.writer(handle, lineterminator="\n")
     writer.writerow(["component", "ty2025_serializer"])
@@ -52,4 +79,64 @@ with (OUT / "year-literals.csv").open("w", newline="") as handle:
     writer.writerow(["file", "line", "source_excerpt"])
     writer.writerows(year_literals)
 
-print(f"PDF descriptors: {len(pdf_rows)}, MeF modules: {len(mef_names)}, node 2025 mentions: {len(year_literals)}")
+# Map every registered TY2025 node to its implementing module. This is the
+# graph review worklist, separate from PDF and MeF serializer inventories.
+registry_source = REGISTRY.read_text()
+bindings: dict[str, Path] = {}
+for names, module in re.findall(
+    r'import\s*\{(.*?)\}\s*from\s*"([^"]+)";', registry_source, re.S
+):
+    if not module.startswith("../nodes/"):
+        continue
+    resolved = (REGISTRY.parent / module).resolve()
+    for name in names.split(","):
+        parts = name.strip().split(" as ")
+        if parts[0]:
+            bindings[parts[-1].strip()] = resolved
+
+body = registry_source.split("export const registry: NodeRegistry = {", 1)[1]
+body = body.split("\n};", 1)[0]
+node_rows = []
+for line in body.splitlines():
+    code = line.split("//", 1)[0].strip().rstrip(",")
+    match = re.fullmatch(r"([A-Za-z][A-Za-z0-9_]*)(?:\s*:\s*([A-Za-z][A-Za-z0-9_]*))?", code)
+    if not match:
+        continue
+    node_type, binding = match.group(1), match.group(2) or match.group(1)
+    if node_type == "start":
+        source = REGISTRY.parent / "start.ts"
+    else:
+        source = bindings.get(binding)
+        if source is None or not source.exists():
+            raise RuntimeError(f"Cannot locate registry binding {node_type}: {binding}")
+    relative = str(source.relative_to(ROOT))
+    source_text = source.read_text()
+    mentions = sum("2025" in source_line for source_line in source_text.splitlines())
+    group = "start" if node_type == "start" else relative.split("/nodes/", 1)[1].split("/", 1)[0]
+    component = re.sub(r"^form_?", "f", node_type)
+    if node_type == "f8812":
+        component = "schedule_8812"
+    pdf = pdf_components.get(component)
+    node_rows.append({
+        "node_type": node_type,
+        "ty2025_source": relative,
+        "group": group,
+        "2025_mentions_in_module": mentions,
+        "uses_ctx_tax_year": "yes" if "ctx.taxYear" in source_text else "no",
+        "ty2025_mef_module": "yes" if component in mef_components else "no",
+        "ty2025_pdf_descriptor": "yes" if pdf else "no",
+        "ty2026_draft_snapshot": pdf["ty2026_draft_snapshot"] if pdf else "n/a",
+        "priority": "P0" if node_type in P0_NODES else "P1" if mentions else "P2",
+        "2026_disposition": "audit-required",
+        "progress_or_next_action": NODE_PROGRESS.get(
+            node_type, "verify 2026 law, node outputs, and graph route"
+        ),
+    })
+if len({row["node_type"] for row in node_rows}) != len(node_rows):
+    raise RuntimeError("Duplicate node in TY2025 registry inventory")
+with (OUT / "node-coverage.csv").open("w", newline="") as handle:
+    writer = csv.DictWriter(handle, fieldnames=list(node_rows[0]), lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(node_rows)
+
+print(f"PDF descriptors: {len(pdf_rows)}, MeF modules: {len(mef_names)}, registry nodes: {len(node_rows)}, node 2025 mentions: {len(year_literals)}")
