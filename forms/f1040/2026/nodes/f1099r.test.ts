@@ -53,6 +53,75 @@ Deno.test("TY2026 Form 1099-R rejects unaudited distribution branches", () => {
   }
 });
 
+Deno.test("TY2026 code G keeps pension rollover gross and taxable amounts separate", () => {
+  const taxFree = f1099r_2026.compute(context, {
+    statements: [{
+      ...base,
+      box1_gross_distribution: 20_000,
+      box2a_taxable_amount: 0,
+      box7a_codes: ["G"],
+      box7b_ira_sep_simple: false,
+    }],
+  });
+  assertEquals(
+    taxFree.outputs.some((output) => output.nodeType === "agi_aggregator"),
+    false,
+  );
+  assertEquals(
+    taxFree.outputs.find((output) => output.nodeType === "f1040")?.fields
+      .line5b_pension_taxable,
+    0,
+  );
+  const result = f1099r_2026.compute(context, {
+    statements: [
+      {
+        ...base,
+        payer_name: "Pension Plan",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 0,
+        box7a_codes: ["G"],
+        box7b_ira_sep_simple: false,
+      },
+      {
+        ...base,
+        payer_name: "Roth Rollover Plan",
+        box1_gross_distribution: 10_000,
+        box2a_taxable_amount: 7_000,
+        box5_employee_contributions_or_insurance_premiums: 3_000,
+        box7a_codes: ["G"],
+        box7b_ira_sep_simple: false,
+      },
+    ],
+  });
+  assertEquals(
+    result.outputs.find((output) => output.nodeType === "agi_aggregator")
+      ?.fields.line5b_pension_taxable,
+    7_000,
+  );
+  const f1040 = result.outputs.find((output) => output.nodeType === "f1040")
+    ?.fields;
+  assertEquals(f1040?.line5a_pension_gross, 30_000);
+  assertEquals(f1040?.line5b_pension_taxable, 7_000);
+  assertEquals(f1040?.line5c_rollover, true);
+  for (
+    const statement of [
+      { ...base, box7a_codes: ["G"], box2a_taxable_amount: 0 },
+      {
+        ...base,
+        box7a_codes: ["G"],
+        box7b_ira_sep_simple: false,
+        box2a_taxable_amount: 6_000,
+      },
+    ]
+  ) {
+    assertThrows(
+      () => f1099r_2026.compute(context, { statements: [statement] }),
+      Error,
+      "distribution needs its code, basis, or special-account calculation route",
+    );
+  }
+});
+
 Deno.test("TY2026 code 1 reports full early-distribution tax on Schedule 2", () => {
   const result = f1099r_2026.compute(context, {
     statements: [{

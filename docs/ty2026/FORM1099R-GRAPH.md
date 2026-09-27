@@ -8,7 +8,8 @@ The draft [2026 Form 1040](corpus/draft/f1040.pdf) supplies the destination
 line labels. The current TY2025 `f1099r` node, its Form 8606/5329/4972
 dependencies, and the TY2025 MeF serializer are audit inputs, not a 2026
 input contract. A dedicated TY2026 node now handles normal, fully taxable
-IRA and pension distributions; the remaining cases below are still required.
+  IRA and pension distributions and a code G pension-plan rollover; the
+  remaining cases below are still required.
 
 ## Source shape changes
 
@@ -32,8 +33,9 @@ IRA and pension distributions; the remaining cases below are still required.
    distributions feed Form 1040 lines 4a/4b; pensions and annuities feed
    5a/5b; box 4 feeds 25b. Disability before minimum retirement age,
    rollovers, QCDs, Roth conversions, and designated Roth distributions
-   require their documented routes. Add 2026 line 5c election/check boxes
-   to the core return when those cases are supported.
+   require their documented routes. The code G pension-plan route now keeps
+   gross and taxable amounts separate and marks line 5c rollover; other 4c/5c
+   check boxes still need their calculation paths.
 3. Feed Form 8606 for nondeductible IRA basis and Roth conversion, Form 5329
    for applicable additional tax through the **2026** Schedule 2 layout,
    and Form 4972 for an explicit lump-sum election. Reconcile every gross,
@@ -52,6 +54,11 @@ IRA and pension distributions; the remaining cases below are still required.
   reach the correct 1040/AGI lines and withholding totals from box facts.
   This graph and two-page PDF case now passes, including simultaneous
   SSA-1099 and W-2 withholding.
+- A single-code G pension-plan direct rollover now prints its box 1 gross on
+  Form 1040 line 5a, box 2a taxable amount on line 5b, and checks 5c(1).
+  A zero-taxable rollover and a taxable rollover to a Roth account can be
+  aggregated while only the taxable amount enters AGI. IRA code G, in-plan
+  Roth details, and other rollover codes remain to map.
 - Code 1 with the full amount subject to 10% now routes directly to 2026
   Schedule 2 line 5, then Form 1040 line 23 and the PDF, as allowed by the
   pinned [2026 draft Form 5329 instructions](corpus/draft/i5329.pdf). The
@@ -61,7 +68,7 @@ IRA and pension distributions; the remaining cases below are still required.
   draft Form 5329 attachment. A normal code 7 statement can coexist with
   this Form 5329 route. The direct 10% route still requires all 1099-R
   statements to carry code 1. See the [Form 5329 contract](FORM5329-GRAPH.md).
-- Taxable code-G Roth rollover, early-distribution exceptions, IRA
+- Other rollover forms, early-distribution exceptions, IRA
   basis with Form 8606, and QCD with and without optional code Y need
   independent calculation fixtures.
 - A box 7c or 7d Trump-account statement must take its own verified path or

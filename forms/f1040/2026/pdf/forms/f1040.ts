@@ -154,6 +154,11 @@ const fields: readonly PdfFieldEntry[] = [
   },
   {
     kind: "checkbox",
+    domainKey: "line5c_rollover",
+    pdfField: `${p1}c1_40[0]`,
+  },
+  {
+    kind: "checkbox",
     domainKey: "line7b_schedule_d_not_required",
     pdfField: `${p1}c1_45[0]`,
   },

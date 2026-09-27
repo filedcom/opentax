@@ -24,6 +24,7 @@ export const f1099rItem2026Schema = z.object({
   box2b_total_distribution: z.boolean().optional(),
   box3_capital_gain: amount.optional(),
   box4_federal_withheld: amount.optional(),
+  box5_employee_contributions_or_insurance_premiums: amount.optional(),
   box7a_codes: z.array(z.string().regex(/^[0-9A-Z]$/)).min(1).max(2),
   box7b_ira_sep_simple: z.boolean(),
   box7c_trump_account: z.boolean().optional(),
@@ -60,6 +61,8 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
     const { statements } = this.inputSchema.parse(rawInput);
     let iraGross = 0;
     let pensionGross = 0;
+    let pensionTaxable = 0;
+    let pensionRollover = false;
     let withheld = 0;
     let earlyTaxable = 0;
     let earlySimpleTaxable = 0;
@@ -84,16 +87,25 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
       );
     }
     for (const statement of statements) {
+      const code = statement.box7a_codes[0];
+      const directPensionRollover = statement.box7a_codes.length === 1 &&
+        code === "G" && !statement.box7b_ira_sep_simple;
       if (
         statement.box7a_codes.length !== 1 ||
-        !["1", "7"].includes(statement.box7a_codes[0]) ||
+        !["1", "7", "G"].includes(code) ||
+        (code === "G" && !directPensionRollover) ||
         statement.box7c_trump_account === true ||
         (statement.box7d_earnings_on_excess_contributions ?? 0) > 0 ||
         (statement.box3_capital_gain ?? 0) > 0 ||
         (statement.box8a_other ?? 0) > 0 ||
         statement.box8b_pct_annuity_contract !== undefined ||
         statement.box2b_taxable_not_determined === true ||
-        statement.box2a_taxable_amount !== statement.box1_gross_distribution
+        (directPensionRollover
+          ? statement.box2a_taxable_amount > statement.box1_gross_distribution
+          : statement.box2a_taxable_amount !==
+              statement.box1_gross_distribution ||
+            (statement.box5_employee_contributions_or_insurance_premiums ?? 0) >
+              0)
       ) {
         throw new Error(
           "TY2026 Form 1099-R distribution needs its code, basis, or special-account calculation route",
@@ -123,6 +135,8 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         iraGross += statement.box1_gross_distribution;
       } else {
         pensionGross += statement.box1_gross_distribution;
+        pensionTaxable += statement.box2a_taxable_amount;
+        pensionRollover ||= directPensionRollover;
       }
       withheld += statement.box4_federal_withheld ?? 0;
       if (statement.box7a_codes[0] === "1") {
@@ -147,9 +161,9 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         line4b_ira_taxable: iraGross,
       }));
     }
-    if (pensionGross > 0) {
+    if (pensionTaxable > 0) {
       outputs.push(this.outputNodes.output(agi_aggregator, {
-        line5b_pension_taxable: pensionGross,
+        line5b_pension_taxable: pensionTaxable,
       }));
     }
     if (earlySimpleTaxable > 0) {
@@ -169,14 +183,16 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         line4b_ira_taxable: iraGross,
         ...(pensionGross > 0 && {
           line5a_pension_gross: pensionGross,
-          line5b_pension_taxable: pensionGross,
+          line5b_pension_taxable: pensionTaxable,
+          ...(pensionRollover && { line5c_rollover: true }),
         }),
         ...(withheld > 0 && { line25b_withheld_1099: withheld }),
       }));
     } else if (pensionGross > 0) {
       outputs.push(this.outputNodes.output(f1040_2026_node, {
         line5a_pension_gross: pensionGross,
-        line5b_pension_taxable: pensionGross,
+        line5b_pension_taxable: pensionTaxable,
+        ...(pensionRollover && { line5c_rollover: true }),
         ...(withheld > 0 && { line25b_withheld_1099: withheld }),
       }));
     } else if (withheld > 0) {
@@ -190,6 +206,8 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         statements,
         ira_gross: iraGross,
         pension_gross: pensionGross,
+        pension_taxable: pensionTaxable,
+        pension_rollover: pensionRollover,
         withholding: withheld,
         early_taxable: earlyTaxable,
         early_simple_taxable: earlySimpleTaxable,

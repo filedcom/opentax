@@ -869,6 +869,42 @@ Deno.test("TY2026 normal IRA and pension 1099-Rs reach AGI, withholding, and PDF
   assertEquals(pdf.getForm().getFields().length, 0);
 });
 
+Deno.test("TY2026 code G pension rollover reaches AGI and Form 1040 line 5c", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 30_000, box2_fed_withheld: 1_500 }],
+    f1099r: [
+      {
+        payer_name: "Pension Plan",
+        payer_ein: "987654321",
+        recipient: "taxpayer",
+        box1_gross_distribution: 20_000,
+        box2a_taxable_amount: 0,
+        box7a_codes: ["G"],
+        box7b_ira_sep_simple: false,
+      },
+      {
+        payer_name: "Roth Rollover Plan",
+        payer_ein: "123456789",
+        recipient: "taxpayer",
+        box1_gross_distribution: 10_000,
+        box2a_taxable_amount: 7_000,
+        box5_employee_contributions_or_insurance_premiums: 3_000,
+        box7a_codes: ["G"],
+        box7b_ira_sep_simple: false,
+      },
+    ],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line5a_pension_gross, 30_000);
+  assertEquals(result.pending.f1040.line5b_pension_taxable, 7_000);
+  assertEquals(result.pending.f1040.line5c_rollover, true);
+  assertEquals(result.pending.f1040.line9_total_income, 37_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 2);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
 Deno.test("TY2026 1099-R code 1 reaches Schedule 2 line 5 without Form 5329", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,
