@@ -155,7 +155,7 @@ form8582cr,forms/f1040/nodes/intermediate/forms/form8582cr/index.ts,intermediate
 form8606,forms/f1040/nodes/intermediate/forms/form8606/index.ts,intermediate,1,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 form8396,forms/f1040/nodes/intermediate/forms/form8396/index.ts,intermediate,2,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 form8815,forms/f1040/nodes/intermediate/forms/form8815/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-form8839,forms/f1040/nodes/intermediate/forms/form8839/index.ts,intermediate,1,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
+form8839,forms/f1040/nodes/intermediate/forms/form8839/index.ts,intermediate,4,yes,yes,yes,yes,P0,audit-required,"2025/2026 refundable split, indexed caps, and origin-year carryforward updated; add full credit-limit worksheet"
 form8853,forms/f1040/nodes/intermediate/forms/form8853/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 form8880,forms/f1040/nodes/intermediate/forms/form8880/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form7203,forms/f1040/nodes/intermediate/forms/form7203/index.ts,intermediate,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"

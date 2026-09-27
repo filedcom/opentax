@@ -15,7 +15,7 @@
 | children[].special_needs | boolean | direct | Child is US special needs | Part I Col (d) | i8839 p4 |
 | children[].prior_year_credit | number | direct | Credit claimed in prior years for same child | Part II Line 3 | i8839 p7 |
 | magi | number | direct | Modified adjusted gross income | Part II Line 7 / Line 25 | i8839 p9 |
-| prior_year_credit_carryforward | number | direct | Unused nonrefundable credit from prior years | Line 18 / Line 3 | i8839 p7 |
+| prior_year_credit_carryforwards | array of origin tax year and amount | direct | Unused nonrefundable credit from each of the preceding five years | Part II line 15 / carryforward worksheet | i8839 carryforward worksheet |
 | filing_status | enum | direct | Filing status (MFS restricted) | General Instructions | i8839 p2 |
 | income_tax_liability | number | direct | Tax liability for credit limit worksheet | Line 17 | i8839 p7 |
 
@@ -35,11 +35,14 @@
 - Line 11c: sum of line11b across all children (total refundable)
 - Line 12: sum of line11a across all children
 - Line 13: line 11c → f1040 line 30 (refundable)
-- Line 14: line 12 (nonrefundable + refundable combined)
+- Line 14: line 12 minus line 13 (current-year nonrefundable portion)
 
-### Step 3 — Nonrefundable Credit (Lines 16-17)
-- Line 16: line14 - line13 (nonrefundable portion)
+### Step 3 — Nonrefundable Credit (Lines 15-18)
+- Line 15: sum of prior-year nonrefundable carryforwards
+- Line 16: line 14 plus line 15
 - Line 17: min(line16, income_tax_liability) — credit limit worksheet result
+- Line 18: line 17 flows to Schedule 3, line 6c. Unused amounts carry forward
+  with their origin year; oldest credits are used first and expire after five years.
 - → Schedule 3 line 6c
 
 ### Step 4 — Employer Exclusion (Part III)
@@ -100,7 +103,9 @@ flowchart LR
 4. **Cannot double-dip**: Expenses reimbursed by employer are not qualified expenses for the credit
 5. **Refundable cap**: $5,000 per child max refundable; excess is nonrefundable (subject to credit limit)
 6. **Credit limit worksheet**: Nonrefundable credit limited to tax liability; we accept income_tax_liability as input
-7. **Carryforward**: Unused nonrefundable credit carries forward 5 years (we model receipt of carryforward as input)
+7. **Carryforward**: Unused nonrefundable credit carries forward 5 years. The
+   node accepts origin-year amounts and emits the surviving balances, but the
+   full credit-limit worksheet still requires the other credit facts upstream.
 8. **Foreign child**: Cannot take credit/exclusion until adoption is final (adoption_final flag required)
 9. **Multi-child**: Each child calculated separately; totals aggregated
 

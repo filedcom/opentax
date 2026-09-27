@@ -34,15 +34,33 @@ export const inputSchema = z.object({
   children: z.array(childSchema).optional(),
   // Modified adjusted gross income — Line 7 (credit) and Line 25 (exclusion)
   magi: z.number().nonnegative().optional(),
-  // Income tax liability for credit limit worksheet (Line 17)
-  // If omitted, nonrefundable credit is not limited (treated as unconstrained)
+  // Available tax after higher-priority credits (Form 8839 credit limit
+  // worksheet line 5). If omitted, the nonrefundable portion is unconstrained.
   income_tax_liability: z.number().nonnegative().optional(),
+  // Unused nonrefundable credits retain their origin year for the five-year
+  // carryforward limit. Oldest origin is used first on the current return.
+  prior_year_credit_carryforwards: z.array(z.object({
+    origin_tax_year: z.number().int(),
+    amount: z.number().nonnegative(),
+  }).strict()).optional(),
   // Filing status — MFS generally cannot claim credit or exclusion
   filing_status: filingStatusSchema.optional(),
 });
 
 type ChildItem = z.infer<typeof childSchema>;
 type Form8839Input = z.infer<typeof inputSchema>;
+
+const ADOPTION_RULES: Record<2025 | 2026, {
+  maxCreditPerChild: number;
+  refundablePerChild: number;
+  phaseOutStart: number;
+  phaseOutRange: number;
+}> = {
+  // 2025 Form 8839, lines 2, 8, and 11b.
+  2025: { maxCreditPerChild: 17_280, refundablePerChild: 5_000, phaseOutStart: 259_190, phaseOutRange: 40_000 },
+  // Pinned draft 2026 Form 8839, lines 2, 8, and 11b.
+  2026: { maxCreditPerChild: 17_670, refundablePerChild: 5_120, phaseOutStart: 265_080, phaseOutRange: 40_000 },
+};
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
@@ -100,9 +118,7 @@ function totalCredit(
   );
 }
 
-// Nonrefundable credit limited by tax liability.
-// Part II Line 17 → Schedule 3 Line 6c.
-// The adoption credit has been entirely nonrefundable since TY2013 (ATRA §104).
+// Nonrefundable portion is limited by tax liability (Part II line 18a).
 function nonrefundableCredit(total: number, taxLiability: number | undefined): number {
   if (total <= 0) return 0;
   // Credit limit worksheet: nonrefundable portion cannot exceed tax liability
@@ -134,21 +150,62 @@ function exclusionAmounts(
   return { excluded, taxable: Math.max(0, taxable) };
 }
 
-// Build credit outputs (Part II).
-// The adoption credit is entirely nonrefundable since TY2013 (ATRA §104).
+// Build the refundable and nonrefundable Part II routes.
 function creditOutputs(
   input: Form8839Input,
   fraction: number,
   maxCreditPerChild: number,
-): NodeOutput[] {
+  refundablePerChild: number,
+  taxYear: number,
+): { outputs: NodeOutput[]; carryforwards: Record<string, number> } {
   const children = input.children ?? [];
-  if (children.length === 0) return [];
+  const prior = input.prior_year_credit_carryforwards ?? [];
+  if (new Set(prior.map((item) => item.origin_tax_year)).size !== prior.length) {
+    throw new Error("Form 8839 has duplicate carryforward origin years");
+  }
+  for (const item of prior) {
+    if (item.origin_tax_year < taxYear - 5 || item.origin_tax_year >= taxYear) {
+      throw new Error("Form 8839 carryforward origin must be within the preceding five years");
+    }
+  }
+  if (prior.length > 0 && input.income_tax_liability === undefined) {
+    throw new Error("Form 8839 carryforward needs the credit-limit worksheet amount");
+  }
+  if (children.length === 0 && prior.length === 0) {
+    return { outputs: [], carryforwards: {} };
+  }
 
   const total = totalCredit(children, fraction, maxCreditPerChild);
-  const nonrefundable = nonrefundableCredit(total, input.income_tax_liability);
+  const refundable = children.reduce(
+    (sum, child) => sum + Math.min(perChildAllowed(child, fraction, maxCreditPerChild), refundablePerChild),
+    0,
+  );
+  const currentNonrefundable = total - refundable;
+  const previous = [...prior].sort((a, b) => a.origin_tax_year - b.origin_tax_year);
+  const available = currentNonrefundable + previous.reduce((sum, item) => sum + item.amount, 0);
+  if (taxYear === 2026 && available > 0 && input.income_tax_liability === undefined) {
+    throw new Error("TY2026 Form 8839 nonrefundable credit needs the credit-limit worksheet amount");
+  }
+  const nonrefundable = nonrefundableCredit(available, input.income_tax_liability);
 
-  if (nonrefundable <= 0) return [];
-  return [output(schedule3, { line6c_adoption_credit: nonrefundable })];
+  let remainingUsed = nonrefundable;
+  const carryforwards: Record<string, number> = {};
+  for (const source of [...previous, { origin_tax_year: taxYear, amount: currentNonrefundable }]) {
+    const used = Math.min(source.amount, remainingUsed);
+    remainingUsed -= used;
+    const balance = source.amount - used;
+    if (balance > 0 && source.origin_tax_year > taxYear - 5) {
+      carryforwards[`adoption_credit_${source.origin_tax_year}`] = balance;
+    }
+  }
+
+  return {
+    outputs: [
+      ...(refundable > 0 ? [output(f1040, { line30_refundable_adoption: refundable })] : []),
+      ...(nonrefundable > 0 ? [output(schedule3, { line6c_adoption_credit: nonrefundable })] : []),
+    ],
+    carryforwards,
+  };
 }
 
 // Build exclusion output (Part III) — taxable employer benefits on f1040 line 1f.
@@ -190,12 +247,11 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3, f1040]);
 
-  // TY2025 — IRS Instructions for Form 8839 (Dec 8 2025) / Rev Proc 2024-40
-  protected readonly maxCreditPerChild = 17280;
-  protected readonly phaseOutStart = 259190;
-  protected readonly phaseOutRange = 40000; // $259,190 to $299,190
-
-  compute(_ctx: NodeContext, rawInput: Form8839Input): NodeResult {
+  compute(ctx: NodeContext, rawInput: Form8839Input): NodeResult {
+    if (ctx.taxYear !== 2025 && ctx.taxYear !== 2026) {
+      throw new Error(`Form 8839 has no rules for tax year ${ctx.taxYear}`);
+    }
+    const rules = ADOPTION_RULES[ctx.taxYear];
     const input = inputSchema.parse(rawInput);
 
     const children = input.children ?? [];
@@ -206,21 +262,17 @@ class Form8839Node extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const fraction = phaseOutFraction(magi, this.phaseOutStart, this.phaseOutRange);
-
-    // If fully phased out, no credit or exclusion benefit
-    if (fraction >= 1) {
-      return { outputs: [] };
-    }
+    const fraction = phaseOutFraction(magi, rules.phaseOutStart, rules.phaseOutRange);
 
     const normalized: Form8839Input = { ...input, children, magi };
 
+    const credit = creditOutputs(normalized, fraction, rules.maxCreditPerChild, rules.refundablePerChild, ctx.taxYear);
     const outputs = mergeF1040Outputs([
-      ...creditOutputs(normalized, fraction, this.maxCreditPerChild),
-      ...exclusionOutputs(normalized, fraction, this.maxCreditPerChild),
+      ...credit.outputs,
+      ...exclusionOutputs(normalized, fraction, rules.maxCreditPerChild),
     ]);
 
-    return { outputs };
+    return { outputs, carryforwards: credit.carryforwards };
   }
 }
 

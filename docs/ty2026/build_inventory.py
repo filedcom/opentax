@@ -24,6 +24,7 @@ NODE_PROGRESS = {
     "form8962": "2026 percentage and repayment paths updated; verify final instructions",
     "form2441": "2026 benefit and credit rules updated; verify final instructions",
     "form982": "2026 qualified-residence debt date gate updated; audit remaining rules",
+    "form8839": "2025/2026 refundable split, indexed caps, and origin-year carryforward updated; add full credit-limit worksheet",
     "form4562": "2026 caps configured; choose passenger-auto cap by placed-in-service year",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 config updated; reconcile 1040 line 13a and source form",

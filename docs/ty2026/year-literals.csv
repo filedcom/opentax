@@ -190,7 +190,10 @@ forms/f1040/nodes/intermediate/forms/form8606/index.ts,22,"// Line 6: FMV of all
 forms/f1040/nodes/intermediate/forms/form8615/calculation.ts,101,// The 2025 form stops before the family-tax worksheets when line 5 is zero.
 forms/f1040/nodes/intermediate/forms/form8815/index.ts,16,// IRC §135; TY2025 instructions.
 forms/f1040/nodes/intermediate/forms/form8824/calculation.ts,12,"// Form 8824 (2025), Part III. Net liabilities must be compared before adding"
-forms/f1040/nodes/intermediate/forms/form8839/index.ts,193,// TY2025 — IRS Instructions for Form 8839 (Dec 8 2025) / Rev Proc 2024-40
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,53,"const ADOPTION_RULES: Record<2025 | 2026, {"
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,59,"// 2025 Form 8839, lines 2, 8, and 11b."
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,60,"2025: { maxCreditPerChild: 17_280, refundablePerChild: 5_000, phaseOutStart: 259_190, phaseOutRange: 40_000 },"
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,248,if (ctx.taxYear !== 2025 && ctx.taxYear !== 2026) {
 forms/f1040/nodes/intermediate/forms/form8853/index.ts,28,// Line 2: Taxpayer contributions to Archer MSA in 2025
 forms/f1040/nodes/intermediate/forms/form8959/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8960/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────

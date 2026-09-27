@@ -31,6 +31,10 @@ EIC checkboxes 27b/27c, refund 35a, applied estimates 36, and penalty 38.
 `itemized-deductions.ts` computes the 2026 charitable floor and overall
 itemized limitation from already allowable contribution and deduction amounts.
 The Schedule A node and carryforward accounting remain to implement.
+The shared Form 8839 node now applies TY2026 adoption limits, emits the
+refundable per-child credit to 1040 line 30, and tracks nonrefundable
+carryforwards by origin year. Its full credit-limit worksheet and TY2026
+serializers remain open.
 CLI node inspection and graph commands accept `--year` and will select the
 TY2026 registry once this product is registered.
 The shared `auto_expense` and Form 2106 paths now apply the two 2026 business

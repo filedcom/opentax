@@ -61,6 +61,11 @@ The pure 2026 itemized-deduction module applies P.L. 119-21's charitable
 floor and the Publication 505 overall limit. The 2026 Schedule A node still
 needs to feed these rules, including carryforward attribution and its new
 form lines.
+The shared Form 8839 node now splits the credit into refundable 1040 line 30
+and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
+year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable
+carryforwards by origin year; the full credit-limit worksheet remains
+outstanding.
 The CLI node list, inspect, and graph commands now accept `--year` and select
 the registered definition for that year. They still default to TY2025 for
 existing CLI calls; an unregistered year fails explicitly.
@@ -84,7 +89,7 @@ suite still needs a separate run before that release gate is green.
    in ignored `.state/research/docs/` because this repository is public.
 3. Use `node-coverage.csv` (191 registered TY2025 nodes),
    `pdf-coverage.csv` (56 descriptors: 51 current drafts, five older-year
-   URLs), `mef-coverage.csv` (84 serializers), `year-literals.csv` (230 non-test
+   URLs), `mef-coverage.csv` (84 serializers), `year-literals.csv` (233 non-test
    occurrences), and the current MeF accepted-form XLSX. Give each existing
    component one disposition: **2026 updated**, **2026 verified unchanged**,
    **replaced**, or **unsupported with explicit diagnostic**. Add Schedule 3-A

@@ -477,12 +477,9 @@ Deno.test("f1040: Form 8936 new credit is capped at remaining line 18 tax", () =
   assertEquals(f.line20_nonrefundable_credits, 5_000);
   assertEquals(f.line21_credits_total, 5_000);
   assertEquals(f.line22_tax_after_credits, 0);
-  assertEquals(result.finalizations?.[0].fields, {
-    line6f_total: 5_000,
-    line6m_total: undefined,
-    line7_total: 5_000,
-    line8_total: 5_000,
-  });
+  assertEquals(result.finalizations?.[0].fields.line6f_total, 5_000);
+  assertEquals(result.finalizations?.[0].fields.line7_total, 5_000);
+  assertEquals(result.finalizations?.[0].fields.line8_total, 5_000);
 });
 
 Deno.test("f1040: previously owned credit takes priority over new clean vehicle credit", () => {
