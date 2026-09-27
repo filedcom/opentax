@@ -46,6 +46,11 @@ export const inputSchema = z.object({
   // Line 9: Employer contributions to HSA (from W-2 Box 12 Code W)
   // IRC §106(d); routed here from the w2 node
   employer_hsa_contributions: z.number().nonnegative().optional(),
+  employer_excess_treatment: z.object({
+    included_in_w2_box1: z.boolean(),
+    retained_through_return_due_date: z.literal(true),
+  }).optional(),
+  hsa_december_31_value: z.number().nonnegative().optional(),
   // Line 10: one direct traditional/Roth IRA-to-HSA transfer. A later second
   // self-only-to-family transfer needs its separate lifetime-limit route.
   qualified_hsa_funding_distribution: z.object({
@@ -77,6 +82,7 @@ export const inputSchema = z.object({
   hsa_excluded_distributions: z.object({
     rollover_amount: z.number().nonnegative().optional(),
     timely_excess_withdrawal: z.object({
+      source: z.literal("current_year_personal"),
       amount_including_earnings: z.number().nonnegative(),
       included_earnings: z.number().nonnegative(),
       withdrawn_by_return_due_date: z.literal(true),
@@ -269,7 +275,20 @@ function totalContributions(input: Form8889Input): number {
 // excess-income treatment is a separate route and currently stops above limit.
 // IRC §4973(a)(2)
 function excessContributions(input: Form8889Input, deductible: number): number {
-  return Math.max(0, (input.taxpayer_hsa_contributions ?? 0) - deductible);
+  const personalExcess = Math.max(
+    0,
+    (input.taxpayer_hsa_contributions ?? 0) - deductible,
+  );
+  const withdrawn = input.hsa_excluded_distributions?.timely_excess_withdrawal;
+  const withdrawnPrincipal = withdrawn
+    ? withdrawn.amount_including_earnings - withdrawn.included_earnings
+    : 0;
+  if (withdrawnPrincipal > personalExcess) {
+    throw new Error(
+      "Form 8889 timely personal excess withdrawal exceeds excess personal contributions",
+    );
+  }
+  return personalExcess - withdrawnPrincipal;
 }
 
 function excludedDistributions(input: Form8889Input): {
@@ -334,12 +353,16 @@ function schedule1Output(
   deductible: number,
   income: number,
   excessWithdrawalEarnings: number,
+  employerExcessIncome: number,
 ): NodeOutput[] {
   const input: Partial<z.infer<typeof schedule1["inputSchema"]>> = {};
   if (deductible > 0) input.line13_hsa_deduction = deductible;
   if (income > 0) input.line8f_hsa_income = income;
   if (excessWithdrawalEarnings > 0) {
     input.line8z_hsa_excess_earnings = excessWithdrawalEarnings;
+  }
+  if (employerExcessIncome > 0) {
+    input.line8z_hsa_excess_employer = employerExcessIncome;
   }
   if (Object.keys(input).length === 0) return [];
   return [
@@ -351,9 +374,17 @@ function schedule1Output(
 }
 
 // Excess contribution output → Form 5329 Part VII
-function excessOutput(excess: number): NodeOutput[] {
+function excessOutput(excess: number, accountValue?: number): NodeOutput[] {
   if (excess <= 0) return [];
-  return [output(form5329, { excess_hsa: excess })];
+  if (accountValue === undefined) {
+    throw new Error(
+      "Form 8889 excess contributions need the December 31 HSA value for Form 5329",
+    );
+  }
+  return [output(form5329, {
+    excess_hsa: excess,
+    hsa_value: accountValue,
+  })];
 }
 
 // Form 8889 Part II line 17b and Part III line 21 remain separate Schedule 2
@@ -420,9 +451,26 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       }
     }
     const employer = input.employer_hsa_contributions ?? 0;
-    if (limitLines && employer > limitLines.line8 - fundingAmount) {
+    const employerExcess = limitLines
+      ? Math.max(0, employer - Math.max(0, limitLines.line8 - fundingAmount))
+      : 0;
+    const employerTreatment = input.employer_excess_treatment;
+    if (employerExcess > 0 && !employerTreatment) {
       throw new Error(
-        "Form 8889 employer HSA contributions above the limit need excess-income source treatment",
+        "Form 8889 employer HSA contributions above the limit need W-2 inclusion and retention facts",
+      );
+    }
+    if (employerExcess === 0 && employerTreatment) {
+      throw new Error(
+        "Form 8889 employer excess treatment requires excess employer contributions",
+      );
+    }
+    if (
+      employerExcess > 0 &&
+      input.hsa_excluded_distributions?.timely_excess_withdrawal
+    ) {
+      throw new Error(
+        "Form 8889 simultaneous employer excess and timely personal withdrawal need separate source attribution",
       );
     }
     const line12 = Math.max(
@@ -430,7 +478,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       (limitLines?.line8 ?? 0) - employer - fundingAmount,
     );
     const deductible = deductibleContributions(input, line12);
-    const excess = excessContributions(input, deductible);
+    const excess = excessContributions(input, deductible) + employerExcess;
+    const employerExcessIncome =
+      employerTreatment?.included_in_w2_box1 === false ? employerExcess : 0;
     const line14b = excludedDistributions(input);
     const taxable = taxableDistributions(input, line14b.excluded);
     const penalty = nonQualifiedPenalty(input, taxable);
@@ -442,8 +492,13 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const eligibilityTax = partIIIIncome * 0.1;
 
     const outputs: NodeOutput[] = [
-      ...schedule1Output(deductible, taxable + partIIIIncome, line14b.earnings),
-      ...excessOutput(excess),
+      ...schedule1Output(
+        deductible,
+        taxable + partIIIIncome,
+        line14b.earnings,
+        employerExcessIncome,
+      ),
+      ...excessOutput(excess, input.hsa_december_31_value),
       ...penaltyOutput(penalty, eligibilityTax),
     ];
 
@@ -502,6 +557,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     }
     if (line14b.earnings > 0) {
       agiFields.line8z_hsa_excess_earnings = line14b.earnings;
+    }
+    if (employerExcessIncome > 0) {
+      agiFields.line8z_hsa_excess_employer = employerExcessIncome;
     }
     if (Object.keys(agiFields).length > 0) {
       outputs.push(this.outputNodes.output(

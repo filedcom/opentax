@@ -19,10 +19,13 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   full year. For an age-55 married family filer, the additional contribution
   belongs on line 7; otherwise eligible catch-up is included on line 3. The
   Archer MSA offset reaches line 4. Taxpayer contributions are deductible only
-  to the extent of line 8 less employer contributions; excess contributions
-  route to Form 5329. Employer excess-income and withdrawal exceptions still
-  need a full source audit, so employer funding above the limit stops rather
-  than being treated as an ordinary deductible-contribution excess.
+  to the extent of line 8 less employer contributions. Retained personal and
+  employer excess contributions route to Form 5329 with the December 31 HSA
+  value needed for its 6% tax base. Retained employer excess above line 8 less
+  qualified funding distributions requires explicit W-2 box 1 inclusion and
+  retention facts. If omitted from W-2 income, that excess reaches Schedule 1
+  other income; if already included, it is not counted as income twice. A timely
+  employer-excess withdrawal still stops pending source attribution.
 - A single traditional/Roth IRA-to-HSA direct trustee transfer can populate line
   10 when the transfer month is eligible, the source is identified, and the
   taxpayer affirms no prior qualified funding distribution. It reduces line 12
@@ -30,14 +33,14 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   self-only-to-family transfer, external IRA reconciliation, and later testing
   period remain open.
 - Part II separately identifies line 14b rollovers and timely excess withdrawals
-  before applying line 15 medical expenses. Earnings included in a timely excess
-  withdrawal route to Schedule 1 other income for the year withdrawn. The
-  taxable line 16 amount goes to Schedule 1 **line 8f**, not line 8z. The
-  nonexcepted 20% line 17b tax goes to Schedule 2 line 17c. A taxable
-  distribution needs the explicit portion qualifying for an additional-tax
-  exception; line 17a is checked when that portion is positive and line 17b
-  taxes only the remainder. This also covers mixed excepted and nonexcepted
-  distributions.
+  before applying line 15 medical expenses. A timely withdrawal explicitly
+  sourced to a current-year personal excess reduces the Form 5329 excess base;
+  its earnings reach Schedule 1 other income for the year withdrawn. The taxable
+  line 16 amount goes to Schedule 1 **line 8f**, not line 8z. The nonexcepted
+  20% line 17b tax goes to Schedule 2 line 17c. A taxable distribution needs the
+  explicit portion qualifying for an additional-tax exception; line 17a is
+  checked when that portion is positive and line 17b taxes only the remainder.
+  This also covers mixed excepted and nonexcepted distributions.
 - Part III accepts a sourced prior-year last-month-rule excess amount and/or
   prior qualified HSA funding distribution after confirmation that death or
   disability does not excuse the testing-period failure. It sums lines 18 and 19
@@ -54,8 +57,8 @@ The later-year last-month-rule testing-period ledger, evidence for monthly
 eligibility (including Medicare and other disqualifying coverage), source
 verification of the spouse allocation, separate spouse forms, source
 classification of taxable distributions by exception, second qualified funding
-distributions, employer contribution year adjustments, excess-contribution
-withdrawal and related-income treatment outside the timely 2025 route, source
-authentication, PDF visual verification, IRS business rules, and ATS acceptance
-remain unverified. All newly written cases await the one full test batch
-requested by the user.
+distributions, employer contribution year adjustments, timely employer-excess
+withdrawals, withdrawals of prior-year excess, related income outside the
+current-year personal 2025 route, source authentication, PDF visual
+verification, IRS business rules, and ATS acceptance remain unverified. All
+newly written cases await the one full test batch requested by the user.

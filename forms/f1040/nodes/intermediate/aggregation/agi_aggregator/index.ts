@@ -141,6 +141,7 @@ export const inputSchema = z.object({
   line8z_other: z.number().optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
+  line8z_hsa_excess_employer: z.number().nonnegative().optional(),
   // Line 8z — RTAA payments (Form 1099-G)
   line8z_rtaa: z.number().optional(),
   // Line 8z — Taxable grants (Form 1099-G)
@@ -274,6 +275,7 @@ function nonSsaIncomeBeforePal(input: AgiInput): number {
     (input.line8z_other ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
+    (input.line8z_hsa_excess_employer ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
@@ -465,6 +467,7 @@ function scheduleOnePartI(input: AgiInput): number {
     (input.line8z_other ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
+    (input.line8z_hsa_excess_employer ?? 0) +
     (input.line8z_rtaa ?? 0) +
     (input.line8z_taxable_grants ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +

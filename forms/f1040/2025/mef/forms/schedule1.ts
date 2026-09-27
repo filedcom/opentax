@@ -21,6 +21,7 @@ export interface Fields {
   line8z_other?: number | null;
   line8z_form8814?: number | null;
   line8z_hsa_excess_earnings?: number | null;
+  line8z_hsa_excess_employer?: number | null;
   line8z_golden_parachute?: number | null;
   line9_total_other_income?: number | null;
   line10_total_additional_income?: number | null;
@@ -80,15 +81,18 @@ function buildIRS1040Schedule1(
     if (key === "line8z_other") {
       const form8814 = fields.line8z_form8814;
       const hsaEarnings = fields.line8z_hsa_excess_earnings;
+      const hsaEmployer = fields.line8z_hsa_excess_employer;
       if (
         typeof value !== "number" && typeof form8814 !== "number" &&
-        typeof hsaEarnings !== "number"
+        typeof hsaEarnings !== "number" &&
+        typeof hsaEmployer !== "number"
       ) return "";
       return element(
         tag,
         (typeof value === "number" ? value : 0) +
           (typeof form8814 === "number" ? form8814 : 0) +
-          (typeof hsaEarnings === "number" ? hsaEarnings : 0),
+          (typeof hsaEarnings === "number" ? hsaEarnings : 0) +
+          (typeof hsaEmployer === "number" ? hsaEmployer : 0),
       );
     }
     if (typeof value !== "number") return "";

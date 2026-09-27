@@ -104,6 +104,11 @@ Deno.test("schedule1: HSA excess-withdrawal earnings enter line 8z total", () =>
   assertEquals(f.line10_total_additional_income, 100);
 });
 
+Deno.test("schedule1: employer HSA excess not in W-2 enters line 8z total", () => {
+  const f = fields({ line8z_hsa_excess_employer: 700 });
+  assertEquals(f.line10_total_additional_income, 700);
+});
+
 Deno.test("schedule1: foreign earned income exclusion offsets income", () => {
   const f = fields({
     line3_schedule_c: 50_000,

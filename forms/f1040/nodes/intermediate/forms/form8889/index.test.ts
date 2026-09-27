@@ -61,6 +61,7 @@ Deno.test("part1: total contributions capped at annual limit (self_only 4300)", 
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 2500,
     employer_hsa_contributions: 2000,
+    hsa_december_31_value: 4500,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 2300);
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 200);
@@ -74,6 +75,7 @@ Deno.test("part1: employer fills entire limit → no taxpayer deduction, taxpaye
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 500,
     employer_hsa_contributions: 4300,
+    hsa_december_31_value: 4800,
   });
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 500);
@@ -116,6 +118,7 @@ Deno.test("part1: excess contributions route to form5329 excess_hsa", () => {
   const result = compute({
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 5000,
+    hsa_december_31_value: 5000,
   });
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 700);
 });
@@ -126,6 +129,7 @@ Deno.test("part1: combined employer+taxpayer excess routes to form5329", () => {
     ...uniformFamily,
     taxpayer_hsa_contributions: 5000,
     employer_hsa_contributions: 4000,
+    hsa_december_31_value: 9000,
   });
   assertEquals(fieldsOf(result.outputs, form5329)!.excess_hsa, 450);
 });
@@ -135,6 +139,7 @@ Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contributio
     ...uniformSelfOnly,
     taxpayer_hsa_contributions: 2500,
     employer_hsa_contributions: 1000,
+    hsa_december_31_value: 4500,
     qualified_hsa_funding_distribution: {
       amount: 1000,
       transfer_month: 6,
@@ -202,6 +207,54 @@ Deno.test("part1: employer funding above the contribution limit needs income tre
       }),
     Error,
     "employer HSA contributions above the limit",
+  );
+});
+
+Deno.test("part1: retained employer excess omitted from W-2 box 1 reaches other income and Form 5329", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 5000,
+    employer_excess_treatment: {
+      included_in_w2_box1: false,
+      retained_through_return_due_date: true,
+    },
+    hsa_december_31_value: 300,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
+    700,
+  );
+  assertEquals(
+    findOutput(result, "agi_aggregator")?.fields.line8z_hsa_excess_employer,
+    700,
+  );
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
+  assertEquals(fieldsOf(result.outputs, form5329)?.hsa_value, 300);
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line9_employer,
+    5000,
+  );
+});
+
+Deno.test("part1: retained employer excess already in W-2 box 1 is not other income again", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 5000,
+    employer_excess_treatment: {
+      included_in_w2_box1: true,
+      retained_through_return_due_date: true,
+    },
+    hsa_december_31_value: 700,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
+});
+
+Deno.test("part1: an excess HSA needs its December 31 value", () => {
+  assertThrows(
+    () => compute({ ...uniformSelfOnly, taxpayer_hsa_contributions: 5000 }),
+    Error,
+    "December 31 HSA value",
   );
 });
 
@@ -297,9 +350,12 @@ Deno.test("part2: line 14b and line 15 cannot exceed their source distribution",
 
 Deno.test("part2: timely excess-withdrawal earnings reach Schedule 1 other income", () => {
   const result = compute({
+    ...uniformSelfOnly,
+    taxpayer_hsa_contributions: 5200,
     hsa_distributions: 3000,
     hsa_excluded_distributions: {
       timely_excess_withdrawal: {
+        source: "current_year_personal",
         amount_including_earnings: 1000,
         included_earnings: 100,
         withdrawn_by_return_due_date: true,
@@ -321,6 +377,28 @@ Deno.test("part2: timely excess-withdrawal earnings reach Schedule 1 other incom
     100,
   );
   assertEquals(fieldsOf(result.outputs, schedule2), undefined);
+  assertEquals(fieldsOf(result.outputs, form5329), undefined);
+});
+
+Deno.test("part2: timely personal withdrawal cannot exceed its 2025 contribution excess", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        taxpayer_hsa_contributions: 5000,
+        hsa_distributions: 900,
+        hsa_excluded_distributions: {
+          timely_excess_withdrawal: {
+            source: "current_year_personal",
+            amount_including_earnings: 900,
+            included_earnings: 0,
+            withdrawn_by_return_due_date: true,
+          },
+        },
+      }),
+    Error,
+    "exceeds excess personal contributions",
+  );
 });
 
 Deno.test("part2: excluded withdrawal earnings cannot exceed its distribution", () => {
@@ -330,6 +408,7 @@ Deno.test("part2: excluded withdrawal earnings cannot exceed its distribution", 
         hsa_distributions: 1000,
         hsa_excluded_distributions: {
           timely_excess_withdrawal: {
+            source: "current_year_personal",
             amount_including_earnings: 500,
             included_earnings: 501,
             withdrawn_by_return_due_date: true,
@@ -463,6 +542,7 @@ Deno.test("part1: separate spouses allocate the full-year family limit on line 6
     spouse_has_separate_hsa: true,
     spouse_allocated_family_limit: 4275,
     taxpayer_hsa_contributions: 5000,
+    hsa_december_31_value: 5000,
   });
   const printed = findOutput(result, "form8889")?.fields;
   assertEquals(printed?.print_line5, 8550);

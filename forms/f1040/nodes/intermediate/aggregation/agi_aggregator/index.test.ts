@@ -91,6 +91,14 @@ Deno.test("agi_aggregator: timely HSA excess-withdrawal earnings increase AGI", 
   assertEquals(agi(result), 30_100);
 });
 
+Deno.test("agi_aggregator: employer HSA excess omitted from W-2 increases AGI", () => {
+  const result = compute({
+    line1a_wages: 30_000,
+    line8z_hsa_excess_employer: 700,
+  });
+  assertEquals(agi(result), 30_700);
+});
+
 Deno.test("agi_aggregator: ordinary dividends included", () => {
   const result = compute({ line3b_ordinary_dividends: 2_000 });
   assertEquals(agi(result), 2_000);

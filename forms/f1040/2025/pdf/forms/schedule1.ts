@@ -130,9 +130,11 @@ export const schedule1Pdf: PdfFormDescriptor = {
   instances(fields) {
     const electionAmount = fields.line8z_form8814;
     const hsaEarnings = fields.line8z_hsa_excess_earnings;
+    const hsaEmployer = fields.line8z_hsa_excess_employer;
     if (
       (typeof electionAmount !== "number" || electionAmount <= 0) &&
-      (typeof hsaEarnings !== "number" || hsaEarnings <= 0)
+      (typeof hsaEarnings !== "number" || hsaEarnings <= 0) &&
+      (typeof hsaEmployer !== "number" || hsaEmployer <= 0)
     ) {
       return [fields];
     }
@@ -146,13 +148,17 @@ export const schedule1Pdf: PdfFormDescriptor = {
       typeof hsaEarnings === "number" && hsaEarnings > 0
         ? "HSA excess earnings"
         : "",
+      typeof hsaEmployer === "number" && hsaEmployer > 0
+        ? "HSA excess employer contributions"
+        : "",
       otherAmount !== 0 ? "other income" : "",
     ].filter(Boolean);
     return [{
       ...fields,
       line8z_other: otherAmount +
         (typeof electionAmount === "number" ? electionAmount : 0) +
-        (typeof hsaEarnings === "number" ? hsaEarnings : 0),
+        (typeof hsaEarnings === "number" ? hsaEarnings : 0) +
+        (typeof hsaEmployer === "number" ? hsaEmployer : 0),
       line8z_description: labels.join(", "),
     }];
   },

@@ -55,6 +55,7 @@ const inputSchema = z.object({
   line8z_other_income: z.number().optional(),
   line8z_form8814: z.number().nonnegative().optional(),
   line8z_hsa_excess_earnings: z.number().nonnegative().optional(),
+  line8z_hsa_excess_employer: z.number().nonnegative().optional(),
   line8z_other: z.number().optional(),
   // ── Part II — Adjustments to Income ──────────────────────────────────────
   // Line 11 — Educator expenses (up to $300 / $600 MFJ)
@@ -136,6 +137,7 @@ function otherIncome(input: Schedule1Input): number {
     (input.line8z_other_income ?? 0) +
     (input.line8z_form8814 ?? 0) +
     (input.line8z_hsa_excess_earnings ?? 0) +
+    (input.line8z_hsa_excess_employer ?? 0) +
     (input.line8z_other ?? 0) +
     (input.at_risk_disallowed_add_back ?? 0) +
     (input.at_risk_recapture ?? 0) +

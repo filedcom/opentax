@@ -170,6 +170,16 @@ Deno.test("HSA excess-withdrawal earnings combine once with other line 8z income
   );
 });
 
+Deno.test("employer HSA excess combines once with other line 8z income", () => {
+  const result = schedule1.build({
+    line8z_other: 400,
+    line8z_hsa_excess_employer: 700,
+    line8z_hsa_excess_earnings: 100,
+  });
+  assertStringIncludes(result, "<OtherIncomeAmt>1200</OtherIncomeAmt>");
+  assertEquals(result.match(/<OtherIncomeAmt>/g)?.length, 1);
+});
+
 Deno.test("line8z_golden_parachute maps to ExcessGoldenParachuteAmt", () => {
   const result = schedule1.build({ line8z_golden_parachute: 50000 });
   assertStringIncludes(

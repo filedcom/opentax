@@ -66,3 +66,15 @@ Deno.test("Schedule 1 PDF identifies HSA excess-withdrawal earnings on line 8z",
     "Form 8814, HSA excess earnings, other income",
   );
 });
+
+Deno.test("Schedule 1 PDF identifies employer HSA excess on line 8z", () => {
+  const [projected] = schedule1Pdf.instances?.({
+    line8z_hsa_excess_employer: 700,
+    line8z_hsa_excess_earnings: 100,
+  }) ?? [];
+  assertEquals(projected.line8z_other, 800);
+  assertEquals(
+    projected.line8z_description,
+    "HSA excess earnings, HSA excess employer contributions",
+  );
+});
