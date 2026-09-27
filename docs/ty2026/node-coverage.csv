@@ -85,7 +85,7 @@ f8867,forms/f1040/nodes/inputs/f8867/index.ts,inputs,1,no,no,no,n/a,P1,audit-req
 f8859,forms/f1040/nodes/inputs/f8859/index.ts,inputs,1,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8820,forms/f1040/nodes/inputs/f8820/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8896,forms/f1040/nodes/inputs/f8896/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
-f8912,forms/f1040/nodes/inputs/f8912/index.ts,inputs,0,no,yes,yes,no,P2,audit-required,"verify 2026 law, node outputs, and graph route"
+f8912,forms/f1040/nodes/inputs/f8912/index.ts,inputs,0,no,yes,yes,no,P2,audit-required,"Current Dec 2024 continuous-use form/instructions pinned; 2026 Schedule 3 line 6k persists; shared input blocks 2025-origin carryforward and pass-through CREB, 218 PDF widgets/current MeF remain; see FORM8912-GRAPH.md"
 f8978,forms/f1040/nodes/inputs/f8978/index.ts,inputs,1,yes,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8615,forms/f1040/nodes/inputs/f8615/index.ts,inputs,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f8611,forms/f1040/nodes/inputs/f8611/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"

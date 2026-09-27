@@ -122,6 +122,9 @@ for the implementation contract.
 - [`FORM8915D-STATUS.md`](FORM8915D-STATUS.md): latest 2024 source and
   expired 2019-disaster repayment period; preserve older-year amendments
   without emitting a 2026 attachment.
+- [`FORM8912-GRAPH.md`](FORM8912-GRAPH.md) and `pdf-fields-f8912.csv`:
+  continuous-use bond-credit form, 2026 Schedule 3 line 6k, carryforward
+  and credit-order work, and all 218 current PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

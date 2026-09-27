@@ -140,6 +140,10 @@ The [Form 8915-D source decision](FORM8915D-STATUS.md) pins the latest
 so the shared node's `repayments_in_2025` and Schedule 1 line 8z output
 must not be carried into a 2026 filing; retain only the older-year
 amendment history unless the IRS issues a newer revision.
+The [Form 8912 contract](FORM8912-GRAPH.md) pins its current continuous-use
+form/instructions and 218 PDF widgets. Schedule 3 line 6k persists in the
+2026 draft; the existing shared schema blocks 2025-origin carryforwards and
+does not calculate pass-through CREB, while current MeF remains to verify.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

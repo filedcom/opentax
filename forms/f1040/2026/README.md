@@ -56,6 +56,10 @@ The [Form 8915-D source decision](../../../docs/ty2026/FORM8915D-STATUS.md)
 pins the latest 2024 form/instructions and its expired 2019-disaster
 repayment period. Older-year amendments remain separate from the 2026
 return graph.
+The [Form 8912 contract](../../../docs/ty2026/FORM8912-GRAPH.md) pins the
+continuous-use tax-credit bond form, its 218 PDF widgets and the 2026
+Schedule 3 line 6k route. Extend carryforward years and Part II credit
+limits before its existing TY2025 PDF/MeF code can be considered for 2026.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared
