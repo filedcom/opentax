@@ -16,6 +16,7 @@ export const inputSchema = z.object({
   line5_schedule_e: accumulated.optional(),
   line6_schedule_f: signed.optional(),
   line7_unemployment: nonnegative.optional(),
+  line7_repaid: nonnegative.optional(),
   line8a_nol_deduction: nonnegative.optional(),
   line8c_cod_income: signed.optional(),
   line8d_foreign_earned_income_exclusion: nonnegative.optional(),
@@ -83,6 +84,12 @@ class Schedule12026Node extends TaxNode<typeof inputSchema> {
     }
     if ((input.line8z_other ?? 0) !== 0 && !input.line8z_description) {
       throw new Error("TY2026 Schedule 1 line 8z needs an income type");
+    }
+    if (
+      (input.line7_repaid ?? 0) > 0 &&
+      input.line7_unemployment === undefined
+    ) {
+      throw new Error("TY2026 Schedule 1 repayment needs net unemployment");
     }
     const adjustedSli = input.line21_student_loan_interest_from_agi ?? 0;
     if (

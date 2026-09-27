@@ -14,6 +14,7 @@ const amounts: readonly (readonly [string, string])[] = [
   ["line5_schedule_e", `${p1}f1_09[0]`],
   ["line6_schedule_f", `${p1}f1_10[0]`],
   ["line7_unemployment", `${p1}f1_12[0]`],
+  ["line7_repaid", `${p1}Line7_ReadOrder[0].f1_11[0]`],
   ["line8a_nol_print", `${p1}Line8a_ReadOrder[0].f1_13[0]`],
   ["line8c_cod_income", `${p1}f1_15[0]`],
   ["line8d_feie_print", `${p1}f1_16[0]`],
@@ -48,6 +49,11 @@ export const irsSchedule1Pdf2026: PdfFormDescriptor = {
   fields: [
     { kind: "text", domainKey: "filer_name", pdfField: `${p1}f1_01[0]` },
     { kind: "text", domainKey: "filer_ssn", pdfField: `${p1}f1_02[0]` },
+    {
+      kind: "checkbox",
+      domainKey: "line7_repaid_checked",
+      pdfField: `${p1}Line7_ReadOrder[0].c1_3[0]`,
+    },
     ...amounts.map(([domainKey, pdfField]): PdfFieldEntry => ({
       kind: "text",
       domainKey,

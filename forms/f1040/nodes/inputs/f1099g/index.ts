@@ -93,13 +93,24 @@ function totalTaxableGrants(g99s: G99Items): number {
 
 function schedule1Output(g99s: G99Items, taxYear: number): NodeOutput[] {
   const unemploymentNet = netUnemployment(g99s);
+  const unemploymentReceived = g99s.reduce(
+    (sum, item) => sum + (item.box_1_unemployment ?? 0),
+    0,
+  );
+  const unemploymentRepaid = g99s.reduce(
+    (sum, item) => sum + (item.box_1_repaid ?? 0),
+    0,
+  );
   const stateRefund = totalStateRefundTaxable(g99s, taxYear);
   const rtaa = totalRtaa(g99s);
   const grants = totalTaxableGrants(g99s);
 
   const fields: Record<string, number> = {};
-  if (unemploymentNet > 0) {
+  if (unemploymentNet > 0 || taxYear === 2026 && unemploymentReceived > 0) {
     fields.line7_unemployment = unemploymentNet;
+  }
+  if (taxYear === 2026 && unemploymentRepaid > 0) {
+    fields.line7_repaid = unemploymentRepaid;
   }
   if (stateRefund > 0) {
     fields.line1_state_refund = stateRefund;
@@ -173,10 +184,22 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
 
     if (g99s.length === 0) return { outputs: [] };
     if (ctx.taxYear === 2026) {
+      const received = g99s.reduce(
+        (sum, item) => sum + (item.box_1_unemployment ?? 0),
+        0,
+      );
+      const repaid = g99s.reduce(
+        (sum, item) => sum + (item.box_1_repaid ?? 0),
+        0,
+      );
+      if (repaid > received) {
+        throw new Error(
+          "TY2026 1099-G repayment exceeds unemployment received",
+        );
+      }
       for (const item of g99s) {
         for (
           const key of [
-            "box_1_repaid",
             "box_5_rtaa",
             "box_6_taxable_grants",
             "box_7_agriculture",

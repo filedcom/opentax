@@ -58,7 +58,6 @@ Deno.test("TY2026 registered 1099-G reaches Schedule 1, 1040, and the PDF bundle
 Deno.test("TY2026 1099-G rejects unfiled branches before routing any amounts", () => {
   for (
     const key of [
-      "box_1_repaid",
       "box_5_rtaa",
       "box_6_taxable_grants",
       "box_7_agriculture",
@@ -74,6 +73,41 @@ Deno.test("TY2026 1099-G rejects unfiled branches before routing any amounts", (
     assertMatch(result.diagnostics[0].message, new RegExp(key));
     assertEquals(result.pending.schedule1, undefined);
   }
+});
+
+Deno.test("TY2026 1099-G prints same-year unemployment repayment", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{ box_1_unemployment: 1_000, box_1_repaid: 400 }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1.line7_unemployment, 600);
+  assertEquals(result.pending.schedule1.line7_repaid, 400);
+  assertEquals(result.pending.schedule1.line10_total_additional_income, 600);
+  assertEquals(result.pending.f1040.line8_additional_income, 600);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      schedule1: result.pending.schedule1,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 4);
+
+  const invalid = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{ box_1_unemployment: 100, box_1_repaid: 101 }],
+  }, context);
+  assertMatch(invalid.diagnostics[0].message, /repayment exceeds/);
+  assertEquals(invalid.pending.schedule1, undefined);
+
+  const fullyRepaid = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    f1099g: [{ box_1_unemployment: 100, box_1_repaid: 100 }],
+  }, context);
+  assertEquals(fullyRepaid.diagnostics, []);
+  assertEquals(fullyRepaid.pending.schedule1.line7_unemployment, 0);
+  assertEquals(fullyRepaid.pending.schedule1.line7_repaid, 100);
+  assertEquals(fullyRepaid.pending.schedule1.file_schedule1, true);
 });
 
 Deno.test("TY2026 registry executes a wages-only return", () => {

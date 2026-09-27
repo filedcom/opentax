@@ -38,6 +38,12 @@ function validate(
   ) {
     throw new Error("TY2026 Schedule 1 PDF line 8z needs an income type");
   }
+  if (
+    optionalAmount(fields, "line7_repaid") > 0 &&
+    fields.line7_unemployment === undefined
+  ) {
+    throw new Error("TY2026 Schedule 1 PDF repayment needs net unemployment");
+  }
   const line9 = [
     "line8a_nol_deduction",
     "line8c_cod_income",
@@ -91,6 +97,10 @@ function fillField(
   entry: PdfFieldEntry,
   value: unknown,
 ): void {
+  if (entry.kind === "checkbox") {
+    if (value === true) form.getCheckBox(entry.pdfField).check();
+    return;
+  }
   if (entry.kind !== "text" || value === undefined || value === null) return;
   if (typeof value === "number" && Math.round(value) === 0) return;
   form.getTextField(entry.pdfField).setText(
@@ -119,6 +129,7 @@ export async function buildSchedule1PdfBytes2026(
     ...fields,
     filer_name: filer.name,
     filer_ssn: filer.ssn,
+    line7_repaid_checked: optionalAmount(fields, "line7_repaid") > 0,
     line8a_nol_print: Math.abs(optionalAmount(fields, "line8a_nol_deduction")),
     line8d_feie_print: Math.abs(
       optionalAmount(fields, "line8d_foreign_earned_income_exclusion"),
