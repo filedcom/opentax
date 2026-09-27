@@ -86,3 +86,5 @@ the five-page version with a line 8z statement. The statement page was also
 checked by PDF text extraction and rendering.
 IRS references: [Form 1099-G instructions](https://www.irs.gov/instructions/i1099g),
 [Publication 525](https://www.irs.gov/publications/p525).
+The [1099-G source contract](FORM1099G-GRAPH.md) pins the final 2026 form,
+instructions and family-leave ruling and defines the unsupported branches.

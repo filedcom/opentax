@@ -84,6 +84,9 @@ for the implementation contract.
 - [`FORM1099MISC-NEC-GRAPH.md`](FORM1099MISC-NEC-GRAPH.md): final 2026
   forms and combined instructions, included cash-tip/overtime boxes,
   activity reconciliation and Schedule 1-A/2 destinations.
+- [`FORM1099G-GRAPH.md`](FORM1099G-GRAPH.md): final 2026 government-payment
+  form and instructions, family-leave authority, refund tax-benefit and
+  farm/CCC route.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

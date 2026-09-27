@@ -40,6 +40,8 @@ its transaction-level reconciliation, 2026 cash-tip fields and explicit
 separation of payer reporting thresholds from recipient taxability.
 The [1099-MISC/NEC plan](FORM1099MISC-NEC-GRAPH.md) adds their 2026 tip
 and overtime boxes without duplicating the underlying activity receipt.
+The [Form 1099-G plan](FORM1099G-GRAPH.md) specifies the currently rejected
+family-leave, business-refund, agriculture and CCC branches.
 
 1. The business credit group contains direct `schedule3` outputs, including
    [`f8994`](../../forms/f1040/nodes/inputs/f8994/index.ts). The 2026 route

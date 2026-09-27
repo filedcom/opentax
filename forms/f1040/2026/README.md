@@ -86,6 +86,10 @@ The [1099-MISC/NEC intake contract](../../../docs/ty2026/FORM1099MISC-NEC-GRAPH.
 adds their 2026 cash-tip/occupation/overtime source boxes to the same
 Schedule 1-A owner while keeping each payment in its existing income
 activity. It flags old Schedule 2 keys and synthetic Schedule C activities.
+The [Form 1099-G contract](../../../docs/ty2026/FORM1099G-GRAPH.md)
+keeps the registered unemployment/refund/withholding slice and maps the
+still-rejected 2026 box 10 family leave, box 8 business refund and farm/CCC
+payments to their proper source owners.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment
