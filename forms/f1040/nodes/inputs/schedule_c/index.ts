@@ -45,6 +45,7 @@ export const itemSchema = z.object({
   line_a_principal_business: z.string(),
   line_b_business_code: z.string(),
   line_c_business_name: z.string().optional(),
+  business_reference: z.string().trim().min(1).optional(),
   line_d_ein: z.string().optional(),
   line_e_business_address: z.object({
     line1: z.string().min(1),
@@ -104,7 +105,9 @@ export const itemSchema = z.object({
   meals_dot_worker: z.boolean().optional(), // DOT hours-of-service → 80% meals
   meals_as_wages: z.boolean().optional(), // Meals treated as wages → 100%
   line_25_utilities: z.number().nonnegative().optional(),
+  // Gross payroll before the Form 5884 and other employment-credit reductions.
   line_26_wages: z.number().nonnegative().optional(),
+  line_26_other_employment_credits: z.number().nonnegative().optional(),
   line_27a_energy_efficient: z.number().nonnegative().optional(),
   line_27b_other_expenses: z.number().nonnegative().optional(),
   line_30_home_office: z.number().nonnegative().optional(), // pre-computed dollar amount
@@ -140,6 +143,10 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   schedule_cs: z.array(itemSchema),
+  wotc_wage_reductions: z.array(z.object({
+    business_reference: z.string().trim().min(1),
+    credit_amount: z.number().nonnegative(),
+  })).optional(),
   filing_status: z.string().optional(),
   // Line 30 — Home office deduction (from Form 8829 line 35)
   // IRC §280A; Form 8829 line 35 → Schedule C line 30
@@ -206,7 +213,58 @@ export function homeOfficeDeduction(
   return Math.min(deduction, Math.max(0, tentativeProfit));
 }
 
-export function computeTotalExpenses(item: ScheduleCItem): number {
+export function wagesLessEmploymentCredits(
+  item: ScheduleCItem,
+  wotcReduction = 0,
+): number {
+  const gross = item.line_26_wages ?? 0;
+  const credits = (item.line_26_other_employment_credits ?? 0) +
+    wotcReduction;
+  if (credits < 0 || credits > gross) {
+    throw new Error("Schedule C employment credits exceed gross wages");
+  }
+  return gross - credits;
+}
+
+export function wotcReductionsByBusiness(
+  input: {
+    schedule_cs: readonly ScheduleCItem[];
+    wotc_wage_reductions?: readonly {
+      business_reference: string;
+      credit_amount: number;
+    }[];
+  },
+): Map<string, number> {
+  const businesses = new Map<string, ScheduleCItem>();
+  for (const item of input.schedule_cs) {
+    if (!item.business_reference) continue;
+    if (businesses.has(item.business_reference)) {
+      throw new Error("Schedule C business reference is duplicated");
+    }
+    businesses.set(item.business_reference, item);
+  }
+  const reductions = new Map<string, number>();
+  for (const entry of input.wotc_wage_reductions ?? []) {
+    const business = businesses.get(entry.business_reference);
+    if (!business) {
+      throw new Error("Form 5884 references an unknown Schedule C business");
+    }
+    reductions.set(
+      entry.business_reference,
+      (reductions.get(entry.business_reference) ?? 0) + entry.credit_amount,
+    );
+    wagesLessEmploymentCredits(
+      business,
+      reductions.get(entry.business_reference),
+    );
+  }
+  return reductions;
+}
+
+export function computeTotalExpenses(
+  item: ScheduleCItem,
+  wotcReduction = 0,
+): number {
   const mealsDeductible = (item.line_24b_meals ?? 0) * mealsDeductiblePct(item);
   const partVTotal = (item.part_v_other_expenses ?? []).reduce(
     (sum, e) => sum + e.amount,
@@ -233,15 +291,18 @@ export function computeTotalExpenses(item: ScheduleCItem): number {
     (item.line_24a_travel ?? 0) +
     mealsDeductible +
     (item.line_25_utilities ?? 0) +
-    (item.line_26_wages ?? 0) +
+    wagesLessEmploymentCredits(item, wotcReduction) +
     (item.line_27a_energy_efficient ?? 0) +
     (item.line_27b_other_expenses ?? 0) +
     partVTotal;
 }
 
-export function computeNetProfit(item: ScheduleCItem): number {
+export function computeNetProfit(
+  item: ScheduleCItem,
+  wotcReduction = 0,
+): number {
   const grossIncome = computeGrossIncome(item);
-  const totalExpenses = computeTotalExpenses(item);
+  const totalExpenses = computeTotalExpenses(item, wotcReduction);
   const tentativeProfit = grossIncome - totalExpenses; // Line 29
   const homeOffice = homeOfficeDeduction(item, tentativeProfit);
   const rawProfit = tentativeProfit - homeOffice; // Line 31
@@ -257,8 +318,11 @@ function isSeExempt(item: ScheduleCItem): boolean {
     item.paper_route === true;
 }
 
-export function calculateScheduleCAtRiskNet(item: ScheduleCItem): AtRiskNet {
-  const preliminaryNet = computeNetProfit(item);
+export function calculateScheduleCAtRiskNet(
+  item: ScheduleCItem,
+  wotcReduction = 0,
+): AtRiskNet {
+  const preliminaryNet = computeNetProfit(item, wotcReduction);
   if (item.at_risk_simplified && item.line_32_at_risk !== "b") {
     throw new Error("Schedule C Form 6198 facts require line 32b");
   }
@@ -341,7 +405,13 @@ class ScheduleCNode extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
 
     // Per-item: compute net profit and collect per-item routing outputs
-    const atRisk = input.schedule_cs.map(calculateScheduleCAtRiskNet);
+    const reductions = wotcReductionsByBusiness(input);
+    const atRisk = input.schedule_cs.map((item) =>
+      calculateScheduleCAtRiskNet(
+        item,
+        reductions.get(item.business_reference ?? "") ?? 0,
+      )
+    );
     const netProfits = atRisk.map((result) => result.atRiskNet);
 
     // Aggregate net profits → single schedule1 output and AGI aggregator

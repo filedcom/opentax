@@ -187,6 +187,14 @@ second year), rows crossing the anniversary without a split, and wages
 recognized after a false-information revocation notice. These source and
 dependent XML/PDF fixture cases are written but unrun; payroll-document
 reconciliation and the underlying wage-deduction adjustment remain open. The
+Schedule C receiving path now treats `line_26_wages` as gross payroll and
+derives its filed line 26 amount after a business-linked Form 5884 line 2
+reduction and separately entered other employment credits. It uses that same
+net wage amount for taxable business profit and MeF XML, and rejects unknown
+businesses or credits exceeding gross wages. Source and XML cases are written
+but unrun. Form 5884 does not yet route its line 2 share into that field, and
+Schedule F labor hired has not been converted; the cross-form deduction gap
+therefore remains open. The
 controlled-group pass now allocates the group credit by members' capped
 qualified wages, requires a group-classification document reference, and sends
 only the taxpayer member's line 2 share to Form 3800. Native member-share and

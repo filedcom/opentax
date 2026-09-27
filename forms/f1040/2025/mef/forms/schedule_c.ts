@@ -7,11 +7,17 @@ import {
   homeOfficeDeduction,
   mealsDeductiblePct,
   type ScheduleCItem,
+  wagesLessEmploymentCredits,
+  wotcReductionsByBusiness,
 } from "../../../nodes/inputs/schedule_c/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
 interface Fields {
   readonly schedule_cs?: readonly ScheduleCItem[];
+  readonly wotc_wage_reductions?: ReadonlyArray<{
+    business_reference: string;
+    credit_amount: number;
+  }>;
 }
 
 function amount(tag: string, value: number | undefined): string {
@@ -109,6 +115,7 @@ function buildScheduleC(
   item: ScheduleCItem,
   context: MefBuildContext,
   index: number,
+  wotcReduction = 0,
 ): string {
   const filer = context.filer;
   if (!filer) throw new Error(`Schedule C ${index + 1} needs filer identity`);
@@ -128,9 +135,9 @@ function buildScheduleC(
   const netReceipts = grossReceipts - (item.line_2_returns_allowances ?? 0);
   const cogs = computeCOGS(item);
   const grossIncome = computeGrossIncome(item);
-  const expenses = computeTotalExpenses(item);
+  const expenses = computeTotalExpenses(item, wotcReduction);
   const tentativeProfit = grossIncome - expenses;
-  const netProfit = calculateScheduleCAtRiskNet(item).atRiskNet;
+  const netProfit = calculateScheduleCAtRiskNet(item, wotcReduction).atRiskNet;
   const otherExpenses = (item.part_v_other_expenses ?? []).reduce(
     (sum, entry) => sum + entry.amount,
     item.line_27b_other_expenses ?? 0,
@@ -207,7 +214,12 @@ function buildScheduleC(
       item.line_24b_meals * mealsDeductiblePct(item),
     ),
     amount("UtilitiesAmt", item.line_25_utilities),
-    amount("WagesLessEmploymentCreditsAmt", item.line_26_wages),
+    amount(
+      "WagesLessEmploymentCreditsAmt",
+      item.line_26_wages === undefined && wotcReduction === 0
+        ? undefined
+        : wagesLessEmploymentCredits(item, wotcReduction),
+    ),
     amount("EnergyEffcntCmrclBldgDedAmt", item.line_27a_energy_efficient),
     element("TotalExpensesAmt", expenses),
     element("TentativeProfitOrLossAmt", tentativeProfit),
@@ -243,6 +255,17 @@ export const scheduleC: MefFormDescriptor<
     if (items.length > 8) {
       throw new Error("MeF allows at most eight Schedule C documents");
     }
-    return items.map((item, index) => buildScheduleC(item, context, index));
+    const reductions = wotcReductionsByBusiness({
+      schedule_cs: items,
+      wotc_wage_reductions: fields?.wotc_wage_reductions,
+    });
+    return items.map((item, index) =>
+      buildScheduleC(
+        item,
+        context,
+        index,
+        reductions.get(item.business_reference ?? "") ?? 0,
+      )
+    );
   },
 };

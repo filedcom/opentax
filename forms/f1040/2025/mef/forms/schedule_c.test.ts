@@ -49,6 +49,25 @@ Deno.test("Schedule C emits sourced income and expense totals as its own MeF doc
   assertStringIncludes(xml, "<NetProfitOrLossAmt>24328</NetProfitOrLossAmt>");
 });
 
+Deno.test("Schedule C MeF wages match gross payroll less employment credits", () => {
+  const [xml] = scheduleC.build({
+    schedule_cs: [item({
+      business_reference: "CONSULTING",
+      line_26_wages: 10_000,
+      line_26_other_employment_credits: 500,
+    })],
+    wotc_wage_reductions: [{
+      business_reference: "CONSULTING",
+      credit_amount: 2_400,
+    }],
+  }, { filer });
+  assertStringIncludes(
+    xml,
+    "<WagesLessEmploymentCreditsAmt>7100</WagesLessEmploymentCreditsAmt>",
+  );
+  assertStringIncludes(xml, "<NetProfitOrLossAmt>28135</NetProfitOrLossAmt>");
+});
+
 Deno.test("Schedule C emits inventory, cost of goods sold, and separate documents", () => {
   const xml = buildMefXml({
     schedule_c: {

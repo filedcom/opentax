@@ -19,13 +19,54 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 
 function compute(
   items: z.infer<typeof itemSchema>[],
-  opts: { filing_status?: string } = {},
+  opts: {
+    filing_status?: string;
+    wotc_wage_reductions?: {
+      business_reference: string;
+      credit_amount: number;
+    }[];
+  } = {},
 ) {
   return scheduleC.compute({ taxYear: 2025, formType: "f1040" }, {
     schedule_cs: items,
     ...opts,
   });
 }
+
+Deno.test("Schedule C reduces gross wages by linked Form 5884 line 2 credit", () => {
+  const business = minimalItem({
+    business_reference: "CONSULTING",
+    line_1_gross_receipts: 50_000,
+    line_26_wages: 10_000,
+    line_26_other_employment_credits: 500,
+  });
+  const result = compute([business], {
+    wotc_wage_reductions: [{
+      business_reference: "CONSULTING",
+      credit_amount: 2_400,
+    }],
+  });
+  assertEquals(
+    findOutput(result, "schedule1")?.fields.line3_schedule_c,
+    42_900,
+  );
+  assertThrows(() =>
+    compute([business], {
+      wotc_wage_reductions: [{
+        business_reference: "OTHER",
+        credit_amount: 2_400,
+      }],
+    })
+  );
+  assertThrows(() =>
+    compute([business], {
+      wotc_wage_reductions: [{
+        business_reference: "CONSULTING",
+        credit_amount: 10_000,
+      }],
+    })
+  );
+});
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
