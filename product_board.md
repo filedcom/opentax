@@ -506,6 +506,13 @@ source-year bridge now checks the Form 8582-CR passive totals against Part I/II,
 allocates passive vintages alongside nonpassive source rows, and retains used
 and unused amounts per vintage. Its mixed-source case is written but unrun;
 the MeF builder does not yet consume the bridge.
+Form 8582-CR source facts now require explicit taxpayer-versus-pass-through
+origin. Partnership, S corporation, estate, trust, and cooperative sources
+require either a nine-digit EIN or the explicit `APPLD FOR` reason. That
+provenance carries through the Form 3800 vintage plan instead of inferring an
+entity from a free-text source form. The source and propagation cases are
+written but unrun; the MeF builder
+still needs to serialize and reconcile the linked rows.
 Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025

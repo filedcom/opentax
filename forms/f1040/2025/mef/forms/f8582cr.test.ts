@@ -2,12 +2,14 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { form8582cr } from "./f8582cr.ts";
 
 const otherCredit = {
   activity_reference: "Clinical activity",
   source_form: "Form 8820",
+  source_origin: { kind: PassiveCreditSourceOrigin.Self },
   source_document_reference: "2025 clinical credit statement",
   category: PassiveCreditCategory.Other,
   reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -24,6 +26,7 @@ const otherCredit = {
 const rentalCredit = {
   activity_reference: "Rental house",
   source_form: "Form 8835",
+  source_origin: { kind: PassiveCreditSourceOrigin.Self },
   source_document_reference: "2025 rental credit statement",
   category: PassiveCreditCategory.ActiveRental,
   reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -167,6 +170,7 @@ Deno.test("Form 8582-CR: Form 8834 credit does not export without its filing rou
         credit_sources: [{
           ...otherCredit,
           source_form: "Form 8834",
+          source_origin: { kind: PassiveCreditSourceOrigin.Self },
           reporting_route: PassiveCreditReportingRoute.Form8834,
         }],
         regular_tax_all_income: 10_000,

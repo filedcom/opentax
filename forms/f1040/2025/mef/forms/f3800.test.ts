@@ -4,6 +4,7 @@ import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import {
   PassiveCreditCategory,
+  PassiveCreditSourceOrigin,
   sourceAllocationSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
@@ -13,6 +14,7 @@ Deno.test("Form 3800 XML refuses passive sources until Parts III/IV reconcile", 
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
     source_form: "Form 8820",
+    source_origin: { kind: PassiveCreditSourceOrigin.Self },
     source_document_reference: "2025 clinical credit statement",
     category: PassiveCreditCategory.Other,
     reporting_route: PassiveCreditReportingRoute.Form3800Line3,

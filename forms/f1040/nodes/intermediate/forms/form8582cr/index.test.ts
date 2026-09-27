@@ -6,10 +6,12 @@ import {
   inputSchema,
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
 } from "./index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f3800 } from "../../../inputs/f3800/index.ts";
+import { creditSourceSchema } from "./source.ts";
 
 function source(
   category: PassiveCreditCategory,
@@ -20,6 +22,7 @@ function source(
   return {
     activity_reference: activity,
     source_form: "Form 8820",
+    source_origin: { kind: PassiveCreditSourceOrigin.Self },
     source_document_reference: `2025 ${activity} credit statement`,
     category,
     reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -48,6 +51,61 @@ function other(current: number, prior = 0, activity = "Clinical activity") {
 function rental(current: number, prior = 0, activity = "Rental house") {
   return source(PassiveCreditCategory.ActiveRental, current, prior, activity);
 }
+
+Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN reason", () => {
+  assertEquals(
+    creditSourceSchema.safeParse({
+      ...other(100),
+      source_origin: {
+        kind: PassiveCreditSourceOrigin.Partnership,
+        ein: "123456789",
+      },
+    }).success,
+    true,
+  );
+  assertEquals(
+    creditSourceSchema.safeParse({
+      ...other(100),
+      source_origin: {
+        kind: PassiveCreditSourceOrigin.SCorporation,
+        missing_ein_reason: "APPLD FOR",
+      },
+    }).success,
+    true,
+  );
+  for (
+    const kind of [
+      PassiveCreditSourceOrigin.Estate,
+      PassiveCreditSourceOrigin.Trust,
+      PassiveCreditSourceOrigin.Cooperative,
+    ]
+  ) {
+    assertEquals(
+      creditSourceSchema.safeParse({
+        ...other(100),
+        source_origin: { kind, ein: "123456789" },
+      }).success,
+      true,
+    );
+  }
+  assertEquals(
+    creditSourceSchema.safeParse({
+      ...other(100),
+      source_origin: { kind: PassiveCreditSourceOrigin.Partnership },
+    }).success,
+    false,
+  );
+  assertEquals(
+    creditSourceSchema.safeParse({
+      ...other(100),
+      source_origin: {
+        kind: PassiveCreditSourceOrigin.Self,
+        ein: "123456789",
+      },
+    }).success,
+    false,
+  );
+});
 
 function compute(input: Record<string, unknown>) {
   return form8582cr.compute(
@@ -142,6 +200,7 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
       credit_sources: [{
         ...other(0, 500),
         source_form: "Form 8931",
+        source_origin: { kind: PassiveCreditSourceOrigin.Self },
         form3800_credit_line: "2h",
       }],
     }).success,
@@ -695,6 +754,7 @@ Deno.test("Form 8582-CR does not send Form 8834 allowed credit to Schedule 3 lin
         credit_sources: [{
           ...other(100),
           source_form: "Form 8834",
+          source_origin: { kind: PassiveCreditSourceOrigin.Self },
           reporting_route: PassiveCreditReportingRoute.Form8834,
         }],
         regular_tax_all_income: 10_000,

@@ -10,6 +10,7 @@ import {
   inputSchema as form8582crInputSchema,
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
 } from "../../intermediate/forms/form8582cr/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
@@ -40,6 +41,7 @@ Deno.test("f3800: passive source waits for the shared tax limit without depositi
     credit_sources: [{
       activity_reference: "Clinical activity",
       source_form: "Form 8820",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2025 clinical credit statement",
       category: PassiveCreditCategory.Other,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,

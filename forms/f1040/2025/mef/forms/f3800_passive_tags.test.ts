@@ -3,6 +3,7 @@ import {
   form3800SpecifiedCreditLineSchema,
   form3800StandardCreditLineSchema,
   PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
 } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
 import { groupForm3800PassiveCreditVintages } from "../../../nodes/inputs/f3800/calculation.ts";
 import {
@@ -53,6 +54,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
   const source = (year: number, before: number, after: number) => ({
     activityReference: "Clinical activity",
     sourceForm: "Form 8820",
+    sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
     sourceDocumentReference: `${year} clinical credit statement`,
     form3800CreditLine: "1h" as const,
     reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
@@ -109,6 +111,7 @@ Deno.test("Form 3800 passive XML summary year survives same-year sources", () =>
       {
         activityReference: "Rental A",
         sourceForm: "Form 8820",
+        sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
         sourceDocumentReference: "2023 A statement",
         form3800CreditLine: "1h",
         reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
@@ -119,6 +122,10 @@ Deno.test("Form 3800 passive XML summary year survives same-year sources", () =>
       {
         activityReference: "Rental B",
         sourceForm: "Form 8820",
+        sourceOrigin: {
+          kind: PassiveCreditSourceOrigin.Partnership,
+          ein: "123456789",
+        },
         sourceDocumentReference: "2023 B statement",
         form3800CreditLine: "1h",
         reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
@@ -132,4 +139,8 @@ Deno.test("Form 3800 passive XML summary year survives same-year sources", () =>
   assertEquals(planned[0].latestOriginatingTaxYear, 2023);
   assertEquals(planned[0].requiresSourceBreakdown, true);
   assertEquals(planned[0].sources.length, 2);
+  assertEquals(planned[0].sources[1].sourceOrigin, {
+    kind: PassiveCreditSourceOrigin.Partnership,
+    ein: "123456789",
+  });
 });

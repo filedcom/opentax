@@ -16,6 +16,7 @@ export type Form3800PassiveCreditVintage = {
   readonly activityReference: string;
   readonly sourceForm: string;
   readonly sourceDocumentReference: string;
+  readonly sourceOrigin: Form8582CRSourceAllocation["source_origin"];
   readonly form3800CreditLine: NonNullable<
     Form8582CRSourceAllocation["form3800_credit_line"]
   >;
@@ -329,6 +330,7 @@ export function splitForm3800PassiveCreditVintages(
         activityReference: source.activity_reference,
         sourceForm: source.source_form,
         sourceDocumentReference: vintage.sourceDocumentReference,
+        sourceOrigin: source.source_origin,
         form3800CreditLine: source.form3800_credit_line,
         reportingRoute: source.reporting_route,
         originatingTaxYear: vintage.originatingTaxYear,

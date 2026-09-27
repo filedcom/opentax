@@ -12,10 +12,60 @@ export enum PassiveCreditCategory {
   Other = "other",
 }
 
+export enum PassiveCreditSourceOrigin {
+  Self = "self",
+  Partnership = "partnership",
+  SCorporation = "s_corporation",
+  Estate = "estate",
+  Trust = "trust",
+  Cooperative = "cooperative",
+}
+
+const passThroughOriginFields = {
+  ein: z.string().regex(/^\d{9}$/).optional(),
+  missing_ein_reason: z.literal("APPLD FOR").optional(),
+};
+
+export const passiveCreditSourceOriginSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal(PassiveCreditSourceOrigin.Self) }).strict(),
+  z.object({
+    kind: z.literal(PassiveCreditSourceOrigin.Partnership),
+    ...passThroughOriginFields,
+  }).strict(),
+  z.object({
+    kind: z.literal(PassiveCreditSourceOrigin.SCorporation),
+    ...passThroughOriginFields,
+  }).strict(),
+  z.object({
+    kind: z.literal(PassiveCreditSourceOrigin.Estate),
+    ...passThroughOriginFields,
+  }).strict(),
+  z.object({
+    kind: z.literal(PassiveCreditSourceOrigin.Trust),
+    ...passThroughOriginFields,
+  }).strict(),
+  z.object({
+    kind: z.literal(PassiveCreditSourceOrigin.Cooperative),
+    ...passThroughOriginFields,
+  }).strict(),
+]).superRefine((origin, ctx) => {
+  if (
+    origin.kind !== PassiveCreditSourceOrigin.Self &&
+    (origin.ein === undefined) ===
+      (origin.missing_ein_reason === undefined)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Pass-through passive credit needs an EIN or APPLD FOR reason",
+    });
+  }
+});
+
 const creditSourceBaseSchema = z.object({
   activity_reference: z.string().trim().min(1),
   source_form: z.string().trim().min(1),
   source_document_reference: z.string().trim().min(1),
+  source_origin: passiveCreditSourceOriginSchema,
   category: z.nativeEnum(PassiveCreditCategory),
   current_year_credit: z.number().int().nonnegative(),
   prior_unallowed_credits: z.array(z.object({

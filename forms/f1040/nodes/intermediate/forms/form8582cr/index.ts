@@ -14,7 +14,7 @@ import {
 } from "./source.ts";
 
 export { PassiveCreditReportingRoute } from "./credit-route.ts";
-export { PassiveCreditCategory } from "./source.ts";
+export { PassiveCreditCategory, PassiveCreditSourceOrigin } from "./source.ts";
 
 // Form 8582-CR — Passive Activity Credit Limitations
 // Mirrors Form 8582 (passive losses) but applies to passive activity credits (PAC).
@@ -150,6 +150,7 @@ function allocateCreditsToSources(
     activity_reference: source.activity_reference,
     source_form: source.source_form,
     source_document_reference: source.source_document_reference,
+    source_origin: source.source_origin,
     category: source.category,
     reporting_route: source.reporting_route,
     form3800_credit_line: source.form3800_credit_line,

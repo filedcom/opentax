@@ -2,6 +2,7 @@ import { assertEquals } from "@std/assert";
 import {
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
 } from "../../../nodes/intermediate/forms/form8582cr/index.ts";
 import { form8582cr } from "./f8582cr.ts";
 
@@ -28,6 +29,7 @@ Deno.test({
     credit_sources: [{
       activity_reference: "Rental house",
       source_form: "Form 8835",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2025 rental credit statement",
       category: PassiveCreditCategory.ActiveRental,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -72,6 +74,7 @@ Deno.test({
     credit_sources: [{
       activity_reference: "Rehabilitation building",
       source_form: "Form 3468",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2025 rehabilitation credit statement",
       category: PassiveCreditCategory.RehabilitationOrPre1990Housing,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -82,6 +85,7 @@ Deno.test({
     }, {
       activity_reference: "Housing project",
       source_form: "Form 8586",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2025 low-income housing credit statement",
       category: PassiveCreditCategory.LowIncomeHousing,
       reporting_route: PassiveCreditReportingRoute.Form3800Line33,

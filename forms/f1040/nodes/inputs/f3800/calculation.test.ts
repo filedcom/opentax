@@ -5,6 +5,7 @@ import {
   inputSchema as form8582crInputSchema,
   PassiveCreditCategory,
   PassiveCreditReportingRoute,
+  PassiveCreditSourceOrigin,
 } from "../../intermediate/forms/form8582cr/index.ts";
 import {
   allocateForm3800CreditUse,
@@ -27,6 +28,7 @@ Deno.test("Form 3800: classifies allowed passive credit into lines 3, 24, and 33
   ) => ({
     activity_reference: activity,
     source_form: "Form 3800 source form",
+    source_origin: { kind: PassiveCreditSourceOrigin.Self },
     source_document_reference: `2025 ${activity} credit statement`,
     category: PassiveCreditCategory.Other,
     reporting_route: route,
@@ -96,6 +98,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
     credit_sources: [{
       activity_reference: "Clinical activity",
       source_form: "Form 8820",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2025 clinical credit statement",
       category: PassiveCreditCategory.Other,
       reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -123,6 +126,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
     {
       activityReference: "Clinical activity",
       sourceForm: "Form 8820",
+      sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
       sourceDocumentReference: "2023 clinical credit carryover",
       reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
       form3800CreditLine: "1h",
@@ -133,6 +137,7 @@ Deno.test("Form 3800: line 2 includes prior passive credit before limitation", (
     {
       activityReference: "Clinical activity",
       sourceForm: "Form 8820",
+      sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
       sourceDocumentReference: "2025 clinical credit statement",
       reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
       form3800CreditLine: "1h",
@@ -148,6 +153,7 @@ Deno.test("Form 3800: passive source vintages keep oldest carryovers first", () 
     credit_sources: [{
       activity_reference: "Rental",
       source_form: "Form 3468",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2025 rehabilitation statement",
       category: PassiveCreditCategory.Other,
       reporting_route: PassiveCreditReportingRoute.Form3800Line33,
@@ -203,6 +209,7 @@ Deno.test("Form 3800: Form 8834 vintage cannot enter the general business credit
     credit_sources: [{
       activity_reference: "Legacy vehicle",
       source_form: "Form 8834",
+      source_origin: { kind: PassiveCreditSourceOrigin.Self },
       source_document_reference: "2024 Form 8834 credit statement",
       category: PassiveCreditCategory.Other,
       reporting_route: PassiveCreditReportingRoute.Form8834,
@@ -233,6 +240,7 @@ Deno.test("Form 3800: groups same-line passive sources without losing activity o
   ) => ({
     activityReference,
     sourceForm: "Form 8820",
+    sourceOrigin: { kind: PassiveCreditSourceOrigin.Self },
     sourceDocumentReference:
       `${originatingTaxYear} ${activityReference} statement`,
     form3800CreditLine: "1h" as const,
@@ -387,6 +395,10 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
     source_form: "Form 8820",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      ein: "123456789",
+    },
     source_document_reference: "2025 clinical statement",
     category: PassiveCreditCategory.Other,
     reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -427,11 +439,32 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
         after: row.afterPassiveLimit,
         applied: row.appliedAgainstTax,
         unused: row.unusedAfterTaxLimit,
+        sourceOrigin: row.sourceOrigin,
       }),
     ),
     [
-      { year: 2023, before: 200, after: 200, applied: 200, unused: 0 },
-      { year: 2025, before: 300, after: 100, applied: 0, unused: 100 },
+      {
+        year: 2023,
+        before: 200,
+        after: 200,
+        applied: 200,
+        unused: 0,
+        sourceOrigin: {
+          kind: PassiveCreditSourceOrigin.Partnership,
+          ein: "123456789",
+        },
+      },
+      {
+        year: 2025,
+        before: 300,
+        after: 100,
+        applied: 0,
+        unused: 100,
+        sourceOrigin: {
+          kind: PassiveCreditSourceOrigin.Partnership,
+          ein: "123456789",
+        },
+      },
     ],
   );
   assertThrows(
