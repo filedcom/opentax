@@ -59,6 +59,9 @@ for the implementation contract.
 - [`NODE-BOUNDARY-AUDIT.md`](NODE-BOUNDARY-AUDIT.md): route owners and
   implementation decisions for the 85 TY2025 registry nodes not named
   individually in the specialist plans.
+- [`FORM5884-6765-8994-GRAPH.md`](FORM5884-6765-8994-GRAPH.md) and three
+  PDF field inventories: work opportunity hire cutoff, required research
+  Section G, and expanded paid-leave credit/Notice 2026-28.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

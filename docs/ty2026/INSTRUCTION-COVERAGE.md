@@ -4,12 +4,13 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-76 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
+79 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **5 with
-current continuous-use instructions**, **2 current older-revision
+current continuous-use instructions**, **4 current older-revision
 form/instruction pairs**, **2 current forms with embedded instructions**, and
-**1 2025 comparator awaiting a 2026 revision**. The
+**1 2025 comparator awaiting a 2026 revision**, and **1 current-guidance
+case with a prior-form comparator**. The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
 Forms 4137, 4952, 4972, 6252, 6781, 8396, 8859, 8880, and 8919 embed their 2026 instructions
@@ -34,6 +35,10 @@ credit needs a new publication check and the 2026 section 45 rate notice.
 Form 8911's December 2025 form, Schedule A and instructions apply to years
 beginning in 2025 or later; Form 8978's January 2023 form/Schedule A and
 December 2024 instructions remain current, with 2026 return-line checks.
+Form 5884's current March 2021 instructions need the pre-2026 hire cutoff;
+Form 6765's current form/instructions add Section G for many 2026 filers.
+Form 8994's earlier form/instructions predate the premium method in the
+pinned Notice 2026-28, so their filed 2026 expression is a source gate.
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.

@@ -1860,6 +1860,62 @@
       "status": "downloaded",
       "bytes": 174599,
       "sha256": "bbc268cc011a1235021532a29ea8cf8a6ad71dc34cdb5941bb58d41e8f6e1816"
+    },
+    {
+      "path": "authorities/f8994--2021.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8994.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 59371,
+      "sha256": "d3ec89566eedfc70f5634fe338bdaa7d5ae08a784bdf98aade3e61fadd28a501"
+    },
+    {
+      "path": "authorities/i8994--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8994.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 199866,
+      "sha256": "fa0f336940fa47611486fc41efdd4b46f45f3658e2919b8c0bac21be64c89b92"
+    },
+    {
+      "path": "authorities/n26-28--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/n26-28.pdf",
+      "kind": "current-guidance",
+      "status": "downloaded",
+      "bytes": 129632,
+      "sha256": "470369a4b3013bbcbcbc6fcafc875dd65975c6462d75c45d20882ec226c81b8a"
+    },
+    {
+      "path": "authorities/f5884--2021.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f5884.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 52478,
+      "sha256": "2d4d730f198d116a52a2cb174db8f420b5c49cfb5593e77de61c3efc89624f23"
+    },
+    {
+      "path": "authorities/i5884--2021.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i5884.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 117376,
+      "sha256": "21d499fd540677e88472f760d1af74358ac3599dff56c0cb8d2a9c4e3a980316"
+    },
+    {
+      "path": "authorities/f6765--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f6765.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 153023,
+      "sha256": "55cbe3ac2c2ab1987776c76a4835fbe85bd2e45940dcf5762fa69b1a933be0ee"
+    },
+    {
+      "path": "authorities/i6765--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i6765.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 226110,
+      "sha256": "2d8bbacca71ded4b573d01eb9fb6a6108441f40755516d8a3e7015d9dc0aafba"
     }
   ]
 }
