@@ -10,6 +10,7 @@ const certifications = {
 const fields = {
   business: {
     qualifying_business_activity: true as const,
+    claimant_is_ultimate_purchaser: true as const,
     activity_count: 1 as const,
     business_name: "Example Farm",
     principal_activity_code: "111000",
@@ -23,13 +24,15 @@ const fields = {
     {
       ...certifications,
       line: "1a" as const,
-      qualified_gallons: 100,
+      unit: "gallons",
+      qualified_quantity: 100,
       actual_fuel_cost: 300,
     },
     {
       ...certifications,
       line: "3b" as const,
-      qualified_gallons: 100,
+      unit: "gallons",
+      qualified_quantity: 100,
       actual_fuel_cost: 400,
     },
   ],
@@ -77,42 +80,48 @@ Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternativ
         ...certifications,
         line: "2b",
         type_of_use: "01",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
       {
         ...certifications,
         line: "4a",
         type_of_use: "02",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
       {
         ...certifications,
         line: "5c",
         type_of_use: "01",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
       {
         ...certifications,
         line: "5d",
         type_of_use: "01",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
       {
         ...certifications,
         line: "11a",
         type_of_use: "02",
-        qualified_gallons: 100,
+        unit: "GGE",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
       {
         ...certifications,
         line: "11c",
         type_of_use: "02",
-        qualified_gallons: 100,
+        unit: "GGE",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
     ],
@@ -138,9 +147,56 @@ Deno.test("Form 4136 XML requires the 2025 business and actual-cost facts", () =
     () =>
       form4136.build({
         ...fields,
-        claims: [{ line: "1a", qualified_gallons: 100, actual_fuel_cost: 0 }],
+        claims: [{
+          line: "1a",
+          unit: "gallons",
+          qualified_quantity: 100,
+          actual_fuel_cost: 0,
+        }],
       }, {
         pending: { schedule3: { line12_fuel_tax_credit: 18.3 } },
       }),
   );
+});
+
+Deno.test("Form 4136 XML covers all non-bus line 11 alternative fuels", () => {
+  const lines = [
+    "11a",
+    "11b",
+    "11c",
+    "11d",
+    "11e",
+    "11f",
+    "11g",
+    "11h",
+  ] as const;
+  const xml = form4136.build({
+    business: fields.business,
+    claims: lines.map((line) => ({
+      ...certifications,
+      line,
+      type_of_use: "02",
+      unit: line === "11a" || line === "11c"
+        ? "GGE" as const
+        : line === "11g"
+        ? "DGE" as const
+        : "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+    })),
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 164.4 } } });
+  for (
+    const tag of [
+      "NontxLiquefiedPetroleumGasGrp",
+      "NontxPSeriesFuelsGrp",
+      "NontxCompressedNaturalGasGrp",
+      "NontxLiquefiedHydrogenGrp",
+      "NontxLiqfdFuelFromCoalGrp",
+      "NontxLiqfdFuelDerBiomassGrp",
+      "NontxLiquefiedNaturalGasGrp",
+      "NontxLiqfdGasDerBiomassGrp",
+    ]
+  ) {
+    assertStringIncludes(xml, `<${tag}>`);
+  }
 });

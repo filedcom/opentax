@@ -8,19 +8,25 @@ The 2025 form added Part I business-activity questions and Part II column (d),
 actual fuel cost from records. The prior flat gallon fields could calculate a
 number without either fact, so the input is now a line-indexed claim array with
 an affirmed single qualifying business, equipment details, purchase-record and
-no-duplicate-claim confirmations, gallons, and actual fuel cost on every claim.
+no-duplicate-claim confirmations, ultimate-purchaser status, units, and actual
+fuel cost on every claim.
 The input also requires the printed undyed-fuel, no-waiver, no-credit-card-
 certificate, and non-highway-vehicle certifications on affected claims.
 The represented line rates are 1a/1b $.183, 2b $.193, 3a/3b $.243, 4a/4b
-$.243, 5c $.243, 5d $.218, and 11a/11c $.183. IRS type-of-use codes are
+$.243, 5c $.243, 5d $.218, 11a-d/11h $.183, and 11e-g $.243. IRS type-of-use codes are
 required and constrained to the local XSD for variable-use lines. This model
 does not assert eligibility solely from gallon quantities.
+Each claim now names its measurement unit. Lines 1-5 and non-equivalent line
+11 fuels use gallons; line 11 LPG, CNG, and LNG may use gallons, GGE, or DGE
+as directed by the 2025 instructions.
+The MeF quantity element does not convey the unit, so source records retain it.
 
 All represented credits sum to refundable Schedule 3 line 12, which flows to
 Form 1040 line 31. The older research note's division between nonrefundable
 off-highway fuel and refundable farm fuel was wrong for the 2025 form.
 
-The native IRS4136 XML builder now serializes these represented claims and
+The native IRS4136 XML builder now serializes these represented claims, including
+all non-bus line 11 alternative fuels, and
 reconciles its line 17 source total against Schedule 3 line 12. The PDF
 descriptor maps the actual 2025 AcroForm widgets across all four pages,
 including dollars/cents fields and a statement for repeated use codes. Its

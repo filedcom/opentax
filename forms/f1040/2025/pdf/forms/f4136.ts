@@ -11,6 +11,16 @@ import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 
 type Claim = Form4136Input["claims"][number];
 type Line = Claim["line"];
+const alternativeFuelLines = [
+  "11a",
+  "11b",
+  "11c",
+  "11d",
+  "11e",
+  "11f",
+  "11g",
+  "11h",
+] as const;
 const creditReferenceNumber: Record<Line, string> = {
   "1a": "362",
   "1b": "362",
@@ -22,7 +32,13 @@ const creditReferenceNumber: Record<Line, string> = {
   "5c": "346",
   "5d": "369",
   "11a": "419",
+  "11b": "420",
   "11c": "421",
+  "11d": "422",
+  "11e": "423",
+  "11f": "424",
+  "11g": "425",
+  "11h": "435",
 };
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 const text = (key: string, p: number, n: number): PdfFieldEntry => ({
@@ -55,40 +71,41 @@ const fields: PdfFieldEntry[] = [
   text("equipment_make", 1, 7),
   text("equipment_model", 1, 8),
   text("equipment_type", 1, 9),
-  text("line1a_gallons", 1, 12),
-  text("line1b_gallons", 1, 15),
+  text("line1a_quantity", 1, 12),
+  text("line1b_quantity", 1, 15),
   ...moneyFields("line1_cost", 1, 20),
   ...moneyFields("line1_credit", 1, 22),
   text("line2b_type", 1, 40),
-  text("line2b_gallons", 1, 42),
+  text("line2b_quantity", 1, 42),
   ...moneyFields("line2b_cost", 1, 43),
   ...moneyFields("line2b_credit", 1, 45),
   text("line3a_type", 1, 64),
-  text("line3a_gallons", 1, 66),
-  text("line3b_gallons", 1, 69),
+  text("line3a_quantity", 1, 66),
+  text("line3b_quantity", 1, 69),
   ...moneyFields("line3_cost", 1, 70),
   ...moneyFields("line3_credit", 1, 72),
   text("line4a_type", 2, 1),
-  text("line4a_gallons", 2, 3),
-  text("line4b_gallons", 2, 6),
+  text("line4a_quantity", 2, 3),
+  text("line4b_quantity", 2, 6),
   ...moneyFields("line4_cost", 2, 7),
   ...moneyFields("line4_credit", 2, 9),
   text("line5c_type", 2, 60),
-  text("line5c_gallons", 2, 62),
+  text("line5c_quantity", 2, 62),
   ...moneyFields("line5c_cost", 2, 63),
   ...moneyFields("line5c_credit", 2, 65),
   text("line5d_type", 2, 68),
-  text("line5d_gallons", 2, 70),
+  text("line5d_quantity", 2, 70),
   ...moneyFields("line5d_cost", 2, 71),
   ...moneyFields("line5d_credit", 2, 73),
-  text("line11a_type", 3, 79),
-  text("line11a_gallons", 3, 81),
-  ...moneyFields("line11a_cost", 3, 82),
-  ...moneyFields("line11a_credit", 3, 84),
-  text("line11c_type", 3, 95),
-  text("line11c_gallons", 3, 97),
-  ...moneyFields("line11c_cost", 3, 98),
-  ...moneyFields("line11c_credit", 3, 100),
+  ...alternativeFuelLines.flatMap((line, index) => {
+    const base = 79 + index * 8;
+    return [
+      text(`line${line}_type`, 3, base),
+      text(`line${line}_quantity`, 3, base + 2),
+      ...moneyFields(`line${line}_cost`, 3, base + 3),
+      ...moneyFields(`line${line}_credit`, 3, base + 5),
+    ];
+  }),
   ...moneyFields("line17_total", 4, 124),
 ];
 
@@ -116,7 +133,7 @@ function putClaimGroup(
   putMoney(
     out,
     `${key}_credit`,
-    total((claim) => claim.qualified_gallons * FORM4136_RATES[claim.line]),
+    total((claim) => claim.qualified_quantity * FORM4136_RATES[claim.line]),
   );
 }
 
@@ -127,8 +144,8 @@ function putLine(
 ): void {
   const claims = input.claims.filter((claim) => claim.line === line);
   if (!claims.length) return;
-  out[`line${line}_gallons`] = claims.reduce(
-    (sum, claim) => sum + claim.qualified_gallons,
+  out[`line${line}_quantity`] = claims.reduce(
+    (sum, claim) => sum + claim.qualified_quantity,
     0,
   );
   if (claims[0].type_of_use) {
@@ -174,7 +191,7 @@ async function appendClaimStatement(
       },
     );
     page.drawText(
-      "Line  Use   Rate   Gallons   Actual fuel cost   Credit   CRN",
+      "Line  Use   Rate   Quantity Unit      Fuel cost   Credit   CRN",
       {
         x: 36,
         y: 698,
@@ -187,9 +204,10 @@ async function appendClaimStatement(
         claim.line.padEnd(5),
         (claim.type_of_use ?? "fixed").padEnd(5),
         FORM4136_RATES[claim.line].toFixed(3).padStart(5),
-        String(claim.qualified_gallons).padStart(9),
-        claim.actual_fuel_cost.toFixed(2).padStart(18),
-        (claim.qualified_gallons * FORM4136_RATES[claim.line]).toFixed(2)
+        String(claim.qualified_quantity).padStart(9),
+        claim.unit.padEnd(7),
+        claim.actual_fuel_cost.toFixed(2).padStart(12),
+        (claim.qualified_quantity * FORM4136_RATES[claim.line]).toFixed(2)
           .padStart(8),
         creditReferenceNumber[claim.line],
       ].join(" ");
@@ -244,8 +262,7 @@ export const form4136Pdf: PdfFormDescriptor = {
         "4b",
         "5c",
         "5d",
-        "11a",
-        "11c",
+        ...alternativeFuelLines,
       ] as const
     ) {
       putLine(out, input, line);
@@ -254,7 +271,7 @@ export const form4136Pdf: PdfFormDescriptor = {
     putClaimGroup(out, input, ["2b"], "line2b");
     putClaimGroup(out, input, ["3a", "3b"], "line3");
     putClaimGroup(out, input, ["4a", "4b"], "line4");
-    for (const line of ["5c", "5d", "11a", "11c"] as const) {
+    for (const line of ["5c", "5d", ...alternativeFuelLines] as const) {
       putClaimGroup(out, input, [line], `line${line}`);
     }
     putMoney(out, "line17_total", total);

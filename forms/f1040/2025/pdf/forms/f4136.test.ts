@@ -4,6 +4,7 @@ import { form4136Pdf } from "./f4136.ts";
 
 const business = {
   qualifying_business_activity: true,
+  claimant_is_ultimate_purchaser: true,
   activity_count: 1,
   business_name: "Example Farm",
   principal_activity_code: "111000",
@@ -25,12 +26,16 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     form4136Pdf.fields.map((field) => [field.domainKey, field.pdfField]),
   );
   assertEquals(names.business_name, "topmostSubform[0].Page1[0].f1_4[0]");
-  assertEquals(names.line1a_gallons, "topmostSubform[0].Page1[0].f1_12[0]");
+  assertEquals(names.line1a_quantity, "topmostSubform[0].Page1[0].f1_12[0]");
   assertEquals(
     names.line5d_credit_dollars,
     "topmostSubform[0].Page2[0].f2_73[0]",
   );
-  assertEquals(names.line11c_gallons, "topmostSubform[0].Page3[0].f3_97[0]");
+  assertEquals(names.line11c_quantity, "topmostSubform[0].Page3[0].f3_97[0]");
+  assertEquals(
+    names.line11h_credit_cents,
+    "topmostSubform[0].Page3[0].f3_141[0]",
+  );
   assertEquals(
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
@@ -44,20 +49,22 @@ Deno.test("Form 4136 PDF projects gallons and split dollars/cents from source", 
       {
         ...certifications,
         line: "1a",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 300.25,
       },
       {
         ...certifications,
         line: "3b",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 400.10,
       },
     ],
   }, {
     schedule3: { line12_fuel_tax_credit: 42.6 },
   });
-  assertEquals(result?.line1a_gallons, 100);
+  assertEquals(result?.line1a_quantity, 100);
   assertEquals(result?.line1_cost_dollars, "300");
   assertEquals(result?.line1_cost_cents, "25");
   assertEquals(result?.line3_credit_dollars, "24");
@@ -74,20 +81,22 @@ Deno.test("Form 4136 PDF carries multiple uses on a separate statement", async (
         ...certifications,
         line: "3a",
         type_of_use: "02",
-        qualified_gallons: 100,
+        unit: "gallons",
+        qualified_quantity: 100,
         actual_fuel_cost: 300,
       },
       {
         ...certifications,
         line: "3a",
         type_of_use: "06",
-        qualified_gallons: 50,
+        unit: "gallons",
+        qualified_quantity: 50,
         actual_fuel_cost: 150,
       },
     ],
   }, { schedule3: { line12_fuel_tax_credit: 36.45 } });
   assertEquals(result?.line3a_type, "SEE STMT");
-  assertEquals(result?.line3a_gallons, 150);
+  assertEquals(result?.line3a_quantity, 150);
   const doc = await PDFDocument.create();
   await form4136Pdf.appendSupplementalPages?.(doc, result ?? {}, undefined);
   assertEquals(doc.getPageCount(), 1);
@@ -101,11 +110,29 @@ Deno.test("Form 4136 PDF rejects a Schedule 3 mismatch", () => {
         claims: [{
           ...certifications,
           line: "1a",
-          qualified_gallons: 100,
+          unit: "gallons",
+          qualified_quantity: 100,
           actual_fuel_cost: 300,
         }],
       }, { schedule3: { line12_fuel_tax_credit: 50 } }),
     Error,
     "does not match Schedule 3",
   );
+});
+
+Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
+  const result = form4136Pdf.projectFields?.({
+    business,
+    claims: [{
+      ...certifications,
+      line: "11g",
+      type_of_use: "02",
+      unit: "DGE",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 24.3 } });
+  assertEquals(result?.line11g_quantity, 100);
+  assertEquals(result?.line11g_credit_dollars, "24");
+  assertEquals(result?.line11g_credit_cents, "30");
 });
