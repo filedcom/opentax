@@ -332,12 +332,11 @@ export function isCoveredExpatriate(rawInput: F8854Input): boolean {
 /** Scope the registered initial filing path before its MeF source reconciliation. */
 export function assertForm8854FilingScope(rawInput: F8854Input): void {
   const input = inputSchema.parse(rawInput);
-  if (input.section_d.elect_deferral) {
-    throw new Error(
-      "Form 8854 Section D deferral needs verified binary attachments",
-    );
+  const covered = isCoveredExpatriate(input);
+  if (input.section_d.elect_deferral && !covered) {
+    throw new Error("Only covered expatriates can elect Section D deferral");
   }
-  if (isCoveredExpatriate(input)) {
+  if (covered) {
     const section = input.section_c;
     if (
       section === null ||

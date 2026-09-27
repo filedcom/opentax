@@ -31,7 +31,7 @@ export const form8854: MefFormDescriptor<"f8854", unknown> = {
         {
           balanceSheet: {},
           sectionC: {},
-          binaryAttachments: [],
+          binaryAttachmentIdsByFileName: {},
         },
         pending,
         "discover",
@@ -40,7 +40,7 @@ export const form8854: MefFormDescriptor<"f8854", unknown> = {
     const links = linkForm8854NativeStatementIds(
       contents,
       context.documentIdsByPendingKey.f8854_native_statements ?? [],
-      [],
+      context.documentIdsByAttachmentFileName ?? {},
     );
     return buildForm8854InitialBundle(input, links, pending).formXml;
   },

@@ -6,7 +6,7 @@ import {
 import { type SectionC, sectionCSchema } from "./section-c.ts";
 
 const hypotheticalReturnSchema = z.object({
-  document_id: z.string().trim().min(1),
+  attachment_file_name: z.string().trim().min(1),
   form_1040_line_24_tax: z.number().int().nonnegative().refine(
     Number.isSafeInteger,
     "Hypothetical Form 1040 tax must be a safe integer dollar amount",
@@ -25,7 +25,10 @@ export const sectionDSchema = z.discriminatedUnion("elect_deferral", [
       .max(20).refine((ids) => new Set(ids).size === ids.length, {
         message: "Deferred Form 8854 property IDs must be unique",
       }),
-    tax_deferral_agreement_copy_document_id: z.string().trim().min(1),
+    tax_deferral_agreement_copy_attachment_file_name: z.string().trim().min(1),
+    original_agreement_request_marked_original_confirmed: z.literal(true),
+    original_agreement_request_mailed_confirmed: z.literal(true),
+    agreement_copy_marked_copy_confirmed: z.literal(true),
     adequate_security_confirmed: z.literal(true),
     us_limited_agent_appointed_confirmed: z.literal(true),
     treaty_collection_waiver_confirmed: z.literal(true),
@@ -33,13 +36,25 @@ export const sectionDSchema = z.discriminatedUnion("elect_deferral", [
 ]).superRefine((section, ctx) => {
   if (!section.elect_deferral) return;
   if (
-    section.hypothetical_return_with_877a.document_id ===
-      section.hypothetical_return_without_877a.document_id
+    section.hypothetical_return_with_877a.attachment_file_name ===
+      section.hypothetical_return_without_877a.attachment_file_name
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Section D needs two distinct hypothetical returns",
-      path: ["hypothetical_return_without_877a", "document_id"],
+      path: ["hypothetical_return_without_877a", "attachment_file_name"],
+    });
+  }
+  if (
+    section.tax_deferral_agreement_copy_attachment_file_name ===
+      section.hypothetical_return_with_877a.attachment_file_name ||
+    section.tax_deferral_agreement_copy_attachment_file_name ===
+      section.hypothetical_return_without_877a.attachment_file_name
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Section D agreement copy needs its own PDF attachment",
+      path: ["tax_deferral_agreement_copy_attachment_file_name"],
     });
   }
   if (

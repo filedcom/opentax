@@ -29,7 +29,7 @@ export type Form8854InitialDocumentLinks = {
   changeStatement?: string;
   balanceSheet: Form8854BalanceSheetStatementIds;
   sectionC: Form8854SectionCStatementIds;
-  binaryAttachments: readonly string[];
+  binaryAttachmentIdsByFileName: Readonly<Record<string, string>>;
 };
 
 export type Form8854NativeStatement = {
@@ -139,7 +139,7 @@ export function buildForm8854NativeStatementContents(
 export function linkForm8854NativeStatementIds(
   contents: readonly Form8854NativeStatementContent[],
   statementIds: readonly string[],
-  binaryAttachments: readonly string[],
+  binaryAttachmentIdsByFileName: Readonly<Record<string, string>>,
 ): Form8854InitialDocumentLinks {
   if (contents.length !== statementIds.length) {
     throw new Error("Form 8854 native statement set changed while linking IDs");
@@ -173,7 +173,7 @@ export function linkForm8854NativeStatementIds(
       computation: linked.get("computation"),
       deferredPropertyTaxElection: linked.get("deferredPropertyTaxElection"),
     },
-    binaryAttachments,
+    binaryAttachmentIdsByFileName,
   };
 }
 
@@ -199,24 +199,24 @@ function linkedStatementId(
   return ids[key];
 }
 
-function requiredBinaryIds(input: F8854Input): string[] {
+function requiredBinaryFileNames(input: F8854Input): string[] {
   const deferral = input.section_d;
   const deferralIds = deferral.elect_deferral
     ? [
-      deferral.hypothetical_return_with_877a.document_id,
-      deferral.hypothetical_return_without_877a.document_id,
-      deferral.tax_deferral_agreement_copy_document_id,
+      deferral.hypothetical_return_with_877a.attachment_file_name,
+      deferral.hypothetical_return_without_877a.attachment_file_name,
+      deferral.tax_deferral_agreement_copy_attachment_file_name,
     ]
     : [];
   const rulingIds = input.section_c?.nongrantor_trust_interests
     .filter((row) => row.treatment === NongrantorTrustTreatment.ElectFullValue)
     .map((row) => {
-      if (!row.valuation_letter_ruling_document_id) {
+      if (!row.valuation_letter_ruling_attachment_file_name) {
         throw new Error(
           "Form 8854 trust election needs a valuation letter ruling",
         );
       }
-      return row.valuation_letter_ruling_document_id;
+      return row.valuation_letter_ruling_attachment_file_name;
     }) ?? [];
   return [...new Set([...deferralIds, ...rulingIds])];
 }
@@ -224,16 +224,18 @@ function requiredBinaryIds(input: F8854Input): string[] {
 function validateIds(
   ids: Form8854InitialDocumentLinks,
   statements: readonly Form8854NativeStatement[],
-  requiredBinary: readonly string[],
+  requiredBinaryFileNames: readonly string[],
 ): void {
-  for (const required of requiredBinary) {
-    if (!ids.binaryAttachments.includes(required)) {
-      throw new Error(`Form 8854 needs binary attachment ${required}`);
+  for (const fileName of requiredBinaryFileNames) {
+    if (!ids.binaryAttachmentIdsByFileName[fileName]) {
+      throw new Error(`Form 8854 needs binary attachment ${fileName}`);
     }
   }
   const used = [
     ...statements.map((statement) => statement.documentId),
-    ...ids.binaryAttachments,
+    ...requiredBinaryFileNames.map((fileName) =>
+      ids.binaryAttachmentIdsByFileName[fileName]
+    ),
   ];
   if (used.some((id) => !idPattern.test(id))) {
     throw new Error("Form 8854 document IDs must match the MeF IdType");
@@ -252,6 +254,19 @@ export function buildForm8854InitialDocument(
 ): string {
   const input = inputSchema.parse(rawInput);
   reconcileForm8854Form8949Properties(input, filingPending.form8949);
+  const requiredBinary = requiredBinaryFileNames(input);
+  if (
+    phase === "link" &&
+    requiredBinary.some((fileName) =>
+      !links.binaryAttachmentIdsByFileName[fileName]
+    )
+  ) {
+    throw new Error("Form 8854 needs its required binary attachments linked");
+  }
+  const binaryIds = requiredBinary.flatMap((fileName) => {
+    const id = links.binaryAttachmentIdsByFileName[fileName];
+    return id ? [id] : [];
+  });
   return elements(
     "IRS8854",
     [
@@ -261,9 +276,9 @@ export function buildForm8854InitialDocument(
       buildForm8854SectionC(input, links.sectionC, phase),
       buildForm8854SectionD(input),
     ],
-    links.binaryAttachments.length
+    binaryIds.length
       ? {
-        referenceDocumentId: links.binaryAttachments.join(" "),
+        referenceDocumentId: binaryIds.join(" "),
         referenceDocumentName: "BinaryAttachment",
       }
       : undefined,
@@ -293,7 +308,7 @@ export function buildForm8854InitialBundle(
       };
     },
   );
-  validateIds(ids, nativeStatements, requiredBinaryIds(input));
+  validateIds(ids, nativeStatements, requiredBinaryFileNames(input));
   const formXml = buildForm8854InitialDocument(
     input,
     ids,

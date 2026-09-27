@@ -104,19 +104,18 @@ export const sectionCSchema = z.object({
     z.object({
       ...identity,
       treatment: z.nativeEnum(NongrantorTrustTreatment),
-      valuation_letter_ruling_document_id: z.string().regex(
-        /^[A-Za-z0-9:.\-]{1,30}$/,
-      ).optional(),
+      valuation_letter_ruling_attachment_file_name: z.string().trim().min(1)
+        .optional(),
     }).strict().superRefine((item, ctx) => {
       if (
         item.treatment === NongrantorTrustTreatment.ElectFullValue &&
-        !item.valuation_letter_ruling_document_id
+        !item.valuation_letter_ruling_attachment_file_name
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
             "Nongrantor trust full-value election requires an IRS valuation ruling",
-          path: ["valuation_letter_ruling_document_id"],
+          path: ["valuation_letter_ruling_attachment_file_name"],
         });
       }
     }),

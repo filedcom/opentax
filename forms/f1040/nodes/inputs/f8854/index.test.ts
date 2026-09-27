@@ -105,15 +105,18 @@ function electedDeferral(ids: string[] = ["stock"]) {
   return {
     elect_deferral: true,
     hypothetical_return_with_877a: {
-      document_id: "DOC-HYP-WITH",
+      attachment_file_name: "hypothetical-with.pdf",
       form_1040_line_24_tax: 600_000,
     },
     hypothetical_return_without_877a: {
-      document_id: "DOC-HYP-WITHOUT",
+      attachment_file_name: "hypothetical-without.pdf",
       form_1040_line_24_tax: 100_000,
     },
     deferred_property_item_ids: ids,
-    tax_deferral_agreement_copy_document_id: "DOC-AGREEMENT",
+    tax_deferral_agreement_copy_attachment_file_name: "agreement-copy.pdf",
+    original_agreement_request_marked_original_confirmed: true,
+    original_agreement_request_mailed_confirmed: true,
+    agreement_copy_marked_copy_confirmed: true,
     adequate_security_confirmed: true,
     us_limited_agent_appointed_confirmed: true,
     treaty_collection_waiver_confirmed: true,
@@ -1094,7 +1097,7 @@ Deno.test("Form 8854 Section D rejects invalid elections and emits a no-deferral
       section_d: {
         ...electedDeferral(),
         hypothetical_return_without_877a: {
-          document_id: "DOC-HYP-WITH",
+          attachment_file_name: "hypothetical-with.pdf",
           form_1040_line_24_tax: 100_000,
         },
       },
@@ -1108,9 +1111,20 @@ Deno.test("Form 8854 Section D rejects invalid elections and emits a no-deferral
       section_d: {
         ...electedDeferral(),
         hypothetical_return_without_877a: {
-          document_id: "DOC-HYP-WITHOUT",
+          attachment_file_name: "hypothetical-without.pdf",
           form_1040_line_24_tax: 600_000,
         },
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      balance_sheet: balanceSheetWithNetWorth(2_000_000),
+      section_c: section,
+      section_d: {
+        ...electedDeferral(),
+        original_agreement_request_mailed_confirmed: false,
       },
     })).success,
     false,
@@ -1155,7 +1169,7 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
     {
       balanceSheet: {},
       sectionC: {},
-      binaryAttachments: [],
+      binaryAttachmentIdsByFileName: {},
     },
     { form8949: undefined },
   );
@@ -1183,7 +1197,7 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
   const coveredIds = {
     balanceSheet: {},
     sectionC: { computation: "DOC-COMP" },
-    binaryAttachments: [],
+    binaryAttachmentIdsByFileName: {},
   };
   assertThrows(
     () =>
@@ -1244,19 +1258,19 @@ Deno.test("Form 8854 native statement set is stable before document IDs are assi
   const links = linkForm8854NativeStatementIds(
     ordered,
     ["DOC-CHANGE", "DOC-LIABILITY", "DOC-PARTNERSHIP"],
-    [],
+    {},
   );
   assertEquals(links.changeStatement, "DOC-CHANGE");
   assertEquals(links.balanceSheet.otherLiabilities, "DOC-LIABILITY");
   assertEquals(links.balanceSheet.partnership, "DOC-PARTNERSHIP");
   assertThrows(() =>
-    linkForm8854NativeStatementIds(ordered, ["DOC-CHANGE"], [])
+    linkForm8854NativeStatementIds(ordered, ["DOC-CHANGE"], {})
   );
   assertThrows(() =>
     linkForm8854NativeStatementIds(
       ordered,
       ["DOC-CHANGE", "DOC-CHANGE", "DOC-PARTNERSHIP"],
-      [],
+      {},
     )
   );
 });
@@ -1276,7 +1290,11 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
       computation: "DOC-COMP",
       deferredPropertyTaxElection: "DOC-DEFERRED",
     },
-    binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT", "DOC-AGREEMENT"],
+    binaryAttachmentIdsByFileName: {
+      "hypothetical-with.pdf": "DOC-HYP-WITH",
+      "hypothetical-without.pdf": "DOC-HYP-WITHOUT",
+      "agreement-copy.pdf": "DOC-AGREEMENT",
+    },
   };
   const filingPending = {
     form8949: filed8949(
@@ -1288,10 +1306,13 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
     () =>
       buildForm8854InitialBundle(parsed, {
         ...ids,
-        binaryAttachments: ["DOC-HYP-WITH", "DOC-HYP-WITHOUT"],
+        binaryAttachmentIdsByFileName: {
+          "hypothetical-with.pdf": "DOC-HYP-WITH",
+          "hypothetical-without.pdf": "DOC-HYP-WITHOUT",
+        },
       }, filingPending),
     Error,
-    "needs binary attachment DOC-AGREEMENT",
+    "needs binary attachment agreement-copy.pdf",
   );
   const bundle = buildForm8854InitialBundle(parsed, ids, filingPending);
   assertStringIncludes(
@@ -1307,8 +1328,11 @@ Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () =
     () =>
       buildForm8854InitialBundle(parsed, {
         ...ids,
-        binaryAttachments: [...ids.binaryAttachments, "DOC-AGREEMENT"],
-      }, reportingSources),
+        binaryAttachmentIdsByFileName: {
+          ...ids.binaryAttachmentIdsByFileName,
+          "agreement-copy.pdf": "DOC-HYP-WITH",
+        },
+      }, filingPending),
     Error,
     "document IDs must be unique",
   );
@@ -1321,7 +1345,7 @@ Deno.test("Form 8854 trust full-value election requires a linked valuation rulin
       item_id: "trust",
       description: "Foreign nongrantor trust",
       treatment: NongrantorTrustTreatment.ElectFullValue,
-      valuation_letter_ruling_document_id: "DOC-RULING",
+      valuation_letter_ruling_attachment_file_name: "trust-ruling.pdf",
     }],
   };
   assertEquals(
@@ -1330,7 +1354,7 @@ Deno.test("Form 8854 trust full-value election requires a linked valuation rulin
         ...section,
         nongrantor_trust_interests: [{
           ...section.nongrantor_trust_interests[0],
-          valuation_letter_ruling_document_id: undefined,
+          valuation_letter_ruling_attachment_file_name: undefined,
         }],
       },
     })).success,
@@ -1343,16 +1367,16 @@ Deno.test("Form 8854 trust full-value election requires a linked valuation rulin
   const ids = {
     balanceSheet: {},
     sectionC: { nongrantorTrust: "DOC-TRUST" },
-    binaryAttachments: ["DOC-RULING"],
+    binaryAttachmentIdsByFileName: { "trust-ruling.pdf": "DOC-RULING" },
   };
   assertThrows(
     () =>
       buildForm8854InitialBundle(parsed, {
         ...ids,
-        binaryAttachments: [],
+        binaryAttachmentIdsByFileName: {},
       }, { form8949: undefined }),
     Error,
-    "needs binary attachment DOC-RULING",
+    "needs binary attachment trust-ruling.pdf",
   );
   const bundle = buildForm8854InitialBundle(parsed, ids, {
     form8949: undefined,

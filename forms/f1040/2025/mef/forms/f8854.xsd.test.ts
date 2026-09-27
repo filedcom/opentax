@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
-import { buildMefXml } from "../builder.ts";
+import { buildMefBundle, buildMefXml } from "../builder.ts";
+import { PDFDocument } from "pdf-lib";
 import { buildPending } from "../pending.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
 import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
@@ -151,6 +152,44 @@ const coveredCapitalTransaction = {
   gain_loss: 10_000,
   is_long_term: true,
 };
+
+const coveredDeferralInput = initialSchema.parse({
+  ...coveredCapitalInput,
+  section_d: {
+    elect_deferral: true,
+    hypothetical_return_with_877a: {
+      attachment_file_name: "hypothetical-with.pdf",
+      form_1040_line_24_tax: 105_000,
+    },
+    hypothetical_return_without_877a: {
+      attachment_file_name: "hypothetical-without.pdf",
+      form_1040_line_24_tax: 100_000,
+    },
+    deferred_property_item_ids: ["stock"],
+    tax_deferral_agreement_copy_attachment_file_name: "agreement-copy.pdf",
+    original_agreement_request_marked_original_confirmed: true,
+    original_agreement_request_mailed_confirmed: true,
+    agreement_copy_marked_copy_confirmed: true,
+    adequate_security_confirmed: true,
+    us_limited_agent_appointed_confirmed: true,
+    treaty_collection_waiver_confirmed: true,
+  },
+});
+
+async function deferralAttachments() {
+  const pdf = await PDFDocument.create();
+  pdf.addPage();
+  const bytes = new Uint8Array(await pdf.save());
+  return [
+    { fileName: "hypothetical-with.pdf", description: "Tax with 877A", bytes },
+    {
+      fileName: "hypothetical-without.pdf",
+      description: "Tax without 877A",
+      bytes,
+    },
+    { fileName: "agreement-copy.pdf", description: "Agreement copy", bytes },
+  ];
+}
 
 const annualNoActivityInput = annualInputSchema.parse({
   expatriation_date: "2020-06-15",
@@ -322,6 +361,67 @@ Deno.test("covered Form 8854 filing keeps noncapital Section C blocked", () => {
     Error,
     "reconciled income forms for non-Form 8949 Section C items",
   );
+});
+
+Deno.test("covered Form 8854 Section D links only its actual PDF bundle attachments", async () => {
+  const pending = {
+    f1040: { filing_status: "single" },
+    f8854: coveredDeferralInput,
+    form8949: [coveredCapitalTransaction],
+  };
+  assertThrows(
+    () => buildMefXml(pending, filer),
+    Error,
+    "needs binary attachment",
+  );
+  const attachments = await deferralAttachments();
+  const bundle = await buildMefBundle(pending, { filer, attachments });
+  assertEquals(bundle.attachments.length, 3);
+  assertStringIncludes(bundle.xml, "<DeferredPropertyTaxElectStmt documentId=");
+  assertStringIncludes(bundle.xml, "<DeferredTaxAmt>5000</DeferredTaxAmt>");
+  assertStringIncludes(bundle.xml, 'referenceDocumentName="BinaryAttachment"');
+  assertEquals(
+    (bundle.xml.match(/<BinaryAttachment documentId=/g) ?? []).length,
+    3,
+  );
+  try {
+    await buildMefBundle(pending, {
+      filer,
+      attachments: attachments.slice(0, 2),
+    });
+    throw new Error("missing agreement copy was accepted");
+  } catch (error) {
+    assertStringIncludes(
+      String(error),
+      "needs binary attachment agreement-copy.pdf",
+    );
+  }
+});
+
+Deno.test("covered Form 8854 Section D reaches a PDF-backed bundle through the graph", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Test Way",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    f8854: coveredDeferralInput,
+    f8949: { f8949s: [coveredCapitalTransaction] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const bundle = await buildMefBundle(buildPending(result.pending), {
+    filer,
+    attachments: await deferralAttachments(),
+  });
+  assertStringIncludes(bundle.xml, "<IRS8854 documentId=");
+  assertStringIncludes(bundle.xml, "<IRS8949 documentId=");
+  assertStringIncludes(bundle.xml, "<DeferredPropertyTaxElectStmt documentId=");
 });
 
 Deno.test("noncovered Form 8854 links its actual native statements in schema order", () => {
@@ -544,7 +644,7 @@ Deno.test({
   const bundle = buildForm8854InitialBundle(input, {
     balanceSheet: {},
     sectionC: { computation: "DOC-COMP" },
-    binaryAttachments: [],
+    binaryAttachmentIdsByFileName: {},
   }, {
     form8949: [{
       part: "F",
@@ -590,6 +690,35 @@ Deno.test({
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});
+
+Deno.test({
+  name: "XSD: covered Form 8854 Section D bundle with three linked PDFs",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const bundle = await buildMefBundle({
+    f1040: { filing_status: "single" },
+    f8854: coveredDeferralInput,
+    form8949: [coveredCapitalTransaction],
+  }, { filer, attachments: await deferralAttachments() });
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, bundle.xml);
     const result = await new Deno.Command("xmllint", {
       args: ["--noout", "--schema", xsd, path],
       stdout: "piped",

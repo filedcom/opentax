@@ -1175,20 +1175,29 @@ route; other loss characters, Form 4797, direct Schedule D, and excluded-item
 income still need character and reporting checks. The registered initial
 builder now files a covered return when Section C contains only identified
 Form 8949 mark-to-market properties, each reconciled to its filed transaction,
-with no other Section C category and no Section D deferral. Its full-return
+with no other Section C category. Its full-return
 XML, missing-source rejection, and local XSD cases are written but unrun. The
 normal Form 8854 calculation node now uses the same filing-scope gate, so this
 covered case can reach the MeF builder through the source graph; a source-to-
 return case is written but unrun.
-Other covered income categories, binary attachment verification, and annual
-disposition or distribution events remain blocked. Exception source
+For a Section D election on those properties, the source now names the two
+hypothetical-return PDFs and the marked agreement-copy PDF by filename rather
+than inventing their MeF document IDs. The bundle validates each PDF and links
+it to the assembler-assigned ID. It requires source confirmations that the
+original request was marked Original and mailed, and the attached copy was
+marked Copy; it cannot
+authenticate that mailing, the agreement's acceptance, adequate security, or
+the tax calculations printed in the supplied hypothetical returns. Bundle,
+source-graph, missing-PDF, and local XSD cases are written but unrun. Other covered income
+categories and annual disposition or distribution events remain blocked.
+Exception source
 corroboration, PDF, broader source reconciliation, and IRS business rules
 remain open. An
-initial-form bundle now composes Parts I and II in
-XSD order and requires explicit MeF document IDs for native statements and the
-known binary attachments, including deferral hypotheticals, agreement copy,
-and trust valuation rulings. It validates ID shape and uniqueness, but cannot
-prove that those source PDFs or the original mailed agreement actually exist.
+initial-form bundle now composes Parts I and II in XSD order and links native
+statement IDs with the required filename-to-binary-ID mapping, including
+deferral hypotheticals, agreement copy, and trust valuation rulings. It validates
+ID shape and uniqueness; the registered bundle also validates that named PDFs
+are present and readable.
 Local IRS8854 XSD cases for the unregistered initial and annual roots are
 written but unrun. Both root builders now leave `documentId` to the return
 assembler, and the initial builder accepts only IDs for linked native and
