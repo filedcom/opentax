@@ -644,30 +644,8 @@ export function buildIRS3800Nonpassive(
   });
   const ordinaryGroup = partIIIGroups.find((group) => group.line === "1f");
   const specifiedGroup = partIIIGroups.find((group) => group.line === "4e");
-  const totalRow = (
-    tag: string,
-    selfEarned: number,
-    transferred: number,
-    available: number,
-    applied: number,
-  ): string =>
-    elements(tag, [
-      element("GeneralBusCrFromNnPssvActyAmt", selfEarned),
-      transferred > 0 ? element("CreditTransferElectionAmt", -transferred) : "",
-      element("TotalGeneralBusCreditsAmt", available),
-      element("TotalGeneralBusCreditsAppTxAmt", applied),
-    ]);
-  const ordinaryRow = credits.rows.find((row) => row.line === "1f");
-  const specifiedRow = credits.rows.find((row) => row.line === "4e");
   const form5884PassThroughSources =
     form5884?.sources.filter((source) => source.ein !== undefined) ?? [];
-  const combinedSelfEarned = form8826Credit + form8820Credit +
-    form8936Credit +
-    form8936CommercialCredit +
-    (ordinaryRow?.selfEarnedCredit ?? 0) +
-    (specifiedRow?.selfEarnedCredit ?? 0) + form5884Credit;
-  const combinedTransferred = (ordinaryRow?.transferOutAmount ?? 0) +
-    (specifiedRow?.transferOutAmount ?? 0);
   const currentRows: Form3800PassiveXmlRow[] = [
     ...(input.form8826
       ? [{
@@ -754,43 +732,61 @@ export function buildIRS3800Nonpassive(
       : []),
     ...(specifiedGroup ? [specifiedGroup] : []),
   ];
-  const standardSubtotal =
-    ordinaryRow || input.form8826 || input.form8820 || input.form8936 ||
-      input.form8936Commercial
-      ? totalRow(
-        "GenBusCYCreditsSubTotGrp",
-        form8826Credit + form8820Credit + form8936Credit +
-          form8936CommercialCredit +
-          (ordinaryRow?.selfEarnedCredit ?? 0),
-        ordinaryRow?.transferOutAmount ?? 0,
-        form8826Credit + form8820Credit + form8936Credit +
-          form8936CommercialCredit +
-          (ordinaryRow?.availableCredit ?? 0),
-        lines.line17,
-      )
-      : "";
-  const specifiedSubtotal = specifiedRow || input.form5884
-    ? totalRow(
-      "GenBusCYCreditsSubTot2Grp",
-      form5884Credit + (specifiedRow?.selfEarnedCredit ?? 0),
-      specifiedRow?.transferOutAmount ?? 0,
-      form5884Credit + (specifiedRow?.availableCredit ?? 0),
-      lines.line37,
-    )
-    : "";
+  const currentAmounts = combineForm3800CurrentCreditAmounts([
+    ...(input.form8826
+      ? [{
+        line: "1e" as const,
+        grossCredit: form8826Credit,
+        transferOutCredit: 0,
+        appliedCredit: form8826Applied,
+      }]
+      : []),
+    ...credits.rows.map((row) => ({
+      line: row.line,
+      grossCredit: row.selfEarnedCredit,
+      transferOutCredit: row.transferOutAmount,
+      appliedCredit: input.facilities.reduce(
+        (sum, facility, index) =>
+          sum + (facility.form3800_line === row.line ? appliedAt(index) : 0),
+        0,
+      ),
+    })),
+    ...(input.form8820
+      ? [{
+        line: "1h" as const,
+        grossCredit: form8820Credit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8820.appliedCredit,
+      }]
+      : []),
+    ...(input.form8936
+      ? [{
+        line: "1y" as const,
+        grossCredit: form8936Credit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8936.appliedCredit,
+      }]
+      : []),
+    ...(input.form8936Commercial
+      ? [{
+        line: "1aa" as const,
+        grossCredit: form8936CommercialCredit,
+        transferOutCredit: 0,
+        appliedCredit: input.form8936Commercial.appliedCredit,
+      }]
+      : []),
+    ...(form5884
+      ? [{
+        line: "4b" as const,
+        grossCredit: form5884Credit,
+        transferOutCredit: 0,
+        appliedCredit: form5884.appliedCredit,
+      }]
+      : []),
+  ], []);
   const partIII = buildForm3800PartIIIXml({
     rows: currentRows,
-    standardSubtotal,
-    specifiedSubtotal,
-    total: totalRow(
-      "TotGenBusCYCreditAmtGrp",
-      combinedSelfEarned,
-      combinedTransferred,
-      form8826Credit + form8820Credit + form8936Credit +
-        form8936CommercialCredit + credits.standardCredit +
-        credits.specifiedCredit + form5884Credit,
-      lines.line38,
-    ),
+    amounts: currentAmounts,
   });
   return elements("IRS3800", [
     element("CAMTAndBEATInd", "false"),

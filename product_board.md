@@ -143,8 +143,10 @@ the mixed same-line case and local XSD case are written but unrun. The filed
 builder now uses that serializer for Form 8826 as well, with cent-precision
 source accounting and whole-dollar XML output; its mixed-cent case is written
 but unrun. The nonpassive filed builder now places line-keyed Part III groups
-through one schema-ordered assembler that rejects duplicates and missing
-subtotals; its ordering cases are written but unrun. It does not yet combine
+through one schema-ordered assembler that rejects duplicate or unmatched rows.
+The assembler now derives Part III column totals from current-year
+source amounts instead of reusing Part II limits that can include carryovers;
+its mixed current-year and cent-precision cases are written but unrun. It does not yet combine
 passive and nonpassive rows. Direct builder
 cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused

@@ -619,6 +619,10 @@ Deno.test("Form 3800 XML: Form 8820 and Form 8835 share a limited standard-credi
   assertStringIncludes(xml, "<Form8835PartIICYCreditsGrp");
   assertStringIncludes(
     xml,
+    "<GenBusCYCreditsSubTotGrp><GeneralBusCrFromNnPssvActyAmt>37750</GeneralBusCrFromNnPssvActyAmt><TotalGeneralBusCreditsAmt>37750</TotalGeneralBusCreditsAmt><TotalGeneralBusCreditsAppTxAmt>20000</TotalGeneralBusCreditsAppTxAmt></GenBusCYCreditsSubTotGrp>",
+  );
+  assertStringIncludes(
+    xml,
     "<TotalGeneralBusCreditsAppTxAmt>5000</TotalGeneralBusCreditsAppTxAmt>",
   );
 });
