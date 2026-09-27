@@ -1606,6 +1606,33 @@ $1,706.30 base in the $11,440–$13,710 bracket. Source-to-form cases for the
 share guard are written but unrun. Multiple-recipient tax allocation, NUA PDF
 appearance, and the full validation gates remain open.
 
+Build-pass addendum for GAP-6251 (unrun): a Form 6251 with line 7 greater than
+line 10 now remains in the return, MeF, and PDF even when the AMT foreign tax
+credit makes line 11 zero. The inverse no-filing path and credit-driven filing
+have written cases. Other who-must-file triggers, AMT refigures, full-batch
+validation, IRS business rules, and PDF appearance remain open.
+
+Build-pass addendum for GAP-4952 (unrun): TY2025 partnership K-1 box 13 code H
+and S-corporation K-1 box 12 code H now feed line 1 from identified payers.
+Duplicate assertions guard manual interest and ambiguous aggregate S-corp
+deductions; cases are written but unrun. Broker allocation, other K-1 codes,
+AMT source refigure, full-batch validation, XSD/PDF, and ATS remain open.
+
+Build-pass addendum for GAP-8962 (unrun): the single-Schedule-C Publication 974
+iterative route now accepts partial-year Marketplace coverage when every Form
+1095-A coverage month and all specified premiums, SLCSP, APTC, and policy rows
+reconcile. The source shape was renamed directly to
+`pub974_single_business`, with no old-name alias. Multi-business, mixed
+specified/nonspecified premiums, other special ordering, and full validation
+remain open.
+
+Static GAP-MAP finding for Form 8815: its 2025 phaseout thresholds and QSS
+bracket are wrong, source facts and filed lines are missing, and its four
+emitted XML tags are not native TY2025 v5.4 Form 8815 elements. See
+`docs/mef/ty2025-form8815-gap.md`. No serializer-only patch or silent omission
+was made; rebuilding the source-to-return path or explicitly excluding claims
+requires a product decision before Form 8815 can be considered ready.
+
 The following are registered in `forms/f1040/2025/mef/forms/index.ts`.
 **Registered means the builder can be invoked, not that the form is complete or
 approved.** Mark each row in the INV-01 matrix after checking calculations, XML,
