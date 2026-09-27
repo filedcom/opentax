@@ -7,10 +7,14 @@ import type { MefFormsPending } from "../../../2025/mef/types.ts";
 import { inputNodes } from "../../../2025/inputs.ts";
 import { registry } from "../../../2025/registry.ts";
 import { FilingStatus } from "../../types.ts";
-import { calculateNewMarketsRecapture, recaptureSchema } from "./recapture.ts";
+import {
+  calculateNewMarketsRecapture,
+  type NewMarketsRecaptureInput,
+  recaptureSchema,
+} from "./recapture.ts";
 import { f8874_recapture } from "./recapture_node.ts";
 
-const source = {
+const source: NewMarketsRecaptureInput = {
   notice_reference: "CDE 2025 Form 8874-B",
   investment_reference: "2022 QEI designation",
   cde_name: "Community Development Entity",
@@ -26,11 +30,16 @@ const source = {
     original_return_due_date: "2025-04-15",
     section38_credit_allowed_as_filed: 9_000,
     section38_credit_allowed_without_this_qei: 7_000,
-    original_unused_qei_credit: 3_000,
-    recomputed_unused_qei_credit: 0,
     recomputation_reference: "2024 Form 3800 recomputation",
   }],
-} as const;
+  carryover_ledger_reference: "2024 Form 3800 Part IV and QEI workpaper",
+  carryover_vintages: [{
+    originating_tax_year: 2024,
+    credit_generated_as_filed: 5_000,
+    credit_carried_to_2025_before_recapture: 3_000,
+    source_document_reference: "2024 QEI carryover workpaper",
+  }],
+};
 
 Deno.test("New Markets recapture uses allowed-credit decrease, not notice credit", () => {
   const result = calculateNewMarketsRecapture({
@@ -38,7 +47,14 @@ Deno.test("New Markets recapture uses allowed-credit decrease, not notice credit
     prior_years: [...source.prior_years],
   });
   assertEquals(result.creditDecrease, 2_000);
-  assertEquals(result.years[0].carryforwardAdjustment, 3_000);
+  assertEquals(result.carryforwardAdjustments, [{
+    originatingTaxYear: 2024,
+    investmentReference: "2022 QEI designation",
+    sourceDocumentReference: "2024 QEI carryover workpaper",
+    beforeRecapture: 3_000,
+    removedFromQeiLedger: 3_000,
+    availableAfterRecapture: 0,
+  }]);
   const days2025 = (Date.UTC(2026, 0, 1) - Date.UTC(2025, 3, 15)) /
     86_400_000;
   const days2026q1 = (Date.UTC(2026, 3, 1) - Date.UTC(2026, 0, 1)) /
@@ -63,7 +79,7 @@ Deno.test("New Markets recapture excludes unused credit from tax and interest", 
     }],
   });
   assertEquals(result.schedule2Line17a, 0);
-  assertEquals(result.years[0].carryforwardAdjustment, 3_000);
+  assertEquals(result.carryforwardAdjustments[0].removedFromQeiLedger, 3_000);
 });
 
 Deno.test("New Markets recapture compounds through rate changes and leap year", () => {
@@ -73,12 +89,12 @@ Deno.test("New Markets recapture compounds through rate changes and leap year", 
     original_return_due_date: "2023-04-18",
     section38_credit_allowed_as_filed: 10_000,
     section38_credit_allowed_without_this_qei: 0,
-    original_unused_qei_credit: 0,
   };
   const result = calculateNewMarketsRecapture({
     ...source,
     qualified_equity_investment_amount: 200_000,
     prior_years: [priorYear],
+    carryover_vintages: [],
   });
   const days = (from: string, to: string) =>
     (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) /
@@ -159,7 +175,6 @@ Deno.test("New Markets recapture totals separate investments once", () => {
       ...source.prior_years[0],
       section38_credit_allowed_as_filed: 10_000,
       section38_credit_allowed_without_this_qei: 9_500,
-      original_unused_qei_credit: 0,
     }],
   };
   const result = f8874_recapture.compute(
@@ -222,6 +237,29 @@ Deno.test("New Markets recapture requires a statutory event and prior-year proof
       { ...source, recapture_event: "investment_sold" },
       { ...source, notice_reference: "" },
       { ...source, notice_credit_amount: 40_000 },
+      { ...source, carryover_ledger_reference: "" },
+      {
+        ...source,
+        carryover_vintages: [
+          { ...source.carryover_vintages[0], credit_generated_as_filed: 6_000 },
+        ],
+      },
+      {
+        ...source,
+        carryover_vintages: [
+          {
+            ...source.carryover_vintages[0],
+            credit_carried_to_2025_before_recapture: 6_000,
+          },
+        ],
+      },
+      {
+        ...source,
+        carryover_vintages: [
+          source.carryover_vintages[0],
+          source.carryover_vintages[0],
+        ],
+      },
       { ...source, prior_years: [] },
       { ...source, initial_investment_date: "2017-01-01" },
       { ...source, recapture_event_date: "2026-01-01" },

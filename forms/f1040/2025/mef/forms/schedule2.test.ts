@@ -230,16 +230,17 @@ Deno.test("2025 Schedule 2 keeps 3468 and NMCR recapture groups separate", () =>
         original_return_due_date: "2025-04-15",
         section38_credit_allowed_as_filed: 3_000,
         section38_credit_allowed_without_this_qei: 0,
-        original_unused_qei_credit: 0,
-        recomputed_unused_qei_credit: 0,
         recomputation_reference: "2024 Form 3800 recomputation",
       }],
+      carryover_ledger_reference: "2024 QEI carryover ledger",
+      carryover_vintages: [],
     }],
   } as const;
   const nmcr = calculateForm8874Recapture({
     recaptures: source.recaptures.map((recapture) => ({
       ...recapture,
       prior_years: [...recapture.prior_years],
+      carryover_vintages: [...recapture.carryover_vintages],
     })),
   });
   const result = schedule2.build({

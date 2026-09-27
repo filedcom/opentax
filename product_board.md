@@ -59,23 +59,25 @@ The New Markets recapture build pass now has a separate Form 8874-B event input
 that works without a current-year Form 8874. It records the noticed taxpayer,
 CDE, QEI identity and amount, notice credit amount, and event reason without
 mistaking the notice amount for the taxpayer's tax. It takes each prior year's
-Section 38 allowed-credit recomputation and unused-QEI-credit balance, computes
-the allowed-credit decrease plus daily-compounded interest through the
-unextended 2025 return due date from IRS quarterly underpayment rates, and
-routes the result to Schedule 2 line 17a. The MeF builder emits a separate
-`NMCR` group beside any `3468` group; the PDF projection totals both on line
-17a. The filed Schedule 2 builder now requires the recapture input and
-recomputes its `NMCR` amount before XML, rejecting missing or mismatched source
-data. A full-return case covers recapture without an IRS8874 attachment. Source,
-routing, XML, and PDF projection cases are written but unrun. The source now
-rejects a substantially-all event unless the six-month cure exception was
-reviewed and found inapplicable, and rejects credit amounts above the QEI's
-seven-year maximum. A written interest case crosses 2023 quarterly changes and
-the 2024 leap year. This is not a completed recapture audit: original return due
-dates and prior recomputations are still supplied facts, the Section 39
-carryover/carryback adjustment is only surfaced for review rather than posted,
-interest rounding and leap-year handling need IRS example reconciliation, and
-filled PDF, local XSD, business-rule, and ATS checks remain open.
+Section 38 allowed-credit recomputation and a referenced QEI carryover ledger by
+originating year, computes the allowed-credit decrease plus daily-compounded
+interest through the unextended 2025 return due date from IRS quarterly
+underpayment rates, and routes the result to Schedule 2 line 17a. The MeF
+builder emits a separate `NMCR` group beside any `3468` group; the PDF
+projection totals both on line 17a. The filed Schedule 2 builder now requires
+the recapture input and recomputes its `NMCR` amount before XML, rejecting
+missing or mismatched source data. A full-return case covers recapture without
+an IRS8874 attachment. Source, routing, XML, and PDF projection cases are
+written but unrun. The source now rejects a substantially-all event unless the
+six-month cure exception was reviewed and found inapplicable, and rejects credit
+amounts above the QEI's seven-year maximum. A written interest case crosses 2023
+quarterly changes and the 2024 leap year. This is not a completed recapture
+audit: original return due dates and prior recomputations are still supplied
+facts, the Section 39 carryover adjustment is now an explicit per-vintage
+before/removed/after ledger but is not yet posted to Form 3800 Part IV, and
+historical carryback adjustments still need source reconciliation, interest
+rounding and leap-year handling need IRS example reconciliation, and filled PDF,
+local XSD, business-rule, and ATS checks remain open.
 
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and

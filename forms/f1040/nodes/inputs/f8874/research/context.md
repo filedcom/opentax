@@ -57,7 +57,13 @@ TY2025, Schedule 2 line 17a identifies this as `NMCR`; the MeF schema has a
 separate `RecaptureOtherCreditsGrp` for that code. A standalone input needs the
 notice identity, prior return and recomputation evidence, prior due dates,
 applicable interest-rate periods, and carryover adjustments. It must not take a
-single unexplained recapture-tax amount.
+single unexplained recapture-tax amount. The current build pass replaces loose
+per-year unused-credit balances with a referenced list of QEI carryover
+vintages: originating year, credit generated, amount available to TY2025 before
+recapture, and source document. The calculator emits an explicit adjustment of
+each vintage to zero, but Form 3800 Part IV column (h), Part VI source detail,
+and the required changed-carryforward statement are not yet linked. Historical
+carrybacks and any prior-year amended returns also remain open.
 
 Form 8874's instructions exclude a substantially-all failure that the CDE
 corrects within six months of awareness, with only one correction permitted per

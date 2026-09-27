@@ -34,10 +34,19 @@ export const recaptureSchema = z.object({
     original_return_due_date: dateSchema,
     section38_credit_allowed_as_filed: dollars,
     section38_credit_allowed_without_this_qei: dollars,
-    original_unused_qei_credit: dollars,
-    recomputed_unused_qei_credit: dollars,
     recomputation_reference: z.string().trim().min(1),
   })).min(1),
+  carryover_ledger_reference: z.string().trim().min(1),
+  carryover_vintages: z.array(
+    z.object({
+      originating_tax_year: z.number().int().min(2018).max(2024),
+      credit_generated_as_filed: dollars.refine((amount) => amount > 0),
+      credit_carried_to_2025_before_recapture: dollars.refine((amount) =>
+        amount > 0
+      ),
+      source_document_reference: z.string().trim().min(1),
+    }).strict(),
+  ),
 }).strict().superRefine((input, ctx) => {
   if (input.recapture_event_date.slice(0, 4) !== "2025") {
     ctx.addIssue({
@@ -143,11 +152,33 @@ export const recaptureSchema = z.object({
         message: "Recomputed allowed credit cannot exceed filed allowed credit",
       });
     }
-    if (year.recomputed_unused_qei_credit > year.original_unused_qei_credit) {
+  });
+  const carryoverYears = new Set<number>();
+  input.carryover_vintages.forEach((vintage, index) => {
+    if (carryoverYears.has(vintage.originating_tax_year)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        path: ["prior_years", index, "recomputed_unused_qei_credit"],
-        message: "Removing this QEI cannot increase its unused credit",
+        path: ["carryover_vintages", index, "originating_tax_year"],
+        message: "Duplicate QEI carryover originating tax year",
+      });
+    }
+    carryoverYears.add(vintage.originating_tax_year);
+    const creditYear = vintage.originating_tax_year -
+      initialDate.getUTCFullYear() + 1;
+    const annualRate = creditYear <= 3 ? 0.05 : 0.06;
+    const annualCredit = Math.round(
+      input.qualified_equity_investment_amount * annualRate,
+    );
+    if (
+      creditYear < 1 || creditYear > 7 ||
+      vintage.credit_generated_as_filed > annualCredit ||
+      vintage.credit_carried_to_2025_before_recapture >
+        vintage.credit_generated_as_filed
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["carryover_vintages", index],
+        message: "QEI carryover vintage exceeds its originating-year credit",
       });
     }
   });
@@ -226,8 +257,6 @@ export function calculateNewMarketsRecapture(raw: NewMarketsRecaptureInput) {
       taxYear: year.tax_year,
       allowedCreditDecrease,
       interest,
-      carryforwardAdjustment: year.original_unused_qei_credit -
-        year.recomputed_unused_qei_credit,
       recomputationReference: year.recomputation_reference,
     };
   });
@@ -241,6 +270,14 @@ export function calculateNewMarketsRecapture(raw: NewMarketsRecaptureInput) {
   }
   return {
     years,
+    carryforwardAdjustments: input.carryover_vintages.map((vintage) => ({
+      originatingTaxYear: vintage.originating_tax_year,
+      investmentReference: input.investment_reference,
+      sourceDocumentReference: vintage.source_document_reference,
+      beforeRecapture: vintage.credit_carried_to_2025_before_recapture,
+      removedFromQeiLedger: vintage.credit_carried_to_2025_before_recapture,
+      availableAfterRecapture: 0,
+    })),
     creditDecrease,
     interest,
     schedule2Line17a: creditDecrease + interest,
