@@ -106,6 +106,91 @@ Deno.test("Form 1116 keeps category credits separate and caps the total", () => 
   );
 });
 
+Deno.test("Form 1116 source edges remain acyclic before credit calculation", () => {
+  const plan = buildExecutionPlan(registry).map((step) => step.nodeType);
+  assertEquals(
+    plan.indexOf("income_tax_calculation") < plan.indexOf("form_1116"),
+    true,
+  );
+  assertEquals(
+    plan.indexOf("form1116_review") < plan.indexOf("form_1116"),
+    true,
+  );
+  assertEquals(plan.indexOf("form_1116") < plan.indexOf("f1040"), true);
+});
+
+Deno.test({
+  name:
+    "XSD: domestic qualified dividends adjust Form 1116 line 18 from return sources",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    w2: [{
+      box1_wages: 100_000,
+      box2_fed_withheld: 12_000,
+      box3_ss_wages: 100_000,
+      box4_ss_withheld: 6_200,
+      box5_medicare_wages: 100_000,
+      box6_medicare_withheld: 1_450,
+      employer_ein: "12-3456789",
+      employer_name: "ACME Corp",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box12_entries: [],
+    }],
+    f1099div: [{
+      payerName: "U.S. Fund",
+      isNominee: false,
+      box11: false,
+      box1a: 20_000,
+      box1b: 20_000,
+    }],
+    f1099int: [{
+      payer_name: "Canadian Bank",
+      box1: 1_000,
+      box6: 100,
+      box7: "Canada",
+      foreign_source_interest_usd: 1_000,
+      foreign_tax_irs_country_code: "CA",
+    }],
+    form1116_review: {
+      all_foreign_sources_reviewed: true,
+      foreign_qualified_dividends: 0,
+      foreign_capital_gains_or_losses_present: false,
+      source_document_references: [
+        "2025 domestic 1099-DIV, Canadian 1099-INT, and brokerage review",
+      ],
+      no_amt_liability_verified: true,
+    },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const fields = result.pending.form_1116 as Record<string, unknown>;
+  const adjusted = fields.total_income as number;
+  const raw = result.pending.f1040?.line15_taxable_income as number;
+  assertEquals(adjusted < raw, true);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(
+    xml,
+    `<ForeignTxblIncomeAftrExemptAmt>${adjusted}</ForeignTxblIncomeAftrExemptAmt>`,
+  );
+  await validateXsd(xml);
+});
+
 Deno.test("Form 1116 rejects missing source facts and stale aggregate data", () => {
   assertThrows(
     () => form1116.build({ foreign_tax_paid: 500 }),

@@ -4,6 +4,8 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
+import { FilingStatus } from "../../../types.ts";
+import { qualifiedDividendTax2025 } from "../../worksheets/tax_table_2025.ts";
 
 const ctx = { taxYear: 2025, formType: "f1040" };
 
@@ -64,6 +66,120 @@ Deno.test("form1116: line 18 adds back only Schedule 1-A senior deduction", () =
   assertEquals(
     fieldsOf(result.outputs, schedule3)?.line1_foreign_tax_credit,
     870,
+  );
+});
+
+const qdcgtSource = {
+  taxable_income: 100_000,
+  qualified_dividends: 20_000,
+  net_capital_gain: 0,
+  filing_status: FilingStatus.Single,
+  special_rate_gain: 0,
+  form4952_election: 0,
+  foreign_earned_income_exclusion: 0,
+  form8615_applies: false,
+  regular_tax_before_additional_items: qualifiedDividendTax2025(
+    100_000,
+    20_000,
+    0,
+    FilingStatus.Single,
+  ),
+};
+const zeroForeignPreference = {
+  all_foreign_sources_reviewed: true as const,
+  foreign_qualified_dividends: 0 as const,
+  foreign_capital_gains_or_losses_present: false as const,
+  source_document_references: [
+    "2025 1099-DIV, 1099-B, and foreign tax source review",
+  ],
+  no_amt_liability_verified: true as const,
+};
+
+Deno.test("form1116: sourced QDCGT worksheet adjusts line 18, not ordinary foreign numerator", () => {
+  const result = form1116.compute(ctx, {
+    foreign_tax_items: [{
+      foreign_tax_paid: 2_000,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 100_000,
+    us_tax_before_credits: qdcgtSource.regular_tax_before_additional_items,
+    regular_tax_preference_facts: qdcgtSource,
+    foreign_preferential_income_review: zeroForeignPreference,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form1116_line18_worldwide_taxable_income,
+    88_108,
+  );
+  const summary = result.outputs.find((row) => row.nodeType === "form_1116")
+    ?.fields.category_summaries as Array<{ foreignTaxableIncome: number }>;
+  assertEquals(summary[0].foreignTaxableIncome, 10_000);
+});
+
+Deno.test("form1116: preferential denominator fails closed without source review or on special tax routes", () => {
+  const base = {
+    foreign_tax_items: [{
+      foreign_tax_paid: 2_000,
+      foreign_gross_income: 10_000,
+      income_category: IncomeCategory.Passive,
+    }],
+    worldwide_taxable_income: 100_000,
+    us_tax_before_credits: qdcgtSource.regular_tax_before_additional_items,
+    regular_tax_preference_facts: qdcgtSource,
+  };
+  assertThrows(
+    () => form1116.compute(ctx, base),
+    Error,
+    "documented review of foreign qualified dividends",
+  );
+  assertThrows(() =>
+    form1116.compute(ctx, {
+      ...base,
+      foreign_preferential_income_review: {
+        ...zeroForeignPreference,
+        foreign_qualified_dividends: 500 as never,
+      },
+    }), Error);
+  assertThrows(() =>
+    form1116.compute(ctx, {
+      ...base,
+      foreign_preferential_income_review: {
+        ...zeroForeignPreference,
+        foreign_capital_gains_or_losses_present: true as never,
+      },
+    }), Error);
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        foreign_preferential_income_review: zeroForeignPreference,
+        known_foreign_qualified_dividends: 500,
+      }),
+    Error,
+    "foreign qualified dividends need the foreign-source rate-adjustment worksheet",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        foreign_preferential_income_review: zeroForeignPreference,
+        regular_tax_preference_facts: {
+          ...qdcgtSource,
+          special_rate_gain: 500,
+        },
+      }),
+    Error,
+    "Schedule D Tax Worksheet",
+  );
+  assertThrows(
+    () =>
+      form1116.compute(ctx, {
+        ...base,
+        foreign_preferential_income_review: zeroForeignPreference,
+        tentative_minimum_tax: 1,
+      }),
+    Error,
+    "AMT",
   );
 });
 

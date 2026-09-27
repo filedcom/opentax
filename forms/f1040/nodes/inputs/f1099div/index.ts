@@ -564,6 +564,16 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       }));
     }
 
+    const knownForeignQualifiedDividends = div1099s.reduce(
+      (sum, item) => sum + (item.foreign_source_qualified_dividends_usd ?? 0),
+      0,
+    );
+    if (knownForeignQualifiedDividends > 0) {
+      outputs.push(this.outputNodes.output(form_1116, {
+        known_foreign_qualified_dividends: knownForeignQualifiedDividends,
+      }));
+    }
+
     return { outputs };
   }
 }

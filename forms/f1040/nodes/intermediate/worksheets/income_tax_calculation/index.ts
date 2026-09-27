@@ -208,6 +208,7 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
     } else {
       tax = ordinaryTax2025(input.taxable_income, input.filing_status);
     }
+    const regularTaxBeforeAdditionalItems = tax;
 
     let form8615Result: ReturnType<typeof calculateForm8615> | undefined;
     if (input.form8615_source !== undefined) {
@@ -309,6 +310,17 @@ class IncomeTaxCalculationNode extends TaxNode<typeof inputSchema> {
       // Form 1116 Part III line 20 — the base the §904(a) limitation multiplies.
       this.outputNodes.output(form_1116, {
         us_tax_before_credits: tax,
+        regular_tax_preference_facts: {
+          taxable_income: input.taxable_income,
+          qualified_dividends: qualDiv,
+          net_capital_gain: netCg,
+          filing_status: input.filing_status,
+          special_rate_gain: unrecaptured1250 + rate28,
+          form4952_election: form4952Election,
+          foreign_earned_income_exclusion: foreignExclusion,
+          form8615_applies: form8615Result !== undefined,
+          regular_tax_before_additional_items: regularTaxBeforeAdditionalItems,
+        },
       }),
     ];
 

@@ -62,6 +62,58 @@ Deno.test("f1040: verifies Form 1116 lines 18 and 20 against filed return source
   assertEquals(f.line11_agi, 80_000);
 });
 
+Deno.test("f1040: Form 1116 preferential adjustment reconciles from the signed source base", () => {
+  const source = {
+    line11_agi: 80_000,
+    line12a_standard_deduction: 15_750,
+    line13b_additional_deductions: 8_000,
+    schedule1a_line37_senior_deduction: 6_000,
+    line16_income_tax: 8_000,
+    form1116_line20_us_tax: 8_000,
+  };
+  assertEquals(
+    fields({
+      ...source,
+      form1116_line18_worldwide_taxable_income: 58_304,
+      form1116_line18_preferential_adjustment: 3_946,
+    }).line11_agi,
+    80_000,
+  );
+  assertThrows(
+    () =>
+      fields({
+        ...source,
+        form1116_line18_worldwide_taxable_income: 58_305,
+        form1116_line18_preferential_adjustment: 3_946,
+      }),
+    Error,
+    "line 18 does not reconcile",
+  );
+  assertThrows(
+    () =>
+      fields({
+        ...source,
+        credit_limit_form6251_line11: 1,
+        form1116_line18_worldwide_taxable_income: 58_304,
+        form1116_line18_preferential_adjustment: 3_946,
+      }),
+    Error,
+    "with AMT needs separate limitation rules",
+  );
+  assertThrows(
+    () =>
+      fields({
+        ...source,
+        line17_additional_taxes: 1,
+        credit_limit_schedule2_line1z: 0,
+        form1116_line18_worldwide_taxable_income: 58_304,
+        form1116_line18_preferential_adjustment: 3_946,
+      }),
+    Error,
+    "with AMT needs separate limitation rules",
+  );
+});
+
 Deno.test("f1040: Form 1116 line 18 cannot add back all Schedule 1-A deductions", () => {
   assertThrows(
     () =>

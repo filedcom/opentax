@@ -120,6 +120,35 @@ flowchart LR
 
 ## Sources
 
+### TY2025 preferential-rate line 18 build slice (written, unrun)
+
+The
+[2025 Form 1116 line 18 instructions](https://www.irs.gov/instructions/i1116)
+require the Worksheet for Line 18 when the Qualified Dividends and Capital Gain
+Tax Worksheet has positive line 5 and preferential line 23 tax below line 24,
+unless a qualifying adjustment-exception election is made. The Form 1116
+worksheet starts with **signed** Form 1040 line 11b less line 14 **plus**
+Schedule 1-A line 37, before flooring. Its QDCGT route skips lines 2-5 and uses
+QDCGT lines 20, 17 and 9 on lines 6, 8 and 10, applying 0.4595 and 0.5946 to the
+first two before subtracting their sum and the full 0%-rate amount from line 1.
+The regular-tax node now deposits its sourced QD, net gain, filing status, tax
+method and pre-additional-item tax; Form 1116 recomputes those worksheet lines
+and line 18. The Form 1040 sink still independently reconciles the signed base
+to filed lines, then checks the computed adjustment.
+
+This slice requires a documented public `form1116_review` input verifying zero
+foreign-source qualified dividends and no foreign-source capital gains or losses
+(zero net gain alone could hide a loss). That keeps each foreign-category line
+17 numerator unadjusted; positive foreign-source preferential income needs its
+separate category-rate adjustment and is rejected. Known 1099-DIV foreign-source
+qualified dividends are also deposited as a contradiction check. The Schedule D
+Tax Worksheet (28%/25% gains or Form 4952 election), Form 2555 and Form 8615
+overlaps, and AMT overlap remain rejected. The no-AMT review fact is checked
+again at the final Form 1040 sink against the sourced Schedule 2 Part I line 2
+amount (Part I less line 1z), or a positive Form 6251 line 11 audit field; this
+still does not implement the AMT foreign-tax-credit limitation. No current-run
+test, XSD, PDF render, business-rule, or ATS pass has been performed.
+
 | Document                   | Year | Section        | URL                                            | Saved as  |
 | -------------------------- | ---- | -------------- | ---------------------------------------------- | --------- |
 | Instructions for Form 1116 | 2025 | All parts      | https://www.irs.gov/pub/irs-pdf/i1116.pdf      | i1116.pdf |

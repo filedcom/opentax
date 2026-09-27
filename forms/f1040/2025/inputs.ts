@@ -1,5 +1,9 @@
 import type { InputNodeEntry } from "../../../core/types/form-definition.ts";
 import {
+  form1116_review,
+  inputSchema as form1116ReviewInputSchema,
+} from "../nodes/inputs/form1116_review/index.ts";
+import {
   ext,
   inputSchema as extInputSchema,
 } from "../nodes/inputs/ext/index.ts";
@@ -642,6 +646,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: schedule_d, inputSchema: scheduleDInputSchema, isArray: false },
   { node: ext, inputSchema: extInputSchema, isArray: false },
   { node: general, inputSchema: generalInputSchema, isArray: false },
+  {
+    node: form1116_review,
+    inputSchema: form1116ReviewInputSchema,
+    isArray: false,
+  },
   { node: schedule1a, inputSchema: schedule1AClaimInputSchema, isArray: false },
   { node: form4684, inputSchema: form4684InputSchema, isArray: false },
   { node: form8824, inputSchema: form8824InputSchema, isArray: false },

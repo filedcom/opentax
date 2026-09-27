@@ -163,6 +163,8 @@ const inputSchema = z.object({
   credit_limit_schedule2_line1z: z.number().finite().nonnegative().optional(),
   form1116_line18_worldwide_taxable_income: z.number().finite().nonnegative()
     .optional(),
+  form1116_line18_preferential_adjustment: z.number().int().nonnegative()
+    .optional(),
   form1116_line20_us_tax: z.number().finite().nonnegative().optional(),
   credit_limit_schedule3_lines: z.object({
     line1: z.number().finite().nonnegative(),
@@ -933,6 +935,22 @@ function verifyForm1116Limitation(
   assembled: Record<string, number>,
 ): void {
   const form1116Line18 = input.form1116_line18_worldwide_taxable_income;
+  const preferentialAdjustment =
+    input.form1116_line18_preferential_adjustment ?? 0;
+  // Schedule 2 Part I is line 1z plus line 2 AMT; both reach this sink.
+  const sourcedAmt = Math.max(
+    0,
+    Math.round(input.line17_additional_taxes ?? 0) -
+      Math.round(input.credit_limit_schedule2_line1z ?? 0),
+  );
+  if (
+    preferentialAdjustment > 0 &&
+    ((input.credit_limit_form6251_line11 ?? 0) > 0 || sourcedAmt > 0)
+  ) {
+    throw new Error(
+      "Form 1116 preferential line 18 with AMT needs separate limitation rules",
+    );
+  }
   const form1116Line20 = input.form1116_line20_us_tax;
   if (form1116Line18 === undefined && form1116Line20 === undefined) return;
   if (
@@ -960,9 +978,13 @@ function verifyForm1116Limitation(
   );
   const expectedLine20 = Math.round(input.line16_income_tax) +
     Math.round(input.credit_limit_schedule2_line1z ?? 0);
-  if (Math.round(form1116Line18) !== expectedLine18) {
+  if (
+    preferentialAdjustment > expectedLine18 ||
+    Math.round(form1116Line18) !==
+      Math.max(0, expectedLine18 - preferentialAdjustment)
+  ) {
     throw new Error(
-      "Form 1116 line 18 does not match Form 1040 lines 11b and 14 plus Schedule 1-A line 37",
+      "Form 1116 line 18 does not reconcile its sourced preferential adjustment to Form 1040 lines 11b and 14 plus Schedule 1-A line 37",
     );
   }
   if (Math.round(form1116Line20) !== expectedLine20) {

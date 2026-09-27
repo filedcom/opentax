@@ -9,6 +9,9 @@ import { schedule3 } from "../../aggregation/schedule3/index.ts";
 import { form6251 } from "../form6251/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
+import { FilingStatus } from "../../../types.ts";
+import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { ordinaryTax2025 } from "../../worksheets/tax_table_2025.ts";
 
 export enum IncomeCategory {
   Passive = "passive",
@@ -78,10 +81,79 @@ export const inputSchema = z.object({
   other_deductions_explanation: z.string().trim().min(1).max(9000).optional(),
   us_tax_before_credits: z.number().nonnegative().optional(),
   tentative_minimum_tax: z.number().nonnegative().optional(),
+  known_foreign_qualified_dividends: z.number().nonnegative().optional(),
+  // Deposited by the regular-tax worksheet, not entered as a Form 1116 answer.
+  regular_tax_preference_facts: z.object({
+    taxable_income: z.number().nonnegative(),
+    qualified_dividends: z.number().nonnegative(),
+    net_capital_gain: z.number().nonnegative(),
+    filing_status: z.nativeEnum(FilingStatus),
+    special_rate_gain: z.number().nonnegative(),
+    form4952_election: z.number().nonnegative(),
+    foreign_earned_income_exclusion: z.number().nonnegative(),
+    form8615_applies: z.boolean(),
+    regular_tax_before_additional_items: z.number().nonnegative(),
+  }).strict().optional(),
+  foreign_preferential_income_review: z.object({
+    all_foreign_sources_reviewed: z.literal(true),
+    foreign_qualified_dividends: z.literal(0),
+    foreign_capital_gains_or_losses_present: z.literal(false),
+    source_document_references: z.array(z.string().trim().min(1)).min(1),
+    no_amt_liability_verified: z.literal(true),
+  }).strict().optional(),
 });
 
 type ForeignTaxItem = z.infer<typeof foreignTaxItemSchema>;
 type Form1116Input = z.infer<typeof inputSchema>;
+
+/** 2025 i1116 Worksheet for Line 18, QDCGT branch, with zero foreign preference. */
+export function adjustedQualifiedDividendLine18(
+  signedWorldwideIncome: number,
+  facts: NonNullable<Form1116Input["regular_tax_preference_facts"]>,
+): number {
+  const line1 = signedWorldwideIncome;
+  const taxable = Math.round(facts.taxable_income);
+  const qualifiedDividends = Math.round(facts.qualified_dividends);
+  const netCapitalGain = Math.round(facts.net_capital_gain);
+  const cfg = CONFIG_BY_YEAR[2025];
+  const line4 = qualifiedDividends + netCapitalGain;
+  const qdcgtLine5 = Math.max(0, taxable - line4);
+  const qdcgtLine7 = Math.min(
+    taxable,
+    cfg.qdcgtZeroCeiling[facts.filing_status],
+  );
+  const qdcgtLine8 = Math.min(qdcgtLine5, qdcgtLine7);
+  const qdcgtLine9 = qdcgtLine7 - qdcgtLine8;
+  const qdcgtLine10 = Math.min(taxable, line4);
+  const qdcgtLine12 = Math.max(0, qdcgtLine10 - qdcgtLine9);
+  const qdcgtLine14 = Math.min(
+    taxable,
+    cfg.qdcgtTwentyFloor[facts.filing_status],
+  );
+  const qdcgtLine16 = Math.max(0, qdcgtLine14 - (qdcgtLine5 + qdcgtLine9));
+  const qdcgtLine17 = Math.min(qdcgtLine12, qdcgtLine16);
+  const qdcgtLine20 = Math.max(0, qdcgtLine10 - (qdcgtLine9 + qdcgtLine17));
+  const preferentialTax = Math.round(
+    qdcgtLine17 * 0.15 + qdcgtLine20 * 0.20 +
+      ordinaryTax2025(qdcgtLine5, facts.filing_status),
+  );
+  const ordinaryTax = ordinaryTax2025(taxable, facts.filing_status);
+  if (qdcgtLine5 <= 0 || preferentialTax >= ordinaryTax) {
+    return Math.max(0, line1);
+  }
+  if (facts.regular_tax_before_additional_items !== preferentialTax) {
+    throw new Error(
+      "Form 1116 preferential worksheet does not match the sourced regular-tax calculation",
+    );
+  }
+  // Worksheet lines 2-5 are skipped for the QDCGT route. Lines 6/8/10
+  // come from QDCGT lines 20/17/9. With no foreign preferential income,
+  // foreign-category line 17 requires no rate-differential adjustment.
+  const worksheetLine7 = Math.round(qdcgtLine20 * 0.4595);
+  const worksheetLine9 = Math.round(qdcgtLine17 * 0.5946);
+  const worksheetLine11 = worksheetLine7 + worksheetLine9 + qdcgtLine9;
+  return Math.max(0, Math.round(line1 - worksheetLine11));
+}
 
 export const categorySummarySchema = z.object({
   category: z.nativeEnum(IncomeCategory),
@@ -308,11 +380,46 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
     }
     // The selected deduction path supplies signed Form 1040 lines 11b minus
     // 14. Add Schedule 1-A line 37, then floor the total as line 18 directs.
-    const line18WorldwideTaxableIncome = Math.max(
-      0,
-      input.worldwide_taxable_income +
-        (input.enhanced_senior_deduction ?? 0),
-    );
+    const signedLine18Base = input.worldwide_taxable_income +
+      (input.enhanced_senior_deduction ?? 0);
+    let line18WorldwideTaxableIncome = Math.max(0, signedLine18Base);
+    const rateFacts = input.regular_tax_preference_facts;
+    if (
+      rateFacts &&
+      (rateFacts.qualified_dividends > 0 || rateFacts.net_capital_gain > 0)
+    ) {
+      if ((input.known_foreign_qualified_dividends ?? 0) > 0) {
+        throw new Error(
+          "Form 1116 foreign qualified dividends need the foreign-source rate-adjustment worksheet",
+        );
+      }
+      if (!input.foreign_preferential_income_review) {
+        throw new Error(
+          "Form 1116 preferential line 18 needs a documented review of foreign qualified dividends and capital gains",
+        );
+      }
+      if (
+        rateFacts.special_rate_gain > 0 ||
+        rateFacts.form4952_election > 0
+      ) {
+        throw new Error(
+          "Form 1116 Schedule D Tax Worksheet preferential adjustment is not yet supported",
+        );
+      }
+      if (
+        rateFacts.foreign_earned_income_exclusion > 0 ||
+        rateFacts.form8615_applies ||
+        (input.tentative_minimum_tax ?? 0) > 0
+      ) {
+        throw new Error(
+          "Form 1116 preferential line 18 with AMT, Form 2555, or Form 8615 needs separate limitation rules",
+        );
+      }
+      line18WorldwideTaxableIncome = adjustedQualifiedDividendLine18(
+        signedLine18Base,
+        rateFacts,
+      );
+    }
 
     const categories: CategorySummary[] = totals.map((category) => ({
       ...category,
@@ -343,6 +450,10 @@ class Form1116Node extends TaxNode<typeof inputSchema> {
     const outputs: NodeOutput[] = [];
     outputs.push(output(f1040, {
       form1116_line18_worldwide_taxable_income: line18WorldwideTaxableIncome,
+      form1116_line18_preferential_adjustment: Math.max(
+        0,
+        Math.round(signedLine18Base) - line18WorldwideTaxableIncome,
+      ),
       form1116_line20_us_tax: input.us_tax_before_credits,
     }));
     if (credit > 0) {

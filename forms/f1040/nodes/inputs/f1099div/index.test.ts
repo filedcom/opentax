@@ -110,6 +110,19 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
 
+Deno.test("f1099div: sourced foreign qualified dividends contradict a zero-preference review", () => {
+  const result = compute([minimalItem({
+    box1a: 1_000,
+    box1b: 500,
+    foreign_source_dividends_usd: 500,
+    foreign_source_qualified_dividends_usd: 500,
+  })]);
+  assertEquals(
+    fieldsOf(result.outputs, form_1116)?.known_foreign_qualified_dividends,
+    500,
+  );
+});
+
 Deno.test("1099-DIV routes investment-property dividends and capital gain to Form 4952 only when affirmed", () => {
   assertEquals(
     findOutput(compute([minimalItem({ box1a: 500 })]), "form4952"),

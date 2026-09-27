@@ -1554,10 +1554,15 @@ apportionment. Schedule 1-A qualified vehicle-loan interest now uses a
 documented beginning/end tax-book asset inventory to allocate its line 4b
 foreign share by category and country; the same amount reduces line 7 and
 appears in native MeF line 4b. Missing inventory, mixed-source asset
-characterization, and the separate small-foreign-income election remain open.
-Preferential-gain line 18 adjustments, AMT Form 1116 sourcing, category-specific
-calculations, visual PDF review, full-batch validation, and IRS business rules
-remain open.
+characterization, and the separate small-foreign-income election remain open. A
+bounded qualified-dividend/capital-gain tax worksheet path now computes the 2025
+preferential-rate line 18 denominator when a documented review confirms no
+foreign qualified dividends or foreign capital gains or losses. It preserves the
+foreign numerator and reconciles the adjustment to Form 1040's signed line 11b
+minus line 14 plus Schedule 1-A line 37; cases are written but unrun. Foreign
+preferential-income adjustments, the Schedule D Tax Worksheet path, AMT Form
+1116 sourcing, category-specific calculations, visual PDF review, full-batch
+validation, and IRS business rules remain open.
 
 Build-pass addendum for GAP-8814 (unrun): the 2025 parent Form 1040 PDF now
 marks the child dividend and direct child capital-gain boxes, while Schedule D
