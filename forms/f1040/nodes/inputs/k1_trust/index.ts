@@ -405,15 +405,24 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
   return items.flatMap((item) => {
     const credit = item.box13_code_zz_disabled_access_credit;
     if (credit === undefined) return [];
-    if (item.disabled_access_credit_subject_to_passive_activity_limit) {
-      return [];
-    }
     if (
       !item.entity_type || !item.estate_trust_ein ||
       !item.source_document_reference ||
       !item.box13_code_zz_disabled_access_statement_reference
     ) {
       throw new Error("Estate/trust disabled-access K-1 source is incomplete");
+    }
+    if (item.disabled_access_credit_subject_to_passive_activity_limit) {
+      return [output(form8582cr, {
+        required_disabled_access_k1_credits: [{
+          source_type: item.entity_type,
+          source_ein: item.estate_trust_ein,
+          source_document_reference: item.source_document_reference,
+          source_statement_reference:
+            item.box13_code_zz_disabled_access_statement_reference,
+          credit_amount: credit,
+        }],
+      })];
     }
     return [output(f3800, {
       f8826_credit_entries: [{

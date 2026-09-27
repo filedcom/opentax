@@ -675,6 +675,28 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
           }],
         })];
       }),
+      ...k1_partnerships.flatMap((item) => {
+        const credit = item.box15_code_k_disabled_access_credit;
+        if (
+          credit === undefined ||
+          !item.disabled_access_credit_subject_to_passive_activity_limit
+        ) {
+          return [];
+        }
+        if (!item.partnership_ein || !item.source_document_reference) {
+          throw new Error(
+            "Partnership disabled-access K-1 source is incomplete",
+          );
+        }
+        return [output(form8582cr, {
+          required_disabled_access_k1_credits: [{
+            source_type: "partnership",
+            source_ein: item.partnership_ein,
+            source_document_reference: item.source_document_reference,
+            credit_amount: credit,
+          }],
+        })];
+      }),
       // box18_tax_exempt_income: excluded from taxable income — no routing needed.
       // box19_distributions: not taxable within basis — no routing needed (basis tracking not yet implemented).
     ];

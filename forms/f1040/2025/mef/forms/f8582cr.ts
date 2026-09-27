@@ -11,6 +11,39 @@ import { sameForm3800PassiveAllocations } from "./f3800_passive_link.ts";
 import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 
+function combineK1ActivityCredits<
+  T extends {
+    source_type: string;
+    entity_ein: string;
+    source_document_reference: string;
+    source_statement_reference?: string;
+    credit_amount: number;
+  },
+>(credits: readonly T[]): T[] {
+  const combined = new Map<string, T>();
+  for (const credit of credits) {
+    const key = [
+      credit.source_type,
+      credit.entity_ein,
+      credit.source_document_reference,
+      credit.source_type === "estate" || credit.source_type === "trust"
+        ? credit.source_statement_reference ?? ""
+        : "",
+    ].join(":");
+    const prior = combined.get(key);
+    combined.set(
+      key,
+      prior
+        ? {
+          ...prior,
+          credit_amount: prior.credit_amount + credit.credit_amount,
+        }
+        : credit,
+    );
+  }
+  return [...combined.values()];
+}
+
 function reconcilePassiveDisabledAccessSources(
   sourceAllocations: ReturnType<
     typeof calculateForm8582CR
@@ -45,7 +78,10 @@ function reconcilePassiveDisabledAccessSources(
       subject_to_passive_activity_limit: true,
     }];
   });
-  reconcileDisabledAccessK1Credits(credits, context.pending);
+  reconcileDisabledAccessK1Credits(
+    combineK1ActivityCredits(credits),
+    context.pending,
+  );
 }
 
 function reconcilePassiveOrphanDrugSources(
@@ -83,7 +119,10 @@ function reconcilePassiveOrphanDrugSources(
       subject_to_passive_activity_limit: true,
     }];
   });
-  reconcileOrphanDrugK1Credits(credits, context.pending);
+  reconcileOrphanDrugK1Credits(
+    combineK1ActivityCredits(credits),
+    context.pending,
+  );
 }
 
 function reconcileFiledBusinessCredits(
@@ -121,11 +160,12 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
   build(raw, context) {
     if (
       raw && typeof raw === "object" &&
-      "required_orphan_drug_k1_credits" in raw &&
+      ("required_orphan_drug_k1_credits" in raw ||
+        "required_disabled_access_k1_credits" in raw) &&
       !("credit_sources" in raw)
     ) {
       throw new Error(
-        "Form 8582-CR passive orphan-drug K-1 needs activity and tax facts",
+        "Form 8582-CR passive K-1 credit needs activity and tax facts",
       );
     }
     if (!raw || typeof raw !== "object" || !("credit_sources" in raw)) {

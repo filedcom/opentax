@@ -547,6 +547,28 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
           }],
         })];
       }),
+      ...k1_s_corps.flatMap((item) => {
+        const credit = item.box13_code_k_disabled_access_credit;
+        if (
+          credit === undefined ||
+          !item.disabled_access_credit_subject_to_passive_activity_limit
+        ) {
+          return [];
+        }
+        if (!item.corporation_ein || !item.source_document_reference) {
+          throw new Error(
+            "S-corporation disabled-access K-1 source is incomplete",
+          );
+        }
+        return [output(form8582cr, {
+          required_disabled_access_k1_credits: [{
+            source_type: "s_corporation",
+            source_ein: item.corporation_ein,
+            source_document_reference: item.source_document_reference,
+            credit_amount: credit,
+          }],
+        })];
+      }),
       // box16_tax_exempt_income: intentionally not routed — tax-exempt income does not flow to taxable income
       // box17_distributions: intentionally not routed — not taxable within basis; no basis-tracking node declared
     ];

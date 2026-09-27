@@ -41,6 +41,12 @@ The K-1 nodes now require any passive orphan-drug code Z/M amount to match
 the entered Form 8582-CR activity sources. Omitted or mismatched facts produce
 a diagnostic rather than silently losing the credit, and the XML builder also
 rejects a marker with no source facts. These cases are written but unrun.
+The same missing-source guard is now written for passive disabled-access K-1
+code K/ZZ credits. Form 8582-CR reconciles a single K-1 credit split over
+multiple activity rows, including a cents-bearing code K/ZZ amount against its
+whole-dollar activity total. The guard and return/XML cases are unrun.
+Nonpassive partnership and S-corporation code K still need automatic Form 3800
+routing; this checkpoint does not claim that path is complete.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and

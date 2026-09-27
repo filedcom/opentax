@@ -109,6 +109,58 @@ Deno.test("Form 8582-CR requires the passive K-1 orphan-drug amount in activity 
   );
 });
 
+Deno.test("Form 8582-CR reconciles rounded disabled-access K-1 activity credits", () => {
+  const evidence = {
+    source_type: "partnership" as const,
+    source_ein: "123456789",
+    source_document_reference: "2025 access K-1",
+    credit_amount: 500.25,
+  };
+  const activity = {
+    ...other(500),
+    source_form: "Form 8826",
+    form3800_credit_line: "1e" as const,
+    source_document_reference: evidence.source_document_reference,
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Access partnership",
+      ein: evidence.source_ein,
+    },
+  };
+  const facts = {
+    credit_sources: [activity],
+    required_disabled_access_k1_credits: [evidence],
+    regular_tax_all_income: 0,
+    regular_tax_without_passive: 0,
+  };
+  assertEquals(inputSchema.safeParse(facts).success, true);
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      credit_sources: [
+        {
+          ...activity,
+          activity_reference: "Access site A",
+          current_year_credit: 200,
+        },
+        {
+          ...activity,
+          activity_reference: "Access site B",
+          current_year_credit: 300,
+        },
+      ],
+    }).success,
+    true,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      credit_sources: [{ ...activity, current_year_credit: 501 }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN reason", () => {
   assertEquals(
     creditSourceSchema.safeParse({

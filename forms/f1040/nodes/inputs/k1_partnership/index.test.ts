@@ -98,12 +98,20 @@ Deno.test("partnership K-1 box 15 code K needs source identity and passive class
   assertThrows(() =>
     compute([minimalItem({ box15_code_k_disabled_access_credit: 500 })])
   );
-  compute([minimalItem({
+  const result = compute([minimalItem({
     partnership_ein: "123456789",
     source_document_reference: "2025 Partnership K-1",
     box15_code_k_disabled_access_credit: 500.25,
     disabled_access_credit_subject_to_passive_activity_limit: true,
   })]);
+  assertEquals(findOutput(result, "form8582cr")?.fields, {
+    required_disabled_access_k1_credits: [{
+      source_type: "partnership",
+      source_ein: "123456789",
+      source_document_reference: "2025 Partnership K-1",
+      credit_amount: 500.25,
+    }],
+  });
   assertThrows(() =>
     compute([minimalItem({
       partnership_ein: "123456789",

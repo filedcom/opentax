@@ -51,19 +51,26 @@ Deno.test("Form 8582-CR: absent or empty credits emit no document", () => {
 });
 
 Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", () => {
-  assertThrows(
-    () =>
-      form8582cr.build({
-        required_orphan_drug_k1_credits: [{
-          source_type: "partnership",
-          source_ein: "123456789",
-          source_document_reference: "2025 clinical K-1",
-          credit_amount: 500,
-        }],
-      }),
-    Error,
-    "needs activity and tax facts",
-  );
+  for (
+    const field of [
+      "required_orphan_drug_k1_credits",
+      "required_disabled_access_k1_credits",
+    ]
+  ) {
+    assertThrows(
+      () =>
+        form8582cr.build({
+          [field]: [{
+            source_type: "partnership",
+            source_ein: "123456789",
+            source_document_reference: "2025 clinical K-1",
+            credit_amount: 500,
+          }],
+        }),
+      Error,
+      "needs activity and tax facts",
+    );
+  }
 });
 
 Deno.test("Form 8582-CR: Part I preserves current and prior other credits", () => {
@@ -260,7 +267,7 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
           partnership_name: "Access partnership",
           partnership_ein: "123456789",
           source_document_reference: "2025 access K-1",
-          box15_code_k_disabled_access_credit: 1_500,
+          box15_code_k_disabled_access_credit: 1_500.25,
           disabled_access_credit_subject_to_passive_activity_limit: true,
         },
       },
@@ -271,7 +278,7 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
           corporation_name: "Access S corporation",
           corporation_ein: "123456789",
           source_document_reference: "2025 access K-1",
-          box13_code_k_disabled_access_credit: 1_500,
+          box13_code_k_disabled_access_credit: 1_500.25,
           disabled_access_credit_subject_to_passive_activity_limit: true,
         },
       },
@@ -283,7 +290,7 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
           entity_type: "trust",
           estate_trust_ein: "123456789",
           source_document_reference: "2025 Trust K-1",
-          box13_code_zz_disabled_access_credit: 1_500,
+          box13_code_zz_disabled_access_credit: 1_500.25,
           box13_code_zz_disabled_access_statement_reference:
             "2025 access statement",
           disabled_access_credit_subject_to_passive_activity_limit: true,
@@ -297,7 +304,7 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
           entity_type: "estate",
           estate_trust_ein: "123456789",
           source_document_reference: "2025 Estate K-1",
-          box13_code_zz_disabled_access_credit: 1_500,
+          box13_code_zz_disabled_access_credit: 1_500.25,
           box13_code_zz_disabled_access_statement_reference:
             "2025 access statement",
           disabled_access_credit_subject_to_passive_activity_limit: true,
@@ -404,6 +411,69 @@ Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source eviden
         ? "K-1 box 13 code K"
         : "K-1 box 13 code ZZ statement",
     );
+  }
+});
+
+Deno.test("Form 8582-CR reconciles one K-1 credit split across two activities", () => {
+  for (
+    const credit of [
+      {
+        sourceForm: "Form 8820",
+        line: "1h",
+        amount: 1_000,
+        k1Field: "box15_code_z_orphan_drug_credit",
+      },
+      {
+        sourceForm: "Form 8826",
+        line: "1e",
+        amount: 1_000.25,
+        k1Field: "box15_code_k_disabled_access_credit",
+      },
+    ] as const
+  ) {
+    const creditSources = [250, 750].map((amount, index) => ({
+      activity_reference: `Clinical activity ${index + 1}`,
+      source_form: credit.sourceForm,
+      source_document_reference: "2025 clinical K-1",
+      source_origin: {
+        kind: PassiveCreditSourceOrigin.Partnership,
+        entity_reference: "Clinical partnership",
+        ein: "123456789",
+      },
+      category: PassiveCreditCategory.Other,
+      reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+      form3800_credit_line: credit.line,
+      current_year_credit: amount,
+      prior_unallowed_credits: [],
+      publicly_traded_partnership: false,
+    }));
+    const input = {
+      credit_sources: creditSources,
+      regular_tax_all_income: 10_000,
+      regular_tax_without_passive: 9_000,
+    };
+    const allocations = calculateForm8582CR(inputSchema.parse(input))
+      .sourceAllocations;
+    const xml = form8582cr.build(input, {
+      pending: {
+        f3800: { passive_source_allocations: allocations },
+        k1_partnership: {
+          k1_partnerships: [{
+            partnership_name: "Clinical partnership",
+            partnership_ein: "123456789",
+            source_document_reference: "2025 clinical K-1",
+            [credit.k1Field]: credit.amount,
+            ...(credit.sourceForm === "Form 8820"
+              ? { orphan_drug_credit_subject_to_passive_activity_limit: true }
+              : {
+                disabled_access_credit_subject_to_passive_activity_limit: true,
+              }),
+          }],
+        },
+      },
+      documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+    });
+    assertStringIncludes(xml, "<AllowedCreditsAmt>1000</AllowedCreditsAmt>");
   }
 });
 

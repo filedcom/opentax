@@ -16,6 +16,17 @@ function sameCents(left: number | undefined, right: number): boolean {
     Math.round(left * 100) === Math.round(right * 100);
 }
 
+function sameK1Credit(
+  left: number | undefined,
+  right: number,
+  passive: boolean,
+): boolean {
+  return passive
+    ? left !== undefined && Number.isInteger(right) &&
+      Math.round(left) === right
+    : sameCents(left, right);
+}
+
 /** Verify a disabled-access pass-through credit against the matching K-1 code. */
 export function reconcileDisabledAccessK1Credits(
   credits: readonly DisabledAccessK1Credit[],
@@ -49,9 +60,10 @@ export function reconcileDisabledAccessK1Credits(
       );
       if (
         matches.length !== 1 ||
-        !sameCents(
+        !sameK1Credit(
           matches[0].box15_code_k_disabled_access_credit,
           credit.credit_amount,
+          credit.subject_to_passive_activity_limit,
         ) ||
         matches[0].disabled_access_credit_subject_to_passive_activity_limit !==
           credit.subject_to_passive_activity_limit
@@ -67,9 +79,10 @@ export function reconcileDisabledAccessK1Credits(
       );
       if (
         matches.length !== 1 ||
-        !sameCents(
+        !sameK1Credit(
           matches[0].box13_code_k_disabled_access_credit,
           credit.credit_amount,
+          credit.subject_to_passive_activity_limit,
         ) ||
         matches[0].disabled_access_credit_subject_to_passive_activity_limit !==
           credit.subject_to_passive_activity_limit
@@ -88,9 +101,10 @@ export function reconcileDisabledAccessK1Credits(
       );
       if (
         !credit.source_statement_reference || matches.length !== 1 ||
-        !sameCents(
+        !sameK1Credit(
           matches[0].box13_code_zz_disabled_access_credit,
           credit.credit_amount,
+          credit.subject_to_passive_activity_limit,
         ) ||
         matches[0].disabled_access_credit_subject_to_passive_activity_limit !==
           credit.subject_to_passive_activity_limit

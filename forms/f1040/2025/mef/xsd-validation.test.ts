@@ -1855,6 +1855,79 @@ Deno.test("passive orphan-drug K-1 without Form 8582-CR facts reports a diagnost
   );
 });
 
+Deno.test("passive disabled-access K-1 without Form 8582-CR facts reports a diagnostic", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 access partnership K-1",
+      box15_code_k_disabled_access_credit: 500.25,
+      disabled_access_credit_subject_to_passive_activity_limit: true,
+    }],
+  });
+  assertEquals(
+    result.diagnostics.some((item) => item.nodeType === "form8582cr"),
+    true,
+  );
+});
+
+Deno.test({
+  name:
+    "XSD: Form 8582-CR start input carries passive disabled-access K-1 through the return",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = singleGeneral();
+  const reference = "2025 access partnership K-1";
+  const result = runReturn({
+    general,
+    k1_partnership: [{
+      partnership_name: "Access partnership",
+      partnership_ein: "123456789",
+      source_document_reference: reference,
+      box15_code_k_disabled_access_credit: 500.25,
+      disabled_access_credit_subject_to_passive_activity_limit: true,
+    }],
+    form8582cr: {
+      credit_sources: [{
+        activity_reference: "Access partnership activity",
+        source_form: "Form 8826",
+        source_document_reference: reference,
+        source_origin: {
+          kind: PassiveCreditSourceOrigin.Partnership,
+          entity_reference: "Access partnership",
+          ein: "123456789",
+        },
+        category: PassiveCreditCategory.Other,
+        reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+        form3800_credit_line: "1e",
+        current_year_credit: 500,
+        prior_unallowed_credits: [],
+        publicly_traded_partnership: false,
+      }],
+      regular_tax_all_income: 0,
+      regular_tax_without_passive: 0,
+    },
+  });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS8582CR ");
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  await validateXsd(
+    xml,
+    "Form 8582-CR passive disabled-access K-1 return path",
+  );
+});
+
 Deno.test({
   name:
     "XSD: Form 8582-CR start input carries passive orphan-drug K-1 through the return",

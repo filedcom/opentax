@@ -168,6 +168,25 @@ Deno.test("estate and trust K-1 nonpassive disabled-access credits enter Form 38
       ),
       undefined,
     );
+    assertEquals(
+      findOutput(
+        compute([{
+          ...item,
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        }]),
+        "form8582cr",
+      )?.fields,
+      {
+        required_disabled_access_k1_credits: [{
+          source_type: entity_type,
+          source_ein: "123456789",
+          source_document_reference: `2025 ${entity_type} K-1`,
+          source_statement_reference:
+            `${entity_type} disabled-access statement`,
+          credit_amount: 500.25,
+        }],
+      },
+    );
   }
 });
 
