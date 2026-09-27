@@ -14,17 +14,17 @@ do not copy blank lines as zeros.
 | 5 | Dobbin's Hardware W-2: box 1 $18,100; box 2 $2,400; boxes 3/5 $18,100; boxes 4/6 $1,122/$262 | Second W-2 source. Wage total is $48,100; federal withholding total is $4,050. |
 | 6–7 | Schedule 2; Schedule H household-employment tax reaches line 17a | Preserve the page 1/page 2 Schedule 2 topology and reconcile line 21 to 1040 line 23. |
 | 8 | Schedule 3; Form 5695 line 3 flows to line 5a | Reconcile Schedule 3 line 8 to 1040 line 20. |
-| 9–10 | Schedule H: $4,100 subject to Social Security and Medicare tax; $0 Additional Medicare wages and withheld income tax | Calculate Social Security at 12.4% and Medicare at 2.9%; determine FUTA using the checked state-contribution answers and wages. Reconcile Schedule H line 26 to Schedule 2 line 17a. |
+| 9–10 | Schedule H: A Yes, $4,100 subject to Social Security and Medicare tax; $0 Additional Medicare wages and withheld income tax; **line 9 No**; page 2 FUTA section blank | Calculate Social Security at 12.4% and Medicare at 2.9% (whole-dollar lines 2/4: $508/$119). Line 8 is $627 and goes directly to Schedule 2 line 17a. Do not create a FUTA amount or a line 26 from the annual wages. |
 | 11 | Form 5695 is the four-line **carryforward-only** 2026 form; scenario states a $200 credit from the 2025 Form 5695 line 16 | Apply the pinned [2026 credit-order plan](FORM5695-CREDIT-GRAPH.md) and residential clean energy credit limit worksheet. Route the smaller of carryforward and limit to Schedule 3 line 5a; carry unused credit to 2027. Do not use the old 2025 Form 5695 line topology. |
 
 ## Acceptance work
 
 1. Encode the two W-2 records, filer answers, Schedule H household wages and
-   state/FUTA answers, 2025 Form 5695 carryforward provenance, and assumed
+   checked line 9 No answer, 2025 Form 5695 carryforward provenance, and assumed
    Form 1062 facts in a typed fixture. Record the source PDF hash and page for
    every field. Where the packet omits an input needed by a worksheet, mark it
    as a required fixture assumption rather than inventing an IRS value.
-2. Independently calculate Schedule H, the Form 5695 limit, Schedule 3,
+2. Independently calculate Schedule H line 8, the Form 5695 limit, Schedule 3,
    Schedule 2, income tax, Form 1062, and the final 1040. Store source facts,
    expected amounts, and application results in separate columns.
 3. Register 2026 Schedule H, Form 5695, and Form 1062 calculation and PDF

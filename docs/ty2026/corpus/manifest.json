@@ -876,6 +876,16 @@
       "sha256": "1efab06c78f27ce81c7f3ee0335a91e7a195c2702f35d908609e4cfee0db4bf0",
       "year_check": "2026-present",
       "retrieved_utc": "2026-09-27T09:16:31.679865+00:00"
+    },
+    {
+      "path": "draft/i1040sh.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040sh--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 394697,
+      "sha256": "685fa1486b3a6e5712c5552da3ef0eb5f7b245dec3d3f28e642e37efe15dbf1e",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T09:25:00.217610+00:00"
     }
   ]
 }

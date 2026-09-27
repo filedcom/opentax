@@ -44,10 +44,12 @@ for the implementation contract.
   all 202 draft Form 8949 widgets and the eleven-row pagination contract.
 - [`FORM5695-CREDIT-GRAPH.md`](FORM5695-CREDIT-GRAPH.md): the carryforward-only
   2026 form, its pinned draft instructions, and the Schedule 8812 credit order.
+- [`SCHEDULEH-GRAPH.md`](SCHEDULEH-GRAPH.md): 2026 household payroll thresholds,
+  FUTA paths, and the Schedule 2 line 17a attachment contract.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
-  Schedule 8812, Schedule B, and Form 5695 instructions**, **five draft URLs that
+  Schedule 8812, Schedule B, Schedule H, and Form 5695 instructions**, **five draft URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
