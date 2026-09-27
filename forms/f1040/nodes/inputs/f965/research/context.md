@@ -25,6 +25,10 @@ amounts. Part III S-corporation computations and Part IV annual deferred-balance
 rows are separate source-backed arrays. The engine subtracts elected
 S-corporation deferrals from original liability eligible for the installment
 election and reconciles unpaid balances.
+For a triggered S-corporation liability, Part I column (a) carries the
+triggering-event year. The associated Part IV column (a) can retain the earlier
+deferral-election year; those years must not be conflated. Triggered rows now
+take the event date and validate the reported Part I year against it.
 
 The native MeF descriptor emits one `IRS965A` with Part I/II rows, Part II
 totals, Part III groups, and Part IV rows. It checks Part II current-year

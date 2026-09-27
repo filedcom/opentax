@@ -20,6 +20,11 @@ const taxId = z.discriminatedUnion("kind", [
 const agreementFileName = z.string().max(64).regex(
   /^(?!.*\.\.)[A-Za-z0-9_.-]+\.pdf$/,
 );
+function validIsoDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
 
 const transferAgreementSchema = z.object({
   agreement_type: z.enum(["965-C", "965-D", "965-E"]),
@@ -141,6 +146,9 @@ export const sCorpDeferredRowSchema = z.object({
 
 const common = z.object({
   source_document_reference: z.string().trim().min(1),
+  // Original/assumed rows: inclusion-liability year. Triggered S-corp rows:
+  // triggering-event year reported in Part I column (a), not the original
+  // S-corporation deferral year still carried in Part IV column (a).
   tax_year_of_inclusion: year,
   // Part I col (j): signed transfer or subsequent adjustment.
   net_tax_adjustment: signedAmount,
@@ -177,6 +185,7 @@ const assumedLiability = common.extend({
 });
 const triggeredLiability = common.extend({
   entry_type: z.literal("triggered_s_corp"),
+  triggering_event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   installment_election: z.boolean(),
   triggered_liability: amount.positive(),
   requires_965e_consent: z.boolean(),
@@ -249,6 +258,19 @@ export const inputSchema = z.object({
     }
   }
   for (const [index, row] of input.f965s.entries()) {
+    if (
+      row.entry_type === "triggered_s_corp" &&
+      (!validIsoDate(row.triggering_event_date) ||
+        Number(row.triggering_event_date.slice(0, 4)) !==
+          row.tax_year_of_inclusion)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f965s", index, "triggering_event_date"],
+        message:
+          "Form 965-A Part I year must match the S corporation triggering event date",
+      });
+    }
     if (
       (row.entry_type === "assumed" ||
         row.net_tax_adjustment_kind === "transfer_out" ||

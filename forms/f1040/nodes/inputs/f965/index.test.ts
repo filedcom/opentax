@@ -283,7 +283,8 @@ Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E co
   const triggered = {
     entry_type: "triggered_s_corp" as const,
     source_document_reference: "2025 consent-triggering transaction",
-    tax_year_of_inclusion: 2018,
+    tax_year_of_inclusion: 2025,
+    triggering_event_date: "2025-06-01",
     installment_election: true,
     triggered_liability: 1_000,
     net_tax_adjustment: 0,
@@ -294,8 +295,8 @@ Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E co
     separate_965h_election_reference: "2025 separate section 965(h) election",
   };
   const deferred = {
-    election_or_transfer_year: 2025,
-    source_document_reference: "2025 S corporation consent transaction",
+    election_or_transfer_year: 2018,
+    source_document_reference: "2018 deferral and 2025 consent transaction",
     corporation_name: "Example S Corp",
     corporation_ein: "123456789",
     beginning_deferred_liability: 1_000,
@@ -319,6 +320,24 @@ Deno.test("Form 965-A consent-triggered liability needs its signed Form 965-E co
     }],
   });
   assertEquals(input.f965s[1].entry_type, "triggered_s_corp");
+  assertThrows(() =>
+    source({
+      ...input,
+      f965s: [input.f965s[0], {
+        ...triggered,
+        tax_year_of_inclusion: 2018,
+      }],
+    })
+  );
+  assertThrows(() =>
+    source({
+      ...input,
+      f965s: [input.f965s[0], {
+        ...triggered,
+        triggering_event_date: "2025-02-30",
+      }],
+    })
+  );
   assertThrows(() =>
     source({
       ...input,

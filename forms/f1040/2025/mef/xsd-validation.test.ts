@@ -274,7 +274,8 @@ Deno.test({
     }, {
       entry_type: "triggered_s_corp",
       source_document_reference: "2025 consent-triggering transaction",
-      tax_year_of_inclusion: 2018,
+      tax_year_of_inclusion: 2025,
+      triggering_event_date: "2025-06-01",
       installment_election: true,
       triggered_liability: 1_000,
       net_tax_adjustment: 0,
@@ -311,8 +312,8 @@ Deno.test({
         },
       ],
     }, {
-      election_or_transfer_year: 2025,
-      source_document_reference: "2025 S corporation consent transaction",
+      election_or_transfer_year: 2018,
+      source_document_reference: "2018 deferral and 2025 consent transaction",
       corporation_name: "Consent S Corp",
       corporation_ein: "456789123",
       beginning_deferred_liability: 1_000,
