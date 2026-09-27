@@ -8,6 +8,7 @@ import type {
 import { TaxNode } from "../../../../../../core/types/tax-node.ts";
 import { FilingStatus } from "../../../types.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 
 // Phase-out rate: 25% of excess above threshold (IRC §55(d); Form 6251 Line 5 Worksheet, Step 5)
@@ -78,6 +79,9 @@ export const inputSchema = z.object({
   // IRS filing instruction: a claimed personal-use Form 8911 credit requires
   // Form 6251 even when the final AMT amount is zero.
   must_file_for_credit: z.boolean().optional(),
+  // Form 3800 separately requires the TMT computation and, for its ordinary
+  // credit, a filed Form 6251 even when AMT is zero.
+  must_file_for_gbc: z.boolean().optional(),
 
   // AMT QDCGT inputs (IRC §55(b)(3)) — same preferential 0%/15%/20% rates
   // apply for AMT purposes, preventing over-taxation of investment income.
@@ -327,7 +331,7 @@ function computePartThree(
 class Form6251Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form6251";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule2]);
+  readonly outputNodes = new OutputNodes([schedule2, f1040]);
 
   compute(ctx: NodeContext, rawInput: Form6251Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -417,7 +421,10 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
     );
     const amt = computeAmt(netTmt, adjustedRegularTax);
 
-    if (amt === 0 && input.must_file_for_credit !== true) {
+    if (
+      amt === 0 && input.must_file_for_credit !== true &&
+      input.must_file_for_gbc !== true
+    ) {
       return { outputs: [] };
     }
 
@@ -425,10 +432,18 @@ class Form6251Node extends TaxNode<typeof inputSchema> {
       ...(amt > 0
         ? [this.outputNodes.output(schedule2, { line2_amt: amt })]
         : []),
+      ...(input.must_file_for_gbc === true
+        ? [this.outputNodes.output(f1040, {
+          form3800_form6251_line9: netTmt,
+          form3800_form6251_line11: amt,
+        })]
+        : []),
       {
         nodeType: this.nodeType,
         fields: {
           ...input,
+          must_file_for_credit: input.must_file_for_credit === true ||
+            input.must_file_for_gbc === true,
           regular_tax: adjustedRegularTax,
           ...(input.form4952_amt_line2c_difference !== undefined &&
               input.taking_standard_deduction !== true

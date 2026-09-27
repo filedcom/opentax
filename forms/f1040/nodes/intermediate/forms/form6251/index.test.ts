@@ -3,6 +3,7 @@ import { form6251, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { form6251 as mef6251 } from "../../../../2025/mef/forms/f6251.ts";
+import { f1040 } from "../../../outputs/f1040/index.ts";
 
 function compute(input: Record<string, unknown>) {
   return form6251.compute(
@@ -34,9 +35,23 @@ Deno.test("form6251: Form 8911 claim files the form with zero AMT", () => {
     must_file_for_credit: true,
   });
   assertEquals(result.outputs.length, 1);
-  assertEquals(result.outputs[0].nodeType, "form6251");
-  assertEquals(result.outputs[0].fields.line11_amt, 0);
-  assertEquals(result.outputs[0].fields.must_file_for_credit, true);
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.line11_amt, 0);
+  assertEquals(filed?.fields.must_file_for_credit, true);
+});
+
+Deno.test("form6251: Form 3800 source receives zero-TMT evidence and files the form", () => {
+  const result = compute({
+    filing_status: "single",
+    regular_tax_income: 80_000,
+    regular_tax: 10_000,
+    must_file_for_gbc: true,
+  });
+  assertEquals(result.outputs.length, 2);
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_form6251_line9, 0);
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_form6251_line11, 0);
+  const filed = result.outputs.find((output) => output.nodeType === "form6251");
+  assertEquals(filed?.fields.must_file_for_credit, true);
 });
 
 Deno.test("form6251: no output when tentative minimum tax equals regular tax", () => {

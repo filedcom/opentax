@@ -217,10 +217,17 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
       ? this.outputNodes.output(f1040, {
         line17_additional_taxes: part1,
         line23_other_taxes: part2,
+        form3800_schedule2_line1z: part1 - (input.line2_amt ?? 0),
       })
       : part1 > 0
-      ? this.outputNodes.output(f1040, { line17_additional_taxes: part1 })
-      : this.outputNodes.output(f1040, { line23_other_taxes: part2 });
+      ? this.outputNodes.output(f1040, {
+        line17_additional_taxes: part1,
+        form3800_schedule2_line1z: part1 - (input.line2_amt ?? 0),
+      })
+      : this.outputNodes.output(f1040, {
+        line23_other_taxes: part2,
+        form3800_schedule2_line1z: 0,
+      });
     const outputs: NodeOutput[] = [
       output,
       this.outputNodes.output(form8978_reporting_year, {

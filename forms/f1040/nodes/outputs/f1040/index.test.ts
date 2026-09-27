@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040 } from "./index.ts";
+import { FilingStatus } from "../../types.ts";
 
 const ctx = {} as Parameters<typeof f1040.compute>[0];
 
@@ -54,6 +55,127 @@ Deno.test("f1040: unresolved Form 8912 credit stops final return assembly", () =
     Error,
     "Part II tax limit and source document",
   );
+});
+
+const emptySchedule3ForBusinessCredit = {
+  line1: 0,
+  line2: 0,
+  line3: 0,
+  line4: 0,
+  line5a: 0,
+  line5b: 0,
+  line6aGbc: 0,
+  line6bPriorMinimumTax: 0,
+  line6kBondCredit: 0,
+  line7: 0,
+};
+
+Deno.test("f1040: source-backed Form 3800 posts only its allowed ordinary credit", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line16_income_tax: 40_000,
+    line19_child_tax_credit: 2_000,
+    line20_nonrefundable_credits: 1_000,
+    form3800_source_credits: { standardCredit: 25_000, specifiedCredit: 0 },
+    form3800_form6251_line9: 20_000,
+    form3800_form6251_line11: 0,
+    form3800_schedule3_lines: {
+      ...emptySchedule3ForBusinessCredit,
+      line2: 1_000,
+      line7: 0,
+    },
+  });
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 18_000);
+  assertEquals(result.outputs[0].fields.line24_total_tax, 20_000);
+  assertEquals(result.finalizations?.[0].fields.line6a_total, 17_000);
+  assertEquals(result.finalizations?.[0].fields.line7_total, 17_000);
+  assertEquals(result.finalizations?.[0].fields.line8_total, 18_000);
+  assertEquals(result.finalizations?.[1].nodeType, "f3800");
+  assertEquals(result.finalizations?.[1].fields.allowed_credit, 17_000);
+});
+
+Deno.test("f1040: specified Form 3800 credit uses its separate AMT limit", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line16_income_tax: 20_000,
+    line17_additional_taxes: 5_000,
+    form3800_source_credits: { standardCredit: 0, specifiedCredit: 10_000 },
+    form3800_form6251_line9: 25_000,
+    form3800_form6251_line11: 5_000,
+    form3800_schedule3_lines: emptySchedule3ForBusinessCredit,
+  });
+  assertEquals(result.finalizations?.[1].fields.standard_credit_allowed, 0);
+  assertEquals(
+    result.finalizations?.[1].fields.specified_credit_allowed,
+    10_000,
+  );
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 10_000);
+});
+
+Deno.test("f1040: Form 3800 follows finalized personal clean-vehicle credit", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    line16_income_tax: 10_000,
+    line20_nonrefundable_credits: 7_500,
+    form8936_tentative_new_credit: 7_500,
+    form8936_tentative_used_credit: 0,
+    form8936_priority_personal_credits: 0,
+    form8936_schedule3_line7_tentative: 7_500,
+    form3800_source_credits: { standardCredit: 5_000, specifiedCredit: 0 },
+    form3800_form6251_line9: 0,
+    form3800_form6251_line11: 0,
+    form3800_schedule3_lines: {
+      ...emptySchedule3ForBusinessCredit,
+      line7: 7_500,
+    },
+  });
+  assertEquals(result.finalizations?.[0].fields.line6a_total, 2_500);
+  assertEquals(result.finalizations?.[0].fields.line6f_total, 7_500);
+  assertEquals(result.finalizations?.[0].fields.line8_total, 10_000);
+  assertEquals(result.outputs[0].fields.line22_tax_after_credits, 0);
+});
+
+Deno.test("f1040: Form 3800 needs AMT evidence and does not mix legacy gross GBC", () => {
+  const source = {
+    filing_status: FilingStatus.Single,
+    line16_income_tax: 10_000,
+    form3800_source_credits: { standardCredit: 1_000, specifiedCredit: 0 },
+    form3800_schedule3_lines: emptySchedule3ForBusinessCredit,
+  };
+  assertThrows(
+    () => compute(source),
+    Error,
+    "needs filing status, Form 1040 tax",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...source,
+        form3800_form6251_line9: 0,
+        form3800_form6251_line11: 0,
+        form3800_schedule3_lines: {
+          ...emptySchedule3ForBusinessCredit,
+          line6aGbc: 100,
+          line7: 100,
+        },
+      }),
+    Error,
+    "unbounded Schedule 3",
+  );
+});
+
+Deno.test("f1040: MFS Form 3800 requires the spouse business-credit answer", () => {
+  const source = {
+    filing_status: FilingStatus.MFS,
+    line16_income_tax: 20_000,
+    form3800_source_credits: { standardCredit: 5_000, specifiedCredit: 0 },
+    form3800_form6251_line9: 0,
+    form3800_form6251_line11: 0,
+    form3800_schedule3_lines: emptySchedule3ForBusinessCredit,
+  };
+  assertThrows(() => compute(source), Error, "spouse business-credit answer");
+  const withAnswer = compute({ ...source, spouse_has_business_credit: true });
+  assertEquals(withAnswer.finalizations?.[1].fields.allowed_credit, 5_000);
 });
 
 // ─── Line computations ────────────────────────────────────────────────────────

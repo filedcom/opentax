@@ -87,7 +87,10 @@ export type Form3800IndividualReturnContext = {
  */
 export function deriveForm3800NonpassiveInput(
   returnLines: Form3800IndividualReturnContext,
-  credits: Form3800CreditClassification,
+  credits: Pick<
+    Form3800CreditClassification,
+    "standardCredit" | "specifiedCredit"
+  >,
 ): Form3800NonpassiveInput {
   for (const [name, amount] of Object.entries(returnLines)) {
     if (

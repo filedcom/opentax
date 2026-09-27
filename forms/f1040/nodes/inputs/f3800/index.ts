@@ -6,12 +6,14 @@ import type {
 import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { form6251 } from "../../intermediate/forms/form6251/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { classifyForm8835Credits } from "./calculation.ts";
 
 // TY2025 — Form 3800: General Business Credit.
-// Source-backed Form 8826 and Form 8835 entries stop here until the Part II
-// tax-liability limitation and source-document bundle are wired.
+// Source-backed Form 8826 and Form 8835 entries pass their classified source
+// credit to the Form 1040 sink for the Part II tax-liability limitation.
 // The older f3800s input still routes unbounded gross amounts to Schedule 3
 // line 6a and must not be treated as a filed Form 3800 calculation.
 // IRC §38 (credit allowed), §39 (carryback 1 yr / carryforward 20 yrs).
@@ -62,7 +64,12 @@ const f8835CreditEntrySchema = z.object({
 const f8826CreditEntrySchema = z.object({
   source_type: z.enum(["self", "partnership", "s_corporation"]),
   source_ein: z.string().regex(/^\d{9}$/).optional(),
-  credit_amount: z.number().finite().nonnegative(),
+  credit_amount: z.number().finite().nonnegative().refine(
+    (amount) =>
+      Number.isSafeInteger(Math.round(amount * 100)) &&
+      Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+    { message: "Form 8826 source credit must have cent precision" },
+  ),
   subject_to_passive_activity_limit: z.boolean(),
 }).superRefine((entry, ctx) => {
   if ((entry.source_type === "self") === (entry.source_ein !== undefined)) {
@@ -133,14 +140,6 @@ function schedule3Output(
     ? classifyForm8835Credits(f8835Entries)
     : undefined;
   if (
-    (f8835Credit?.standardCredit ?? 0) > 0 ||
-    (f8835Credit?.specifiedCredit ?? 0) > 0
-  ) {
-    throw new Error(
-      "Form 3800 tax-liability limitation is not implemented for Form 8835 credit",
-    );
-  }
-  if (
     f8826Entries.some((entry) =>
       entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
     )
@@ -149,10 +148,41 @@ function schedule3Output(
       "Form 8826 passive credit needs Form 8582-CR before Form 3800",
     );
   }
-  if (f8826Entries.some((entry) => entry.credit_amount > 0)) {
+  const sourceIds = new Set<string>();
+  for (const entry of f8826Entries) {
+    const id = `${entry.source_type}:${entry.source_ein ?? "self"}`;
+    if (sourceIds.has(id)) {
+      throw new Error(`Duplicate Form 8826 credit source ${id}`);
+    }
+    sourceIds.add(id);
+  }
+  const form8826Credit = f8826Entries.reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
+  if (form8826Credit > 5_000) {
+    throw new Error("Form 8826 source credits exceed the $5,000 cap");
+  }
+  const hasSourceCredit = form8826Credit > 0 ||
+    (f8835Credit?.standardCredit ?? 0) > 0 ||
+    (f8835Credit?.specifiedCredit ?? 0) > 0;
+  if (hasSourceCredit && totalGbc(items) > 0) {
     throw new Error(
-      "Form 3800 tax-liability limitation is not implemented for Form 8826 credit",
+      "Source-backed Form 3800 credit cannot mix with unbounded legacy f3800s credit",
     );
+  }
+  if (hasSourceCredit) {
+    return [
+      output(f1040, {
+        form3800_source_credits: {
+          standardCredit: form8826Credit +
+            (f8835Credit?.standardCredit ?? 0),
+          specifiedCredit: f8835Credit?.specifiedCredit ?? 0,
+        },
+      }),
+      output(form6251, { must_file_for_gbc: true }),
+      output(schedule3, { form3800_source_credit_pending: true }),
+    ];
   }
   const total = totalGbc(items);
   if (total === 0) return [];
@@ -162,7 +192,7 @@ function schedule3Output(
 class F3800Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f3800";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([schedule3, form6251, f1040]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

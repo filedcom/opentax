@@ -32,6 +32,27 @@ Deno.test("validation: all-zero fields produce no output", () => {
   assertEquals(result.outputs.length, 0);
 });
 
+Deno.test("Schedule 3: Form 3800 pending source keeps the schedule available without gross credit", () => {
+  const result = compute({ form3800_source_credit_pending: true });
+  assertEquals(result.outputs.length, 1);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.line20_nonrefundable_credits,
+    undefined,
+  );
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_schedule3_lines, {
+    line1: 0,
+    line2: 0,
+    line3: 0,
+    line4: 0,
+    line5a: 0,
+    line5b: 0,
+    line6aGbc: 0,
+    line6bPriorMinimumTax: 0,
+    line6kBondCredit: 0,
+    line7: 0,
+  });
+});
+
 Deno.test("Schedule 3: sends Form 8936 tentative and priority amounts to Form 1040", () => {
   const result = compute({
     line1_foreign_tax_credit: 500,
