@@ -441,9 +441,10 @@ uses tax attributable to the remaining allowance for line 15, subtracts the
 amount already used on Form 8582 line 9, and distinguishes MFS spouses who
 lived apart. Real-estate-professional status no longer bypasses the limit for
 every activity. Its source allocations now go to the Form 3800 node instead of
-depositing the aggregate allowed amount directly to Schedule 3. Form 3800
-currently stops that route until the source rows, shared limit, and XML are
-wired together, so filing support and ATS acceptance remain open. The unrun source pass
+depositing the aggregate allowed amount directly to Schedule 3. Form 3800 now
+passes passive source totals through the shared 1040 tax limit, but its MeF
+builder still stops that route until Parts III/IV source rows and XML are wired
+together, so filing support and ATS acceptance remain open. The unrun source pass
 replaces one aggregate passive-credit amount with activity and document
 references, credit category, a current-year amount, and originating-year-stamped
 prior unallowed credit rows. Active-rental
@@ -470,8 +471,11 @@ and allowed line amounts from Form 8582-CR source allocations, including prior
 credits, and rejects Form 8834 sources. The shared Form 3800 Part I/II
 calculator now applies standard, empowerment-zone, and specified passive
 credits in their separate statutory order, with written but unrun cases. The
-1040 and XML callers still pass explicit zero passive lines, so the calculator
-does not yet make passive credits fileable. An unrun source transform now splits
+1040 now passes classified passive lines into the shared calculator and
+finalizes Schedule 3 with only the tax-limited credit; nonpassive callers pass
+explicit zero passive lines. The XML builder still rejects passive source
+allocations, so this does not make passive credits fileable. The new source and
+1040 cases are written but unrun. An unrun source transform now splits
 each allowed credit by originating tax year, keeping prior carryovers ahead of
 2025 credit for the future Parts III/IV rows. It does not yet allocate the
 separate Form 3800 tax-liability limit to those rows. Form 8582-CR business-credit

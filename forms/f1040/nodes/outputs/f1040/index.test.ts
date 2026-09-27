@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f1040 } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
+import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../inputs/f3800/calculation.ts";
 
 const ctx = {} as Parameters<typeof f1040.compute>[0];
 
@@ -239,7 +240,11 @@ Deno.test("f1040: Form 8912 uses tax remaining after allowed Form 3800 credit", 
   const result = compute({
     filing_status: FilingStatus.Single,
     line16_income_tax: 250,
-    form3800_source_credits: { standardCredit: 200, specifiedCredit: 0 },
+    form3800_source_credits: {
+      standardCredit: 200,
+      specifiedCredit: 0,
+      passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    },
     form8912_source_lines: {
       line1: 300,
       line2: 0,
@@ -278,7 +283,11 @@ Deno.test("f1040: source-backed Form 3800 posts only its allowed ordinary credit
     line16_income_tax: 40_000,
     line19_child_tax_credit: 2_000,
     line20_nonrefundable_credits: 1_000,
-    form3800_source_credits: { standardCredit: 25_000, specifiedCredit: 0 },
+    form3800_source_credits: {
+      standardCredit: 25_000,
+      specifiedCredit: 0,
+      passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    },
     credit_limit_form6251_line9: 20_000,
     credit_limit_form6251_line11: 0,
     credit_limit_schedule3_lines: {
@@ -296,12 +305,44 @@ Deno.test("f1040: source-backed Form 3800 posts only its allowed ordinary credit
   assertEquals(result.finalizations?.[1].fields.allowed_credit, 17_000);
 });
 
+Deno.test("f1040: passive Form 3800 credit is limited again by available tax", () => {
+  const passiveLines = {
+    ...ZERO_FORM3800_PASSIVE_ACTIVITY,
+    line2: 1_000,
+    line3: 500,
+  };
+  const input = {
+    filing_status: FilingStatus.Single,
+    form3800_source_credits: {
+      standardCredit: 0,
+      specifiedCredit: 0,
+      passiveLines,
+    },
+    credit_limit_form6251_line9: 0,
+    credit_limit_form6251_line11: 0,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+  };
+  const partial = compute({ ...input, line16_income_tax: 250 });
+  assertEquals(partial.finalizations?.[0].fields.line6a_total, 250);
+  assertEquals(partial.finalizations?.[1].fields.allowed_credit, 250);
+  assertEquals(partial.finalizations?.[1].fields.passive_lines, passiveLines);
+  assertEquals(partial.outputs[0].fields.line20_nonrefundable_credits, 250);
+
+  const full = compute({ ...input, line16_income_tax: 1_000 });
+  assertEquals(full.finalizations?.[1].fields.allowed_credit, 500);
+  assertEquals(full.outputs[0].fields.line20_nonrefundable_credits, 500);
+});
+
 Deno.test("f1040: specified Form 3800 credit uses its separate AMT limit", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
     line16_income_tax: 20_000,
     line17_additional_taxes: 5_000,
-    form3800_source_credits: { standardCredit: 0, specifiedCredit: 10_000 },
+    form3800_source_credits: {
+      standardCredit: 0,
+      specifiedCredit: 10_000,
+      passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    },
     credit_limit_form6251_line9: 25_000,
     credit_limit_form6251_line11: 5_000,
     credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
@@ -323,7 +364,11 @@ Deno.test("f1040: Form 3800 follows finalized personal clean-vehicle credit", ()
     form8936_tentative_used_credit: 0,
     form8936_priority_personal_credits: 0,
     form8936_schedule3_line7_tentative: 7_500,
-    form3800_source_credits: { standardCredit: 5_000, specifiedCredit: 0 },
+    form3800_source_credits: {
+      standardCredit: 5_000,
+      specifiedCredit: 0,
+      passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    },
     credit_limit_form6251_line9: 0,
     credit_limit_form6251_line11: 0,
     credit_limit_schedule3_lines: {
@@ -341,7 +386,11 @@ Deno.test("f1040: Form 3800 needs AMT evidence and does not mix legacy gross GBC
   const source = {
     filing_status: FilingStatus.Single,
     line16_income_tax: 10_000,
-    form3800_source_credits: { standardCredit: 1_000, specifiedCredit: 0 },
+    form3800_source_credits: {
+      standardCredit: 1_000,
+      specifiedCredit: 0,
+      passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    },
     credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
   };
   assertThrows(
@@ -370,7 +419,11 @@ Deno.test("f1040: MFS Form 3800 requires the spouse business-credit answer", () 
   const source = {
     filing_status: FilingStatus.MFS,
     line16_income_tax: 20_000,
-    form3800_source_credits: { standardCredit: 5_000, specifiedCredit: 0 },
+    form3800_source_credits: {
+      standardCredit: 5_000,
+      specifiedCredit: 0,
+      passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    },
     credit_limit_form6251_line9: 0,
     credit_limit_form6251_line11: 0,
     credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,

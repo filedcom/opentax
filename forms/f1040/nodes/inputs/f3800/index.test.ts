@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import { f3800 } from "./index.ts";
+import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "./calculation.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
@@ -34,7 +35,7 @@ Deno.test("f3800.inputSchema: empty array fails (min 1)", () => {
   assertEquals(parsed.success, false);
 });
 
-Deno.test("f3800: passive source cannot bypass Part III/IV and the shared tax limit", () => {
+Deno.test("f3800: passive source waits for the shared tax limit without depositing gross credit", () => {
   const pac = calculateForm8582CR(form8582crInputSchema.parse({
     credit_sources: [{
       activity_reference: "Clinical activity",
@@ -50,13 +51,29 @@ Deno.test("f3800: passive source cannot bypass Part III/IV and the shared tax li
     regular_tax_all_income: 10_000,
     regular_tax_without_passive: 9_500,
   }));
-  assertThrows(
-    () =>
-      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
-        passive_source_allocations: pac.sourceAllocations,
-      }),
-    Error,
-    "need Part III/IV XML",
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    passive_source_allocations: pac.sourceAllocations,
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 0,
+    specifiedCredit: 0,
+    passiveLines: {
+      line2: 1_000,
+      line3: 500,
+      line23: 0,
+      line24: 0,
+      line32: 0,
+      line33: 0,
+    },
+  });
+  assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.form3800_source_credit_pending,
+    true,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    undefined,
   );
 });
 
@@ -74,6 +91,7 @@ Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of dep
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,
     specifiedCredit: 4_000,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
   });
   assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
   assertEquals(
@@ -96,6 +114,7 @@ Deno.test("f3800: Form 5884 specified credit waits for the shared limit", () => 
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 0,
     specifiedCredit: 2_400,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
   });
   assertEquals(
     fieldsOf(result.outputs, schedule3)?.form3800_source_credit_pending,
@@ -128,6 +147,7 @@ Deno.test("f3800: Form 8820 ordinary credit waits for the shared limit", () => {
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 19_750,
     specifiedCredit: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
   });
   assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
   assertEquals(
@@ -157,6 +177,7 @@ Deno.test("f3800: new clean vehicle business credit enters the ordinary limit", 
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 1_875,
     specifiedCredit: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
   });
   assertEquals(fieldsOf(result.outputs, form6251)?.must_file_for_gbc, true);
   assertEquals(
@@ -219,6 +240,7 @@ Deno.test("f3800: Form 8826 source credit reaches the final tax limit without a 
   assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
     standardCredit: 2_375,
     specifiedCredit: 0,
+    passiveLines: ZERO_FORM3800_PASSIVE_ACTIVITY,
   });
   assertEquals(
     fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
