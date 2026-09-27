@@ -117,7 +117,7 @@ export const inputSchema = z.object({
   excess_able: z.number().nonnegative().optional(),
   // FMV of ABLE account on Dec 31, 2025 (caps the 6% tax base)
   able_value: z.number().nonnegative().optional(),
-});
+}).strict();
 
 type Form5329Input = z.infer<typeof inputSchema>;
 

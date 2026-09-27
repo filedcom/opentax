@@ -57,6 +57,11 @@ Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => 
     Error,
     "requires computed print_line fields",
   );
+  assertThrows(
+    () => form8889.build({ qualified_hsa_funding_distribution: {} }, context),
+    Error,
+    "requires computed print_line fields",
+  );
 });
 
 Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () => {

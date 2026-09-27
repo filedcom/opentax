@@ -33,6 +33,14 @@ Deno.test("schema: rejects negative excess_traditional_ira", () => {
   assertEquals(parsed.success, false);
 });
 
+Deno.test("schema: rejects obsolete flat HSA excess keys instead of dropping them", () => {
+  assertEquals(
+    form5329.inputSchema.safeParse({ excess_hsa: 500, hsa_value: 2_000 })
+      .success,
+    false,
+  );
+});
+
 Deno.test("schema: accepts valid full input", () => {
   const parsed = form5329.inputSchema.safeParse({
     early_distribution: 10000,

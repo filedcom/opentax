@@ -133,7 +133,7 @@ export const inputSchema = z.object({
     not_death_or_disability: z.literal(true),
     prior_year_source: z.string().trim().min(1),
   }).optional(),
-});
+}).strict();
 
 type Form8889Input = z.infer<typeof inputSchema>;
 

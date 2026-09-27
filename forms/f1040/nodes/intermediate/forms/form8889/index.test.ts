@@ -1219,6 +1219,16 @@ Deno.test("part1: last-month rule requires December eligibility", () => {
 
 // ─── Input validation ─────────────────────────────────────────────────────────
 
+Deno.test("validation: obsolete singular IRA-to-HSA transfer key is rejected", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      ...uniformSelfOnly,
+      qualified_hsa_funding_distribution: { amount: 1_000 },
+    }).success,
+    false,
+  );
+});
+
 Deno.test("validation: a W-2 HSA contribution does not imply self-only coverage", () => {
   assertThrows(
     () =>

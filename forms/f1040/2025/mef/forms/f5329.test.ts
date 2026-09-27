@@ -163,6 +163,14 @@ Deno.test("Form 5329 will not invent a required account balance", () => {
   );
 });
 
+Deno.test("Form 5329 MeF rejects obsolete flat HSA excess keys", () => {
+  assertThrows(
+    () => form5329.build({ excess_hsa: 500, hsa_value: 2_000 }, { filer }),
+    Error,
+    "source-linked Part VII line facts",
+  );
+});
+
 Deno.test("Form 5329 MeF carries prior-year HSA excess after line 43 and line 44 reductions", () => {
   const xml = form5329.build({
     hsa_part_vii: {

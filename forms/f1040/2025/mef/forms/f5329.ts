@@ -43,7 +43,14 @@ function excessTax(
 
 function buildIRS5329(raw: Input, context?: MefBuildContext): string {
   if (Array.isArray(raw) && raw.length === 0) return "";
-  const input = inputSchema.parse(raw);
+  if ("excess_hsa" in raw || "hsa_value" in raw) {
+    throw new Error(
+      "Form 5329 HSA excess needs the source-linked Part VII line facts",
+    );
+  }
+  // The final node adds print-only line fields to pending for the PDF.
+  // MeF consumes only the source inputs, then computes its own totals.
+  const input = inputSchema.strip().parse(raw);
   const regular = total(input.early_distribution);
   const simple = total(input.simple_ira_early_distribution);
   const early = regular + simple;
