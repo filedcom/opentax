@@ -58,3 +58,8 @@ The [scenario 6 fixture plan](ATS-SCENARIO-06.md) maps all 10 pages and the
 $5,700 provisional income bridge from W-2 wages, W-2G winnings, and the
 Schedule E partnership row. It records the dependent standard deduction,
 overtime, missing K-1, and 2026 gambling-line gates.
+The [scenario 12 fixture plan](ATS-SCENARIO-12.md) maps its 37-page
+Schedule C/SE, Form 4562-B, §179D deduction, and §45X credit-transfer packet.
+It preserves the conflicting Form 3800 tax base and registration numbers,
+missing signed binary, Form 7205 indexed-rate issue, and blank apprenticeship
+section as filing gates.

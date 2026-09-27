@@ -42,9 +42,10 @@ period, or election.
    Form 4562-B support, XML element names, attachment references, and any
    statement requirements; validate a complete return with both current-
    year and prior-year amortization. The May v1 package is a research baseline.
-5. Use TY2026 ATS if an individual 1040 scenario includes Form 4562-B; add
-   independent cases for first-year and continuing amortization if none do.
-   Run TY2025 regression on its existing Form 4562 path.
+5. [TY2026 ATS scenario 12](ATS-SCENARIO-12.md) includes a $10,000 §195
+   start-up-cost row with January 1, 2026 amortization start and $667 line 3
+   routed to Schedule C Part V/line 27b. Use it as the first-year case and
+   add a continuing-asset case. Run TY2025 regression on Form 4562.
 
 This is a source and implementation plan. The form remains outside the
 registered TY2026 calculation, PDF, and MeF product until those checks pass.

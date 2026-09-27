@@ -86,6 +86,9 @@ for the implementation contract.
 - [`FORM4562B-GRAPH.md`](FORM4562B-GRAPH.md): newly pinned 2026 amortization
   attachment, per-asset input and carryforward contract, and current
   instructions/MeF acceptance gates.
+- [`GENERAL-BUSINESS-CREDIT-GRAPH.md`](GENERAL-BUSINESS-CREDIT-GRAPH.md):
+  Form 7207/3800/3800 Schedule A transfer, Form 7205/7220 §179D evidence,
+  PDF/MeF surfaces, and ATS scenario 12 build order.
 - [`FORM4835-GRAPH.md`](FORM4835-GRAPH.md): production-based farm rent,
   the new vehicle-interest line 19b, Schedule E/SE boundary, loss limits,
   PDF/MeF build order, and ATS scenario 3.
@@ -103,9 +106,12 @@ for the implementation contract.
 - [`ATS-SCENARIO-05.md`](ATS-SCENARIO-05.md) and `pdf-fields-f8888.csv`:
   refund allocation after settlement, account validation,
   1040/Form 8888 indicator, and the draft-versus-ATS revision difference.
+- [`ATS-SCENARIO-12.md`](ATS-SCENARIO-12.md): the 37-page business return,
+  independent arithmetic, credit-transfer contradictions, and missing binary
+  evidence.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **62 TY2026 IRS draft forms**, **26 verified 2026
+  and retrieval date for **63 TY2026 IRS draft forms**, **27 verified 2026
   draft instruction PDFs**, **six draft form URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.

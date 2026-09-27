@@ -9,6 +9,12 @@ support.
 The [instruction availability ledger](../../../docs/ty2026/INSTRUCTION-COVERAGE.md)
 now distinguishes 2026 drafts from draft URLs still serving 2025, so each
 remaining route has an explicit source check before coding.
+The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
+[business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
+map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.
+These routes and their PDF/MeF attachments are not yet registered in 2026;
+the packet's transfer and tax-base conflicts must be resolved before a
+return can be used as an accepted fixture.
 
 The dedicated 2026 Schedule H node now calculates Part I and FUTA Section A,
 routes household employment tax to Schedule 2 line 17a, and has a two-page

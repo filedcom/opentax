@@ -25,7 +25,7 @@ FORM_SLUGS = [
     "f2441", "f4562", "f4562b", "f6251", "f8839", "f8863", "f8889", "f8962", "f8995",
     "f8995a", "f8995aa", "f1062", "f8888",
     # Remaining IRS slugs represented by the TY2025 PDF descriptors.
-    "f1116", "f2555", "f4136", "f4136sa", "f4137", "f461", "f4684",
+    "f1116", "f2555", "f3800", "f4136", "f4136sa", "f4137", "f461", "f4684",
     "f4797", "f4835", "f4952", "f4972", "f5329", "f5695", "f6198", "f6252",
     "f6781", "f7206", "f8396", "f8582", "f8606", "f8615", "f8814",
     "f8815", "f8824", "f8829", "f8834", "f8853", "f8859", "f8880",
@@ -76,7 +76,7 @@ for slug in FORM_SLUGS:
 
 for slug in (
     "i1040sb", "i1040s8", "i1040sh", "i1040se", "i1040sf",
-    "i1040sse", "i1040sr", "i2106", "i2441", "i2555", "i4835",
+    "i1040sse", "i1040sr", "i2106", "i2441", "i2555", "i3800", "i4835",
     "i5329", "i5695", "i7206", "i8606", "i8615", "i8814",
     "i8815", "i8829", "i8853", "i8863", "i8889", "i8936",
     "i8959", "i8995", "i8888",
@@ -107,6 +107,13 @@ sources += [
     ("authorities/i8283--2025.pdf", IRS + "/pub/irs-pdf/i8283.pdf", "final-authority"),
     ("authorities/f8862--2025.pdf", IRS + "/pub/irs-prior/f8862--2025.pdf", "final-authority"),
     ("authorities/i8862--2025.pdf", IRS + "/pub/irs-pdf/i8862.pdf", "final-authority"),
+    ("authorities/f3800a--2025.pdf", IRS + "/pub/irs-pdf/f3800a.pdf", "final-authority"),
+    ("authorities/f7207--2025.pdf", IRS + "/pub/irs-pdf/f7207.pdf", "final-authority"),
+    ("authorities/i7207--2025.pdf", IRS + "/pub/irs-pdf/i7207.pdf", "final-authority"),
+    ("authorities/f7205--2023.pdf", IRS + "/pub/irs-pdf/f7205.pdf", "final-authority"),
+    ("authorities/i7205--2025.pdf", IRS + "/pub/irs-pdf/i7205.pdf", "final-authority"),
+    ("authorities/f7220--2025.pdf", IRS + "/pub/irs-pdf/f7220.pdf", "final-authority"),
+    ("authorities/i7220--2025.pdf", IRS + "/pub/irs-pdf/i7220.pdf", "final-authority"),
     ("authorities/p15a--2026.pdf", IRS + "/pub/irs-pdf/p15a.pdf", "final-authority"),
     ("authorities/f1099div--2024.pdf", IRS + "/pub/irs-prior/f1099div--2024.pdf", "final-authority"),
     ("authorities/i1099div--2024.pdf", IRS + "/pub/irs-prior/i1099div--2024.pdf", "final-authority"),

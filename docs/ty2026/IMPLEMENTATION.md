@@ -20,6 +20,13 @@ an authorized e-Services/SOR mailbox. Use the current
 [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) for active route status. The progress
 notes below record the order in which work landed and may describe an earlier
 state of a node.
+The [scenario 12 contract](ATS-SCENARIO-12.md) and
+[business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
+broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
+with Schedule A transfer evidence before Schedule 3; Form 7205/7220 and
+Form 4562-B feed the same Schedule C activity. The packet's inconsistent
+Form 3800 tax amount and registration, missing signed binary, and blank
+apprenticeship section are explicit fixture failures until reconciled.
 The [Schedule E implementation contract](SCHEDULEE-GRAPH.md) now gives the
 next property/K-1 activity build order and the new line 13a split from other
 interest. It covers PDF, MeF, and ATS 3/6 acceptance; the route remains

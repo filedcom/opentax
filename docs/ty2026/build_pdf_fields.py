@@ -74,3 +74,10 @@ for slug in SLUGS:
 inventory("f1040sei", ROOT / "corpus/draft/f1040sei.pdf")
 inventory("f8862", ROOT / "corpus/authorities/f8862--2025.pdf")
 inventory("f8863", ROOT / "corpus/draft/f8863.pdf")
+inventory("f3800", ROOT / "corpus/draft/f3800.pdf")
+inventory("f4562b", ROOT / "corpus/draft/f4562b.pdf")
+for slug, revision in (
+    ("f3800a", "2025"), ("f7205", "2023"),
+    ("f7207", "2025"), ("f7220", "2025"),
+):
+    inventory(slug, ROOT / f"corpus/authorities/{slug}--{revision}.pdf")
