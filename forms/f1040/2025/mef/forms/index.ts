@@ -25,6 +25,7 @@ import { form4952 } from "./f4952.ts";
 import { form4972 } from "./f4972.ts";
 import { form5329 } from "./f5329.ts";
 import { form5695 } from "./f5695.ts";
+import { form5884 } from "./f5884.ts";
 import { form6198 } from "./f6198.ts";
 import { form4835AtRisk } from "./f4835_at_risk.ts";
 import { form6251 } from "./f6251.ts";
@@ -146,6 +147,8 @@ export const ALL_MEF_FORMS = [
   form5329,
   // Form 5695
   form5695,
+  // Form 5884
+  form5884,
   // Form 6198
   form6198,
   form4835AtRisk,

@@ -12,6 +12,10 @@ import {
   calculateForm8835,
   inputSchema as f8835InputSchema,
 } from "../../../nodes/inputs/f8835/index.ts";
+import {
+  calculateForm5884,
+  inputSchema as f5884InputSchema,
+} from "../../../nodes/inputs/f5884/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
@@ -224,6 +228,33 @@ function sourceForm8835(
   return expected;
 }
 
+function sourceForm5884(
+  fields: z.infer<typeof f3800InputSchema>,
+  context: MefBuildContext,
+) {
+  if (!fields.f5884_credit || fields.f5884_credit.credit_amount <= 0) {
+    return undefined;
+  }
+  const raw = context.pending?.f5884;
+  if (!raw) {
+    throw new Error(
+      "Form 3800 work opportunity credit needs Form 5884 source facts",
+    );
+  }
+  const source = f5884InputSchema.parse(raw);
+  const expected = calculateForm5884(source).line4;
+  if (
+    source.subject_to_passive_activity_limit ||
+    fields.f5884_credit.subject_to_passive_activity_limit ||
+    !sameMoney(fields.f5884_credit.credit_amount, expected)
+  ) {
+    throw new Error(
+      "Form 3800 work opportunity entry does not reconcile to Form 5884 source",
+    );
+  }
+  return { source, credit: expected };
+}
+
 function form8826SourceAllocations(
   source: ReturnType<typeof sourceForm8826>,
   appliedCredit: number,
@@ -307,7 +338,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const hasSourceCredit = fields.allowed_credit !== undefined ||
       fields.f8826_credit_entries?.some((entry) => entry.credit_amount > 0) ||
-      fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0);
+      fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
+      (fields.f5884_credit?.credit_amount ?? 0) > 0;
     if (!hasSourceCredit) return "";
     if (
       fields.tax_context === undefined || fields.allowed_credit === undefined
@@ -337,6 +369,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     }
     const form8826 = sourceForm8826(parsed, context);
     const facilities = sourceForm8835(parsed, context);
+    const form5884 = sourceForm5884(parsed, context);
     const form8826Credit = form8826?.lines.line8 ?? 0;
     const form8826Applied = Math.min(form8826Credit, lines.line17);
     const form8826Ids = context.documentIdsByPendingKey.f8826 ?? [];
@@ -350,8 +383,35 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     if (form8835Ids.length !== facilities.length) {
       throw new Error("Form 3800 needs one attached Form 8835 per facility");
     }
+    const form5884Ids = context.documentIdsByPendingKey.f5884 ?? [];
+    if (form5884Ids.length !== (form5884 ? 1 : 0)) {
+      throw new Error("Form 3800 needs one attached Form 5884 source document");
+    }
+    const form5884Applied = form5884
+      ? parsed.form5884_applied_credit ??
+        (facilities.some((facility) => facility.form3800_line === "4e") &&
+            lines.line37 > 0 &&
+            !sameMoney(lines.line37, tax.specifiedCredit)
+          ? undefined
+          : Math.min(form5884.credit, lines.line37))
+      : undefined;
+    if (form5884 && form5884Applied === undefined) {
+      throw new Error(
+        "Form 3800 needs the applied-credit split between Form 5884 and Form 8835",
+      );
+    }
+    if (!form5884 && parsed.form5884_applied_credit !== undefined) {
+      throw new Error("Form 3800 has a Form 5884 allocation without a source");
+    }
     return buildIRS3800Nonpassive({
       tax,
+      form5884: form5884
+        ? {
+          credit: form5884.credit,
+          documentId: form5884Ids[0],
+          appliedCredit: form5884Applied,
+        }
+        : undefined,
       form8826: form8826
         ? {
           source: form8826.source,
@@ -369,7 +429,7 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       appliedCreditsByFacility: form8835FacilityAllocations(
         facilities,
         lines.line17 - form8826Applied,
-        lines.line37,
+        lines.line37 - (form5884Applied ?? 0),
         parsed.form8835_applied_credits_by_facility,
       ),
       transferStatementIdsByFileName: context.documentIdsByAttachmentFileName ??

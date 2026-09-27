@@ -2,9 +2,10 @@
 
 The employer's credit is calculated from one employee row at a time. The
 credit belongs on Form 3800 Part III line 4b, then on Schedule 3 line 6a only
-after the Form 3800 tax-liability limit. The current `f5884` node still sends
-its gross result directly to Schedule 3. This is an open filing gap, not a
-verified Form 1040 route. See
+after the Form 3800 tax-liability limit. The current build pass sends a
+classified Form 5884 source credit to the shared nonpassive Form 3800 limit,
+with native `IRS5884` and linked `IRS3800` XML. These paths have cases written
+but unrun and are not yet a verified Form 1040 route. See
 [the business-credit routing audit](../../../../../../docs/mef/general-business-credit-routing.md).
 
 Sources: [IRS Form 5884](https://www.irs.gov/pub/irs-pdf/f5884.pdf),
@@ -43,7 +44,6 @@ These checks are written but unrun under the requested build-first workflow.
 The row still accepts affirmed eligibility facts rather than reconciling
 certifications, payroll periods, and wage exclusions against primary source
 documents. Successor-employer wages, controlled-group allocations, pass-through
-credits, passive-activity limitations, carryovers, source XML, Form 3800 Part II,
-and the final PDF/ATS route remain open. In particular, a positive source
-credit must not be interpreted as a filed, allowed Schedule 3 credit until
-the common Form 3800 path replaces the direct deposit.
+credits, passive-activity limitations, carryovers, PDF, and ATS acceptance
+remain open. The native XML and shared nonpassive tax limit still need the full
+test batch, local XSD validation, and business-rule review before filing use.

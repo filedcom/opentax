@@ -18,7 +18,7 @@ or Form 3800 line assignment is correct.
 | Source node | Required classification before filing                                                                                                        |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `f3468`     | Separate its Part II/III/IV/V/VI/VII credit lines, EPEs, transfers, and specified-credit parts.                                              |
-| `f5884`     | Part III line 4b specified credit and any carryover classification. The build pass now requires employee-level qualification and the correct $24,000 veteran cap, but still deposits the gross amount on Schedule 3. |
+| `f5884`     | Part III line 4b specified credit. The build pass now requires employee-level qualification and the correct $24,000 veteran cap, then forwards the source amount through Form 3800's nonpassive tax limit. Its native Form 5884 and linked Form 3800 XML are unrun. Passive credit and carryovers remain open. |
 | `f6478`     | Part III line 4c specified credit and applicable source year.                                                                                |
 | `f6765`     | Ordinary line 1c versus eligible-small-business specified line 4i, plus payroll-tax election.                                                |
 | `f7207`     | Part III line 1b, transfer/EPE, and facility breakdown.                                                                                      |

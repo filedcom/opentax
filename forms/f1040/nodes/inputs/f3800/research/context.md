@@ -117,9 +117,9 @@ flowchart LR
 
 3. **Zero output when all fields are zero or absent**: If no credits are entered, no output is emitted to schedule3.
 
-4. **The actual §38(c) limitation** (net income tax minus tentative minimum tax) is applied at the Schedule 3 level where all nonrefundable credits are aggregated and compared against the total tax liability. This input node passes the raw total.
+4. **The actual §38(c) limitation** is now calculated at final Form 1040 assembly for the source-backed nonpassive Form 8826, Form 8835, and Form 5884 entries. Legacy `f3800s` amounts still bypass that calculation and are not supported for MeF export.
 
-5. **Component credits already captured by other nodes**: Individual component credit nodes (f5884 for Work Opportunity, f6765 for Research, f8826 for Disabled Access, f8881 for Pension Startup, f8882 for Childcare, f8941 for Health Insurance, f8874 for New Markets, f8908 for Energy Efficient Home, f7207 for Advanced Manufacturing) each route their credit amounts to schedule3 independently. The f3800 node captures amounts entered directly on the Drake 3800/GBC screens — typically used when the component form amounts are bundled.
+5. **Component credit routes**: Form 5884, Form 8826, and Form 8835 now send source entries to this node, not gross Schedule 3 deposits. Other component nodes still route directly to Schedule 3 and need the same source classification and Form 3800 limit. The legacy `f3800s` input is not a filed substitute.
 
 6. **§6417 Elective Payment Election**: Some credits (clean energy, advanced manufacturing, etc.) under IRC §6417 may be treated as tax payments rather than credits. These flow through a different path (schedule3 additional payments) and are not captured here.
 

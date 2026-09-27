@@ -167,9 +167,12 @@ eligibility affirmations, and a single certified veteran category. It applies
 the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
 minimum plus hours-based first-year rate to long-term family assistance
 recipients. Source and rejection cases
-are written but unrun. Its gross direct Schedule 3 route still needs conversion
-to the shared Form 3800 limit and native source XML before it can be considered
-filing-ready. An unrun pure Form 8912 Part I/II limit
+are written but unrun. The current pass now forwards its nonpassive line 4b
+credit through the shared Form 3800 tax limit instead of depositing gross
+credit on Schedule 3. Native `IRS5884` source XML, the linked `IRS3800` line
+4b group, and partial-limit reconciliation have cases written but unrun.
+Passive credit, carryovers, filled PDF, IRS business rules, and ATS acceptance
+remain open. An unrun pure Form 8912 Part I/II limit
 calculation now keeps its line 12 allowed credit and unused amount separate,
 taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
 CREB cases until their separate taxable-income limit is modeled. The Form 8912

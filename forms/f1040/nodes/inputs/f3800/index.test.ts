@@ -54,6 +54,38 @@ Deno.test("f3800: Form 8835 source credit waits for finalized tax instead of dep
   );
 });
 
+Deno.test("f3800: Form 5884 specified credit waits for the shared limit", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f5884_credit: {
+      credit_amount: 2_400,
+      subject_to_passive_activity_limit: false,
+    },
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.form3800_source_credits, {
+    standardCredit: 0,
+    specifiedCredit: 2_400,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.form3800_source_credit_pending,
+    true,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    undefined,
+  );
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f5884_credit: {
+          credit_amount: 2_400,
+          subject_to_passive_activity_limit: true,
+        },
+      }),
+    Error,
+    "8582-CR",
+  );
+});
+
 Deno.test("f3800: rejects transferred credit larger than its source credit", () => {
   assertThrows(() =>
     f3800.compute({ taxYear: 2025, formType: "f1040" }, {

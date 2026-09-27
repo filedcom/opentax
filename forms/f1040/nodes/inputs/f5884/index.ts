@@ -1,11 +1,8 @@
 import { z } from "zod";
-import type {
-  NodeOutput,
-  NodeResult,
-} from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { f3800 } from "../f3800/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // ─── TY2025 Constants (IRC §51) ───────────────────────────────────────────────
@@ -123,6 +120,7 @@ export const itemSchema = z.object({
 
 export const inputSchema = z.object({
   f5884s: z.array(itemSchema).min(1),
+  subject_to_passive_activity_limit: z.boolean(),
 }).superRefine((input, ctx) => {
   const references = new Set<string>();
   input.f5884s.forEach((item, index) => {
@@ -159,60 +157,68 @@ function wageCap(item: F5884Item): number {
   return WAGE_CAP_STANDARD;
 }
 
-// First-year credit rate based on hours.
-function standardRate(hours: number): number {
-  if (hours >= 400) return RATE_HIGH_HOURS;
-  if (hours >= 120) return RATE_LOW_HOURS;
-  return 0;
-}
-
-// Credit for one employee entry
-function employeeCredit(item: F5884Item): number {
-  const hours = item.hours_worked;
-  if (hours < 120) return 0;
-
-  if (item.target_group === TargetGroup.LongTermFamilyAssistance) {
-    // Form 5884 lines 1a/1b and 1c, each year capped at $10,000.
-    const firstYearCredit =
-      Math.min(item.first_year_wages, WAGE_CAP_LTFA_FIRST) *
-      standardRate(hours);
-    const secondYearCredit =
-      Math.min(item.second_year_wages ?? 0, WAGE_CAP_LTFA_SECOND) *
-      RATE_LTFA_SECOND_YEAR;
-    return firstYearCredit + secondYearCredit;
-  }
-
-  const rate = standardRate(hours);
-  if (rate === 0) return 0;
-
-  const cap = wageCap(item);
-  return Math.min(item.first_year_wages, cap) * rate;
-}
-
-function totalCredit(items: F5884Item[]): number {
-  return items.reduce((sum, item) => sum + employeeCredit(item), 0);
-}
-
-function buildOutputs(credit: number): NodeOutput[] {
-  if (credit <= 0) return [];
-  return [{
-    nodeType: schedule3.nodeType,
-    fields: { line6a_general_business_credit: credit },
-  }];
+export function calculateForm5884(input: z.infer<typeof inputSchema>) {
+  const rows = input.f5884s.map((item) => ({
+    item,
+    firstYearWages: item.hours_worked < 120
+      ? 0
+      : Math.min(item.first_year_wages, wageCap(item)),
+    secondYearWages:
+      item.target_group === TargetGroup.LongTermFamilyAssistance &&
+        item.hours_worked >= 120
+        ? Math.min(item.second_year_wages ?? 0, WAGE_CAP_LTFA_SECOND)
+        : 0,
+  }));
+  const line1aWages = Math.round(
+    rows.filter((row) =>
+      row.item.hours_worked >= 120 && row.item.hours_worked < 400
+    ).reduce((sum, row) => sum + row.firstYearWages, 0),
+  );
+  const line1bWages = Math.round(
+    rows.filter((row) => row.item.hours_worked >= 400)
+      .reduce((sum, row) => sum + row.firstYearWages, 0),
+  );
+  const line1cWages = Math.round(rows.reduce(
+    (sum, row) => sum + row.secondYearWages,
+    0,
+  ));
+  const line1aCredit = Math.round(line1aWages * RATE_LOW_HOURS);
+  const line1bCredit = Math.round(line1bWages * RATE_HIGH_HOURS);
+  const line1cCredit = Math.round(line1cWages * RATE_LTFA_SECOND_YEAR);
+  const line2 = line1aCredit + line1bCredit + line1cCredit;
+  return {
+    line1aWages,
+    line1aCredit,
+    line1bWages,
+    line1bCredit,
+    line1cWages,
+    line1cCredit,
+    line2,
+    line4: line2,
+  };
 }
 
 class F5884Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f5884";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule3]);
+  readonly outputNodes = new OutputNodes([f3800]);
 
   compute(
     _ctx: NodeContext,
     rawInput: z.infer<typeof inputSchema>,
   ): NodeResult {
     const input = inputSchema.parse(rawInput);
-    const credit = totalCredit(input.f5884s);
-    return { outputs: buildOutputs(credit) };
+    const credit = calculateForm5884(input).line4;
+    if (credit <= 0) return { outputs: [] };
+    return {
+      outputs: [output(f3800, {
+        f5884_credit: {
+          credit_amount: credit,
+          subject_to_passive_activity_limit:
+            input.subject_to_passive_activity_limit,
+        },
+      })],
+    };
   }
 }
 

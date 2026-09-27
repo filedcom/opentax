@@ -1,5 +1,6 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { EnergyType } from "../../../nodes/inputs/f8835/index.ts";
+import { TargetGroup } from "../../../nodes/inputs/f5884/index.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
 import { form3800 } from "./f3800.ts";
 
@@ -89,6 +90,81 @@ Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gr
     () => form3800.build({ f3800s: [{ research_credit: 500 }] }),
     Error,
     "legacy credit cannot be exported",
+  );
+});
+
+Deno.test("Form 3800 links and limits a nonpassive Form 5884 line 4b credit", () => {
+  const source = {
+    subject_to_passive_activity_limit: false,
+    f5884s: [{
+      employee_reference: "EMP-001",
+      target_group: TargetGroup.TanfRecipient,
+      hired_on: "2025-01-15",
+      swa_certification_reference: "SWA-001",
+      qualified_wages_confirmed: true,
+      not_prior_employee_confirmed: true,
+      not_related_or_dependent_confirmed: true,
+      more_than_half_wages_for_trade_or_business_confirmed: true,
+      excluded_wages_removed_confirmed: true,
+      first_year_wages: 6_000,
+      hours_worked: 400,
+    }],
+  };
+  const specifiedTax = {
+    ...tax,
+    standardCredit: 0,
+    specifiedCredit: 2_400,
+  };
+  const fields = {
+    f5884_credit: {
+      credit_amount: 2_400,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: specifiedTax,
+    allowed_credit: 2_400,
+  };
+  const context = {
+    pending: { ...filedPending(specifiedTax, 2_400), f5884: source },
+    documentIdsByPendingKey: {
+      f5884: ["IRS5884_1"],
+      f8835: [],
+    },
+  };
+  const xml = form3800.build(fields, context);
+  assertStringIncludes(xml, "<Form5884CYCreditsGrp");
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="IRS5884_1" referenceDocumentName="IRS5884"',
+  );
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>2400</CurrentYearCreditAllowedAmt>",
+  );
+  const limitedTax = {
+    ...specifiedTax,
+    regularTax: 1_000,
+    tentativeMinimumTax: 0,
+  };
+  const limitedXml = form3800.build({
+    ...fields,
+    tax_context: limitedTax,
+    allowed_credit: 1_000,
+  }, {
+    ...context,
+    pending: { ...filedPending(limitedTax, 1_000), f5884: source },
+  });
+  assertStringIncludes(
+    limitedXml,
+    "<CurrentYearCreditAllowedAmt>1000</CurrentYearCreditAllowedAmt>",
+  );
+  assertThrows(
+    () =>
+      form3800.build({
+        ...fields,
+        f5884_credit: { ...fields.f5884_credit, credit_amount: 2_399 },
+      }, context),
+    Error,
+    "does not reconcile",
   );
 });
 

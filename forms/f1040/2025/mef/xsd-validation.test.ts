@@ -16,6 +16,7 @@ import { buildMefBundle, buildMefXml } from "./builder.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
 import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
+import { TargetGroup } from "../../nodes/inputs/f5884/index.ts";
 import { BondType } from "../../nodes/inputs/f8912/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
@@ -1401,6 +1402,59 @@ Deno.test({
     "<CurrentYearCreditAllowedAmt>6000</CurrentYearCreditAllowedAmt>",
   );
   await validateXsd(xml, "linked Form 8835 and Form 3800");
+});
+
+Deno.test({
+  name: "XSD: Form 5884 work opportunity credit links to Form 3800 line 4b",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 40_000 },
+    schedule3: { line6a_total: 2_400, line7_total: 2_400 },
+    form6251: { line11_amt: 0, net_tmt: 20_000 },
+    f5884: {
+      subject_to_passive_activity_limit: false,
+      f5884s: [{
+        employee_reference: "EMP-001",
+        target_group: TargetGroup.TanfRecipient,
+        hired_on: "2025-01-15",
+        swa_certification_reference: "SWA-001",
+        qualified_wages_confirmed: true,
+        not_prior_employee_confirmed: true,
+        not_related_or_dependent_confirmed: true,
+        more_than_half_wages_for_trade_or_business_confirmed: true,
+        excluded_wages_removed_confirmed: true,
+        first_year_wages: 6_000,
+        hours_worked: 400,
+      }],
+    },
+    f3800: {
+      f5884_credit: {
+        credit_amount: 2_400,
+        subject_to_passive_activity_limit: false,
+      },
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 40_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 20_000,
+        standardCredit: 0,
+        specifiedCredit: 2_400,
+      },
+      allowed_credit: 2_400,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS5884 ");
+  assertStringIncludes(xml, "<Form5884CYCreditsGrp");
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>2400</CurrentYearCreditAllowedAmt>",
+  );
+  await validateXsd(xml, "linked Form 5884 and Form 3800");
 });
 
 Deno.test({
