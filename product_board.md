@@ -266,9 +266,10 @@ use codes, measurement units, and actual fuel costs. Its calculation and rejecti
 written but unrun. Its `IRS4136` builder now maps the represented lines and
 reconciles line 17 with Schedule 3 line 12; local XSD and source cases are
 written but unrun. All line 11 fuels and reduced-rate bus calculations/MeF
-groups are now built; bus PDF claims explicitly stop until their read-only
-preprinted rates can be overlaid and visually checked. Multiple businesses
-require Schedule A (Form 4136). The PDF
+groups are now built. The PDF builder now overlays the read-only preprinted
+line 11 rates for bus use and adds "Bus" beside the use code, but this still
+needs filled-render inspection. Mixed-rate rows refer to an attached detail
+statement. Multiple businesses require Schedule A (Form 4136). The PDF
 descriptor now maps the four-page 2025 form and repeated-use statement, but
 filled rendering is unverified. Additional claim lines, source evidence, full
 test/XSD and IRS business rules, and ATS acceptance remain open.

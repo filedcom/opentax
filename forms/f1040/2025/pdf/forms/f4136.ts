@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import { PDFDocument, type PDFPage, rgb, StandardFonts } from "pdf-lib";
 import { z } from "zod";
 import {
   calculateForm4136,
@@ -20,6 +20,18 @@ const alternativeFuelLines = [
   "11f",
   "11g",
   "11h",
+] as const;
+// Top-of-page text coordinates measured on the 2025 IRS page 3. Line 11e
+// wraps, so its rate sits one row lower than the regular 12-point cadence.
+const alternativeFuelRateTop = [
+  475.593,
+  487.592,
+  499.591,
+  511.590,
+  535.591,
+  547.590,
+  559.589,
+  571.588,
 ] as const;
 const creditReferenceNumber: Record<Line, string> = {
   "1a": "362",
@@ -144,14 +156,49 @@ function putLine(
 ): void {
   const claims = input.claims.filter((claim) => claim.line === line);
   if (!claims.length) return;
-  out[`line${line}_quantity`] = claims.reduce(
-    (sum, claim) => sum + claim.qualified_quantity,
-    0,
-  );
+  out[`line${line}_quantity`] = claims.length === 1
+    ? claims[0].qualified_quantity
+    : "STMT";
   if (claims[0].type_of_use) {
     out[`line${line}_type`] = claims.length === 1
       ? claims[0].type_of_use
-      : "SEE STMT";
+      : "STMT";
+  }
+}
+
+async function decorateBusRates(
+  document: PDFDocument,
+  pages: readonly PDFPage[],
+  fields: Record<string, unknown>,
+): Promise<void> {
+  const input = inputSchema.parse(fields);
+  if (!input.claims.some((claim) => claim.type_of_use === "05")) return;
+  const page = pages[2];
+  if (!page) throw new Error("Form 4136 bus rates require page 3");
+  const font = await document.embedFont(StandardFonts.Helvetica);
+  for (const [index, line] of alternativeFuelLines.entries()) {
+    const claims = input.claims.filter((claim) => claim.line === line);
+    const bus = claims.find((claim) => claim.type_of_use === "05");
+    if (!bus) continue;
+    const y = page.getHeight() - alternativeFuelRateTop[index] - 9.328;
+    // The source field is read-only and displays the standard rate. Its
+    // flattened appearance must be covered before drawing the bus rate.
+    page.drawRectangle({
+      x: 292,
+      y: y - 0.5,
+      width: 23,
+      height: 10.5,
+      color: rgb(1, 1, 1),
+    });
+    if (claims.length > 1) continue;
+    const rate = rateForForm4136Claim(bus).toFixed(3);
+    page.drawText(line === "11a" ? `$${rate.slice(1)}` : rate.slice(1), {
+      x: 293.5,
+      y: y + 1.3,
+      size: 8,
+      font,
+    });
+    page.drawText("Bus", { x: 230, y: y + 1.3, size: 8, font });
   }
 }
 
@@ -191,7 +238,7 @@ async function appendClaimStatement(
       },
     );
     page.drawText(
-      "Line  Use   Rate   Quantity Unit      Fuel cost   Credit   CRN",
+      "Line  Use     Rate   Quantity Unit      Fuel cost   Credit   CRN",
       {
         x: 36,
         y: 698,
@@ -202,7 +249,8 @@ async function appendClaimStatement(
     overflow.slice(offset, offset + rowsPerPage).forEach((claim, index) => {
       const row = [
         claim.line.padEnd(5),
-        (claim.type_of_use ?? "fixed").padEnd(5),
+        (claim.type_of_use === "05" ? "05 Bus" : claim.type_of_use ?? "fixed")
+          .padEnd(7),
         rateForForm4136Claim(claim).toFixed(3).padStart(5),
         String(claim.qualified_quantity).padStart(9),
         claim.unit.padEnd(7),
@@ -236,11 +284,6 @@ export const form4136Pdf: PdfFormDescriptor = {
   projectFields(raw, allPending) {
     if (!Array.isArray(raw.claims) || !raw.claims.length) return {};
     const input = inputSchema.parse(raw);
-    if (input.claims.some((claim) => claim.type_of_use === "05")) {
-      throw new Error(
-        "Form 4136 PDF bus claims require a verified reduced-rate overlay",
-      );
-    }
     const total = calculateForm4136(input);
     const schedule3 = z.object({
       line12_fuel_tax_credit: z.number().finite().nonnegative(),
@@ -282,5 +325,6 @@ export const form4136Pdf: PdfFormDescriptor = {
     putMoney(out, "line17_total", total);
     return out;
   },
+  decoratePages: decorateBusRates,
   appendSupplementalPages: appendClaimStatement,
 };
