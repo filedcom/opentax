@@ -38,6 +38,10 @@ for the implementation contract.
 - [`PDF-SCHEDULED-MAP.md`](PDF-SCHEDULED-MAP.md) and
   `pdf-fields-f1040sd.csv`: all 55 draft Schedule D widgets, the six Form 8949
   summary rows, and the reconciliation work required for a filed attachment.
+- [`TRANSACTION-GRAPH.md`](TRANSACTION-GRAPH.md): the 2026 1099-B/1099-DA box
+  meanings, Form 8949 classification, Schedule D totals, and MeF/ATS gates.
+- [`PDF-FORM8949-MAP.md`](PDF-FORM8949-MAP.md) and `pdf-fields-f8949.csv`:
+  all 202 draft Form 8949 widgets and the eleven-row pagination contract.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
@@ -46,7 +50,8 @@ for the implementation contract.
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
   2026-29 and 2026 W-2/W-3 instructions), continuous-use Form 1099-DIV and
-  its instructions, the 2025 Form 1040 instructions as a marked comparator,
+  its instructions, final 2026 Forms 1099-B/1099-DA with instructions, the
+  2025 Form 1040 and Form 8949 instructions as marked comparators,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash

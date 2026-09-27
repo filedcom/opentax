@@ -821,6 +821,51 @@
       "sha256": "482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a",
       "retrieved_utc": "2026-09-27T08:25:32.198723+00:00",
       "use": "Schedule D not required exception and Form 1040 line 7b; verify against final 2026 instructions"
+    },
+    {
+      "path": "authorities/f1099b--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1099b--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 602398,
+      "sha256": "31fb17392add548510bc618d64bb525bb36fb35babb59048d9427d13276cc64e",
+      "retrieved_utc": "2026-09-27T08:46:27.776315+00:00"
+    },
+    {
+      "path": "authorities/i1099b--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1099b--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 227398,
+      "sha256": "81ef22308f8e5f615a2c0a9ecf7b4098a32969e95255bd906e3e7d6bebb2253e",
+      "retrieved_utc": "2026-09-27T08:46:28.672823+00:00"
+    },
+    {
+      "path": "authorities/f1099da--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1099da--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 625300,
+      "sha256": "e6f397924211a3a887cacd75f5ca6378ed728cf0bbce99909f15f4da09dad258",
+      "retrieved_utc": "2026-09-27T08:46:29.733006+00:00"
+    },
+    {
+      "path": "authorities/i1099da--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1099da--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 200783,
+      "sha256": "1ae3947a4b570cbd60c58bd2dd35efec588746fec144d0616b40392c7577be37",
+      "retrieved_utc": "2026-09-27T08:46:30.702893+00:00"
+    },
+    {
+      "path": "authorities/i8949--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8949--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 255808,
+      "sha256": "f077991c83b086810c46cbad3755e0f126cb8dfd88cf8bf8ab2d5605d6e7ab45",
+      "retrieved_utc": "2026-09-27T08:46:31.446292+00:00"
     }
   ]
 }
