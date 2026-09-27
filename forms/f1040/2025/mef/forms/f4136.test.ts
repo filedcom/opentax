@@ -163,6 +163,34 @@ Deno.test("Form 4136 XML keeps diesel train, bus, and export credits separate", 
   );
 });
 
+Deno.test("Form 4136 XML separates kerosene bus, export, and reduced-tax claims", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: fields.business,
+    claims: (["4c", "4d", "4e", "4f"] as const).map((line) => ({
+      ...certifications,
+      line,
+      type_of_use: line === "4e" || line === "4f" ? "02" : undefined,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      excise_tax_rate_per_gallon: line === "4e"
+        ? 0.044
+        : line === "4f"
+        ? 0.219
+        : undefined,
+    })),
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 67.5 } } });
+  assertStringIncludes(xml, "<BusesUseUndyedKeroseneGrp>");
+  assertStringIncludes(xml, "<ExportedUndyedKeroseneGrp>");
+  assertStringIncludes(xml, "<NontxUseUndyedKrsnTxdAt044Grp>");
+  assertStringIncludes(xml, "<NontxUseUndyedKrsnTxdAt219Grp>");
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>68</TotalFuelTaxCreditAmt>",
+  );
+});
+
 Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternative fuel groups", () => {
   const xml = form4136.build({
     ...activityContext,

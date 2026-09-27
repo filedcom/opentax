@@ -282,6 +282,10 @@ source-to-XSD/PDF cases.
 Diesel train, bus, and export lines 3c-3e now have separate credit rates,
 source confirmations, XML groups, and PDF fields, with cases written but
 unrun.
+Undyed-kerosene lines 4c-4f now have bus, export, and taxed-at-$.044/$.219
+routes with unrun source-to-XSD/PDF cases. The 2025 instructions limit 4e/4f
+to use type 02 even though the local schema admits more codes; the input
+follows the instructions pending IRS business-rule review.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule

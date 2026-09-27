@@ -23,6 +23,10 @@ export const FORM4136_RATES = {
   "3e": 0.244,
   "4a": 0.243,
   "4b": 0.243,
+  "4c": 0.17,
+  "4d": 0.244,
+  "4e": 0.043,
+  "4f": 0.218,
   "5c": 0.243,
   "5d": 0.218,
   "11a": 0.183,
@@ -62,6 +66,10 @@ const fuelLine = z.enum([
   "3e",
   "4a",
   "4b",
+  "4c",
+  "4d",
+  "4e",
+  "4f",
   "5c",
   "5d",
   "11a",
@@ -93,6 +101,8 @@ const allowedUseCodes: Partial<
   "2b": ["01", "02", "09", "10", "11", "13", "14", "15"],
   "3a": ["02", "06", "07", "08", "11", "13", "14", "15"],
   "4a": ["02", "06", "07", "08", "11", "13", "14", "15"],
+  "4e": ["02"],
+  "4f": ["02"],
   "5c": ["01", "09", "10", "11", "13", "15", "16"],
   "5d": ["01", "09", "10", "11", "13", "15", "16"],
   "11a": alternativeFuelUseCodes,
@@ -121,6 +131,7 @@ export const fuelClaimSchema = z.object({
   foreign_trade_lust_tax_paid_confirmed: z.literal(true).optional(),
   train_use_confirmed: z.literal(true).optional(),
   certain_intercity_or_local_bus_use_confirmed: z.literal(true).optional(),
+  excise_tax_rate_per_gallon: z.number().finite().positive().optional(),
 });
 
 const businessSchema = z.object({
@@ -190,10 +201,12 @@ const activitySchema = z.object({
       });
     }
     const requiredFacts = [
-      ...(["3a", "3b", "3c", "3d", "3e", "4a", "4b"].includes(claim.line)
+      ...(["3a", "3b", "3c", "3d", "3e", "4a", "4b", "4c", "4d", "4e", "4f"]
+          .includes(claim.line)
         ? ["undyed_fuel_confirmed"] as const
         : []),
-      ...(claim.line === "3d" || claim.line === "5c" || claim.line === "5d" ||
+      ...(claim.line === "3d" || claim.line === "4c" || claim.line === "5c" ||
+          claim.line === "5d" ||
           (claim.line === "1c" &&
             ["13", "14"].includes(claim.type_of_use ?? "")) ||
           (claim.line === "2b" &&
@@ -205,7 +218,8 @@ const activitySchema = z.object({
         ? ["credit_card_issuer_certificate_not_provided"] as const
         : []),
       ...(claim.line === "1c" ? ["not_noncommercial_motorboat"] as const : []),
-      ...(claim.line === "1d" || claim.line === "2c" || claim.line === "3e"
+      ...(claim.line === "1d" || claim.line === "2c" || claim.line === "3e" ||
+          claim.line === "4d"
         ? ["exported_fuel_confirmed"] as const
         : []),
       ...(claim.line === "2a"
@@ -215,7 +229,7 @@ const activitySchema = z.object({
         ? ["foreign_trade_lust_tax_paid_confirmed"] as const
         : []),
       ...(claim.line === "3c" ? ["train_use_confirmed"] as const : []),
-      ...(claim.line === "3d"
+      ...(claim.line === "3d" || claim.line === "4c"
         ? ["certain_intercity_or_local_bus_use_confirmed"] as const
         : []),
       ...(claim.line === "1a" || claim.type_of_use === "02"
@@ -230,6 +244,23 @@ const activitySchema = z.object({
           path: ["claims", index, fact],
         });
       }
+    }
+    const expectedKeroseneRate = claim.line === "4e"
+      ? 0.044
+      : claim.line === "4f"
+      ? 0.219
+      : undefined;
+    if (
+      expectedKeroseneRate !== undefined &&
+      claim.excise_tax_rate_per_gallon !== expectedKeroseneRate
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Form 4136 line ${claim.line} requires kerosene taxed at $${
+          expectedKeroseneRate.toFixed(3)
+        } per gallon`,
+        path: ["claims", index, "excise_tax_rate_per_gallon"],
+      });
     }
     const key = `${claim.line}:${claim.type_of_use ?? ""}`;
     if (seen.has(key)) {

@@ -51,6 +51,10 @@ const creditReferenceNumber: Record<Line, string> = {
   "3e": "413",
   "4a": "346",
   "4b": "346",
+  "4c": "347",
+  "4d": "414",
+  "4e": "377",
+  "4f": "369",
   "5c": "346",
   "5d": "369",
   "11a": "419",
@@ -121,10 +125,28 @@ function fieldPath(p: number, n: number): string {
         : "";
     }
   } else if (p === 2) {
-    if (n >= 1 && n <= 11) {
+    if (n >= 1 && n <= 43) {
       table = "Table_Line4";
-      line = n <= 3 ? "Line4a" : "Line4b";
-      column = n >= 7 && n <= 8 ? "ColD" : n >= 9 && n <= 10 ? "ColE" : "";
+      line = n <= 3
+        ? "Line4a"
+        : n <= 11
+        ? "Line4b"
+        : n <= 19
+        ? "Line4c"
+        : n <= 27
+        ? "Line4d"
+        : n <= 35
+        ? "Line4e"
+        : "Line4f";
+      column = n >= 7 && n <= 8 || n >= 15 && n <= 16 ||
+          n >= 23 && n <= 24 || n >= 31 && n <= 32 ||
+          n >= 39 && n <= 40
+        ? "ColD"
+        : n >= 9 && n <= 10 || n >= 17 && n <= 18 ||
+            n >= 25 && n <= 26 || n >= 33 && n <= 34 ||
+            n >= 41 && n <= 42
+        ? "ColE"
+        : "";
     } else if (n >= 60 && n <= 75) {
       table = "Table_Line5";
       line = n <= 67 ? "Line5c" : "Line5d";
@@ -223,6 +245,20 @@ const fields: PdfFieldEntry[] = [
   text("line4b_quantity", 2, 6),
   ...moneyFields("line4_cost", 2, 7),
   ...moneyFields("line4_credit", 2, 9),
+  text("line4c_quantity", 2, 14),
+  ...moneyFields("line4c_cost", 2, 15),
+  ...moneyFields("line4c_credit", 2, 17),
+  text("line4d_quantity", 2, 22),
+  ...moneyFields("line4d_cost", 2, 23),
+  ...moneyFields("line4d_credit", 2, 25),
+  text("line4e_type", 2, 28),
+  text("line4e_quantity", 2, 30),
+  ...moneyFields("line4e_cost", 2, 31),
+  ...moneyFields("line4e_credit", 2, 33),
+  text("line4f_type", 2, 36),
+  text("line4f_quantity", 2, 38),
+  ...moneyFields("line4f_cost", 2, 39),
+  ...moneyFields("line4f_credit", 2, 41),
   text("line5c_type", 2, 60),
   text("line5c_quantity", 2, 62),
   ...moneyFields("line5c_cost", 2, 63),
@@ -431,6 +467,10 @@ export function projectForm4136Fields(
       "3e",
       "4a",
       "4b",
+      "4c",
+      "4d",
+      "4e",
+      "4f",
       "5c",
       "5d",
       ...alternativeFuelLines,
@@ -448,6 +488,9 @@ export function projectForm4136Fields(
     putClaimGroup(out, input, [line], `line${line}`);
   }
   putClaimGroup(out, input, ["4a", "4b"], "line4");
+  for (const line of ["4c", "4d", "4e", "4f"] as const) {
+    putClaimGroup(out, input, [line], `line${line}`);
+  }
   for (const line of ["5c", "5d", ...alternativeFuelLines] as const) {
     putClaimGroup(out, input, [line], `line${line}`);
   }

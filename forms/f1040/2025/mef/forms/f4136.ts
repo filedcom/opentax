@@ -162,6 +162,10 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l3e = onLine(input, "3e");
     const l4a = onLine(input, "4a");
     const l4b = onLine(input, "4b");
+    const l4c = onLine(input, "4c");
+    const l4d = onLine(input, "4d");
+    const l4e = onLine(input, "4e");
+    const l4f = onLine(input, "4f");
     const l5c = onLine(input, "5c");
     const l5d = onLine(input, "5d");
     const business = input.claimant_context === "business"
@@ -321,6 +325,30 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
             )
             : "",
         ]),
+        elements("BusesUseUndyedKeroseneGrp", [
+          element("BusUseOfUndyedKeroseneGalsQty", qty(l4c)),
+          l4c.length ? element("ActualFuelCostAmt", cost(l4c)) : "",
+          l4c.length
+            ? credit("BusUseOfUndyedKeroseneCrAmt", lineAmount(l4c), "347")
+            : "",
+        ]),
+        elements("ExportedUndyedKeroseneGrp", [
+          element("ExportedUndyedKeroseneGalsQty", qty(l4d)),
+          l4d.length ? element("ActualFuelCostAmt", cost(l4d)) : "",
+          l4d.length
+            ? credit("ExportedUndyedKeroseneCrAmt", lineAmount(l4d), "414")
+            : "",
+        ]),
+        ...l4e.map((claim) => detail("NontxUseUndyedKrsnTxdAt044Grp", claim)),
+        l4e.length ? element("NontxUndyedKrsn044ActlFlCstAmt", cost(l4e)) : "",
+        l4e.length
+          ? credit("NontxUseUndyedKrsnTxd044CrAmt", lineAmount(l4e), "377")
+          : "",
+        ...l4f.map((claim) => detail("NontxUseUndyedKrsnTxdAt219Grp", claim)),
+        l4f.length ? element("NontxUndyedKrsn219ActlFlCstAmt", cost(l4f)) : "",
+        l4f.length
+          ? credit("NontxUseUndyedKrsnTxd219CrAmt", lineAmount(l4f), "369")
+          : "",
         ...l5c.map((claim) => detail("NontxKrsnUsedAvnTxd244Grp", claim)),
         l5c.length ? element("NontxKrsnAvnTxd244ActlFlCstAmt", cost(l5c)) : "",
         l5c.length

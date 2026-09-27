@@ -460,6 +460,56 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 kerosene bus, export, and reduced-tax groups validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 68 },
+    schedule3: { line12_fuel_tax_credit: 67.5, line15_total: 67.5 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        business_name: "Example Kerosene Business",
+        principal_activity_code: "447100",
+        equipment_make: "Example",
+        equipment_model: "Equipment",
+        equipment_type: "business equipment",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: (["4c", "4d", "4e", "4f"] as const).map((line) => ({
+        line,
+        type_of_use: line === "4e" || line === "4f" ? "02" : undefined,
+        unit: "gallons" as const,
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        undyed_fuel_confirmed: true,
+        right_to_claim_not_waived: true,
+        certain_intercity_or_local_bus_use_confirmed: true,
+        exported_fuel_confirmed: true,
+        not_highway_vehicle: true,
+        excise_tax_rate_per_gallon: line === "4e"
+          ? 0.044
+          : line === "4f"
+          ? 0.219
+          : undefined,
+      })),
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<BusesUseUndyedKeroseneGrp>");
+  assertStringIncludes(xml, "<ExportedUndyedKeroseneGrp>");
+  assertStringIncludes(xml, "<NontxUseUndyedKrsnTxdAt044Grp>");
+  assertStringIncludes(xml, "<NontxUseUndyedKrsnTxdAt219Grp>");
+  await validateXsd(xml, "Form 4136 kerosene lines 4c through 4f");
+});
+
+Deno.test({
   name: "XSD: Form 4136 line 11 reduced-rate bus group validates",
   sanitizeOps: false,
   sanitizeResources: false,
