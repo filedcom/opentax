@@ -22,7 +22,18 @@ function source(
     source_document_reference: `2025 ${activity} credit statement`,
     category,
     current_year_credit: current,
-    prior_unallowed_credit: prior,
+    prior_unallowed_credits: prior > 0
+      ? [{
+        originating_tax_year: 2024,
+        credit_amount: prior,
+        source_document_reference:
+          `2024 ${activity} credit carryover statement`,
+        actively_participated_origin_year: category ===
+            PassiveCreditCategory.ActiveRental
+          ? true
+          : undefined,
+      }]
+      : [],
     publicly_traded_partnership: false,
   };
 }
@@ -57,6 +68,10 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
     parsed.credit_sources[0].activity_reference,
     "Clinical activity",
   );
+  assertEquals(
+    parsed.credit_sources[0].prior_unallowed_credits[0].originating_tax_year,
+    2024,
+  );
   assertEquals(allowed(compute(parsed)), 1_500);
   assertEquals(
     inputSchema.safeParse({
@@ -76,6 +91,38 @@ Deno.test("Form 8582-CR identifies each current and prior credit source", () => 
     inputSchema.safeParse({
       ...parsed,
       credit_sources: [{ ...other(1_000), publicly_traded_partnership: true }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...other(1_000),
+        prior_unallowed_credits: [{
+          originating_tax_year: 2025,
+          credit_amount: 100,
+          source_document_reference: "invalid future carryover",
+        }],
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...parsed,
+      credit_sources: [{
+        ...rental(0, 500),
+        prior_unallowed_credits: [{
+          originating_tax_year: 2024,
+          credit_amount: 500,
+          source_document_reference: "2024 inactive rental credit",
+          actively_participated_origin_year: false,
+        }],
+      }],
+      filing_status: FilingStatus.Single,
+      modified_agi: 100_000,
+      form8582_line9_special_allowance_used: 0,
     }).success,
     false,
   );
@@ -388,6 +435,43 @@ Deno.test("Form 8582-CR MFS lived with spouse skips all three special allowances
   });
   assertEquals(allowed(result), 500);
   assertEquals(result.carryforwards?.suspended_pac_8582cr, 2_500);
+  const lines = calculateForm8582CR(inputSchema.parse({
+    credit_sources: [rental(1_000)],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_500,
+    filing_status: FilingStatus.MFS,
+    mfs_lived_apart_all_year: false,
+  }));
+  assertEquals(lines.partI.rental.total, 0);
+  assertEquals(lines.partI.other.total, 1_000);
+  assertEquals(
+    lines.sourceAllocations[0].category,
+    PassiveCreditCategory.Other,
+  );
+});
+
+Deno.test("Form 8582-CR separates prior rental credit without origin-year participation", () => {
+  const lines = calculateForm8582CRPartI(inputSchema.parse({
+    credit_sources: [
+      rental(100),
+      {
+        ...source(PassiveCreditCategory.Other, 0, 500),
+        prior_unallowed_credits: [{
+          originating_tax_year: 2024,
+          credit_amount: 500,
+          source_document_reference: "2024 nonactive rental carryover",
+          actively_participated_origin_year: false,
+        }],
+      },
+    ],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_400,
+    filing_status: FilingStatus.Single,
+    modified_agi: 100_000,
+    form8582_line9_special_allowance_used: 0,
+  }));
+  assertEquals(lines.rental, { current: 100, prior: 0, total: 100 });
+  assertEquals(lines.other, { current: 0, prior: 500, total: 500 });
 });
 
 Deno.test("Form 8582-CR combines different activity credits before the tax limit", () => {
@@ -460,5 +544,33 @@ Deno.test("Form 8582-CR allocation preserves exact dollars and source identity",
   assertEquals(
     lines.sourceAllocations[0].source_document_reference,
     "2025 A credit statement",
+  );
+});
+
+Deno.test("Form 8582-CR keeps carryover vintages on their activity source", () => {
+  const lines = calculateForm8582CR(inputSchema.parse({
+    credit_sources: [{
+      ...other(0, 0, "Clinical activity"),
+      prior_unallowed_credits: [{
+        originating_tax_year: 2022,
+        credit_amount: 400,
+        source_document_reference: "2022 suspended clinical credit",
+      }, {
+        originating_tax_year: 2024,
+        credit_amount: 600,
+        source_document_reference: "2024 suspended clinical credit",
+      }],
+    }],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_700,
+  }));
+  assertEquals(lines.partI.other.prior, 1_000);
+  assertEquals(lines.sourceAllocations[0].allowed_credit, 300);
+  assertEquals(lines.sourceAllocations[0].unallowed_credit, 700);
+  assertEquals(
+    lines.sourceAllocations[0].prior_unallowed_credits.map((credit) =>
+      credit.originating_tax_year
+    ),
+    [2022, 2024],
   );
 });

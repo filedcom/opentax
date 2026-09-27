@@ -444,15 +444,24 @@ every activity. The node still sends its aggregate allowed amount directly to
 Schedule 3, so source-level filing route, Form 3800 limitation, and
 ATS acceptance remain open. The unrun source pass
 replaces one aggregate passive-credit amount with activity and document
-references, credit category, and separate current/prior amounts. Active-rental
-and other credits now feed Part I by source. The next unrun pass computes Part III
+references, credit category, a current-year amount, and originating-year-stamped
+prior unallowed credit rows. Active-rental
+and other credits now feed Part I by source. The current pass also requires
+origin-year active participation for Worksheet 1 rental carryovers, and moves
+active-rental credits to Worksheet 4 when an MFS filer lived with a spouse.
+The next unrun pass computes Part III
 rehabilitation/pre-1990 housing and Part IV post-1989 housing allowances with
 separate worksheet tax inputs; PTP credits still stop pending their per-partnership
 limitation. The next unrun pass allocates the three special allowances and the
 remaining suspended credit across named sources using Worksheets 5-9. The node
-still returns only an aggregate carryforward, with no prior-year vintage split.
+still returns only an aggregate carryforward, and allowed versus suspended
+amounts have not been split by prior-year vintage for Form 3800 Part IV.
 The native `IRS8582CR` MeF descriptor now serializes Parts I-IV, with direct XML
-and local XSD cases written but unrun. Form 4136 now combines its represented
+and local XSD cases written but unrun. The existing Form 3800 calculation and
+XML builder cover nonpassive credits only. Passive Form 3800 Part I lines 2/3,
+Part II lines 23/24 and 32/33, and source columns in Parts III/IV still need a
+separate source-backed route before the Form 8582-CR direct Schedule 3 deposit
+can be removed. Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These

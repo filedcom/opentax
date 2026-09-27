@@ -8,7 +8,11 @@ const otherCredit = {
   source_document_reference: "2025 clinical credit statement",
   category: PassiveCreditCategory.Other,
   current_year_credit: 1_500,
-  prior_unallowed_credit: 500,
+  prior_unallowed_credits: [{
+    originating_tax_year: 2024,
+    credit_amount: 500,
+    source_document_reference: "2024 clinical credit carryover statement",
+  }],
   publicly_traded_partnership: false,
 };
 
@@ -18,7 +22,7 @@ const rentalCredit = {
   source_document_reference: "2025 rental credit statement",
   category: PassiveCreditCategory.ActiveRental,
   current_year_credit: 3_000,
-  prior_unallowed_credit: 0,
+  prior_unallowed_credits: [],
   publicly_traded_partnership: false,
 };
 
@@ -86,6 +90,20 @@ Deno.test("Form 8582-CR: active rental Part II serializes the tax limitation", (
   assertStringIncludes(xml, "<AttributableTaxAmt>1000</AttributableTaxAmt>");
   assertStringIncludes(xml, "<SmallestTaxAmt>1000</SmallestTaxAmt>");
   assertStringIncludes(xml, "<AllowedCreditsAmt>1000</AllowedCreditsAmt>");
+});
+
+Deno.test("Form 8582-CR: MFS lived-with rental credit appears in other credits", () => {
+  const xml = form8582cr.build({
+    credit_sources: [rentalCredit],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+    filing_status: "mfs",
+    mfs_lived_apart_all_year: false,
+  });
+  assertStringIncludes(xml, "<AllPassiveCreditGrp>");
+  assertStringIncludes(xml, "<OtherCurrentYearAmt>3000</OtherCurrentYearAmt>");
+  assertEquals(xml.includes("<RentalCreditGrp>"), false);
+  assertEquals(xml.includes("<SpecialAllowActiveGrp>"), false);
 });
 
 Deno.test("Form 8582-CR: Part III and IV serialize separate tax limits", () => {

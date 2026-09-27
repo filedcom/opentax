@@ -38,22 +38,45 @@ const creditSourceSchema = z.object({
   source_document_reference: z.string().trim().min(1),
   category: z.nativeEnum(PassiveCreditCategory),
   current_year_credit: z.number().int().nonnegative(),
-  prior_unallowed_credit: z.number().int().nonnegative(),
+  prior_unallowed_credits: z.array(z.object({
+    originating_tax_year: z.number().int().min(1900).max(2024),
+    credit_amount: z.number().int().positive(),
+    source_document_reference: z.string().trim().min(1),
+    actively_participated_origin_year: z.boolean().optional(),
+  })),
   publicly_traded_partnership: z.boolean(),
 }).refine(
-  (source) => source.current_year_credit + source.prior_unallowed_credit > 0,
+  (source) =>
+    source.current_year_credit > 0 || source.prior_unallowed_credits.length > 0,
   { message: "Form 8582-CR source must have current or prior credit" },
 );
 
 type PassiveCreditSource = z.infer<typeof creditSourceSchema>;
+
+function priorCredit(source: PassiveCreditSource): number {
+  return source.prior_unallowed_credits.reduce(
+    (sum, credit) => sum + credit.credit_amount,
+    0,
+  );
+}
+
+function reportedCategory(
+  source: PassiveCreditSource,
+  filingStatus: FilingStatus | undefined,
+  mfsLivedApartAllYear: boolean | undefined,
+): PassiveCreditCategory {
+  return source.category === PassiveCreditCategory.ActiveRental &&
+      filingStatus === FilingStatus.MFS && !mfsLivedApartAllYear
+    ? PassiveCreditCategory.Other
+    : source.category;
+}
 
 function categoryCredit(
   sources: readonly PassiveCreditSource[],
   category: PassiveCreditCategory,
 ): number {
   return sources.filter((source) => source.category === category).reduce(
-    (sum, source) =>
-      sum + source.current_year_credit + source.prior_unallowed_credit,
+    (sum, source) => sum + source.current_year_credit + priorCredit(source),
     0,
   );
 }
@@ -68,7 +91,7 @@ function categoryAmounts(
     0,
   );
   const prior = matches.reduce(
-    (sum, source) => sum + source.prior_unallowed_credit,
+    (sum, source) => sum + priorCredit(source),
     0,
   );
   return { current, prior, total: current + prior };
@@ -121,7 +144,7 @@ function allocateCreditsToSources(
   unallowedTotal: number,
 ) {
   const totals = sources.map((source) =>
-    source.current_year_credit + source.prior_unallowed_credit
+    source.current_year_credit + priorCredit(source)
   );
   const specialAllowed = sources.map(() => 0);
   const categories = [
@@ -150,7 +173,7 @@ function allocateCreditsToSources(
     source_document_reference: source.source_document_reference,
     category: source.category,
     current_year_credit: source.current_year_credit,
-    prior_unallowed_credit: source.prior_unallowed_credit,
+    prior_unallowed_credits: source.prior_unallowed_credits,
     total_credit: totals[index],
     special_allowed_credit: specialAllowed[index],
     unallowed_credit: unallowed[index],
@@ -213,6 +236,21 @@ export const inputSchema = z.object({
       });
     }
     sourceIds.add(id);
+    if (
+      source.category === PassiveCreditCategory.ActiveRental &&
+      !(input.filing_status === FilingStatus.MFS &&
+        input.mfs_lived_apart_all_year === false) &&
+      source.prior_unallowed_credits.some((credit) =>
+        credit.actively_participated_origin_year !== true
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["credit_sources", index, "prior_unallowed_credits"],
+        message:
+          "Form 8582-CR prior rental credit needs active participation in both years or a separate Other-category source",
+      });
+    }
   });
   if (
     input.credit_sources.some((source) => source.publicly_traded_partnership)
@@ -280,20 +318,28 @@ type Form8582CRInput = z.infer<typeof inputSchema>;
 
 export function calculateForm8582CRPartI(raw: Form8582CRInput) {
   const input = inputSchema.parse(raw);
+  const sources = input.credit_sources.map((source) => ({
+    ...source,
+    category: reportedCategory(
+      source,
+      input.filing_status,
+      input.mfs_lived_apart_all_year,
+    ),
+  }));
   const rental = categoryAmounts(
-    input.credit_sources,
+    sources,
     PassiveCreditCategory.ActiveRental,
   );
   const rehabilitation = categoryAmounts(
-    input.credit_sources,
+    sources,
     PassiveCreditCategory.RehabilitationOrPre1990Housing,
   );
   const housing = categoryAmounts(
-    input.credit_sources,
+    sources,
     PassiveCreditCategory.LowIncomeHousing,
   );
   const other = categoryAmounts(
-    input.credit_sources,
+    sources,
     PassiveCreditCategory.Other,
   );
   const line5 = rental.total + rehabilitation.total + housing.total +
@@ -530,7 +576,14 @@ export function calculateForm8582CR(raw: Form8582CRInput) {
   );
   const suspendedCredit = partI.line5 - line37;
   const sourceAllocations = allocateCreditsToSources(
-    input.credit_sources,
+    input.credit_sources.map((source) => ({
+      ...source,
+      category: reportedCategory(
+        source,
+        input.filing_status,
+        input.mfs_lived_apart_all_year,
+      ),
+    })),
     {
       [PassiveCreditCategory.ActiveRental]: partII?.line16 ?? 0,
       [PassiveCreditCategory.RehabilitationOrPre1990Housing]: partIII?.line30 ??
