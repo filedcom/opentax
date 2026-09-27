@@ -1,7 +1,7 @@
 // UNRESOLVED ITEMS:
 //   - line_18_itemize_checkbox: not in schema
 
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { scheduleA } from "./index.ts";
 import { FilingStatus } from "../../types.ts";
 
@@ -328,6 +328,98 @@ Deno.test("scheduleA.compute: Pub. 526 20% category obeys nested 50%, 30%, and 2
     result.carryforwards?.charitable_capital_gain_20_2025,
     10_000,
   );
+});
+
+Deno.test("scheduleA.compute: Pub. 526 cash to a second-category charity uses the other 30% limit", () => {
+  // Publication 526 example: $15,000 capital-gain property to a 50% charity
+  // and $10,000 cash to a second-category organization, AGI $50,000.
+  const result = compute({
+    agi: 50_000,
+    cash_contributions_other_30: 10_000,
+    noncash_contribution_items: [{
+      source: "capital-gain property",
+      amount: 15_000,
+      category: "capital_gain_30",
+    }],
+  });
+  assertEquals(
+    result.finalizations?.[0].fields.line_11_cash_contributions,
+    10_000,
+  );
+  assertEquals(
+    result.finalizations?.[0].fields.line_12_noncash_contributions,
+    15_000,
+  );
+  assertEquals(deductionInput(result).itemized_deductions, 25_000);
+});
+
+Deno.test("scheduleA.compute: cash-only other 30% excess retains its own vintage", () => {
+  const result = compute({ agi: 50_000, cash_contributions_other_30: 20_000 });
+  assertEquals(
+    result.finalizations?.[0].fields.line_11_cash_contributions,
+    15_000,
+  );
+  assertEquals(
+    result.finalizations?.[0].fields.line_12_noncash_contributions,
+    0,
+  );
+  assertEquals(result.carryforwards?.charitable_cash_other_30_2025, 5_000);
+});
+
+Deno.test("scheduleA.compute: fully allowed mixed other 30% gifts split exactly across filed lines", () => {
+  const result = compute({
+    agi: 100_000,
+    cash_contributions_other_30: 5_000,
+    noncash_contribution_items: [{
+      source: "property",
+      amount: 5_000,
+      category: "other_30",
+    }],
+  });
+  assertEquals(
+    result.finalizations?.[0].fields.line_11_cash_contributions,
+    5_000,
+  );
+  assertEquals(
+    result.finalizations?.[0].fields.line_12_noncash_contributions,
+    5_000,
+  );
+});
+
+Deno.test("scheduleA.compute: partly limited mixed other 30% gifts reject an invented cash/property split", () => {
+  assertThrows(
+    () =>
+      compute({
+        agi: 100_000,
+        cash_contributions_other_30: 25_000,
+        noncash_contribution_items: [{
+          source: "property",
+          amount: 10_000,
+          category: "other_30",
+        }],
+      }),
+    Error,
+    "need an explicit Schedule A line-11/line-12 allocation",
+  );
+});
+
+Deno.test("scheduleA.compute: zero AGI leaves both mixed other-30 sources entirely undeducted", () => {
+  const result = compute({
+    agi: 0,
+    cash_contributions_other_30: 2_000,
+    noncash_contribution_items: [{
+      source: "property",
+      amount: 3_000,
+      category: "other_30",
+    }],
+  });
+  assertEquals(result.finalizations?.[0].fields.line_11_cash_contributions, 0);
+  assertEquals(
+    result.finalizations?.[0].fields.line_12_noncash_contributions,
+    0,
+  );
+  assertEquals(result.carryforwards?.charitable_cash_other_30_2025, 2_000);
+  assertEquals(result.carryforwards?.charitable_noncash_other_30_2025, 3_000);
 });
 
 // =============================================================================

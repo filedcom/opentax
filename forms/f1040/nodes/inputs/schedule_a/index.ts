@@ -65,8 +65,9 @@ export const inputSchema = z.object({
   // Source amounts must be classified before the filed Schedule A lines are set.
   cash_contributions_to_50_percent_organizations: z.number().nonnegative()
     .optional(),
-  cash_contributions_to_30_percent_organizations: z.number().nonnegative()
-    .optional(),
+  // Pub. 526 Worksheet 2 lines 5/7: cash to a second-category organization
+  // or held for the use of any qualified organization.
+  cash_contributions_other_30: z.number().nonnegative().optional(),
   qualified_conservation_contributions: z.number().nonnegative().optional(),
   noncash_contribution_items: z.array(noncashContributionItemSchema).optional(),
   // Filed values. Nonzero direct input is rejected; this node finalizes them.
@@ -76,14 +77,6 @@ export const inputSchema = z.object({
   line_15_casualty_theft_loss: z.number().nonnegative().optional(),
   line_16_other_deductions: z.number().nonnegative().optional(),
 }).superRefine((data, ctx) => {
-  if ((data.cash_contributions_to_30_percent_organizations ?? 0) > 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["cash_contributions_to_30_percent_organizations"],
-      message:
-        "30%-limit cash gifts need cash/noncash allocation within Pub. 526 Worksheet 2 lines 5 and 7; this route is not yet implemented",
-    });
-  }
   if ((data.qualified_conservation_contributions ?? 0) > 0) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
@@ -192,6 +185,7 @@ function computeContributions(
   taxYear: number,
 ) {
   const sourceCash = input.cash_contributions_to_50_percent_organizations ?? 0;
+  const sourceCashOther30 = input.cash_contributions_other_30 ?? 0;
   const byCategory = {
     noncash_50: 0,
     other_30: 0,
@@ -211,14 +205,32 @@ function computeContributions(
     byCategory.noncash_50,
     floorZero(positiveAgi * .5 - cash),
   );
+  const sourceOther30 = sourceCashOther30 + byCategory.other_30;
   const other30 = Math.min(
-    byCategory.other_30,
+    sourceOther30,
     floorZero(
       positiveAgi * .5 - byCategory.capital_gain_30 -
         byCategory.noncash_50 - sourceCash,
     ),
     positiveAgi * .3,
   );
+  // Worksheet 2 does not assign a partly allowed combined line 24 amount
+  // between cash (Schedule A line 11) and property (line 12). Do not invent
+  // a filing split or a source-specific carryover in that case.
+  if (
+    sourceCashOther30 > 0 && byCategory.other_30 > 0 && other30 > 0 &&
+    other30 < sourceOther30
+  ) {
+    throw new Error(
+      "Partly limited mixed cash/noncash 30%-category gifts need an explicit Schedule A line-11/line-12 allocation",
+    );
+  }
+  const cashOther30Allowed = sourceCashOther30 > 0 && byCategory.other_30 === 0
+    ? other30
+    : other30 === sourceOther30
+    ? sourceCashOther30
+    : 0;
+  const noncashOther30Allowed = other30 - cashOther30Allowed;
   const capitalGain30 = Math.min(
     byCategory.capital_gain_30,
     floorZero(positiveAgi * .5 - byCategory.noncash_50 - sourceCash),
@@ -236,15 +248,18 @@ function computeContributions(
   const carryforwards = {
     [`charitable_cash_60_${taxYear}`]: sourceCash - cash,
     [`charitable_noncash_50_${taxYear}`]: byCategory.noncash_50 - noncash50,
-    [`charitable_other_30_${taxYear}`]: byCategory.other_30 - other30,
+    [`charitable_cash_other_30_${taxYear}`]: sourceCashOther30 -
+      cashOther30Allowed,
+    [`charitable_noncash_other_30_${taxYear}`]: byCategory.other_30 -
+      noncashOther30Allowed,
     [`charitable_capital_gain_30_${taxYear}`]: byCategory.capital_gain_30 -
       capitalGain30,
     [`charitable_capital_gain_20_${taxYear}`]: byCategory.capital_gain_20 -
       capitalGain20,
   };
   return {
-    cash,
-    noncash: noncash50 + other30 + capitalGain30 + capitalGain20,
+    cash: cash + cashOther30Allowed,
+    noncash: noncash50 + noncashOther30Allowed + capitalGain30 + capitalGain20,
     carryforwards,
   };
 }
@@ -261,6 +276,7 @@ class ScheduleANode extends TaxNode<typeof inputSchema> {
     const agi = input.agi ?? 0;
     const hasContributions =
       (input.cash_contributions_to_50_percent_organizations ?? 0) > 0 ||
+      (input.cash_contributions_other_30 ?? 0) > 0 ||
       (input.noncash_contribution_items ?? []).some((item) => item.amount > 0);
     if (hasContributions && input.agi === undefined) {
       throw new Error("Schedule A charitable limits require computed AGI");
