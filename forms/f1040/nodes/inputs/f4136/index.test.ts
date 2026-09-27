@@ -252,3 +252,42 @@ Deno.test("Form 4136: line 11 retains an explicit equivalent-fuel unit", () => {
     false,
   );
 });
+
+Deno.test("Form 4136: line 11 bus claims use reduced rates and required units", () => {
+  const cases = [
+    ["11a", "GGE", 10.9],
+    ["11b", "gallons", 11],
+    ["11c", "GGE", 10.9],
+    ["11d", "gallons", 11],
+    ["11e", "gallons", 17],
+    ["11f", "gallons", 17],
+    ["11g", "DGE", 16.9],
+    ["11h", "gallons", 11],
+  ] as const;
+  for (const [line, unit, expected] of cases) {
+    const claim = {
+      ...certifications,
+      line,
+      type_of_use: "05",
+      unit,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+    } as const;
+    assertEquals(
+      inputSchema.safeParse({ business, claims: [claim] }).success,
+      true,
+    );
+    assertEquals(
+      compute({ business, claims: [claim] }).outputs[0].fields
+        .line12_fuel_tax_credit,
+      expected,
+    );
+    assertEquals(
+      inputSchema.safeParse({
+        business,
+        claims: [{ ...claim, unit: "gallons" }],
+      }).success,
+      unit === "gallons",
+    );
+  }
+});

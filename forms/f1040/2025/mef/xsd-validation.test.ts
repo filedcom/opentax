@@ -260,6 +260,44 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 line 11 reduced-rate bus group validates",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 11 },
+    schedule3: {
+      line12_fuel_tax_credit: 10.9,
+      line15_total: 10.9,
+    },
+    f4136: {
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        activity_count: 1,
+        business_name: "Example Bus Business",
+        principal_activity_code: "485110",
+        equipment_make: "Example",
+        equipment_model: "Bus",
+        equipment_type: "intercity bus",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [{
+        line: "11a",
+        type_of_use: "05",
+        unit: "GGE",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<BusNontxLiquifiedPetroleumGas>");
+  await validateXsd(xml, "Form 4136 line 11 bus use");
+});
+
+Deno.test({
   name:
     "XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3",
   sanitizeOps: false,

@@ -2,9 +2,9 @@ import { PDFDocument, StandardFonts } from "pdf-lib";
 import { z } from "zod";
 import {
   calculateForm4136,
-  FORM4136_RATES,
   type Form4136Input,
   inputSchema,
+  rateForForm4136Claim,
 } from "../../../nodes/inputs/f4136/index.ts";
 import type { FilerIdentity } from "../../../mef/header.ts";
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
@@ -133,7 +133,7 @@ function putClaimGroup(
   putMoney(
     out,
     `${key}_credit`,
-    total((claim) => claim.qualified_quantity * FORM4136_RATES[claim.line]),
+    total((claim) => claim.qualified_quantity * rateForForm4136Claim(claim)),
   );
 }
 
@@ -203,11 +203,11 @@ async function appendClaimStatement(
       const row = [
         claim.line.padEnd(5),
         (claim.type_of_use ?? "fixed").padEnd(5),
-        FORM4136_RATES[claim.line].toFixed(3).padStart(5),
+        rateForForm4136Claim(claim).toFixed(3).padStart(5),
         String(claim.qualified_quantity).padStart(9),
         claim.unit.padEnd(7),
         claim.actual_fuel_cost.toFixed(2).padStart(12),
-        (claim.qualified_quantity * FORM4136_RATES[claim.line]).toFixed(2)
+        (claim.qualified_quantity * rateForForm4136Claim(claim)).toFixed(2)
           .padStart(8),
         creditReferenceNumber[claim.line],
       ].join(" ");
@@ -236,6 +236,11 @@ export const form4136Pdf: PdfFormDescriptor = {
   projectFields(raw, allPending) {
     if (!Array.isArray(raw.claims) || !raw.claims.length) return {};
     const input = inputSchema.parse(raw);
+    if (input.claims.some((claim) => claim.type_of_use === "05")) {
+      throw new Error(
+        "Form 4136 PDF bus claims require a verified reduced-rate overlay",
+      );
+    }
     const total = calculateForm4136(input);
     const schedule3 = z.object({
       line12_fuel_tax_credit: z.number().finite().nonnegative(),

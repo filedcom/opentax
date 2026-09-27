@@ -2,9 +2,9 @@ import { z } from "zod";
 import { element, elements } from "../../../mef/xml.ts";
 import {
   calculateForm4136,
-  FORM4136_RATES,
   type Form4136Input,
   inputSchema,
+  rateForForm4136Claim,
 } from "../../../nodes/inputs/f4136/index.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -19,6 +19,7 @@ const alternativeFuelTags = [
     "NontxLiqfdPtrlmActlFlCstAmt",
     "NontxLiquefiedPtrlmGasCrAmt",
     "419",
+    "BusNontxLiquifiedPetroleumGas",
   ],
   [
     "11b",
@@ -26,6 +27,7 @@ const alternativeFuelTags = [
     "NontxPSeriesFuelsActlFlCstAmt",
     "NontxPSeriesFuelsCreditAmt",
     "420",
+    "BusNontxPSeriesFuels",
   ],
   [
     "11c",
@@ -33,6 +35,7 @@ const alternativeFuelTags = [
     "NontxCmprsdNatGasActlFlCstAmt",
     "NontxCompressedNaturalGasCrAmt",
     "421",
+    "BusNontxCompressedNaturalGas",
   ],
   [
     "11d",
@@ -40,6 +43,7 @@ const alternativeFuelTags = [
     "NontxLiqfdHydrogenActlFlCstAmt",
     "NontxLiquefiedHydrogenCrAmt",
     "422",
+    "BusNontxLiquifiedHydrogen",
   ],
   [
     "11e",
@@ -47,6 +51,7 @@ const alternativeFuelTags = [
     "NontxLiqfdFuelCoalActlFlCstAmt",
     "NontxLiqfdFuelDerFromCoalCrAmt",
     "423",
+    "BusNontxLiqfdFuelDerFromCoal",
   ],
   [
     "11f",
@@ -54,6 +59,7 @@ const alternativeFuelTags = [
     "NontxLiqFuelBmssActlFlCstAmt",
     "NontxLiqFuelDerBiomassCrAmt",
     "424",
+    "BusNontxLiqFuelDerFromBiomass",
   ],
   [
     "11g",
@@ -61,6 +67,7 @@ const alternativeFuelTags = [
     "NontxLiqfdNatGasActlFlCstAmt",
     "NontxLiquefiedNaturalGasCrAmt",
     "425",
+    "BusNontxLiquefiedNaturalGas",
   ],
   [
     "11h",
@@ -68,6 +75,7 @@ const alternativeFuelTags = [
     "NontxLiqfdGasBmssActlFlCstAmt",
     "NontxLiquefiedGasBiomassCrAmt",
     "435",
+    "BusNontxLiquefiedGasDerBiomass",
   ],
 ] as const;
 
@@ -79,7 +87,7 @@ function lineAmount(claims: readonly Claim[]): number {
   return Math.round(
     claims.reduce(
       (sum, claim) =>
-        sum + claim.qualified_quantity * FORM4136_RATES[claim.line],
+        sum + claim.qualified_quantity * rateForForm4136Claim(claim),
       0,
     ) * 100,
   ) / 100;
@@ -100,6 +108,15 @@ function credit(tag: string, amount: number, crn: string): string {
 function detail(tag: string, claim: Claim): string {
   return elements(tag, [
     element("NontaxableUseOfFuelTypeCd", claim.type_of_use),
+    element("GallonsQty", claim.qualified_quantity),
+  ]);
+}
+
+function busDetail(tag: string, claim: Claim): string {
+  return elements(tag, [
+    element("FuelTaxLocalBusCd", "BUS"),
+    element("NontaxableUseOfFuelTypeCd", "05"),
+    element("CreditRt", rateForForm4136Claim(claim).toFixed(3)),
     element("GallonsQty", claim.qualified_quantity),
   ]);
 }
@@ -204,11 +221,14 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         ? credit("NonTxKrsnUsedInAvnTxd219CrAmt", lineAmount(l5d), "369")
         : "",
       ...alternativeFuelTags.flatMap(
-        ([line, groupTag, costTag, creditTag, crn]) => {
+        ([line, groupTag, costTag, creditTag, crn, busTag]) => {
           const claims = onLine(input, line);
           if (!claims.length) return [];
+          const busClaim = claims.find((claim) => claim.type_of_use === "05");
           return [
-            ...claims.map((claim) => detail(groupTag, claim)),
+            ...(busClaim ? [busDetail(busTag, busClaim)] : []),
+            ...claims.filter((claim) => claim.type_of_use !== "05")
+              .map((claim) => detail(groupTag, claim)),
             element(costTag, cost(claims)),
             credit(creditTag, lineAmount(claims), crn),
           ];
