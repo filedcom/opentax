@@ -191,6 +191,32 @@ Deno.test("Form 4136 XML separates kerosene bus, export, and reduced-tax claims"
   );
 });
 
+Deno.test("Form 4136 XML separates aviation kerosene commercial and LUST claims", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: fields.business,
+    claims: (["5a", "5b", "5e"] as const).map((line) => ({
+      ...certifications,
+      line,
+      unit: "gallons" as const,
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      excise_tax_rate_per_gallon: line === "5a"
+        ? 0.244
+        : line === "5b"
+        ? 0.219
+        : undefined,
+    })),
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 376 } } });
+  assertStringIncludes(xml, "<KrsnUsedInCmrclAvnTxdAt244Grp>");
+  assertStringIncludes(xml, "<KrsnUsedInCmrclAvnTxdAt219Grp>");
+  assertStringIncludes(xml, "<LUSTTxKrsnAvnFrgnTrdGrp>");
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>376</TotalFuelTaxCreditAmt>",
+  );
+});
+
 Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternative fuel groups", () => {
   const xml = form4136.build({
     ...activityContext,
@@ -215,6 +241,7 @@ Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternativ
       {
         ...certifications,
         line: "5c",
+        excise_tax_rate_per_gallon: 0.244,
         type_of_use: "01",
         unit: "gallons",
         qualified_quantity: 100,
@@ -223,6 +250,7 @@ Deno.test("Form 4136 XML carries variable-use aviation, kerosene, and alternativ
       {
         ...certifications,
         line: "5d",
+        excise_tax_rate_per_gallon: 0.219,
         type_of_use: "01",
         unit: "gallons",
         qualified_quantity: 100,

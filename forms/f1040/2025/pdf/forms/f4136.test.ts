@@ -73,6 +73,14 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page2[0].Table_Line4[0].Line4f[0].ColE[0].f2_42[0]",
   );
   assertEquals(
+    names.line5a_quantity,
+    "topmostSubform[0].Page2[0].Table_Line5[0].Line5a[0].f2_46[0]",
+  );
+  assertEquals(
+    names.line5e_credit_cents,
+    "topmostSubform[0].Page2[0].Table_Line5[0].Line5e[0].ColE[0].f2_82[0]",
+  );
+  assertEquals(
     names.line5d_credit_dollars,
     "topmostSubform[0].Page2[0].Table_Line5[0].Line5d[0].ColE[0].f2_73[0]",
   );
@@ -88,6 +96,30 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF separates aviation kerosene commercial and LUST rows", () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business,
+    claims: (["5a", "5b", "5e"] as const).map((line) => ({
+      ...certifications,
+      line,
+      unit: "gallons" as const,
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      excise_tax_rate_per_gallon: line === "5a"
+        ? 0.244
+        : line === "5b"
+        ? 0.219
+        : undefined,
+    })),
+  }, { schedule3: { line12_fuel_tax_credit: 376 } });
+  assertEquals(result?.line5a_quantity, 1_000);
+  assertEquals(result?.line5a_credit_dollars, "200");
+  assertEquals(result?.line5b_credit_dollars, "175");
+  assertEquals(result?.line5e_credit_dollars, "1");
+  assertEquals(result?.line17_total_dollars, "376");
 });
 
 Deno.test("Form 4136 PDF separates kerosene bus, export, and reduced-tax rows", () => {

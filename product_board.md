@@ -286,6 +286,9 @@ Undyed-kerosene lines 4c-4f now have bus, export, and taxed-at-$.044/$.219
 routes with unrun source-to-XSD/PDF cases. The 2025 instructions limit 4e/4f
 to use type 02 even though the local schema admits more codes; the input
 follows the instructions pending IRS business-rule review.
+Aviation-kerosene lines 5a, 5b, and 5e now have commercial-use and
+foreign-trade LUST routes, with rates and source-to-XSD/PDF cases written but
+unrun. Lines 5a-5d now require the source tax rate matching the selected row.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule
