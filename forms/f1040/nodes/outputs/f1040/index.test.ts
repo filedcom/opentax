@@ -45,6 +45,87 @@ Deno.test("f1040: empty input emits zeros for computed lines", () => {
   assertEquals(f.line35a_refund, 0);
 });
 
+Deno.test("f1040: Form 8859 limits carryforward after the listed prior credits", () => {
+  const result = compute({
+    line16_income_tax: 1_000,
+    line19_child_tax_credit: 100,
+    line20_nonrefundable_credits: 70,
+    form8859_source_carryforward: 1_200,
+    credit_limit_schedule3_lines: {
+      ...emptySchedule3ForBusinessCredit,
+      line1: 50,
+      line6dElderlyDisabled: 20,
+      line7: 20,
+    },
+  });
+  assertEquals(result.outputs[0].fields.line20_nonrefundable_credits, 900);
+  const schedule = result.finalizations?.find((item) =>
+    item.nodeType === "schedule3"
+  );
+  const homebuyer = result.finalizations?.find((item) =>
+    item.nodeType === "f8859"
+  );
+  assertEquals(schedule?.fields.line6h_dc_homebuyer_credit, 830);
+  assertEquals(schedule?.fields.line7_total, 850);
+  assertEquals(homebuyer?.fields.line1_carryforward, 1_200);
+  assertEquals(homebuyer?.fields.line2_limit, 830);
+  assertEquals(homebuyer?.fields.line3_allowed_credit, 830);
+  assertEquals(homebuyer?.fields.line4_carryforward, 370);
+});
+
+Deno.test("f1040: Form 8859 uses Schedule 8812 Worksheet B line 14 when directed", () => {
+  const result = compute({
+    line16_income_tax: 1_000,
+    line19_child_tax_credit: 100,
+    form8859_source_carryforward: 1_200,
+    form8859_worksheet_b_applies: true,
+    form8859_worksheet_b_line14: 200,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+  });
+  const homebuyer = result.finalizations?.find((item) =>
+    item.nodeType === "f8859"
+  );
+  assertEquals(homebuyer?.fields.line2_limit, 800);
+  assertEquals(homebuyer?.fields.line4_carryforward, 400);
+});
+
+Deno.test("f1040: Form 8859 carries all unused credit when no tax remains", () => {
+  const result = compute({
+    line16_income_tax: 0,
+    form8859_source_carryforward: 500,
+    credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+  });
+  const homebuyer = result.finalizations?.find((item) =>
+    item.nodeType === "f8859"
+  );
+  assertEquals(homebuyer?.fields.line2_limit, 0);
+  assertEquals(homebuyer?.fields.line3_allowed_credit, 0);
+  assertEquals(homebuyer?.fields.line4_carryforward, 500);
+});
+
+Deno.test("f1040: Form 8859 needs completed tax and Worksheet B source", () => {
+  assertThrows(
+    () =>
+      compute({
+        form8859_source_carryforward: 500,
+        credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+      }),
+    Error,
+    "finalized Form 1040 tax",
+  );
+  assertThrows(
+    () =>
+      compute({
+        line16_income_tax: 1_000,
+        form8859_source_carryforward: 500,
+        form8859_worksheet_b_applies: true,
+        credit_limit_schedule3_lines: emptySchedule3ForBusinessCredit,
+      }),
+    Error,
+    "Worksheet B line 14",
+  );
+});
+
 Deno.test("f1040: Form 8912 needs finalized credit inputs", () => {
   assertThrows(
     () =>

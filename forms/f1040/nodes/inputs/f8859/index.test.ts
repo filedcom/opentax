@@ -2,6 +2,7 @@ import { assertEquals, assertThrows } from "@std/assert";
 import { f8859 } from "./index.ts";
 import { fieldsOf } from "../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
+import { f1040 } from "../../outputs/f1040/index.ts";
 
 function minimalItem(overrides: Record<string, unknown> = {}) {
   return { ...overrides };
@@ -28,13 +29,23 @@ Deno.test("f8859.inputSchema: negative carryforward_amount fails", () => {
 });
 
 // =============================================================================
-// 2. Credit Passthrough to Schedule 3
+// 2. Source routing without prematurely claiming the credit
 // =============================================================================
 
-Deno.test("f8859.compute: carryforward amount routes to schedule3 line6h_dc_homebuyer_credit", () => {
+Deno.test("f8859.compute: carries source to Form 1040 finalization", () => {
   const result = compute([minimalItem({ carryforward_amount: 2500 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6h_dc_homebuyer_credit, 2500);
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.form8859_source_credit_pending,
+    true,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form8859_source_carryforward,
+    2500,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6h_dc_homebuyer_credit,
+    undefined,
+  );
 });
 
 Deno.test("f8859.compute: zero carryforward — no output", () => {
@@ -51,13 +62,15 @@ Deno.test("f8859.compute: absent carryforward — no output", () => {
 // 3. Aggregation — Multiple Items
 // =============================================================================
 
-Deno.test("f8859.compute: multiple carryforward items summed to schedule3", () => {
+Deno.test("f8859.compute: multiple carryforward items summed before limit", () => {
   const result = compute([
     minimalItem({ carryforward_amount: 1000 }),
     minimalItem({ carryforward_amount: 1500 }),
   ]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6h_dc_homebuyer_credit, 2500);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form8859_source_carryforward,
+    2500,
+  );
 });
 
 Deno.test("f8859.compute: one zero + one nonzero — only nonzero credited", () => {
@@ -65,8 +78,10 @@ Deno.test("f8859.compute: one zero + one nonzero — only nonzero credited", () 
     minimalItem({ carryforward_amount: 0 }),
     minimalItem({ carryforward_amount: 800 }),
   ]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6h_dc_homebuyer_credit, 800);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form8859_source_carryforward,
+    800,
+  );
 });
 
 // =============================================================================
@@ -84,9 +99,11 @@ Deno.test("f8859.compute: throws on negative carryforward_amount", () => {
 // 5. Smoke Test
 // =============================================================================
 
-Deno.test("f8859.compute: smoke test — carryforward from prior year", () => {
+Deno.test("f8859.compute: source needs final tax before Schedule 3 credit", () => {
   const result = compute([minimalItem({ carryforward_amount: 3000 })]);
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6h_dc_homebuyer_credit, 3000);
-  assertEquals(result.outputs.length, 1);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)?.form8859_source_carryforward,
+    3000,
+  );
+  assertEquals(result.outputs.length, 2);
 });

@@ -238,17 +238,22 @@ and XML cases are written but unrun. Record-holder timing on a sale, other
 dispositions, and the required bond-rate source still need review.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
-its calculation, MeF, and PDF field maps. Form 8859 and Form 8834 now deposit on
-their printed lines 6h and 6i. Form 4136 now combines its represented fuel-use
+its calculation, MeF, and PDF field maps. Form 8859 now carries its prior-year
+amount into the 2025 tax-liability worksheet, sends only the allowed credit to
+Schedule 3 line 6h, and retains the unused amount on Form 8859 line 4. Its
+native XML and PDF descriptors and source-to-return cases are built but unrun;
+the filled PDF has not been visually checked. Schedule 8812 Worksheet B line 14
+must be supplied when that worksheet applies. Form 8834 still deposits its
+tentative amount on line 6i. Form 4136 now combines its represented fuel-use
 credits on refundable line 12 instead of misrouting some to general business
 credit and some to a nonexistent Form 1040 field; the represented 2025 fuel
 rates are updated, with separate aviation-kerosene tax-rate inputs. These
 routing and field-map cases are written but unrun. Form 8912's Part II limit now
 feeds line 6k, while all three source forms still need complete eligibility,
 document, and business-rule review. The Schedule 3 MeF builder requires attached
-source-form IDs for lines 6h, 6i, 6k, and 12. Form 8912 is registered but unrun;
-the other source serializers are not yet registered, so these paths must not be
-treated as e-file ready.
+source-form IDs for lines 6h, 6i, 6k, and 12. Forms 8912 and 8859 are
+registered but unrun; the Form 8834 and Form 4136 source serializers are not
+yet registered, so those paths must not be treated as e-file ready.
 
 Form 8936 now enters the start graph as one singleton input containing both Part
 I MAGI breakdowns, both filing statuses, and its vehicle array. The old

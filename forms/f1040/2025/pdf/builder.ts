@@ -69,7 +69,10 @@ function fillEntry(
       for (const extraField of entry.extraPdfFields) {
         try {
           if (entry.kind === "text") {
-            if (typeof value === "number" && Math.round(value) === 0) continue;
+            if (
+              typeof value === "number" && Math.round(value) === 0 &&
+              !("printZero" in entry && entry.printZero)
+            ) continue;
             const text = typeof value === "number"
               ? Math.round(value).toString()
               : String(value);
