@@ -61,6 +61,29 @@ const nonApplicableBelowFpl = {
 } as const;
 
 Deno.test({
+  name: "XSD: TY2025 Schedule 2 recapture lines retain schema order",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line23_other_taxes: 2_150 },
+    schedule2: {
+      uncollected_fica: 100,
+      line16_lihtc_recapture: 750,
+      line17b_mortgage_subsidy_recapture: 1_000,
+      line17c_hsa_penalty: 300,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<RecaptureTaxAmt>750</RecaptureTaxAmt>");
+  assertStringIncludes(
+    xml,
+    "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
+  );
+  await validateXsd(xml, "TY2025 Schedule 2 lines 16, 17b, and 17c");
+});
+
+Deno.test({
   name: "XSD: Form 8912 allowed credit links to Schedule 3 line 6k",
   sanitizeOps: false,
   sanitizeResources: false,

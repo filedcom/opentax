@@ -50,6 +50,10 @@ filed K-1 to Form 3800 line 1e without an invented Form 8826 attachment. The
 XML builder reconciles source identity and cents to the K-1, rejects a duplicate
 Form 8826 source, and retains the shared $5,000 line 1e cap. Source, cap, and
 XML cases are written but unrun.
+The $5,000 cap is not yet allocated across a return that mixes passive and
+nonpassive disabled-access sources. The IRS requires the overall limited credit
+to be allocated pro rata, so that mixed-source path remains an open correctness
+gap rather than a supported filing claim.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
@@ -92,6 +96,14 @@ after Form 1040 line 18 is known, then replaces the tentative Schedule 3 lines
 6f, 6m, 7, and 8. The new-vehicle nonpassive business-use slice now reaches Form
 3800 line 1y; other Form 8936 eligibility and source reconciliation remain open.
 None of these changes has passed the deferred full test batch.
+
+The current Schedule 2 audit moves HSA distribution tax to the correct 2025
+line 17c, Form 8828 mortgage-subsidy recapture to 17b, and Form 8611
+low-income-housing recapture to 16. The MeF builder now orders these and the
+line 13 aggregate in schema order. Form 5405 repayment is rejected for TY2025
+because the IRS ended that form after TY2024. The source and XSD cases are
+written but unrun; Form 8611 attachment and other Schedule 2 routes still need
+audit.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section
@@ -287,8 +299,8 @@ The estate/trust code M classification follows the 2025
 [Form 1041 Schedule K-1 instructions](https://www.irs.gov/instructions/i1041);
 code ZZ is reserved here for separately identified other credits such as the
 disabled-access credit. The earlier orphan-drug code ZZ label was incorrect.
-Automatic K-1-to-Form-3800 routing remains
-open. Passive credits, eligibility-document verification,
+Automatic nonpassive K-1-to-Form-3800 routing is now coded and unrun.
+Passive-activity fact entry, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no
 current-year credit, without requiring a Form 3800 source document. The official

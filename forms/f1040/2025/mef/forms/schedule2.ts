@@ -19,7 +19,9 @@ export interface Fields {
   line17h_nqdc_tax?: number | null;
   golden_parachute_excise?: number | null;
   line17k_golden_parachute_excise?: number | null;
-  line17b_hsa_penalty?: number | null;
+  line17c_hsa_penalty?: number | null;
+  line17b_mortgage_subsidy_recapture?: number | null;
+  line16_lihtc_recapture?: number | null;
   line17e_archer_msa_tax?: number | null;
   line17f_medicare_advantage_msa_tax?: number | null;
   line17p_form8621_interest?: number | null;
@@ -41,7 +43,9 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["line9_household_employment", "HouseholdEmploymentTaxAmt"],
   ["line11_additional_medicare", "TotalAMRRTTaxAmt"],
   ["line12_niit", "IndivNetInvstIncomeTaxAmt"],
-  ["line17b_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],
+  ["line16_lihtc_recapture", "RecaptureTaxAmt"],
+  ["line17b_mortgage_subsidy_recapture", "MortgSbsdyRecaptureTaxAmt"],
+  ["line17c_hsa_penalty", "HSADistriAddnlPercentTaxAmt"],
   ["line17e_archer_msa_tax", "ArcherMSAAddnlDistriTaxAmt"],
   ["line17f_medicare_advantage_msa_tax", "MedicareMSAAddnlDistriTaxAmt"],
 ];
@@ -58,11 +62,37 @@ const AGGREGATED: ReadonlyArray<readonly [string, ...(keyof Fields)[]]> = [
   ],
 ];
 
+// IRS1040Schedule2.xsd is a sequence, not an unordered set of line elements.
+const ELEMENT_ORDER = [
+  "PremiumTaxCreditTaxLiabAmt",
+  "CrTrnsfrDlrSaleAmt",
+  "PrevOwnCrTrnsfrDlrSaleAmt",
+  "AlternativeMinimumTaxAmt",
+  "SelfEmploymentTaxAmt",
+  "SocSecMedicareTaxUnrptdTipAmt",
+  "UncollectedSocSecMedTaxAmt",
+  "TaxOnIRAsAmt",
+  "HouseholdEmploymentTaxAmt",
+  "TotalAMRRTTaxAmt",
+  "IndivNetInvstIncomeTaxAmt",
+  "UncollSSMedcrRRTAGrpInsTxAmt",
+  "RecaptureTaxAmt",
+  "MortgSbsdyRecaptureTaxAmt",
+  "HSADistriAddnlPercentTaxAmt",
+  "ArcherMSAAddnlDistriTaxAmt",
+  "MedicareMSAAddnlDistriTaxAmt",
+  "IncmNonqlfyDefrdCompPlanAmt",
+  "ExcessParachutePaymentAmt",
+  "InterestOnEachNetIncrInTaxAmt",
+  "TotalAnyOtherTaxesAmt",
+  "TotalOtherTaxesAmt",
+] as const;
+
 function buildIRS1040Schedule2(
   fields: Input,
   context?: MefBuildContext,
 ): string {
-  const children: string[] = [];
+  const childrenByTag = new Map<string, string>();
 
   // Direct mappings
   for (const [key, tag] of FIELD_MAP) {
@@ -76,19 +106,22 @@ function buildIRS1040Schedule2(
       if (context?.documentIdsByTag && formIds.length === 0) {
         throw new Error("Schedule 2 clean-vehicle repayment needs Form 8936");
       }
-      children.push(element(
+      childrenByTag.set(
         tag,
-        value,
-        formIds.length > 0
-          ? {
-            referenceDocumentId: formIds.join(" "),
-            referenceDocumentName: "IRS8936",
-          }
-          : undefined,
-      ));
+        element(
+          tag,
+          value,
+          formIds.length > 0
+            ? {
+              referenceDocumentId: formIds.join(" "),
+              referenceDocumentName: "IRS8936",
+            }
+            : undefined,
+        ),
+      );
       continue;
     }
-    children.push(element(tag, value));
+    childrenByTag.set(tag, element(tag, value));
   }
 
   // Aggregated mappings
@@ -98,7 +131,7 @@ function buildIRS1040Schedule2(
     );
     if (values.length === 0) continue;
     const sum = values.reduce((a, b) => a + b, 0);
-    children.push(element(tag, sum));
+    childrenByTag.set(tag, element(tag, sum));
   }
 
   const form8621Interest = fields.line17p_form8621_interest;
@@ -107,16 +140,19 @@ function buildIRS1040Schedule2(
     if (context?.documentIdsByPendingKey && formIds.length === 0) {
       throw new Error("Schedule 2 line 17p needs an attached Form 8621");
     }
-    children.push(element(
+    childrenByTag.set(
       "InterestOnEachNetIncrInTaxAmt",
-      form8621Interest,
-      formIds.length > 0
-        ? {
-          referenceDocumentId: formIds.join(" "),
-          referenceDocumentName: "IRS8621",
-        }
-        : undefined,
-    ));
+      element(
+        "InterestOnEachNetIncrInTaxAmt",
+        form8621Interest,
+        formIds.length > 0
+          ? {
+            referenceDocumentId: formIds.join(" "),
+            referenceDocumentName: "IRS8621",
+          }
+          : undefined,
+      ),
+    );
   }
 
   const adjustment = context?.pending?.form8978_reporting_year;
@@ -131,16 +167,19 @@ function buildIRS1040Schedule2(
     if (context?.documentIdsByPendingKey && !statementId) {
       throw new Error("Schedule 2 line 17z needs its other-taxes statement");
     }
-    children.push(element(
+    childrenByTag.set(
       "TotalAnyOtherTaxesAmt",
-      line17z,
-      statementId
-        ? {
-          referenceDocumentId: statementId,
-          referenceDocumentName: "AnyOtherTaxesStatement",
-        }
-        : undefined,
-    ));
+      element(
+        "TotalAnyOtherTaxesAmt",
+        line17z,
+        statementId
+          ? {
+            referenceDocumentId: statementId,
+            referenceDocumentName: "AnyOtherTaxesStatement",
+          }
+          : undefined,
+      ),
+    );
   }
   const adjustedPart2 = adjustment && typeof adjustment === "object"
     ? (adjustment as Record<string, unknown>).schedule2_line21
@@ -149,10 +188,16 @@ function buildIRS1040Schedule2(
     typeof adjustedPart2 === "number" &&
     (adjustedPart2 > 0 || (typeof reduction === "number" && reduction > 0))
   ) {
-    children.push(element("TotalOtherTaxesAmt", adjustedPart2));
+    childrenByTag.set(
+      "TotalOtherTaxesAmt",
+      element("TotalOtherTaxesAmt", adjustedPart2),
+    );
   }
 
-  return elements("IRS1040Schedule2", children);
+  return elements(
+    "IRS1040Schedule2",
+    ELEMENT_ORDER.map((tag) => childrenByTag.get(tag) ?? ""),
+  );
 }
 
 export const schedule2: MefFormDescriptor<"schedule2", Input> = {

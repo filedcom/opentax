@@ -1,16 +1,17 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
 // Form 5405 — Repayment of the First-Time Homebuyer Credit (IRC §36(f))
 // The 2008 first-time homebuyer credit was a $7,500 interest-free loan repaid
-// at $500/year over 15 years (TY2010–TY2024). For TY2025, the annual installment
-// is still due unless the full balance was previously repaid.
-// If the home is sold, disposed of, or destroyed before the period ends,
-// the entire remaining balance is accelerated and due in that year.
+// at $500/year over 15 years (TY2010–TY2024). Form 5405 is no longer revised
+// for TY2025, so this legacy input must not enter a TY2025 return.
 
 // Per-instance schema — one Form 5405 per home
 export const itemSchema = z.object({
@@ -20,7 +21,7 @@ export const itemSchema = z.object({
   original_credit_amount: z.number().nonnegative(),
   // Total repayments made in all prior tax years
   repayments_already_made: z.number().nonnegative(),
-  // True if the home was sold, disposed of, or ceased to be the main home in 2025
+  // True if the home was sold, disposed of, or ceased to be the main home.
   sold_or_disposed: z.boolean(),
   // Year of disposal (informational, if applicable)
   disposal_year: z.number().optional(),
@@ -35,11 +36,14 @@ export const inputSchema = z.object({
 type F5405Item = z.infer<typeof itemSchema>;
 type F5405Items = F5405Item[];
 
-// TY2025 constants
+// Historical repayment constant.
 const ANNUAL_INSTALLMENT = 500; // IRC §36(f)(1)(B): 1/15 of $7,500 max credit
 
 function remainingBalance(item: F5405Item): number {
-  return Math.max(0, item.original_credit_amount - item.repayments_already_made);
+  return Math.max(
+    0,
+    item.original_credit_amount - item.repayments_already_made,
+  );
 }
 
 function isAccelerated(item: F5405Item): boolean {
@@ -68,7 +72,12 @@ class F5405Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+    if (ctx.taxYear >= 2025) {
+      throw new Error(
+        "Form 5405 repayment ended with TY2024 and cannot be filed on a TY2025 return",
+      );
+    }
     const parsed = inputSchema.parse(input);
     const { f5405s } = parsed;
 

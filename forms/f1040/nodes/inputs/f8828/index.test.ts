@@ -17,7 +17,9 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(item: ReturnType<typeof minimalItem>) {
-  return f8828.compute({ taxYear: 2025, formType: "f1040" }, { f8828s: [item] });
+  return f8828.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8828s: [item],
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -63,7 +65,7 @@ Deno.test("f8828.inputSchema: negative modified_agi fails", () => {
 // 2. Core Recapture Calculation
 // =============================================================================
 
-Deno.test("f8828.compute: standard recapture routes to schedule2 line10_recapture_tax", () => {
+Deno.test("f8828.compute: standard recapture routes to schedule2 line17b_mortgage_subsidy_recapture", () => {
   // federally_subsidized_amount = 100000 × 0.06 × 0.0625 = 375
   // year 5 holding percentage = 100% (1.0)
   // adjusted_recapture = 375 × 1.0 = 375
@@ -71,7 +73,10 @@ Deno.test("f8828.compute: standard recapture routes to schedule2 line10_recaptur
   // recapture = min(375 × (1/3), 50% × 50000) = min(125, 25000) = 125
   const result = compute(minimalItem());
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(Math.round(fields.line10_recapture_tax! * 1000) / 1000, 125);
+  assertEquals(
+    Math.round(fields.line17b_mortgage_subsidy_recapture! * 1000) / 1000,
+    125,
+  );
 });
 
 Deno.test("f8828.compute: recapture capped at 50% of gain", () => {
@@ -90,7 +95,7 @@ Deno.test("f8828.compute: recapture capped at 50% of gain", () => {
     repayment_income_limit: 100_000,
   }));
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax, 500);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 500);
 });
 
 // =============================================================================
@@ -102,9 +107,11 @@ Deno.test("f8828.compute: year 1 holding period = 20%", () => {
   // year 1 = 20% → adjusted = 375 × 0.20 = 75
   // income ratio: (150000/90000) - 1 = 66.67% → capped at 50%
   // recapture = min(75 × 0.50, 50000 × 0.50) = min(37.5, 25000) = 37.5
-  const result = compute(minimalItem({ holding_period_years: 1, modified_agi: 150_000 }));
+  const result = compute(
+    minimalItem({ holding_period_years: 1, modified_agi: 150_000 }),
+  );
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax, 37.5);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 37.5);
 });
 
 Deno.test("f8828.compute: year 5 holding period = 100%", () => {
@@ -115,14 +122,19 @@ Deno.test("f8828.compute: year 5 holding period = 100%", () => {
   const result = compute(minimalItem({ holding_period_years: 5 }));
   const fields = fieldsOf(result.outputs, schedule2)!;
   // 100000 * 0.06 * 0.0625 = 375; 375 * 1.0 = 375; income_pct = (120000/90000)-1 = 1/3
-  assertEquals(Math.round(fields.line10_recapture_tax! * 100), Math.round(375 * (1 / 3) * 100));
+  assertEquals(
+    Math.round(fields.line17b_mortgage_subsidy_recapture! * 100),
+    Math.round(375 * (1 / 3) * 100),
+  );
 });
 
 Deno.test("f8828.compute: year 9 holding period = 20%", () => {
-  const result = compute(minimalItem({ holding_period_years: 9, modified_agi: 150_000 }));
+  const result = compute(
+    minimalItem({ holding_period_years: 9, modified_agi: 150_000 }),
+  );
   const fields = fieldsOf(result.outputs, schedule2)!;
   // 375 × 0.20 × 0.50 = 37.5
-  assertEquals(fields.line10_recapture_tax, 37.5);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 37.5);
 });
 
 Deno.test("f8828.compute: holding period >= 10 years — no recapture", () => {
@@ -135,12 +147,16 @@ Deno.test("f8828.compute: holding period >= 10 years — no recapture", () => {
 // =============================================================================
 
 Deno.test("f8828.compute: modified_agi equal to repayment_income_limit — no recapture", () => {
-  const result = compute(minimalItem({ modified_agi: 90_000, repayment_income_limit: 90_000 }));
+  const result = compute(
+    minimalItem({ modified_agi: 90_000, repayment_income_limit: 90_000 }),
+  );
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("f8828.compute: modified_agi below repayment_income_limit — no recapture", () => {
-  const result = compute(minimalItem({ modified_agi: 80_000, repayment_income_limit: 90_000 }));
+  const result = compute(
+    minimalItem({ modified_agi: 80_000, repayment_income_limit: 90_000 }),
+  );
   assertEquals(result.outputs.length, 0);
 });
 
@@ -153,7 +169,7 @@ Deno.test("f8828.compute: modified_agi >= 150% of repayment_income_limit — inc
     holding_period_years: 5,
   }));
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax, 187.5);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 187.5);
 });
 
 Deno.test("f8828.compute: modified_agi at exactly 125% — income_pct = 25%", () => {
@@ -165,7 +181,7 @@ Deno.test("f8828.compute: modified_agi at exactly 125% — income_pct = 25%", ()
     holding_period_years: 5,
   }));
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax, 93.75);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 93.75);
 });
 
 // =============================================================================
@@ -195,7 +211,7 @@ Deno.test("f8828.compute: exact federally_subsidized_amount calculation", () => 
     repayment_income_limit: 100_000,
   }));
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax, 500);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 500);
 });
 
 // =============================================================================
@@ -236,6 +252,6 @@ Deno.test("f8828.compute: smoke test — full realistic scenario", () => {
     family_size: 4,
   }));
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_recapture_tax, 116.015625);
+  assertEquals(fields.line17b_mortgage_subsidy_recapture, 116.015625);
   assertEquals(result.outputs.length, 1);
 });

@@ -217,18 +217,13 @@ Deno.test("calc: line17a_investment_credit_recapture alone routes to f1040 line2
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 3_000);
 });
 
-Deno.test("calc: line10_homebuyer_credit_repayment alone routes to f1040 line23", () => {
-  const result = compute({ line10_homebuyer_credit_repayment: 500 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 500);
-});
-
-Deno.test("calc: line10_recapture_tax alone routes to f1040 line23", () => {
-  const result = compute({ line10_recapture_tax: 1_000 });
+Deno.test("calc: line17b_mortgage_subsidy_recapture alone routes to f1040 line23", () => {
+  const result = compute({ line17b_mortgage_subsidy_recapture: 1_000 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 1_000);
 });
 
-Deno.test("calc: line10_lihtc_recapture alone routes to f1040 line23", () => {
-  const result = compute({ line10_lihtc_recapture: 750 });
+Deno.test("calc: line16_lihtc_recapture alone routes to f1040 line23", () => {
+  const result = compute({ line16_lihtc_recapture: 750 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 750);
 });
 
@@ -269,9 +264,8 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
     line9_household_employment: 600,
     line8_form5329_tax: 700,
     line9_965_net_tax_liability: 800,
-    line10_homebuyer_credit_repayment: 900,
-    line10_recapture_tax: 1_000,
-    line10_lihtc_recapture: 1_100,
+    line17b_mortgage_subsidy_recapture: 1_000,
+    line16_lihtc_recapture: 1_100,
     line11_additional_medicare: 1_200,
     line12_niit: 1_300,
     uncollected_fica: 1_400,
@@ -282,14 +276,14 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
     line17k_golden_parachute_excise: 1_900,
     line17e_archer_msa_tax: 2_000,
     line17f_medicare_advantage_msa_tax: 2_100,
-    line17b_hsa_penalty: 2_300,
+    line17c_hsa_penalty: 2_300,
     line17a_investment_credit_recapture: 2_500,
     line17z_other_additional_taxes: 2_600,
     line17_exit_tax: 2_700,
   });
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line17_additional_taxes, 1_200);
-  assertEquals(fields.line23_other_taxes, 32_900);
+  assertEquals(fields.line23_other_taxes, 32_000);
 });
 
 // ── Previously untested fields ───────────────────────────────────────────────
@@ -319,8 +313,8 @@ Deno.test("calc: line6_uncollected_8919 alone routes to f1040 line23", () => {
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 600);
 });
 
-Deno.test("calc: line17b_hsa_penalty alone routes to f1040 line23", () => {
-  const result = compute({ line17b_hsa_penalty: 700 });
+Deno.test("calc: line17c_hsa_penalty alone routes to f1040 line23", () => {
+  const result = compute({ line17c_hsa_penalty: 700 });
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 700);
 });
 
@@ -354,7 +348,7 @@ Deno.test("routing: Part I AMT stays separate from eight Part II tax fields", ()
     line17e_archer_msa_tax: 400,
     line17f_medicare_advantage_msa_tax: 500,
     line6_uncollected_8919: 600,
-    line17b_hsa_penalty: 700,
+    line17c_hsa_penalty: 700,
     line11_additional_medicare: 800,
     line12_niit: 900,
   });

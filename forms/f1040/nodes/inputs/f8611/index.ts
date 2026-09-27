@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
@@ -8,7 +11,7 @@ import type { NodeContext } from "../../../../../core/types/node-context.ts";
 // Form 8611 — Recapture of Low-Income Housing Credit (IRC §42(j))
 // Filed when a building that received LIHTC is disposed of or no longer meets
 // credit requirements before the end of the 15-year recapture period.
-// Recaptured credit routes to Schedule 2 line 10.
+// Recaptured credit routes to Schedule 2 line 16.
 
 // ─── TY2025 Constants (IRC §42(j)) ───────────────────────────────────────────
 
@@ -89,7 +92,10 @@ function totalRecapture(items: F8611Item[]): number {
 
 function buildOutputs(recapture: number): NodeOutput[] {
   if (recapture <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line10_lihtc_recapture: recapture } }];
+  return [{
+    nodeType: schedule2.nodeType,
+    fields: { line16_lihtc_recapture: recapture },
+  }];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -99,7 +105,10 @@ class F8611Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
     for (const item of input.f8611s) {
       validateYears(item);

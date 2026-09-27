@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
@@ -90,7 +93,10 @@ function recaptureForItem(item: F8828Item): number {
 
 function buildOutputs(recapture: number): NodeOutput[] {
   if (recapture <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line10_recapture_tax: recapture } }];
+  return [{
+    nodeType: schedule2.nodeType,
+    fields: { line17b_mortgage_subsidy_recapture: recapture },
+  }];
 }
 
 class F8828Node extends TaxNode<typeof inputSchema> {
@@ -98,7 +104,10 @@ class F8828Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
     const totalRecapture = input.f8828s.reduce(
       (sum, item) => sum + recaptureForItem(item),

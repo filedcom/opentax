@@ -1,5 +1,5 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
-import { schedule2 } from "./schedule2.ts";
+import { FIELD_MAP, schedule2 } from "./schedule2.ts";
 
 function assertNotIncludes(actual: string, expected: string) {
   assertEquals(
@@ -129,12 +129,49 @@ Deno.test("line12_niit maps to IndivNetInvstIncomeTaxAmt", () => {
   );
 });
 
-Deno.test("line17b_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
-  const result = schedule2.build({ line17b_hsa_penalty: 400 });
+Deno.test("line17c_hsa_penalty maps to HSADistriAddnlPercentTaxAmt", () => {
+  const result = schedule2.build({ line17c_hsa_penalty: 400 });
   assertStringIncludes(
     result,
     "<HSADistriAddnlPercentTaxAmt>400</HSADistriAddnlPercentTaxAmt>",
   );
+});
+
+Deno.test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
+  const result = schedule2.build({
+    line16_lihtc_recapture: 750,
+    line17b_mortgage_subsidy_recapture: 1_000,
+    line17c_hsa_penalty: 400,
+    uncollected_fica: 100,
+  });
+  assertStringIncludes(result, "<RecaptureTaxAmt>750</RecaptureTaxAmt>");
+  assertStringIncludes(
+    result,
+    "<MortgSbsdyRecaptureTaxAmt>1000</MortgSbsdyRecaptureTaxAmt>",
+  );
+  const tags = [
+    "UncollSSMedcrRRTAGrpInsTxAmt",
+    "RecaptureTaxAmt",
+    "MortgSbsdyRecaptureTaxAmt",
+    "HSADistriAddnlPercentTaxAmt",
+  ];
+  const positions = tags.map((tag) => result.indexOf(`<${tag}>`));
+  assertEquals(positions.every((position) => position >= 0), true);
+  assertEquals(
+    positions.every((position, index) =>
+      index === 0 ||
+      positions[index - 1] < position
+    ),
+    true,
+  );
+});
+
+Deno.test("every mapped Schedule 2 field survives the schema-order builder", () => {
+  const fields = Object.fromEntries(FIELD_MAP.map(([key]) => [key, 1]));
+  const result = schedule2.build(fields);
+  for (const [, tag] of FIELD_MAP) {
+    assertStringIncludes(result, `<${tag}>1</${tag}>`);
+  }
 });
 
 Deno.test("line17e_archer_msa_tax maps to ArcherMSAAddnlDistriTaxAmt", () => {
@@ -298,7 +335,7 @@ const allFields = {
   line17h_nqdc_tax: 1100,
   golden_parachute_excise: 1200,
   line17k_golden_parachute_excise: 1300,
-  line17b_hsa_penalty: 1400,
+  line17c_hsa_penalty: 1400,
   line17e_archer_msa_tax: 1500,
   line17f_medicare_advantage_msa_tax: 1600,
 };

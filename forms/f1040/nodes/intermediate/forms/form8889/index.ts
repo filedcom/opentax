@@ -3,7 +3,11 @@ import type {
   NodeOutput,
   NodeResult,
 } from "../../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../../core/types/output-nodes.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
@@ -77,11 +81,17 @@ function annualLimit(
   familyLimit: number,
   catchupLimit: number,
 ): number {
-  const base = input.coverage_type === CoverageType.Family ? familyLimit : selfOnlyLimit;
-  const withCatchup = input.age_55_or_older === true ? base + catchupLimit : base;
+  const base = input.coverage_type === CoverageType.Family
+    ? familyLimit
+    : selfOnlyLimit;
+  const withCatchup = input.age_55_or_older === true
+    ? base + catchupLimit
+    : base;
   // Prorate by months of HDHP coverage; default to 12 (full year) when not provided.
   const months = input.months_of_hdhp_coverage ?? 12;
-  const prorated = months < 12 ? Math.floor((withCatchup * months) / 12) : withCatchup;
+  const prorated = months < 12
+    ? Math.floor((withCatchup * months) / 12)
+    : withCatchup;
   // Subtract Archer MSA distributions; floor at zero.
   const archerOffset = input.archer_msa_distributions ?? 0;
   return Math.max(0, prorated - archerOffset);
@@ -112,7 +122,8 @@ function deductibleContributions(
 
 // Part I: Total contributions (taxpayer + employer) for excess calculation
 function totalContributions(input: Form8889Input): number {
-  return (input.taxpayer_hsa_contributions ?? 0) + (input.employer_hsa_contributions ?? 0);
+  return (input.taxpayer_hsa_contributions ?? 0) +
+    (input.employer_hsa_contributions ?? 0);
 }
 
 // Part I: Excess contributions = max(0, total - limit)
@@ -125,7 +136,8 @@ function excessContributions(
 ): number {
   return Math.max(
     0,
-    totalContributions(input) - annualLimit(input, selfOnlyLimit, familyLimit, catchupLimit),
+    totalContributions(input) -
+      annualLimit(input, selfOnlyLimit, familyLimit, catchupLimit),
   );
 }
 
@@ -155,7 +167,12 @@ function schedule1Output(deductible: number, taxable: number): NodeOutput[] {
   if (deductible > 0) input.line13_hsa_deduction = deductible;
   if (taxable > 0) input.line8z_other = taxable;
   if (Object.keys(input).length === 0) return [];
-  return [output(schedule1, input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>)];
+  return [
+    output(
+      schedule1,
+      input as AtLeastOne<z.infer<typeof schedule1["inputSchema"]>>,
+    ),
+  ];
 }
 
 // Excess contribution output → Form 5329 Part VII
@@ -167,7 +184,7 @@ function excessOutput(excess: number): NodeOutput[] {
 // 20% penalty output → Schedule 2 line 17b
 function penaltyOutput(penalty: number): NodeOutput[] {
   if (penalty <= 0) return [];
-  return [output(schedule2, { line17b_hsa_penalty: penalty })];
+  return [output(schedule2, { line17c_hsa_penalty: penalty })];
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -175,7 +192,12 @@ function penaltyOutput(penalty: number): NodeOutput[] {
 class Form8889Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form8889";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([schedule1, agi_aggregator, schedule2, form5329]);
+  readonly outputNodes = new OutputNodes([
+    schedule1,
+    agi_aggregator,
+    schedule2,
+    form5329,
+  ]);
 
   compute(ctx: NodeContext, rawInput: Form8889Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -222,10 +244,14 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const base = input.coverage_type === CoverageType.Family
       ? cfg.hsaFamilyLimit
       : cfg.hsaSelfOnlyLimit;
-    const withCatchup = input.age_55_or_older === true ? base + cfg.hsaCatchup : base;
+    const withCatchup = input.age_55_or_older === true
+      ? base + cfg.hsaCatchup
+      : base;
     // Line 3 — annual limit prorated by HDHP coverage months (before the
     // Archer MSA offset, which the form applies on lines 4–5).
-    const line3 = months < 12 ? Math.floor((withCatchup * months) / 12) : withCatchup;
+    const line3 = months < 12
+      ? Math.floor((withCatchup * months) / 12)
+      : withCatchup;
     const line4 = input.archer_msa_distributions ?? 0;
     const line5 = Math.max(0, line3 - line4);
     const line9 = input.employer_hsa_contributions ?? 0;
@@ -247,13 +273,15 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     if (distributions > 0) {
       printFields.print_line14a_distributions = distributions;
       printFields.print_line14c = distributions;
-      printFields.print_line15_qualified = input.qualified_medical_expenses ?? 0;
+      printFields.print_line15_qualified = input.qualified_medical_expenses ??
+        0;
       printFields.print_line16_taxable = taxable;
     }
     outputs.push({ nodeType: this.nodeType, fields: printFields });
 
     // Route HSA deduction and taxable distribution to AGI aggregator
-    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> = {};
+    const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
+      {};
     if (deductible > 0) agiFields.line13_hsa_deduction = deductible;
     if (taxable > 0) agiFields.line8z_other = taxable;
     if (Object.keys(agiFields).length > 0) {

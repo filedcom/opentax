@@ -1,12 +1,15 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { form8889, inputSchema, CoverageType } from "./index.ts";
+import { CoverageType, form8889, inputSchema } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { form5329 } from "../form5329/index.ts";
 import { schedule1 } from "../../../outputs/schedule1/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8889.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form8889.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -140,14 +143,14 @@ Deno.test("part2: non-qualified distribution → schedule1 line8z_other income",
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 2000);
 });
 
-Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17b_hsa_penalty", () => {
+Deno.test("part2: non-qualified distribution → 20% penalty on schedule2 line17c_hsa_penalty", () => {
   // distribute 3000, qualified 1000 → taxable 2000 → penalty 400
   const result = compute({
     coverage_type: CoverageType.SelfOnly,
     hsa_distributions: 3000,
     qualified_medical_expenses: 1000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 400);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 400);
 });
 
 Deno.test("part2: fully non-qualified distribution → income + 20% penalty", () => {
@@ -157,7 +160,7 @@ Deno.test("part2: fully non-qualified distribution → income + 20% penalty", ()
     hsa_distributions: 1000,
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1000);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 200);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 200);
 });
 
 Deno.test("part2: distribution_exception → income still taxable but no 20% penalty", () => {
@@ -184,7 +187,7 @@ Deno.test("combined: deduction + non-qualified distribution both present", () =>
   });
   assertEquals(fieldsOf(result.outputs, schedule1)!.line13_hsa_deduction, 3000);
   assertEquals(fieldsOf(result.outputs, schedule1)!.line8z_other, 1000);
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line17b_hsa_penalty, 200);
+  assertEquals(fieldsOf(result.outputs, schedule2)!.line17c_hsa_penalty, 200);
 });
 
 // ─── Input validation ─────────────────────────────────────────────────────────

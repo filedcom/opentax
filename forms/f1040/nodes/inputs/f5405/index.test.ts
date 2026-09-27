@@ -12,12 +12,24 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return f5405.compute({ taxYear: 2025, formType: "f1040" }, { f5405s: items });
+  return f5405.compute({ taxYear: 2024, formType: "f1040" }, { f5405s: items });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
+
+Deno.test("Form 5405 rejects the obsolete TY2025 repayment input", () => {
+  assertThrows(
+    () =>
+      f5405.compute(
+        { taxYear: 2025, formType: "f1040" },
+        { f5405s: [minimalItem()] },
+      ),
+    Error,
+    "ended with TY2024",
+  );
+});
 
 // =============================================================================
 // 1. Input Schema Validation
@@ -58,7 +70,7 @@ Deno.test("f5405.inputSchema: valid full item passes", () => {
     f5405s: [minimalItem({
       repayments_already_made: 7000,
       sold_or_disposed: true,
-      disposal_year: 2025,
+      disposal_year: 2024,
       home_destroyed: false,
     })],
   });
@@ -70,7 +82,9 @@ Deno.test("f5405.inputSchema: valid full item passes", () => {
 // =============================================================================
 
 Deno.test("f5405.compute: standard installment with no prior repayments → $500 to schedule2", () => {
-  const result = compute([minimalItem({ repayments_already_made: 0, sold_or_disposed: false })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 0, sold_or_disposed: false }),
+  ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line10_homebuyer_credit_repayment, 500);
@@ -78,7 +92,9 @@ Deno.test("f5405.compute: standard installment with no prior repayments → $500
 
 Deno.test("f5405.compute: standard installment with partial prior repayments → $500", () => {
   // Still has balance: 7500 - 5000 = 2500 remaining; installment = min(500, 2500)
-  const result = compute([minimalItem({ repayments_already_made: 5000, sold_or_disposed: false })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 5000, sold_or_disposed: false }),
+  ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line10_homebuyer_credit_repayment, 500);
@@ -86,7 +102,9 @@ Deno.test("f5405.compute: standard installment with partial prior repayments →
 
 Deno.test("f5405.compute: standard installment when remaining balance < $500 → routes remaining", () => {
   // 7500 - 7200 = 300 remaining; installment = min(500, 300) = 300
-  const result = compute([minimalItem({ repayments_already_made: 7200, sold_or_disposed: false })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 7200, sold_or_disposed: false }),
+  ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line10_homebuyer_credit_repayment, 300);
@@ -98,14 +116,18 @@ Deno.test("f5405.compute: standard installment when remaining balance < $500 →
 
 Deno.test("f5405.compute: sold_or_disposed=true → full remaining balance due", () => {
   // 7500 - 2000 = 5500 remaining; disposal → full 5500 due
-  const result = compute([minimalItem({ repayments_already_made: 2000, sold_or_disposed: true })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 2000, sold_or_disposed: true }),
+  ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line10_homebuyer_credit_repayment, 5500);
 });
 
 Deno.test("f5405.compute: sold_or_disposed=true with no prior repayments → full $7500 due", () => {
-  const result = compute([minimalItem({ repayments_already_made: 0, sold_or_disposed: true })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 0, sold_or_disposed: true }),
+  ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line10_homebuyer_credit_repayment, 7500);
@@ -129,17 +151,23 @@ Deno.test("f5405.compute: home_destroyed=true → full remaining balance due", (
 
 Deno.test("f5405.compute: fully repaid credit → no output", () => {
   // 7500 - 7500 = 0 remaining; no repayment due
-  const result = compute([minimalItem({ repayments_already_made: 7500, sold_or_disposed: false })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 7500, sold_or_disposed: false }),
+  ]);
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("f5405.compute: repayments exceed original → no output (floor at 0)", () => {
-  const result = compute([minimalItem({ repayments_already_made: 8000, sold_or_disposed: false })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 8000, sold_or_disposed: false }),
+  ]);
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("f5405.compute: sold_or_disposed=true but fully repaid → no output", () => {
-  const result = compute([minimalItem({ repayments_already_made: 7500, sold_or_disposed: true })]);
+  const result = compute([
+    minimalItem({ repayments_already_made: 7500, sold_or_disposed: true }),
+  ]);
   assertEquals(result.outputs.length, 0);
 });
 
@@ -152,7 +180,11 @@ Deno.test("f5405.compute: multiple items — repayment amounts summed into singl
   // Item 2: 5000 - 0 = 5000 remaining, disposed → 5000
   const result = compute([
     minimalItem({ repayments_already_made: 7000, sold_or_disposed: false }),
-    minimalItem({ original_credit_amount: 5000, repayments_already_made: 0, sold_or_disposed: true }),
+    minimalItem({
+      original_credit_amount: 5000,
+      repayments_already_made: 0,
+      sold_or_disposed: true,
+    }),
   ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
@@ -177,12 +209,20 @@ Deno.test("f5405.compute: credit_year=2008 does not throw", () => {
 // =============================================================================
 
 Deno.test("f5405.compute: original_credit_amount=0 → no repayment", () => {
-  const result = compute([minimalItem({ original_credit_amount: 0, repayments_already_made: 0 })]);
+  const result = compute([
+    minimalItem({ original_credit_amount: 0, repayments_already_made: 0 }),
+  ]);
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("f5405.compute: disposal_year field present — does not affect calculation", () => {
-  const result = compute([minimalItem({ sold_or_disposed: true, disposal_year: 2025, repayments_already_made: 6000 })]);
+  const result = compute([
+    minimalItem({
+      sold_or_disposed: true,
+      disposal_year: 2024,
+      repayments_already_made: 6000,
+    }),
+  ]);
   const out = findOutput(result, "schedule2");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line10_homebuyer_credit_repayment, 1500);
@@ -205,7 +245,7 @@ Deno.test("f5405.compute: smoke test — mixed items", () => {
       original_credit_amount: 6000,
       repayments_already_made: 1000,
       sold_or_disposed: true,
-      disposal_year: 2025,
+      disposal_year: 2024,
     }),
     // Fully repaid: no output
     minimalItem({

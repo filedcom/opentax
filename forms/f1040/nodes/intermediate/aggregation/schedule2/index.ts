@@ -54,9 +54,9 @@ export const inputSchema = z.object({
   // Line 6 — Uncollected SS and Medicare tax on wages (Form 8919 line 13)
   // IRC §3101; Form 8919 line 13 → Schedule 2 line 6
   line6_uncollected_8919: z.number().nonnegative().optional(),
-  // Line 17b — 20% additional tax on non-qualified HSA distributions (Form 8889 line 20)
-  // IRC §223(f)(4)(A); Form 8889 Part II line 20 → Schedule 2 line 17b
-  line17b_hsa_penalty: z.number().nonnegative().optional(),
+  // Line 17c — 20% additional tax on non-qualified HSA distributions (Form 8889 line 20)
+  // IRC §223(f)(4)(A); Form 8889 Part II line 20 → Schedule 2 line 17c
+  line17c_hsa_penalty: z.number().nonnegative().optional(),
   // Line 11 — Additional Medicare Tax (from Form 8959 line 18)
   // IRC §3101(b)(2); Form 8959 line 18 → Schedule 2 line 11
   line11_additional_medicare: z.number().nonnegative().optional(),
@@ -88,15 +88,10 @@ export const inputSchema = z.object({
   // Line 17a — Recapture of investment credit (Form 4255)
   // IRC §50(a); Form 4255 → Schedule 2 line 17a
   line17a_investment_credit_recapture: z.number().nonnegative().optional(),
-  // Line 10 — Repayment of first-time homebuyer credit (Form 5405)
-  // IRC §36(f); Form 5405 → Schedule 2 line 10
-  line10_homebuyer_credit_repayment: z.number().nonnegative().optional(),
-  // Line 10 — Recapture of federal mortgage subsidy (Form 8828)
-  // IRC §143(m); Form 8828 → Schedule 2 line 10
-  line10_recapture_tax: z.number().nonnegative().optional(),
-  // Line 10 — Recapture of low-income housing credit (Form 8611)
-  // IRC §42(j); Form 8611 → Schedule 2 line 10
-  line10_lihtc_recapture: z.number().nonnegative().optional(),
+  // Line 17b — Recapture of federal mortgage subsidy (Form 8828).
+  line17b_mortgage_subsidy_recapture: z.number().nonnegative().optional(),
+  // Line 16 — Recapture of low-income housing credit (Form 8611).
+  line16_lihtc_recapture: z.number().nonnegative().optional(),
   // Line 17z — other additional taxes. A negative Form 8978 adjustment may
   // reduce eligible chapter 1 taxes here after its Schedule 3 line 6l cap;
   // a positive Form 8978 line 14 belongs on Form 1040 line 16, not here.
@@ -156,14 +151,13 @@ function part2Total(input: Schedule2Input): number {
     (input.line17e_archer_msa_tax ?? 0) +
     (input.line17f_medicare_advantage_msa_tax ?? 0) +
     (input.line6_uncollected_8919 ?? 0) +
-    (input.line17b_hsa_penalty ?? 0) +
+    (input.line17c_hsa_penalty ?? 0) +
     (input.line11_additional_medicare ?? 0) +
     (input.line12_niit ?? 0) +
     (input.line9_household_employment ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
-    (input.line10_homebuyer_credit_repayment ?? 0) +
-    (input.line10_recapture_tax ?? 0) +
-    (input.line10_lihtc_recapture ?? 0) +
+    (input.line17b_mortgage_subsidy_recapture ?? 0) +
+    (input.line16_lihtc_recapture ?? 0) +
     (input.line17z_other_additional_taxes ?? 0) +
     (input.line17p_form8621_interest ?? 0) +
     (input.line17_exit_tax ?? 0) +
@@ -182,11 +176,10 @@ function part2Chapter1Tax(input: Schedule2Input): number {
     (input.line17h_nqdc_tax ?? 0) +
     (input.line17e_archer_msa_tax ?? 0) +
     (input.line17f_medicare_advantage_msa_tax ?? 0) +
-    (input.line17b_hsa_penalty ?? 0) +
+    (input.line17c_hsa_penalty ?? 0) +
     (input.line17a_investment_credit_recapture ?? 0) +
-    (input.line10_homebuyer_credit_repayment ?? 0) +
-    (input.line10_recapture_tax ?? 0) +
-    (input.line10_lihtc_recapture ?? 0) +
+    (input.line17b_mortgage_subsidy_recapture ?? 0) +
+    (input.line16_lihtc_recapture ?? 0) +
     (input.line17_exit_tax ?? 0);
 }
 

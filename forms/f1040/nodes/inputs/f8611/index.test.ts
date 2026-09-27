@@ -44,28 +44,50 @@ Deno.test("f8611.inputSchema: empty array fails (min 1)", () => {
 
 Deno.test("f8611.inputSchema: negative original_credit_amount fails", () => {
   const parsed = f8611.inputSchema.safeParse({
-    f8611s: [{ original_credit_amount: -1000, year_credit_first_claimed: 2020, year_of_recapture_event: 2025, recapture_event_type: RecaptureEventType.DISPOSITION }],
+    f8611s: [{
+      original_credit_amount: -1000,
+      year_credit_first_claimed: 2020,
+      year_of_recapture_event: 2025,
+      recapture_event_type: RecaptureEventType.DISPOSITION,
+    }],
   });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("f8611.inputSchema: applicable_fraction out of range (> 1) fails", () => {
   const parsed = f8611.inputSchema.safeParse({
-    f8611s: [{ original_credit_amount: 10_000, year_credit_first_claimed: 2020, year_of_recapture_event: 2025, recapture_event_type: RecaptureEventType.DISPOSITION, applicable_fraction: 1.5 }],
+    f8611s: [{
+      original_credit_amount: 10_000,
+      year_credit_first_claimed: 2020,
+      year_of_recapture_event: 2025,
+      recapture_event_type: RecaptureEventType.DISPOSITION,
+      applicable_fraction: 1.5,
+    }],
   });
   assertEquals(parsed.success, false);
 });
 
 Deno.test("f8611.inputSchema: applicable_fraction of 0 passes", () => {
   const parsed = f8611.inputSchema.safeParse({
-    f8611s: [{ original_credit_amount: 10_000, year_credit_first_claimed: 2020, year_of_recapture_event: 2025, recapture_event_type: RecaptureEventType.DISPOSITION, applicable_fraction: 0 }],
+    f8611s: [{
+      original_credit_amount: 10_000,
+      year_credit_first_claimed: 2020,
+      year_of_recapture_event: 2025,
+      recapture_event_type: RecaptureEventType.DISPOSITION,
+      applicable_fraction: 0,
+    }],
   });
   assertEquals(parsed.success, true);
 });
 
 Deno.test("f8611.inputSchema: invalid recapture_event_type fails", () => {
   const parsed = f8611.inputSchema.safeParse({
-    f8611s: [{ original_credit_amount: 10_000, year_credit_first_claimed: 2020, year_of_recapture_event: 2025, recapture_event_type: "INVALID" }],
+    f8611s: [{
+      original_credit_amount: 10_000,
+      year_credit_first_claimed: 2020,
+      year_of_recapture_event: 2025,
+      recapture_event_type: "INVALID",
+    }],
   });
   assertEquals(parsed.success, false);
 });
@@ -73,9 +95,18 @@ Deno.test("f8611.inputSchema: invalid recapture_event_type fails", () => {
 Deno.test("f8611.inputSchema: all recapture event types are valid", () => {
   for (const eventType of Object.values(RecaptureEventType)) {
     const parsed = f8611.inputSchema.safeParse({
-      f8611s: [{ original_credit_amount: 10_000, year_credit_first_claimed: 2020, year_of_recapture_event: 2025, recapture_event_type: eventType }],
+      f8611s: [{
+        original_credit_amount: 10_000,
+        year_credit_first_claimed: 2020,
+        year_of_recapture_event: 2025,
+        recapture_event_type: eventType,
+      }],
     });
-    assertEquals(parsed.success, true, `RecaptureEventType.${eventType} should be valid`);
+    assertEquals(
+      parsed.success,
+      true,
+      `RecaptureEventType.${eventType} should be valid`,
+    );
   }
 });
 
@@ -91,7 +122,7 @@ Deno.test("f8611.compute: year 0 (same year) = 100% recapture", () => {
     year_of_recapture_event: 2025,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_lihtc_recapture, 10_000);
+  assertEquals(fields.line16_lihtc_recapture, 10_000);
 });
 
 Deno.test("f8611.compute: year 5 = 10/15 recapture", () => {
@@ -103,7 +134,10 @@ Deno.test("f8611.compute: year 5 = 10/15 recapture", () => {
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
   const expected = 15_000 * (10 / 15);
-  assertEquals(Math.abs((fields.line10_lihtc_recapture ?? 0) - expected) < 0.01, true);
+  assertEquals(
+    Math.abs((fields.line16_lihtc_recapture ?? 0) - expected) < 0.01,
+    true,
+  );
 });
 
 Deno.test("f8611.compute: year 14 = 1/15 recapture", () => {
@@ -115,7 +149,10 @@ Deno.test("f8611.compute: year 14 = 1/15 recapture", () => {
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
   const expected = 15_000 * (1 / 15);
-  assertEquals(Math.abs((fields.line10_lihtc_recapture ?? 0) - expected) < 0.01, true);
+  assertEquals(
+    Math.abs((fields.line16_lihtc_recapture ?? 0) - expected) < 0.01,
+    true,
+  );
 });
 
 // =============================================================================
@@ -154,7 +191,7 @@ Deno.test("f8611.compute: applicable_fraction reduces recapture", () => {
     applicable_fraction: 0.5,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_lihtc_recapture, 5_000);
+  assertEquals(fields.line16_lihtc_recapture, 5_000);
 });
 
 Deno.test("f8611.compute: applicable_fraction defaults to 1.0 when omitted", () => {
@@ -164,7 +201,7 @@ Deno.test("f8611.compute: applicable_fraction defaults to 1.0 when omitted", () 
     year_of_recapture_event: 2025,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_lihtc_recapture, 10_000);
+  assertEquals(fields.line16_lihtc_recapture, 10_000);
 });
 
 // =============================================================================
@@ -180,7 +217,7 @@ Deno.test("f8611.compute: prior_recapture_amounts reduces net recapture", () => 
     prior_recapture_amounts: 3_000,
   })]);
   const fields = fieldsOf(result.outputs, schedule2)!;
-  assertEquals(fields.line10_lihtc_recapture, 7_000);
+  assertEquals(fields.line16_lihtc_recapture, 7_000);
 });
 
 Deno.test("f8611.compute: prior_recapture_amounts equals gross — no output", () => {
@@ -208,7 +245,7 @@ Deno.test("f8611.compute: prior_recapture_amounts exceeds gross — floors at ze
 // 6. Output Routing
 // =============================================================================
 
-Deno.test("f8611.compute: routes to schedule2 line10_lihtc_recapture with correct amount", () => {
+Deno.test("f8611.compute: routes to schedule2 line16_lihtc_recapture with correct amount", () => {
   const result = compute([minimalItem({
     original_credit_amount: 10_000,
     year_credit_first_claimed: 2020,
@@ -217,7 +254,10 @@ Deno.test("f8611.compute: routes to schedule2 line10_lihtc_recapture with correc
   const fields = fieldsOf(result.outputs, schedule2)!;
   // years_held = 5, recapture_fraction = 10/15
   const expected = 10_000 * (10 / 15);
-  assertEquals(Math.abs((fields.line10_lihtc_recapture ?? 0) - expected) < 0.01, true);
+  assertEquals(
+    Math.abs((fields.line16_lihtc_recapture ?? 0) - expected) < 0.01,
+    true,
+  );
 });
 
 Deno.test("f8611.compute: zero original_credit_amount — no output", () => {
@@ -237,18 +277,37 @@ Deno.test("f8611.compute: multiple buildings — recaptures summed", () => {
   // Building 1: 10,000, year 0 → 10,000 × 1.0 = 10,000
   // Building 2: 6,000, year 5 → 6,000 × (10/15) = 4,000
   const result = compute([
-    minimalItem({ original_credit_amount: 10_000, year_credit_first_claimed: 2025, year_of_recapture_event: 2025 }),
-    minimalItem({ original_credit_amount: 6_000, year_credit_first_claimed: 2020, year_of_recapture_event: 2025 }),
+    minimalItem({
+      original_credit_amount: 10_000,
+      year_credit_first_claimed: 2025,
+      year_of_recapture_event: 2025,
+    }),
+    minimalItem({
+      original_credit_amount: 6_000,
+      year_credit_first_claimed: 2020,
+      year_of_recapture_event: 2025,
+    }),
   ]);
   const fields = fieldsOf(result.outputs, schedule2)!;
   const expected = 10_000 + 6_000 * (10 / 15);
-  assertEquals(Math.abs((fields.line10_lihtc_recapture ?? 0) - expected) < 0.01, true);
+  assertEquals(
+    Math.abs((fields.line16_lihtc_recapture ?? 0) - expected) < 0.01,
+    true,
+  );
 });
 
 Deno.test("f8611.compute: multiple buildings — only one schedule2 output", () => {
   const result = compute([
-    minimalItem({ original_credit_amount: 10_000, year_credit_first_claimed: 2025, year_of_recapture_event: 2025 }),
-    minimalItem({ original_credit_amount: 5_000, year_credit_first_claimed: 2021, year_of_recapture_event: 2025 }),
+    minimalItem({
+      original_credit_amount: 10_000,
+      year_credit_first_claimed: 2025,
+      year_of_recapture_event: 2025,
+    }),
+    minimalItem({
+      original_credit_amount: 5_000,
+      year_credit_first_claimed: 2021,
+      year_of_recapture_event: 2025,
+    }),
   ]);
   assertEquals(result.outputs.length, 1);
 });
@@ -258,11 +317,27 @@ Deno.test("f8611.compute: multiple buildings — only one schedule2 output", () 
 // =============================================================================
 
 Deno.test("f8611.compute: throws if year_of_recapture_event < year_credit_first_claimed", () => {
-  assertThrows(() => compute([minimalItem({ original_credit_amount: 10_000, year_credit_first_claimed: 2025, year_of_recapture_event: 2020 })]), Error);
+  assertThrows(
+    () =>
+      compute([
+        minimalItem({
+          original_credit_amount: 10_000,
+          year_credit_first_claimed: 2025,
+          year_of_recapture_event: 2020,
+        }),
+      ]),
+    Error,
+  );
 });
 
 Deno.test("f8611.compute: same year (year_of_recapture = year_first_claimed) does not throw", () => {
-  const result = compute([minimalItem({ original_credit_amount: 10_000, year_credit_first_claimed: 2025, year_of_recapture_event: 2025 })]);
+  const result = compute([
+    minimalItem({
+      original_credit_amount: 10_000,
+      year_credit_first_claimed: 2025,
+      year_of_recapture_event: 2025,
+    }),
+  ]);
   assertEquals(result.outputs.length, 1);
 });
 
@@ -304,5 +379,8 @@ Deno.test("f8611.compute: smoke test — multiple buildings with all fields", ()
   const b1_net = b1_gross - 5_000;
   const b2_gross = 30_000 * 1.0 * (12 / 15);
   const expected = b1_net + b2_gross;
-  assertEquals(Math.abs((fields.line10_lihtc_recapture ?? 0) - expected) < 0.01, true);
+  assertEquals(
+    Math.abs((fields.line16_lihtc_recapture ?? 0) - expected) < 0.01,
+    true,
+  );
 });
