@@ -21,7 +21,8 @@ Gasoline line 1c now requires a permitted use code and a noncommercial-
 motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
 certificate confirmations. Export line 1d requires an export confirmation.
 The represented line rates are 1a/1b/1c $.183, 1d $.184, 2a $.150,
-2b $.193, 2c $.194, 2d $.001, 3a/3b $.243, 4a/4b
+2b $.193, 2c $.194, 2d $.001, 3a/3b/3c $.243, 3d $.170,
+3e $.244, 4a/4b
 $.243, 5c $.243, 5d $.218, 11a-d/11h $.183, and 11e-g $.243. IRS type-of-use codes are
 required and constrained to the local XSD for variable-use lines. This model
 does not assert eligibility solely from gallon quantities.
@@ -37,6 +38,8 @@ off-highway fuel and refundable farm fuel was wrong for the 2025 form.
 The native IRS4136 XML builder now serializes these represented claims, including
 separate gasoline line 1c detail and line 1d export groups,
 plus aviation-gasoline commercial-use, export, and foreign-trade LUST groups,
+and distinct diesel train, bus, and export groups with undyed-fuel and
+claim-specific confirmations,
 all line 11 alternative fuels and the reduced-rate type 5 bus branch, and
 reconciles its line 17 source total against Schedule 3 line 12. The PDF
 descriptor maps the actual 2025 AcroForm widgets across all four pages,

@@ -21,6 +21,8 @@ const certifications = {
   exported_fuel_confirmed: true,
   commercial_aviation_nonforeign_trade_confirmed: true,
   foreign_trade_lust_tax_paid_confirmed: true,
+  train_use_confirmed: true,
+  certain_intercity_or_local_bus_use_confirmed: true,
 } as const;
 
 function compute(
@@ -87,6 +89,9 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     ["2d", undefined, 0.1],
     ["3a", "02", 24.3],
     ["3b", undefined, 24.3],
+    ["3c", undefined, 24.3],
+    ["3d", undefined, 17],
+    ["3e", undefined, 24.4],
     ["4a", "02", 24.3],
     ["4b", undefined, 24.3],
     ["5c", "01", 24.3],
@@ -118,6 +123,56 @@ Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
     });
     assertEquals(result.outputs[0].fields.line12_fuel_tax_credit, expected);
   }
+});
+
+Deno.test("Form 4136: diesel train, bus, and export claims require distinct proof", () => {
+  const claim = {
+    ...certifications,
+    line: "3c" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  assertEquals(parseInput({ business, claims: [claim] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, train_use_confirmed: undefined }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        line: "3d",
+        certain_intercity_or_local_bus_use_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, line: "3d", right_to_claim_not_waived: undefined }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, line: "3e", exported_fuel_confirmed: undefined }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...claim, line: "3e", undyed_fuel_confirmed: undefined }],
+    }).success,
+    false,
+  );
 });
 
 Deno.test("Form 4136: commercial aviation, export, and foreign-trade LUST facts are required", () => {

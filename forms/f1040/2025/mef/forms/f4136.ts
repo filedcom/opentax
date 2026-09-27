@@ -157,6 +157,9 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l2d = onLine(input, "2d");
     const l3a = onLine(input, "3a");
     const l3b = onLine(input, "3b");
+    const l3c = onLine(input, "3c");
+    const l3d = onLine(input, "3d");
+    const l3e = onLine(input, "3e");
     const l4a = onLine(input, "4a");
     const l4b = onLine(input, "4b");
     const l5c = onLine(input, "5c");
@@ -279,6 +282,27 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
               lineAmount([...l3a, ...l3b]),
               "360",
             )
+            : "",
+        ]),
+        elements("TrainsUseUndyedDieselFuelGrp", [
+          element("TrainUseOfUndyedDieselGalsQty", qty(l3c)),
+          l3c.length ? element("ActualFuelCostAmt", cost(l3c)) : "",
+          l3c.length
+            ? credit("TrainUseOfUndyedDieselCrAmt", lineAmount(l3c), "353")
+            : "",
+        ]),
+        elements("BusesUseUndyedDieselFuelGrp", [
+          element("BusUseOfUndyedDieselGalsQty", qty(l3d)),
+          l3d.length ? element("ActualFuelCostAmt", cost(l3d)) : "",
+          l3d.length
+            ? credit("BusUseOfUndyedDieselCreditAmt", lineAmount(l3d), "350")
+            : "",
+        ]),
+        elements("ExportedUndyedDieselFuelGrp", [
+          element("ExpUndyedDieselFuelGalsQty", qty(l3e)),
+          l3e.length ? element("ActualFuelCostAmt", cost(l3e)) : "",
+          l3e.length
+            ? credit("ExpUndyedDieselFuelCreditAmt", lineAmount(l3e), "413")
             : "",
         ]),
         elements("NontxUseUndyedKeroseneGrp", [

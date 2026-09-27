@@ -46,6 +46,9 @@ const creditReferenceNumber: Record<Line, string> = {
   "2d": "433",
   "3a": "360",
   "3b": "360",
+  "3c": "353",
+  "3d": "350",
+  "3e": "413",
   "4a": "346",
   "4b": "346",
   "5c": "346",
@@ -98,10 +101,24 @@ function fieldPath(p: number, n: number): string {
             n >= 53 && n <= 54 || n >= 61 && n <= 62
         ? "ColE"
         : "";
-    } else if (n >= 64 && n <= 74) {
+    } else if (n >= 64 && n <= 98) {
       table = "Table_Line3";
-      line = n <= 66 ? "Line3a" : "Line3b";
-      column = n >= 70 && n <= 71 ? "ColD" : n >= 72 && n <= 73 ? "ColE" : "";
+      line = n <= 66
+        ? "Line3a"
+        : n <= 74
+        ? "Line3b"
+        : n <= 82
+        ? "Line3c"
+        : n <= 90
+        ? "Line3d"
+        : "Line3e";
+      column = n >= 70 && n <= 71 || n >= 78 && n <= 79 ||
+          n >= 86 && n <= 87 || n >= 94 && n <= 95
+        ? "ColD"
+        : n >= 72 && n <= 73 || n >= 80 && n <= 81 ||
+            n >= 88 && n <= 89 || n >= 96 && n <= 97
+        ? "ColE"
+        : "";
     }
   } else if (p === 2) {
     if (n >= 1 && n <= 11) {
@@ -192,6 +209,15 @@ const fields: PdfFieldEntry[] = [
   text("line3b_quantity", 1, 69),
   ...moneyFields("line3_cost", 1, 70),
   ...moneyFields("line3_credit", 1, 72),
+  text("line3c_quantity", 1, 77),
+  ...moneyFields("line3c_cost", 1, 78),
+  ...moneyFields("line3c_credit", 1, 80),
+  text("line3d_quantity", 1, 85),
+  ...moneyFields("line3d_cost", 1, 86),
+  ...moneyFields("line3d_credit", 1, 88),
+  text("line3e_quantity", 1, 93),
+  ...moneyFields("line3e_cost", 1, 94),
+  ...moneyFields("line3e_credit", 1, 96),
   text("line4a_type", 2, 1),
   text("line4a_quantity", 2, 3),
   text("line4b_quantity", 2, 6),
@@ -400,6 +426,9 @@ export function projectForm4136Fields(
       "2d",
       "3a",
       "3b",
+      "3c",
+      "3d",
+      "3e",
       "4a",
       "4b",
       "5c",
@@ -415,6 +444,9 @@ export function projectForm4136Fields(
     putClaimGroup(out, input, [line], `line${line}`);
   }
   putClaimGroup(out, input, ["3a", "3b"], "line3");
+  for (const line of ["3c", "3d", "3e"] as const) {
+    putClaimGroup(out, input, [line], `line${line}`);
+  }
   putClaimGroup(out, input, ["4a", "4b"], "line4");
   for (const line of ["5c", "5d", ...alternativeFuelLines] as const) {
     putClaimGroup(out, input, [line], `line${line}`);

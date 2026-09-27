@@ -401,6 +401,65 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 diesel train, bus, and export groups validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 66 },
+    schedule3: { line12_fuel_tax_credit: 65.7, line15_total: 65.7 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        business_name: "Example Rail Business",
+        principal_activity_code: "482111",
+        equipment_make: "Example",
+        equipment_model: "Locomotive",
+        equipment_type: "train equipment",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [
+        {
+          line: "3c",
+          unit: "gallons",
+          qualified_quantity: 100,
+          actual_fuel_cost: 300,
+          undyed_fuel_confirmed: true,
+          train_use_confirmed: true,
+        },
+        {
+          line: "3d",
+          unit: "gallons",
+          qualified_quantity: 100,
+          actual_fuel_cost: 300,
+          undyed_fuel_confirmed: true,
+          certain_intercity_or_local_bus_use_confirmed: true,
+          right_to_claim_not_waived: true,
+        },
+        {
+          line: "3e",
+          unit: "gallons",
+          qualified_quantity: 100,
+          actual_fuel_cost: 300,
+          undyed_fuel_confirmed: true,
+          exported_fuel_confirmed: true,
+        },
+      ],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<TrainsUseUndyedDieselFuelGrp>");
+  assertStringIncludes(xml, "<BusesUseUndyedDieselFuelGrp>");
+  assertStringIncludes(xml, "<ExportedUndyedDieselFuelGrp>");
+  await validateXsd(xml, "Form 4136 diesel train, bus, and export lines");
+});
+
+Deno.test({
   name: "XSD: Form 4136 line 11 reduced-rate bus group validates",
   sanitizeOps: false,
   sanitizeResources: false,

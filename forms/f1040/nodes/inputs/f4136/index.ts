@@ -18,6 +18,9 @@ export const FORM4136_RATES = {
   "2d": 0.001,
   "3a": 0.243,
   "3b": 0.243,
+  "3c": 0.243,
+  "3d": 0.17,
+  "3e": 0.244,
   "4a": 0.243,
   "4b": 0.243,
   "5c": 0.243,
@@ -54,6 +57,9 @@ const fuelLine = z.enum([
   "2d",
   "3a",
   "3b",
+  "3c",
+  "3d",
+  "3e",
   "4a",
   "4b",
   "5c",
@@ -113,6 +119,8 @@ export const fuelClaimSchema = z.object({
   exported_fuel_confirmed: z.literal(true).optional(),
   commercial_aviation_nonforeign_trade_confirmed: z.literal(true).optional(),
   foreign_trade_lust_tax_paid_confirmed: z.literal(true).optional(),
+  train_use_confirmed: z.literal(true).optional(),
+  certain_intercity_or_local_bus_use_confirmed: z.literal(true).optional(),
 });
 
 const businessSchema = z.object({
@@ -182,10 +190,10 @@ const activitySchema = z.object({
       });
     }
     const requiredFacts = [
-      ...(["3a", "3b", "4a", "4b"].includes(claim.line)
+      ...(["3a", "3b", "3c", "3d", "3e", "4a", "4b"].includes(claim.line)
         ? ["undyed_fuel_confirmed"] as const
         : []),
-      ...(claim.line === "5c" || claim.line === "5d" ||
+      ...(claim.line === "3d" || claim.line === "5c" || claim.line === "5d" ||
           (claim.line === "1c" &&
             ["13", "14"].includes(claim.type_of_use ?? "")) ||
           (claim.line === "2b" &&
@@ -197,7 +205,7 @@ const activitySchema = z.object({
         ? ["credit_card_issuer_certificate_not_provided"] as const
         : []),
       ...(claim.line === "1c" ? ["not_noncommercial_motorboat"] as const : []),
-      ...(claim.line === "1d" || claim.line === "2c"
+      ...(claim.line === "1d" || claim.line === "2c" || claim.line === "3e"
         ? ["exported_fuel_confirmed"] as const
         : []),
       ...(claim.line === "2a"
@@ -205,6 +213,10 @@ const activitySchema = z.object({
         : []),
       ...(claim.line === "2d"
         ? ["foreign_trade_lust_tax_paid_confirmed"] as const
+        : []),
+      ...(claim.line === "3c" ? ["train_use_confirmed"] as const : []),
+      ...(claim.line === "3d"
+        ? ["certain_intercity_or_local_bus_use_confirmed"] as const
         : []),
       ...(claim.line === "1a" || claim.type_of_use === "02"
         ? ["not_highway_vehicle"] as const

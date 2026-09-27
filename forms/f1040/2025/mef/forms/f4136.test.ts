@@ -9,6 +9,8 @@ const certifications = {
   exported_fuel_confirmed: true,
   commercial_aviation_nonforeign_trade_confirmed: true,
   foreign_trade_lust_tax_paid_confirmed: true,
+  train_use_confirmed: true,
+  certain_intercity_or_local_bus_use_confirmed: true,
 } as const;
 const activityContext = {
   claimant_context: "business" as const,
@@ -137,6 +139,27 @@ Deno.test("Form 4136 XML maps commercial, exported, and foreign-trade aviation g
   assertStringIncludes(
     xml,
     "<TotalFuelTaxCreditAmt>345</TotalFuelTaxCreditAmt>",
+  );
+});
+
+Deno.test("Form 4136 XML keeps diesel train, bus, and export credits separate", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: fields.business,
+    claims: (["3c", "3d", "3e"] as const).map((line) => ({
+      ...certifications,
+      line,
+      unit: "gallons" as const,
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+    })),
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 65.7 } } });
+  assertStringIncludes(xml, "<TrainsUseUndyedDieselFuelGrp>");
+  assertStringIncludes(xml, "<BusesUseUndyedDieselFuelGrp>");
+  assertStringIncludes(xml, "<ExportedUndyedDieselFuelGrp>");
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>66</TotalFuelTaxCreditAmt>",
   );
 });
 
