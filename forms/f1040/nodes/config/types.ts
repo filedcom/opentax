@@ -127,14 +127,6 @@ export interface F1040Config {
   saltFloor: number;
   saltFloorMfs: number;
 
-  // ── Dependent Care (2441) ─────────────────────────────────────────────────
-  depCareExpenseCapOne: number;
-  depCareExpenseCapTwoPlus: number;
-  depCareEmployerExclusion: number;
-  depCareEmployerExclusionMfs: number;
-  depCareCreditRateAgiThreshold: number;
-  depCareCreditRateBracketSize: number;
-
   // ── ACA Premium Tax Credit (8962) ─────────────────────────────────────────
   fplBase: number;
   fplIncrement: number;

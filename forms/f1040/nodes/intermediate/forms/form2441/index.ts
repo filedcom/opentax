@@ -11,16 +11,11 @@ import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { f2441 } from "../../../inputs/f2441/index.ts";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../../config/index.ts";
-import type { F1040Config } from "../../../config/index.ts";
 import {
   calculateForm2441Benefits,
   filingDetailsSchema,
 } from "./calculation.ts";
-
-// IRC §21(a): credit rate — 35% at AGI ≤ $15,000, drops 1% per $2,000, floor 20%
-const MAX_CREDIT_RATE = 0.35;
-const MIN_CREDIT_RATE = 0.20;
+import { form2441CreditRate, form2441Rules } from "./year-rules.ts";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -32,8 +27,8 @@ export const inputSchema = z.object({
   // Aggregated across all W-2s by the w2 input node.
   dep_care_benefits: z.number().nonnegative().optional(),
 
-  // Filing status — determines §129 employer exclusion cap (MFS = $2,500, others = $5,000)
-  // and earned income cap (MFJ uses lesser of two spouses)
+  // Filing status determines the §129 exclusion cap, §21 rate, and
+  // earned-income cap (MFJ uses the lesser spouse amount).
   filing_status: filingStatusSchema.optional(),
 
   // Number of qualifying persons (Form 2441 Part I)
@@ -61,38 +56,31 @@ type Form2441Input = z.infer<typeof inputSchema>;
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-// IRC §129(a)(2): employer exclusion limit — $5,000 general, $2,500 for MFS
+// IRC §129(a)(2): employer exclusion limit for the selected year.
 function employerExclusionLimit(
   status: FilingStatus | undefined,
-  cfg: F1040Config,
+  rules: ReturnType<typeof form2441Rules>,
 ): number {
   return status === FilingStatus.MFS
-    ? cfg.depCareEmployerExclusionMfs
-    : cfg.depCareEmployerExclusion;
+    ? rules.employerExclusionMfs
+    : rules.employerExclusion;
 }
 
 // Amount of employer benefits that exceeds the §129 exclusion → taxable income (f1040 line 1e)
 function taxableExcess(
   benefits: number,
   status: FilingStatus | undefined,
-  cfg: F1040Config,
+  rules: ReturnType<typeof form2441Rules>,
 ): number {
-  return Math.max(0, benefits - employerExclusionLimit(status, cfg));
-}
-
-// IRC §21(a)(2): applicable credit percentage based on AGI
-function applicablePercentage(agi: number, cfg: F1040Config): number {
-  if (agi <= cfg.depCareCreditRateAgiThreshold) return MAX_CREDIT_RATE;
-  const stepsOver = Math.ceil(
-    (agi - cfg.depCareCreditRateAgiThreshold) /
-      cfg.depCareCreditRateBracketSize,
-  );
-  return Math.max(MIN_CREDIT_RATE, MAX_CREDIT_RATE - stepsOver * 0.01);
+  return Math.max(0, benefits - employerExclusionLimit(status, rules));
 }
 
 // Qualifying expense dollar limit (IRC §21(c)): $3,000 for 1 person, $6,000 for 2+
-function expenseDollarLimit(persons: number, cfg: F1040Config): number {
-  return persons >= 2 ? cfg.depCareExpenseCapTwoPlus : cfg.depCareExpenseCapOne;
+function expenseDollarLimit(
+  persons: number,
+  rules: ReturnType<typeof form2441Rules>,
+): number {
+  return persons >= 2 ? rules.expenseCapTwoPlus : rules.expenseCapOne;
 }
 
 // Earned income cap: MFJ uses lesser of two spouses' earned incomes (IRC §21(d))
@@ -110,7 +98,8 @@ function earnedIncomeCap(
 // IRC §21 credit: qualifying expenses × applicable percentage
 function computeSection21Credit(
   input: Form2441Input,
-  cfg: F1040Config,
+  taxYear: number,
+  rules: ReturnType<typeof form2441Rules>,
 ): number {
   const expenses = input.qualifying_expenses ?? 0;
   const persons = input.qualifying_persons ?? 0;
@@ -119,12 +108,12 @@ function computeSection21Credit(
   const benefits = input.dep_care_benefits ?? 0;
   const excludedBenefits = Math.min(
     benefits,
-    employerExclusionLimit(input.filing_status, cfg),
+    employerExclusionLimit(input.filing_status, rules),
   );
 
   if (expenses <= 0 || persons <= 0) return 0;
 
-  const dollarCap = expenseDollarLimit(persons, cfg);
+  const dollarCap = expenseDollarLimit(persons, rules);
   // Employer-excluded benefits reduce the qualifying expense base (Form 2441 line 9)
   const reducedCap = Math.max(0, dollarCap - excludedBenefits);
   const earnedCap = earnedIncomeCap(
@@ -136,7 +125,13 @@ function computeSection21Credit(
 
   if (allowedExpenses <= 0) return 0;
 
-  return Math.round(allowedExpenses * applicablePercentage(agi, cfg));
+  return Math.round(
+    allowedExpenses * form2441CreditRate(
+      taxYear,
+      agi,
+      input.filing_status ?? FilingStatus.Single,
+    ),
+  );
 }
 
 // ─── Node class ───────────────────────────────────────────────────────────────
@@ -152,8 +147,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
   ]);
 
   compute(ctx: NodeContext, input: Form2441Input): NodeResult {
-    const cfg = CONFIG_BY_YEAR[ctx.taxYear];
-    if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
+    const rules = form2441Rules(ctx.taxYear);
     const parsed = inputSchema.parse(input);
     const benefits = parsed.dep_care_benefits ?? 0;
     const outputs: NodeOutput[] = [];
@@ -174,6 +168,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
       const lines = calculateForm2441Benefits(
         parsed.filing_details,
         benefits,
+        ctx.taxYear,
       );
       if (lines.line26 > 0) {
         outputs.push(this.outputNodes.output(f1040, {
@@ -191,7 +186,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
     }
 
     // Part III — §129 employer exclusion: excess above limit is taxable income
-    const taxable = taxableExcess(benefits, parsed.filing_status, cfg);
+    const taxable = taxableExcess(benefits, parsed.filing_status, rules);
     if (taxable > 0) {
       outputs.push(
         this.outputNodes.output(f1040, { line1e_taxable_dep_care: taxable }),
@@ -204,7 +199,7 @@ class Form2441Node extends TaxNode<typeof inputSchema> {
     }
 
     // Part II — §21 credit: route to Schedule 3 line 2
-    const credit = computeSection21Credit(parsed, cfg);
+    const credit = computeSection21Credit(parsed, ctx.taxYear, rules);
     if (credit > 0) {
       outputs.push(
         this.outputNodes.output(schedule3, { line2_childcare_credit: credit }),

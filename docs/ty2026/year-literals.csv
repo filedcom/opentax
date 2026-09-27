@@ -31,7 +31,6 @@ forms/f1040/nodes/inputs/f2210/calculation.ts,20,"Date.UTC(2025, 3, 15),"
 forms/f1040/nodes/inputs/f2210/calculation.ts,21,"Date.UTC(2025, 5, 15),"
 forms/f1040/nodes/inputs/f2210/calculation.ts,22,"Date.UTC(2025, 8, 15),"
 forms/f1040/nodes/inputs/f2210/calculation.ts,47,* Computes the 2025 regular-method penalty with payments treated as made on
-forms/f1040/nodes/inputs/f2441/index.ts,17,"// TY2025 constants — IRC §21(c), IRC §129(a)(2)"
 forms/f1040/nodes/inputs/f3468/index.ts,11,// TY2025 rates and caps
 forms/f1040/nodes/inputs/f3800/calculation.ts,2,"* TY2025 Form 3800 Part II for individual, non-passive credits only."
 forms/f1040/nodes/inputs/f3800/calculation.ts,4,"* Source: https://www.irs.gov/pub/irs-pdf/f3800.pdf (2025, Part II lines 7-38)"
@@ -157,7 +156,8 @@ forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,28,// IRC §55; 20
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,75,// IRC §36B(f); 2025 Schedule 2 line 1a.
 forms/f1040/nodes/intermediate/forms/farm_elections.ts,10,const cropInsuranceDate = z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
 forms/f1040/nodes/intermediate/forms/farm_elections.ts,14,"""Date must be a valid day in 2025"","
-forms/f1040/nodes/intermediate/forms/form2441/calculation.ts,61,"// Total qualifying expenses incurred during 2025, Form 2441 line 16."
+forms/f1040/nodes/intermediate/forms/form2441/year-rules.ts,8,if (year === 2025) {
+forms/f1040/nodes/intermediate/forms/form2441/year-rules.ts,32,if (year === 2025) {
 forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,80,if (taxYear !== 2025) {
 forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,81,"throw new Error(""Form 2555 structured filing is available for TY2025 only"");"
 forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,104,"throw new Error(""Form 2555 qualifying period does not overlap TY2025"");"

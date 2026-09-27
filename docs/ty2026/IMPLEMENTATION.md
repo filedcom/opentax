@@ -16,6 +16,9 @@ The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
 are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
 2026 and final Form 8962 instruction table remain outstanding.
+The shared Form 2441 detailed and aggregate calculations now select explicit
+TY2025/TY2026 benefit limits and credit rates, with 2026 phaseout boundaries
+tested. Its TY2026 MeF/PDF serializers remain outstanding.
 `forms/f1040/2026/deductions.ts` implements the new 1040 lines 12e–15, and
 the prior CLI type-check errors have been cleared. Neither pure 2026
 calculator is connected to a registered graph yet.

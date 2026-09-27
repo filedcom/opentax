@@ -1,7 +1,8 @@
 # TY2026 constants and rule source map
 
 Implementation target: `forms/f1040/nodes/config/2026.ts`, satisfying every
-field of `F1040Config` in `forms/f1040/nodes/config/types.ts`. This table is a
+field of `F1040Config` in `forms/f1040/nodes/config/types.ts`, plus explicit
+year rules where a single config value cannot describe the calculation. This table is a
 work list, not permission to copy a TY2025 value. Cite the exact authority and
 page/section in the code review for each value. The linked PDFs are pinned by
 SHA-256 in `corpus/manifest.json`.
@@ -23,7 +24,7 @@ SHA-256 in `corpus/manifest.json`.
 | `section179*`, `luxuryAuto*` | Rev. Proc. 2025-32 §2.24, draft Form 4562, and separate IRS 2026 passenger-auto limit guidance when issued. Bonus-depreciation rules require date-specific review. |
 | `household*` | Draft Schedule H and 2026 instructions/SSA threshold publication; verify FICA and FUTA triggers independently. |
 | `salt*` | [IRS 2026 SALT correction](https://www.irs.gov/forms-pubs/correction-to-state-and-local-income-tax-deduction-amount-in-the-2026-form-1040-es), draft Schedule A, and final instructions. Cap $40,400 ($20,200 MFS); phaseout begins $505,000 ($252,500 MFS); floor $10,000 ($5,000 MFS). |
-| `depCare*` | Draft Form 2441 and 2026 instructions. Verify credit-rate schedule and employer exclusion separately; recent law changed the applicable credit percentage. |
+| Form 2441 year rules | Draft Form 2441 lines 3, 8, 21, 27; [IRS Publication 505 (2026)](https://www.irs.gov/publications/p505); [P.L. 119-21 §§70404–70405](https://www.govinfo.gov/content/pkg/PLAW-119publ21/html/PLAW-119publ21.htm). The employer exclusion is $7,500 ($3,750 MFS when spouse income is required on line 19); expense caps remain $3,000/$6,000. The 2026 credit starts at 50%, drops 1 point per $2,000 AGI above $15,000 to a 35% floor, then drops from 35% above $75,000 ($150,000 MFJ) by 1 point per $2,000 ($4,000 MFJ) to a 20% floor. `form2441/year-rules.ts` owns these rules; verify against final instructions when issued. |
 | `fpl*` and Form 8962 percentages/repayment | [Rev. Proc. 2025-25](https://www.irs.gov/pub/irs-drop/rp-25-25.pdf), draft Form 8962, [Rev. Proc. 2025-32](https://www.irs.gov/pub/irs-drop/rp-25-32.pdf) §2.04, and [2025 HHS poverty guidelines](https://public-inspection.federalregister.gov/2025-01377.pdf). The enhanced >400% FPL eligibility and excess-APTC repayment caps expire after 2025; this is logic work beyond replacing FPL amounts. The TY2025 Form 8962 instructions use prior-year guidelines, so 2025 HHS values are the expected TY2026 input. Confirm the guideline year and Alaska/Hawaii tables in final TY2026 instructions. |
 | `qcdAnnualLimit`, `psoExclusionLimit` | Rev. Proc. 2025-32 and 2026 Form 1099-R/1040 instructions; verify whether each is indexed. |
 | `ebl*`, `smallBizGrossReceipts` | Rev. Proc. 2025-32 §§2.31, 2.30 and 2026 Forms 461/8990 instructions. |

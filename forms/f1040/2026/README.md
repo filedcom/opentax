@@ -15,6 +15,8 @@ needs to be connected to the TY2026 node graph and serializers.
 charitable cap. The shared Form 8962 node has explicit 2026 percentage,
 repayment, affordability, and FPL paths, with boundary tests. These pieces
 still require a complete 2026 config and final output wiring.
+The shared Form 2441 calculations now select explicit TY2026 employer benefit
+limits and credit rates; their 2026 output mappings remain to build.
 CLI node inspection and graph commands accept `--year` and will select the
 TY2026 registry once this product is registered.
 

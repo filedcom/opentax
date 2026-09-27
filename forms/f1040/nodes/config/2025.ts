@@ -445,27 +445,6 @@ export const SALT_FLOOR_2025 = 10_000;
  */
 export const SALT_FLOOR_MFS_2025 = 5_000;
 
-// ─── Dependent Care (Form 2441) ───────────────────────────────────────────────
-// IRC §21; not indexed for inflation
-
-/** Qualifying expense cap — one qualifying person. */
-export const DEP_CARE_EXPENSE_CAP_ONE_2025 = 3_000;
-
-/** Qualifying expense cap — two or more qualifying persons. */
-export const DEP_CARE_EXPENSE_CAP_TWO_PLUS_2025 = 6_000;
-
-/** Employer-provided dependent care exclusion limit — MFJ/single/HOH/QSS. */
-export const DEP_CARE_EMPLOYER_EXCLUSION_2025 = 5_000;
-
-/** Employer-provided dependent care exclusion limit — MFS. */
-export const DEP_CARE_EMPLOYER_EXCLUSION_MFS_2025 = 2_500;
-
-/** Credit rate phase-down starting AGI. */
-export const DEP_CARE_CREDIT_RATE_AGI_THRESHOLD_2025 = 15_000;
-
-/** Credit rate phase-down bracket size ($2,000 per 1% step). */
-export const DEP_CARE_CREDIT_RATE_BRACKET_SIZE_2025 = 2_000;
-
 // ─── ACA / Form 8962 ─────────────────────────────────────────────────────────
 // IRC §36B; 2024 HHS FPL tables (IRS uses prior-year FPL)
 
@@ -700,12 +679,6 @@ export const config2025: F1040Config = {
   saltPhaseoutRate:             SALT_PHASEOUT_RATE_2025,
   saltFloor:                    SALT_FLOOR_2025,
   saltFloorMfs:                 SALT_FLOOR_MFS_2025,
-  depCareExpenseCapOne:         DEP_CARE_EXPENSE_CAP_ONE_2025,
-  depCareExpenseCapTwoPlus:     DEP_CARE_EXPENSE_CAP_TWO_PLUS_2025,
-  depCareEmployerExclusion:     DEP_CARE_EMPLOYER_EXCLUSION_2025,
-  depCareEmployerExclusionMfs:  DEP_CARE_EMPLOYER_EXCLUSION_MFS_2025,
-  depCareCreditRateAgiThreshold: DEP_CARE_CREDIT_RATE_AGI_THRESHOLD_2025,
-  depCareCreditRateBracketSize: DEP_CARE_CREDIT_RATE_BRACKET_SIZE_2025,
   fplBase:                      FPL_BASE_2025,
   fplIncrement:                 FPL_INCREMENT_2025,
   // 2024 HHS guidelines, per TY2025 Form 8962 Instructions, Tables 1-2/1-3.

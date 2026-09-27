@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
+import { form2441CreditRate, form2441Rules } from "./year-rules.ts";
 
 const money = z.number().int().nonnegative();
 
@@ -58,7 +59,7 @@ export const filingDetailsSchema = z.object({
   benefits_carryover_used: money.optional(),
   benefits_forfeited_or_carried_forward: money.optional(),
   dependent_care_plan_limit: money.optional(),
-  // Total qualifying expenses incurred during 2025, Form 2441 line 16.
+  // Total qualifying expenses incurred during the return year, Form 2441 line 16.
   total_qualified_expenses_incurred: money.optional(),
 }).strict();
 
@@ -94,11 +95,6 @@ export interface Form2441Lines {
   readonly line31: number;
 }
 
-function creditRate(agi: number): number {
-  if (agi <= 15_000) return 0.35;
-  return Math.max(0.20, (35 - Math.ceil((agi - 15_000) / 2_000)) / 100);
-}
-
 export type Form2441BenefitLines = Pick<
   Form2441Lines,
   | "line12"
@@ -125,7 +121,9 @@ export type Form2441BenefitLines = Pick<
 export function calculateForm2441Benefits(
   rawDetails: Form2441FilingDetails,
   benefits: number,
+  taxYear: number,
 ): Form2441BenefitLines {
+  const rules = form2441Rules(taxYear);
   const details = filingDetailsSchema.parse(rawDetails);
   if (!Number.isInteger(benefits) || benefits < 0) {
     throw new Error("Form 2441 needs nonnegative whole-dollar benefits");
@@ -151,7 +149,9 @@ export function calculateForm2441Benefits(
     (sum, person) => sum + person.credit_expenses_paid,
     0,
   );
-  const line27 = details.qualifying_people.length > 1 ? 6_000 : 3_000;
+  const line27 = details.qualifying_people.length > 1
+    ? rules.expenseCapTwoPlus
+    : rules.expenseCapOne;
   const line12 = benefits;
   const line13 = details.benefits_carryover_used ?? 0;
   const line14 = details.benefits_forfeited_or_carried_forward ?? 0;
@@ -174,9 +174,13 @@ export function calculateForm2441Benefits(
     ? details.mfs_line19_income!
     : line18;
   const line20 = Math.min(line17, line18, line19);
-  const statutoryLimit = details.filing_status === FilingStatus.MFS
-    ? 2_500
-    : 5_000;
+  // Draft Form 2441 line 21 halves the limit for MFS only when spouse
+  // earned income was required on line 19. A qualifying separate filer
+  // treated as unmarried uses their own income and the full limit.
+  const statutoryLimit = details.filing_status === FilingStatus.MFS &&
+      !details.mfs_eligibility_met
+    ? rules.employerExclusionMfs
+    : rules.employerExclusion;
   if (line15 > 0 && details.dependent_care_plan_limit === undefined) {
     throw new Error("Form 2441 benefits need the dependent-care plan limit");
   }
@@ -222,12 +226,13 @@ export function calculateForm2441(
   rawDetails: Form2441FilingDetails,
   agi: number,
   benefits: number,
+  taxYear: number,
 ): Form2441Lines {
   const details = filingDetailsSchema.parse(rawDetails);
   if (!Number.isInteger(agi)) {
     throw new Error("Form 2441 needs calculated whole-dollar AGI");
   }
-  const benefitLines = calculateForm2441Benefits(details, benefits);
+  const benefitLines = calculateForm2441Benefits(details, benefits, taxYear);
   const line3 = benefitLines.line15 > 0
     ? benefitLines.line31
     : Math.min(benefitLines.line30, benefitLines.line27);
@@ -237,7 +242,7 @@ export function calculateForm2441(
     : benefitLines.line18;
   const line6 = Math.min(line3, line4, line5);
   const line7 = agi;
-  const line8 = creditRate(agi);
+  const line8 = form2441CreditRate(taxYear, agi, details.filing_status);
   const line9a = Math.round(line6 * line8);
   const line10 = details.tax_liability_limit;
   const line11 = details.filing_status === FilingStatus.MFS &&
