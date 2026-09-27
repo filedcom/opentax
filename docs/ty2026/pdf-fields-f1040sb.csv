@@ -1,0 +1,73 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684 467.25 698.001,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Your social security number. ,2,468 684 576 698.001,yes
+topmostSubform[0].Page1[0].Line1_ReadOrder[0].f1_03[0],/Tx,"Part I. Interest. (See instructions and the Instructions for Form 1040, line 2b.). Note: If you received a Form 1099-I N T, Form 1099-O I D, or substitute statement from a brokerage firm, list the firm’s name as the payer and enter the total interest shown on that form. 1. List name of payer. If any interest is from a seller-financed mortgage and the buyer used the property as a personal residence, see the instructions and list this interest first. Also, show that buyer’s social security number and address: Line 1 of 14. ",2,129.6 636.001 460.8 648,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,1. Amount. Line 1 of 14. ,2,489.6 636.001 576 648,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,1. Line 2 of 14. ,2,129.6 624.002 460.8 636.001,yes
+topmostSubform[0].Page1[0].f1_06[0],/Tx,1. Amount. Line 2 of 14. ,2,489.6 624.002 576 636.001,yes
+topmostSubform[0].Page1[0].f1_07[0],/Tx,1. Line 3 of 14. ,2,129.6 612 460.8 623.999,yes
+topmostSubform[0].Page1[0].f1_08[0],/Tx,1. Amount. Line 3 of 14. ,2,489.6 612 576 623.999,yes
+topmostSubform[0].Page1[0].f1_09[0],/Tx,1. Line 4 of 14. ,2,129.6 600.001 460.8 612,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,1. Amount. Line 4 of 14. ,2,489.6 600.001 576 612,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,1. Line 5 of 14. ,2,129.6 588.002 460.8 600.001,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,1. Amount. Line 5 of 14. ,2,489.6 588.002 576 600.001,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,1. Line 6 of 14. ,2,129.6 576 460.8 587.999,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,1. Amount. Line 6 of 14. ,2,489.6 576 576 587.999,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,1. Line 7 of 14. ,2,129.6 564.001 460.8 576,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,1. Amount. Line 7 of 14. ,2,489.6 564.001 576 576,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,1. Line 8 of 14. ,2,129.6 552.002 460.8 564.001,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,1. Amount. Line 8 of 14. ,2,489.6 552.002 576 564.001,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,1. Line 9 of 14. ,2,129.6 540 460.8 551.999,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,1. Amount. Line 9 of 14. ,2,489.6 540 576 551.999,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,1. Line 10 of 14. ,2,129.6 528.001 460.8 540,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,1. Amount. Line 10 of 14. ,2,489.6 528.001 576 540,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,1. Line 11 of 14. ,2,129.6 516.002 460.8 528.001,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,1. Amount. Line 11 of 14. ,2,489.6 516.002 576 528.001,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,1. Line 12 of 14. ,2,129.6 504 460.8 515.999,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,1. Amount. Line 12 of 14. ,2,489.6 504 576 515.999,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,1. Line 13 of 14. ,2,129.6 492.001 460.8 504,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,1. Amount. Line 13 of 14. ,2,489.6 492.001 576 504,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,1. Line 14 of 14. ,2,129.6 480.002 460.8 492.001,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,1. Amount. Line 14 of 14. ,2,489.6 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,2. Add the amounts on line 1. ,2,489.6 468 576 479.999,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,3. Excludable interest on series E E and I U.S. savings bonds issued after 1989. Attach Form 8815. ,2,489.6 444.002 576 456.001,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,"4. Subtract line 3 from line 2. Enter the result here and on Form 1040 or 1040-S R, line 2b. Note: If line 4 is over $1,500, you must complete Part I I I. ",2,489.6 432 576 443.999,yes
+topmostSubform[0].Page1[0].ReadOrderControl[0].f1_34[0],/Tx,"Part I I. Ordinary Dividends. (See instructions and the Instructions for Form 1040, line 3b.). Note: If you received a Form 1099-D I V or substitute statement from a brokerage firm, list the firm’s name as the payer and enter the ordinary dividends shown on that form. 5. List name of payer: Line 1 of 15. ",2,201.6 408.002 460.8 420.001,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,5. Amount. Line 1 of 15. ,2,489.6 408.002 576 420.001,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,5. Line 2 of 15. ,2,129.6 396 460.8 407.999,yes
+topmostSubform[0].Page1[0].f1_37[0],/Tx,5. Amount. Line 2 of 15. ,2,489.6 396 576 407.999,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,5. Line 3 of 15. ,2,129.6 384.001 460.8 396,yes
+topmostSubform[0].Page1[0].f1_39[0],/Tx,5. Amount. Line 3 of 15. ,2,489.6 384.001 576 396,yes
+topmostSubform[0].Page1[0].f1_40[0],/Tx,5. Line 4 of 15. ,2,129.6 372.002 460.8 384.001,yes
+topmostSubform[0].Page1[0].f1_41[0],/Tx,5. Amount. Line 4 of 15. ,2,489.6 372.002 576 384.001,yes
+topmostSubform[0].Page1[0].f1_42[0],/Tx,5. Line 5 of 15. ,2,129.6 360 460.8 371.999,yes
+topmostSubform[0].Page1[0].f1_43[0],/Tx,5. Amount. Line 5 of 15. ,2,489.6 360 576 371.999,yes
+topmostSubform[0].Page1[0].f1_44[0],/Tx,5. Line 6 of 15. ,2,129.6 348.001 460.8 360,yes
+topmostSubform[0].Page1[0].f1_45[0],/Tx,5. Amount. Line 6 of 15. ,2,489.6 348.001 576 360,yes
+topmostSubform[0].Page1[0].f1_46[0],/Tx,5. Line 7 of 15. ,2,129.6 336.002 460.8 348.001,yes
+topmostSubform[0].Page1[0].f1_47[0],/Tx,5. Amount. Line 7 of 15. ,2,489.6 336.002 576 348.001,yes
+topmostSubform[0].Page1[0].f1_48[0],/Tx,5. Line 8 of 15. ,2,129.6 324 460.8 335.999,yes
+topmostSubform[0].Page1[0].f1_49[0],/Tx,5. Amount. Line 8 of 15. ,2,489.6 324 576 335.999,yes
+topmostSubform[0].Page1[0].f1_50[0],/Tx,5. Line 9 of 15. ,2,129.6 312.001 460.8 324,yes
+topmostSubform[0].Page1[0].f1_51[0],/Tx,5. Amount. Line 9 of 15. ,2,489.6 312.001 576 324,yes
+topmostSubform[0].Page1[0].f1_52[0],/Tx,5. Line 10 of 15. ,2,129.6 300.002 460.8 312.001,yes
+topmostSubform[0].Page1[0].f1_53[0],/Tx,5. Amount. Line 10 of 15. ,2,489.6 300.002 576 312.001,yes
+topmostSubform[0].Page1[0].f1_54[0],/Tx,5. Line 11 of 15. ,2,129.6 288 460.8 299.999,yes
+topmostSubform[0].Page1[0].f1_55[0],/Tx,5. Amount. Line 11 of 15. ,2,489.6 288 576 299.999,yes
+topmostSubform[0].Page1[0].f1_56[0],/Tx,5. Line 12 of 15. ,2,129.6 276.001 460.8 288,yes
+topmostSubform[0].Page1[0].f1_57[0],/Tx,5. Amount. Line 12 of 15. ,2,489.6 276.001 576 288,yes
+topmostSubform[0].Page1[0].f1_58[0],/Tx,5. Line 13 of 15. ,2,129.6 264.002 460.8 276.001,yes
+topmostSubform[0].Page1[0].f1_59[0],/Tx,5. Amount. Line 13 of 15. ,2,489.6 264.002 576 276.001,yes
+topmostSubform[0].Page1[0].f1_60[0],/Tx,5. Line 14 of 15. ,2,129.6 252 460.8 263.999,yes
+topmostSubform[0].Page1[0].f1_61[0],/Tx,5. Amount. Line 14 of 15. ,2,489.6 252 576 263.999,yes
+topmostSubform[0].Page1[0].f1_62[0],/Tx,5. Line 15 of 15. ,2,129.6 240.001 460.8 252,yes
+topmostSubform[0].Page1[0].f1_63[0],/Tx,5. Amount. Line 15 of 15. ,2,489.6 240.001 576 252,yes
+topmostSubform[0].Page1[0].f1_64[0],/Tx,"6. Add the amounts on line 5. Enter the total here and on Form 1040 or 1040-S R, line 3b. Note:  If line 6 is over $1,500, you must complete Part I I I. ",2,489.6 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].TagcorrectingSubform[0].c1_1[0],/Btn,"Part I I I. Foreign Accounts and Trusts. Caution: If required, failure to file F i n C E N Form 114 may result in substantial penalties. Additionally, you may be required to file Form 8938, Statement of Specified Foreign Financial Assets. See instructions. You must complete this part if you (a) had over $1,500 of taxable interest or ordinary dividends; (b) had a foreign account; or (c) received a distribution from, or were a grantor of, or a transferor to, a foreign trust. 7a. At any time during 2026, did you have a financial interest in or signature authority over a financial account (such as a bank account, securities account, or brokerage account) located in a foreign country? See instructions. Yes. ",2,539.4 133.001 549.4 143.001,yes
+topmostSubform[0].Page1[0].TagcorrectingSubform[0].c1_1[1],/Btn,7a. No. ,2,561 133.001 571 143.001,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,"7a. If “Yes,"" are you required to file F i n C E N Form 114, Report of Foreign Bank and Financial Accounts (F B A R), to report that financial interest or signature authority? See F i n C E N Form 114 and its instructions for filing requirements and exceptions to those requirements. Yes. ",2,539.4 97.001 549.4 107.001,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,7a. No. ,2,561 97.001 571 107.001,yes
+topmostSubform[0].Page1[0].f1_65[0],/Tx,"7b. If you are required to file F i n C E N Form 114, list the name(s) of the foreign country(ies) where the financial account(s) is (are) located: Line 1 of 2. ",2,273.6 72 525.6 83.999,yes
+topmostSubform[0].Page1[0].f1_66[0],/Tx,7b. Line 2 of 2. ,2,129.6 60.001 525.6 72,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,"8. During 2026, did you receive a distribution from, or were you the grantor of, or transferor to, a foreign trust? If “Yes,” you may have to file Form 3520. See instructions. Yes. ",2,539.4 37 549.4 47,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,8. No. ,2,561 37 571 47,yes

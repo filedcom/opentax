@@ -1,0 +1,238 @@
+file,line,source_excerpt
+forms/f1040/nodes/inputs/clergy/index.ts,12,"// TY2025 — Clergy/ministerial income treatment under IRC §107, §1402(a)(8), §1402(c)(4)"
+forms/f1040/nodes/inputs/depletion/index.ts,84,"// ─── Constants (TY2025 — IRC §613, §613A; no annual inflation adjustment) ────"
+forms/f1040/nodes/inputs/educator_expenses/index.ts,13,// TY2025 — Educator Expenses Deduction
+forms/f1040/nodes/inputs/educator_expenses/index.ts,17,// Rev Proc 2024-40 §3.12: $300 per eligible educator for TY2025.
+forms/f1040/nodes/inputs/f1040es/index.ts,25,".describe(""Date Q1 estimated payment was made (ISO 8601, e.g. '2025-04-15')""),"
+forms/f1040/nodes/inputs/f1040es/index.ts,27,".describe(""Date Q2 estimated payment was made (ISO 8601, e.g. '2025-06-16')""),"
+forms/f1040/nodes/inputs/f1040es/index.ts,29,".describe(""Date Q3 estimated payment was made (ISO 8601, e.g. '2025-09-15')""),"
+forms/f1040/nodes/inputs/f1095a/index.ts,20,// IRS Form 8962 Instructions (2025): https://www.irs.gov/instructions/i8962
+forms/f1040/nodes/inputs/f1098/index.ts,35,// box5: MIP — NOT deductible for TY2025. Collected for informational purposes only.
+forms/f1040/nodes/inputs/f1098/index.ts,45,// Drake-specific: no tax effect for TY2025
+forms/f1040/nodes/inputs/f1099int/index.ts,138,// The TY2025 node ignores this additional source detail.
+forms/f1040/nodes/inputs/f1099k/index.ts,13,// TY2025 TPSO reporting threshold per OBBBA (IRC §6050W as amended)
+forms/f1040/nodes/inputs/f1099k/index.ts,119,// but the engine surfaces it. For TY2025 the tolerance is ±$1.)
+forms/f1040/nodes/inputs/f1099k/index.ts,135,// Route box1a income when for_routing is set and amount exceeds TY2025 threshold.
+forms/f1040/nodes/inputs/f1099k/index.ts,158,// Exported for reference (TY2025 threshold)
+forms/f1040/nodes/inputs/f1099k/index.ts,159,export const TY2025 = {
+forms/f1040/nodes/inputs/f1099m/index.ts,93,// Box 14 — Reserved for future use in TY2025 (not accepted)
+forms/f1040/nodes/inputs/f1099oid/index.ts,15,// IRS Form 1099-OID TY2025: Original Issue Discount
+forms/f1040/nodes/inputs/f1099oid/index.ts,21,// Box 1: Original issue discount for 2025
+forms/f1040/nodes/inputs/f1099r/index.ts,146,// Distribution code enum covering all valid 1099-R Box 7 codes for TY2025
+forms/f1040/nodes/inputs/f2106/index.ts,21,// Standard mileage rate TY2025: $0.70/mile (Notice 2025-05).
+forms/f1040/nodes/inputs/f2210/calculation.ts,20,"Date.UTC(2025, 3, 15),"
+forms/f1040/nodes/inputs/f2210/calculation.ts,21,"Date.UTC(2025, 5, 15),"
+forms/f1040/nodes/inputs/f2210/calculation.ts,22,"Date.UTC(2025, 8, 15),"
+forms/f1040/nodes/inputs/f2210/calculation.ts,47,* Computes the 2025 regular-method penalty with payments treated as made on
+forms/f1040/nodes/inputs/f3468/index.ts,11,// TY2025 rates and caps
+forms/f1040/nodes/inputs/f3800/calculation.ts,2,"* TY2025 Form 3800 Part II for individual, non-passive credits only."
+forms/f1040/nodes/inputs/f3800/calculation.ts,4,"* Source: https://www.irs.gov/pub/irs-pdf/f3800.pdf (2025, Part II lines 7-38)"
+forms/f1040/nodes/inputs/f3800/calculation.ts,86,"* Source: 2025 Instructions for Form 3800, Part II lines 7 and 10b."
+forms/f1040/nodes/inputs/f3800/index.ts,14,// TY2025 — Form 3800: General Business Credit.
+forms/f1040/nodes/inputs/f3903/index.ts,12,// TY2025 — Moving expense deduction (IRC §217) is suspended for most taxpayers
+forms/f1040/nodes/inputs/f4136/index.ts,8,"// Represented 2025 Part II claims retain the IRS line, qualified fuel quantity,"
+forms/f1040/nodes/inputs/f4255/index.ts,13,// TY2025 — §50(a)(1) recapture percentages
+forms/f1040/nodes/inputs/f5405/index.ts,10,"// at $500/year over 15 years (TY2010–TY2024). For TY2025, the annual installment"
+forms/f1040/nodes/inputs/f5405/index.ts,23,"// True if the home was sold, disposed of, or ceased to be the main home in 2025"
+forms/f1040/nodes/inputs/f5405/index.ts,38,// TY2025 constants
+forms/f1040/nodes/inputs/f5471/index.ts,8,// TY2025 — Form 5471: Information Return of U.S. Persons With Respect To
+forms/f1040/nodes/inputs/f5884/index.ts,8,// ─── TY2025 Constants (IRC §51) ───────────────────────────────────────────────
+forms/f1040/nodes/inputs/f6478/index.ts,8,"// ─── TY2025 Constants (IRC §6426, §6427) ─────────────────────────────────────"
+forms/f1040/nodes/inputs/f6478/index.ts,23,// Credit rates per gallon (TY2025 — rates are set by statute)
+forms/f1040/nodes/inputs/f6765/index.ts,8,// ─── TY2025 Constants (IRC §41) ───────────────────────────────────────────────
+forms/f1040/nodes/inputs/f7207/index.ts,8,// ─── TY2025 Constants (IRC §45X — Advanced Manufacturing Production Credit) ───
+forms/f1040/nodes/inputs/f8082/index.ts,7,// TY2025 — Form 8082: Notice of Inconsistent Treatment or Administrative Adjustment Request (AAR)
+forms/f1040/nodes/inputs/f8288/index.ts,8,// TY2025 — Form 8288/8288-A: FIRPTA Withholding
+forms/f1040/nodes/inputs/f8611/index.ts,13,// ─── TY2025 Constants (IRC §42(j)) ───────────────────────────────────────────
+forms/f1040/nodes/inputs/f8621/excess_distribution.ts,8,"tax_year: z.number().int().min(1987).max(2025),"
+forms/f1040/nodes/inputs/f8621/excess_distribution.ts,36,"tax_year: z.number().int().min(2022).max(2025),"
+forms/f1040/nodes/inputs/f8621/excess_distribution.ts,404,if (taxYear !== 2025 && taxYear !== 2026) {
+forms/f1040/nodes/inputs/f8805/index.ts,16,// TY2025 withholding rates (IRC §1446(b)(2); Rev. Proc. 2024-40)
+forms/f1040/nodes/inputs/f8814/index.ts,19,"// 2025 Form 8814, Parts I and II."
+forms/f1040/nodes/inputs/f8820/index.ts,16,// TY2025 constant — IRC §45C(a); TCJA P.L. 115-97 §13401
+forms/f1040/nodes/inputs/f8820/index.ts,22,// Whether the taxpayer is a qualified small biotech company — informational for TY2025
+forms/f1040/nodes/inputs/f8826/index.ts,13,// TY2025 constants — IRC §44
+forms/f1040/nodes/inputs/f8828/index.ts,13,// TY2025 Constants
+forms/f1040/nodes/inputs/f8834/index.ts,13,// The continuous-use 2024 Form 8834 applies to TY2025. Its line 1 is a
+forms/f1040/nodes/inputs/f8835/index.ts,199,start.getUTCFullYear() !== 2025 || end.getUTCFullYear() !== 2025
+forms/f1040/nodes/inputs/f8835/index.ts,202,"""Form 8835 production period must be a valid 2025 period after service"","
+forms/f1040/nodes/inputs/f8835/index.ts,227,"""Form 8835 calendar-year 2025 cannot carry a phaseout adjustment"","
+forms/f1040/nodes/inputs/f8844/index.ts,13,// TY2025 Constants per IRC §1396
+forms/f1040/nodes/inputs/f8854/index.ts,16,"// TY2025 constants — Rev. Proc. 2024-40, §3.23"
+forms/f1040/nodes/inputs/f8859/index.ts,13,"// The credit itself expired after December 31, 2011. For TY2025, no new credit"
+forms/f1040/nodes/inputs/f8862/index.ts,64,// not any of these years; the TY2025 MeF document does not serialize them.
+forms/f1040/nodes/inputs/f8862/index.ts,78,// TY2025 Form 8862 detail needed to produce a complete MeF document.
+forms/f1040/nodes/inputs/f8863/index.ts,81,// Required by TY2025 MeF. The older display strings above are not parsed
+forms/f1040/nodes/inputs/f8863/index.ts,90,"// 2025 Form 8863 Credit Limit Worksheet, lines 4 and 5. These amounts must"
+forms/f1040/nodes/inputs/f8863/index.ts,122,"// TY2025 constants — statutory rates/caps (IRC §25A(d), not inflation-adjusted)"
+forms/f1040/nodes/inputs/f8863/index.ts,141,"// Per-student TY2025 Form 8863 Part III, lines 27-30."
+forms/f1040/nodes/inputs/f8864/index.ts,12,// TY2025 Credit rates (not inflation-indexed for these fuel credits)
+forms/f1040/nodes/inputs/f8867/index.ts,9,"// IRC §6695(g): $600 penalty per failure (TY2025, Rev. Proc. 2024-40 §3.57)."
+forms/f1040/nodes/inputs/f8873/index.ts,8,// TY2025 — Form 8873: Extraterritorial Income Exclusion
+forms/f1040/nodes/inputs/f8873/index.ts,10,"// effective for transactions after 2006. For TY2025, extremely limited applicability remains"
+forms/f1040/nodes/inputs/f8874/index.ts,13,// TY2025 constants — IRC §45D(a)(2)
+forms/f1040/nodes/inputs/f8881/index.ts,8,// ─── TY2025 Constants (IRC §45E — Small Employer Pension Plan Startup Costs) ──
+forms/f1040/nodes/inputs/f8882/index.ts,8,// ─── TY2025 Constants (IRC §45F — Employer-Provided Child Care Credit) ────────
+forms/f1040/nodes/inputs/f8896/index.ts,12,// TY2025 NOTE: This credit is effectively expired. Qualified capital costs had to
+forms/f1040/nodes/inputs/f8896/index.ts,16,// ─── TY2025 Constants (IRC §45H) ─────────────────────────────────────────────
+forms/f1040/nodes/inputs/f8908/index.ts,8,// ─── TY2025 Constants (IRC §45L — Energy Efficient Home Credit) ───────────────
+forms/f1040/nodes/inputs/f8908/index.ts,10,// Credit amounts per qualifying home (TY2025 under IRA-expanded §45L)
+forms/f1040/nodes/inputs/f8911/index.ts,12,// Form 8911 (2025) takes a separate Schedule A for each property. The current
+forms/f1040/nodes/inputs/f8912/allowance.ts,18,"""2025-03-15"","
+forms/f1040/nodes/inputs/f8912/allowance.ts,19,"""2025-06-15"","
+forms/f1040/nodes/inputs/f8912/allowance.ts,20,"""2025-09-15"","
+forms/f1040/nodes/inputs/f8912/allowance.ts,21,"""2025-12-15"","
+forms/f1040/nodes/inputs/f8912/allowance.ts,32,"return new Date(Date.UTC(2025, month - 1, date) - DAY_MS)"
+forms/f1040/nodes/inputs/f8912/allowance.ts,75,"!date.startsWith(""2025-"") ||"
+forms/f1040/nodes/inputs/f8912/allowance.ts,81,"""Form 8912 credit allowance date is outside the 2025 holding period"","
+forms/f1040/nodes/inputs/f8915d/index.ts,11,// TY2025 — Form 8915-D: Qualified 2019 Disaster Retirement Plan Distributions and Repayments
+forms/f1040/nodes/inputs/f8915d/index.ts,13,"// By TY2025, the 3-year spreading window (2019/2020/2021) is complete."
+forms/f1040/nodes/inputs/f8915d/index.ts,14,// Repayments in 2025 may still generate a credit.
+forms/f1040/nodes/inputs/f8915d/index.ts,29,// Repayments made to the retirement plan in 2025
+forms/f1040/nodes/inputs/f8915d/index.ts,30,"repayments_in_2025: z.number().nonnegative().optional(),"
+forms/f1040/nodes/inputs/f8915d/index.ts,64,const repayments = item.repayments_in_2025 ?? 0;
+forms/f1040/nodes/inputs/f8915d/index.ts,73,const repayments = item.repayments_in_2025 ?? 0;
+forms/f1040/nodes/inputs/f8915f/index.ts,11,// TY2025 — Form 8915-F: Qualified Disaster Retirement Plan Distributions and Repayments
+forms/f1040/nodes/inputs/f8917/index.ts,7,// TY2025 — Form 8917 Tuition and Fees Deduction is EXPIRED.
+forms/f1040/nodes/inputs/f8917/index.ts,10,"// For TY2025, no federal deduction is available. The node captures data for"
+forms/f1040/nodes/inputs/f8917/index.ts,47,// TY2025: IRC §222 repealed — no federal deduction output
+forms/f1040/nodes/inputs/f8936/index.ts,16,// ─── TY2025 Constants ────────────────────────────────────────────────────────
+forms/f1040/nodes/inputs/f8936/index.ts,28,"const LAST_ELIGIBLE_ACQUISITION_DATE = ""2025-09-30"";"
+forms/f1040/nodes/inputs/f8936/index.ts,142,"!item.placed_in_service_date.startsWith(""2025-"")"
+forms/f1040/nodes/inputs/f8936/index.ts,145,"""f8936: vehicle must have a valid 2025 placed-in-service date"","
+forms/f1040/nodes/inputs/f8938/index.ts,7,// ─── TY2025 Filing Thresholds (IRC §6038D) ────────────────────────────────────
+forms/f1040/nodes/inputs/f8941/index.ts,8,// ─── TY2025 Constants (IRC §45R — Small Employer Health Insurance Credit) ─────
+forms/f1040/nodes/inputs/f8941/index.ts,19,"// Average wage threshold (TY2025): $56,000; phase-out $28,000 – $56,000"
+forms/f1040/nodes/inputs/f8965/index.ts,10,"// mandate penalty to $0 beginning TY2019. For TY2025 federal returns, this form"
+forms/f1040/nodes/inputs/f8965/index.ts,40,// No federal tax computation or downstream routing for TY2025.
+forms/f1040/nodes/inputs/f8978/index.ts,10,"// Form 8978 (Rev. January 2023, still used in TY2025) is a comparison of"
+forms/f1040/nodes/inputs/f8994/index.ts,8,// ─── TY2025 Constants (IRC §45S) ─────────────────────────────────────────────
+forms/f1040/nodes/inputs/f8997/index.ts,48,"// TY2025 note: The December 31, 2026 hard deferral deadline means all remaining deferred"
+forms/f1040/nodes/inputs/f8997/index.ts,49,// gains will become includible on TY2026 returns; TY2025 filers are still in the deferral
+forms/f1040/nodes/inputs/f965/index.ts,8,"// TY2025 — Forms 965-A, 965-C, 965-D, 965-E: §965 Transition Tax (Repatriation)"
+forms/f1040/nodes/inputs/f965/index.ts,16,// TY2025 is the 8th (final) installment year for the original 2017 inclusion.
+forms/f1040/nodes/inputs/fec/index.ts,19,// TY2025 Form 1040 reports FEC on line 1h (IRS Publication 4164).
+forms/f1040/nodes/inputs/general/index.ts,271,// Rev. Proc. 2024-40 §3.23 and Rev. Proc. 2025-32 §4.23.
+forms/f1040/nodes/inputs/general/index.ts,273,"2025: 5_200,"
+forms/f1040/nodes/inputs/general/index.ts,310,"// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use"
+forms/f1040/nodes/inputs/general/index.ts,328,"// For TY2025, CTC requires an employment-valid SSN issued before the return"
+forms/f1040/nodes/inputs/ltc_premium/index.ts,11,"// Age of insured as of December 31, 2025 — determines age bracket"
+forms/f1040/nodes/inputs/nol_carryforward/index.ts,12,// TY2025 — Net Operating Loss (NOL) carryforward deduction (IRC §172)
+forms/f1040/nodes/inputs/qsehra/index.ts,24,// TY2025 limits (Rev Proc 2024-40 §3.25):
+forms/f1040/nodes/inputs/qsehra/index.ts,28,// TY2025 QSEHRA limits
+forms/f1040/nodes/inputs/rrb1099r/index.ts,16,"//   IRS Pub. 575 (2025), ""Railroad Retirement Benefits"" section"
+forms/f1040/nodes/inputs/rrb1099r/index.ts,17,"//   IRS Pub. 915 (2025), ""Tier 1 Railroad Retirement Benefits"" section"
+forms/f1040/nodes/inputs/rrb1099r/index.ts,21,"// Unchanged for TY2025 (statutory, not inflation-adjusted)"
+forms/f1040/nodes/inputs/rrb1099r/index.ts,35,// Box 3 — Gross SSEB/Tier 1 SS-equivalent benefit paid in 2025
+forms/f1040/nodes/inputs/rrb1099r/index.ts,39,// Box 4 — SSEB/Tier 1 SS benefit repaid to RRB in 2025
+forms/f1040/nodes/inputs/schedule_c/index.ts,26,// ── TY2025 Constants ────────────────────────────────────────────────────────
+forms/f1040/nodes/inputs/schedule_j/index.ts,10,"// TY2025: base years are 2022 (py1), 2023 (py2), 2024 (py3)"
+forms/f1040/nodes/inputs/schedule_r/index.ts,12,// TY2025 — Schedule R base amounts (IRC §22(c)(2)(A))
+forms/f1040/nodes/inputs/schedule_r/index.ts,26,// TY2025 — AGI phaseout thresholds (IRC §22(d)(1))
+forms/f1040/nodes/inputs/sep_retirement/index.ts,14,"// TY2025 — Self-employed retirement plan deduction (IRC §404(a)(8), §408(k), §408(p), §401(k))"
+forms/f1040/nodes/inputs/ssa1099/index.ts,17,// Box 3 — Total social security benefits paid in 2025
+forms/f1040/nodes/inputs/ssa1099/index.ts,20,// Box 4 — Total benefits repaid to SSA/RRB in 2025
+forms/f1040/nodes/inputs/ssa1099/index.ts,23,"// Box 5 — Net benefits for 2025 (Box 3 minus Box 4, as precomputed by SSA)"
+forms/f1040/nodes/inputs/ssa1099/index.ts,26,"box5_net_benefits: z.number().nonnegative().optional().describe(""Net benefits for 2025 (Box 3 minus Box 4)""),"
+forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts,514,// and the final 1040 derive AGI from identical numbers. TY2025 retains its
+forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,28,// IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
+forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,75,// IRC §36B(f); 2025 Schedule 2 line 1a.
+forms/f1040/nodes/intermediate/aggregation/schedule_d/index.ts,518,// TY2026 takes the required return-level answer. TY2025 retains its
+forms/f1040/nodes/intermediate/forms/farm_elections.ts,10,const cropInsuranceDate = z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
+forms/f1040/nodes/intermediate/forms/farm_elections.ts,14,"""Date must be a valid day in 2025"","
+forms/f1040/nodes/intermediate/forms/form2441/year-rules.ts,8,if (year === 2025) {
+forms/f1040/nodes/intermediate/forms/form2441/year-rules.ts,32,if (year === 2025) {
+forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,80,if (taxYear !== 2025) {
+forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,81,"throw new Error(""Form 2555 structured filing is available for TY2025 only"");"
+forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,104,"throw new Error(""Form 2555 qualifying period does not overlap TY2025"");"
+forms/f1040/nodes/intermediate/forms/form2555/calculation.ts,107,const line40 = Math.round(CONFIG_BY_YEAR[2025].feieLimit * line39);
+forms/f1040/nodes/intermediate/forms/form2555/index.ts,20,// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,14,// ── TY2025 Constants ──────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,17,"const BONUS_RATE_PRE_JAN20 = 0.40;   // Property placed in service before Jan 20, 2025"
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,18,"const BONUS_RATE_POST_JAN19 = 1.00;  // Property placed in service after Jan 19, 2025"
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,30,"// Source: IRS Form 4562 Instructions TY2025, Table A (page 20)"
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,40,"// Source: IRS Form 4562 Instructions TY2025, Table B (page 20)"
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,71,"// Depreciable basis for property placed in service before Jan 20, 2025 (40% rate)"
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,73,"// Depreciable basis for property placed in service after Jan 19, 2025 (100% rate)"
+forms/f1040/nodes/intermediate/forms/form4562/index.ts,87,// MACRS prior-year depreciation (Line 17) — assets placed in service before 2025
+forms/f1040/nodes/intermediate/forms/form4684/index.ts,13,// ─── TY2025 Constants ─────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form4684/index.ts,37,// TY2025: Personal casualty losses ONLY deductible if federally declared disaster
+forms/f1040/nodes/intermediate/forms/form4684/index.ts,110,// TY2025: Personal losses ONLY deductible for federally declared disasters
+forms/f1040/nodes/intermediate/forms/form4972/index.ts,18,"// 2025 Form 4972 instructions, Tax Rate Schedule for lines 24 and 27."
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,12,// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,84,"// FMV of traditional IRAs on Dec 31, 2025 (caps the 6% tax base)"
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,90,"// FMV of Roth IRAs on Dec 31, 2025 (caps the 6% tax base)"
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,96,"// FMV of Coverdell ESAs on Dec 31, 2025 (caps the 6% tax base)"
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,102,"// FMV of Archer MSAs on Dec 31, 2025 (caps the 6% tax base)"
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,108,"// FMV of HSAs on Dec 31, 2025 (caps the 6% tax base)"
+forms/f1040/nodes/intermediate/forms/form5329/index.ts,114,"// FMV of ABLE account on Dec 31, 2025 (caps the 6% tax base)"
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,20,"// ─── TY2025 Constants (IRC §25C, §25D) ───────────────────────────────────────"
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,99,"enabling_installed_year: z.union([z.literal(2024), z.literal(2025)]),"
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,100,"enabled_installed_year: z.union([z.literal(2024), z.literal(2025)]),"
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,644,) !== 2025 ||
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,649,"""Form 5695 panelboard needs distinct enabled-property codes and 2025 or consecutive-year timing"","
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,652,if (panelboard.enabled_installed_year === 2025) {
+forms/f1040/nodes/intermediate/forms/form5695/index.ts,668,"""Form 5695 panelboard enabled-property code needs a matching 2025 property item"","
+forms/f1040/nodes/intermediate/forms/form6251/index.ts,154,"// Source: IRS Instructions for Form 6251 (2025), ""Line 7"" / ""What's New"""
+forms/f1040/nodes/intermediate/forms/form6251/index.ts,184,// IRC §55(a); Form 6251 Line 11 → 2025 Schedule 2 Line 2
+forms/f1040/nodes/intermediate/forms/form6251/index.ts,252,"// 2025 Form 6251 Part III, using the worksheet amounts above for both the"
+forms/f1040/nodes/intermediate/forms/form6252/calculation.ts,100,if (sold <= acquired || sold.getUTCFullYear() > 2025) {
+forms/f1040/nodes/intermediate/forms/form6252/calculation.ts,102,"""Form 6252 sale must follow acquisition and occur by tax year 2025"","
+forms/f1040/nodes/intermediate/forms/form6252/calculation.ts,140,const line20 = sold.getUTCFullYear() === 2025 ? line17 : 0;
+forms/f1040/nodes/intermediate/forms/form6252/index.ts,19,// IRC §453; TY2025 instructions.
+forms/f1040/nodes/intermediate/forms/form6781/index.ts,11,// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form6781/index.ts,22,// IRC §1256; TY2025 instructions.
+forms/f1040/nodes/intermediate/forms/form8396/index.ts,12,// ─── Constants — TY2025 ───────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8396/index.ts,20,// IRC §25; TY2025 instructions.
+forms/f1040/nodes/intermediate/forms/form8582/index.ts,17,// IRC §469(i)(2): maximum special allowance for rental real estate (TY2025)
+forms/f1040/nodes/intermediate/forms/form8582/index.ts,20,// IRC §469(i)(3)(A): MAGI thresholds for phase-out (TY2025)
+forms/f1040/nodes/intermediate/forms/form8582/index.ts,24,// IRC §469(i)(5)(B): MFS (lived apart all year) reduced thresholds (TY2025)
+forms/f1040/nodes/intermediate/forms/form8606/index.ts,22,"// Line 6: FMV of all traditional IRAs as of December 31, 2025"
+forms/f1040/nodes/intermediate/forms/form8615/calculation.ts,101,// The 2025 form stops before the family-tax worksheets when line 5 is zero.
+forms/f1040/nodes/intermediate/forms/form8815/index.ts,16,// IRC §135; TY2025 instructions.
+forms/f1040/nodes/intermediate/forms/form8824/calculation.ts,12,"// Form 8824 (2025), Part III. Net liabilities must be compared before adding"
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,53,"const ADOPTION_RULES: Record<2025 | 2026, {"
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,59,"// 2025 Form 8839, lines 2, 8, and 11b."
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,60,"2025: { maxCreditPerChild: 17_280, refundablePerChild: 5_000, phaseOutStart: 259_190, phaseOutRange: 40_000 },"
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,251,if (ctx.taxYear !== 2025 && ctx.taxYear !== 2026) {
+forms/f1040/nodes/intermediate/forms/form8853/index.ts,28,// Line 2: Taxpayer contributions to Archer MSA in 2025
+forms/f1040/nodes/intermediate/forms/form8959/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8960/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8960/index.ts,116,// Form 8960 line 14; not indexed for inflation (TY2025)
+forms/f1040/nodes/intermediate/forms/form8960/index.ts,194,"if (taxYear === 2025) return [output(schedule2, { line12_niit: niit })];"
+forms/f1040/nodes/intermediate/forms/form8962/index.ts,305,"...(taxYear === 2025 ? { excess_advance_premium: line29 } : {}),"
+forms/f1040/nodes/intermediate/forms/form8962/index.ts,626,"...(ctx.taxYear === 2025 ? { excess_advance_premium: line29 } : {}),"
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,3,"// TY2025: Form 8962 Instructions, Tables 2 and 5."
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,4,// TY2026: Rev. Proc. 2025-25 §3.01–.02; Rev. Proc. 2025-32 §2.04;
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,8,if (year !== 2025 && year !== 2026) {
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,24,if (taxYear === 2025) {
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,35,// Rev. Proc. 2025-25 §3.01 sets initial and final percentages for each
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,51,/** Null means full excess APTC is repaid. The limitation ends after TY2025. */
+forms/f1040/nodes/intermediate/forms/form8990/index.ts,10,// ─── TY2025 Constants ─────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8990/index.ts,42,// TY2025: reinstated by P.L. 119-21 (OBBBA) for tax years beginning after 2024
+forms/f1040/nodes/intermediate/forms/form8990/index.ts,91,//   + depreciation/amortization/depletion (line 11 — TY2025 reinstated)
+forms/f1040/nodes/intermediate/forms/form8995/index.ts,16,// ── TY2025 Constants ─────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8995a/index.ts,15,// ── TY2025 Constants ─────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form_8829/index.ts,11,"// ─── TY2025 Depreciation Rate Table (MACRS 39-year, mid-month convention) ─────"
+forms/f1040/nodes/intermediate/forms/form_8829/index.ts,13,"// Index 0 = January, Index 11 = December (first year of business use in TY2025)"
+forms/f1040/nodes/intermediate/forms/form_8829/index.ts,14,const DEPRECIATION_RATES_TY2025 = [
+forms/f1040/nodes/intermediate/forms/form_8829/index.ts,29,// Rate for homes where business use began before 2025 (full-year mid-month convention)
+forms/f1040/nodes/intermediate/forms/form_8829/index.ts,57,"// Month home first used for business: 1–12 for TY2025 first use, 0 for prior-year use"
+forms/f1040/nodes/intermediate/forms/form_8829/index.ts,83,rate = DEPRECIATION_RATES_TY2025[month - 1];
+forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,103,"taxYear = 2025,"
+forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,165,"taxYear = 2025,"
+forms/f1040/nodes/intermediate/forms/schedule_f/index.ts,29,// ── TY2025 Constants ──────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,12,// ─── TY2025 Constants (Rev Proc 2024-40; IRS Publication 926) ────────────────
+forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,34,"cash_wages_over_2025_limit: z.boolean().optional(),"
+forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,125,"unemployment && ""state_rows"" in unemployment && taxYear !== 2025"
+forms/f1040/nodes/intermediate/forms/schedule_se/index.ts,16,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/worksheets/form8978_negative_adjustment.ts,2,* TY2025 Form 8978 negative line 14 worksheets from the Schedule 3 line 6l
+forms/f1040/nodes/intermediate/worksheets/income_tax_calculation/index.ts,102,"// 2025 Schedule D Tax Worksheet, lines 1–47, for positive Schedule D lines"
+forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,71,"// Each factor is $1,600 (MFJ/MFS/QSS) or $2,000 (Single/HOH) for TY2025 per OBBBA."
+forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,158,// 2025 Form 6251 line 1a = Form 1040 line 14 minus Schedule 1-A line 37;
+forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,162,"// 2025 Form 6251 line 2a: Schedule A line 7 if itemizing, otherwise"
+forms/f1040/nodes/outputs/f1040/index.ts,38,// Lines reference: Form 1040 (2025)
+forms/f1040/nodes/outputs/f1040/index.ts,194,// Line 26 — 2025 estimated tax payments
+forms/f1040/nodes/shared/business-mileage.ts,2,"* Business standard mileage rates from Notice 2025-5, Notice 2026-10, and"
+forms/f1040/nodes/shared/business-mileage.ts,11,if (taxYear === 2025) {
+forms/f1040/nodes/shared/business-mileage.ts,13,"throw new Error(""TY2026 mileage periods cannot be used on a TY2025 return"");"

@@ -1,0 +1,63 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,"Page 1. Name(s) shown on Form 1040, 1040-S R, or 1040-N R. ",2,36 684 445.65 697.388,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,446.4 684 576 698.001,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"Part I. Alternative Minimum Taxable Income (See instructions for how to complete each line.) 1a. Subtract Schedule 1-A (Form 1040), line 43, from Form 1040, 1040-S R, or 1040-N R, line 14.",2,410.4 648 481.65 659.999,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"1b. Subtract line 1a from Form 1040, 1040-S R, or 1040-N R, line 11b (if less than zero, enter as a negative amount).",2,504 624.002 576 636.001,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,"2a. If filing Schedule A (Form 1040), enter the taxes from Schedule A, line 7; otherwise, enter the amount from Form 1040 or 1040-S R, line 12e. ",2,504 600.001 576 612,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,"2b. Open parenthesis. Tax refund from Schedule 1 (Form 1040), line 1 or line 8z. Close parenthesis.",2,508 588.002 572 600.001,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,2c. Investment interest expense (difference between regular tax and A M T). ,2,504 576 576 587.999,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,2d. Depletion (difference between regular tax and A M T). ,2,504 564.001 576 576,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"2e. Net operating loss deduction from Schedule 1 (Form 1040), line 8a. Enter as a positive amount. ",2,504 552.002 576 564.001,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,2f. Open parenthesis. Alternative tax net operating loss deduction. Close parenthesis.,2,508 540 572 551.999,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,2g. Interest from specified private activity bonds exempt from the regular tax. ,2,504 528.001 576 540,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,"2h. Qualified small business stock, see instructions. ",2,504 516.002 576 528.001,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,2i. Exercise of incentive stock options (excess of A M T income over regular tax income). ,2,504 504 576 515.999,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,"2j. Estates and trusts (amount from Schedule K-1 (Form 1041), box 12, code A). ",2,504 492.001 576 504,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,2k. Disposition of property (difference between A M T and regular tax gain or loss). ,2,504 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,2l. Depreciation on assets placed in service after 1986 (difference between regular tax and A M T). ,2,504 468 576 479.999,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,2m. Passive activities (difference between A M T and regular tax income or loss). ,2,504 456.001 576 468,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,2n. Loss limitations (difference between A M T and regular tax income or loss). ,2,504 444.002 576 456.001,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,2o. Circulation costs (difference between regular tax and A M T). ,2,504 432 576 443.999,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,2p. Long-term contracts (difference between A M T and regular tax income). ,2,504 420.001 576 432,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,2q. Mining costs (difference between regular tax and A M T). ,2,504 408.002 576 420.001,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,2r. Research and experimental costs (difference between regular tax and A M T).,2,504 396 576 407.999,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,"2s. Open parenthesis. Income from certain installment sales before January 1, 1987. Close parenthesis. ",2,508 384.001 572 396,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,2t. Intangible drilling costs preference. ,2,504 372.002 576 384.001,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,"3. Other adjustments, including income-based related adjustments. ",2,504 360 576 371.999,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,"4. Alternative minimum taxable income. Combine lines 1b through 3. (If married filing separately and line 4 is more than $640,200, see instructions.).",2,504 336.002 576 348.001,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,"Part I I. Alternative Minimum Tax (A M T). 5. Exemption. IF your filing status is Single or head of household AND line 4 is not over $500,000 THEN enter on line 5 $90,100. IF your filing status is Married filing jointly or qualifying surviving spouse AND line 4 is not over $1,000,000 THEN enter on line 5 $140,200. IF your filing status is Married filing separately AND line 4 is not over $500,000 THEN enter on line 5 $70,100. If line 4 is over the amount shown above for your filing status, see instructions. ",2,504 264.002 576 276.001,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,"6. Subtract line 5 from line 4. If more than zero, go to line 7. If zero or less, enter 0 here and on lines 7, 9, and 11, and go to line 10. ",2,504 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,"7. If you are filing Form 2555, see instructions for the amount to enter. If you reported capital gain distributions directly on Form 1040 or 1040-S R, line 7a; you reported qualified dividends on Form 1040 or 1040-S R, line 3a; or you had a gain on both lines 15 and 16 of Schedule D (Form 1040) (as refigured for the A M T, if necessary), complete Part I I I on the back and enter the amount from line 40 here. All others: If line 6 is $244,500 or less ($122,250 or less if married filing separately), multiply line 6 by 26% (0.26). Otherwise, multiply line 6 by 28% (0.28) and subtract $4,890 ($2,445 if married filing separately) from the result. ",2,504 180 576 191.999,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,8. Alternative minimum tax foreign tax credit (see instructions). ,2,504 120.002 576 132.001,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,9. Tentative minimum tax. Subtract line 8 from line 7. ,2,504 108 576 119.999,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,"10. Add Form 1040 or 1040-S R, line 16 (minus any tax from Form 4972), and Schedule 2 (Form 1040), line 1z. Subtract from the result Schedule 3 (Form 1040), line 1 and any negative amount reported on Form 8978, line 14 (treated as a positive number). If zero or less, enter 0. If you used Schedule J to figure your tax on Form 1040 or 1040-S R, line 16, refigure that tax without using Schedule J before completing this line. See instructions.",2,504 48.002 576 60.001,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,"11. A M T. Subtract line 10 from line 9. If zero or less, enter 0. Enter here and on Schedule 2 (Form 1040), line 2. ",2,504 36 576 47.999,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,"Page 2. Part I I I. Tax Computation Using Maximum Capital Gains Rates. Complete Part I I I only if you are required to do so by line 7 or by the Foreign Earned Income Tax Worksheet in the instructions. 12. Enter the amount from Form 6251, line 6. If you are filing Form 2555, enter the amount from line 3 of the worksheet in the instructions for line 7. ",3,504 696.002 576 708.001,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,"13. Enter the amount from line 4 of the Qualified Dividends and Capital Gain Tax Worksheet in the Instructions for Form 1040 or the amount from line 13 of the Schedule D Tax Worksheet in the Instructions for Schedule D (Form 1040), whichever applies (as refigured for the A M T, if necessary). See instructions. If you are filing Form 2555, see instructions for the amount to enter. ",3,504 648 576 659.999,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,"14. Enter the amount from Schedule D (Form 1040), line 19 (as refigured for the A M T, if necessary). See instructions. If you are filing Form 2555, see instructions for the amount to enter. ",3,504 624.002 576 636.001,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,"15. If you did not complete a Schedule D Tax Worksheet for the regular tax or the A M T, enter the amount from line 13. Otherwise, add lines 13 and 14, and  enter the smaller of that result or the amount from line 10 of the Schedule D Tax Worksheet (as refigured for the A M T, if necessary). If you are filing Form 2555, see instructions for the amount to enter. ",3,504 576 576 587.999,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,16. Enter the smaller of line 12 or line 15. ,3,504 564.001 576 576,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,17. Subtract line 16 from line 12. ,3,504 552.002 576 564.001,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,"18. If line 17 is $244,500 or less ($122,250 or less if married filing separately), multiply line 17 by 26% (0.26). Otherwise, multiply line 17 by 28% (0.28) and subtract $4,890 ($2,445 if married filing separately) from the result. ",3,504 528.001 576 540,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,"19. Enter: $98,900 if married filing jointly or qualifying surviving spouse. $49,450 if single or married filing separately, or $66,200 if head of household. ",3,504 492.001 576 504,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,"20. Enter the amount from line 5 of the Qualified Dividends and Capital Gain Tax Worksheet or the amount from line 14 of the Schedule D Tax Worksheet, whichever applies (as figured for the regular tax). If you did not complete either worksheet for the regular tax, enter the amount from Form 1040 or 1040-S R, line 15; if zero or less, enter 0. If you are filing Form 2555, see instructions for the amount to enter. ",3,504 432 576 443.999,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,"21. Subtract line 20 from line 19. If zero or less, enter 0. ",3,504 420.001 576 432,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,22. Enter the smaller of line 12 or line 13. ,3,504 408.002 576 420.001,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,23. Enter the smaller of line 21 or line 22. This amount is taxed at 0%. ,3,504 396 576 407.999,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,24. Subtract line 23 from line 22. ,3,504 384.001 576 396,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,"25. Enter: $545,500 if single. $306,850 if married filing separately. $613,700 if married filing jointly or qualifying surviving spouse, or $579,600 if head of household. ",3,504 348.001 576 360,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,26. Enter the amount from line 21. ,3,504 312.001 576 324,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,"27. Enter the amount from line 5 of the Qualified Dividends and Capital Gain Tax Worksheet or the amount from line 21 of the Schedule D Tax Worksheet, whichever applies (as figured for the regular tax). If you did not complete either worksheet for the regular tax, enter the amount from Form 1040 or 1040-S R, line 15; if zero or less, enter 0. If you are filing Form 2555, see instructions for the amount to enter. ",3,504 264.002 576 276.001,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,28. Add line 26 and line 27. ,3,504 252 576 263.999,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,"29. Subtract line 28 from line 25. If zero or less, enter 0. ",3,504 240.001 576 252,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,30. Enter the smaller of line 24 or line 29. ,3,504 228.002 576 240.001,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,31. Multiply line 30 by 15% (0.15). ,3,504 216 576 227.999,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,32. Add lines 23 and 30. ,3,504 204.001 576 216,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,"If lines 32 and 12 are the same, skip lines 33 through 37 and go to line 38. Otherwise, go to line 33. 33. Subtract line 32 from line 22. ",3,504 180 576 191.999,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,34. Multiply line 33 by 20% (0.20). ,3,504 168.001 576 180,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,"If line 14 is zero or blank, skip lines 35 through 37 and go to line 38. Otherwise, go to line 35. 35. Add lines 17, 32, and 33. ",3,504 144 576 155.999,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,36. Subtract line 35 from line 12. ,3,504 132.001 576 144,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,37. Multiply line 36 by 25% (0.25). ,3,504 120.002 576 132.001,yes
+topmostSubform[0].Page2[0].f2_27[0],/Tx,"38. Add lines 18, 31, 34, and 37. ",3,504 108 576 119.999,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,"39. If line 12 is $244,500 or less ($122,250 or less if married filing separately), multiply line 12 by 26% (0.26). Otherwise, multiply line 12 by 28% (0.28) and subtract $4,890 ($2,445 if married filing separately) from the result. ",3,504 84.002 576 96.001,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,"40. Enter the smaller of line 38 or line 39 here and on line 7. If you are filing Form 2555, do not enter this amount on line 7. Instead, enter it on line 4 of the worksheet in the instructions for line 7. ",3,504 60.001 576 72,yes

@@ -1,0 +1,11 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 684 467.25 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,468 684 576 698.001,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"Before you begin: You can deduct moving expenses only if you are a Member of the Armed Forces on active duty and, due to a military order, you, your spouse, or your dependents move because of a permanent change of station, or you are a Member of the Intelligence Community who moves due to a change in assignment that requires relocation. Check here to certify that you meet these requirements. See the instructions.",2,564.902 639.001 572.902 647.001,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,1. Transportation and storage of household goods and personal effects (see instructions). ,2,504 612 576 623.999,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,2. Travel (including lodging) from your old home to your new home (see instructions). Do not include the cost of meals. ,2,504 576 576 587.999,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,3. Add lines 1 and 2. ,2,504 552.002 576 564.001,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,4. Enter the total amount the government paid you for the expenses listed on lines 1 and 2 that is not included in box 1 of your Form W-2 (wages). This amount should be shown in box 12 of your Form W-2 with code P. ,2,504 504 576 515.999,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,"5. Is line 3 more than line 4? No. You cannot deduct your moving expenses. If line 3 is less than line 4, subtract line 3 from line 4 and include the result on Form 1040, 1040-S R, or 1040-N R, line 1h.",2,72 458.001 80 466.001,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,"5. Yes. Subtract line 4 from line 3. Enter the result here and on Schedule 1 (Form 1040), line 14. This is your moving expense deduction.",2,72 422.001 80 430.001,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,5. Amount. ,2,504 408.002 576 420.001,yes

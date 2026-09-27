@@ -1,0 +1,208 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,"Page 1. For the year Jan. 1–Dec. 31, 2026, or other tax year beginning. Month and day. ",2,228.8 732.502 316.8 743.501,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,", 2026, ending. Month and day. ",2,365.6 732.502 453.6 743.501,yes
+topmostSubform[0].Page1[0].f1_03[0],/Tx,", 20. 2 digit year. ",2,468.6 732.502 485.6 743.501,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,Filed pursuant to section 301.9100-2. ,2,36 722 44 730,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,Combat zone. ,2,155.2 722 163.2 730,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,Combat zone (specify). ,2,209.8 720.5 370.8 731.499,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,Deceased. ,2,374.8 722 382.8 730,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,M M. ,2,417.6 720.5 432 731.499,yes
+topmostSubform[0].Page1[0].f1_06[0],/Tx,/ D D. ,2,439.2 720.5 453.6 731.499,yes
+topmostSubform[0].Page1[0].f1_07[0],/Tx,/ Y Y Y Y. ,2,460.8 720.5 482.4 731.499,yes
+topmostSubform[0].Page1[0].f1_08[0],/Tx,Spouse. M M. ,2,511.2 720.5 525.6 731.499,yes
+topmostSubform[0].Page1[0].f1_09[0],/Tx,/ D D. ,2,532.8 720.5 547.2 731.499,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,/ Y Y Y Y. ,2,554.4 720.5 576 731.499,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,Other. ,2,36 710.001 44 718.001,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,Other (specify). 1. ,2,68.4 708.501 236.6 719.5,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,Other (specify). 2. ,2,238.6 708.501 409.4 719.5,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,Other (specify). 3. ,2,411.4 708.501 576 719.5,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,Your first name and middle initial. ,2,36 684.5 251 698.001,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,Last name. ,2,253 684.5 467 698.001,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,Your social security number. ,2,469 684.5 576 698.001,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"If a joint return, spouse's first name and middle initial. ",2,36 660.499 251 674,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,Last name. ,2,253 660.499 467 674,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,Spouse's social security number. ,2,469 660.499 576 674,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_20[0],/Tx,"Home address (number and street). If you have a P.O. box, see instructions. ",2,36 636.498 416.6 649.999,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_21[0],/Tx,Apt. no. ,2,418.6 636.498 467 649.999,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_22[0],/Tx,"City, town, or post office. If you have a foreign address, also complete spaces below. ",2,36 612.5 330.2 626.001,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_23[0],/Tx,State. ,2,332.2 612.5 395 626.001,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_24[0],/Tx,Z I P code. ,2,397 612.5 467 626.001,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_25[0],/Tx,Foreign country name. ,2,36 588.499 222.2 602,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_26[0],/Tx,Foreign province/state/county. ,2,224.2 588.499 395 602,yes
+topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_27[0],/Tx,Foreign postal code. ,2,397 588.499 467 602,yes
+topmostSubform[0].Page1[0].c1_5[0],/Btn,"Check here if your main home, and your spouse's if filing a joint return, was in the U.S. for more than half of 2026. ",2,568 637.251 576 645.251,yes
+topmostSubform[0].Page1[0].c1_6[0],/Btn,"Presidential Election Campaign. Check here if you, or your spouse if filing jointly, want $3 to go to this fund. Checking a box below will not change your tax or refund. You. ",2,482.4 589.502 490.4 597.502,yes
+topmostSubform[0].Page1[0].c1_7[0],/Btn,Spouse. ,2,525.6 589.502 533.6 597.502,yes
+topmostSubform[0].Page1[0].c1_8[0],/Btn,Filing Status. Check only one box. Single. ,2,95.599 578 103.599 586,yes
+topmostSubform[0].Page1[0].c1_8[1],/Btn,Married filing jointly (even if only one had income). ,2,138.799 578 146.799 586,yes
+topmostSubform[0].Page1[0].c1_8[2],/Btn,Married filing separately (M F S). ,2,311.599 578 319.599 586,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,Enter spouse’s S S N above and full name here: ,2,446.4 570.502 576 582.001,yes
+topmostSubform[0].Page1[0].HOH-QSS_ReadOrder[0].c1_8[0],/Btn,Head of household (H O H). ,2,95.599 564.5 103.599 572.5,yes
+topmostSubform[0].Page1[0].HOH-QSS_ReadOrder[0].c1_8[1],/Btn,Qualifying surviving spouse (Q S S). ,2,95.599 552 103.599 560,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,"If you checked the H O H or Q S S box, enter the child's name if the qualifying person is a child but not your dependent: ",2,396 552.502 576 564.001,yes
+topmostSubform[0].Page1[0].Nonresident_ReadOrder[0].c1_9[0],/Btn,"Other Information (see instructions). If treating a nonresident alien or dual-status alien spouse as a U.S. resident for the entire tax year, check the box. ",2,187.199 530.501 195.199 538.501,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,and enter their name (attach statement if required): ,2,352.8 530.502 576 542.001,yes
+topmostSubform[0].Page1[0].c1_10[0],/Btn,"At any time during 2026, did you: (a) receive (as a reward, award, or payment for property or services); or (b) sell, exchange, or otherwise dispose of a digital asset (or a financial interest in a digital asset)? Yes. ",2,518.4 512.001 526.4 520.001,yes
+topmostSubform[0].Page1[0].c1_10[1],/Btn,No. ,2,554.4 512.001 562.4 520.001,yes
+topmostSubform[0].Page1[0].c1_11[0],/Btn,"At the time you file your return, are you, and your spouse if filing jointly, a U.S. citizen, U.S. national, or an alien lawfully authorized to work in the U.S.? (see instructions). You: Yes. ",2,165.6 488.5 173.6 496.5,yes
+topmostSubform[0].Page1[0].c1_11[1],/Btn,No. ,2,198 488.5 206 496.5,yes
+topmostSubform[0].Page1[0].c1_12[0],/Btn,Spouse: Yes. ,2,273.6 488.5 281.6 496.5,yes
+topmostSubform[0].Page1[0].c1_12[1],/Btn,No. ,2,306 488.5 314 496.5,yes
+topmostSubform[0].Page1[0].Dependents_ReadOrder[0].c1_13[0],/Btn,"Dependents (see instructions). If more than four dependents, see instructions and check here. ",2,79.699 406.5 87.699 414.5,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row1[0].f1_31[0],/Tx,Row: (1) First name. Column: Dependent 1. ,2,145 462.502 251 473.501,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row1[0].f1_32[0],/Tx,Row: (1) First name. Column: Dependent 2. ,2,253 462.502 359 473.501,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row1[0].f1_33[0],/Tx,Row: (1) First name. Column: Dependent 3. ,2,361 462.502 467 473.501,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row1[0].f1_34[0],/Tx,Row: (1) First name. Column: Dependent 4. ,2,469 462.502 576 473.501,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row2[0].f1_35[0],/Tx,Row: (2) Last name. Column: Dependent 1. ,2,145 450.503 251 461.502,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row2[0].f1_36[0],/Tx,Row: (2) Last name. Column: Dependent 2. ,2,253 450.503 359 461.502,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row2[0].f1_37[0],/Tx,Row: (2) Last name. Column: Dependent 3. ,2,361 450.503 467 461.502,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row2[0].f1_38[0],/Tx,Row: (2) Last name. Column: Dependent 4. ,2,469 450.503 576 461.502,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row3[0].f1_39[0],/Tx,Row: (3) S S N. Column: Dependent 1. ,2,145 438.504 251 449.503,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row3[0].f1_40[0],/Tx,Row: (3) S S N. Column: Dependent 2. ,2,253 438.504 359 449.503,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row3[0].f1_41[0],/Tx,Row: (3) S S N. Column: Dependent 3. ,2,361 438.504 467 449.503,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row3[0].f1_42[0],/Tx,Row: (3) S S N. Column: Dependent 4. ,2,469 438.504 576 449.503,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row4[0].f1_43[0],/Tx,Row: (4) Relationship. Column: Dependent 1. ,2,145 426.505 251 437.504,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row4[0].f1_44[0],/Tx,Row: (4) Relationship. Column: Dependent 2. ,2,253 426.505 359 437.504,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row4[0].f1_45[0],/Tx,Row: (4) Relationship. Column: Dependent 3. ,2,361 426.505 467 437.504,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row4[0].f1_46[0],/Tx,Row: (4) Relationship. Column: Dependent 4. ,2,469 426.505 576 437.504,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent1[0].c1_14[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 1. (a) Yes. ,2,169.6 415.999 177.6 423.999,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent1[0].c1_15[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 1. (b) And in the U.S. ,2,169.6 404 177.6 412,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent2[0].c1_16[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 2. (a) Yes. ,2,277.6 415.999 285.6 423.999,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent2[0].c1_17[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 2. (b) And in the U.S. ,2,277.6 404 285.6 412,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent3[0].c1_18[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 3. (a) Yes. ,2,385.6 415.999 393.6 423.999,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent3[0].c1_19[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 3. (b) And in the U.S. ,2,385.6 404 393.6 412,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent4[0].c1_20[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 4. (a) Yes. ,2,493.6 415.999 501.6 423.999,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row5[0].Dependent4[0].c1_21[0],/Btn,Row: (5) Check if lived with you more than half of 2026. Column: Dependent 4. (b) And in the U.S. ,2,493.6 404 501.6 412,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent1[0].c1_22[0],/Btn,Row: (6) Check if. Column: Dependent 1. Full-time student. ,2,148 392.001 156 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent1[0].c1_23[0],/Btn,Row: (6) Check if. Column: Dependent 1. Permanently and totally disabled. ,2,198.4 392.001 206.4 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent2[0].c1_24[0],/Btn,Row: (6) Check if. Column: Dependent 2. Full-time student. ,2,256 392.001 264 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent2[0].c1_25[0],/Btn,Row: (6) Check if. Column: Dependent 2. Permanently and totally disabled. ,2,306.4 392.001 314.4 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent3[0].c1_26[0],/Btn,Row: (6) Check if. Column: Dependent 3. Full-time student. ,2,364 392.001 372 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent3[0].c1_27[0],/Btn,Row: (6) Check if. Column: Dependent 3. Permanently and totally disabled. ,2,414.4 392.001 422.4 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent4[0].c1_28[0],/Btn,Row: (6) Check if. Column: Dependent 4. Full-time student. ,2,472 392.001 480 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row6[0].Dependent4[0].c1_29[0],/Btn,Row: (6) Check if. Column: Dependent 4. Permanently and totally disabled. ,2,522.4 392.001 530.4 400.001,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent1[0].c1_30[0],/Btn,Row: (7) Credits. Column: Dependent 1. Child tax credit. ,2,148 371.002 156 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent1[0].c1_30[1],/Btn,Row: (7) Credits. Column: Dependent 1. Credit for other dependents. ,2,198.4 371.002 206.4 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent2[0].c1_31[0],/Btn,Row: (7) Credits. Column: Dependent 2. Child tax credit. ,2,256 371.002 264 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent2[0].c1_31[1],/Btn,Row: (7) Credits. Column: Dependent 2. Credit for other dependents. ,2,306.4 371.002 314.4 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent3[0].c1_32[0],/Btn,Row: (7) Credits. Column: Dependent 3. Child tax credit. ,2,364 371.002 372 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent3[0].c1_32[1],/Btn,Row: (7) Credits. Column: Dependent 3. Credit for other dependents. ,2,414.4 371.002 422.4 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent4[0].c1_33[0],/Btn,Row: (7) Credits. Column: Dependent 4. Child tax credit. ,2,472 371.002 480 379.002,yes
+topmostSubform[0].Page1[0].Table_Dependents[0].Row7[0].Dependent4[0].c1_33[1],/Btn,Row: (7) Credits. Column: Dependent 4. Credit for other dependents. ,2,522.4 371.002 530.4 379.002,yes
+topmostSubform[0].Page1[0].c1_34[0],/Btn,"Check if your filing status is M F S or H O H and you lived apart from your spouse for the last 6 months of 2026, or you are legally separated according to your state law under a written separation agreement or a decree of separate maintenance and you didn't live in the same household as your spouse at the end of 2026. ",2,95.599 350.501 103.599 358.501,yes
+topmostSubform[0].Page1[0].f1_47[0],/Tx,"Income. Attach Form(s) W-2 here. Also attach Forms W-2G and 1099-R if tax was withheld. If you did not get a Form W-2, see instructions. 1a. Total amount from Form(s) W-2, box 1 (see instructions). ",2,505 330.501 576 341.5,yes
+topmostSubform[0].Page1[0].f1_48[0],/Tx,1b. Household employee wages not reported on Form(s) W-2. ,2,505 318.502 576 329.501,yes
+topmostSubform[0].Page1[0].f1_49[0],/Tx,1c. Tip income not reported on line 1a (see instructions). ,2,505 306.5 576 317.499,yes
+topmostSubform[0].Page1[0].f1_50[0],/Tx,1d. Medicaid waiver payments not reported on Form(s) W-2 (see instructions). ,2,505 294.501 576 305.5,yes
+topmostSubform[0].Page1[0].f1_51[0],/Tx,"1e. Taxable dependent care benefits from Form 2441, line 26. ",2,505 282.502 576 293.501,yes
+topmostSubform[0].Page1[0].f1_52[0],/Tx,"1f. Employer-provided adoption benefits from Form 8839, line 31. ",2,505 270.5 576 281.499,yes
+topmostSubform[0].Page1[0].f1_53[0],/Tx,"1g. Wages from Form 8919, line 6. ",2,505 258.501 576 269.5,yes
+topmostSubform[0].Page1[0].f1_54[0],/Tx,1h. Other earned income (see instructions). Enter type. ,2,345.6 247.5 475.2 258.001,yes
+topmostSubform[0].Page1[0].f1_55[0],/Tx,1h. and amount: ,2,505 246.502 576 257.501,yes
+topmostSubform[0].Page1[0].f1_56[0],/Tx,1i. Nontaxable combat pay election (see instructions). ,2,411.4 234.5 481.4 245.999,yes
+topmostSubform[0].Page1[0].f1_57[0],/Tx,1z. Add lines 1a through 1h. ,2,505 222.501 576 234,yes
+topmostSubform[0].Page1[0].f1_58[0],/Tx,2a. Tax-exempt interest. Attach Sch. B if required. ,2,253 210.502 323 222.001,yes
+topmostSubform[0].Page1[0].f1_59[0],/Tx,2b. Taxable interest. ,2,505 210.502 576 221.501,yes
+topmostSubform[0].Page1[0].f1_60[0],/Tx,3a. Qualified dividends. Attach Sch. B if required. ,2,253 198.5 323 209.499,yes
+topmostSubform[0].Page1[0].f1_61[0],/Tx,3b. Ordinary dividends. ,2,505 198.5 576 209.499,yes
+topmostSubform[0].Page1[0].c1_35[0],/Btn,3c. Check if your child's dividends are included in. 1. Line 3a. ,2,298.2 187.501 306.2 195.501,yes
+topmostSubform[0].Page1[0].c1_36[0],/Btn,3c. 2. Line 3b. ,2,363 187.501 371 195.501,yes
+topmostSubform[0].Page1[0].f1_62[0],/Tx,4a. I R A distributions. ,2,253 174.502 323 186.001,yes
+topmostSubform[0].Page1[0].f1_63[0],/Tx,4b. Taxable amount. ,2,505 174.502 576 186.001,yes
+topmostSubform[0].Page1[0].c1_37[0],/Btn,4c. Check if (see instructions): 1. Rollover. ,2,298.2 163.5 306.2 171.5,yes
+topmostSubform[0].Page1[0].c1_38[0],/Btn,4c. 2. Q C D. ,2,363 163.5 371 171.5,yes
+topmostSubform[0].Page1[0].c1_39[0],/Btn,4c. 3. ,2,413.399 163.5 421.399 171.5,yes
+topmostSubform[0].Page1[0].f1_64[0],/Tx,4c. 3. (specify). ,2,424.8 162.5 475.2 173.999,yes
+topmostSubform[0].Page1[0].f1_65[0],/Tx,5a. Pensions and annuities.,2,253 150.501 323 162,yes
+topmostSubform[0].Page1[0].f1_66[0],/Tx,5b. Taxable amount. ,2,505 150.501 576 162,yes
+topmostSubform[0].Page1[0].c1_40[0],/Btn,5c. Check if (see instructions): 1. Rollover. ,2,298.2 139.502 306.2 147.502,yes
+topmostSubform[0].Page1[0].c1_41[0],/Btn,5c. 2. P S O. ,2,363 139.502 371 147.502,yes
+topmostSubform[0].Page1[0].c1_42[0],/Btn,5c. 3. ,2,413.399 139.502 421.399 147.502,yes
+topmostSubform[0].Page1[0].f1_67[0],/Tx,5c. 3. (specify). ,2,424.8 138.502 475.2 150.001,yes
+topmostSubform[0].Page1[0].f1_68[0],/Tx,6a. Social security benefits. ,2,253 126.5 323 137.999,yes
+topmostSubform[0].Page1[0].f1_69[0],/Tx,6b. Taxable amount. ,2,505 126.5 576 137.999,yes
+topmostSubform[0].Page1[0].c1_43[0],/Btn,"6c. If you elect to use the lump-sum election method, check here (see instructions). ",2,467.2 116.001 475.2 124.001,yes
+topmostSubform[0].Page1[0].c1_44[0],/Btn,"6d. If you are married filing separately and lived apart from your spouse the entire year (see inst.), check here. ",2,467.2 104.002 475.2 112.002,yes
+topmostSubform[0].Page1[0].f1_70[0],/Tx,7a. Capital gain or (loss). Attach Schedule D if required. ,2,505 90.5 576 101.999,yes
+topmostSubform[0].Page1[0].c1_45[0],/Btn,7b. Check if: Schedule D not required. ,2,153.2 79.501 161.2 87.501,yes
+topmostSubform[0].Page1[0].c1_46[0],/Btn,7b. Includes child's capital gain or (loss).  ,2,261.2 79.501 269.2 87.501,yes
+topmostSubform[0].Page1[0].f1_71[0],/Tx,7b. Amount. ,2,403.2 78.501 475.2 90,yes
+topmostSubform[0].Page1[0].f1_72[0],/Tx,"8. Additional income from Schedule 1, line 10. ",2,505 66.502 576 78.001,yes
+topmostSubform[0].Page1[0].f1_73[0],/Tx,"9. Add lines 1z, 2b, 3b, 4b, 5b, 6b, 7a, and 8. This is your total income. ",2,505 54.5 576 65.499,yes
+topmostSubform[0].Page1[0].f1_74[0],/Tx,"10. Adjustments to income from Schedule 1, line 26. ",2,505 42.501 576 53.5,yes
+topmostSubform[0].Page1[0].f1_75[0],/Tx,11a. Subtract line 10 from line 9. This is your adjusted gross income. ,2,505 30.502 576 41.501,yes
+topmostSubform[0].Page2[0].f2_01[0],/Tx,Page 2. Tax and Credits. 11b. Amount from line 11a (adjusted gross income). ,3,505 744.501 576 755.5,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,12a. Someone can claim. You as a dependent. ,3,203.6 734 211.6 742,yes
+topmostSubform[0].Page2[0].c2_2[0],/Btn,12a. Your spouse as a dependent. ,3,304.4 734.002 312.4 742.002,yes
+topmostSubform[0].Page2[0].c2_3[0],/Btn,12b. Spouse itemizes on a separate return. ,3,115.2 722 123.2 730,yes
+topmostSubform[0].Page2[0].c2_4[0],/Btn,12c. You were a dual-status alien. ,3,318.8 722 326.8 730,yes
+topmostSubform[0].Page2[0].c2_5[0],/Btn,"12d. You: Were born before January 2, 1962. ",3,153.2 710.001 161.2 718.001,yes
+topmostSubform[0].Page2[0].c2_6[0],/Btn,12d. Are blind. ,3,304.4 710.001 312.4 718.001,yes
+topmostSubform[0].Page2[0].c2_7[0],/Btn,"12d. Spouse: Was born before January 2, 1962. ",3,153.2 698.002 161.2 706.002,yes
+topmostSubform[0].Page2[0].c2_8[0],/Btn,12d. Is blind. ,3,304.4 698.002 312.4 706.002,yes
+topmostSubform[0].Page2[0].f2_02[0],/Tx,"12e. Standard deduction or itemized deductions (from Schedule A). Standard deduction for— Single or Married filing separately, $16,100. Married filing jointly or Qualifying surviving spouse, $32,200. Head of household, $24,150. If you checked a box on line 12a, 12b, 12c, or 12d, see inst. ",3,505 684.5 576 695.999,yes
+topmostSubform[0].Page2[0].f2_03[0],/Tx,12f. Charitable contribution deduction for non-itemizers (see instructions). ,3,505 672.501 576 683.5,yes
+topmostSubform[0].Page2[0].f2_04[0],/Tx,"13a. Additional deductions from Schedule 1-A, line 44. ",3,505 660.502 576 671.501,yes
+topmostSubform[0].Page2[0].f2_05[0],/Tx,13b. Qualified business income deduction from Form 8995 or Form 8995-A. ,3,505 648.5 576 659.499,yes
+topmostSubform[0].Page2[0].f2_06[0],/Tx,"14. Add lines 12e, 12f, 13a, and 13b. ",3,505 636.501 576 647.5,yes
+topmostSubform[0].Page2[0].f2_07[0],/Tx,"15. Subtract line 14 from line 11b. If zero or less, enter 0. This is your taxable income. ",3,505 624.502 576 635.501,yes
+topmostSubform[0].Page2[0].c2_9[0],/Btn,16. Tax (see instructions). Check if any from Form(s): 1. 8814. ,3,312.6 614 320.6 622,yes
+topmostSubform[0].Page2[0].c2_10[0],/Btn,16. 2. 4972. ,3,363 614 371 622,yes
+topmostSubform[0].Page2[0].c2_11[0],/Btn,16. 3. ,3,413.399 614 421.399 622,yes
+topmostSubform[0].Page2[0].f2_08[0],/Tx,16. 3. (specify). ,3,424.8 612.5 475.2 623.999,yes
+topmostSubform[0].Page2[0].f2_09[0],/Tx,16. Amount. ,3,505 612.5 576 623.499,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,"17. Amount from Schedule 2, line 3. ",3,505 600.501 576 611.5,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,18. Add lines 16 and 17. ,3,505 588.502 576 599.501,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,19. Child tax credit or credit for other dependents from Schedule 8812. ,3,505 576.5 576 587.499,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,"20. Amount from Schedule 3, line 8. ",3,505 564.501 576 575.5,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,21. Add lines 19 and 20. ,3,505 552.502 576 563.501,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,"22. Subtract line 21 from line 18. If zero or less, enter 0. ",3,505 540.5 576 551.499,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,"23. Additional taxes, including self-employment tax, from Schedule 2, line 21. ",3,505 528.501 576 539.5,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,24a. Add lines 22 and 23. This is your total tax. ,3,505 516.502 576 527.501,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,"24b. Enter amount from Form 1062, line 15. ",3,505 504.5 576 515.499,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,24c. Add lines 24a and 24b. ,3,505 492.501 576 503.5,yes
+topmostSubform[0].Page2[0].Line25_ReadOrder[0].f2_20[0],/Tx,Payments and Refundable Credits. 25. Federal income tax withheld from: a. Form(s) W-2. ,3,411.4 468.5 481.4 480.001,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,25b. Form(s) 1099. ,3,411.4 456.501 481.4 467.5,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,25c. Other forms (see instructions). ,3,411.4 444.502 481.4 455.501,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,25d. Add lines 25a through 25c. ,3,505 432.5 576 443.999,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,26. 2026 estimated tax payments and amount applied from 2025 return. ,3,505 420.501 576 431.5,yes
+topmostSubform[0].Page2[0].Estimated_ReadOrder[0].f2_25[0],/Tx,"26. If you made estimated tax payments with your former spouse in 2026, enter their S S N (see inst.): ",3,295.2 402.501 381.6 414,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,"27a. Earned income credit (E I C). If you have a qualifying child, you may need to attach Sch. E I C. ",3,411.4 390.502 481.4 402.001,yes
+topmostSubform[0].Page2[0].c2_12[0],/Btn,27b. Clergy filing Schedule S E (see instructions). ,3,373.6 380 381.6 388,yes
+topmostSubform[0].Page2[0].c2_13[0],/Btn,"27c. If you do not want to receive the E I C, check here. ",3,373.6 368.001 381.6 376.001,yes
+topmostSubform[0].Page2[0].f2_27[0],/Tx,28. Additional child tax credit (A C T C) from Schedule 8812. ,3,411.4 354.502 481.4 366.001,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,"29. Refundable American opportunity credit from Form 8863, line 8. ",3,411.4 342.5 481.4 353.499,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,"30. Refundable adoption credit from Form 8839, line 13. ",3,411.4 330.501 481.4 341.5,yes
+topmostSubform[0].Page2[0].Line31-32_ReadOrder[0].f2_30[0],/Tx,"31. Amount from Schedule 3, line 15. ",3,411.4 318.502 481.4 329.501,yes
+topmostSubform[0].Page2[0].Line31-32_ReadOrder[0].f2_31[0],/Tx,"32a. Add lines 27a, 28, 29, 30, and 31. ",3,411.4 306.5 481.4 317.499,yes
+topmostSubform[0].Page2[0].f2_32[0],/Tx,"32b. Amount from Schedule 3-A. If you entered an amount on line 27a, 28, 29, or 30, attach Sch. 3-A. ",3,411.4 294.501 481.4 305.5,yes
+topmostSubform[0].Page2[0].f2_33[0],/Tx,32c. Subtract line 32b from line 32a. ,3,505 282.502 576 294.001,yes
+topmostSubform[0].Page2[0].f2_34[0],/Tx,"33. Add lines 25d, 26, and 32c. These are your total payments. ",3,505 270.5 576 281.499,yes
+topmostSubform[0].Page2[0].f2_35[0],/Tx,"Refund. 34. If line 33 is more than line 24c, subtract line 24c from line 33. This is the amount you overpaid. ",3,505 258.501 576 269.5,yes
+topmostSubform[0].Page2[0].c2_14[0],/Btn,"35a. Amount of line 34 you want refunded to you. If Form 8888 is attached, check here. ",3,467.2 248.002 475.2 256.002,yes
+topmostSubform[0].Page2[0].f2_36[0],/Tx,35a. Amount. ,3,505 246.502 576 257.501,yes
+topmostSubform[0].Page2[0].RoutingNo[0].f2_37[0],/Tx,Direct Deposit? See instructions. 35b. Routing number. ,3,181 235.498 308.6 245.499,yes
+topmostSubform[0].Page2[0].c2_15[0],/Btn,35c. Type: Checking. ,3,377.4 236 385.4 244,yes
+topmostSubform[0].Page2[0].c2_15[1],/Btn,35c. Savings. ,3,435 236 443 244,yes
+topmostSubform[0].Page2[0].AccountNo[0].f2_38[0],/Tx,35d. Account number. ,3,181 223.499 423.8 233.5,yes
+topmostSubform[0].Page2[0].f2_39[0],/Tx,36. Amount of line 34 you want applied to your 2027 estimated tax. ,3,411.4 210.502 481.4 222.001,yes
+topmostSubform[0].Page2[0].f2_40[0],/Tx,Amount You Owe. 37. Subtract line 33 from line 24c. This is the amount you owe (see www.irs.gov/ModernPayments). ,3,505 198.5 576 209.499,yes
+topmostSubform[0].Page2[0].f2_41[0],/Tx,38. Estimated tax penalty (see instructions). ,3,411.4 186.501 481.4 198,yes
+topmostSubform[0].Page2[0].c2_16[0],/Btn,Third Party Designee. Do you want to allow another person to discuss this return with the I R S? See instructions. Yes. Complete below. ,3,432 176.252 440 184.252,yes
+topmostSubform[0].Page2[0].c2_16[1],/Btn,No. ,3,540 176.252 548 184.252,yes
+topmostSubform[0].Page2[0].f2_42[0],/Tx,Designee's name. ,3,129.6 156.499 294.2 173.999,yes
+topmostSubform[0].Page2[0].f2_43[0],/Tx,Phone no. ,3,324 156.499 423.8 173.999,yes
+topmostSubform[0].Page2[0].f2_44[0],/Tx,Personal identification number (P I N). ,3,504 155.5 576 168.001,yes
+topmostSubform[0].Page2[0].f2_45[0],/Tx,Sign Here. Joint return? See instructions. Keep a copy for your records. Your occupation. ,3,310.6 114.498 416.6 127.999,yes
+topmostSubform[0].Page2[0].f2_46[0],/Tx,"If the I R S sent you an Identity Protection P I N, enter it here (see inst.). ",3,504 114.001 576 126,yes
+topmostSubform[0].Page2[0].f2_47[0],/Tx,Spouse's occupation. ,3,310.6 90.5 416.6 104.001,yes
+topmostSubform[0].Page2[0].f2_48[0],/Tx,"If the I R S sent your spouse an Identity Protection P I N, enter it here (see inst.). ",3,504 90 576 101.999,yes
+topmostSubform[0].Page2[0].f2_49[0],/Tx,Phone no. ,3,127.599 78.501 258.2 89.5,yes
+topmostSubform[0].Page2[0].f2_50[0],/Tx,Email address. ,3,309.6 78.501 576 89.5,yes
+topmostSubform[0].Page2[0].f2_51[0],/Tx,Paid Preparer Use Only. Preparer’s name. ,3,91.599 54.5 222.2 68.001,yes
+topmostSubform[0].Page2[0].f2_52[0],/Tx,P T I N. ,3,454.6 54.5 510.2 68.001,yes
+topmostSubform[0].Page2[0].c2_17[0],/Btn,Check if: Self-employed. ,3,518.4 57.5 526.4 65.5,yes
+topmostSubform[0].Page2[0].f2_53[0],/Tx,Firm's name. ,3,134.599 42.501 452.6 53.5,yes
+topmostSubform[0].Page2[0].f2_54[0],/Tx,Phone no. ,3,494.6 42.501 576 53.5,yes
+topmostSubform[0].Page2[0].f2_55[0],/Tx,Firm's address. ,3,142.599 30.502 452.6 41.501,yes
+topmostSubform[0].Page2[0].f2_56[0],/Tx,Firm's E I N. ,3,494.6 30.502 576 41.501,yes

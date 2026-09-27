@@ -1,0 +1,66 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 671.998 445.65 685.999,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,446.4 671.998 576 685.999,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Part I. Vehicle Details: 1a. Year. ,2,446.4 618.001 576 630,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,1b. Make. ,2,446.4 600.001 576 612,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,1c. Model. ,2,446.4 582.001 576 594,yes
+topmostSubform[0].Page1[0].Line2_Comb[0].f1_6[0],/Tx,2. Vehicle identification number (V I N) (see instructions). ,2,302.4 560 574.401 572,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,3. Enter date vehicle was placed in service (M M/D D/Y Y Y Y). ,2,446.4 540 576 551.999,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,4a. Did you transfer the credit to the dealer at the time of sale? Yes. Enter the transferred amount shown on the seller's report.,2,65.799 512.001 73.799 520.001,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,4a. Amount.,2,446.4 510.001 576 522,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,4a. No. Go to line 5.,2,65.799 500.002 73.799 508.002,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,"4b. If line 4a is ""Yes,"" complete line 8 or line 13, as applicable, and check here if directed to do so by line 8a, 8d, 13a, or 13c.",2,562.599 488 570.599 496,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,"5. Does the V I N entered on line 2 belong to a new clean vehicle acquired before October 1, 2025 and placed in service during the tax year? See instructions for definitions.  Yes. Go to Part I I. ",2,65.799 446.002 73.799 454.002,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,5. No. Go to line 6.,2,65.799 434 73.799 442,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,"6. Does the V I N entered on line 2 belong to a previously owned clean vehicle acquired after 2022 and before October 1, 2025 and placed in service during the tax year? See instructions for definitions. Yes. Go to Part I V.",2,65.799 392.002 73.799 400.002,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,6. No. Go to line 7.,2,65.799 380 73.799 388,yes
+topmostSubform[0].Page1[0].c1_5[0],/Btn,"7. Does the V I N entered on line 2 belong to a qualified commercial clean vehicle acquired after 2022 and before October 1, 2025 and placed in service during the tax year? See instructions for definitions. Yes. Go to Part V.",2,65.799 338.002 73.799 346.002,yes
+topmostSubform[0].Page1[0].c1_5[1],/Btn,"7. No. Stop here. You can't use this schedule to figure a credit amount for a vehicle not described on line 5, 6, or 7. ",2,65.799 326 73.799 334,yes
+topmostSubform[0].Page1[0].c1_6[0],/Btn,"Part I I. Credit Amount for Business/Investment Use Part of New Clean Vehicle. 8a. Did you resell the vehicle within 30 days of the placed-in-service date shown on line 3? Yes. Stop here. You can't claim a clean vehicle credit for this vehicle. If line 4s is ""Yes,"" check the box on line 4b and report the amount from line 4a on Schedule 2 (Form 1040), line 1b.",2,65.799 278.001 73.799 286.001,yes
+topmostSubform[0].Page1[0].c1_6[1],/Btn,8a. No. Go to line 8b.,2,65.799 254 73.799 262,yes
+topmostSubform[0].Page1[0].c1_7[0],/Btn,8b. Are you filing this form with an individual income tax return? Yes. Go to line 8c.,2,65.799 224.001 73.799 232.001,yes
+topmostSubform[0].Page1[0].c1_7[1],/Btn,8b. No. Skip lines 8c and 8d and go to line 8e.,2,65.799 212.002 73.799 220.002,yes
+topmostSubform[0].Page1[0].c1_8[0],/Btn,"8c. Complete Form 8936, lines 1 and 2. Is line 2 more than the “Part I I/I I I limits” amount shown on the chart below line 5 Form 8936 for your 2026 filing status? Yes. Go to line 8d. ",2,65.799 170.001 73.799 178.001,yes
+topmostSubform[0].Page1[0].c1_8[1],/Btn,"8c. No. If you transferred the credit amount to the dealer at the time of sale, stop here and see instructions. Otherwise, skip line 8d and go to line 8e.",2,65.799 152.001 73.799 160.001,yes
+topmostSubform[0].Page1[0].c1_9[0],/Btn,"8d. Complete Form 8936, lines 3, 4, and 5. Is line 4 more than the Part I I/ I I I limit shown on the chart below line 5 for your 2025 filing status? See instructions if your 2026 return is a joint return. Yes. Stop here. You can't claim a clean vehicle credit for this vehicle. If line 4a is ""Yes,"" check the box on line 4b and report the amount from line 4a on Schedule 2 (Form 1040), line 1b.",2,65.799 98.001 73.799 106.001,yes
+topmostSubform[0].Page1[0].c1_9[1],/Btn,"8d. No. If you transferred the credit amount to the dealer at the time of sale, stop here and see instructions. Otherwise, go to line 8e. ",2,65.799 74 73.799 82,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,"Page 2. Part I I. Credit Amount for Business/Investment Use Part of New Clean Vehicle (continued). 8e. Did you acquire the vehicle for use or to lease to others, and not for resale? Answer ""No"" if you are leasing the vehicle from another person. Yes. ",3,65.799 692.001 73.799 700.001,yes
+topmostSubform[0].Page2[0].c2_1[1],/Btn,"8e. No. Stop here. You can’t claim a credit amount for a vehicle you didn't acquire for use or to lease to others, or acquired for resale.",3,65.799 680.002 73.799 688.002,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,9. Tentative credit amount (see instructions).,3,468 642.002 576 654.001,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,10. Business/investment use percentage (see instructions). %.,3,468 618.001 561.6 630,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,"11. Multiply line 9 by line 10. Include this credit amount on line 6 in Part I I of Form 8936. If you entered 100% on line 10, stop here. Otherwise, go to Part I I I below.",3,468 594 576 605.999,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,Part I I I. Credit Amount for Personal Use Part of New Clean Vehicle. 12. Subtract line 11 from line 9 in Part I I. Stop here and include this credit amount on line 9 in Part I I I of Form 8936.,3,468 558 576 569.999,yes
+topmostSubform[0].Page2[0].c2_3[0],/Btn,"Part I V. Credit Amount for Previously Owned Clean Vehicle. 13a. Did you resell the vehicle within 30 days of the placed-in-service date shown on line 3? Yes. Stop here. You can't claim a clean vehicle credit for this vehicle. If line 4a is ""Yes"", check the box on line 4b and report the amount from line 4a on Schedule 2 (Form 1040), line 1c.",3,65.799 524 73.799 532,yes
+topmostSubform[0].Page2[0].c2_3[1],/Btn,13a. No. Go to line 13b. ,3,65.799 500.002 73.799 508.002,yes
+topmostSubform[0].Page2[0].c2_4[0],/Btn,"13b. Complete Form 8936, lines 1 and 2. Is line 2 more than the “Part I V limits” amount shown on the chart below line 5 Form 8936 for your 2026 filing status? Yes. Go to line 13c.",3,65.799 458.001 73.799 466.001,yes
+topmostSubform[0].Page2[0].c2_4[1],/Btn,"13b. No. If you transferred the credit amount to the dealer at the time of sale, stop here and see instructions. Otherwise, skip line 13c and go to line 13d. ",3,65.799 446.002 73.799 454.002,yes
+topmostSubform[0].Page2[0].c2_5[0],/Btn,"13c. Complete Form 8936, lines 3, 4, and 5. Is line 4 more than the “Part I V limits” amount shown on the chart below line 5 Form 8936 for your 2025 filing status? See instructions if your 2026 return is a joint return. Yes. Stop here. You can't claim a clean vehicle credit for this vehicle. If line 4a is ""Yes,"" check the box on line 4b and report the amount from line 4a on Schedule 2 (Form 1040), line 1c.",3,65.799 392.002 73.799 400.002,yes
+topmostSubform[0].Page2[0].c2_5[1],/Btn,"13c. No. If you transferred the credit amount to the dealer at the time of sale, stop here and see instructions. Otherwise, go to line 13d.",3,65.799 368.001 73.799 376.001,yes
+topmostSubform[0].Page2[0].c2_6[0],/Btn,13d. Have you claimed a previously owned clean vehicle credit for another vehicle purchased in the 3-year period ending on the date you purchased the vehicle identified in Part I? See instructions if you are filing a joint return. Yes. Stop here. You can’t claim a credit for this vehicle if you have already claimed the previously owned vehicle credit for another vehicle purchased during this 3-year period.,3,65.799 314.001 73.799 322.001,yes
+topmostSubform[0].Page2[0].c2_6[1],/Btn,13d. No. Go to line 13e. ,3,65.799 290 73.799 298,yes
+topmostSubform[0].Page2[0].c2_7[0],/Btn,"13e. Is the sales price of the vehicle more than $25,000? Yes. Stop here. The vehicle doesn’t qualify for the Part I V credit.",3,65.799 260.001 73.799 268.001,yes
+topmostSubform[0].Page2[0].c2_7[1],/Btn,13e. No. ,3,65.799 248.002 73.799 256.002,yes
+topmostSubform[0].Page2[0].c2_8[0],/Btn,"13f. Did you acquire the vehicle for use and not for resale? Answer ""No"" if you are leasing the vehicle from another person. Yes. ",3,65.799 218 73.799 226,yes
+topmostSubform[0].Page2[0].c2_8[1],/Btn,13f. No. Stop here. You can’t claim a credit amount for a vehicle you didn’t acquire for use or acquired for resale.,3,65.799 206.001 73.799 214.001,yes
+topmostSubform[0].Page2[0].c2_9[0],/Btn,"13g. Can you be claimed as a dependent on another person's tax return, such as your parent's return? Yes. Stop here. You can't claim a credit amount if you can be claimed as a dependent.",3,65.799 176.002 73.799 184.002,yes
+topmostSubform[0].Page2[0].c2_9[1],/Btn,13g. No. ,3,65.799 164 73.799 172,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,14. Enter the sales price of the vehicle.,3,468 138.002 576 150.001,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,15. Multiply line 14 by 30% (0.30).,3,468 114.001 576 126,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,"16. Maximum vehicle credit amount. $4,000.",3,575 90 576 101.999,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,17.  Enter the smaller of line 15 or line 16. Stop here and include this credit amount on line 14 in Part I V of Form 8936.,3,468 66.002 576 78.001,yes
+topmostSubform[0].Page3[0].f3_1[0],/Tx,"Page 3. Part V. Credit Amount for Qualified Commercial Clean Vehicle. 18a. If making an elective payment election, enter the I R S-issued registration number for the vehicle.",4,446.4 714.002 576 726.001,yes
+topmostSubform[0].Page3[0].c3_1[0],/Btn,18b. Is the vehicle of a character subject to the allowance for depreciation? Answer “Yes” if the exception for certain tax-exempt entities discussed in the instructions applies. Yes. ,4,65.799 674.001 73.799 682.001,yes
+topmostSubform[0].Page3[0].c3_1[1],/Btn,18b. No. Stop here. The vehicle is not a qualified commercial clean vehicle unless the exception applies.,4,65.799 662.002 73.799 670.002,yes
+topmostSubform[0].Page3[0].c3_2[0],/Btn,"18c. Did you acquire the vehicle for use or to lease to others, and not for resale? Answer ""No"" if you are leasing the vehicle from another person. Yes. ",4,65.799 620.001 73.799 628.001,yes
+topmostSubform[0].Page3[0].c3_2[1],/Btn,"18c. No. Stop here. You can’t claim a credit amount for a vehicle you didn’t acquire for use or to lease to others, or acquired for resale.",4,65.799 608.002 73.799 616.002,yes
+topmostSubform[0].Page3[0].c3_3[0],/Btn,18d. Is the vehicle also powered in part by gas or diesel? See instructions. Yes. ,4,65.799 566.001 73.799 574.001,yes
+topmostSubform[0].Page3[0].c3_3[1],/Btn,18d. No. ,4,65.799 554.002 73.799 562.002,yes
+topmostSubform[0].Page3[0].f3_2[0],/Tx,18e. Enter the vehicle's gross vehicle weight rating (G V W R).,4,446.4 534.002 576 546.001,yes
+topmostSubform[0].Page3[0].f3_3[0],/Tx,19. Enter the cost or other basis of the vehicle. See instructions.,4,468 504 576 515.999,yes
+topmostSubform[0].Page3[0].f3_4[0],/Tx,20. Section 179 expense deduction (see instructions).,4,468 480.002 576 492.001,yes
+topmostSubform[0].Page3[0].f3_5[0],/Tx,21. Subtract line 20 from line 19. ,4,468 456.001 576 468,yes
+topmostSubform[0].Page3[0].f3_6[0],/Tx,22. Multiply line 21 by 15% (0.15) (30% (0.30) if the answer on line 18d above is “No”). 	,4,468 432 576 443.999,yes
+topmostSubform[0].Page3[0].f3_7[0],/Tx,23. Enter the incremental cost of the vehicle. See instructions.,4,468 408.002 576 420.001,yes
+topmostSubform[0].Page3[0].f3_8[0],/Tx,24. Enter the smaller of line 22 or line 23.,4,468 384.001 576 396,yes
+topmostSubform[0].Page3[0].f3_9[0],/Tx,"25. Maximum credit. Enter $7,500 ($40,000 if the vehicle's gross vehicle weight rating (see line 18e) is 14,000 pounds or more).",4,468 354.002 576 366.001,yes
+topmostSubform[0].Page3[0].f3_10[0],/Tx,26. Enter the smaller of line 24 or line 25. Include this credit amount on line 19 in Part V of Form 8936.,4,468 324 576 335.999,yes

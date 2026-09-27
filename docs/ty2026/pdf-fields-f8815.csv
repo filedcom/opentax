@@ -1,0 +1,24 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 671.966 460.05 685.967,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,460.8 671.966 576 685.967,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row1[0].f1_3[0],/Tx,"1. Row: 1. Column: (a) Name of person (you, your spouse, or your dependent) who was enrolled at or attended an eligible educational institution. ",2,36 611.968 294.7 635.969,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row1[0].ColB[0].f1_4[0],/Tx,Row: 1. Column: (b) Name and address of eligible educational institution. ,2,295.7 611.968 576 635.469,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row2[0].f1_5[0],/Tx,"Row: 2. Column: (a) Name of person (you, your spouse, or your dependent) who was enrolled at or attended an eligible educational institution. ",2,36 587.967 294.7 611.968,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row2[0].ColB[0].f1_6[0],/Tx,Row: 2. Column: (b) Name and address of eligible educational institution.,2,295.7 587.967 576 611.468,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row3[0].f1_7[0],/Tx,"Row: 3. Column: (a) Name of person (you, your spouse, or your dependent) who was enrolled at or attended an eligible educational institution. ",2,36 563.966 294.7 587.967,yes
+topmostSubform[0].Page1[0].Table_Line1[0].Row3[0].ColB[0].f1_8[0],/Tx,Row: 3. Column: (b) Name and address of eligible educational institution.,2,295.7 563.966 576 587.467,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"If you need more space, attach a statement. 2. Enter the total qualified higher education expenses you paid in 2026 for the person(s) listed in column (a) of line 1. See the instructions to find out which expenses qualify. ",2,504 527.969 576 539.968,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,3. Enter the total of any nontaxable educational benefits (such as nontaxable scholarship or fellowship grants) received for 2026 for the person(s) listed in column (a) of line 1. See instructions. ,2,504 503.968 576 515.967,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,"4. Subtract line 3 from line 2. If zero or less, stop. You cannot take the exclusion. ",2,504 491.969 576 503.968,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,5. Enter the total proceeds (principal and interest) from all series E E and I U.S. savings bonds issued after 1989 that you cashed during 2026. ,2,504 467.968 576 479.967,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,6. Enter the interest included on line 5. See instructions. ,2,504 455.969 576 467.968,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,"7. If line 4 is equal to or more than line 5, enter “1.000.” If line 4 is less than line 5, divide line 4 by line 5. Enter the result as a decimal (rounded to at least three places). Number before the decimal. ",2,532.8 431.968 547.2 443.967,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,7. Numbers after the decimal. ,2,550.8 431.968 576 443.967,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,8. Multiply line 6 by line 7. ,2,504 419.969 576 431.968,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"9. Enter your modified adjusted gross income. See instructions. Note: If line 9 is $116,800 or more if single, head of household, or qualifying surviving spouse; or $182,650 or more if married filing jointly, stop. You cannot take the exclusion.",2,410.4 407.97 481.65 419.969,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,"10. Enter $101,800 if single, head of household, or qualifying surviving spouse; or $152,650 if married filing jointly.",2,410.4 347.969 481.65 359.968,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"11. Subtract line 10 from line 9. If zero or less, skip line 12, enter 0 on line 13, and go to line 14. ",2,410.4 323.968 481.65 335.967,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"12. Divide line 11 by $15,000 if single, head of household, or qualifying surviving spouse; or $30,000 if married filing jointly. Enter the result as a decimal (rounded to at least three places). Number before the decimal. ",2,532.8 299.97 547.2 311.969,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,12. Numbers after the decimal. ,2,550.8 299.97 576 311.969,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,13. Multiply line 8 by line 12. ,2,504 287.968 576 299.967,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,"14. Excludable savings bond interest. Subtract line 13 from line 8. Enter the result here and on Schedule B (Form 1040), line 3. ",2,504 263.97 576 275.969,yes

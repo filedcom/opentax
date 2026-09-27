@@ -1,0 +1,39 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on your tax return.,2,36 684 452.85 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number or E I N.,2,453.6 684 576 698.001,yes
+topmostSubform[0].Page1[0].PartI[0].c1_1[0],/Btn,Part I. Investment Income. Section 6013(g) election (see instructions).,2,181.999 674.001 189.999 682.001,yes
+topmostSubform[0].Page1[0].PartI[0].c1_2[0],/Btn,Section 6013(h) election (see instructions).,2,181.999 662.002 189.999 670.002,yes
+topmostSubform[0].Page1[0].PartI[0].c1_3[0],/Btn,Regulations section 1.1411-10(g) election (see instructions).,2,181.999 650.5 189.999 658.5,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,1. Taxable interest (see instructions). ,2,504 636.001 576 648,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,2. Ordinary dividends (see instructions). ,2,504 624.002 576 636.001,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,3. Annuities (see instructions). ,2,504 612 576 623.999,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,"4a. Rental real estate, royalties, partnerships, S corporations, trusts, trades or businesses, etc. (see instructions). ",2,410.4 588.002 481.65 600.001,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,4b. Adjustment for net income or loss derived in the ordinary course of a non-section 1411 trade or business included on line 4a (see instructions). ,2,410.4 564.001 481.65 576,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,4c. Combine lines 4a and 4b. ,2,504 552.002 576 564.001,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,5a. Net gain or loss from disposition of property (see instructions). ,2,410.4 540 481.65 551.999,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,5b. Net gain or loss from disposition of property that is not subject to net investment income tax (see instructions). ,2,410.4 516.002 481.65 528.001,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,5c. Adjustment from disposition of partnership interest or S corporation stock (see instructions). ,2,410.4 492.001 481.65 504,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,5d. Combine lines 5a through 5c. ,2,504 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,6. Adjustments to investment income for certain controlled foreign corporations (C F Cs) and passive foreign investment companies (P F I Cs) (see instructions).,2,504 456.001 576 468,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,7. Other modifications to investment income (see instructions). ,2,504 444.002 576 456.001,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"8. Total investment income. Combine lines 1, 2, 3, 4c, 5d, 6, and 7. ",2,504 432.003 576 444.002,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,Part I I. Investment Expenses Allocable to Investment Income and Modifications. 9a. Investment interest expenses (see instructions). ,2,410.4 408.002 481.65 420.001,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,"9b. State, local, and foreign income tax (see instructions). ",2,410.4 396.003 481.65 408.002,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,9c. Miscellaneous investment expenses (see instructions). ,2,410.4 384.001 481.65 396,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"9d. Add lines 9a, 9b, and 9c. ",2,504 372.002 576 384.001,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,10. Additional modifications (see instructions). ,2,504 360.003 576 372.002,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,11. Total deductions and modifications. Add lines 9d and 10. ,2,504 348.001 576 360,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,"Part I I I. Tax Computation. 12. Net investment income. Subtract Part I I, line 11, from Part I, line 8. Individuals, complete lines 13–17. Estates and trusts, complete lines 18a–21. If zero or less, enter 0. ",2,504 312.001 576 324,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,Individuals: 13. Modified adjusted gross income (see instructions). ,2,410.4 288.003 481.65 300.002,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,14. Threshold based on filing status (see instructions). ,2,410.4 276.001 481.65 288,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,"15. Subtract line 14 from line 13. If zero or less, enter 0. ",2,410.4 264.002 481.65 276.001,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,16. Enter the smaller of line 12 or line 15. ,2,504 252.003 576 264.002,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,17. Net investment income tax for individuals. Multiply line 16 by 3.8% (0.038). Enter here and include on your tax return (see instructions). ,2,504 228.002 576 240.001,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,Estates and Trusts: 18a. Net investment income (line 12 above). ,2,410.4 204.001 481.65 216,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,18b. Deductions for distributions of net investment income and charitable deductions (see instructions). ,2,410.4 180.003 481.65 192.002,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,"18c. Undistributed net investment income. Subtract line 18b from line 18a (see instructions). If zero or less, enter 0. ",2,410.4 156.002 481.65 168.001,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,19a. Adjusted gross income (see instructions). ,2,410.4 144.003 481.65 156.002,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,19b. Highest tax bracket for estates and trusts for the year (see instructions). ,2,410.4 132.001 481.65 144,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,"19c. Subtract line 19b from line 19a. If zero or less, enter 0. ",2,410.4 120.002 481.65 132.001,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,20. Enter the smaller of line 18c or line 19c. ,2,504 108.003 576 120.002,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,21. Net investment income tax for estates and trusts. Multiply line 20 by 3.8% (0.038). Enter here and include on your tax return (see instructions). ,2,504 84.002 576 96.001,yes

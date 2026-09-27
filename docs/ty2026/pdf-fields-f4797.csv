@@ -1,0 +1,189 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 671.998 431.25 685.999,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,432 671.998 576 685.999,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"1a. Enter the gross proceeds from sales or exchanges reported to you for 2026 on Form(s) 1099-B or 1099-S (or substitute statement) that you are including on line 2, 11, or 22. See instructions. ",2,504 648 576 659.999,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"1b. Enter the total amount of gain that you are including on lines 2, 11, and 26 due to the partial dispositions of M A C R S assets. ",2,504 624.002 576 636.001,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,1c. Enter the total amount of loss that you are including on lines 2 and 11 due to the partial dispositions of M A C R S assets. ,2,504 600.001 576 612,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_6[0],/Tx,Part I. Sales or Exchanges of Property Used in a Trade or Business and Involuntary Conversions From Other Than Casualty or Theft - Most Property Held More Than 1 Year (see instructions). 2. Row: 1. Column: (a) Description of property. ,2,36 528.001 157.65 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_7[0],/Tx,"Row: 1. Column: (b) Date acquired (mo., day, yr.) ",2,158.4 528.001 223.2 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_8[0],/Tx,"Row: 1. Column: (c) Date sold (mo., day, yr.) ",2,223.2 528.001 288 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_9[0],/Tx,Row: 1. Column: (d) Gross sales price. ,2,288 528.001 359.25 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_10[0],/Tx,Row: 1. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 528.001 431.25 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_11[0],/Tx,"Row: 1. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 528.001 503.25 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row1[0].f1_12[0],/Tx,Row: 1. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 528.001 576 540,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_13[0],/Tx,Row: 2. Column: (a) Description of property. ,2,36 516.002 157.65 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_14[0],/Tx,"Row: 2. Column: (b) Date acquired (mo., day, yr.) ",2,158.4 516.002 223.2 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_15[0],/Tx,"Row: 2. Column: (c) Date sold (mo., day, yr.) ",2,223.2 516.002 288 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_16[0],/Tx,Row: 2. Column: (d) Gross sales price. ,2,288 516.002 359.25 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_17[0],/Tx,Row: 2. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 516.002 431.25 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_18[0],/Tx,"Row: 2. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 516.002 503.25 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row2[0].f1_19[0],/Tx,Row: 2. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 516.002 576 528.001,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_20[0],/Tx,Row: 3. Column: (a) Description of property. ,2,36 504.003 157.65 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_21[0],/Tx,"Row: 3. Column: (b) Date acquired (mo., day, yr.) ",2,158.4 504.003 223.2 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_22[0],/Tx,"Row: 3. Column: (c) Date sold (mo., day, yr.) ",2,223.2 504.003 288 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_23[0],/Tx,Row: 3. Column: (d) Gross sales price. ,2,288 504.003 359.25 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_24[0],/Tx,Row: 3. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 504.003 431.25 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_25[0],/Tx,"Row: 3. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 504.003 503.25 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row3[0].f1_26[0],/Tx,Row: 3. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 504.003 576 516.002,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_27[0],/Tx,Row: 4. Column: (a) Description of property. ,2,36 492.004 157.65 504.003,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_28[0],/Tx,"Row: 4. Column: (b) Date acquired (mo., day, yr.) ",2,158.4 492.004 223.2 504.003,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_29[0],/Tx,"Row: 4. Column: (c) Date sold (mo., day, yr.) ",2,223.2 492.004 288 504.003,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_30[0],/Tx,Row: 4. Column: (d) Gross sales price. ,2,288 492.004 359.25 504.003,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_31[0],/Tx,Row: 4. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 492.004 431.25 504.003,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_32[0],/Tx,"Row: 4. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 492.004 503.25 504.003,yes
+topmostSubform[0].Page1[0].TableLine2[0].Row4[0].f1_33[0],/Tx,Row: 4. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 492.004 576 504.003,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,"3. Gain, if any, from Form 4684, line 39. ",2,504 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_35[0],/Tx,"4. Section 1231 gain from installment sales from Form 6252, line 26 or 37. ",2,504 468 576 479.999,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,5. Section 1231 gain or (loss) from like-kind exchanges from Form 8824. ,2,504 456.001 576 468,yes
+topmostSubform[0].Page1[0].f1_37[0],/Tx,"6. Gain, if any, from line 34, from other than casualty or theft. ",2,504 444.002 576 456.001,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,"7. Section 1231 gain or (loss) from the sale of livestock used for draft, breeding, sport, or dairy purposes. ",2,504 432 576 443.999,yes
+topmostSubform[0].Page1[0].f1_39[0],/Tx,"8. Combine lines 2 through 7. Enter the gain or (loss) here and on the appropriate line as follows. Partnerships and S corporations. Report the gain or (loss) following the instructions for Form 1065, Schedule K, line 10; or Form 1120-S, Schedule K, line 9. Skip lines 9, 10, 11, and 13 below. Individuals, partners, S corporation shareholders, and all others. If line 8 is zero or a loss, enter the amount from line 8 on line 12 below and skip lines 9 and 10. If line 8 is a gain and you didn’t have any prior-year section 1231 losses, or they were recaptured in an earlier year, enter the gain from line 8 as a long-term capital gain on the Schedule D filed with your return and skip lines 9, 10, 12, and 13 below.",2,504 420.001 576 432,yes
+topmostSubform[0].Page1[0].f1_40[0],/Tx,9. Nonrecaptured net section 1231 losses from prior years. See instructions. ,2,504 336.002 576 348.001,yes
+topmostSubform[0].Page1[0].f1_41[0],/Tx,"10. Subtract line 9 from line 8. If zero or less, enter 0. If line 10 is zero, enter the gain from line 8 on line 13 below. If line 10 is more than zero, enter the amount from line 9 on line 13 below and enter the gain from line 10 as a long-term capital gain on the Schedule D filed with your return. See instructions.",2,504 300.002 576 312.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_42[0],/Tx,Part I I. Ordinary Gains and Losses (see instructions). 11. Ordinary gains and losses not included on lines 12 through 17 (include property held 1 year or less): Row: 1. Column: (a) Description of property. ,2,36 264.002 157.65 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_43[0],/Tx,"Row: 1. Column: (b) Date acquired (month, day, year).",2,158.4 264.002 223.2 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_44[0],/Tx,"Row: 1. Column: (c) Date sold (month, day, year).",2,223.2 264.002 288 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_45[0],/Tx,Row: 1. Column: (d) Gross sales price. ,2,288 264.002 359.25 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_46[0],/Tx,Row: 1. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 264.002 431.25 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_47[0],/Tx,"Row: 1. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 264.002 503.25 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row1[0].f1_48[0],/Tx,Row: 1. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 264.002 576 276.001,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_49[0],/Tx,Row: 2. Column: (a) Description of property. ,2,36 252.003 157.65 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_50[0],/Tx,"Row: 2. Column: (b) Date acquired (month, day, year).",2,158.4 252.003 223.2 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_51[0],/Tx,"Row: 2. Column: (c) Date sold (month, day, year).",2,223.2 252.003 288 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_52[0],/Tx,Row: 2. Column: (d) Gross sales price. ,2,288 252.003 359.25 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_53[0],/Tx,Row: 2. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 252.003 431.25 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_54[0],/Tx,"Row: 2. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 252.003 503.25 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row2[0].f1_55[0],/Tx,Row: 2. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 252.003 576 264.002,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_56[0],/Tx,Row: 3. Column: (a) Description of property. ,2,36 240.004 157.65 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_57[0],/Tx,"Row: 3. Column: (b) Date acquired (month, day, year).",2,158.4 240.004 223.2 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_58[0],/Tx,"Row: 3. Column: (c) Date sold (month, day, year).",2,223.2 240.004 288 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_59[0],/Tx,Row: 3. Column: (d) Gross sales price. ,2,288 240.004 359.25 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_60[0],/Tx,Row: 3. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 240.004 431.25 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_61[0],/Tx,"Row: 3. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 240.004 503.25 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row3[0].f1_62[0],/Tx,Row: 3. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 240.004 576 252.003,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_63[0],/Tx,Row: 4. Column: (a) Description of property. ,2,36 228.005 157.65 240.004,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_64[0],/Tx,"Row: 4. Column: (b) Date acquired (month, day, year).",2,158.4 228.005 223.2 240.004,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_65[0],/Tx,"Row: 4. Column: (c) Date sold (month, day, year).",2,223.2 228.005 288 240.004,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_66[0],/Tx,Row: 4. Column: (d) Gross sales price. ,2,288 228.005 359.25 240.004,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_67[0],/Tx,Row: 4. Column: (e) Depreciation allowed or allowable since acquisition. ,2,360 228.005 431.25 240.004,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_68[0],/Tx,"Row: 4. Column: (f) Cost or other basis, plus improvements and expense of sale. ",2,432 228.005 503.25 240.004,yes
+topmostSubform[0].Page1[0].TableLine11[0].Row4[0].f1_69[0],/Tx,Row: 4. Column: (g) Gain or (loss). Subtract (f) from the sum of (d) and (e). ,2,504 228.005 576 240.004,yes
+topmostSubform[0].Page1[0].f1_70[0],/Tx,"12. Open parenthesis. Loss, if any, from line 8. Close parenthesis. ",2,508 216 572 227.999,yes
+topmostSubform[0].Page1[0].f1_71[0],/Tx,"13. Gain, if any, from line 8 or amount from line 9, if applicable. ",2,504 204.001 576 216,yes
+topmostSubform[0].Page1[0].f1_72[0],/Tx,"14. Gain, if any, from line 33. ",2,504 192.002 576 204.001,yes
+topmostSubform[0].Page1[0].f1_73[0],/Tx,"15. Net gain or (loss) from Form 4684, lines 31 and 38a. ",2,504 180 576 191.999,yes
+topmostSubform[0].Page1[0].f1_74[0],/Tx,"16. Ordinary gain from installment sales from Form 6252, line 25 or 36. ",2,504 168.001 576 180,yes
+topmostSubform[0].Page1[0].f1_75[0],/Tx,17. Ordinary gain or (loss) from like-kind exchanges from Form 8824. ,2,504 156.002 576 168.001,yes
+topmostSubform[0].Page1[0].f1_76[0],/Tx,"18. Ordinary gain or (loss) from the sale of livestock used for draft, breeding, sport, or dairy purposes. ",2,504 144 576 155.999,yes
+topmostSubform[0].Page1[0].f1_77[0],/Tx,19. Combine lines 11 through 18. ,2,504 132.001 576 144,yes
+topmostSubform[0].Page1[0].f1_78[0],/Tx,"20. For all except individual returns, enter the amount from line 19 on the appropriate line of your return and skip lines 20a and 20b below. For individual returns, complete lines 20a and 20b below. 20a. If the loss on line 12 includes a loss from Form 4684, line 35, column (b)(i i), enter that part of the loss here. Enter the loss from income-producing property on Schedule A (Form 1040), line 16. (Do not include any loss on property used as an employee.) Identify as from “Form 4797, line 20a.” See instructions. ",2,504 72 576 83.999,yes
+topmostSubform[0].Page1[0].f1_79[0],/Tx,"20b. Redetermine the gain or (loss) on line 19 excluding the loss, if any, on line 20a. Enter here and on Schedule 1 (Form 1040), Part I, line 4. ",2,504 48.002 576 60.001,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row1[0].f2_1[0],/Tx,"Page 2. Part I I I. Gain From Disposition of Property Under Sections 1245, 1250, 1252, 1254, and 1255 (see instructions). Row: 21A. Column: (a) Description of section 1245, 1250, 1252, 1254, or 1255 property: ",3,57.6 684 431.25 695.999,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row1[0].f2_2[0],/Tx,"Row: 21A. Column: (b) Date acquired (mo., day, yr.) ",3,432 684 504 695.999,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row1[0].f2_3[0],/Tx,"Row: 21A. Column: (c) Date sold (mo., day, yr.) ",3,504 684 576 695.999,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row2[0].f2_4[0],/Tx,"Row: 21B. Column: (a) Description of section 1245, 1250, 1252, 1254, or 1255 property: ",3,57.6 672.001 431.25 684,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row2[0].f2_5[0],/Tx,"Row: 21B. Column: (b) Date acquired (mo., day, yr.) ",3,432 672.001 504 684,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row2[0].f2_6[0],/Tx,"Row: 21B. Column: (c) Date sold (mo., day, yr.) ",3,504 672.001 576 684,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row3[0].f2_7[0],/Tx,"Row: 21C. Column: (a) Description of section 1245, 1250, 1252, 1254, or 1255 property: ",3,57.6 660.002 431.25 672.001,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row3[0].f2_8[0],/Tx,"Row: 21C. Column: (b) Date acquired (mo., day, yr.) ",3,432 660.002 504 672.001,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row3[0].f2_9[0],/Tx,"Row: 21C. Column: (c) Date sold (mo., day, yr.) ",3,504 660.002 576 672.001,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row4[0].f2_10[0],/Tx,"Row: 21D. Column: (a) Description of section 1245, 1250, 1252, 1254, or 1255 property: ",3,57.6 648.003 431.25 660.002,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row4[0].f2_11[0],/Tx,"Row: 21D. Column: (b) Date acquired (mo., day, yr.) ",3,432 648.003 504 660.002,yes
+topmostSubform[0].Page2[0].PartIIITable1[0].Row4[0].f2_12[0],/Tx,"Row: 21D. Column: (c) Date sold (mo., day, yr.) ",3,504 648.003 576 660.002,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row22[0].f2_13[0],/Tx,These columns relate to the properties on lines 21A through 21D. Row: 22. Gross sales price (Note: See line 1a before completing.) Column: Property A. ,3,288 612 359.25 623.999,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row22[0].f2_14[0],/Tx,Row: 22. Gross sales price (Note: See line 1a before completing.) Column: Property B. ,3,360 612 431.25 623.999,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row22[0].f2_15[0],/Tx,Row: 22. Gross sales price (Note: See line 1a before completing.) Column: Property C. ,3,432 612 503.25 623.999,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row22[0].f2_16[0],/Tx,Row: 22. Gross sales price (Note: See line 1a before completing.) Column: Property D. ,3,504 612 576 623.999,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row23[0].f2_17[0],/Tx,Row: 23. Cost or other basis plus expense of sale. Column: Property A. ,3,288 600.001 359.25 612,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row23[0].f2_18[0],/Tx,Row: 23. Cost or other basis plus expense of sale. Column: Property B. ,3,360 600.001 431.25 612,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row23[0].f2_19[0],/Tx,Row: 23. Cost or other basis plus expense of sale. Column: Property C. ,3,432 600.001 503.25 612,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row23[0].f2_20[0],/Tx,Row: 23. Cost or other basis plus expense of sale. Column: Property D. ,3,504 600.001 576 612,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row24[0].f2_21[0],/Tx,Row: 24. Depreciation (or depletion) allowed or allowable. Column: Property A. ,3,288 588.002 359.25 600.001,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row24[0].f2_22[0],/Tx,Row: 24. Depreciation (or depletion) allowed or allowable. Column: Property B. ,3,360 588.002 431.25 600.001,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row24[0].f2_23[0],/Tx,Row: 24. Depreciation (or depletion) allowed or allowable. Column: Property C. ,3,432 588.002 503.25 600.001,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row24[0].f2_24[0],/Tx,Row: 24. Depreciation (or depletion) allowed or allowable. Column: Property D. ,3,504 588.002 576 600.001,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row25[0].f2_25[0],/Tx,Row: 25. Adjusted basis. Subtract line 24 from line 23. Column: Property A. ,3,288 576.003 359.25 588.002,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row25[0].f2_26[0],/Tx,Row: 25. Adjusted basis. Subtract line 24 from line 23. Column: Property B. ,3,360 576.003 431.25 588.002,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row25[0].f2_27[0],/Tx,Row: 25. Adjusted basis. Subtract line 24 from line 23. Column: Property C. ,3,432 576.003 503.25 588.002,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row25[0].f2_28[0],/Tx,Row: 25. Adjusted basis. Subtract line 24 from line 23. Column: Property D. ,3,504 576.003 576 588.002,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row26[0].f2_29[0],/Tx,Row: 26. Total gain. Subtract line 25 from line 22. Column: Property A. ,3,288 564.004 359.25 576.003,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row26[0].f2_30[0],/Tx,Row: 26. Total gain. Subtract line 25 from line 22. Column: Property B. ,3,360 564.004 431.25 576.003,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row26[0].f2_31[0],/Tx,Row: 26. Total gain. Subtract line 25 from line 22. Column: Property C. ,3,432 564.004 503.25 576.003,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row26[0].f2_32[0],/Tx,Row: 26. Total gain. Subtract line 25 from line 22. Column: Property D. ,3,504 564.004 576 576.003,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27[0].c2_1[0],/Btn,Row: 27. If section 1245 property: Check the box if the disposition is a change in use of qualified production property. See instructions. Column: Property A.,3,322 531.004 330 539.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27[0].c2_2[0],/Btn,Row: 27. If section 1245 property: Check the box if the disposition is a change in use of qualified production property. See instructions. Column: Property B.,3,394 531.004 402 539.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27[0].c2_3[0],/Btn,Row: 27. If section 1245 property: Check the box if the disposition is a change in use of qualified production property. See instructions Column: Property C.,3,466 531.004 474 539.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27[0].c2_4[0],/Btn,Row: 27. If section 1245 property: Check the box if the disposition is a change in use of qualified production property. See instructions. Column: Property D.,3,538 531.004 546 539.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27a[0].f2_33[0],/Tx,Row: 27a. Depreciation allowed or allowable from line 24. Column: Property A. ,3,288 516.005 359.25 528.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27a[0].f2_34[0],/Tx,Row: 27a. Depreciation allowed or allowable from line 24. Column: Property B. ,3,360 516.005 431.25 528.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27a[0].f2_35[0],/Tx,Row: 27a. Depreciation allowed or allowable from line 24. Column: Property C. ,3,432 516.005 503.25 528.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27a[0].f2_36[0],/Tx,Row: 27a. Depreciation allowed or allowable from line 24. Column: Property D. ,3,504 516.005 576 528.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27b[0].f2_37[0],/Tx,Row: 27b. Enter the smaller of line 26 or 27a. Column: Property A. ,3,288 504.006 359.25 516.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27b[0].f2_38[0],/Tx,Row: 27b. Enter the smaller of line 26 or 27a. Column: Property B. ,3,360 504.006 431.25 516.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27b[0].f2_39[0],/Tx,Row: 27b. Enter the smaller of line 26 or 27a. Column: Property C. ,3,432 504.006 503.25 516.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row27b[0].f2_40[0],/Tx,Row: 27b. Enter the smaller of line 26 or 27a. Column: Property D. ,3,504 504.006 576 516.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28a[0].f2_41[0],/Tx,"28. If section 1250 property:  If straight line depreciation was used, enter 0 on line 28g, except for a corporation subject to section 291. Row: 28a. Additional depreciation after 1975 (see instructions). Column: Property A. ",3,288 468.006 359.25 480.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28a[0].f2_42[0],/Tx,Row: 28a. Additional depreciation after 1975 (see instructions). Column: Property B. ,3,360 468.006 431.25 480.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28a[0].f2_43[0],/Tx,Row: 28a. Additional depreciation after 1975 (see instructions). Column: Property C. ,3,432 468.006 503.25 480.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28a[0].f2_44[0],/Tx,Row: 28a. Additional depreciation after 1975 (see instructions). Column: Property D. ,3,504 468.006 576 480.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28b[0].f2_45[0],/Tx,Row: 28b. Applicable percentage multiplied by the smaller of line 26 or line 28a (see instructions). Column: Property A. ,3,288 444.005 359.25 456.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28b[0].f2_46[0],/Tx,Row: 28b. Applicable percentage multiplied by the smaller of line 26 or line 28a (see instructions). Column: Property B. ,3,360 444.005 431.25 456.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28b[0].f2_47[0],/Tx,Row: 28b. Applicable percentage multiplied by the smaller of line 26 or line 28a (see instructions). Column: Property C. ,3,432 444.005 503.25 456.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28b[0].f2_48[0],/Tx,Row: 28b. Applicable percentage multiplied by the smaller of line 26 or line 28a (see instructions). Column: Property D. ,3,504 444.005 576 456.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28c[0].f2_49[0],/Tx,"Row: 28c. Subtract line 28a from line 26. If residential rental property or line 26 isn't more than line 28a, skip lines 28d and 28e. Column: Property A. ",3,288 420.004 359.25 432.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28c[0].f2_50[0],/Tx,"Row: 28c. Subtract line 28a from line 26. If residential rental property or line 26 isn't more than line 28a, skip lines 28d and 28e. Column: Property B. ",3,360 420.004 431.25 432.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28c[0].f2_51[0],/Tx,"Row: 28c. Subtract line 28a from line 26. If residential rental property or line 26 isn't more than line 28a, skip lines 28d and 28e. Column: Property C. ",3,432 420.004 503.25 432.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28c[0].f2_52[0],/Tx,"Row: 28c. Subtract line 28a from line 26. If residential rental property or line 26 isn't more than line 28a, skip lines 28d and 28e. Column: Property D. ",3,504 420.004 576 432.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28d[0].f2_53[0],/Tx,Row: 28d. Additional depreciation after 1969 and before 1976. Column: Property A. ,3,288 408.005 359.25 420.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28d[0].f2_54[0],/Tx,Row: 28d. Additional depreciation after 1969 and before 1976. Column: Property B. ,3,360 408.005 431.25 420.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28d[0].f2_55[0],/Tx,Row: 28d. Additional depreciation after 1969 and before 1976. Column: Property C. ,3,432 408.005 503.25 420.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28d[0].f2_56[0],/Tx,Row: 28d. Additional depreciation after 1969 and before 1976. Column: Property D. ,3,504 408.005 576 420.004,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28e[0].f2_57[0],/Tx,Row: 28e. Enter the smaller of line 28c or 28d. Column: Property A. ,3,288 396.006 359.25 408.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28e[0].f2_58[0],/Tx,Row: 28e. Enter the smaller of line 28c or 28d. Column: Property B. ,3,360 396.006 431.25 408.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28e[0].f2_59[0],/Tx,Row: 28e. Enter the smaller of line 28c or 28d. Column: Property C. ,3,432 396.006 503.25 408.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28e[0].f2_60[0],/Tx,Row: 28e. Enter the smaller of line 28c or 28d. Column: Property D. ,3,504 396.006 576 408.005,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28f[0].f2_61[0],/Tx,Row: 28f. Section 291 amount (corporations only). Column: Property A. ,3,288 384.007 359.25 396.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28f[0].f2_62[0],/Tx,Row: 28f. Section 291 amount (corporations only). Column: Property B. ,3,360 384.007 431.25 396.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28f[0].f2_63[0],/Tx,Row: 28f. Section 291 amount (corporations only). Column: Property C. ,3,432 384.007 503.25 396.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28f[0].f2_64[0],/Tx,Row: 28f. Section 291 amount (corporations only). Column: Property D. ,3,504 384.007 576 396.006,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28g[0].f2_65[0],/Tx,"Row: 28g. Add lines 28b, 28e, and 28f. Column: Property A. ",3,288 372.008 359.25 384.007,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28g[0].f2_66[0],/Tx,"Row: 28g. Add lines 28b, 28e, and 28f.  Column: Property B. ",3,360 372.008 431.25 384.007,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28g[0].f2_67[0],/Tx,"Row: 28g. Add lines 28b, 28e, and 28f. Column: Property C. ",3,432 372.008 503.25 384.007,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row28g[0].f2_68[0],/Tx,"Row: 28g. Add lines 28b, 28e, and 28f. Column: Property D. ",3,504 372.008 576 384.007,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29a[0].f2_69[0],/Tx,"29. If section 1252 property: Skip this section if you didn't dispose of farmland or if this form is being completed for a partnership. Row: 29a. Soil, water, and land clearing expenses. Column: Property A. ",3,288 324.009 359.25 336.008,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29a[0].f2_70[0],/Tx,"Row: 29a. Soil, water, and land clearing expenses. Column: Property B. ",3,360 324.009 431.25 336.008,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29a[0].f2_71[0],/Tx,"Row: 29a. Soil, water, and land clearing expenses. Column: Property C. ",3,432 324.009 503.25 336.008,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29a[0].f2_72[0],/Tx,"Row: 29a. Soil, water, and land clearing expenses. Column: Property D. ",3,504 324.009 576 336.008,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29b[0].f2_73[0],/Tx,Row: 29b. Line 29a multiplied by applicable percentage (see instructions). Column: Property A. ,3,288 312.01 359.25 324.009,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29b[0].f2_74[0],/Tx,Row: 29b. Line 29a multiplied by applicable percentage (see instructions). Column: Property B. ,3,360 312.01 431.25 324.009,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29b[0].f2_75[0],/Tx,Row: 29b. Line 29a multiplied by applicable percentage (see instructions). Column: Property C. ,3,432 312.01 503.25 324.009,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29b[0].f2_76[0],/Tx,Row: 29b. Line 29a multiplied by applicable percentage (see instructions). Column: Property D. ,3,504 312.01 576 324.009,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29c[0].f2_77[0],/Tx,Row: 29c. Enter the smaller of line 26 or 29b. Column: Property A. ,3,288 300.011 359.25 312.01,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29c[0].f2_78[0],/Tx,Row: 29c. Enter the smaller of line 26 or 29b. Column: Property B. ,3,360 300.011 431.25 312.01,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29c[0].f2_79[0],/Tx,Row: 29c. Enter the smaller of line 26 or 29b. Column: Property C. ,3,432 300.011 503.25 312.01,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row29c[0].f2_80[0],/Tx,Row: 29c. Enter the smaller of line 26 or 29b. Column: Property D. ,3,504 300.011 576 312.01,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30a[0].f2_81[0],/Tx,"30. If section 1254 property: Row: 30a. Intangible drilling and development costs, expenditures for development of mines and other natural deposits, mining exploration costs, and depletion (see instructions). Column: Property A. ",3,288 252.012 359.25 264.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30a[0].f2_82[0],/Tx,"Row: 30a. Intangible drilling and development costs, expenditures for development of mines and other natural deposits, mining exploration costs, and depletion (see instructions). Column: Property B. ",3,360 252.012 431.25 264.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30a[0].f2_83[0],/Tx,"Row: 30a. Intangible drilling and development costs, expenditures for development of mines and other natural deposits, mining exploration costs, and depletion (see instructions). Column: Property C. ",3,432 252.012 503.25 264.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30a[0].f2_84[0],/Tx,"Row: 30a. Intangible drilling and development costs, expenditures for development of mines and other natural deposits, mining exploration costs, and depletion (see instructions). Column: Property D. ",3,504 252.012 576 264.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30b[0].f2_85[0],/Tx,Row: 30b. Enter the smaller of line 26 or 30a. Column: Property A. ,3,288 240.013 359.25 252.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30b[0].f2_86[0],/Tx,Row: 30b. Enter the smaller of line 26 or 30a. Column: Property B. ,3,360 240.013 431.25 252.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30b[0].f2_87[0],/Tx,Row: 30b. Enter the smaller of line 26 or 30a. Column: Property C. ,3,432 240.013 503.25 252.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row30b[0].f2_88[0],/Tx,Row: 30b. Enter the smaller of line 26 or 30a. Column: Property D. ,3,504 240.013 576 252.012,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31a[0].f2_89[0],/Tx,31. If section 1255 property: Row: 31a. Applicable percentage of payments excluded from income under section 126 (see instructions). Column: Property A. ,3,288 204.013 359.25 216.014,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31a[0].f2_90[0],/Tx,Row: 31a. Applicable percentage of payments excluded from income under section 126 (see instructions). Column: Property B. ,3,360 204.013 431.25 216.014,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31a[0].f2_91[0],/Tx,Row: 31a. Applicable percentage of payments excluded from income under section 126 (see instructions). Column: Property C. ,3,432 204.013 503.25 216.014,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31a[0].f2_92[0],/Tx,Row: 31a. Applicable percentage of payments excluded from income under section 126 (see instructions). Column: Property D. ,3,504 204.013 576 216.014,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31b[0].f2_93[0],/Tx,Row: 31b. Enter the smaller of line 26 or 31a. See instructions. Column: Property A. ,3,288 192.014 359.25 204.013,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31b[0].f2_94[0],/Tx,Row: 31b. Enter the smaller of line 26 or 31a. See instructions. Column: Property B. ,3,360 192.014 431.25 204.013,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31b[0].f2_95[0],/Tx,Row: 31b. Enter the smaller of line 26 or 31a. See instructions. Column: Property C. ,3,432 192.014 503.25 204.013,yes
+topmostSubform[0].Page2[0].PartIIITable2[0].Row31b[0].f2_96[0],/Tx,Row: 31b. Enter the smaller of line 26 or 31a. See instructions. Column: Property D. ,3,504 192.014 576 204.013,yes
+topmostSubform[0].Page2[0].f2_97[0],/Tx,"Summary of Part I I I Gains. Complete property columns A through D through line 31b before going to line 32. 32. Total gains for all properties. Add property columns A through D, line 26. ",3,504 168.001 576 180,yes
+topmostSubform[0].Page2[0].f2_98[0],/Tx,"33. Add property columns A through D, lines 27b, 28g, 29c, 30b, and 31b. Enter here and on line 14. ",3,504 156.002 576 168.001,yes
+topmostSubform[0].Page2[0].f2_99[0],/Tx,"34. Subtract line 33 from line 32. Enter the portion from casualty or theft on Form 4684, line 33. Enter the portion from other than casualty or theft on Form 4797, line 6. ",3,504 132.001 576 144,yes
+topmostSubform[0].Page2[0].PartIVTable[0].Row35[0].f2_100[0],/Tx,Part I V. Recapture Amounts Under Sections 179 and 280F(b)(2) When Business Use Drops to 50% or Less (see instructions). Row: 35. Section 179 expense deduction or depreciation allowable in prior years. Column: (a) Section 179. ,3,432 72 503.25 83.999,yes
+topmostSubform[0].Page2[0].PartIVTable[0].Row35[0].f2_101[0],/Tx,Row: 35. Section 179 expense deduction or depreciation allowable in prior years. Column: (b) Section 280F(b)(2). ,3,504 72 576 83.999,yes
+topmostSubform[0].Page2[0].PartIVTable[0].Row36[0].f2_102[0],/Tx,Row: 36. Recomputed depreciation (see instructions). Column: (a) Section 179. ,3,432 60.001 503.25 72,yes
+topmostSubform[0].Page2[0].PartIVTable[0].Row36[0].f2_103[0],/Tx,Row: 36. Recomputed depreciation (see instructions). Column: (b) Section 280F(b)(2). ,3,504 60.001 576 72,yes
+topmostSubform[0].Page2[0].PartIVTable[0].Row37[0].f2_104[0],/Tx,Row: 37. Recapture amount. Subtract line 36 from line 35. See the instructions for where to report. Column: (a) Section 179. ,3,432 48.002 503.25 60.001,yes
+topmostSubform[0].Page2[0].PartIVTable[0].Row37[0].f2_105[0],/Tx,Row: 37. Recapture amount. Subtract line 36 from line 35. See the instructions for where to report. Column: (b) Section 280F(b)(2). ,3,504 48.002 576 60.001,yes

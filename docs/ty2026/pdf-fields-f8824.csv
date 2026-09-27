@@ -1,0 +1,69 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on tax return. ,2,36 684 467.25 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Identifying number. ,2,468.75 684 576 697.499,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"Part I. Information on the Like-Kind Exchange. Note: Only real property should be described on lines 1 and 2. If the property described on line 1 or line 2 is real property located outside the United States, indicate the country. 1. Description of every piece of like-kind property given up (if more space is needed, attach a sheet with the required additional information):",2,64.8 612 576 636.001,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"2. Description of every piece of like-kind property received (if more space is needed, attach a sheet with the required additional information):",2,64.8 563.998 576 587.999,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,"3. Date like-kind property given up was originally acquired (month, day, year). M M/D D/Y Y Y Y. ",2,504.75 540 576 551.999,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,"4. Date you actually transferred your property to the other party (month, day, year). M M/D D/Y Y Y Y. ",2,504.75 516.002 576 528.001,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"5. Date like-kind property you received was identified by written notice to another party (month, day, year). See instructions for 45-day written identification requirement. M M/D D/Y Y Y Y. ",2,504.75 480.002 576 492.001,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,"6. Date you actually received the like-kind property from other party (month, day, year). See instructions. M M/D D/Y Y Y Y. ",2,504.75 456.001 576 468,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"7. Was the exchange of the property given up or received made with a related party, either directly or indirectly (such as through an intermediary)? See instructions. If ""Yes,"" complete Part I I. Yes. ",2,504 422.001 512 430.001,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,"7. If ""No,"" go to Part I I I. No. ",2,547.2 422.001 555.2 430.001,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,Part I I. Related Party Exchange Information. 8. Name of related party. ,2,64.8 335.999 316.05 350,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,8. Relationship to you. ,2,317.55 335.999 460.05 350,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,8. Related party's identifying number. ,2,461.55 335.999 576 350,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,"8. Address (number and street). If you have a foreign address, also complete spaces below.",2,64.8 299.999 280.05 315.999,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,8. Apt. no. ,2,281.55 299.999 316.05 315.999,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,"8. City, town, or post office.",2,317.55 299.999 424.05 315.999,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,8. State.,2,425.55 299.999 510.45 315.999,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,8. Z I P code.,2,511.95 299.999 576 315.999,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,8. Foreign country name.,2,64.8 275.998 316.05 289.999,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,8. Foreign province/state/county.,2,317.55 275.998 510.45 289.999,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,8. Foreign postal code.,2,512.2 276.498 576 289.999,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,"9. During this tax year (and before the date that is 2 years after the last transfer of property that was part of the exchange), did the related party sell or dispose of any part of the like-kind property received from you (or an intermediary) in the exchange? Yes. ",2,504 242.001 512 250.001,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,9. No. ,2,547.2 242.001 555.2 250.001,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,"10. During this tax year (and before the date that is 2 years after the last transfer of property that was part of the exchange), did you sell or dispose of any part of the like-kind property you received? Yes. ",2,504 206.001 512 214.001,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,"10. No. If both lines 9 and 10 are ""No"" and this is the year of the exchange, go to Part I I I. If both lines 9 and 10 are ""No"" and this is not the year of the exchange, stop here. If either line 9 or line 10 is ""Yes,"" complete Part I I I and report on this year's tax return the deferred gain or (loss) from line 24 unless one of the exceptions on line 11 applies. ",2,547.2 206.001 555.2 214.001,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,"11. If one of the exceptions below applies to the disposition, check the applicable box. 11a. The disposition was after the death of either of the related parties. ",2,66.799 122.002 74.799 130.002,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,"11b. The disposition was an involuntary conversion, and the threat of conversion occurred after the exchange. ",2,66.799 98.001 74.799 106.001,yes
+topmostSubform[0].Page1[0].c1_4[2],/Btn,"11c. You can establish to the satisfaction of the I R S that neither the exchange nor the disposition had tax avoidance as one of its principal purposes. If this box is checked, attach an explanation. See instructions. ",2,66.799 75 74.799 83,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,Page 2. Name(s) shown on tax return. Do not enter name and identifying number if shown on other side. ,3,36 720.5 467 734.001,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,Identifying number. ,3,469 720.5 576 734.001,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,"Part I I I. Realized Gain or (Loss), Recognized Gain, and Basis of Like-Kind Property Received. Caution: If you transferred and received (a) more than one group of like-kind properties, or (b) cash or other (not like-kind) property, see Reporting of multi-asset exchanges in the instructions. Note: Complete lines 12 through 14 only if you gave up property that was not like-kind. Otherwise, go to line 15. 12. Fair market value (F M V) of other property given up. See instructions.",3,411.15 660.002 481.65 672.001,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,12a. Description of other property given up. Line 1 of 2. ,3,221.8 648 481.4 659.999,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,12a. Line 2 of 2. ,3,64.8 636.001 481.4 648,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,13. Adjusted basis of other property given up. ,3,411.15 624.002 481.65 636.001,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,"14. Gain or (loss) recognized on other property given up. Subtract line 13 from line 12. Report the gain or (loss) in the same manner as if the exchange had been a sale. Caution: If the property given up was used previously or partly as a home, see Property used as home in the instructions. ",3,504.75 600.001 576 612,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,"15. Cash received, F M V of other property received, plus net liabilities assumed by other party, reduced (but not below zero) by any exchange expenses incurred. See instructions. ",3,504.75 552.002 576 564.001,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,15a. Description of other property received. Line 1 of 2. ,3,221.8 540 475.2 551.999,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,15a. Line 2 of 2. ,3,64.8 528.001 475.2 540,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,16. F M V of like-kind property received. ,3,504.75 516.002 576 528.001,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,17. Add lines 15 and 16. ,3,504.75 504 576 515.999,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,"18. Adjusted basis of like-kind property you gave up, net amounts paid to other party, plus any exchange expenses not used on line 15. See instructions.",3,504.75 480.002 576 492.001,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,19. Realized gain or (loss). Subtract line 18 from line 17.,3,284.8 468 475.2 479.999,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,19. Amount.,3,504.75 468 576 479.999,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,"20. Enter the smaller of line 15 or line 19, but not less than zero. ",3,504.75 456.001 576 468,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,"21. Ordinary income under recapture rules. Enter here and on Form 4797, line 16. See instructions. ",3,504.75 444.002 576 456.001,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,"22. Subtract line 21 from line 20. If zero or less, enter 0. If more than zero, enter here and on Schedule D or Form 4797, unless the installment method applies. See instructions. ",3,504.75 420.001 576 432,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,23. Recognized gain. Add lines 21 and 22. ,3,504.75 408.002 576 420.001,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,"24. Deferred gain or (loss). Subtract line 23 from line 19. If a related party exchange, see instructions. ",3,504.75 396 576 407.999,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,"25. Basis of like-kind property received. Subtract line 15 from the sum of lines 18 and 23. See instructions. Note: Complete lines 25a, 25b, and 25c if property received in the exchange is like-kind section 1250, 1245, 1252, 1254, or 1255 property or like-kind intangible property.",3,504.75 372.002 576 384.001,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,25a. Basis of like-kind section 1250 property received.,3,411.15 336.002 481.65 348.001,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,"25b. Basis of like-kind section 1245, 1252, 1254, and 1255 property received.",3,411.15 324 481.65 335.999,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,25c. Basis of like-kind intangible property received. ,3,411.15 312.001 481.65 324,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,"Part I V. Deferral of Gain From Section 1043 Conflict-of-Interest Sales. Note: This part is to be used only by officers or employees of the executive branch of the federal government or judicial officers of the federal government (including certain spouses, minor or dependent children, and trustees as described in section 1043) for reporting nonrecognition of gain under section 1043 on the sale of property to comply with the conflict-of-interest requirements. This part can be used only if the cost of the replacement property is more than the basis of the divested property. 26. Enter the number from the upper right corner of your certificate of divestiture. (Do not attach a copy of your certificate. Keep the certificate with your records.) Numbers before the dash. ",3,460.8 228.002 511.2 240.001,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,26. Numbers after the dash. ,3,525.6 228.002 576 240.001,yes
+topmostSubform[0].Page2[0].f2_27[0],/Tx,27. Description of divested property. Line 1 of 2. ,3,197.8 216 576 227.999,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,27. Line 2 of 2. ,3,64.8 204.001 576 216,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,28. Description of replacement property. Line 1 of 2. ,3,213.8 192.002 576 204.001,yes
+topmostSubform[0].Page2[0].f2_30[0],/Tx,28. Line 2 of 2. ,3,64.8 180.5 576 191.499,yes
+topmostSubform[0].Page2[0].f2_31[0],/Tx,"29. Date divested property was sold (month, day, year). M M/D D/Y Y Y Y. ",3,504.75 168.001 576 180,yes
+topmostSubform[0].Page2[0].f2_32[0],/Tx,30. Sales price of divested property. See instructions. ,3,411.15 156.002 481.65 168.001,yes
+topmostSubform[0].Page2[0].f2_33[0],/Tx,31. Basis of divested property. ,3,411.15 144 481.65 155.999,yes
+topmostSubform[0].Page2[0].f2_34[0],/Tx,32. Realized gain. Subtract line 31 from line 30. ,3,504.75 132.001 576 144,yes
+topmostSubform[0].Page2[0].f2_35[0],/Tx,33. Cost of replacement property purchased within 60 days after date of sale. ,3,411.15 120.002 481.65 132.001,yes
+topmostSubform[0].Page2[0].f2_36[0],/Tx,"34. Subtract line 33 from line 30. If zero or less, enter 0. ",3,504.75 108 576 119.999,yes
+topmostSubform[0].Page2[0].f2_37[0],/Tx,"35. Ordinary income under recapture rules. Enter here and on Form 4797, line 10. See instructions. ",3,504.75 96.001 576 108,yes
+topmostSubform[0].Page2[0].f2_38[0],/Tx,"36. Subtract line 35 from line 34. If zero or less, enter 0. If more than zero, enter here and on Schedule D or Form 4797. See instructions. ",3,504.75 72 576 83.999,yes
+topmostSubform[0].Page2[0].f2_39[0],/Tx,37. Deferred gain. Subtract the sum of lines 35 and 36 from line 32. ,3,504.75 60.001 576 72,yes
+topmostSubform[0].Page2[0].f2_40[0],/Tx,38. Basis of replacement property. Subtract line 37 from line 33. ,3,504.75 48.002 576 60.001,yes

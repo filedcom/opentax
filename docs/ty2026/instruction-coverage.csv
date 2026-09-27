@@ -1,0 +1,97 @@
+form_slug,instruction_slug,snapshot_status,irs_draft_url,next_action
+f4852,f4852,continuous-use form with embedded instructions pinned,https://www.irs.gov/pub/irs-dft/f4852--dft.pdf,Expected draft still serves Sep 2020 form; use pinned current form/instructions and refresh current MeF before filing.
+f8938,i8938,continuous-use 2021 instructions pinned,https://www.irs.gov/pub/irs-dft/i8938--dft.pdf,Expected draft URL still serves 2021; use pinned published continuous-use instructions with 2026 draft form and refresh final/MeF before filing.
+f3903,i3903,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i3903--dft.pdf,Use pinned 2026 form/instructions for intelligence-community and military move branches; refresh final and current MeF before filing.
+f3800,i3800,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i3800--dft.pdf,Reconcile Part III transfer columns and Part II tax limitation with ATS scenario 12 and current MeF.
+f965a,i965a,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i965a.pdf,Current January 2021 form and instructions pinned; reconcile 2026 Schedule 2 line 12/15 draft conflict and current MeF before filing.
+f8888,i8888,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8888--dft.pdf,Review current instruction revision and reconcile ATS scenario 5 before filing.
+f1040,i1040gi,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1040s1,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 1 instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s1a,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 1-A instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s2,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 2 instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s3,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule 3 instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040s3a,i1040gi,2026 instruction owner unresolved; 1040 booklet pending,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,New 2026 schedule is absent from the 2025 booklet; inspect the released 2026 Form 1040 combined booklet or a separately published Schedule 3-A instruction.
+f1040sa,i1040sca,actual instruction slug serves 2025; comparator pinned,https://www.irs.gov/pub/irs-dft/i1040sca--dft.pdf,The actual Schedule A instruction slug is i1040sca; use the pinned 2025 booklet only as comparator and obtain its 2026 revision before finalizing SALT and educator itemization.
+f1040sb,i1040sb,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sb--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sc,i1040sc,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sc--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1040sd,i1040sd,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sd--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1040se,i1040se,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040se--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sei,i1040gi,combined 1040 booklet pending; 2025 comparator pinned,https://www.irs.gov/pub/irs-dft/i1040gi--dft.pdf,The 2025 Form 1040 booklet contains Schedule EIC instructions; use its pinned copy only as comparator and map 2026 rules from the released 2026 combined booklet.
+f1040sse,i1040sse,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sse--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sh,i1040sh,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sh--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040sf,i1040sf,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sf--dft.pdf,Use pinned PDF; recheck final instructions.
+f1040s8,i1040s8,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040s8--dft.pdf,Use pinned PDF; recheck final instructions.
+f2441,i2441,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2441--dft.pdf,Use pinned PDF; recheck final instructions.
+f4562,i4562,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4562--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f6251,i6251,URL serves 2025,https://www.irs.gov/pub/irs-dft/i6251--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8839,i8839,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8839--dft.pdf,2025 instructions pinned as comparator; obtain 2026 instructions for per-child timing MAGI exclusion and credit-limit worksheets.
+f8889,i8889,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8889--dft.pdf,Use pinned PDF; recheck final instructions.
+f8962,i8962,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8962--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8995,i8995,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8995--dft.pdf,Use pinned PDF; recheck final instructions.
+f8995a,i8995a,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8995a--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1062,i1062,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1062--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f1116,i1116,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1116--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f2555,i2555,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2555--dft.pdf,Use pinned PDF; recheck final instructions.
+f4136,i4136,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4136--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4136sa,i4136sa,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i4136sa--dft.pdf,2025 Schedule A and combined i4136 booklet pinned as comparators; obtain 2026 Schedule A and instructions when published.
+f4137,i4137,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f4137--dft.pdf,2026 draft pages 1-2 embed instructions; printed Schedule 2 line 5 conflicts with 2026 Schedule 2 line 16a.
+f461,i461,URL serves 2025,https://www.irs.gov/pub/irs-dft/i461--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4684,i4684,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4684--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4797,i4797,URL serves 2025,https://www.irs.gov/pub/irs-dft/i4797--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f4952,i4952,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f4952--dft.pdf,Use printed pages 3-4 of pinned f4952.pdf; recheck final form and Pub. 550.
+f4972,i4972,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f4972--dft.pdf,Printed pages 2-4 of the pinned 2026 draft contain instructions; recheck final release.
+f5329,i5329,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i5329--dft.pdf,Use pinned PDF; recheck final instructions.
+f5695,i5695,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i5695--dft.pdf,Use pinned PDF; recheck final instructions.
+f6198,i6198,continuous-use final pinned,https://www.irs.gov/pub/irs-dft/i6198--dft.pdf,November 2025 final instructions apply to that form revision or later; confirm current revision and MeF before filing.
+f6252,i6252,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f6252--dft.pdf,Use pages 2-4 of pinned f6252.pdf; cross-form Form 4797 line references conflict with its 2026 draft and require final-source reconciliation.
+f6781,i6781,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f6781--dft.pdf,Printed pages 2-4 of the pinned 2026 draft contain instructions; verify final release.
+f8997,i8997,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8997--dft.pdf,2026 form draft pinned; 2025 form embeds instructions as prior-year comparator; obtain current instructions before coding recognition rules.
+f8621,i8621,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i8621.pdf,Current December 2025 revision form/instructions pinned; instructions cite 2025 lines; verify any 2026 revision and MeF before filing.
+f7206,i7206,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i7206--dft.pdf,Use pinned PDF; recheck final instructions.
+f7217,i7217,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i7217.pdf,Use December 2024 form for 2024 or later and apply April 2026 IRS box 19 code update until revised instructions publish.
+f8396,i8396,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8396--dft.pdf,2026 draft pages 2 onward embed MCC eligibility credit-limit and three-year carryforward instructions.
+f8582,i8582,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8582--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8606,i8606,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8606--dft.pdf,Use pinned PDF; recheck final instructions.
+f8615,i8615,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8615--dft.pdf,Use pinned PDF; recheck final instructions.
+f8814,i8814,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8814--dft.pdf,Use pinned PDF; recheck final instructions.
+f8815,i8815,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8815--dft.pdf,Use pinned PDF; recheck final instructions.
+f8824,i8824,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8824--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8829,i8829,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8829--dft.pdf,Use pinned PDF; recheck final instructions.
+f8834,i8834,current final with embedded instructions,https://www.irs.gov/pub/irs-pdf/f8834.pdf,October 2024 form explicitly applies to tax years 2024 or later until superseded; embedded instructions cover TY2026 source pending final MeF check.
+f8853,i8853,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8853--dft.pdf,Use pinned PDF; recheck final instructions.
+f8859,i8859,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8859--dft.pdf,2026 draft embeds carryforward-only and tax-liability worksheet instructions.
+f8880,i8880,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8880--dft.pdf,2026 draft page 2 embeds saver-credit contribution distribution and student instructions.
+f8912,i8912,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i8912.pdf,December 2024 final instructions are continuous-use; current form pinned and Schedule 3 line 6k checked; verify MeF and final return lines.
+f8915f,i8915f,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8915f--dft.pdf,2026 form draft pinned; use pinned December 2025 instructions only as comparator and obtain 2026 revision before filing.
+f8919,i8919,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8919--dft.pdf,2026 draft pages 1-2 embed reason-code and line instructions; line 13 routes to Schedule 2 line 16b.
+f8936,i8936,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8936--dft.pdf,Use pinned PDF; recheck final instructions.
+f8936sa,i8936sa,covered by combined 2026 draft,https://www.irs.gov/pub/irs-dft/i8936--dft.pdf,Combined Form 8936 instructions explicitly cover Schedule A; use pinned i8936 PDF and recheck final.
+f8949,i8949,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8949--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f8959,i8959,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8959--dft.pdf,Use pinned PDF; recheck final instructions.
+f8960,i8960,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8960--dft.pdf,2025 instructions pinned as comparator; obtain 2026 instructions when posted and recheck line 13 MAGI and deduction worksheets.
+f8990,i8990,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8990--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
+f982,i982,current final pinned,https://www.irs.gov/pub/irs-pdf/i982.pdf,Current March 2018 form and December 2021 instructions pinned; recheck 2026 COD law and MeF before filing.
+schedule_r,i1040sr,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i1040sr--dft.pdf,Form and instructions pinned; map nine Part I choices and line 21 tax worksheet per SCHEDULER-GRAPH.md then recheck final and MeF.
+schedule_j,i1040sj,URL serves 2025,https://www.irs.gov/pub/irs-dft/i1040sj--dft.pdf,2026 form and 2025 instructions pinned as comparator; obtain 2026 instructions for base-year and capital-gain rate worksheets before filing.
+f1099k,i1099k,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1099k--2026.pdf,Final December 2026 form/instructions pinned; map new boxes 1c/1d and reconcile gross to income and Schedule 1-A before current MeF source rule.
+f1099m,i1099mec,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1099mec--2026.pdf,Final December 2026 MISC and combined instructions pinned; map boxes 13a/13b/14 to Schedule 1-A and reconcile box3 income.
+f1099nec,i1099mec,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1099mec--2026.pdf,Final December 2026 NEC and combined instructions pinned; map boxes 1b/1c/1d to Schedule 1-A and reconcile box1a income.
+f1099g,i1099g,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1099g--2026.pdf,Final December 2026 form/instructions and Rev Rul 2025-4 pinned; complete box10 family leave box8 business recovery and farm/CCC routes.
+f1098,i1098,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1098--2026.pdf,April 2025 continuous-use form with Dec 2026 instructions pinned; 2026 Schedule A 8a/8c points and 8d MIP plus debt limit and prior-year recovery require work.
+f1098e,i1098et,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1098et--2026.pdf,2026 source form and combined instructions pinned; calculate qualified paid interest with box2 old-loan amount and 2026 Schedule 1 line21 MAGI phaseout.
+f1098t,i1098et,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1098et--2026.pdf,2026 tuition source form and combined instructions pinned; reconcile box1 payments box4/6 prior-year corrections box5 aid and 2026 box7 to Form8863.
+f1098vli,i1098vli,2026 final pinned,https://www.irs.gov/pub/irs-prior/i1098vli--2026.pdf,New final Dec 2026 lender statement and instructions pinned with IRB 2026-39 final regulations; map vehicle loan eligibility and box1/5 to Schedule 1-A line28-36.
+f1099oid,i1099int,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i1099int.pdf,January 2024 form and combined OID/INT instructions pinned; distinguish net/gross acquisition premium negative TIPS tax-exempt PAB and instrument basis.
+f2106,i2106,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i2106--dft.pdf,Use pinned PDF; recheck final instructions.
+f4835,i4835,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i4835--dft.pdf,Use pinned PDF; recheck final instructions.
+f8826,embedded,current final with embedded instructions,https://www.irs.gov/pub/irs-pdf/f8826.pdf,September 2017 form and embedded instructions pinned; check current product and MeF before TY2026 filing.
+f8835,i8835,2025 comparator; no 2026 revision posted,https://www.irs.gov/pub/irs-pdf/i8835.pdf,2025 form and instructions pinned as comparators; obtain 2026 form/instructions and apply 2026 section 45 rate notice.
+f8911,i8911,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i8911.pdf,December 2025 form Schedule A and instructions apply to 2025 or later; enforce June 30 2026 service cutoff and current MeF.
+f8978,i8978,current final pinned,https://www.irs.gov/pub/irs-pdf/i8978.pdf,January 2023 form and Schedule A with December 2024 instructions pinned; reconcile 2026 reporting-year lines and current MeF.
+f5884,i5884,current final pinned,https://www.irs.gov/pub/irs-pdf/i5884.pdf,March 2021 form and instructions pinned; enforce pre-2026 hire date and current MeF.
+f6765,i6765,current final pinned,https://www.irs.gov/pub/irs-pdf/i6765.pdf,Currently served form says December 2024 and instructions say January 2025; Section G required for many 2026 filers; reconcile revisions and current MeF.
+f8994,i8994,current guidance with prior-form comparator,https://www.irs.gov/pub/irs-pdf/i8994.pdf,2021 form and 2024 instructions predate the 2026 paid-leave premium method; Notice 2026-28 pinned; obtain current filing form and MeF.
+f3468,i3468,2025 comparator; no 2026 revision posted,https://www.irs.gov/pub/irs-pdf/i3468.pdf,2025 form/instructions and Notice 2026-15 pinned; obtain 2026 Form 3468 and current MeF; apply corrected section 48D rate.
+f4255,i4255,current final pinned,https://www.irs.gov/pub/irs-pdf/i4255.pdf,December 2025 form/instructions pinned; recheck 2026 release and Schedule 2 lines 10/13a with current MeF.
+f8863,i8863,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8863--dft.pdf,Use pinned PDF; recheck final instructions.
+f172,i172,current 2024 revision and instructions pinned,https://www.irs.gov/pub/irs-dft/i172--dft.pdf,"Current December 2024 form and instructions pinned; apply the Form 172/NOL contract, refresh 2026 law and current MeF before filing."

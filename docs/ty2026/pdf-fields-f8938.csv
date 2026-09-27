@@ -1,0 +1,132 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].Pg1Header[0].f1_1[0],/Tx,Page 1. For calendar year 20. 2 digit year. ,2,199.4 707.969 216 719.968,yes
+topmostSubform[0].Page1[0].Pg1Header[0].f1_2[0],/Tx,or tax year beginning. Month and day. ,2,295 707.969 338.4 719.968,yes
+topmostSubform[0].Page1[0].Pg1Header[0].f1_3[0],/Tx,", 20. 2 digit year. ",2,353.4 707.969 367.2 719.968,yes
+topmostSubform[0].Page1[0].Pg1Header[0].f1_4[0],/Tx,", and ending. Month and day. ",2,414.2 707.969 457.2 719.968,yes
+topmostSubform[0].Page1[0].Pg1Header[0].f1_5[0],/Tx,", 20. 2 digit year. ",2,472.2 707.969 486 719.968,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"If you have attached additional statements, check here. ",2,276.599 694.969 284.599 702.969,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,Number of additional statements. ,2,489.6 693.969 576 705.969,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,1. Name(s) shown on return. ,2,36 665.968 373.65 677.969,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,2. Taxpayer identification number (T I N). ,2,374.4 665.968 576 677.969,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,3. Type of filer. 3a. Specified individual. ,2,80.2 643.97 88.2 651.97,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,3b. Partnership. ,2,224.2 643.97 232.2 651.97,yes
+topmostSubform[0].Page1[0].c1_2[2],/Btn,3c. Corporation. ,2,339.4 643.97 347.4 651.97,yes
+topmostSubform[0].Page1[0].c1_2[3],/Btn,3d. Trust. ,2,454.6 643.97 462.6 651.97,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"4. If you checked box 3a, skip this line 4. If you checked box 3b or 3c, enter the name and T I N of the specified individual who closely holds the partnership or corporation. If you checked box 3d, enter the name and T I N of the specified person who is a current beneficiary of the trust. (See instructions for definitions and what to do if you have more than one specified individual or specified person to list.) 4a. Name. ",2,109.2 588.22 424.8 599.969,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,4b. T I N. ,2,457.2 588.22 576 599.969,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,Part I. Foreign Deposit and Custodial Accounts Summary. 5. Number of deposit accounts (reported in Part V).,2,490.35 563.969 576 575.968,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,6. Maximum value of all deposit accounts during the tax year. ,2,490.35 551.97 576 563.969,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,7. Number of custodial accounts (reported in Part V).,2,490.35 539.968 576 551.967,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,8. Maximum value of all custodial accounts during the tax year. ,2,490.35 527.969 576 539.968,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,9. Were any foreign deposit or custodial accounts closed during the tax year? Yes. ,2,498.8 517.97 506.8 525.97,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,9. No. ,2,542 517.97 550 525.97,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,Part I I. Other Foreign Assets and Accounts Summary (see instructions). 10. Number of other foreign assets and accounts (reported in Part V l).,2,490.35 491.969 576 503.968,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,11. Maximum value of all other foreign assets and accounts during the tax year (reported in Part V l).,2,490.35 479.97 576 491.969,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,"12. Were any other foreign assets and accounts acquired, sold, opened, or closed (as applicable) during the tax year? Yes. ",2,498.8 457.969 506.8 465.969,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,12. No. ,2,542 457.969 550 465.969,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13a[0].f1_17[0],/Tx,Part I I I. Summary of Tax Items Attributable to Specified Foreign Financial Assets (see instructions). 13. Foreign deposit and custodial accounts. Row: a. Interest. Column: (c) Amount reported on form or schedule. $. ,2,274.4 407.97 366.45 419.969,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13a[0].f1_18[0],/Tx,Row: 13a. Interest. Column: Where reported. (d) Form and line. ,2,367.95 407.97 474.45 419.969,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13a[0].f1_19[0],/Tx,Row: 13a. Interest. Column: Where reported. (e) Schedule and line. ,2,475.95 407.97 576 419.969,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13b[0].f1_20[0],/Tx,Row: 13b. Dividends. Column: (c) Amount reported on form or schedule. $.  ,2,274.4 395.971 366.45 407.97,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13b[0].f1_21[0],/Tx,Row: 13b. Dividends. Columns: Where reported. (d) Form and line. ,2,367.95 395.971 474.45 407.97,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13b[0].f1_22[0],/Tx,Row: 13b. Dividends. Column: Where reported. (e) Schedule and line. ,2,475.95 395.971 576 407.97,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13c[0].f1_23[0],/Tx,Row: 13c. Royalties. Column: (c) Amount reported on form or schedule. $. ,2,274.4 383.972 366.45 395.971,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13c[0].f1_24[0],/Tx,Row: 13c. Royalties. Column: Where reported. (d) Form and line. ,2,367.95 383.972 474.45 395.971,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13c[0].f1_25[0],/Tx,Row: 13c. Royalties. Column: Where reported. (e) Schedule and line. ,2,475.95 383.972 576 395.971,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13d[0].f1_26[0],/Tx,Row: 13d. Other income. Column: (c) Amount reported on form or schedule. $. ,2,274.4 371.973 366.45 383.972,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13d[0].f1_27[0],/Tx,Row: 13d. Other income. Column: Where reported. (d) Form and line. ,2,367.95 371.973 474.45 383.972,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13d[0].f1_28[0],/Tx,Row: 13d. Other income. Column: Where reported. (e) Schedule and line. ,2,475.95 371.973 576 383.972,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13e[0].f1_29[0],/Tx,Row: 13e. Gains (losses). Column: (c) Amount reported on form or schedule. $. ,2,274.4 359.974 366.45 371.973,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13e[0].f1_30[0],/Tx,Row: 13e. Gains (losses). Column: Where reported. (d) Form and line. ,2,367.95 359.974 474.45 371.973,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13e[0].f1_31[0],/Tx,Row: 13e. Gains (losses). Column: Where reported. (e) Schedule and line.  ,2,475.95 359.974 576 371.973,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13f[0].f1_32[0],/Tx,Row: 13f. Deductions. Column: (c) Amount reported on form or schedule. $. ,2,274.4 347.975 366.45 359.974,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13f[0].f1_33[0],/Tx,Row: 13f. Deductions. Column: Where reported. (d) Form and line. ,2,367.95 347.975 474.45 359.974,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13f[0].f1_34[0],/Tx,Row: 13f. Deductions. Column: Where reported. (e) Schedule and line. ,2,475.95 347.975 576 359.974,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13g[0].f1_35[0],/Tx,Row: 13g. Credits. Column: (c) Amount reported on form or schedule. $. ,2,274.4 335.976 366.45 347.975,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13g[0].f1_36[0],/Tx,Row: 13g. Credits. Column: Where reported. (d) Form and line. ,2,367.95 335.976 474.45 347.975,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow13g[0].f1_37[0],/Tx,Row: 13g. Credits. Column: Where reported. (e) Schedule and line. ,2,475.95 335.976 576 347.975,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14a[0].f1_38[0],/Tx,14. Other foreign assets or accounts. Row: a. Interest. Column: (c) Amount reported on form or schedule. $. ,2,274.4 323.977 366.45 335.976,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14a[0].f1_39[0],/Tx,Row: 14a. Interest. Column: Where reported. (d) Form and line.,2,367.95 323.977 474.45 335.976,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14a[0].f1_40[0],/Tx,Row: 14a. Interest. Column: Where reported. (e) Schedule and line.,2,475.95 323.977 576 335.976,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14b[0].f1_41[0],/Tx,Row: 14b. Dividends. Column: (c) Amount reported on form or schedule. $. ,2,274.4 311.978 366.45 323.977,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14b[0].f1_42[0],/Tx,Row: 14b. Dividends. Column: Where reported. (d) Form and line.,2,367.95 311.978 474.45 323.977,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14b[0].f1_43[0],/Tx,Row: 14b. Dividends. Column: Where reported. (e) Schedule and line.,2,475.95 311.978 576 323.977,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14c[0].f1_44[0],/Tx,Row: 14c. Royalties. Column: (c) Amount reported on form or schedule. $. ,2,274.4 299.979 366.45 311.978,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14c[0].f1_45[0],/Tx,Row: 14c. Royalties. Column: Where reported. (d) Form and line.,2,367.95 299.979 474.45 311.978,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14c[0].f1_46[0],/Tx,Row: 14c. Royalties. Column: Where reported. (e) Schedule and line.,2,475.95 299.979 576 311.978,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14d[0].f1_47[0],/Tx,Row: 14d. Other income. Column: (c) Amount reported on form or schedule. $. ,2,274.4 287.98 366.45 299.979,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14d[0].f1_48[0],/Tx,Row: 14d. Other income. Column: Where reported. (d) Form and line.,2,367.95 287.98 474.45 299.979,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14d[0].f1_49[0],/Tx,Row: 14d. Other income. Column: Where reported. (e) Schedule and line.,2,475.95 287.98 576 299.979,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14e[0].f1_50[0],/Tx,Row: 14e. Gains (losses). Column: (c) Amount reported on form or schedule. $. ,2,274.4 275.981 366.45 287.98,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14e[0].f1_51[0],/Tx,Row: 14e. Gains (losses). Column: Where reported. (d) Form and line.,2,367.95 275.981 474.45 287.98,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14e[0].f1_52[0],/Tx,Row: 14e. Gains (losses). Column: Where reported. (e) Schedule and line.,2,475.95 275.981 576 287.98,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14f[0].f1_53[0],/Tx,Row: 14f. Deductions. Column: (c) Amount reported on form or schedule. $. ,2,274.4 263.982 366.45 275.981,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14f[0].f1_54[0],/Tx,Row: 14f. Deductions. Column: Where reported. (d) Form and line.,2,367.95 263.982 474.45 275.981,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14f[0].f1_55[0],/Tx,Row: 14f. Deductions. Column: Where reported. (e) Schedule and line.,2,475.95 263.982 576 275.981,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14g[0].f1_56[0],/Tx,Row: 14g. Credits. Column: (c) Amount reported on form or schedule. $. ,2,274.4 251.983 366.45 263.982,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14g[0].f1_57[0],/Tx,Row: 14g. Credits. Column: Where reported. (d) Form and line.,2,367.95 251.983 474.45 263.982,yes
+topmostSubform[0].Page1[0].Table_Part3[0].BodyRow14g[0].f1_58[0],/Tx,Row: 14g. Credits. Column: Where reported. (e) Schedule and line.,2,475.95 251.983 576 263.982,yes
+topmostSubform[0].Page1[0].f1_59[0],/Tx,"Part I V. Excepted Specified Foreign Financial Assets (see instructions). If you reported specified foreign financial assets on one or more of the following forms, enter the number of such forms filed. You do not need to include these assets on Form 8938 for the tax year. 15. Number of Forms 3520. ",2,161.2 203.969 201.6 215.968,yes
+topmostSubform[0].Page1[0].f1_60[0],/Tx,16. Number of Forms 3520-A. ,2,348.4 203.969 396 215.968,yes
+topmostSubform[0].Page1[0].f1_61[0],/Tx,17. Number of Forms 5471. ,2,535.6 203.969 576 215.968,yes
+topmostSubform[0].Page1[0].f1_62[0],/Tx,18. Number of Forms 8621. ,2,161.2 191.97 201.6 203.969,yes
+topmostSubform[0].Page1[0].f1_63[0],/Tx,19. Number of Forms 8865. ,2,348.4 191.97 396 203.969,yes
+topmostSubform[0].Page2[0].Line20_ReadOrder[0].c2_1[0],/Btn,"Page 2. Part V. Detailed Information for Each Foreign Deposit and Custodial Account Included in the Part I Summary (see instructions). If you have more than one account to report in Part V, attach a separate statement for each additional account. See instructions. 20. Type of account. 20a. Deposit. ",3,172.8 697.97 180.8 705.97,yes
+topmostSubform[0].Page2[0].Line20_ReadOrder[0].c2_1[1],/Btn,20b. Custodial. ,3,172.8 685.968 180.8 693.968,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,21. Account number or other designation. ,3,360 683.968 576 695.969,yes
+topmostSubform[0].Page2[0].c2_2[0],/Btn,22. Check all that apply. 22a. Account opened during tax year. ,3,172.8 673.969 180.8 681.969,yes
+topmostSubform[0].Page2[0].c2_3[0],/Btn,22b. Account closed during tax year. ,3,352.8 673.969 360.8 681.969,yes
+topmostSubform[0].Page2[0].c2_4[0],/Btn,22c. Account jointly owned with spouse. ,3,172.8 661.97 180.8 669.97,yes
+topmostSubform[0].Page2[0].c2_5[0],/Btn,22d. No tax item reported in Part I I I with respect to this asset. ,3,352.8 661.97 360.8 669.97,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,23. Maximum value of account during the tax year. ,3,490.35 647.968 576 659.967,yes
+topmostSubform[0].Page2[0].c2_6[0],/Btn,24. Did you use a foreign currency exchange rate to convert the value of the account into U.S. dollars? Yes. ,3,498.8 637.969 506.8 645.969,yes
+topmostSubform[0].Page2[0].c2_6[1],/Btn,24. No. ,3,542 637.969 550 645.969,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,"25. If you answered “Yes” to line 24, complete all that apply. 25(a). Foreign currency in which account is maintained. ",3,64.8 587.967 208.05 599.967,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,25(b). Foreign currency exchange rate used to convert to U.S. dollars. ,3,209.55 587.967 359.25 599.967,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,25(c). Source of exchange rate used if not from U.S. Treasury Department's Bureau of the Fiscal Service. ,3,360.75 587.967 576 599.967,yes
+topmostSubform[0].Page2[0].f2_6[0],/Tx,26a. Name of financial institution in which account is maintained. ,3,64.8 563.966 316.05 575.967,yes
+topmostSubform[0].Page2[0].f2_7[0],/Tx,26b. Global Intermediary Identification Number (G I I N) (Optional). First 6 numbers. ,3,345.6 563.969 384.153 575.968,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,26b. Next 5 numbers. ,3,388.8 563.969 427.353 575.968,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,26b. Next 2 numbers. ,3,432 563.969 448.953 575.968,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,26b. Last 3 numbers. ,3,453.6 563.969 475.2 575.968,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,"27. Mailing address of financial institution in which account is maintained. Number, street, and room or suite no. ",3,64.8 539.968 576 551.969,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,"28. City or town, state or province, and country, and Z I P or foreign postal code. ",3,64.8 516.467 576 527.968,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,"Part V I. Detailed Information for Each ""Other Foreign Asset and Account"" Included in the Part I I Summary (see instructions). If you have more than one asset or account to report in Part V I, attach a separate statement for each additional asset or account. See instructions. 29. Description of asset or account. ",3,64.8 443.967 359.25 455.968,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,30. Identifying number or other designation. ,3,360.75 443.967 576 455.968,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,"31. Complete all that apply. See instructions for reporting of multiple acquisition or disposition dates. 31a. Date asset acquired (or account opened) during tax year, if applicable. ",3,489.8 419.969 576 431.968,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,"31b. Date asset disposed of or account closed during tax year, if applicable. ",3,489.8 407.97 576 419.969,yes
+topmostSubform[0].Page2[0].c2_7[0],/Btn,31c. Check if asset or account jointly owned with spouse. ,3,64.8 397.968 72.8 405.968,yes
+topmostSubform[0].Page2[0].c2_8[0],/Btn,31d. Check if no tax item reported in Part I I I with respect to this asset or account. ,3,64.8 385.969 72.8 393.969,yes
+topmostSubform[0].Page2[0].c2_9[0],/Btn,"32. Maximum value of asset or account during tax year (check box that applies). 32a. $0–$50,000. ",3,64.8 361.968 72.8 369.968,yes
+topmostSubform[0].Page2[0].c2_9[1],/Btn,"32b. $50,001–$100,000. ",3,165.6 361.968 173.6 369.968,yes
+topmostSubform[0].Page2[0].c2_9[2],/Btn,"32c. $100,001–$150,000. ",3,295.2 361.968 303.2 369.968,yes
+topmostSubform[0].Page2[0].c2_9[3],/Btn,"32d. $150,001–$200,000. ",3,432 361.968 440 369.968,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,"32e. If more than $200,000, list value. ",3,490.35 347.969 576 359.968,yes
+topmostSubform[0].Page2[0].c2_10[0],/Btn,33. Did you use a foreign currency exchange rate to convert the value of the asset or account into U.S. dollars? Yes. ,3,498.8 337.97 506.8 345.97,yes
+topmostSubform[0].Page2[0].c2_10[1],/Btn,33. No. ,3,542 337.97 550 345.97,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,"34. If you answered “Yes” to line 33, complete all that apply. 34(a). Foreign currency in which asset or account is denominated. ",3,64.8 287.968 208.05 299.968,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,34(b). Foreign currency exchange rate used to convert to U.S. dollars. ,3,209.55 287.968 359.25 299.968,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,34(c). Source of exchange rate used if not from U.S. Treasury Department's Bureau of the Fiscal Service. ,3,360.75 287.968 576 299.968,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,"35. If asset or account reported on line 29 is stock of a foreign entity or an interest in a foreign entity, enter the following information for the asset or account. 35a. Name of foreign entity. ",3,64.8 239.966 359.25 251.967,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,35b. G I I N (Optional). First 6 numbers. ,3,388.8 239.969 427.353 251.968,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,35b. Next 5 numbers. ,3,432 239.969 470.553 251.968,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,35b. Next 2 numbers. ,3,475.2 239.969 492.153 251.968,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,35b. Last 3 numbers. ,3,496.8 239.969 518.4 251.968,yes
+topmostSubform[0].Page2[0].c2_11[0],/Btn,35c. Type of foreign entity. (1). Partnership. ,3,174.8 230.095 182.8 238.095,yes
+topmostSubform[0].Page2[0].c2_11[1],/Btn,35c. (2). Corporation. ,3,268.4 230.095 276.4 238.095,yes
+topmostSubform[0].Page2[0].c2_11[2],/Btn,35c. (3). Trust. ,3,362 230.095 370 238.095,yes
+topmostSubform[0].Page2[0].c2_11[3],/Btn,35c. (4). Estate. ,3,426.8 230.095 434.8 238.095,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,"35d. Mailing address of foreign entity. Number, street, and room or suite no. ",3,64.8 203.966 576 215.967,yes
+topmostSubform[0].Page2[0].f2_27[0],/Tx,"35e. City or town, state or province, country, and Z I P or foreign postal code. ",3,64.8 179.968 576 191.969,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,"36. If asset or account reported on line 29 is not stock of a foreign entity or an interest in a foreign entity, enter the following information for the asset or account. Note: If this asset or account has more than one issuer or counterparty, attach a separate statement with the same information for each additional issuer or counterparty. See instructions. 36a. Name of issuer or counterparty. ",3,192.247 119.97 576 131.969,yes
+topmostSubform[0].Page2[0].c2_12[0],/Btn,36a. Check if information is for. Issuer. ,3,182 109.968 190 117.968,yes
+topmostSubform[0].Page2[0].c2_12[1],/Btn,36a. Counterparty (see instructions). ,3,232.4 109.968 240.4 117.968,yes
+topmostSubform[0].Page2[0].c2_13[0],/Btn,36b. Type of issuer or counterparty. (1). Individual. ,3,210.8 97.969 218.8 105.969,yes
+topmostSubform[0].Page2[0].c2_13[1],/Btn,36b. (2). Partnership. ,3,290 97.969 298 105.969,yes
+topmostSubform[0].Page2[0].c2_13[2],/Btn,36b. (3). Corporation. ,3,376.4 97.969 384.4 105.969,yes
+topmostSubform[0].Page2[0].c2_13[3],/Btn,36b. (4). Trust. ,3,462.8 97.969 470.8 105.969,yes
+topmostSubform[0].Page2[0].c2_13[4],/Btn,36b. (5). Estate. ,3,520.4 97.969 528.4 105.969,yes
+topmostSubform[0].Page2[0].c2_14[0],/Btn,36c. Check if issuer or counterparty is a. U.S. person. ,3,218 85.97 226 93.97,yes
+topmostSubform[0].Page2[0].c2_14[1],/Btn,36c. Foreign person. ,3,297.2 85.97 305.2 93.97,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,"36d. Mailing address of issuer or counterparty. Number, street, and room or suite no. ",3,64.8 59.966 576 71.967,yes
+topmostSubform[0].Page2[0].f2_30[0],/Tx,"36e. City or town, state or province, country, and Z I P or foreign postal code. ",3,64.8 36.468 576 48.545,yes

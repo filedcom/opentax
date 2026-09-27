@@ -1,0 +1,74 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,"Page 1. Name(s) shown on Form 1040, 1040-S R, or 1040-N R. ",2,36 684.5 445.4 698.001,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,Your social security number. ,2,447.4 684.5 576 698.001,yes
+topmostSubform[0].Page1[0].f1_03[0],/Tx,"For 2026, enter the amount reported to you on Form(s) 1099-K that was included in error or for personal items sold at a loss. Note: The remaining amounts reported to you on Form(s) 1099-K should be reported elsewhere on your return depending on the nature of the transaction. See www.irs.gov/1099k.",2,482.4 660.502 576 672.001,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,"Part I. Additional Income. 1. Taxable refunds, credits, or offsets of state and local income taxes. ",2,505 606.502 576 617.501,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,2a. Alimony received. ,2,505 594.5 576 605.499,yes
+topmostSubform[0].Page1[0].f1_06[0],/Tx,2b. Date of original divorce or separation agreement (see instructions): ,2,338.4 582.501 475.2 594,yes
+topmostSubform[0].Page1[0].f1_07[0],/Tx,3. Business income or (loss). Attach Schedule C. ,2,505 570.502 576 582.001,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,4. Other gains or (losses). Check if any from Form(s): 4797. ,2,273.6 560 281.6 568,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,4. 4684. ,2,324 560 332 568,yes
+topmostSubform[0].Page1[0].f1_08[0],/Tx,4. Amount. ,2,505 558.5 576 569.499,yes
+topmostSubform[0].Page1[0].f1_09[0],/Tx,"5. Rental real estate, royalties, partnerships, S corporations, trusts, etc. Attach Schedule E. ",2,505 546.501 576 557.5,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,6. Farm income or (loss). Attach Schedule F. ,2,505 534.502 576 545.501,yes
+topmostSubform[0].Page1[0].Line7_ReadOrder[0].c1_3[0],/Btn,"7. Unemployment compensation. If you repaid a 2026 overpayment (see instructions), check here. ",2,449.3 524 457.3 532,yes
+topmostSubform[0].Page1[0].Line7_ReadOrder[0].f1_11[0],/Tx,7. and enter amount repaid: ,2,151.2 510.501 223.2 522,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,7. Amount. ,2,505 510.501 576 522,yes
+topmostSubform[0].Page1[0].Line8a_ReadOrder[0].f1_13[0],/Tx,8. Other income: 8a. Open parenthesis. Net operating loss. Close parenthesis. ,2,414.4 486.5 478.4 497.999,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,8b. Gambling. ,2,411.4 474.501 481.4 485.5,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,8c. Cancellation of debt. ,2,411.4 462.502 481.4 473.501,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,8d. Open parenthesis. Foreign earned income exclusion from Form 2555. Close parenthesis. ,2,414.4 450.5 478.4 461.499,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,8e. Income from Form 8853. ,2,411.4 438.501 481.4 449.5,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,8f. Income from Form 8889. ,2,411.4 426.502 481.4 437.501,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,8g. Alaska Permanent Fund dividends. ,2,411.4 414.5 481.4 425.499,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,8h. Jury duty pay. ,2,411.4 402.501 481.4 413.5,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,8i. Prizes and awards. ,2,411.4 390.502 481.4 401.501,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,8j. Activity not engaged in for profit income. ,2,411.4 378.5 481.4 389.499,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,8k. Stock options. ,2,411.4 366.501 481.4 377.5,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,8l. Income from the rental of personal property if you engaged in the rental for profit but were not in the business of renting such property. ,2,411.4 342.5 481.4 353.999,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,8m. Olympic and Paralympic medals and U S O C prize money (see instructions). ,2,411.4 330.501 481.4 341.5,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,8n. Section 951(a) inclusion (see instructions). ,2,411.4 318.502 481.4 329.501,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,8o. Section 951A(a) inclusion (see instructions). ,2,411.4 306.5 481.4 317.499,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,8p. Section 461(l) excess business loss adjustment. ,2,411.4 294.501 481.4 305.5,yes
+topmostSubform[0].Page1[0].f1_29[0],/Tx,8q. Taxable distributions from an A B L E account (see instructions). ,2,411.4 282.502 481.4 293.501,yes
+topmostSubform[0].Page1[0].f1_30[0],/Tx,8r. Scholarship and fellowship grants not reported on Form W-2. ,2,411.4 270.5 481.4 281.499,yes
+topmostSubform[0].Page1[0].f1_31[0],/Tx,"8s. Open parenthesis. Nontaxable amount of Medicaid waiver payments included on Form 1040, line 1a or 1d. Close parenthesis. ",2,414.4 246.502 478.4 258.001,yes
+topmostSubform[0].Page1[0].f1_32[0],/Tx,8t. Pension or annuity from a nonqualifed deferred compensation plan or a nongovernmental section 457 plan. ,2,411.4 222.501 481.4 234,yes
+topmostSubform[0].Page1[0].f1_33[0],/Tx,8u. Wages earned while incarcerated. ,2,411.4 210.502 481.4 221.501,yes
+topmostSubform[0].Page1[0].f1_34[0],/Tx,8v. Digital assets received as ordinary income not reported elsewhere. See instructions. ,2,411.4 186.501 481.4 198,yes
+topmostSubform[0].Page1[0].Line8z_ReadOrder[0].f1_35[0],/Tx,8z. Other income. List type. ,2,64.8 150.498 381.6 173.999,yes
+topmostSubform[0].Page1[0].f1_36[0],/Tx,8z. and amount: ,2,411.4 150.501 481.4 162,yes
+topmostSubform[0].Page1[0].f1_37[0],/Tx,9. Total other income. Add lines 8a through 8z. ,2,505 138.502 576 150.001,yes
+topmostSubform[0].Page1[0].f1_38[0],/Tx,"10. Combine lines 1 through 7 and 9. This is your additional income. Enter here and on Form 1040, 1040-S R, or 1040-N R, line 8. ",2,505 114.501 576 126,yes
+topmostSubform[0].Page2[0].f2_01[0],/Tx,Page 2. Part I I. Adjustments to Income. 11. Educator expenses. ,3,505 720.5 576 731.499,yes
+topmostSubform[0].Page2[0].f2_02[0],/Tx,"12. Certain business expenses of reservists, performing artists, and fee-basis government officials. Attach Form 2106. ",3,505 696.502 576 708.001,yes
+topmostSubform[0].Page2[0].f2_03[0],/Tx,13. Health savings account deduction. Attach Form 8889. ,3,505 684.5 576 695.499,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,"14. Moving expenses for members of the Armed Forces and the intelligence community. Attach Form 3903. If claiming only storage fees (see instructions), check here. ",3,302.8 662 310.8 670,yes
+topmostSubform[0].Page2[0].f2_04[0],/Tx,14. Amount. ,3,505 660.502 576 672.001,yes
+topmostSubform[0].Page2[0].f2_05[0],/Tx,15. Deductible part of self-employment tax. Attach Schedule S E. ,3,505 648.5 576 659.499,yes
+topmostSubform[0].Page2[0].f2_06[0],/Tx,"16. Self-employed S E P, S I M P L E, and qualified plans. ",3,505 636.501 576 647.5,yes
+topmostSubform[0].Page2[0].f2_07[0],/Tx,17. Self-employed health insurance deduction. ,3,505 624.502 576 635.501,yes
+topmostSubform[0].Page2[0].f2_08[0],/Tx,18. Penalty on early withdrawal of savings. ,3,505 612.5 576 623.499,yes
+topmostSubform[0].Page2[0].f2_09[0],/Tx,19a. Alimony paid. ,3,505 600.501 576 611.5,yes
+topmostSubform[0].Page2[0].Line19b_CombField[0].f2_10[0],/Tx,19b. Recipient's S S N. ,3,403.2 588.502 475.2 600.001,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,19c. Date of original divorce or separation agreement (see instructions): ,3,338.4 576.5 475.2 587.999,yes
+topmostSubform[0].Page2[0].c2_2[0],/Btn,"20. I R A deduction. If you are married filing separately and lived apart from your spouse for the entire year (see instructions), check here. ",3,185.8 554.002 193.8 562.002,yes
+topmostSubform[0].Page2[0].f2_12[0],/Tx,20. Amount. ,3,505 552.502 576 564.001,yes
+topmostSubform[0].Page2[0].f2_13[0],/Tx,21. Student loan interest deduction. ,3,505 540.5 576 551.499,yes
+topmostSubform[0].Page2[0].f2_14[0],/Tx,22. Reserved for future use. ,3,505 528.501 576 539.5,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,23. Archer M S A deduction. ,3,505 516.502 576 527.501,yes
+topmostSubform[0].Page2[0].Line24_ReadOrder[0].f2_16[0],/Tx,24. Other adjustments: 24a. Jury duty pay (see instructions). ,3,411.4 492.501 481.4 504,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,24b. Deductible expenses related to income reported on line 8l from the rental of personal property engaged in for profit. ,3,411.4 468.5 481.4 479.999,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,24c. Nontaxable amount of the value of Olympic and Paralympic medals and U S O C prize money reported on line 8m. ,3,411.4 444.502 481.4 456.001,yes
+topmostSubform[0].Page2[0].f2_19[0],/Tx,24d. Reforestation amortization and expenses. ,3,411.4 432.5 481.4 443.499,yes
+topmostSubform[0].Page2[0].f2_20[0],/Tx,24e. Repayment of supplemental unemployment benefits under the Trade Act of 1974. ,3,411.4 408.502 481.4 420.001,yes
+topmostSubform[0].Page2[0].f2_21[0],/Tx,24f. Contributions to section 501(c)(18)(D) pension plans. ,3,411.4 396.5 481.4 407.499,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,24g. Contributions by certain chaplains to section 403(b) plans. ,3,411.4 384.501 481.4 395.5,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,24h. Attorney fees and court costs for actions involving certain unlawful discrimination claims (see instructions). ,3,411.4 360.5 481.4 371.999,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,24i. Attorney fees and court costs you paid in connection with an award from the I R S for information you provided that helped the I R S detect tax law violations. ,3,411.4 336.502 481.4 348.001,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,24j. Housing deduction from Form 2555. ,3,411.4 324.5 481.4 335.499,yes
+topmostSubform[0].Page2[0].f2_26[0],/Tx,24k. Excess deductions of section 67(e) expenses from Schedule K-1 (Form 1041). ,3,411.4 312.501 481.4 323.5,yes
+topmostSubform[0].Page2[0].Line24z_ReadOrder[0].f2_27[0],/Tx,24z. Other adjustments. List type. ,3,64.8 276.498 381.6 299.999,yes
+topmostSubform[0].Page2[0].f2_28[0],/Tx,24z. and amount: ,3,411.4 276.501 481.4 288,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,25. Total other adjustments. Add lines 24a through 24z. ,3,505 264.502 576 276.001,yes
+topmostSubform[0].Page2[0].f2_30[0],/Tx,"26. Add lines 11 through 23 and 25. These are your adjustments to income. Enter here and on Form 1040, 1040-S R, or 1040-N R, line 10. ",3,505 240.501 576 252,yes

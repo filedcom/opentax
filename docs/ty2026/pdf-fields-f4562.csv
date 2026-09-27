@@ -1,0 +1,272 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 683.968 251.25 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Business or activity to which this form relates. ,2,253 683.968 481.65 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Identifying number. ,2,482.4 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"Part I. Election To Expense Certain Property Under Section 179. Note: If you have any listed property, complete Part V before you complete Part I. 1. Maximum amount (see instructions). ",2,504 647.968 576 659.967,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,2. Total cost of section 179 property placed in service (see instructions). ,2,504 635.969 576 647.968,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,3. Threshold cost of section 179 property before reduction in limitation (see instructions). ,2,504 623.97 576 635.969,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"4. Reduction in limitation. Subtract line 3 from line 2. If zero or less, enter 0. ",2,504 611.968 576 623.967,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,"5. Dollar limitation for tax year. Subtract line 4 from line 1. If zero or less, enter 0. If married filing separately, see instructions. ",2,504 599.969 576 611.968,yes
+topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow1[0].f1_9[0],/Tx,6. Row: 1. Column: (a) Description of property. ,2,36 575.971 280.05 587.97,yes
+topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow1[0].f1_10[0],/Tx,Row: 1. Column: (b) Cost (business use only). ,2,280.8 575.971 380.85 587.97,yes
+topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow1[0].f1_11[0],/Tx,Row: 1. Column: (c) Elected cost. ,2,381.6 575.971 503.25 587.97,yes
+topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow2[0].f1_12[0],/Tx,Row: 2. Column: (a) Description of property. ,2,36 563.972 280.05 575.971,yes
+topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow2[0].f1_13[0],/Tx,Row: 2. Column: (b) Cost (business use only). ,2,280.8 563.972 380.85 575.971,yes
+topmostSubform[0].Page1[0].Table_Ln6[0].BodyRow2[0].f1_14[0],/Tx,Row: 2. Column: (c) Elected cost. ,2,381.6 563.972 503.25 575.971,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,7. Listed property. Enter the amount from line 29. ,2,504 551.97 576 563.969,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"8. Total elected cost of section 179 property. Add amounts in column (c), lines 6 and 7. ",2,504 539.968 576 551.967,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,9. Tentative deduction. Enter the smaller of line 5 or line 8. ,2,504 527.969 576 539.968,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,10. Carryover of disallowed deduction from line 13 of your 2025 Form 4562.  ,2,504 515.97 576 527.969,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,11. Business income limitation. Enter the smaller of business income (not less than zero) or line 5. See instructions. ,2,504 503.968 576 515.967,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"12. Section 179 expense deduction. Add lines 9 and 10, but don't enter more than line 11. ",2,504 491.969 576 503.968,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"13. Carryover of disallowed deduction to 2027. Add lines 9 and 10, less line 12. ",2,504 479.97 576 491.969,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,"Note: Don't use Part I I or Part I I I below for listed property. Instead, use Part V. Part I I. Special Depreciation Allowance and Other Depreciation. (Don't include listed property. See instructions.). 14a. Special depreciation allowance for certain qualified property (other than listed property) under section 168(k). ",2,504 443.97 576 455.969,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,14b. Special depreciation allowance for certain specified plants bearing fruits and nuts under section 168(k)(5). ,2,504 431.968 576 443.967,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,14c. Special depreciation allowance for qualified reuse and recycle property under section 168(m). ,2,504 419.969 576 431.968,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,14d. Special depreciation allowance for certain qualified production property under section 168(n) (attach statement). ,2,504 407.97 576 419.969,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,15. Property subject to section 168(f)(1) election. ,2,504 395.968 576 407.967,yes
+topmostSubform[0].Page1[0].f1_27[0],/Tx,16. Other depreciation (including A C R S). ,2,504 383.969 576 395.968,yes
+topmostSubform[0].Page1[0].f1_28[0],/Tx,Part I I I. M A C R S Depreciation. (Don't include listed property. See instructions.). Section A. 17. M A C R S deductions for assets placed in service in tax years beginning before 2026. ,2,504 347.969 576 359.968,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"18. If you are electing to group any assets placed in service during the tax year into one or more general asset accounts, check here. ",2,462.799 325.968 470.799 333.968,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_29[0],/Tx,Section B—Assets Placed in Service During 2026 Tax Year Using the General Depreciation System. Row: 19a. 3-year property. Column: (b) Month and year placed in service.,2,208.8 263.97 266.4 275.969,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_30[0],/Tx,Row: 19a. 3-year property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 263.97 345.6 275.969,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_31[0],/Tx,Row: 19a. 3-year property. Column: (d) Recovery period. ,2,345.6 263.97 396 275.969,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_32[0],/Tx,Row: 19a. 3-year property. Column: (e) Convention. ,2,396 263.97 439.2 275.969,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_33[0],/Tx,Row: 19a. 3-year property. Column: (f) Method. ,2,439.2 263.97 504 275.969,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19a[0].f1_34[0],/Tx,Row: 19a. 3-year property. Column: (g) Depreciation deduction. ,2,504 263.97 576 275.969,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19b[0].f1_35[0],/Tx,Row: 19b. 5-year property. Column: (b) Month and year placed in service.,2,208.8 251.971 266.4 263.97,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19b[0].f1_36[0],/Tx,Row: 19b. 5-year property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 251.971 345.6 263.97,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19b[0].f1_37[0],/Tx,Row: 19b. 5-year property. Column: (d) Recovery period. ,2,345.6 251.971 396 263.97,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19b[0].f1_38[0],/Tx,Row: 19b. 5-year property. Column: (e) Convention. ,2,396 251.971 439.2 263.97,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19b[0].f1_39[0],/Tx,Row: 19b. 5-year property. Column: (f) Method. ,2,439.2 251.971 504 263.97,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19b[0].f1_40[0],/Tx,Row: 19b. 5-year property. Column: (g) Depreciation deduction. ,2,504 251.971 576 263.97,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19c[0].f1_41[0],/Tx,Row: 19c. 7-year property. Column: (b) Month and year placed in service.,2,208.8 239.972 266.4 251.971,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19c[0].f1_42[0],/Tx,Row: 19c. 7-year property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 239.972 345.6 251.971,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19c[0].f1_43[0],/Tx,Row: 19c. 7-year property. Column: (d) Recovery period. ,2,345.6 239.972 396 251.971,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19c[0].f1_44[0],/Tx,Row: 19c. 7-year property. Column: (e) Convention. ,2,396 239.972 439.2 251.971,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19c[0].f1_45[0],/Tx,Row: 19c. 7-year property. Column: (f) Method. ,2,439.2 239.972 504 251.971,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19c[0].f1_46[0],/Tx,Row: 19c. 7-year property. Column: (g) Depreciation deduction. ,2,504 239.972 576 251.971,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19d[0].f1_47[0],/Tx,Row: 19d. 10-year property. Column: (b) Month and year placed in service.,2,208.8 227.973 266.4 239.972,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19d[0].f1_48[0],/Tx,Row: 19d. 10-year property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 227.973 345.6 239.972,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19d[0].f1_49[0],/Tx,Row: 19d. 10-year property. Column: (d) Recovery period. ,2,345.6 227.973 396 239.972,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19d[0].f1_50[0],/Tx,Row: 19d. 10-year property. Column: (e) Convention. ,2,396 227.973 439.2 239.972,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19d[0].f1_51[0],/Tx,Row: 19d. 10-year property. Column: (f) Method. ,2,439.2 227.973 504 239.972,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19d[0].f1_52[0],/Tx,Row: 19d. 10-year property. Column: (g) Depreciation deduction. ,2,504 227.973 576 239.972,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19e[0].f1_53[0],/Tx,Row: 19e. 15-year property. Column: (b) Month and year placed in service.,2,208.8 215.974 266.4 227.973,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19e[0].f1_54[0],/Tx,Row: 19e. 15-year property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 215.974 345.6 227.973,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19e[0].f1_55[0],/Tx,Row: 19e. 15-year property. Column: (d) Recovery period. ,2,345.6 215.974 396 227.973,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19e[0].f1_56[0],/Tx,Row: 19e. 15-year property. Column: (e) Convention. ,2,396 215.974 439.2 227.973,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19e[0].f1_57[0],/Tx,Row: 19e. 15-year property. Column: (f) Method. ,2,439.2 215.974 504 227.973,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19e[0].f1_58[0],/Tx,Row: 19e. 15-year property. Column: (g) Depreciation deduction. ,2,504 215.974 576 227.973,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19f[0].f1_59[0],/Tx,Row: 19f. 20-year property. Column: (b) Month and year placed in service.,2,208.8 203.975 266.4 215.974,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19f[0].f1_60[0],/Tx,Row: 19f. 20-year property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 203.975 345.6 215.974,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19f[0].f1_61[0],/Tx,Row: 19f. 20-year property. Column: (d) Recovery period. ,2,345.6 203.975 396 215.974,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19f[0].f1_62[0],/Tx,Row: 19f. 20-year property. Column: (e) Convention. ,2,396 203.975 439.2 215.974,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19f[0].f1_63[0],/Tx,Row: 19f. 20-year property. Column: (f) Method. ,2,439.2 203.975 504 215.974,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19f[0].f1_64[0],/Tx,Row: 19f. 20-year property. Column: (g) Depreciation deduction. ,2,504 203.975 576 215.974,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19g[0].f1_65[0],/Tx,Row: 19g. Water utility property. Column: (b) Month and year placed in service.,2,208.8 191.976 266.4 203.975,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19g[0].f1_66[0],/Tx,Row: 19g. Water utility property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 191.976 345.6 203.975,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19g[0].f1_67[0],/Tx,Row: 19g. Water utility property. Column: (d) Recovery period. 25 yrs. ,2,395 191.976 396 203.975,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19g[0].f1_68[0],/Tx,Row: 19g. Water utility property. Column: (e) Convention. ,2,396 191.976 439.2 203.975,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19g[0].f1_69[0],/Tx,Row: 19g. Water utility property. Column: (f) Method. S/L. ,2,503 191.976 504 203.975,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19g[0].f1_70[0],/Tx,Row: 19g. Water utility property. Column: (g) Depreciation deduction. ,2,504 191.976 576 203.975,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19h[0].f1_71[0],/Tx,Row: 19h. Any railroad grading or tunnel bore. Column: (b) Month and year placed in service.,2,208.8 179.977 266.4 191.976,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19h[0].f1_72[0],/Tx,Row: 19h. Any railroad grading or tunnel bore. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 179.977 345.6 191.976,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19h[0].f1_73[0],/Tx,Row: 19h. Any railroad grading or tunnel bore. Column: (d) Recovery period. 50 yrs. ,2,395 179.977 396 191.976,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19h[0].f1_74[0],/Tx,Row: 19h. Any railroad grading or tunnel bore. Column: (e) Convention. M M. ,2,438.2 179.977 439.2 191.976,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19h[0].f1_75[0],/Tx,Row: 19h. Any railroad grading or tunnel bore. Column: (f) Method. S/L. ,2,503 179.977 504 191.976,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19h[0].f1_76[0],/Tx,Row: 19h. Any railroad grading or tunnel bore. Column: (g) Depreciation deduction. ,2,504 179.977 576 191.976,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_1[0].f1_77[0],/Tx,Row: 19i. Residential rental property. Line 1 of 2. Column: (b) Month and year placed in service.,2,208.8 167.978 266.4 179.977,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_1[0].f1_78[0],/Tx,Row: 19i. Residential rental property. Line 1 of 2. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 167.978 345.6 179.977,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_1[0].f1_79[0],/Tx,Row: 19i. Residential rental property. Line 1 of 2. Column: (d) Recovery period. 27.5 yrs. ,2,395 167.978 396 179.977,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_1[0].f1_80[0],/Tx,Row: 19i. Residential rental property. Line 1 of 2. Column: (e) Convention. M M. ,2,438.2 167.978 439.2 179.977,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_1[0].f1_81[0],/Tx,Row: 19i. Residential rental property. Line 1 of 2. Column: (f) Method. S/L. ,2,503 167.978 504 179.977,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_1[0].f1_82[0],/Tx,Row: 19i. Residential rental property. Line 1 of 2. Column: (g) Depreciation deduction. ,2,504 167.978 576 179.977,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_2[0].f1_83[0],/Tx,Row: 19i. Residential rental property. Line 2 of 2. Colimn: (b) Month and year placed in service.,2,208.8 155.979 266.4 167.978,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_2[0].f1_84[0],/Tx,Row: 19i. Residential rental property. Line 2 of 2. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 155.979 345.6 167.978,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_2[0].f1_85[0],/Tx,Row: 19i. Residential rental property. Line 2 of 2. Column: (d) Recovery period. 27.5 yrs. ,2,395 155.979 396 167.978,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_2[0].f1_86[0],/Tx,Row: 19i. Residential rental property. Line 2 of 2. Column: (e) Convention. M M. ,2,438.2 155.979 439.2 167.978,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_2[0].f1_87[0],/Tx,Row: 19i. Residential rental property. Line 2 of 2. Column: (f) Method. S/L. ,2,503 155.979 504 167.978,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19i_2[0].f1_88[0],/Tx,Row: 19i. Residential rental property. Line 2 of 2. Column: (g) Depreciation deduction. ,2,504 155.979 576 167.978,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_1[0].f1_89[0],/Tx,Row: 19j. Nonresidential real property. Line 1 of 2. Column: (b) Month and year placed in service.,2,208.8 143.98 266.4 155.979,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_1[0].f1_90[0],/Tx,Row: 19j. Nonresidential real property. Line 1 of 2. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 143.98 345.6 155.979,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_1[0].f1_91[0],/Tx,Row: 19j. Nonresidential real property. Line 1 of 2. Column: (d) Recovery period. 39 yrs. ,2,395 143.98 396 155.979,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_1[0].f1_92[0],/Tx,Row: 19j. Nonresidential real property. Line 1 of 2. Column: (e) Convention. M M. ,2,438.2 143.98 439.2 155.979,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_1[0].f1_93[0],/Tx,Row: 19j. Nonresidential real property. Line 1 of 2. Column: (f) Method. S/L. ,2,503 143.98 504 155.979,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_1[0].f1_94[0],/Tx,Row: 19j. Nonresidential real property. Line 1 of 2. Column: (g) Depreciation deduction. ,2,504 143.98 576 155.979,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_2[0].f1_95[0],/Tx,Row: 19j. Nonresidential real property. Line 2 of 2. Column: (b) Month and year placed in service.,2,208.8 131.981 266.4 143.98,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_2[0].f1_96[0],/Tx,Row: 19j. Nonresidential real property. Line 2 of 2. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 131.981 345.6 143.98,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_2[0].f1_97[0],/Tx,Row: 19j. Nonresidential real property. Line 2 of 2. Column: (d) Recovery period. ,2,345.6 131.981 396 143.98,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_2[0].f1_98[0],/Tx,Row: 19j. Nonresidential real property. Line 2 of 2. Column: (e) Convention. M M. ,2,438.2 131.981 439.2 143.98,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_2[0].f1_99[0],/Tx,Row: 19j. Nonresidential real property. Line 2 of 2. Column: (f) Method. S/L. ,2,503 131.981 504 143.98,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19j_2[0].f1_100[0],/Tx,Row: 19j. Nonresidential real property. Line 2 of 2. Column: (g) Depreciation deduction. ,2,504 131.981 576 143.98,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19k[0].f1_101[0],/Tx,Row: 19k. Qualified production property. Column: (b) Month and year placed in service.,2,208.8 119.982 266.4 131.981,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19k[0].f1_102[0],/Tx,Row: 19k. Qualified production property. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 119.982 345.6 131.981,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19k[0].f1_103[0],/Tx,Row: 19k. Qualified production property. Column: (d) Recovery period. 39 yrs.,2,395 119.982 396 131.981,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19k[0].f1_104[0],/Tx,Row: 19k. Qualified production property. Column: (e) Convention. M M. ,2,438.2 119.982 439.2 131.981,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19k[0].f1_105[0],/Tx,Row: 19k. Qualified production property. Column: (f) Method. S/L. ,2,503 119.982 504 131.981,yes
+topmostSubform[0].Page1[0].SectionBTable[0].Line19k[0].f1_106[0],/Tx,Row: 19k. Qualified production property. Column: (g) Depreciation deduction. ,2,504 119.982 576 131.981,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20a[0].f1_107[0],/Tx,Section C—Assets Placed in Service During 2026 Tax Year Using the Alternative Depreciation System. Row: 20a. Class life. Column: (b) Month and year placed in service.,2,208.8 95.969 266.4 107.968,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20a[0].f1_108[0],/Tx,Row: 20a. Class life. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 95.969 345.6 107.968,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20a[0].f1_109[0],/Tx,Row: 20a. Class life. Column: (d) Recovery period. ,2,345.6 95.969 396 107.968,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20a[0].f1_110[0],/Tx,Row: 20a. Class life. Column: (e) Convention. ,2,396 95.969 439.2 107.968,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20a[0].f1_111[0],/Tx,Row: 20a. Class life. Column: (f) Method. S/L. ,2,503 95.969 504 107.968,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20a[0].f1_112[0],/Tx,Row: 20a. Class life. Column: (g) Depreciation deduction. ,2,504 95.969 576 107.968,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20b[0].f1_113[0],/Tx,Row: 20b. 12-year. Column: (b) Month and year placed in service.,2,208.8 83.97 266.4 95.969,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20b[0].f1_114[0],/Tx,Row: 20b. 12-year. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 83.97 345.6 95.969,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20b[0].f1_115[0],/Tx,Row: 20b. 12-year. Column: (d) Recovery period. 12 yrs. ,2,395 83.97 396 95.969,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20b[0].f1_116[0],/Tx,Row: 20b. 12-year. Column: (e) Convention. ,2,396 83.97 439.2 95.969,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20b[0].f1_117[0],/Tx,Row: 20b. 12-year. Column: (f) Method. S/L. ,2,503 83.97 504 95.969,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20b[0].f1_118[0],/Tx,Row: 20b. 12-year. Column: (g) Depreciation deduction. ,2,504 83.97 576 95.969,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20c[0].f1_119[0],/Tx,Row: 20c. 30-year. Column: (b) Month and year placed in service.,2,208.8 71.971 266.4 83.97,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20c[0].f1_120[0],/Tx,Row: 20c. 30-year. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 71.971 345.6 83.97,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20c[0].f1_121[0],/Tx,Row: 20c. 30-year. Column: (d) Recovery period. 30 yrs. ,2,395 71.971 396 83.97,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20c[0].f1_122[0],/Tx,Row: 20c. 30-year. Column: (e) Convention. M M. ,2,438.2 71.971 439.2 83.97,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20c[0].f1_123[0],/Tx,Row: 20c. 30-year. Column: (f) Method. S/L. ,2,503 71.971 504 83.97,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20c[0].f1_124[0],/Tx,Row: 20c. 30-year. Column: (g) Depreciation deduction. ,2,504 71.971 576 83.97,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20d[0].f1_125[0],/Tx,Row: 20d. 40-year. Column: (b) Month and year placed in service.,2,208.8 59.972 266.4 71.971,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20d[0].f1_126[0],/Tx,Row: 20d. 40-year. Column: (c) Basis for depreciation (business/investment use only—see instructions).,2,266.4 59.972 345.6 71.971,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20d[0].f1_127[0],/Tx,Row: 20d. 40-year. Column: (d) Recovery period. 40 yrs. ,2,395 59.972 396 71.971,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20d[0].f1_128[0],/Tx,Row: 20d. 40-year. Column: (e) Convention. M M.,2,438.2 59.972 439.2 71.971,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20d[0].f1_129[0],/Tx,Row: 20d. 40-year. Column: (f) Method. S/L. ,2,503 59.972 504 71.971,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20d[0].f1_130[0],/Tx,Row: 20d. 40-year. Column: (g) Depreciation deduction. ,2,504 59.972 576 71.971,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20e[0].f1_131[0],/Tx,"Row: 20e. Railroad grading, tunnel bore, or water utility property. Column: (b) Month and year placed in service.",2,208.8 35.971 266.4 47.972,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20e[0].f1_132[0],/Tx,"Row: 20e. Railroad grading, tunnel bore, or water utility property. Column: (c) Basis for depreciation (business/investment use only—see instructions).",2,266.4 35.971 345.6 47.972,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20e[0].f1_133[0],/Tx,"Row: 20e. Railroad grading, tunnel bore, or water utility property. Column: (d) Recovery period. 50 yrs. ",2,395 35.971 396 47.972,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20e[0].f1_134[0],/Tx,"Row: 20e. Railroad grading, tunnel bore, or water utility property. Column: (e) Convention. M M.",2,438.2 35.971 439.2 47.972,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20e[0].f1_135[0],/Tx,"Row: 20e. Railroad grading, tunnel bore, or water utility property. Column: (f) Method. S/L. ",2,503 35.971 504 47.972,yes
+topmostSubform[0].Page1[0].SectionCTable[0].Line20e[0].f1_136[0],/Tx,"Row: 20e. Railroad grading, tunnel bore, or water utility property. Column: (g) Depreciation deduction. ",2,504 35.971 576 47.972,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,Page 2. Part I V. Summary (See instructions.). 21. Listed property. Enter amount from line 28. ,3,504 719.968 576 731.967,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,"22. Total. Add amounts from line 12, lines 14a through 14d, lines 15 through 17, lines 19 and 20 in column (g), and line 21. Enter here and on the appropriate lines of your return. Partnerships and S corporations—see instructions.",3,504 683.968 576 695.967,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,"23a. For assets shown in Part I I I that are placed in service during the current tax year, and have costs capitalized under section 263A, enter the amount of the basis attributable to interest costs capitalized under section 263A(f).",3,504 647.968 576 659.967,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,"23b. For assets shown in Part I I I that are placed in service during the current tax year, and have costs capitalized under section 263A, enter the amount of the basis attributable to costs capitalized under section 263A other than interest costs capitalized under section 263A(f).",3,504 611.968 576 623.967,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,"Part V. Listed Property. (Include automobiles, certain other vehicles, certain aircraft, and property used for entertainment, recreation, or amusement.). Note: For any vehicle for which you are using the standard mileage rate or deducting lease expense, complete only 24a, 24b, columns (a) through (c) of Section A, all of Section B, and Section C if applicable. Section A—Depreciation and Other Information. (Caution: See the instructions for limits for passenger automobiles.). 24a. Do you have evidence to support the business/investment use claimed? Yes. ",3,482.4 541.968 490.4 549.968,yes
+topmostSubform[0].Page2[0].c2_1[1],/Btn,24a. No. ,3,532.8 541.968 540.8 549.968,yes
+topmostSubform[0].Page2[0].c2_2[0],/Btn,"24b. If ""Yes,"" is the evidence written? Yes. ",3,482.4 529.969 490.4 537.969,yes
+topmostSubform[0].Page2[0].c2_2[1],/Btn,24b. No. ,3,532.8 529.969 540.8 537.969,yes
+topmostSubform[0].Page2[0].c2_3[0],/Btn,24c. Does at least 25% of the use of any aircraft listed in Section A consist of qualified business use not described in section 280F(d)(6)(C)(i)? See instructions. Yes. ,3,482.4 505.968 490.4 513.968,yes
+topmostSubform[0].Page2[0].c2_3[1],/Btn,24c. No.,3,532.8 505.968 540.8 513.968,yes
+topmostSubform[0].Page2[0].f2_5[0],/Tx,25. Special depreciation allowance for qualified listed property placed in service during the tax year and used more than 50% in a qualified business use. See instructions. ,3,432 443.97 503.25 455.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_6[0],/Tx,26. Property used more than 50% in a qualified business use: Row: 1. Column: (a) Type of property (list vehicles first). ,3,36 419.969 108 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_7[0],/Tx,Row: 1. Column: (b) Date placed in service. ,3,108 419.969 151.2 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_8[0],/Tx,Row: 1. Column: (c) Business/investment use percentage. %.,3,151.2 419.969 184.4 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_9[0],/Tx,Row: 1. Column: (d) Cost or other basis. ,3,194.4 419.969 265.65 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_10[0],/Tx,Row: 1. Column: (e) Basis for depreciation (business/investment use only). ,3,267.4 419.969 338.4 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_11[0],/Tx,Row: 1. Column: (f) Recovery period. ,3,338.4 419.969 381.6 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_12[0],/Tx,Row: 1. Column: (g) Method/Convention. ,3,382.6 419.969 432 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_13[0],/Tx,Row: 1. Column: (h) Depreciation deduction. ,3,432 419.969 503.25 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow1[0].f2_14[0],/Tx,Row: 1. Column: (i) Elected section 179 cost. ,3,504 419.969 576 431.968,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_15[0],/Tx,Row: 2. Column: (a) Type of property (list vehicles first). ,3,36 407.97 108 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_16[0],/Tx,Row: 2. Column: (b) Date placed in service. ,3,108 407.97 151.2 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_17[0],/Tx,Row: 2. Column: (c) Business/investment use percentage. %.,3,151.2 407.97 184.4 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_18[0],/Tx,Row: 2. Column: (d) Cost or other basis. ,3,194.4 407.97 265.65 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_19[0],/Tx,Row: 2. Column: (e) Basis for depreciation (business/investment use only). ,3,267.4 407.97 338.4 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_20[0],/Tx,Row: 2. Column: (f) Recovery period. ,3,338.4 407.97 381.6 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_21[0],/Tx,Row: 2. Column: (g) Method/Convention. ,3,382.6 407.97 432 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_22[0],/Tx,Row: 2. Column: (h) Depreciation deduction. ,3,432 407.97 503.25 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow2[0].f2_23[0],/Tx,Row: 2. Column: (i) Elected section 179 cost. ,3,504 407.97 576 419.969,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_24[0],/Tx,Row: 3. Column: (a) Type of property (list vehicles first). ,3,36 395.971 108 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_25[0],/Tx,Row: 3. Column: (b) Date placed in service. ,3,108 395.971 151.2 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_26[0],/Tx,Row: 3. Column: (c) Business/investment use percentage. %.,3,151.2 395.971 184.4 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_27[0],/Tx,Row: 3. Column: (d) Cost or other basis. ,3,194.4 395.971 265.65 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_28[0],/Tx,Row: 3. Column: (e) Basis for depreciation (business/investment use only). ,3,267.4 395.971 338.4 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_29[0],/Tx,Row: 3. Column: (f) Recovery period. ,3,338.4 395.971 381.6 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_30[0],/Tx,Row: 3. Column: (g) Method/Convention. ,3,382.6 395.971 432 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_31[0],/Tx,Row: 3. Column: (h) Depreciation deduction. ,3,432 395.971 503.25 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln26[0].BodyRow3[0].f2_32[0],/Tx,Row: 3. Column: (i) Elected section 179 cost. ,3,504 395.971 576 407.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_33[0],/Tx,27. Property used 50% or less in a qualified business use: Row: 1. Column: (a) Type of property (list vehicles first). ,3,36 371.97 108 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_34[0],/Tx,Row: 1. Column: (b) Date placed in service. ,3,108 371.97 151.2 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_35[0],/Tx,Row: 1. Column: (c) Business/investment use percentage. %.,3,151.2 371.97 184.4 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_36[0],/Tx,Row: 1. Column: (d) Cost or other basis. ,3,194.4 371.97 265.65 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_37[0],/Tx,Row: 1. Column: (e) Basis for depreciation (business/investment use only). ,3,267.4 371.97 338.4 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_38[0],/Tx,Row: 1. Column: (f) Recovery period. ,3,338.4 371.97 381.6 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_39[0],/Tx,Row: 1. Column: (g) Method/Convention. S/L –.,3,404.6 371.97 432 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow1[0].f2_40[0],/Tx,Row: 1. Column: (h) Depreciation deduction. ,3,432 371.97 503.25 383.969,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_41[0],/Tx,Row: 2. Column: (a) Type of property (list vehicles first). ,3,36 359.971 108 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_42[0],/Tx,Row: 2. Column: (b) Date placed in service. ,3,108 359.971 151.2 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_43[0],/Tx,Row: 2. Column: (c) Business/investment use percentage. %.,3,151.2 359.971 184.4 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_44[0],/Tx,Row: 2. Column: (d) Cost or other basis. ,3,194.4 359.971 265.65 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_45[0],/Tx,Row: 2. Column: (e) Basis for depreciation (business/investment use only). ,3,267.4 359.971 338.4 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_46[0],/Tx,Row: 2. Column: (f) Recovery period. ,3,338.4 359.971 381.6 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_47[0],/Tx,Row: 2. Column: (g) Method/Convention. S/L –.,3,404.6 359.971 432 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow2[0].f2_48[0],/Tx,Row: 2. Column: (h) Depreciation deduction. ,3,432 359.971 503.25 371.97,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_49[0],/Tx,Row: 3. Column: (a) Type of property (list vehicles first). ,3,36 347.972 108 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_50[0],/Tx,Row: 3. Column: (b) Date placed in service. ,3,108 347.972 151.2 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_51[0],/Tx,Row: 3. Column: (c) Business/investment use percentage. %.,3,151.2 347.972 184.4 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_52[0],/Tx,Row: 3. Column: (d) Cost or other basis. ,3,194.4 347.972 265.65 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_53[0],/Tx,Row: 3. Column: (e) Basis for depreciation (business/investment use only). ,3,267.4 347.972 338.4 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_54[0],/Tx,Row: 3. Column: (f) Recovery period. ,3,338.4 347.972 381.6 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_55[0],/Tx,Row: 3. Column: (g) Method/Convention. S/L –.,3,404.6 347.972 432 359.971,yes
+topmostSubform[0].Page2[0].Table_Ln27[0].BodyRow3[0].f2_56[0],/Tx,Row: 3. Column: (h) Depreciation deduction. ,3,432 347.972 503.25 359.971,yes
+topmostSubform[0].Page2[0].f2_57[0],/Tx,"28. Add amounts in column (h), lines 25 through 27. Enter here and on line 21.",3,504 335.97 576 347.969,yes
+topmostSubform[0].Page2[0].f2_58[0],/Tx,"29. Add amounts in column (i), line 26. Enter here and on line 7.",3,504 323.968 576 335.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line30[0].f2_59[0],/Tx,"Section B—Information on Use of Vehicles. Complete this section for vehicles used by a sole proprietor, partner, or other ""more than 5% owner,"" or related person. If you provided vehicles to your employees, first answer the questions in Section C to see if you meet an exception to completing this section for those vehicles. Row: 30. Total business/investment miles driven during the year (don't include commuting miles). Column: (a) Vehicle 1. ",3,230.4 239.969 288 263.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line30[0].f2_60[0],/Tx,Row: 30. Total business/investment miles driven during the year (don't include commuting miles). Column: (b) Vehicle 2. ,3,288 239.969 345.6 263.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line30[0].f2_61[0],/Tx,Row: 30. Total business/investment miles driven during the year (don't include commuting miles). Column: (c) Vehicle 3. ,3,345.6 239.969 403.2 263.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line30[0].f2_62[0],/Tx,Row: 30. Total business/investment miles driven during the year (don't include commuting miles). Column: (d) Vehicle 4. ,3,403.2 239.969 460.8 263.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line30[0].f2_63[0],/Tx,Row: 30. Total business/investment miles driven during the year (don't include commuting miles). Column: (e) Vehicle 5. ,3,460.8 239.969 518.4 263.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line30[0].f2_64[0],/Tx,Row: 30. Total business/investment miles driven during the year (don't include commuting miles). Column: (f) Vehicle 6. ,3,518.4 239.969 576 263.967,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line31[0].f2_65[0],/Tx,Row: 31. Total commuting miles driven during the year. Column: (a) Vehicle 1. ,3,230.4 227.97 288 239.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line31[0].f2_66[0],/Tx,Row: 31. Total commuting miles driven during the year. Column: (b) Vehicle 2. ,3,288 227.97 345.6 239.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line31[0].f2_67[0],/Tx,Row: 31. Total commuting miles driven during the year. Column: (c) Vehicle 3. ,3,345.6 227.97 403.2 239.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line31[0].f2_68[0],/Tx,Row: 31. Total commuting miles driven during the year. Column: (d) Vehicle 4. ,3,403.2 227.97 460.8 239.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line31[0].f2_69[0],/Tx,Row: 31. Total commuting miles driven during the year. Column: (e) Vehicle 5. ,3,460.8 227.97 518.4 239.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line31[0].f2_70[0],/Tx,Row: 31. Total commuting miles driven during the year. Column: (f) Vehicle 6. ,3,518.4 227.97 576 239.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line32[0].f2_71[0],/Tx,Row: 32. Total other personal (noncommuting) miles driven. Column: (a) Vehicle 1. ,3,230.4 203.969 288 215.97,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line32[0].f2_72[0],/Tx,Row: 32. Total other personal (noncommuting) miles driven. Column: (b) Vehicle 2. ,3,288 203.969 345.6 215.97,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line32[0].f2_73[0],/Tx,Row: 32. Total other personal (noncommuting) miles driven. Column: (c) Vehicle 3. ,3,345.6 203.969 403.2 215.97,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line32[0].f2_74[0],/Tx,Row: 32. Total other personal (noncommuting) miles driven. Column: (d) Vehicle 4. ,3,403.2 203.969 460.8 215.97,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line32[0].f2_75[0],/Tx,Row: 32. Total other personal (noncommuting) miles driven. Column: (e) Vehicle 5. ,3,460.8 203.969 518.4 215.97,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line32[0].f2_76[0],/Tx,Row: 32. Total other personal (noncommuting) miles driven. Column: (f) Vehicle 6. ,3,518.4 203.969 576 215.97,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line33[0].f2_77[0],/Tx,Row: 33. Total miles driven during the year. Add lines 30 through 32. Column: (a) Vehicle 1. ,3,230.4 179.968 288 191.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line33[0].f2_78[0],/Tx,Row: 33. Total miles driven during the year. Add lines 30 through 32. Column: (b) Vehicle 2. ,3,288 179.968 345.6 191.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line33[0].f2_79[0],/Tx,Row: 33. Total miles driven during the year. Add lines 30 through 32. Column: (c) Vehicle 3. ,3,345.6 179.968 403.2 191.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line33[0].f2_80[0],/Tx,Row: 33. Total miles driven during the year. Add lines 30 through 32. Column: (d) Vehicle 4. ,3,403.2 179.968 460.8 191.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line33[0].f2_81[0],/Tx,Row: 33. Total miles driven during the year. Add lines 30 through 32. Column: (e) Vehicle 5. ,3,460.8 179.968 518.4 191.969,yes
+topmostSubform[0].Page2[0].Table_Ln30-33[0].Line33[0].f2_82[0],/Tx,Row: 33. Total miles driven during the year. Add lines 30 through 32. Column: (f) Vehicle 6. ,3,518.4 179.968 576 191.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_4[0],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (a) Vehicle 1. Yes. ,3,240.8 157.969 248.8 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_4[1],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (a) Vehicle 1. No. ,3,269.6 157.969 277.6 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_5[0],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (b) Vehicle 2. Yes. ,3,298.4 157.969 306.4 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_5[1],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (b) Vehicle 2. No. ,3,327.2 157.969 335.2 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_6[0],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (c) Vehicle 3. Yes. ,3,356 157.969 364 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_6[1],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (c) Vehicle 3. No. ,3,384.8 157.969 392.8 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_7[0],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (d) Vehicle 4. Yes. ,3,413.6 157.969 421.6 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_7[1],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (d) Vehicle 4. No. ,3,442.4 157.969 450.4 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_8[0],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (e) Vehicle 5. Yes. ,3,471.2 157.969 479.2 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_8[1],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (e) Vehicle 5. No. ,3,500 157.969 508 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_9[0],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (f) Vehicle 6. Yes. ,3,528.8 157.969 536.8 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line34[0].c2_9[1],/Btn,Row: 34. Was the vehicle available for personal use during off-duty hours? Column: (f) Vehicle 6. No. ,3,557.6 157.969 565.6 165.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_10[0],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (a) Vehicle 1. Yes. ,3,240.8 124.969 248.8 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_10[1],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (a) Vehicle 1. No. ,3,269.6 124.969 277.6 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_11[0],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (b) Vehicle 2. Yes. ,3,298.4 124.969 306.4 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_11[1],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (b) Vehicle 2. No. ,3,327.2 124.969 335.2 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_12[0],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (c) Vehicle 3. Yes. ,3,356 124.969 364 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_12[1],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (c) Vehicle 3. No. ,3,384.8 124.969 392.8 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_13[0],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (d) Vehicle 4. Yes. ,3,413.6 124.969 421.6 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_13[1],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (d) Vehicle 4. No. ,3,442.4 124.969 450.4 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_14[0],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (e) Vehicle 5. Yes. ,3,471.2 124.969 479.2 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_14[1],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (e) Vehicle 5. No. ,3,500 124.969 508 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_15[0],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (f) Vehicle 6. Yes. ,3,528.8 124.969 536.8 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line35[0].c2_15[1],/Btn,Row: 35. Was the vehicle used primarily by a more than 5% owner or related person? Column: (f) Vehicle 6. No. ,3,557.6 124.969 565.6 132.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_16[0],/Btn,Row: 36. Is another vehicle available for personal use? Column: (a) Vehicle 1. Yes. ,3,240.8 98.969 248.8 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_16[1],/Btn,Row: 36. Is another vehicle available for personal use? Column: (a) Vehicle 1. No. ,3,269.6 98.969 277.6 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_17[0],/Btn,Row: 36. Is another vehicle available for personal use? Column: (b) Vehicle 2. Yes. ,3,298.4 98.969 306.4 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_17[1],/Btn,Row: 36. Is another vehicle available for personal use? Column: (b) Vehicle 2. No. ,3,327.2 98.969 335.2 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_18[0],/Btn,Row: 36. Is another vehicle available for personal use? Column: (c) Vehicle 3. Yes. ,3,356 98.969 364 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_18[1],/Btn,Row: 36. Is another vehicle available for personal use? Column: (c) Vehicle 3. No. ,3,384.8 98.969 392.8 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_19[0],/Btn,Row: 36. Is another vehicle available for personal use? Column: (d) Vehicle 4. Yes. ,3,413.6 98.969 421.6 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_19[1],/Btn,Row: 36. Is another vehicle available for personal use? Column: (d) Vehicle 4. No. ,3,442.4 98.969 450.4 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_20[0],/Btn,Row: 36. Is another vehicle available for personal use? Column: (e) Vehicle 5. Yes. ,3,471.2 98.969 479.2 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_20[1],/Btn,Row: 36. Is another vehicle available for personal use? Column: (e) Vehicle 5. No. ,3,500 98.969 508 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_21[0],/Btn,Row: 36. Is another vehicle available for personal use? Column: (f) Vehicle 6. Yes. ,3,528.8 98.969 536.8 106.969,yes
+topmostSubform[0].Page2[0].SectionBTable2[0].Line36[0].c2_21[1],/Btn,Row: 36. Is another vehicle available for personal use? Column: (f) Vehicle 6. No. ,3,557.6 98.969 565.6 106.969,yes
+topmostSubform[0].Page3[0].c3_1[0],/Btn,"Page 3. Part V. Listed Property (Include automobiles, certain other vehicles, certain aircraft, and property used for entertainment, recreation, or amusement.). (continued). Section C—Questions for Employers Who Provide Vehicles for Use by Their Employees. Answer these questions to determine if you meet an exception to completing Section B for vehicles used by employees who aren't more than 5% owners or related persons. See instructions. 37. Do you maintain a written policy statement that prohibits all personal use of vehicles, including commuting, by your employees? Yes. ",4,528.8 649.968 536.8 657.968,yes
+topmostSubform[0].Page3[0].c3_1[1],/Btn,37. No. ,4,557.6 649.968 565.6 657.968,yes
+topmostSubform[0].Page3[0].c3_2[0],/Btn,"38. Do you maintain a written policy statement that prohibits personal use of vehicles, except commuting, by your employees? See the instructions for vehicles used by corporate officers, directors, or 1% or more owners. Yes. ",4,528.8 626.968 536.8 634.968,yes
+topmostSubform[0].Page3[0].c3_2[1],/Btn,38. No. ,4,557.6 626.968 565.6 634.968,yes
+topmostSubform[0].Page3[0].c3_3[0],/Btn,39. Do you treat all use of vehicles by employees as personal use? Yes. ,4,528.8 613.968 536.8 621.968,yes
+topmostSubform[0].Page3[0].c3_3[1],/Btn,39. No. ,4,557.6 613.968 565.6 621.968,yes
+topmostSubform[0].Page3[0].c3_4[0],/Btn,"40. Do you provide more than five vehicles to your employees, obtain information from your employees about the use of the vehicles, and retain the information received? Yes. ",4,528.8 590.968 536.8 598.968,yes
+topmostSubform[0].Page3[0].c3_4[1],/Btn,40. No. ,4,557.6 590.968 565.6 598.968,yes
+topmostSubform[0].Page3[0].c3_5[0],/Btn,"41. Do you meet the requirements concerning qualified automobile demonstration use? See instructions. Note: If your answer to 37, 38, 39, 40, or 41 is ""Yes,"" don't complete Section B for the covered vehicles. Yes. ",4,528.8 577.968 536.8 585.968,yes
+topmostSubform[0].Page3[0].c3_5[1],/Btn,41. No. ,4,557.6 577.968 565.6 585.968,yes

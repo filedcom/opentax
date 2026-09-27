@@ -1,0 +1,27 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name(s) shown on return. ,2,36 683.968 445.4 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,447.4 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"Part I. Additional Medicare Tax on Medicare Wages. 1. Medicare wages and tips from Form W-2, box 5. If you have more than one Form W-2, enter the total of the amounts from box 5. ",2,411.4 648.468 481.4 659.467,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,"2. Unreported tips from Form 4137, line 6. ",2,411.4 636.469 481.4 647.468,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,"3. Wages from Form 8919, line 6. ",2,411.4 623.97 481.4 635.969,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,4. Add lines 1 through 3. ,2,411.4 612.468 481.4 623.467,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"5. Enter the following amount for your filing status: Married filing jointly, $250,000. Married filing separately, $125,000. Single, Head of household, or Qualifying surviving spouse, $200,000. ",2,411.4 564.469 481.4 575.468,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,"6. Subtract line 5 from line 4. If zero or less, enter 0. ",2,505 552.47 576 563.469,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,7. Additional Medicare Tax on Medicare wages. Multiply line 6 by 0.9% (0.009). Enter here and go to Part I I. ,2,505 528.469 576 539.468,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,"Part I I. Additional Medicare Tax on Railroad Retirement Tax Act (R R T A) Compensation. 8. R R T A compensation and tips from Form(s) W-2, box 14a (see instructions). ",2,411.4 504.468 481.4 515.467,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,"9. Enter the following amount for your filing status: Married filing jointly, $250,000. Married filing separately, $125,000. Single, Head of household, or Qualifying surviving spouse, $200,000. ",2,411.4 456.469 481.4 467.468,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,"10. Subtract line 9 from line 8. If zero or less, enter 0. ",2,505 444.467 576 455.466,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,11. Additional Medicare Tax on R R T A compensation. Multiply line 10 by 0.9% (0.009). Enter here and go to Part I I I. ,2,505 420.469 576 431.468,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,"Part I I I. Total Additional Medicare Tax on Medicare Wages and R R T A Compensation. 12. Add lines 7 and 11. Also enter this amount on Schedule 2 (Form 1040), line 17b, or Form 1040-S S, Part I, line 5b. Go to Part I V.",2,505 384.469 576 395.468,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"Part I V. Additional Medicare Tax on Self-Employment Income. 13. Self-employment income from Schedule S E (Form 1040), Part I, line 6. If you had a loss, enter 0.",2,411.4 348.469 481.4 359.468,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,"14. Enter the following amount for your filing status: Married filing jointly, $250,000. Married filing separately, $125,000. Single, Head of household, or Qualifying surviving spouse, $200,000. ",2,411.4 300.467 481.4 311.466,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,15. Enter the amount from line 4. ,2,411.4 288.468 481.4 299.467,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,"16. Subtract line 15 from line 14. If zero or less, enter 0. ",2,411.4 276.469 481.4 287.468,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"17. Subtract line 16 from line 13. If zero or less, enter 0. ",2,505 264.467 576 275.466,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,"18. Additional Medicare Tax on self-employment income. Multiply line 17 by 0.9% (0.009). Enter here and on Schedule 2 (Form 1040), line 11, or Form 1040-S S, Part I, line 5a. Go to Part V. ",2,505 240.469 576 251.468,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,"Part V. Withholding Reconciliation. 19. Medicare tax withheld from Form W-2, box 6. If you have more than one Form W-2, enter the total of the amounts from box 6.",2,411.4 204.469 481.4 215.468,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,20. Enter the amount from line 1. ,2,411.4 192.467 481.4 203.466,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,21. Multiply line 20 by 1.45% (0.0145). This is your regular Medicare tax withholding on Medicare wages. ,2,411.4 168.469 481.4 179.468,yes
+topmostSubform[0].Page1[0].f1_24[0],/Tx,"22. Subtract line 21 from line 19. If zero or less, enter 0. This is your Additional Medicare Tax withholding on Medicare wages. ",2,505 144.468 576 155.467,yes
+topmostSubform[0].Page1[0].f1_25[0],/Tx,"23. Additional Medicare Tax withholding on R R T A compensation from Form W-2, box 14a (see instructions). ",2,505 120.467 576 131.466,yes
+topmostSubform[0].Page1[0].f1_26[0],/Tx,"24. Total Additional Medicare Tax withholding. Add lines 22 and 23. Also include this amount with federal income tax withholding on Form 1040, 1040-S R, or 1040-N R, line 25c, or Form 1040-S S, Part I, line 11a. ",2,505 84.967 576 95.466,yes

@@ -1,0 +1,14 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_01[0],/Tx,,1,36 683.968 460.05 697.969,yes
+topmostSubform[0].Page1[0].f1_02[0],/Tx,,1,460.8 683.968 576 697.969,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,,1,66.799 637.969 74.799 645.969,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,,1,66.799 625.97 74.799 633.97,yes
+topmostSubform[0].Page1[0].c1_2[0],/Btn,,1,66.799 577.968 74.799 585.968,yes
+topmostSubform[0].Page1[0].c1_2[1],/Btn,,1,66.799 565.969 74.799 573.969,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,,1,66.799 529.969 74.799 537.969,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,,1,66.799 517.97 74.799 525.97,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,,1,66.799 469.968 74.799 477.968,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,,1,66.799 457.969 74.799 465.969,yes
+topmostSubform[0].Page1[0].f1_03[0],/Tx,,1,504 383.969 576 395.968,yes
+topmostSubform[0].Page1[0].f1_04[0],/Tx,,1,504 359.968 576 371.967,yes
+topmostSubform[0].Page1[0].f1_05[0],/Tx,,1,504 323.968 576 335.967,yes
