@@ -159,6 +159,11 @@ The [Form 4136 contract](FORM4136-GRAPH.md) pins the 2026 main form plus
 Schedule A per qualifying business activity for multi-activity claims,
 reconciles line 17 to Schedule 3 line 12, and holds PDF/MeF acceptance for
 the current Schedule A and XSD/rules.
+The [Form 8960 contract](FORM8960-GRAPH.md) maps NIIT across investment
+income, activity dispositions, allocable expenses and the §911 MAGI
+worksheet. The registered 2026 graph/PDF slice lacks printed lines 5c, 6
+and 9c, election boxes, and a current MeF serializer; all 38 draft widgets
+are inventoried.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

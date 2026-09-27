@@ -1756,6 +1756,14 @@
       "status": "downloaded",
       "bytes": 194213,
       "sha256": "d3d63fc3e5af24a8d4c8466b415c3d9269233af67f24d29640a5b4581e10c9f1"
+    },
+    {
+      "path": "authorities/i8960--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8960.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 377700,
+      "sha256": "b10fbb23ff4a053db197285497a00914c558e3ae0cdf5c956b7c0c7867376428"
     }
   ]
 }

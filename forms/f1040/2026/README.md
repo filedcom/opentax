@@ -15,6 +15,10 @@ graph, PDF and MeF work against all TY2025 inventories and names the new
 The [Form 8962 contract](../../../docs/ty2026/FORM8962-GRAPH.md) maps the
 2026 full-repayment line 27, 400% FPL boundary and Form 1095-A source to
 Schedule 2/3, with a 143-widget PDF inventory and current-MeF gate.
+The [Form 8960 contract](../../../docs/ty2026/FORM8960-GRAPH.md) maps
+investment-income sources and the §911 MAGI adjustment to 2026 Schedule 2
+line 6. Its registered calculator and draft PDF omit printed adjustment,
+election and expense fields; current MeF remains to build.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment
