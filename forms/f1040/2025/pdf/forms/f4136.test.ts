@@ -95,8 +95,8 @@ Deno.test("Form 4136 PDF carries multiple uses on a separate statement", async (
       },
     ],
   }, { schedule3: { line12_fuel_tax_credit: 36.45 } });
-  assertEquals(result?.line3a_type, "SEE STMT");
-  assertEquals(result?.line3a_quantity, 150);
+  assertEquals(result?.line3a_type, "STMT");
+  assertEquals(result?.line3a_quantity, "STMT");
   const doc = await PDFDocument.create();
   await form4136Pdf.appendSupplementalPages?.(doc, result ?? {}, undefined);
   assertEquals(doc.getPageCount(), 1);
@@ -137,21 +137,52 @@ Deno.test("Form 4136 PDF carries line 11 LNG diesel-gallon equivalents", () => {
   assertEquals(result?.line11g_credit_cents, "30");
 });
 
-Deno.test("Form 4136 PDF refuses bus claims until the reduced-rate overlay is verified", () => {
-  assertThrows(
-    () =>
-      form4136Pdf.projectFields?.({
-        business,
-        claims: [{
-          ...certifications,
-          line: "11a",
-          type_of_use: "05",
-          unit: "GGE",
-          qualified_quantity: 100,
-          actual_fuel_cost: 300,
-        }],
-      }, { schedule3: { line12_fuel_tax_credit: 10.9 } }),
-    Error,
-    "reduced-rate overlay",
-  );
+Deno.test("Form 4136 PDF projects reduced-rate bus claims", async () => {
+  const result = form4136Pdf.projectFields?.({
+    business,
+    claims: [{
+      ...certifications,
+      line: "11a",
+      type_of_use: "05",
+      unit: "GGE",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 10.9 } });
+  assertEquals(result?.line11a_type, "05");
+  assertEquals(result?.line11a_quantity, 100);
+  assertEquals(result?.line11a_credit_dollars, "10");
+  assertEquals(result?.line11a_credit_cents, "90");
+  const doc = await PDFDocument.create();
+  const pages = [doc.addPage(), doc.addPage(), doc.addPage()];
+  await form4136Pdf.decoratePages?.(doc, pages, result ?? {}, undefined);
+  assertEquals(doc.getPageCount(), 3);
+});
+
+Deno.test("Form 4136 PDF sends mixed bus and standard line 11 use to a statement", () => {
+  const result = form4136Pdf.projectFields?.({
+    business,
+    claims: [
+      {
+        ...certifications,
+        line: "11a",
+        type_of_use: "05",
+        unit: "GGE",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+      {
+        ...certifications,
+        line: "11a",
+        type_of_use: "02",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+      },
+    ],
+  }, { schedule3: { line12_fuel_tax_credit: 29.2 } });
+  assertEquals(result?.line11a_type, "STMT");
+  assertEquals(result?.line11a_quantity, "STMT");
+  assertEquals(result?.line11a_credit_dollars, "29");
+  assertEquals(result?.line11a_credit_cents, "20");
 });

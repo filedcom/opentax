@@ -29,9 +29,10 @@ The native IRS4136 XML builder now serializes these represented claims, includin
 all line 11 alternative fuels and the reduced-rate type 5 bus branch, and
 reconciles its line 17 source total against Schedule 3 line 12. The PDF
 descriptor maps the actual 2025 AcroForm widgets across all four pages,
-including dollars/cents fields and a statement for repeated use codes. It
-refuses bus claims because the preprinted rate is read-only and the required
-"Bus" and reduced-rate overlay has not been built or visually checked. Its
+including dollars/cents fields and a statement for repeated use codes. For
+bus claims, its page-3 decoration covers the read-only preprinted standard
+rate, writes the reduced rate and "Bus," and sends mixed-rate rows to a detail
+statement. The bus overlay has not been visually checked yet. Its
 direct and local XSD/PDF cases are written but unrun. Filled PDF rendering,
 the full test batch, TY2025v5.4 XSD, and 2025 business rules remain open.
 Multiple business activities require separate Schedule A (Form 4136)
