@@ -1,6 +1,8 @@
 import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
+import { buildForm6251PdfBytes2026 } from "./f6251.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
+import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
 
 function amount(fields: Record<string, unknown>, key: string): number {
@@ -11,11 +13,13 @@ function amount(fields: Record<string, unknown>, key: string): number {
   return value;
 }
 
-/** The current main-form, Schedule 3-A, and Schedule B PDF slice. */
+/** The current main-form and checked TY2026 attachment PDF slice. */
 export async function buildCorePdfBytes2026(
   f1040: Record<string, unknown>,
   schedule3a?: Record<string, unknown>,
   scheduleB?: Record<string, unknown>,
+  schedule2?: Record<string, unknown>,
+  form6251?: Record<string, unknown>,
 ): Promise<Uint8Array> {
   const claimsRelevantCredit = [
     "line27a_eic",
@@ -77,6 +81,29 @@ export async function buildCorePdfBytes2026(
       throw new Error("TY2026 core PDF Schedule B disagrees with Form 1040");
     }
   }
+  if (
+    !schedule2 &&
+    (optionalAmount(f1040, "line17_additional_taxes") > 0 ||
+      optionalAmount(f1040, "line23_other_taxes") > 0)
+  ) {
+    throw new Error("TY2026 core PDF needs Schedule 2 for additional tax");
+  }
+  if (schedule2) {
+    if (
+      amount(schedule2, "line3_part1_tax") !==
+        optionalAmount(f1040, "line17_additional_taxes") ||
+      amount(schedule2, "line21_total_additional_taxes") !==
+        optionalAmount(f1040, "line23_other_taxes")
+    ) {
+      throw new Error("TY2026 core PDF Schedule 2 disagrees with Form 1040");
+    }
+  }
+  if (
+    optionalAmount(schedule2 ?? {}, "line2_amt") !==
+      optionalAmount(form6251 ?? {}, "line11_amt")
+  ) {
+    throw new Error("TY2026 core PDF Form 6251 disagrees with Schedule 2");
+  }
 
   const name = [
     f1040.taxpayer_first_name,
@@ -86,11 +113,17 @@ export async function buildCorePdfBytes2026(
   const ssn = String(f1040.taxpayer_ssn ?? "");
   const mainBytes = await buildF1040PdfBytes2026(f1040);
   const parts = [mainBytes];
+  if (schedule2) {
+    parts.push(await buildSchedule2PdfBytes2026(schedule2, { name, ssn }));
+  }
   if (schedule3a) {
     parts.push(await buildSchedule3APdfBytes2026(schedule3a, { name, ssn }));
   }
   if (scheduleB) {
     parts.push(await buildScheduleBPdfBytes2026(scheduleB, { name, ssn }));
+  }
+  if (form6251) {
+    parts.push(await buildForm6251PdfBytes2026(form6251, f1040, { name, ssn }));
   }
   const merged = await PDFDocument.create();
   for (const bytes of parts) {

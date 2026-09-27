@@ -15,6 +15,9 @@ for the implementation contract.
 - [`PDF-SCHEDULEB-MAP.md`](PDF-SCHEDULEB-MAP.md) and
   `pdf-fields-f1040sb.csv`: the 2026 Schedule B field map, including Part III
   disclosures and supplemental statement requirements.
+- [`PDF-SCHEDULE2-6251-MAP.md`](PDF-SCHEDULE2-6251-MAP.md),
+  `pdf-fields-f1040s2.csv`, and `pdf-fields-f6251.csv`: the 2026 additional-tax
+  and AMT attachment field maps and remaining print-detail gaps.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
 - [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated

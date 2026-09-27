@@ -161,8 +161,12 @@ passes a focused test; the rest of the investment-income graph is still open.
 The shared Form 6251 is now in the 2026 calculation registry. Its pinned draft
 line 5 exemption and line 7 rate constants agree with the 2026 config; a
 focused ISO-adjustment graph test carries AMT to Schedule 2 line 2 and Form
-1040 line 17/24a. Public ISO input, other AMT adjustments and credit-limit
-feedback, PDF, and MeF still need to be completed.
+1040 line 17/24a. The [Schedule 2/Form 6251 PDF map](PDF-SCHEDULE2-6251-MAP.md)
+inventories 68 and 62 draft widgets, respectively. Their fillers produce
+two printed pages each, verify calculation and 1040 totals, and merge with
+the 1040 into a six-page sample that passed visual QA. Public ISO input,
+other AMT adjustment detail, credit-limit feedback, and MeF still need to be
+completed.
 The August 2026 [Schedule B instructions](corpus/draft/i1040sb.pdf) are now
 hash-pinned. The [interest graph contract](INTEREST-GRAPH.md) records every
 1099-INT branch, filing trigger, disclosure, and outstanding attachment path.

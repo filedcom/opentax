@@ -107,8 +107,11 @@ Form 8960 is registered and sends TY2026 NIIT to the draft Schedule 2 line 6;
 the shared node retains its TY2025 line 12 route.
 Form 6251 is registered and sends TY2026 AMT to Schedule 2 line 2 and then
 1040 line 17. A focused ISO-adjustment graph test verifies its draft 2026
-exemption/rate arithmetic. Public ISO input, the rest of its source routes,
-credit-limit feedback, PDF, and MeF remain open.
+exemption/rate arithmetic. `pdf/schedule2.ts` and `pdf/f6251.ts` now fill
+the pinned draft attachments, and `pdf/core.ts` requires/reconciles them
+when the 1040 reports their tax. The [field map](../../../docs/ty2026/PDF-SCHEDULE2-6251-MAP.md)
+records missing print detail. Public ISO input, other source routes,
+credit-limit feedback, and MeF remain open.
 The [interest graph contract](../../../docs/ty2026/INTEREST-GRAPH.md) uses
 the pinned 2026 Schedule B instructions to map every 1099-INT branch and the
 filing decision before that source is exposed as a TY2026 input. Box 2 now
