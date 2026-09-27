@@ -76,6 +76,10 @@ moving form and instructions, all ten PDF widgets, per-move deduction or
 taxable reimbursement routes, and educator Schedule A line 17k after the
 Schedule 1 limit. Both shared input nodes need 2026 source facts before
 registration.
+The [Form 8938 contract](FORM8938-GRAPH.md) pins its 2026 draft and
+continuous-use instructions, 131 PDF widgets, threshold/exception ledger,
+Part III income reconciliation and repeated asset statements. The shared
+node produces no filed form; 2026 PDF and MeF support remain open.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

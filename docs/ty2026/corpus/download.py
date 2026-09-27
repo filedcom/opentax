@@ -30,7 +30,7 @@ FORM_SLUGS = [
     "f6781", "f7206", "f8396", "f8582", "f8606", "f8615", "f8814",
     "f8815", "f8824", "f8829", "f8834", "f8853", "f8859", "f8880",
     "f8912", "f8915f", "f8919", "f8936", "f8936sa", "f8949", "f8959", "f8960",
-    "f8990", "f982", "f172", "f3903",
+    "f8990", "f982", "f172", "f3903", "f8938",
 ]
 
 
@@ -99,6 +99,7 @@ for label, url in page_links(MEF_PAGE):
         sources.append(("mef/" + name, url, "mef-inventory"))
 
 sources += [
+    ("authorities/i8938--2021.pdf", IRS + "/pub/irs-pdf/i8938.pdf", "current-revision-instructions"),
     ("authorities/p1436--2026.pdf", IRS + "/pub/irs-pdf/p1436.pdf", "final-authority"),
     ("authorities/f1098t--2026.pdf", IRS + "/pub/irs-prior/f1098t--2026.pdf", "final-authority"),
     ("authorities/f1098vli--2026.pdf", IRS + "/pub/irs-prior/f1098vli--2026.pdf", "final-authority"),

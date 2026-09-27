@@ -94,6 +94,9 @@ for the implementation contract.
 - [`FORM3903-EDUCATOR-GRAPH.md`](FORM3903-EDUCATOR-GRAPH.md): pinned 2026
   moving form/instructions, military and intelligence moves, reimbursement
   and storage routes, and the new educator Schedule A line 17k handoff.
+- [`FORM8938-GRAPH.md`](FORM8938-GRAPH.md) and `pdf-fields-f8938.csv`:
+  December 2026 foreign-asset disclosure draft, continuous-use instructions,
+  threshold/exception ledger, Part III income reconciliation and 131 widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

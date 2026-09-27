@@ -4,9 +4,9 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-93 entries: **28 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
+94 entries: **28 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
-in their form drafts**, **1 covered by a combined 2026 booklet**, **6 with
+in their form drafts**, **1 covered by a combined 2026 booklet**, **7 with
 current continuous-use instructions**, **5 current older-revision
 form/instruction pairs**, **2 current forms with embedded instructions**, and
 **2 2025 comparators awaiting 2026 revisions**, **1 current-guidance
@@ -85,6 +85,10 @@ The 2026 Form 3903 draft and separate instructions are pinned. They add
 intelligence-community relocation, a certification checkbox, split-year
 moving mileage, Schedule 1 storage-only treatment and taxable excess
 reimbursement. See the [moving/educator plan](FORM3903-EDUCATOR-GRAPH.md).
+Form 8938 has a December 2026 draft with 131 PDF widgets, while both the
+published instructions and the expected draft instruction URL remain
+November 2021 continuous-use revisions. See the [foreign asset disclosure
+plan](FORM8938-GRAPH.md) for threshold, asset and continuation work.
 
 The pinned PDFs include 2026 Schedules E, F, SE, R, and 8812 and Forms 2106,
 2441, 2555, 4835, 5329, 5695, 7206, 8606, 8615, 8814, 8815, 8829, 8853,
