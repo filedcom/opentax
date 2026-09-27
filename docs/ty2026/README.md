@@ -63,6 +63,9 @@ for the implementation contract.
   2026 form, its pinned draft instructions, and the Schedule 8812 credit order.
 - [`SCHEDULEH-GRAPH.md`](SCHEDULEH-GRAPH.md): 2026 household payroll thresholds,
   FUTA paths, and the Schedule 2 line 17a attachment contract.
+- [`SCHEDULEE-GRAPH.md`](SCHEDULEE-GRAPH.md): the new rental vehicle-interest
+  line, Part I–V activity graph, passive/at-risk/interest limits, PDF/MeF
+  work, and ATS scenarios 3 and 6.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, **25 verified 2026

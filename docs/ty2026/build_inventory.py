@@ -35,6 +35,12 @@ NODE_PROGRESS = {
     "schedule_d": "2026 box2a, carryover, and 1099-B/DA transaction PDF routes verified; add other capital sources, QOF, and MeF",
     "f1099b": "dedicated 2026 1099-B input registered with Form 8949/Schedule D PDF; add unsupported broker branches and MeF",
     "form8949": "2026 broker and digital-asset transactions reach category PDF pages and Schedule D; add direct public trades and MeF",
+    "schedule_e": "2026 draft adds vehicle-interest line 13a; build activity-level Part I-V graph, PDF, MeF, and ATS 3/6; see SCHEDULEE-GRAPH.md",
+    "f1099r": "final 2026 form/instructions pinned; fully and partially taxable normal pensions, code1 early tax, early SIMPLE Form5329 Part I, and pension code G rollover reach AGI/1040/PDF; add other codes, 8606/4972, current MeF; see FORM1099R-GRAPH.md",
+    "f2441": "2026 form/instructions pinned; monthly deemed-income and provider continuation built; finish eligibility, prior-year expense, self-employed benefit, PDF and MeF; see FORM2441-GRAPH.md",
+    "ssa1099": "dedicated 2026 SSA/RRB source registered through AGI and PDF; add net-repayment deduction, lump-sum election, MeF, and current-year instruction check",
+    "form5329": "dedicated 2026 Part I early SIMPLE 25% graph and PDF route; add exceptions, other parts, separate spouse forms, MeF; see FORM5329-GRAPH.md",
+    "form8606": "2026 form and instructions pinned; dedicated per-owner basis and Roth calculation needed before registry; see FORM8606-GRAPH.md",
 }
 
 P0_NODES = {

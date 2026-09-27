@@ -15,6 +15,11 @@ routes household employment tax to Schedule 2 line 17a, and has a two-page
 draft PDF attachment. Its ATS line 9 No case reconciles $627 through Form
 1040 line 23. Section B, payroll-to-form wage derivation, and MeF remain open;
 see [the Schedule H contract](../../../docs/ty2026/SCHEDULEH-GRAPH.md).
+The [Schedule E contract](../../../docs/ty2026/SCHEDULEE-GRAPH.md) maps the
+pinned 2026 form and instructions to the existing property and K-1 nodes.
+It identifies new line 13a vehicle-loan interest, the three-page Part I–V
+attachment, downstream passive/at-risk/interest limits, and ATS scenarios 3
+and 6. Schedule E is not registered in the TY2026 graph yet.
 `credit-resolution.ts` computes Schedule 8812 Worksheet B through line 14
 and 2026 Form 5695 lines 1–4 in the required order. The registered graph
 receives tax, dependent, AGI, Schedule 2, and Schedule 3 amounts.

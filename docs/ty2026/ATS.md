@@ -34,3 +34,6 @@ mileage-rate boundary. Test the 2025 path in the same run to catch year leakage.
 The [scenario 1 fixture plan](ATS-SCENARIO-01.md) records page-level source
 facts, the independent calculation chain, and the Schedule H/Form 5695/Form
 1062 attachments still needed for that scenario.
+The [Schedule E contract](SCHEDULEE-GRAPH.md) identifies the Schedule E pages
+in scenarios 3 and 6; scenario 6's partnership row is an explicit Part II
+fixture gate.

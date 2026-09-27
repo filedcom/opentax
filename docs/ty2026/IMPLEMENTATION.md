@@ -20,6 +20,10 @@ an authorized e-Services/SOR mailbox. Use the current
 [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) for active route status. The progress
 notes below record the order in which work landed and may describe an earlier
 state of a node.
+The [Schedule E implementation contract](SCHEDULEE-GRAPH.md) now gives the
+next property/K-1 activity build order and the new line 13a split from other
+interest. It covers PDF, MeF, and ATS 3/6 acceptance; the route remains
+`audit-required` in the ledger.
 
 ## Chronological progress notes
 
