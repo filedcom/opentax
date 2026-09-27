@@ -58,6 +58,10 @@ The [Form 1099-K contract](FORM1099K-GRAPH.md) pins the final 2026 source
 form/instructions and maps each payment to one income or personal-sale
 route, Schedule 1's header, new cash-tip/TTOC fields and withholding.
 The shared $5,000 cutoff incorrectly suppresses taxable receipts.
+The [1099-MISC/NEC contract](FORM1099MISC-NEC-GRAPH.md) pins final 2026
+forms and combined instructions, maps included cash tips and overtime
+to Schedule 1-A, and prevents new source records from duplicating
+Schedule C or 1099-K receipts.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

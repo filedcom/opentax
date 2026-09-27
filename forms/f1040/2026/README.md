@@ -82,6 +82,10 @@ reconciles gross platform payments to one income activity or personal-sale
 route, the 2026 Schedule 1 header, box 1c cash tips/1d occupation code for
 Schedule 1-A and box 4 withholding. The shared node uses a filing threshold
 as a taxability gate and cannot prevent duplicate business income.
+The [1099-MISC/NEC intake contract](../../../docs/ty2026/FORM1099MISC-NEC-GRAPH.md)
+adds their 2026 cash-tip/occupation/overtime source boxes to the same
+Schedule 1-A owner while keeping each payment in its existing income
+activity. It flags old Schedule 2 keys and synthetic Schedule C activities.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

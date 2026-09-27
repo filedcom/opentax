@@ -2019,6 +2019,33 @@
       "bytes": 177311,
       "sha256": "d7f48a804e26d83b5419aa51bb76fee7b129a388960c01d82e83e255337ea699",
       "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/f1099nec--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1099nec--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 537467,
+      "sha256": "68a8f00078be6dd6a4912cc4209df317b31840d5fe19560222d39df9f2f7ff49",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/f1099msc--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1099msc--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 561788,
+      "sha256": "38051fe1cdce8fac5183a7e7b182b1a0de590dcfec3e4f66a156eba3f98943fa",
+      "year_check": "2026-present"
+    },
+    {
+      "path": "authorities/i1099mec--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1099mec--2026.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 312867,
+      "sha256": "883fb800e5100ff74a37fb0427d0c16c14031a2421a058254f71c66f8c03087e",
+      "year_check": "2026-present"
     }
   ]
 }

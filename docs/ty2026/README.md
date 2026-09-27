@@ -81,6 +81,9 @@ for the implementation contract.
 - [`FORM1099K-GRAPH.md`](FORM1099K-GRAPH.md): final 2026 recipient source,
   transaction-level income reconciliation, Schedule 1 header, cash-tip
   fields and withholding route.
+- [`FORM1099MISC-NEC-GRAPH.md`](FORM1099MISC-NEC-GRAPH.md): final 2026
+  forms and combined instructions, included cash-tip/overtime boxes,
+  activity reconciliation and Schedule 1-A/2 destinations.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

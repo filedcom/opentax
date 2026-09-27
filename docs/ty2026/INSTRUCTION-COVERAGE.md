@@ -4,14 +4,14 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-84 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
+86 entries: **27 pinned 2026 drafts**, **21 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
 in their form drafts**, **1 covered by a combined 2026 booklet**, **6 with
 current continuous-use instructions**, **5 current older-revision
 form/instruction pairs**, **2 current forms with embedded instructions**, and
 **2 2025 comparators awaiting 2026 revisions**, **1 current-guidance
-case with a prior-form comparator**, and **1 final 2026 information-return
-booklet**. The
+case with a prior-form comparator**, and **3 final 2026 information-return
+rows** (one K booklet and one combined MISC/NEC booklet). The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
 Forms 4137, 4952, 4972, 6252, 6781, 8396, 8859, 8880, and 8919 embed their 2026 instructions
@@ -54,6 +54,9 @@ method comparator; see the [base-year plan](SCHEDULEJ-GRAPH.md).
 Form 1099-K's final December 2026 form and instructions are pinned; they
 add cash-tip and occupation-code boxes and restore the $20,000-plus-200
 TPSO issuer test. See the [recipient intake plan](FORM1099K-GRAPH.md).
+Forms 1099-MISC and 1099-NEC share final December 2026 instructions.
+Their new included cash-tip, occupation-code and overtime fields feed
+Schedule 1-A; see the [source plan](FORM1099MISC-NEC-GRAPH.md).
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.
