@@ -132,8 +132,9 @@ check now permits Form 8820 and Form 8835 to share a limited standard-credit
 amount while the combined allocation still reconciles to Part II. A shared
 Part I/II serializer now keeps passive line 2/3/23/24/32/33 separate from
 nonpassive line 1/30 and writes the calculated totals in schema order; its
-passive case is written but unrun. The filed descriptor still stops on passive
-sources until source rows, tax use, and mixed-credit XML are joined. A current-year
+passive case is written but unrun. The filed descriptor now joins passive
+sources, source tax use, and mixed-credit XML; its passive-only and mixed-source
+cases are written but unrun. A current-year
 row combiner now totals passive and nonpassive amounts once per credit line,
 including when both belong to the same line; its cases are written but unrun,
 and a shared Part III serializer now keeps gross nonpassive credit, transfer-out,
@@ -463,8 +464,8 @@ lived apart. Real-estate-professional status no longer bypasses the limit for
 every activity. Its source allocations now go to the Form 3800 node instead of
 depositing the aggregate allowed amount directly to Schedule 3. Form 3800 now
 passes passive source totals through the shared 1040 tax limit, but its MeF
-builder still stops that route until Parts III/IV source rows and XML are wired
-together, so filing support and ATS acceptance remain open. The unrun source pass
+builder now joins those sources to Parts III/IV and XML, with written but unrun
+cases; filing support and ATS acceptance remain unverified. The unrun source pass
 replaces one aggregate passive-credit amount with activity and document
 references, credit category, a current-year amount, and originating-year-stamped
 prior unallowed credit rows. Active-rental
@@ -485,16 +486,16 @@ path is built; business-credit routes now hand their source allocations to
 Form 3800, where the incomplete filing path stops explicitly.
 The native `IRS8582CR` MeF descriptor now serializes Parts I-IV, with direct XML
 and local XSD cases written but unrun. Passive Form 3800 Part I lines 2/3,
-Part II lines 23/24 and 32/33, and source columns in Parts III/IV still need a
-source-backed filing route before passive credits can be filed. An unrun pure classifier derives those six passive pre-limit
+Part II lines 23/24 and 32/33, and source columns in Parts III/IV now have a
+source-backed descriptor route, with tests written but unrun. An unrun pure classifier derives those six passive pre-limit
 and allowed line amounts from Form 8582-CR source allocations, including prior
 credits, and rejects Form 8834 sources. The shared Form 3800 Part I/II
 calculator now applies standard, empowerment-zone, and specified passive
 credits in their separate statutory order, with written but unrun cases. The
 1040 now passes classified passive lines into the shared calculator and
 finalizes Schedule 3 with only the tax-limited credit; nonpassive callers pass
-explicit zero passive lines. The XML builder still rejects passive source
-allocations, so this does not make passive credits fileable. The new source and
+explicit zero passive lines. The XML builder now consumes passive source
+allocations, but the filed route is not verified yet. The new source and
 1040 cases are written but unrun. An unrun source transform now splits
 each allowed credit by originating tax year, keeping prior carryovers ahead of
 2025 credit for the future Parts III/IV rows. It does not yet allocate the
@@ -524,8 +525,8 @@ its mixed-detail ordering case is written but unrun. These passive fragments
 now carry structured Part IV amounts, and a shared Part IV assembler orders
 carryover rows and derives lines 5-7 from columns (d)-(i), including applied
 tax use and remaining carryforward. Its source and local XSD cases are written
-but unrun. The passive rows and Part IV assembler are not yet joined to the
-filed Form 3800. The registered nonpassive builder now returns structured
+but unrun. The filed descriptor now joins passive rows and Part IV through the
+shared assembler, with cases written but unrun. The registered nonpassive builder now returns structured
 document parts for the source-backed join instead of serializing a separate
 terminal XML string. The descriptor delegates final document ordering to a
 shared IRS3800 assembler that can place Parts III-VI. A structural case is
@@ -539,7 +540,8 @@ Part III fragments also expose their structured current-year amounts and row
 metadata. The nonpassive builder now retains the same metadata alongside every
 current-year row, including source counts, first transfer registration number,
 entity, and document reference. Their source cases are written but unrun. The
-same-line aggregate and Part V source join are not yet connected. Complete
+same-line aggregate and Part V source join are now connected in the descriptor;
+their cases are written but unrun. Complete
 passive source-document and Part II reconciliation remains open. Current-year
 source details are now retained even when a standalone row has only one source,
 including Form 8936 lines 1y/1aa. The filed assembler emits Part V details
@@ -549,29 +551,33 @@ sides' single-source evidence available for the same-line join. A pure join now
 combines nonpassive and passive current-year amounts on one credit line,
 retains all Part V source rows, and selects column (c) by the largest combined
 pass-through entity credit, including when the same EIN occurs on both sides.
-Mixed and passive-only source cases are written but unrun; the descriptor does
-not yet feed the join with finalized tax-use allocations. A pure nonpassive
+Mixed and passive-only source cases are written but unrun; the descriptor now
+feeds the join with finalized tax-use allocations. A pure nonpassive
 source-use ledger now gives Forms 8826, 8820, 5884, both Form 8936 routes, and
 Form 8835 line aggregates stable keys and credit years for the common FIFO pass.
 It retains Form 8826 cent amounts and rejects imprecise source credit. Its
-mixed-source case is written but unrun; the ledger is not yet connected to
+mixed-source case is written but unrun; the ledger is now connected to
 the descriptor. The shared FIFO tax-use allocator now reconciles all three
 Part II buckets in integer cents, so a Form 8826 amount can follow an older
 passive carryover without being rounded away; source and bridge cases are
 written but unrun. A fractional-cent tax-use boundary is rejected. The passive
 XML path still needs consistent whole-dollar filing amounts when a boundary
-falls inside a passive source.
+falls inside a passive source. The source-use bridge now returns both passive
+vintage allocations and nonpassive source allocations from the same FIFO pass,
+instead of discarding the nonpassive side. Passive-only, mixed, cent-precision,
+and nonpassive-only cases are written but unrun; the return descriptor now
+consumes the result.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS
 ordering rank, instead of assigning the limit by input order. The named 2025
 credit types now have that ordering; other/legacy rows and multiple same-line
 sources under a partial cap still stop. Its cases are written but unrun, and
-the allocator is not yet connected to the return or XML builder. A pure
+the allocator now feeds the Form 3800 XML builder. A pure
 source-year bridge now checks the Form 8582-CR passive totals against Part I/II,
 allocates passive vintages alongside nonpassive source rows, and retains used
 and unused amounts per vintage. Its mixed-source case is written but unrun;
-the MeF builder does not yet consume the bridge.
+the MeF builder now consumes the bridge.
 Form 8582-CR source facts now require explicit taxpayer-versus-pass-through
 origin. Partnership, S corporation, estate, trust, and cooperative sources
 require either a nine-digit EIN or the explicit `APPLD FOR` reason. That

@@ -1,13 +1,20 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { FilingStatus } from "../../../nodes/types.ts";
+import { ZERO_FORM3800_PASSIVE_ACTIVITY } from "../../../nodes/inputs/f3800/calculation.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
 import {
   buildForm3800NonpassiveParts,
   type Form3800NonpassiveXmlInput,
 } from "./f3800_nonpassive.ts";
 
-function buildFiledNonpassive(input: Form3800NonpassiveXmlInput): string {
-  return buildIRS3800Document(buildForm3800NonpassiveParts(input));
+function buildFiledNonpassive(
+  input: Omit<Form3800NonpassiveXmlInput, "passiveActivity" | "passiveApplied">,
+): string {
+  return buildIRS3800Document(buildForm3800NonpassiveParts({
+    ...input,
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
+  }));
 }
 
 const ordinary = {
@@ -51,6 +58,8 @@ const tax = {
 Deno.test("Form 3800 nonpassive source builder exposes structured document parts", () => {
   const parts = buildForm3800NonpassiveParts({
     tax: { ...tax, standardCredit: 5_000, specifiedCredit: 0 },
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
     form8826: disabledAccess,
     facilities: [],
     form8835DocumentIds: [],
@@ -67,6 +76,8 @@ Deno.test("Form 3800 nonpassive source builder exposes structured document parts
 Deno.test("Form 3800 source parts retain facility metadata for a mixed row", () => {
   const parts = buildForm3800NonpassiveParts({
     tax,
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
     facilities: [ordinary, specified],
     form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
     appliedCreditsByFacility: [18_000, 15_000],
@@ -86,6 +97,8 @@ Deno.test("Form 3800 source parts retain facility metadata for a mixed row", () 
 Deno.test("Form 3800 retains one Form 8936 source detail for a later mixed line", () => {
   const parts = buildForm3800NonpassiveParts({
     tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
+    passiveActivity: ZERO_FORM3800_PASSIVE_ACTIVITY,
+    passiveApplied: { standard: 0, specified: 0 },
     form8936: {
       credit: 1_875,
       documentId: "IRS8936_1",

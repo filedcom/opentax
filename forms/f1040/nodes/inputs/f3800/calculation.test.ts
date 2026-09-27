@@ -9,7 +9,7 @@ import {
 } from "../../intermediate/forms/form8582cr/index.ts";
 import {
   allocateForm3800CreditUse,
-  allocateForm3800PassiveCreditVintages,
+  allocateForm3800SourceTaxUse,
   calculateForm3800Nonpassive,
   classifyForm3800PassiveCredits,
   classifyForm8835Credits,
@@ -412,6 +412,28 @@ Deno.test("Form 3800 tax use keeps Form 8826 cents after an older passive carryo
   assertEquals(allocated.map((row) => row.unusedAfterTaxLimit), [100.15, 0]);
 });
 
+Deno.test("Form 3800 source-use bridge handles nonpassive-only credits", () => {
+  const lines = calculateForm3800Nonpassive({
+    filingStatus: FilingStatus.Single,
+    regularTax: 50,
+    alternativeMinimumTax: 0,
+    foreignTaxCredit: 0,
+    priorAllowableCredits: 0,
+    tentativeMinimumTax: 0,
+    standardCredit: 100.25,
+    specifiedCredit: 0,
+  }, ZERO_FORM3800_PASSIVE_ACTIVITY);
+  const result = allocateForm3800SourceTaxUse([], [{
+    sourceKey: "nonpassive:8826",
+    form3800CreditLine: "1e",
+    originatingTaxYear: 2025,
+    availableAfterPassiveLimit: 100.25,
+  }], lines);
+  assertEquals(result.passiveVintages, []);
+  assertEquals(result.nonpassiveSources[0].appliedAgainstTax, 50);
+  assertEquals(result.nonpassiveSources[0].unusedAfterTaxLimit, 50.25);
+});
+
 Deno.test("Form 3800 tax use follows the named same-year credit-type order", () => {
   const sources = [
     {
@@ -527,16 +549,17 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     availableAfterPassiveLimit: 100,
   }];
   assertEquals(
-    allocateForm3800PassiveCreditVintages([source], otherSources, lines).map(
-      (row) => ({
-        year: row.originatingTaxYear,
-        before: row.beforePassiveLimit,
-        after: row.afterPassiveLimit,
-        applied: row.appliedAgainstTax,
-        unused: row.unusedAfterTaxLimit,
-        sourceOrigin: row.sourceOrigin,
-      }),
-    ),
+    allocateForm3800SourceTaxUse([source], otherSources, lines).passiveVintages
+      .map(
+        (row) => ({
+          year: row.originatingTaxYear,
+          before: row.beforePassiveLimit,
+          after: row.afterPassiveLimit,
+          applied: row.appliedAgainstTax,
+          unused: row.unusedAfterTaxLimit,
+          sourceOrigin: row.sourceOrigin,
+        }),
+      ),
     [
       {
         year: 2023,
@@ -564,8 +587,13 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
       },
     ],
   );
+  assertEquals(
+    allocateForm3800SourceTaxUse([source], otherSources, lines)
+      .nonpassiveSources.map((row) => row.appliedAgainstTax),
+    [50],
+  );
   assertThrows(
-    () => allocateForm3800PassiveCreditVintages([source], [], lines),
+    () => allocateForm3800SourceTaxUse([source], [], lines),
     Error,
     "does not reconcile",
   );
@@ -580,11 +608,18 @@ Deno.test("Form 3800 passive source years reconcile with nonpassive credit order
     specifiedCredit: 0,
   }, classifyForm3800PassiveCredits([source]));
   assertEquals(
-    allocateForm3800PassiveCreditVintages([source], [{
+    allocateForm3800SourceTaxUse([source], [{
       ...otherSources[0],
       availableAfterPassiveLimit: 100.25,
-    }], centLines).map((row) => row.appliedAgainstTax),
+    }], centLines).passiveVintages.map((row) => row.appliedAgainstTax),
     [200, 0],
+  );
+  assertEquals(
+    allocateForm3800SourceTaxUse([source], [{
+      ...otherSources[0],
+      availableAfterPassiveLimit: 100.25,
+    }], centLines).nonpassiveSources[0].appliedAgainstTax,
+    50.10,
   );
 });
 

@@ -10,11 +10,15 @@ import {
 import { PassiveCreditReportingRoute } from "../../../nodes/intermediate/forms/form8582cr/credit-route.ts";
 import { form3800 } from "./f3800.ts";
 
-Deno.test("Form 3800 XML refuses passive sources until Parts III/IV reconcile", () => {
+Deno.test("Form 3800 files a source-backed passive-only current-year credit", () => {
   const source = sourceAllocationSchema.parse({
     activity_reference: "Clinical activity",
     source_form: "Form 8820",
-    source_origin: { kind: PassiveCreditSourceOrigin.Self },
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership",
+      ein: "123456789",
+    },
     source_document_reference: "2025 clinical credit statement",
     category: PassiveCreditCategory.Other,
     reporting_route: PassiveCreditReportingRoute.Form3800Line3,
@@ -27,10 +31,35 @@ Deno.test("Form 3800 XML refuses passive sources until Parts III/IV reconcile", 
     unallowed_credit: 500,
     allowed_credit: 500,
   });
-  assertThrows(
-    () => form3800.build({ passive_source_allocations: [source] }),
-    Error,
-    "need Part III/IV XML",
+  const passiveTax = {
+    filingStatus: FilingStatus.Single as const,
+    regularTax: 300,
+    alternativeMinimumTax: 0,
+    foreignTaxCredit: 0,
+    priorAllowableCredits: 0,
+    tentativeMinimumTax: 0,
+    standardCredit: 0,
+    specifiedCredit: 0,
+  };
+  const xml = form3800.build({
+    passive_source_allocations: [source],
+    tax_context: passiveTax,
+    allowed_credit: 300,
+  }, {
+    pending: filedPending(passiveTax, 300),
+    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+  });
+  assertStringIncludes(
+    xml,
+    "<CrSubjToPassiveActyLmtAmt>1000</CrSubjToPassiveActyLmtAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAppTxAmt>300</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
   );
 });
 
@@ -112,6 +141,125 @@ function filedPending(
     },
   };
 }
+
+Deno.test("Form 3800 applies a passive carryover before a Form 8826 current credit", () => {
+  const passive = sourceAllocationSchema.parse({
+    activity_reference: "Clinical partnership",
+    source_form: "Form 8820",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Clinical partnership",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 Schedule K-1 statement",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1h",
+    current_year_credit: 300,
+    prior_unallowed_credits: [{
+      originating_tax_year: 2023,
+      credit_amount: 200,
+      source_document_reference: "2023 Schedule K-1 statement",
+    }],
+    publicly_traded_partnership: false,
+    total_credit: 500,
+    special_allowed_credit: 0,
+    unallowed_credit: 200,
+    allowed_credit: 300,
+  });
+  const accessSource = { ...selfEarned, eligible_expenditures: 450 };
+  const mixedTax = {
+    ...tax,
+    regularTax: 250,
+    tentativeMinimumTax: 0,
+    standardCredit: 100,
+  };
+  const xml = form3800.build({
+    passive_source_allocations: [passive],
+    f8826_credit_entries: [{
+      source_type: "self",
+      credit_amount: 100,
+      subject_to_passive_activity_limit: false,
+    }],
+    tax_context: mixedTax,
+    allowed_credit: 250,
+  }, {
+    pending: { ...filedPending(mixedTax, 250), f8826: accessSource },
+    documentIdsByPendingKey: {
+      f8826: ["IRS8826_1"],
+      form6251: ["IRS6251_1"],
+    },
+  });
+  assertStringIncludes(xml, "<Frm8820CYCyovCrGrp>");
+  assertStringIncludes(xml, "<Form8826CYCreditsGrp");
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>250</CurrentYearCreditAllowedAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAppTxAmt>200</TotalGeneralBusCreditsAppTxAmt>",
+  );
+});
+
+Deno.test("Form 3800 merges passive and nonpassive Form 8826 on one current-year line", () => {
+  const passive = sourceAllocationSchema.parse({
+    activity_reference: "Access partnership",
+    source_form: "Form 8826",
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Partnership,
+      entity_reference: "Access partnership",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 Schedule K-1 access credit",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1e",
+    current_year_credit: 500,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+    total_credit: 500,
+    special_allowed_credit: 0,
+    unallowed_credit: 0,
+    allowed_credit: 500,
+  });
+  const accessSource = { ...selfEarned, eligible_expenditures: 450 };
+  const mixedTax = {
+    ...tax,
+    regularTax: 1_000,
+    tentativeMinimumTax: 0,
+    standardCredit: 100,
+  };
+  const xml = form3800.build({
+    passive_source_allocations: [passive],
+    f8826_credit_entries: [{
+      source_type: "self",
+      credit_amount: 100,
+      subject_to_passive_activity_limit: false,
+    }],
+    tax_context: mixedTax,
+    allowed_credit: 600,
+  }, {
+    pending: { ...filedPending(mixedTax, 600), f8826: accessSource },
+    documentIdsByPendingKey: {
+      f8826: ["IRS8826_1"],
+      form6251: ["IRS6251_1"],
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>600</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertStringIncludes(xml, "<Frm8826CYAggrgtAmtGrp");
+});
 
 Deno.test("Form 3800 descriptor stays empty without credit and rejects legacy gross credit", () => {
   assertEquals(form3800.build({}), "");

@@ -1,8 +1,10 @@
 import { z } from "zod";
 import {
+  allocateForm3800SourceTaxUse,
   calculateForm3800Nonpassive,
+  classifyForm3800PassiveCredits,
+  form3800NonpassiveCreditUseRows,
   type Form8835CreditEntry,
-  ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../nodes/inputs/f3800/calculation.ts";
 import { inputSchema as f3800InputSchema } from "../../../nodes/inputs/f3800/index.ts";
 import {
@@ -30,7 +32,9 @@ import { FilingStatus } from "../../../nodes/types.ts";
 import { FilingStatus as MefFilingStatus } from "../../../mef/header.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 import { buildIRS3800Document } from "./f3800_document.ts";
+import { joinForm3800DocumentParts } from "./f3800_join.ts";
 import { buildForm3800NonpassiveParts } from "./f3800_nonpassive.ts";
+import { buildForm3800PassiveRowXml } from "./f3800_passive_rows.ts";
 
 const amount = z.number().finite().nonnegative();
 const taxBase = z.object({
@@ -495,11 +499,6 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f3800.pdf",
   build(fields, context = {}) {
-    if (fields.passive_source_allocations?.length) {
-      throw new Error(
-        "Form 3800 passive source rows need Part III/IV XML and the Part II tax limit before filing",
-      );
-    }
     const hasLegacyCredit = fields.f3800s?.some((entry) =>
       Object.values(entry).some((value) =>
         typeof value === "number" && value > 0
@@ -516,7 +515,8 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       fields.f8835_credit_entries?.some((entry) => entry.credit_amount > 0) ||
       (fields.f5884_credit?.credit_amount ?? 0) > 0 ||
       (fields.f8936_new_vehicle_credit?.credit_amount ?? 0) > 0 ||
-      (fields.f8936_commercial_vehicle_credit?.credit_amount ?? 0) > 0;
+      (fields.f8936_commercial_vehicle_credit?.credit_amount ?? 0) > 0 ||
+      Boolean(fields.passive_source_allocations?.length);
     if (!hasSourceCredit) return "";
     if (
       fields.tax_context === undefined || fields.allowed_credit === undefined
@@ -526,23 +526,26 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       );
     }
     const tax = taxContextSchema.parse(fields.tax_context);
+    const parsed = f3800InputSchema.parse(fields);
+    const passiveActivity = classifyForm3800PassiveCredits(
+      parsed.passive_source_allocations ?? [],
+    );
     const lines = calculateForm3800Nonpassive(
       tax,
-      ZERO_FORM3800_PASSIVE_ACTIVITY,
+      passiveActivity,
     );
     if (!sameMoney(fields.allowed_credit, lines.line38)) {
       throw new Error(
         "Form 3800 allowed credit does not reconcile to finalized Part II",
       );
     }
-    const parsed = f3800InputSchema.parse(fields);
     if (!context.documentIdsByPendingKey) {
       // The bundle's first pass reserves document IDs; the second builds links.
       return "<IRS3800><CAMTAndBEATInd>false</CAMTAndBEATInd></IRS3800>";
     }
     reconcileFiledTaxContext(tax, fields.allowed_credit, context);
     if (
-      tax.standardCredit > 0 &&
+      lines.line6 > 0 &&
       context.documentIdsByPendingKey.form6251?.length !== 1
     ) {
       throw new Error("Form 3800 ordinary credit needs attached Form 6251");
@@ -555,94 +558,73 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     const form8936Commercial = sourceForm8936Commercial(parsed, context);
     const form8826Credit = form8826?.lines.line8 ?? 0;
     const form8820Credit = form8820?.lines.line4 ?? 0;
-    const otherOrdinaryCredit = form8826Credit + form8820Credit +
-      facilities.reduce(
-        (sum, facility) =>
-          sum +
-          (facility.form3800_line === "1f"
-            ? facility.credit_amount - facility.transfer_out_amount
+    const nonpassiveSources = form3800NonpassiveCreditUseRows({
+      form8826Credit,
+      form8820Credit,
+      form5884Credit: form5884?.credit,
+      form8936NewVehicleCredit: form8936?.credit,
+      form8936CommercialVehicleCredit: form8936Commercial?.credit,
+      facilities,
+    });
+    const taxUse = allocateForm3800SourceTaxUse(
+      parsed.passive_source_allocations ?? [],
+      nonpassiveSources,
+      lines,
+    );
+    const sourceUse = new Map(
+      taxUse.nonpassiveSources.map((row) => [row.sourceKey, row] as const),
+    );
+    const applied = (sourceKey: string): number =>
+      sourceUse.get(sourceKey)?.appliedAgainstTax ?? 0;
+    const passiveApplied = taxUse.passiveVintages.reduce(
+      (sum, row) => ({
+        standard: sum.standard +
+          (row.form3800CreditLine !== "3" &&
+              !row.form3800CreditLine.startsWith("4")
+            ? row.appliedAgainstTax
             : 0),
-        0,
-      );
-    let form8936Applied = parsed.form8936_applied_credit;
-    if (form8936 && form8936Applied === undefined) {
-      const sharedPartialLimit =
-        (otherOrdinaryCredit > 0 || form8936Commercial !== undefined) &&
-        lines.line17 > 0 && !sameMoney(lines.line17, tax.standardCredit);
-      if (sharedPartialLimit) {
+        specified: sum.specified +
+          (row.form3800CreditLine.startsWith("4") ? row.appliedAgainstTax : 0),
+      }),
+      { standard: 0, specified: 0 },
+    );
+    const sourceApplied = (
+      exists: boolean,
+      sourceKey: string,
+      explicit: number | undefined,
+    ): number => {
+      if (!exists && explicit !== undefined) {
+        throw new Error(`Form 3800 ${sourceKey} allocation has no source`);
+      }
+      const used = applied(sourceKey);
+      if (explicit !== undefined && !sameMoney(explicit, used)) {
         throw new Error(
-          "Form 3800 needs the applied-credit split for Form 8936 line 1y",
+          `Form 3800 ${sourceKey} allocation differs from FIFO tax use`,
         );
       }
-      form8936Applied = Math.min(form8936.credit, lines.line17);
-    }
-    if (!form8936 && parsed.form8936_applied_credit !== undefined) {
-      throw new Error("Form 3800 has a Form 8936 allocation without a source");
-    }
-    let form8936CommercialApplied = parsed.form8936_commercial_applied_credit;
-    if (form8936Commercial && form8936CommercialApplied === undefined) {
-      const otherCredit = otherOrdinaryCredit + (form8936?.credit ?? 0);
-      const partialLimit = otherCredit > 0 && lines.line17 > 0 &&
-        !sameMoney(lines.line17, tax.standardCredit);
-      if (partialLimit) {
-        throw new Error(
-          "Form 3800 needs the applied-credit split for Form 8936 line 1aa",
-        );
-      }
-      form8936CommercialApplied = Math.min(
-        form8936Commercial.credit,
-        Math.max(0, lines.line17 - (form8936Applied ?? 0)),
-      );
-    }
-    if (
-      !form8936Commercial &&
-      parsed.form8936_commercial_applied_credit !== undefined
-    ) {
-      throw new Error(
-        "Form 3800 has a commercial Form 8936 allocation without a source",
-      );
-    }
-    let form8820Applied = parsed.form8820_applied_credit;
-    if (form8820 && form8820Applied === undefined) {
-      const otherCredit = tax.standardCredit - form8820Credit;
-      if (
-        otherCredit > 0 && lines.line17 > 0 &&
-        !sameMoney(lines.line17, tax.standardCredit)
-      ) {
-        throw new Error(
-          "Form 3800 needs the applied-credit split for Form 8820 line 1h",
-        );
-      }
-      form8820Applied = Math.min(
-        form8820Credit,
-        Math.max(
-          0,
-          lines.line17 - (form8936Applied ?? 0) -
-            (form8936CommercialApplied ?? 0),
-        ),
-      );
-    }
-    if (!form8820 && parsed.form8820_applied_credit !== undefined) {
-      throw new Error("Form 3800 has a Form 8820 allocation without a source");
-    }
+      return used;
+    };
+    const form8936Applied = sourceApplied(
+      Boolean(form8936),
+      "nonpassive:8936-new",
+      parsed.form8936_applied_credit,
+    );
+    const form8936CommercialApplied = sourceApplied(
+      Boolean(form8936Commercial),
+      "nonpassive:8936-commercial",
+      parsed.form8936_commercial_applied_credit,
+    );
+    const form8820Applied = sourceApplied(
+      Boolean(form8820),
+      "nonpassive:8820",
+      parsed.form8820_applied_credit,
+    );
     if (!form8820 && parsed.form8820_applied_credits_by_source !== undefined) {
       throw new Error(
         "Form 3800 has Form 8820 source allocations without a source",
       );
     }
-    if (form8820Applied !== undefined && form8820Applied > form8820Credit) {
-      throw new Error(
-        "Form 3800 Form 8820 allocation exceeds its source credit",
-      );
-    }
-    const form8826Applied = Math.min(
-      form8826Credit,
-      Math.max(
-        0,
-        lines.line17 - (form8820Applied ?? 0) - (form8936Applied ?? 0) -
-          (form8936CommercialApplied ?? 0),
-      ),
-    );
+    const form8826Applied = applied("nonpassive:8826");
     const form8826Ids = context.documentIdsByPendingKey.f8826 ?? [];
     const selfEarned = (form8826?.lines.line6 ?? 0) > 0;
     if (selfEarned ? form8826Ids.length !== 1 : form8826Ids.length !== 0) {
@@ -678,105 +660,101 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
         "Form 3800 Form 8936 document count does not match its source",
       );
     }
-    const form5884Applied = form5884
-      ? parsed.form5884_applied_credit ??
-        (facilities.some((facility) => facility.form3800_line === "4e") &&
-            lines.line37 > 0 &&
-            !sameMoney(lines.line37, tax.specifiedCredit)
-          ? undefined
-          : Math.min(form5884.credit, lines.line37))
-      : undefined;
-    if (form5884 && form5884Applied === undefined) {
-      throw new Error(
-        "Form 3800 needs the applied-credit split between Form 5884 and Form 8835",
-      );
-    }
-    if (!form5884 && parsed.form5884_applied_credit !== undefined) {
-      throw new Error("Form 3800 has a Form 5884 allocation without a source");
-    }
-    return buildIRS3800Document(buildForm3800NonpassiveParts({
-      tax,
-      form5884: form5884
-        ? {
-          credit: form5884.credit,
-          documentId: form5884Ids[0],
-          appliedCredit: form5884Applied,
-          sources: [
-            ...(form5884.lines.line2 > 0
-              ? [{ credit: form5884.lines.line2 }]
-              : []),
-            ...(form5884.source.pass_through_credits ?? []).flatMap((entry) =>
-              entry.credit_amount > 0
-                ? [{ credit: entry.credit_amount, ein: entry.entity_ein }]
-                : []
+    const form5884Applied = sourceApplied(
+      Boolean(form5884),
+      "nonpassive:5884",
+      parsed.form5884_applied_credit,
+    );
+    const nonpassiveParts = nonpassiveSources.length > 0
+      ? buildForm3800NonpassiveParts({
+        tax,
+        passiveActivity,
+        passiveApplied,
+        form5884: form5884
+          ? {
+            credit: form5884.credit,
+            documentId: form5884Ids[0],
+            appliedCredit: form5884Applied,
+            sources: [
+              ...(form5884.lines.line2 > 0
+                ? [{ credit: form5884.lines.line2 }]
+                : []),
+              ...(form5884.source.pass_through_credits ?? []).flatMap((entry) =>
+                entry.credit_amount > 0
+                  ? [{ credit: entry.credit_amount, ein: entry.entity_ein }]
+                  : []
+              ),
+            ],
+            appliedCreditsBySource: form5884SourceAllocations(
+              form5884,
+              form5884Applied,
+              parsed.form5884_applied_credits_by_source,
             ),
-          ],
-          appliedCreditsBySource: form5884SourceAllocations(
-            form5884,
-            form5884Applied,
-            parsed.form5884_applied_credits_by_source,
-          ),
-        }
-        : undefined,
-      form8826: form8826
-        ? {
-          source: form8826.source,
-          documentId: form8826Ids[0],
-          appliedCredit: form8826Applied,
-          appliedCreditsBySource: form8826SourceAllocations(
-            form8826,
-            form8826Applied,
-            parsed.form8826_applied_credits_by_source,
-          ),
-        }
-        : undefined,
-      form8820: form8820
-        ? {
-          credit: form8820Credit,
-          documentId: form8820Ids[0],
-          appliedCredit: form8820Applied!,
-          sources: [
-            ...(form8820.lines.line2c > 0
-              ? [{ credit: form8820.lines.line2c }]
-              : []),
-            ...(form8820.source.pass_through_credits ?? []).map((entry) => ({
-              credit: entry.credit_amount,
-              ein: entry.entity_ein,
-            })),
-          ],
-          appliedCreditsBySource: form8820SourceAllocations(
-            form8820,
-            form8820Applied!,
-            parsed.form8820_applied_credits_by_source,
-          ),
-        }
-        : undefined,
-      form8936: form8936
-        ? {
-          credit: form8936.credit,
-          documentId: form8936Ids[0],
-          appliedCredit: form8936Applied!,
-        }
-        : undefined,
-      form8936Commercial: form8936Commercial
-        ? {
-          credit: form8936Commercial.credit,
-          documentId: form8936Ids[0],
-          appliedCredit: form8936CommercialApplied!,
-        }
-        : undefined,
-      facilities,
-      form8835DocumentIds: form8835Ids,
-      appliedCreditsByFacility: form8835FacilityAllocations(
+          }
+          : undefined,
+        form8826: form8826
+          ? {
+            source: form8826.source,
+            documentId: form8826Ids[0],
+            appliedCredit: form8826Applied,
+            appliedCreditsBySource: form8826SourceAllocations(
+              form8826,
+              form8826Applied,
+              parsed.form8826_applied_credits_by_source,
+            ),
+          }
+          : undefined,
+        form8820: form8820
+          ? {
+            credit: form8820Credit,
+            documentId: form8820Ids[0],
+            appliedCredit: form8820Applied,
+            sources: [
+              ...(form8820.lines.line2c > 0
+                ? [{ credit: form8820.lines.line2c }]
+                : []),
+              ...(form8820.source.pass_through_credits ?? []).map((entry) => ({
+                credit: entry.credit_amount,
+                ein: entry.entity_ein,
+              })),
+            ],
+            appliedCreditsBySource: form8820SourceAllocations(
+              form8820,
+              form8820Applied,
+              parsed.form8820_applied_credits_by_source,
+            ),
+          }
+          : undefined,
+        form8936: form8936
+          ? {
+            credit: form8936.credit,
+            documentId: form8936Ids[0],
+            appliedCredit: form8936Applied,
+          }
+          : undefined,
+        form8936Commercial: form8936Commercial
+          ? {
+            credit: form8936Commercial.credit,
+            documentId: form8936Ids[0],
+            appliedCredit: form8936CommercialApplied,
+          }
+          : undefined,
         facilities,
-        lines.line17 - form8826Applied - (form8820Applied ?? 0) -
-          (form8936Applied ?? 0) -
-          (form8936CommercialApplied ?? 0),
-        lines.line37 - (form5884Applied ?? 0),
-        parsed.form8835_applied_credits_by_facility,
-      ),
-      transferStatementIdsByFileName: context.documentIdsByAttachmentFileName ??
-        {},
-    }));
+        form8835DocumentIds: form8835Ids,
+        appliedCreditsByFacility: form8835FacilityAllocations(
+          facilities,
+          applied("nonpassive:8835:1f"),
+          applied("nonpassive:8835:4e"),
+          parsed.form8835_applied_credits_by_facility,
+        ),
+        transferStatementIdsByFileName:
+          context.documentIdsByAttachmentFileName ??
+            {},
+      })
+      : undefined;
+    const passiveParts = buildForm3800PassiveRowXml(taxUse.passiveVintages);
+    return buildIRS3800Document(
+      joinForm3800DocumentParts(lines, nonpassiveParts, passiveParts),
+    );
   },
 };

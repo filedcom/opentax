@@ -3,8 +3,8 @@ import {
   calculateForm3800Nonpassive,
   classifyForm8835Credits,
   type Form3800NonpassiveInput,
+  type Form3800PassiveActivityLines,
   type Form8835CreditEntry,
-  ZERO_FORM3800_PASSIVE_ACTIVITY,
 } from "../../../nodes/inputs/f3800/calculation.ts";
 import {
   calculateForm8826,
@@ -82,6 +82,11 @@ function passThroughEntityCredits(
 /** Source-backed nonpassive Form 8826, 8835, 5884, and 8936 rows. */
 export type Form3800NonpassiveXmlInput = {
   readonly tax: Form3800NonpassiveInput;
+  readonly passiveActivity: Form3800PassiveActivityLines;
+  readonly passiveApplied: {
+    readonly standard: number;
+    readonly specified: number;
+  };
   readonly form5884?: {
     readonly credit: number;
     /** Present only when the filer earned a credit on their own Form 5884. */
@@ -394,8 +399,20 @@ export function buildForm3800NonpassiveParts(
   });
   const lines = calculateForm3800Nonpassive(
     input.tax,
-    ZERO_FORM3800_PASSIVE_ACTIVITY,
+    input.passiveActivity,
   );
+  if (
+    cents(input.passiveApplied.standard, "Form 3800 passive standard use") <
+      0 ||
+    cents(input.passiveApplied.specified, "Form 3800 passive specified use") <
+      0 ||
+    cents(input.passiveApplied.standard, "Form 3800 passive standard use") >
+      cents(lines.line17, "Form 3800 line 17") ||
+    cents(input.passiveApplied.specified, "Form 3800 passive specified use") >
+      cents(lines.line37, "Form 3800 line 37")
+  ) {
+    throw new Error("Form 3800 passive tax use exceeds Part II");
+  }
   const form8826Sources: Form8826PartVSource[] = input.form8826 &&
       form8826Lines
     ? [
@@ -508,7 +525,17 @@ export function buildForm3800NonpassiveParts(
       sum + (facility.form3800_line === "4e" ? appliedAt(index) : 0),
     input.form5884?.appliedCredit ?? 0,
   );
-  if (standardApplied !== lines.line17 || specifiedApplied !== lines.line37) {
+  if (
+    cents(standardApplied, "Form 3800 standard source use") !==
+      cents(lines.line17, "Form 3800 line 17") -
+        cents(
+          input.passiveApplied.standard,
+          "Form 3800 passive standard use",
+        ) ||
+    cents(specifiedApplied, "Form 3800 specified source use") !==
+      cents(lines.line37, "Form 3800 line 37") -
+        cents(input.passiveApplied.specified, "Form 3800 passive specified use")
+  ) {
     throw new Error(
       "Form 3800 Part III applied credits do not reconcile to Part II",
     );

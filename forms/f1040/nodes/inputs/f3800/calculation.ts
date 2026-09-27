@@ -440,12 +440,17 @@ export function splitForm3800PassiveCreditVintages(
   );
 }
 
-/** Apply the filed Part II caps to each passive source year, alongside other credits. */
-export function allocateForm3800PassiveCreditVintages(
+export type Form3800SourceTaxUse = {
+  readonly passiveVintages: readonly Form3800PassiveTaxUseVintage[];
+  readonly nonpassiveSources: readonly Form3800CreditUseAllocation[];
+};
+
+/** Apply one filed Part II tax-use pass to passive vintages and other credits. */
+export function allocateForm3800SourceTaxUse(
   sources: readonly Form8582CRSourceAllocation[],
   otherSources: readonly Form3800CreditUseRow[],
   lines: Form3800NonpassiveLines,
-): Form3800PassiveTaxUseVintage[] {
+): Form3800SourceTaxUse {
   const passiveLines = classifyForm3800PassiveCredits(sources);
   if (
     passiveLines.line2 !== lines.line2 ||
@@ -477,11 +482,17 @@ export function allocateForm3800PassiveCreditVintages(
   const passiveUse = new Map(
     allocated.map((row) => [row.sourceKey, row] as const),
   );
-  return vintages.map((vintage) => {
+  const passiveVintages = vintages.map((vintage) => {
     const use = passiveUse.get(vintage.sourceKey);
     if (!use) throw new Error("Form 3800 passive source was not allocated");
     return { ...vintage, ...use };
   });
+  const nonpassiveSources = otherSources.map((source) => {
+    const use = passiveUse.get(source.sourceKey);
+    if (!use) throw new Error("Form 3800 nonpassive source was not allocated");
+    return use;
+  });
+  return { passiveVintages, nonpassiveSources };
 }
 
 export const form3800PassiveActivityLinesSchema = z.object({
