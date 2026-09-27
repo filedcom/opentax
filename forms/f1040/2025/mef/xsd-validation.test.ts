@@ -356,6 +356,50 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 registered blender line 15a and certification validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 46 },
+    schedule3: { line12_fuel_tax_credit: 46, line15_total: 46 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Emulsion Blender",
+        principal_activity_code: "324110",
+        equipment_make: "Example",
+        equipment_model: "Mixer",
+        equipment_type: "fuel blender",
+        production_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [{
+        line: "15a",
+        unit: "gallons",
+        qualified_quantity: 1_000,
+        actual_fuel_cost: 2_500,
+        undyed_fuel_confirmed: true,
+        excise_tax_rate_per_gallon: 0.244,
+        blender_registration_number: "M123456789",
+        blender_produced_confirmed: true,
+        blender_input_diesel_gallons: 1_000,
+        blender_trade_or_business_disposition: "used_in_business",
+        emulsion_water_percentage: 14,
+        emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<EmulsionBlndCreditGrp>");
+  assertStringIncludes(xml, "<DslWaterFuelEmulsionBlndgStmt ");
+  await validateXsd(xml, "Form 4136 registered blender line 15a");
+});
+
+Deno.test({
   name: "XSD: Form 4136 all non-bus line 11 fuel groups validate",
   sanitizeOps: false,
   sanitizeResources: false,

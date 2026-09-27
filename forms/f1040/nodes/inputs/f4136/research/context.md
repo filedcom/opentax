@@ -36,6 +36,16 @@ the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage
 and a record reference for its EPA-registered additive under Pub. 510's fuel
 definition. Their source-to-MeF and PDF cases are written but unrun.
+Line 15a is a separate registered-blender claim, not an ultimate-purchaser
+claim. It requires an IRS-issued M registration number, production records,
+gallons of undyed diesel taxed at $.244 that went into the emulsion, at least
+14% water, an EPA additive registration reference, and sale or use in the
+blender's trade or business. The $.046-per-gallon credit uses those input diesel
+gallons. One native blending-certification statement is built per claim and
+linked to the Form 4136 credit; the parent and Schedule A PDFs map line 15a
+and the parent appends a certification page. Source, XML, PDF, and local XSD
+cases are written but unrun, and the filled PDFs and IRS business rules remain
+unverified.
 Lines 16a and 16b allow an exporter who is not the ultimate purchaser. The
 source retains the exporter-of-record and export-record facts, typed export
 proof, the $.001 fuel-tax rate, and the exact fuel kind. Dyed diesel and

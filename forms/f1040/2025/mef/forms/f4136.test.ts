@@ -1,6 +1,7 @@
 import { assertStringIncludes, assertThrows } from "@std/assert";
 import { form4136 } from "./f4136.ts";
 import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
+import { form4136EmulsionBlendingStatement } from "./f4136_emulsion_blending_statement.ts";
 const certifications = {
   undyed_fuel_confirmed: true,
   right_to_claim_not_waived: true,
@@ -130,6 +131,78 @@ Deno.test("Form 4136 XML separates emulsion use, reduced-rate bus use, and expor
   assertStringIncludes(
     xml,
     "<TotalFuelTaxCreditAmt>52</TotalFuelTaxCreditAmt>",
+  );
+});
+
+Deno.test("Form 4136 XML links registered-blender line 15a to its certification", () => {
+  const blender = {
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true as const,
+      business_name: "Example Emulsion Blender",
+      principal_activity_code: "324110",
+      equipment_make: "Example",
+      equipment_model: "Mixer",
+      equipment_type: "fuel blender",
+      production_records_confirmed: true as const,
+      no_duplicate_excise_claim: true as const,
+    },
+    claims: [{
+      line: "15a" as const,
+      unit: "gallons" as const,
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 2_500,
+      undyed_fuel_confirmed: true as const,
+      excise_tax_rate_per_gallon: 0.244,
+      blender_registration_number: "M123456789",
+      blender_produced_confirmed: true as const,
+      blender_input_diesel_gallons: 1_000,
+      blender_trade_or_business_disposition: "used_in_business" as const,
+      emulsion_water_percentage: 14,
+      emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
+    }],
+  };
+  const xml = form4136.build(blender, {
+    pending: { schedule3: { line12_fuel_tax_credit: 46 } },
+    documentIdsByPendingKey: {
+      f4136_emulsion_blending_statement: ["blender-statement-1"],
+    },
+  });
+  assertStringIncludes(
+    xml,
+    "<DieselWtrBlndgRegistrationNum>M123456789</DieselWtrBlndgRegistrationNum>",
+  );
+  assertStringIncludes(
+    xml,
+    "<BlndrCrUseDslWtrEmulsionQty>1000</BlndrCrUseDslWtrEmulsionQty>",
+  );
+  assertStringIncludes(
+    xml,
+    'referenceDocumentId="blender-statement-1" referenceDocumentName="DieselWaterFuelEmulsionBlendingStatement"',
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalFuelTaxCreditAmt>46</TotalFuelTaxCreditAmt>",
+  );
+  const [statement] = form4136EmulsionBlendingStatement.build(undefined, {
+    pending: { f4136: blender },
+  });
+  assertStringIncludes(statement, "<DslWaterFuelEmulsionBlndgStmt>");
+  assertStringIncludes(statement, "at least 14% water");
+  assertStringIncludes(statement, "EPA under Clean Air Act section 211");
+  assertStringIncludes(statement, "taxed at $0.244 per gallon");
+  assertStringIncludes(
+    statement,
+    "used in the blender&apos;s trade or business",
+  );
+  assertThrows(
+    () =>
+      form4136.build(blender, {
+        pending: { schedule3: { line12_fuel_tax_credit: 46 } },
+        documentIdsByPendingKey: {},
+      }),
+    Error,
+    "needs a blending statement",
   );
 });
 

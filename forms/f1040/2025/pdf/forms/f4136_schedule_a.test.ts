@@ -50,6 +50,18 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page4[0].Line14Table[0].Line14b[0].f4_11[0]",
   );
   assertEquals(
+    names.line15_registration_number,
+    "topmostSubform[0].Page4[0].f4_17[0]",
+  );
+  assertEquals(
+    names.line15a_quantity,
+    "topmostSubform[0].Page4[0].Line15Table[0].Line15a[0].f4_19[0]",
+  );
+  assertEquals(
+    names.line15a_credit_dollars,
+    "topmostSubform[0].Page4[0].Line15Table[0].Line15a[0].ColE[0].f4_22[0]",
+  );
+  assertEquals(
     names.line16a_credit_dollars,
     "topmostSubform[0].Page4[0].Line16Table[0].Line16a[0].ColE[0].f4_29[0]",
   );
@@ -58,6 +70,54 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page4[0].Line16Table[0].Line16b[0].f4_33[0]",
   );
   assertEquals(names.line17_total_cents, "topmostSubform[0].Page4[0].f4_40[0]");
+});
+
+Deno.test("Schedule A (Form 4136) keeps blender line 15a on its activity", () => {
+  const projected = form4136ScheduleAPdf.projectFields?.({
+    claimant_context: "business",
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Emulsion Blender",
+      principal_activity_code: "324110",
+      equipment_make: "Example",
+      equipment_model: "Mixer",
+      equipment_type: "fuel blender",
+      production_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "15a",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 2_500,
+      undyed_fuel_confirmed: true,
+      excise_tax_rate_per_gallon: 0.244,
+      blender_registration_number: "M123456789",
+      blender_produced_confirmed: true,
+      blender_input_diesel_gallons: 1_000,
+      blender_trade_or_business_disposition: "used_in_business",
+      emulsion_water_percentage: 14,
+      emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
+    }],
+    additional_activities: [{
+      business,
+      claims: [{
+        line: "1a",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        not_highway_vehicle: true,
+        not_noncommercial_motorboat: true,
+      }],
+    }],
+    primary_activity_has_most_credit: true,
+  }, {});
+  const instances = form4136ScheduleAPdf.instances?.(projected ?? {}) ?? [];
+  assertEquals(instances.length, 2);
+  assertEquals(instances[0].line15_registration_number, "M123456789");
+  assertEquals(instances[0].line15a_quantity, 1_000);
+  assertEquals(instances[0].line15a_credit_dollars, "46");
+  assertEquals(instances[1].line15a_quantity, undefined);
 });
 
 Deno.test("Schedule A (Form 4136) expands one PDF per business activity", () => {

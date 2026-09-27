@@ -115,6 +115,18 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page4[0].Table_Line14[0].Line14b[0].f4_96[0]",
   );
   assertEquals(
+    names.line15_registration_number,
+    "topmostSubform[0].Page4[0].f4_102[0]",
+  );
+  assertEquals(
+    names.line15a_quantity,
+    "topmostSubform[0].Page4[0].Table_Line15[0].Line15a[0].f4_104[0]",
+  );
+  assertEquals(
+    names.line15a_credit_dollars,
+    "topmostSubform[0].Page4[0].Table_Line15[0].Line15a[0].ColE[0].f4_107[0]",
+  );
+  assertEquals(
     names.line16a_credit_dollars,
     "topmostSubform[0].Page4[0].Table_Line16[0].Line16a[0].ColE[0].f4_114[0]",
   );
@@ -126,6 +138,48 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF projects blender line 15a and appends certification", async () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Emulsion Blender",
+      principal_activity_code: "324110",
+      equipment_make: "Example",
+      equipment_model: "Mixer",
+      equipment_type: "fuel blender",
+      production_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "15a",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 2_500,
+      undyed_fuel_confirmed: true,
+      excise_tax_rate_per_gallon: 0.244,
+      blender_registration_number: "M123456789",
+      blender_produced_confirmed: true,
+      blender_input_diesel_gallons: 1_000,
+      blender_trade_or_business_disposition: "used_in_business",
+      emulsion_water_percentage: 14,
+      emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 46 } });
+  assertEquals(result?.line15_registration_number, "M123456789");
+  assertEquals(result?.line15a_quantity, 1_000);
+  assertEquals(result?.line15a_cost_dollars, "2500");
+  assertEquals(result?.line15a_credit_dollars, "46");
+  const document = await PDFDocument.create();
+  for (let i = 0; i < 4; i++) document.addPage([612, 792]);
+  await form4136Pdf.appendSupplementalPages?.(
+    document,
+    result ?? {},
+    undefined,
+  );
+  assertEquals(document.getPageCount(), 5);
 });
 
 Deno.test("Form 4136 PDF projects emulsion bus and export rows", async () => {

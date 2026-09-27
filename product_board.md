@@ -306,6 +306,11 @@ facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are
 written but unrun. Emulsion composition and EPA additive records are required;
 filled-PDF rendering and IRS business-rule review remain open.
+Registered-blender line 15a now has a distinct source route using taxed input
+diesel gallons, an IRS M registration number, production and disposition facts,
+the $.046 rate, a linked native blender-certification statement, and parent
+and Schedule A PDF fields. Source, XML, PDF, and local XSD cases are written
+but unrun. The filled PDF, IRS business rules, and ATS acceptance remain open.
 Exported dyed-fuel lines 16a and 16b now have an exporter-specific source
 route, retained export proof, fuel-kind and $.001 tax-rate checks, MeF groups,
 and parent/Schedule A PDF fields. Line 16a can combine dyed diesel and

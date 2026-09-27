@@ -160,6 +160,82 @@ Deno.test("Form 4136: registered vendor government diesel sales reconcile to lin
   );
 });
 
+Deno.test("Form 4136: registered blender line 15a uses taxed input diesel gallons", () => {
+  const blenderBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Emulsion Blender",
+    principal_activity_code: "324110",
+    equipment_make: "Example",
+    equipment_model: "Mixer",
+    equipment_type: "fuel blender",
+    production_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const claim = {
+    line: "15a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 1_000,
+    actual_fuel_cost: 2_500,
+    undyed_fuel_confirmed: true as const,
+    excise_tax_rate_per_gallon: 0.244,
+    blender_registration_number: "M123456789",
+    blender_produced_confirmed: true as const,
+    blender_input_diesel_gallons: 1_000,
+    blender_trade_or_business_disposition: "used_in_business" as const,
+    emulsion_water_percentage: 14,
+    emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
+  };
+  assertEquals(
+    parseInput({ business: blenderBusiness, claims: [claim] }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: blenderBusiness, claims: [claim] }).outputs[0].fields
+      .line12_fuel_tax_credit,
+    46,
+  );
+  for (
+    const invalidClaim of [
+      { ...claim, blender_registration_number: undefined },
+      { ...claim, blender_produced_confirmed: undefined },
+      { ...claim, blender_input_diesel_gallons: 999 },
+      { ...claim, blender_trade_or_business_disposition: undefined },
+      { ...claim, emulsion_water_percentage: 13.9 },
+      { ...claim, emulsion_epa_additive_record_reference: undefined },
+      { ...claim, excise_tax_rate_per_gallon: 0.001 },
+      { ...claim, undyed_fuel_confirmed: undefined },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: blenderBusiness, claims: [invalidClaim] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: { ...blenderBusiness, production_records_confirmed: undefined },
+      claims: [claim],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business: blenderBusiness,
+      claims: [claim],
+      additional_activities: [{
+        business: blenderBusiness,
+        claims: [{
+          ...claim,
+          qualified_quantity: 500,
+          blender_input_diesel_gallons: 500,
+          blender_registration_number: "M987654321",
+        }],
+      }],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],
