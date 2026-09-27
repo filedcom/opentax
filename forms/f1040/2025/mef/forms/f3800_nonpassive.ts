@@ -13,7 +13,9 @@ import {
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
+import { buildForm3800PartIIIXml } from "./f3800_part_iii.ts";
 import { buildForm3800PartVXml } from "./f3800_part_v.ts";
+import type { Form3800PassiveXmlRow } from "./f3800_passive_rows.ts";
 import {
   buildForm3800CurrentCreditRowXml,
   combineForm3800CurrentCreditAmounts,
@@ -666,71 +668,93 @@ export function buildIRS3800Nonpassive(
     (specifiedRow?.selfEarnedCredit ?? 0) + form5884Credit;
   const combinedTransferred = (ordinaryRow?.transferOutAmount ?? 0) +
     (specifiedRow?.transferOutAmount ?? 0);
-  return elements("IRS3800", [
-    element("CAMTAndBEATInd", "false"),
-    element("CreditTransferElectionInd", String(statementIds.length > 0)),
-    statementIds.length > 0
-      ? element("TransferElectionStatementCnt", statementIds.length, {
-        referenceDocumentId: statementIds.join(" "),
-        referenceDocumentName: "BinaryAttachment",
-      })
-      : "",
-    ...form3800PartIAndIIXml(lines),
-    input.form8826
-      ? nontransferableCurrentRowXml(
-        "1e",
-        form8826Credit,
-        form8826Applied,
-        {
-          sourceCount: form8826Sources.length,
-          entity: largestPassThroughEntity(form8826PassThroughSources),
-          referenceDocumentId: input.form8826.documentId,
-          referenceDocumentName: input.form8826.documentId
-            ? "IRS8826"
-            : undefined,
-        },
-      )
-      : "",
-    ordinaryGroup?.xml ?? "",
-    input.form8820
-      ? nontransferableCurrentRowXml(
-        "1h",
-        form8820Credit,
-        input.form8820.appliedCredit,
-        {
-          sourceCount: input.form8820.sources.length,
-          entity: largestPassThroughEntity(form8820PassThroughSources),
-          referenceDocumentId: input.form8820.documentId,
-          referenceDocumentName: input.form8820.documentId
-            ? "IRS8820"
-            : undefined,
-        },
-      )
-      : "",
-    input.form8936
-      ? nontransferableCurrentRowXml(
-        "1y",
-        form8936Credit,
-        input.form8936.appliedCredit,
-        {
-          sourceCount: 1,
-          referenceDocumentId: input.form8936.documentId,
-          referenceDocumentName: "IRS8936",
-        },
-      )
-      : "",
-    input.form8936Commercial
-      ? nontransferableCurrentRowXml(
-        "1aa",
-        form8936CommercialCredit,
-        input.form8936Commercial.appliedCredit,
-        {
-          sourceCount: 1,
-          referenceDocumentId: input.form8936Commercial.documentId,
-          referenceDocumentName: "IRS8936",
-        },
-      )
-      : "",
+  const currentRows: Form3800PassiveXmlRow[] = [
+    ...(input.form8826
+      ? [{
+        line: "1e" as const,
+        xml: nontransferableCurrentRowXml(
+          "1e",
+          form8826Credit,
+          form8826Applied,
+          {
+            sourceCount: form8826Sources.length,
+            entity: largestPassThroughEntity(form8826PassThroughSources),
+            referenceDocumentId: input.form8826.documentId,
+            referenceDocumentName: input.form8826.documentId
+              ? "IRS8826"
+              : undefined,
+          },
+        ),
+      }]
+      : []),
+    ...(ordinaryGroup ? [ordinaryGroup] : []),
+    ...(input.form8820
+      ? [{
+        line: "1h" as const,
+        xml: nontransferableCurrentRowXml(
+          "1h",
+          form8820Credit,
+          input.form8820.appliedCredit,
+          {
+            sourceCount: input.form8820.sources.length,
+            entity: largestPassThroughEntity(form8820PassThroughSources),
+            referenceDocumentId: input.form8820.documentId,
+            referenceDocumentName: input.form8820.documentId
+              ? "IRS8820"
+              : undefined,
+          },
+        ),
+      }]
+      : []),
+    ...(input.form8936
+      ? [{
+        line: "1y" as const,
+        xml: nontransferableCurrentRowXml(
+          "1y",
+          form8936Credit,
+          input.form8936.appliedCredit,
+          {
+            sourceCount: 1,
+            referenceDocumentId: input.form8936.documentId,
+            referenceDocumentName: "IRS8936",
+          },
+        ),
+      }]
+      : []),
+    ...(input.form8936Commercial
+      ? [{
+        line: "1aa" as const,
+        xml: nontransferableCurrentRowXml(
+          "1aa",
+          form8936CommercialCredit,
+          input.form8936Commercial.appliedCredit,
+          {
+            sourceCount: 1,
+            referenceDocumentId: input.form8936Commercial.documentId,
+            referenceDocumentName: "IRS8936",
+          },
+        ),
+      }]
+      : []),
+    ...(form5884
+      ? [{
+        line: "4b" as const,
+        xml: nontransferableCurrentRowXml(
+          "4b",
+          form5884Credit,
+          form5884.appliedCredit,
+          {
+            sourceCount: form5884.sources.length,
+            entity: largestPassThroughEntity(form5884PassThroughSources),
+            referenceDocumentId: form5884.documentId,
+            referenceDocumentName: form5884.documentId ? "IRS5884" : undefined,
+          },
+        ),
+      }]
+      : []),
+    ...(specifiedGroup ? [specifiedGroup] : []),
+  ];
+  const standardSubtotal =
     ordinaryRow || input.form8826 || input.form8820 || input.form8936 ||
       input.form8936Commercial
       ? totalRow(
@@ -744,41 +768,41 @@ export function buildIRS3800Nonpassive(
           (ordinaryRow?.availableCredit ?? 0),
         lines.line17,
       )
-      : "",
-    form5884
-      ? nontransferableCurrentRowXml(
-        "4b",
-        form5884Credit,
-        form5884.appliedCredit,
-        {
-          sourceCount: form5884.sources.length,
-          entity: largestPassThroughEntity(form5884PassThroughSources),
-          referenceDocumentId: form5884.documentId,
-          referenceDocumentName: form5884.documentId ? "IRS5884" : undefined,
-        },
-      )
-      : "",
-    specifiedGroup?.xml ?? "",
-    specifiedRow || input.form5884
-      ? totalRow(
-        "GenBusCYCreditsSubTot2Grp",
-        form5884Credit + (specifiedRow?.selfEarnedCredit ?? 0),
-        specifiedRow?.transferOutAmount ?? 0,
-        form5884Credit + (specifiedRow?.availableCredit ?? 0),
-        lines.line37,
-      )
-      : "",
-    totalRow(
+      : "";
+  const specifiedSubtotal = specifiedRow || input.form5884
+    ? totalRow(
+      "GenBusCYCreditsSubTot2Grp",
+      form5884Credit + (specifiedRow?.selfEarnedCredit ?? 0),
+      specifiedRow?.transferOutAmount ?? 0,
+      form5884Credit + (specifiedRow?.availableCredit ?? 0),
+      lines.line37,
+    )
+    : "";
+  const partIII = buildForm3800PartIIIXml({
+    rows: currentRows,
+    standardSubtotal,
+    specifiedSubtotal,
+    total: totalRow(
       "TotGenBusCYCreditAmtGrp",
       combinedSelfEarned,
       combinedTransferred,
       form8826Credit + form8820Credit + form8936Credit +
-        form8936CommercialCredit +
-        credits.standardCredit +
-        credits.specifiedCredit +
-        form5884Credit,
+        form8936CommercialCredit + credits.standardCredit +
+        credits.specifiedCredit + form5884Credit,
       lines.line38,
     ),
+  });
+  return elements("IRS3800", [
+    element("CAMTAndBEATInd", "false"),
+    element("CreditTransferElectionInd", String(statementIds.length > 0)),
+    statementIds.length > 0
+      ? element("TransferElectionStatementCnt", statementIds.length, {
+        referenceDocumentId: statementIds.join(" "),
+        referenceDocumentName: "BinaryAttachment",
+      })
+      : "",
+    ...form3800PartIAndIIXml(lines),
+    ...partIII,
     buildForm3800PartVXml([
       ...form8826PartVGroups.map((xml) => ({ line: "1e" as const, xml })),
       ...partVGroups,
