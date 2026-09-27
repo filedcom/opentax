@@ -71,15 +71,17 @@ export const inputSchema = z.object({
     withdrawal_tax_year: z.literal(2026),
     withdrawn_by_return_due_date: z.literal(true),
   }).optional(),
-  // Line 10: one direct traditional/Roth IRA-to-HSA transfer. A later second
-  // self-only-to-family transfer needs its separate lifetime-limit route.
-  qualified_hsa_funding_distribution: z.object({
-    amount: z.number().positive(),
-    transfer_month: z.number().int().min(1).max(12),
-    ira_type: z.enum(["traditional", "roth"]),
-    direct_trustee_transfer: z.literal(true),
+  // Line 10: one direct IRA-to-HSA transfer, or a second in a later month of
+  // this year after self-only coverage changes to family coverage.
+  qualified_hsa_funding_distributions: z.object({
     no_prior_qualified_funding_distribution: z.literal(true),
-    source_reference: z.string().trim().min(1),
+    transfers: z.array(z.object({
+      amount: z.number().positive(),
+      transfer_month: z.number().int().min(1).max(12),
+      ira_type: z.enum(["traditional", "roth"]),
+      direct_trustee_transfer: z.literal(true),
+      source_reference: z.string().trim().min(1),
+    })).min(1).max(2),
   }).optional(),
   // Whether the taxpayer is age 55 or older (enables $1,000 catch-up)
   // IRC §223(b)(3)
@@ -470,8 +472,11 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
-    const funding = input.qualified_hsa_funding_distribution;
-    const fundingAmount = funding?.amount ?? 0;
+    const funding = input.qualified_hsa_funding_distributions;
+    const fundingAmount = funding?.transfers.reduce(
+      (sum, transfer) => sum + transfer.amount,
+      0,
+    ) ?? 0;
     const employer = employerContributionsForTaxYear(input);
     const hasContributions = totalContributions(input, employer) +
         fundingAmount > 0;
@@ -484,21 +489,46 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       )
       : undefined;
     if (funding && limitLines) {
-      const coverageAtTransfer = input.eligible_hdhp_coverage_by_month![
-        funding.transfer_month - 1
-      ];
-      if (coverageAtTransfer === null) {
-        throw new Error(
-          "Form 8889 qualified HSA funding transfer needs HDHP eligibility in its transfer month",
-        );
+      const transferCoverage = funding.transfers.map((transfer) => {
+        const coverage = input.eligible_hdhp_coverage_by_month![
+          transfer.transfer_month - 1
+        ];
+        if (coverage === null) {
+          throw new Error(
+            "Form 8889 qualified HSA funding transfer needs HDHP eligibility in its transfer month",
+          );
+        }
+        const limit = (coverage === CoverageType.Family
+          ? cfg.hsaFamilyLimit
+          : cfg.hsaSelfOnlyLimit) +
+          (input.age_55_or_older ? cfg.hsaCatchup : 0);
+        if (transfer.amount > limit) {
+          throw new Error(
+            "Form 8889 qualified HSA funding transfer exceeds its coverage limit",
+          );
+        }
+        return coverage;
+      });
+      if (funding.transfers.length === 2) {
+        const [first, second] = funding.transfers;
+        if (
+          transferCoverage[0] !== CoverageType.SelfOnly ||
+          transferCoverage[1] !== CoverageType.Family ||
+          first.transfer_month >= second.transfer_month ||
+          first.source_reference === second.source_reference
+        ) {
+          throw new Error(
+            "Form 8889 second HSA funding transfer needs a later family-coverage month and distinct trustee source",
+          );
+        }
       }
-      const annualTransferLimit = (coverageAtTransfer === CoverageType.Family
+      const lifetimeLimit = (funding.transfers.length === 2
+        ? cfg.hsaFamilyLimit
+        : transferCoverage[0] === CoverageType.Family
         ? cfg.hsaFamilyLimit
         : cfg.hsaSelfOnlyLimit) +
         (input.age_55_or_older ? cfg.hsaCatchup : 0);
-      if (
-        fundingAmount > annualTransferLimit || fundingAmount > limitLines.line8
-      ) {
+      if (fundingAmount > lifetimeLimit || fundingAmount > limitLines.line8) {
         throw new Error(
           "Form 8889 qualified HSA funding transfer exceeds its eligible contribution limit",
         );

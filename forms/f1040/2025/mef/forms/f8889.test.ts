@@ -38,7 +38,11 @@ Deno.test("Form 8889 rejects raw HSA values without computed form lines", () => 
   assertThrows(
     () =>
       form8889.build(
-        { qualified_hsa_funding_distribution: { amount: 1000 } },
+        {
+          qualified_hsa_funding_distributions: {
+            transfers: [{ amount: 1000 }],
+          },
+        },
         context,
       ),
     Error,
@@ -62,13 +66,15 @@ Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () 
       eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
       age_55_or_older: false,
       last_month_rule_elected: false,
-      qualified_hsa_funding_distribution: {
-        amount: 1000,
-        transfer_month: 3,
-        ira_type: "traditional",
-        direct_trustee_transfer: true,
+      qualified_hsa_funding_distributions: {
         no_prior_qualified_funding_distribution: true,
-        source_reference: "IRA trustee transfer confirmation",
+        transfers: [{
+          amount: 1000,
+          transfer_month: 3,
+          ira_type: "traditional",
+          direct_trustee_transfer: true,
+          source_reference: "IRA trustee transfer confirmation",
+        }],
       },
     }),
   );
@@ -81,6 +87,46 @@ Deno.test("Form 8889 calculated IRA-to-HSA transfer reaches native line 10", () 
   assertStringIncludes(
     xml,
     "<HSALimitedContributionAmt>3300</HSALimitedContributionAmt>",
+  );
+});
+
+Deno.test("Form 8889 sums two permitted IRA-to-HSA transfers on native line 10", () => {
+  const result = form8889Node.compute(
+    { taxYear: 2025, formType: "f1040" },
+    form8889InputSchema.parse({
+      eligible_hdhp_coverage_by_month: [
+        ...Array(6).fill(CoverageType.SelfOnly),
+        ...Array(6).fill(CoverageType.Family),
+      ],
+      age_55_or_older: false,
+      last_month_rule_elected: false,
+      married_at_year_end: false,
+      qualified_hsa_funding_distributions: {
+        no_prior_qualified_funding_distribution: true,
+        transfers: [
+          {
+            amount: 3000,
+            transfer_month: 3,
+            ira_type: "traditional",
+            direct_trustee_transfer: true,
+            source_reference: "March trustee transfer",
+          },
+          {
+            amount: 5000,
+            transfer_month: 8,
+            ira_type: "roth",
+            direct_trustee_transfer: true,
+            source_reference: "August trustee transfer",
+          },
+        ],
+      },
+    }),
+  );
+  const printed = result.outputs.find((entry) => entry.nodeType === "form8889");
+  const xml = form8889.build(printed?.fields ?? {}, context);
+  assertStringIncludes(
+    xml,
+    "<HSAQualifiedFundingDistriAmt>8000</HSAQualifiedFundingDistriAmt>",
   );
 });
 

@@ -30,12 +30,14 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   2025 distribution and earnings lines. Twelve explicit ineligible months
   produce a zero contribution limit and still route sourced employer excess to
   income and Form 5329.
-- A single traditional/Roth IRA-to-HSA direct trustee transfer can populate line
-  10 when the transfer month is eligible, the source is identified, and the
-  taxpayer affirms no prior qualified funding distribution. It reduces line 12
-  and available personal contribution room. The permitted second
-  self-only-to-family transfer, external IRA reconciliation, and later testing
-  period remain open.
+- One direct traditional/Roth IRA-to-HSA trustee transfer can populate line 10
+  when its transfer month is eligible, the source is identified, and the
+  taxpayer affirms no earlier funding distribution. A second distinct transfer
+  is allowed only in a later month of the same year after self-only coverage
+  changes to family coverage. The sum is capped by the family contribution limit
+  and available Form 8889 line 8 room. Each transfer has its own later testing
+  period. External IRA reconciliation and later testing-period verification
+  remain open.
 - Employer line 9 follows the 2025 Employer Contribution Worksheet: W-2 box 12
   code W less deposits made in 2025 for 2024, plus deposits made in 2026 for
   2025. Both year-allocation amounts are explicit source facts when code W is

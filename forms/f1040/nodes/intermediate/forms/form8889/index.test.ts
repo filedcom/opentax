@@ -144,13 +144,15 @@ Deno.test("part1: direct IRA-to-HSA funding transfer reduces line 12 contributio
     taxpayer_hsa_contributions: 2500,
     employer_hsa_contributions: 1000,
     hsa_december_31_value: 4500,
-    qualified_hsa_funding_distribution: {
-      amount: 1000,
-      transfer_month: 6,
-      ira_type: "traditional",
-      direct_trustee_transfer: true,
+    qualified_hsa_funding_distributions: {
       no_prior_qualified_funding_distribution: true,
-      source_reference: "2025 IRA trustee transfer confirmation",
+      transfers: [{
+        amount: 1000,
+        transfer_month: 6,
+        ira_type: "traditional",
+        direct_trustee_transfer: true,
+        source_reference: "2025 IRA trustee transfer confirmation",
+      }],
     },
   });
   const printed = findOutput(result, "form8889")?.fields;
@@ -171,13 +173,15 @@ Deno.test("part1: a funding transfer needs eligible coverage in its transfer mon
           null,
           ...Array(6).fill(CoverageType.SelfOnly),
         ],
-        qualified_hsa_funding_distribution: {
-          amount: 1000,
-          transfer_month: 6,
-          ira_type: "roth",
-          direct_trustee_transfer: true,
+        qualified_hsa_funding_distributions: {
           no_prior_qualified_funding_distribution: true,
-          source_reference: "Roth IRA trustee transfer confirmation",
+          transfers: [{
+            amount: 1000,
+            transfer_month: 6,
+            ira_type: "roth",
+            direct_trustee_transfer: true,
+            source_reference: "Roth IRA trustee transfer confirmation",
+          }],
         },
       }),
     Error,
@@ -188,18 +192,119 @@ Deno.test("part1: a funding transfer needs eligible coverage in its transfer mon
 Deno.test("part1: a funding-only Form 8889 prints line 10 without a deduction", () => {
   const result = compute({
     ...uniformSelfOnly,
-    qualified_hsa_funding_distribution: {
-      amount: 1000,
-      transfer_month: 3,
-      ira_type: "roth",
-      direct_trustee_transfer: true,
+    qualified_hsa_funding_distributions: {
       no_prior_qualified_funding_distribution: true,
-      source_reference: "Roth IRA trustee transfer confirmation",
+      transfers: [{
+        amount: 1000,
+        transfer_month: 3,
+        ira_type: "roth",
+        direct_trustee_transfer: true,
+        source_reference: "Roth IRA trustee transfer confirmation",
+      }],
     },
   });
   assertEquals(findOutput(result, "form8889")?.fields.print_line10, 1000);
   assertEquals(findOutput(result, "form8889")?.fields.print_line12, 3300);
   assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+});
+
+Deno.test("part1: later family coverage permits a second sourced IRA-to-HSA transfer", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    eligible_hdhp_coverage_by_month: [
+      ...Array(6).fill(CoverageType.SelfOnly),
+      ...Array(6).fill(CoverageType.Family),
+    ],
+    married_at_year_end: false,
+    qualified_hsa_funding_distributions: {
+      no_prior_qualified_funding_distribution: true,
+      transfers: [
+        {
+          amount: 3000,
+          transfer_month: 3,
+          ira_type: "traditional",
+          direct_trustee_transfer: true,
+          source_reference: "March trustee transfer",
+        },
+        {
+          amount: 5000,
+          transfer_month: 8,
+          ira_type: "roth",
+          direct_trustee_transfer: true,
+          source_reference: "August trustee transfer",
+        },
+      ],
+    },
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line10, 8000);
+  assertEquals(printed?.print_line11, 8000);
+  assertEquals(printed?.print_line12, 550);
+});
+
+Deno.test("part1: second IRA-to-HSA transfer must follow self-only coverage in a later family month", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        qualified_hsa_funding_distributions: {
+          no_prior_qualified_funding_distribution: true,
+          transfers: [
+            {
+              amount: 1000,
+              transfer_month: 3,
+              ira_type: "traditional",
+              direct_trustee_transfer: true,
+              source_reference: "first",
+            },
+            {
+              amount: 1000,
+              transfer_month: 8,
+              ira_type: "roth",
+              direct_trustee_transfer: true,
+              source_reference: "second",
+            },
+          ],
+        },
+      }),
+    Error,
+    "later family-coverage month",
+  );
+});
+
+Deno.test("part1: two IRA-to-HSA transfers cannot exceed the family contribution limit", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        eligible_hdhp_coverage_by_month: [
+          ...Array(6).fill(CoverageType.SelfOnly),
+          ...Array(6).fill(CoverageType.Family),
+        ],
+        married_at_year_end: false,
+        qualified_hsa_funding_distributions: {
+          no_prior_qualified_funding_distribution: true,
+          transfers: [
+            {
+              amount: 4300,
+              transfer_month: 3,
+              ira_type: "traditional",
+              direct_trustee_transfer: true,
+              source_reference: "March trustee transfer",
+            },
+            {
+              amount: 4300,
+              transfer_month: 8,
+              ira_type: "roth",
+              direct_trustee_transfer: true,
+              source_reference: "August trustee transfer",
+            },
+          ],
+        },
+      }),
+    Error,
+    "exceeds its eligible contribution limit",
+  );
 });
 
 Deno.test("part1: employer funding above the contribution limit needs income treatment", () => {
