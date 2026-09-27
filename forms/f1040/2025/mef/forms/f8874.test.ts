@@ -63,3 +63,74 @@ Deno.test("Form 8874 MeF requires matching linked Form 3800", () => {
   });
   assertStringIncludes(xml, "<CDETotalCreditAmt>50000</CDETotalCreditAmt>");
 });
+
+Deno.test("Form 8874 MeF reconciles passive and direct investments separately", () => {
+  const passive = {
+    ...source.investments[0],
+    subject_to_passive_activity_limit: true,
+    passive_activity_reference: "Community venture",
+    passive_source_document_reference: "2025 community venture QEI",
+  };
+  const mixed = {
+    investments: [passive, {
+      ...source.investments[0],
+      initial_investment_date: "2022-04-15",
+      designation_notice_reference: "2022 QEI notice",
+    }],
+  };
+  const activity = {
+    activity_reference: "Community venture",
+    source_form: "Form 8874",
+    source_origin: { kind: "self" },
+    source_document_reference: "2025 community venture QEI",
+    category: "other",
+    reporting_route: "form3800_line3",
+    form3800_credit_line: "1i",
+    current_year_credit: 50_000,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  };
+  const pending = {
+    f3800: { f8874_credit: { credit_amount: 60_000 } },
+    form8582cr: {
+      credit_sources: [activity],
+      regular_tax_all_income: 50_000,
+      regular_tax_without_passive: 40_000,
+    },
+  };
+  const context = {
+    pending,
+    documentIdsByPendingKey: {
+      f3800: ["IRS3800_1"],
+      form8582cr: ["IRS8582CR_1"],
+    },
+  };
+  assertStringIncludes(
+    form8874.build(mixed, context),
+    "<TotalCreditAmt>110000</TotalCreditAmt>",
+  );
+  assertThrows(
+    () =>
+      form8874.build(mixed, {
+        ...context,
+        pending: {
+          ...pending,
+          form8582cr: {
+            ...pending.form8582cr,
+            credit_sources: [{ ...activity, current_year_credit: 49_999 }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to Form 8582-CR",
+  );
+  assertThrows(
+    () =>
+      form8874.build(mixed, {
+        ...context,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "needs attached Form 8582-CR",
+  );
+});

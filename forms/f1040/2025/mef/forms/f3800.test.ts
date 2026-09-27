@@ -441,6 +441,84 @@ Deno.test("Form 3800 links an identified Form 8874 credit to line 1i", () => {
   );
 });
 
+Deno.test("Form 3800 keeps the Form 8874 attachment for a passive-only QEI", () => {
+  const source = sourceAllocationSchema.parse({
+    activity_reference: "Community venture",
+    source_form: "Form 8874",
+    source_origin: { kind: PassiveCreditSourceOrigin.Self },
+    source_document_reference: "2025 community venture QEI",
+    category: PassiveCreditCategory.Other,
+    reporting_route: PassiveCreditReportingRoute.Form3800Line3,
+    form3800_credit_line: "1i",
+    current_year_credit: 500,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+    total_credit: 500,
+    special_allowed_credit: 0,
+    unallowed_credit: 0,
+    allowed_credit: 500,
+  });
+  const businessTax = { ...tax, regularTax: 1_000, standardCredit: 0 };
+  const input = {
+    passive_source_allocations: [source],
+    tax_context: businessTax,
+    allowed_credit: 500,
+  };
+  const context = {
+    pending: {
+      ...filedPending(businessTax, 500),
+      f8874: {
+        investments: [{
+          cde_name: "Community Development Entity",
+          cde_ein: "123456789",
+          cde_address: {
+            line1: "10 Main Street",
+            city: "Wilmington",
+            state: "DE",
+            zip: "19801",
+          },
+          initial_investment_date: "2023-04-15",
+          credit_allowance_date: "2025-04-15",
+          qualified_equity_investment_amount: 10_000,
+          designation_notice_reference: "2023 QEI notice",
+          held_on_credit_allowance_date: true,
+          qualified_on_credit_allowance_date: true,
+          recapture_notice_received: false,
+          subject_to_passive_activity_limit: true,
+          passive_activity_reference: "Community venture",
+          passive_source_document_reference: "2025 community venture QEI",
+        }],
+      },
+      form8582cr: {
+        credit_sources: [source],
+        regular_tax_all_income: 1_000,
+        regular_tax_without_passive: 500,
+      },
+    },
+    documentIdsByPendingKey: {
+      f8874: ["IRS8874_1"],
+      form8582cr: ["IRS8582CR_1"],
+      form6251: ["IRS6251_1"],
+    },
+  };
+  assertStringIncludes(
+    form3800.build(input, context),
+    "<Form8874CYCreditsGrp",
+  );
+  assertThrows(
+    () =>
+      form3800.build(input, {
+        ...context,
+        documentIdsByPendingKey: {
+          form8582cr: ["IRS8582CR_1"],
+          form6251: ["IRS6251_1"],
+        },
+      }),
+    Error,
+    "Form 8874 document count differs from source",
+  );
+});
+
 Deno.test("Form 3800 files partnership code AD directly without an IRS8874", () => {
   const businessTax = { ...tax, standardCredit: 1_250 };
   const source = {

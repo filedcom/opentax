@@ -39,10 +39,15 @@ without an invented IRS8874. Its reconciliation cases are written but unrun.
 Passive K-1 code AD/ZZ amounts now deposit a required Form 8582-CR marker; the
 activity source must match the K-1 credit and the MeF builder reconciles it
 again before Form 3800 receives the passive allocation. These cases are written
-but unrun. Self-earned passive QEI credits, carryovers, recapture and sale
-events, leap-day allowance dates, cent-bearing QEI/credit reporting, filled PDF
-inspection, and IRS business-rule/ATS evidence remain open. It is not filing
-ready.
+but unrun. A self-earned passive QEI now deposits a source-specific Form
+8582-CR requirement, while only the nonpassive portion goes directly to Form
+3800. The filed Form 8874, Form 8582-CR activity, Form 3800 amount, and source
+document count are cross-checked, including passive-only and mixed-source
+cases written but unrun. Passive sources currently require whole-dollar credit
+amounts because the Form 8582-CR source model does; cent-bearing passive credit
+reporting remains open. Carryovers, recapture and sale events, leap-day
+allowance dates, filled PDF inspection, and IRS business-rule/ATS evidence also
+remain open. It is not filing ready.
 
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and

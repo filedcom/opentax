@@ -85,3 +85,76 @@ Deno.test("Form 8874 rejects a duplicated investment notice", () => {
     false,
   );
 });
+
+Deno.test("Form 8874 splits self-earned passive and nonpassive investments", () => {
+  const passive = {
+    ...investment,
+    subject_to_passive_activity_limit: true,
+    passive_activity_reference: "Community venture",
+    passive_source_document_reference: "2025 community venture QEI",
+  } as const;
+  const direct = {
+    ...investment,
+    initial_investment_date: "2022-04-15",
+    designation_notice_reference: "2022 QEI notice",
+  } as const;
+  const lines = calculateForm8874({ investments: [passive, direct] });
+  assertEquals(lines.passiveCredit, 50_000);
+  assertEquals(lines.nonpassiveCredit, 60_000);
+  assertEquals(lines.line3, 110_000);
+  const outputs = f8874.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { investments: [passive, direct] },
+  ).outputs;
+  assertEquals(outputs.length, 2);
+  assertEquals(
+    f3800.inputSchema.parse(outputs[0].fields).f8874_credit?.credit_amount,
+    60_000,
+  );
+  assertEquals(outputs[1].nodeType, "form8582cr");
+  assertEquals(outputs[1].fields, {
+    required_new_markets_self_credits: [{
+      activity_reference: "Community venture",
+      source_document_reference: "2025 community venture QEI",
+      credit_amount: 50_000,
+    }],
+  });
+  const passiveOnly = f8874.compute(
+    { taxYear: 2025, formType: "f1040" },
+    { investments: [passive] },
+  ).outputs;
+  assertEquals(passiveOnly.length, 1);
+  assertEquals(passiveOnly[0].nodeType, "form8582cr");
+});
+
+Deno.test("Form 8874 passive investment requires distinct whole-dollar activity evidence", () => {
+  const passive = {
+    ...investment,
+    subject_to_passive_activity_limit: true,
+    passive_activity_reference: "Community venture",
+    passive_source_document_reference: "2025 community venture QEI",
+  } as const;
+  assertEquals(
+    f8874.inputSchema.safeParse({ investments: [passive] }).success,
+    true,
+  );
+  assertEquals(
+    f8874.inputSchema.safeParse({
+      investments: [{
+        ...passive,
+        qualified_equity_investment_amount: 100.20,
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    f8874.inputSchema.safeParse({
+      investments: [passive, {
+        ...passive,
+        initial_investment_date: "2022-04-15",
+        designation_notice_reference: "2022 QEI notice",
+      }],
+    }).success,
+    false,
+  );
+});

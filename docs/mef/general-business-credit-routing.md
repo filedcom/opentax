@@ -55,10 +55,14 @@ batch. Nonpassive partnership and S-corporation K-1 code AD sources also enter
 line 1i directly, with filed K-1 amount and identity reconciliation and no
 invented IRS8874 for pass-through-only claims. Estate/trust K-1 box 13 code ZZ
 credits require a statement identifying the New Markets Credit and use the same
-source-backed line 1i. Passive K-1 credits now require matching Form 8582-CR
-activity facts and K-1 evidence before their Form 3800 allocation. Self-earned
-passive, carryforward, recapture, and cent-bearing cases remain open; this is
-not a complete New Markets Credit filing path.
+source-backed line 1i. Passive K-1 credits require matching Form 8582-CR
+activity facts and K-1 evidence before their Form 3800 allocation. A self-earned
+passive QEI now similarly requires a named Form 8582-CR activity and source,
+with the filed Form 8874 checked against that source; its nonpassive share is
+routed directly, so mixed investments do not duplicate the credit. Passive
+credits currently require whole-dollar source amounts. Carryforward, recapture,
+and cent-bearing passive cases remain open; this is not a complete New Markets
+Credit filing path.
 
 `f8820` now sends an identified, nonpassive orphan-drug source credit to Form
 3800 Part III line 1h instead of depositing its gross 25% credit in Schedule 3.

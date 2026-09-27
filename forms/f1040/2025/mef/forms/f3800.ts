@@ -356,12 +356,12 @@ function sourceForm8874(
   const source = f8874InputSchema.parse(raw);
   const lines = calculateForm8874(source);
   if (
-    !sameMoney(fields.f8874_credit.credit_amount, lines.line3) ||
+    !sameMoney(fields.f8874_credit.credit_amount, lines.nonpassiveCredit) ||
     fields.f8874_credit.subject_to_passive_activity_limit !== false
   ) {
     throw new Error("Form 3800 new-markets credit differs from Form 8874");
   }
-  return { source, lines, credit: lines.line3 };
+  return { source, lines, credit: lines.nonpassiveCredit };
 }
 
 function sourceOrphanDrugK1Credits(
@@ -925,7 +925,10 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       );
     }
     const form8874Ids = context.documentIdsByPendingKey.f8874 ?? [];
-    if (form8874Ids.length !== (form8874 ? 1 : 0)) {
+    const filedForm8874 = context.pending?.f8874 === undefined
+      ? undefined
+      : f8874InputSchema.parse(context.pending.f8874);
+    if (form8874Ids.length !== (filedForm8874 ? 1 : 0)) {
       throw new Error("Form 3800 Form 8874 document count differs from source");
     }
     const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];

@@ -165,6 +165,48 @@ Deno.test("Form 8582-CR requires passive New Markets K-1 activity and statement 
   );
 });
 
+Deno.test("Form 8582-CR matches each self-earned passive New Markets activity", () => {
+  const activity = {
+    ...other(500, 0, "Community venture"),
+    source_form: "Form 8874",
+    form3800_credit_line: "1i" as const,
+    source_document_reference: "2025 community venture QEI",
+  };
+  const evidence = {
+    activity_reference: activity.activity_reference,
+    source_document_reference: activity.source_document_reference,
+    credit_amount: 500,
+  };
+  const facts = {
+    credit_sources: [activity],
+    required_new_markets_self_credits: [evidence],
+    regular_tax_all_income: 2_000,
+    regular_tax_without_passive: 1_500,
+  };
+  assertEquals(inputSchema.safeParse(facts).success, true);
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      credit_sources: [{ ...activity, current_year_credit: 499 }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      credit_sources: [{ ...activity, source_document_reference: "Other QEI" }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...facts,
+      required_new_markets_self_credits: [evidence, evidence],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 8582-CR reconciles rounded disabled-access K-1 activity credits", () => {
   const evidence = {
     source_type: "partnership" as const,

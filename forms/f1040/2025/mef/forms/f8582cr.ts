@@ -12,6 +12,10 @@ import { reconcileOrphanDrugK1Credits } from "./f8820_credit_evidence.ts";
 import { reconcileDisabledAccessK1Credits } from "./f8826_credit_evidence.ts";
 import { readDisabledAccessCapLedger } from "./f8826_cap_ledger.ts";
 import { reconcileNewMarketsK1Credits } from "./f8874_credit_evidence.ts";
+import {
+  calculateForm8874,
+  inputSchema as f8874InputSchema,
+} from "../../../nodes/inputs/f8874/index.ts";
 
 function combineK1ActivityCredits<
   T extends {
@@ -139,14 +143,48 @@ function reconcilePassiveNewMarketsSources(
   if (!context.pending) {
     throw new Error("Form 8582-CR source evidence needs the filed return");
   }
+  const selfSources = sourceAllocations.filter((source) =>
+    source.form3800_credit_line === "1i" &&
+    source.current_year_credit > 0 &&
+    source.source_origin.kind === PassiveCreditSourceOrigin.Self
+  );
+  if (selfSources.length > 0) {
+    const raw = context.pending.f8874;
+    if (!raw || context.documentIdsByPendingKey.f8874?.length !== 1) {
+      throw new Error(
+        "Form 8582-CR self-earned New Markets credit needs attached Form 8874",
+      );
+    }
+    const investments = calculateForm8874(f8874InputSchema.parse(raw)).rows
+      .filter((row) => row.investment.subject_to_passive_activity_limit);
+    if (
+      investments.length !== selfSources.length ||
+      investments.some((row) =>
+        !selfSources.some((source) =>
+          source.source_form === "Form 8874" &&
+          source.reporting_route ===
+            PassiveCreditReportingRoute.Form3800Line3 &&
+          source.activity_reference ===
+            row.investment.passive_activity_reference &&
+          source.source_document_reference ===
+            row.investment.passive_source_document_reference &&
+          source.current_year_credit === row.creditAmount
+        )
+      )
+    ) {
+      throw new Error(
+        "Form 8582-CR self-earned New Markets credit differs from filed Form 8874",
+      );
+    }
+  }
   const credits = sourceAllocations.flatMap((source) => {
     if (
       source.form3800_credit_line !== "1i" ||
       source.current_year_credit === 0
     ) return [];
     const origin = source.source_origin;
+    if (origin.kind === PassiveCreditSourceOrigin.Self) return [];
     if (
-      origin.kind === PassiveCreditSourceOrigin.Self ||
       origin.kind === PassiveCreditSourceOrigin.Cooperative ||
       !origin.ein || source.source_form !== "Form 8874"
     ) {
@@ -206,11 +244,12 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
       raw && typeof raw === "object" &&
       ("required_orphan_drug_k1_credits" in raw ||
         "required_new_markets_k1_credits" in raw ||
+        "required_new_markets_self_credits" in raw ||
         "required_disabled_access_k1_credits" in raw) &&
       !("credit_sources" in raw)
     ) {
       throw new Error(
-        "Form 8582-CR passive K-1 credit needs activity and tax facts",
+        "Form 8582-CR passive credit needs activity and tax facts",
       );
     }
     if (!raw || typeof raw !== "object" || !("credit_sources" in raw)) {

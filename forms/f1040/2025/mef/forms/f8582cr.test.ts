@@ -55,6 +55,7 @@ Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", ()
     const field of [
       "required_orphan_drug_k1_credits",
       "required_new_markets_k1_credits",
+      "required_new_markets_self_credits",
       "required_disabled_access_k1_credits",
     ]
   ) {
@@ -72,6 +73,85 @@ Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", ()
       "needs activity and tax facts",
     );
   }
+});
+
+Deno.test("Form 8582-CR self-earned New Markets source matches attached Form 8874", () => {
+  const investment = {
+    cde_name: "Community Development Entity",
+    cde_ein: "123456789",
+    cde_address: {
+      line1: "10 Main Street",
+      city: "Wilmington",
+      state: "DE",
+      zip: "19801",
+    },
+    initial_investment_date: "2023-04-15",
+    credit_allowance_date: "2025-04-15",
+    qualified_equity_investment_amount: 10_000,
+    designation_notice_reference: "2023 QEI notice",
+    held_on_credit_allowance_date: true,
+    qualified_on_credit_allowance_date: true,
+    recapture_notice_received: false,
+    subject_to_passive_activity_limit: true,
+    passive_activity_reference: "Community venture",
+    passive_source_document_reference: "2025 community venture QEI",
+  };
+  const source = {
+    ...otherCredit,
+    activity_reference: "Community venture",
+    source_form: "Form 8874",
+    source_document_reference: "2025 community venture QEI",
+    form3800_credit_line: "1i",
+    current_year_credit: 500,
+    prior_unallowed_credits: [],
+  };
+  const input = {
+    credit_sources: [source],
+    regular_tax_all_income: 2_000,
+    regular_tax_without_passive: 1_500,
+  };
+  const allocation = calculateForm8582CR(inputSchema.parse(input))
+    .sourceAllocations[0];
+  const context = {
+    documentIdsByPendingKey: {
+      f3800: ["IRS3800_1"],
+      f8874: ["IRS8874_1"],
+    },
+    pending: {
+      f3800: { passive_source_allocations: [allocation] },
+      f8874: { investments: [investment] },
+    },
+  };
+  assertStringIncludes(
+    form8582cr.build(input, context),
+    "<AllowedCreditsAmt>500</AllowedCreditsAmt>",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        ...context,
+        pending: {
+          ...context.pending,
+          f8874: {
+            investments: [{
+              ...investment,
+              qualified_equity_investment_amount: 9_000,
+            }],
+          },
+        },
+      }),
+    Error,
+    "differs from filed Form 8874",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        ...context,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "needs attached Form 8874",
+  );
 });
 
 Deno.test("Form 8582-CR: Part I preserves current and prior other credits", () => {

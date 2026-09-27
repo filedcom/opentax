@@ -171,7 +171,7 @@ function allocateCreditsToSources(
 export const inputSchema = z.object({
   // Source identity and current/prior amounts feed the four Part I worksheets.
   credit_sources: z.array(creditSourceSchema),
-  // K-1 nodes deposit this evidence so an entered passive credit cannot be
+  // Source nodes deposit this evidence so an entered passive credit cannot be
   // omitted from the activity calculation without a diagnostic.
   required_orphan_drug_k1_credits: z.array(z.object({
     source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
@@ -184,6 +184,11 @@ export const inputSchema = z.object({
     source_ein: z.string().regex(/^\d{9}$/),
     source_document_reference: z.string().trim().min(1),
     source_statement_reference: z.string().trim().min(1).optional(),
+    credit_amount: z.number().int().positive(),
+  })).optional(),
+  required_new_markets_self_credits: z.array(z.object({
+    activity_reference: z.string().trim().min(1),
+    source_document_reference: z.string().trim().min(1),
     credit_amount: z.number().int().positive(),
   })).optional(),
   required_disabled_access_k1_credits: z.array(z.object({
@@ -315,6 +320,40 @@ export const inputSchema = z.object({
         path: ["required_new_markets_k1_credits", index],
         message:
           "Form 8582-CR New Markets activities must match the passive K-1 amount",
+      });
+    }
+  });
+  const marketsSelfKeys = new Set<string>();
+  input.required_new_markets_self_credits?.forEach((evidence, index) => {
+    const key = [
+      evidence.activity_reference,
+      evidence.source_document_reference,
+    ].join(":");
+    if (marketsSelfKeys.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_new_markets_self_credits", index],
+        message: "Form 8582-CR self-earned New Markets source is duplicated",
+      });
+    }
+    marketsSelfKeys.add(key);
+    const matching = input.credit_sources.filter((source) =>
+      source.source_form === "Form 8874" &&
+      source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&
+      source.form3800_credit_line === "1i" &&
+      source.source_origin.kind === PassiveCreditSourceOrigin.Self &&
+      source.activity_reference === evidence.activity_reference &&
+      source.source_document_reference === evidence.source_document_reference
+    );
+    if (
+      matching.length !== 1 ||
+      matching[0].current_year_credit !== evidence.credit_amount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_new_markets_self_credits", index],
+        message:
+          "Form 8582-CR self-earned New Markets activity must match the Form 8874 credit",
       });
     }
   });
