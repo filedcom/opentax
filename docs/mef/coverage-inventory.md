@@ -96,23 +96,22 @@ end-to-end, and business-rule tests before it can become a whole-form claim.
 These appear in Form 1040 Scenario 4 and cannot be treated as ATS-ready simply
 because a serializer exists or the IRS XSD permits them.
 
-| Scenario | IRS XML root or required attachment | Current evidence                                                                                                                                                               |
-| -------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1040-04  | `IRS3800`                           | M: no registered XML serializer; a temporary descriptor fails export closed for a credit claim. The source-backed nonpassive graph limit is written but unrun.                 |
-| 1040-04  | `IRS8835`                           | Build pass: per-facility Part I/II serializer registered; source-to-XSD and negative cases written but unrun. Fiscal years, source statements, and ATS acceptance remain open. |
-| 1040-04  | Transfer Election Statement PDF     | M: source PDF identifies the attachment, but its content is not in the captured scenario facts                                                                                 |
+| Scenario | IRS XML root or required attachment | Current evidence                                                                                                                                                                                                                   |
+| -------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1040-04  | `IRS3800`                           | A source-backed nonpassive Form 8826/8835 serializer is registered and links source documents and Schedule 3 line 6a. Its graph limit and direct cases are written but unrun; other credit classes and ATS acceptance remain open. |
+| 1040-04  | `IRS8835`                           | Build pass: per-facility Part I/II serializer registered; source-to-XSD and negative cases written but unrun. Fiscal years, source statements, and ATS acceptance remain open.                                                     |
+| 1040-04  | Transfer Election Statement PDF     | M: source PDF identifies the attachment, but its content is not in the captured scenario facts                                                                                                                                     |
 
 Form 8826 is another in-scope source document, outside the Scenario 4 rows
 above. Its lines 1, 3, 5, 6, 7, and 8 now have a registered `IRS8826` XML
 descriptor for self-earned claims and unrun source-to-XSD cases. The descriptor
 requires an attached Form 3800 in the linked bundle and omits pass-through-only
-recipient claims. The unregistered Form 3800 draft has a linked Part III line
-1e, Part II nonpassive reconciliation, and Part V rows for multiple Form 8826
-sources. Those rows retain capped source credit, K-1 EIN, explicit applied
+recipient claims. The registered nonpassive Form 3800 path has a linked Part III
+line 1e, Part II nonpassive reconciliation, and Part V rows for multiple Form
+8826 sources. Those rows retain capped source credit, K-1 EIN, explicit applied
 amount, and remaining amount; their cases are unrun. The graph-level nonpassive
-allowed-credit route is written but unrun. No registered Form 3800 XML document,
-Form 8826 PDF, passive Form 8582-CR path, K-1 document reconciliation, or ATS
-evidence exists yet.
+allowed-credit route is written but unrun. No Form 8826 PDF, passive Form
+8582-CR path, K-1 document reconciliation, or ATS evidence exists yet.
 
 The ATS inventory in `docs/ats/ty2025.md` identifies other scenario-specific
 facts that remain incomplete. This file must be expanded after comparing IRS

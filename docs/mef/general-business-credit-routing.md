@@ -42,9 +42,10 @@ activity allowed credit directly into line 6a, but that is only the passive
 activity limit, not necessarily the Form 3800 tax-liability limit. `f8835`
 instead forwards per-facility amounts to `f3800`; positive available credit now
 waits for final Form 1040 tax and Form 6251 TMT before Schedule 3 receives the
-allowed amount. MeF export still stops until IRS3800 and the source bundle are
-registered. Form 8936 business-use and Form 8911 business-use paths also need
-the shared Form 3800 treatment.
+allowed amount. The source-backed nonpassive IRS3800 bundle is registered but
+unverified; unsupported credit categories still stop export. Form 8936
+business-use and Form 8911 business-use paths also need the shared Form 3800
+treatment.
 
 `f8826` now forwards its line 8 source amount to `f3800` as a separate line 1e
 entry. A positive nonpassive credit is limited at final Form 1040 assembly; a
@@ -54,11 +55,11 @@ Identified partnership and S-corporation line 7 credits now combine with
 self-earned line 6 under one $5,000 cap. A pass-through-only credit can appear
 on Form 3800 without a Form 8826 document; the source amounts are allocated pro
 rata in cents when that cap binds. K-1 attachment reconciliation and filed
-source-attribution checks remain open. The unregistered Form 3800 XML draft now
+source-attribution checks remain open. The registered Form 3800 XML path now
 emits Part V rows for multiple Form 8826 sources, retaining their EINs, capped
-amounts, explicit applied-credit split, and remaining amounts. The draft is not
-yet a registered filing document, and the MeF export guard rejects both
-source-backed and legacy Form 3800 credits. The self-earned Form 8826 XML is
+amounts, explicit applied-credit split, and remaining amounts. This path has not
+passed the deferred full test batch, local XSD, or IRS business rules. The
+legacy gross-credit path remains unsupported. The self-earned Form 8826 XML is
 registered, while pass-through-only recipients do not attach their own
 Form 8826. Schedule 3 line 6a now requires a linked Form 3800 document before
 export.
@@ -92,8 +93,9 @@ source cases and the stop are written but unrun in the current build pass.
    Form 1040, transfer statements, and any carryforward. Then run full-batch
    tests, local XSD, business rules, and ATS acceptance as separate gates.
 
-The current pure Form 8835/Form 3800 helpers cover only a nonpassive slice of
-steps 1, 3, and 4. They are not registered as a filed Form 3800 document.
+The current Form 8826/8835/Form 3800 path covers only a nonpassive slice of
+steps 1, 3, 4, and 5. Its native document is registered but unverified in the
+deferred full test batch and is not ATS accepted.
 
 Form 8912's routing is confirmed by
 [Form 8912 line 12](https://www.irs.gov/pub/irs-pdf/f8912.pdf) and its

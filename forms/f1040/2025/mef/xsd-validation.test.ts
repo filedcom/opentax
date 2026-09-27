@@ -15,6 +15,7 @@ import { registry } from "../registry.ts";
 import { buildMefBundle, buildMefXml } from "./builder.ts";
 import type { MefFormsPending } from "./types.ts";
 import { FilingStatus } from "../../nodes/types.ts";
+import { EnergyType } from "../../nodes/inputs/f8835/index.ts";
 import { SS_WAGE_BASE_2025 } from "../../nodes/config/2025.ts";
 import { extractFilerIdentity } from "../../mef/filer.ts";
 import {
@@ -51,6 +52,70 @@ const nonApplicableBelowFpl = {
   no_self_employed_health_insurance_deduction: true,
   no_alternative_marriage_calculation: true,
 } as const;
+
+Deno.test({
+  name:
+    "XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const facility = {
+    energy_type: EnergyType.Wind,
+    subject_to_passive_activity_limit: false,
+    kwh_produced: 1_000_000,
+    kwh_sold: 1_000_000,
+    facility_description: "Onshore wind turbine",
+    facility_us_address: {
+      line1: "100 Wind Farm Rd",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    facility_latitude: 30.267153,
+    facility_longitude: -97.743061,
+    facility_owned_by_filer: true,
+    ac_nameplate_kw: 900,
+    facility_placed_in_service_date: "2023-01-01",
+    facility_construction_start_date: "2022-12-01",
+    production_period_start_date: "2025-01-01",
+    production_period_end_date: "2025-12-31",
+    increased_credit_reason: "none" as const,
+    domestic_content_bonus: false,
+    energy_community_bonus: false,
+    is_fiscal_year: false,
+  };
+  const xml = buildMefXml({
+    schedule3: { line6a_total: 6_000 },
+    f3800: {
+      f8835_credit_entries: [{
+        form3800_line: "4e",
+        credit_amount: 6_000,
+        transfer_out_amount: 0,
+        subject_to_passive_activity_limit: false,
+      }],
+      tax_context: {
+        filingStatus: FilingStatus.Single,
+        regularTax: 40_000,
+        alternativeMinimumTax: 0,
+        foreignTaxCredit: 0,
+        priorAllowableCredits: 0,
+        tentativeMinimumTax: 20_000,
+        standardCredit: 0,
+        specifiedCredit: 6_000,
+      },
+      allowed_credit: 6_000,
+    },
+    f8835: { f8835s: [facility] },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS3800 ");
+  assertStringIncludes(xml, "<IRS8835 ");
+  assertStringIncludes(
+    xml,
+    "<CurrentYearCreditAllowedAmt>6000</CurrentYearCreditAllowedAmt>",
+  );
+  await validateXsd(xml, "linked Form 8835 and Form 3800");
+});
 
 Deno.test({
   name: "XSD: 2025 Schedule 2 line 1a Form 8962 repayment precedes line 2 AMT",
