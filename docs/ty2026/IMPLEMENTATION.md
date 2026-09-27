@@ -23,6 +23,9 @@ state of a node.
 The [parity queue](PARITY-QUEUE.md) groups retained TY2025 PDF/MeF surfaces
 and TY2026-only attachments into coding waves, with the cross-form evidence
 required to close each route.
+The [product assembly handoff](PRODUCT-ASSEMBLY.md) names the year-specific
+catalog, CLI summary, validation, XML, PDF and submission-archive seams that
+must be completed after the individual form routes.
 The [Form 8826/8835 and statement contract](FORM8826-8835-STATEMENTS.md)
 closes the TY2025 MeF inventory's distinct credit-form and statement-only
 routes, including the 2026 crop-election text change and 5695 statement

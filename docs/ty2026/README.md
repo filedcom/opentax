@@ -102,6 +102,9 @@ for the implementation contract.
   original-versus-substitute reconciliation and 34 PDF widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
+- [`PRODUCT-ASSEMBLY.md`](PRODUCT-ASSEMBLY.md): repository handoff from the
+  form routes into catalog registration, CLI summary/validation/export,
+  submission ZIP and end-to-end ATS evidence.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
   `instruction-coverage.csv`: available 2026 instructions, URLs still serving
   2025, and source refresh gates for the full form inventory.

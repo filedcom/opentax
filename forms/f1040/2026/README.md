@@ -12,6 +12,9 @@ remaining route has an explicit source check before coding.
 The [parity queue](../../../docs/ty2026/PARITY-QUEUE.md) orders the remaining
 graph, PDF and MeF work against all TY2025 inventories and names the new
 2026-only forms that those inventories cannot reveal.
+The [product assembly handoff](../../../docs/ty2026/PRODUCT-ASSEMBLY.md)
+names the catalog, input, CLI summary, validation, PDF, MeF and submission
+ZIP changes needed to turn those routes into one end-to-end 2026 return.
 The [public MeF inventory reconciliation](../../../docs/ty2026/MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
 records published accepted counts and dependency names for Forms 3903/8938,
 and the absence of Form 4852 and U.S. RRB source statements from those
