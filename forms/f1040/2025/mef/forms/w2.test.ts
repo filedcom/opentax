@@ -129,6 +129,17 @@ Deno.test("w2 refuses a finalized document with missing employer filing data", (
   );
 });
 
+Deno.test("w2 refuses an Applied For employer EIN that IRSW2 cannot export", () => {
+  assertThrows(
+    () =>
+      w2.build({ w2s: [item({ employer_ein: "Applied For" })] }, {
+        filer: filer(),
+      }),
+    Error,
+    "employer EIN must be nine digits",
+  );
+});
+
 Deno.test("w2 refuses a finalized document without filer identity", () => {
   assertThrows(
     () => w2.build({ w2s: [item()] }),

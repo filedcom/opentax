@@ -253,6 +253,22 @@ export function calculateForm4137(
         );
       }
     }
+    for (const employer of form.employers) {
+      const employerEin = employer.ein?.replaceAll("-", "") ?? "Applied For";
+      if (
+        !related.some((source) =>
+          (source.rrta_compensation ?? 0) === 0 &&
+          source.employer_name === employer.name &&
+          (source.employer_ein === "Applied For"
+              ? "Applied For"
+              : source.employer_ein?.replaceAll("-", "")) === employerEin
+        )
+      ) {
+        throw new Error(
+          `Form 4137 ${form.recipient} line 1 employer does not match a filed W-2`,
+        );
+      }
+    }
     const incidentalTips = below20Months.reduce(
       (sum, month) => sum + month.tips_received - month.tips_reported,
       0,

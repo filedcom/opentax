@@ -14,6 +14,13 @@ const taxpayerForm = {
   }],
   ss_wages_from_w2: 30_000,
 };
+const taxpayerW2 = {
+  employee_ssn: "123-45-6789",
+  employer_name: "CAFE",
+  employer_ein: "12-3456789",
+  allocated_tips: 0,
+  ss_wages_and_tips: 30_000,
+};
 
 Deno.test("Form 4137 PDF maps the five employer rows and numbered lines", () => {
   const names = Object.fromEntries(
@@ -43,6 +50,8 @@ Deno.test("Form 4137 PDF maps the five employer rows and numbered lines", () => 
 
 Deno.test("Form 4137 PDF creates separate calculated taxpayer and spouse copies", () => {
   const copies = form4137Pdf.instances?.({
+    taxpayer_ssn: "123-45-6789",
+    spouse_ssn: "987-65-4321",
     forms: [taxpayerForm, {
       recipient: "spouse",
       employers: [{
@@ -52,6 +61,13 @@ Deno.test("Form 4137 PDF creates separate calculated taxpayer and spouse copies"
         tips_reported: 0,
       }],
       ss_wages_from_w2: 176_100,
+    }],
+    w2_tip_sources: [taxpayerW2, {
+      employee_ssn: "987-65-4321",
+      employer_name: "DINER",
+      employer_ein: "98-7654321",
+      allocated_tips: 0,
+      ss_wages_and_tips: 176_100,
     }],
   }) ?? [];
   assertEquals(copies.length, 2);
@@ -75,6 +91,12 @@ Deno.test("Form 4137 PDF adds continuation for employers beyond five", async () 
   }));
   const [copy] = form4137Pdf.instances?.({
     forms: [{ ...taxpayerForm, employers }],
+    w2_tip_sources: employers.map((employer) => ({
+      employer_name: employer.name,
+      employer_ein: employer.ein,
+      allocated_tips: 0,
+      ss_wages_and_tips: employer.name === "CAFE 1" ? 30_000 : 0,
+    })),
   }) ?? [];
   assertEquals(copy.line2, 6_000);
   assertEquals(copy.line3, 600);
@@ -87,6 +109,12 @@ Deno.test("Form 4137 PDF adds continuation for employers beyond five", async () 
 Deno.test("Form 4137 PDF requires spouse identity for a spouse copy", async () => {
   const [copy] = form4137Pdf.instances?.({
     forms: [{ ...taxpayerForm, recipient: "spouse" }],
+    taxpayer_ssn: "123-45-6789",
+    spouse_ssn: "987-65-4321",
+    w2_tip_sources: [{
+      ...taxpayerW2,
+      employee_ssn: "987-65-4321",
+    }],
   }) ?? [];
   const document = await PDFDocument.create();
   const page = document.addPage([612, 792]);

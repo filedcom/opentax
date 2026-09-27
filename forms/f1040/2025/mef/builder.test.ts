@@ -975,8 +975,21 @@ Deno.test("form8960 TaxableInterestAmt value appears in assembled output", () =>
 
 // ─── 24. New forms (plans 11-01 through 11-05): routing ───────────────────────
 
+const form4137W2 = {
+  employer_name: "CAFE",
+  employer_ein: "123456789",
+  employer_address_line1: "100 Main St",
+  employer_address_city: "Austin",
+  employer_address_state: "TX",
+  employer_address_zip: "78701",
+  box1_wages: 0,
+  box2_fed_withheld: 0,
+  box3_ss_wages: 0,
+};
+
 Deno.test("IRS4137 present when form4137 has data", () => {
   const xml = buildMefXml({
+    w2: { w2s: [form4137W2] },
     form4137: {
       forms: [{
         recipient: "taxpayer",
@@ -988,8 +1001,14 @@ Deno.test("IRS4137 present when form4137 has data", () => {
         }],
         ss_wages_from_w2: 0,
       }],
+      w2_tip_sources: [{
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 0,
+      }],
     },
-  });
+  }, sampleFiler());
   assertStringIncludes(xml, "<IRS4137 ");
 });
 
@@ -1238,10 +1257,11 @@ Deno.test("IRS8839 absent when form8839 missing from pending", () => {
   assertNotIncludes(xml, "<IRS8839>");
 });
 
-// ─── 25. Full 29-form smoke test ──────────────────────────────────────────────
+// ─── 25. Full document smoke test ─────────────────────────────────────────────
 
-Deno.test("documentCnt=28 when all currently serializable forms have data", () => {
+Deno.test("documentCnt=29 when all currently serializable forms have data", () => {
   const xml = buildMefXml({
+    w2: { w2s: [form4137W2] },
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
@@ -1272,6 +1292,12 @@ Deno.test("documentCnt=28 when all currently serializable forms have data", () =
         }],
         ss_wages_from_w2: 0,
       }],
+      w2_tip_sources: [{
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 0,
+      }],
     },
     form8919: { wages: 45000 },
     form4972: qualifiedForm4972,
@@ -1299,11 +1325,12 @@ Deno.test("documentCnt=28 when all currently serializable forms have data", () =
     form_8829: { mortgage_interest: 12000 },
     form8839: { adoption_benefits: 14890 },
   }, sampleFiler());
-  assertStringIncludes(xml, 'documentCnt="28"');
+  assertStringIncludes(xml, 'documentCnt="29"');
 });
 
-Deno.test("all 28 serializable forms populated: XML contains their document tags", () => {
+Deno.test("all 29 serializable documents populated: XML contains their tags", () => {
   const xml = buildMefXml({
+    w2: { w2s: [form4137W2] },
     f1040: { line1a_wages: 50000 },
     schedule1: { line7_unemployment: 4800 },
     schedule2: { line2_amt: 5000 },
@@ -1333,6 +1360,12 @@ Deno.test("all 28 serializable forms populated: XML contains their document tags
           tips_reported: 0,
         }],
         ss_wages_from_w2: 0,
+      }],
+      w2_tip_sources: [{
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 0,
       }],
     },
     form8919: { wages: 45000 },

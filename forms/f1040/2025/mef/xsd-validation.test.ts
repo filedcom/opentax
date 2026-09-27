@@ -4080,6 +4080,19 @@ Deno.test({
   ignore: !xsdAvailable,
 }, async () => {
   const xml = buildMefXml({
+    w2: {
+      w2s: [{
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        employer_address_line1: "100 Main St",
+        employer_address_city: "Austin",
+        employer_address_state: "TX",
+        employer_address_zip: "78701",
+        box1_wages: 30_000,
+        box2_fed_withheld: 0,
+        box3_ss_wages: 30_000,
+      }],
+    },
     form4137: {
       forms: [{
         recipient: "taxpayer",
@@ -4090,6 +4103,12 @@ Deno.test({
           tips_reported: 2_000,
         }],
         ss_wages_from_w2: 30_000,
+      }],
+      w2_tip_sources: [{
+        employer_name: "CAFE",
+        employer_ein: "123456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 30_000,
       }],
     },
   }, extractFilerIdentity(singleGeneral()));
@@ -4250,6 +4269,34 @@ Deno.test({
     spouse_ssn: "222-33-4444",
   };
   const xml = buildMefXml({
+    w2: {
+      w2s: [
+        {
+          employee_ssn: "111-22-3333",
+          employer_name: "CAFE",
+          employer_ein: "123456789",
+          employer_address_line1: "100 Main St",
+          employer_address_city: "Austin",
+          employer_address_state: "TX",
+          employer_address_zip: "78701",
+          box1_wages: 30_000,
+          box2_fed_withheld: 0,
+          box3_ss_wages: 30_000,
+        },
+        {
+          employee_ssn: "222-33-4444",
+          employer_name: "DINER",
+          employer_ein: "987654321",
+          employer_address_line1: "200 Main St",
+          employer_address_city: "Austin",
+          employer_address_state: "TX",
+          employer_address_zip: "78701",
+          box1_wages: 176_100,
+          box2_fed_withheld: 0,
+          box3_ss_wages: 176_100,
+        },
+      ],
+    },
     form4137: {
       forms: [
         {
@@ -4271,6 +4318,24 @@ Deno.test({
             tips_reported: 0,
           }],
           ss_wages_from_w2: 176_100,
+        },
+      ],
+      taxpayer_ssn: "111-22-3333",
+      spouse_ssn: "222-33-4444",
+      w2_tip_sources: [
+        {
+          employee_ssn: "111-22-3333",
+          employer_name: "CAFE",
+          employer_ein: "123456789",
+          allocated_tips: 0,
+          ss_wages_and_tips: 30_000,
+        },
+        {
+          employee_ssn: "222-33-4444",
+          employer_name: "DINER",
+          employer_ein: "987654321",
+          allocated_tips: 0,
+          ss_wages_and_tips: 176_100,
         },
       ],
     },

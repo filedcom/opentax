@@ -382,8 +382,8 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   ];
 }
 
-function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
-  const sources = w2s.map((item) => {
+export function form4137Sources(w2s: W2Items) {
+  return w2s.map((item) => {
     const rrtaCompensation = box14Amount(item, "RRTA compensation");
     return {
       ...(item.employee_ssn !== undefined && {
@@ -405,6 +405,10 @@ function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
         : (item.box3_ss_wages ?? 0) + (item.box7_ss_tips ?? 0),
     };
   });
+}
+
+function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
+  const sources = form4137Sources(w2s);
   return sources.length > 0
     ? [output(form4137, { w2_tip_sources: sources })]
     : [];

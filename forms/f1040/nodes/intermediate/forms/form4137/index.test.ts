@@ -71,6 +71,12 @@ Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () =
       ],
       ss_wages_from_w2: 0,
     }],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 0,
+    }],
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 3_000);
   assertEquals(
@@ -97,6 +103,20 @@ Deno.test("Form 4137 applies the $20 test separately by employer and month", () 
         ],
         ss_wages_from_w2: 0,
       }],
+      w2_tip_sources: [
+        {
+          employer_name: "CAFE",
+          employer_ein: "12-3456789",
+          allocated_tips: 0,
+          ss_wages_and_tips: 0,
+        },
+        {
+          employer_name: "DINER",
+          employer_ein: "98-7654321",
+          allocated_tips: 0,
+          ss_wages_and_tips: 0,
+        },
+      ],
     }),
     176_100,
   );
@@ -111,6 +131,12 @@ Deno.test("Form 4137 SS wage base caps only SS tax, not Medicare tax", () => {
       recipient: "taxpayer",
       employers: [employer],
       ss_wages_from_w2: 175_100,
+    }],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 175_100,
     }],
   });
   assertEquals(
@@ -174,6 +200,12 @@ Deno.test("Form 4137 government employee tips are Medicare-only", () => {
       government_employee_tips: 1_000,
       ss_wages_from_w2: 0,
     }],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 0,
+    }],
   });
   const [calculated] = calculateForm4137(input, 176_100);
   assertEquals(calculated.medicareTips, 3_000);
@@ -183,12 +215,30 @@ Deno.test("Form 4137 government employee tips are Medicare-only", () => {
 
 Deno.test("Form 4137 keeps taxpayer and spouse computations separate", () => {
   const result = compute({
+    taxpayer_ssn: "123-45-6789",
+    spouse_ssn: "987-65-4321",
     forms: [
       { recipient: "taxpayer", employers: [employer], ss_wages_from_w2: 0 },
       {
         recipient: "spouse",
         employers: [{ ...employer, tips_received: 1_000, tips_reported: 0 }],
         ss_wages_from_w2: 176_100,
+      },
+    ],
+    w2_tip_sources: [
+      {
+        employee_ssn: "123-45-6789",
+        employer_name: "CAFE",
+        employer_ein: "12-3456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 0,
+      },
+      {
+        employee_ssn: "987-65-4321",
+        employer_name: "CAFE",
+        employer_ein: "12-3456789",
+        allocated_tips: 0,
+        ss_wages_and_tips: 176_100,
       },
     ],
   });
@@ -365,6 +415,50 @@ Deno.test("Form 4137 matches each allocated-tip W-2 to one exact employer row", 
     Error,
     "one row per employer",
   );
+});
+
+Deno.test("Form 4137 requires a filed W-2 match even without allocated tips", () => {
+  const form = {
+    recipient: "taxpayer",
+    employers: [employer],
+    ss_wages_from_w2: 30_000,
+  };
+  assertThrows(
+    () => compute({ forms: [form] }),
+    Error,
+    "line 1 employer does not match a filed W-2",
+  );
+  for (
+    const w2 of [
+      { employer_name: "Cafe", employer_ein: "12-3456789" },
+      { employer_name: "CAFE", employer_ein: "98-7654321" },
+      { employer_name: "CAFE" },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          forms: [form],
+          w2_tip_sources: [{
+            ...w2,
+            allocated_tips: 0,
+            ss_wages_and_tips: 30_000,
+          }],
+        }),
+      Error,
+      "line 1 employer does not match a filed W-2",
+    );
+  }
+  const result = compute({
+    forms: [form],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "123456789",
+      allocated_tips: 0,
+      ss_wages_and_tips: 30_000,
+    }],
+  });
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 3_000);
 });
 
 Deno.test("Form 4137 compares allocated tips with the same employer, not a return total", () => {

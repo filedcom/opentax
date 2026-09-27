@@ -1,6 +1,10 @@
 import { element, elements } from "../../../mef/xml.ts";
 import { CONFIG_BY_YEAR } from "../../../nodes/config/index.ts";
 import {
+  form4137Sources,
+  inputSchema as w2InputSchema,
+} from "../../../nodes/inputs/w2/index.ts";
+import {
   calculateForm4137,
   inputSchema,
 } from "../../../nodes/intermediate/forms/form4137/index.ts";
@@ -19,6 +23,23 @@ export const form4137: MefFormDescriptor<
   build(fields, context) {
     if (Array.isArray(fields) && fields.length === 0) return [];
     const input = inputSchema.parse(fields);
+    if ((input.forms ?? []).length > 0) {
+      if (!context?.pending?.w2) {
+        throw new Error("Form 4137 MeF needs its filed W-2 documents");
+      }
+      const w2s = w2InputSchema.parse(context.pending.w2).w2s;
+      const filedSources = form4137Sources(w2s).map((source) =>
+        JSON.stringify(source)
+      ).sort();
+      const enteredSources = (input.w2_tip_sources ?? []).map((source) =>
+        JSON.stringify(source)
+      ).sort();
+      if (JSON.stringify(filedSources) !== JSON.stringify(enteredSources)) {
+        throw new Error(
+          "Form 4137 W-2 tip sources disagree with filed W-2 documents",
+        );
+      }
+    }
     const calculated = calculateForm4137(
       input,
       CONFIG_BY_YEAR[2025].ssWageBase,

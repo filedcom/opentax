@@ -11,10 +11,15 @@ every W-2 needs its employee SSN for attribution; on a single return an omitted
 W-2 SSN is assigned to the taxpayer. An active allocated-tip W-2 must also name
 its employer and EIN or "Applied For". That source must match exactly one Form
 4137 line 1 employer row, and its allocated tips are compared with that
-employer's unreported tips rather than with the return-wide total. The
-calculation rejects duplicate employer or recipient rows, an unmatched W-2
-identity, and a W-2 wage-base amount that disagrees with an explicit Form 4137
-amount.
+employer's unreported tips rather than with the return-wide total. The reverse
+check also requires every line 1 employer to match a W-2 name and EIN, even when
+its box 8 has no allocated tips. The form is rejected when the supporting W-2 is
+missing or belongs to the wrong recipient. At MeF export, Form 4137 W-2 sources
+are regenerated from the W-2 documents in the pending return and compared with
+the calculated sources, so copied tip and wage facts cannot silently differ from
+those documents. The calculation rejects duplicate employer or recipient rows,
+an unmatched W-2 identity, and a W-2 wage-base amount that disagrees with an
+explicit Form 4137 amount.
 
 The calculation follows the numbered 2025 form:
 
@@ -54,10 +59,15 @@ III and Part V. The W-2 MeF serializer emits those box 14 entries in native
 from Form 4137. Calculation, full-return, and source-to-XSD cases are written
 but unrun.
 
-Still open: Form 4137 employer rows without an allocated-tip W-2 have not been
-cross-checked to a filed W-2; the `records_support_lower_tips` answer is not
-authenticated against actual tip records. The full test batch, filled-PDF visual
-check, IRS business rules, and ATS acceptance are still required.
+Still open: the `records_support_lower_tips` answer is not authenticated against
+actual tip records. The full test batch, filled-PDF visual check, IRS business
+rules, and ATS acceptance are still required. The W-2 match cases above are
+written but unrun.
+
+An "Applied For" employer EIN can be represented on Form 4137, but the local
+TY2025 v5.4 `IRSW2` schema requires `EmployerEIN`. A full MeF return with an
+"Applied For" W-2 is not yet supported and must not be treated as covered by the
+standalone Form 4137 XML test.
 
 Primary sources:
 [2025 Form 4137 and instructions](https://www.irs.gov/pub/irs-pdf/f4137.pdf),

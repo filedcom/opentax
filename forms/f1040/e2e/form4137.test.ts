@@ -228,6 +228,54 @@ Deno.test("Form 4137 rejects an allocated-tip employer absent from line 1", () =
   );
 });
 
+Deno.test("Form 4137 line 1 matches a W-2 employer when box 8 is blank", () => {
+  const general = {
+    filing_status: FilingStatus.Single,
+    taxpayer_first_name: "Alex",
+    taxpayer_last_name: "Tipper",
+    taxpayer_ssn: "123-45-6789",
+  };
+  const w2 = {
+    employee_ssn: "123-45-6789",
+    employer_name: "CAFE",
+    employer_ein: "123456789",
+    box1_wages: 30_000,
+    box2_fed_withheld: 2_000,
+    box3_ss_wages: 30_000,
+  };
+  const form4137 = {
+    forms: [{
+      recipient: "taxpayer",
+      employers: [{
+        name: "CAFE",
+        ein: "123456789",
+        tips_received: 3_000,
+        tips_reported: 0,
+      }],
+    }],
+  };
+  const matched = execute(plan, registry, {
+    general,
+    w2: [w2],
+    form4137,
+  }, ctx);
+  assertEquals(matched.diagnostics, []);
+  assertEquals(matched.pending.f1040?.line1c_unreported_tips, 3_000);
+
+  const missing = execute(plan, registry, {
+    general,
+    w2: [{ ...w2, employer_name: "DINER" }],
+    form4137,
+  }, ctx);
+  assertEquals(
+    missing.diagnostics.some((entry) =>
+      entry.nodeType === "form4137" &&
+      entry.message.includes("line 1 employer does not match a filed W-2")
+    ),
+    true,
+  );
+});
+
 Deno.test("Form 4137 line 6 reaches Form 8959 line 2 and Additional Medicare Tax", () => {
   const result = execute(plan, registry, {
     general: {
