@@ -36,6 +36,12 @@ when a partial tax limit cuts across multiple same-line sources. Those cases are
 written but unrun. Estate/trust box 13 code ZZ New Markets Credit now also
 requires an identifying statement and reaches the same source-backed line 1i
 without an invented IRS8874. Its reconciliation cases are written but unrun.
+When a taxpayer files an IRS8874 for an own QEI and also has partnership or
+S-corporation code AD credits, line 2 now includes the filed K-1 amounts and
+line 3 adds them to the own QEI credit. The line 2 sources must match their
+direct Form 3800 entries or passive Form 8582-CR activity sources. The native
+XML and mismatch cases are written but unrun; a pass-through-only claim still
+does not create a Form 8874 document.
 Passive K-1 code AD/ZZ amounts now deposit a required Form 8582-CR marker; the
 activity source must match the K-1 credit and the MeF builder reconciles it
 again before Form 3800 receives the passive allocation. These cases are written

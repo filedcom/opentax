@@ -11,9 +11,11 @@ resolve to whole dollars for the Form 8582-CR activity source. Recapture-notice
 cases still stop rather than being treated as an ordinary current-year credit.
 
 For each QEI, the initial allowance date and its first two anniversaries use 5%.
-The next four anniversaries use 6%. The current-year total is Form 8874 line 1
-and line 3. Prior-year carryovers do not belong in this source-form total; they
-use Form 3800's separate carryover path.
+The next four anniversaries use 6%. Own QEI credits make up Form 8874 line 1.
+When a taxpayer files Form 8874 for an own QEI and also has partnership or
+S-corporation New Markets K-1 credits, those K-1 amounts populate line 2, and
+line 3 adds lines 1 and 2. Prior-year carryovers do not belong in this
+source-form total; they use Form 3800's separate carryover path.
 
 The input node routes a self-earned nonpassive amount directly to Form 3800 and
 a self-earned passive amount through Form 8582-CR activity and tax facts. One
@@ -31,6 +33,11 @@ box 13 code ZZ amounts additionally require a source statement identifying the
 New Markets Credit and route directly to the same line 1i. Passive K-1 code
 AD/ZZ credits require matching Form 8582-CR activity facts and are checked again
 against their K-1 during MeF assembly.
+When an own QEI causes Form 8874 to be filed, line 2 is rebuilt from the filed
+partnership/S-corporation K-1s and checked against the matching direct Form
+3800 entries or passive Form 8582-CR sources. Pass-through-only claims continue
+without an invented IRS8874 document. Line 2 does not include estate/trust code
+ZZ credits because the source form labels it for partnerships and S corporations.
 
 Open work: cent-bearing passive credit and shared XML rounding; carryovers and
 carrybacks; recapture and sale events; leap-day anniversary rules; filled PDF

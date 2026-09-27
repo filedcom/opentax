@@ -23,7 +23,7 @@ const source = {
 };
 
 Deno.test("Form 8874 MeF records an identified investment and 5 percent credit", () => {
-  const xml = buildForm8874Document(source);
+  const xml = buildForm8874Document(source, 0);
   assertStringIncludes(xml, "<IRS8874>");
   assertStringIncludes(
     xml,
@@ -127,6 +127,145 @@ Deno.test("Form 8874 MeF reconciles passive and direct investments separately", 
   assertThrows(
     () =>
       form8874.build(mixed, {
+        ...context,
+        documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+      }),
+    Error,
+    "needs attached Form 8582-CR",
+  );
+});
+
+Deno.test("Form 8874 line 2 includes filed partnership and S-corporation credits", () => {
+  const pending = {
+    f3800: {
+      f8874_credit: {
+        credit_amount: 50_000,
+        subject_to_passive_activity_limit: false,
+      },
+      f8874_k1_credit_entries: [{
+        source_type: "partnership",
+        source_ein: "111111111",
+        source_document_reference: "2025 partnership K-1",
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: false,
+      }, {
+        source_type: "s_corporation",
+        source_ein: "222222222",
+        source_document_reference: "2025 S corporation K-1",
+        credit_amount: 750,
+        subject_to_passive_activity_limit: false,
+      }],
+    },
+    k1_partnership: {
+      k1_partnerships: [{
+        partnership_name: "Community partnership",
+        partnership_ein: "111111111",
+        source_document_reference: "2025 partnership K-1",
+        box15_code_ad_new_markets_credit: 1_250,
+        new_markets_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+    k1_s_corp: {
+      k1_s_corps: [{
+        corporation_name: "Community corporation",
+        corporation_ein: "222222222",
+        source_document_reference: "2025 S corporation K-1",
+        box13_code_ad_new_markets_credit: 750,
+        new_markets_credit_subject_to_passive_activity_limit: false,
+      }],
+    },
+  };
+  const context = {
+    pending,
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  };
+  const xml = form8874.build(source, context);
+  assertStringIncludes(xml, "<NewMarketsCreditAmt>2000</NewMarketsCreditAmt>");
+  assertStringIncludes(xml, "<TotalCreditAmt>52000</TotalCreditAmt>");
+  assertThrows(
+    () =>
+      form8874.build(source, {
+        ...context,
+        pending: {
+          ...pending,
+          f3800: {
+            ...pending.f3800,
+            f8874_k1_credit_entries: pending.f3800.f8874_k1_credit_entries
+              .slice(0, 1),
+          },
+        },
+      }),
+    Error,
+    "nonpassive K-1 credit differs from Form 3800",
+  );
+});
+
+Deno.test("Form 8874 line 2 reconciles a passive partnership credit", () => {
+  const activity = {
+    activity_reference: "Community partnership activity",
+    source_form: "Form 8874",
+    source_origin: {
+      kind: "partnership",
+      entity_reference: "Community partnership",
+      ein: "111111111",
+    },
+    source_document_reference: "2025 partnership K-1",
+    category: "other",
+    reporting_route: "form3800_line3",
+    form3800_credit_line: "1i",
+    current_year_credit: 1_250,
+    prior_unallowed_credits: [],
+    publicly_traded_partnership: false,
+  };
+  const context = {
+    pending: {
+      f3800: {
+        f8874_credit: {
+          credit_amount: 50_000,
+          subject_to_passive_activity_limit: false,
+        },
+      },
+      form8582cr: {
+        credit_sources: [activity],
+        regular_tax_all_income: 10_000,
+        regular_tax_without_passive: 9_000,
+      },
+      k1_partnership: {
+        k1_partnerships: [{
+          partnership_name: "Community partnership",
+          partnership_ein: "111111111",
+          source_document_reference: "2025 partnership K-1",
+          box15_code_ad_new_markets_credit: 1_250,
+          new_markets_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+    },
+    documentIdsByPendingKey: {
+      f3800: ["IRS3800_1"],
+      form8582cr: ["IRS8582CR_1"],
+    },
+  };
+  const xml = form8874.build(source, context);
+  assertStringIncludes(xml, "<NewMarketsCreditAmt>1250</NewMarketsCreditAmt>");
+  assertStringIncludes(xml, "<TotalCreditAmt>51250</TotalCreditAmt>");
+  assertThrows(
+    () =>
+      form8874.build(source, {
+        ...context,
+        pending: {
+          ...context.pending,
+          form8582cr: {
+            ...context.pending.form8582cr,
+            credit_sources: [{ ...activity, current_year_credit: 1_249 }],
+          },
+        },
+      }),
+    Error,
+    "passive K-1 credit differs from Form 8582-CR",
+  );
+  assertThrows(
+    () =>
+      form8874.build(source, {
         ...context,
         documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
       }),

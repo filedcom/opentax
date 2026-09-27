@@ -57,6 +57,9 @@ invented IRS8874 for pass-through-only claims. Estate/trust K-1 box 13 code ZZ
 credits require a statement identifying the New Markets Credit and use the same
 source-backed line 1i. Passive K-1 credits require matching Form 8582-CR
 activity facts and K-1 evidence before their Form 3800 allocation. A self-earned
+QEI filed together with partnership/S-corporation K-1 credits now puts those
+K-1 amounts on IRS8874 line 2 after matching them to their Form 3800 or Form
+8582-CR sources; line 3 includes both own and pass-through credit. A self-earned
 passive QEI now similarly requires a named Form 8582-CR activity and source,
 with the filed Form 8874 checked against that source; its nonpassive share is
 routed directly, so mixed investments do not duplicate the credit. Passive

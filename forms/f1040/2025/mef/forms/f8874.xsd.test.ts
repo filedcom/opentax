@@ -15,7 +15,7 @@ try {
 }
 
 Deno.test({
-  name: "XSD: Form 8874 qualified investment and line 1 credit",
+  name: "XSD: Form 8874 qualified investment and pass-through line 2 credit",
   ignore: !xsdAvailable,
   sanitizeOps: false,
   sanitizeResources: false,
@@ -39,7 +39,10 @@ Deno.test({
       recapture_notice_received: false,
       subject_to_passive_activity_limit: false,
     }],
-  }).replace("<IRS8874>", '<IRS8874 xmlns="http://www.irs.gov/efile">');
+  }, 1_250).replace(
+    "<IRS8874>",
+    '<IRS8874 xmlns="http://www.irs.gov/efile">',
+  );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {
     await Deno.writeTextFile(path, xml);
