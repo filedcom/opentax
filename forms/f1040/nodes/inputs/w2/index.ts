@@ -344,6 +344,10 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
 function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
   const sources = w2s.map((item) => ({
     ...(item.employee_ssn !== undefined && { employee_ssn: item.employee_ssn }),
+    ...(item.employer_name !== undefined && {
+      employer_name: item.employer_name,
+    }),
+    ...(item.employer_ein !== undefined && { employer_ein: item.employer_ein }),
     allocated_tips: item.box8_allocated_tips ?? 0,
     ss_wages_and_tips: item.box3_ss_wages === undefined
       ? undefined

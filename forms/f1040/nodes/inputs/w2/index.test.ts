@@ -89,6 +89,23 @@ Deno.test("box8_allocated_tips_routes_to_form4137: $2,000 allocated tips appear 
   );
 });
 
+Deno.test("W-2 carries employer and employee identity to Form 4137", () => {
+  const result = compute([minimalItem({
+    employee_ssn: "123-45-6789",
+    employer_name: "CAFE",
+    employer_ein: "12-3456789",
+    box3_ss_wages: 30_000,
+    box7_ss_tips: 2_000,
+    box8_allocated_tips: 1_000,
+  })]);
+  const source = fieldsOf(result.outputs, form4137)?.w2_tip_sources?.[0];
+  assertEquals(source?.employee_ssn, "123-45-6789");
+  assertEquals(source?.employer_name, "CAFE");
+  assertEquals(source?.employer_ein, "12-3456789");
+  assertEquals(source?.allocated_tips, 1_000);
+  assertEquals(source?.ss_wages_and_tips, 32_000);
+});
+
 Deno.test("box10_dep_care_routes_to_form2441: $3,000 dep care appears exactly on form2441", () => {
   const result = compute([
     minimalItem({ box1_wages: 70000, box10_dep_care: 3000 }),

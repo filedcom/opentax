@@ -8,9 +8,13 @@ SSN when entered. The general return supplies taxpayer and spouse SSNs. Form
 4137 matches explicit W-2 employee SSNs to those identities before assigning
 wage-base or allocated-tip amounts. On a joint return with Form 4137 activity,
 every W-2 needs its employee SSN for attribution; on a single return an omitted
-W-2 SSN is assigned to the taxpayer. The calculation rejects allocated tips
-without employer records, duplicate recipient forms, an unmatched W-2 SSN, and a
-W-2 wage-base amount that disagrees with an explicit Form 4137 amount.
+W-2 SSN is assigned to the taxpayer. An active allocated-tip W-2 must also name
+its employer and EIN or "Applied For". That source must match exactly one Form
+4137 line 1 employer row, and its allocated tips are compared with that
+employer's unreported tips rather than with the return-wide total. The
+calculation rejects duplicate employer or recipient rows, an unmatched W-2
+identity, and a W-2 wage-base amount that disagrees with an explicit Form 4137
+amount.
 
 The calculation follows the numbered 2025 form:
 
@@ -42,10 +46,11 @@ $20, checks reported tips, rejects duplicate employer/month records, and
 reconciles those records to annual employer totals. Those cases are written but
 unrun.
 
-Still open: employer names and EINs are not cross-checked against the filed
-W-2s; railroad retirement compensation on line 8 is not modeled. The full test
-batch, filled-PDF visual check, IRS business rules, and ATS acceptance are still
-required.
+Still open: Form 4137 employer rows without an allocated-tip W-2 have not been
+cross-checked to a filed W-2; the `records_support_lower_tips` answer is not
+authenticated against actual tip records; railroad retirement compensation on
+line 8 is not modeled. The full test batch, filled-PDF visual check, IRS
+business rules, and ATS acceptance are still required.
 
 Primary sources:
 [2025 Form 4137 and instructions](https://www.irs.gov/pub/irs-pdf/f4137.pdf),

@@ -42,6 +42,8 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
       ss_wages_from_w2: 30_000,
     }],
     w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
       allocated_tips: 2_500,
       ss_wages_and_tips: 30_000,
     }],
@@ -171,11 +173,15 @@ Deno.test("Form 4137 attributes W-2 wages by employee SSN, including an explicit
       w2_tip_sources: [
         {
           employee_ssn: "123456789",
+          employer_name: "CAFE",
+          employer_ein: "12-3456789",
           allocated_tips: 500,
           ss_wages_and_tips: 30_000,
         },
         {
           employee_ssn: "987-65-4321",
+          employer_name: "DINER",
+          employer_ein: "98-7654321",
           allocated_tips: 500,
           ss_wages_and_tips: 176_100,
         },
@@ -241,6 +247,8 @@ Deno.test("Form 4137 refuses duplicate recipients and inconsistent W-2 wages", (
           ss_wages_from_w2: 20_000,
         }],
         w2_tip_sources: [{
+          employer_name: "CAFE",
+          employer_ein: "12-3456789",
           allocated_tips: 500,
           ss_wages_and_tips: 30_000,
         }],
@@ -257,7 +265,11 @@ Deno.test("Form 4137 lower reported tips require supporting records", () => {
       employers: [{ ...employer, tips_received: 2_500 }],
       ss_wages_from_w2: 0,
     }],
-    w2_tip_sources: [{ allocated_tips: 1_000 }],
+    w2_tip_sources: [{
+      employer_name: "CAFE",
+      employer_ein: "12-3456789",
+      allocated_tips: 1_000,
+    }],
   };
   assertThrows(() => compute(raw), Error, "without supporting records");
   const result = compute({
@@ -265,6 +277,96 @@ Deno.test("Form 4137 lower reported tips require supporting records", () => {
     forms: [{ ...raw.forms[0], records_support_lower_tips: true }],
   });
   assertEquals(fieldsOf(result.outputs, f1040)?.line1c_unreported_tips, 500);
+});
+
+Deno.test("Form 4137 matches each allocated-tip W-2 to one exact employer row", () => {
+  const form = {
+    recipient: "taxpayer",
+    employers: [employer],
+    ss_wages_from_w2: 0,
+  };
+  for (
+    const w2 of [
+      { employer_name: "Cafe", employer_ein: "12-3456789" },
+      { employer_name: "CAFE", employer_ein: "98-7654321" },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          forms: [form],
+          w2_tip_sources: [{ ...w2, allocated_tips: 500 }],
+        }),
+      Error,
+      "employer does not match line 1",
+    );
+  }
+  assertThrows(
+    () =>
+      compute({
+        forms: [form],
+        w2_tip_sources: [{ allocated_tips: 500 }],
+      }),
+    Error,
+    "needs employer name and EIN",
+  );
+  assertThrows(
+    () =>
+      compute({
+        forms: [{ ...form, employers: [employer, employer] }],
+      }),
+    Error,
+    "one row per employer",
+  );
+});
+
+Deno.test("Form 4137 compares allocated tips with the same employer, not a return total", () => {
+  assertThrows(
+    () =>
+      compute({
+        forms: [{
+          recipient: "taxpayer",
+          employers: [
+            { ...employer, tips_received: 2_500 },
+            {
+              name: "DINER",
+              ein: "98-7654321",
+              tips_received: 3_000,
+              tips_reported: 0,
+            },
+          ],
+          ss_wages_from_w2: 0,
+        }],
+        w2_tip_sources: [{
+          employer_name: "CAFE",
+          employer_ein: "12-3456789",
+          allocated_tips: 1_000,
+        }],
+      }),
+    Error,
+    "without supporting records",
+  );
+  const [appliedFor] = calculateForm4137(
+    inputSchema.parse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "TOWN",
+          applied_for_ein: true,
+          tips_received: 1_000,
+          tips_reported: 0,
+        }],
+        ss_wages_from_w2: 0,
+      }],
+      w2_tip_sources: [{
+        employer_name: "TOWN",
+        employer_ein: "Applied For",
+        allocated_tips: 500,
+      }],
+    }),
+    176_100,
+  );
+  assertEquals(appliedFor.totalTax, 77);
 });
 
 Deno.test("Form 4137 rejects impossible employer and below-$20 month facts", () => {

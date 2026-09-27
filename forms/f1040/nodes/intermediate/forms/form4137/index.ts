@@ -52,6 +52,11 @@ const formSchema = z.object({
 
 const w2TipSourceSchema = z.object({
   employee_ssn: z.string().regex(/^\d{3}-?\d{2}-?\d{4}$/).optional(),
+  employer_name: z.string().min(1).optional(),
+  employer_ein: z.union([
+    z.string().regex(/^\d{2}-?\d{7}$/),
+    z.literal("Applied For"),
+  ]).optional(),
   allocated_tips: z.number().nonnegative(),
   ss_wages_and_tips: z.number().nonnegative().optional(),
 }).strict();
@@ -129,10 +134,41 @@ export function calculateForm4137(
     const related = attributedSources.filter((source) =>
       source.recipient === form.recipient
     );
-    const allocated = related.reduce(
-      (sum, source) => sum + source.allocated_tips,
-      0,
-    );
+    const employerKeys = new Set<string>();
+    for (const employer of form.employers) {
+      const key = `${employer.name}\u0000${
+        employer.ein?.replaceAll("-", "") ?? "Applied For"
+      }`;
+      if (employerKeys.has(key)) {
+        throw new Error("Form 4137 needs one row per employer");
+      }
+      employerKeys.add(key);
+    }
+    const allocatedByEmployer = new Map<number, number>();
+    for (const source of related) {
+      if (source.allocated_tips === 0) continue;
+      if (!source.employer_name || !source.employer_ein) {
+        throw new Error(
+          "Form 4137 allocated-tip W-2 needs employer name and EIN",
+        );
+      }
+      const index = form.employers.findIndex((employer) =>
+        employer.name === source.employer_name &&
+        (employer.ein?.replaceAll("-", "") ?? "Applied For") ===
+          (source.employer_ein === "Applied For"
+            ? "Applied For"
+            : source.employer_ein.replaceAll("-", ""))
+      );
+      if (index < 0) {
+        throw new Error(
+          "Form 4137 allocated-tip W-2 employer does not match line 1",
+        );
+      }
+      allocatedByEmployer.set(
+        index,
+        (allocatedByEmployer.get(index) ?? 0) + source.allocated_tips,
+      );
+    }
     const totalTipsReceived = form.employers.reduce(
       (sum, employer) => sum + employer.tips_received,
       0,
@@ -142,12 +178,16 @@ export function calculateForm4137(
       0,
     );
     const unreportedTips = totalTipsReceived - totalTipsReported;
-    if (
-      allocated > unreportedTips && form.records_support_lower_tips !== true
-    ) {
-      throw new Error(
-        `Form 4137 ${form.recipient} unreported tips are below W-2 allocated tips without supporting records`,
-      );
+    for (const [index, allocated] of allocatedByEmployer) {
+      const employer = form.employers[index];
+      if (
+        allocated > employer.tips_received - employer.tips_reported &&
+        form.records_support_lower_tips !== true
+      ) {
+        throw new Error(
+          `Form 4137 ${form.recipient} employer unreported tips are below W-2 allocated tips without supporting records`,
+        );
+      }
     }
     const below20Months = form.below_20_tip_months ?? [];
     const seenMonths = new Set<string>();
