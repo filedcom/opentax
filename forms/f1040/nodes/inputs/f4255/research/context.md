@@ -1,73 +1,29 @@
-# Form 4255 — Recapture of Investment Credit — Context
+# Form 4255, TY2025 scoped net-EPE route
 
-## Overview
-Form 4255 is filed when property on which an investment credit was claimed is
-disposed of or ceases to qualify before the end of a 5-year holding period.
-The recaptured amount becomes additional tax on the return.
+The old `original_credit_amount × recapture year` input did not represent the
+2025 Form 4255 Part I columns, and it always labeled the result as a generic
+Schedule 2 line 17a `3468` recapture. It is replaced with explicit Part I
+row facts for line 1d (Form 3468 Part IV) and line 2a (Form 8933). The input
+requires a source-document reference, prior-year credit and EPE split,
+recapture partition, and EP amounts. Column (h) must equal (i)+(j)+(k)+(l),
+and each partition must fit its prior-year source. This scoped route requires
+columns (j), (k), and (n)(2) to be zero because their Schedule 2 routes are
+not yet implemented.
 
-## Node Type
-- nodeType: `f4255`
-- Input type: **array** — one item per property being recaptured
-- Output: Schedule 2, Line 17a (`line17a_investment_credit_recapture`)
+| Form 4255 row and column | Schedule 2 | MeF source |
+| --- | --- | --- |
+| 2a(l), Form 8933 net-EPE recapture | 1d | `Form8933PYCreditsGrp/RcptrPrtnNetEPECrAmt` |
+| 1d(n)(1) and 2a(n)(1) | 1e, boxes (iii)/(iv) | respective row groups' `NetEPEPortionAmt` |
+| 1d(n)(3) and 2a(n)(3) | 1f, boxes (iii)/(iv) | respective row groups' `EP20PctOweAmt` |
+| 1d(l), Form 3468 Part IV net-EPE recapture | 19 | `Form3468PartIVPYCreditsGrp/RcptrPrtnNetEPECrAmt` |
 
-## Schema — Per-Item (itemSchema)
+The native `IRS4255` document and Schedule 2 builder reconcile those amounts.
+Schedule 2 line 19 is kept outside the Form 8978 chapter-1 offset until its
+classification is supported; it is tracked as unclassified. Other Form 4255
+credit lines, line 17a recapture, columns (j)/(k)/(n)(2), and penalties need
+their own exact source routes. The tax and source calculations remain untested
+until the batch validation; no claim of ATS acceptance is made.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `description` | string | optional | Property description (Form 4255 col a) |
-| `date_placed_in_service` | string (ISO date) | optional | When originally placed in service |
-| `original_credit_amount` | number ≥ 0 | required | Investment credit originally claimed |
-| `year_of_recapture` | 1–5 | required | Determines recapture percentage |
-| `recapture_reason` | RecaptureReason enum | optional | Why property ceased to qualify |
-| `recapture_amount_override` | number ≥ 0 | optional | Override computed recapture amount |
-
-## Input Schema
-```
-inputSchema = z.object({ properties: z.array(itemSchema).min(1) })
-```
-
-## Enum — RecaptureReason
-- `Disposed` — property was sold or transferred
-- `CeasedToQualify` — property no longer meets credit requirements
-- `Converted` — business use dropped below required threshold
-- `Destroyed` — property destroyed (casualty; recapture may not apply if replaced)
-
-## Recapture Percentages (IRC §50(a))
-```
-year 1 → 100%
-year 2 →  80%
-year 3 →  60%
-year 4 →  40%
-year 5 →  20%
-```
-Year 6+ = 0% recapture (no longer within recapture period).
-
-## Computed Recapture Amount (per property)
-```
-recapture_amount = original_credit_amount × recapturePercentage(year_of_recapture)
-```
-If `recapture_amount_override` is provided, use that value instead.
-
-## Aggregation
-```
-total_recapture = sum(recapture_amount for each property)
-```
-If total_recapture = 0, emit no outputs.
-
-## Output Routing
-- `schedule2` field: `line17a_investment_credit_recapture`
-- Only emitted when total_recapture > 0
-
-## Validation Rules
-1. `original_credit_amount` must be ≥ 0
-2. `year_of_recapture` must be integer 1–5 (validated via z.int().min(1).max(5))
-3. `recapture_amount_override` if provided must be ≥ 0
-4. Array must have at least 1 item (z.array(itemSchema).min(1))
-5. Schema rejects negative values
-
-## Edge Cases
-- year_of_recapture = 5 → 20% recapture
-- original_credit_amount = 0 → recapture = 0
-- override = 0 → recapture = 0 (explicit override honored)
-- All items compute to 0 → no output emitted
-- Single item with year 1 → 100% recapture
+Sources: [2025 Form 4255](https://www.irs.gov/pub/irs-prior/f4255--2025.pdf),
+[2025 Form 4255 instructions](https://www.irs.gov/pub/irs-prior/i4255--2025.pdf),
+and [2025 Form 1040 instructions, Schedule 2](https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf).

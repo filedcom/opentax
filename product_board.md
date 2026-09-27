@@ -41,19 +41,23 @@ cases remain unrun under the agreed implementation-first test sequence; none
 closes its entire gap or clears the release gate.
 
 The same parallel pass writes Form 8962's guarded alternative year-of-marriage
-calculation and native Part V groups, with line 26 zero on an election. Its
-2025 PDF field map now covers both Part V lines 35/36 and checks line 9 Yes for
-an election, with focused field/projection cases written but no render yet. It
-does not yet derive spouse-specific pre-marriage policy groups from 1095-A.
-The QSEHRA annual branch now follows the distinct Publication
-974 Worksheets N/Q formulas and checks annual 1095-A totals against supplied
-monthly columns. An annual-only policy still cannot be combined with a monthly
-policy without its missing monthly facts. Form 4952 can now receive
-affirmed taxable market discount from 1099-B after the matching Form 8949 code-D
-adjustment. Part-II-only Form 4972 federal estate tax now splits between
-capital-gain reduction and a Schedule A line 16 ordinary-income deduction. Form
-1116 line 3b now has a linked other-deductions statement. Source cases are
-written for each route, but none has passed the deferred test or XSD batch.
+calculation and native Part V groups, with line 26 zero on an election. Its 2025
+PDF field map now covers both Part V lines 35/36 and checks line 9 Yes for an
+election, with focused field/projection cases written but no render yet. The
+Part V calculation now carries its monthly contribution through a coverage gap
+between the source start and stop months, as Publication 974 Worksheets II/IV
+require; a gap still has no credit. It does not yet derive spouse-specific
+pre-marriage policy groups from 1095-A because the current 1095-A source does
+not identify which alternative family owns each policy. The QSEHRA annual branch
+now follows the distinct Publication 974 Worksheets N/Q formulas and checks
+annual 1095-A totals against supplied monthly columns. An annual-only policy
+still cannot be combined with a monthly policy without its missing monthly
+facts. Form 4952 can now receive affirmed taxable market discount from 1099-B
+after the matching Form 8949 code-D adjustment. Part-II-only Form 4972 federal
+estate tax now splits between capital-gain reduction and a Schedule A line 16
+ordinary-income deduction. Form 1116 line 3b now has a linked other-deductions
+statement. Source cases are written for each route, but none has passed the
+deferred test or XSD batch.
 
 The Form 8949 MeF build pass now preserves all twelve TY2025 paper boxes
 separately instead of merging 1099-DA digital-asset categories into 1099-B
@@ -233,53 +237,65 @@ statement when the certificate rates differ in the refinance year. The current
 input rejects it rather than filing an unsupported amount.
 
 The current Schedule 2 audit moves HSA distribution tax to the correct 2025 line
-17c and HSA testing-period tax to line 17d, Form 8828 mortgage-subsidy
-recapture to 17b, and Form 8611
-low-income-housing recapture to 16. The MeF builder now orders these and the
-line 13 aggregate in schema order. The existing Form 4255 recapture output now
-also reaches a line 17a MeF `3468` group and the printed line 17a code and
-amount fields, with XML, XSD, and PDF mapping cases written but unrun. Its
-source calculation and native Form 4255 attachment still need a separate audit.
-Form 8889 now routes taxable HSA distributions and testing-period income to
-Schedule 1 line 8f, with separate Schedule 2 lines 17c and 17d. The build pass
-adds sourced line 14b rollovers, Part III lines 18-21, native MeF lines and
-beneficiary identity, and PDF fields. It removes assumed self-only/full-year
-coverage for contribution cases. Twelve explicit monthly facts now support
-mixed/partial-year HDHP limits and an elected last-month rule, while an
-explicit excepted taxable amount handles mixed distributions on line 17b.
-A sourced single direct IRA-to-HSA transfer populates line 10 and reduces line
-12. Spouse allocations, a permitted second transfer, source verification of
-monthly eligibility and prior-year testing periods, and employer excess
-treatment still need work. These cases are written but unrun.
-Form 5405 repayment is rejected for TY2025 because the IRS ended that form after
-TY2024. The source and XSD cases are written but unrun. Form 8611 now has a
-per-building source model, printed-form line calculation including the per-year
-Form 8609-A line 2 worksheet, one `IRS8611` attachment per building, and
-Schedule 2 line 16 document links. Bond-financing details and a
-recapture-exception decision are required source facts. Its written node, XML,
-and XSD cases are unrun; historic credit, qualified-basis, and interest amounts
-still require source-record verification. Other Schedule 2 routes still need
-audit. The section 965 installment now goes to Schedule 2 line 20 and is
-excluded from line 21/Form 1040 line 23, matching the printed 2025 line 21 sum.
-A new Form 965-A source model and MeF descriptor now carry cumulative Part I/II
-liability and payments, Part III S-corporation computations, and Part IV
-deferred balances, and reconcile current-year payments to Schedule 2 line 20.
-The old assumption that a 2017 inclusion normally has its eighth installment in
-2025 was incorrect; the normal eighth year was 2024. Native MeF statements now
-describe netted Part I adjustments/transfers and allocate Part IV transfers
-among multiple transferees, with required source facts, reconciliation, and
-parent document links. The build pass now takes source-provided signed Form
-965-C, 965-D, and 965-E PDF copies for reported transfer or consent events,
-preserves their bytes in the MeF bundle, and links them from Form 965-A.
-Multiple partial Form 965-D transfers require one copy per transferee. The
-bundle case is written but unrun. It does not create, sign, mail, or
-authenticate an agreement. Consent-triggered Form 965-E installments now also
-require evidence of the separate section 965(h) election; the case is written
-but unrun. Part IV transfer-in rows now omit the beginning balance and retain
-the transferor's agreement link; those cases are also written but unrun. The
-triggered-liability case now distinguishes Part I's triggering-event year from
-Part IV's original deferral-election year and validates an event date; those
-cases are unrun. Historical tax computations and IRS business rules remain open.
+17c and HSA testing-period tax to line 17d, Form 8828 mortgage-subsidy recapture
+to 17b, and Form 8611 low-income-housing recapture to 16. The MeF builder now
+orders these and the line 13 aggregate in schema order. The ambiguous
+Form 4255 original-credit-times-year shortcut has been replaced with explicit
+TY2025 Part I row facts for Form 3468 Part IV line 1d and Form 8933 line 2a.
+Those rows now drive Schedule 2 lines 1d, 1e, 1f, and 19, with native `IRS4255`
+row groups and source reconciliation in the Schedule 2 MeF/PDF builders.
+The earlier generic line 17a `3468` route is rejected; other Form 4255 credit
+recapture types and column (j)/(k)/(n)(2) routes still need exact source models.
+These cases are written but unrun. The 2025 Schedule 2 PDF now maps already-sourced lines 9, 13,
+16, 17b/c/e/f/h/k/p, and 20; line 13, 17h, and 17k aggregate their existing
+source amounts on the printed form. PDF field-map cases are written but unrun.
+The official TY2025 form and v5.4 schema additionally require source-backed
+installment-sale interest for lines 14-15. These remain open, not represented
+by arbitrary Schedule 2 inputs. Line 19's Form 8978 chapter-1 classification
+also needs specific authority. Filled-PDF inspection and the full validation
+batch remain open. Form 8889 now routes taxable HSA distributions and testing-period income
+to Schedule 1 line 8f, with separate Schedule 2 lines 17c and 17d. The build
+pass adds separate line 14b rollover and timely excess-withdrawal facts, routes
+withdrawal earnings to Schedule 1 other income, and adds Part III lines 18-21,
+native MeF lines and beneficiary identity, and PDF fields. It removes assumed
+self-only/full-year coverage for contribution cases. Twelve explicit monthly
+facts now support mixed/partial-year HDHP limits and an elected last-month rule,
+while an explicit excepted taxable amount handles mixed distributions on line
+17b. A sourced single direct IRA-to-HSA transfer populates line 10 and reduces
+line 12. An agreed share of the refigured family limit now computes line 6 when
+spouses have separate HSAs, without assuming an equal split. Separate spouse
+forms, a permitted second transfer, source verification of monthly eligibility
+and prior-year testing periods, and employer excess treatment still need work.
+These cases are written but unrun. Form 5405 repayment is rejected for TY2025
+because the IRS ended that form after TY2024. The source and XSD cases are
+written but unrun. Form 8611 now has a per-building source model, printed-form
+line calculation including the per-year Form 8609-A line 2 worksheet, one
+`IRS8611` attachment per building, and Schedule 2 line 16 document links.
+Bond-financing details and a recapture-exception decision are required source
+facts. Its written node, XML, and XSD cases are unrun; historic credit,
+qualified-basis, and interest amounts still require source-record verification.
+Other Schedule 2 routes still need audit. The section 965 installment now goes
+to Schedule 2 line 20 and is excluded from line 21/Form 1040 line 23, matching
+the printed 2025 line 21 sum. A new Form 965-A source model and MeF descriptor
+now carry cumulative Part I/II liability and payments, Part III S-corporation
+computations, and Part IV deferred balances, and reconcile current-year payments
+to Schedule 2 line 20. The old assumption that a 2017 inclusion normally has its
+eighth installment in 2025 was incorrect; the normal eighth year was 2024.
+Native MeF statements now describe netted Part I adjustments/transfers and
+allocate Part IV transfers among multiple transferees, with required source
+facts, reconciliation, and parent document links. The build pass now takes
+source-provided signed Form 965-C, 965-D, and 965-E PDF copies for reported
+transfer or consent events, preserves their bytes in the MeF bundle, and links
+them from Form 965-A. Multiple partial Form 965-D transfers require one copy per
+transferee. The bundle case is written but unrun. It does not create, sign,
+mail, or authenticate an agreement. Consent-triggered Form 965-E installments
+now also require evidence of the separate section 965(h) election; the case is
+written but unrun. Part IV transfer-in rows now omit the beginning balance and
+retain the transferor's agreement link; those cases are also written but unrun.
+The triggered-liability case now distinguishes Part I's triggering-event year
+from Part IV's original deferral-election year and validates an event date;
+those cases are unrun. Historical tax computations and IRS business rules remain
+open.
 
 The current untested Form 8936 commercial-vehicle pass replaces the new/used
 boolean with one three-way credit type and adds Schedule A Part V basis, Section
@@ -1066,8 +1082,8 @@ acceptance remain open.
 | GAP-6251       | Form 6251                                    | The build pass now calculates TY2025 Part III lines 12–40 and MeF fields from both the Qualified Dividends and Capital Gain Tax Worksheet and the Schedule D Tax Worksheet source amounts, and replaces the simplified Form 1040 line 16 special-gain tax path with the 2025 Schedule D Tax Worksheet line order; these paths are unrun. The line 10 comparison now receives Form 1040 line 16, including preferential-rate tax. The build pass also routes signed 2025 line 1b, moves Form 1040 line 12 to the selected deduction branch and suppresses Schedule A XML when standard deduction wins, and applies the matching standard-versus-itemized line 2a addback, keeps evaluating AMT when regular taxable income is zero, and serializes calculated Part I/II amounts when AMT is due or a personal Form 8911 credit requires filing; cases are written but unrun. The build pass also carries separately refigured AMT Form 4952 line 4g into Part III and the signed regular-versus-AMT investment-interest difference into line 2c. Broader AMT-basis capital-gain refiguring, Form 2555, other line 10 adjustments, and other credit-driven filing triggers remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Part III is calculated from source facts and reconciled with AMT and MeF XML for capital-gain cases.                                                                                                    |
 | GAP-S2         | 2025 Schedule 2 line structure               | The code previously labeled AMT as line 1 and Form 8962 excess APTC repayment as line 2, and omitted the latter from MeF. The current worktree uses line 2 for AMT and line 1a for excess APTC. The negative Form 8978 build pass also computes a chapter-1-tax offset, emits signed line 17z with a linked `AnyOtherTaxesStatement`, and adjusts line 21 and Form 1040 line 23. Those new cases are written but unrun. The remaining Schedule 2 line map, chapter 1 classification, and source-specific statements are not audited.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Pass source-to-return-to-MeF cases for Form 8962, AMT, and Form 8978; audit every other 2025 Schedule 2 line and chapter 1 classification against IRS instructions and schema, then run the full suite. |
 | GAP-8962       | Form 8962 2025 MeF and calculation           | **Verified slices, whole form open.** Earlier source-backed Table 2/Table 5 and source-to-XSD cases cover named annual, monthly, MAGI, and same-state SLCSP flows. The current build pass adds separate taxpayer/dependent MAGI, dependent filing facts, multi-policy line 10 eligibility, below-100%-FPL exceptions and repayment, MFS branches, and shared-policy Situations 1-4. Up to 99 native MeF Part IV groups and line 34 No after four are coded. The PDF builder appends overflow statement pages. Monthly and annual line 11 QSEHRA paths use explicit self-only SLCSP, self-only permitted benefit, and actual permitted benefit facts for Publication 974 Worksheets N/Q, reconcile them to the annual reported amount, and set the MeF QSEHRA indicator. The PDF builder now writes “QSEHRA” in the top margin. These cases are written but unrun. Mixed monthly/annual-only policy inputs still stop. Form 8814 dependent income, PDF visual verification, alternative marriage calculation, coverage-family changes/SLCSP accuracy, self-employed insurance interactions, broader business rules, and ATS acceptance remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Continue building the remaining Form 8962 branches and source facts, then verify calculation, XML, PDF, business rules, and the full suite as one batch.                                                |
-| GAP-8283       | Form 8283                                    | Build pass replaced the automatic capital-gain-property basis cap with an explicit Section B claimed deduction, added separate MeF documents for ordinary Section B gifts, and added VIN plus a linked native MeF vehicle statement for Section A claims above $500 on the donee-certified unrelated-party sale-proceeds route. These calculation, multi-document, and local XSD cases are written but unrun. The Section A box 5a significant-use and material-improvement routes and box 5b needy-transfer route now require dated donee certification and a linked acknowledgment PDF, with focused cases written but unrun. Section B box 5a/5b vehicle exception claims above $5,000 now require a VIN, dated donee certification, qualified appraisal, signed donee facts, both signature PDFs, and linked acknowledgment PDF. Cases are written but unrun. Single-item claims above $500,000 for equipment, Section B securities, collectibles, and exception vehicles now require a linked full qualified-appraisal PDF with the IRS-recommended description; cases are written but unrun. Similar-item aggregation, art/conservation and other special routes, AGI limits, source authentication, and PDF rendering remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Build the remaining attachment and limit paths, then run the full batch and verify IRS rules.                                                                                                           |
-| GAP-8889       | Form 8889 HSAs                               | Build pass corrects Schedule 1 line 8f and Schedule 2 lines 17c/17d, calculates monthly mixed/partial-year HDHP limits and the elected last-month rule from twelve explicit coverage facts, and taxes only the nonexcepted part of a taxable distribution. A sourced single IRA-to-HSA direct transfer now prints line 10 and reduces line 12 contribution room. Native MeF/PDF lines include Part III. Employer contributions above the computed limit stop pending income treatment. Cases are written but unrun. Spouse allocation, employer excess, a permitted second funding transfer, eligibility evidence, prior-year testing-period verification, and ATS remain open. | Complete remaining HSA source paths, then verify full-batch calculation, XML, PDF, and IRS rules. |
+| GAP-8283       | Form 8283                                    | Build pass replaced the automatic capital-gain-property basis cap with an explicit Section B claimed deduction, added separate MeF documents for ordinary Section B gifts, and added VIN plus a linked native MeF vehicle statement for Section A claims above $500 on the donee-certified unrelated-party sale-proceeds route. These calculation, multi-document, and local XSD cases are written but unrun. The Section A box 5a significant-use and material-improvement routes and box 5b needy-transfer route now require dated donee certification and a linked acknowledgment PDF, with focused cases written but unrun. Section B box 5a/5b vehicle exception claims above $5,000 now require a VIN, dated donee certification, qualified appraisal, signed donee facts, both signature PDFs, and linked acknowledgment PDF. Cases are written but unrun. Single-item claims above $500,000 for equipment, Section B securities, collectibles, and exception vehicles now require a linked full qualified-appraisal PDF with the IRS-recommended description; cases are written but unrun. Similar-item aggregation, art/conservation and other special routes, AGI limits, source authentication, and PDF rendering remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Build the remaining attachment and limit paths, then run the full batch and verify IRS rules.                                                                                                           |
+| GAP-8889       | Form 8889 HSAs                               | Build pass corrects Schedule 1 line 8f and Schedule 2 lines 17c/17d, calculates monthly mixed/partial-year HDHP limits and the elected last-month rule from twelve explicit coverage facts, and taxes only the nonexcepted part of a taxable distribution. An explicit agreed spouse share of the refigured family limit computes line 6 without a 50/50 default. A sourced single IRA-to-HSA direct transfer prints line 10 and reduces line 12 contribution room. Line 14b separates rollovers from timely excess withdrawals and routes the latter's earnings to Schedule 1 other income. Native MeF/PDF lines include Part III. Employer contributions above the computed limit stop pending income treatment. Cases are written but unrun. Separate spouse forms, employer excess, a permitted second funding transfer, eligibility evidence, prior-year testing-period verification, and ATS remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Complete remaining HSA source paths, then verify full-batch calculation, XML, PDF, and IRS rules.                                                                                                       |
 | GAP-8582       | Form 8582                                    | Prior-year active-participation facts already existed. The current build pass now splits an active rental's ineligible prior operating loss into Part V, excludes it from the Part II special allowance and Part VI ratios, and shares the revised per-activity allocation with Schedule E and Form 4835. Cases are written but unrun. Prior Form 4797 losses, durable per-activity carryforward identities, and full business-rule verification remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Verify split Part IV/V XML, Schedule E and Form 4835 routing, current-worktree tests and IRS rules; finish remaining prior-loss forms.                                                                  |
 | GAP-8814       | Form 8814 and dependent income               | Build pass has replaced old thresholds with the 2025 $1,350/$2,700 rules, routed lines 9/10/12/15, added an `IRS8814` MeF serializer and PDF descriptor, linked elected dependent income to Form 8962 Worksheet 1-2 by SSN, routed line 12 less the Alaska PFD share to Form 8960 line 7, added combined-source Schedule B reporting, and routed child investment-income facts to Form 4952. These changes are untested under the requested build-first workflow. Explicit interest nominee, accrued-interest, ABP, and OID facts now generate a linked ChildTaxableInterestStmt per affected child, and dividend/capital-gain nominee amounts map to the IRS8814 attributes, and the child's private-activity-bond interest routes to the parent's Form 6251 line 2g; cases are written but unrun. The child's foreign-account/trust facts now trigger Schedule B Part III and its Form 8814 literals; explicit FBAR facts are still required. PDF dotted-line notes, PDF layout verification, parent-election business rules, and IRS acceptance remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Finish source-to-return and form-output coverage, then run the full batch including IRS XSD and business-rule cases.                                                                                    |
 | GAP-4952       | Form 4952 source and child investment income | Build pass now exposes Form 4952 as a normal return input, calculates lines 1 through 8 from separate `other_` investment-property facts, affirmed 1099-INT/1099-DIV/1099-OID and partnership/S-corp/trust K-1 portfolio sources, and Form 8814 contributions. It routes line 8 to Schedule A and line 7 to carryforward, and maps the 2025 XML and PDF form lines. These changes are untested. The build pass also takes explicit AMT refigure facts, derives a separate AMT Form 4952 line 8 and carryforward, routes the signed difference to Form 6251 line 2c, and caps AMT line 4g separately. A positive line 4g election and its capital-gain attribution feed the regular and AMT Schedule D Tax Worksheets. These cases are written but unrun. Broker, non-portfolio, and broader AMT-basis source derivation, foreign-tax interactions, PDF layout, and business rules remain open.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Finish source derivation and election tax treatment, then run the full batch including XSD and PDF checks.                                                                                              |
@@ -1078,6 +1094,29 @@ acceptance remain open.
 
 ### GAP-8283: Noncash contribution signatures
 
+The current build pass also classifies each positive Form 8283 gift for the
+TY2025 Publication 526 Worksheet 2 limits and passes its source amount to
+Schedule A. Schedule A applies the current-year 60% cash, 50% noncash, other
+30%, capital-gain 30%, and 20% limits in worksheet order, finalizes the filed
+cash/noncash lines, and records excess by original category. Focused cases are
+written but unrun. Direct unclassified Schedule A lines 11-13 and Form 8283
+claims without a category are rejected. This is **not** a complete AGI-limit or
+carryover route: prior-year carryovers need origin year/category ledger,
+current-year-first then oldest-vintage priority, 50%-organization carryover
+priority over current second-category gifts, current-year standard-deduction
+selection treatment, capital-gain election refiguring, and any prior Form 8283
+and appraisal attachments. Current-year cash gifts to second-category
+organizations or for the use of a qualified organization now enter the other 30%
+Worksheet 2 limit and Schedule A line 11 when cash-only or fully allowed
+alongside noncash gifts. A partially allowed mixed cash/noncash other-30 group
+stops because Worksheet 2 does not assign its combined line 24 allowance to
+Schedule A's separate cash and property lines. These cases are written but
+unrun. Qualified conservation contributions are explicitly rejected. K-1
+charitable sources are not routed. Ten benchmark fixtures (69, 73, 74, 75, 81,
+84, 87, 89, 95, 101) contain raw Schedule A charity amounts without
+recipient/property categories; no fixture supplies enough evidence to infer a
+category, so they currently fail explicitly and must be re-sourced.
+
 The current build pass requires the actual appraiser-signature and
 donee-signature PDFs for Section B, checks the exact descriptions required by
 the 2025 MeF business rules F8283-041 and F8283-042, and links both binaries to
@@ -1085,20 +1124,20 @@ the corresponding native `IRS8283` document. Missing or mismatched attachments
 stop export. The attachment and full-bundle cases are written but unrun. This
 does not settle other Form 8283 limits or attachment paths.
 
-The Section A vehicle build pass now requires the donee-issued PDF for a
-claimed deduction above $500. For a $501-$5,000 claim it supports Form 1098-C
-box 5b needy transfer and both box 5a exceptions: significant intervening use
-and material improvement. Each has an exclusive, timely donee certification,
-source facts, and its native MeF indicator; box 5c carries intended use plus
-duration or intended improvement detail. A larger exception claim now uses
-Section B with explicit qualified-appraisal and signed donee facts; the builder
-links the appraiser-signature, donee-signature, and donee-issued acknowledgment
-PDFs plus the native vehicle statement. This is written for the three exception
-routes, not all Section B vehicle situations. The 2025 Form 8283 instructions
-require a copy of the donee-issued Form 1098-C or equivalent written
-acknowledgment above $500. Focused calculation, attachment, and native-statement
-XSD cases are written but unrun. The model cannot authenticate the donee's PDF
-or prove the intended work was ultimately done.
+The Section A vehicle build pass now requires the donee-issued PDF for a claimed
+deduction above $500. For a $501-$5,000 claim it supports Form 1098-C box 5b
+needy transfer and both box 5a exceptions: significant intervening use and
+material improvement. Each has an exclusive, timely donee certification, source
+facts, and its native MeF indicator; box 5c carries intended use plus duration
+or intended improvement detail. A larger exception claim now uses Section B with
+explicit qualified-appraisal and signed donee facts; the builder links the
+appraiser-signature, donee-signature, and donee-issued acknowledgment PDFs plus
+the native vehicle statement. This is written for the three exception routes,
+not all Section B vehicle situations. The 2025 Form 8283 instructions require a
+copy of the donee-issued Form 1098-C or equivalent written acknowledgment above
+$500. Focused calculation, attachment, and native-statement XSD cases are
+written but unrun. The model cannot authenticate the donee's PDF or prove the
+intended work was ultimately done.
 
 For a single supported Section B item claimed above $500,000, the build now
 requires the full qualified appraisal as a separate PDF from the appraiser's
@@ -1118,41 +1157,40 @@ requires traced total and qualifying pre-discharge loan balances, main-home
 security confirmation, and an explicit filing-status cap answer. A mixed-use
 loan's nonqualified balance is discharged first for the exclusion calculation;
 the remainder feeds Schedule 1 and Form 1040 AGI, while the excluded portion
-feeds native Form 982 line 2.
-MeF export checks the MFS cap choice against the return. A Form 1099-C with
-undivided discharged interest stops pending a principal/interest split. QPRI
-also requires a sourced home-value-decline or financial-condition discharge
-reason, an actual discharge date separate from the 1099-C identifiable-event
-date, and confirmation that discharged principal equals box 2; other box 2
-components need separate classification. Box 7 FMV no longer invents a
-Schedule D gain: retained property does not route there, and a transfer stops
-until recourse, debt balance, basis, and holding facts support a disposition
-calculation. The legacy Schedule D COD fields now reject direct input. Source,
-calculation, XML, and local XSD cases are written but unrun. Interest,
-recourse/nonrecourse property disposition, multiple debts, evidence
+feeds native Form 982 line 2. MeF export checks the MFS cap choice against the
+return. A Form 1099-C with undivided discharged interest stops pending a
+principal/interest split. QPRI also requires a sourced home-value-decline or
+financial-condition discharge reason, an actual discharge date separate from the
+1099-C identifiable-event date, and confirmation that discharged principal
+equals box 2; other box 2 components need separate classification. Box 7 FMV no
+longer invents a Schedule D gain: retained property does not route there, and a
+transfer stops until recourse, debt balance, basis, and holding facts support a
+disposition calculation. The legacy Schedule D COD fields now reject direct
+input. Source, calculation, XML, and local XSD cases are written but unrun.
+Interest, recourse/nonrecourse property disposition, multiple debts, evidence
 authentication, and non-QPRI Part II tax-attribute reductions remain open. See
 the [Form 982 instructions](https://www.irs.gov/instructions/i982) and
 [2025 Publication 4681](https://www.irs.gov/publications/p4681).
 
 ### ATS-01: Form 1040 Scenario 13 source reconciliation
 
-A full source-fact input fixture for the nine-page [TY2025 Scenario 13
-PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf) now maps
-the joint filer, W-2, and Form 8911 charger facts. Its separate reconciliation
-records that the PDF prints a $30,000 joint standard deduction and $1,620 of
-taxable income, while the current TY2025 configuration applies $31,500 and
-leaves $120. The printed $162 Form 8911 tax limit cannot be reused as a
-current-law result. The fixture cases are written but unrun and are not an
+A full source-fact input fixture for the nine-page
+[TY2025 Scenario 13 PDF](https://www.irs.gov/pub/irs-efile/1040-mef-ats-scenario-13.pdf)
+now maps the joint filer, W-2, and Form 8911 charger facts. Its separate
+reconciliation records that the PDF prints a $30,000 joint standard deduction
+and $1,620 of taxable income, while the current TY2025 configuration applies
+$31,500 and leaves $120. The printed $162 Form 8911 tax limit cannot be reused
+as a current-law result. The fixture cases are written but unrun and are not an
 ATS-ready return or an acknowledgment.
 
-Scenario 3 now has a source-fact fixture and reconciliation cases for Schedule
-F and Form 4835. The IRS packet leaves the Form 1040 results blank. The current
-build pass calculates the elected Schedule SE farm optional method from
-Schedule F gross and net amounts, including farms with profit below $400 or a
-loss. One shared calculation feeds the tax node, native TY2025 MeF Part I/II
-fields, and PDF descriptor. Farm K-1 and CRP source facts, missing transaction
-and activity details, and blank Form 1040 results still prevent an ATS-ready
-return. Calculation, MeF, and PDF-field cases are written but unrun.
+Scenario 3 now has a source-fact fixture and reconciliation cases for Schedule F
+and Form 4835. The IRS packet leaves the Form 1040 results blank. The current
+build pass calculates the elected Schedule SE farm optional method from Schedule
+F gross and net amounts, including farms with profit below $400 or a loss. One
+shared calculation feeds the tax node, native TY2025 MeF Part I/II fields, and
+PDF descriptor. Farm K-1 and CRP source facts, missing transaction and activity
+details, and blank Form 1040 results still prevent an ATS-ready return.
+Calculation, MeF, and PDF-field cases are written but unrun.
 
 ### GAP-8978: Partner's additional reporting year tax
 
@@ -1242,19 +1280,18 @@ line 15. It carries explicit parent and sibling preferential-income facts and
 native MeF worksheet indicators. Focused and end-to-end cases are written but
 unrun. The current build pass also adds exact TY2025 Tax Table lookup for
 positive-line-5 Forms 8615 below $100,000, including both ordinary-tax
-comparisons inside the qualified-dividend worksheet. Its derivation was
-compared with all 8,248 cells of the published IRS table with zero mismatches;
-the repository tests and full graph have not yet run. Schedule D special-gain
-and Form 4952 routes, Schedule J, and Form 2555 still stop explicitly.
-The exact TY2025 Tax Table helper is now shared with general Form 1040 line 16
-and the qualified-dividend and Schedule D worksheet comparisons below
-$100,000. Form 2555 without preferential income uses table cells in its
-stacked comparison; Form 2555 with preferential income stops pending the
-capital-gain-excess adjustment. These cases are written but unrun. Rounding
-and the shared preferential-tax helper's behavior-preserving extraction await
-the full test batch. Parent and child
-eligibility proof, dependent earned-income source derivation beyond the stated
-amount, visual PDF verification, and IRS business
+comparisons inside the qualified-dividend worksheet. Its derivation was compared
+with all 8,248 cells of the published IRS table with zero mismatches; the
+repository tests and full graph have not yet run. Schedule D special-gain and
+Form 4952 routes, Schedule J, and Form 2555 still stop explicitly. The exact
+TY2025 Tax Table helper is now shared with general Form 1040 line 16 and the
+qualified-dividend and Schedule D worksheet comparisons below $100,000. Form
+2555 without preferential income uses table cells in its stacked comparison;
+Form 2555 with preferential income stops pending the capital-gain-excess
+adjustment. These cases are written but unrun. Rounding and the shared
+preferential-tax helper's behavior-preserving extraction await the full test
+batch. Parent and child eligibility proof, dependent earned-income source
+derivation beyond the stated amount, visual PDF verification, and IRS business
 rules remain open. Do not treat the ordinary slice as whole-form support.
 
 ### GAP-8854: Initial and annual expatriation statement

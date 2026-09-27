@@ -12,6 +12,7 @@ import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
 import { form4137 } from "./f4137.ts";
+import { form4255 } from "./f4255.ts";
 import { form4136 } from "./f4136.ts";
 import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
 import { form4136KeroseneGovernmentSalesStatement } from "./f4136_kerosene_government_sales_statement.ts";
@@ -149,6 +150,8 @@ export const ALL_MEF_FORMS = [
   form4136,
   // Form 4137
   form4137,
+  // Form 4255 follows Form 4137 in ReturnData1040.xsd.
+  form4255,
   // Form 4562
   form4562,
   // Form 4684

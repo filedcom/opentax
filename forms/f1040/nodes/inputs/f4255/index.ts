@@ -1,94 +1,120 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode } from "../../../../../core/types/tax-node.ts";
-import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
-import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
+import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
+import type { NodeResult } from "../../../../../core/types/tax-node.ts";
+import { TaxNode } from "../../../../../core/types/tax-node.ts";
+import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
 
-// Form 4255 — Recapture of Investment Credit (IRC §50(a))
-// Filed when property on which an investment credit was claimed is disposed of
-// or ceases to qualify before the end of the 5-year recapture period.
-// Recapture amount routes to Schedule 2, Line 17a.
+// TY2025 Form 4255 Part I row facts. The former original-credit × year
+// shortcut could not distinguish carryover, gross EPE, net EPE, or an EP.
+const dollars = z.number().int().nonnegative();
 
-// TY2025 — §50(a)(1) recapture percentages
-const RECAPTURE_PERCENTAGES: Record<number, number> = {
-  1: 1.00,
-  2: 0.80,
-  3: 0.60,
-  4: 0.40,
-  5: 0.20,
-};
-
-export enum RecaptureReason {
-  Disposed = "disposed",
-  CeasedToQualify = "ceased_to_qualify",
-  Converted = "converted",
-  Destroyed = "destroyed",
-}
-
-export const itemSchema = z.object({
-  // Form 4255 column (a) — description of property
-  description: z.string().optional(),
-  // Form 4255 column (b) — date placed in service (ISO YYYY-MM-DD)
-  date_placed_in_service: z.string().optional(),
-  // Original investment credit claimed on this property
-  original_credit_amount: z.number().nonnegative(),
-  // Year of recapture (1–5): determines the recapture percentage under §50(a)(1)
-  year_of_recapture: z.number().int().min(1).max(5),
-  // Why the property ceased to qualify
-  recapture_reason: z.nativeEnum(RecaptureReason).optional(),
-  // Override computed recapture amount (taxpayer-provided or from prior-year carryover)
-  recapture_amount_override: z.number().nonnegative().optional(),
-});
-
-export const inputSchema = z.object({
-  properties: z.array(itemSchema).min(1),
-});
-
-type F4255Item = z.infer<typeof itemSchema>;
-type F4255Items = F4255Item[];
-
-// ── Per-item recapture ────────────────────────────────────────────────────────
-
-function recapturePercentage(year: number): number {
-  return RECAPTURE_PERCENTAGES[year] ?? 0;
-}
-
-function propertyRecapture(item: F4255Item): number {
-  if (item.recapture_amount_override !== undefined) {
-    return item.recapture_amount_override;
+export const rowSchema = z.object({
+  source_document_reference: z.string().trim().min(1),
+  credit_line: z.enum(["1d", "2a"]),
+  prior_credit_claimed: dollars, // column (a)
+  gross_epe: dollars, // column (b)
+  gross_epe_applied_regular_tax: dollars, // column (c)
+  non_epe_applied_regular_tax: dollars, // column (e)
+  recaptured_total: dollars, // column (h)
+  recaptured_carryover: dollars, // column (i)
+  recaptured_non_epe_applied: z.literal(0), // column (j): separate unsupported route
+  recaptured_gross_epe_applied: z.literal(0), // column (k): separate unsupported route
+  recaptured_net_epe: dollars, // column (l)
+  excessive_payment_net_epe: dollars, // column (n)(1)
+  excessive_payment_other: z.literal(0), // column (n)(2): separate line 1y route
+  excessive_payment_20_percent: dollars, // column (n)(3)
+}).superRefine((row, ctx) => {
+  const fail = (message: string) => ctx.addIssue({ code: "custom", message });
+  if (row.gross_epe > row.prior_credit_claimed) {
+    fail("Form 4255 column (b) exceeds column (a)");
   }
-  return item.original_credit_amount * recapturePercentage(item.year_of_recapture);
+  if (row.gross_epe_applied_regular_tax > row.gross_epe) {
+    fail("Form 4255 column (c) exceeds column (b)");
+  }
+  const nonEpe = row.prior_credit_claimed - row.gross_epe;
+  if (row.non_epe_applied_regular_tax > nonEpe) {
+    fail("Form 4255 column (e) exceeds non-EPE credit");
+  }
+  const carryover = row.prior_credit_claimed - row.gross_epe -
+    row.non_epe_applied_regular_tax;
+  const netEpe = row.gross_epe - row.gross_epe_applied_regular_tax;
+  if (row.recaptured_carryover > carryover) {
+    fail("Form 4255 column (i) exceeds column (f) carryover");
+  }
+  if (row.recaptured_non_epe_applied > row.non_epe_applied_regular_tax) {
+    fail("Form 4255 column (j) exceeds column (e)");
+  }
+  if (row.recaptured_gross_epe_applied > row.gross_epe_applied_regular_tax) {
+    fail("Form 4255 column (k) exceeds column (c)");
+  }
+  if (row.recaptured_net_epe > netEpe) {
+    fail("Form 4255 column (l) exceeds column (d)");
+  }
+  if (
+    row.recaptured_total !== row.recaptured_carryover +
+        row.recaptured_non_epe_applied + row.recaptured_gross_epe_applied +
+        row.recaptured_net_epe
+  ) {
+    fail("Form 4255 column (h) must equal columns (i) through (l)");
+  }
+});
+
+export const inputSchema = z.object({ rows: z.array(rowSchema).min(1) });
+export type F4255Input = z.infer<typeof inputSchema>;
+export type F4255Row = z.infer<typeof rowSchema>;
+
+export function calculateForm4255Routes(raw: F4255Input) {
+  const input = inputSchema.parse(raw);
+  const sum = (
+    line: F4255Row["credit_line"],
+    key:
+      | "recaptured_net_epe"
+      | "excessive_payment_net_epe"
+      | "excessive_payment_20_percent",
+  ) =>
+    input.rows.filter((row) => row.credit_line === line).reduce(
+      (total, row) => total + row[key],
+      0,
+    );
+  return {
+    line1d: sum("2a", "recaptured_net_epe"),
+    line1e_1d: sum("1d", "excessive_payment_net_epe"),
+    line1e_2a: sum("2a", "excessive_payment_net_epe"),
+    line1f_1d: sum("1d", "excessive_payment_20_percent"),
+    line1f_2a: sum("2a", "excessive_payment_20_percent"),
+    line19: sum("1d", "recaptured_net_epe"),
+  };
 }
-
-// ── Aggregation ───────────────────────────────────────────────────────────────
-
-function totalRecapture(properties: F4255Items): number {
-  return properties.reduce((sum, item) => sum + propertyRecapture(item), 0);
-}
-
-// ── Output ────────────────────────────────────────────────────────────────────
-
-function buildOutputs(total: number): NodeOutput[] {
-  if (total <= 0) return [];
-  return [{ nodeType: schedule2.nodeType, fields: { line17a_investment_credit_recapture: total } }];
-}
-
-// ── Node class ────────────────────────────────────────────────────────────────
 
 class F4255Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f4255";
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule2]);
-  readonly pdfUrl = "https://www.irs.gov/pub/irs-pdf/f4255.pdf";
+  readonly pdfUrl = "https://www.irs.gov/pub/irs-prior/f4255--2025.pdf";
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
-    const input = inputSchema.parse(rawInput);
-    const total = totalRecapture(input.properties);
-    return { outputs: buildOutputs(total) };
+  compute(_ctx: NodeContext, rawInput: F4255Input): NodeResult {
+    const lines = calculateForm4255Routes(rawInput);
+    const fields = {
+      ...(lines.line1d > 0 ? { line1d_form4255_net_epe: lines.line1d } : {}),
+      ...(lines.line1e_1d + lines.line1e_2a > 0
+        ? {
+          line1e_form4255_excessive_payment: lines.line1e_1d +
+            lines.line1e_2a,
+        }
+        : {}),
+      ...(lines.line1f_1d + lines.line1f_2a > 0
+        ? {
+          line1f_form4255_20_percent_ep: lines.line1f_1d +
+            lines.line1f_2a,
+        }
+        : {}),
+      ...(lines.line19 > 0 ? { line19_form4255_net_epe: lines.line19 } : {}),
+    };
+    return Object.keys(fields).length === 0 ? { outputs: [] } : {
+      outputs: [this.outputNodes.output(schedule2, fields)],
+    };
   }
 }
-
-// ── Singleton export ──────────────────────────────────────────────────────────
 
 export const f4255 = new F4255Node();

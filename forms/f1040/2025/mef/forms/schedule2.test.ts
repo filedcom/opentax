@@ -18,6 +18,54 @@ Deno.test("empty object returns empty string", () => {
   assertEquals(schedule2.build({}), "");
 });
 
+Deno.test("Form 4255 source rows drive Schedule 2 net-EPE and EP groups", () => {
+  const source = {
+    rows: [{
+      source_document_reference: "2024 Form 3800 and recapture workpaper",
+      credit_line: "2a" as const,
+      prior_credit_claimed: 10_000,
+      gross_epe: 8_000,
+      gross_epe_applied_regular_tax: 3_000,
+      non_epe_applied_regular_tax: 1_000,
+      recaptured_total: 2_000,
+      recaptured_carryover: 500,
+      recaptured_non_epe_applied: 0 as const,
+      recaptured_gross_epe_applied: 0 as const,
+      recaptured_net_epe: 1_500,
+      excessive_payment_net_epe: 300,
+      excessive_payment_other: 0 as const,
+      excessive_payment_20_percent: 60,
+    }],
+  };
+  const xml = schedule2.build({
+    line1d_form4255_net_epe: 1_500,
+    line1e_form4255_excessive_payment: 300,
+    line1f_form4255_20_percent_ep: 60,
+  }, { pending: { f4255: source } });
+  assertStringIncludes(
+    xml,
+    "<RcptrPrtnNetEPECrAmt>1500</RcptrPrtnNetEPECrAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ApplicableCheckboxivInd>X</ApplicableCheckboxivInd>",
+  );
+  assertStringIncludes(xml, "<ExPymt100CrAmt>300</ExPymt100CrAmt>");
+  assertStringIncludes(
+    xml,
+    "<TotEx20PrvlWgAprntcshpPnltyAmt>60</TotEx20PrvlWgAprntcshpPnltyAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalTaxAdditionsAmt>1860</TotalTaxAdditionsAmt>",
+  );
+  assertThrows(
+    () => schedule2.build({ line1d_form4255_net_epe: 1_500 }),
+    Error,
+    "require source rows",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Section 2: Unknown keys ignored
 // ---------------------------------------------------------------------------
@@ -228,33 +276,15 @@ Deno.test("TY2025 mortgage and housing recaptures use lines 17b and 16", () => {
   );
 });
 
-Deno.test("2025 Schedule 2 line 17a identifies investment-credit recapture", () => {
-  const result = schedule2.build({
-    line16_lihtc_recapture: 750,
-    line17a_investment_credit_recapture: 2_500,
-    line17b_mortgage_subsidy_recapture: 1_000,
-  });
-  assertStringIncludes(
-    result,
-    "<RecaptureOtherCreditsGrp><OtherCreditsCd>3468</OtherCreditsCd><OtherCreditsAmt>2500</OtherCreditsAmt></RecaptureOtherCreditsGrp>",
-  );
-  assertStringIncludes(
-    result,
-    "<TotalRecaptureOtherCreditsAmt>2500</TotalRecaptureOtherCreditsAmt>",
-  );
-  assertEquals(
-    result.indexOf("<RecaptureTaxAmt>") <
-      result.indexOf("<RecaptureOtherCreditsGrp>"),
-    true,
-  );
-  assertEquals(
-    result.indexOf("<TotalRecaptureOtherCreditsAmt>") <
-      result.indexOf("<MortgSbsdyRecaptureTaxAmt>"),
-    true,
+Deno.test("2025 Schedule 2 rejects generic 3468 recapture without a Form 4255 credit-line source", () => {
+  assertThrows(
+    () => schedule2.build({ line17a_investment_credit_recapture: 2_500 }),
+    Error,
+    "requires a specific Form 4255 credit-line source",
   );
 });
 
-Deno.test("2025 Schedule 2 keeps 3468 and NMCR recapture groups separate", () => {
+Deno.test("2025 Schedule 2 keeps NMCR recapture source-linked", () => {
   const source = {
     recaptures: [{
       notice_reference: "2025 CDE notice",
@@ -286,18 +316,15 @@ Deno.test("2025 Schedule 2 keeps 3468 and NMCR recapture groups separate", () =>
     })),
   });
   const result = schedule2.build({
-    line17a_investment_credit_recapture: 2_500,
     line17a_new_markets_credit_recapture: nmcr,
   }, { pending: { f8874_recapture: source } });
   assertStringIncludes(
     result,
-    `<RecaptureOtherCreditsGrp><OtherCreditsCd>3468</OtherCreditsCd><OtherCreditsAmt>2500</OtherCreditsAmt></RecaptureOtherCreditsGrp><RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>${nmcr}</OtherCreditsAmt></RecaptureOtherCreditsGrp>`,
+    `<RecaptureOtherCreditsGrp><OtherCreditsCd>NMCR</OtherCreditsCd><OtherCreditsAmt>${nmcr}</OtherCreditsAmt></RecaptureOtherCreditsGrp>`,
   );
   assertStringIncludes(
     result,
-    `<TotalRecaptureOtherCreditsAmt>${
-      2_500 + nmcr
-    }</TotalRecaptureOtherCreditsAmt>`,
+    `<TotalRecaptureOtherCreditsAmt>${nmcr}</TotalRecaptureOtherCreditsAmt>`,
   );
   assertThrows(
     () => schedule2.build({ line17a_new_markets_credit_recapture: nmcr }),

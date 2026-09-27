@@ -2,15 +2,16 @@
 
 ## Current TY2025 charitable-limit build pass (unverified)
 
-The implementation now takes `cash_contributions_to_50_percent_organizations`
-and categorized `noncash_contribution_items`, including Form 8283 items. It does
-**not** accept nonzero raw filed lines 11-13 as source inputs. Publication 526
-(2025) Worksheet 2 lines 13, 17, 24, 30, and 40 determine current-year allowed
-amounts for cash 60%, noncash 50%, other 30%, capital-gain 30%, and capital-gain
-20%. Schedule A finalizes the filed line 11/12 amounts and emits the excess in
-category-specific current-year carryforward fields. The direct MeF and PDF
-builders reject charitable filed lines without that finalization. The cases are
-written but have not been run in the requested build-first batch.
+The implementation now takes `cash_contributions_to_50_percent_organizations`,
+`cash_contributions_other_30`, and categorized `noncash_contribution_items`,
+including Form 8283 items. It does **not** accept nonzero raw filed lines 11-13
+as source inputs. Publication 526 (2025) Worksheet 2 lines 13, 17, 24, 30, and
+40 determine current-year allowed amounts for cash 60%, noncash 50%, other 30%,
+capital-gain 30%, and capital-gain 20%. Schedule A finalizes the filed line
+11/12 amounts and emits the excess in category-specific current-year
+carryforward fields. The direct MeF and PDF builders reject charitable filed
+lines without that finalization. The cases are written but have not been run in
+the requested build-first batch.
 
 The direct `line_13_contribution_carryover` path remains rejected. Pub. 526
 explicitly prohibits using Worksheet 2 when a prior-year carryover exists. Prior
@@ -19,9 +20,15 @@ prior-year and oldest-vintage priority, 50%-organization carryover priority
 against current second-category gifts, potential capital-gain-election
 refiguring, and a decision about carryover when the standard deduction wins.
 Form 8283 instructions also require the prior completed Form 8283 and any
-originally required appraisal on a noncash carryover return. Cash gifts to
-30%-limit organizations and qualified conservation contributions are rejected
-until their source categories and filed-line allocation are modeled. K-1
+originally required appraisal on a noncash carryover return. Current-year cash
+to a second-category organization or for the use of any qualified organization
+uses `cash_contributions_other_30` and Publication 526 Worksheet 2 lines 5/7,
+19-25. Cash-only other-30 gifts route the allowed amount to line 11; mixed
+cash/noncash other-30 gifts also route when wholly allowed (or wholly blocked).
+Partially allowed mixed gifts stop because Worksheet 2 provides only one
+combined allowance, not a cash/property allocation for Schedule A lines 11/12
+and the resulting source carryovers. Qualified conservation contributions are
+rejected until their separate 50%/100% route is modeled. K-1
 charitable-contribution boxes have no source route. The benchmark fixtures 69,
 73, 74, 75, 81, 84, 87, 89, 95, and 101 have raw charity amounts but no
 organization/property classification; do not infer their categories.

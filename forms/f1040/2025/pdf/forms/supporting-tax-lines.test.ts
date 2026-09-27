@@ -335,3 +335,25 @@ Deno.test("Form 8962 marriage calculation reaches printed Part V line 35", () =>
   assertEquals(projected?.pdf_marriage_primary_end_month, "06");
   assertEquals(projected?.pdf_marriage_spouse_family_size, undefined);
 });
+
+Deno.test("Form 8962 PDF preserves marriage worksheet contribution in a no-premium gap", () => {
+  const projected = form8962Pdf.projectFields?.({
+    monthly_ptc_rows: [{
+      month_code: "FEBRUARY",
+      premium: 0,
+      slcsp: 0,
+      contribution: 153,
+      max_assistance: 0,
+      allowed_credit: 0,
+      aptc: 0,
+    }],
+    alternative_marriage_primary: {
+      family_size: 1,
+      monthly_contribution: 153,
+      start_month: 1,
+      end_month: 3,
+    },
+  }, {});
+  assertEquals(projected?.pdf_month_2_contribution, "153");
+  assertEquals(projected?.pdf_month_2_premium, "0");
+});

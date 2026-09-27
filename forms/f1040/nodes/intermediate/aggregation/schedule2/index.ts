@@ -30,16 +30,19 @@ export const inputSchema = z.object({
   // Line 8 — Additional taxes from Form 5329 (early dist, excess contributions)
   // IRC §72(t), §4973; Form 5329 all parts → Schedule 2 line 8
   line8_form5329_tax: z.number().nonnegative().optional(),
-  // Only Forms 5329 Parts I/II are chapter 1 taxes. Parts III-VIII are
-  // section 4973 excise taxes and cannot be offset by Form 8978.
+  // Only Form 5329 Parts I/II are chapter 1 taxes. The later parts include
+  // several different excise-tax sections, not just section 4973, and cannot
+  // be included in a Form 8978 chapter 1 offset.
   line8_form5329_chapter1_tax: z.number().nonnegative().optional(),
   // Line 13 — Uncollected SS/Medicare on tips (W-2 Box12 codes A+B)
   uncollected_fica: z.number().nonnegative().optional(),
   // Line 13 — Uncollected SS/Medicare on group-term life ins >$50k (W-2 Box12 codes M+N)
   uncollected_fica_gtl: z.number().nonnegative().optional(),
-  // Line 17h — §409A excise on NQDC failure (W-2 Box12 code Z, pre-computed at 20%)
+  // Line 17h — §409A additional chapter 1 income tax on NQDC failure
+  // (W-2 Box12 code Z, pre-computed at 20%).
   section409a_excise: z.number().nonnegative().optional(),
-  // Line 17h — §409A NQDC excise (1099-MISC box15 × 20%, computed by f1099m)
+  // Line 17h — §409A NQDC additional income tax
+  // (1099-MISC box15 × 20%, computed by f1099m).
   line17h_nqdc_tax: z.number().nonnegative().optional(),
   // Line 17k — 20% excise on excess golden parachute payments (W-2 Box12 code K)
   golden_parachute_excise: z.number().nonnegative().optional(),
@@ -82,6 +85,11 @@ export const inputSchema = z.object({
     z.number().nonnegative(),
   )
     .optional(),
+  // Form 4255 Part I row 2a column (l), row-specific net EPE recapture.
+  line1d_form4255_net_epe: z.number().nonnegative().optional(),
+  // Form 4255 rows 1d/2a columns (n)(1) and (n)(3), respectively.
+  line1e_form4255_excessive_payment: z.number().nonnegative().optional(),
+  line1f_form4255_20_percent_ep: z.number().nonnegative().optional(),
   // Line 9 — Household employment taxes (Schedule H line 26).
   // IRC §3510; Schedule H line 26 → Schedule 2 line 9.
   line9_household_employment: z.number().nonnegative().optional(),
@@ -94,6 +102,8 @@ export const inputSchema = z.object({
   line17b_mortgage_subsidy_recapture: z.number().nonnegative().optional(),
   // Line 16 — Recapture of low-income housing credit (Form 8611).
   line16_lihtc_recapture: z.number().nonnegative().optional(),
+  // Form 4255 Part I row 1d column (l), separate from line 1d above.
+  line19_form4255_net_epe: z.number().nonnegative().optional(),
   // Line 17z — other additional taxes. A negative Form 8978 adjustment may
   // reduce eligible chapter 1 taxes here after its Schedule 3 line 6l cap;
   // a positive Form 8978 line 14 belongs on Form 1040 line 16, not here.
@@ -121,7 +131,7 @@ function line13(input: Schedule2Input): number {
   return (input.uncollected_fica ?? 0) + (input.uncollected_fica_gtl ?? 0);
 }
 
-// Line 17h: §409A excise tax on failing NQDC plans
+// Line 17h: §409A additional income tax on failing NQDC plans
 // IRC §409A(a)(1)(B); Schedule 2 Line 17h
 function line17h(input: Schedule2Input): number {
   return (input.section409a_excise ?? 0) + (input.line17h_nqdc_tax ?? 0);
@@ -137,7 +147,10 @@ function line17k(input: Schedule2Input): number {
 function part1Total(input: Schedule2Input): number {
   return (input.line2_amt ?? 0) + (input.line1a_excess_advance_premium ?? 0) +
     sumAccumulable(input.line1b_new_clean_vehicle_repayment) +
-    sumAccumulable(input.line1c_prev_owned_clean_vehicle_repayment);
+    sumAccumulable(input.line1c_prev_owned_clean_vehicle_repayment) +
+    (input.line1d_form4255_net_epe ?? 0) +
+    (input.line1e_form4255_excessive_payment ?? 0) +
+    (input.line1f_form4255_20_percent_ep ?? 0);
 }
 
 function part2Total(input: Schedule2Input): number {
@@ -159,6 +172,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line17a_new_markets_credit_recapture ?? 0) +
     (input.line17b_mortgage_subsidy_recapture ?? 0) +
     (input.line16_lihtc_recapture ?? 0) +
+    (input.line19_form4255_net_epe ?? 0) +
     (input.line17z_other_additional_taxes ?? 0) +
     (input.line17p_form8621_interest ?? 0);
 }
@@ -189,6 +203,7 @@ function part2UnclassifiedTax(input: Schedule2Input): number {
       ? input.line8_form5329_tax ?? 0
       : 0;
   return form5329WithoutBreakdown +
+    (input.line19_form4255_net_epe ?? 0) +
     (input.line17z_other_additional_taxes ?? 0);
 }
 
@@ -201,6 +216,11 @@ class Schedule2Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: Schedule2Input): NodeResult {
     const input = inputSchema.parse(rawInput);
+    if ((input.line17a_investment_credit_recapture ?? 0) > 0) {
+      throw new Error(
+        "Schedule 2 generic 3468 recapture requires a specific Form 4255 credit-line source",
+      );
+    }
 
     const part1 = part1Total(input);
     const part2 = part2Total(input);

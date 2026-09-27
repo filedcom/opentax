@@ -1,9 +1,11 @@
 # Schedule 2 — Additional Taxes
 
 ## Overview
-Schedule 2 aggregates "additional taxes" from multiple upstream sources into a single total that flows to Form 1040 Line 17. It collects excise taxes, uncollected FICA taxes, and penalty taxes that are pre-calculated by upstream nodes (W-2, 1099-NEC, 1099-MISC) and simply sums them by line, then emits the aggregate to the main 1040.
+For TY2025, Schedule 2 Part I line 3 flows to Form 1040 line 17, while Part II line 21 flows to Form 1040 line 23. The node aggregates precomputed upstream tax amounts and separately classifies Part II chapter 1 amounts for the Form 8978 reporting-year limitation. The narrower W-2/1099 examples below describe only a subset of the current node.
 
-The node is a pure aggregation node: no new calculations are performed. Each input field maps to a specific Schedule 2 line number. The combined total of all lines flows to Form 1040, Line 17 (Other Taxes).
+The [2025 Schedule 2](https://www.irs.gov/pub/irs-prior/f1040s2--2025.pdf) and local MeF v5.4 `IRS1040Schedule2.xsd` specify lines 1d-1f and 19 for Form 4255. The scoped row-facts model now derives these only from Form 4255 Part I rows 1d and 2a, and the MeF/PDF builders require that source. The former ambiguous generic Form 4255 line 17a shortcut was removed. Other credit-recapture types and installment-sale interest on lines 14-15 still need separate source routes. Line 19 stays unclassified for the Form 8978 chapter-1 offset pending authority.
+
+The 2025 PDF descriptor now maps already-modeled lines 9, 13, 16, 17b/c/e/f/h/k/p, and 20 to their AcroForm fields. Lines 13, 17h, and 17k sum their existing W-2 and information-return inputs for the printed form. The filled PDF and full test batch still need verification.
 
 **IRS Form:** Schedule 2 (Form 1040)
 **Drake Screen:** Screen "5"
@@ -20,9 +22,9 @@ Fields received from upstream NodeOutput objects.
 | `uncollected_fica` | number (nonneg) | w2 | Uncollected SS+Medicare tax on tips (Box 12 codes A+B) | Schedule 2 Line 13 | .research/docs/f1040s2.pdf |
 | `uncollected_fica_gtl` | number (nonneg) | w2 | Uncollected SS+Medicare on group-term life ins >$50k (Box 12 codes M+N) | Schedule 2 Line 13 | .research/docs/f1040s2.pdf |
 | `golden_parachute_excise` | number (nonneg) | w2 | 20% excise on excess golden parachute payments (Box 12 code K) | Schedule 2 Line 17k | .research/docs/f1040s2.pdf |
-| `section409a_excise` | number (nonneg) | w2 | §409A failure excise on NQDC amounts (Box 12 code Z) | Schedule 2 Line 17h | .research/docs/f1040s2.pdf |
+| `section409a_excise` | number (nonneg) | w2 | §409A additional income tax on NQDC amounts (Box 12 code Z) | Schedule 2 Line 17h | .research/docs/f1040s2.pdf |
 | `line17k_golden_parachute_excise` | number (nonneg) | f1099nec | 20% excise on excess golden parachute (box3 × 20%) | Schedule 2 Line 17k | .research/docs/f1040s2.pdf |
-| `line17h_nqdc_tax` | number (nonneg) | f1099m | §409A excise on NQDC failure (box15 × 20%) | Schedule 2 Line 17h | .research/docs/f1040s2.pdf |
+| `line17h_nqdc_tax` | number (nonneg) | f1099m | §409A additional income tax on NQDC failure (box15 × 20%) | Schedule 2 Line 17h | .research/docs/f1040s2.pdf |
 
 ---
 
@@ -37,10 +39,10 @@ Both come from W-2 Box 12:
 
 > **Source:** IRS Schedule 2 (Form 1040), Line 13, "Uncollected social security and Medicare or RRTA tax on tips or group-term life insurance" — .research/docs/f1040s2.pdf
 
-### Step 2 — Line 17h: §409A excise tax
+### Step 2 — Line 17h: §409A additional income tax
 Line 17h = `section409a_excise` + `line17h_nqdc_tax`
 
-Both represent the 20% excise tax imposed under IRC §409A on nonqualified deferred compensation plans that fail §409A requirements. Pre-calculated by upstream nodes at 20% of the includible NQDC amount.
+Both represent the 20% additional income tax imposed under IRC §409A on nonqualified deferred compensation plans that fail §409A requirements. Pre-calculated by upstream nodes at 20% of the includible NQDC amount. This is included in the Form 8978 chapter 1 tax classification, unlike the section 4999 golden-parachute excise tax.
 
 > **Source:** IRC §409A(a)(1)(B); IRS Schedule 2 Line 17h — .research/docs/f1040s2.pdf
 
@@ -51,12 +53,8 @@ Both represent the 20% excise tax imposed under IRC §4999 on excess parachute p
 
 > **Source:** IRC §4999; IRS Schedule 2 Line 17k — .research/docs/f1040s2.pdf
 
-### Step 4 — Total additional taxes
-total = line13 + line17h + line17k
-
-This total flows to Form 1040, Line 17 (Other Taxes, Schedule 2).
-
-> **Source:** Form 1040 (2024/2025), Line 17: "Other taxes, including self-employment tax, from Schedule 2, line 10" — .research/docs/f1040.pdf
+### Step 4 — Part II example subtotal
+The W-2/1099 example subtotal is line13 + line17h + line17k. It is only part of Schedule 2 line 21, which flows to Form 1040 line 23. Part I line 3 separately flows to Form 1040 line 17.
 
 ---
 
@@ -64,7 +62,8 @@ This total flows to Form 1040, Line 17 (Other Taxes, Schedule 2).
 
 | Output Field | Destination Node | Line / Field | Condition | IRS Reference | URL |
 | ------------ | ---------------- | ------------ | --------- | ------------- | --- |
-| `line17_additional_taxes` | f1040 | Line 17 | total > 0 | Form 1040 Line 17 | .research/docs/f1040.pdf |
+| `line17_additional_taxes` | f1040 | Line 17 | Part I line 3 > 0 | Form 1040 Line 17 | https://www.irs.gov/pub/irs-prior/f1040--2025.pdf |
+| `line23_other_taxes` | f1040 | Line 23 | Part II line 21 > 0 | Form 1040 Line 23 | https://www.irs.gov/pub/irs-prior/f1040--2025.pdf |
 
 ---
 
@@ -72,7 +71,7 @@ This total flows to Form 1040, Line 17 (Other Taxes, Schedule 2).
 
 | Constant | Value | Source | URL |
 | -------- | ----- | ------ | --- |
-| §409A excise rate | 20% (statutory) | IRC §409A(a)(1)(B) | https://www.law.cornell.edu/uscode/text/26/409A |
+| §409A additional-tax rate | 20% (statutory) | IRC §409A(a)(1)(B) | https://www.law.cornell.edu/uscode/text/26/409A |
 | Golden parachute excise rate | 20% (statutory) | IRC §4999 | https://www.law.cornell.edu/uscode/text/26/4999 |
 
 No inflation-adjusted constants apply to these lines in TY2025.
@@ -95,7 +94,7 @@ flowchart LR
     total["Total\nLine 13 + 17h + 17k"]
   end
   subgraph outputs["Downstream Nodes"]
-    f1040["f1040\nline17_additional_taxes"]
+    f1040["f1040\nline23_other_taxes"]
   end
   w2 -->|uncollected_fica\nuncollected_fica_gtl| L13
   w2 -->|section409a_excise| L17h

@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { schedule2 } from "./index.ts";
 import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
@@ -222,17 +222,12 @@ Deno.test("calc: line9_household_employment alone routes to f1040 line23", () =>
   assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 2_400);
 });
 
-Deno.test("calc: line17a_investment_credit_recapture alone routes to f1040 line23", () => {
-  const result = compute({ line17a_investment_credit_recapture: 3_000 });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 3_000);
-});
-
-Deno.test("calc: New Markets and investment recapture share Schedule 2 line 17a", () => {
-  const result = compute({
-    line17a_investment_credit_recapture: 3_000,
-    line17a_new_markets_credit_recapture: 2_200,
-  });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line23_other_taxes, 5_200);
+Deno.test("calc: unsourced generic 3468 recapture fails closed", () => {
+  assertThrows(
+    () => compute({ line17a_investment_credit_recapture: 3_000 }),
+    Error,
+    "requires a specific Form 4255 credit-line source",
+  );
 });
 
 Deno.test("calc: line17b_mortgage_subsidy_recapture alone routes to f1040 line23", () => {
@@ -290,12 +285,11 @@ Deno.test("agg: all fields populated — grand total is correct sum", () => {
     line17e_archer_msa_tax: 2_000,
     line17f_medicare_advantage_msa_tax: 2_100,
     line17c_hsa_penalty: 2_300,
-    line17a_investment_credit_recapture: 2_500,
     line17z_other_additional_taxes: 2_600,
   });
   const fields = fieldsOf(result.outputs, f1040)!;
   assertEquals(fields.line17_additional_taxes, 1_200);
-  assertEquals(fields.line23_other_taxes, 28_500);
+  assertEquals(fields.line23_other_taxes, 26_000);
 });
 
 // ── Previously untested fields ───────────────────────────────────────────────
@@ -351,6 +345,23 @@ Deno.test("Schedule 2 keeps Chapter 1, non-Chapter-1, and unclassified tax disti
   assertEquals(classified.schedule2_part2_tax, 330);
   assertEquals(classified.schedule2_chapter1_part2_tax, 40);
   assertEquals(classified.schedule2_unclassified_part2_tax, 30);
+});
+
+Deno.test("Schedule 2 classifies section 409A tax but not section 4999 excise, FICA, NIIT, or section 965 installments", () => {
+  const result = compute({
+    section409a_excise: 200,
+    line17h_nqdc_tax: 300,
+    golden_parachute_excise: 400,
+    line17k_golden_parachute_excise: 100,
+    line4_se_tax: 600,
+    line12_niit: 700,
+    line20_965_tax_installment: 800,
+  });
+  const classified = fieldsOf(result.outputs, form8978_reporting_year)!;
+  assertEquals(classified.schedule2_part2_tax, 2_300);
+  assertEquals(classified.schedule2_chapter1_part2_tax, 500);
+  assertEquals(classified.schedule2_unclassified_part2_tax, 0);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line23_other_taxes, 2_300);
 });
 
 Deno.test("routing: Part I AMT stays separate from eight Part II tax fields", () => {
