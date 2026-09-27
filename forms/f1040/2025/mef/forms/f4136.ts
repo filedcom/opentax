@@ -12,6 +12,65 @@ type Claim = Form4136Input["claims"][number];
 type Line = Claim["line"];
 type PendingForm4136 = Partial<Form4136Input>;
 
+const alternativeFuelTags = [
+  [
+    "11a",
+    "NontxLiquefiedPetroleumGasGrp",
+    "NontxLiqfdPtrlmActlFlCstAmt",
+    "NontxLiquefiedPtrlmGasCrAmt",
+    "419",
+  ],
+  [
+    "11b",
+    "NontxPSeriesFuelsGrp",
+    "NontxPSeriesFuelsActlFlCstAmt",
+    "NontxPSeriesFuelsCreditAmt",
+    "420",
+  ],
+  [
+    "11c",
+    "NontxCompressedNaturalGasGrp",
+    "NontxCmprsdNatGasActlFlCstAmt",
+    "NontxCompressedNaturalGasCrAmt",
+    "421",
+  ],
+  [
+    "11d",
+    "NontxLiquefiedHydrogenGrp",
+    "NontxLiqfdHydrogenActlFlCstAmt",
+    "NontxLiquefiedHydrogenCrAmt",
+    "422",
+  ],
+  [
+    "11e",
+    "NontxLiqfdFuelFromCoalGrp",
+    "NontxLiqfdFuelCoalActlFlCstAmt",
+    "NontxLiqfdFuelDerFromCoalCrAmt",
+    "423",
+  ],
+  [
+    "11f",
+    "NontxLiqfdFuelDerBiomassGrp",
+    "NontxLiqFuelBmssActlFlCstAmt",
+    "NontxLiqFuelDerBiomassCrAmt",
+    "424",
+  ],
+  [
+    "11g",
+    "NontxLiquefiedNaturalGasGrp",
+    "NontxLiqfdNatGasActlFlCstAmt",
+    "NontxLiquefiedNaturalGasCrAmt",
+    "425",
+  ],
+  [
+    "11h",
+    "NontxLiqfdGasDerBiomassGrp",
+    "NontxLiqfdGasBmssActlFlCstAmt",
+    "NontxLiquefiedGasBiomassCrAmt",
+    "435",
+  ],
+] as const;
+
 function onLine(input: Form4136Input, line: Line): Claim[] {
   return input.claims.filter((claim) => claim.line === line);
 }
@@ -20,7 +79,7 @@ function lineAmount(claims: readonly Claim[]): number {
   return Math.round(
     claims.reduce(
       (sum, claim) =>
-        sum + claim.qualified_gallons * FORM4136_RATES[claim.line],
+        sum + claim.qualified_quantity * FORM4136_RATES[claim.line],
       0,
     ) * 100,
   ) / 100;
@@ -31,7 +90,7 @@ function cost(claims: readonly Claim[]): number {
 }
 
 function qty(claims: readonly Claim[]): number | undefined {
-  return claims.length ? claims[0].qualified_gallons : undefined;
+  return claims.length ? claims[0].qualified_quantity : undefined;
 }
 
 function credit(tag: string, amount: number, crn: string): string {
@@ -41,7 +100,7 @@ function credit(tag: string, amount: number, crn: string): string {
 function detail(tag: string, claim: Claim): string {
   return elements(tag, [
     element("NontaxableUseOfFuelTypeCd", claim.type_of_use),
-    element("GallonsQty", claim.qualified_gallons),
+    element("GallonsQty", claim.qualified_quantity),
   ]);
 }
 
@@ -72,8 +131,6 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l4b = onLine(input, "4b");
     const l5c = onLine(input, "5c");
     const l5d = onLine(input, "5d");
-    const l11a = onLine(input, "11a");
-    const l11c = onLine(input, "11c");
 
     return elements("IRS4136", [
       element("QlfyUsageFuelsEligFTCInd", "true"),
@@ -146,16 +203,17 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
       l5d.length
         ? credit("NonTxKrsnUsedInAvnTxd219CrAmt", lineAmount(l5d), "369")
         : "",
-      ...l11a.map((claim) => detail("NontxLiquefiedPetroleumGasGrp", claim)),
-      l11a.length ? element("NontxLiqfdPtrlmActlFlCstAmt", cost(l11a)) : "",
-      l11a.length
-        ? credit("NontxLiquefiedPtrlmGasCrAmt", lineAmount(l11a), "419")
-        : "",
-      ...l11c.map((claim) => detail("NontxCompressedNaturalGasGrp", claim)),
-      l11c.length ? element("NontxCmprsdNatGasActlFlCstAmt", cost(l11c)) : "",
-      l11c.length
-        ? credit("NontxCompressedNaturalGasCrAmt", lineAmount(l11c), "421")
-        : "",
+      ...alternativeFuelTags.flatMap(
+        ([line, groupTag, costTag, creditTag, crn]) => {
+          const claims = onLine(input, line);
+          if (!claims.length) return [];
+          return [
+            ...claims.map((claim) => detail(groupTag, claim)),
+            element(costTag, cost(claims)),
+            credit(creditTag, lineAmount(claims), crn),
+          ];
+        },
+      ),
       element("TotalFuelTaxCreditAmt", amount),
     ]);
   },

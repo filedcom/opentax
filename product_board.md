@@ -259,12 +259,14 @@ feeds line 6k, while these source forms still need complete eligibility,
 document, and business-rule review. The Schedule 3 MeF builder requires attached
 source-form IDs for lines 6h, 6i, 6k, and 12. Forms 8912, 8859, and 8834 are
 registered but unrun. The Form 4136 input has now
-replaced unsubstantiated flat gallon fields with a single qualifying business,
+replaced unsubstantiated flat gallon fields with a single qualifying business
+and ultimate-purchaser affirmation,
 purchase-record and duplicate-claim confirmations, and line-indexed gallons,
-use codes, and actual fuel costs. Its calculation and rejection cases are
+use codes, measurement units, and actual fuel costs. Its calculation and rejection cases are
 written but unrun. Its `IRS4136` builder now maps the represented lines and
 reconciles line 17 with Schedule 3 line 12; local XSD and source cases are
-written but unrun. Multiple businesses require Schedule A (Form 4136). The PDF
+written but unrun. All non-bus line 11 fuels are included; reduced-rate bus
+claims remain open. Multiple businesses require Schedule A (Form 4136). The PDF
 descriptor now maps the four-page 2025 form and repeated-use statement, but
 filled rendering is unverified. Additional claim lines, source evidence, full
 test/XSD and IRS business rules, and ATS acceptance remain open.

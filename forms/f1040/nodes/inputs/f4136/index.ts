@@ -18,7 +18,13 @@ export const FORM4136_RATES = {
   "5c": 0.243,
   "5d": 0.218,
   "11a": 0.183,
+  "11b": 0.183,
   "11c": 0.183,
+  "11d": 0.183,
+  "11e": 0.243,
+  "11f": 0.243,
+  "11g": 0.243,
+  "11h": 0.183,
 } as const;
 
 const fuelLine = z.enum([
@@ -32,9 +38,26 @@ const fuelLine = z.enum([
   "5c",
   "5d",
   "11a",
+  "11b",
   "11c",
+  "11d",
+  "11e",
+  "11f",
+  "11g",
+  "11h",
 ]);
 
+const alternativeFuelUseCodes = [
+  "01",
+  "02",
+  "04",
+  "06",
+  "07",
+  "11",
+  "13",
+  "14",
+  "15",
+] as const;
 const allowedUseCodes: Partial<
   Record<z.infer<typeof fuelLine>, readonly string[]>
 > = {
@@ -43,14 +66,21 @@ const allowedUseCodes: Partial<
   "4a": ["02", "06", "07", "08", "11", "13", "14", "15"],
   "5c": ["01", "09", "10", "11", "13", "15", "16"],
   "5d": ["01", "09", "10", "11", "13", "15", "16"],
-  "11a": ["01", "02", "04", "06", "07", "11", "13", "14", "15"],
-  "11c": ["01", "02", "04", "06", "07", "11", "13", "14", "15"],
+  "11a": alternativeFuelUseCodes,
+  "11b": alternativeFuelUseCodes,
+  "11c": alternativeFuelUseCodes,
+  "11d": alternativeFuelUseCodes,
+  "11e": alternativeFuelUseCodes,
+  "11f": alternativeFuelUseCodes,
+  "11g": alternativeFuelUseCodes,
+  "11h": alternativeFuelUseCodes,
 };
 
 export const fuelClaimSchema = z.object({
   line: fuelLine,
   type_of_use: z.string().regex(/^\d{2}$/).optional(),
-  qualified_gallons: z.number().int().positive().max(999_999_999),
+  unit: z.enum(["gallons", "GGE", "DGE"]),
+  qualified_quantity: z.number().int().positive().max(999_999_999),
   actual_fuel_cost: z.number().finite().positive(),
   undyed_fuel_confirmed: z.literal(true).optional(),
   right_to_claim_not_waived: z.literal(true).optional(),
@@ -61,6 +91,7 @@ export const fuelClaimSchema = z.object({
 export const inputSchema = z.object({
   business: z.object({
     qualifying_business_activity: z.literal(true),
+    claimant_is_ultimate_purchaser: z.literal(true),
     activity_count: z.literal(1),
     business_name: z.string().trim().min(1),
     business_ein: z.string().regex(/^\d{9}$/).optional(),
@@ -75,6 +106,16 @@ export const inputSchema = z.object({
 }).superRefine((input, ctx) => {
   const seen = new Set<string>();
   input.claims.forEach((claim, index) => {
+    if (
+      !["11a", "11c", "11g"].includes(claim.line) &&
+      claim.unit !== "gallons"
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Form 4136 line ${claim.line} must use gallons`,
+        path: ["claims", index, "unit"],
+      });
+    }
     const codes = allowedUseCodes[claim.line];
     if (codes && !claim.type_of_use) {
       ctx.addIssue({
@@ -139,7 +180,7 @@ export type Form4136Input = z.infer<typeof inputSchema>;
 
 export function calculateForm4136(input: Form4136Input): number {
   const credit = input.claims.reduce(
-    (sum, claim) => sum + claim.qualified_gallons * FORM4136_RATES[claim.line],
+    (sum, claim) => sum + claim.qualified_quantity * FORM4136_RATES[claim.line],
     0,
   );
   return Math.round(credit * 100) / 100;

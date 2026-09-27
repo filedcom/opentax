@@ -173,6 +173,7 @@ Deno.test({
     f4136: {
       business: {
         qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
         activity_count: 1,
         business_name: "Example Farm",
         principal_activity_code: "111000",
@@ -185,13 +186,15 @@ Deno.test({
       claims: [
         {
           line: "1a",
-          qualified_gallons: 100,
+          unit: "gallons",
+          qualified_quantity: 100,
           actual_fuel_cost: 300,
           not_highway_vehicle: true,
         },
         {
           line: "3b",
-          qualified_gallons: 100,
+          unit: "gallons",
+          qualified_quantity: 100,
           actual_fuel_cost: 400,
           undyed_fuel_confirmed: true,
         },
@@ -201,6 +204,59 @@ Deno.test({
   assertStringIncludes(xml, "<IRS4136 ");
   assertStringIncludes(xml, 'referenceDocumentName="IRS4136"');
   await validateXsd(xml, "Form 4136 Schedule 3 line 12");
+});
+
+Deno.test({
+  name: "XSD: Form 4136 all non-bus line 11 fuel groups validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const lines = [
+    "11a",
+    "11b",
+    "11c",
+    "11d",
+    "11e",
+    "11f",
+    "11g",
+    "11h",
+  ] as const;
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 164 },
+    schedule3: {
+      line12_fuel_tax_credit: 164.4,
+      line15_total: 164.4,
+    },
+    f4136: {
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        activity_count: 1,
+        business_name: "Example Fuel Business",
+        principal_activity_code: "447100",
+        equipment_make: "Example",
+        equipment_model: "Equipment",
+        equipment_type: "business equipment",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: lines.map((line) => ({
+        line,
+        type_of_use: "02",
+        unit: line === "11a" || line === "11c"
+          ? "GGE" as const
+          : line === "11g"
+          ? "DGE" as const
+          : "gallons" as const,
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        not_highway_vehicle: true,
+      })),
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<NontxLiquefiedNaturalGasGrp>");
+  await validateXsd(xml, "Form 4136 line 11 alternative fuels");
 });
 
 Deno.test({
