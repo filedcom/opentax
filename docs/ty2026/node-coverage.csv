@@ -4,7 +4,7 @@ ext,forms/f1040/nodes/inputs/ext/index.ts,inputs,0,no,no,no,n/a,P2,audit-require
 f1098,forms/f1040/nodes/inputs/f1098/index.ts,inputs,2,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099b,forms/f1040/nodes/inputs/f1099b/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099c,forms/f1040/nodes/inputs/f1099c/index.ts,inputs,0,no,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-f1099div,forms/f1040/nodes/inputs/f1099div/index.ts,inputs,0,yes,no,no,n/a,P2,audit-required,"2026 ordinary/qualified/exempt dividends, PAB/AMT, and withholding route; add capital gains, QBI, foreign credit, and MeF"
+f1099div,forms/f1040/nodes/inputs/f1099div/index.ts,inputs,0,yes,no,no,n/a,P2,audit-required,"2026 ordinary/qualified/exempt dividends, direct box2a gain, PAB/AMT, and withholding; add special gains, QBI, foreign credit, and MeF"
 f1099g,forms/f1040/nodes/inputs/f1099g/index.ts,inputs,0,yes,no,no,n/a,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099int,forms/f1040/nodes/inputs/f1099int/index.ts,inputs,1,yes,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f1099k,forms/f1040/nodes/inputs/f1099k/index.ts,inputs,5,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
@@ -176,7 +176,7 @@ rate_28_gain_worksheet,forms/f1040/nodes/intermediate/worksheets/rate_28_gain_wo
 schedule2,forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,intermediate,2,no,yes,yes,yes,P0,audit-required,dedicated 2026 line calculator/node routes tip and W-2 taxes; split other sources
 schedule3,forms/f1040/nodes/intermediate/aggregation/schedule3/index.ts,intermediate,0,no,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_b,forms/f1040/nodes/intermediate/aggregation/schedule_b/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
-schedule_d,forms/f1040/nodes/intermediate/aggregation/schedule_d/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
+schedule_d,forms/f1040/nodes/intermediate/aggregation/schedule_d/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"2026 direct box2a distribution route verified; add capital transactions, carryovers, QOF, PDF, and MeF"
 schedule_f,forms/f1040/nodes/intermediate/forms/schedule_f/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_h,forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,intermediate,3,yes,yes,yes,yes,P0,audit-required,"verify 2026 law, node outputs, and graph route"
 schedule_se,forms/f1040/nodes/intermediate/forms/schedule_se/index.ts,intermediate,1,yes,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"

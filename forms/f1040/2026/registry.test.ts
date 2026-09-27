@@ -155,6 +155,41 @@ Deno.test("TY2026 dividends over $1,500 reach the filed Schedule B", async () =>
   assertEquals(pdf.getPageCount(), 3);
 });
 
+Deno.test("TY2026 plain capital gain distributions reach line 7a and PDF", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f1099div: [{
+      payerName: "North Bank",
+      isNominee: false,
+      box11: false,
+      box1a: 0,
+      box2a: 5_000,
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040.line7a_capital_gain, 5_000);
+  assertEquals(result.pending.f1040.line7b_schedule_d_not_required, true);
+  assertEquals(result.pending.f1040.line9_total_income, 75_000);
+  assertEquals(result.pending.income_tax_calculation.net_capital_gain, 5_000);
+  assertEquals(result.pending.form8960.line5a_net_gain, 5_000);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({ f1040: result.pending.f1040 }),
+  );
+  assertEquals(pdf.getPageCount(), 2);
+  await assertRejects(
+    () =>
+      buildCorePdfBytes2026({
+        f1040: {
+          ...result.pending.f1040,
+          line7b_schedule_d_not_required: false,
+        },
+      }),
+    Error,
+    "needs Schedule D",
+  );
+});
+
 Deno.test("TY2026 1099-INT and 1099-DIV exempt income reaches 1040 and AMT", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,

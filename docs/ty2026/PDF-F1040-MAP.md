@@ -18,6 +18,10 @@ page-1 widgets. The dedicated 2026 final node now preserves these source
 amounts, sums accumulated wages and dividends for print, and combines the
 capital-gain and capital-gain-distribution inputs on printed line 7a. A
 populated income-page sample passed text extraction and visual inspection.
+For a direct Form 1099-DIV box 2a distribution, `line7b_schedule_d_not_required`
+checks `Page1[0].c1_45[0]`; a rendered draft sample shows line 7a and the
+marked box together. The PDF boundary currently rejects a capital gain or loss
+that requires the still-unimplemented 2026 Schedule D attachment.
 
 | Form line | TY2026 pending key | PDF field suffix |
 | --- | --- | --- |

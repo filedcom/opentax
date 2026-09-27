@@ -215,6 +215,10 @@ qualified, and exempt-interest dividends, plus federal withholding and
 private-activity-bond AMT, through AGI, tax, Form 1040, Schedule B when
 required, Form 6251, and the draft PDF. The [branch contract](DIVIDEND-GRAPH.md)
 identifies each remaining 1099-DIV box and its required downstream form;
+the plain box 2a distribution now passes through the shared Schedule D
+filing decision to 1040 line 7a and its line 7b checkbox. The rendered
+two-page draft PDF shows both. The PDF boundary rejects capital gains that
+require Schedule D until its 2026 attachment is implemented. Special-rate
 capital gains, QBI, foreign tax, state withholding, nominee,
 and basis routes currently fail with named diagnostics. MeF remains open.
 Progress update: 1099-INT and Schedule B Part III answers are now registered

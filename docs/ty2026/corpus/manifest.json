@@ -811,6 +811,16 @@
       "sha256": "af89ec14c288df70092cc2439e0bf215bab9704fc0b70ba3f9bd7d420067e607",
       "retrieved_utc": "2026-09-27T08:11:48.037017+00:00",
       "revision": "January 2024 continuous use"
+    },
+    {
+      "path": "authorities/i1040gi--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1040gi--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 4434643,
+      "sha256": "482e9c487c608f1bbeaceef35bc3c0933e8b35443cfff447e4279d590468364a",
+      "retrieved_utc": "2026-09-27T08:25:32.198723+00:00",
+      "use": "Schedule D not required exception and Form 1040 line 7b; verify against final 2026 instructions"
     }
   ]
 }

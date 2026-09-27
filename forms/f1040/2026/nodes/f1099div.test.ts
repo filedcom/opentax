@@ -64,10 +64,20 @@ Deno.test("TY2026 1099-DIV separates exempt dividends and their AMT subset", () 
   );
 });
 
+Deno.test("TY2026 1099-DIV sends plain box 2a distributions to Schedule D decision", () => {
+  const outputs = f1099div_2026.compute(context, {
+    f1099divs: [{ ...basic, box2a: 5_000 }],
+  }).outputs;
+  assertEquals(
+    outputs.find((item) => item.nodeType === "schedule_d")?.fields,
+    { line13_cap_gain_distrib: 5_000 },
+  );
+});
+
 Deno.test("TY2026 1099-DIV rejects unconnected capital gain and foreign tax routes", () => {
   for (
     const [extra, message] of [
-      [{ box2a: 100 }, "capital gains need Schedule D"],
+      [{ box2b: 100 }, "special-rate capital gains need Schedule D worksheets"],
       [{ box7: 20 }, "foreign tax needs Form 1116"],
       [{ box5: 40 }, "section 199A dividends need the QBI route"],
     ] as const

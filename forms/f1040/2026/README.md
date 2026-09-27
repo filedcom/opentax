@@ -135,11 +135,15 @@ Form 1098-E is a registered TY2026 input. The AGI calculation applies its
 2026 phaseout before Schedule 1 line 21 and Form 1040 line 10 are printed.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond
-AMT interest, and NIIT income. Its Schedule B filing path
+AMT interest, plain box 2a capital gain distributions, and NIIT income. Its
+Schedule B filing path
 reconciles with Form 1040 line 3b and the draft PDF. The continuous-use
 [source and branch map](../../../docs/ty2026/DIVIDEND-GRAPH.md) records the
-capital-gain, QBI, foreign-tax, state, and basis routes still
+special-rate capital-gain, QBI, foreign-tax, state, and basis routes still
 to implement; nonzero inputs on those routes fail before calculation.
+The shared Schedule D node now decides when box 2a can print directly on
+1040 line 7a with line 7b checked. The 2026 PDF boundary rejects capital gains
+that require a Schedule D attachment until its PDF is built.
 The dedicated `nodes/schedule_b.ts` is registered and now consumes gross
 interest with labeled adjustments, reconciles its lines, determines the
 modeled filing and Part III triggers, and sends taxable interest through AGI

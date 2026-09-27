@@ -255,7 +255,7 @@ function computeDScreenLtNet(input: ScheduleDInput): number {
     sumAmounts(input.line_11_form2439) +
     (input.line_11_qef_lt ?? 0) +
     (input.line_12_cap_gain_dist ?? 0) +
-    (input.line_12_k1_lt ?? 0) +
+    (input.line_12_k1_lt ?? 0) -
     (input.line_14_carryover ?? 0)
   );
 }

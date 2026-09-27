@@ -42,6 +42,7 @@ Deno.test("TY2026 1040 preserves income sources and computes printed wage and ga
   assertEquals(fields.line5b_pension_taxable, 1_000);
   assertEquals(fields.line6a_ss_gross, 4_000);
   assertEquals(fields.line7a_capital_gain, 1_000);
+  assertEquals(fields.line7b_schedule_d_not_required, false);
 });
 
 Deno.test("TY2026 1040 assembles deductions, Form 1062, and payments", () => {

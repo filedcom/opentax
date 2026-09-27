@@ -33,6 +33,8 @@ for the implementation contract.
   AGI, NIIT, PDF, and MeF wiring and attachment contract.
 - [`DIVIDEND-GRAPH.md`](DIVIDEND-GRAPH.md): continuous-use 1099-DIV source,
   current TY2026 income/withholding route, and dependent-form worklist.
+- [`CAPITAL-GAIN-GRAPH.md`](CAPITAL-GAIN-GRAPH.md): direct 1099-DIV box 2a
+  decision, Schedule D/8949 dependencies, and PDF/MeF work order.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
@@ -41,7 +43,8 @@ for the implementation contract.
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
   2026-29 and 2026 W-2/W-3 instructions), continuous-use Form 1099-DIV and
-  its instructions, Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
+  its instructions, the 2025 Form 1040 instructions as a marked comparator,
+  Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash
   changes before using new values or layouts.

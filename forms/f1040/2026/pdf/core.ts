@@ -111,6 +111,20 @@ export async function buildCorePdfBytes2026({
   const optionalAmount = (fields: Record<string, unknown>, key: string) =>
     fields[key] === undefined ? 0 : amount(fields, key);
   if (
+    optionalAmount(f1040, "line7a_capital_gain") !== 0 &&
+    f1040.line7b_schedule_d_not_required !== true
+  ) {
+    throw new Error(
+      "TY2026 core PDF needs Schedule D for capital gain or loss",
+    );
+  }
+  if (
+    f1040.line7b_schedule_d_not_required === true &&
+    optionalAmount(f1040, "line7a_capital_gain") <= 0
+  ) {
+    throw new Error("TY2026 core PDF Schedule D exception needs a gain");
+  }
+  if (
     !schedule3 &&
     (optionalAmount(f1040, "line20_nonrefundable_credits") > 0 ||
       optionalAmount(f1040, "line31_other_payments") > 0)

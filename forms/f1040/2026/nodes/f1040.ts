@@ -130,6 +130,9 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       ? undefined
       : (input.line7_capital_gain ?? 0) +
         (input.line7a_cap_gain_distrib ?? 0);
+    const line7bScheduleDNotRequired =
+      (input.line7a_cap_gain_distrib ?? 0) > 0 &&
+      input.line7_capital_gain === undefined;
     const line25dWithholding = input.line25a_w2_withheld +
       input.line25b_withheld_1099 + input.line25c_other_withheld;
     const deductions = calculateDeductions2026({
@@ -202,6 +205,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line6a_ss_gross: input.line6a_ss_gross,
         line6b_ss_taxable: input.line6b_ss_taxable,
         line7a_capital_gain: line7aCapitalGain,
+        line7b_schedule_d_not_required: line7bScheduleDNotRequired,
         line8_additional_income: input.line8_additional_income,
         line9_total_income: input.line9_total_income,
         line10_adjustments: input.line10_adjustments,

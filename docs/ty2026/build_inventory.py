@@ -31,7 +31,8 @@ NODE_PROGRESS = {
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",
     "schedule2": "dedicated 2026 line calculator/node routes tip and W-2 taxes; split other sources",
     "f8812": "2026 Part II-B uses Schedule 2 lines 16c/17c; Worksheets A/B use 2026 Schedule 3 lines; finish credit graph",
-    "f1099div": "2026 ordinary/qualified/exempt dividends, PAB/AMT, and withholding route; add capital gains, QBI, foreign credit, and MeF",
+    "f1099div": "2026 ordinary/qualified/exempt dividends, direct box2a gain, PAB/AMT, and withholding; add special gains, QBI, foreign credit, and MeF",
+    "schedule_d": "2026 direct box2a distribution route verified; add capital transactions, carryovers, QOF, PDF, and MeF",
 }
 
 P0_NODES = {

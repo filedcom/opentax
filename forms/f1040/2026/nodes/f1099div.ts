@@ -6,6 +6,7 @@ import { itemSchema as sharedItemSchema } from "../../nodes/inputs/f1099div/inde
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { form6251 } from "../../nodes/intermediate/forms/form6251/index.ts";
 import { form8960 } from "../../nodes/intermediate/forms/form8960/index.ts";
+import { schedule_d } from "../../nodes/intermediate/aggregation/schedule_d/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { f1040_2026_node } from "./f1040.ts";
 import { schedule_b_2026 } from "./schedule_b.ts";
@@ -33,10 +34,12 @@ export const f1099divItem2026Schema = sharedItemSchema.extend({
     reject("TY2026 1099-DIV nominee or FATCA reporting needs its filed route");
   }
   if (
-    [item.box2a, item.box2b, item.box2c, item.box2d, item.box2e, item.box2f]
+    [item.box2b, item.box2c, item.box2d, item.box2e, item.box2f]
       .some((value) => (value ?? 0) > 0)
   ) {
-    reject("TY2026 1099-DIV capital gains need Schedule D and related routes");
+    reject(
+      "TY2026 1099-DIV special-rate capital gains need Schedule D worksheets",
+    );
   }
   if (
     [item.box3, item.box9, item.box10].some((value) => (value ?? 0) > 0)
@@ -76,6 +79,7 @@ class F1099DivNode2026 extends TaxNode<typeof f1099divInput2026Schema> {
     income_tax_calculation,
     form8960,
     form6251,
+    schedule_d,
   ]);
 
   compute(ctx: NodeContext, rawInput: z.input<typeof f1099divInput2026Schema>) {
@@ -98,6 +102,10 @@ class F1099DivNode2026 extends TaxNode<typeof f1099divInput2026Schema> {
     );
     const privateActivityBondInterest = f1099divs.reduce(
       (sum, item) => sum + (item.box13 ?? 0),
+      0,
+    );
+    const capitalGainDistributions = f1099divs.reduce(
+      (sum, item) => sum + (item.box2a ?? 0),
       0,
     );
     const outputs = [];
@@ -147,6 +155,11 @@ class F1099DivNode2026 extends TaxNode<typeof f1099divInput2026Schema> {
     if (privateActivityBondInterest > 0) {
       outputs.push(this.outputNodes.output(form6251, {
         private_activity_bond_interest: privateActivityBondInterest,
+      }));
+    }
+    if (capitalGainDistributions > 0) {
+      outputs.push(this.outputNodes.output(schedule_d, {
+        line13_cap_gain_distrib: capitalGainDistributions,
       }));
     }
     if (ordinary > 0) {

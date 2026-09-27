@@ -57,6 +57,10 @@ Deno.test("TY2026 PDF maps income lines to the pinned draft", () => {
   ) {
     assertEquals(fields.get(key), `${page1}${widget}`);
   }
+  assertEquals(
+    fields.get("line7b_schedule_d_not_required"),
+    `${page1}c1_45[0]`,
+  );
 });
 
 Deno.test("TY2026 PDF requires the new filer answers", () => {

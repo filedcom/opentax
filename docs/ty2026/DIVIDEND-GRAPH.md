@@ -5,14 +5,17 @@ and [instructions](https://www.irs.gov/pub/irs-prior/i1099div--2024.pdf), both J
 2024 revisions pinned under `corpus/authorities/`, plus the pinned 2026 draft
 Schedule B and its instructions. The 1099-DIV revision is not a TY2026-specific
 form. Recheck the continuous-use source when IRS changes it, and reconcile the
-2026 1040 instructions and current MeF rules before XML output.
+2026 1040 instructions and current MeF rules before XML output. The pinned
+2025 1040 instructions supply the direct-distribution exception pending a
+published 2026 instruction; the draft 2026 Form 1040 retains lines 7a/7b.
 
 | 1099-DIV fact | TY2026 return route | Current graph status | Next required work |
 | --- | --- | --- | --- |
 | Box 1a ordinary dividends | 1040 line 3b; AGI; Form 8960 line 2 | Registered. Schedule B line 5/6 and its PDF are filed when ordinary dividends exceed $1,500; below that threshold the amount reaches 1040 and AGI directly. | Current MeF 1040/Schedule B serializer and active rule checks. |
 | Box 1b qualified dividends | 1040 line 3a; qualified-dividend tax worksheet | Registered and constrained to box 1a. | Verify all 2026 tax-worksheet boundaries and interaction with capital gains/QBI. |
 | Box 4 federal withholding | 1040 line 25b | Registered and included in 1040 payments. | MeF withholding detail. |
-| Boxes 2a–2f capital gains and section 897 | Schedule D, rate worksheets, AGI, 1040 line 7a, tax and AMT | Explicitly rejected at the TY2026 input boundary. | Build and audit 2026 Schedule D, 28% and unrecaptured gain worksheets, and PDFs/MeF. |
+| Box 2a plain capital gain distributions | Schedule D filing decision, AGI, 1040 line 7a/7b, preferential tax, Form 8960 | Registered. With no other modeled capital activity, the existing Schedule D node sends box 2a directly to 1040 and marks Schedule D unnecessary. The two-page draft PDF was rendered and checked. | Capture capital loss carryovers, QOF elections, and other capital sources before treating the direct-filing decision as complete; check final 2026 instructions and MeF. |
+| Boxes 2b–2f special-rate and section 897 gain | Schedule D, 28%/unrecaptured worksheets, Form 8949 where required | Explicitly rejected when nonzero. | Build the full 2026 Schedule D and worksheet paths, then their PDF/MeF attachments. |
 | Box 3 and boxes 9–10 distributions | Security basis and later disposition | Explicitly rejected when nonzero. | Add basis/carryforward records and applicable gain routes. |
 | Box 5 section 199A dividends | Form 8995/8995-A and 1040 line 13b | Explicitly rejected when nonzero. | Complete the Schedule A/QBI joint resolver and 2026 QBI output. |
 | Boxes 6–8 foreign expense/tax/country | Form 1116 or direct Schedule 3 credit | Explicitly rejected when populated. | Choose 2026 direct-credit eligibility or Form 1116, including qualified-dividend rate adjustment. |
@@ -22,13 +25,13 @@ form. Recheck the continuous-use source when IRS changes it, and reconcile the
 | Nominee, FATCA, investment-property flags | Schedule B nominee adjustment, foreign-asset answers, Form 4952 | Explicitly rejected when true. | Add the matching disclosure and source-reconciliation paths. |
 
 The dedicated `f1099div_2026` input and node accept all current source fields,
-then reject material branches whose downstream form is absent. This prevents a
-capital gain or credit from being deposited into an unregistered pending slot
-while the 1040 looks complete. The filed Schedule B PDF checks line 6 against
+then reject material branches whose downstream form is absent. The 2026 PDF
+boundary rejects capital gains that require Schedule D until that attachment
+exists. The filed Schedule B PDF checks line 6 against
 1040 line 3b. A plain dividend return below the filing threshold has no
 Schedule B attachment; the node still retains payer rows in pending data.
 
 Graph tests cover a plain qualified-dividend/withholding return, a filed
-Schedule B case above $1,500, and combined 1099-INT/1099-DIV exempt income
+Schedule B case above $1,500, direct box 2a distribution reporting, and combined 1099-INT/1099-DIV exempt income
 that reaches Form 6251 and a six-page PDF. The full Form 1099-DIV surface, current MeF
 package, and TY2026 ATS examples remain release gates.

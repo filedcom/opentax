@@ -1,9 +1,9 @@
 # TY2026 calculation graph route gaps
 
-The current dedicated registry declares **32 edges to targets it has not
+The current dedicated registry declares **34 edges to targets it has not
 registered**. `graph-route-gaps.csv` is generated from the executable registry
 by running `deno run --allow-write forms/f1040/2026/build_route_gaps.ts` from
-the repository root. Every target on these 32 edges exists in the TY2025 registry, but that
+the repository root. Every target on these 34 edges exists in the TY2025 registry, but that
 does not establish that their tax-year behavior or output lines are correct
 for 2026. This inventory covers edges from the currently registered nodes;
 it does not cover the remaining nodes in `node-coverage.csv`.
@@ -21,7 +21,9 @@ calculation therefore does not prove that every upstream route was consumed.
    through Schedule B, Schedule 1, and AGI to the final 1040. The dedicated
    Schedule 1 sink and PDF now handle the 1099-INT box 2 penalty. The public
    1099-INT, 1099-G, 1098-E, and simple 1099-DIV routes are registered; other
-   source lines remain open. Review 2026
+   source lines remain open. The shared Schedule D node now handles the
+   1099-DIV-only direct box 2a path; filed Schedule D detail remains a PDF
+   blocker. Review 2026
    forms and instructions for each source before registration, including
    capital gains, retirement distributions, Social Security, and foreign
    income. Reconcile each printed 1040 income line with the same amount in
