@@ -16,6 +16,11 @@ export const form8854: MefFormDescriptor<"f8854", unknown> = {
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8854.pdf",
   build(fields, context) {
     if (Array.isArray(fields) && fields.length === 0) return "";
+    if (context?.pending?.f8854_annual !== undefined) {
+      throw new Error(
+        "One taxpayer cannot file both initial and annual Form 8854 for 2025",
+      );
+    }
     const input = inputSchema.parse(fields);
     if (
       isCoveredExpatriate(input) ||

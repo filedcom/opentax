@@ -3,7 +3,9 @@ import {
   annualInputSchema,
   type F8854AnnualInput,
 } from "../../../nodes/inputs/f8854/annual.ts";
+import { validateAnnualForm8854Filing } from "../../../nodes/inputs/f8854/annual_node.ts";
 import { buildForm8854PartIFields } from "./f8854_part_i.ts";
+import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 /** IRS8854 Part III children in 2025v5.4 XSD order. */
 export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {
@@ -66,3 +68,19 @@ export function buildForm8854Annual(
     buildForm8854PartIII(input),
   ]);
 }
+
+export const form8854Annual: MefFormDescriptor<"f8854_annual", unknown> = {
+  pendingKey: "f8854_annual",
+  FIELD_MAP: [],
+  pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8854.pdf",
+  build(fields, context) {
+    if (Array.isArray(fields) && fields.length === 0) return "";
+    if (context?.pending?.f8854 !== undefined) {
+      throw new Error(
+        "One taxpayer cannot file both initial and annual Form 8854 for 2025",
+      );
+    }
+    const input = validateAnnualForm8854Filing(annualInputSchema.parse(fields));
+    return buildForm8854Annual(input);
+  },
+};

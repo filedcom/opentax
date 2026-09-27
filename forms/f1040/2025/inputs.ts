@@ -430,6 +430,8 @@ import {
   f8854,
   inputSchema as f8854InputSchema,
 } from "../nodes/inputs/f8854/index.ts";
+import { f8854Annual } from "../nodes/inputs/f8854/annual_node.ts";
+import { annualInputSchema } from "../nodes/inputs/f8854/annual.ts";
 import {
   f5471,
   itemSchema as f5471ItemSchema,
@@ -735,6 +737,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f8805, itemSchema: f8805ItemSchema, isArray: true },
   { node: f8840, inputSchema: f8840InputSchema, isArray: false },
   { node: f8854, inputSchema: f8854InputSchema, isArray: false },
+  { node: f8854Annual, inputSchema: annualInputSchema, isArray: false },
   { node: f5471, itemSchema: f5471ItemSchema, isArray: true },
   { node: f8828, itemSchema: f8828ItemSchema, isArray: true },
   { node: f8835, itemSchema: f8835ItemSchema, isArray: true },

@@ -4,6 +4,7 @@ import {
   buildForm8854PartIII,
 } from "../../../2025/mef/forms/f8854_annual.ts";
 import { annualInputSchema } from "./annual.ts";
+import { f8854Annual } from "./annual_node.ts";
 import { ExpatriateType } from "./index.ts";
 
 function annualInput(overrides: Record<string, unknown> = {}) {
@@ -67,6 +68,31 @@ Deno.test("annual Form 8854 certifies no distributions from a remaining eligible
   );
   assertEquals(xml.includes("ExpatriationInformationGrp"), false);
   assertEquals(xml.includes("InitialExptrtStmtSpcfdYrInd"), false);
+});
+
+Deno.test("annual Form 8854 no-activity certification reaches the filing graph", () => {
+  assertEquals(
+    f8854Annual.compute(
+      { taxYear: 2025, formType: "f1040" },
+      annualInputSchema.parse(annualInput()),
+    ).outputs,
+    [],
+  );
+  assertThrows(
+    () =>
+      f8854Annual.compute(
+        { taxYear: 2025, formType: "f1040" },
+        annualInputSchema.parse(annualInput({
+          eligible_deferred_compensation_items: [{
+            item_id: "plan",
+            prior_form8854_document_id: "DOC-PRIOR",
+            distributions: [distribution()],
+          }],
+        })),
+      ),
+    Error,
+    "reconciled 2025 reporting and payment evidence",
+  );
 });
 
 Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions", () => {

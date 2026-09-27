@@ -1137,11 +1137,15 @@ and emits unregistered Section D, Section C column (g), and native per-property
 allocation XML. The document IDs, security, agent, and waiver confirmations are
 source assertions; the hypothetical return PDFs, agreement copy, original
 mailing, and IRS acceptance are not authenticated or attached. A separate
-unregistered annual input and Part III XML builder now represent prior deferred
+annual input and Part III XML builder now represent prior deferred
 properties, 2025 dispositions, and eligible-compensation and nongrantor-trust
 distributions. It rejects unsupported pre-June-17-2008 dates and more than
 three distribution rows per category; prior Form 8854 amounts, disposition
-reporting, and payment evidence remain entered source assertions. Identified
+reporting, and payment evidence remain entered source assertions. A registered
+annual node and MeF descriptor now file the no-disposition, no-distribution
+certification only; events needing return reporting or payment evidence still
+reject filing. Its graph, full-return, and local XSD cases are written but
+unrun. Identified
 Form 8949 transactions now retain a source ID through calculation and MeF
 pending data. The unregistered initial bundle now checks the Form 8949 MeF
 filing rows, rather than a separate raw source, and requires a one-to-one match for
@@ -1155,7 +1159,7 @@ These checks are
 written but unrun. This is a reconciliation check, not an automatic transaction
 route; other loss characters, Form 4797, direct Schedule D, and excluded-item
 income still need character and reporting checks. Exception source
-corroboration, PDF, covered/annual MeF serialization, broader source
+corroboration, PDF, covered and annual-event MeF serialization, broader source
 reconciliation, and IRS business rules remain open. An
 initial-form bundle now composes Parts I and II in
 XSD order and requires explicit MeF document IDs for native statements and the

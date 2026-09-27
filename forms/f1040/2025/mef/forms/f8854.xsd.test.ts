@@ -1,6 +1,10 @@
 import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
+import { buildPending } from "../pending.ts";
 import { type FilerIdentity, FilingStatus } from "../types.ts";
+import { buildExecutionPlan } from "../../../../../core/runtime/planner.ts";
+import { execute } from "../../../../../core/runtime/executor.ts";
+import { registry } from "../../registry.ts";
 import { buildForm8854Annual } from "./f8854_annual.ts";
 import { buildForm8854InitialBundle } from "./f8854_initial.ts";
 import { form8854 } from "./f8854.ts";
@@ -101,6 +105,29 @@ const statementInput = initialSchema.parse({
   },
 });
 
+const annualNoActivityInput = annualInputSchema.parse({
+  expatriation_date: "2020-06-15",
+  expatriate_type: ExpatriateType.CITIZEN,
+  part_i: {
+    ...partI,
+    notification: {
+      kind: "CITIZEN_STATE_DEPARTMENT",
+      date: "2020-06-15",
+    },
+  },
+  prior_form8854_obligations_confirmed_complete: true,
+  deferred_properties: [{
+    item_id: "stock",
+    description: "Stock holding",
+    prior_form8854_document_id: "DOC-PRIOR",
+    prior_mark_to_market_gain_or_loss_amount: 111_000,
+    prior_deferred_tax_amount: 50_000,
+    disposition: { disposed_in_2025: false },
+  }],
+  eligible_deferred_compensation_items: [],
+  nongrantor_trust_interests: [],
+});
+
 function withNamespace(xml: string): string {
   return xml.replace(
     "<IRS8854",
@@ -183,6 +210,74 @@ Deno.test("Form 8854 linking refuses a changed native statement set", () => {
       }),
     Error,
     "statement set changed",
+  );
+});
+
+Deno.test("annual Form 8854 no-activity certification is attached to Form 1040", () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854_annual: annualNoActivityInput,
+  }, filer);
+  assertStringIncludes(xml, "<IRS8854 documentId=");
+  assertStringIncludes(
+    xml,
+    "<AnnualExptrtStmtBfrSpcfdYrInd>X</AnnualExptrtStmtBfrSpcfdYrInd>",
+  );
+});
+
+Deno.test("annual Form 8854 source reaches the filed return through the graph", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Test Way",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    f8854_annual: annualNoActivityInput,
+  }, { taxYear: 2025, formType: "f1040" });
+  const xml = buildMefXml(buildPending(result.pending), filer);
+  assertStringIncludes(xml, "<IRS8854 documentId=");
+  assertStringIncludes(xml, "<AnnualExptrtStmtBfrSpcfdYrGrp>");
+});
+
+Deno.test("annual Form 8854 descriptor refuses an unreported disposition", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        f1040: { filing_status: "single" },
+        f8854_annual: {
+          ...annualNoActivityInput,
+          deferred_properties: [{
+            ...annualNoActivityInput.deferred_properties[0],
+            disposition: {
+              disposed_in_2025: true,
+              disposition_date: "2025-05-20",
+              reported_transaction_id: "TX-STOCK",
+              deferred_tax_and_interest_payment_document_id: "DOC-PAYMENT",
+            },
+          }],
+        },
+      }, filer),
+    Error,
+    "reconciled 2025 reporting and payment evidence",
+  );
+});
+
+Deno.test("Form 8854 refuses ambiguous initial and annual statements for one filer", () => {
+  assertThrows(
+    () =>
+      buildMefXml({
+        f1040: { filing_status: "single" },
+        f8854: noncoveredInput,
+        f8854_annual: annualNoActivityInput,
+      }, filer),
+    Error,
+    "cannot file both initial and annual Form 8854",
   );
 });
 
@@ -328,27 +423,33 @@ Deno.test({
   sanitizeOps: false,
   sanitizeResources: false,
 }, async () => {
-  const input = annualInputSchema.parse({
-    expatriation_date: "2020-06-15",
-    expatriate_type: ExpatriateType.CITIZEN,
-    part_i: {
-      ...partI,
-      notification: {
-        kind: "CITIZEN_STATE_DEPARTMENT",
-        date: "2020-06-15",
-      },
-    },
-    prior_form8854_obligations_confirmed_complete: true,
-    deferred_properties: [{
-      item_id: "stock",
-      description: "Stock holding",
-      prior_form8854_document_id: "DOC-PRIOR",
-      prior_mark_to_market_gain_or_loss_amount: 111_000,
-      prior_deferred_tax_amount: 50_000,
-      disposition: { disposed_in_2025: false },
-    }],
-    eligible_deferred_compensation_items: [],
-    nongrantor_trust_interests: [],
-  });
-  await validate8854(buildForm8854Annual(input));
+  await validate8854(buildForm8854Annual(annualNoActivityInput));
+});
+
+Deno.test({
+  name: "XSD: annual no-activity Form 8854 in a full Form 1040 return",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single" },
+    f8854_annual: annualNoActivityInput,
+  }, filer);
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/IndividualIncomeTax/Ind1040/Return1040.xsd",
+    import.meta.url,
+  ).pathname;
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });

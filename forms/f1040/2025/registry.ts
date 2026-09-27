@@ -106,6 +106,7 @@ import { f8833 } from "../nodes/inputs/f8833/index.ts";
 import { f8840 } from "../nodes/inputs/f8840/index.ts";
 import { f8843 } from "../nodes/inputs/f8843/index.ts";
 import { f8854 } from "../nodes/inputs/f8854/index.ts";
+import { f8854Annual } from "../nodes/inputs/f8854/annual_node.ts";
 import { f5471 } from "../nodes/inputs/f5471/index.ts";
 import { f8805 } from "../nodes/inputs/f8805/index.ts";
 import { depletion } from "../nodes/inputs/depletion/index.ts";
@@ -313,6 +314,7 @@ export const registry: NodeRegistry = {
   f8840,
   f8843,
   f8854,
+  f8854Annual,
   f5471,
   f8805,
   fec,
