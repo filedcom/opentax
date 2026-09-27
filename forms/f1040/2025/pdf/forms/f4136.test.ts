@@ -89,6 +89,14 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     "topmostSubform[0].Page2[0].Table_Line5[0].Line5d[0].ColE[0].f2_73[0]",
   );
   assertEquals(
+    names.line6_registration_number,
+    "topmostSubform[0].Page2[0].f2_84[0]",
+  );
+  assertEquals(
+    names.line6a_credit_dollars,
+    "topmostSubform[0].Page2[0].Table_Line6[0].Line6a[0].ColE[0].f2_89[0]",
+  );
+  assertEquals(
     names.line11c_quantity,
     "topmostSubform[0].Page3[0].Table_Line11[0].Line11c[0].f3_97[0]",
   );
@@ -100,6 +108,52 @@ Deno.test("Form 4136 PDF maps page 1 business and page 4 total widgets", () => {
     names.line17_total_cents,
     "topmostSubform[0].Page4[0].f4_125[0]",
   );
+});
+
+Deno.test("Form 4136 PDF includes vendor line 6a and government-buyer detail", async () => {
+  const result = form4136Pdf.projectFields?.({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Fuel Vendor",
+      principal_activity_code: "457100",
+      equipment_make: "Example",
+      equipment_model: "Pump",
+      equipment_type: "diesel dispenser",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "6a",
+      unit: "gallons",
+      qualified_quantity: 150,
+      actual_fuel_cost: 400,
+      undyed_fuel_confirmed: true,
+      vendor_registration_number: "UV123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      government_sales: [{
+        sale_date: "2025-06-12",
+        buyer_name: "Example City",
+        buyer_ein: "123456789",
+        gallons: 150,
+        certificate_p_record_reference: "Certificate P-2025-1",
+        certificate_information_believed_true: true,
+        exclusive_government_use_confirmed: true,
+      }],
+    }],
+  }, { schedule3: { line12_fuel_tax_credit: 36.45 } });
+  assertEquals(result?.line6_registration_number, "UV123456789");
+  assertEquals(result?.line6a_quantity, 150);
+  assertEquals(result?.line6a_credit_dollars, "36");
+  assertEquals(result?.line6a_credit_cents, "45");
+  const document = await PDFDocument.create();
+  for (let i = 0; i < 4; i++) document.addPage([612, 792]);
+  await form4136Pdf.appendSupplementalPages?.(
+    document,
+    result ?? {},
+    undefined,
+  );
+  assertEquals(document.getPageCount(), 5);
 });
 
 Deno.test("Form 4136 PDF separates aviation kerosene commercial and LUST rows", () => {

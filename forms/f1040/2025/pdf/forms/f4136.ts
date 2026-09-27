@@ -60,6 +60,7 @@ const creditReferenceNumber: Record<Line, string> = {
   "5c": "346",
   "5d": "369",
   "5e": "433",
+  "6a": "360",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -71,7 +72,10 @@ const creditReferenceNumber: Record<Line, string> = {
 };
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 function fieldPath(p: number, n: number): string {
-  if (p === 1 && n <= 9 || p === 4 && (n === 124 || n === 125)) {
+  if (
+    p === 1 && n <= 9 || p === 2 && n === 84 ||
+    p === 4 && (n === 124 || n === 125)
+  ) {
     return `${page(p)}.f${p}_${n}[0]`;
   }
   let table = "";
@@ -170,6 +174,10 @@ function fieldPath(p: number, n: number): string {
             n >= 81 && n <= 82
         ? "ColE"
         : "";
+    } else if (n >= 85 && n <= 91) {
+      table = "Table_Line6";
+      line = "Line6a";
+      column = n >= 87 && n <= 88 ? "ColD" : n >= 89 && n <= 90 ? "ColE" : "";
     }
   } else if (p === 3 && n >= 79 && n <= 142) {
     table = "Table_Line11";
@@ -291,6 +299,10 @@ const fields: PdfFieldEntry[] = [
   text("line5e_quantity", 2, 78),
   ...moneyFields("line5e_cost", 2, 79),
   ...moneyFields("line5e_credit", 2, 81),
+  text("line6_registration_number", 2, 84),
+  text("line6a_quantity", 2, 86),
+  ...moneyFields("line6a_cost", 2, 87),
+  ...moneyFields("line6a_credit", 2, 89),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -406,7 +418,6 @@ async function appendClaimStatement(
   });
   const overflow = [...grouped.values()].filter((rows) => rows.length > 1)
     .flat();
-  if (!overflow.length) return;
   const font = await document.embedFont(StandardFonts.Courier);
   const bold = await document.embedFont(StandardFonts.CourierBold);
   const rowsPerPage = 32;
@@ -460,6 +471,52 @@ async function appendClaimStatement(
       },
     );
   }
+  const governmentSales = allForm4136Claims(input)
+    .filter((claim) => claim.line === "6a")
+    .flatMap((claim) => claim.government_sales ?? []);
+  if (!governmentSales.length) return;
+  const buyers = new Map<string, {
+    name: string;
+    ein: string;
+    gallons: number;
+  }>();
+  for (const sale of governmentSales) {
+    const key = `${sale.buyer_ein}:${sale.buyer_name}`;
+    const prior = buyers.get(key);
+    buyers.set(key, {
+      name: sale.buyer_name,
+      ein: sale.buyer_ein,
+      gallons: (prior?.gallons ?? 0) + sale.gallons,
+    });
+  }
+  const buyerRows = [...buyers.values()];
+  for (let offset = 0; offset < buyerRows.length; offset += 32) {
+    const page = document.addPage([612, 792]);
+    page.drawText("2025 Form 4136 line 6a - Government diesel buyers", {
+      x: 36,
+      y: 750,
+      size: 12,
+      font: bold,
+    });
+    page.drawText(
+      `Name: ${filer?.nameLine1 ?? ""}    SSN: ${filer?.primarySSN ?? ""}`,
+      { x: 36, y: 730, size: 9, font },
+    );
+    page.drawText("Government unit name", {
+      x: 36,
+      y: 699,
+      size: 9,
+      font: bold,
+    });
+    page.drawText("EIN", { x: 430, y: 699, size: 9, font: bold });
+    page.drawText("Gallons", { x: 510, y: 699, size: 9, font: bold });
+    buyerRows.slice(offset, offset + 32).forEach((buyer, index) => {
+      const y = 680 - index * 18;
+      page.drawText(buyer.name, { x: 36, y, size: 8, font });
+      page.drawText(buyer.ein, { x: 430, y, size: 8, font });
+      page.drawText(String(buyer.gallons), { x: 510, y, size: 8, font });
+    });
+  }
 }
 
 export function projectForm4136Fields(
@@ -500,6 +557,7 @@ export function projectForm4136Fields(
       "5c",
       "5d",
       "5e",
+      "6a",
       ...alternativeFuelLines,
     ] as const
   ) {
@@ -530,6 +588,10 @@ export function projectForm4136Fields(
   ) {
     putClaimGroup(out, input, [line], `line${line}`);
   }
+  putClaimGroup(out, input, ["6a"], "line6a");
+  out.line6_registration_number = allForm4136Claims(input).find((claim) =>
+    claim.line === "6a"
+  )?.vendor_registration_number;
   putMoney(out, "line17_total", total);
   return out;
 }

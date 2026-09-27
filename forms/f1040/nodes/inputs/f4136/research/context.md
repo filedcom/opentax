@@ -24,6 +24,13 @@ Export claims on lines 1d, 2c, 3e, and 4d now require the kind of retained
 IRS-accepted export proof and a nonempty record reference instead of a bare
 export affirmation. The proof remains with the taxpayer's records; it is not
 included as a repo file or return attachment.
+For line 6a, the registered ultimate vendor is not treated as the ultimate
+purchaser. Each government sale has a date, buyer name/EIN, gallons, and
+retained Model Certificate P reference. The sales total must equal the claim;
+the IRS-issued UV registration, tax-settlement method, undyed fuel, and sales
+records are required. The government-buyer MeF statement and PDF continuation
+are emitted from those rows. This route is unrun and awaits IRS business-rule
+review; other vendor lines remain open.
 Gasoline line 1c now requires a permitted use code and a noncommercial-
 motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
 certificate confirmations. Export line 1d requires retained export proof.

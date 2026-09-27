@@ -12,7 +12,10 @@ function fieldPath(p: number, n: number): string {
   let table = "";
   let line = "";
   let column = "";
-  if (p === 1 && n <= 8 || p === 4 && (n === 39 || n === 40)) {
+  if (
+    p === 1 && n <= 8 || p === 2 && n === 41 ||
+    p === 4 && (n === 39 || n === 40)
+  ) {
     return `${page(p)}.f${p}_${n}[0]`;
   }
   if (p === 1) {
@@ -37,14 +40,20 @@ function fieldPath(p: number, n: number): string {
         ? "ColE"
         : "";
     }
-  } else if (p === 2 && n >= 17 && n <= 32) {
-    table = "Line5Table";
-    line = n <= 24 ? "Line5c" : "Line5d";
-    column = n >= 20 && n <= 21 || n >= 28 && n <= 29
-      ? "ColD"
-      : n >= 22 && n <= 23 || n >= 30 && n <= 31
-      ? "ColE"
-      : "";
+  } else if (p === 2) {
+    if (n >= 17 && n <= 32) {
+      table = "Line5Table";
+      line = n <= 24 ? "Line5c" : "Line5d";
+      column = n >= 20 && n <= 21 || n >= 28 && n <= 29
+        ? "ColD"
+        : n >= 22 && n <= 23 || n >= 30 && n <= 31
+        ? "ColE"
+        : "";
+    } else if (n >= 42 && n <= 48) {
+      table = "Line6Table";
+      line = "Line6a";
+      column = n >= 44 && n <= 45 ? "ColD" : n >= 46 && n <= 47 ? "ColE" : "";
+    }
   } else if (p === 3 && n >= 29 && n <= 92) {
     table = "Line11Table";
     const index = Math.floor((n - 29) / 8);
@@ -117,6 +126,10 @@ const fields: PdfFieldEntry[] = [
   text("line5d_quantity", 2, 27),
   ...money("line5d_cost", 2, 28),
   ...money("line5d_credit", 2, 30),
+  text("line6_registration_number", 2, 41),
+  text("line6a_quantity", 2, 43),
+  ...money("line6a_cost", 2, 44),
+  ...money("line6a_credit", 2, 46),
   ...line11.flatMap((line, index) => {
     const base = 29 + index * 8;
     return [

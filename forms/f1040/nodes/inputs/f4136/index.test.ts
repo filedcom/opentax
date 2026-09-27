@@ -81,6 +81,83 @@ Deno.test("Form 4136: qualified business gasoline and diesel route to refundable
   );
 });
 
+Deno.test("Form 4136: registered vendor government diesel sales reconcile to line 6a", () => {
+  const vendorBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Fuel Vendor",
+    principal_activity_code: "457100",
+    equipment_make: "Example",
+    equipment_model: "Pump",
+    equipment_type: "diesel dispenser",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const claim = {
+    line: "6a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 150,
+    actual_fuel_cost: 400,
+    undyed_fuel_confirmed: true as const,
+    vendor_registration_number: "UV123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    government_sales: [{
+      sale_date: "2025-06-12",
+      buyer_name: "Example City",
+      buyer_ein: "123456789",
+      gallons: 150,
+      certificate_p_record_reference: "Certificate P-2025-1",
+      certificate_information_believed_true: true as const,
+      exclusive_government_use_confirmed: true as const,
+    }],
+  };
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [claim] }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: vendorBusiness, claims: [claim] }).outputs[0].fields
+      .line12_fuel_tax_credit,
+    36.45,
+  );
+  for (
+    const invalidClaim of [
+      { ...claim, vendor_registration_number: undefined },
+      { ...claim, vendor_tax_settlement: undefined },
+      { ...claim, government_sales: undefined },
+      {
+        ...claim,
+        government_sales: [{ ...claim.government_sales[0], gallons: 149 }],
+      },
+      {
+        ...claim,
+        government_sales: [{
+          ...claim.government_sales[0],
+          certificate_p_record_reference: " ",
+        }],
+      },
+      {
+        ...claim,
+        government_sales: [{
+          ...claim.government_sales[0],
+          exclusive_government_use_confirmed: undefined,
+        }],
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [invalidClaim] }).success,
+      false,
+    );
+  }
+  assertEquals(
+    parseInput({
+      business: { ...vendorBusiness, sales_records_confirmed: undefined },
+      claims: [claim],
+    }).success,
+    false,
+  );
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],
