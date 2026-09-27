@@ -1,6 +1,9 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { Form3800NonpassiveLines } from "../../../nodes/inputs/f3800/calculation.ts";
-import type { Form3800CurrentCreditAmount } from "./f3800_current_rows.ts";
+import type {
+  Form3800CurrentCreditAmount,
+  Form3800CurrentXmlRow,
+} from "./f3800_current_rows.ts";
 import type {
   Form3800CarryoverXmlRow,
   Form3800PassiveXmlRow,
@@ -14,7 +17,7 @@ import { buildForm3800PartVIXml } from "./f3800_part_vi.ts";
 export type Form3800DocumentParts = {
   readonly lines: Form3800NonpassiveLines;
   readonly transferStatementIds: readonly string[];
-  readonly currentRows: readonly Form3800PassiveXmlRow[];
+  readonly currentRows: readonly Form3800CurrentXmlRow[];
   readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
   readonly carryoverRows: readonly Form3800CarryoverXmlRow[];
   readonly currentDetails: readonly Form3800PassiveXmlRow[];

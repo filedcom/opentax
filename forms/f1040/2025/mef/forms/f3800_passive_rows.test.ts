@@ -61,6 +61,10 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
   ]);
   assertEquals(xml.partIII.length, 1);
   assertEquals(xml.partIII[0].line, "1h");
+  assertEquals(xml.partIII[0].metadata, {
+    sourceCount: 2,
+    entity: { ein: "123456789" },
+  });
   assertEquals(xml.currentAmounts, [{
     line: "1h",
     nonpassiveCredit: 0,

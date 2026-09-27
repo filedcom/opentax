@@ -36,6 +36,12 @@ export type Form3800CurrentCreditRowMetadata = {
   readonly referenceDocumentName?: string;
 };
 
+export type Form3800CurrentXmlRow = {
+  readonly line: Form3800CreditLine;
+  readonly xml: string;
+  readonly metadata: Form3800CurrentCreditRowMetadata;
+};
+
 function isCentMoney(amount: number): boolean {
   return Number.isFinite(amount) &&
     Number.isSafeInteger(Math.round(amount * 100)) &&

@@ -13,26 +13,30 @@ import {
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 import type { Form3800DocumentParts } from "./f3800_document.ts";
-import type { Form3800PassiveXmlRow } from "./f3800_passive_rows.ts";
 import {
   buildForm3800CurrentCreditRowXml,
   combineForm3800CurrentCreditAmounts,
   type Form3800CurrentCreditRowMetadata,
+  type Form3800CurrentXmlRow,
 } from "./f3800_current_rows.ts";
 
-function nontransferableCurrentRowXml(
+function nontransferableCurrentRow(
   line: "1e" | "1h" | "1y" | "1aa" | "4b",
   credit: number,
   appliedCredit: number,
   metadata: Form3800CurrentCreditRowMetadata,
-): string {
+): Form3800CurrentXmlRow {
   const [row] = combineForm3800CurrentCreditAmounts([{
     line,
     grossCredit: credit,
     transferOutCredit: 0,
     appliedCredit,
   }], []);
-  return buildForm3800CurrentCreditRowXml(row, metadata);
+  return {
+    line,
+    metadata,
+    xml: buildForm3800CurrentCreditRowXml(row, metadata),
+  };
 }
 
 function largestPassThroughEntity(
@@ -608,8 +612,17 @@ export function buildForm3800NonpassiveParts(
     if (firstFacilityIndex === undefined) {
       throw new Error(`Form 3800 Part III line ${row.line} has no facility`);
     }
+    const metadata: Form3800CurrentCreditRowMetadata = {
+      sourceCount: row.facilityCount,
+      transferRegistrationNumber: firstTransferred?.registration_number,
+      referenceDocumentId: row.facilityCount > 1
+        ? facilityIndexes.map(documentIdAt).join(" ")
+        : documentIdAt(firstFacilityIndex),
+      referenceDocumentName: "IRS8835",
+    };
     return {
       line: row.line,
+      metadata,
       xml: elements(
         row.line === "1f"
           ? "Form8835PartIICYCreditsGrp"
@@ -632,10 +645,8 @@ export function buildForm3800NonpassiveParts(
           element("TotalGeneralBusCreditsAppTxAmt", applied),
         ],
         {
-          referenceDocumentId: row.facilityCount > 1
-            ? facilityIndexes.map(documentIdAt).join(" ")
-            : documentIdAt(firstFacilityIndex),
-          referenceDocumentName: "IRS8835",
+          referenceDocumentId: metadata.referenceDocumentId,
+          referenceDocumentName: metadata.referenceDocumentName,
         },
       ),
     };
@@ -644,11 +655,10 @@ export function buildForm3800NonpassiveParts(
   const specifiedGroup = partIIIGroups.find((group) => group.line === "4e");
   const form5884PassThroughSources =
     form5884?.sources.filter((source) => source.ein !== undefined) ?? [];
-  const currentRows: Form3800PassiveXmlRow[] = [
+  const currentRows: Form3800CurrentXmlRow[] = [
     ...(input.form8826
-      ? [{
-        line: "1e" as const,
-        xml: nontransferableCurrentRowXml(
+      ? [
+        nontransferableCurrentRow(
           "1e",
           form8826Credit,
           form8826Applied,
@@ -661,13 +671,12 @@ export function buildForm3800NonpassiveParts(
               : undefined,
           },
         ),
-      }]
+      ]
       : []),
     ...(ordinaryGroup ? [ordinaryGroup] : []),
     ...(input.form8820
-      ? [{
-        line: "1h" as const,
-        xml: nontransferableCurrentRowXml(
+      ? [
+        nontransferableCurrentRow(
           "1h",
           form8820Credit,
           input.form8820.appliedCredit,
@@ -680,12 +689,11 @@ export function buildForm3800NonpassiveParts(
               : undefined,
           },
         ),
-      }]
+      ]
       : []),
     ...(input.form8936
-      ? [{
-        line: "1y" as const,
-        xml: nontransferableCurrentRowXml(
+      ? [
+        nontransferableCurrentRow(
           "1y",
           form8936Credit,
           input.form8936.appliedCredit,
@@ -695,12 +703,11 @@ export function buildForm3800NonpassiveParts(
             referenceDocumentName: "IRS8936",
           },
         ),
-      }]
+      ]
       : []),
     ...(input.form8936Commercial
-      ? [{
-        line: "1aa" as const,
-        xml: nontransferableCurrentRowXml(
+      ? [
+        nontransferableCurrentRow(
           "1aa",
           form8936CommercialCredit,
           input.form8936Commercial.appliedCredit,
@@ -710,12 +717,11 @@ export function buildForm3800NonpassiveParts(
             referenceDocumentName: "IRS8936",
           },
         ),
-      }]
+      ]
       : []),
     ...(form5884
-      ? [{
-        line: "4b" as const,
-        xml: nontransferableCurrentRowXml(
+      ? [
+        nontransferableCurrentRow(
           "4b",
           form5884Credit,
           form5884.appliedCredit,
@@ -726,7 +732,7 @@ export function buildForm3800NonpassiveParts(
             referenceDocumentName: form5884.documentId ? "IRS5884" : undefined,
           },
         ),
-      }]
+      ]
       : []),
     ...(specifiedGroup ? [specifiedGroup] : []),
   ];

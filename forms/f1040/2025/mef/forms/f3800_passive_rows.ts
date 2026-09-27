@@ -14,6 +14,7 @@ import {
   combineForm3800CurrentCreditAmounts,
   type Form3800CurrentCreditAmount,
   type Form3800CurrentCreditRowMetadata,
+  type Form3800CurrentXmlRow,
 } from "./f3800_current_rows.ts";
 
 export type Form3800PassiveXmlRow = {
@@ -36,7 +37,7 @@ export type Form3800CarryoverXmlRow = Form3800PassiveXmlRow & {
 };
 
 export type Form3800PassiveRowXml = {
-  readonly partIII: readonly Form3800PassiveXmlRow[];
+  readonly partIII: readonly Form3800CurrentXmlRow[];
   readonly currentAmounts: readonly Form3800CurrentCreditAmount[];
   readonly partIV: readonly Form3800CarryoverXmlRow[];
   readonly partV: readonly Form3800PassiveXmlRow[];
@@ -141,12 +142,14 @@ export function buildForm3800PassiveRowXml(
     if (!amount) {
       throw new Error("Form 3800 current-year passive row was not combined");
     }
+    const metadata = {
+      sourceCount: row.sources.length,
+      entity: sourceEntity(row.sources),
+    };
     return {
       line: row.form3800CreditLine,
-      xml: buildForm3800CurrentCreditRowXml(amount, {
-        sourceCount: row.sources.length,
-        entity: sourceEntity(row.sources),
-      }),
+      metadata,
+      xml: buildForm3800CurrentCreditRowXml(amount, metadata),
     };
   });
   const partIV = carryover.map((row) => {

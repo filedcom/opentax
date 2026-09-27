@@ -31,13 +31,15 @@ const currentAmounts = combineForm3800CurrentCreditAmounts([{
   transferOutCredit: 0,
   appliedCredit: 100,
 }], []);
+const metadata = {
+  sourceCount: 1,
+  referenceDocumentId: "IRS8820_1",
+  referenceDocumentName: "IRS8820",
+};
 const currentRows = [{
   line: "1h" as const,
-  xml: buildForm3800CurrentCreditRowXml(currentAmounts[0], {
-    sourceCount: 1,
-    referenceDocumentId: "IRS8820_1",
-    referenceDocumentName: "IRS8820",
-  }),
+  metadata,
+  xml: buildForm3800CurrentCreditRowXml(currentAmounts[0], metadata),
 }];
 
 Deno.test("Form 3800 document orders all six parts with filed tax-use reconciliation", () => {

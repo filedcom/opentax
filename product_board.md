@@ -535,9 +535,12 @@ carryover-only, and mismatch cases are written
 but unrun. Part VI vintage
 details now pass through a schema-ordered assembler that retains multiple
 source years per credit line; its ordering case is written but unrun. Passive
-Part III fragments also expose their structured current-year amounts for the
-join, with a source case written but unrun. Complete passive source-document
-and Part II reconciliation remains open.
+Part III fragments also expose their structured current-year amounts and row
+metadata. The nonpassive builder now retains the same metadata alongside every
+current-year row, including source counts, first transfer registration number,
+entity, and document reference. Their source cases are written but unrun. The
+same-line aggregate and Part V source join are not yet connected. Complete
+passive source-document and Part II reconciliation remains open.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS

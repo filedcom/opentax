@@ -63,6 +63,24 @@ Deno.test("Form 3800 nonpassive source builder exposes structured document parts
   assertEquals(parts.lines.line38, 5_000);
 });
 
+Deno.test("Form 3800 source parts retain facility metadata for a mixed row", () => {
+  const parts = buildForm3800NonpassiveParts({
+    tax,
+    facilities: [ordinary, specified],
+    form8835DocumentIds: ["IRS8835_1", "IRS8835_2"],
+    appliedCreditsByFacility: [18_000, 15_000],
+    transferStatementIdsByFileName: {
+      "Transfer Election Statement.pdf": "BinaryAttachment1",
+    },
+  });
+  assertEquals(parts.currentRows.find((row) => row.line === "4e")?.metadata, {
+    sourceCount: 1,
+    transferRegistrationNumber: "CAABC12ABCDE",
+    referenceDocumentId: "IRS8835_2",
+    referenceDocumentName: "IRS8835",
+  });
+});
+
 Deno.test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to Part II", () => {
   const xml = buildFiledNonpassive({
     tax,
