@@ -161,7 +161,15 @@ requires and references the Form 3800 document in the linked MeF bundle. The
 names the direct line 6a producers and the source classifications needed before
 a shared Form 3800 finalization. It also identifies Form 8912 as a separate line
 6k credit formerly misrouted to 6a. The other direct deposits remain in code and
-can still overstate filed credits. An unrun pure Form 8912 Part I/II limit
+can still overstate filed credits. The Form 5884 source build pass now requires
+employee identity, pre-2026 hire, state-workforce certification, wage
+eligibility affirmations, and a single certified veteran category. It applies
+the missing $24,000 disabled-long-term-unemployed veteran cap and the 120-hour
+minimum plus hours-based first-year rate to long-term family assistance
+recipients. Source and rejection cases
+are written but unrun. Its gross direct Schedule 3 route still needs conversion
+to the shared Form 3800 limit and native source XML before it can be considered
+filing-ready. An unrun pure Form 8912 Part I/II limit
 calculation now keeps its line 12 allowed credit and unused amount separate,
 taking the already-allowed Form 3800 credit on line 10c. It rejects pass-through
 CREB cases until their separate taxable-income limit is modeled. The Form 8912

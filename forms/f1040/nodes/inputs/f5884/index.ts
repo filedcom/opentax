@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
 import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
@@ -31,10 +34,16 @@ export enum TargetGroup {
   LongTermUnemployment = "10",
 }
 
+export enum VeteranCategory {
+  SnapOrShortTermUnemployed = "snap_or_short_term_unemployed",
+  DisabledRecentlyDischarged = "disabled_recently_discharged",
+  LongTermUnemployed = "long_term_unemployed",
+  DisabledLongTermUnemployed = "disabled_long_term_unemployed",
+}
+
 // Credit rates per IRC §51(a) and §51(d)(8)
 const RATE_LOW_HOURS = 0.25; // 120-399 hours worked
 const RATE_HIGH_HOURS = 0.40; // 400+ hours worked
-const RATE_LTFA_FIRST_YEAR = 0.40; // Long-term family assistance, year 1
 const RATE_LTFA_SECOND_YEAR = 0.50; // Long-term family assistance, year 2
 
 // Wage caps per group (IRC §51(b)(3))
@@ -43,38 +52,114 @@ const WAGE_CAP_SUMMER_YOUTH = 3000; // group 6 summer youth
 const WAGE_CAP_LTFA_FIRST = 10000; // group 9 LTFA, first year
 const WAGE_CAP_LTFA_SECOND = 10000; // group 9 LTFA, second year
 const WAGE_CAP_VETERAN_DISABLED_1YR = 12000; // disabled veteran 1-year
-const WAGE_CAP_VETERAN_DISABLED_2YR = 14000; // disabled veteran long-term
+const WAGE_CAP_VETERAN_LONG_TERM_UNEMPLOYED = 14000;
+const WAGE_CAP_VETERAN_DISABLED_LONG_TERM = 24000;
 
-// Per-item schema — one entry per employee/group
+// Per-item schema — one entry per employee
 export const itemSchema = z.object({
+  employee_reference: z.string().trim().min(1),
   target_group: z.nativeEnum(TargetGroup),
-  // First-year qualified wages (Line 1a/1b/1c depending on group)
+  hired_on: z.string().date().refine((date) => date < "2026-01-01", {
+    message:
+      "Work opportunity credit requires employment beginning before 2026",
+  }),
+  swa_certification_reference: z.string().trim().min(1),
+  qualified_wages_confirmed: z.literal(true),
+  not_prior_employee_confirmed: z.literal(true),
+  not_related_or_dependent_confirmed: z.literal(true),
+  more_than_half_wages_for_trade_or_business_confirmed: z.literal(true),
+  excluded_wages_removed_confirmed: z.literal(true),
+  // First-year qualified wages (line 1a or 1b, depending on hours)
   first_year_wages: z.number().nonnegative(),
-  // Second-year wages (only for LTFA group, Line 2)
+  // Second-year wages (line 1c, only for LTFA)
   second_year_wages: z.number().nonnegative().optional(),
-  // Hours worked (determines rate tier; not required for LTFA computation)
-  hours_worked: z.number().nonnegative().optional(),
-  // Special veteran subcategory affects wage cap
-  is_disabled_veteran: z.boolean().optional(),
-  is_disabled_veteran_long_term: z.boolean().optional(),
+  // Hours worked determine first-year rate and the 120-hour minimum.
+  hours_worked: z.number().nonnegative(),
+  veteran_category: z.nativeEnum(VeteranCategory).optional(),
+  summer_youth_zone_and_service_period_confirmed: z.literal(true).optional(),
+  designated_community_resident_location_confirmed: z.literal(true).optional(),
+}).superRefine((item, ctx) => {
+  if (
+    (item.target_group === TargetGroup.VeteranFoodStamp) !==
+      (item.veteran_category !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["veteran_category"],
+      message: "Veteran credit needs its certified veteran category only",
+    });
+  }
+  if (
+    item.target_group === TargetGroup.SummerYouth &&
+    item.summer_youth_zone_and_service_period_confirmed !== true
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["summer_youth_zone_and_service_period_confirmed"],
+      message: "Summer youth wages need the qualifying zone and service period",
+    });
+  }
+  if (
+    item.target_group === TargetGroup.DesignatedCommunityResident &&
+    item.designated_community_resident_location_confirmed !== true
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["designated_community_resident_location_confirmed"],
+      message: "Community resident wages need the qualifying work location",
+    });
+  }
+  if (
+    item.target_group !== TargetGroup.LongTermFamilyAssistance &&
+    item.second_year_wages !== undefined
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["second_year_wages"],
+      message: "Second-year wages are limited to long-term family assistance",
+    });
+  }
 });
 
 export const inputSchema = z.object({
   f5884s: z.array(itemSchema).min(1),
+}).superRefine((input, ctx) => {
+  const references = new Set<string>();
+  input.f5884s.forEach((item, index) => {
+    if (references.has(item.employee_reference)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["f5884s", index, "employee_reference"],
+        message: "Work opportunity credit employee is duplicated",
+      });
+    }
+    references.add(item.employee_reference);
+  });
 });
 
 type F5884Item = z.infer<typeof itemSchema>;
 
 // Wage cap for an employee entry
 function wageCap(item: F5884Item): number {
-  if (item.target_group === TargetGroup.SummerYouth) return WAGE_CAP_SUMMER_YOUTH;
-  if (item.target_group === TargetGroup.LongTermFamilyAssistance) return WAGE_CAP_LTFA_FIRST;
-  if (item.is_disabled_veteran_long_term === true) return WAGE_CAP_VETERAN_DISABLED_2YR;
-  if (item.is_disabled_veteran === true) return WAGE_CAP_VETERAN_DISABLED_1YR;
+  if (item.target_group === TargetGroup.SummerYouth) {
+    return WAGE_CAP_SUMMER_YOUTH;
+  }
+  if (item.target_group === TargetGroup.LongTermFamilyAssistance) {
+    return WAGE_CAP_LTFA_FIRST;
+  }
+  if (item.veteran_category === VeteranCategory.DisabledLongTermUnemployed) {
+    return WAGE_CAP_VETERAN_DISABLED_LONG_TERM;
+  }
+  if (item.veteran_category === VeteranCategory.LongTermUnemployed) {
+    return WAGE_CAP_VETERAN_LONG_TERM_UNEMPLOYED;
+  }
+  if (item.veteran_category === VeteranCategory.DisabledRecentlyDischarged) {
+    return WAGE_CAP_VETERAN_DISABLED_1YR;
+  }
   return WAGE_CAP_STANDARD;
 }
 
-// Credit rate based on hours (not used for LTFA)
+// First-year credit rate based on hours.
 function standardRate(hours: number): number {
   if (hours >= 400) return RATE_HIGH_HOURS;
   if (hours >= 120) return RATE_LOW_HOURS;
@@ -83,12 +168,17 @@ function standardRate(hours: number): number {
 
 // Credit for one employee entry
 function employeeCredit(item: F5884Item): number {
-  const hours = item.hours_worked ?? 0;
+  const hours = item.hours_worked;
+  if (hours < 120) return 0;
 
   if (item.target_group === TargetGroup.LongTermFamilyAssistance) {
-    // IRC §51(d)(8): 40% first-year + 50% second-year, each capped at $10k
-    const firstYearCredit = Math.min(item.first_year_wages, WAGE_CAP_LTFA_FIRST) * RATE_LTFA_FIRST_YEAR;
-    const secondYearCredit = Math.min(item.second_year_wages ?? 0, WAGE_CAP_LTFA_SECOND) * RATE_LTFA_SECOND_YEAR;
+    // Form 5884 lines 1a/1b and 1c, each year capped at $10,000.
+    const firstYearCredit =
+      Math.min(item.first_year_wages, WAGE_CAP_LTFA_FIRST) *
+      standardRate(hours);
+    const secondYearCredit =
+      Math.min(item.second_year_wages ?? 0, WAGE_CAP_LTFA_SECOND) *
+      RATE_LTFA_SECOND_YEAR;
     return firstYearCredit + secondYearCredit;
   }
 
@@ -105,7 +195,10 @@ function totalCredit(items: F5884Item[]): number {
 
 function buildOutputs(credit: number): NodeOutput[] {
   if (credit <= 0) return [];
-  return [{ nodeType: schedule3.nodeType, fields: { line6a_general_business_credit: credit } }];
+  return [{
+    nodeType: schedule3.nodeType,
+    fields: { line6a_general_business_credit: credit },
+  }];
 }
 
 class F5884Node extends TaxNode<typeof inputSchema> {
@@ -113,7 +206,10 @@ class F5884Node extends TaxNode<typeof inputSchema> {
   readonly inputSchema = inputSchema;
   readonly outputNodes = new OutputNodes([schedule3]);
 
-  compute(_ctx: NodeContext, rawInput: z.infer<typeof inputSchema>): NodeResult {
+  compute(
+    _ctx: NodeContext,
+    rawInput: z.infer<typeof inputSchema>,
+  ): NodeResult {
     const input = inputSchema.parse(rawInput);
     const credit = totalCredit(input.f5884s);
     return { outputs: buildOutputs(credit) };
