@@ -246,6 +246,30 @@ Deno.test("covered Form 8854 with reconciled Form 8949 property reaches full ret
   );
 });
 
+Deno.test("covered Form 8854 and deemed sale reach the return through the calculation graph", () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Test Way",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    f8854: coveredCapitalInput,
+    f8949: { f8949s: [coveredCapitalTransaction] },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(buildPending(result.pending), filer);
+  assertStringIncludes(xml, "<IRS8854 documentId=");
+  assertStringIncludes(xml, "<IRS8949 documentId=");
+  assertStringIncludes(xml, "<Form8854ComputationStatement documentId=");
+  assertStringIncludes(xml, "<CapitalGainLossAmt>10000</CapitalGainLossAmt>");
+});
+
 Deno.test("covered Form 8854 filing rejects absent or unmatched Form 8949 rows", () => {
   for (
     const form8949 of [

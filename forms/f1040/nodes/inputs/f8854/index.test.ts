@@ -1612,17 +1612,35 @@ Deno.test("Form 8854 Form 8949 loss treatment cannot be claimed for a gain or Fo
 });
 
 Deno.test("Form 8854 does not turn deemed gain into a dollar-for-dollar Schedule 2 tax", () => {
+  assertEquals(
+    f8854.compute(
+      { taxYear: 2025, formType: "f1040" },
+      inputSchema.parse(input({
+        balance_sheet: balanceSheetWithNetWorth(2_000_000),
+        section_c: sectionC([asset("A", 2_000_000, 500_000)]),
+      })),
+    ).outputs,
+    [],
+  );
+});
+
+Deno.test("Form 8854 calculation node rejects covered non-Form 8949 property", () => {
   assertThrows(
     () =>
       f8854.compute(
         { taxYear: 2025, formType: "f1040" },
         inputSchema.parse(input({
           balance_sheet: balanceSheetWithNetWorth(2_000_000),
-          section_c: sectionC([asset("A", 2_000_000, 500_000)]),
+          section_c: sectionC([{
+            ...asset("business", 2_000_000, 500_000),
+            reported_form_code: ReportedFormCode.Form4797,
+            form8949_standard_holding_period_confirmed: undefined,
+            form8949_digital_asset: undefined,
+          }]),
         })),
       ),
     Error,
-    "asset-specific deemed gain reporting and linked IRS8854 attachments",
+    "reconciled income forms for non-Form 8949 Section C items",
   );
 });
 

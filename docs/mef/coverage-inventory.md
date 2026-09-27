@@ -112,11 +112,13 @@ It now also checks an explicit digital-asset classification against the TY2025
 Form 8949 C/F versus I/L no-information-return box; cases are written, unrun.
 The `form8949` MeF descriptor now maps all twelve TY2025 A-L boxes to distinct
 v5.4 groups and indicators; its all-boxes and local XSD cases are unrun.
+The covered Form 8854 Form 8949-only case now passes the calculation node's
+shared filing-scope check and has a source-graph-to-return case written, unrun.
 The `f8854` row has a registered initial `IRS8854` serializer for
-noncovered cases, including their linked native statements, and a separate
-annual no-activity serializer. Covered initial cases and annual dispositions or
-distributions remain blocked. Source, calculation, and XML-shape cases are
-written but unrun.
+noncovered and Form 8949-only covered cases, including linked native statements,
+and a separate annual no-activity serializer. Other covered initial cases and
+annual dispositions or distributions remain blocked. Source, calculation, and
+XML-shape cases are written but unrun.
 
 The `form8959` row also has a new, unrun CT-2 employee-representative source:
 four quarters per recipient feed Form 8959 lines 14 and 23. W-2 box 12 codes B

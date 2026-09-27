@@ -1176,7 +1176,10 @@ income still need character and reporting checks. The registered initial
 builder now files a covered return when Section C contains only identified
 Form 8949 mark-to-market properties, each reconciled to its filed transaction,
 with no other Section C category and no Section D deferral. Its full-return
-XML, missing-source rejection, and local XSD cases are written but unrun.
+XML, missing-source rejection, and local XSD cases are written but unrun. The
+normal Form 8854 calculation node now uses the same filing-scope gate, so this
+covered case can reach the MeF builder through the source graph; a source-to-
+return case is written but unrun.
 Other covered income categories, binary attachment verification, and annual
 disposition or distribution events remain blocked. Exception source
 corroboration, PDF, broader source reconciliation, and IRS business rules

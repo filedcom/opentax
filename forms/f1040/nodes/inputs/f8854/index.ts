@@ -4,7 +4,7 @@ import { TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { balanceSheetSchema, calculateBalanceSheet } from "./balance-sheet.ts";
-import { sectionCSchema } from "./section-c.ts";
+import { ReportedFormCode, sectionCSchema } from "./section-c.ts";
 import { sectionDSchema } from "./section-d.ts";
 export { MARK_TO_MARKET_EXCLUSION_2025 } from "./constants.ts";
 
@@ -329,6 +329,35 @@ export function isCoveredExpatriate(rawInput: F8854Input): boolean {
     calculateBalanceSheet(input.balance_sheet).netWorth >= NET_WORTH_THRESHOLD;
 }
 
+/** Scope the registered initial filing path before its MeF source reconciliation. */
+export function assertForm8854FilingScope(rawInput: F8854Input): void {
+  const input = inputSchema.parse(rawInput);
+  if (input.section_d.elect_deferral) {
+    throw new Error(
+      "Form 8854 Section D deferral needs verified binary attachments",
+    );
+  }
+  if (isCoveredExpatriate(input)) {
+    const section = input.section_c;
+    if (
+      section === null ||
+      section.mark_to_market_assets.some((asset) =>
+        asset.reported_form_code !== ReportedFormCode.Form8949
+      ) ||
+      section.eligible_deferred_compensation.length > 0 ||
+      section.ineligible_deferred_compensation.length > 0 ||
+      section.specified_tax_deferred_accounts.length > 0 ||
+      section.nongrantor_trust_interests.length > 0
+    ) {
+      throw new Error(
+        "Form 8854 covered filing needs reconciled income forms for non-Form 8949 Section C items",
+      );
+    }
+  } else if (input.section_c !== null) {
+    throw new Error("Noncovered Form 8854 cannot include Section C");
+  }
+}
+
 class F8854Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f8854";
   readonly inputSchema = inputSchema;
@@ -336,19 +365,10 @@ class F8854Node extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, rawInput: F8854Input): NodeResult {
     const input = inputSchema.parse(rawInput);
-    if (
-      !isCoveredExpatriate(input) &&
-      input.section_c === null &&
-      !input.section_d.elect_deferral
-    ) {
-      return { outputs: [] };
-    }
-    // A deemed gain is income reported by asset character on Form 8949,
-    // Form 4797, Schedule E, etc. It is not a dollar-for-dollar Schedule 2 tax.
-    // Covered cases still need complete income-form and attachment reconciliation.
-    throw new Error(
-      "Form 8854 covered filing is not ready: asset-specific deemed gain reporting and linked IRS8854 attachments are required",
-    );
+    assertForm8854FilingScope(input);
+    // Deemed gain is reported by the asset's income-form character. The
+    // registered IRS8854 builder reconciles its identified Form 8949 rows.
+    return { outputs: [] };
   }
 }
 
