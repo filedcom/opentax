@@ -188,3 +188,147 @@ Deno.test("2026 Form 2441 taxable benefits can be finalized before tax", () => {
   assertEquals(lines.line25, 7_500);
   assertEquals(lines.line26, 500);
 });
+
+const monthlyCareDetails: Form2441BenefitDetails = {
+  filing_status: FilingStatus.Single,
+  care_providers: [{
+    kind: "business",
+    name: "Care Center",
+    name_control: "CARE",
+    ein: "123456789",
+    us_address: {
+      line1: "100 Main St",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    household_employee: false,
+    amount_paid: 3_000,
+  }],
+  qualifying_people: [{
+    first_name: "Child",
+    last_name: "Smith",
+    name_control: "SMIT",
+    ssn: "123456789",
+    credit_expenses_paid: 3_000,
+  }],
+  taxpayer_earned_income: 0,
+};
+
+Deno.test("2026 Form 2441 applies five student months and actual-income floor", () => {
+  const months = Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    taxpayer_actual_earned_income: index === 0 ? 400 : 0,
+    taxpayer_full_time_student: index < 5,
+  }));
+  const lines = calculateForm2441(
+    {
+      ...monthlyCareDetails,
+      taxpayer_earned_income: 400,
+      earned_income_months: months,
+      tax_liability_limit: 2_000,
+    },
+    15_000,
+    0,
+    2026,
+  );
+  assertEquals(lines.line4, 1_400);
+  assertEquals(lines.line18, 1_400);
+  assertEquals(lines.line11, 700);
+  assertEquals(lines.deemed_income_used, true);
+
+  const twoPeople = calculateForm2441Benefits(
+    {
+      ...monthlyCareDetails,
+      qualifying_people: [
+        monthlyCareDetails.qualifying_people[0],
+        { ...monthlyCareDetails.qualifying_people[0], ssn: "987654321" },
+      ],
+      taxpayer_earned_income: 400,
+      earned_income_months: months,
+    },
+    0,
+    2026,
+  );
+  assertEquals(twoPeople.line18, 2_500);
+});
+
+Deno.test("2026 Form 2441 requires five student months and reconciled actual income", () => {
+  const months = Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    taxpayer_actual_earned_income: 0,
+    taxpayer_full_time_student: index < 4,
+  }));
+  const lines = calculateForm2441Benefits(
+    {
+      ...monthlyCareDetails,
+      earned_income_months: months,
+    },
+    0,
+    2026,
+  );
+  assertEquals(lines.line18, 0);
+  assertEquals(lines.deemed_income_used, false);
+  assertThrows(
+    () =>
+      calculateForm2441Benefits(
+        {
+          ...monthlyCareDetails,
+          taxpayer_earned_income: 100,
+          earned_income_months: months,
+        },
+        0,
+        2026,
+      ),
+    Error,
+    "monthly actual income disagrees",
+  );
+  assertThrows(
+    () =>
+      calculateForm2441Benefits(
+        {
+          ...monthlyCareDetails,
+          earned_income_months: [months[0], ...months.slice(0, 11)],
+        },
+        0,
+        2026,
+      ),
+    Error,
+    "each month exactly once",
+  );
+});
+
+Deno.test("2026 Form 2441 deems only one eligible spouse in a shared month", () => {
+  const months = Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    taxpayer_actual_earned_income: 0,
+    spouse_actual_earned_income: 0,
+    taxpayer_unable_to_care_for_self: index === 0,
+    spouse_unable_to_care_for_self: index === 0,
+  }));
+  const joint: Form2441BenefitDetails = {
+    ...monthlyCareDetails,
+    filing_status: FilingStatus.MFJ,
+    spouse_earned_income: 0,
+    earned_income_months: months,
+  };
+  assertThrows(
+    () => calculateForm2441Benefits(joint, 0, 2026),
+    Error,
+    "needs one deemed income recipient",
+  );
+  const lines = calculateForm2441Benefits(
+    {
+      ...joint,
+      earned_income_months: [
+        { ...months[0], deemed_income_recipient: "spouse" },
+        ...months.slice(1),
+      ],
+    },
+    0,
+    2026,
+  );
+  assertEquals(lines.line18, 0);
+  assertEquals(lines.line19, 250);
+  assertEquals(lines.deemed_income_used, true);
+});

@@ -45,12 +45,24 @@ export const qualifyingPersonSchema = z.object({
   credit_expenses_paid: money,
 }).strict();
 
+const earnedIncomeMonthSchema = z.object({
+  month: z.number().int().min(1).max(12),
+  taxpayer_actual_earned_income: money,
+  spouse_actual_earned_income: money.optional(),
+  taxpayer_full_time_student: z.boolean().optional(),
+  taxpayer_unable_to_care_for_self: z.boolean().optional(),
+  spouse_full_time_student: z.boolean().optional(),
+  spouse_unable_to_care_for_self: z.boolean().optional(),
+  deemed_income_recipient: z.enum(["taxpayer", "spouse"]).optional(),
+}).strict();
+
 export const benefitDetailsSchema = z.object({
   filing_status: filingStatusSchema,
   care_providers: z.array(careProviderSchema).min(1).max(25),
   qualifying_people: z.array(qualifyingPersonSchema).min(1).max(25),
   taxpayer_earned_income: money,
   spouse_earned_income: money.optional(),
+  earned_income_months: z.array(earnedIncomeMonthSchema).length(12).optional(),
   student_or_disabled_deemed_income_used: z.boolean().optional(),
   mfs_eligibility_met: z.boolean().optional(),
   mfs_line19_income: money.optional(),
@@ -70,6 +82,7 @@ export type Form2441FilingDetails = z.infer<typeof filingDetailsSchema>;
 export type Form2441BenefitDetails = z.infer<typeof benefitDetailsSchema>;
 
 export interface Form2441Lines {
+  readonly deemed_income_used: boolean;
   readonly line3: number;
   readonly line4: number;
   readonly line5: number;
@@ -105,6 +118,7 @@ export interface Form2441Lines {
 
 export type Form2441BenefitLines = Pick<
   Form2441Lines,
+  | "deemed_income_used"
   | "line12"
   | "line13"
   | "line14"
@@ -126,6 +140,115 @@ export type Form2441BenefitLines = Pick<
   | "line30"
   | "line31"
 >;
+
+function earnedIncomeForCare(details: Form2441BenefitDetails): {
+  taxpayer: number;
+  spouse: number | undefined;
+  deemedIncomeUsed: boolean;
+} {
+  const months = details.earned_income_months;
+  if (!months) {
+    if (details.student_or_disabled_deemed_income_used === true) {
+      throw new Error("Form 2441 deemed income needs monthly facts");
+    }
+    return {
+      taxpayer: details.taxpayer_earned_income,
+      spouse: details.spouse_earned_income,
+      deemedIncomeUsed: false,
+    };
+  }
+  if (new Set(months.map(({ month }) => month)).size !== 12) {
+    throw new Error("Form 2441 earned income needs each month exactly once");
+  }
+  const joint = details.filing_status === FilingStatus.MFJ;
+  if (
+    !joint &&
+    months.some((month) =>
+      month.spouse_actual_earned_income !== undefined ||
+      month.spouse_full_time_student !== undefined ||
+      month.spouse_unable_to_care_for_self !== undefined ||
+      month.deemed_income_recipient === "spouse"
+    )
+  ) {
+    throw new Error("Form 2441 spouse monthly facts require a joint return");
+  }
+  if (
+    joint &&
+    months.some((month) => month.spouse_actual_earned_income === undefined)
+  ) {
+    throw new Error(
+      "Form 2441 joint return needs spouse income for each month",
+    );
+  }
+  const actualTaxpayer = months.reduce(
+    (sum, month) => sum + month.taxpayer_actual_earned_income,
+    0,
+  );
+  const actualSpouse = months.reduce(
+    (sum, month) => sum + (month.spouse_actual_earned_income ?? 0),
+    0,
+  );
+  if (
+    actualTaxpayer !== details.taxpayer_earned_income ||
+    (joint && actualSpouse !== details.spouse_earned_income)
+  ) {
+    throw new Error(
+      "Form 2441 monthly actual income disagrees with annual income",
+    );
+  }
+  const taxpayerStudent =
+    months.filter((month) => month.taxpayer_full_time_student === true)
+      .length >= 5;
+  const spouseStudent =
+    months.filter((month) => month.spouse_full_time_student === true).length >=
+      5;
+  const floor = details.qualifying_people.length > 1 ? 500 : 250;
+  let taxpayer = 0;
+  let spouse = 0;
+  let deemedIncomeUsed = false;
+  for (const month of months) {
+    const taxpayerEligible =
+      (taxpayerStudent && month.taxpayer_full_time_student === true) ||
+      month.taxpayer_unable_to_care_for_self === true;
+    const spouseEligible = joint &&
+      ((spouseStudent && month.spouse_full_time_student === true) ||
+        month.spouse_unable_to_care_for_self === true);
+    const taxpayerIncrease = taxpayerEligible &&
+      month.taxpayer_actual_earned_income < floor;
+    const spouseIncrease = spouseEligible &&
+      month.spouse_actual_earned_income! < floor;
+    const recipient = month.deemed_income_recipient;
+    if (taxpayerIncrease && spouseIncrease && !recipient) {
+      throw new Error(
+        `Form 2441 month ${month.month} needs one deemed income recipient`,
+      );
+    }
+    if (
+      recipient &&
+      (recipient === "taxpayer" ? !taxpayerIncrease : !spouseIncrease)
+    ) {
+      throw new Error(
+        `Form 2441 month ${month.month} has an ineligible deemed income recipient`,
+      );
+    }
+    const useTaxpayer = taxpayerIncrease &&
+      (!spouseIncrease || recipient === "taxpayer");
+    const useSpouse = spouseIncrease &&
+      (!taxpayerIncrease || recipient === "spouse");
+    taxpayer += useTaxpayer ? floor : month.taxpayer_actual_earned_income;
+    spouse += useSpouse ? floor : month.spouse_actual_earned_income ?? 0;
+    deemedIncomeUsed ||= useTaxpayer || useSpouse;
+  }
+  if (
+    details.student_or_disabled_deemed_income_used !== undefined &&
+    details.student_or_disabled_deemed_income_used !== deemedIncomeUsed
+  ) {
+    throw new Error(
+      "Form 2441 deemed income answer disagrees with monthly facts",
+    );
+  }
+  return { taxpayer, spouse: joint ? spouse : undefined, deemedIncomeUsed };
+}
 
 /** Part III is AGI-independent and must run before the AGI aggregator. */
 export function calculateForm2441Benefits(
@@ -155,6 +278,7 @@ export function calculateForm2441Benefits(
       throw new Error("Form 2441 separate return needs spouse line 19 income");
     }
   }
+  const earnedIncome = earnedIncomeForCare(details);
   const line30 = details.qualifying_people.reduce(
     (sum, person) => sum + person.credit_expenses_paid,
     0,
@@ -176,9 +300,9 @@ export function calculateForm2441Benefits(
   }
   const line16 = details.total_qualified_expenses_incurred ?? line30;
   const line17 = Math.min(line15, line16);
-  const line18 = details.taxpayer_earned_income;
+  const line18 = earnedIncome.taxpayer;
   const line19 = details.filing_status === FilingStatus.MFJ
-    ? details.spouse_earned_income!
+    ? earnedIncome.spouse!
     : details.filing_status === FilingStatus.MFS &&
         !details.mfs_eligibility_met
     ? details.mfs_line19_income!
@@ -214,6 +338,7 @@ export function calculateForm2441Benefits(
   }
   const line31 = Math.min(line29, line30);
   return {
+    deemed_income_used: earnedIncome.deemedIncomeUsed,
     line12,
     line13,
     line14,

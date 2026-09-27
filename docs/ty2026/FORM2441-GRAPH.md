@@ -41,7 +41,12 @@ credit-limit resolution, without a cycle back through AGI.
   phaseout and $7,500/$3,750 exclusion ceiling. Retain its boundary tests
   and compare final instructions before using it in the public 2026 graph.
 - The shared detailed calculation has a pre-AGI benefits stage and post-AGI
-  credit stage. Part III lines 22/24 and Part II line 9b remain zero because
+  credit stage. It accepts twelve monthly earned-income records, reconciles
+  their actual earnings to each annual total, and applies the $250/$500 floor
+  for qualifying student or disability months. Full-time student status needs
+  five marked calendar months; when both spouses qualify in the same month,
+  one deemed-income recipient must be identified. The calculated use flag
+  drives Form 2441 box B. Part III lines 22/24 and Part II line 9b remain zero because
   proprietor/partnership benefits and prior-year paid expenses lack source
   facts; line 9c currently equals 9a. Its line 10 is
   supplied internally by the TY2026 graph, while TY2025 retains its existing
@@ -50,7 +55,7 @@ credit-limit resolution, without a cycle back through AGI.
   their source forms can be added to the public registry.
 - The older aggregate `f2441` route computes credit from total amounts and
   assumes 12 months of deemed student/disability income. It cannot print or
-  validate the required provider/person rows, month detail, and benefit
+  validate the required provider/person rows and benefit
   worksheet. Do not register that aggregate input as the TY2026 filing path.
 - The TY2025 PDF descriptor prints only one benefit field. The 2026
   [AcroForm inventory](PDF-FORM2441-MAP.md) now drives a one-page credit-only

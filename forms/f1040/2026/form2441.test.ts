@@ -182,6 +182,30 @@ Deno.test("TY2026 Form 2441 does not assume annual deemed income", () => {
   assertMatch(result.diagnostics[0].message, /needs monthly facts/);
 });
 
+Deno.test("TY2026 Form 2441 carries monthly deemed income through both stages", async () => {
+  const result = execute(plan, testRegistry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    form2441: {
+      filing_details: {
+        ...details,
+        student_or_disabled_deemed_income_used: true,
+        earned_income_months: Array.from({ length: 12 }, (_, index) => ({
+          month: index + 1,
+          taxpayer_actual_earned_income: index === 11 ? 70_000 : 0,
+          taxpayer_full_time_student: index < 5,
+        })),
+      },
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form2441.line18, 71_250);
+  assertEquals(result.pending.f2441.line4, 71_250);
+  assertEquals(result.pending.f2441.deemed_income_used, true);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 4);
+});
+
 Deno.test("TY2026 Form 2441 PDF appends a fourth-provider statement", async () => {
   const result = execute(plan, testRegistry, {
     general: filer,

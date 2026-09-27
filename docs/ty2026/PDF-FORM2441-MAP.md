@@ -15,7 +15,7 @@ IRS release before filing.
 | Printed area | AcroForm widgets | Required projection |
 | --- | --- | --- |
 | Name and SSN | `f1_1`, `f1_2` | Form 1040 filer identity. |
-| A and B | `c1_1`, `c1_2` | MFS considered-unmarried answer and student/disability deemed-income use. |
+| A and B | `c1_1`, `c1_2` | MFS considered-unmarried answer and calculated student/disability deemed-income use from monthly facts. |
 | More than three providers | `c1_3` | Check only with a provider continuation statement. |
 | Part I provider names, addresses, TINs, paid amounts | `f1_3`–`f1_14` | Three columns. Address widgets `f1_6`–`f1_8` have mismatched line spacing, so the current static builder draws street, unit, city, state, and ZIP directly on the printed rows. Preserve every provider beyond three on a continuation statement. |
 | Part I line 1d | `c1_4[0/1]`–`c1_6[0/1]` | Paired Yes/No checkboxes, `/1` and `/2` on-state values. Check exactly one per populated provider. Reconcile Yes providers with Schedule H facts. |
@@ -36,7 +36,7 @@ IRS release before filing.
 
 1. Complete the [Form 2441 calculation contract](FORM2441-GRAPH.md): prior-year
    paid expenses and Worksheet A (9b/9c), proprietor/partner benefits
-   (22/24), month-level deemed income, person eligibility, provider
+   (22/24), person eligibility, provider
    reconciliation, and earlier-credit inputs to line 10.
 2. Fill every populated provider/person row and the applicable printed pages.
    The current builder prints the three highest-paid providers and three

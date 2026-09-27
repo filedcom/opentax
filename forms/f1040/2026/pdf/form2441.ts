@@ -89,6 +89,12 @@ function validate(
     }
   }
   if (
+    credit.deemed_income_used !== benefits.deemed_income_used ||
+    typeof credit.deemed_income_used !== "boolean"
+  ) {
+    throw new Error("TY2026 Form 2441 deemed income changed after AGI");
+  }
+  if (
     amount(credit, "line9b") !== 0 || amount(credit, "line22") !== 0 ||
     amount(credit, "line24") !== 0
   ) {
@@ -325,7 +331,7 @@ export async function buildForm2441PdfBytes2026(
   setText("f1_1[0]", filer.name);
   setText("f1_2[0]", filer.ssn);
   if (details.mfs_eligibility_met === true) check("c1_1[0]");
-  if (details.student_or_disabled_deemed_income_used === true) {
+  if (credit.deemed_income_used === true) {
     check("c1_2[0]");
   }
   if (providers.length > 3) check("c1_3[0]");
