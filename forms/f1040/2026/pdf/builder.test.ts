@@ -67,3 +67,38 @@ Deno.test("TY2026 PDF boundary includes Form 8960 for investment income tax", as
     "Form 8960 PDF lines do not reconcile",
   );
 });
+
+Deno.test("TY2026 PDF boundary includes Form 4137 when tip deduction phases out", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{
+      employee_ssn: "111223333",
+      employer_ein: "12-3456789",
+      employer_name: "CAFE",
+      box1_wages: 400_000,
+      box2_fed_withheld: 80_000,
+      box3_ss_wages: 184_500,
+      box8_allocated_tips: 1_000,
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "12-3456789",
+          tips_received: 5_000,
+          tips_reported: 3_000,
+          tipped_occupation_codes: ["102"],
+        }],
+        ss_wages_from_w2: 184_500,
+      }],
+    },
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule1a.line44_total_additional_deductions,
+    undefined,
+  );
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+});

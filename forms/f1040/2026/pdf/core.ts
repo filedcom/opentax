@@ -1,6 +1,7 @@
 import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 import { buildForm6251PdfBytes2026 } from "./f6251.ts";
+import { buildForm4137PdfBytes2026 } from "./f4137.ts";
 import { buildForm8960PdfBytes2026 } from "./f8960.ts";
 import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
@@ -22,6 +23,7 @@ interface CorePdfInput2026 {
   readonly schedule3a?: Record<string, unknown>;
   readonly scheduleB?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
+  readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
 }
 
@@ -33,6 +35,7 @@ export async function buildCorePdfBytes2026({
   schedule3a,
   scheduleB,
   form6251,
+  form4137,
   form8960,
 }: CorePdfInput2026): Promise<Uint8Array> {
   const claimsRelevantCredit = [
@@ -133,6 +136,13 @@ export async function buildCorePdfBytes2026({
   ) {
     throw new Error("TY2026 core PDF Form 8960 disagrees with Schedule 2");
   }
+  if (
+    !form4137 &&
+    (optionalAmount(f1040, "line1c_unreported_tips") > 0 ||
+      optionalAmount(schedule2 ?? {}, "line16a_form4137_tip_tax") > 0)
+  ) {
+    throw new Error("TY2026 core PDF needs Form 4137");
+  }
 
   const name = [
     f1040.taxpayer_first_name,
@@ -161,6 +171,15 @@ export async function buildCorePdfBytes2026({
   }
   if (form8960) {
     parts.push(await buildForm8960PdfBytes2026(form8960, { name, ssn }));
+  }
+  if (form4137) {
+    parts.push(
+      await buildForm4137PdfBytes2026(
+        form4137,
+        f1040,
+        schedule2 ?? { line16a_form4137_tip_tax: 0 },
+      ),
+    );
   }
   const merged = await PDFDocument.create();
   for (const bytes of parts) {

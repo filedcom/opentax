@@ -31,14 +31,12 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
   ) {
     throw new Error("TY2026 PDF needs the Schedule 1-A attachment");
   }
-  if (amount(schedule2, "line16a_form4137_tip_tax") > 0) {
-    throw new Error("TY2026 PDF needs the Form 4137 attachment");
-  }
 
   const schedule1 = record(pending, "schedule1");
   const scheduleB = record(pending, "schedule_b");
   const form6251 = record(pending, "form6251");
   const form8960 = record(pending, "form8960");
+  const form4137 = record(pending, "form4137");
   return buildCorePdfBytes2026({
     f1040,
     schedule1: schedule1?.file_schedule1 === true ? schedule1 : undefined,
@@ -51,5 +49,9 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
       ? form6251
       : undefined,
     form8960: amount(form8960, "line17_niit") > 0 ? form8960 : undefined,
+    form4137: amount(f1040, "line1c_unreported_tips") > 0 ||
+        amount(schedule2, "line16a_form4137_tip_tax") > 0
+      ? form4137
+      : undefined,
   });
 }
