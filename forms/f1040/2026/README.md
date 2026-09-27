@@ -35,6 +35,10 @@ The [Form 8959 contract](../../../docs/ty2026/FORM8959-GRAPH.md) maps
 separate 2026 wage/RRTA and self-employment Additional Medicare Tax to
 Schedule 2 lines 17b and 11, plus withholding to Form 1040 line 25c.
 The TY2025 calculator/PDF positions cannot describe that revised form.
+The [Form 7206 contract](../../../docs/ty2026/FORM7206-GRAPH.md) maps
+insurance premiums by plan/business, LTC limits, earnings allocations,
+Form 2555 and the Form 8962 Marketplace loop into Schedule 1 line 17.
+The current aggregate node and PDF descriptor cannot file the 2026 form.
 The [ATS scenario 12 plan](../../../docs/ty2026/ATS-SCENARIO-12.md) and
 [business credit contract](../../../docs/ty2026/GENERAL-BUSINESS-CREDIT-GRAPH.md)
 map Form 7207 → Form 3800 → Schedule 3 and Form 7205/7220 → Schedule C.

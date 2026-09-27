@@ -56,6 +56,9 @@ for the implementation contract.
 - [`FORM8959-GRAPH.md`](FORM8959-GRAPH.md) and `pdf-fields-f8959.csv`:
   2026 wage/RRTA/SE Additional Medicare Tax split, withholding reconciliation,
   changed PDF line positions, and MeF/graph build order.
+- [`FORM7206-GRAPH.md`](FORM7206-GRAPH.md) and `pdf-fields-f7206.csv`:
+  per-business health-insurance earnings limits, LTC age caps, Form 2555 and
+  Marketplace PTC dependencies, and full 2026 PDF field inventory.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

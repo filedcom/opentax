@@ -57,6 +57,11 @@ that can be reviewed for reuse after a 2026 visual/field audit.
   `forms/f1040/2026/mef` does not yet exist.
 - The 2026 PDF builder has no Form 8962 attachment. The TY2025 descriptor
   targets a 2025 form and must not be registered for a 2026 return as-is.
+- Marketplace premiums under a self-employed business plan create a
+  deduction/PTC dependency with [Form 7206](FORM7206-GRAPH.md). Its 2026
+  instructions defer the computation to Publication 974; the pinned 2025
+  publication is a comparator, not a current-year worksheet. Resolve this
+  loop before finalizing either form's amount.
 
 ## Build order and independent acceptance cases
 

@@ -1441,6 +1441,15 @@
       "bytes": 195723,
       "sha256": "9a5657ed3162160a7ea011683e9a0b6ccb83a68e15eba9e57774e75d81ec736e",
       "retrieved_utc": "2026-09-27T13:22:41.656551+00:00"
+    },
+    {
+      "path": "authorities/p974--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/p974--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 1861233,
+      "sha256": "e17265a7ff82e0b2541dbf7bd90797bdaa1eb5678c3d23d059f42939274f0845",
+      "retrieved_utc": "2026-09-27T13:40:38Z"
     }
   ]
 }
