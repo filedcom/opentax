@@ -1148,7 +1148,17 @@ IRS acceptance are not authenticated. A separate
 annual input and Part III XML builder now represent prior deferred
 properties, 2025 dispositions, and eligible-compensation and nongrantor-trust
 distributions. It rejects unsupported pre-June-17-2008 dates and more than
-three distribution rows per category; prior Form 8854 amounts, disposition
+three distinct Form 1042-S source groups per category. Eligible-compensation
+and trust distribution entries now reference structured 2025 Form 1042-S
+source rows with income codes 38 and 39, respectively, per the
+[2025 Form 1042-S instructions](https://www.irs.gov/pub/irs-pdf/i1042s--2025.pdf).
+Each source's rounded
+reportable amount and withholding must match its linked distributions; the
+Part III builder groups payments from one source into one MeF detail row.
+Source, mismatch, and grouping cases are written but unrun. This does not
+authenticate the payor statement or open the registered distribution filing
+gate; zero-reportable distributions and separate 1040 income treatment still
+need review. Prior Form 8854 amounts, disposition
 reporting, and payment evidence remain entered source assertions. A registered
 annual node and MeF descriptor now file the no-disposition, no-distribution
 certification. The annual input also requires explicit confirmations that the

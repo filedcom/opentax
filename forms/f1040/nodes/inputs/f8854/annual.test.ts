@@ -32,6 +32,7 @@ function annualInput(overrides: Record<string, unknown> = {}) {
     prior_form8854_obligations_confirmed_complete: true,
     original_form8854_mailed_confirmed: true,
     attached_form8854_copy_marked_copy_confirmed: true,
+    source_1042s: [],
     deferred_properties: [],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
@@ -50,6 +51,21 @@ function distribution() {
     amount_includible_if_us_resident: 800,
     tax_withheld_amount: 240,
     source_document_id: "DOC-DISTRIBUTION",
+  };
+}
+
+function source1042s(
+  documentId = "DOC-DISTRIBUTION",
+  incomeCode: "38" | "39" = "38",
+  grossIncome = 800,
+  taxWithheld = 240,
+) {
+  return {
+    document_id: documentId,
+    income_code: incomeCode,
+    payer_name: "Example payor",
+    gross_income_amount: grossIncome,
+    federal_tax_withheld_amount: taxWithheld,
   };
 }
 
@@ -87,6 +103,7 @@ Deno.test("annual Form 8854 no-activity certification reaches the filing graph",
       f8854Annual.compute(
         { taxYear: 2025, formType: "f1040" },
         annualInputSchema.parse(annualInput({
+          source_1042s: [source1042s()],
           eligible_deferred_compensation_items: [{
             item_id: "plan",
             prior_form8854_document_id: "DOC-PRIOR",
@@ -101,6 +118,10 @@ Deno.test("annual Form 8854 no-activity certification reaches the filing graph",
 
 Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions", () => {
   const parsed = annualInputSchema.parse(annualInput({
+    source_1042s: [
+      source1042s(),
+      source1042s("DOC-TRUST-PAYMENT", "39"),
+    ],
     deferred_properties: [{
       item_id: "stock",
       description: "Stock holding",
@@ -307,6 +328,7 @@ Deno.test("annual Form 8854 rejects missing obligations and unsupported years", 
 
 Deno.test("annual Form 8854 enforces source and three-row distribution limits", () => {
   const centsInput = annualInputSchema.parse(annualInput({
+    source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 801, 240)],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
       prior_form8854_document_id: "DOC-PRIOR",
@@ -322,23 +344,44 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
     buildForm8854PartIII(centsInput),
     "<EligDeferredCompItemsDistriDtl><DistributionAmt>801</DistributionAmt><TotalTaxWithheldAmt>240</TotalTaxWithheldAmt></EligDeferredCompItemsDistriDtl>",
   );
+  const groupedInput = annualInputSchema.parse(annualInput({
+    source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 3_200, 960)],
+    eligible_deferred_compensation_items: [{
+      item_id: "plan",
+      prior_form8854_document_id: "DOC-PRIOR",
+      distributions: [
+        distribution(),
+        distribution(),
+        distribution(),
+        distribution(),
+      ],
+    }],
+  }));
+  assertEquals(
+    (buildForm8854PartIII(groupedInput).match(
+      /<EligDeferredCompItemsDistriDtl>/g,
+    ) ?? []).length,
+    1,
+  );
   assertEquals(
     annualInputSchema.safeParse(annualInput({
+      source_1042s: ["DOC-1", "DOC-2", "DOC-3", "DOC-4"].map((id) =>
+        source1042s(id)
+      ),
       eligible_deferred_compensation_items: [{
         item_id: "plan",
         prior_form8854_document_id: "DOC-PRIOR",
-        distributions: [
-          distribution(),
-          distribution(),
-          distribution(),
-          distribution(),
-        ],
+        distributions: ["DOC-1", "DOC-2", "DOC-3", "DOC-4"].map((id) => ({
+          ...distribution(),
+          source_document_id: id,
+        })),
       }],
     })).success,
     false,
   );
   assertEquals(
     annualInputSchema.safeParse(annualInput({
+      source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 1_001, 240)],
       eligible_deferred_compensation_items: [{
         item_id: "plan",
         prior_form8854_document_id: "DOC-PRIOR",
@@ -374,4 +417,73 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
     })).success,
     false,
   );
+});
+
+Deno.test("annual Form 8854 reconciles code 38 and 39 Form 1042-S sources", () => {
+  const first = {
+    ...distribution(),
+    gross_distribution_amount: 500,
+    amount_includible_if_us_resident: 400.25,
+    tax_withheld_amount: 120.25,
+  };
+  const second = {
+    ...distribution(),
+    gross_distribution_amount: 500,
+    amount_includible_if_us_resident: 399.75,
+    tax_withheld_amount: 119.75,
+  };
+  const input = annualInput({
+    source_1042s: [
+      source1042s(),
+      source1042s("DOC-TRUST-PAYMENT", "39"),
+    ],
+    eligible_deferred_compensation_items: [{
+      item_id: "plan",
+      prior_form8854_document_id: "DOC-PRIOR",
+      distributions: [first, second],
+    }],
+    nongrantor_trust_interests: [{
+      item_id: "trust",
+      prior_form8854_document_id: "DOC-PRIOR",
+      no_prior_full_value_election_confirmed: true,
+      distributions: [{
+        ...distribution(),
+        source_document_id: "DOC-TRUST-PAYMENT",
+      }],
+    }],
+  });
+  assertEquals(annualInputSchema.safeParse(input).success, true);
+  const xml = buildForm8854PartIII(annualInputSchema.parse(input));
+  assertEquals(
+    (xml.match(/<EligDeferredCompItemsDistriDtl>/g) ?? []).length,
+    1,
+  );
+  assertStringIncludes(
+    xml,
+    "<EligDeferredCompItemsDistriDtl><DistributionAmt>800</DistributionAmt><TotalTaxWithheldAmt>240</TotalTaxWithheldAmt></EligDeferredCompItemsDistriDtl>",
+  );
+  for (
+    const source_1042s of [
+      [
+        source1042s("DOC-DISTRIBUTION", "39"),
+        source1042s("DOC-TRUST-PAYMENT", "39"),
+      ],
+      [
+        source1042s("DOC-DISTRIBUTION", "38", 801),
+        source1042s("DOC-TRUST-PAYMENT", "39"),
+      ],
+      [
+        source1042s("DOC-DISTRIBUTION", "38", 800, 239),
+        source1042s("DOC-TRUST-PAYMENT", "39"),
+      ],
+      [source1042s(), source1042s()],
+      [source1042s(), source1042s("DOC-UNUSED", "39")],
+      [],
+    ]
+  ) {
+    assertEquals(
+      annualInputSchema.safeParse({ ...input, source_1042s }).success,
+      false,
+    );
+  }
 });

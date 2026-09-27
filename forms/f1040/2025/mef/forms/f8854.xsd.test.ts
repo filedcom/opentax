@@ -209,6 +209,7 @@ const annualNoActivityInput = annualInputSchema.parse({
   prior_form8854_obligations_confirmed_complete: true,
   original_form8854_mailed_confirmed: true,
   attached_form8854_copy_marked_copy_confirmed: true,
+  source_1042s: [],
   deferred_properties: [{
     item_id: "stock",
     description: "Stock holding",

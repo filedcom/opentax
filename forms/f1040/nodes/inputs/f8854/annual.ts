@@ -39,6 +39,26 @@ const distributionSchema = z.object({
   }
 });
 
+const source1042SSchema = z.object({
+  document_id: documentId,
+  income_code: z.enum(["38", "39"]),
+  payer_name: z.string().trim().min(1),
+  gross_income_amount: positiveDollars,
+  federal_tax_withheld_amount: dollars,
+}).strict();
+
+function roundedDistributionAmount(values: readonly number[]): number {
+  const cents = values.reduce(
+    (total, value) => total + BigInt(Math.round(value * 100)),
+    0n,
+  );
+  const dollars = (cents + 50n) / 100n;
+  if (dollars > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error("Annual Form 8854 distribution total exceeds safe dollars");
+  }
+  return Number(dollars);
+}
+
 const deferredPropertySchema = z.object({
   item_id: z.string().trim().min(1),
   description: z.string().trim().min(1),
@@ -120,6 +140,7 @@ export const annualInputSchema = z.object({
   prior_form8854_obligations_confirmed_complete: z.literal(true),
   original_form8854_mailed_confirmed: z.literal(true),
   attached_form8854_copy_marked_copy_confirmed: z.literal(true),
+  source_1042s: z.array(source1042SSchema),
   deferred_properties: z.array(deferredPropertySchema).max(20),
   eligible_deferred_compensation_items: z.array(annualItemSchema).max(1000),
   nongrantor_trust_interests: z.array(annualTrustSchema).max(1000),
@@ -199,25 +220,93 @@ export const annualInputSchema = z.object({
       path: ["deferred_properties"],
     });
   }
+  if (
+    new Set(input.source_1042s.map((source) => source.document_id)).size !==
+      input.source_1042s.length
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Annual Form 8854 source Form 1042-S IDs must be unique",
+      path: ["source_1042s"],
+    });
+  }
+  const reportedDistributions = [
+    ...input.eligible_deferred_compensation_items.flatMap((item) =>
+      item.distributions.map((distribution) => ({
+        incomeCode: "38",
+        distribution,
+      }))
+    ),
+    ...input.nongrantor_trust_interests.flatMap((item) =>
+      item.distributions.map((distribution) => ({
+        incomeCode: "39",
+        distribution,
+      }))
+    ),
+  ];
   for (
-    const [key, items] of [
-      [
-        "eligible_deferred_compensation_items",
-        input.eligible_deferred_compensation_items,
-      ],
-      ["nongrantor_trust_interests", input.nongrantor_trust_interests],
+    const [incomeCode, key] of [
+      ["38", "eligible_deferred_compensation_items"],
+      ["39", "nongrantor_trust_interests"],
     ] as const
   ) {
-    const count = items.reduce(
-      (total, row) => total + row.distributions.length,
-      0,
-    );
-    if (count > 3) {
+    const sourceCount = new Set(
+      reportedDistributions.filter((row) => row.incomeCode === incomeCode)
+        .map((row) => row.distribution.source_document_id),
+    ).size;
+    if (sourceCount > 3) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message:
-          "Annual Form 8854 MeF permits at most three distributions per category",
+          "Annual Form 8854 MeF permits at most three Form 1042-S source groups per category",
         path: [key],
+      });
+    }
+  }
+  for (const [index, source] of input.source_1042s.entries()) {
+    const rows = reportedDistributions.filter((row) =>
+      row.distribution.source_document_id === source.document_id
+    );
+    if (
+      rows.length === 0 ||
+      rows.some((row) => row.incomeCode !== source.income_code)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Form 1042-S income code must match its annual Form 8854 distributions",
+        path: ["source_1042s", index, "income_code"],
+      });
+      continue;
+    }
+    if (
+      roundedDistributionAmount(
+          rows.map((row) => row.distribution.amount_includible_if_us_resident),
+        ) !== source.gross_income_amount ||
+      roundedDistributionAmount(
+          rows.map((row) => row.distribution.tax_withheld_amount),
+        ) !== source.federal_tax_withheld_amount
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Annual Form 8854 distribution and withholding must match Form 1042-S",
+        path: ["source_1042s", index],
+      });
+    }
+  }
+  for (const row of reportedDistributions) {
+    if (
+      !input.source_1042s.some((source) =>
+        source.document_id === row.distribution.source_document_id &&
+        source.income_code === row.incomeCode
+      )
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Annual Form 8854 distribution needs matching Form 1042-S source",
+        path: ["source_1042s"],
       });
     }
   }

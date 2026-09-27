@@ -16,6 +16,12 @@ export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {
   const trustDistributions = input.nongrantor_trust_interests.flatMap((item) =>
     item.distributions
   );
+  const eligibleSources = input.source_1042s.filter((source) =>
+    source.income_code === "38"
+  );
+  const trustSources = input.source_1042s.filter((source) =>
+    source.income_code === "39"
+  );
   return elements("AnnualExptrtStmtBfrSpcfdYrGrp", [
     ...input.deferred_properties.map((property) =>
       elements("PropTaxDeferredPYFrm8854Grp", [
@@ -34,26 +40,20 @@ export function buildForm8854PartIII(rawInput: F8854AnnualInput): string {
       "EligDeferredCompItemsDistriInd",
       String(eligibleDistributions.length > 0),
     ),
-    ...eligibleDistributions.map((distribution) =>
+    ...eligibleSources.map((source) =>
       elements("EligDeferredCompItemsDistriDtl", [
-        element(
-          "DistributionAmt",
-          distribution.amount_includible_if_us_resident,
-        ),
-        element("TotalTaxWithheldAmt", distribution.tax_withheld_amount),
+        element("DistributionAmt", source.gross_income_amount),
+        element("TotalTaxWithheldAmt", source.federal_tax_withheld_amount),
       ])
     ),
     element(
       "NongrantorTrustDistriInd",
       String(trustDistributions.length > 0),
     ),
-    ...trustDistributions.map((distribution) =>
+    ...trustSources.map((source) =>
       elements("NongrantorTrustDistriDtl", [
-        element(
-          "DistributionAmt",
-          distribution.amount_includible_if_us_resident,
-        ),
-        element("TotalTaxWithheldAmt", distribution.tax_withheld_amount),
+        element("DistributionAmt", source.gross_income_amount),
+        element("TotalTaxWithheldAmt", source.federal_tax_withheld_amount),
       ])
     ),
   ]);
