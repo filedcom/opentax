@@ -62,3 +62,15 @@ registered TY2026 input: a $2,500 source amount at $90,000 MAGI produces a
 $1,667 line 21 deduction, the same 1040 line 10 amount, and a four-page
 1040/Schedule 1 PDF. The other rows above remain implementation work; this
 is not yet a public 1099-INT input path.
+
+1099-G source audit: the payer's Form 1099-G reporting minimums are
+not income exclusions. The shared source now routes every positive taxable
+amount, including amounts below those payer minimums. For TY2026, a state
+refund input requires `box_2_taxable_amount`, bounded by box 2; prior-year
+itemization alone does not determine how much tax benefit was received. The
+TY2025 `box_2_prior_year_itemized` behavior remains for existing callers,
+but should be replaced with an explicit tax-benefit calculation there too.
+This does not make 1099-G a registered TY2026 input yet: unemployment repayment
+metadata, typed line 8z amounts, and farm payments still need complete graph
+and print routes. IRS references: [Form 1099-G instructions](https://www.irs.gov/instructions/i1099g),
+[Publication 525](https://www.irs.gov/publications/p525).

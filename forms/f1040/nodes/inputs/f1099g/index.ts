@@ -16,18 +16,13 @@ import { schedule_f } from "../../intermediate/forms/schedule_f/index.ts";
 import type { FarmSource } from "../../intermediate/forms/schedule_f/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
-// TY2025 thresholds from IRS Form 1099-G instructions
-const UNEMPLOYMENT_MIN_THRESHOLD = 10;
-const STATE_REFUND_MIN_THRESHOLD = 10;
-const RTAA_MIN_THRESHOLD = 600;
-const GRANTS_MIN_THRESHOLD = 600;
-
 export const itemSchema = z.object({
   box_1_unemployment: z.number().nonnegative().optional(),
   box_1_repaid: z.number().nonnegative().optional(),
   box_1_railroad: z.boolean().optional(),
   box_2_state_refund: z.number().nonnegative().optional(),
   box_2_prior_year_itemized: z.boolean().optional(),
+  box_2_taxable_amount: z.number().nonnegative().optional(),
   box_3_tax_year: z.number().int().optional(),
   box_4_federal_withheld: z.number().nonnegative().optional(),
   box_5_rtaa: z.number().nonnegative().optional(),
@@ -64,10 +59,20 @@ function netUnemployment(g99s: G99Items): number {
   return Math.max(0, totalReceived - totalRepaid);
 }
 
-function totalStateRefundTaxable(g99s: G99Items): number {
+function totalStateRefundTaxable(g99s: G99Items, taxYear: number): number {
   return g99s.reduce((sum, item) => {
     const refund = item.box_2_state_refund ?? 0;
-    return sum + (item.box_2_prior_year_itemized === true ? refund : 0);
+    const taxable = item.box_2_taxable_amount;
+    if (taxable !== undefined && taxable > refund) {
+      throw new Error("1099-G taxable state refund exceeds box 2 refund");
+    }
+    if (taxYear >= 2026 && refund > 0 && taxable === undefined) {
+      throw new Error(
+        "TY2026 1099-G state refund needs tax-benefit taxable amount",
+      );
+    }
+    return sum + (taxable ??
+      (item.box_2_prior_year_itemized === true ? refund : 0));
   }, 0);
 }
 
@@ -86,23 +91,23 @@ function totalTaxableGrants(g99s: G99Items): number {
   return g99s.reduce((sum, item) => sum + (item.box_6_taxable_grants ?? 0), 0);
 }
 
-function schedule1Output(g99s: G99Items): NodeOutput[] {
+function schedule1Output(g99s: G99Items, taxYear: number): NodeOutput[] {
   const unemploymentNet = netUnemployment(g99s);
-  const stateRefund = totalStateRefundTaxable(g99s);
+  const stateRefund = totalStateRefundTaxable(g99s, taxYear);
   const rtaa = totalRtaa(g99s);
   const grants = totalTaxableGrants(g99s);
 
   const fields: Record<string, number> = {};
-  if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) {
+  if (unemploymentNet > 0) {
     fields.line7_unemployment = unemploymentNet;
   }
-  if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) {
+  if (stateRefund > 0) {
     fields.line1_state_refund = stateRefund;
   }
-  if (rtaa >= RTAA_MIN_THRESHOLD) {
+  if (rtaa > 0) {
     fields.line8z_rtaa = rtaa;
   }
-  if (grants >= GRANTS_MIN_THRESHOLD) {
+  if (grants > 0) {
     fields.line8z_taxable_grants = grants;
   }
 
@@ -162,33 +167,33 @@ class F1099gNode extends TaxNode<typeof inputSchema> {
     schedule_f,
   ]);
 
-  compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
+  compute(ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
     const { f1099gs: g99s } = parsed;
 
     if (g99s.length === 0) return { outputs: [] };
 
     const outputs: NodeOutput[] = [
-      ...schedule1Output(g99s),
+      ...schedule1Output(g99s, ctx.taxYear),
       ...f1040Output(g99s),
       ...scheduleFOutput(g99s),
     ];
 
     // Route income items to AGI aggregator
     const unemploymentNet = netUnemployment(g99s);
-    const stateRefund = totalStateRefundTaxable(g99s);
+    const stateRefund = totalStateRefundTaxable(g99s, ctx.taxYear);
     const rtaa = totalRtaa(g99s);
     const grants = totalTaxableGrants(g99s);
     const agiFields: Partial<z.infer<typeof agi_aggregator["inputSchema"]>> =
       {};
-    if (unemploymentNet >= UNEMPLOYMENT_MIN_THRESHOLD) {
+    if (unemploymentNet > 0) {
       agiFields.line7_unemployment = unemploymentNet;
     }
-    if (stateRefund >= STATE_REFUND_MIN_THRESHOLD) {
+    if (stateRefund > 0) {
       agiFields.line1_state_refund = stateRefund;
     }
-    if (rtaa >= RTAA_MIN_THRESHOLD) agiFields.line8z_rtaa = rtaa;
-    if (grants >= GRANTS_MIN_THRESHOLD) {
+    if (rtaa > 0) agiFields.line8z_rtaa = rtaa;
+    if (grants > 0) {
       agiFields.line8z_taxable_grants = grants;
     }
     if (Object.keys(agiFields).length > 0) {
