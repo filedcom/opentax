@@ -497,6 +497,8 @@ export const RETIREMENT_LIMITS_2025: Record<string, Record<number, number>> = {
   "403b": { 49: 23_500, 59: 31_000, 63: 34_750, [Infinity]: 31_000 },
   "457b": { 49: 23_500, 59: 31_000, 63: 34_750, [Infinity]: 31_000 },
   "simple": { 49: 16_500, 59: 20_000, 63: 21_750, [Infinity]: 20_000 },
+  // SECURE 2.0 §117 higher SIMPLE limit and the corresponding catch-up.
+  "simpleHigher": { 49: 17_600, 59: 21_450, 63: 22_850, [Infinity]: 21_450 },
 } as const;
 
 // ─── Form 8853 — Archer MSA / LTC ────────────────────────────────────────────

@@ -163,6 +163,9 @@ export const w2ItemSchema = z.object({
   taxpayer_age: z.number().nonnegative().optional().describe(
     "Taxpayer age — used for retirement contribution limit (catch-up)",
   ),
+  simple_plan_limit: z.enum(["standard", "enhanced"]).optional().describe(
+    "SIMPLE plan deferral tier; enhanced requires an eligible employer plan",
+  ),
 });
 
 // Node inputSchema — receives all W-2s for this return as a single array.
@@ -180,7 +183,7 @@ function retirementLimit(
   age: number | undefined,
 ): number {
   const limits = retirementLimits[planType];
-  if (age === undefined) return limits[59]; // default to standard catch-up limit
+  if (age === undefined) return limits[49]; // age evidence is required for catch-up
   if (age <= 49) return limits[49];
   if (age <= 59) return limits[59];
   if (age <= 63) return limits[63];
@@ -247,7 +250,10 @@ function validateItem(
 
   const codeS = entries.filter((e) => e.code === Box12Code.S)
     .reduce((s, e) => s + e.amount, 0);
-  if (codeS > retirementLimit(retirementLimits, "simple", age)) {
+  const simplePlanKey = item.simple_plan_limit === "enhanced"
+    ? "simpleHigher"
+    : "simple";
+  if (codeS > retirementLimit(retirementLimits, simplePlanKey, age)) {
     throw new Error(
       `W-2 validation error: SIMPLE IRA deferrals (${codeS}) exceed the limit`,
     );

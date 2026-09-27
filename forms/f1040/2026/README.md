@@ -14,12 +14,14 @@ needs to be connected to the TY2026 node graph and serializers.
 `deductions.ts` now computes 1040 lines 12e–15, including the nonitemizer
 charitable cap. The shared Form 8962 node has explicit 2026 percentage,
 repayment, affordability, and FPL paths, with boundary tests. These pieces
-still require a complete 2026 config and final output wiring.
+still require final output wiring and instruction reconciliation.
 The shared Form 2441 calculations now select explicit TY2026 employer benefit
 limits and credit rates; their 2026 output mappings remain to build.
-The `forms/f1040/nodes/config/2026-indexed.ts` module contains 104 verified TY2026 config
-members and adds the distinct MFS QBI threshold. It must be completed to the
-full `F1040Config` contract before the 2026 graph can use it.
+The `forms/f1040/nodes/config/2026-indexed.ts` module contains all 111 TY2026
+config members, including the distinct MFS QBI threshold and standard/enhanced
+SIMPLE plan limits. `forms/f1040/nodes/config/2026.ts` registers the complete
+config for shared nodes; the TY2026 return graph still needs its own audit and
+registration.
 `nodes/f1040.ts` is a dedicated 2026 core output node: it computes the revised
 deduction, tax, payment, and balance lines and emits Schedule 3-A data. It is
 not in a registered graph yet. Expand its upstream input surface and preserve
@@ -38,9 +40,10 @@ and cannot be the final validation target.
 
 ## Build contract
 
-1. Add `forms/f1040/nodes/config/2026.ts` implementing every member of
-   `F1040Config`; register it in `CONFIG_BY_YEAR`. Fill values from the
-   [source map](../../../docs/ty2026/CONSTANTS.md), not from 2025 values.
+1. Audit the registered `forms/f1040/nodes/config/2026.ts` against every
+   shared node that consumes it. The [source map](../../../docs/ty2026/CONSTANTS.md)
+   records the values and conditional rules; config registration alone does not
+   make a shared node TY2026 correct.
 2. Audit every shared node listed in
    [`year-literals.csv`](../../../docs/ty2026/year-literals.csv). A year literal
    that changes behavior must use `ctx.taxYear` or a year-specific node;

@@ -14,23 +14,22 @@ TY2026 bundle, node graph, MeF/PDF builders, and catalog entry remain to build.
 Schedule 3-A arithmetic but is not wired into a return yet.
 The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
 repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
-are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
-2026 and final Form 8962 instruction table remain outstanding.
-`forms/f1040/nodes/config/2026-indexed.ts` now holds 104 source-backed 2026
+are sourced from the 2025 HHS guideline PDF. The final Form 8962 instruction
+table remains outstanding.
+`forms/f1040/nodes/config/2026-indexed.ts` now holds all 111 source-backed 2026
 config members, including tax brackets, standard deduction, AMT, capital-gain,
-HSA, IRA, QBI, EITC, and other indexed amounts. The QBI config distinguishes the TY2026 MFS threshold from
-other nonjoint statuses and shares one threshold selector across the nodes.
-This is not yet a complete or registered `F1040Config`.
-The remaining seven members are grouped below so source review and implementation
-can proceed without repeating the config inventory:
-
-| Source target | Remaining `F1040Config` members |
-| --- | --- |
-| 2026 retirement/benefit forms and notices | `retirementLimits`, `sepContributionRate`, `simpleEmployerMatchRate`, `psoExclusionLimit` |
-| 2026 Forms 982 and 2106 | `qpriCapMfs`, `qpriCapStandard`, `f2106PerformingArtistAgiLimit` |
-
-The current `retirementLimits` shape may need to distinguish enhanced SIMPLE
-limits and age 60–63 catch-ups. Specify those cases before adding 2026 values.
+HSA, IRA, QBI, EITC, and other amounts. The QBI config distinguishes the TY2026
+MFS threshold from other nonjoint statuses and shares one threshold selector
+across the nodes.
+`forms/f1040/nodes/config/2026.ts` now implements the complete `F1040Config`
+and registers it in `CONFIG_BY_YEAR`. W-2 validation distinguishes standard
+and enhanced SIMPLE limits, including the age 60–63 catch-up tier. A missing
+age uses the under-50 limit, so a catch-up amount requires age evidence.
+Registration makes shared nodes callable for TY2026; it does not register a
+TY2026 return product or prove that every shared node has the right TY2026
+logic. The 2026 Form 982 QPRI path now requires a 2026 discharge date and a
+written agreement before 2026. Its cap remains $750,000 ($375,000 MFS) for
+eligible legacy agreements.
 Rev. Proc. 2026-15 is pinned for passenger autos first placed in service in
 2026, and Rev. Proc. 2025-16 supports the TY2025 regression correction. Form
 4562 must select the cap table by the vehicle's placed-in-service year, not
@@ -74,10 +73,11 @@ existing CLI calls; an unregistered year fails explicitly.
 
 ## 1. Make calculation genuinely year aware
 
-1. Implement `forms/f1040/nodes/config/2026.ts` against all members in
-   `forms/f1040/nodes/config/types.ts`; register it in
-   `forms/f1040/nodes/config/index.ts`. `CONSTANTS.md` is the source checklist.
-   Record source section and boundary cases alongside each group of values.
+1. Audit the registered `forms/f1040/nodes/config/2026.ts` and its source map
+   against final 2026 instructions as they arrive. The config now covers every
+   member of `forms/f1040/nodes/config/types.ts`; `CONSTANTS.md` records the
+   sources and boundary cases. Registration alone does not validate every
+   shared node's 2026 behavior.
 2. Review every occurrence in `year-literals.csv`. Split behavior by
    `ctx.taxYear` or a dedicated year implementation where the law/form changed.
    Audit adjacent tables and predicates without a year literal. In particular,

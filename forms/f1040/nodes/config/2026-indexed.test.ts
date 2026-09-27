@@ -150,3 +150,10 @@ Deno.test("2026 Form 4972 allowance extinguishes at the printed cutoff", () => {
   assertEquals(INDEXED_CONFIG_2026.mccMaxCreditHighRate, 2_000);
   assertEquals(INDEXED_CONFIG_2026.scheduleBDividendThreshold, 1_500);
 });
+
+Deno.test("2026 enhanced SIMPLE plan has a distinct age 60–63 limit", () => {
+  assertEquals(INDEXED_CONFIG_2026.retirementLimits.simple[49], 17_000);
+  assertEquals(INDEXED_CONFIG_2026.retirementLimits.simpleHigher[49], 18_100);
+  assertEquals(INDEXED_CONFIG_2026.retirementLimits.simple[63], 22_250);
+  assertEquals(INDEXED_CONFIG_2026.retirementLimits.simpleHigher[63], 23_350);
+});

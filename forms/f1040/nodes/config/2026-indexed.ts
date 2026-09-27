@@ -95,6 +95,13 @@ type IndexedKeys =
   | "fplHawaiiBase"
   | "fplHawaiiIncrement"
   | "qcdAnnualLimit"
+  | "psoExclusionLimit"
+  | "qpriCapStandard"
+  | "qpriCapMfs"
+  | "f2106PerformingArtistAgiLimit"
+  | "retirementLimits"
+  | "sepContributionRate"
+  | "simpleEmployerMatchRate"
   | "mdaMax"
   | "mdaPhaseOutThreshold"
   | "mdaZeroThreshold"
@@ -338,7 +345,31 @@ export const INDEXED_CONFIG_2026 = {
 
   // Notice 2025-67: §408(d)(8) QCD and §415(c) plan contribution limit.
   qcdAnnualLimit: 111_000,
+  // IRC §402(l)(2); annual cap confirmed in IRS IRM 21.6.6 (2026).
+  psoExclusionLimit: 3_000,
+  // IRC §108(a)(1)(E): 2026 discharge is eligible only under a pre-2026
+  // written arrangement; the date gate is enforced by Form 982, not this cap.
+  qpriCapStandard: 750_000,
+  qpriCapMfs: 375_000,
+  // IRC §62(b)(1)(C), §408(k), §408(p); standard plan terms.
+  f2106PerformingArtistAgiLimit: 16_000,
+  sepContributionRate: 0.25,
+  simpleEmployerMatchRate: 0.03,
   sepMaxContribution: 72_000,
+
+  // Notice 2025-67, elective deferrals and §414(v) catch-ups.
+  retirementLimits: {
+    "401k": { 49: 24_500, 59: 32_500, 63: 35_750, [Infinity]: 32_500 },
+    "403b": { 49: 24_500, 59: 32_500, 63: 35_750, [Infinity]: 32_500 },
+    "457b": { 49: 24_500, 59: 32_500, 63: 35_750, [Infinity]: 32_500 },
+    "simple": { 49: 17_000, 59: 21_000, 63: 22_250, [Infinity]: 21_000 },
+    "simpleHigher": {
+      49: 18_100,
+      59: 21_950,
+      63: 23_350,
+      [Infinity]: 21_950,
+    },
+  },
 
   // Pinned 2026 draft Form 4972, lines 12–16 and page 4 instructions.
   mdaMax: 10_000,

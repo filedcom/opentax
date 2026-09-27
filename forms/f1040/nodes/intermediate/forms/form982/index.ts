@@ -41,9 +41,30 @@ export const inputSchema = z.object({
   principal_residence_retained: z.boolean().optional(),
   principal_residence_basis: z.number().nonnegative().optional(),
   discharge_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  written_agreement_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 });
 
 type Form982Input = z.infer<typeof inputSchema>;
+
+function validIsoDate(value: string): boolean {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value;
+}
+
+function validateQpriTiming(taxYear: number, input: Form982Input): void {
+  if (taxYear !== 2026 || input.exclusion_type !== ExclusionType.Qpri) return;
+  const discharge = input.discharge_date;
+  const agreement = input.written_agreement_date;
+  if (!discharge || !validIsoDate(discharge) || !discharge.startsWith("2026-")) {
+    throw new Error("TY2026 QPRI requires a valid 2026 discharge date");
+  }
+  if (!agreement || !validIsoDate(agreement) || agreement >= "2026-01-01") {
+    throw new Error(
+      "TY2026 QPRI requires a written agreement dated before January 1, 2026",
+    );
+  }
+}
 
 // ─── Cap Helpers ─────────────────────────────────────────────────────────────
 
@@ -112,6 +133,8 @@ class Form982Node extends TaxNode<typeof inputSchema> {
     if (input.line2_excluded_cod === 0) {
       return { outputs: [] };
     }
+
+    validateQpriTiming(ctx.taxYear, input);
 
     const cap = exclusionCap(input, cfg);
     const excluded = computeExcluded(input.line2_excluded_cod, cap);

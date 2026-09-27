@@ -25,6 +25,10 @@ function compute(input: Record<string, unknown>) {
   return form982.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
 }
 
+function compute2026(input: Record<string, unknown>) {
+  return form982.compute({ taxYear: 2026, formType: "f1040" }, inputSchema.parse(input));
+}
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
@@ -246,6 +250,31 @@ Deno.test("qpri: MFS=false uses standard $750,000 cap", () => {
   });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1, undefined);
+});
+
+Deno.test("TY2026 QPRI requires a pre-2026 written agreement", () => {
+  const eligible = compute2026({
+    line2_excluded_cod: 800_000,
+    exclusion_type: ExclusionType.Qpri,
+    discharge_date: "2026-03-01",
+    written_agreement_date: "2025-12-31",
+  });
+  assertEquals(fieldsOf(eligible.outputs, schedule1)!.line8c_cod_income, 50_000);
+
+  for (const written_agreement_date of [undefined, "2026-01-01", "2026-02-30"]) {
+    assertThrows(() => compute2026({
+      line2_excluded_cod: 100_000,
+      exclusion_type: ExclusionType.Qpri,
+      discharge_date: "2026-03-01",
+      written_agreement_date,
+    }));
+  }
+  assertThrows(() => compute2026({
+    line2_excluded_cod: 100_000,
+    exclusion_type: ExclusionType.Qpri,
+    discharge_date: "2026-02-30",
+    written_agreement_date: "2025-12-31",
+  }));
 });
 
 // ============================================================

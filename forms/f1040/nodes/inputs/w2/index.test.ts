@@ -35,6 +35,10 @@ function compute(items: ReturnType<typeof minimalItem>[]) {
   return w2.compute({ taxYear: 2025, formType: "f1040" }, { w2s: items });
 }
 
+function compute2026(items: ReturnType<typeof minimalItem>[]) {
+  return w2.compute({ taxYear: 2026, formType: "f1040" }, { w2s: items });
+}
+
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
   return result.outputs.find((o) => o.nodeType === nodeType);
 }
@@ -843,6 +847,42 @@ Deno.test("simple_ira_age60_63_above_super_catchup_throws: age 62, S = $21,751 t
       })]),
     Error,
   );
+});
+
+Deno.test("enhanced SIMPLE plan uses its own age-specific limit", () => {
+  const result = compute([minimalItem({
+    box1_wages: 60_000,
+    box12_entries: [{ code: Box12Code.S, amount: 22_850 }],
+    taxpayer_age: 62,
+    simple_plan_limit: "enhanced",
+  })]);
+  assertEquals(fieldsOf(result.outputs, f1040)!.line1a_wages, 60_000);
+  assertThrows(() => compute([minimalItem({
+    box1_wages: 60_000,
+    box12_entries: [{ code: Box12Code.S, amount: 22_851 }],
+    taxpayer_age: 62,
+    simple_plan_limit: "enhanced",
+  })]));
+});
+
+Deno.test("TY2026 W-2 enforces standard and enhanced SIMPLE limits", () => {
+  const item = (amount: number, tier?: "enhanced") => minimalItem({
+    box1_wages: 60_000,
+    box12_entries: [{ code: Box12Code.S, amount }],
+    taxpayer_age: 40,
+    simple_plan_limit: tier,
+  });
+  assertEquals(fieldsOf(compute2026([item(17_000)]).outputs, f1040)!.line1a_wages, 60_000);
+  assertThrows(() => compute2026([item(17_001)]));
+  assertEquals(fieldsOf(compute2026([item(18_100, "enhanced")]).outputs, f1040)!.line1a_wages, 60_000);
+  assertThrows(() => compute2026([item(18_101, "enhanced")]));
+});
+
+Deno.test("W-2 catch-up deferral needs an age", () => {
+  assertThrows(() => compute2026([minimalItem({
+    box1_wages: 60_000,
+    box12_entries: [{ code: Box12Code.D, amount: 24_501 }],
+  })]));
 });
 
 // ============================================================
