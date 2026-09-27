@@ -102,3 +102,47 @@ Deno.test("TY2026 PDF boundary includes Form 4137 when tip deduction phases out"
   const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
   assertEquals(pdf.getPageCount(), 5);
 });
+
+Deno.test("TY2026 PDF boundary includes Schedule 1-A tip and Form 4137 pages", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{
+      employee_ssn: "111223333",
+      employer_ein: "12-3456789",
+      employer_name: "CAFE",
+      box1_wages: 70_000,
+      box2_fed_withheld: 6_000,
+      box3_ss_wages: 70_000,
+      box8_allocated_tips: 1_000,
+      box12_entries: [{ code: "TP", amount: 3_000 }],
+      box14b_tipped_codes: ["102"],
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "12-3456789",
+          tips_received: 5_000,
+          tips_reported: 3_000,
+        }],
+        ss_wages_from_w2: 70_000,
+      }],
+    },
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line15_qualified_tips, 5_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 8);
+});
+
+Deno.test("TY2026 PDF boundary includes Schedule 1-A senior deduction", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: { ...filer, taxpayer_dob: "1950-07-12" },
+    w2: [{ box1_wages: 50_000, box2_fed_withheld: 5_000 }],
+  }, { taxYear: 2026, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line43_enhanced_senior, 6_000);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 5);
+});

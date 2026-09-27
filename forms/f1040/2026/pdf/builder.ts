@@ -25,12 +25,6 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
 
   const schedule1a = record(pending, "schedule1a");
   const schedule2 = record(pending, "schedule2");
-  if (
-    amount(f1040, "line13a_schedule1a") > 0 ||
-    amount(schedule1a, "line44_total_additional_deductions") > 0
-  ) {
-    throw new Error("TY2026 PDF needs the Schedule 1-A attachment");
-  }
 
   const schedule1 = record(pending, "schedule1");
   const scheduleB = record(pending, "schedule_b");
@@ -40,6 +34,9 @@ export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
   return buildCorePdfBytes2026({
     f1040,
     schedule1: schedule1?.file_schedule1 === true ? schedule1 : undefined,
+    schedule1a: amount(schedule1a, "line44_total_additional_deductions") > 0
+      ? schedule1a
+      : undefined,
     schedule2: schedule2?.line3_part1_tax !== undefined ? schedule2 : undefined,
     schedule3a: record(pending, "schedule3a"),
     scheduleB: scheduleB?.file_schedule_b === true ? scheduleB : undefined,

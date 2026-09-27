@@ -4,6 +4,7 @@ import { buildForm6251PdfBytes2026 } from "./f6251.ts";
 import { buildForm4137PdfBytes2026 } from "./f4137.ts";
 import { buildForm8960PdfBytes2026 } from "./f8960.ts";
 import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
+import { buildSchedule1APdfBytes2026 } from "./schedule1a.ts";
 import { buildScheduleBPdfBytes2026 } from "./schedule_b.ts";
 import { buildSchedule2PdfBytes2026 } from "./schedule2.ts";
 import { buildSchedule3APdfBytes2026 } from "./schedule3a.ts";
@@ -19,6 +20,7 @@ function amount(fields: Record<string, unknown>, key: string): number {
 interface CorePdfInput2026 {
   readonly f1040: Record<string, unknown>;
   readonly schedule1?: Record<string, unknown>;
+  readonly schedule1a?: Record<string, unknown>;
   readonly schedule2?: Record<string, unknown>;
   readonly schedule3a?: Record<string, unknown>;
   readonly scheduleB?: Record<string, unknown>;
@@ -31,6 +33,7 @@ interface CorePdfInput2026 {
 export async function buildCorePdfBytes2026({
   f1040,
   schedule1,
+  schedule1a,
   schedule2,
   schedule3a,
   scheduleB,
@@ -88,6 +91,12 @@ export async function buildCorePdfBytes2026({
     throw new Error(
       "TY2026 core PDF needs Schedule 1 for income or adjustments",
     );
+  }
+  if (
+    optionalAmount(f1040, "line13a_schedule1a") !==
+      optionalAmount(schedule1a ?? {}, "line44_total_additional_deductions")
+  ) {
+    throw new Error("TY2026 core PDF Schedule 1-A disagrees with Form 1040");
   }
   if (
     !scheduleB &&
@@ -155,6 +164,14 @@ export async function buildCorePdfBytes2026({
   if (schedule1) {
     parts.push(
       await buildSchedule1PdfBytes2026(schedule1, f1040, { name, ssn }),
+    );
+  }
+  if (schedule1a) {
+    parts.push(
+      await buildSchedule1APdfBytes2026(schedule1a, f1040, {
+        name,
+        ssn,
+      }),
     );
   }
   if (schedule2) {

@@ -208,8 +208,7 @@ The standalone TY2026 validation module now checks the calculated 1040's AGI,
 deductions, tax, payments, and required Schedule 1/2/B reconciliation using
 pending-field keys. It is a local calculation gate, not a 2026 MeF
 business-rule bundle. The standalone PDF builder selects only filed 2026
-attachments and rejects positive Schedule 1-A cases whose PDF attachment is
-not built yet. A wages-plus-interest graph produces
+attachments. A wages-plus-interest graph produces
 the expected five-page PDF through this boundary. Catalog registration remains
 pending so `tax validate` does not report `canFile` from local-only rules.
 The pinned draft Form 8960 now fills and appends its individual page for a
@@ -221,6 +220,14 @@ with Form 1040 line 1c and Schedule 2 line 16a. The March 2026 draft
 Form 4137 still names Schedule 2 line 5 beside its line 13; the draft
 Schedule 2 itself places Form 4137 tax on line 16a. Keep that source
 inconsistency visible until the IRS publishes aligned final forms.
+The pinned draft Schedule 1-A now prints the employee-tip and senior
+deduction paths, including an employee-tip row statement after five employers.
+It reconciles the final deduction with Form 1040 line 13a. Overtime, vehicle
+interest, and nonzero MAGI addbacks still raise explicit PDF errors because
+their current graph records lack the row or addback detail needed to print
+those parts accurately. The tip/Form 4137 example builds an eight-page PDF;
+the senior-only example builds five pages. Those remaining Schedule 1-A
+source records are the next expansion target.
 
 ## 0. Freeze source versions and establish the baseline
 
