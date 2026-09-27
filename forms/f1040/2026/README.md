@@ -39,6 +39,11 @@ current continuous-use form/instructions and the later IRS correction to
 K-1 box 19 source codes. It requires one form per property-distribution
 date, a reconciled property basis ledger and gain route; TY2026 PDF/MeF
 are still absent.
+The [Form 8826/8835 and statement contract](../../../docs/ty2026/FORM8826-8835-STATEMENTS.md)
+pins the continuous-use disabled-access form, the still-2025 renewable
+electricity form comparator, and the TY2025 farm, foreign-wage, other-tax
+and joint-occupancy MeF statements. It records which need 2026 source
+refresh, PDF/MeF routes, or should remain TY2025-only.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

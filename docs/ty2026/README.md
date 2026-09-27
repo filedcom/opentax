@@ -50,6 +50,9 @@ for the implementation contract.
 - [`FORM7217-GRAPH.md`](FORM7217-GRAPH.md) and `pdf-fields-f7217.csv`:
   continuous-use partnership-property basis report, April 2026 K-1 box 19
   correction, per-date filing and all 306 current form widgets.
+- [`FORM8826-8835-STATEMENTS.md`](FORM8826-8835-STATEMENTS.md) and the two
+  matching PDF field inventories: current disabled-access credit authority,
+  prior-year electricity-credit comparator, and statement-only MeF ownership.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

@@ -1788,6 +1788,30 @@
       "status": "downloaded",
       "bytes": 142891,
       "sha256": "a00432e6260a82bc58b90356c5e1abfa528e668694a45e5e88b3322da596925d"
+    },
+    {
+      "path": "authorities/f8826--2017.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8826.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 126045,
+      "sha256": "480502e4167833f1758f2a0fa200c4b0b113b8cb7d7d70ae808f1812d5d16ece"
+    },
+    {
+      "path": "authorities/f8835--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8835.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 123961,
+      "sha256": "e0e3aa20718d90e9430c4da326c4155501aab16d7955f86e4fc609c2f3bd263a"
+    },
+    {
+      "path": "authorities/i8835--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8835.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 185393,
+      "sha256": "628e79647a4595baeebe980e90639a482e7929382a03e01727b07c7580282c06"
     }
   ]
 }
