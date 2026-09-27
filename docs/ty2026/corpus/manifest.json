@@ -1812,6 +1812,54 @@
       "status": "downloaded",
       "bytes": 185393,
       "sha256": "628e79647a4595baeebe980e90639a482e7929382a03e01727b07c7580282c06"
+    },
+    {
+      "path": "authorities/f8911--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8911.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 62710,
+      "sha256": "0960be0efb864a6bbaf62565908cbf4bfa4af00f3574eb592a76af39c5c1aeda"
+    },
+    {
+      "path": "authorities/f8911sa--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8911sa.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 76534,
+      "sha256": "8feda345747dfdb1c6bff573af3ef26c726235d8df91224ed9e20f85a364eb1c"
+    },
+    {
+      "path": "authorities/i8911--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8911.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 153260,
+      "sha256": "a85de22466ee5c65f7211199c6d0e655211be0cd6e9a682a15bdb98540bcc8b3"
+    },
+    {
+      "path": "authorities/f8978--2023.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8978.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 85303,
+      "sha256": "b954fffd7b16777cfde5917cd08aaa2b3ca3f8a1bd846cb062296e31e463f48d"
+    },
+    {
+      "path": "authorities/f8978sa--2023.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f8978sa.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 86339,
+      "sha256": "e625f6689ae2c86152a2b979d9a627342a93855251664aac3f825bf810072ffa"
+    },
+    {
+      "path": "authorities/i8978--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8978.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 174599,
+      "sha256": "bbc268cc011a1235021532a29ea8cf8a6ad71dc34cdb5941bb58d41e8f6e1816"
     }
   ]
 }

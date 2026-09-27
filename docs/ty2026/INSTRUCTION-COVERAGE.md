@@ -4,11 +4,11 @@ Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
 checks the expected IRS draft instruction URL for each form in the TY2025 PDF
 surface and additional active inputs. The form slug is a lookup aid, not
 proof that every form has its own instruction booklet. Current result across
-74 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
+76 entries: **27 pinned 2026 drafts**, **20 URLs serving 2025 instructions**,
 **9 with no draft at the expected URL**, **9 with 2026 instructions embedded
-in their form drafts**, **1 covered by a combined 2026 booklet**, **4 with
-current continuous-use instructions**, **1 current older-revision
-form/instruction pair**, **2 current forms with embedded instructions**, and
+in their form drafts**, **1 covered by a combined 2026 booklet**, **5 with
+current continuous-use instructions**, **2 current older-revision
+form/instruction pairs**, **2 current forms with embedded instructions**, and
 **1 2025 comparator awaiting a 2026 revision**. The
 missing and unverified groups are research gates, not unsupported-form
 decisions. Schedule A (Form 8936) is covered by the pinned Form 8936 booklet.
@@ -31,6 +31,9 @@ the April 2026 IRS update changes its K-1 box 19 source codes for 2025 onward.
 Form 8826's September 2017 current revision embeds instructions; Form 8835's
 published form and instructions are still for 2025, so its 2026 facility
 credit needs a new publication check and the 2026 section 45 rate notice.
+Form 8911's December 2025 form, Schedule A and instructions apply to years
+beginning in 2025 or later; Form 8978's January 2023 form/Schedule A and
+December 2024 instructions remain current, with 2026 return-line checks.
 Form 6252 has its instructions on pages 2–4 of the pinned 2026 draft form;
 some references there still name the old Form 4797 lines, so they need
 final-source reconciliation before coding.

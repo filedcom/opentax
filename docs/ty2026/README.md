@@ -53,6 +53,9 @@ for the implementation contract.
 - [`FORM8826-8835-STATEMENTS.md`](FORM8826-8835-STATEMENTS.md) and the two
   matching PDF field inventories: current disabled-access credit authority,
   prior-year electricity-credit comparator, and statement-only MeF ownership.
+- [`MEF-REMAINDER.md`](MEF-REMAINDER.md) and four matching PDF field
+  inventories: Forms 8911/8978, their Schedules A, and the remaining
+  source-linked TY2025 MeF serializers.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

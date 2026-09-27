@@ -44,6 +44,10 @@ pins the continuous-use disabled-access form, the still-2025 renewable
 electricity form comparator, and the TY2025 farm, foreign-wage, other-tax
 and joint-occupancy MeF statements. It records which need 2026 source
 refresh, PDF/MeF routes, or should remain TY2025-only.
+The [remaining MeF contract](../../../docs/ty2026/MEF-REMAINDER.md) names
+Forms 8911/8978 and Schedules A, including the June 30 refueling-property
+cutoff, and gives explicit source/document ownership for the foreign-tax,
+fuel, at-risk, vehicle-gift, PFIC, clean-vehicle and 8812 serializers.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

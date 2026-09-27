@@ -27,6 +27,9 @@ The [Form 8826/8835 and statement contract](FORM8826-8835-STATEMENTS.md)
 closes the TY2025 MeF inventory's distinct credit-form and statement-only
 routes, including the 2026 crop-election text change and 5695 statement
 sunset.
+The [remaining MeF contract](MEF-REMAINDER.md) maps Forms 8911/8978 and
+Schedules A plus seven source-linked serializers into 2026 calculation,
+PDF and XML evidence.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.
