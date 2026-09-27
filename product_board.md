@@ -435,7 +435,14 @@ regular-tax and tentative-minimum-tax limit, and routes only line 7 to Schedule
 3 line 6i. Its 2024 continuous-use XML and PDF descriptors are built, with
 source, tax-limit, and XSD cases written but unrun. The Form 8582-CR source
 calculation and combined-credit ordering with Forms 8859 or 8936 remain open;
-those combinations stop explicitly. Form 4136 now combines its represented
+those combinations stop explicitly. The current unrun Form 8582-CR Part II
+correction treats the $25,000/$12,500 rental allowance as an income allowance,
+uses tax attributable to the remaining allowance for line 15, subtracts the
+amount already used on Form 8582 line 9, and distinguishes MFS spouses who
+lived apart. Real-estate-professional status no longer bypasses the limit for
+every activity. The node still sends its aggregate allowed amount directly to
+Schedule 3, so source-level allocation, Form 3800 limitation, Parts III/IV,
+native output, and ATS acceptance remain open. Form 4136 now combines its represented
 fuel-use credits on refundable line 12 instead of misrouting some to general
 business credit and some to a nonexistent Form 1040 field; the represented 2025
 fuel rates are updated, with separate aviation-kerosene tax-rate inputs. These

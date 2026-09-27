@@ -5,7 +5,10 @@ import { fieldsOf } from "../../../../../../core/test-utils/output.ts";
 import { schedule3 } from "../../aggregation/schedule3/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8582cr.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form8582cr.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -131,9 +134,7 @@ Deno.test("form8582cr: prior_unallowed_credits added to total available", () => 
 // =============================================================================
 
 Deno.test("form8582cr: rental RE special allowance — MAGI below threshold → full allowance available", () => {
-  // tax_attributable = 0 (no passive income), but special allowance applies
-  // MAGI=80000 < 100000, active participation=true, rental_credits=3000
-  // special_allowance = min(rental_credits, 25000) = 3000
+  // The $25,000 dollar allowance produces $3,000 of tax, not $25,000 credit.
   const result = compute({
     total_passive_credits: 3_000,
     rental_real_estate_credits: 3_000,
@@ -141,6 +142,8 @@ Deno.test("form8582cr: rental RE special allowance — MAGI below threshold → 
     regular_tax_without_passive: 10_000,
     modified_agi: 80_000,
     has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 7_000,
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
@@ -156,14 +159,14 @@ Deno.test("form8582cr: rental RE special allowance — MAGI above upper threshol
     regular_tax_without_passive: 10_000,
     modified_agi: 160_000,
     has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
     filing_status: FilingStatus.Single,
   });
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("form8582cr: rental RE special allowance — MAGI in phase-out range", () => {
-  // MAGI=120000; phase-out = 50% * (120000-100000) = 10000; allowance = 25000-10000 = 15000
-  // rental_credits=3000 < 15000 → all 3000 allowed
+  // Line 12 is $15,000; the tax difference on that allowance is $1,000.
   const result = compute({
     total_passive_credits: 3_000,
     rental_real_estate_credits: 3_000,
@@ -171,14 +174,16 @@ Deno.test("form8582cr: rental RE special allowance — MAGI in phase-out range",
     regular_tax_without_passive: 10_000,
     modified_agi: 120_000,
     has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 9_000,
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 3_000);
+  assertEquals(fields.line6a_general_business_credit, 1_000);
 });
 
 Deno.test("form8582cr: rental RE special allowance — MAGI at lower threshold → full max", () => {
-  // MAGI=100000, allowance = 25000; rental_credits=5000 < 25000 → 5000 allowed
+  // MAGI=100000 gives a $25,000 income allowance, worth $2,000 of tax here.
   const result = compute({
     total_passive_credits: 5_000,
     rental_real_estate_credits: 5_000,
@@ -186,10 +191,12 @@ Deno.test("form8582cr: rental RE special allowance — MAGI at lower threshold �
     regular_tax_without_passive: 10_000,
     modified_agi: 100_000,
     has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 8_000,
     filing_status: FilingStatus.Single,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 5_000);
+  assertEquals(fields.line6a_general_business_credit, 2_000);
 });
 
 // =============================================================================
@@ -205,26 +212,81 @@ Deno.test("form8582cr: MFS filing status → no special allowance", () => {
     regular_tax_without_passive: 10_000,
     modified_agi: 50_000,
     has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
+    mfs_lived_apart_all_year: false,
     filing_status: FilingStatus.MFS,
   });
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("form8582cr: MFS lived apart uses the $75,000 Part II threshold", () => {
+  const result = compute({
+    total_passive_credits: 3_000,
+    rental_real_estate_credits: 3_000,
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 60_000,
+    has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 8_500,
+    mfs_lived_apart_all_year: true,
+    filing_status: FilingStatus.MFS,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule3)?.line6a_general_business_credit,
+    1_500,
+  );
+});
+
+Deno.test("form8582cr: Form 8582 line 9 can use the whole dollar allowance", () => {
+  const result = compute({
+    total_passive_credits: 3_000,
+    rental_real_estate_credits: 3_000,
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 10_000,
+    modified_agi: 100_000,
+    has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 25_000,
+    filing_status: FilingStatus.Single,
+  });
+  assertEquals(result.outputs, []);
+});
+
+Deno.test("form8582cr: Part II needs the tax on income less line 14", () => {
+  assertThrows(
+    () =>
+      compute({
+        total_passive_credits: 3_000,
+        rental_real_estate_credits: 3_000,
+        regular_tax_all_income: 10_000,
+        regular_tax_without_passive: 10_000,
+        modified_agi: 100_000,
+        has_active_rental_participation: true,
+        form8582_line9_special_allowance_used: 0,
+        filing_status: FilingStatus.Single,
+      }),
+    Error,
+    "line 15 needs tax on income less",
+  );
 });
 
 // =============================================================================
 // 7. Real Estate Professional Bypass
 // =============================================================================
 
-Deno.test("form8582cr: real estate professional → credits not limited by passive rules (flow through)", () => {
-  // RE professional: nonpassive, allowed = total_passive_credits directly
-  const result = compute({
-    total_passive_credits: 4_000,
-    regular_tax_all_income: 20_000,
-    regular_tax_without_passive: 15_000,
-    is_real_estate_professional: true,
-    filing_status: FilingStatus.Single,
-  });
-  const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 4_000);
+Deno.test("form8582cr: professional status alone cannot reclassify every activity", () => {
+  assertThrows(
+    () =>
+      compute({
+        total_passive_credits: 4_000,
+        regular_tax_all_income: 20_000,
+        regular_tax_without_passive: 15_000,
+        is_real_estate_professional: true,
+        filing_status: FilingStatus.Single,
+      }),
+    Error,
+    "activity-level material participation",
+  );
 });
 
 // =============================================================================
@@ -259,11 +321,10 @@ Deno.test("form8582cr: no credit allowed → no schedule3 output", () => {
 Deno.test("form8582cr: smoke test — active rental participation, MAGI at 125000", () => {
   // tax_attributable = 12000-10000 = 2000
   // MAGI=125000: special_allowance = 25000 - 50%*(125000-100000) = 25000-12500 = 12500
-  // rental_credits=5000 < 12500 → special allowance for 5000
+  // tax attributable to $12,500 allowance is $4,000 here
   // non-rental credits also limited by tax_attributable=2000 already counted
   // total_passive_credits=7000, base=min(7000,2000)=2000
-  // special allowance brings additional 5000 (rental credits)
-  // But since base already covers some credits, total allowed = min(7000, 2000+5000) = 7000
+  // total allowed = min(7000, 2000+4000) = 6000
   const result = compute({
     total_passive_credits: 7_000,
     rental_real_estate_credits: 5_000,
@@ -272,8 +333,10 @@ Deno.test("form8582cr: smoke test — active rental participation, MAGI at 12500
     regular_tax_without_passive: 10_000,
     modified_agi: 125_000,
     has_active_rental_participation: true,
+    form8582_line9_special_allowance_used: 0,
+    part_ii_tax_on_income_less_line14: 8_000,
     filing_status: FilingStatus.MFJ,
   });
   const fields = fieldsOf(result.outputs, schedule3)!;
-  assertEquals(fields.line6a_general_business_credit, 7_000);
+  assertEquals(fields.line6a_general_business_credit, 6_000);
 });

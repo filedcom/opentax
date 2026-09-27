@@ -17,18 +17,17 @@ import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 
 // ─── Constants — IRC §469(i) thresholds (not inflation-adjusted) ─────────────
 
-const PHASE_OUT_RATE = 0.50;                // IRC §469(i)(3)(B)
-const RENTAL_ALLOWANCE_MAX = 25_000;        // IRC §469(i)(2)
-const MAGI_LOWER_THRESHOLD = 100_000;       // IRC §469(i)(3)(A)
-const MAGI_UPPER_THRESHOLD = 150_000;       // IRC §469(i)(3)(A)
-const MFS_ALLOWANCE_MAX = 12_500;           // IRC §469(i)(5)(B)
-const MFS_MAGI_LOWER = 50_000;              // IRC §469(i)(5)(B)
-const MFS_MAGI_UPPER = 75_000;              // IRC §469(i)(5)(B)
+const PHASE_OUT_RATE = 0.50; // IRC §469(i)(3)(B)
+const RENTAL_ALLOWANCE_MAX = 25_000; // IRC §469(i)(2)
+const MAGI_UPPER_THRESHOLD = 150_000; // IRC §469(i)(3)(A)
+const MFS_ALLOWANCE_MAX = 12_500; // IRC §469(i)(5)(B)
+const MFS_MAGI_UPPER = 75_000; // IRC §469(i)(5)(B)
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 export const inputSchema = z.object({
-  // Total current-year passive activity credits from all sources (Part I, Line 5)
+  // Total current-year passive activity credits from all sources (Part I lines
+  // 1a, 2a, 3a, and 4a, before the separate prior-year amount below).
   total_passive_credits: z.number().nonnegative(),
 
   // Regular tax computed on all income including passive net income
@@ -43,8 +42,8 @@ export const inputSchema = z.object({
   // IRC §469(i)(3)
   modified_agi: z.number().nonnegative().optional(),
 
-  // True if taxpayer qualifies as real estate professional per IRC §469(c)(7)
-  // Real estate professionals have their rental activities treated as nonpassive
+  // This fact alone does not make every rental activity nonpassive; each
+  // activity must separately satisfy material participation.
   is_real_estate_professional: z.boolean().optional(),
 
   // True if taxpayer actively participated in rental real estate activity
@@ -55,13 +54,67 @@ export const inputSchema = z.object({
   // Used for Part II special allowance calculation
   rental_real_estate_credits: z.number().nonnegative().optional(),
 
-  // Filing status — MFS filers are ineligible for Part II special allowance
-  // IRC §469(i)(5)(A)
+  // Form 8582 line 9 uses part of the dollar special allowance before this
+  // credit worksheet computes Form 8582-CR line 14.
+  form8582_line9_special_allowance_used: z.number().nonnegative().optional(),
+  // Form 8582-CR line 15 worksheet: tax on taxable income less line 14.
+  // The tax on unadjusted taxable income is regular_tax_all_income above.
+  part_ii_tax_on_income_less_line14: z.number().nonnegative().optional(),
+  mfs_lived_apart_all_year: z.boolean().optional(),
+
+  // MFS filers who lived with their spouse cannot use Part II.
   filing_status: filingStatusSchema.optional(),
 
   // Prior-year unallowed PAC carryforward from Form 8582-CR prior years
   // IRC §469(b)
   prior_unallowed_credits: z.number().nonnegative().optional(),
+}).superRefine((input, ctx) => {
+  if (
+    (input.rental_real_estate_credits ?? 0) >
+      input.total_passive_credits + (input.prior_unallowed_credits ?? 0)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["rental_real_estate_credits"],
+      message: "Form 8582-CR rental credits exceed total available credits",
+    });
+  }
+  if (
+    input.has_active_rental_participation &&
+    (input.rental_real_estate_credits ?? 0) > 0
+  ) {
+    if (input.filing_status === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["filing_status"],
+        message: "Form 8582-CR Part II needs filing status",
+      });
+    }
+    if (input.modified_agi === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["modified_agi"],
+        message: "Form 8582-CR Part II needs modified AGI",
+      });
+    }
+    if (input.form8582_line9_special_allowance_used === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["form8582_line9_special_allowance_used"],
+        message: "Form 8582-CR Part II needs Form 8582 line 9, including zero",
+      });
+    }
+    if (
+      input.filing_status === FilingStatus.MFS &&
+      input.mfs_lived_apart_all_year === undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["mfs_lived_apart_all_year"],
+        message: "Form 8582-CR MFS Part II needs the lived-apart answer",
+      });
+    }
+  }
 });
 
 type Form8582CRInput = z.infer<typeof inputSchema>;
@@ -71,62 +124,84 @@ type Form8582CRInput = z.infer<typeof inputSchema>;
 // Tax attributable to net passive income = difference in regular tax
 // Form 8582-CR Part I, Line 6
 function taxAttributableToPassive(input: Form8582CRInput): number {
-  return Math.max(0, input.regular_tax_all_income - input.regular_tax_without_passive);
+  return Math.max(
+    0,
+    input.regular_tax_all_income - input.regular_tax_without_passive,
+  );
 }
 
 function totalCreditsAvailable(input: Form8582CRInput): number {
   return input.total_passive_credits + (input.prior_unallowed_credits ?? 0);
 }
 
-function isMfsIneligible(input: Form8582CRInput): boolean {
-  // MFS filers who lived with spouse at any time are ineligible for Part II
-  // Conservative: treat all MFS as ineligible
-  return input.filing_status === FilingStatus.MFS;
-}
-
-// Special allowance for rental real estate credits (Part II)
-// IRC §469(i): up to $25,000 for active participants below MAGI thresholds
-function specialAllowanceCredit(input: Form8582CRInput, rentalCredits: number): number {
+// Form 8582-CR Part II converts the dollar special allowance to tax before
+// allowing any additional credit. The $25,000 figure is never itself a credit.
+function specialAllowanceCredit(
+  input: Form8582CRInput,
+  remainingCredits: number,
+): number {
   if (!input.has_active_rental_participation) return 0;
-  if (isMfsIneligible(input)) return 0;
-  if (input.modified_agi === undefined) return 0;
-
-  const magi = input.modified_agi;
-  const lower = MAGI_LOWER_THRESHOLD;
-  const upper = MAGI_UPPER_THRESHOLD;
-  const max = RENTAL_ALLOWANCE_MAX;
-
-  // MAGI above upper threshold → no allowance
-  if (magi >= upper) return 0;
-
-  // Cap credit at max allowance or actual rental credits
-  const baseAllowance = Math.min(rentalCredits, max);
-
-  // MAGI at or below lower threshold → full allowance
-  if (magi <= lower) return baseAllowance;
-
-  // Phase-out: 50% of excess MAGI over lower threshold
-  const reduction = PHASE_OUT_RATE * (magi - lower);
-  const phasedAllowance = Math.max(0, max - reduction);
-  return Math.min(rentalCredits, phasedAllowance);
+  if (
+    input.filing_status === FilingStatus.MFS &&
+    !input.mfs_lived_apart_all_year
+  ) return 0;
+  const line8 = Math.min(
+    input.rental_real_estate_credits ?? 0,
+    remainingCredits,
+  );
+  if (line8 === 0) return 0;
+  const upper = input.filing_status === FilingStatus.MFS
+    ? MFS_MAGI_UPPER
+    : MAGI_UPPER_THRESHOLD;
+  const max = input.filing_status === FilingStatus.MFS
+    ? MFS_ALLOWANCE_MAX
+    : RENTAL_ALLOWANCE_MAX;
+  const modifiedAgi = input.modified_agi;
+  const lossAllowanceUsed = input.form8582_line9_special_allowance_used;
+  if (modifiedAgi === undefined || lossAllowanceUsed === undefined) {
+    throw new Error("Form 8582-CR Part II needs MAGI and Form 8582 line 9");
+  }
+  const line12 = Math.min(
+    max,
+    PHASE_OUT_RATE * Math.max(0, upper - modifiedAgi),
+  );
+  const line14 = Math.max(
+    0,
+    line12 - lossAllowanceUsed,
+  );
+  if (line14 === 0) return 0;
+  const taxWithoutAllowance = input.part_ii_tax_on_income_less_line14;
+  if (
+    taxWithoutAllowance === undefined ||
+    taxWithoutAllowance > input.regular_tax_all_income
+  ) {
+    throw new Error(
+      "Form 8582-CR line 15 needs tax on income less the line 14 allowance",
+    );
+  }
+  return Math.min(line8, input.regular_tax_all_income - taxWithoutAllowance);
 }
 
 function computeAllowedCredit(input: Form8582CRInput): number {
   const available = totalCreditsAvailable(input);
   if (available === 0) return 0;
 
-  // Real estate professional: activity is nonpassive — all credits allowed
+  // This single taxpayer status cannot reclassify all activity credits.
   if (input.is_real_estate_professional === true) {
-    return available;
+    throw new Error(
+      "Form 8582-CR needs activity-level material participation for a real estate professional",
+    );
   }
 
   // Base: credits allowed up to tax attributable to passive income
   const taxAttr = taxAttributableToPassive(input);
   const baseAllowed = Math.min(available, taxAttr);
 
-  // Additional: special allowance for rental real estate credits (Part II)
-  const rentalCredits = input.rental_real_estate_credits ?? 0;
-  const special = specialAllowanceCredit(input, rentalCredits);
+  // Additional Part II credit is limited by tax on the dollar allowance.
+  const special = specialAllowanceCredit(
+    input,
+    Math.max(0, available - taxAttr),
+  );
 
   // Total allowed = base + any special allowance credit above the base
   // But total cannot exceed total available
@@ -159,7 +234,9 @@ class Form8582CRNode extends TaxNode<typeof inputSchema> {
     const suspendedPac = available - allowedCredit;
     return {
       outputs: schedule3Output(allowedCredit),
-      ...(suspendedPac > 0 ? { carryforwards: { suspended_pac_8582cr: suspendedPac } } : {}),
+      ...(suspendedPac > 0
+        ? { carryforwards: { suspended_pac_8582cr: suspendedPac } }
+        : {}),
     };
   }
 }

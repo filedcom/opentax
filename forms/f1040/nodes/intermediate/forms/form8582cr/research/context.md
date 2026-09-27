@@ -1,7 +1,7 @@
 # Form 8582-CR — Passive Activity Credit Limitations
 
 ## Overview
-Form 8582-CR limits the amount of passive activity credits (PAC) that can be claimed to offset regular tax. Mirrors Form 8582 (which handles passive losses) but applies to credits. The allowed credit flows to Schedule 3 (via Form 3800) which routes to line 7 (other nonrefundable credits). Unused credits carry forward indefinitely.
+Form 8582-CR limits passive activity credits. The current node calculates a Part I and active-rental Part II slice, but still deposits its allowed total directly in Schedule 3 line 6a. That is not the final filing route: each allowed business credit must enter its source form or Form 3800, then survive the Form 3800 tax limit. Source-level allocation, Parts III/IV, and native Form 8582-CR output are still open. Unallowed credits carry forward by activity and credit identity.
 
 **IRS Form:** Form 8582-CR
 **Drake Screen:** CR
@@ -22,6 +22,9 @@ Form 8582-CR limits the amount of passive activity credits (PAC) that can be cla
 | is_real_estate_professional | boolean | no | Real Estate Professional | True if taxpayer qualifies as real estate professional per IRC §469(c)(7) | IRC §469(c)(7) | https://www.law.cornell.edu/uscode/text/26/469 |
 | has_active_rental_participation | boolean | no | Active Participation | True if taxpayer actively participated in rental real estate activity | IRC §469(i)(6) | https://www.law.cornell.edu/uscode/text/26/469 |
 | rental_real_estate_credits | number >= 0 | no | Rental RE Credits | Credits specifically from rental real estate with active participation (Part II) | IRC §469(i) | https://www.law.cornell.edu/uscode/text/26/469 |
+| form8582_line9_special_allowance_used | number >= 0 | required for active rental credit | Form 8582 line 9 | Dollar allowance already used by passive rental losses | Form 8582-CR line 13 | https://www.irs.gov/instructions/i8582cr |
+| part_ii_tax_on_income_less_line14 | number >= 0 | required when line 14 is positive | Part II tax worksheet | Tax on taxable income after subtracting the line 14 dollar allowance | Form 8582-CR line 15 | https://www.irs.gov/instructions/i8582cr |
+| mfs_lived_apart_all_year | boolean | required for MFS active rental credit | MFS lived-apart answer | Distinguishes the $75,000 threshold from ineligibility | Form 8582-CR lines 9 and 12 | https://www.irs.gov/instructions/i8582cr |
 | filing_status | enum(single, mfj, mfs, hoh, qw) | no | Filing Status | Filing status for MFS phase-out thresholds | IRC §469(i)(5) | https://www.law.cornell.edu/uscode/text/26/469 |
 | prior_unallowed_credits | number >= 0 | no | Prior Year Unallowed | Unused PAC carryforward from prior years | IRC §469(b) | https://www.law.cornell.edu/uscode/text/26/469 |
 
@@ -40,20 +43,21 @@ total_credits_available = total_passive_credits + (prior_unallowed_credits ?? 0)
 base_allowed = min(total_credits_available, tax_attributable_to_passive)
 
 ### Step 4 — Special Allowance for Rental Real Estate (Part II)
-If has_active_rental_participation = true AND is_real_estate_professional != true AND filing_status != MFS:
-  Compute $25,000 special allowance credit limit (analogous to Form 8582 Part II):
-  - If modified_agi <= $100,000: allowance = min(rental_real_estate_credits, $25,000 worth of credit)
-  - Phase-out: reduce by 50% of MAGI over $100,000; zero at $150,000
-  MFS filers who did not live apart all year: $0 special allowance (ineligible)
-Source: IRC §469(i)(3)(B); Form 8582-CR Part II
+If active rental credits remain after the line 6 passive-income tax limit:
+  - line 8 = min(active rental credits, line 7 remaining credits)
+  - line 12 = min($25,000, 50% × max(0, $150,000 − MAGI)); MFS lived apart uses $12,500 and $75,000
+  - line 14 = max(0, line 12 − Form 8582 line 9)
+  - line 15 = tax on taxable income − tax on taxable income less line 14
+  - line 16 = min(line 8, line 15)
+The $25,000 figure is an income allowance, never a $25,000 credit. MFS filers who lived with a spouse have no Part II allowance. Real-estate-professional status alone does not reclassify every rental activity as nonpassive.
+Source: Form 8582-CR lines 8–16 and instructions.
 
 ### Step 5 — Total Allowed Credit
 allowed_credit = min(total_credits_available, base_allowed + special_allowance_additional)
 unallowed_credit = total_credits_available − allowed_credit
 
 ### Step 6 — Route Allowed Credit
-Allowed credit flows to schedule3 line6z_general_business_credit (via Form 3800 conceptually)
-Source: Form 8582-CR Part V; Form 3800
+The current node still routes directly to Schedule 3 line 6a; this is an open correctness gap. The intended route is source-level allowed credit to Form 3800 (or another applicable credit form), then its separate limit and Schedule 3.
 
 ---
 
@@ -61,7 +65,7 @@ Source: Form 8582-CR Part V; Form 3800
 
 | Output Field | Destination Node | Condition | IRS Reference | URL |
 | ------------ | ---------------- | --------- | ------------- | --- |
-| line6z_general_business_credit | schedule3 | allowed_credit > 0 | IRC §469(d)(2); Form 3800 | https://www.irs.gov/instructions/i8582cr |
+| line6a_general_business_credit | schedule3 | allowed_credit > 0; current incomplete route | IRC §469(d)(2); Form 3800 | https://www.irs.gov/instructions/i8582cr |
 
 ---
 
@@ -93,7 +97,7 @@ flowchart LR
     E[allowed_credit = base_allowed + special_allowance]
   end
   subgraph outputs["Downstream Nodes"]
-    F[schedule3.line6z_general_business_credit]
+    F[schedule3.line6a_general_business_credit - current incomplete route]
   end
   A --> B
   B --> C
@@ -109,8 +113,8 @@ flowchart LR
 
 1. **No passive credits**: If total_passive_credits = 0 and prior_unallowed_credits = 0, output nothing.
 2. **Tax attributable can be zero**: If regular_tax_all_income = regular_tax_without_passive, no credit allowed from base computation (passive income tax = 0). Special allowance may still apply.
-3. **MFS ineligible for special allowance**: filing_status = MFS → special allowance = $0 (conservative; assumes lived with spouse).
-4. **Real estate professional bypass**: is_real_estate_professional = true → rental activity treated as nonpassive, flows outside PAC limitation.
+3. **MFS special allowance**: MFS lived apart all year uses a $12,500 maximum and $75,000 MAGI threshold; MFS who lived with a spouse are ineligible.
+4. **Real estate professional**: taxpayer status alone is not enough; activity-level material participation is required before a credit is treated as nonpassive.
 5. **Credits exceed tax attributable**: Excess carries forward indefinitely per IRC §469(b).
 6. **No modification for passive income**: Unlike Form 8582, Form 8582-CR does not reduce loss carryforwards; it reduces credit carryforwards.
 

@@ -36,7 +36,10 @@ Separate paths: `f8609` deposits low-income housing credit directly into the
 other Schedule 3 line 6a accumulator; the Form 8586 specified-credit and
 carryover path needs source reconciliation. `form8582cr` deposits its passive
 activity allowed credit directly into line 6a, but that is only the passive
-activity limit, not necessarily the Form 3800 tax-liability limit. `f8835`
+activity limit, not necessarily the Form 3800 tax-liability limit. Its current
+unrun Part II correction computes tax attributable to the rental income
+allowance instead of treating the $25,000 allowance itself as a credit.
+`f8835`
 instead forwards per-facility amounts to `f3800`; positive available credit now
 waits for final Form 1040 tax and Form 6251 TMT before Schedule 3 receives the
 allowed amount. The source-backed nonpassive IRS3800 bundle is registered but
