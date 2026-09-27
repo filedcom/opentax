@@ -60,10 +60,14 @@ applicable interest-rate periods, and carryover adjustments. It must not take a
 single unexplained recapture-tax amount. The current build pass replaces loose
 per-year unused-credit balances with a referenced list of QEI carryover
 vintages: originating year, credit generated, amount available to TY2025 before
-recapture, and source document. The calculator emits an explicit adjustment of
-each vintage to zero, but Form 3800 Part IV column (h), Part VI source detail,
-and the required changed-carryforward statement are not yet linked. Historical
-carrybacks and any prior-year amended returns also remain open.
+recapture, source document, and each earlier tax year where the credit was
+allowed with its filed-return reference. Historical use plus the entering-2025
+balance must equal the generated credit, and any carryback must be to the
+immediately preceding year, no earlier than the QEI's first allowable year. The
+calculator emits an explicit adjustment of each vintage to zero, but Form 3800
+Part IV column (h), Part VI source detail, and the required changed-carryforward
+statement are not yet linked. The sources still need reconciliation to actual
+prior filed and amended returns.
 
 Form 8874's instructions exclude a substantially-all failure that the CDE
 corrects within six months of awareness, with only one correction permitted per

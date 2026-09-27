@@ -45,6 +45,13 @@ export const recaptureSchema = z.object({
         amount > 0
       ),
       source_document_reference: z.string().trim().min(1),
+      historical_uses: z.array(
+        z.object({
+          tax_year: z.number().int().min(2018).max(2024),
+          credit_allowed: dollars.refine((amount) => amount > 0),
+          return_reference: z.string().trim().min(1),
+        }).strict(),
+      ),
     }).strict(),
   ),
 }).strict().superRefine((input, ctx) => {
@@ -154,6 +161,7 @@ export const recaptureSchema = z.object({
     }
   });
   const carryoverYears = new Set<number>();
+  const historicalUseByTaxYear = new Map<number, number>();
   input.carryover_vintages.forEach((vintage, index) => {
     if (carryoverYears.has(vintage.originating_tax_year)) {
       ctx.addIssue({
@@ -181,7 +189,68 @@ export const recaptureSchema = z.object({
         message: "QEI carryover vintage exceeds its originating-year credit",
       });
     }
+    const useYears = new Set<number>();
+    let historicalUse = 0;
+    vintage.historical_uses.forEach((use, useIndex) => {
+      if (useYears.has(use.tax_year)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["carryover_vintages", index, "historical_uses", useIndex],
+          message: "QEI carryover has duplicate use in one tax year",
+        });
+      }
+      useYears.add(use.tax_year);
+      if (
+        use.tax_year <
+          Math.max(
+            initialDate.getUTCFullYear(),
+            vintage.originating_tax_year - 1,
+          ) ||
+        use.tax_year > 2024
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [
+            "carryover_vintages",
+            index,
+            "historical_uses",
+            useIndex,
+            "tax_year",
+          ],
+          message: "QEI credit use is outside its carryback/carryforward years",
+        });
+      }
+      historicalUse += use.credit_allowed;
+      historicalUseByTaxYear.set(
+        use.tax_year,
+        (historicalUseByTaxYear.get(use.tax_year) ?? 0) + use.credit_allowed,
+      );
+    });
+    if (
+      !Number.isSafeInteger(historicalUse) ||
+      historicalUse + vintage.credit_carried_to_2025_before_recapture !==
+        vintage.credit_generated_as_filed
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["carryover_vintages", index, "historical_uses"],
+        message: "QEI historical credit use and 2025 balance must reconcile",
+      });
+    }
   });
+  for (const [taxYear, used] of historicalUseByTaxYear) {
+    const priorReturn = input.prior_years.find((year) =>
+      year.tax_year === taxYear
+    );
+    if (!priorReturn || used > priorReturn.section38_credit_allowed_as_filed) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["prior_years"],
+        message:
+          `QEI credit used in ${taxYear} needs a matching prior Section 38 return`,
+      });
+    }
+  }
   const priorAllowedCreditDecrease = input.prior_years.reduce(
     (sum, year) =>
       sum + year.section38_credit_allowed_as_filed -
@@ -274,6 +343,12 @@ export function calculateNewMarketsRecapture(raw: NewMarketsRecaptureInput) {
       originatingTaxYear: vintage.originating_tax_year,
       investmentReference: input.investment_reference,
       sourceDocumentReference: vintage.source_document_reference,
+      creditGeneratedAsFiled: vintage.credit_generated_as_filed,
+      historicalUses: vintage.historical_uses.map((use) => ({
+        taxYear: use.tax_year,
+        creditAllowed: use.credit_allowed,
+        returnReference: use.return_reference,
+      })),
       beforeRecapture: vintage.credit_carried_to_2025_before_recapture,
       removedFromQeiLedger: vintage.credit_carried_to_2025_before_recapture,
       availableAfterRecapture: 0,

@@ -74,10 +74,12 @@ amounts above the QEI's seven-year maximum. A written interest case crosses 2023
 quarterly changes and the 2024 leap year. This is not a completed recapture
 audit: original return due dates and prior recomputations are still supplied
 facts, the Section 39 carryover adjustment is now an explicit per-vintage
-before/removed/after ledger but is not yet posted to Form 3800 Part IV, and
-historical carryback adjustments still need source reconciliation, interest
-rounding and leap-year handling need IRS example reconciliation, and filled PDF,
-local XSD, business-rule, and ATS checks remain open.
+before/removed/after ledger with referenced year-by-year credit use that must
+reconcile to the generated amount, but is not yet posted to Form 3800 Part IV.
+Historical carryback and carryforward use still need actual return
+reconciliation, and interest rounding and leap-year handling need IRS example
+reconciliation, and filled PDF, local XSD, business-rule, and ATS checks remain
+open.
 
 The current build pass now routes nonpassive Schedule K-1 orphan-drug credits
 from partnerships (box 15 code Z), S corporations (box 13 code Z), and

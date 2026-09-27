@@ -38,6 +38,11 @@ const source: NewMarketsRecaptureInput = {
     credit_generated_as_filed: 5_000,
     credit_carried_to_2025_before_recapture: 3_000,
     source_document_reference: "2024 QEI carryover workpaper",
+    historical_uses: [{
+      tax_year: 2024,
+      credit_allowed: 2_000,
+      return_reference: "2024 filed Form 3800",
+    }],
   }],
 };
 
@@ -51,6 +56,12 @@ Deno.test("New Markets recapture uses allowed-credit decrease, not notice credit
     originatingTaxYear: 2024,
     investmentReference: "2022 QEI designation",
     sourceDocumentReference: "2024 QEI carryover workpaper",
+    creditGeneratedAsFiled: 5_000,
+    historicalUses: [{
+      taxYear: 2024,
+      creditAllowed: 2_000,
+      returnReference: "2024 filed Form 3800",
+    }],
     beforeRecapture: 3_000,
     removedFromQeiLedger: 3_000,
     availableAfterRecapture: 0,
@@ -80,6 +91,32 @@ Deno.test("New Markets recapture excludes unused credit from tax and interest", 
   });
   assertEquals(result.schedule2Line17a, 0);
   assertEquals(result.carryforwardAdjustments[0].removedFromQeiLedger, 3_000);
+});
+
+Deno.test("New Markets carryover records a sourced one-year carryback", () => {
+  const result = calculateNewMarketsRecapture({
+    ...source,
+    prior_years: [{
+      tax_year: 2023,
+      original_return_due_date: "2024-04-15",
+      section38_credit_allowed_as_filed: 2_000,
+      section38_credit_allowed_without_this_qei: 0,
+      recomputation_reference: "2023 amended Form 3800 carryback",
+    }],
+    carryover_vintages: [{
+      ...source.carryover_vintages[0],
+      historical_uses: [{
+        tax_year: 2023,
+        credit_allowed: 2_000,
+        return_reference: "2023 amended Form 3800 carryback",
+      }],
+    }],
+  });
+  assertEquals(result.carryforwardAdjustments[0].historicalUses, [{
+    taxYear: 2023,
+    creditAllowed: 2_000,
+    returnReference: "2023 amended Form 3800 carryback",
+  }]);
 });
 
 Deno.test("New Markets recapture compounds through rate changes and leap year", () => {
@@ -238,6 +275,52 @@ Deno.test("New Markets recapture requires a statutory event and prior-year proof
       { ...source, notice_reference: "" },
       { ...source, notice_credit_amount: 40_000 },
       { ...source, carryover_ledger_reference: "" },
+      {
+        ...source,
+        carryover_vintages: [{
+          ...source.carryover_vintages[0],
+          historical_uses: [{
+            tax_year: 2023,
+            credit_allowed: 2_000,
+            return_reference: "2023 amended Form 3800 carryback",
+          }],
+        }],
+      },
+      {
+        ...source,
+        carryover_vintages: [{
+          ...source.carryover_vintages[0],
+          historical_uses: [],
+        }],
+      },
+      {
+        ...source,
+        carryover_vintages: [{
+          ...source.carryover_vintages[0],
+          historical_uses: [
+            source.carryover_vintages[0].historical_uses[0],
+            source.carryover_vintages[0].historical_uses[0],
+          ],
+        }],
+      },
+      {
+        ...source,
+        carryover_vintages: [{
+          ...source.carryover_vintages[0],
+          historical_uses: [{
+            ...source.carryover_vintages[0].historical_uses[0],
+            tax_year: 2021,
+          }],
+        }],
+      },
+      {
+        ...source,
+        prior_years: [{
+          ...source.prior_years[0],
+          section38_credit_allowed_as_filed: 1_000,
+          section38_credit_allowed_without_this_qei: 0,
+        }],
+      },
       {
         ...source,
         carryover_vintages: [
