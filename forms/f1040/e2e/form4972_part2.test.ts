@@ -12,6 +12,7 @@ function electedReturn(
   includeOtherPension = false,
   deathBenefit = 0,
   includedNua = 0,
+  federalEstateTax = 0,
 ) {
   return execute(plan, registry, {
     general: {
@@ -54,13 +55,18 @@ function electedReturn(
       elect_capital_gain: true,
       elect_10yr_averaging: elect10yr,
       ...(includedNua > 0 ? { elect_include_nua: true } : {}),
-      ...(deathBenefit > 0
+      ...(deathBenefit > 0 || federalEstateTax > 0
         ? {
-          death_benefit_exclusion: deathBenefit,
           beneficiary_distribution: true,
-          participant_died_before_1996_08_21: true,
+          ...(deathBenefit > 0
+            ? {
+              death_benefit_exclusion: deathBenefit,
+              participant_died_before_1996_08_21: true,
+            }
+            : {}),
         }
         : {}),
+      ...(federalEstateTax > 0 ? { federal_estate_tax: federalEstateTax } : {}),
     },
   }, { taxYear: 2025, formType: "f1040" });
 }
@@ -105,4 +111,22 @@ Deno.test("Form 4972 Part II NUA election reaches Form 1040 ordinary income", ()
   assertEquals(result.pending.form4972?.line7, 7_200);
   assertEquals(result.pending.f1040?.line5b_pension_taxable, 84_000);
   assertEquals(result.pending.f1040?.line9_total_income, 84_000);
+});
+
+Deno.test("Form 4972 Part II-only estate tax reaches Schedule A without reducing pension income", () => {
+  const result = electedReturn(false, false, 0, 0, 4_000);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4972?.line6, 28_800);
+  assertEquals(result.pending.form4972?.line7, 5_760);
+  assertEquals(result.pending.form4972?.line18, undefined);
+  assertEquals(result.pending.f1040?.line5b_pension_taxable, 70_000);
+  assertEquals(result.pending.schedule_a?.line_16_other_deductions, 2_800);
+});
+
+Deno.test("Form 4972 combined election keeps the ordinary estate-tax share on line 18", () => {
+  const result = electedReturn(true, false, 0, 0, 4_000);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form4972?.line6, 28_800);
+  assertEquals(result.pending.form4972?.line18, 2_800);
+  assertEquals(result.pending.schedule_a?.line_16_other_deductions, undefined);
 });

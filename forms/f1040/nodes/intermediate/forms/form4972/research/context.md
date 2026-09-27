@@ -161,3 +161,26 @@ annotations, so the 2025 PDF descriptor draws them after filling the numeric
 AcroForm fields. The annotation coordinates were read from the unfilled 2025
 filing-page image already present in the workspace; filled-form visual
 inspection is reserved for the full batch.
+
+## 2025 Part-II-only estate-tax allocation
+
+The
+[2025 Form 4972 instructions, line 6](https://www.irs.gov/pub/irs-prior/f4972--2025.pdf)
+require the beneficiary to obtain the federal estate tax attributable to the
+lump-sum distribution from the estate administrator, then allocate it using
+Death Benefit Worksheet line C: Form 1099-R box 3 (plus the elected NUA capital
+share) divided by box 2a (plus elected box 6 NUA). The capital share reduces
+Part II line 6. The instructions put the remainder on Part III line 18 when Part
+III is elected. For a Part-II-only election, the ordinary portion instead
+remains Form 1040 pension income.
+[2025 Publication 575](https://www.irs.gov/publications/p575) describes the
+income-in-respect-of-a-decedent estate-tax deduction as an itemized Schedule A
+deduction, and the
+[2025 Schedule K-1 (Form 1041)
+instructions](https://www.irs.gov/instructions/i1041sk1) identify Schedule A
+line 16 for that deduction. The Part-II-only routing is an inference from
+these two IRS instructions: the node keeps box 2a less box 3 on Form 1040 line
+5b and sends only the estate-tax share attributable to that ordinary income to
+Schedule A line 16. The
+administrator-provided attributable amount is an explicit input; the node does
+not infer it from total estate tax.
