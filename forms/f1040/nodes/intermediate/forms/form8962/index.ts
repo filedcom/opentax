@@ -127,10 +127,19 @@ export const sharedPolicyAllocationSchema = z.object({
 
 const alternativeMarriageCoverageSchema = z.object({
   family_size: z.number().int().positive(),
-  // Pub. 974 Worksheets II and IV, columns A and B, after any Part IV
-  // allocation and any correction to the applicable SLCSP premium.
+  // Exact 1095-A policy identities for the spouse's pre-marriage worksheet.
+  policy_numbers: z.array(z.string().trim().min(1)).min(1),
+}).strict();
+
+export const alternativeMarriagePolicySchema = z.object({
+  policy_number: z.string().trim().min(1),
+  owner: z.enum(["primary", "spouse"]),
+  coverage_state: z.string().regex(/^[A-Z]{2}$/).optional(),
+  // Source Form 1095-A monthly columns after applicable SLCSP correction
+  // and any Part IV allocation; not taxpayer-entered worksheet amounts.
   monthly_premiums: z.array(z.number().nonnegative()).length(12),
   monthly_slcsps: z.array(z.number().nonnegative()).length(12),
+  monthly_aptcs: z.array(z.number().nonnegative()).length(12),
 }).strict();
 
 export const alternativeMarriageSchema = z.object({
@@ -161,6 +170,8 @@ export const inputSchema = z.object({
   shared_policy_allocations: z.array(sharedPolicyAllocationSchema).max(99)
     .optional(),
   alternative_marriage: alternativeMarriageSchema.optional(),
+  alternative_marriage_policies: z.array(alternativeMarriagePolicySchema).min(1)
+    .optional(),
 
   // Annual totals (used when no monthly detail provided)
   annual_premium: z.number().nonnegative().optional(),
@@ -344,7 +355,78 @@ function alternativeMarriageCalculation(
       "Form 8962 marriage alternative requires monthly 1095-A columns",
     );
   }
-  const groups = [election.primary, election.spouse].filter((group) =>
+  const sourcePolicies = input.alternative_marriage_policies ?? [];
+  const byPolicyNumber = new Map(
+    sourcePolicies.map((policy) => [policy.policy_number, policy]),
+  );
+  if (
+    sourcePolicies.length === 0 ||
+    byPolicyNumber.size !== sourcePolicies.length
+  ) {
+    throw new Error(
+      "Form 8962 marriage alternative needs uniquely identified Form 1095-A policies",
+    );
+  }
+  const selectedPolicies = new Set<string>();
+  const resolveCoverage = (
+    role: "primary" | "spouse",
+    coverage: typeof election.primary,
+  ) => {
+    if (!coverage) return undefined;
+    const policies = coverage.policy_numbers.map((number) => {
+      const policy = byPolicyNumber.get(number);
+      if (!policy || policy.owner !== role || selectedPolicies.has(number)) {
+        throw new Error(
+          "Form 8962 marriage policy number must identify one policy owned by the selected spouse",
+        );
+      }
+      selectedPolicies.add(number);
+      return policy;
+    });
+    const monthly_premiums = Array<number>(12).fill(0);
+    const monthly_slcsps = Array<number>(12).fill(0);
+    const monthly_aptcs = Array<number>(12).fill(0);
+    for (let month = 0; month < election.marriage_month; month++) {
+      const slcspByState = new Map<string, number>();
+      for (const policy of policies) {
+        monthly_premiums[month] += policy.monthly_premiums[month];
+        monthly_aptcs[month] += policy.monthly_aptcs[month];
+        const slcsp = policy.monthly_slcsps[month];
+        if (slcsp <= 0) continue;
+        if (policies.length > 1 && !policy.coverage_state) {
+          throw new Error(
+            "Form 8962 multiple marriage policies need coverage state for SLCSP",
+          );
+        }
+        const state = policy.coverage_state ?? policy.policy_number;
+        const prior = slcspByState.get(state);
+        if (prior !== undefined && prior !== slcsp) {
+          throw new Error(
+            "Form 8962 same-state marriage policies disagree on SLCSP",
+          );
+        }
+        slcspByState.set(state, slcsp);
+      }
+      monthly_slcsps[month] = [...slcspByState.values()].reduce(
+        (sum, amount) => sum + amount,
+        0,
+      );
+    }
+    return {
+      family_size: coverage.family_size,
+      monthly_premiums,
+      monthly_slcsps,
+      monthly_aptcs,
+    };
+  };
+  const primaryCoverage = resolveCoverage("primary", election.primary);
+  const spouseCoverage = resolveCoverage("spouse", election.spouse);
+  if (selectedPolicies.size !== sourcePolicies.length) {
+    throw new Error(
+      "Form 8962 marriage policies must all be assigned to a worksheet spouse",
+    );
+  }
+  const groups = [primaryCoverage, spouseCoverage].filter((group) =>
     group !== undefined
   );
   if (groups.length === 0) {
@@ -373,8 +455,8 @@ function alternativeMarriageCalculation(
   } = { coveredMonths, contributions, credits };
   for (
     const [role, coverage] of [
-      ["primary", election.primary],
-      ["spouse", election.spouse],
+      ["primary", primaryCoverage],
+      ["spouse", spouseCoverage],
     ] as const
   ) {
     if (!coverage) continue;
@@ -445,9 +527,14 @@ function alternativeMarriageCalculation(
       (sum, group) => sum + group.monthly_slcsps[month],
       0,
     );
+    const aptc = groups.reduce(
+      (sum, group) => sum + group.monthly_aptcs[month],
+      0,
+    );
     if (
       Math.abs(premium - input.monthly_premiums[month]) > 0.01 ||
-      Math.abs(slcsp - input.monthly_slcsps[month]) > 0.01
+      Math.abs(slcsp - input.monthly_slcsps[month]) > 0.01 ||
+      Math.abs(aptc - input.monthly_aptcs[month]) > 0.01
     ) {
       throw new Error(
         "Form 8962 marriage worksheet amounts must reconcile to allocated monthly 1095-A columns",

@@ -135,12 +135,14 @@ Deno.test("f8283.compute: Section A routes the claimed deduction, not the higher
       {
         fmv: 1_200,
         deduction_claimed: 700,
+        similar_item_group: "books",
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
       },
       {
         fmv: 400,
         deduction_claimed: 250,
+        similar_item_group: "books",
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
       },
@@ -231,7 +233,7 @@ Deno.test("f8283.compute: capital gain property is not automatically capped at b
 
 Deno.test("f8283.compute: a stated reduction is honored when below FMV", () => {
   const result = compute({
-    section_b_items: [{
+    section_a_items: [{
       fmv: 3000,
       deduction_claimed: 2500,
       cost_or_adjusted_basis: 5000,
@@ -261,8 +263,72 @@ Deno.test("f8283.compute: section B NOT capital gain property — uses full fmv"
 // 4. Aggregation
 // =============================================================================
 
-Deno.test("f8283.compute: multiple section A items — fmv summed", () => {
-  const result = compute({
+Deno.test("f8283.inputSchema: cross-donee similar books above $5,000 cannot remain in Section A", () => {
+  const parsed = f8283.inputSchema.safeParse({
+    section_a_items: [
+      {
+        property_description: "Books to college",
+        fmv: 2_000,
+        deduction_claimed: 2_000,
+        similar_item_group: "books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        property_description: "Books to university",
+        fmv: 2_500,
+        deduction_claimed: 2_500,
+        similar_item_group: "Books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        property_description: "Books to library",
+        fmv: 900,
+        deduction_claimed: 900,
+        similar_item_group: "books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+    ],
+  });
+  assertEquals(parsed.success, false);
+});
+
+Deno.test("f8283.inputSchema: same cross-donee books qualify for separate Section B items", () => {
+  const parsed = f8283.inputSchema.safeParse({
+    section_b_items: [
+      {
+        property_description: "Books to college",
+        fmv: 2_000,
+        deduction_claimed: 2_000,
+        similar_item_group: "books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        property_description: "Books to university",
+        fmv: 2_500,
+        deduction_claimed: 2_500,
+        similar_item_group: "Books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        property_description: "Books to library",
+        fmv: 900,
+        deduction_claimed: 900,
+        similar_item_group: "books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+    ],
+  });
+  assertEquals(parsed.success, true);
+});
+
+Deno.test("f8283.inputSchema: multiple positive gifts require explicit similar-property categories", () => {
+  const parsed = f8283.inputSchema.safeParse({
     section_a_items: [
       {
         fmv: 200,
@@ -274,8 +340,29 @@ Deno.test("f8283.compute: multiple section A items — fmv summed", () => {
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
       },
+    ],
+  });
+  assertEquals(parsed.success, false);
+});
+
+Deno.test("f8283.compute: multiple section A items — fmv summed", () => {
+  const result = compute({
+    section_a_items: [
+      {
+        fmv: 200,
+        similar_item_group: "books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        fmv: 350,
+        similar_item_group: "books",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
       {
         fmv: 150,
+        similar_item_group: "books",
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
       },
@@ -294,12 +381,14 @@ Deno.test("f8283.compute: section A + section B items combined", () => {
   const result = compute({
     section_a_items: [{
       fmv: 1000,
+      similar_item_group: "clothing",
       charitable_limit_category: "noncash_50",
       is_capital_gain_property: false,
     }],
     section_b_items: [{
       fmv: 6000,
       deduction_claimed: 6000,
+      similar_item_group: "equipment",
       charitable_limit_category: "noncash_50",
       is_capital_gain_property: false,
     }],
@@ -313,21 +402,25 @@ Deno.test("f8283.compute: section A + section B items combined", () => {
   );
 });
 
-Deno.test("f8283.compute: section B with capital gain basis limitation combined with section A", () => {
+Deno.test("f8283.compute: capital gain basis election combines with an unrelated Section A item", () => {
   const result = compute({
-    section_a_items: [{
-      fmv: 500,
-      charitable_limit_category: "noncash_50",
-      is_capital_gain_property: false,
-    }],
-    section_b_items: [{
-      fmv: 8000,
-      deduction_claimed: 3000,
-      cost_or_adjusted_basis: 3000,
-      is_capital_gain_property: true,
-      charitable_limit_category: "noncash_50",
-      capital_gain_reduction_election_confirmed: true,
-    }],
+    section_a_items: [
+      {
+        fmv: 500,
+        similar_item_group: "clothing",
+        charitable_limit_category: "noncash_50",
+        is_capital_gain_property: false,
+      },
+      {
+        fmv: 8000,
+        deduction_claimed: 3000,
+        similar_item_group: "securities",
+        cost_or_adjusted_basis: 3000,
+        is_capital_gain_property: true,
+        charitable_limit_category: "noncash_50",
+        capital_gain_reduction_election_confirmed: true,
+      },
+    ],
   });
   const fields = fieldsOf(result.outputs, schedule_a)!;
   // Explicitly reduced deduction, not an automatic capital-gain basis cap.
@@ -831,9 +924,9 @@ Deno.test("f8283.compute: throws on negative fmv in section B", () => {
 // 7. Edge Cases
 // =============================================================================
 
-Deno.test("f8283.compute: section B capital gain with no basis — uses full fmv", () => {
+Deno.test("f8283.compute: Section A capital gain with no basis uses full FMV", () => {
   const result = compute({
-    section_b_items: [{
+    section_a_items: [{
       fmv: 5000,
       deduction_claimed: 5000,
       is_capital_gain_property: true,
@@ -846,7 +939,7 @@ Deno.test("f8283.compute: section B capital gain with no basis — uses full fmv
 
 Deno.test("f8283.compute: fmv equals basis — uses fmv exactly", () => {
   const result = compute({
-    section_b_items: [{
+    section_a_items: [{
       fmv: 4000,
       deduction_claimed: 4000,
       cost_or_adjusted_basis: 4000,
@@ -867,6 +960,7 @@ Deno.test("f8283.compute: smoke test — section A and section B items combined"
     section_a_items: [
       {
         property_description: "Used clothing",
+        similar_item_group: "clothing",
         fmv: 250,
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
@@ -875,6 +969,7 @@ Deno.test("f8283.compute: smoke test — section A and section B items combined"
       },
       {
         property_description: "Books",
+        similar_item_group: "books",
         fmv: 75,
         charitable_limit_category: "noncash_50",
         is_capital_gain_property: false,
@@ -884,6 +979,7 @@ Deno.test("f8283.compute: smoke test — section A and section B items combined"
     section_b_items: [
       {
         property_description: "Artwork",
+        similar_item_group: "paintings",
         fmv: 12000,
         deduction_claimed: 12000,
         cost_or_adjusted_basis: 8000,

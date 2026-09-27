@@ -159,6 +159,13 @@ based on household income and size. Net PTC flows to **Schedule 3 line 9**
   allocation five onward, the PDF builder appends paginated statement pages and
   marks line 34 No. A page-decoration hook writes the QSEHRA label in the
   first-page top margin. These generated pages have not had filled-render QA.
-  The marriage calculation still needs direct spouse-specific pre-marriage
-  1095-A derivation and full source-to-PDF verification. Self-employed insurance
-  interactions and IRS business rules still need a complete audit.
+  The alternative year-of-marriage election now names each spouse's Form 1095-A
+  policy numbers, and owner-tagged corrected/allocated monthly policy rows feed
+  Worksheets II/IV directly. It rejects a missing, duplicate, mismatched, or
+  unassigned policy rather than accepting manually entered worksheet arrays.
+  This is a breaking replacement of the prior monthly worksheet input shape.
+  Pre-marriage rows reconcile premiums, SLCSP, and APTC to the aggregated 1095-A
+  columns before Part V is emitted. Multiple policies in one state with
+  conflicting SLCSP still stop pending exact coverage-family facts. Source-to-
+  PDF rendering, self-employed insurance interactions, and IRS business rules
+  still need a complete audit.

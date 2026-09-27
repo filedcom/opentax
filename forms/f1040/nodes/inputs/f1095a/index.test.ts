@@ -145,6 +145,64 @@ Deno.test("monthly aptc routes to form8962", () => {
   assertEquals((out?.fields.monthly_aptcs as number[])[5], 60);
 });
 
+Deno.test("identified spouse policy carries corrected 1095-A rows to marriage worksheet", () => {
+  const monthlyPremiums = Array(12).fill(500);
+  const monthlySlcsps = Array(12).fill(600);
+  const correctedSlcsps = [650, ...Array(11).fill(600)];
+  const monthlyAptcs = Array(12).fill(450);
+  const result = compute([
+    minimalItem({
+      policy_number: "ATS-POLICY-1",
+      alternative_marriage_owner: "spouse",
+      coverage_state: "CA",
+      monthly_premiums: monthlyPremiums,
+      monthly_slcsps: monthlySlcsps,
+      monthly_aptcs: monthlyAptcs,
+      slcsp_corrections: [{
+        month: 1,
+        basis: "coverage_family_change",
+        corrected_slcsp: 650,
+      }],
+    }),
+  ]);
+  assertEquals(
+    findOutput(result, "form8962")?.fields.alternative_marriage_policies,
+    [{
+      policy_number: "ATS-POLICY-1",
+      owner: "spouse",
+      coverage_state: "CA",
+      monthly_premiums: monthlyPremiums,
+      monthly_slcsps: correctedSlcsps,
+      monthly_aptcs: monthlyAptcs,
+    }],
+  );
+});
+
+Deno.test("marriage policy source requires unique identity and monthly columns", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        alternative_marriage_owner: "primary",
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(450),
+      })]),
+    Error,
+    "unique policy numbers",
+  );
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        policy_number: "ATS-POLICY-1",
+        alternative_marriage_owner: "primary",
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+      })]),
+    Error,
+    "complete monthly columns",
+  );
+});
+
 Deno.test("issuer_name alone does not produce form8962 output", () => {
   const result = compute([minimalItem()]);
   const out = findOutput(result, "form8962");

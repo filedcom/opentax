@@ -89,6 +89,9 @@ export const itemSchema = z.object({
   // Part I — Issuer / Marketplace information
   issuer_name: z.string().min(1),
   policy_number: z.string().optional(),
+  // Identify which spouse's Pub. 974 pre-marriage worksheet receives this
+  // 1095-A policy. A policy may continue after the marriage month.
+  alternative_marriage_owner: z.enum(["primary", "spouse"]).optional(),
   // State of Marketplace coverage, needed to combine SLCSP across policies.
   coverage_state: z.string().regex(/^[A-Z]{2}$/).optional(),
 
@@ -553,6 +556,34 @@ class F1095ANode extends TaxNode<typeof inputSchema> {
     }
     if (sharedAllocations.length > 0) {
       form8962Fields.shared_policy_allocations = sharedAllocations;
+    }
+    const marriagePolicies = allocatedItems.filter((item) =>
+      item.alternative_marriage_owner !== undefined
+    );
+    if (marriagePolicies.length > 0) {
+      const policyNumbers = marriagePolicies.map((item) => item.policy_number);
+      if (
+        marriagePolicies.some((item) =>
+          !item.policy_number || !item.monthly_premiums ||
+          !item.monthly_slcsps || !item.monthly_aptcs
+        ) || new Set(policyNumbers).size !== policyNumbers.length
+      ) {
+        throw new Error(
+          "Form 1095-A marriage policies need unique policy numbers and complete monthly columns",
+        );
+      }
+      form8962Fields.alternative_marriage_policies = marriagePolicies.map(
+        (item) => ({
+          policy_number: item.policy_number!,
+          owner: item.alternative_marriage_owner!,
+          ...(item.coverage_state
+            ? { coverage_state: item.coverage_state }
+            : {}),
+          monthly_premiums: item.monthly_premiums!,
+          monthly_slcsps: item.monthly_slcsps!,
+          monthly_aptcs: item.monthly_aptcs!,
+        }),
+      );
     }
 
     return {

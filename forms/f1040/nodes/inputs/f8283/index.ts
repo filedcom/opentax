@@ -35,6 +35,13 @@ export enum SectionBPropertyType {
   Other = "other",
 }
 
+const SUPPORTED_HIGH_VALUE_TYPES = new Set<SectionBPropertyType>([
+  SectionBPropertyType.Equipment,
+  SectionBPropertyType.Securities,
+  SectionBPropertyType.Collectibles,
+  SectionBPropertyType.Vehicle,
+]);
+
 const usAddressSchema = z.object({
   line1: z.string().min(1),
   line2: z.string().optional(),
@@ -131,6 +138,9 @@ const sectionAItemSchema = z.object({
   donor_acquisition_description: z.string().optional(),
   fmv: z.number().nonnegative().optional(),
   deduction_claimed: z.number().nonnegative().optional(),
+  // Taxpayer-supplied general property category (for example "books"). The
+  // same category must be used for similar gifts to every donee this year.
+  similar_item_group: z.string().trim().min(1).optional(),
   // Pub. 526 Worksheet 2 category of this actual donee/property combination.
   charitable_limit_category: noncashContributionCategorySchema.optional(),
   is_capital_gain_property: z.boolean().optional(),
@@ -271,6 +281,7 @@ const sectionBItemSchema = z.object({
   // FMV and the Schedule A deduction are distinct, especially for ordinary
   // income property and the specific capital-gain-property reductions.
   deduction_claimed: z.number().nonnegative(),
+  similar_item_group: z.string().trim().min(1).optional(),
   charitable_limit_category: noncashContributionCategorySchema.optional(),
   capital_gain_reduction_election_confirmed: z.literal(true).optional(),
   cost_or_adjusted_basis: z.number().nonnegative().optional(),
@@ -296,6 +307,7 @@ const sectionBItemSchema = z.object({
     // Full appraisal PDF, distinct from the Form 8283 signature PDF, is
     // required when the claimed deduction for this item exceeds $500,000.
     attachment_file_name: z.string().min(1).optional(),
+    covers_similar_item_group_confirmed: z.literal(true).optional(),
   }).superRefine((appraisal, ctx) => {
     if (Boolean(appraisal.appraiser_ein) === Boolean(appraisal.appraiser_ssn)) {
       ctx.addIssue({
@@ -325,14 +337,8 @@ const sectionBItemSchema = z.object({
     });
   }
   if (item.deduction_claimed > 500_000) {
-    const supportedHighValueTypes = new Set<SectionBPropertyType>([
-      SectionBPropertyType.Equipment,
-      SectionBPropertyType.Securities,
-      SectionBPropertyType.Collectibles,
-      SectionBPropertyType.Vehicle,
-    ]);
     if (
-      !item.property_type || !supportedHighValueTypes.has(item.property_type)
+      !item.property_type || !SUPPORTED_HIGH_VALUE_TYPES.has(item.property_type)
     ) {
       ctx.addIssue({
         code: "custom",
@@ -456,11 +462,176 @@ const sectionBItemSchema = z.object({
 export const inputSchema = z.object({
   section_a_items: z.array(sectionAItemSchema).optional(),
   section_b_items: z.array(sectionBItemSchema).optional(),
+}).superRefine((input, ctx) => {
+  const sectionA = input.section_a_items ?? [];
+  const sectionB = input.section_b_items ?? [];
+  const positive = [
+    ...sectionA.map((item, index) => ({
+      item,
+      section: "section_a_items",
+      index,
+    })),
+    ...sectionB.map((item, index) => ({
+      item,
+      section: "section_b_items",
+      index,
+    })),
+  ].filter(({ item }) => (item.deduction_claimed ?? item.fmv ?? 0) > 0);
+  if (positive.length > 1) {
+    for (const { item, section, index } of positive) {
+      if (!item.similar_item_group) {
+        ctx.addIssue({
+          code: "custom",
+          path: [section, index, "similar_item_group"],
+          message:
+            "Multiple Form 8283 gifts need an explicit similar-property category for cross-donee threshold aggregation",
+        });
+      }
+    }
+  }
+  const groupTotals = similarItemGroupTotals(input);
+  for (const [index, item] of sectionA.entries()) {
+    const amount = item.deduction_claimed ?? item.fmv ?? 0;
+    if (amount <= 0) continue;
+    const groupTotal = item.similar_item_group
+      ? groupTotals.get(normalizeSimilarItemGroup(item.similar_item_group)) ??
+        amount
+      : amount;
+    if (groupTotal > 5_000 && !item.vehicle_sale_acknowledgment) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["section_a_items", index, "similar_item_group"],
+        message:
+          "Similar property claimed above $5,000 across all donees needs Section B and qualified-appraisal facts for each non-exempt gift",
+      });
+    }
+  }
+  for (const [index, item] of sectionB.entries()) {
+    const groupTotal = item.similar_item_group
+      ? groupTotals.get(normalizeSimilarItemGroup(item.similar_item_group)) ??
+        item.deduction_claimed
+      : item.deduction_claimed;
+    if (groupTotal <= 5_000) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["section_b_items", index],
+        message:
+          "Section B ordinary gift needs more than $5,000 claimed for the item or its similar-item group",
+      });
+    }
+    if (groupTotal > 500_000) {
+      if (
+        !item.property_type ||
+        !SUPPORTED_HIGH_VALUE_TYPES.has(item.property_type)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["section_b_items", index, "property_type"],
+          message:
+            "High-value similar-item group property type needs its separate special-substantiation route",
+        });
+      }
+      if (!item.qualified_appraisal?.attachment_file_name) {
+        ctx.addIssue({
+          code: "custom",
+          path: [
+            "section_b_items",
+            index,
+            "qualified_appraisal",
+            "attachment_file_name",
+          ],
+          message:
+            "Similar-item group claimed above $500,000 needs a full qualified-appraisal PDF covering the group",
+        });
+      }
+      if (
+        item.similar_item_group &&
+        positive.filter(({ item: candidate }) =>
+            candidate.similar_item_group &&
+            normalizeSimilarItemGroup(candidate.similar_item_group) ===
+              normalizeSimilarItemGroup(item.similar_item_group!)
+          ).length > 1 &&
+        item.qualified_appraisal?.covers_similar_item_group_confirmed !== true
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: [
+            "section_b_items",
+            index,
+            "qualified_appraisal",
+            "covers_similar_item_group_confirmed",
+          ],
+          message:
+            "High-value similar-item appraisal must cover every item in the declared group",
+        });
+      }
+    }
+  }
+  for (const [group, total] of groupTotals) {
+    if (total <= 500_000) continue;
+    const membersA = sectionA.filter((item) =>
+      item.similar_item_group &&
+      normalizeSimilarItemGroup(item.similar_item_group) === group
+    );
+    const membersB = sectionB.filter((item) =>
+      item.similar_item_group &&
+      normalizeSimilarItemGroup(item.similar_item_group) === group
+    );
+    if (membersA.length > 0 && membersB.length > 0) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "High-value similar-item group mixes Section A exception and Section B gifts; appraisal exception allocation is not implemented",
+      });
+    }
+    const appraisalFiles = new Set(
+      membersB.map((item) => item.qualified_appraisal?.attachment_file_name)
+        .filter(Boolean),
+    );
+    if (appraisalFiles.size > 1) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "High-value similar-item group needs one shared full qualified appraisal covering every item and donee",
+      });
+    }
+  }
 });
 
 export type SectionAItem = z.infer<typeof sectionAItemSchema>;
 export type SectionBItem = z.infer<typeof sectionBItemSchema>;
 export type F8283Input = z.infer<typeof inputSchema>;
+
+export function normalizeSimilarItemGroup(group: string): string {
+  return group.trim().toLocaleLowerCase("en-US");
+}
+
+export function similarItemGroupTotals(input: {
+  section_a_items?: readonly {
+    similar_item_group?: string;
+    deduction_claimed?: number;
+    fmv?: number;
+  }[];
+  section_b_items?: readonly {
+    similar_item_group?: string;
+    deduction_claimed?: number;
+    fmv?: number;
+  }[];
+}): Map<string, number> {
+  const totals = new Map<string, number>();
+  for (
+    const item of [
+      ...(input.section_a_items ?? []),
+      ...(input.section_b_items ?? []),
+    ]
+  ) {
+    if (!item.similar_item_group) continue;
+    const key = normalizeSimilarItemGroup(item.similar_item_group);
+    const amount = item.deduction_claimed ?? item.fmv ?? 0;
+    totals.set(key, (totals.get(key) ?? 0) + amount);
+  }
+  return totals;
+}
 
 type ClassifiedItem = {
   property_description?: string;

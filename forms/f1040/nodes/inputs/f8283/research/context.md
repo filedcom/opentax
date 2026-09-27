@@ -5,12 +5,38 @@ The authoritative source for this implementation is the
 local TY2025v5.4 `IRS8283.xsd`. This file describes the current build pass, not
 verified IRS acceptance.
 
+## Similar-item aggregation build pass (unverified)
+
+The [2025 Form 8283 instructions](https://www.irs.gov/instructions/i8283) define
+similar items by general category or type (for example, books, clothing,
+jewelry, paintings, or nonpublic stock), not by donee. Multiple positive gifts
+now need an explicit `similar_item_group` source category on each item; the
+software does not infer it from descriptions. Claimed values before AGI limits
+aggregate case-insensitively across Section A, Section B, and all donees. A
+group above $5,000 cannot leave a non-exempt item in Section A and requires
+Section B qualified-appraisal facts. The separate per-item `IRS8283` documents
+emitted by the current MeF builder also meet the distinct donee-document
+requirement. Individual Section B items at or below $5,000 are allowed only when
+their group exceeds $5,000. A supported Section B group above $500,000 now needs
+one shared full appraisal PDF, an explicit statement that it covers all items,
+and a binary link on every group document. The multi-donee and boundary cases
+are written but unrun.
+
+The declaration itself cannot authenticate that gifts really are similar, that
+the PDF covers every item, or that appraiser/donee signatures are valid. Mixed
+Section A exemption and ordinary Section B gifts above $500,000 are stopped
+pending the exception's treatment. Art, conservation, public securities,
+intellectual property, inventory, and other special routes remain outside this
+bounded group implementation. There is no registered Form 8283 filed-PDF
+descriptor in the repository, so native MeF documents are built but filled Form
+8283 PDF output and visual validation remain open.
+
 ## Calculation and document model
 
-- Section A currently sends reported FMV to Schedule A line 12 for nonvehicle
-  gifts. For vehicles, it sends `deduction_claimed` when supplied. A vehicle
-  claimed above $500 requires the donee's certified facts, a contribution date,
-  a VIN, and a claimed amount within the supported sale-proceeds, needy-person
+- Section A now sends the source claimed amount, or FMV when no reduction is
+  stated, with an explicit AGI-limit category to Schedule A. A vehicle claimed
+  above $500 requires the donee's certified facts, a contribution date, a VIN,
+  and a claimed amount within the supported sale-proceeds, needy-person
   transfer, significant-intervening-use, or material-improvement route. The
   three gross-proceeds exceptions use Section A only when the claimed deduction
   is at most $5,000; larger claims need Section B and a qualified appraisal.

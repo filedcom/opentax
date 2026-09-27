@@ -1,4 +1,6 @@
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import { form8962 as form8962Mef } from "../../../../2025/mef/forms/f8962.ts";
+import { form8962Pdf } from "../../../../2025/pdf/forms/f8962.ts";
 import { FilingStatus } from "../../../types.ts";
 import { form8962 } from "./index.ts";
 
@@ -84,10 +86,17 @@ const marriageAlternative = {
   marriage_month: 6,
   primary: {
     family_size: 1,
-    monthly_premiums: [...Array(6).fill(1_000), ...Array(6).fill(0)],
-    monthly_slcsps: [...Array(6).fill(1_200), ...Array(6).fill(0)],
+    policy_numbers: ["PRIMARY-1095A"],
   },
 } as const;
+const marriagePolicy = {
+  policy_number: "PRIMARY-1095A",
+  owner: "primary" as const,
+  coverage_state: "NY",
+  monthly_premiums: Array(12).fill(1_000),
+  monthly_slcsps: Array(12).fill(1_200),
+  monthly_aptcs: Array(12).fill(1_000),
+};
 
 Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit", () => {
   const result = compute({
@@ -99,6 +108,7 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
     monthly_aptcs: Array(12).fill(1_000),
     annual_line11_eligible: true,
     alternative_marriage: marriageAlternative,
+    alternative_marriage_policies: [marriagePolicy],
   });
   const calculated = fields(result, "form8962");
   const rows = calculated?.monthly_ptc_rows as Array<{
@@ -121,6 +131,22 @@ Deno.test("Pub 974 marriage Worksheets I-V elect beneficial pre-marriage credit"
     end_month: 6,
   });
   assertEquals(calculated?.alternative_marriage_spouse, undefined);
+  const xml = form8962Mef.build(calculated!);
+  assertStringIncludes(xml, "<AltCalcForMarriagePrimaryGrp>");
+  assertStringIncludes(
+    xml,
+    "<MonthlyContributionAmt>153</MonthlyContributionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ReconciledPremiumTaxCreditAmt>0</ReconciledPremiumTaxCreditAmt>",
+  );
+  const pdf = form8962Pdf.projectFields?.(calculated!, {});
+  assertEquals(pdf?.pdf_line9_yes, true);
+  assertEquals(pdf?.pdf_line10_no, true);
+  assertEquals(pdf?.pdf_marriage_primary_family_size, "1");
+  assertEquals(pdf?.pdf_marriage_primary_start_month, "01");
+  assertEquals(pdf?.pdf_marriage_primary_end_month, "06");
 });
 
 Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an enrollment gap", () => {
@@ -141,10 +167,17 @@ Deno.test("Pub 974 marriage worksheet keeps line 12-23 contribution through an e
       marriage_month: 3,
       primary: {
         family_size: 1,
-        monthly_premiums: premiums,
-        monthly_slcsps: slcsps,
+        policy_numbers: ["GAP-1095A"],
       },
     },
+    alternative_marriage_policies: [{
+      policy_number: "GAP-1095A",
+      owner: "primary",
+      coverage_state: "NY",
+      monthly_premiums: premiums,
+      monthly_slcsps: slcsps,
+      monthly_aptcs: aptcs,
+    }],
   });
   const form = fields(result, "form8962");
   const rows = form?.monthly_ptc_rows as Array<{
@@ -182,6 +215,7 @@ Deno.test("marriage alternative requires MFJ and reconciled pre-marriage workshe
     monthly_slcsps: Array(12).fill(1_200),
     monthly_aptcs: Array(12).fill(1_000),
     alternative_marriage: marriageAlternative,
+    alternative_marriage_policies: [marriagePolicy],
   };
   assertThrows(
     () => compute({ ...base, filing_status: FilingStatus.Single }),
@@ -193,13 +227,10 @@ Deno.test("marriage alternative requires MFJ and reconciled pre-marriage workshe
       compute({
         ...base,
         filing_status: FilingStatus.MFJ,
-        alternative_marriage: {
-          ...marriageAlternative,
-          primary: {
-            ...marriageAlternative.primary,
-            monthly_premiums: [...Array(6).fill(900), ...Array(6).fill(0)],
-          },
-        },
+        alternative_marriage_policies: [{
+          ...marriagePolicy,
+          monthly_premiums: Array(12).fill(900),
+        }],
       }),
     Error,
     "must reconcile",
@@ -209,8 +240,7 @@ Deno.test("marriage alternative requires MFJ and reconciled pre-marriage workshe
 Deno.test("marriage Worksheets II and IV add two separate pre-marriage families", () => {
   const group = {
     family_size: 1,
-    monthly_premiums: [...Array(6).fill(500), ...Array(6).fill(0)],
-    monthly_slcsps: [...Array(6).fill(600), ...Array(6).fill(0)],
+    policy_numbers: ["PRIMARY-1095A"],
   };
   const result = compute({
     filing_status: FilingStatus.MFJ,
@@ -222,8 +252,25 @@ Deno.test("marriage Worksheets II and IV add two separate pre-marriage families"
     alternative_marriage: {
       ...marriageAlternative,
       primary: group,
-      spouse: group,
+      spouse: { family_size: 1, policy_numbers: ["SPOUSE-1095A"] },
     },
+    alternative_marriage_policies: [
+      {
+        ...marriagePolicy,
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(500),
+      },
+      {
+        ...marriagePolicy,
+        policy_number: "SPOUSE-1095A",
+        owner: "spouse",
+        coverage_state: "CA",
+        monthly_premiums: Array(12).fill(500),
+        monthly_slcsps: Array(12).fill(600),
+        monthly_aptcs: Array(12).fill(500),
+      },
+    ],
   });
   const calculated = fields(result, "form8962");
   const rows = calculated?.monthly_ptc_rows as Array<{
@@ -253,9 +300,63 @@ Deno.test("marriage alternative is not elected without excess APTC", () => {
         monthly_slcsps: Array(12).fill(1_200),
         monthly_aptcs: Array(12).fill(100),
         alternative_marriage: marriageAlternative,
+        alternative_marriage_policies: [{
+          ...marriagePolicy,
+          monthly_aptcs: Array(12).fill(100),
+        }],
       }),
     Error,
     "requires excess APTC",
+  );
+});
+
+Deno.test("marriage alternative rejects unsourced and mismatched policy identities", () => {
+  const base = {
+    filing_status: FilingStatus.MFJ,
+    household_size: 2,
+    taxpayer_modified_agi: 80_000,
+    monthly_premiums: Array(12).fill(1_000),
+    monthly_slcsps: Array(12).fill(1_200),
+    monthly_aptcs: Array(12).fill(1_000),
+    alternative_marriage: marriageAlternative,
+  };
+  assertThrows(() => compute(base), Error, "uniquely identified");
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        alternative_marriage_policies: [{
+          ...marriagePolicy,
+          owner: "spouse",
+        }],
+      }),
+    Error,
+    "owned by the selected spouse",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        alternative_marriage_policies: [marriagePolicy, marriagePolicy],
+      }),
+    Error,
+    "uniquely identified",
+  );
+  assertThrows(
+    () =>
+      compute({
+        ...base,
+        alternative_marriage: {
+          ...marriageAlternative,
+          primary: {
+            family_size: 1,
+            monthly_premiums: Array(12).fill(1_000),
+            monthly_slcsps: Array(12).fill(1_200),
+          },
+        },
+        alternative_marriage_policies: [marriagePolicy],
+      }),
+    Error,
   );
 });
 

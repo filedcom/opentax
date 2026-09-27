@@ -232,6 +232,120 @@ function sectionBHighValueEquipmentGift() {
   };
 }
 
+Deno.test("Form 8283 similar books across three donees need three Section B documents", () => {
+  const base = sectionBHighValueEquipmentGift();
+  const gifts = [
+    ["City College", "111111111", 2_000],
+    ["State University", "222222222", 2_500],
+    ["Public Library", "333333333", 900],
+  ] as const;
+  const sectionB = gifts.map(([organization_name, ein, amount], index) => ({
+    ...base,
+    property_description: `Books lot ${index + 1}`,
+    property_type: SectionBPropertyType.Collectibles,
+    fmv: amount,
+    deduction_claimed: amount,
+    similar_item_group: "books",
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+    qualified_appraisal: {
+      ...base.qualified_appraisal,
+      attachment_file_name: undefined,
+    },
+    donee_acknowledgment: {
+      ...base.donee_acknowledgment,
+      organization_name,
+      ein,
+      signature_attachment_file_name: `Donee-${index + 1}.pdf`,
+    },
+  }));
+  const documents = form8283.build({ section_b_items: sectionB }, {
+    attachmentDescriptionsByFileName: {
+      "Form8283AppraiserSignature.pdf":
+        "Form 8283 appraiser signature document",
+      "Donee-1.pdf": "Form 8283 Donee signature document",
+      "Donee-2.pdf": "Form 8283 Donee signature document",
+      "Donee-3.pdf": "Form 8283 Donee signature document",
+    },
+  });
+  assertEquals(documents.length, 3);
+  for (const [index, document] of documents.entries()) {
+    assertStringIncludes(
+      document,
+      `<DeductionClaimedAmt>${gifts[index]![2]}</DeductionClaimedAmt>`,
+    );
+    assertStringIncludes(
+      document,
+      `<BusinessNameLine1Txt>${gifts[index]![0]}</BusinessNameLine1Txt>`,
+    );
+  }
+});
+
+Deno.test("Form 8283 similar equipment above $500,000 shares a full group appraisal attachment", () => {
+  const base = sectionBHighValueEquipmentGift();
+  const sectionB = [1, 2].map((index) => ({
+    ...base,
+    fmv: 300_000,
+    deduction_claimed: 300_000,
+    similar_item_group: "industrial equipment",
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+    qualified_appraisal: {
+      ...base.qualified_appraisal,
+      attachment_file_name: "QualifiedAppraisal-EquipmentGroup.pdf",
+      covers_similar_item_group_confirmed: true as const,
+    },
+    donee_acknowledgment: {
+      ...base.donee_acknowledgment,
+      organization_name: `Charity ${index}`,
+      ein: index === 1 ? "111111111" : "222222222",
+      signature_attachment_file_name: `Donee-${index}.pdf`,
+    },
+  }));
+  const documents = form8283.build({ section_b_items: sectionB }, {
+    attachmentDescriptionsByFileName: {
+      "Form8283AppraiserSignature.pdf":
+        "Form 8283 appraiser signature document",
+      "Donee-1.pdf": "Form 8283 Donee signature document",
+      "Donee-2.pdf": "Form 8283 Donee signature document",
+      "QualifiedAppraisal-EquipmentGroup.pdf":
+        "Qualified Appraisal industrial equipment group",
+    },
+    documentIdsByAttachmentFileName: {
+      "Form8283AppraiserSignature.pdf": "PDF-APPRAISER",
+      "Donee-1.pdf": "PDF-DONEE1",
+      "Donee-2.pdf": "PDF-DONEE2",
+      "QualifiedAppraisal-EquipmentGroup.pdf": "PDF-GROUP",
+    },
+  });
+  assertEquals(documents.length, 2);
+  for (const document of documents) {
+    assertStringIncludes(document, "PDF-GROUP");
+  }
+});
+
+Deno.test("Form 8283 combined $500,000 group threshold rejects missing full appraisal even when each item is below it", () => {
+  const base = sectionBHighValueEquipmentGift();
+  const items = [1, 2].map(() => ({
+    ...base,
+    fmv: 300_000,
+    deduction_claimed: 300_000,
+    similar_item_group: "industrial equipment",
+    charitable_limit_category: "noncash_50" as const,
+    is_capital_gain_property: false,
+    qualified_appraisal: {
+      ...base.qualified_appraisal,
+      attachment_file_name: undefined,
+      covers_similar_item_group_confirmed: true as const,
+    },
+  }));
+  assertThrows(
+    () => form8283.build({ section_b_items: items }),
+    Error,
+    "Similar-item group claimed above $500,000 needs a full qualified-appraisal PDF",
+  );
+});
+
 Deno.test("Form 8283 Section A includes VIN without a donee PDF for a vehicle claimed at $500 or less", async () => {
   const bundle = await buildMefBundle({
     f8283: {

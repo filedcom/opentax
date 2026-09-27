@@ -3,9 +3,11 @@ import {
   type F8283Input,
   FMVMethod,
   inputSchema,
+  normalizeSimilarItemGroup,
   type SectionAItem,
   type SectionBItem,
   SectionBPropertyType,
+  similarItemGroupTotals,
 } from "../../../nodes/inputs/f8283/index.ts";
 import type { MefBuildContext, MefFormDescriptor } from "../form-descriptor.ts";
 
@@ -299,6 +301,7 @@ function requiredQualifiedAppraisalAttachment(
 function buildSectionBItem(
   item: SectionBItem,
   index: number,
+  similarGroupTotal: number,
   context: MefBuildContext,
   vehicleStatementId?: string,
   vehicleAttachmentId?: string,
@@ -318,9 +321,9 @@ function buildSectionBItem(
       } needs property, acquisition, qualified appraisal, and signed donee facts`,
     );
   }
-  if (item.deduction_claimed <= 5_000) {
+  if (similarGroupTotal <= 5_000) {
     throw new Error(
-      "Form 8283 Section B ordinary gift needs a claimed deduction above $5,000",
+      "Form 8283 Section B ordinary gift needs a claimed deduction above $5,000 for the item or similar-item group",
     );
   }
   if (
@@ -375,7 +378,7 @@ function buildSectionBItem(
   const signatureIds = [appraiserId, doneeId].filter(
     (id): id is string => id !== undefined,
   );
-  const qualifiedAppraisalId = item.deduction_claimed > 500_000
+  const qualifiedAppraisalId = similarGroupTotal > 500_000
     ? requiredQualifiedAppraisalAttachment(
       appraisal.attachment_file_name,
       context,
@@ -451,6 +454,7 @@ export const form8283: MefFormDescriptor<
     const parsed = inputSchema.parse(fields);
     const sectionA = parsed.section_a_items ?? [];
     const sectionB = parsed.section_b_items ?? [];
+    const similarGroupTotals = similarItemGroupTotals(parsed);
     const sectionAVehicleAttachments = sectionA.filter(needsVehicleStatement)
       .map((item) => requiredVehicleAttachment(item, context));
     const sectionBVehicleAttachments = sectionB
@@ -505,6 +509,11 @@ export const form8283: MefFormDescriptor<
         buildSectionBItem(
           item,
           index,
+          item.similar_item_group
+            ? similarGroupTotals.get(
+              normalizeSimilarItemGroup(item.similar_item_group),
+            ) ?? item.deduction_claimed
+            : item.deduction_claimed,
           context,
           needsSectionBVehicleStatement(item)
             ? statementIds[nextStatement++]
