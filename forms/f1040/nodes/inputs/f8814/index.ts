@@ -55,6 +55,9 @@ export const itemSchema = z.object({
   capital_gain_nominee_distribution: z.number().positive().optional(),
   alaska_pfd: z.number().nonnegative().optional(),
   nontaxable_social_security: z.number().nonnegative().optional(),
+  child_had_foreign_account: z.boolean().optional(),
+  // Distribution, grantor status, or transfer to a foreign trust in 2025.
+  child_foreign_trust_part_iii_event: z.boolean().optional(),
 }).superRefine((item, ctx) => {
   if ((item.qualified_dividends ?? 0) > (item.dividend_income ?? 0)) {
     ctx.addIssue({
@@ -178,6 +181,12 @@ class F8814Node extends TaxNode<typeof inputSchema> {
     const line12 = sum((line) => line.line12);
     const line15 = sum((line) => line.line15);
     const line12InvestmentIncome = sum((line) => line.line12InvestmentIncome);
+    const childHadForeignAccount = lines.some((line) =>
+      line.item.child_had_foreign_account === true
+    );
+    const childHadForeignTrust = lines.some((line) =>
+      line.item.child_foreign_trust_part_iii_event === true
+    );
     const outputs: NodeOutput[] = [
       { nodeType: "form8814", fields: { items: lines } },
       {
@@ -206,6 +215,15 @@ class F8814Node extends TaxNode<typeof inputSchema> {
         },
       },
     ];
+    if (childHadForeignAccount || childHadForeignTrust) {
+      outputs.push({
+        nodeType: schedule_b.nodeType,
+        fields: {
+          ...(childHadForeignAccount ? { form8814_foreign_account: true } : {}),
+          ...(childHadForeignTrust ? { form8814_foreign_trust: true } : {}),
+        },
+      });
+    }
     const privateActivityBondInterest = sum((line) =>
       line.item.private_activity_bond_interest ?? 0
     );

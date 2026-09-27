@@ -2,7 +2,7 @@
 
 ## Overview
 
-Schedule B aggregates taxable interest income (Part I) and ordinary dividend income (Part II) from upstream nodes (f1099int and f1099div), computes the total taxable interest (line 4 → Form 1040 line 2b) and total ordinary dividends (line 6 → Form 1040 line 3b), and gates Part III (foreign accounts/trusts) when either total exceeds $1,500.
+Schedule B aggregates taxable interest income (Part I) and ordinary dividend income (Part II) from upstream nodes (f1099int and f1099div), computes the total taxable interest (line 4 → Form 1040 line 2b) and total ordinary dividends (line 6 → Form 1040 line 3b). Explicit Part III answers also file Schedule B when an account or trust triggers it, including a child's facts from Form 8814.
 
 The node receives per-payer entries from f1099int (taxable_interest_net already net of nominee/ABP/OID adjustments) and per-payer entries from f1099div (ordinaryDividends = box1a, isNominee flag). It does NOT receive or route tax-exempt interest (that goes directly to Form 1040 line 2a from f1099int).
 
@@ -55,8 +55,8 @@ Line 6 flows to Form 1040 line 3b (ordinary dividends).
 
 > **Source:** IRS Schedule B 2025 form, Part I Line 4 note; Part II Line 6 note — .research/docs/f1040sb.pdf
 
-### Step 5 — Part III threshold gate (informational)
-If line 4 > $1,500 OR line 6 > $1,500, Part III must be completed (foreign accounts questions). This is not computed by this node — it is user-answered. The node computes the boolean condition only (not emitted as output, just part of form logic).
+### Step 5 — Part III foreign accounts and trusts
+The `schedule_b_part_iii` input supplies the foreign-account answer, the separate FinCEN Form 114 filing answer, country codes plus names when FBAR filing is required, and the foreign-trust answer. An elected child's foreign account or trust forces the corresponding Yes answer and the MeF `FORM8814` literal. The child's account alone does not establish whether the taxpayer must file FinCEN Form 114; an explicit answer is required. Part III can file Schedule B without interest or dividends. Line 4 or line 6 over $1,500 also requires Part III to be answered, but a complete global answer gate remains open.
 
 > **Source:** IRS Schedule B 2025 form, Part I/II Notes; Part III header — .research/docs/f1040sb.pdf
 
@@ -119,7 +119,7 @@ flowchart LR
 
 4. **Dividend threshold for Part II appearance**: f1099div only sends dividend entries to schedule_b when total box1a > $1,500 OR any item isNominee. So schedule_b may receive interest entries but no dividend entries (when all dividend totals ≤ $1,500 and no nominees).
 
-5. **Part III foreign accounts**: Not computed — user-answered checkbox. Threshold condition (line 4 > $1,500 or line 6 > $1,500) is informational only.
+5. **Part III foreign accounts**: Explicit taxpayer answers and affirmative elected-child facts combine. FBAR filing is never inferred from account value or the child's election. The PDF prints two country names or appends a country statement; MeF emits up to 25 IRS country codes.
 
 6. **Zero outputs**: If all interest nets to zero after EE/I exclusion and no dividends → return empty outputs (no f1040 routing needed).
 

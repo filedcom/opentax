@@ -103,6 +103,70 @@ Deno.test("schedule_b: information-only below-threshold dividends do not file th
   );
 });
 
+Deno.test("schedule_b: No foreign answers do not force a below-threshold filing", () => {
+  assertEquals(
+    scheduleB.build({
+      dividend_info: [{ payerName: "Fund A", amount: 1_200 }],
+      print_line6_total: 1_200,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    }),
+    "",
+  );
+});
+
+Deno.test("schedule_b: Part III No answers alone do not create a document", () => {
+  assertEquals(
+    scheduleB.build({
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    }),
+    "",
+  );
+});
+
+Deno.test("schedule_b: Form 8814 foreign-account and trust answers file Part III", () => {
+  const xml = scheduleB.build({
+    form8814_foreign_account: true,
+    foreign_accounts_question: true,
+    fincen_form114_required: false,
+    form8814_foreign_trust: true,
+    foreign_trust_question: true,
+  });
+  assertStringIncludes(xml, "<Form8814LiteralCd>FORM8814</Form8814LiteralCd>");
+  assertStringIncludes(
+    xml,
+    "<ForeignAccountsQuestionInd>true</ForeignAccountsQuestionInd>",
+  );
+  assertStringIncludes(xml, "<FinCENForm114Ind>false</FinCENForm114Ind>");
+  assertStringIncludes(
+    xml,
+    "<TrustFormLiteralCd>FORM8814</TrustFormLiteralCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTrustQuestionInd>true</ForeignTrustQuestionInd>",
+  );
+});
+
+Deno.test("schedule_b: FBAR Yes carries ordered IRS country codes", () => {
+  const xml = scheduleB.build({
+    foreign_accounts_question: true,
+    fincen_form114_required: true,
+    foreign_country_codes: ["CA", "FR"],
+    foreign_trust_question: false,
+  });
+  assertStringIncludes(xml, "<FinCENForm114Ind>true</FinCENForm114Ind>");
+  assertStringIncludes(
+    xml,
+    "<ForeignCountryCd>CA</ForeignCountryCd><ForeignCountryCd>FR</ForeignCountryCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTrustQuestionInd>false</ForeignTrustQuestionInd>",
+  );
+});
+
 // ---------------------------------------------------------------------------
 // Section 5: Sparse output
 // ---------------------------------------------------------------------------

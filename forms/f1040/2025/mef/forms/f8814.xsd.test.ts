@@ -112,8 +112,17 @@ Deno.test({
           dividend_nominee_distribution: 200,
           capital_gain_distributions: 100,
           capital_gain_nominee_distribution: 50,
+          child_had_foreign_account: true,
+          child_foreign_trust_part_iii_event: true,
         }),
       ],
+    },
+    schedule_b: {
+      form8814_foreign_account: true,
+      foreign_accounts_question: true,
+      fincen_form114_required: false,
+      form8814_foreign_trust: true,
+      foreign_trust_question: true,
     },
   }, filer);
   assertStringIncludes(xml, "<ChildTaxableInterestStmt documentId=");
@@ -146,6 +155,20 @@ Deno.test({
   assertStringIncludes(
     forms[1][1],
     'nomineeDistributionCd="ND" nomineeDistributionAmt="50"',
+  );
+  assertStringIncludes(xml, "<Form8814LiteralCd>FORM8814</Form8814LiteralCd>");
+  assertStringIncludes(
+    xml,
+    "<ForeignAccountsQuestionInd>true</ForeignAccountsQuestionInd>",
+  );
+  assertStringIncludes(xml, "<FinCENForm114Ind>false</FinCENForm114Ind>");
+  assertStringIncludes(
+    xml,
+    "<TrustFormLiteralCd>FORM8814</TrustFormLiteralCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignTrustQuestionInd>true</ForeignTrustQuestionInd>",
   );
   const path = await Deno.makeTempFile({ suffix: ".xml" });
   try {

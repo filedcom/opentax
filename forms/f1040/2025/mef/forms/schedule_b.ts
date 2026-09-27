@@ -10,6 +10,12 @@ export interface Fields {
   print_line2_total?: number | null;
   print_line4_total?: number | null;
   print_line6_total?: number | null;
+  foreign_accounts_question?: boolean;
+  fincen_form114_required?: boolean;
+  foreign_country_codes?: readonly string[];
+  foreign_trust_question?: boolean;
+  form8814_foreign_account?: boolean;
+  form8814_foreign_trust?: boolean;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -23,6 +29,10 @@ export const FIELD_MAP: ReadonlyArray<readonly [keyof Fields, string]> = [
   ["taxable_interest_net", "TaxableInterestSubtotalAmt"],
   ["ee_bond_exclusion", "ExcludableSavingsBondIntAmt"],
   ["ordinaryDividends", "TotalOrdinaryDividendsAmt"],
+  ["foreign_accounts_question", "ForeignAccountsQuestionInd"],
+  ["fincen_form114_required", "FinCENForm114Ind"],
+  ["foreign_country_codes", "ForeignCountryCd"],
+  ["foreign_trust_question", "ForeignTrustQuestionInd"],
 ];
 
 function buildIRS1040ScheduleB(fields: Input): string {
@@ -93,6 +103,16 @@ function buildIRS1040ScheduleB(fields: Input): string {
   const dividends = typeof fields.print_line6_total === "number"
     ? fields.print_line6_total
     : sum(fields.ordinaryDividends);
+  if (
+    fields.taxable_interest_net === undefined &&
+    fields.interest_rows === undefined &&
+    fields.ordinaryDividends === undefined &&
+    fields.dividend_info === undefined &&
+    fields.form8814_dividends === undefined &&
+    fields.ee_bond_exclusion === undefined &&
+    fields.foreign_accounts_question !== true &&
+    fields.foreign_trust_question !== true
+  ) return "";
   // Information-only deposits from below-threshold 1099-DIV and Form 8814
   // must not force Schedule B onto an otherwise below-threshold return.
   if (
@@ -101,6 +121,8 @@ function buildIRS1040ScheduleB(fields: Input): string {
     fields.ordinaryDividends === undefined &&
     fields.taxable_interest_net === undefined &&
     fields.interest_rows === undefined &&
+    fields.foreign_accounts_question !== true &&
+    fields.foreign_trust_question !== true &&
     (dividends ?? 0) <= 1500
   ) return "";
   const rows = Array.from({ length: 15 }, (_, index) => {
@@ -142,6 +164,26 @@ function buildIRS1040ScheduleB(fields: Input): string {
     dividends === undefined
       ? ""
       : element("TotalOrdinaryDividendsAmt", dividends),
+    fields.form8814_foreign_account === true
+      ? element("Form8814LiteralCd", "FORM8814")
+      : "",
+    fields.foreign_accounts_question === undefined ? "" : element(
+      "ForeignAccountsQuestionInd",
+      String(fields.foreign_accounts_question),
+    ),
+    fields.fincen_form114_required === undefined
+      ? ""
+      : element("FinCENForm114Ind", String(fields.fincen_form114_required)),
+    ...(fields.foreign_country_codes ?? []).map((code) =>
+      element("ForeignCountryCd", code)
+    ),
+    fields.form8814_foreign_trust === true
+      ? element("TrustFormLiteralCd", "FORM8814")
+      : "",
+    fields.foreign_trust_question === undefined ? "" : element(
+      "ForeignTrustQuestionInd",
+      String(fields.foreign_trust_question),
+    ),
   ];
   return elements("IRS1040ScheduleB", children);
 }

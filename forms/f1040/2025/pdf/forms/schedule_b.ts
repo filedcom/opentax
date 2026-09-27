@@ -1,5 +1,9 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
+import {
+  appendScheduleBForeignCountriesStatement,
+  foreignCountryPrintFields,
+} from "./schedule_b_foreign_countries_statement.ts";
 
 // IRS Schedule B (2025) AcroForm field names.
 // Verified against the f1040sb--2025.pdf AcroForm field dump (one page):
@@ -9,13 +13,11 @@ import { appendScheduleBInterestStatement } from "./schedule_b_interest_statemen
 //   Part II — line 5 payer table: 15 name/amount pairs f1_34/f1_35 … f1_62/f1_63
 //   f1_64 = line 6 total
 //   Part III — c1_1 = 7a Yes/No, c1_2 = FinCEN 114 Yes/No, f1_65/f1_66 = 7b
-//   countries, c1_3 = line 8 Yes/No. Left blank: no engine data source — the
-//   taxpayer answers Part III by hand when this schedule is filed.
+//   countries, c1_3 = line 8 Yes/No. The child Form 8814 source can force Yes
+//   on lines 7a/8; the FBAR filing answer remains an explicit taxpayer fact.
 //
 // print_* keys are self-emitted by the schedule_b node. The schedule itself is
-// only included when required: over $1,500 of taxable interest (line 4) or
-// ordinary dividends (line 6). (Schedule B instructions; the foreign-account
-// trigger is unmodeled.)
+// included for threshold income or an affirmative foreign account/trust fact.
 
 function interestRow(i: number): PdfFieldEntry[] {
   const nameField = i === 1
@@ -73,12 +75,65 @@ const fields: ReadonlyArray<PdfFieldEntry> = [
     domainKey: "print_line6_total",
     pdfField: "topmostSubform[0].Page1[0].f1_64[0]",
   },
+  {
+    kind: "checkboxWhen",
+    domainKey: "foreign_accounts_question",
+    pdfField: "topmostSubform[0].Page1[0].TagcorrectingSubform[0].c1_1[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "foreign_accounts_question",
+    pdfField: "topmostSubform[0].Page1[0].TagcorrectingSubform[0].c1_1[1]",
+    whenValue: "false",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "fincen_form114_required",
+    pdfField: "topmostSubform[0].Page1[0].c1_2[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "fincen_form114_required",
+    pdfField: "topmostSubform[0].Page1[0].c1_2[1]",
+    whenValue: "false",
+  },
+  {
+    kind: "text",
+    domainKey: "print_foreign_country_line1",
+    pdfField: "topmostSubform[0].Page1[0].f1_65[0]",
+  },
+  {
+    kind: "text",
+    domainKey: "print_foreign_country_line2",
+    pdfField: "topmostSubform[0].Page1[0].f1_66[0]",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "foreign_trust_question",
+    pdfField: "topmostSubform[0].Page1[0].c1_3[0]",
+    whenValue: "true",
+  },
+  {
+    kind: "checkboxWhen",
+    domainKey: "foreign_trust_question",
+    pdfField: "topmostSubform[0].Page1[0].c1_3[1]",
+    whenValue: "false",
+  },
 ];
 
 export const scheduleBPdf: PdfFormDescriptor = {
   pendingKey: "schedule_b",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f1040sb--2025.pdf",
   fields,
+  projectFields(fields) {
+    const names = fields.foreign_country_names;
+    return {
+      ...fields,
+      ...(Array.isArray(names) ? foreignCountryPrintFields(names) : {}),
+    };
+  },
   filerFields: [
     {
       kind: "text",
@@ -94,6 +149,11 @@ export const scheduleBPdf: PdfFormDescriptor = {
   includeWhen: (fields) =>
     ((fields["print_line4_total"] as number | undefined) ?? 0) > 1500 ||
     ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500 ||
-    fields["ordinaryDividends"] !== undefined,
-  appendSupplementalPages: appendScheduleBInterestStatement,
+    fields["ordinaryDividends"] !== undefined ||
+    fields["foreign_accounts_question"] === true ||
+    fields["foreign_trust_question"] === true,
+  async appendSupplementalPages(document, fields, filer) {
+    await appendScheduleBInterestStatement(document, fields, filer);
+    await appendScheduleBForeignCountriesStatement(document, fields, filer);
+  },
 };

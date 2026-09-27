@@ -114,6 +114,7 @@ import { f965 } from "../nodes/inputs/f965/index.ts";
 import { ppp_forgiveness } from "../nodes/inputs/ppp_forgiveness/index.ts";
 import { qbiAggregation } from "../nodes/inputs/qbi_aggregation/index.ts";
 import { f114 } from "../nodes/inputs/f114/index.ts";
+import { schedule_b_part_iii } from "../nodes/inputs/schedule_b_part_iii/index.ts";
 import { f8594 } from "../nodes/inputs/f8594/index.ts";
 import { f8903 } from "../nodes/inputs/f8903/index.ts";
 import { f14039 } from "../nodes/inputs/f14039/index.ts";
@@ -317,6 +318,7 @@ export const registry: NodeRegistry = {
   lump_sum_ss,
   qbi_aggregation: qbiAggregation,
   f114,
+  schedule_b_part_iii,
   f8594,
   f8903,
   f14039,

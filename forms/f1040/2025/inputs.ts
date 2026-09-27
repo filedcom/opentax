@@ -166,6 +166,10 @@ import {
   itemSchema as f8814ItemSchema,
 } from "../nodes/inputs/f8814/index.ts";
 import {
+  inputSchema as scheduleBPartIIIInputSchema,
+  schedule_b_part_iii,
+} from "../nodes/inputs/schedule_b_part_iii/index.ts";
+import {
   f8379,
   inputSchema as f8379InputSchema,
 } from "../nodes/inputs/f8379/index.ts";
@@ -607,6 +611,11 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f4852, itemSchema: f4852ItemSchema, isArray: true },
   { node: sep_retirement, itemSchema: sepRetirementItemSchema, isArray: true },
   // Singleton inputs: entire form as a single object
+  {
+    node: schedule_b_part_iii,
+    inputSchema: scheduleBPartIIIInputSchema,
+    isArray: false,
+  },
   { node: form2441, inputSchema: form2441InputSchema, isArray: false },
   { node: form2555, inputSchema: form2555InputSchema, isArray: false },
   { node: scheduleA, inputSchema: scheduleAInputSchema, isArray: false },

@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { inputSchema, schedule_b } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -17,6 +17,45 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("empty input returns no outputs", () => {
   const result = compute({});
   assertEquals(result.outputs.length, 0);
+});
+
+Deno.test("foreign-account and trust facts file Schedule B without interest", () => {
+  const result = compute({
+    form8814_foreign_account: true,
+    form8814_foreign_trust: true,
+    fincen_form114_required: false,
+  });
+  const fields = findOutput(result, "schedule_b")?.fields;
+  assertEquals(fields?.foreign_accounts_question, true);
+  assertEquals(fields?.fincen_form114_required, false);
+  assertEquals(fields?.foreign_trust_question, true);
+  assertEquals(fields?.form8814_foreign_account, true);
+  assertEquals(fields?.form8814_foreign_trust, true);
+  assertEquals(findOutput(result, "f1040"), undefined);
+});
+
+Deno.test("Schedule B requires an explicit FBAR decision and country codes", () => {
+  assertThrows(() => compute({ form8814_foreign_account: true }));
+  assertThrows(() =>
+    compute({
+      foreign_accounts_question: true,
+      fincen_form114_required: true,
+    })
+  );
+  assertEquals(
+    findOutput(
+      compute({
+        foreign_accounts_question: true,
+        fincen_form114_required: true,
+        foreign_countries: [
+          { irs_code: "CA", name: "Canada" },
+          { irs_code: "FR", name: "France" },
+        ],
+      }),
+      "schedule_b",
+    )?.fields.foreign_country_codes,
+    ["CA", "FR"],
+  );
 });
 
 Deno.test("single interest entry routes taxable_interest_net to f1040 line2b", () => {

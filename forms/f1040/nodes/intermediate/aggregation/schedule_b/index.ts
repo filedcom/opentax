@@ -22,6 +22,11 @@ import { normalizeArray } from "../../../utils.ts";
 const accumulable = <T extends z.ZodTypeAny>(schema: T) =>
   z.union([schema, z.array(schema)]);
 
+export const foreignCountrySchema = z.object({
+  irs_code: z.string().regex(/^[A-Z]{2}$/),
+  name: z.string().min(1).max(90),
+});
+
 export const inputSchema = z.object({
   // ── Part I: Interest (from f1099int, one entry per payer) ──────────────────
   // Net taxable interest per payer (box1+box3+box10 - adjustments)
@@ -47,6 +52,14 @@ export const inputSchema = z.object({
   payerName: accumulable(z.string()).optional(),
   // Nominee flags (informational — f1099div already nets nominee amounts)
   isNominee: accumulable(z.boolean()).optional(),
+  // Part III facts are explicit. A child's Form 8814 can make the answer Yes,
+  // but FBAR filing status must still be supplied by the taxpayer.
+  foreign_accounts_question: z.boolean().optional(),
+  fincen_form114_required: z.boolean().optional(),
+  foreign_countries: z.array(foreignCountrySchema).max(25).optional(),
+  foreign_trust_question: z.boolean().optional(),
+  form8814_foreign_account: z.boolean().optional(),
+  form8814_foreign_trust: z.boolean().optional(),
 });
 
 type ScheduleBInput = z.infer<typeof inputSchema>;
@@ -88,8 +101,32 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     const line6 = line6OrdinaryDividends(input);
     const dividendsForReturn = normalizeArray(input.ordinaryDividends)
       .reduce((sum, n) => sum + n, 0);
+    const foreignAccount = input.foreign_accounts_question === true ||
+      input.form8814_foreign_account === true;
+    const foreignTrust = input.foreign_trust_question === true ||
+      input.form8814_foreign_trust === true;
+    if (foreignAccount && input.fincen_form114_required === undefined) {
+      throw new Error(
+        "Schedule B needs an explicit FinCEN Form 114 filing answer for foreign accounts",
+      );
+    }
+    if (input.fincen_form114_required === true && !foreignAccount) {
+      throw new Error("Schedule B FBAR answer requires a foreign account");
+    }
+    if (
+      input.fincen_form114_required === true &&
+      (!input.foreign_countries || input.foreign_countries.length === 0)
+    ) {
+      throw new Error("Schedule B FBAR filing needs foreign country codes");
+    }
+    if (
+      input.foreign_countries?.length &&
+      input.fincen_form114_required !== true
+    ) {
+      throw new Error("Schedule B foreign country codes require FBAR filing");
+    }
 
-    if (line4 === 0 && line6 === 0) {
+    if (line4 === 0 && line6 === 0 && !foreignAccount && !foreignTrust) {
       return { outputs: [] };
     }
 
@@ -131,9 +168,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
 
     // ── Self-emit print-layer values for the PDF builder ─────────────────────
     // Per-payer rows (up to the form's row counts: 14 interest, 15 dividend)
-    // plus the Part I/II totals. Part III (foreign accounts/trusts) has no
-    // engine data source and is left for the taxpayer to complete when the
-    // schedule is filed.
+    // plus the Part I/II totals and explicit Part III answers.
     const printFields: Record<string, unknown> = {};
     const intAmounts = normalizeArray(input.taxable_interest_net);
     const intNames = normalizeArray(
@@ -186,6 +221,29 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       printFields.print_line4_total = line4;
     }
     if (line6 > 0) printFields.print_line6_total = line6;
+    if (foreignAccount || input.foreign_accounts_question !== undefined) {
+      printFields.foreign_accounts_question = foreignAccount;
+      if (foreignAccount) {
+        printFields.fincen_form114_required = input.fincen_form114_required;
+      }
+      if (input.form8814_foreign_account === true) {
+        printFields.form8814_foreign_account = true;
+      }
+      if (input.foreign_countries?.length) {
+        printFields.foreign_country_codes = input.foreign_countries.map((
+          entry,
+        ) => entry.irs_code);
+        printFields.foreign_country_names = input.foreign_countries.map((
+          entry,
+        ) => entry.name);
+      }
+    }
+    if (foreignTrust || input.foreign_trust_question !== undefined) {
+      printFields.foreign_trust_question = foreignTrust;
+      if (input.form8814_foreign_trust === true) {
+        printFields.form8814_foreign_trust = true;
+      }
+    }
     outputs.push({ nodeType: this.nodeType, fields: printFields });
 
     return { outputs };

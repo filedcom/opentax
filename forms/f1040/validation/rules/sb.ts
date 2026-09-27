@@ -4,43 +4,61 @@
  * 5 rules (3 implemented, 2 stubs)
  */
 
-import type { RuleDef } from "../../../../core/validation/types.ts";
-import { rule, eqField, eqStr, hasValue, ifThen, } from "../../../../core/validation/mod.ts";
+import type { RuleCheck, RuleDef } from "../../../../core/validation/types.ts";
+import {
+  eqField,
+  eqStr,
+  hasValue,
+  ifThen,
+  rule,
+} from "../../../../core/validation/mod.ts";
+
+const hasForeignCountry: RuleCheck = (ctx) =>
+  ctx.fieldArray("ForeignCountryCd").length > 0;
 
 export const SB_RULES: readonly RuleDef[] = [
   rule(
     "SB-F1040-003-02",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("CalculatedTotalTaxableIntAmt"), eqField("CalculatedTotalTaxableIntAmt", "TaxableInterestAmt")),
+    ifThen(
+      hasValue("CalculatedTotalTaxableIntAmt"),
+      eqField("CalculatedTotalTaxableIntAmt", "TaxableInterestAmt"),
+    ),
     "If Schedule B (Form 1040), 'CalculatedTotalTaxableIntAmt' has a non-zero value, then it must be equal to Form 1040, 'TaxableInterestAmt' unless Form 8958 is present in the return.",
   ),
   rule(
     "SB-F1040-004-02",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("TotalOrdinaryDividendsAmt"), eqField("TotalOrdinaryDividendsAmt", "OrdinaryDividendsAmt")),
+    ifThen(
+      hasValue("TotalOrdinaryDividendsAmt"),
+      eqField("TotalOrdinaryDividendsAmt", "OrdinaryDividendsAmt"),
+    ),
     "If Schedule B (Form 1040), 'TotalOrdinaryDividendsAmt' has a non-zero value, then it must be equal to Form 1040 'OrdinaryDividendsAmt' unless Form 8958 is present in the return.",
   ),
   rule(
     "SB-F1040-005-01",
     "reject",
     "incorrect_data",
-    ifThen(hasValue("ExcludableSavingsBondIntAmt"), eqField("ExcludableSavingsBondIntAmt", "ExcludableSavingsBondIntAmt")),
+    ifThen(
+      hasValue("ExcludableSavingsBondIntAmt"),
+      eqField("ExcludableSavingsBondIntAmt", "ExcludableSavingsBondIntAmt"),
+    ),
     "If Schedule B (Form 1040), 'ExcludableSavingsBondIntAmt' has a non-zero value, then it must be equal to Form 8815, 'ExcludableSavingsBondIntAmt'.",
   ),
   rule(
     "SB-F1040-006-02",
     "reject",
     "missing_data",
-    ifThen(eqStr("FinCENForm114Ind", "Yes"), hasValue("ForeignCountryCd")),
+    ifThen(eqStr("FinCENForm114Ind", "true"), hasForeignCountry),
     "If Schedule B (Form 1040), 'FinCENForm114Ind' has a choice of \"Yes\" indicated, then 'ForeignCountryCd' must have a value.",
   ),
   rule(
     "SB-F1040-007-02",
     "reject",
     "missing_data",
-    ifThen(hasValue("ForeignCountryCd"), eqStr("FinCENForm114Ind", "Yes")),
+    ifThen(hasForeignCountry, eqStr("FinCENForm114Ind", "true")),
     "If Schedule B (Form 1040), 'ForeignCountryCd' has a value, then 'FinCENForm114Ind' must have a choice of \"Yes\" indicated.",
   ),
 ];

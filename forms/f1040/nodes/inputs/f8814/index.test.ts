@@ -215,3 +215,14 @@ Deno.test("f8814: child's private-activity-bond interest enters parent AMT", () 
     false,
   );
 });
+
+Deno.test("f8814: child's foreign account and trust trigger Schedule B", () => {
+  const result = compute([{
+    ...child,
+    interest_income: 3000,
+    child_had_foreign_account: true,
+    child_foreign_trust_part_iii_event: true,
+  }]);
+  assertEquals(field(result, "schedule_b", "form8814_foreign_account"), true);
+  assertEquals(field(result, "schedule_b", "form8814_foreign_trust"), true);
+});

@@ -23,4 +23,6 @@ Form 8962 Worksheet 1-2 has a special household-income amount when a dependent c
 
 The private-activity-bond portion of the child's line 1b tax-exempt interest is included in `tax_exempt_interest` and separately routed to the parent's Form 6251 line 2g, per the 2025 Form 8814 instructions' AMT note. It cannot exceed the child's total tax-exempt interest.
 
+If the elected child had a foreign financial account or foreign-trust activity, the parent must file Schedule B Part III and enter `Form 8814` beside the matching question. These child facts force Yes for lines 7a or 8, but they do not determine whether FinCEN Form 114 is required. The parent must explicitly answer that question and list countries when required.
+
 Build status: the calculation, return routing, MeF serializer, 2025 PDF descriptor, Form 8960 line 7 NIIT route, combined-source Schedule B dividend reporting, and linked interest-adjustment statements have been added, but not yet verified in the user-requested full-batch test. PDF dotted-line notes, broader IRS business rules, and ATS acceptance are still open. Do not mark this form production-ready based on this document.
