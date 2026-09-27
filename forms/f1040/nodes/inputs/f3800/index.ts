@@ -114,6 +114,8 @@ export const inputSchema = z.object({
   form8936_applied_credit: appliedSourceCreditSchema.optional(),
   form8936_commercial_applied_credit: appliedSourceCreditSchema.optional(),
   form8820_applied_credit: appliedSourceCreditSchema.optional(),
+  form8820_applied_credits_by_source: z.array(appliedSourceCreditSchema)
+    .optional(),
   form5884_applied_credit: appliedSourceCreditSchema.optional(),
   form5884_applied_credits_by_source: z.array(appliedSourceCreditSchema)
     .optional(),

@@ -202,10 +202,15 @@ function sourceForm8820(
   }
   const source = f8820InputSchema.parse(raw);
   const lines = calculateForm8820(source);
+  const passive =
+    (lines.line2c > 0 && source.subject_to_passive_activity_limit) ||
+    (source.pass_through_credits ?? []).some((entry) =>
+      entry.subject_to_passive_activity_limit
+    );
   if (
     !sameMoney(fields.f8820_credit.credit_amount, lines.line4) ||
     fields.f8820_credit.subject_to_passive_activity_limit !==
-      source.subject_to_passive_activity_limit
+      passive
   ) {
     throw new Error(
       "Form 3800 orphan-drug credit does not reconcile to Form 8820",
@@ -417,6 +422,32 @@ function form5884SourceAllocations(
   );
 }
 
+function form8820SourceAllocations(
+  source: ReturnType<typeof sourceForm8820>,
+  appliedCredit: number,
+  explicit: readonly number[] | undefined,
+): readonly number[] | undefined {
+  if (!source) {
+    if (explicit !== undefined) {
+      throw new Error("Form 3800 has Form 8820 allocations without a source");
+    }
+    return undefined;
+  }
+  const amounts = [
+    ...(source.lines.line2c > 0 ? [source.lines.line2c] : []),
+    ...(source.source.pass_through_credits ?? []).map((entry) =>
+      entry.credit_amount
+    ),
+  ];
+  if (amounts.length <= 1) return explicit;
+  if (explicit !== undefined) return explicit;
+  if (sameMoney(appliedCredit, 0)) return amounts.map(() => 0);
+  if (sameMoney(appliedCredit, source.lines.line4)) return amounts;
+  throw new Error(
+    "Form 3800 needs Part V applied amounts for each Form 8820 source",
+  );
+}
+
 function form8835FacilityAllocations(
   facilities: readonly Form8835CreditEntry[],
   standardApplied: number,
@@ -584,6 +615,11 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
     if (!form8820 && parsed.form8820_applied_credit !== undefined) {
       throw new Error("Form 3800 has a Form 8820 allocation without a source");
     }
+    if (!form8820 && parsed.form8820_applied_credits_by_source !== undefined) {
+      throw new Error(
+        "Form 3800 has Form 8820 source allocations without a source",
+      );
+    }
     if (form8820Applied !== undefined && form8820Applied > form8820Credit) {
       throw new Error(
         "Form 3800 Form 8820 allocation exceeds its source credit",
@@ -605,8 +641,13 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
       );
     }
     const form8820Ids = context.documentIdsByPendingKey.f8820 ?? [];
-    if (form8820Ids.length !== (form8820 ? 1 : 0)) {
-      throw new Error("Form 3800 needs one attached Form 8820 source document");
+    const form8820Filed = form8820 &&
+      (form8820.lines.line2c > 0 ||
+        form8820.source.reduced_section280c_credit_election);
+    if (form8820Ids.length !== (form8820Filed ? 1 : 0)) {
+      throw new Error(
+        "Form 3800 Form 8820 document count differs from the filed source",
+      );
     }
     const form8835Ids = context.documentIdsByPendingKey.f8835 ?? [];
     if (form8835Ids.length !== facilities.length) {
@@ -684,6 +725,20 @@ export const form3800: MefFormDescriptor<"f3800", PendingForm3800> = {
           credit: form8820Credit,
           documentId: form8820Ids[0],
           appliedCredit: form8820Applied!,
+          sources: [
+            ...(form8820.lines.line2c > 0
+              ? [{ credit: form8820.lines.line2c }]
+              : []),
+            ...(form8820.source.pass_through_credits ?? []).map((entry) => ({
+              credit: entry.credit_amount,
+              ein: entry.entity_ein,
+            })),
+          ],
+          appliedCreditsBySource: form8820SourceAllocations(
+            form8820,
+            form8820Applied!,
+            parsed.form8820_applied_credits_by_source,
+          ),
         }
         : undefined,
       form8936: form8936

@@ -15,12 +15,54 @@ const drugSchema = z.object({
   expenses_not_used_for_research_credit: z.literal(true),
 });
 
+const passThroughCreditSchema = z.object({
+  source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
+  entity_ein: z.string().regex(/^\d{9}$/),
+  source_document_reference: z.string().trim().min(1),
+  credit_amount: z.number().int().positive(),
+  subject_to_passive_activity_limit: z.boolean(),
+});
+
 export const inputSchema = z.object({
-  f8820s: z.array(drugSchema).min(1),
+  f8820s: z.array(drugSchema),
+  pass_through_credits: z.array(passThroughCreditSchema).optional(),
   reduced_section280c_credit_election: z.boolean(),
   form8932_overlapping_wage_credit: z.number().int().nonnegative(),
   subject_to_passive_activity_limit: z.boolean(),
   expense_reduction_statement_file_name: z.string().min(1).optional(),
+}).superRefine((input, ctx) => {
+  if (
+    input.f8820s.length === 0 &&
+    (input.pass_through_credits?.length ?? 0) === 0 &&
+    !input.reduced_section280c_credit_election
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["f8820s"],
+      message: "Form 8820 needs own drugs, pass-through credit, or an election",
+    });
+  }
+  if (
+    input.f8820s.length === 0 && input.form8932_overlapping_wage_credit > 0
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["form8932_overlapping_wage_credit"],
+      message: "Form 8820 wage-credit overlap requires own drug expenses",
+    });
+  }
+  const entities = new Set<string>();
+  input.pass_through_credits?.forEach((entry, index) => {
+    const id = `${entry.source_type}:${entry.entity_ein}`;
+    if (entities.has(id)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pass_through_credits", index, "entity_ein"],
+        message: "Form 8820 pass-through source is duplicated",
+      });
+    }
+    entities.add(id);
+  });
 });
 
 export type F8820Input = z.infer<typeof inputSchema>;
@@ -30,6 +72,7 @@ export interface Form8820Lines {
   line2a: number;
   line2b: number;
   line2c: number;
+  line3: number;
   line4: number;
 }
 
@@ -79,7 +122,11 @@ export function calculateForm8820(raw: F8820Input): Form8820Lines {
     );
   }
   const line2c = Math.max(0, line2a - line2b);
-  return { line1, line2a, line2b, line2c, line4: line2c };
+  const line3 = (input.pass_through_credits ?? []).reduce(
+    (sum, entry) => sum + entry.credit_amount,
+    0,
+  );
+  return { line1, line2a, line2b, line2c, line3, line4: line2c + line3 };
 }
 
 class F8820Node extends TaxNode<typeof inputSchema> {
@@ -96,7 +143,10 @@ class F8820Node extends TaxNode<typeof inputSchema> {
         f8820_credit: {
           credit_amount: lines.line4,
           subject_to_passive_activity_limit:
-            input.subject_to_passive_activity_limit,
+            (lines.line2c > 0 && input.subject_to_passive_activity_limit) ||
+            (input.pass_through_credits ?? []).some((entry) =>
+              entry.subject_to_passive_activity_limit
+            ),
         },
       })],
     };

@@ -51,6 +51,7 @@ export const form8820Pdf: PdfFormDescriptor = {
     text("line2a", `${page1}.f1_5[0]`),
     text("line2b", `${page1}.f1_7[0]`),
     text("line2c", `${page1}.f1_9[0]`),
+    text("line3", `${page1}.f1_11[0]`),
     text("line4", `${page1}.f1_13[0]`),
     ...drugFields,
   ],
@@ -62,17 +63,21 @@ export const form8820Pdf: PdfFormDescriptor = {
     if (!Array.isArray(fields.f8820s)) return {};
     const source = inputSchema.parse(fields);
     const lines = calculateForm8820(source);
-    if (lines.line4 > 0) {
-      if (source.subject_to_passive_activity_limit) {
+    if (lines.line2c > 0 || source.reduced_section280c_credit_election) {
+      if (lines.line2c > 0 && source.subject_to_passive_activity_limit) {
         throw new Error("Form 8820 passive credit needs Form 8582-CR");
       }
-      const credit = allPending.f3800?.f8820_credit;
-      if (
-        !credit || typeof credit !== "object" ||
-        !("credit_amount" in credit) ||
-        credit.credit_amount !== lines.line4
-      ) {
-        throw new Error("Form 8820 PDF does not reconcile to Form 3800 source");
+      if (lines.line4 > 0) {
+        const credit = allPending.f3800?.f8820_credit;
+        if (
+          !credit || typeof credit !== "object" ||
+          !("credit_amount" in credit) ||
+          credit.credit_amount !== lines.line4
+        ) {
+          throw new Error(
+            "Form 8820 PDF does not reconcile to Form 3800 source",
+          );
+        }
       }
     }
     const projected: Record<string, unknown> = { ...fields, ...lines };
@@ -90,7 +95,7 @@ export const form8820Pdf: PdfFormDescriptor = {
   includeWhen(fields) {
     if (!Array.isArray(fields.f8820s)) return false;
     const source = inputSchema.parse(fields);
-    return calculateForm8820(source).line4 > 0 ||
+    return calculateForm8820(source).line2c > 0 ||
       source.reduced_section280c_credit_election;
   },
   appendSupplementalPages: async (document, fields) => {

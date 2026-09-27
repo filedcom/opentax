@@ -37,8 +37,15 @@ export type Form3800NonpassiveXmlInput = {
   };
   readonly form8820?: {
     readonly credit: number;
-    readonly documentId: string;
+    /** Present only when the filer has their own Form 8820 or an election. */
+    readonly documentId?: string;
     readonly appliedCredit: number;
+    readonly sources: readonly {
+      readonly credit: number;
+      readonly ein?: string;
+    }[];
+    /** Self-earned source first, then positive pass-through sources. */
+    readonly appliedCreditsBySource?: readonly number[];
   };
   readonly form8936?: {
     readonly credit: number;
@@ -250,16 +257,45 @@ export function buildIRS3800Nonpassive(
       throw new Error("Form 3800 has an invalid Form 8826 applied credit");
     }
   }
-  if (
-    input.form8820 &&
-    (!input.form8820.documentId || !Number.isFinite(form8820Credit) ||
-      form8820Credit <= 0 || !Number.isInteger(form8820Credit) ||
-      !Number.isFinite(input.form8820.appliedCredit) ||
-      !Number.isInteger(input.form8820.appliedCredit) ||
-      input.form8820.appliedCredit < 0 ||
-      input.form8820.appliedCredit > form8820Credit)
-  ) {
-    throw new Error("Form 3800 has an invalid Form 8820 line 1h allocation");
+  if (input.form8820) {
+    const source = input.form8820;
+    const hasSelfEarned = source.sources.some((entry) => !entry.ein);
+    if (
+      !Number.isFinite(form8820Credit) || form8820Credit <= 0 ||
+      !Number.isInteger(form8820Credit) ||
+      !Number.isInteger(source.appliedCredit) ||
+      source.appliedCredit < 0 || source.appliedCredit > form8820Credit ||
+      source.sources.length === 0 || source.sources.length > 999 ||
+      source.sources.some((entry) =>
+        !Number.isInteger(entry.credit) || entry.credit <= 0
+      ) ||
+      source.sources.reduce((sum, entry) => sum + entry.credit, 0) !==
+        form8820Credit ||
+      (hasSelfEarned && !source.documentId) ||
+      source.sources.filter((entry) => !entry.ein).length > 1
+    ) {
+      throw new Error(
+        "Form 3800 has an invalid Form 8820 source or allocation",
+      );
+    }
+    if (source.sources.length > 1) {
+      const applied = source.appliedCreditsBySource;
+      if (
+        !applied || applied.length !== source.sources.length ||
+        applied.some((amount, index) =>
+          !Number.isInteger(amount) || amount < 0 ||
+          amount > source.sources[index].credit
+        ) ||
+        applied.reduce((sum, amount) => sum + amount, 0) !==
+          source.appliedCredit
+      ) {
+        throw new Error(
+          "Form 3800 Form 8820 Part V applied credits do not reconcile",
+        );
+      }
+    } else if (source.appliedCreditsBySource !== undefined) {
+      throw new Error("Form 3800 Form 8820 allocations need multiple sources");
+    }
   }
   if (
     credits.standardCredit + form8826Credit + form8820Credit + form8936Credit +
@@ -425,6 +461,27 @@ export function buildIRS3800Nonpassive(
         lineNumberTxt: "Part III Line 1e",
       })
     )
+    : [];
+  const form8820 = input.form8820;
+  const form8820PassThroughSources =
+    form8820?.sources.filter((source) => source.ein !== undefined) ?? [];
+  const form8820PartVGroups = form8820 && form8820.sources.length > 1
+    ? form8820.sources.map((source, index) => {
+      const applied = form8820.appliedCreditsBySource![index];
+      return elements("Frm8820CYAggrgtAmtGrp", [
+        source.ein ? element("PassThroughEntityEIN", source.ein) : "",
+        element("OthThnCrTrnsfrElectCrNoLmtAmt", source.credit),
+        element("TotalGeneralBusCreditsAmt", source.credit),
+        element("TotalGBCLessGrossEPEAppTxAmt", applied),
+        element("CarryforwardGeneralBusCrAmt", source.credit - applied),
+      ], {
+        ...(source.ein || !form8820.documentId ? {} : {
+          referenceDocumentId: form8820.documentId,
+          referenceDocumentName: "IRS8820",
+        }),
+        lineNumberTxt: "Part III Line 1h",
+      });
+    })
     : [];
   const form5884 = input.form5884;
   const form5884PartVGroups = form5884 && form5884.sources.length > 1
@@ -645,6 +702,17 @@ export function buildIRS3800Nonpassive(
       ? elements(
         "Form8820CYCreditsGrp",
         [
+          form8820 && form8820.sources.length > 1
+            ? element("CYGeneralBusinessCrItemCnt", form8820.sources.length)
+            : "",
+          form8820PassThroughSources.length > 0
+            ? element(
+              "PassThroughEntityEIN",
+              [...form8820PassThroughSources].sort((a, b) =>
+                b.credit - a.credit
+              )[0].ein,
+            )
+            : "",
           element("GeneralBusCrFromNnPssvActyAmt", form8820Credit),
           element("TotalGeneralBusCreditsAmt", form8820Credit),
           element(
@@ -652,10 +720,12 @@ export function buildIRS3800Nonpassive(
             input.form8820.appliedCredit,
           ),
         ],
-        {
-          referenceDocumentId: input.form8820.documentId,
-          referenceDocumentName: "IRS8820",
-        },
+        input.form8820.documentId
+          ? {
+            referenceDocumentId: input.form8820.documentId,
+            referenceDocumentName: "IRS8820",
+          }
+          : undefined,
       )
       : "",
     input.form8936
@@ -757,13 +827,15 @@ export function buildIRS3800Nonpassive(
         form5884Credit,
       lines.line38,
     ),
-    form8826PartVGroups.length + form5884PartVGroups.length +
+    form8826PartVGroups.length + form8820PartVGroups.length +
+          form5884PartVGroups.length +
           partVGroups.length > 0
       ? elements("GBCBreakdownCYAggrgtAmtGrp", [
         ...form8826PartVGroups,
         ...partVGroups.filter((group) => group.line === "1f").map((group) =>
           group.xml
         ),
+        ...form8820PartVGroups,
         ...form5884PartVGroups,
         ...partVGroups.filter((group) => group.line === "4e").map((group) =>
           group.xml

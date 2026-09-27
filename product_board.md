@@ -188,13 +188,18 @@ handoff. A native IRS8820 document and linked Form 3800 line 1h group are
 registered, with source, XML, and XSD cases written but unrun. The full-credit
 path requires a bundled expense-reduction statement, but reconciliation to the
 actual deduction or capitalized basis remains open. Controlled groups,
-pass-through credits, passive credits, eligibility-document verification,
+passive credits, K-1 document reconciliation, eligibility-document verification,
 filled-PDF verification, and IRS business rules remain open. The reduced-credit
 election now retains an IRS8820 document and paper form even with no
 current-year credit, without requiring a Form 3800 source document. The official
 two-page Form 8820 PDF maps Part I and all 26 Part II drug rows, with
 continuation pages for additional drugs. Its source, field, election, and
-overflow cases are written but unrun. The Form 5884 source build pass now
+overflow cases are written but unrun. Identified partnership, S-corporation,
+estate, and trust orphan-drug credits now enter Form 8820 line 3 when combined
+with own credit, while a pass-through-only 1040 filer goes straight to Form 3800
+without filing Form 8820. Multiple sources retain EIN and per-source applied
+amounts in Form 3800 Part V; partial-limit allocations must be explicit. Source,
+XML, PDF-field, and local XSD cases are written but unrun. The Form 5884 source build pass now
 requires employee identity, pre-2026 hire, state-workforce certification, wage
 eligibility affirmations, and a single certified veteran category. The input now
 requires dated evidence for either certification received by the first workday

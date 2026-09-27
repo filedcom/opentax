@@ -100,3 +100,30 @@ Deno.test("Form 8820 MeF preserves a zero-credit reduced election without Form 3
     "",
   );
 });
+
+Deno.test("Form 8820 MeF includes mixed line 3 but omits a pass-through-only form", () => {
+  const passThrough = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 Schedule K-1 orphan-drug credit",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const mixed = { ...source, pass_through_credits: [passThrough] };
+  const xml = form8820.build(mixed, {
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+  });
+  assertStringIncludes(xml, "<OrphanDrugCreditAmt>1250</OrphanDrugCreditAmt>");
+  assertStringIncludes(
+    xml,
+    "<SumCurrYrCrandOrphnDrugCrAmt>19750</SumCurrYrCrandOrphnDrugCrAmt>",
+  );
+  assertEquals(
+    form8820.build({
+      ...mixed,
+      f8820s: [],
+      reduced_section280c_credit_election: false,
+    }),
+    "",
+  );
+});

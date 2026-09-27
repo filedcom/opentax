@@ -138,6 +138,95 @@ Deno.test("Form 3800 links Form 8820 orphan-drug credit to line 1h", () => {
   );
 });
 
+Deno.test("Form 3800 accepts Form 8820 pass-through-only credit without IRS8820", () => {
+  const source = {
+    f8820s: [],
+    pass_through_credits: [{
+      source_type: "partnership" as const,
+      entity_ein: "123456789",
+      source_document_reference: "2025 Schedule K-1 orphan-drug credit",
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    }],
+    reduced_section280c_credit_election: false,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const businessTax = { ...tax, standardCredit: 1_250 };
+  const xml = form3800.build({
+    f8820_credit: {
+      credit_amount: 1_250,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: businessTax,
+    allowed_credit: 1_250,
+  }, {
+    pending: { ...filedPending(businessTax, 1_250), f8820: source },
+    documentIdsByPendingKey: { form6251: ["IRS6251_1"] },
+  });
+  assertStringIncludes(xml, "<Form8820CYCreditsGrp>");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
+});
+
+Deno.test("Form 3800 requires each mixed Form 8820 source allocation under a shared limit", () => {
+  const source = {
+    f8820s: [{
+      generic_name: "Test Orphan Drug",
+      designation_application_number: "FDA-123",
+      designation_date: "2024-03-15",
+      qualified_clinical_testing_expenses: 100_000,
+      qualifying_testing_confirmed: true,
+      expenses_exclude_third_party_funding: true,
+      expenses_not_used_for_research_credit: true,
+    }],
+    pass_through_credits: [{
+      source_type: "partnership" as const,
+      entity_ein: "123456789",
+      source_document_reference: "2025 Schedule K-1 orphan-drug credit",
+      credit_amount: 5_250,
+      subject_to_passive_activity_limit: false,
+    }],
+    reduced_section280c_credit_election: true,
+    form8932_overlapping_wage_credit: 0,
+    subject_to_passive_activity_limit: false,
+  };
+  const businessTax = { ...tax, standardCredit: 25_000 };
+  const context = {
+    pending: { ...filedPending(businessTax, 20_000), f8820: source },
+    documentIdsByPendingKey: {
+      f8820: ["IRS8820_1"],
+      form6251: ["IRS6251_1"],
+    },
+  };
+  const fields = {
+    f8820_credit: {
+      credit_amount: 25_000,
+      subject_to_passive_activity_limit: false,
+    },
+    tax_context: businessTax,
+    allowed_credit: 20_000,
+    form8820_applied_credit: 20_000,
+  };
+  assertThrows(
+    () => form3800.build(fields, context),
+    Error,
+    "Part V applied amounts",
+  );
+  const xml = form3800.build({
+    ...fields,
+    form8820_applied_credits_by_source: [16_000, 4_000],
+  }, context);
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(xml, 'lineNumberTxt="Part III Line 1h"');
+});
+
 Deno.test("Form 3800 links Form 8936 business-use credit to line 1y", () => {
   const vehicle = {
     vin: "1HGCM82633A004352",

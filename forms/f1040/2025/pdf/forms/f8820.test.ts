@@ -26,6 +26,7 @@ Deno.test("Form 8820 PDF maps official Part I and Part II widgets", () => {
   assertEquals(fields.line2a, "topmostSubform[0].Page1[0].f1_5[0]");
   assertEquals(fields.line2b, "topmostSubform[0].Page1[0].f1_7[0]");
   assertEquals(fields.line2c, "topmostSubform[0].Page1[0].f1_9[0]");
+  assertEquals(fields.line3, "topmostSubform[0].Page1[0].f1_11[0]");
   assertEquals(fields.line4, "topmostSubform[0].Page1[0].f1_13[0]");
   assertEquals(
     fields.drug_1_name,
@@ -98,4 +99,29 @@ Deno.test("Form 8820 PDF compacts active drugs and appends Part II overflow", as
   const document = await PDFDocument.create();
   await form8820Pdf.appendSupplementalPages?.(document, projected, undefined);
   assertEquals(document.getPageCount(), 1);
+});
+
+Deno.test("Form 8820 PDF prints mixed line 3 and omits a pass-through-only form", () => {
+  const passThrough = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 Schedule K-1 orphan-drug credit",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const mixed = { ...source, pass_through_credits: [passThrough] };
+  const projected = form8820Pdf.projectFields?.(mixed, {
+    f3800: { f8820_credit: { credit_amount: 19_750 } },
+  }) ?? {};
+  assertEquals(projected.line2c, 18_500);
+  assertEquals(projected.line3, 1_250);
+  assertEquals(projected.line4, 19_750);
+  assertEquals(form8820Pdf.includeWhen?.(projected), true);
+  const only = {
+    ...mixed,
+    f8820s: [],
+    reduced_section280c_credit_election: false,
+    form8932_overlapping_wage_credit: 0,
+  };
+  assertEquals(form8820Pdf.includeWhen?.(only), false);
 });

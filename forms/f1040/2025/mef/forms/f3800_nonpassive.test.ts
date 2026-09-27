@@ -103,6 +103,7 @@ Deno.test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
       credit: 19_750,
       documentId: "IRS8820_1",
       appliedCredit: 19_750,
+      sources: [{ credit: 19_750 }],
     },
     facilities: [],
     form8835DocumentIds: [],
@@ -124,12 +125,83 @@ Deno.test("Form 3800 XML: Form 8820 line 1h reconciles with Part II", () => {
         credit: 19_750,
         documentId: "IRS8820_1",
         appliedCredit: 20_000,
+        sources: [{ credit: 19_750 }],
       },
       facilities: [],
       form8835DocumentIds: [],
       appliedCreditsByFacility: [],
       transferStatementIdsByFileName: {},
     })
+  );
+});
+
+Deno.test("Form 3800 XML: Form 8820 pass-through-only line 1h needs no Form 8820 document", () => {
+  const xml = buildIRS3800Nonpassive({
+    tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
+    form8820: {
+      credit: 1_250,
+      appliedCredit: 1_250,
+      sources: [{ credit: 1_250, ein: "123456789" }],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertStringIncludes(xml, "<Form8820CYCreditsGrp>");
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertEquals(xml.includes('referenceDocumentName="IRS8820"'), false);
+});
+
+Deno.test("Form 3800 XML: mixed Form 8820 sources retain Part V identity and allocations", () => {
+  const base = {
+    tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
+    form8820: {
+      credit: 19_750,
+      documentId: "IRS8820_1",
+      appliedCredit: 19_750,
+      sources: [
+        { credit: 18_500 },
+        { credit: 1_250, ein: "123456789" },
+      ],
+      appliedCreditsBySource: [18_500, 1_250],
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  };
+  const xml = buildIRS3800Nonpassive(base);
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    '<Frm8820CYAggrgtAmtGrp referenceDocumentId="IRS8820_1"',
+  );
+  assertStringIncludes(
+    xml,
+    '<Frm8820CYAggrgtAmtGrp lineNumberTxt="Part III Line 1h">',
+  );
+  assertStringIncludes(
+    xml,
+    "<PassThroughEntityEIN>123456789</PassThroughEntityEIN>",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Nonpassive({
+        ...base,
+        form8820: {
+          ...base.form8820,
+          appliedCreditsBySource: [18_500, 1_249],
+        },
+      }),
+    Error,
+    "Part V applied credits do not reconcile",
   );
 });
 
@@ -602,11 +674,41 @@ Deno.test("Form 3800 XML: mixed Form 8826 and Form 8835 follows TY2025 source sc
       transferStatementIdsByFileName: {},
     }),
     buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 1_250, specifiedCredit: 0 },
+      form8820: {
+        credit: 1_250,
+        appliedCredit: 1_250,
+        sources: [{ credit: 1_250, ein: "123456789" }],
+      },
+      facilities: [],
+      form8835DocumentIds: [],
+      appliedCreditsByFacility: [],
+      transferStatementIdsByFileName: {},
+    }),
+    buildIRS3800Nonpassive({
       tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
       form8820: {
         credit: 19_750,
         documentId: "IRS8820_1",
         appliedCredit: 19_750,
+        sources: [
+          { credit: 18_500 },
+          { credit: 1_250, ein: "123456789" },
+        ],
+        appliedCreditsBySource: [18_500, 1_250],
+      },
+      facilities: [],
+      form8835DocumentIds: [],
+      appliedCreditsByFacility: [],
+      transferStatementIdsByFileName: {},
+    }),
+    buildIRS3800Nonpassive({
+      tax: { ...tax, standardCredit: 19_750, specifiedCredit: 0 },
+      form8820: {
+        credit: 19_750,
+        documentId: "IRS8820_1",
+        appliedCredit: 19_750,
+        sources: [{ credit: 19_750 }],
       },
       facilities: [],
       form8835DocumentIds: [],

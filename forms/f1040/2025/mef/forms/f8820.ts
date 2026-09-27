@@ -9,10 +9,10 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 export function buildForm8820Document(raw: unknown): string {
   const input = inputSchema.parse(raw);
   const lines = calculateForm8820(input);
-  if (lines.line4 <= 0 && !input.reduced_section280c_credit_election) {
+  if (lines.line2c <= 0 && !input.reduced_section280c_credit_election) {
     throw new Error("Form 8820 has no current-year source credit to document");
   }
-  if (lines.line4 > 0 && input.subject_to_passive_activity_limit) {
+  if (lines.line2c > 0 && input.subject_to_passive_activity_limit) {
     throw new Error("Form 8820 passive credit needs Form 8582-CR");
   }
   return elements("IRS8820", [
@@ -24,6 +24,7 @@ export function buildForm8820Document(raw: unknown): string {
     ),
     element("EmployerDifferentialWageCrAmt", lines.line2b),
     element("CYCLessEmployerDiffWageCrAmt", lines.line2c),
+    element("OrphanDrugCreditAmt", lines.line3),
     element("SumCurrYrCrandOrphnDrugCrAmt", lines.line4),
     ...input.f8820s.filter((drug) =>
       drug.qualified_clinical_testing_expenses > 0
@@ -50,11 +51,11 @@ export const form8820: MefFormDescriptor<"f8820", Input> = {
     if (fields.f8820s === undefined) return "";
     const source = inputSchema.parse(fields);
     const lines = calculateForm8820(source);
-    if (lines.line4 <= 0 && !source.reduced_section280c_credit_election) {
+    if (lines.line2c <= 0 && !source.reduced_section280c_credit_election) {
       return "";
     }
     if (
-      lines.line4 > 0 &&
+      lines.line2c > 0 &&
       context?.documentIdsByPendingKey &&
       context.documentIdsByPendingKey.f3800?.length !== 1
     ) {

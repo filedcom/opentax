@@ -120,9 +120,11 @@ allowed-credit route is written but unrun. No Form 8826 PDF, passive Form
 Form 8820 is also in scope outside the Scenario 4 rows. The current build pass
 registers an `IRS8820` document with identified orphan-drug details, the section
 280C election, Form 8932 wage-credit offset, and an unrun source-to-XSD case.
-Its source credit now enters the shared nonpassive Form 3800 line 1h and needs
-an attached source document. Expense or basis reduction, controlled groups,
-pass-through and passive credits, filled-PDF verification, business rules, and
+Its source credit now enters the shared nonpassive Form 3800 line 1h. Own credit
+needs an attached Form 8820, while pass-through-only credit does not. Mixed
+credit appears on Form 8820 line 3/4 and preserves source EIN and applied amount
+in Form 3800 Part V. Expense or basis reduction, controlled groups, passive
+credits, K-1 document reconciliation, filled-PDF verification, business rules, and
 ATS evidence remain open. The official two-page PDF descriptor now maps Part I,
 the 26 Part II drug rows, and continuation pages for additional drugs. A
 zero-credit reduced election also retains the IRS8820 and PDF without a Form

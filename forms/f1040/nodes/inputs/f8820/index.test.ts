@@ -30,6 +30,7 @@ Deno.test("Form 8820 reduced section 280C election uses 19.75%", () => {
     line2a: 19_750,
     line2b: 0,
     line2c: 19_750,
+    line3: 0,
     line4: 19_750,
   });
 });
@@ -105,4 +106,72 @@ Deno.test("Form 8820 zero expenses produce no credit", () => {
     }),
   );
   assertEquals(result.outputs, []);
+});
+
+Deno.test("Form 8820 accepts identified pass-through credit without own drugs", () => {
+  const passThrough = {
+    source_type: "partnership" as const,
+    entity_ein: "123456789",
+    source_document_reference: "2025 Schedule K-1 orphan-drug credit",
+    credit_amount: 1_250,
+    subject_to_passive_activity_limit: false,
+  };
+  const only = source({
+    f8820s: [],
+    reduced_section280c_credit_election: false,
+    pass_through_credits: [passThrough],
+  });
+  const lines = calculateForm8820(only);
+  assertEquals(lines.line2c, 0);
+  assertEquals(lines.line3, 1_250);
+  assertEquals(lines.line4, 1_250);
+  assertEquals(
+    fieldsOf(
+      f8820.compute({ taxYear: 2025, formType: "f1040" }, only).outputs,
+      f3800,
+    )
+      ?.f8820_credit,
+    { credit_amount: 1_250, subject_to_passive_activity_limit: false },
+  );
+  assertEquals(
+    calculateForm8820(source({ pass_through_credits: [passThrough] })).line4,
+    21_000,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...only,
+      pass_through_credits: [passThrough, passThrough],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      ...only,
+      pass_through_credits: [],
+    }).success,
+    false,
+  );
+  const passive = source({
+    f8820s: [],
+    reduced_section280c_credit_election: false,
+    pass_through_credits: [{
+      ...passThrough,
+      subject_to_passive_activity_limit: true,
+    }],
+  });
+  assertEquals(
+    fieldsOf(
+      f8820.compute({ taxYear: 2025, formType: "f1040" }, passive).outputs,
+      f3800,
+    )?.f8820_credit,
+    { credit_amount: 1_250, subject_to_passive_activity_limit: true },
+  );
+  assertThrows(() =>
+    f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+      f8820_credit: {
+        credit_amount: 1_250,
+        subject_to_passive_activity_limit: true,
+      },
+    })
+  );
 });
