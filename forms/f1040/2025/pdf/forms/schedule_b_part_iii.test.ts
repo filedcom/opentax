@@ -50,6 +50,16 @@ Deno.test("Schedule B PDF includes a Part III-only filing", () => {
   );
 });
 
+Deno.test("Schedule B PDF includes seller-financed and adjustment filings below $1,500", () => {
+  assertEquals(
+    scheduleBPdf.includeWhen?.({
+      seller_financed_rows: [{ buyer: {}, amount: 900 }],
+    }),
+    true,
+  );
+  assertEquals(scheduleBPdf.includeWhen?.({ interest_nominee: 100 }), true);
+});
+
 Deno.test("Schedule B PDF prints two countries or appends a longer list", async () => {
   const short = scheduleBPdf.projectFields?.({
     foreign_country_names: ["Canada", "France"],

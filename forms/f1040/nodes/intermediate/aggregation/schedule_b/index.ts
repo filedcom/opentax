@@ -30,6 +30,15 @@ const interestDetailSchema = z.object({
   accrued: z.number().nonnegative(),
   oid_adjustment: z.number().nonnegative(),
   bond_premium: z.number().nonnegative(),
+  seller_financed_buyer: z.object({
+    name: z.string().min(1),
+    ssn: z.string().regex(/^[0-9]{9}$/),
+    address_line1: z.string().min(1),
+    address_line2: z.string().optional(),
+    city: z.string().min(1),
+    state: z.string().regex(/^[A-Z]{2}$/),
+    zip: z.string().regex(/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/),
+  }).optional(),
 });
 
 export const foreignCountrySchema = z.object({
@@ -125,8 +134,12 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       row.nominee > 0 || row.accrued > 0 || row.oid_adjustment > 0 ||
       row.bond_premium > 0
     );
+    const hasSellerFinancedInterest = details.some((row) =>
+      row.seller_financed_buyer !== undefined
+    );
     const partIIIRequired = line4 > 1_500 || line6 > 1_500 ||
-      foreignAccount || foreignTrust || hasInterestAdjustment;
+      foreignAccount || foreignTrust || hasInterestAdjustment ||
+      hasSellerFinancedInterest;
     if (
       partIIIRequired && input.foreign_accounts_question === undefined &&
       input.form8814_foreign_account !== true
@@ -162,7 +175,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
 
     if (
       line4 === 0 && line6 === 0 && !foreignAccount && !foreignTrust &&
-      !hasInterestAdjustment
+      !hasInterestAdjustment && !hasSellerFinancedInterest
     ) {
       return { outputs: [] };
     }
@@ -229,12 +242,30 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       payerName: intNames[index],
       amount,
     }));
-    const detailRows = details.map((row) => ({
-      payerName: row.payer_name,
-      amount: row.gross,
-    }));
-    const allInterestRows = [...detailRows, ...genericRows];
-    if (allInterestRows.length > 0) printFields.interest_rows = allInterestRows;
+    const sellerRows = details.filter((row) => row.seller_financed_buyer)
+      .map((row) => ({
+        buyer: row.seller_financed_buyer!,
+        amount: row.gross,
+      }));
+    const ordinaryRows = [
+      ...details.filter((row) => !row.seller_financed_buyer).map((row) => ({
+        payerName: row.payer_name,
+        amount: row.gross,
+      })),
+      ...genericRows,
+    ];
+    const allInterestRows = [
+      ...sellerRows.map((row) => ({
+        payerName: row.buyer.name,
+        amount: row.amount,
+      })),
+      ...ordinaryRows,
+    ];
+    if (ordinaryRows.length > 0) printFields.interest_rows = ordinaryRows;
+    if (sellerRows.length > 0) printFields.seller_financed_rows = sellerRows;
+    if (allInterestRows.length > 0) {
+      printFields.print_interest_rows = allInterestRows;
+    }
     for (let i = 0; i < Math.min(allInterestRows.length, 14); i++) {
       printFields[`print_int_payer_${i + 1}`] = allInterestRows[i].payerName;
       printFields[`print_int_amount_${i + 1}`] = allInterestRows[i].amount;

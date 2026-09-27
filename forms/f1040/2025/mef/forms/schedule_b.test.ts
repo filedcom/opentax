@@ -105,6 +105,49 @@ Deno.test("schedule_b: gross interest and adjustment lines reconcile to line 2",
   );
 });
 
+Deno.test("schedule_b: seller-financed buyer row precedes ordinary interest", () => {
+  const seller = {
+    buyer: {
+      name: "Jane Buyer",
+      ssn: "123456789",
+      address_line1: "456 Oak Ave",
+      city: "Austin",
+      state: "TX",
+      zip: "78701",
+    },
+    amount: 200,
+  };
+  const xml = scheduleB.build({
+    seller_financed_rows: [seller],
+    interest_rows: [{ payerName: "Bank", amount: 100 }],
+    interest_line1_subtotal: 300,
+    print_line2_total: 300,
+    print_line4_total: 300,
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  assertStringIncludes(xml, "<SellerFinancedNm>Jane Buyer</SellerFinancedNm>");
+  assertStringIncludes(xml, "<AddressLine1Txt>456 Oak Ave</AddressLine1Txt>");
+  assertStringIncludes(xml, "<SellerFinancedSSN>123456789</SellerFinancedSSN>");
+  assertStringIncludes(
+    xml,
+    "<TotalSellerFinancedMortgIntAmt>200</TotalSellerFinancedMortgIntAmt>",
+  );
+  assertEquals(
+    xml.indexOf("<Form1040SchBPartIGroup1>") <
+      xml.indexOf("<Form1040SchBPartIGroup2>"),
+    true,
+  );
+  assertThrows(() =>
+    scheduleB.build({
+      seller_financed_rows: [seller],
+      print_line2_total: 100,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    })
+  );
+});
+
 Deno.test("schedule_b: MeF refuses a required Part III with unanswered questions", () => {
   assertThrows(() => scheduleB.build({ taxable_interest_net: 1_501 }));
   assertThrows(() =>

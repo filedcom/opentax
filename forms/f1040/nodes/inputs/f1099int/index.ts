@@ -27,9 +27,16 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
   seller_financed: z.boolean().optional(),
-  payer_ssn: z.string().optional(),
-  payer_address: z.string().optional(),
-  payer_city_state_zip: z.string().optional(),
+  seller_financed_buyer: z.object({
+    name: z.string().regex(/^([A-Za-z0-9'\-] ?)*[A-Za-z0-9'\-]$/).max(35),
+    ssn: z.string().regex(/^[0-9]{9}$/),
+    address_line1: z.string().regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/).max(35),
+    address_line2: z.string().regex(/^[A-Za-z0-9]( ?[A-Za-z0-9\-/])*$/).max(35)
+      .optional(),
+    city: z.string().regex(/^([A-Za-z] ?)*[A-Za-z]$/).max(22),
+    state: z.string().regex(/^[A-Z]{2}$/),
+    zip: z.string().regex(/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/),
+  }).optional(),
   box1: z.number().nonnegative().optional(),
   // Affirm that this payer's taxable interest is from property held for
   // investment and is not already in Form 4952's manual "other" income.
@@ -82,16 +89,22 @@ function validateIntItem(item: INTItem): void {
     );
   }
   if (item.seller_financed) {
-    if (!item.payer_ssn || item.payer_ssn.length !== 9) {
+    if (!item.seller_financed_buyer) {
       throw new Error(
-        "INT validation error: payer SSN must be exactly 9 digits for seller-financed mortgages",
+        "INT validation error: seller-financed interest needs structured buyer name, SSN, and address",
       );
     }
-    if (!item.payer_address || item.payer_address.length === 0) {
+    if (
+      (item.box1 ?? 0) <= 0 || (item.box3 ?? 0) > 0 || (item.box10 ?? 0) > 0
+    ) {
       throw new Error(
-        "INT validation error: payer address is required for seller-financed mortgages",
+        "INT validation error: seller-financed interest must be a positive box 1 amount",
       );
     }
+  } else if (item.seller_financed_buyer) {
+    throw new Error(
+      "INT validation error: seller-financed buyer requires the seller-financed flag",
+    );
   }
   if (computeTaxableInterestNet(item) < 0) {
     throw new Error(
@@ -130,6 +143,9 @@ function scheduleBOutput(item: INTItem): NodeOutput {
       accrued: item.accrued_interest_paid ?? 0,
       oid_adjustment: item.non_taxable_oid_adjustment ?? 0,
       bond_premium: bondPremium,
+      ...(item.seller_financed_buyer
+        ? { seller_financed_buyer: item.seller_financed_buyer }
+        : {}),
     },
     box3_us_obligations: item.box3,
   });

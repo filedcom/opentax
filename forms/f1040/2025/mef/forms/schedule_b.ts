@@ -3,6 +3,18 @@ import type { MefFormDescriptor } from "../form-descriptor.ts";
 
 export interface Fields {
   interest_rows?: readonly { payerName: string; amount: number }[] | null;
+  seller_financed_rows?: readonly {
+    buyer: {
+      name: string;
+      ssn: string;
+      address_line1: string;
+      address_line2?: string;
+      city: string;
+      state: string;
+      zip: string;
+    };
+    amount: number;
+  }[];
   payer_name?: string | readonly string[] | null;
   taxable_interest_net?: number | readonly number[] | null;
   ee_bond_exclusion?: number | null;
@@ -96,17 +108,55 @@ function buildIRS1040ScheduleB(fields: Input): string {
       element("InterestAmt", interestAmounts[index]),
     ])
   );
+  const sellerRows = fields.seller_financed_rows ?? [];
+  if (sellerRows.length > 0 && interest === undefined) {
+    throw new Error(
+      "Schedule B seller-financed interest needs the reconciled line 2 amount",
+    );
+  }
+  if (
+    sellerRows.some((row) =>
+      !row?.buyer?.name?.trim() || !/^[0-9]{9}$/.test(row.buyer.ssn) ||
+      !row.buyer.address_line1?.trim() || !row.buyer.city?.trim() ||
+      !/^[A-Z]{2}$/.test(row.buyer.state) ||
+      !/^[0-9]{5}([0-9]{4}|[0-9]{7})?$/.test(row.buyer.zip) ||
+      !Number.isFinite(row.amount) || row.amount <= 0
+    )
+  ) {
+    throw new Error(
+      "Schedule B seller-financed rows need a buyer, address, SSN, and positive interest",
+    );
+  }
+  const sellerAmount = sellerRows.reduce((total, row) => total + row.amount, 0);
+  const sellerXml = sellerRows.map((row) =>
+    elements("Form1040SchBPartIGroup1", [
+      element("SellerFinancedNm", row.buyer.name),
+      elements("SellerFinancedAddressUS", [
+        element("AddressLine1Txt", row.buyer.address_line1),
+        row.buyer.address_line2
+          ? element("AddressLine2Txt", row.buyer.address_line2)
+          : "",
+        element("CityNm", row.buyer.city),
+        element("StateAbbreviationCd", row.buyer.state),
+        element("ZIPCd", row.buyer.zip),
+      ]),
+      element("SellerFinancedSSN", row.buyer.ssn),
+      element("SellerFinancedMortgageIntAmt", row.amount),
+    ])
+  );
   const line1Subtotal = fields.interest_line1_subtotal ??
-    interestAmounts.reduce((total, amount) => total + amount, 0);
+    interestAmounts.reduce((total, amount) => total + amount, 0) + sellerAmount;
   const adjustments = (fields.interest_nominee ?? 0) +
     (fields.interest_accrued ?? 0) +
     (fields.interest_oid_adjustment ?? 0) +
     (fields.interest_bond_premium ?? 0);
   if (
-    interestRows.length > 0 && interest !== undefined &&
+    (interestRows.length > 0 || sellerRows.length > 0) &&
+    interest !== undefined &&
     (Math.abs(
           line1Subtotal -
-            interestAmounts.reduce((total, amount) => total + amount, 0),
+            interestAmounts.reduce((total, amount) => total + amount, 0) -
+            sellerAmount,
         ) > 0.000001 ||
       Math.abs(line1Subtotal - adjustments - interest) > 0.000001)
   ) {
@@ -124,6 +174,8 @@ function buildIRS1040ScheduleB(fields: Input): string {
     : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0));
   const partIIIRequired = (taxableInterest ?? 0) > 1_500 ||
     (dividends ?? 0) > 1_500 ||
+    sellerRows.length > 0 ||
+    adjustments > 0 ||
     fields.foreign_accounts_question === true ||
     fields.foreign_trust_question === true ||
     fields.form8814_foreign_account === true ||
@@ -158,6 +210,7 @@ function buildIRS1040ScheduleB(fields: Input): string {
   if (
     fields.taxable_interest_net === undefined &&
     fields.interest_rows === undefined &&
+    fields.seller_financed_rows === undefined &&
     fields.ordinaryDividends === undefined &&
     fields.dividend_rows === undefined &&
     fields.dividend_info === undefined &&
@@ -211,8 +264,12 @@ function buildIRS1040ScheduleB(fields: Input): string {
     ]);
   });
   const children = [
+    ...sellerXml,
+    sellerRows.length > 0
+      ? element("TotalSellerFinancedMortgIntAmt", sellerAmount)
+      : "",
     ...interestRows,
-    interestRows.length > 0 && interest !== undefined
+    (interestRows.length > 0 || sellerRows.length > 0) && interest !== undefined
       ? element("InterestSubtotalAmt", line1Subtotal, {
         interestSubtotalLiteralCd: "INTEREST SUBTOTAL",
       })

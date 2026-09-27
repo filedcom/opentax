@@ -20,7 +20,7 @@ const filer: FilerIdentity = {
 
 function rows(count: number): Record<string, unknown> {
   return {
-    interest_rows: Array.from({ length: count }, (_, index) => ({
+    print_interest_rows: Array.from({ length: count }, (_, index) => ({
       payerName: `Issuer ${index + 1}`,
       amount: index + 1,
     })),
@@ -51,7 +51,7 @@ Deno.test("Schedule B interest statement keeps paired rows after pending normali
     schedule_b: {
       ...rows(15),
       taxable_interest_net: Array.from({ length: 15 }, (_, index) => index + 1),
-      print_line2_total: 120,
+      interest_line1_subtotal: 120,
     },
   });
   await appendScheduleBInterestStatement(
@@ -62,12 +62,23 @@ Deno.test("Schedule B interest statement keeps paired rows after pending normali
   assertEquals(document.getPageCount(), 1);
 });
 
+Deno.test("Schedule B interest continuation reconciles gross line 1 before deductions", async () => {
+  const document = await PDFDocument.create();
+  await appendScheduleBInterestStatement(document, {
+    ...rows(15),
+    interest_line1_subtotal: 120,
+    print_line2_total: 90,
+    interest_nominee: 30,
+  }, filer);
+  assertEquals(document.getPageCount(), 1);
+});
+
 Deno.test("Schedule B interest statement rejects missing payer detail", async () => {
   const document = await PDFDocument.create();
   await assertRejects(
     () =>
       appendScheduleBInterestStatement(document, {
-        interest_rows: [
+        print_interest_rows: [
           ...Array.from(
             { length: 14 },
             () => ({ payerName: "Issuer", amount: 100 }),

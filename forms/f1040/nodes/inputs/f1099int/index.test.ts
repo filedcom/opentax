@@ -16,9 +16,15 @@ type ItemOverrides = Partial<{
   payer_name: string;
   payer_tin: string;
   seller_financed: boolean;
-  payer_ssn: string;
-  payer_address: string;
-  payer_city_state_zip: string;
+  seller_financed_buyer: {
+    name: string;
+    ssn: string;
+    address_line1: string;
+    address_line2?: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
   box1: number;
   investment_property_for_form4952: boolean;
   box2: number;
@@ -52,6 +58,15 @@ function minimalItem(overrides: ItemOverrides = {}): ItemOverrides {
     ...overrides,
   };
 }
+
+const buyer = {
+  name: "Jane Buyer",
+  ssn: "123456789",
+  address_line1: "456 Oak Ave",
+  city: "Austin",
+  state: "TX",
+  zip: "78701",
+};
 
 function taxedInterest(
   tax: number,
@@ -156,9 +171,9 @@ Deno.test("schema: box13 exceeding box8 throws", () => {
   assertThrows(() => compute([minimalItem({ box8: 100, box13: 150 })]), Error);
 });
 
-Deno.test("schema: seller_financed requires payer_ssn (9 digits)", () => {
+Deno.test("schema: seller_financed requires structured buyer details", () => {
   assertThrows(
-    () => compute([minimalItem({ seller_financed: true, payer_ssn: "" })]),
+    () => compute([minimalItem({ seller_financed: true, box1: 100 })]),
     Error,
   );
 });
@@ -169,18 +184,24 @@ Deno.test("schema: seller_financed with 8-digit SSN throws", () => {
       compute([
         minimalItem({
           seller_financed: true,
-          payer_name: "Seller",
-          payer_ssn: "12345678",
-          payer_address: "1 Main St",
+          box1: 100,
+          seller_financed_buyer: { ...buyer, ssn: "12345678" },
         }),
       ]),
     Error,
   );
 });
 
-Deno.test("schema: seller_financed requires payer_address", () => {
+Deno.test("schema: seller_financed requires a structured address", () => {
   assertThrows(
-    () => compute([minimalItem({ seller_financed: true, payer_address: "" })]),
+    () =>
+      compute([
+        minimalItem({
+          seller_financed: true,
+          box1: 100,
+          seller_financed_buyer: { ...buyer, address_line1: "" },
+        }),
+      ]),
     Error,
   );
 });
@@ -189,12 +210,17 @@ Deno.test("schema: seller_financed with all required fields is valid", () => {
   const result = compute([
     minimalItem({
       seller_financed: true,
-      payer_name: "John Seller",
-      payer_ssn: "123456789",
-      payer_address: "456 Oak Ave",
+      box1: 100,
+      seller_financed_buyer: buyer,
     }),
   ]);
   assertEquals(Array.isArray(result.outputs), true);
+  assertEquals(
+    (fieldsOf(result.outputs, schedule_b)?.interest_detail as {
+      seller_financed_buyer?: typeof buyer;
+    })?.seller_financed_buyer,
+    buyer,
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -566,14 +592,28 @@ Deno.test("hard block: box13 > box8 throws (bond premium on tax-exempt cannot ex
 
 Deno.test("hard block: seller_financed + missing SSN throws", () => {
   assertThrows(
-    () => compute([minimalItem({ seller_financed: true, payer_ssn: "" })]),
+    () =>
+      compute([
+        minimalItem({
+          seller_financed: true,
+          box1: 100,
+          seller_financed_buyer: { ...buyer, ssn: "" },
+        }),
+      ]),
     Error,
   );
 });
 
-Deno.test("hard block: seller_financed + missing payer_address throws", () => {
+Deno.test("hard block: seller_financed + missing buyer address throws", () => {
   assertThrows(
-    () => compute([minimalItem({ seller_financed: true, payer_address: "" })]),
+    () =>
+      compute([
+        minimalItem({
+          seller_financed: true,
+          box1: 100,
+          seller_financed_buyer: { ...buyer, city: "" },
+        }),
+      ]),
     Error,
   );
 });

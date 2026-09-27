@@ -15,7 +15,7 @@ export async function appendScheduleBInterestStatement(
   fields: Record<string, unknown>,
   filer: FilerIdentity | undefined,
 ): Promise<void> {
-  const rows = fields.interest_rows;
+  const rows = fields.print_interest_rows;
   if (!Array.isArray(rows) || rows.length <= PRINTED_ROWS) return;
   if (
     rows.some((row) =>
@@ -37,14 +37,14 @@ export async function appendScheduleBInterestStatement(
     );
   }
   if (
-    typeof fields.print_line2_total === "number" &&
+    typeof fields.interest_line1_subtotal === "number" &&
     Math.abs(
         interestRows.reduce((sum, row) => sum + row.amount, 0) -
-          fields.print_line2_total,
+          fields.interest_line1_subtotal,
       ) > 0.000001
   ) {
     throw new Error(
-      "Schedule B additional interest rows do not reconcile to line 2",
+      "Schedule B additional interest rows do not reconcile to line 1",
     );
   }
   if (!filer) {
@@ -123,7 +123,7 @@ export async function appendScheduleBInterestStatement(
     page.drawText(
       `Interest payers ${
         first + 1
-      }-${last} of ${interestRows.length}. Total on Schedule B line 2.`,
+      }-${last} of ${interestRows.length}. Total included in Schedule B line 1.`,
       { x: LEFT, y: 55, size: 8, font: regular },
     );
     page.drawText(`Page ${pageIndex + 1} of ${pageCount}`, {

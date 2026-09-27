@@ -89,3 +89,54 @@ Deno.test({
     await Deno.remove(path);
   }
 });
+
+Deno.test({
+  name: "XSD: Schedule B seller-financed buyer and interest adjustments",
+  ignore: !xsdAvailable,
+  sanitizeOps: false,
+  sanitizeResources: false,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { filing_status: "single", line2b_taxable_interest: 1_850 },
+    schedule_b: {
+      seller_financed_rows: [{
+        buyer: {
+          name: "Jane Buyer",
+          ssn: "123456789",
+          address_line1: "456 Oak Ave",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
+        amount: 200,
+      }],
+      interest_rows: [{ payerName: "Bond Bank", amount: 2_000 }],
+      interest_line1_subtotal: 2_200,
+      interest_nominee: 100,
+      interest_accrued: 50,
+      interest_oid_adjustment: 75,
+      interest_bond_premium: 125,
+      print_line2_total: 1_850,
+      print_line4_total: 1_850,
+      foreign_accounts_question: false,
+      foreign_trust_question: false,
+    },
+  }, filer);
+  assertStringIncludes(xml, "<SellerFinancedNm>Jane Buyer</SellerFinancedNm>");
+  assertStringIncludes(
+    xml,
+    "<TaxableInterestSubtotalAmt>1850</TaxableInterestSubtotalAmt>",
+  );
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(path, xml);
+    const result = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", XSD_PATH, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(result.code, 0, new TextDecoder().decode(result.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
+});

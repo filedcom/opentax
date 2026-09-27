@@ -1,6 +1,8 @@
 import type { PdfFieldEntry, PdfFormDescriptor } from "../form-descriptor.ts";
 import { appendScheduleBInterestStatement } from "./schedule_b_interest_statement.ts";
 import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statement.ts";
+import { appendScheduleBSellerFinancedStatement } from "./schedule_b_seller_financed_statement.ts";
+import { appendScheduleBInterestAdjustmentsStatement } from "./schedule_b_interest_adjustments_statement.ts";
 import {
   appendScheduleBForeignCountriesStatement,
   foreignCountryPrintFields,
@@ -151,10 +153,23 @@ export const scheduleBPdf: PdfFormDescriptor = {
     ((fields["print_line4_total"] as number | undefined) ?? 0) > 1500 ||
     ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500 ||
     fields["ordinaryDividends"] !== undefined ||
+    [
+      "interest_nominee",
+      "interest_accrued",
+      "interest_oid_adjustment",
+      "interest_bond_premium",
+      "ee_bond_exclusion",
+    ].some(
+      (key) => typeof fields[key] === "number" && (fields[key] as number) > 0,
+    ) ||
+    ((fields["seller_financed_rows"] as unknown[] | undefined)?.length ?? 0) >
+      0 ||
     fields["foreign_accounts_question"] === true ||
     fields["foreign_trust_question"] === true,
   async appendSupplementalPages(document, fields, filer) {
+    await appendScheduleBSellerFinancedStatement(document, fields, filer);
     await appendScheduleBInterestStatement(document, fields, filer);
+    await appendScheduleBInterestAdjustmentsStatement(document, fields, filer);
     await appendScheduleBDividendStatement(document, fields, filer);
     await appendScheduleBForeignCountriesStatement(document, fields, filer);
   },

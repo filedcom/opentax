@@ -175,6 +175,50 @@ Deno.test("gross 1099-INT and other net interest sources each appear once", () =
   );
 });
 
+Deno.test("seller-financed interest is first and retains buyer identity", () => {
+  const buyer = {
+    name: "Jane Buyer",
+    ssn: "123456789",
+    address_line1: "456 Oak Ave",
+    city: "Austin",
+    state: "TX",
+    zip: "78701",
+  };
+  const result = compute({
+    interest_detail: [
+      {
+        payer_name: "Bank",
+        gross: 100,
+        net: 100,
+        nominee: 0,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+      },
+      {
+        payer_name: "Buyer",
+        gross: 200,
+        net: 200,
+        nominee: 0,
+        accrued: 0,
+        oid_adjustment: 0,
+        bond_premium: 0,
+        seller_financed_buyer: buyer,
+      },
+    ],
+    foreign_accounts_question: false,
+    foreign_trust_question: false,
+  });
+  const fields = findOutput(result, "schedule_b")?.fields;
+  assertEquals(fields?.seller_financed_rows, [{ buyer, amount: 200 }]);
+  assertEquals(fields?.interest_rows, [{ payerName: "Bank", amount: 100 }]);
+  assertEquals(fields?.print_interest_rows, [
+    { payerName: "Jane Buyer", amount: 200 },
+    { payerName: "Bank", amount: 100 },
+  ]);
+  assertEquals(fields?.interest_line1_subtotal, 300);
+});
+
 Deno.test("zero taxable_interest_net produces no interest in f1040 output", () => {
   const result = compute({ payer_name: "Bank A", taxable_interest_net: 0 });
   // If no dividends either, no output at all

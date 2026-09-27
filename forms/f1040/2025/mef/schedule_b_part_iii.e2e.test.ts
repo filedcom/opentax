@@ -143,3 +143,43 @@ Deno.test("1099-INT adjustments reach gross Schedule B rows and MeF deductions",
     "<TaxableInterestSubtotalAmt>1650</TaxableInterestSubtotalAmt>",
   );
 });
+
+Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099int: [{
+        payer_name: "Buyer mortgage",
+        seller_financed: true,
+        seller_financed_buyer: {
+          name: "Jane Buyer",
+          ssn: "123456789",
+          address_line1: "456 Oak Ave",
+          city: "Austin",
+          state: "TX",
+          zip: "78701",
+        },
+        box1: 900,
+      }],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b?.print_line2_total, 900);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<SellerFinancedNm>Jane Buyer</SellerFinancedNm>");
+  assertStringIncludes(xml, "<SellerFinancedSSN>123456789</SellerFinancedSSN>");
+  assertStringIncludes(
+    xml,
+    "<TotalSellerFinancedMortgIntAmt>900</TotalSellerFinancedMortgIntAmt>",
+  );
+});

@@ -294,60 +294,65 @@ payer names and amounts are available; source-to-XSD cases are written but
 unrun. The Schedule B node now self-emits paired interest rows so numeric-array
 pending normalization does not discard payer amounts before XML/PDF export. The
 PDF path now appends paginated interest-payer detail after the 14 printed rows,
-with cases written but unrun. This does not yet cover all Schedule B adjustment
-rows. The current build pass also carries explicit Schedule B Part III foreign-
-account, FBAR, country, and trust answers from a dedicated input into the MeF
-XML and PDF fields. An elected Form 8814 child's foreign-account or trust fact
-forces the matching Schedule B Yes answer and Form 8814 literal, but FBAR filing
-is never inferred from that fact. More than two country names get a PDF
-supplemental page. These cases are written but unrun; the calculation and MeF
-builder now require both Part III account/trust answers when either income line
-exceeds $1,500 or foreign activity requires the form. Source PDF rendering and
-IRS business rules remain open. The PDF statements still need filled-render
-verification. The Schedule B pass also removes the 15-dividend-payer cutoff: the
-Schedule B node retains every dividend payer, MeF emits every native Part II
-row, and the PDF builder appends a continuation statement after the 15 printed
-rows. Its source-to-XSD, reconciliation, and PDF-page cases are written but
-unrun. The current unrun 1099-INT pass keeps gross payer interest separate from
-nominee, accrued-interest, OID, and amortizable-bond-premium deductions;
-Schedule B now reconciles those categories to taxable line 2 and emits the
-corresponding MeF adjustment elements. Source, aggregation, direct XML, and
-full-return cases are written but unrun. Seller-financed mortgage
-identity/address rows, 1099-OID adjustment provenance, nominee dividends,
-Schedule B filing triggers, and printed adjustment annotations still need work,
-so this is not complete Schedule B support. The next Form 8912 graph pass
-requires each bond's taxable interest already reported by another input,
-validates that amount against computed bond interest, and routes only the
-unreported balance to Schedule B. Positive credit was formerly blocked at final
-Form 1040 assembly. The current MeF path requires a finalized, attached Form
-8912; the PDF path now has a descriptor but is not rendered or tested yet. These
-graph and duplicate-interest cases are written but unrun. The source node now
-hands separate Part I lines 1 through 4 to the Form 1040 sink instead of a
-tentative scalar. The PDF build now maps Form 8912 Part I/II to its IRS widgets,
-adds 20-row Part III and one-bond Part IV pages as needed, and reconciles the
-printed credit with finalized Schedule 3 and the graph. Its descriptor and
-pagination cases are written but unrun; filled-render inspection is still
-required. Multiple partially limited bond sources and CREB/QZAB deduction
-elections still stop MeF export pending bond-specific unused-credit treatment.
-Source-document identity reconciliation remains open. The Form 1097-BTC
-reported-bond input now requires all 12 monthly credit boxes and checks their
-sum against annual box 1, captures box 2a's C/A/O code, and constrains box 2b to
-the IRS 39-character alphanumeric identifier. It also rejects duplicate
-issuer-EIN/unique-ID pairs within and across Form 8912 input items. These source
-cases are written but unrun. The actual annual 1097-BTC document, corrected
-statements, fiscal-year allocation, multi-bond type 1097-BTC source model, and
-full cross-document identity matching remain open. A new unrun check rejects a
-Part IV CUSIP already represented by a Form 1097-BTC with the same issuer EIN
-and box 2a code C, including identifiers with an account suffix and entries in
-separate Form 8912 input items. Account and other identifiers cannot be matched
-to a CUSIP from these facts alone. The Part IV input now records acquisition and
-allowance dates instead of an unchecked column (e) percentage. The build pass
-derives quarterly allowances, BAB interest-payment allowances, pre-October 2008
-QZAB annual allowances, and the final quarter prorated on maturity or
-redemption, including a fifth partial date after December 15; it rejects dates
-outside the 2025 holding period or duplicated across line 18 rows. These date
-and XML cases are written but unrun. Record-holder timing on a sale, other
-dispositions, and the required bond-rate source still need review.
+with cases written but unrun. The current build pass also carries explicit
+Schedule B Part III foreign- account, FBAR, country, and trust answers from a
+dedicated input into the MeF XML and PDF fields. An elected Form 8814 child's
+foreign-account or trust fact forces the matching Schedule B Yes answer and Form
+8814 literal, but FBAR filing is never inferred from that fact. More than two
+country names get a PDF supplemental page. These cases are written but unrun;
+the calculation and MeF builder now require both Part III account/trust answers
+when either income line exceeds $1,500 or foreign activity requires the form.
+Source PDF rendering and IRS business rules remain open. The PDF statements
+still need filled-render verification. The Schedule B pass also removes the
+15-dividend-payer cutoff: the Schedule B node retains every dividend payer, MeF
+emits every native Part II row, and the PDF builder appends a continuation
+statement after the 15 printed rows. Its source-to-XSD, reconciliation, and
+PDF-page cases are written but unrun. The current unrun 1099-INT pass keeps
+gross payer interest separate from nominee, accrued-interest, OID, and
+amortizable-bond-premium deductions; Schedule B now reconciles those categories
+to taxable line 2 and emits the corresponding MeF adjustment elements. Source,
+aggregation, direct XML, and full-return cases are written but unrun.
+Seller-financed mortgage interest now requires structured buyer identity and
+U.S. address, appears first on Schedule B MeF line 1, and carries a printed
+supplemental buyer-detail statement. A printed adjustment statement lists the
+gross-to-net calculation; the payer continuation now reconciles to gross line 1
+rather than net line 2. These PDF and source-to-XML cases are written but unrun,
+and no filled PDF has been rendered. Foreign buyer addresses, 1099-OID
+adjustment provenance, nominee dividends, Schedule B filing triggers, and IRS
+business-rule acceptance remain open, so this is not complete Schedule B
+support. The next Form 8912 graph pass requires each bond's taxable interest
+already reported by another input, validates that amount against computed bond
+interest, and routes only the unreported balance to Schedule B. Positive credit
+was formerly blocked at final Form 1040 assembly. The current MeF path requires
+a finalized, attached Form 8912; the PDF path now has a descriptor but is not
+rendered or tested yet. These graph and duplicate-interest cases are written but
+unrun. The source node now hands separate Part I lines 1 through 4 to the Form
+1040 sink instead of a tentative scalar. The PDF build now maps Form 8912 Part
+I/II to its IRS widgets, adds 20-row Part III and one-bond Part IV pages as
+needed, and reconciles the printed credit with finalized Schedule 3 and the
+graph. Its descriptor and pagination cases are written but unrun; filled-render
+inspection is still required. Multiple partially limited bond sources and
+CREB/QZAB deduction elections still stop MeF export pending bond-specific
+unused-credit treatment. Source-document identity reconciliation remains open.
+The Form 1097-BTC reported-bond input now requires all 12 monthly credit boxes
+and checks their sum against annual box 1, captures box 2a's C/A/O code, and
+constrains box 2b to the IRS 39-character alphanumeric identifier. It also
+rejects duplicate issuer-EIN/unique-ID pairs within and across Form 8912 input
+items. These source cases are written but unrun. The actual annual 1097-BTC
+document, corrected statements, fiscal-year allocation, multi-bond type 1097-BTC
+source model, and full cross-document identity matching remain open. A new unrun
+check rejects a Part IV CUSIP already represented by a Form 1097-BTC with the
+same issuer EIN and box 2a code C, including identifiers with an account suffix
+and entries in separate Form 8912 input items. Account and other identifiers
+cannot be matched to a CUSIP from these facts alone. The Part IV input now
+records acquisition and allowance dates instead of an unchecked column (e)
+percentage. The build pass derives quarterly allowances, BAB interest-payment
+allowances, pre-October 2008 QZAB annual allowances, and the final quarter
+prorated on maturity or redemption, including a fifth partial date after
+December 15; it rejects dates outside the 2025 holding period or duplicated
+across line 18 rows. These date and XML cases are written but unrun.
+Record-holder timing on a sale, other dispositions, and the required bond-rate
+source still need review.
 
 The 2025 Schedule 3 build pass now carries separate lines 6h, 6k, and 12 through
 its calculation, MeF, and PDF field maps. Form 8859 now carries its prior-year
