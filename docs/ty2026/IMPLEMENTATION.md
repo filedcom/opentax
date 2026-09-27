@@ -12,6 +12,13 @@ from the return definition. TY2025 supplies its existing artifacts. The
 TY2026 bundle, node graph, MeF/PDF builders, and catalog entry remain to build.
 `forms/f1040/2026/settlement.ts` implements and tests the changed payment and
 Schedule 3-A arithmetic but is not wired into a return yet.
+The shared Form 8962 node now selects TY2025 or TY2026 applicable percentage,
+repayment cap, and QSEHRA affordability rules explicitly; 2026 FPL figures
+are sourced from the 2025 HHS guideline PDF. The complete `F1040Config` for
+2026 and final Form 8962 instruction table remain outstanding.
+`forms/f1040/2026/deductions.ts` implements the new 1040 lines 12e–15, and
+the prior CLI type-check errors have been cleared. Neither pure 2026
+calculator is connected to a registered graph yet.
 
 ## 0. Freeze source versions and establish the baseline
 
@@ -27,7 +34,7 @@ Schedule 3-A arithmetic but is not wired into a return yet.
    in ignored `.state/research/docs/` because this repository is public.
 3. Build a coverage ledger from `pdf-coverage.csv` (56 descriptors: 51 current
    drafts, five older-year URLs),
-   `mef-coverage.csv` (84 serializers), `year-literals.csv` (238 non-test
+   `mef-coverage.csv` (84 serializers), `year-literals.csv` (244 non-test
    occurrences), and the current MeF accepted-form XLSX. Give each existing
    component one disposition: **2026 updated**, **2026 verified unchanged**,
    **replaced**, or **unsupported with explicit diagnostic**. Add Schedule 3-A
@@ -70,7 +77,7 @@ still pass. Test both sides of each threshold and July 1 mileage boundary.
 2. Extend `core/types/form-definition.ts` only as needed for a year-specific
    validation artifact bundle and current MeF version. Route
    `cli/commands/validate.ts` and `cli/commands/export.ts` through the selected
-   `FormDefinition`; today both import 2025 validation artifacts. Fix
+   `FormDefinition` (completed for the existing TY2025 definition). Fix
    `cli/commands/node.ts` and `cli/commands/graph.ts` to use the selected
    year's registry rather than the hardcoded 2025 one. Review benchmark year
    selection and CLI summaries for `line24_total_tax`/new 24c and 32c.

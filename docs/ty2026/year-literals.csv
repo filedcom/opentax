@@ -212,8 +212,14 @@ forms/f1040/nodes/intermediate/forms/form8853/index.ts,28,// Line 2: Taxpayer co
 forms/f1040/nodes/intermediate/forms/form8959/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8960/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8960/index.ts,116,// Form 8960 line 14; not indexed for inflation (TY2025)
-forms/f1040/nodes/intermediate/forms/form8962/index.ts,16,"// 2025 Form 8962 instructions, Table 2: line 5 is an integer percentage."
-forms/f1040/nodes/intermediate/forms/form8962/index.ts,22,"// Above 400% FPL (TY2025): no cap — ARP extension means 400%+ still eligible,"
+forms/f1040/nodes/intermediate/forms/form8962/index.ts,305,"...(taxYear === 2025 ? { excess_advance_premium: line29 } : {}),"
+forms/f1040/nodes/intermediate/forms/form8962/index.ts,626,"...(ctx.taxYear === 2025 ? { excess_advance_premium: line29 } : {}),"
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,3,"// TY2025: Form 8962 Instructions, Tables 2 and 5."
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,4,// TY2026: Rev. Proc. 2025-25 §3.01–.02; Rev. Proc. 2025-32 §2.04;
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,8,if (year !== 2025 && year !== 2026) {
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,24,if (taxYear === 2025) {
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,35,// Rev. Proc. 2025-25 §3.01 sets initial and final percentages for each
+forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,51,/** Null means full excess APTC is repaid. The limitation ends after TY2025. */
 forms/f1040/nodes/intermediate/forms/form8990/index.ts,10,// ─── TY2025 Constants ─────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8990/index.ts,42,// TY2025: reinstated by P.L. 119-21 (OBBBA) for tax years beginning after 2024
 forms/f1040/nodes/intermediate/forms/form8990/index.ts,91,//   + depreciation/amortization/depletion (line 11 — TY2025 reinstated)

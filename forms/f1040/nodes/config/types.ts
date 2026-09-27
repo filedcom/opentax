@@ -138,6 +138,10 @@ export interface F1040Config {
   // ── ACA Premium Tax Credit (8962) ─────────────────────────────────────────
   fplBase: number;
   fplIncrement: number;
+  fplAlaskaBase: number;
+  fplAlaskaIncrement: number;
+  fplHawaiiBase: number;
+  fplHawaiiIncrement: number;
 
   // ── IRA Distributions (1099-R) ───────────────────────────────────────────
   qcdAnnualLimit: number;

@@ -70,7 +70,7 @@ Deno.test("Form 4952 computes all lines, deduction, and carryforward", () => {
   );
   assertEquals(
     result.outputs.find((o) => o.nodeType === "form4952")?.fields,
-    lines,
+    { ...lines },
   );
   assertEquals(result.carryforwards?.investment_interest_excess_4952, 3_200);
 });

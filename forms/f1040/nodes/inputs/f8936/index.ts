@@ -256,6 +256,12 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
   // A dealer transfer is reconciled on Form 8936/Schedule A, not claimed
   // again as a personal credit on Schedule 3.
   if (item.transferred_to_dealer) {
+    const transferredAmount = item.transferred_amount;
+    if (transferredAmount === undefined) {
+      throw new Error(
+        "f8936: dealer-transferred credit needs its transferred amount",
+      );
+    }
     if ((item.business_use_pct ?? 0) > 0) {
       throw new Error(
         "f8936: dealer transfer with business use needs Form 3800 routing",
@@ -265,8 +271,8 @@ function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {
     return [output(
       schedule2,
       used
-        ? { line1c_prev_owned_clean_vehicle_repayment: item.transferred_amount }
-        : { line1b_new_clean_vehicle_repayment: item.transferred_amount },
+        ? { line1c_prev_owned_clean_vehicle_repayment: transferredAmount }
+        : { line1b_new_clean_vehicle_repayment: transferredAmount },
     )];
   }
   if (credit <= 0) return [];

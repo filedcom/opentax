@@ -660,7 +660,7 @@ Deno.test("MFS without exception files APTC-only repayment subject to Table 5", 
       filing_status: FilingStatus.MFS,
       mfs_ptc_status: mfsNoException,
     }).outputs,
-    [],
+    [{ nodeType: "form8962", fields: { filing_required: false } }],
   );
   assertThrows(
     () =>

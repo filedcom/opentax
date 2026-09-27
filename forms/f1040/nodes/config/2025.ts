@@ -708,6 +708,11 @@ export const config2025: F1040Config = {
   depCareCreditRateBracketSize: DEP_CARE_CREDIT_RATE_BRACKET_SIZE_2025,
   fplBase:                      FPL_BASE_2025,
   fplIncrement:                 FPL_INCREMENT_2025,
+  // 2024 HHS guidelines, per TY2025 Form 8962 Instructions, Tables 1-2/1-3.
+  fplAlaskaBase:                18_810,
+  fplAlaskaIncrement:           6_730,
+  fplHawaiiBase:                17_310,
+  fplHawaiiIncrement:           6_190,
   qcdAnnualLimit:               QCD_ANNUAL_LIMIT_2025,
   psoExclusionLimit:            PSO_EXCLUSION_LIMIT_2025,
   eblThresholdSingle:           EBL_THRESHOLD_SINGLE_2025,

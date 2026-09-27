@@ -1,10 +1,9 @@
 import { z } from "zod";
 import type {
-  AtLeastOne,
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output } from "../../../../../core/types/tax-node.ts";
+import { output, TaxNode } from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
@@ -78,12 +77,7 @@ class F2210Node extends TaxNode<typeof inputSchema> {
     for (const [key, value] of Object.entries(parsed)) {
       if (value !== undefined) fields[`f2210_${key}`] = value;
     }
-    const outputs: NodeOutput[] = [
-      output(
-        f1040,
-        fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
-      ),
-    ];
+    const outputs: NodeOutput[] = [{ nodeType: f1040.nodeType, fields }];
 
     return { outputs };
   }

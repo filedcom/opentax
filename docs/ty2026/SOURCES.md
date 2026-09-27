@@ -10,6 +10,8 @@
 | IRS [Notice 2025-67](https://www.irs.gov/pub/irs-drop/n-25-67.pdf) | Final PDF in `corpus/authorities/` | Retirement plan limits | Later correction. |
 | IRS [Rev. Proc. 2025-19](https://www.irs.gov/pub/irs-drop/rp-25-19.pdf) | Final PDF in `corpus/authorities/` | 2026 HSA contribution limits | Later correction. |
 | IRS [Rev. Proc. 2025-25](https://www.irs.gov/pub/irs-drop/rp-25-25.pdf) | Final PDF in `corpus/authorities/` | 2026 premium-tax-credit applicable percentages | Later correction. |
+| HHS [2025 poverty guidelines](https://public-inspection.federalregister.gov/2025-01377.pdf) | Final public PDF in `corpus/authorities/` | Expected 2026 Form 8962 FPL amounts, subject to confirmation in 2026 Form 8962 instructions | Final 2026 Form 8962 instructions. |
+| IRS [Publication 505 (2026)](https://www.irs.gov/pub/irs-prior/p505--2026.pdf) | Final PDF in `corpus/authorities/` | Cross-check 2026 deductions, credits, and estimated-tax calculations | Later correction or final form instructions. |
 | IRS [Notice 2026-10](https://www.irs.gov/pub/irs-drop/n-26-10.pdf) and [IRB 2026-29](https://www.irs.gov/pub/irs-irbs/irb26-29.pdf) | Final PDFs in `corpus/authorities/` | January–June and July–December mileage rates | Later correction. |
 | IRS [2026 SALT correction](https://www.irs.gov/forms-pubs/correction-to-state-and-local-income-tax-deduction-amount-in-the-2026-form-1040-es) | Public correction page | Schedule A cap and phaseout | Final Schedule A/instructions or later correction. |
 | IRS [2026 FICA guidance](https://www.irs.gov/taxtopics/tc751) | Public page; 2026 wage base $184,500 | W-2, Schedule SE, 8959, 4137, 8919 | Revised IRS guidance. |

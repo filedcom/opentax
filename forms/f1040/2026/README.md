@@ -11,6 +11,10 @@ lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount
 owed from upstream figures. Its source-backed tests cover the Form 1062 amount,
 Schedule 2 offset, and Schedule 3-A election/eligibility decisions. It still
 needs to be connected to the TY2026 node graph and serializers.
+`deductions.ts` now computes 1040 lines 12e–15, including the nonitemizer
+charitable cap. The shared Form 8962 node has explicit 2026 percentage,
+repayment, affordability, and FPL paths, with boundary tests. These pieces
+still require a complete 2026 config and final output wiring.
 
 The source corpus and provenance are in [`docs/ty2026`](../../../docs/ty2026/README.md).
 Its raw IRS draft forms, ATS scenarios, and authorities are committed; the

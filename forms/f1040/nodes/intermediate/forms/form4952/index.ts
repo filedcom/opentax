@@ -228,7 +228,7 @@ class Form4952Node extends TaxNode<typeof inputSchema> {
     const amt = calculateAmtForm4952(input);
     const line2cDifference = lines.line8 - amt.lines.line8;
     const outputs: NodeOutput[] = lines.line3 > 0
-      ? [{ nodeType: this.nodeType, fields: lines }]
+      ? [{ nodeType: this.nodeType, fields: { ...lines } }]
       : [];
     if (lines.line8 > 0) {
       outputs.push(

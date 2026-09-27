@@ -12,26 +12,11 @@ import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import type { F1040Config } from "../../../config/index.ts";
-
-// 2025 Form 8962 instructions, Table 2: line 5 is an integer percentage.
-// Through 150% FPL the applicable figure is zero; it rises by 0.0004 per
-// percentage point through 300%, then by 0.00025 to 8.5% at 400%.
-
-// IRC §36B(f)(2)(B): APTC repayment caps by household income as % of FPL
-// Table 5 has a Single column and one column for every other filing status.
-// Above 400% FPL (TY2025): no cap — ARP extension means 400%+ still eligible,
-//   so full excess APTC is repaid with no limit
-type RepaymentCapTier = {
-  readonly maxPct: number; // income pct upper bound (exclusive)
-  readonly singleCap: number;
-  readonly otherCap: number;
-};
-
-const REPAYMENT_CAP_TIERS: readonly RepaymentCapTier[] = [
-  { maxPct: 200, singleCap: 375, otherCap: 750 },
-  { maxPct: 300, singleCap: 975, otherCap: 1_950 },
-  { maxPct: 400, singleCap: 1_625, otherCap: 3_250 },
-];
+import {
+  applicableFigure,
+  qsehraAffordabilityRate,
+  repaymentCap,
+} from "./year-rules.ts";
 
 const MONTH_CODES = [
   "JANUARY",
@@ -182,21 +167,11 @@ function federalPovertyLevel(
   cfg: F1040Config,
 ): number {
   const [base, increment] = region === "alaska"
-    ? [18_810, 6_730]
+    ? [cfg.fplAlaskaBase, cfg.fplAlaskaIncrement]
     : region === "hawaii"
-    ? [17_310, 6_190]
+    ? [cfg.fplHawaiiBase, cfg.fplHawaiiIncrement]
     : [cfg.fplBase, cfg.fplIncrement];
   return base + increment * (householdSize - 1);
-}
-
-function applicableContributionPct(incomeAsFplPct: number): number {
-  const line5 = Math.floor(incomeAsFplPct);
-  if (line5 <= 150) return 0;
-  if (line5 <= 300) return ((line5 - 150) * 4) / 10_000;
-  if (line5 < 400) {
-    return Math.round(600 + (line5 - 300) * 2.5) / 10_000;
-  }
-  return 0.085;
 }
 
 function totalPremium(input: Form8962Input): number {
@@ -235,30 +210,17 @@ function qsehraMonthlyCredit(
   tentativeCredit: number,
   householdIncome: number,
   facts: NonNullable<Form8962Input["qsehra_monthly_facts"]>[number],
+  taxYear: number,
 ): number {
   if (facts === null) return tentativeCredit;
   // Pub. 974 Worksheet N, lines 4 and 8. Equality is affordable.
-  const affordabilityThreshold = householdIncome * 0.0902 / 12;
+  const affordabilityThreshold = householdIncome *
+    qsehraAffordabilityRate(taxYear) / 12;
   const employeeCost = facts.self_only_slcsp -
     facts.self_only_permitted_benefit;
   if (affordabilityThreshold >= employeeCost) return 0;
   // Worksheet Q, Part III, columns A-C.
   return Math.max(0, tentativeCredit - facts.permitted_benefit);
-}
-
-// IRC §36B(f)(2)(B): cap on excess APTC repayment liability
-// Returns null when no cap applies (income ≥ 400% FPL)
-function repaymentCap(
-  incomePct: number,
-  status: FilingStatus | undefined,
-): number | null {
-  const isSingle = status === FilingStatus.Single;
-  for (const tier of REPAYMENT_CAP_TIERS) {
-    if (incomePct < tier.maxPct) {
-      return isSingle ? tier.singleCap : tier.otherCap;
-    }
-  }
-  return null; // ≥ 400% FPL — no cap
 }
 
 function buildOutputs(
@@ -303,6 +265,7 @@ function aptcOnlyRepayment(
   input: Form8962Input,
   aptc: number,
   baseFields: Form8962BaseFields,
+  taxYear: number,
 ): NodeResult {
   if (aptc === 0) return noForm8962Required();
   const monthlyAptc = input.monthly_aptcs;
@@ -314,7 +277,11 @@ function aptcOnlyRepayment(
     );
   }
   const line25 = Math.round(aptc);
-  const cap = repaymentCap(baseFields.federal_poverty_pct, input.filing_status);
+  const cap = repaymentCap(
+    baseFields.federal_poverty_pct,
+    input.filing_status,
+    taxYear,
+  );
   const line29 = cap === null ? line25 : Math.min(line25, cap);
   return {
     outputs: buildOutputs(0, line29, {
@@ -335,7 +302,7 @@ function aptcOnlyRepayment(
         : { annual_aptc: aptc }),
       excess_advance_payment: line25,
       ...(cap !== null ? { repayment_limitation: cap } : {}),
-      excess_advance_premium: line29,
+      ...(taxYear === 2025 ? { excess_advance_premium: line29 } : {}),
     }),
   };
 }
@@ -498,7 +465,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       throw new Error("Form 8962 shared policy must use monthly calculation");
     }
     if (mfsStatus?.basis === "no_exception") {
-      return aptcOnlyRepayment(input, aptc, baseFields);
+      return aptcOnlyRepayment(input, aptc, baseFields, ctx.taxYear);
     }
     if (incomePct < 100) {
       const status = input.below_100_fpl_status;
@@ -513,7 +480,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
       if (status.basis === "not_applicable") {
-        return aptcOnlyRepayment(input, aptc, baseFields);
+        return aptcOnlyRepayment(input, aptc, baseFields, ctx.taxYear);
       }
     }
 
@@ -567,10 +534,10 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
-    const applicableFigure = applicableContributionPct(incomePct);
-    const annualContribution = applicableFigure === Infinity
+    const line7ApplicableFigure = applicableFigure(incomePct, ctx.taxYear);
+    const annualContribution = line7ApplicableFigure === null
       ? undefined
-      : Math.round(income * applicableFigure);
+      : Math.round(income * line7ApplicableFigure);
     const monthlyContribution = annualContribution === undefined
       ? undefined
       : Math.round(annualContribution / 12);
@@ -591,6 +558,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
             Math.min(monthPremium, maxAssistance),
             income,
             qsehraFacts?.[index] ?? null,
+            ctx.taxYear,
           ),
           aptc: monthAptc,
         };
@@ -611,6 +579,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
             annualTentativeCredit / 12,
             income,
             facts,
+            ctx.taxYear,
           ),
         0,
       )
@@ -625,7 +594,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
     const line26 = Math.max(0, line24 - line25);
     const line27 = Math.max(0, line25 - line24);
     const cap = line27 > 0
-      ? repaymentCap(incomePct, input.filing_status)
+      ? repaymentCap(incomePct, input.filing_status, ctx.taxYear)
       : null;
     const line29 = cap === null ? line27 : Math.min(line27, cap);
 
@@ -639,7 +608,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       total_premium_tax_credit: line24,
       total_advance_ptc: line25,
       ...(annualContribution !== undefined && {
-        applicable_figure: applicableFigure,
+        applicable_figure: line7ApplicableFigure,
         annual_applicable_contribution: annualContribution,
         monthly_applicable_contribution: monthlyContribution,
       }),
@@ -654,7 +623,7 @@ class Form8962Node extends TaxNode<typeof inputSchema> {
       ...(line27 > 0 && {
         excess_advance_payment: line27,
         ...(cap !== null && { repayment_limitation: cap }),
-        excess_advance_premium: line29,
+        ...(ctx.taxYear === 2025 ? { excess_advance_premium: line29 } : {}),
       }),
     };
     return { outputs: buildOutputs(line26, line29, formFields) };

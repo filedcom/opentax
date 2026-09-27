@@ -94,7 +94,6 @@ function validateInput(input: Form4972Input, deathBenefitMax: number): void {
     input.prior_election_after_1986 !== false ||
     !(
       input.beneficiary_distribution === true ||
-      input.alternate_payee_distribution === true ||
       input.participant_five_year_member === true
     )
   ) {
