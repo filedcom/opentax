@@ -791,6 +791,26 @@
       "bytes": 527838,
       "sha256": "d16b9f506f039f5af24f01fad699b0b60d392ac7920fcff528c7d97740c792b6",
       "retrieved_utc": "2026-09-27T04:39:59Z"
+    },
+    {
+      "path": "authorities/f1099div--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f1099div--2024.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 542425,
+      "sha256": "4ea1de804ff1db921753bd6319beeccfe4647299e03d79816e04d852a9cd1435",
+      "retrieved_utc": "2026-09-27T08:11:48.037017+00:00",
+      "revision": "January 2024 continuous use"
+    },
+    {
+      "path": "authorities/i1099div--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i1099div--2024.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 178269,
+      "sha256": "af89ec14c288df70092cc2439e0bf215bab9704fc0b70ba3f9bd7d420067e607",
+      "retrieved_utc": "2026-09-27T08:11:48.037017+00:00",
+      "revision": "January 2024 continuous use"
     }
   ]
 }

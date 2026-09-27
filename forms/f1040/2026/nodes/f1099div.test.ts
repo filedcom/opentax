@@ -1,0 +1,60 @@
+import { assertEquals, assertThrows } from "@std/assert";
+import { f1099div_2026 } from "./f1099div.ts";
+
+const context = { taxYear: 2026, formType: "f1040" };
+const basic = {
+  payerName: "North Bank",
+  isNominee: false as const,
+  box11: false as const,
+  box1a: 600,
+  box1b: 200,
+  box4: 50,
+};
+
+Deno.test("TY2026 1099-DIV routes ordinary and qualified dividends", () => {
+  const outputs = f1099div_2026.compute(context, {
+    f1099divs: [basic],
+  }).outputs;
+  const fields = (nodeType: string) =>
+    outputs.filter((item) => item.nodeType === nodeType).map((item) =>
+      item.fields
+    );
+  assertEquals(fields("f1040"), [
+    { line3b_ordinary_dividends: 600 },
+    { line3a_qualified_dividends: 200 },
+    { line25b_withheld_1099: 50 },
+  ]);
+  assertEquals(fields("agi_aggregator"), [
+    { line3b_ordinary_dividends: 600 },
+  ]);
+  assertEquals(fields("income_tax_calculation"), [
+    { qualified_dividends: 200 },
+  ]);
+});
+
+Deno.test("TY2026 1099-DIV rejects unconnected capital gain and foreign tax routes", () => {
+  for (
+    const [extra, message] of [
+      [{ box2a: 100 }, "capital gains need Schedule D"],
+      [{ box7: 20 }, "foreign tax needs Form 1116"],
+      [{ box5: 40 }, "section 199A dividends need the QBI route"],
+    ] as const
+  ) {
+    assertThrows(
+      () =>
+        f1099div_2026.compute(context, {
+          f1099divs: [{ ...basic, ...extra }],
+        }),
+      Error,
+      message,
+    );
+  }
+  assertThrows(
+    () =>
+      f1099div_2026.compute(context, {
+        f1099divs: [{ ...basic, box1b: 601 }],
+      }),
+    Error,
+    "qualified dividends exceed ordinary dividends",
+  );
+});

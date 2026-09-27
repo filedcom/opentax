@@ -89,6 +89,72 @@ Deno.test("TY2026 W-2 excess Social Security withholding reaches Schedule 3 and 
   assertEquals(pdf.getPageCount(), 3);
 });
 
+Deno.test("TY2026 1099-DIV reaches qualified-dividend tax and Form 1040", async () => {
+  const facts = {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f1099div: [{
+      payerName: "North Bank",
+      isNominee: false,
+      box11: false,
+      box1a: 600,
+      box1b: 200,
+      box4: 50,
+    }],
+  };
+  const plan = buildExecutionPlan(registry);
+  const result = execute(plan, registry, facts, context);
+  const allOrdinary = execute(plan, registry, {
+    ...facts,
+    f1099div: [{ ...facts.f1099div[0], box1b: 0 }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(allOrdinary.diagnostics, []);
+  assertEquals(result.pending.f1040.line3a_qualified_dividends, 200);
+  assertEquals(result.pending.f1040.line3b_ordinary_dividends, 600);
+  assertEquals(result.pending.f1040.line25b_withheld_1099, 50);
+  assertEquals(result.pending.f1040.line9_total_income, 70_600);
+  assertEquals(result.pending.income_tax_calculation.qualified_dividends, 200);
+  if (
+    Number(result.pending.f1040.line16_income_tax) >=
+      Number(allOrdinary.pending.f1040.line16_income_tax)
+  ) {
+    throw new Error("TY2026 qualified-dividend tax did not reduce line 16");
+  }
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({ f1040: result.pending.f1040 }),
+  );
+  assertEquals(pdf.getPageCount(), 2);
+});
+
+Deno.test("TY2026 dividends over $1,500 reach the filed Schedule B", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f1099div: [{
+      payerName: "North Bank",
+      isNominee: false,
+      box11: false,
+      box1a: 1_600,
+      box1b: 200,
+    }],
+    schedule_b: { foreign_account: false, foreign_trust: false },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule_b.file_schedule_b, true);
+  assertEquals(result.pending.schedule_b.print_line6_total, 1_600);
+  assertEquals(result.pending.schedule_b.print_div_payer_1, "North Bank");
+  assertEquals(result.pending.schedule_b.print_div_amount_1, 1_600);
+  assertEquals(result.pending.f1040.line3b_ordinary_dividends, 1_600);
+  const pdf = await PDFDocument.load(
+    await buildCorePdfBytes2026({
+      f1040: result.pending.f1040,
+      scheduleB: result.pending.schedule_b,
+    }),
+  );
+  assertEquals(pdf.getPageCount(), 3);
+});
+
 Deno.test("TY2026 registered dependent reaches Schedule 8812, Form 1040, and PDF", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {

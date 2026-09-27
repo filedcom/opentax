@@ -1,9 +1,9 @@
 # TY2026 calculation graph route gaps
 
-The current dedicated registry declares **35 edges to targets it has not
+The current dedicated registry declares **32 edges to targets it has not
 registered**. `graph-route-gaps.csv` is generated from the executable registry
 by running `deno run --allow-write forms/f1040/2026/build_route_gaps.ts` from
-the repository root. Every target on these 35 edges exists in the TY2025 registry, but that
+the repository root. Every target on these 32 edges exists in the TY2025 registry, but that
 does not establish that their tax-year behavior or output lines are correct
 for 2026. This inventory covers edges from the currently registered nodes;
 it does not cover the remaining nodes in `node-coverage.csv`.
@@ -11,7 +11,7 @@ it does not cover the remaining nodes in `node-coverage.csv`.
 The planner orders registered nodes and ignores edges to absent ones. The
 executor still deposits output values into the absent target's pending slot.
 A wages-only 2026 run still deposits values into absent nodes, including EITC,
-Schedule A, Form 8812, and Form 8962. Form 6251 is now registered and can
+Schedule A, and Form 8962. Form 6251 and Schedule 8812 are now registered and can
 send AMT through Schedule 2 to Form 1040. A successful core 1040
 calculation therefore does not prove that every upstream route was consumed.
 
@@ -19,8 +19,9 @@ calculation therefore does not prove that every upstream route was consumed.
 
 1. **Income and adjustments:** connect the remaining income source inputs
    through Schedule B, Schedule 1, and AGI to the final 1040. The dedicated
-   Schedule 1 sink and PDF now handle the 1099-INT box 2 penalty, but the
-   public source and other Schedule 1 line routes remain open. Review 2026
+   Schedule 1 sink and PDF now handle the 1099-INT box 2 penalty. The public
+   1099-INT, 1099-G, 1098-E, and simple 1099-DIV routes are registered; other
+   source lines remain open. Review 2026
    forms and instructions for each source before registration, including
    capital gains, retirement distributions, Social Security, and foreign
    income. Reconcile each printed 1040 income line with the same amount in

@@ -13,6 +13,7 @@ import { income_tax_calculation } from "../nodes/intermediate/worksheets/income_
 import { start } from "./start.ts";
 import { f1040_2026_node } from "./nodes/f1040.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
+import { f1099div_2026 } from "./nodes/f1099div.ts";
 import { schedule1_2026 } from "./nodes/schedule1.ts";
 import { schedule_b_2026 } from "./nodes/schedule_b.ts";
 import { schedule2_2026 } from "./nodes/schedule2.ts";
@@ -27,6 +28,7 @@ export const registry: NodeRegistry = {
   f1098e,
   f1099g,
   f1099int,
+  f1099div: f1099div_2026,
   w2,
   form4137,
   form8960,

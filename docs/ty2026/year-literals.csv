@@ -9,8 +9,7 @@ forms/f1040/nodes/inputs/f1040es/index.ts,29,".describe(""Date Q3 estimated paym
 forms/f1040/nodes/inputs/f1095a/index.ts,20,// IRS Form 8962 Instructions (2025): https://www.irs.gov/instructions/i8962
 forms/f1040/nodes/inputs/f1098/index.ts,35,// box5: MIP — NOT deductible for TY2025. Collected for informational purposes only.
 forms/f1040/nodes/inputs/f1098/index.ts,45,// Drake-specific: no tax effect for TY2025
-forms/f1040/nodes/inputs/f1098e/index.ts,12,// TY2025 — Form 1098-E: Student Loan Interest Statement
-forms/f1040/nodes/inputs/f1099g/index.ts,19,// TY2025 thresholds from IRS Form 1099-G instructions
+forms/f1040/nodes/inputs/f1099int/index.ts,138,// The TY2025 node ignores this additional source detail.
 forms/f1040/nodes/inputs/f1099k/index.ts,13,// TY2025 TPSO reporting threshold per OBBBA (IRC §6050W as amended)
 forms/f1040/nodes/inputs/f1099k/index.ts,119,// but the engine surfaces it. For TY2025 the tolerance is ±$1.)
 forms/f1040/nodes/inputs/f1099k/index.ts,135,// Route box1a income when for_routing is set and amount exceeds TY2025 threshold.
@@ -113,10 +112,10 @@ forms/f1040/nodes/inputs/f8997/index.ts,49,// gains will become includible on TY
 forms/f1040/nodes/inputs/f965/index.ts,8,"// TY2025 — Forms 965-A, 965-C, 965-D, 965-E: §965 Transition Tax (Repatriation)"
 forms/f1040/nodes/inputs/f965/index.ts,16,// TY2025 is the 8th (final) installment year for the original 2017 inclusion.
 forms/f1040/nodes/inputs/fec/index.ts,19,// TY2025 Form 1040 reports FEC on line 1h (IRS Publication 4164).
-forms/f1040/nodes/inputs/general/index.ts,269,// Rev. Proc. 2024-40 §3.23 and Rev. Proc. 2025-32 §4.23.
-forms/f1040/nodes/inputs/general/index.ts,271,"2025: 5_200,"
-forms/f1040/nodes/inputs/general/index.ts,308,"// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use"
-forms/f1040/nodes/inputs/general/index.ts,326,"// For TY2025, CTC requires an employment-valid SSN issued before the return"
+forms/f1040/nodes/inputs/general/index.ts,271,// Rev. Proc. 2024-40 §3.23 and Rev. Proc. 2025-32 §4.23.
+forms/f1040/nodes/inputs/general/index.ts,273,"2025: 5_200,"
+forms/f1040/nodes/inputs/general/index.ts,310,"// 65th birthday. For TY2025, this matches the Schedule 1-A instruction to use"
+forms/f1040/nodes/inputs/general/index.ts,328,"// For TY2025, CTC requires an employment-valid SSN issued before the return"
 forms/f1040/nodes/inputs/ltc_premium/index.ts,11,"// Age of insured as of December 31, 2025 — determines age bracket"
 forms/f1040/nodes/inputs/nol_carryforward/index.ts,12,// TY2025 — Net Operating Loss (NOL) carryforward deduction (IRC §172)
 forms/f1040/nodes/inputs/qsehra/index.ts,24,// TY2025 limits (Rev Proc 2024-40 §3.25):
@@ -135,7 +134,7 @@ forms/f1040/nodes/inputs/ssa1099/index.ts,17,// Box 3 — Total social security 
 forms/f1040/nodes/inputs/ssa1099/index.ts,20,// Box 4 — Total benefits repaid to SSA/RRB in 2025
 forms/f1040/nodes/inputs/ssa1099/index.ts,23,"// Box 5 — Net benefits for 2025 (Box 3 minus Box 4, as precomputed by SSA)"
 forms/f1040/nodes/inputs/ssa1099/index.ts,26,"box5_net_benefits: z.number().nonnegative().optional().describe(""Net benefits for 2025 (Box 3 minus Box 4)""),"
-forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts,508,// and the final 1040 derive AGI from identical numbers. TY2025 retains its
+forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts,510,// and the final 1040 derive AGI from identical numbers. TY2025 retains its
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,28,// IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,75,// IRC §36B(f); 2025 Schedule 2 line 1a.
 forms/f1040/nodes/intermediate/forms/farm_elections.ts,10,const cropInsuranceDate = z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
@@ -173,9 +172,9 @@ forms/f1040/nodes/intermediate/forms/form5695/index.ts,644,) !== 2025 ||
 forms/f1040/nodes/intermediate/forms/form5695/index.ts,649,"""Form 5695 panelboard needs distinct enabled-property codes and 2025 or consecutive-year timing"","
 forms/f1040/nodes/intermediate/forms/form5695/index.ts,652,if (panelboard.enabled_installed_year === 2025) {
 forms/f1040/nodes/intermediate/forms/form5695/index.ts,668,"""Form 5695 panelboard enabled-property code needs a matching 2025 property item"","
-forms/f1040/nodes/intermediate/forms/form6251/index.ts,153,"// Source: IRS Instructions for Form 6251 (2025), ""Line 7"" / ""What's New"""
-forms/f1040/nodes/intermediate/forms/form6251/index.ts,183,// IRC §55(a); Form 6251 Line 11 → 2025 Schedule 2 Line 2
-forms/f1040/nodes/intermediate/forms/form6251/index.ts,251,"// 2025 Form 6251 Part III, using the worksheet amounts above for both the"
+forms/f1040/nodes/intermediate/forms/form6251/index.ts,154,"// Source: IRS Instructions for Form 6251 (2025), ""Line 7"" / ""What's New"""
+forms/f1040/nodes/intermediate/forms/form6251/index.ts,184,// IRC §55(a); Form 6251 Line 11 → 2025 Schedule 2 Line 2
+forms/f1040/nodes/intermediate/forms/form6251/index.ts,252,"// 2025 Form 6251 Part III, using the worksheet amounts above for both the"
 forms/f1040/nodes/intermediate/forms/form6252/calculation.ts,100,if (sold <= acquired || sold.getUTCFullYear() > 2025) {
 forms/f1040/nodes/intermediate/forms/form6252/calculation.ts,102,"""Form 6252 sale must follow acquisition and occur by tax year 2025"","
 forms/f1040/nodes/intermediate/forms/form6252/calculation.ts,140,const line20 = sold.getUTCFullYear() === 2025 ? line17 : 0;
@@ -199,6 +198,7 @@ forms/f1040/nodes/intermediate/forms/form8853/index.ts,28,// Line 2: Taxpayer co
 forms/f1040/nodes/intermediate/forms/form8959/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8960/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8960/index.ts,116,// Form 8960 line 14; not indexed for inflation (TY2025)
+forms/f1040/nodes/intermediate/forms/form8960/index.ts,194,"if (taxYear === 2025) return [output(schedule2, { line12_niit: niit })];"
 forms/f1040/nodes/intermediate/forms/form8962/index.ts,305,"...(taxYear === 2025 ? { excess_advance_premium: line29 } : {}),"
 forms/f1040/nodes/intermediate/forms/form8962/index.ts,626,"...(ctx.taxYear === 2025 ? { excess_advance_premium: line29 } : {}),"
 forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,3,"// TY2025: Form 8962 Instructions, Tables 2 and 5."
@@ -218,8 +218,8 @@ forms/f1040/nodes/intermediate/forms/form_8829/index.ts,14,const DEPRECIATION_RA
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,29,// Rate for homes where business use began before 2025 (full-year mid-month convention)
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,57,"// Month home first used for business: 1–12 for TY2025 first use, 0 for prior-year use"
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,83,rate = DEPRECIATION_RATES_TY2025[month - 1];
-forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,87,"taxYear = 2025,"
-forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,149,"taxYear = 2025,"
+forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,103,"taxYear = 2025,"
+forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,165,"taxYear = 2025,"
 forms/f1040/nodes/intermediate/forms/schedule_f/index.ts,29,// ── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,12,// ─── TY2025 Constants (Rev Proc 2024-40; IRS Publication 926) ────────────────
 forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,34,"cash_wages_over_2025_limit: z.boolean().optional(),"

@@ -14,6 +14,7 @@ import {
   itemSchema as f1099intItemSchema,
 } from "../nodes/inputs/f1099int/index.ts";
 import { schedule_b_2026 } from "./nodes/schedule_b.ts";
+import { f1099div_2026, f1099divItem2026Schema } from "./nodes/f1099div.ts";
 import { form4137 } from "../nodes/intermediate/forms/form4137/index.ts";
 import { f8812_2026 } from "./nodes/f8812.ts";
 import {
@@ -34,6 +35,7 @@ export const inputNodes: readonly InputNodeEntry[] = [
   { node: f1098e, itemSchema: f1098eItemSchema, isArray: true },
   { node: f1099g, itemSchema: f1099gItemSchema2026, isArray: true },
   { node: f1099int, itemSchema: f1099intItemSchema.strict(), isArray: true },
+  { node: f1099div_2026, itemSchema: f1099divItem2026Schema, isArray: true },
   {
     node: schedule_b_2026,
     inputSchema: schedule_b_2026.inputSchema.pick({
