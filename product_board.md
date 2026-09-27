@@ -985,9 +985,12 @@ A/G require a referenced SS-8 filing, and H requires a W-2 from the same
 firm. These source and full-return cases are written but unrun. The actual
 letters/SS-8 receipts are still entered evidence, not authenticated documents;
 1099-MISC box 3 and 1099-NEC box 1 now share one source ledger and can be
-combined for a reason-H firm with a matching W-2. Those cases are written but
-unrun. Continuation, PDF review, IRS business rules, and ATS acceptance remain
-open.
+combined for a reason-H firm with a matching W-2. The 2025 PDF descriptor
+now fills five firm rows, printed lines 6 and 8-13, and a separate recipient
+copy. More than five firms create additional Form 8919 copies with lines 6-13
+only on the first copy. Source, XML, PDF field-map, and continuation cases are
+written but unrun. Filled-PDF visual inspection, IRS business rules, and ATS
+acceptance remain open.
 
 ## Workstreams
 
