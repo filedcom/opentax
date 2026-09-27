@@ -259,6 +259,55 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: Form 4136 diesel-water emulsion use, bus, and export groups validate",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const claims = [
+    { line: "14a", type_of_use: "02", qualified_quantity: 100 },
+    { line: "14a", type_of_use: "05", qualified_quantity: 100 },
+    { line: "14b", type_of_use: undefined, qualified_quantity: 100 },
+  ].map((claim) => ({
+    ...claim,
+    unit: "gallons",
+    actual_fuel_cost: 250,
+    not_highway_vehicle: true,
+    emulsion_water_percentage: 14,
+    emulsion_epa_additive_record_reference: "EPA additive record 2025-1",
+    export_proof: {
+      kind: "carrier_bill_of_lading",
+      record_reference: "Export file 2025-014",
+    },
+  }));
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 52 },
+    schedule3: { line12_fuel_tax_credit: 51.9, line15_total: 51.9 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        claimant_is_ultimate_purchaser: true,
+        business_name: "Example Emulsion Buyer",
+        principal_activity_code: "111000",
+        equipment_make: "Example",
+        equipment_model: "Equipment",
+        equipment_type: "farm equipment",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<BusNontxUseDieselWtrEmlsnGrp>");
+  assertStringIncludes(xml, "<ExpNontxUseDslWtrEmulsionGrp>");
+  await validateXsd(xml, "Form 4136 diesel-water emulsion");
+});
+
+Deno.test({
   name: "XSD: Form 4136 all non-bus line 11 fuel groups validate",
   sanitizeOps: false,
   sanitizeResources: false,

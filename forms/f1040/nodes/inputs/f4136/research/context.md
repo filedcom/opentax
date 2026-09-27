@@ -31,6 +31,11 @@ the IRS-issued UV registration, tax-settlement method, undyed fuel, and sales
 records are required. The government-buyer MeF statement and PDF continuation
 are emitted from those rows. This route is unrun and awaits IRS business-rule
 review; other vendor lines remain open.
+Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
+the reduced $.124 rate only to bus use (type 05); line 14b uses the export
+rate and requires retained proof. Both require the emulsion's water percentage
+and a record reference for its EPA-registered additive under Pub. 510's fuel
+definition. Their source-to-MeF and PDF cases are written but unrun.
 Gasoline line 1c now requires a permitted use code and a noncommercial-
 motorboat exclusion; types 13/14 also require no-waiver and no-credit-card-
 certificate confirmations. Export line 1d requires retained export proof.

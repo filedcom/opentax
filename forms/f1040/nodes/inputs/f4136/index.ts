@@ -41,6 +41,8 @@ export const FORM4136_RATES = {
   "11f": 0.243,
   "11g": 0.243,
   "11h": 0.183,
+  "14a": 0.197,
+  "14b": 0.198,
 } as const;
 
 export const FORM4136_BUS_RATES = {
@@ -52,6 +54,7 @@ export const FORM4136_BUS_RATES = {
   "11f": 0.170,
   "11g": 0.169,
   "11h": 0.110,
+  "14a": 0.124,
 } as const;
 
 const fuelLine = z.enum([
@@ -88,6 +91,8 @@ const fuelLine = z.enum([
   "11f",
   "11g",
   "11h",
+  "14a",
+  "14b",
 ]);
 
 const alternativeFuelUseCodes = [
@@ -127,6 +132,7 @@ const allowedUseCodes: Partial<
   "11f": alternativeFuelUseCodes,
   "11g": alternativeFuelUseCodes,
   "11h": alternativeFuelUseCodes,
+  "14a": ["01", "02", "05", "06", "07", "08", "11", "13", "14", "15"],
 };
 
 export const fuelClaimSchema = z.object({
@@ -170,6 +176,8 @@ export const fuelClaimSchema = z.object({
     certificate_information_believed_true: z.literal(true),
     exclusive_government_use_confirmed: z.literal(true),
   })).min(1).optional(),
+  emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
+  emulsion_epa_additive_record_reference: z.string().trim().min(1).optional(),
 });
 
 const businessSchema = z.object({
@@ -236,6 +244,18 @@ const activitySchema = z.object({
         message:
           `Form 4136 line ${claim.line} needs an ultimate purchaser and purchase records`,
         path: ["business", "claimant_is_ultimate_purchaser"],
+      });
+    }
+    if (
+      (claim.line === "14a" || claim.line === "14b") &&
+      (claim.emulsion_water_percentage === undefined ||
+        !claim.emulsion_epa_additive_record_reference)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          `Form 4136 line ${claim.line} needs the emulsion composition and EPA additive record`,
+        path: ["claims", index, "emulsion_water_percentage"],
       });
     }
     if (claim.type_of_use === "05" && claim.line in FORM4136_BUS_RATES) {
@@ -345,7 +365,7 @@ const activitySchema = z.object({
       }
     }
     if (
-      ["1d", "2c", "3e", "4d"].includes(claim.line) &&
+      ["1d", "2c", "3e", "4d", "14b"].includes(claim.line) &&
       !claim.export_proof
     ) {
       ctx.addIssue({

@@ -172,6 +172,8 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l5d = onLine(input, "5d");
     const l5e = onLine(input, "5e");
     const l6a = onLine(input, "6a");
+    const l14a = onLine(input, "14a");
+    const l14b = onLine(input, "14b");
     const business = input.claimant_context === "business"
       ? input.business
       : undefined;
@@ -409,6 +411,23 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
             ];
           },
         ),
+        ...l14a.filter((claim) => claim.type_of_use === "05").map((claim) =>
+          busDetail("BusNontxUseDieselWtrEmlsnGrp", claim)
+        ),
+        ...l14a.filter((claim) => claim.type_of_use !== "05").map((claim) =>
+          detail("NontxUseDieselWaterEmulsionGrp", claim)
+        ),
+        l14a.length ? element("NontxDslWtrEmlsnActlFlCstAmt", cost(l14a)) : "",
+        l14a.length
+          ? credit("NontxUseDieselWtrEmulsionCrAmt", lineAmount(l14a), "309")
+          : "",
+        elements("ExpNontxUseDslWtrEmulsionGrp", [
+          element("ExpNontxUseDslWtrEmulsionQty", qty(l14b)),
+          l14b.length ? element("ActualFuelCostAmt", cost(l14b)) : "",
+          l14b.length
+            ? credit("ExpNontxUseDslWtrEmulsionCrAmt", lineAmount(l14b), "306")
+            : "",
+        ]),
         element("TotalFuelTaxCreditAmt", amount),
       ],
       scheduleAIds.length && scheduleAIds.every(Boolean)

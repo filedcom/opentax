@@ -69,6 +69,8 @@ const creditReferenceNumber: Record<Line, string> = {
   "11f": "424",
   "11g": "425",
   "11h": "435",
+  "14a": "309",
+  "14b": "306",
 };
 const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 function fieldPath(p: number, n: number): string {
@@ -187,6 +189,14 @@ function fieldPath(p: number, n: number): string {
     column = offset === 3 || offset === 4
       ? "ColD"
       : offset === 5 || offset === 6
+      ? "ColE"
+      : "";
+  } else if (p === 4 && n >= 86 && n <= 101) {
+    table = "Table_Line14";
+    line = n <= 93 ? "Line14a" : "Line14b";
+    column = n >= 89 && n <= 90 || n >= 97 && n <= 98
+      ? "ColD"
+      : n >= 91 && n <= 92 || n >= 99 && n <= 100
       ? "ColE"
       : "";
   }
@@ -312,6 +322,13 @@ const fields: PdfFieldEntry[] = [
       ...moneyFields(`line${line}_credit`, 3, base + 5),
     ];
   }),
+  text("line14a_type", 4, 86),
+  text("line14a_quantity", 4, 88),
+  ...moneyFields("line14a_cost", 4, 89),
+  ...moneyFields("line14a_credit", 4, 91),
+  text("line14b_quantity", 4, 96),
+  ...moneyFields("line14b_cost", 4, 97),
+  ...moneyFields("line14b_credit", 4, 99),
   ...moneyFields("line17_total", 4, 124),
 ];
 
@@ -401,6 +418,24 @@ async function decorateBusRates(
       font,
     });
     page.drawText("Bus", { x: 230, y: y + 1.3, size: 8, font });
+  }
+  const emulsionClaims = allForm4136Claims(input).filter((claim) =>
+    claim.line === "14a"
+  );
+  if (emulsionClaims.some((claim) => claim.type_of_use === "05")) {
+    const page4 = pages[3];
+    if (!page4) throw new Error("Form 4136 bus rates require page 4");
+    page4.drawRectangle({
+      x: 292,
+      y: 324,
+      width: 23,
+      height: 11,
+      color: rgb(1, 1, 1),
+    });
+    if (emulsionClaims.length === 1) {
+      page4.drawText(".124", { x: 293.5, y: 327, size: 8, font });
+      page4.drawText("Bus", { x: 260, y: 327, size: 8, font });
+    }
   }
 }
 
@@ -558,6 +593,8 @@ export function projectForm4136Fields(
       "5d",
       "5e",
       "6a",
+      "14a",
+      "14b",
       ...alternativeFuelLines,
     ] as const
   ) {
@@ -589,6 +626,8 @@ export function projectForm4136Fields(
     putClaimGroup(out, input, [line], `line${line}`);
   }
   putClaimGroup(out, input, ["6a"], "line6a");
+  putClaimGroup(out, input, ["14a"], "line14a");
+  putClaimGroup(out, input, ["14b"], "line14b");
   out.line6_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "6a"
   )?.vendor_registration_number;
