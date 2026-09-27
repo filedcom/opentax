@@ -50,6 +50,9 @@ for the implementation contract.
   attachment route, with the remaining additional-tax work.
 - [`FORM8606-GRAPH.md`](FORM8606-GRAPH.md): 2026 IRA basis, conversion,
   Roth-distribution, spouse-form, and carryforward implementation contract.
+- [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
+  2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
+  143 PDF widgets, and MeF/graph acceptance order.
 - [`FORM2441-GRAPH.md`](FORM2441-GRAPH.md): dependent-care benefits before
   AGI, 2026 credit phaseout and limit, provider detail, PDF, and MeF order.
 - [`FORM8862-8863-EIC-GRAPH.md`](FORM8862-8863-EIC-GRAPH.md),

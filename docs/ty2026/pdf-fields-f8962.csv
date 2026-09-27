@@ -1,0 +1,144 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Name shown on your return. ,2,36 684.5 380.6 698.001,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Your social security number. ,2,382.6 684.5 576 698.001,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,"A. You cannot take the P T C if your filing status is married filing separately unless you qualify for an exception. See instructions. If you qualify, check the box.",2,565.6 674.251 573.1 681.751,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,Part I. Annual and Monthly Contribution Amount. 1. Tax family size. Enter your tax family size. See instructions. ,2,505 648.5 576 659.499,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,2a. Modified A G I. Enter your modified A G I. See instructions. ,2,411.4 636.501 481.4 648,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,2b. Enter the total of your dependents' modified A G I. See instructions). ,2,411.4 624.502 481.4 635.501,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,3. Household income. Add the amounts on lines 2a and 2b. See instructions. ,2,505 612.5 576 623.499,yes
+topmostSubform[0].Page1[0].Line4_ReadOrder[0].c1_2[0],/Btn,"4. Federal poverty line. Enter the federal poverty line amount from Table 1-1, 1-2, or 1-3. See instructions. Check the appropriate box for the federal poverty table used. a. Alaska. ",2,262.2 590.002 270.2 598.002,yes
+topmostSubform[0].Page1[0].Line4_ReadOrder[0].c1_2[1],/Btn,4b. Hawaii. ,2,319.8 590.002 327.8 598.002,yes
+topmostSubform[0].Page1[0].Line4_ReadOrder[0].c1_2[2],/Btn,4c. Other 48 states and D C. ,2,377.4 590.002 385.4 598.002,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,4. Amount.,2,505 588.502 576 600.001,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,5. Household income as a percentage of Federal poverty line. (see instructions). %.,2,505 576.5 561.6 587.499,yes
+topmostSubform[0].Page1[0].c1_3[0],/Btn,6. Did you enter 401% on line 5? (See instructions if you entered less than 100%.) No. Continue to line 7. ,2,64.8 554.002 72.8 562.002,yes
+topmostSubform[0].Page1[0].c1_3[1],/Btn,"6. Yes. You are not eligible to take the P T C. If advance payment of the P T C was made, see the instructions for how to report your excess advance P T C repayment amount.",2,64.8 542 72.8 550,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"7. Applicable figure. Using your line 5 percentage, locate your “applicable figure” on the table in the instructions. ",2,504 516.002 576 528.001,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,8a. Annual contribution amount. Multiply line 3 by line 7. Round to nearest whole dollar amount.,2,231.4 492.501 301.4 504,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,8b. Monthly contribution amount. Divide line 8a by 12. Round to nearest whole dollar amount. ,2,505 492.501 576 504,yes
+topmostSubform[0].Page1[0].c1_4[0],/Btn,"Part I I. Premium Tax Credit Claim and Reconciliation of Advance Payment of Premium Tax Credit. 9. Are you allocating policy amounts with another taxpayer or do you want to use the alternative calculation for year of marriage? See instructions. Yes. Skip to Part I V, Allocation of Policy Amounts, or Part V, Alternative Calculation for Year of Marriage. ",2,64.8 458.001 72.8 466.001,yes
+topmostSubform[0].Page1[0].c1_4[1],/Btn,9. No. Continue to line 10. ,2,64.8 446.002 72.8 454.002,yes
+topmostSubform[0].Page1[0].c1_5[0],/Btn,10. See the instructions to determine if you can use line 11 or must complete lines 12 through 23. Yes. Continue to line 11. Compute your annual P T C. Then skip lines 12–23 and continue to line 24. ,2,64.8 422.001 72.8 430.001,yes
+topmostSubform[0].Page1[0].c1_5[1],/Btn,10. No. Continue to lines 12–23. Compute your monthly P T C and continue to line 24. ,2,64.8 410.002 72.8 418.002,yes
+topmostSubform[0].Page1[0].Part2_Table1[0].BodyRow1[0].f1_12[0],/Tx,"Annual calculation. Row: 11. Annual totals. Column: (a) Annual enrollment premiums (Form(s) 1095-A, line 33A).",2,109 360.5 179 371.499,yes
+topmostSubform[0].Page1[0].Part2_Table1[0].BodyRow1[0].f1_13[0],/Tx,"Row: 11. Annual totals. Column: (b) Annual applicable S L C S P premium. (Form(s) 1095-A, line 33B).",2,181 360.5 258.2 371.499,yes
+topmostSubform[0].Page1[0].Part2_Table1[0].BodyRow1[0].f1_14[0],/Tx,Row: 11. Annual totals. Column: (c) Annual contribution amount (line 8a).,2,260.2 360.5 337.4 371.499,yes
+topmostSubform[0].Page1[0].Part2_Table1[0].BodyRow1[0].f1_15[0],/Tx,"Row: 11. Annual totals. Column: (d) Annual maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 360.5 416.6 371.499,yes
+topmostSubform[0].Page1[0].Part2_Table1[0].BodyRow1[0].f1_16[0],/Tx,Row: 11. Annual totals. Column: (e) Annual P T C allowed (smaller of (a) or (d)).,2,418.6 360.5 495.8 371.499,yes
+topmostSubform[0].Page1[0].Part2_Table1[0].BodyRow1[0].f1_17[0],/Tx,"Row: 11. Annual totals. Column: (f) Annual advance payment of P T C (Form(s) 1095-A, line 33C).",2,497.8 360.5 576 371.499,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow1[0].f1_18[0],/Tx,"Monthly calculation. Row: 12. January. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 300.502 179 311.501,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow1[0].f1_19[0],/Tx,"Row: 12. January. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 300.502 258.2 311.501,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow1[0].f1_20[0],/Tx,Row: 12. January. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation),2,260.2 300.502 337.4 311.501,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow1[0].f1_21[0],/Tx,"Row: 12. January. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 300.502 416.6 311.501,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow1[0].f1_22[0],/Tx,Row: 12. January. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 300.502 495.8 311.501,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow1[0].f1_23[0],/Tx,"Row: 12. January. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 300.502 576 311.501,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow2[0].f1_24[0],/Tx,"Row: 13. February. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 288.503 179 299.502,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow2[0].f1_25[0],/Tx,"Row: 13. February. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 288.503 258.2 299.502,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow2[0].f1_26[0],/Tx,Row: 13. February. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 288.503 337.4 299.502,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow2[0].f1_27[0],/Tx,"Row: 13. February. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 288.503 416.6 299.502,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow2[0].f1_28[0],/Tx,Row: 13. February. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 288.503 495.8 299.502,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow2[0].f1_29[0],/Tx,"Row: 13. February. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 288.503 576 299.502,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow3[0].f1_30[0],/Tx,"Row: 14. March. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 276.504 179 287.503,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow3[0].f1_31[0],/Tx,"Row: 14. March. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 276.504 258.2 287.503,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow3[0].f1_32[0],/Tx,Row: 14. March. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 276.504 337.4 287.503,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow3[0].f1_33[0],/Tx,"Row: 14. March. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 276.504 416.6 287.503,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow3[0].f1_34[0],/Tx,Row: 14. March. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 276.504 495.8 287.503,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow3[0].f1_35[0],/Tx,"Row: 14. March. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 276.504 576 287.503,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow4[0].f1_36[0],/Tx,"Row: 15. April. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 264.505 179 275.504,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow4[0].f1_37[0],/Tx,"Row: 15. April. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 264.505 258.2 275.504,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow4[0].f1_38[0],/Tx,Row: 15. April. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 264.505 337.4 275.504,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow4[0].f1_39[0],/Tx,"Row: 15. April. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 264.505 416.6 275.504,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow4[0].f1_40[0],/Tx,Row: 15. April. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 264.505 495.8 275.504,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow4[0].f1_41[0],/Tx,"Row: 15. April. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 264.505 576 275.504,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow5[0].f1_42[0],/Tx,"Row: 16. May. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 252.506 179 263.505,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow5[0].f1_43[0],/Tx,"Row: 16. May. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 252.506 258.2 263.505,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow5[0].f1_44[0],/Tx,Row: 16. May. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 252.506 337.4 263.505,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow5[0].f1_45[0],/Tx,"Row: 16. May. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 252.506 416.6 263.505,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow5[0].f1_46[0],/Tx,Row: 16. May. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 252.506 495.8 263.505,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow5[0].f1_47[0],/Tx,"Row: 16. May. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 252.506 576 263.505,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow6[0].f1_48[0],/Tx,"Row: 17. June. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 240.507 179 251.506,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow6[0].f1_49[0],/Tx,"Row: 17. June. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 240.507 258.2 251.506,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow6[0].f1_50[0],/Tx,Row: 17. June. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 240.507 337.4 251.506,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow6[0].f1_51[0],/Tx,"Row: 17. June. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 240.507 416.6 251.506,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow6[0].f1_52[0],/Tx,Row: 17. June. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 240.507 495.8 251.506,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow6[0].f1_53[0],/Tx,"Row: 17. June. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 240.507 576 251.506,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow7[0].f1_54[0],/Tx,"Row: 18. July. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 228.508 179 239.507,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow7[0].f1_55[0],/Tx,"Row: 18. July. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 228.508 258.2 239.507,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow7[0].f1_56[0],/Tx,Row: 18. July. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 228.508 337.4 239.507,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow7[0].f1_57[0],/Tx,"Row: 18. July. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 228.508 416.6 239.507,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow7[0].f1_58[0],/Tx,Row: 18. July. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 228.508 495.8 239.507,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow7[0].f1_59[0],/Tx,"Row: 18. July. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 228.508 576 239.507,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow8[0].f1_60[0],/Tx,"Row: 19. August. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 216.509 179 227.508,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow8[0].f1_61[0],/Tx,"Row: 19. August. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 216.509 258.2 227.508,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow8[0].f1_62[0],/Tx,Row: 19. August. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 216.509 337.4 227.508,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow8[0].f1_63[0],/Tx,"Row: 19. August. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 216.509 416.6 227.508,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow8[0].f1_64[0],/Tx,Row: 19. August. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 216.509 495.8 227.508,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow8[0].f1_65[0],/Tx,"Row: 19. August. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 216.509 576 227.508,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow9[0].f1_66[0],/Tx,"Row: 20. September. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 204.51 179 215.509,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow9[0].f1_67[0],/Tx,"Row: 20. September. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 204.51 258.2 215.509,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow9[0].f1_68[0],/Tx,Row: 20. September. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 204.51 337.4 215.509,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow9[0].f1_69[0],/Tx,"Row: 20. September. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 204.51 416.6 215.509,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow9[0].f1_70[0],/Tx,Row: 20. September. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 204.51 495.8 215.509,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow9[0].f1_71[0],/Tx,"Row: 20. September. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 204.51 576 215.509,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow10[0].f1_72[0],/Tx,"Row: 21. October. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 192.511 179 203.51,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow10[0].f1_73[0],/Tx,"Row: 21. October. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 192.511 258.2 203.51,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow10[0].f1_74[0],/Tx,Row: 21. October. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 192.511 337.4 203.51,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow10[0].f1_75[0],/Tx,"Row: 21. October. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 192.511 416.6 203.51,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow10[0].f1_76[0],/Tx,Row: 21. October. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 192.511 495.8 203.51,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow10[0].f1_77[0],/Tx,"Row: 21. October. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 192.511 576 203.51,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow11[0].f1_78[0],/Tx,"Row: 22. November. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 180.512 179 191.511,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow11[0].f1_79[0],/Tx,"Row: 22. November. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 180.512 258.2 191.511,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow11[0].f1_80[0],/Tx,Row: 22. November. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 180.512 337.4 191.511,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow11[0].f1_81[0],/Tx,"Row: 22. November. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 180.512 416.6 191.511,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow11[0].f1_82[0],/Tx,Row: 22. November. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 180.512 495.8 191.511,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow11[0].f1_83[0],/Tx,"Row: 22. November. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 180.512 576 191.511,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow12[0].f1_84[0],/Tx,"Row: 23. December. Column: (a) Monthly enrollment premiums (Form(s) 1095-A, lines 21–32, column A).",2,109 168.513 179 179.512,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow12[0].f1_85[0],/Tx,"Row: 23. December. Column: (b) Monthly applicable S L C S P premium (Form(s) 1095-A, lines 21–32, column B).",2,181 168.513 258.2 179.512,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow12[0].f1_86[0],/Tx,Row: 23. December. Column: (c) Monthly contribution amount (amount from line 8b or alternative marriage monthly calculation).,2,260.2 168.513 337.4 179.512,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow12[0].f1_87[0],/Tx,"Row: 23. December. Column: (d) Monthly maximum premium assistance (subtract (c) from (b); if zero or less, enter 0).",2,339.4 168.513 416.6 179.512,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow12[0].f1_88[0],/Tx,Row: 23. December. Column: (e) Monthly P T C allowed (smaller of (a) or d)).,2,418.6 168.513 495.8 179.512,yes
+topmostSubform[0].Page1[0].Part2_Table2[0].BodyRow12[0].f1_89[0],/Tx,"Row: 23. December. Column: (f) Monthly advance payment of P T C (Form(s) 1095-A, lines 21–32, column C).",2,497.8 168.513 576 179.512,yes
+topmostSubform[0].Page1[0].f1_90[0],/Tx,"24. Total P T C. Enter the amount from line 11, column (e), or add lines 12 through 23, column (e), and enter the total here.",2,505 156.502 576 167.501,yes
+topmostSubform[0].Page1[0].f1_91[0],/Tx,"25. Advance payment of P T C. Enter the amount from line 11, column (f), or add lines 12 through 23, column (f), and enter the total here.",2,505 132.501 576 144,yes
+topmostSubform[0].Page1[0].f1_92[0],/Tx,"26. Net P T C. If line 24 is greater than line 25, subtract line 25 from line 24. Enter the difference here and on Schedule 3 (Form 1040), line 9. If line 24 equals line 25, enter -0-. Stop here. If line 25 is greater than line 24, leave this line blank and continue to line 27.",2,505 96.501 576 108,yes
+topmostSubform[0].Page1[0].f1_93[0],/Tx,"Part I I I. Repayment of Excess Advance Payment of the Premium Tax Credit. 27. Excess advance payment of P T C. If line 25 is greater than line 24, subtract line 24 from line 25. Enter the difference here and on Schedule 2 (Form 1040), line 1a. ",2,505 60.501 576 72,yes
+topmostSubform[0].Page1[0].f1_94[0],/Tx,28. Reserved for future use. ,2,505 48.502 576 59.501,yes
+topmostSubform[0].Page1[0].f1_95[0],/Tx,29. Reserved for future use. ,2,505 36.5 576 47.499,yes
+topmostSubform[0].Page2[0].f2_1[0],/Tx,"Page 2. Part I V. Allocation of Policy Amounts. Complete the following information for up to four policy amount allocations. See instructions for allocation details. Allocation 1. 30. (a) Policy number (Form 1095-A, line 2). ",3,64.8 684.5 215 698.001,yes
+topmostSubform[0].Page2[0].f2_2[0],/Tx,(b) S S N of other taxpayer. ,3,217 684.5 359 698.001,yes
+topmostSubform[0].Page2[0].f2_3[0],/Tx,(c) Allocation start month. ,3,361 684.5 467 698.001,yes
+topmostSubform[0].Page2[0].f2_4[0],/Tx,(d) Allocation stop month. ,3,469 684.5 576 698.001,yes
+topmostSubform[0].Page2[0].Lines30e-g[0].Line30e[0].f2_5[0],/Tx,Allocation percentage applied to monthly amounts. (e) Premium percentage. ,3,166.6 636.501 301.4 647.5,yes
+topmostSubform[0].Page2[0].Lines30e-g[0].Line30f[0].f2_6[0],/Tx,(f) S L C S P percentage. ,3,303.4 636.501 438.2 647.5,yes
+topmostSubform[0].Page2[0].Lines30e-g[0].f2_7[0],/Tx,(g) Advance payment of the P T C percentage. ,3,440.2 636.501 576 647.5,yes
+topmostSubform[0].Page2[0].f2_8[0],/Tx,"Allocation 2. 31. (a) Policy number (Form 1095-A, line 2). ",3,64.8 600.498 215 613.999,yes
+topmostSubform[0].Page2[0].f2_9[0],/Tx,(b) S S N of other taxpayer. ,3,217 600.498 359 613.999,yes
+topmostSubform[0].Page2[0].f2_10[0],/Tx,(c) Allocation start month. ,3,361 600.498 467 613.999,yes
+topmostSubform[0].Page2[0].f2_11[0],/Tx,(d) Allocation stop month. ,3,469 600.498 576 613.999,yes
+topmostSubform[0].Page2[0].Lines31e-g[0].Line31e[0].f2_12[0],/Tx,Allocation percentage applied to monthly amounts. (e) Premium percentage. ,3,166.6 552.502 301.4 563.501,yes
+topmostSubform[0].Page2[0].Lines31e-g[0].Line31f[0].f2_13[0],/Tx,(f) S L C S P percentage. ,3,303.4 552.502 438.2 563.501,yes
+topmostSubform[0].Page2[0].Lines31e-g[0].f2_14[0],/Tx,(g) Advance payment of the P T C percentage. ,3,440.2 552.502 576 563.501,yes
+topmostSubform[0].Page2[0].f2_15[0],/Tx,"Allocation 3. 32. (a) Policy number (Form 1095-A, line 2). ",3,64.8 516.499 215 530,yes
+topmostSubform[0].Page2[0].f2_16[0],/Tx,(b) S S N of other taxpayer. ,3,217 516.499 359 530,yes
+topmostSubform[0].Page2[0].f2_17[0],/Tx,(c) Allocation start month. ,3,361 516.499 467 530,yes
+topmostSubform[0].Page2[0].f2_18[0],/Tx,(d) Allocation stop month. ,3,469 515.999 576 530,yes
+topmostSubform[0].Page2[0].Lines32e-g[0].Line32e[0].f2_19[0],/Tx,Allocation percentage applied to monthly amounts. (e) Premium percentage. ,3,166.6 468.5 301.4 479.999,yes
+topmostSubform[0].Page2[0].Lines32e-g[0].Line32f[0].f2_20[0],/Tx,(f) S L C S P percentage. ,3,303.4 468.5 438.2 479.999,yes
+topmostSubform[0].Page2[0].Lines32e-g[0].f2_21[0],/Tx,(g) Advance payment of the P T C percentage. ,3,439.2 468 576 479.999,yes
+topmostSubform[0].Page2[0].f2_22[0],/Tx,"Allocation 4. 33. (a) Policy number (Form 1095-A, line 2). ",3,64.8 432.5 215 446.001,yes
+topmostSubform[0].Page2[0].f2_23[0],/Tx,(b) S S N of other taxpayer. ,3,217 432.5 359 446.001,yes
+topmostSubform[0].Page2[0].f2_24[0],/Tx,(c) Allocation start month. ,3,361 432.5 467 446.001,yes
+topmostSubform[0].Page2[0].f2_25[0],/Tx,(d) Allocation stop month. ,3,469 432.5 576 446.001,yes
+topmostSubform[0].Page2[0].Lines33e-g[0].Line33e[0].f2_26[0],/Tx,Allocation percentage applied to monthly amounts. (e) Premium percentage. ,3,166.6 384.501 301.4 395.5,yes
+topmostSubform[0].Page2[0].Lines33e-g[0].Line33f[0].f2_27[0],/Tx,(f) S L C S P percentage. ,3,303.4 384.501 438.2 395.5,yes
+topmostSubform[0].Page2[0].Lines33e-g[0].f2_28[0],/Tx,(g) Advance payment of the P T C percentage. ,3,440.2 384.501 576 396,yes
+topmostSubform[0].Page2[0].c2_1[0],/Btn,"34. Have you completed all policy amount allocations? Yes. Multiply the amounts on Form 1095-A by the allocation percentages entered by policy. Add all allocated policy amounts and non-allocated policy amounts from Forms 1095-A, if any, to compute a combined total for each month. Enter the combined total for each month on lines 12–23, columns (a), (b), and (f). Compute the amounts for lines 12–23, columns (c)–(e), and continue to line 24.",3,64.8 362 72.8 370,yes
+topmostSubform[0].Page2[0].c2_1[1],/Btn,34. No. See the instructions to report additional policy amount allocations.,3,64.8 326 72.8 334,yes
+topmostSubform[0].Page2[0].f2_29[0],/Tx,"Part V. Alternative Calculation for Year of Marriage. Complete line(s) 35 and/or 36 to elect the alternative calculation for year of marriage. For eligibility to make the election, see the instructions for line 9. To complete line(s) 35 and/or 36 and compute the amounts for lines 12–23, see the instructions for this Part V. 35. Alternative entries for your S S N. (a) Alternative family size. ",3,145 240.501 243.8 252.001,yes
+topmostSubform[0].Page2[0].f2_30[0],/Tx,(b) Alternative monthly contribution amount.,3,245.8 240.501 344.6 252.001,yes
+topmostSubform[0].Page2[0].f2_31[0],/Tx,(c) Alternative start month. ,3,346.6 240.501 459.8 252.001,yes
+topmostSubform[0].Page2[0].f2_32[0],/Tx,(d) Alternative stop month. ,3,461.8 240.501 576 252.001,yes
+topmostSubform[0].Page2[0].f2_33[0],/Tx,36. Alternative entries for your spouse's S S N. (a) Alternative family size. ,3,145 204.501 243.8 216.001,yes
+topmostSubform[0].Page2[0].f2_34[0],/Tx,(b) Alternative monthly contribution amount.,3,245.8 204.501 344.6 216.001,yes
+topmostSubform[0].Page2[0].f2_35[0],/Tx,(c) Alternative start month. ,3,346.6 204.501 459.8 216.001,yes
+topmostSubform[0].Page2[0].f2_36[0],/Tx,(d) Alternative stop month. ,3,461.8 204.501 576 216.001,yes
