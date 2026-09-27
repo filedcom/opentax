@@ -279,6 +279,9 @@ have distinct input, MeF, and PDF paths with unrun source-to-XSD cases.
 The next build pass adds aviation-gasoline lines 2a, 2c, and 2d with
 commercial-use, export, and foreign-trade LUST confirmations and unrun
 source-to-XSD/PDF cases.
+Diesel train, bus, and export lines 3c-3e now have separate credit rates,
+source confirmations, XML groups, and PDF fields, with cases written but
+unrun.
 The Schedule A section of the 2025 IRS instructions instead says to show the
 activity with the most qualifying fuel usage. That conflict is unresolved;
 the current code follows the printed Form 4136 and needs IRS business-rule
