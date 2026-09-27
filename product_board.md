@@ -28,7 +28,8 @@ estates/trusts (box 13 code M) directly to source-backed Form 3800 Part III
 line 1h. It reconciles each credit to its filed K-1, combines it with any
 separately earned Form 8820 amount without duplicating a source, and does not
 invent a Form 8820 attachment for K-1-only credits. The source, tax-limit,
-and XML cases are written but unrun. Passive K-1 credits remain open.
+and XML cases are written but unrun. Passive K-1 credits still need Form
+8582-CR activity and tax facts; they are not treated as nonpassive credits.
 
 The existing Form 8582-CR source-and-tax input is now reachable from the
 normal Form 1040 start node, so a taxpayer can supply the passive-credit
@@ -36,6 +37,10 @@ activities and the two required passive-income tax figures for calculation and
 Form 3800 routing. A full-return passive K-1-to-XML case is written but unrun.
 Automatic creation of those activity facts from a K-1 amount alone is not
 claimed; K-1s do not supply the tax-without-passive-income figure.
+The K-1 nodes now require any passive orphan-drug code Z/M amount to match
+the entered Form 8582-CR activity sources. Omitted or mismatched facts produce
+a diagnostic rather than silently losing the credit, and the XML builder also
+rejects a marker with no source facts. These cases are written but unrun.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and

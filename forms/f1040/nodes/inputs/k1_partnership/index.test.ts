@@ -75,6 +75,23 @@ Deno.test("partnership K-1 code Z reaches source-backed Form 3800", () => {
     ),
     undefined,
   );
+  assertEquals(
+    findOutput(
+      compute([{
+        ...item,
+        orphan_drug_credit_subject_to_passive_activity_limit: true,
+      }]),
+      "form8582cr",
+    )?.fields,
+    {
+      required_orphan_drug_k1_credits: [{
+        source_type: "partnership",
+        source_ein: "123456789",
+        source_document_reference: "2025 partnership K-1",
+        credit_amount: 1_250,
+      }],
+    },
+  );
 });
 
 Deno.test("partnership K-1 box 15 code K needs source identity and passive classification", () => {

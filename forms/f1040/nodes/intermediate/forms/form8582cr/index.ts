@@ -10,6 +10,7 @@ import {
   creditSourceSchema,
   PassiveCreditCategory,
   type PassiveCreditSource,
+  PassiveCreditSourceOrigin,
   sourceAllocationSchema,
 } from "./source.ts";
 
@@ -170,6 +171,14 @@ function allocateCreditsToSources(
 export const inputSchema = z.object({
   // Source identity and current/prior amounts feed the four Part I worksheets.
   credit_sources: z.array(creditSourceSchema),
+  // K-1 nodes deposit this evidence so an entered passive credit cannot be
+  // omitted from the activity calculation without a diagnostic.
+  required_orphan_drug_k1_credits: z.array(z.object({
+    source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
+    source_ein: z.string().regex(/^\d{9}$/),
+    source_document_reference: z.string().trim().min(1),
+    credit_amount: z.number().int().positive(),
+  })).optional(),
 
   // Regular tax computed on all income including passive net income
   // Part I, Line 6 (full tax side)
@@ -204,6 +213,42 @@ export const inputSchema = z.object({
   // MFS filers who lived with their spouse cannot use Parts II-IV.
   filing_status: filingStatusSchema.optional(),
 }).superRefine((input, ctx) => {
+  const k1Keys = new Set<string>();
+  input.required_orphan_drug_k1_credits?.forEach((evidence, index) => {
+    const key = [
+      evidence.source_type,
+      evidence.source_ein,
+      evidence.source_document_reference,
+    ].join(":");
+    if (k1Keys.has(key)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_orphan_drug_k1_credits", index],
+        message: "Form 8582-CR orphan-drug K-1 source is duplicated",
+      });
+    }
+    k1Keys.add(key);
+    const matching = input.credit_sources.filter((source) =>
+      source.source_form === "Form 8820" &&
+      source.reporting_route === PassiveCreditReportingRoute.Form3800Line3 &&
+      source.form3800_credit_line === "1h" &&
+      source.source_document_reference === evidence.source_document_reference &&
+      source.source_origin.kind === evidence.source_type &&
+      source.source_origin.kind !== PassiveCreditSourceOrigin.Self &&
+      source.source_origin.ein === evidence.source_ein
+    );
+    if (
+      matching.reduce((sum, source) => sum + source.current_year_credit, 0) !==
+        evidence.credit_amount
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["required_orphan_drug_k1_credits", index],
+        message:
+          "Form 8582-CR orphan-drug activity credits must match the passive K-1 amount",
+      });
+    }
+  });
   const sourceIds = new Set<string>();
   input.credit_sources.forEach((source, index) => {
     const id = JSON.stringify([

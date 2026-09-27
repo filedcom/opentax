@@ -28,6 +28,7 @@ import { form4562 } from "../../intermediate/forms/form4562/index.ts";
 import { form6251 } from "../../intermediate/forms/form6251/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f3800 } from "../f3800/index.ts";
+import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 
@@ -496,6 +497,7 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
     schedule_a,
     form4952,
     f3800,
+    form8582cr,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -521,12 +523,19 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       ...amtAdjustmentOutput(k1_s_corps),
       ...k1_s_corps.flatMap((item) => {
         const credit = item.box13_code_z_orphan_drug_credit;
-        if (
-          credit === undefined ||
-          item.orphan_drug_credit_subject_to_passive_activity_limit
-        ) return [];
+        if (credit === undefined) return [];
         if (!item.corporation_ein || !item.source_document_reference) {
           throw new Error("S-corporation orphan-drug K-1 source is incomplete");
+        }
+        if (item.orphan_drug_credit_subject_to_passive_activity_limit) {
+          return [output(form8582cr, {
+            required_orphan_drug_k1_credits: [{
+              source_type: "s_corporation",
+              source_ein: item.corporation_ein,
+              source_document_reference: item.source_document_reference,
+              credit_amount: credit,
+            }],
+          })];
         }
         return [output(f3800, {
           f8820_k1_credit_entries: [{

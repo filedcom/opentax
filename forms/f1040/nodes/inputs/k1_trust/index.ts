@@ -16,6 +16,7 @@ import { scheduleA } from "../schedule_a/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f3800 } from "../f3800/index.ts";
+import { form8582cr } from "../../intermediate/forms/form8582cr/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -431,15 +432,22 @@ function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
 function orphanDrugCreditOutputs(items: K1TrustItems): NodeOutput[] {
   return items.flatMap((item) => {
     const credit = item.box13_code_m_orphan_drug_credit;
-    if (
-      credit === undefined ||
-      item.orphan_drug_credit_subject_to_passive_activity_limit
-    ) return [];
+    if (credit === undefined) return [];
     if (
       !item.entity_type || !item.estate_trust_ein ||
       !item.source_document_reference
     ) {
       throw new Error("Estate/trust orphan-drug K-1 source is incomplete");
+    }
+    if (item.orphan_drug_credit_subject_to_passive_activity_limit) {
+      return [output(form8582cr, {
+        required_orphan_drug_k1_credits: [{
+          source_type: item.entity_type,
+          source_ein: item.estate_trust_ein,
+          source_document_reference: item.source_document_reference,
+          credit_amount: credit,
+        }],
+      })];
     }
     return [output(f3800, {
       f8820_k1_credit_entries: [{
@@ -464,6 +472,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     form_1116,
     form4952,
     f3800,
+    form8582cr,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {

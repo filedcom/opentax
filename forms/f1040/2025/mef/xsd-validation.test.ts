@@ -1838,6 +1838,23 @@ Deno.test({
   );
 });
 
+Deno.test("passive orphan-drug K-1 without Form 8582-CR facts reports a diagnostic", () => {
+  const result = runReturn({
+    general: singleGeneral(),
+    k1_partnership: [{
+      partnership_name: "Clinical partnership",
+      partnership_ein: "123456789",
+      source_document_reference: "2025 clinical partnership K-1",
+      box15_code_z_orphan_drug_credit: 500,
+      orphan_drug_credit_subject_to_passive_activity_limit: true,
+    }],
+  });
+  assertEquals(
+    result.diagnostics.some((item) => item.nodeType === "form8582cr"),
+    true,
+  );
+});
+
 Deno.test({
   name:
     "XSD: Form 8582-CR start input carries passive orphan-drug K-1 through the return",

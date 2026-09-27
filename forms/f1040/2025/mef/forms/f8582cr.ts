@@ -119,6 +119,15 @@ export const form8582cr: MefFormDescriptor<"form8582cr", unknown> = {
   FIELD_MAP: [],
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8582cr.pdf",
   build(raw, context) {
+    if (
+      raw && typeof raw === "object" &&
+      "required_orphan_drug_k1_credits" in raw &&
+      !("credit_sources" in raw)
+    ) {
+      throw new Error(
+        "Form 8582-CR passive orphan-drug K-1 needs activity and tax facts",
+      );
+    }
     if (!raw || typeof raw !== "object" || !("credit_sources" in raw)) {
       return "";
     }

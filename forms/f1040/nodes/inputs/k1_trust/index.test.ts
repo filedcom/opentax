@@ -89,6 +89,23 @@ Deno.test("estate/trust K-1 code M reaches source-backed Form 3800", () => {
       ),
       undefined,
     );
+    assertEquals(
+      findOutput(
+        compute([{
+          ...item,
+          orphan_drug_credit_subject_to_passive_activity_limit: true,
+        }]),
+        "form8582cr",
+      )?.fields,
+      {
+        required_orphan_drug_k1_credits: [{
+          source_type: entity_type,
+          source_ein: "123456789",
+          source_document_reference: `${entity_type} K-1 2025`,
+          credit_amount: 1_250,
+        }],
+      },
+    );
   }
 });
 

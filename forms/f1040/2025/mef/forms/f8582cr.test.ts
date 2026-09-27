@@ -50,6 +50,22 @@ Deno.test("Form 8582-CR: absent or empty credits emit no document", () => {
   );
 });
 
+Deno.test("Form 8582-CR rejects passive K-1 evidence without activity facts", () => {
+  assertThrows(
+    () =>
+      form8582cr.build({
+        required_orphan_drug_k1_credits: [{
+          source_type: "partnership",
+          source_ein: "123456789",
+          source_document_reference: "2025 clinical K-1",
+          credit_amount: 500,
+        }],
+      }),
+    Error,
+    "needs activity and tax facts",
+  );
+});
+
 Deno.test("Form 8582-CR: Part I preserves current and prior other credits", () => {
   const xml = form8582cr.build({
     credit_sources: [otherCredit],
