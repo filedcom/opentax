@@ -53,6 +53,22 @@ Deno.test("partnership K-1 box 20 code B routes only allowed investment deprecia
   });
 });
 
+Deno.test("partnership K-1 box 13 code H routes separately stated investment interest", () => {
+  const item = minimalItem({
+    partnership_ein: "123456789",
+    source_document_reference: "2025 K-1 box 13 code H",
+    box13_code_h_investment_interest: 425,
+  });
+  assertEquals(findOutput(compute([item]), "form4952")?.fields, {
+    source_k1_investment_interest: 425,
+  });
+  assertThrows(() =>
+    compute([minimalItem({
+      box13_code_h_investment_interest: 425,
+    })])
+  );
+});
+
 Deno.test("partnership K-1 box 20 code B rejects unsourced or disallowed expenses", () => {
   const expense = {
     reported_amount: 1_000,

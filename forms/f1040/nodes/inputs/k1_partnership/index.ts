@@ -185,6 +185,10 @@ export const itemSchema = z.object({
     },
   ).optional(),
 
+  // Box 13 code H is separately stated investment interest, not a general
+  // partnership deduction. Form 4952 limits the amount deductible in 2025.
+  box13_code_h_investment_interest: z.number().positive().optional(),
+
   // Box 20 — W-2 wages for QBI limitation
   box20_w2_wages: z.number().nonnegative().optional(),
 
@@ -332,6 +336,19 @@ export const itemSchema = z.object({
           code: "custom",
           path: [key],
           message: `K-1 box 20 code B needs ${key}`,
+        });
+      }
+    }
+  }
+  if (item.box13_code_h_investment_interest !== undefined) {
+    for (
+      const key of ["partnership_ein", "source_document_reference"] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 13 code H needs ${key}`,
         });
       }
     }
@@ -817,6 +834,14 @@ class K1PartnershipNode extends TaxNode<typeof inputSchema> {
         outputs.push(output(form4952, {
           source_k1_allowed_investment_expenses:
             expense.allowed_deduction_amount,
+        }));
+      }
+    }
+
+    for (const item of k1_partnerships) {
+      if (item.box13_code_h_investment_interest !== undefined) {
+        outputs.push(output(form4952, {
+          source_k1_investment_interest: item.box13_code_h_investment_interest,
         }));
       }
     }

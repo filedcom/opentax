@@ -137,6 +137,34 @@ Deno.test("Form 4952 line 5 includes separately sourced allowed K-1 expenses", (
   );
 });
 
+Deno.test("Form 4952 includes sourced K-1 code H interest once on line 1", () => {
+  const sourced = calculateForm4952({
+    source_k1_investment_interest: [300, 450],
+    other_investment_property_gross_income: 500,
+  });
+  assertEquals(sourced.line1, 750);
+  assertEquals(sourced.line8, 500);
+  assertEquals(sourced.line7, 250);
+
+  assertThrows(
+    () =>
+      calculateForm4952({
+        investment_interest_expense: 200,
+        source_k1_investment_interest: 300,
+      }),
+    Error,
+    "manual investment interest must exclude sourced K-1 code H amounts",
+  );
+  assertEquals(
+    calculateForm4952({
+      investment_interest_expense: 200,
+      investment_interest_expense_excludes_sourced_k1: true,
+      source_k1_investment_interest: 300,
+    }).line1,
+    500,
+  );
+});
+
 Deno.test("Form 4952 carries forward interest when net investment income is zero", () => {
   const result = compute({
     investment_interest_expense: 5_000,

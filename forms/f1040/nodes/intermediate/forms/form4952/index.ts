@@ -36,6 +36,7 @@ function sum(value: number | number[] | undefined): number {
 
 export const inputSchema = z.object({
   investment_interest_expense: z.number().nonnegative().optional(),
+  investment_interest_expense_excludes_sourced_k1: z.literal(true).optional(),
   prior_year_carryforward: z.number().nonnegative().optional(),
   other_investment_property_gross_income: z.number().nonnegative().optional(),
   other_investment_property_qualified_dividends: z.number().nonnegative()
@@ -59,6 +60,7 @@ export const inputSchema = z.object({
   source_k1_dividends: accumulableAmount.optional(),
   source_k1_qualified_dividends: accumulableAmount.optional(),
   source_k1_allowed_investment_expenses: accumulableAmount.optional(),
+  source_k1_investment_interest: accumulableAmount.optional(),
   form8814_line9_qualified_dividends: z.number().nonnegative().optional(),
   form8814_line10_capital_gain: z.number().nonnegative().optional(),
   form8814_line12_investment_income: z.number().nonnegative().optional(),
@@ -98,6 +100,15 @@ interface Form4952Totals {
 
 function sourceTotals(input: Form4952Input): Form4952Totals {
   if (
+    (input.investment_interest_expense ?? 0) > 0 &&
+    sum(input.source_k1_investment_interest) > 0 &&
+    input.investment_interest_expense_excludes_sourced_k1 !== true
+  ) {
+    throw new Error(
+      "Form 4952 manual investment interest must exclude sourced K-1 code H amounts",
+    );
+  }
+  if (
     (input.investment_expenses ?? 0) > 0 &&
     sum(input.source_k1_allowed_investment_expenses) > 0 &&
     input.investment_expenses_exclude_sourced_k1 !== true
@@ -109,7 +120,8 @@ function sourceTotals(input: Form4952Input): Form4952Totals {
   const childDividends = input.form8814_line9_qualified_dividends ?? 0;
   const childGain = input.form8814_line10_capital_gain ?? 0;
   return {
-    line1: input.investment_interest_expense ?? 0,
+    line1: (input.investment_interest_expense ?? 0) +
+      sum(input.source_k1_investment_interest),
     line2: input.prior_year_carryforward ?? 0,
     line4a: (input.other_investment_property_gross_income ?? 0) +
       sum(input.source_1099_interest) + sum(input.source_1099_dividends) +

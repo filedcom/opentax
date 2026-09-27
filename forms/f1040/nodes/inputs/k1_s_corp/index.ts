@@ -118,6 +118,8 @@ export const itemSchema = z.object({
   box12_other_deductions: z.number().nonnegative().optional().describe(
     "Box 12 — Other deductions",
   ),
+  // Code H must go through Form 4952, not the generic Schedule A line 16 route.
+  box12_code_h_investment_interest: z.number().positive().optional(),
 
   // Box 15 — Alternative minimum tax (AMT) items (codes A–C) → Form 6251
   box15_amt_adjustment: z.number().optional().describe(
@@ -224,6 +226,27 @@ export const itemSchema = z.object({
           message: `K-1 box 13 code K needs ${key}`,
         });
       }
+    }
+  }
+  if (item.box12_code_h_investment_interest !== undefined) {
+    for (
+      const key of ["corporation_ein", "source_document_reference"] as const
+    ) {
+      if (item[key] === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          path: [key],
+          message: `K-1 box 12 code H needs ${key}`,
+        });
+      }
+    }
+    if ((item.box12_other_deductions ?? 0) > 0) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["box12_other_deductions"],
+        message:
+          "K-1 box 12 code H cannot be combined with aggregate box 12 deductions",
+      });
     }
   }
 });
@@ -651,6 +674,14 @@ class K1SCorpNode extends TaxNode<typeof inputSchema> {
       if ((item.box5b_qualified_dividends ?? 0) > 0) {
         outputs.push(output(form4952, {
           source_k1_qualified_dividends: item.box5b_qualified_dividends!,
+        }));
+      }
+    }
+
+    for (const item of k1_s_corps) {
+      if (item.box12_code_h_investment_interest !== undefined) {
+        outputs.push(output(form4952, {
+          source_k1_investment_interest: item.box12_code_h_investment_interest,
         }));
       }
     }

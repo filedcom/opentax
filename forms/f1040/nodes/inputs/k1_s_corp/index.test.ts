@@ -37,6 +37,25 @@ Deno.test("S corporation K-1 portfolio boxes feed Form 4952 only when affirmed",
   ]);
 });
 
+Deno.test("S corporation K-1 box 12 code H routes investment interest without a generic deduction", () => {
+  const item = minimalItem({
+    corporation_ein: "123456789",
+    source_document_reference: "2025 K-1 box 12 code H",
+    box12_code_h_investment_interest: 375,
+  });
+  const result = compute([item]);
+  assertEquals(findOutput(result, "form4952")?.fields, {
+    source_k1_investment_interest: 375,
+  });
+  assertEquals(findOutput(result, "schedule_a"), undefined);
+  assertThrows(() =>
+    compute([minimalItem({
+      box12_code_h_investment_interest: 375,
+    })])
+  );
+  assertThrows(() => compute([{ ...item, box12_other_deductions: 375 }]));
+});
+
 Deno.test("S corporation K-1 box 13 code Z needs source identity and passive classification", () => {
   assertThrows(() =>
     compute([minimalItem({ box13_code_z_orphan_drug_credit: 1_250 })])
