@@ -42,6 +42,7 @@ const RAW_HSA_KEYS = [
   "employer_hsa_contributions",
   "employer_excess_treatment",
   "hsa_december_31_value",
+  "post_year_personal_excess_withdrawal",
   "qualified_hsa_funding_distribution",
   "hsa_distributions",
   "hsa_excluded_distributions",

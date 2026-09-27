@@ -216,7 +216,7 @@ Deno.test("part1: retained employer excess omitted from W-2 box 1 reaches other 
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
       included_in_w2_box1: false,
-      retained_through_return_due_date: true,
+      timely_withdrawal: null,
     },
     hsa_december_31_value: 300,
   });
@@ -242,7 +242,7 @@ Deno.test("part1: retained employer excess already in W-2 box 1 is not other inc
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
       included_in_w2_box1: true,
-      retained_through_return_due_date: true,
+      timely_withdrawal: null,
     },
     hsa_december_31_value: 700,
   });
@@ -255,6 +255,115 @@ Deno.test("part1: an excess HSA needs its December 31 value", () => {
     () => compute({ ...uniformSelfOnly, taxpayer_hsa_contributions: 5000 }),
     Error,
     "December 31 HSA value",
+  );
+});
+
+Deno.test("part1: timely 2025 employer-excess withdrawal excludes principal from Form 5329 and includes earnings", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 5000,
+    employer_excess_treatment: {
+      included_in_w2_box1: false,
+      timely_withdrawal: {
+        principal: 700,
+        earnings: 50,
+        withdrawal_tax_year: 2025,
+        withdrawn_by_return_due_date: true,
+      },
+    },
+    hsa_distributions: 750,
+  });
+  assertEquals(fieldsOf(result.outputs, form5329), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
+    700,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_earnings,
+    50,
+  );
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line14b_excluded_distributions,
+    750,
+  );
+  assertEquals(findOutput(result, "form8889")?.fields.print_line16_taxable, 0);
+});
+
+Deno.test("part1: timely 2026 employer-excess withdrawal stays off 2025 distribution and earnings lines", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 5000,
+    employer_excess_treatment: {
+      included_in_w2_box1: false,
+      timely_withdrawal: {
+        principal: 700,
+        earnings: 50,
+        withdrawal_tax_year: 2026,
+        withdrawn_by_return_due_date: true,
+      },
+    },
+  });
+  assertEquals(fieldsOf(result.outputs, form5329), undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
+    700,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_earnings,
+    undefined,
+  );
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line14b_excluded_distributions,
+    undefined,
+  );
+});
+
+Deno.test("part1: partial timely employer withdrawal leaves only the retained excess on Form 5329", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 5000,
+    employer_excess_treatment: {
+      included_in_w2_box1: true,
+      timely_withdrawal: {
+        principal: 300,
+        earnings: 10,
+        withdrawal_tax_year: 2025,
+        withdrawn_by_return_due_date: true,
+      },
+    },
+    hsa_distributions: 310,
+    hsa_december_31_value: 100,
+  });
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 400);
+  assertEquals(fieldsOf(result.outputs, form5329)?.hsa_value, 100);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_earnings,
+    10,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
+    undefined,
+  );
+});
+
+Deno.test("part1: timely employer withdrawal cannot exceed employer excess", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        employer_hsa_contributions: 5000,
+        employer_excess_treatment: {
+          included_in_w2_box1: false,
+          timely_withdrawal: {
+            principal: 701,
+            earnings: 0,
+            withdrawal_tax_year: 2026,
+            withdrawn_by_return_due_date: true,
+          },
+        },
+      }),
+    Error,
+    "exceeds excess employer contributions",
   );
 });
 
@@ -398,6 +507,29 @@ Deno.test("part2: timely personal withdrawal cannot exceed its 2025 contribution
       }),
     Error,
     "exceeds excess personal contributions",
+  );
+});
+
+Deno.test("part2: timely 2026 personal excess withdrawal reduces 2025 Form 5329 without 2025 distribution income", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    taxpayer_hsa_contributions: 5000,
+    post_year_personal_excess_withdrawal: {
+      principal: 700,
+      earnings: 30,
+      withdrawal_tax_year: 2026,
+      withdrawn_by_return_due_date: true,
+    },
+  });
+  assertEquals(fieldsOf(result.outputs, form5329), undefined);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line13_hsa_deduction, 4300);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_earnings,
+    undefined,
+  );
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line14b_excluded_distributions,
+    undefined,
   );
 });
 

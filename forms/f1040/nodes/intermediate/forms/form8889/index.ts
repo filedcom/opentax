@@ -48,9 +48,25 @@ export const inputSchema = z.object({
   employer_hsa_contributions: z.number().nonnegative().optional(),
   employer_excess_treatment: z.object({
     included_in_w2_box1: z.boolean(),
-    retained_through_return_due_date: z.literal(true),
+    // Null is an explicit retained-excess answer. A later-year timely
+    // withdrawal reduces the 2025 excess base but is not a 2025 distribution.
+    timely_withdrawal: z.union([
+      z.null(),
+      z.object({
+        principal: z.number().positive(),
+        earnings: z.number().nonnegative(),
+        withdrawal_tax_year: z.union([z.literal(2025), z.literal(2026)]),
+        withdrawn_by_return_due_date: z.literal(true),
+      }),
+    ]),
   }).optional(),
   hsa_december_31_value: z.number().nonnegative().optional(),
+  post_year_personal_excess_withdrawal: z.object({
+    principal: z.number().positive(),
+    earnings: z.number().nonnegative(),
+    withdrawal_tax_year: z.literal(2026),
+    withdrawn_by_return_due_date: z.literal(true),
+  }).optional(),
   // Line 10: one direct traditional/Roth IRA-to-HSA transfer. A later second
   // self-only-to-family transfer needs its separate lifetime-limit route.
   qualified_hsa_funding_distribution: z.object({
@@ -271,8 +287,9 @@ function totalContributions(input: Form8889Input): number {
     (input.employer_hsa_contributions ?? 0);
 }
 
-// Part I: Personal excess contributions equal line 2 less line 13. Employer
-// excess-income treatment is a separate route and currently stops above limit.
+// Part I: Personal excess contributions equal line 2 less line 13, reduced by
+// any timely withdrawn current-year personal principal. Employer excess and
+// its timely withdrawal are calculated separately in compute().
 // IRC §4973(a)(2)
 function excessContributions(input: Form8889Input, deductible: number): number {
   const personalExcess = Math.max(
@@ -283,12 +300,14 @@ function excessContributions(input: Form8889Input, deductible: number): number {
   const withdrawnPrincipal = withdrawn
     ? withdrawn.amount_including_earnings - withdrawn.included_earnings
     : 0;
-  if (withdrawnPrincipal > personalExcess) {
+  const postYearPrincipal = input.post_year_personal_excess_withdrawal
+    ?.principal ?? 0;
+  if (withdrawnPrincipal + postYearPrincipal > personalExcess) {
     throw new Error(
       "Form 8889 timely personal excess withdrawal exceeds excess personal contributions",
     );
   }
-  return personalExcess - withdrawnPrincipal;
+  return personalExcess - withdrawnPrincipal - postYearPrincipal;
 }
 
 function excludedDistributions(input: Form8889Input): {
@@ -297,16 +316,23 @@ function excludedDistributions(input: Form8889Input): {
 } {
   const sources = input.hsa_excluded_distributions;
   const timely = sources?.timely_excess_withdrawal;
-  const earnings = timely?.included_earnings ?? 0;
-  if (timely && earnings > timely.amount_including_earnings) {
+  const personalEarnings = timely?.included_earnings ?? 0;
+  if (timely && personalEarnings > timely.amount_including_earnings) {
     throw new Error(
       "Form 8889 timely excess-withdrawal earnings cannot exceed the withdrawal",
     );
   }
+  const employerTimely = input.employer_excess_treatment?.timely_withdrawal;
+  const employerCurrentYear = employerTimely?.withdrawal_tax_year === 2025
+    ? employerTimely.principal + employerTimely.earnings
+    : 0;
   return {
     excluded: (sources?.rollover_amount ?? 0) +
-      (timely?.amount_including_earnings ?? 0),
-    earnings,
+      (timely?.amount_including_earnings ?? 0) + employerCurrentYear,
+    earnings: personalEarnings +
+      (employerTimely?.withdrawal_tax_year === 2025
+        ? employerTimely.earnings
+        : 0),
   };
 }
 
@@ -465,12 +491,10 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         "Form 8889 employer excess treatment requires excess employer contributions",
       );
     }
-    if (
-      employerExcess > 0 &&
-      input.hsa_excluded_distributions?.timely_excess_withdrawal
-    ) {
+    const employerWithdrawal = employerTreatment?.timely_withdrawal;
+    if (employerWithdrawal && employerWithdrawal.principal > employerExcess) {
       throw new Error(
-        "Form 8889 simultaneous employer excess and timely personal withdrawal need separate source attribution",
+        "Form 8889 timely employer withdrawal exceeds excess employer contributions",
       );
     }
     const line12 = Math.max(
@@ -478,7 +502,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
       (limitLines?.line8 ?? 0) - employer - fundingAmount,
     );
     const deductible = deductibleContributions(input, line12);
-    const excess = excessContributions(input, deductible) + employerExcess;
+    const excess = excessContributions(input, deductible) + employerExcess -
+      (employerWithdrawal?.principal ?? 0);
     const employerExcessIncome =
       employerTreatment?.included_in_w2_box1 === false ? employerExcess : 0;
     const line14b = excludedDistributions(input);

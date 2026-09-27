@@ -19,13 +19,15 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   full year. For an age-55 married family filer, the additional contribution
   belongs on line 7; otherwise eligible catch-up is included on line 3. The
   Archer MSA offset reaches line 4. Taxpayer contributions are deductible only
-  to the extent of line 8 less employer contributions. Retained personal and
+  to the extent of line 8 less employer contributions. Remaining personal and
   employer excess contributions route to Form 5329 with the December 31 HSA
-  value needed for its 6% tax base. Retained employer excess above line 8 less
-  qualified funding distributions requires explicit W-2 box 1 inclusion and
-  retention facts. If omitted from W-2 income, that excess reaches Schedule 1
+  value needed for its 6% tax base. Employer excess above line 8 less qualified
+  funding distributions requires explicit W-2 box 1 inclusion and timely
+  withdrawal facts. If omitted from W-2 income, the excess reaches Schedule 1
   other income; if already included, it is not counted as income twice. A timely
-  employer-excess withdrawal still stops pending source attribution.
+  employer withdrawal reduces the Form 5329 excess base. A 2025 withdrawal
+  reaches Form 8889 line 14b and its earnings reach Schedule 1; a 2026
+  withdrawal and its earnings stay off the 2025 distribution and earnings lines.
 - A single traditional/Roth IRA-to-HSA direct trustee transfer can populate line
   10 when the transfer month is eligible, the source is identified, and the
   taxpayer affirms no prior qualified funding distribution. It reduces line 12
@@ -35,12 +37,15 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
 - Part II separately identifies line 14b rollovers and timely excess withdrawals
   before applying line 15 medical expenses. A timely withdrawal explicitly
   sourced to a current-year personal excess reduces the Form 5329 excess base;
-  its earnings reach Schedule 1 other income for the year withdrawn. The taxable
-  line 16 amount goes to Schedule 1 **line 8f**, not line 8z. The nonexcepted
-  20% line 17b tax goes to Schedule 2 line 17c. A taxable distribution needs the
-  explicit portion qualifying for an additional-tax exception; line 17a is
-  checked when that portion is positive and line 17b taxes only the remainder.
-  This also covers mixed excepted and nonexcepted distributions.
+  its earnings reach Schedule 1 other income for the year withdrawn. A
+  separately sourced 2026 withdrawal of 2025 personal excess also reduces the
+  2025 Form 5329 base, but its principal and earnings stay off the 2025
+  distribution and income lines. The taxable line 16 amount goes to Schedule 1
+  **line 8f**, not line 8z. The nonexcepted 20% line 17b tax goes to Schedule 2
+  line 17c. A taxable distribution needs the explicit portion qualifying for an
+  additional-tax exception; line 17a is checked when that portion is positive
+  and line 17b taxes only the remainder. This also covers mixed excepted and
+  nonexcepted distributions.
 - Part III accepts a sourced prior-year last-month-rule excess amount and/or
   prior qualified HSA funding distribution after confirmation that death or
   disability does not excuse the testing-period failure. It sums lines 18 and 19
@@ -57,8 +62,8 @@ The later-year last-month-rule testing-period ledger, evidence for monthly
 eligibility (including Medicare and other disqualifying coverage), source
 verification of the spouse allocation, separate spouse forms, source
 classification of taxable distributions by exception, second qualified funding
-distributions, employer contribution year adjustments, timely employer-excess
-withdrawals, withdrawals of prior-year excess, related income outside the
-current-year personal 2025 route, source authentication, PDF visual
+distributions, employer contribution year adjustments, withdrawals of prior-year
+excess, 2026 reporting of a post-year timely employer withdrawal, related income
+outside the current-year personal 2025 route, source authentication, PDF visual
 verification, IRS business rules, and ATS acceptance remain unverified. All
 newly written cases await the one full test batch requested by the user.
