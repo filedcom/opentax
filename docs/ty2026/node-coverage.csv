@@ -72,7 +72,7 @@ f4852,forms/f1040/nodes/inputs/f4852/index.ts,inputs,0,no,no,no,n/a,P2,audit-req
 sep_retirement,forms/f1040/nodes/inputs/sep_retirement/index.ts,inputs,1,yes,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 clergy,forms/f1040/nodes/inputs/clergy/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f8915f,forms/f1040/nodes/inputs/f8915f/index.ts,inputs,1,no,no,no,n/a,P1,audit-required,"2026 form draft pinned; 2025 instructions comparator only; replace $100k aggregate/Schedule 1 8z node with $22k-per-disaster ledger, 1040 lines 4b/5b, Form 8606/5329 and Part IV; 102 PDF widgets/current MeF remain; see FORM8915F-GRAPH.md"
-f8915d,forms/f1040/nodes/inputs/f8915d/index.ts,inputs,7,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+f8915d,forms/f1040/nodes/inputs/f8915d/index.ts,inputs,7,no,no,no,n/a,P1,audit-required,Latest official Form 8915-D and instructions are 2024; last 2019-disaster repayment window expired in 2024 and carrybacks affect older returns; do not register TY2026 Schedule 1 8z node without newer authority; see FORM8915D-STATUS.md
 f3800,forms/f1040/nodes/inputs/f3800/index.ts,inputs,1,no,yes,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"
 f2106,forms/f1040/nodes/inputs/f2106/index.ts,inputs,1,yes,no,no,n/a,P1,audit-required,2026 business mileage and AGI limit updated; audit remaining rules
 f5405,forms/f1040/nodes/inputs/f5405/index.ts,inputs,3,no,no,no,n/a,P1,audit-required,"verify 2026 law, node outputs, and graph route"

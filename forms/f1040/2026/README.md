@@ -52,6 +52,10 @@ The [Form 8915-F contract](../../../docs/ty2026/FORM8915F-GRAPH.md) maps
 disaster retirement distributions by FEMA event, owner and account to
 1040 lines 4b/5b. The newly pinned 2026 draft has 102 PDF widgets; its
 instructions and current MeF package remain to obtain.
+The [Form 8915-D source decision](../../../docs/ty2026/FORM8915D-STATUS.md)
+pins the latest 2024 form/instructions and its expired 2019-disaster
+repayment period. Older-year amendments remain separate from the 2026
+return graph.
 The [Form 2555 contract](../../../docs/ty2026/FORM2555-GRAPH.md) maps the
 2026 $132,900 exclusion, location-specific housing limits, Schedule 1
 lines 8d/24j, SE tax and Form 1116 reductions. The structured shared

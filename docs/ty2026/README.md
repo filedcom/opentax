@@ -119,6 +119,9 @@ for the implementation contract.
 - [`FORM8915F-GRAPH.md`](FORM8915F-GRAPH.md) and `pdf-fields-f8915f.csv`:
   2026 disaster distribution/repayment ledger, account-specific 1040 routes,
   2025 instruction comparator, and all 102 draft PDF widgets.
+- [`FORM8915D-STATUS.md`](FORM8915D-STATUS.md): latest 2024 source and
+  expired 2019-disaster repayment period; preserve older-year amendments
+  without emitting a 2026 attachment.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

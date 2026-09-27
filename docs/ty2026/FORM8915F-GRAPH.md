@@ -51,15 +51,16 @@ instructions before applying them to a 2026 calculation.
   has **102 terminal widgets** across the four form pages, including year,
   FEMA, disaster table, election, amount and Part IV fields. There is no
   TY2026 registry, PDF or MeF route for this attachment.
-- Form 8915-D is a distinct 2019-disaster route in TY2025 code. Its 2026
-  applicability and form revision need a separate source check before
-  porting; the Form 8915-F draft explicitly starts at 2021 disasters.
+- Form 8915-D is a distinct 2019-disaster route in TY2025 code. The
+  [source-status decision](FORM8915D-STATUS.md) pins its latest 2024
+  form/instructions and keeps it out of the 2026 filing graph; the
+  Form 8915-F draft explicitly starts at 2021 disasters.
 
 ## Build order and acceptance
 
 1. Pin current 2026 instructions and active MeF package; compare the 2026
    form and 2025 worksheet rules, disaster-year cutoffs, repayment timing,
-   2019 Form 8915-D availability, and attachment requirements.
+   the Form 8915-D source-status decision, and attachment requirements.
 2. Build disaster/owner/1099-R/repayment ledgers and FEMA eligibility;
    allocate per-disaster $22,000 capacity without reuse across years/forms.
    Complete Form 8606 and account-specific basis before Parts II/III.

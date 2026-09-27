@@ -135,6 +135,11 @@ December 2026 draft and a prior-year instruction comparator. Its 102 widgets
 and Parts I–IV require a per-disaster distribution/repayment ledger; the
 shared node's $100,000 cap and Schedule 1 line 8z output conflict with the
 draft's $22,000-per-disaster limit and 1040 lines 4b/5b destinations.
+The [Form 8915-D source decision](FORM8915D-STATUS.md) pins the latest
+2024 form/instructions. Its 2019-disaster repayment period ended in 2024,
+so the shared node's `repayments_in_2025` and Schedule 1 line 8z output
+must not be carried into a 2026 filing; retain only the older-year
+amendment history unless the IRS issues a newer revision.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

@@ -918,6 +918,24 @@
       "retrieved_utc": "2026-09-27T14:57:19.297077+00:00"
     },
     {
+      "path": "authorities/f8915d--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f8915d--2024.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 74130,
+      "sha256": "89681a2b779f03b8c2f7c6dbecd444ff0cc17ed5850a467e4ebf047f8e79e72d",
+      "retrieved_utc": "2026-09-27T15:00:30.724851+00:00"
+    },
+    {
+      "path": "authorities/i8915d--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8915d--2024.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 177840,
+      "sha256": "2309b4e6602bd3d61d48b4fc45eb06d88722cf2b24a1961db6ee4cb98aff289a",
+      "retrieved_utc": "2026-09-27T15:00:30.725675+00:00"
+    },
+    {
       "path": "draft/i5695.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/i5695--dft.pdf",
       "kind": "draft-instructions",
