@@ -159,6 +159,41 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 fuel credit links to refundable Schedule 3 line 12",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 43 },
+    schedule3: {
+      line12_fuel_tax_credit: 42.6,
+      line15_total: 42.6,
+    },
+    f4136: {
+      business: {
+        qualifying_business_activity: true,
+        activity_count: 1,
+        business_name: "Example Farm",
+        principal_activity_code: "111000",
+        equipment_make: "Example",
+        equipment_model: "Tractor",
+        equipment_type: "farm tractor",
+        purchase_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [
+        { line: "1a", qualified_gallons: 100, actual_fuel_cost: 300 },
+        { line: "3b", qualified_gallons: 100, actual_fuel_cost: 400 },
+      ],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS4136 ");
+  assertStringIncludes(xml, 'referenceDocumentName="IRS4136"');
+  await validateXsd(xml, "Form 4136 Schedule 3 line 12");
+});
+
+Deno.test({
   name:
     "XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3",
   sanitizeOps: false,

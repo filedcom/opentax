@@ -11,6 +11,7 @@ import { form2441 } from "./f2441.ts";
 import { form2555 } from "./f2555.ts";
 import { form3800 } from "./f3800.ts";
 import { form4137 } from "./f4137.ts";
+import { form4136 } from "./f4136.ts";
 import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
 import { form4684 } from "./f4684.ts";
@@ -122,6 +123,8 @@ export const ALL_MEF_FORMS = [
   form2555,
   // Form 3800 is one document after Form 2555 in ReturnData1040.xsd.
   form3800,
+  // Form 4136 precedes Form 4137 in ReturnData1040.xsd.
+  form4136,
   // Form 4137
   form4137,
   // Form 4562

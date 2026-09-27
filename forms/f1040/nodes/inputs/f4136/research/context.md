@@ -1,66 +1,29 @@
-# Form 4136 — Credit for Federal Tax Paid on Fuels
+# Form 4136, tax year 2025
 
-## Overview
-- **Form**: 4136
-- **IRC**: §§ 6421, 6427
-- **Purpose**: Credit for federal excise tax paid on fuels used for qualifying purposes
-- **Type**: Input singleton (one form per return)
-- **Drake screen**: 4136
+Source: [2025 Form 4136](https://www.irs.gov/pub/irs-pdf/f4136.pdf) and
+[2025 instructions](https://www.irs.gov/instructions/i4136), checked
+2026-09-27. The TY2025v5.4 `IRS4136.xsd` is the MeF field authority.
 
-## TY2025 Credit Rates
+The 2025 form added Part I business-activity questions and Part II column (d),
+actual fuel cost from records. The prior flat gallon fields could calculate a
+number without either fact, so the input is now a line-indexed claim array with
+an affirmed single qualifying business, equipment details, purchase-record and
+no-duplicate-claim confirmations, gallons, and actual fuel cost on every claim.
+The represented line rates are 1a/1b $.183, 2b $.193, 3a/3b $.243, 4a/4b
+$.243, 5c $.243, 5d $.218, and 11a/11c $.183. IRS type-of-use codes are
+required and constrained to the local XSD for variable-use lines. This model
+does not assert eligibility solely from gallon quantities.
 
-| Fuel Type | Use Purpose | Rate (per gallon) | Refundable? |
-|-----------|-------------|-------------------|-------------|
-| Gasoline | Off-highway business | $0.184 | No |
-| Gasoline | Farming | $0.184 | Yes |
-| Diesel | Off-highway business | $0.244 | No |
-| Diesel | Farming | $0.244 | Yes |
-| Aviation gasoline | Non-commercial aviation | $0.194 | No |
-| Aviation gasoline | Farming | $0.194 | Yes |
-| Kerosene | Off-highway business | $0.244 | No |
-| Kerosene | Farming | $0.244 | Yes |
-| Kerosene (aviation) | Non-commercial aviation | $0.219 | No |
-| LPG (liquefied petroleum gas) | Off-highway business | $0.183 | No |
-| CNG (compressed natural gas) | Off-highway business | $0.183 | No |
+All represented credits sum to refundable Schedule 3 line 12, which flows to
+Form 1040 line 31. The older research note's division between nonrefundable
+off-highway fuel and refundable farm fuel was wrong for the 2025 form.
 
-## Routing Rules
-
-### Nonrefundable Credit
-- Uses: off-highway business, non-commercial aviation
-- Route: `schedule3.line6z_general_business_credit`
-
-### Refundable Credit
-- Uses: farming (all fuel types)
-- Route: `f1040.line35_fuel_tax_credit` (new field needed)
-
-## Schema Design
-
-### Input fields (gallons by fuel type × use purpose)
-```
-gasoline_offhighway_gallons: number (≥0)
-gasoline_farming_gallons: number (≥0)
-diesel_offhighway_gallons: number (≥0)
-diesel_farming_gallons: number (≥0)
-aviation_gas_noncommercial_gallons: number (≥0)
-aviation_gas_farming_gallons: number (≥0)
-kerosene_offhighway_gallons: number (≥0)
-kerosene_farming_gallons: number (≥0)
-kerosene_aviation_gallons: number (≥0)
-lpg_offhighway_gallons: number (≥0)
-cng_offhighway_gallons: number (≥0)
-```
-
-## Output Nodes
-- `schedule3` (nonrefundable credit → line6z_general_business_credit)
-- `f1040` (refundable credit → line35_fuel_tax_credit)
-
-## Validation Rules
-- All gallon inputs must be nonnegative
-- At least one gallon field must be nonzero (or all zero → no outputs)
-- Credit amounts rounded to 2 decimal places
-
-## Hard Rules
-- Cannot claim credit for fuel used in highway vehicles (taxable use)
-- Cannot claim commercial aviation kerosene credit here
-- Farming use is REFUNDABLE regardless of tax liability
-- Off-highway business use reduces tax liability but not below zero (nonrefundable)
+The native IRS4136 XML builder now serializes these represented claims and
+reconciles its line 17 source total against Schedule 3 line 12. Its direct and
+local XSD cases are written but unrun. Open: add PDF output, run the full test
+batch, validate the bundle against TY2025v5.4 XSD, and check all 2025 business
+rules. Multiple business activities require separate Schedule A (Form 4136)
+documents and are currently refused. The undyed-kerosene home-use exception,
+other Part II lines, seller/purchase-date source identities, rate-by-use
+exceptions, and cross-form duplicate claims are not modeled yet. No IRS ATS
+acknowledgment exists.
