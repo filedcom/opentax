@@ -585,7 +585,10 @@ work-authorization topology. Do not serialize TY2026 from those v1 fields.
    without TY2025 assumptions. Reuse a shared node only after its TY2026
    behavior has been verified. Keep TY2025 registry and outputs pinned.
 5. Create `forms/f1040/2026/mef` from the selected TY2026 XSD, including
-   document order, field maps, attachments, and return version. Create
+   document order, field maps, attachments, and return version. Use the
+   [binary attachment handoff](../../../docs/ty2026/MEF-BINARY-ATTACHMENTS.md)
+   for generated and caller-supplied PDFs; the TY2025 Form 5695 QMID statement
+   has no place in the pinned 2026 draft's carryforward-only form. Create
    `forms/f1040/2026/pdf` from the final 2026 AcroForms. Add year-specific
    business rules and field registry to `FormDefinition` so `tax validate` and
    export select the same year's artifacts as calculation.

@@ -14,6 +14,10 @@ The runtime `ALL_MEF_FORMS` array contains **85 descriptors**;
 order, symbols, pending keys and source modules. The extra descriptor is
 in `foreign_employer_wages.ts`, which emits both `FECRecord` and
 `WagesNotShownSchedule`.
+Four of these descriptors also generate PDF `BinaryAttachment` documents.
+Their conditions, reference links and TY2026 disposition are in the
+[binary attachment handoff](MEF-BINARY-ATTACHMENTS.md); caller-supplied PDFs
+are a separate input to the bundle.
 
 The 84 module rows split into 74 entries matched to an accepted-form row and
 10 statement/dependency serializers that have no one-to-one accepted-form
