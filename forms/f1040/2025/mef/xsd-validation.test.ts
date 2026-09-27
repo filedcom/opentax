@@ -192,6 +192,7 @@ Deno.test({
           qualified_quantity: 100,
           actual_fuel_cost: 300,
           not_highway_vehicle: true,
+          not_noncommercial_motorboat: true,
         },
         {
           line: "3b",
@@ -301,7 +302,10 @@ Deno.test({
           unit: "gallons",
           qualified_quantity: 100,
           actual_fuel_cost: 300,
-          exported_fuel_confirmed: true,
+          export_proof: {
+            kind: "carrier_bill_of_lading",
+            record_reference: "Export file 2025-001",
+          },
         },
       ],
     },
@@ -382,7 +386,10 @@ Deno.test({
           unit: "gallons",
           qualified_quantity: 1_000,
           actual_fuel_cost: 3_000,
-          exported_fuel_confirmed: true,
+          export_proof: {
+            kind: "carrier_bill_of_lading",
+            record_reference: "Export file 2025-002",
+          },
         },
         {
           line: "2d",
@@ -448,7 +455,10 @@ Deno.test({
           qualified_quantity: 100,
           actual_fuel_cost: 300,
           undyed_fuel_confirmed: true,
-          exported_fuel_confirmed: true,
+          export_proof: {
+            kind: "carrier_bill_of_lading",
+            record_reference: "Export file 2025-003",
+          },
         },
       ],
     },
@@ -492,7 +502,10 @@ Deno.test({
         undyed_fuel_confirmed: true,
         right_to_claim_not_waived: true,
         certain_intercity_or_local_bus_use_confirmed: true,
-        exported_fuel_confirmed: true,
+        export_proof: {
+          kind: "carrier_bill_of_lading",
+          record_reference: "Export file 2025-004",
+        },
         not_highway_vehicle: true,
         excise_tax_rate_per_gallon: line === "4e"
           ? 0.044
@@ -619,6 +632,7 @@ Deno.test({
     qualified_quantity: 100,
     actual_fuel_cost: 300,
     not_highway_vehicle: true,
+    not_noncommercial_motorboat: true,
   };
   const bundle = await buildMefBundle({
     f1040: { line31_additional_payments: 27 },

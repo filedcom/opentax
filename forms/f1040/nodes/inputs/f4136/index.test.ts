@@ -18,7 +18,11 @@ const certifications = {
   credit_card_issuer_certificate_not_provided: true,
   not_highway_vehicle: true,
   not_noncommercial_motorboat: true,
-  exported_fuel_confirmed: true,
+  aviation_gasoline_outside_propulsion_confirmed: true,
+  export_proof: {
+    kind: "carrier_bill_of_lading",
+    record_reference: "Export file 2025-001",
+  },
   commercial_aviation_nonforeign_trade_confirmed: true,
   foreign_trade_lust_tax_paid_confirmed: true,
   train_use_confirmed: true,
@@ -183,7 +187,7 @@ Deno.test("Form 4136: kerosene bus, export, and reduced-tax claims require disti
         ...claim,
         line: "4d",
         type_of_use: undefined,
-        exported_fuel_confirmed: undefined,
+        export_proof: undefined,
       }],
     }).success,
     false,
@@ -227,7 +231,7 @@ Deno.test("Form 4136: diesel train, bus, and export claims require distinct proo
   assertEquals(
     parseInput({
       business,
-      claims: [{ ...claim, line: "3e", exported_fuel_confirmed: undefined }],
+      claims: [{ ...claim, line: "3e", export_proof: undefined }],
     }).success,
     false,
   );
@@ -265,7 +269,7 @@ Deno.test("Form 4136: commercial aviation, export, and foreign-trade LUST facts 
       claims: [{
         ...claim,
         line: "2c",
-        exported_fuel_confirmed: undefined,
+        export_proof: undefined,
       }],
     }).success,
     false,
@@ -331,7 +335,86 @@ Deno.test("Form 4136: other-use and exported gasoline require their source confi
         ...claim,
         line: "1d",
         type_of_use: undefined,
-        exported_fuel_confirmed: undefined,
+        export_proof: undefined,
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 4136: gasoline motorboat and aviation propulsion exclusions are enforced", () => {
+  const gasoline = {
+    ...certifications,
+    line: "1a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  assertEquals(parseInput({ business, claims: [gasoline] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{ ...gasoline, not_noncommercial_motorboat: undefined }],
+    }).success,
+    false,
+  );
+  const aviation = {
+    ...certifications,
+    line: "2b" as const,
+    type_of_use: "01",
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  assertEquals(parseInput({ business, claims: [aviation] }).success, true);
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...aviation,
+        aviation_gasoline_outside_propulsion_confirmed: undefined,
+      }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 4136: exported claims require an identifiable IRS-accepted proof record", () => {
+  const claim = {
+    ...certifications,
+    line: "1d" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  assertEquals(parseInput({ business, claims: [claim] }).success, true);
+  assertEquals(
+    parseInput({ business, claims: [{ ...claim, export_proof: undefined }] })
+      .success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        export_proof: {
+          kind: "carrier_bill_of_lading",
+          record_reference: "  ",
+        },
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    parseInput({
+      business,
+      claims: [{
+        ...claim,
+        export_proof: {
+          kind: "self_attestation",
+          record_reference: "Export file 2025-001",
+        },
       }],
     }).success,
     false,
