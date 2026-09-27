@@ -15,9 +15,18 @@ export enum ExpatriateType {
   LONG_TERM_RESIDENT = "LONG_TERM_RESIDENT",
 }
 
-const assetSchema = z.object({
-  fmv_at_expatriation: z.number().nonnegative(),
-  basis: z.number().nonnegative(),
+const moneySchema = z.number().finite().nonnegative().refine(
+  (amount) =>
+    Number.isSafeInteger(Math.round(amount * 100)) &&
+    Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+  "Form 8854 asset amounts must have safe cent precision",
+);
+
+export const assetSchema = z.object({
+  asset_id: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  fmv_at_expatriation: moneySchema,
+  basis: moneySchema,
 });
 
 export const inputSchema = z.object({
@@ -31,7 +40,19 @@ export const inputSchema = z.object({
   average_annual_tax_prior_5_years: z.number().nonnegative(),
   net_worth_at_expatriation: z.number().nonnegative(),
   certified_tax_compliance: z.boolean(),
-  assets: z.array(assetSchema).optional(),
+  assets: z.array(assetSchema).superRefine((assets, ctx) => {
+    const ids = new Set<string>();
+    for (const [index, asset] of assets.entries()) {
+      if (ids.has(asset.asset_id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate Form 8854 asset ID: ${asset.asset_id}`,
+          path: [index, "asset_id"],
+        });
+      }
+      ids.add(asset.asset_id);
+    }
+  }).optional(),
 });
 
 export type F8854Input = z.infer<typeof inputSchema>;

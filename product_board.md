@@ -973,19 +973,18 @@ The Form 8919 audit found that the prior flat wage input used obsolete reason
 codes, the 1099-NEC route omitted its required reason, and Form 8919 line 6
 never reached Form 8959 line 3. The current build pass replaces it with one
 recipient form containing identified firm rows and the 2025 A/C/G/H codes.
-Routed 1099-NEC income must match a firm row, so it is not counted twice.
-Line 6 now reaches Form 1040 and Form 8959, line 10 reaches Schedule SE, and
-line 13 reaches Schedule 2. The native IRS8919 XML now has identity, firm
-detail, and calculated lines. The follow-on build replaces the free-entered
-line 8 with W-2 boxes 3 and 7,
-RRTA compensation capped at the 2025 wage base, and Form 4137 line 10 for
-each recipient. The MeF builder rederives those figures from the filed W-2 and
-Form 4137 documents. Reasons A/C require a referenced IRS correspondence,
-A/G require a referenced SS-8 filing, and H requires a W-2 from the same
-firm. These source and full-return cases are written but unrun. The actual
-letters/SS-8 receipts are still entered evidence, not authenticated documents;
-1099-MISC box 3 and 1099-NEC box 1 now share one source ledger and can be
-combined for a reason-H firm with a matching W-2. The 2025 PDF descriptor
+Routed 1099-NEC income must match a firm row, so it is not counted twice. Line 6
+now reaches Form 1040 and Form 8959, line 10 reaches Schedule SE, and line 13
+reaches Schedule 2. The native IRS8919 XML now has identity, firm detail, and
+calculated lines. The follow-on build replaces the free-entered line 8 with W-2
+boxes 3 and 7, RRTA compensation capped at the 2025 wage base, and Form 4137
+line 10 for each recipient. The MeF builder rederives those figures from the
+filed W-2 and Form 4137 documents. Reasons A/C require a referenced IRS
+correspondence, A/G require a referenced SS-8 filing, and H requires a W-2 from
+the same firm. These source and full-return cases are written but unrun. The
+actual letters/SS-8 receipts are still entered evidence, not authenticated
+documents; 1099-MISC box 3 and 1099-NEC box 1 now share one source ledger and
+can be combined for a reason-H firm with a matching W-2. The 2025 PDF descriptor
 now fills five firm rows, printed lines 6 and 8-13, and a separate recipient
 copy. More than five firms create additional Form 8919 copies with lines 6-13
 only on the first copy. Source, XML, PDF field-map, and continuation cases are
@@ -1088,6 +1087,22 @@ child eligibility proof, dependent earned-income source derivation beyond the
 stated amount, exact Tax Table behavior, visual PDF verification, and IRS
 business rules remain open. Do not treat the ordinary slice as whole-form
 support.
+
+### GAP-8854: Initial and annual expatriation statement
+
+**Build pass, untested; whole-form gap remains.** The old node used 2024
+thresholds and treated deemed asset gain as a dollar-for-dollar Schedule 2 tax.
+That route has been removed. The 2025 covered-expatriate average-tax threshold
+is $206,000 and the mark-to-market exclusion is $890,000. A source-identified
+asset calculation now allocates the exclusion proportionally to gain assets,
+without using losses to dilute it, and balances cents deterministically. The
+Form 8854 node still rejects filing, including non-covered cases, because it
+cannot yet produce the required `IRS8854` document. The initial and annual
+statement facts, dual-citizen/minor exceptions, excluded asset classes,
+property-character gain/loss routing, deferral, required statements, PDF, MeF
+serializer, source reconciliation, and IRS business rules remain open. The
+calculation and rejection cases are written but unrun. See the
+[2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
 ## Registered Form 1040 MeF documents to audit
 

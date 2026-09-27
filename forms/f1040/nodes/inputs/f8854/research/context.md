@@ -20,10 +20,15 @@ covered-expatriate criterion. The 2025 mark-to-market exclusion is **$890,000**.
 These amounts are from the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
+The current build pass allocates the $890,000 exclusion across identified gain
+properties in proportion to their positive built-in gains, with a stable
+cent-balancing rule. Loss properties receive no exclusion. This is only the
+Section C calculation; it does not establish that a loss is deductible or that
+an asset belongs in the mark-to-market class.
+
 Remaining build work: model all required Form 8854 identification and
 certification fields; distinguish assets subject to mark-to-market from deferred
-compensation, specified tax-deferred accounts and nongrantor trusts; compute and
-allocate the exclusion under the instructions; route gains and losses by asset
-character to the proper forms and schedules; serialize the IRS8854 MeF
-attachment; map the paper form; and add source, calculation, serialization and
+compensation, specified tax-deferred accounts and nongrantor trusts; route gains
+and losses by asset character to the proper forms and schedules; serialize the
+IRS8854 MeF attachment; map the paper form; and add source, serialization and
 filing tests. Until that is complete, failing closed is intentional.
