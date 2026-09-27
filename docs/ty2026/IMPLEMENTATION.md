@@ -6,6 +6,23 @@ the complete Form 1040 family supported by the TY2025 implementation. This
 plan is based on the 2026-09-27 corpus snapshot. It does not claim current
 TY2025 ATS approval or that the May 2026 MeF v1 package is the final target.
 
+## Current state
+
+The TY2026 calculation registry and local calculation validation are
+executable, and a growing set of source routes has a reconciled draft-PDF
+bundle. They are not registered as a filing product in `catalog.ts`. The
+remaining TY2025-supported form surface, current TY2026 MeF XML and rules,
+and ATS/XSD checks are open. The May v1 package cannot validate the September
+draft Form 1040; the IRS September 24 v4 package must be obtained through
+an authorized e-Services/SOR mailbox. Use the current
+[`forms/f1040/2026/README.md`](../../forms/f1040/2026/README.md),
+[`node-coverage.csv`](node-coverage.csv), and generated
+[`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) for active route status. The progress
+notes below record the order in which work landed and may describe an earlier
+state of a node.
+
+## Chronological progress notes
+
 Progress after this snapshot: `FormDefinition.validation` now owns a field
 registry and rule set; `tax validate` and both export paths select that bundle
 from the return definition. TY2025 supplies its existing artifacts. The

@@ -38,11 +38,11 @@ limits and credit rates; their 2026 output mappings remain to build.
 The `forms/f1040/nodes/config/2026-indexed.ts` module contains all 111 TY2026
 config members, including the distinct MFS QBI threshold and standard/enhanced
 SIMPLE plan limits. `forms/f1040/nodes/config/2026.ts` registers the complete
-config for shared nodes; the TY2026 return graph still needs its own audit and
-registration.
+config for shared nodes; the TY2026 registry is an audited subset and still
+needs the remaining source and form routes.
 `nodes/f1040.ts` is a dedicated 2026 core output node: it computes the revised
 deduction, tax, payment, and balance lines and emits Schedule 3-A data. It is
-not in a registered graph yet. Expand its upstream input surface and preserve
+registered in the TY2026 calculation graph. Expand its upstream input surface and preserve
 the 2025 credit-finalization behavior where 2026 law and forms still require it.
 Its output now distinguishes AGI 11a/11b, withholding sources 25a–25d,
 EIC checkboxes 27b/27c, refund 35a, applied estimates 36, and penalty 38.
@@ -58,8 +58,8 @@ support; the two calculations can depend on each other.
 uses 2026 standard-deduction amounts, sends the same total income and adjustments
 to the 1040 node, and routes taxable income plus draft 2026 Form 6251 lines 1b
 and 2a to the shared income-tax calculator. A focused graph test now executes
-deduction choice → tax → 1040. Upstream income, Schedule A, Schedule 1-A, and
-QBI edges still need to be wired into the 2026 graph.
+deduction choice → tax → 1040. Several income, Schedule A, and QBI routes
+still need to be wired into the 2026 graph.
 The shared Schedule 1-A calculation now emits 2026 form lines 15, 27, 36,
 43, and 44; it passes lines 43 and 44 to the 2026 deduction node. The AGI
 node adds back Form 2555 exclusions for its 2026 MAGI. Puerto Rico/Form 4563
@@ -69,16 +69,16 @@ now joins W-2 TP by filer and employer; Schedule 1-A takes the larger amount
 per employer. Mixed occupations require an explicit qualified amount. The
 focused graph also carries unreported tip income and Schedule 2 tip tax to
 1040. The 2026 final node explicitly rejects nonzero Schedule 2 credit-limit
-tax until its credit finalization path is built. The full return remains to
-register.
+tax until its credit finalization path is built. The full product remains to
+register in `catalog.ts`.
 The shared AGI aggregator now emits a TY2026 income/adjustment pair to this
 node while retaining its TY2025 output contract. A graph test runs income
 facts → AGI → deduction choice → tax → 1040 and checks Social Security and
 Schedule 1 income pass-through. The rest of the 2026 input graph is pending.
 The shared W-2 input now reaches that focused graph: two W-2 records produce
 1040 wages, AGI, taxable income, income tax, withholding, and refund. This is
-an executable calculation slice, not the registered 2026 product; Form 1040
-income-line completeness, validation, MeF, and PDF remain to be connected.
+an executable calculation slice, not the registered 2026 product; other
+income lines and the filing outputs remain to be completed.
 The shared general input reaches the 2026 graph with dependent details.
 `identity.ts` defines the 2026 Form 1040 filer fields from that input. The
 dedicated 2026 Schedule 8812 node now finalizes CTC/ACTC in the calculation
@@ -112,8 +112,9 @@ an export path yet. The generic start-node factory lives in
 `pdf/forms/f1040.ts` maps the current 1040 output fields to the pinned draft
 AcroForm, including revised tax/payment lines and the new work-authorization
 answers. `pdf/f1040.ts` fills the two printed pages from a calculated pending
-1040; its wages-only sample was rendered and visually checked. It is not yet
-the full return PDF builder: dependent rows and attached forms remain.
+1040; its wages-only sample was rendered and visually checked. The later
+`pdf/core.ts` bundle now adds the supported dependent rows and attachments;
+the remaining TY2025 form surface still needs TY2026 PDF output.
 `pdf/schedule3a.ts` now renders the new one-page schedule with a static
 overlay because the draft's 16 widgets are absent from its AcroForm tree. Its
 line reconciliation, election checks, and rendered placement are verified.
@@ -122,10 +123,10 @@ reconciles its main amounts to the 1040. The combined three-page PDF passed
 visual QA; the remaining supported forms still need PDF output.
 The final 1040 node and draft PDF descriptor also retain and print the
 principal income amounts through 7a, including aggregate 1z wages,
-accumulated dividends, and printed 7a capital gain. A populated income page passed visual QA. Its
-source nodes and supporting schedules remain to join the 2026 registry.
+accumulated dividends, and printed 7a capital gain. A populated income page
+passed visual QA. Additional source nodes and supporting schedules remain.
 The generated [graph route inventory](../../../docs/ty2026/GRAPH-ROUTES.md)
-lists 37 declared edges from active nodes to targets outside this registry;
+lists 35 declared edges from active nodes to targets outside this registry;
 the wages-only run deposits values in 12 absent target slots. It gives the
 dependency order for expanding beyond the current calculation slice.
 Form 8960 is registered and sends TY2026 NIIT to the draft Schedule 2 line 6;
