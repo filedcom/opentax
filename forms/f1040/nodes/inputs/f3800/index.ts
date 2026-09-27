@@ -9,12 +9,13 @@ import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
 import { classifyForm8835Credits } from "./calculation.ts";
 
-// TY2025 — Form 3800: General Business Credit
-// Aggregates component business credits and carryovers; routes to Schedule 3
-// line 6z → Form 1040 line 20.
+// TY2025 — Form 3800: General Business Credit.
+// Source-backed Form 8826 and Form 8835 entries stop here until the Part II
+// tax-liability limitation and source-document bundle are wired.
+// The older f3800s input still routes unbounded gross amounts to Schedule 3
+// line 6a and must not be treated as a filed Form 3800 calculation.
 // IRC §38 (credit allowed), §39 (carryback 1 yr / carryforward 20 yrs).
 // Carryback is 3 years for §6417(b) credits (clean energy elective payments).
-// Limitation against net income tax is applied at the Schedule 3 / f1040 level.
 
 // Per-entry schema — each item represents one Form 3800 entry (3800 or GBC screen)
 export const itemSchema = z.object({
@@ -58,12 +59,19 @@ const f8835CreditEntrySchema = z.object({
   transfer_election_statement_file_name: z.string().min(1).optional(),
 });
 
+const f8826CreditEntrySchema = z.object({
+  credit_amount: z.number().finite().nonnegative(),
+  subject_to_passive_activity_limit: z.boolean(),
+});
+
 export const inputSchema = z.object({
   f3800s: z.array(itemSchema).min(1).optional(),
   f8835_credit_entries: z.array(f8835CreditEntrySchema).min(1).optional(),
+  f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
 }).refine(
   (input) =>
-    input.f3800s !== undefined || input.f8835_credit_entries !== undefined,
+    input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
+    input.f8826_credit_entries !== undefined,
   {
     message: "Form 3800 needs a credit source",
   },
@@ -109,6 +117,7 @@ function totalGbc(items: F3800Items): number {
 function schedule3Output(
   items: F3800Items,
   f8835Entries: z.infer<typeof f8835CreditEntrySchema>[],
+  f8826Entries: z.infer<typeof f8826CreditEntrySchema>[],
 ): NodeOutput[] {
   const f8835Credit = f8835Entries.length > 0
     ? classifyForm8835Credits(f8835Entries)
@@ -119,6 +128,20 @@ function schedule3Output(
   ) {
     throw new Error(
       "Form 3800 tax-liability limitation is not implemented for Form 8835 credit",
+    );
+  }
+  if (
+    f8826Entries.some((entry) =>
+      entry.credit_amount > 0 && entry.subject_to_passive_activity_limit
+    )
+  ) {
+    throw new Error(
+      "Form 8826 passive credit needs Form 8582-CR before Form 3800",
+    );
+  }
+  if (f8826Entries.some((entry) => entry.credit_amount > 0)) {
+    throw new Error(
+      "Form 3800 tax-liability limitation is not implemented for Form 8826 credit",
     );
   }
   const total = totalGbc(items);
@@ -137,6 +160,7 @@ class F3800Node extends TaxNode<typeof inputSchema> {
       outputs: schedule3Output(
         parsed.f3800s ?? [],
         parsed.f8835_credit_entries ?? [],
+        parsed.f8826_credit_entries ?? [],
       ),
     };
   }

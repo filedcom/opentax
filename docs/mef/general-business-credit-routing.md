@@ -23,7 +23,6 @@ or Form 3800 line assignment is correct.
 | `f6765`     | Ordinary line 1c versus eligible-small-business specified line 4i, plus payroll-tax election.                                                |
 | `f7207`     | Part III line 1b, transfer/EPE, and facility breakdown.                                                                                      |
 | `f8820`     | Part III line 1h and applicable source limits.                                                                                               |
-| `f8826`     | Part III line 1e and passive-activity classification.                                                                                        |
 | `f8844`     | Part III line 3 uses its own Part II section B limitation.                                                                                   |
 | `f8864`     | Separate diesel line 1l and SAF line 1ff, including transfer eligibility.                                                                    |
 | `f8874`     | Part III line 1i and pass-through/source limits.                                                                                             |
@@ -44,6 +43,12 @@ activity limit, not necessarily the Form 3800 tax-liability limit. `f8835`
 instead forwards per-facility amounts to `f3800`; positive available credit
 currently stops rather than claiming gross credit. Form 8936 business-use and
 Form 8911 business-use paths also need the shared Form 3800 treatment.
+
+`f8826` now forwards its line 8 source amount to `f3800` as a separate line 1e
+entry. A positive nonpassive credit stops there until the Form 3800
+tax-liability limit is wired; a passive credit stops for Form 8582-CR. The older
+`f3800s.disabled_access_credit` input still deposits a gross amount and is not a
+source-backed Form 8826 claim.
 
 Separate 2025 Schedule 3 corrections in the current build pass: `f8859` now
 deposits into line 6h, `f8834` into line 6i, and the combined Form 4136 fuel

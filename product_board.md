@@ -123,8 +123,11 @@ finalization. Other GBC producers still send gross source credits straight to
 Schedule 3 line 6a and require a common limitation pass. The
 [Form 8826](https://www.irs.gov/pub/irs-pdf/f8826.pdf) source now requires both
 preceding-year receipts and full-time employee headcount instead of treating
-missing facts as eligibility; its cases are written but unrun, and its gross
-credit still needs Form 3800. A native `IRS8826` XML draft now shares the source
+missing facts as eligibility; its cases are written but unrun. Its credit now
+enters Form 3800 instead of being deposited gross into Schedule 3, but a
+positive claim stops there until the tax-liability limit is wired. The legacy
+`f3800s.disabled_access_credit` input still deposits gross credit. These routing
+cases are written but unrun. A native `IRS8826` XML draft now shares the source
 calculation for lines 1, 3, 5, 6, and 8, with direct schema and reconciliation
 cases written but unrun. It remains unregistered until the Form 3800
 allowed-credit and source-document path is complete. Form 8826 now requires a

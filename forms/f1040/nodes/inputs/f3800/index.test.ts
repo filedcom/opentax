@@ -74,6 +74,44 @@ Deno.test("f3800: passive Form 8835 credit needs Form 8582-CR before limitation"
   );
 });
 
+Deno.test("f3800: Form 8826 source credit stops before Schedule 3", () => {
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8826_credit_entries: [{
+          credit_amount: 2_375,
+          subject_to_passive_activity_limit: false,
+        }],
+      }),
+    Error,
+    "tax-liability limitation",
+  );
+});
+
+Deno.test("f3800: passive Form 8826 source credit requires Form 8582-CR", () => {
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8826_credit_entries: [{
+          credit_amount: 2_375,
+          subject_to_passive_activity_limit: true,
+        }],
+      }),
+    Error,
+    "8582-CR",
+  );
+});
+
+Deno.test("f3800: zero Form 8826 source credit produces no Schedule 3 claim", () => {
+  const result = f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8826_credit_entries: [{
+      credit_amount: 0,
+      subject_to_passive_activity_limit: false,
+    }],
+  });
+  assertEquals(result.outputs, []);
+});
+
 Deno.test("f3800.inputSchema: valid minimal item (empty object) passes", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [{}] });
   assertEquals(parsed.success, true);
