@@ -709,7 +709,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
   ]);
 
   override get outputNodeTypes(): readonly string[] {
-    return [...super.outputNodeTypes, "form4137", "credit_resolution"];
+    return [
+      ...super.outputNodeTypes,
+      "form4137",
+      "credit_resolution",
+      "form2441",
+    ];
   }
 
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
@@ -797,6 +802,12 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     const counts = dependentCounts(deps, filer, ctx.taxYear);
 
     const outputs: NodeOutput[] = [
+      ...(ctx.taxYear === 2026
+        ? [{
+          nodeType: "form2441",
+          fields: { return_filing_status: parsed.filing_status },
+        }]
+        : []),
       this.outputNodes.output(
         f1040,
         f1040Input as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,

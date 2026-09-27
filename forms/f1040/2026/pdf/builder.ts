@@ -22,6 +22,9 @@ function amount(
 export async function buildPdfBytes2026(pending: Pending): Promise<Uint8Array> {
   const f1040 = record(pending, "f1040");
   if (!f1040) throw new Error("TY2026 PDF needs a calculated Form 1040");
+  if (record(pending, "f2441")?.line11 !== undefined) {
+    throw new Error("TY2026 PDF needs the Form 2441 attachment");
+  }
 
   const schedule1a = record(pending, "schedule1a");
   const schedule2 = record(pending, "schedule2");

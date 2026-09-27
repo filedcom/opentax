@@ -37,7 +37,13 @@ charitable cap. The shared Form 8962 node has explicit 2026 percentage,
 repayment, affordability, and FPL paths, with boundary tests. These pieces
 still require final output wiring and instruction reconciliation.
 The shared Form 2441 calculations now select explicit TY2026 employer benefit
-limits and credit rates; their 2026 output mappings remain to build.
+limits and credit rates. The TY2026 registry now separates taxable benefits
+before AGI from the credit after calculated AGI and income tax; W-2 box 10,
+Form 1040 line 1e, Schedule 3 line 2, and the Form 1040 credit total pass
+focused graph checks. The Form 2441 filing input is not on the public start
+surface, and the TY2026 PDF builder rejects a calculated Form 2441 until its
+full attachment is implemented. Provider eligibility, prior-year expenses,
+self-employed benefits, PDF, MeF, and ATS remain to build.
 The [Form 2441 contract](../../../docs/ty2026/FORM2441-GRAPH.md) uses the
 pinned draft instructions to specify provider/benefit facts, the pre-AGI
 benefit stage, post-AGI credit stage, and the full attachment work.
@@ -132,7 +138,7 @@ principal income amounts through 7a, including aggregate 1z wages,
 accumulated dividends, and printed 7a capital gain. A populated income page
 passed visual QA. Additional source nodes and supporting schedules remain.
 The generated [graph route inventory](../../../docs/ty2026/GRAPH-ROUTES.md)
-lists 35 declared edges from active nodes to targets outside this registry;
+lists 33 declared edges from active nodes to targets outside this registry;
 the wages-only run deposits values in 12 absent target slots. It gives the
 dependency order for expanding beyond the current calculation slice.
 Form 8960 is registered and sends TY2026 NIIT to the draft Schedule 2 line 6;

@@ -233,8 +233,8 @@ export function calculateForm2441(
   taxYear: number,
 ): Form2441Lines {
   const details = filingDetailsSchema.parse(rawDetails);
-  if (!Number.isInteger(agi)) {
-    throw new Error("Form 2441 needs calculated whole-dollar AGI");
+  if (!Number.isFinite(agi)) {
+    throw new Error("Form 2441 needs calculated AGI");
   }
   const { tax_liability_limit, ...benefitDetails } = details;
   const benefitLines = calculateForm2441Benefits(

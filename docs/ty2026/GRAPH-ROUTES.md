@@ -1,9 +1,9 @@
 # TY2026 calculation graph route gaps
 
-The current dedicated registry declares **35 edges to targets it has not
+The current dedicated registry declares **33 edges to targets it has not
 registered**. `graph-route-gaps.csv` is generated from the executable registry
 by running `deno run --allow-write forms/f1040/2026/build_route_gaps.ts` from
-the repository root. Every target on these 35 edges exists in the TY2025 registry, but that
+the repository root. Every target on these 33 edges exists in the TY2025 registry, but that
 does not establish that their tax-year behavior or output lines are correct
 for 2026. This inventory covers edges from the currently registered nodes;
 it does not cover the remaining nodes in `node-coverage.csv`.

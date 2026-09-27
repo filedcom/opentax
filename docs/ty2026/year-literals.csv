@@ -134,7 +134,7 @@ forms/f1040/nodes/inputs/ssa1099/index.ts,17,// Box 3 — Total social security 
 forms/f1040/nodes/inputs/ssa1099/index.ts,20,// Box 4 — Total benefits repaid to SSA/RRB in 2025
 forms/f1040/nodes/inputs/ssa1099/index.ts,23,"// Box 5 — Net benefits for 2025 (Box 3 minus Box 4, as precomputed by SSA)"
 forms/f1040/nodes/inputs/ssa1099/index.ts,26,"box5_net_benefits: z.number().nonnegative().optional().describe(""Net benefits for 2025 (Box 3 minus Box 4)""),"
-forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts,510,// and the final 1040 derive AGI from identical numbers. TY2025 retains its
+forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts,514,// and the final 1040 derive AGI from identical numbers. TY2025 retains its
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,28,// IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,75,// IRC §36B(f); 2025 Schedule 2 line 1a.
 forms/f1040/nodes/intermediate/aggregation/schedule_d/index.ts,518,// TY2026 takes the required return-level answer. TY2025 retains its

@@ -27,13 +27,25 @@ credit-limit resolution, without a cycle back through AGI.
 
 ## Existing-code audit
 
+- The TY2026 registry now has separate `form2441` and `f2441` nodes. W-2 box
+  10 enters the first node before AGI; it rejects benefits without filing
+  details and checks filing status against Form 1040. The second node receives
+  calculated AGI, line 16 tax, and Schedule 2 line 3, derives the Credit Limit
+  Worksheet amount, and sends line 11 to Schedule 3 line 2. Focused graph
+  cases verify taxable line 1e, AGI, tax limitation, and a missing-detail
+  diagnostic. The node is absent from the public start inputs while
+  eligibility facts, attachment output, and MeF remain incomplete; the PDF
+  builder rejects a calculated Form 2441 rather than omitting its pages.
 - The shared `form2441/year-rules.ts` already selects the 2026 50%–20%
   phaseout and $7,500/$3,750 exclusion ceiling. Retain its boundary tests
   and compare final instructions before using it in the public 2026 graph.
-- The shared detailed calculation has a useful pre-AGI benefits stage and
-  post-AGI credit stage. It does not currently calculate Part III lines
-  22/24 for proprietor or partnership benefits, Part II line 9b/9c, or the
-  graph-derived Credit Limit Worksheet. Its line 10 is supplied as an input.
+- The shared detailed calculation has a pre-AGI benefits stage and post-AGI
+  credit stage. It does not currently calculate Part III lines 22/24 for
+  proprietor or partnership benefits or Part II line 9b/9c. Its line 10 is
+  supplied internally by the TY2026 graph, while TY2025 retains its existing
+  input contract. The TY2026 graph has no producers for Schedule 3 lines 1
+  and 6l yet; those earlier credits must route directly to `f2441` before
+  their source forms can be added to the public registry.
 - The older aggregate `f2441` route computes credit from total amounts and
   assumes 12 months of deemed student/disability income. It cannot print or
   validate the required provider/person rows, month detail, and benefit

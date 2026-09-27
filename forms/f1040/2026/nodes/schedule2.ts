@@ -13,6 +13,7 @@ import {
 import { f1040_2026_node } from "./f1040.ts";
 import { f8812_2026 } from "./f8812.ts";
 import { credit_resolution_2026 } from "./credit_resolution.ts";
+import { f2441_2026 } from "./f2441.ts";
 
 class Schedule2Node2026 extends TaxNode<typeof schedule2Input2026Schema> {
   readonly nodeType = "schedule2";
@@ -21,6 +22,7 @@ class Schedule2Node2026 extends TaxNode<typeof schedule2Input2026Schema> {
     f1040_2026_node,
     f8812_2026,
     credit_resolution_2026,
+    f2441_2026,
   ]);
 
   compute(ctx: NodeContext, rawInput: Schedule2Input2026): NodeResult {
@@ -48,6 +50,9 @@ class Schedule2Node2026 extends TaxNode<typeof schedule2Input2026Schema> {
         schedule2_line3: lines.line3_part1_tax,
         schedule2_line16c: lines.line16c_additional_fica,
         schedule2_line17c: input.line17c_w2_uncollected_fica ?? 0,
+      }),
+      this.outputNodes.output(f2441_2026, {
+        schedule2_line3: lines.line3_part1_tax,
       }),
       { nodeType: this.nodeType, fields: { ...input, ...lines } },
     ];
