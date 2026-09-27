@@ -6,7 +6,6 @@ export interface Fields {
   filing_status?: string | null;
   // Part I (inside AdditionalTaxGrp > AdditionalMedicareTaxGrp)
   medicare_wages?: number | null;
-  medicare_wages_box5?: number | null;
   unreported_tips?: number | null;
   wages_8919?: number | null;
   // Part II (inside AdditionalTaxGrp > AddnlSelfEmploymentTaxGrp)
@@ -16,6 +15,7 @@ export interface Fields {
   // Part V (outside AdditionalTaxGrp — top level of IRS8959)
   medicare_withheld?: number | null;
   rrta_medicare_withheld?: number | null;
+  single_w2_over_withholding_threshold?: boolean | null;
 }
 
 type Input = Partial<Fields> & Record<string, unknown>;
@@ -39,14 +39,13 @@ function buildAdditionalMedicareTaxGrp(
   fields: Input,
   threshold: number,
 ): string {
-  const hasWages = typeof fields.medicare_wages_box5 === "number" ||
-    typeof fields.medicare_wages === "number";
+  const hasWages = typeof fields.medicare_wages === "number";
   const hasTips = typeof fields.unreported_tips === "number";
   const hasWages8919 = typeof fields.wages_8919 === "number";
   // Only emit if any Part I wage/tip source is explicitly provided
   if (!hasWages && !hasTips && !hasWages8919) return "";
 
-  const wages = fields.medicare_wages_box5 ?? fields.medicare_wages ?? 0;
+  const wages = fields.medicare_wages ?? 0;
   const tips = hasTips ? (fields.unreported_tips as number) : 0;
   const wages8919 = hasWages8919 ? (fields.wages_8919 as number) : 0;
 
@@ -98,7 +97,7 @@ function buildAdditionalTaxGrp(fields: Input): string {
   // TotalAMRRTTaxAmt (line 18) = sum of part I line 7 + part II line 13 + part III line 17
   // For the MeF builder we approximate from available data (0 if not computable)
   const code = thresholdCode(fields.filing_status as string | null);
-  const wages = fields.medicare_wages_box5 ?? fields.medicare_wages ?? 0;
+  const wages = fields.medicare_wages ?? 0;
   const tips = typeof fields.unreported_tips === "number"
     ? fields.unreported_tips
     : 0;
@@ -135,7 +134,7 @@ function buildAdditionalTaxGrp(fields: Input): string {
 
 function buildIRS8959(fields: Input): string {
   const threshold = thresholdAmount(fields.filing_status);
-  const wages = fields.medicare_wages_box5 ?? fields.medicare_wages ?? 0;
+  const wages = fields.medicare_wages ?? 0;
   const tips = fields.unreported_tips ?? 0;
   const wages8919 = fields.wages_8919 ?? 0;
   const line4 = wages + tips + wages8919;
@@ -148,7 +147,16 @@ function buildIRS8959(fields: Input): string {
     0,
     (fields.medicare_withheld ?? 0) - wages * 0.0145,
   ) + (fields.rrta_medicare_withheld ?? 0);
-  if (wageTax + seTax + rrtaTax === 0 && additionalWithheld === 0) return "";
+  const filingRequired = fields.single_w2_over_withholding_threshold === true;
+  if (filingRequired && wages === 0 && (fields.rrta_wages ?? 0) === 0) {
+    throw new Error(
+      "Form 8959 single-W-2 filing trigger needs Medicare wages or RRTA compensation",
+    );
+  }
+  if (
+    wageTax + seTax + rrtaTax === 0 && additionalWithheld === 0 &&
+    !filingRequired
+  ) return "";
 
   const additionalTaxGrp = buildAdditionalTaxGrp(fields);
   const withheldParts: string[] = [];
@@ -183,6 +191,11 @@ export const form8959: MefFormDescriptor<"form8959", Input> = {
   FIELD_MAP,
   pdfUrl: "https://www.irs.gov/pub/irs-pdf/f8959.pdf",
   build(fields) {
+    if ("medicare_wages_box5" in fields) {
+      throw new Error(
+        "Form 8959 uses medicare_wages for W-2 box 5; medicare_wages_box5 is not supported",
+      );
+    }
     return buildIRS8959(fields);
   },
 };

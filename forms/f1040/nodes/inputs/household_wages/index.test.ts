@@ -9,7 +9,9 @@ function minimalItem(overrides: Record<string, unknown> = {}) {
 }
 
 function compute(items: ReturnType<typeof minimalItem>[]) {
-  return household_wages.compute({ taxYear: 2025, formType: "f1040" }, { household_wages: items });
+  return household_wages.compute({ taxYear: 2025, formType: "f1040" }, {
+    household_wages: items,
+  });
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -86,7 +88,9 @@ Deno.test("household_wages.compute: wages_received = 0 → no f1040 output", () 
 });
 
 Deno.test("household_wages.compute: federal_income_tax_withheld > 0 → routes to f1040 line25a_w2_withheld", () => {
-  const result = compute([minimalItem({ wages_received: 20000, federal_income_tax_withheld: 3000 })]);
+  const result = compute([
+    minimalItem({ wages_received: 20000, federal_income_tax_withheld: 3000 }),
+  ]);
   const out = findOutput(result, "f1040");
   assertEquals(out !== undefined, true);
   assertEquals(out!.fields.line25a_w2_withheld, 3000);
@@ -101,7 +105,10 @@ Deno.test("household_wages.compute: employer_name and employer_ein are informati
   const withoutInfo = compute([minimalItem({ wages_received: 10000 })]);
   const outWith = findOutput(withInfo, "f1040");
   const outWithout = findOutput(withoutInfo, "f1040");
-  assertEquals(outWith!.fields.line1b_household_wages, outWithout!.fields.line1b_household_wages);
+  assertEquals(
+    outWith!.fields.line1b_household_wages,
+    outWithout!.fields.line1b_household_wages,
+  );
 });
 
 // =============================================================================
@@ -143,17 +150,21 @@ Deno.test("household_wages.compute: one item zero wages, one item positive wages
 // =============================================================================
 
 Deno.test("household_wages.compute: ss_tax_withheld does not create separate output", () => {
-  const result = compute([minimalItem({ wages_received: 20000, ss_tax_withheld: 1240 })]);
+  const result = compute([
+    minimalItem({ wages_received: 20000, ss_tax_withheld: 1240 }),
+  ]);
   // Only one output to f1040
   assertEquals(result.outputs.length, 1);
 });
 
 Deno.test("household_wages.compute: medicare_tax_withheld routes to form8959", () => {
-  const result = compute([minimalItem({ wages_received: 20000, medicare_tax_withheld: 290 })]);
+  const result = compute([
+    minimalItem({ wages_received: 20000, medicare_tax_withheld: 290 }),
+  ]);
   // f1040 output for wages + form8959 output for Medicare withholding
   assertEquals(result.outputs.length, 2);
   const f8959 = findOutput(result, "form8959");
-  assertEquals(f8959?.fields?.medicare_withheld, 290);
+  assertEquals(f8959?.fields?.household_medicare_withheld, 290);
 });
 
 // =============================================================================
@@ -174,7 +185,9 @@ Deno.test("household_wages.compute: zero wages does not throw", () => {
 // =============================================================================
 
 Deno.test("household_wages.compute: wages + withholding → single f1040 output (not two)", () => {
-  const result = compute([minimalItem({ wages_received: 20000, federal_income_tax_withheld: 2500 })]);
+  const result = compute([
+    minimalItem({ wages_received: 20000, federal_income_tax_withheld: 2500 }),
+  ]);
   assertEquals(result.outputs.length, 1);
   const out = findOutput(result, "f1040");
   assertEquals(out!.fields.line1b_household_wages, 20000);
@@ -187,7 +200,9 @@ Deno.test("household_wages.compute: wages + withholding → single f1040 output 
 
 Deno.test("household_wages.compute: withholding with zero wages — no output (withholding alone)", () => {
   // Withholding without wages is unusual; if wages=0, no output
-  const result = compute([minimalItem({ wages_received: 0, federal_income_tax_withheld: 500 })]);
+  const result = compute([
+    minimalItem({ wages_received: 0, federal_income_tax_withheld: 500 }),
+  ]);
   assertEquals(result.outputs.length, 0);
 });
 

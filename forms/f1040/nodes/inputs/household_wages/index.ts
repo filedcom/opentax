@@ -1,6 +1,13 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
@@ -40,11 +47,18 @@ type HouseholdWageItem = z.infer<typeof itemSchema>;
 type HouseholdWageItems = HouseholdWageItem[];
 
 function totalWages(items: HouseholdWageItems): number {
-  return items.reduce((sum: number, item: HouseholdWageItem) => sum + item.wages_received, 0);
+  return items.reduce(
+    (sum: number, item: HouseholdWageItem) => sum + item.wages_received,
+    0,
+  );
 }
 
 function totalWithholding(items: HouseholdWageItems): number {
-  return items.reduce((sum: number, item: HouseholdWageItem) => sum + (item.federal_income_tax_withheld ?? 0), 0);
+  return items.reduce(
+    (sum: number, item: HouseholdWageItem) =>
+      sum + (item.federal_income_tax_withheld ?? 0),
+    0,
+  );
 }
 
 function f1040Output(items: HouseholdWageItems): NodeOutput[] {
@@ -53,20 +67,36 @@ function f1040Output(items: HouseholdWageItems): NodeOutput[] {
 
   const withheld = totalWithholding(items);
   if (withheld > 0) {
-    return [output(f1040, { line1b_household_wages: wages, line25a_w2_withheld: withheld })];
+    return [
+      output(f1040, {
+        line1b_household_wages: wages,
+        line25a_w2_withheld: withheld,
+      }),
+    ];
   }
   return [output(f1040, { line1b_household_wages: wages })];
 }
 
 function form8959Output(items: HouseholdWageItems): NodeOutput[] {
-  const medicareWages = items.reduce((sum, item) => sum + (item.medicare_wages ?? 0), 0);
-  const medicareTax = items.reduce((sum, item) => sum + (item.medicare_tax_withheld ?? 0), 0);
+  const medicareWages = items.reduce(
+    (sum, item) => sum + (item.medicare_wages ?? 0),
+    0,
+  );
+  const medicareTax = items.reduce(
+    (sum, item) => sum + (item.medicare_tax_withheld ?? 0),
+    0,
+  );
   if (medicareWages === 0 && medicareTax === 0) return [];
   // Emit partial fields — executor merges; filing_status provided by other upstream nodes
   const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
-  if (medicareWages > 0) fields.medicare_wages = medicareWages;
-  if (medicareTax > 0) fields.medicare_withheld = medicareTax;
-  return [output(form8959, fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>)];
+  if (medicareWages > 0) fields.household_medicare_wages = medicareWages;
+  if (medicareTax > 0) fields.household_medicare_withheld = medicareTax;
+  return [
+    output(
+      form8959,
+      fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>,
+    ),
+  ];
 }
 
 class HouseholdWagesNode extends TaxNode<typeof inputSchema> {
@@ -76,7 +106,12 @@ class HouseholdWagesNode extends TaxNode<typeof inputSchema> {
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);
-    return { outputs: [...f1040Output(parsed.household_wages), ...form8959Output(parsed.household_wages)] };
+    return {
+      outputs: [
+        ...f1040Output(parsed.household_wages),
+        ...form8959Output(parsed.household_wages),
+      ],
+    };
   }
 }
 

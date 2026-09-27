@@ -1,21 +1,48 @@
-import { assertEquals, assertStringIncludes } from "@std/assert";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { form8959 } from "./f8959.ts";
 
 Deno.test("ordinary W-2 wages below the threshold do not emit Form 8959", () => {
   const result = form8959.build({
     filing_status: "single",
     medicare_wages: 30_000,
-    medicare_wages_box5: 30_000,
     medicare_withheld: 435,
   });
   assertEquals(result, "");
 });
 
-Deno.test("Form 8959 XML uses W-2 box 5 when it differs from box 1", () => {
+Deno.test("a single W-2 over $200k emits Form 8959 even below the MFJ threshold", () => {
+  const fields = {
+    filing_status: "mfj",
+    medicare_wages: 220_000,
+    medicare_withheld: 3_190,
+  };
+  assertEquals(form8959.build(fields), "");
+  const xml = form8959.build({
+    ...fields,
+    single_w2_over_withholding_threshold: true,
+  });
+  assertStringIncludes(xml, "<IRS8959>");
+  assertStringIncludes(
+    xml,
+    "<FilingStatusThresholdCd>250000</FilingStatusThresholdCd>",
+  );
+  assertStringIncludes(xml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
+  const rrtaXml = form8959.build({
+    filing_status: "mfj",
+    rrta_wages: 220_000,
+    single_w2_over_withholding_threshold: true,
+  });
+  assertStringIncludes(
+    rrtaXml,
+    "<TotalRailroadRetirementCompAmt>220000</TotalRailroadRetirementCompAmt>",
+  );
+  assertStringIncludes(rrtaXml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
+});
+
+Deno.test("Form 8959 XML uses its canonical W-2 box 5 amount", () => {
   const xml = form8959.build({
     filing_status: "single",
-    medicare_wages: 190_000,
-    medicare_wages_box5: 198_000,
+    medicare_wages: 198_000,
     unreported_tips: 4_000,
   });
   assertStringIncludes(
@@ -33,6 +60,18 @@ Deno.test("Form 8959 XML uses W-2 box 5 when it differs from box 1", () => {
   assertStringIncludes(
     xml,
     "<TotalAMRRTTaxAmt>18</TotalAMRRTTaxAmt>",
+  );
+});
+
+Deno.test("Form 8959 XML rejects the removed second wage field", () => {
+  assertThrows(
+    () =>
+      form8959.build({
+        medicare_wages: 198_000,
+        medicare_wages_box5: 198_000,
+      }),
+    Error,
+    "medicare_wages_box5 is not supported",
   );
 });
 

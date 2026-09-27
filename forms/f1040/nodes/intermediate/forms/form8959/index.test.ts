@@ -6,7 +6,10 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 
 function compute(input: Record<string, unknown>) {
-  return form8959.compute({ taxYear: 2025, formType: "f1040" }, inputSchema.parse(input));
+  return form8959.compute(
+    { taxYear: 2025, formType: "f1040" },
+    inputSchema.parse(input),
+  );
 }
 
 function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
@@ -18,7 +21,7 @@ function findOutput(result: ReturnType<typeof compute>, nodeType: string) {
 Deno.test("below_threshold_single: wages below $200k → no schedule2 output", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 150_000,
+    w2_medicare_wages: 150_000,
   });
   const out = findOutput(result, "schedule2");
   assertEquals(out, undefined);
@@ -27,7 +30,7 @@ Deno.test("below_threshold_single: wages below $200k → no schedule2 output", (
 Deno.test("at_threshold_single: wages exactly $200k → no schedule2 output", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 200_000,
+    w2_medicare_wages: 200_000,
   });
   const out = findOutput(result, "schedule2");
   assertEquals(out, undefined);
@@ -36,7 +39,7 @@ Deno.test("at_threshold_single: wages exactly $200k → no schedule2 output", ()
 Deno.test("below_threshold_mfj: wages below $250k → no schedule2 output", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
-    medicare_wages: 200_000,
+    w2_medicare_wages: 200_000,
   });
   const out = findOutput(result, "schedule2");
   assertEquals(out, undefined);
@@ -45,7 +48,7 @@ Deno.test("below_threshold_mfj: wages below $250k → no schedule2 output", () =
 Deno.test("below_threshold_mfs: wages below $125k → no schedule2 output", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
-    medicare_wages: 100_000,
+    w2_medicare_wages: 100_000,
   });
   const out = findOutput(result, "schedule2");
   assertEquals(out, undefined);
@@ -56,17 +59,19 @@ Deno.test("below_threshold_mfs: wages below $125k → no schedule2 output", () =
 Deno.test("part1_single_above: Single $220k wages → 0.9% on $20k = $180", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 220_000,
+    w2_medicare_wages: 220_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    180,
+  );
 });
 
 Deno.test("computed form lines use W-2 box 5 and expose the full Part I calculation", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 349_154.37,
-    medicare_wages_box5: 367_934.84,
-    medicare_withheld: 6_846.47,
+    w2_medicare_wages: 367_934.84,
+    w2_medicare_withheld: 6_846.47,
   });
   const form = findOutput(result, "form8959");
 
@@ -80,46 +85,113 @@ Deno.test("computed form lines use W-2 box 5 and expose the full Part I calculat
   assertEquals(form?.fields.line22_additional_withheld, 1_511.41);
 });
 
+Deno.test("Form 8959 rejects the removed second wage field", () => {
+  assertEquals(
+    inputSchema.safeParse({
+      filing_status: FilingStatus.Single,
+      w2_medicare_wages: 198_000,
+      medicare_wages_box5: 198_000,
+    }).success,
+    false,
+  );
+});
+
 Deno.test("part1_mfj_above: MFJ $325k wages → 0.9% on $75k = $675", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
-    medicare_wages: 325_000,
+    w2_medicare_wages: 325_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 675);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    675,
+  );
+});
+
+Deno.test("single W-2 over $200k requires Form 8959 below the MFJ tax threshold", () => {
+  const result = compute({
+    filing_status: FilingStatus.MFJ,
+    w2_medicare_wages: 220_000,
+    w2_single_over_withholding_threshold: true,
+  });
+  assertEquals(fieldsOf(result.outputs, schedule2), undefined);
+  assertEquals(
+    findOutput(result, "form8959")?.fields.line1_medicare_wages,
+    220_000,
+  );
+  assertEquals(findOutput(result, "form8959")?.fields.line18_total_tax, 0);
+  assertEquals(
+    findOutput(
+      compute({
+        filing_status: FilingStatus.MFJ,
+        w2_medicare_wages: 220_000,
+      }),
+      "form8959",
+    ),
+    undefined,
+  );
+});
+
+Deno.test("W-2, Form 4852, and household Medicare wages sum once", () => {
+  const result = compute({
+    filing_status: FilingStatus.Single,
+    w2_medicare_wages: 100_000,
+    f4852_medicare_wages: 70_000,
+    household_medicare_wages: 40_000,
+    w2_medicare_withheld: 1_450,
+    f4852_medicare_withheld: 1_015,
+    household_medicare_withheld: 580,
+  });
+  const form = findOutput(result, "form8959")?.fields;
+  assertEquals(form?.line1_medicare_wages, 210_000);
+  assertEquals(form?.medicare_wages, 210_000);
+  assertEquals(form?.line19_medicare_withheld, 3_045);
+  assertEquals(form?.medicare_withheld, 3_045);
+  assertEquals(form?.line18_total_tax, 90);
+  assertEquals(form?.line24_total_withheld, 0);
 });
 
 Deno.test("part1_mfs_above: MFS $200k wages → 0.9% on $75k = $675", () => {
   const result = compute({
     filing_status: FilingStatus.MFS,
-    medicare_wages: 200_000,
+    w2_medicare_wages: 200_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 675);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    675,
+  );
 });
 
 Deno.test("part1_hoh_above: HOH $210k wages → 0.9% on $10k = $90", () => {
   const result = compute({
     filing_status: FilingStatus.HOH,
-    medicare_wages: 210_000,
+    w2_medicare_wages: 210_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 90);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    90,
+  );
 });
 
-// QSS uses MFJ threshold ($250k) per IRC §3101(b)(2) — NOT the OTHER threshold ($200k)
-Deno.test("part1_qss_below_mfj_threshold: QSS $205k wages → below $250k → no AMT", () => {
+Deno.test("part1_qss_above_200k_threshold: QSS $205k wages → $45 AMT", () => {
   const result = compute({
     filing_status: FilingStatus.QSS,
-    medicare_wages: 205_000,
+    w2_medicare_wages: 205_000,
   });
-  const out = findOutput(result, "schedule2");
-  assertEquals(out, undefined);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)?.line11_additional_medicare,
+    45,
+  );
 });
 
-Deno.test("part1_qss_above_mfj_threshold: QSS $280k wages → 0.9% on $30k = $270", () => {
+Deno.test("part1_qss_280k: QSS $280k wages → 0.9% on $80k = $720", () => {
   const result = compute({
     filing_status: FilingStatus.QSS,
-    medicare_wages: 280_000,
+    w2_medicare_wages: 280_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 270);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    720,
+  );
 });
 
 // ─── Part II: SE Income combined with wages ────────────────────────────────────
@@ -140,7 +212,10 @@ Deno.test("part2_se_above_threshold: SE $220k single, no wages → $180 AMT", ()
     filing_status: FilingStatus.Single,
     se_income: 220_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    180,
+  );
 });
 
 // Example 3: SE $145k + wages $130k single → reduced SE threshold = $200k - $130k = $70k
@@ -150,10 +225,13 @@ Deno.test("part2_se_above_threshold: SE $220k single, no wages → $180 AMT", ()
 Deno.test("part2_wages_reduce_se_threshold: SE $145k + wages $130k single → $675", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 130_000,
+    w2_medicare_wages: 130_000,
     se_income: 145_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 675);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    675,
+  );
 });
 
 // Wages exceed threshold → SE threshold reduced to zero → all SE subject to AMT
@@ -163,21 +241,27 @@ Deno.test("part2_wages_exceed_threshold: wages $250k + SE $50k single → wages 
   // Total = $900
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 250_000,
+    w2_medicare_wages: 250_000,
     se_income: 50_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 900);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    900,
+  );
 });
 
 // Negative SE income → treated as zero for Part II
 Deno.test("part2_negative_se_ignored: negative SE income → no Part II AMT", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 210_000,
+    w2_medicare_wages: 210_000,
     se_income: -50_000,
   });
   // Only Part I: ($210k - $200k) × 0.009 = $90
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 90);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    90,
+  );
 });
 
 // ─── Part III: RRTA Compensation ──────────────────────────────────────────────
@@ -188,7 +272,7 @@ Deno.test("part3_rrta_below_mfj_threshold: RRTA $140k MFJ → no AMT", () => {
   const result = compute({
     filing_status: FilingStatus.MFJ,
     se_income: 160_000,
-    rrta_wages: 140_000,
+    w2_rrta_wages: 140_000,
   });
   // SE: threshold reduced by 0 wages = $250k; $160k < $250k → no Part II AMT
   // RRTA: $140k < $250k → no Part III AMT
@@ -199,9 +283,12 @@ Deno.test("part3_rrta_below_mfj_threshold: RRTA $140k MFJ → no AMT", () => {
 Deno.test("part3_rrta_above_single: RRTA $220k single → 0.9% on $20k = $180", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    rrta_wages: 220_000,
+    w2_rrta_wages: 220_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    180,
+  );
 });
 
 // RRTA threshold NOT reduced by wages (unlike SE income)
@@ -211,10 +298,13 @@ Deno.test("part3_rrta_threshold_not_reduced: wages $150k + RRTA $220k single →
   // Part III: RRTA $220k - $200k = $20k × 0.009 = $180 (not reduced by wages)
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 150_000,
-    rrta_wages: 220_000,
+    w2_medicare_wages: 150_000,
+    w2_rrta_wages: 220_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 180);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    180,
+  );
 });
 
 // ─── Part I+II+III combined ────────────────────────────────────────────────────
@@ -227,11 +317,14 @@ Deno.test("combined_all_parts: wages + SE + RRTA all contributing AMT", () => {
   // Total = $90 + $270 + $450 = $810
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 210_000,
+    w2_medicare_wages: 210_000,
     se_income: 30_000,
-    rrta_wages: 250_000,
+    w2_rrta_wages: 250_000,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 810);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    810,
+  );
 });
 
 // ─── Part V: Withholding ──────────────────────────────────────────────────────
@@ -245,18 +338,21 @@ Deno.test("withholding_routes_to_f1040: wages above threshold + withheld → f10
   // Part V: line20 = $3,625; line21 = $4,075 - $3,625 = $450 → line25c
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 250_000,
-    medicare_withheld: 4_075, // W-2 box 6: regular $3,625 + additional $450
+    w2_medicare_wages: 250_000,
+    w2_medicare_withheld: 4_075, // W-2 box 6: regular $3,625 + additional $450
   });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 450);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
+    450,
+  );
 });
 
 Deno.test("withholding_no_amt_no_f1040: below threshold + withheld → no f1040 output", () => {
   // Below threshold — no Additional Medicare Tax → Form 8959 not filed → no line25c
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 150_000,
-    medicare_withheld: 2_175, // regular Medicare withheld but no AMT situation
+    w2_medicare_wages: 150_000,
+    w2_medicare_withheld: 2_175, // regular Medicare withheld but no AMT situation
   });
   const s2 = findOutput(result, "schedule2");
   const f1 = findOutput(result, "f1040");
@@ -267,7 +363,7 @@ Deno.test("withholding_no_amt_no_f1040: below threshold + withheld → no f1040 
 Deno.test("withholding_zero_no_output: no withholding fields → no f1040 output", () => {
   const result = compute({
     filing_status: FilingStatus.Single,
-    medicare_wages: 150_000, // below $200K threshold, no withholding
+    w2_medicare_wages: 150_000, // below $200K threshold, no withholding
   });
   const s2 = findOutput(result, "schedule2");
   const f1 = findOutput(result, "f1040");
@@ -280,11 +376,14 @@ Deno.test("withholding_rrta_combined: rrta above threshold + combined withheld �
   // Use MFJ with rrta above threshold to trigger line18 > 0
   const result = compute({
     filing_status: FilingStatus.MFJ,
-    rrta_wages: 260_000,
-    medicare_withheld: 1_000,
-    rrta_medicare_withheld: 500,
+    w2_rrta_wages: 260_000,
+    w2_medicare_withheld: 1_000,
+    w2_rrta_medicare_withheld: 500,
   });
-  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 1_500);
+  assertEquals(
+    fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
+    1_500,
+  );
 });
 
 // ─── Smoke test ───────────────────────────────────────────────────────────────
@@ -305,14 +404,20 @@ Deno.test("smoke: all fields present → schedule2 AMT + f1040 withholding credi
   //         line22 (RRTA additional) = $200 → line24 = $200 → f1040 line25c
   const result = compute({
     filing_status: FilingStatus.MFJ,
-    medicare_wages: 300_000,
+    w2_medicare_wages: 300_000,
     unreported_tips: 5_000,
     wages_8919: 2_000,
     se_income: 50_000,
-    rrta_wages: 260_000,
-    medicare_withheld: 4_000,
-    rrta_medicare_withheld: 200,
+    w2_rrta_wages: 260_000,
+    w2_medicare_withheld: 4_000,
+    w2_rrta_medicare_withheld: 200,
   });
-  assertEquals(fieldsOf(result.outputs, schedule2)!.line11_additional_medicare, 1_053);
-  assertEquals(fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld, 200);
+  assertEquals(
+    fieldsOf(result.outputs, schedule2)!.line11_additional_medicare,
+    1_053,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, f1040)!.line25c_additional_medicare_withheld,
+    200,
+  );
 });

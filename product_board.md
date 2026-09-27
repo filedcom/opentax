@@ -938,6 +938,17 @@ mileage/payroll matching is still open.
 | Scope decision            | The requested product boundary is not yet explicit.                                                                         |
 | Release gate              | Required verification or integration step has not passed on the current worktree.                                           |
 
+The Form 8959 build pass now sums source-specific W-2 box 5, Form 4852, and
+household-employee Medicare wages once for lines 1 and 20, avoiding executor
+collisions when these sources coexist. It removes and rejects the second box 5 override,
+includes statutory-employee box 5 wages, rejects box 6 withholding without box 5
+wages, and corrects the qualifying-surviving-spouse threshold to the 2025 form's
+$200,000. A single employer W-2 box 5 or RRTA box 14 amount above $200,000 now
+preserves Form 8959 even when a joint return has zero additional tax; Form 4852
+W-2 substitutes carry the same box 5 trigger. Source, calculation, XML, PDF
+inclusion, and full-return cases are written but unrun. The full-batch gate and
+IRS business-rule review remain open.
+
 ## Workstreams
 
 | ID       | Workstream                               | Current state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Next evidence required                                                                                                                                                                                                                            |

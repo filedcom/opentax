@@ -34,6 +34,24 @@ Deno.test("Form 8959 maps resolved box 5 wages and computed totals to lines 1 th
   );
 });
 
+Deno.test("Form 8959 PDF includes a single-W-2 filing trigger with zero tax", () => {
+  assertEquals(
+    form8959Pdf.includeWhen?.({
+      medicare_wages: 220_000,
+      single_w2_over_withholding_threshold: true,
+    }, {}),
+    true,
+  );
+  assertEquals(
+    form8959Pdf.includeWhen?.({ medicare_wages: 220_000 }, {}),
+    false,
+  );
+  assertEquals(
+    form8959Pdf.includeWhen?.({ line24_total_withheld: 45 }, {}),
+    true,
+  );
+});
+
 Deno.test("Schedule 2 maps Additional Medicare Tax and NIIT to 2025 lines 11 and 12", () => {
   assertEquals(
     mappedField(schedule2Pdf, "line11_additional_medicare"),

@@ -44,9 +44,12 @@ export const form8959Pdf: PdfFormDescriptor = {
   pendingKey: "form8959",
   pdfUrl: "https://www.irs.gov/pub/irs-prior/f8959--2025.pdf",
   fields,
-  // Form 8959 is required when Medicare wages exceed the $200k withholding
-  // threshold or additional Medicare tax was computed (Schedule 2 line 11).
+  // A single W-2 above the employer withholding trigger requires filing even
+  // when the return-wide threshold leaves tax at zero.
   includeWhen: (fields, all) =>
-    (((all?.["schedule2"]?.["line11_additional_medicare"]) as number | undefined) ?? 0) > 0 ||
-    ((fields["medicare_wages_box5"] as number | undefined) ?? 0) > 200000,
+    (((all?.["schedule2"]?.["line11_additional_medicare"]) as
+        | number
+        | undefined) ?? 0) > 0 ||
+    ((fields["line24_total_withheld"] as number | undefined) ?? 0) > 0 ||
+    fields["single_w2_over_withholding_threshold"] === true,
 };

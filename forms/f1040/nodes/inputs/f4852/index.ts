@@ -1,6 +1,13 @@
 import { z } from "zod";
-import type { NodeOutput, NodeResult } from "../../../../../core/types/tax-node.ts";
-import { TaxNode, output, type AtLeastOne } from "../../../../../core/types/tax-node.ts";
+import type {
+  NodeOutput,
+  NodeResult,
+} from "../../../../../core/types/tax-node.ts";
+import {
+  type AtLeastOne,
+  output,
+  TaxNode,
+} from "../../../../../core/types/tax-node.ts";
 import { OutputNodes } from "../../../../../core/types/output-nodes.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import { form8959 } from "../../intermediate/forms/form8959/index.ts";
@@ -60,7 +67,9 @@ export const itemSchema = z.object({
   // 1099-R box 7: distribution code — determines penalty applicability and routing
   // (e.g., code 1 = early distribution, code 7 = normal, code G = direct rollover)
   distribution_code: z.string().optional()
-    .describe("Distribution code (1099-R box 7); affects early withdrawal penalty and routing"),
+    .describe(
+      "Distribution code (1099-R box 7); affects early withdrawal penalty and routing",
+    ),
 }).superRefine((val, ctx) => {
   if (val.form_type === FormType.W2) {
     const hasWages = (val.wages ?? 0) > 0;
@@ -68,7 +77,8 @@ export const itemSchema = z.object({
     if (!hasWages && !hasWithheld) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "W2 form_type requires at least wages or federal_withheld to be nonzero",
+        message:
+          "W2 form_type requires at least wages or federal_withheld to be nonzero",
       });
     }
   }
@@ -124,7 +134,10 @@ function effectiveTaxable(item: F4852Item): number {
 function wagesFields(items: F4852Items): Partial<F1040Input> {
   const w2s = w2Items(items);
   const totalWages = w2s.reduce((sum, item) => sum + (item.wages ?? 0), 0);
-  const totalWithheld = w2s.reduce((sum, item) => sum + (item.federal_withheld ?? 0), 0);
+  const totalWithheld = w2s.reduce(
+    (sum, item) => sum + (item.federal_withheld ?? 0),
+    0,
+  );
   const fields: Partial<F1040Input> = {};
   if (totalWages > 0) fields.line1a_wages = totalWages;
   if (totalWithheld > 0) fields.line25a_w2_withheld = totalWithheld;
@@ -135,8 +148,14 @@ function wagesFields(items: F4852Items): Partial<F1040Input> {
 function pensionFields(items: F4852Items): Partial<F1040Input> {
   const pensions = pensionItems(items);
   if (pensions.length === 0) return {};
-  const totalGross = pensions.reduce((sum, item) => sum + (item.gross_distribution ?? 0), 0);
-  const totalTaxable = pensions.reduce((sum, item) => sum + effectiveTaxable(item), 0);
+  const totalGross = pensions.reduce(
+    (sum, item) => sum + (item.gross_distribution ?? 0),
+    0,
+  );
+  const totalTaxable = pensions.reduce(
+    (sum, item) => sum + effectiveTaxable(item),
+    0,
+  );
   const fields: Partial<F1040Input> = {};
   if (totalGross > 0) fields.line5a_pension_gross = totalGross;
   fields.line5b_pension_taxable = totalTaxable;
@@ -147,8 +166,14 @@ function pensionFields(items: F4852Items): Partial<F1040Input> {
 function iraFields(items: F4852Items): Partial<F1040Input> {
   const iras = iraItems(items);
   if (iras.length === 0) return {};
-  const totalGross = iras.reduce((sum, item) => sum + (item.gross_distribution ?? 0), 0);
-  const totalTaxable = iras.reduce((sum, item) => sum + effectiveTaxable(item), 0);
+  const totalGross = iras.reduce(
+    (sum, item) => sum + (item.gross_distribution ?? 0),
+    0,
+  );
+  const totalTaxable = iras.reduce(
+    (sum, item) => sum + effectiveTaxable(item),
+    0,
+  );
   const fields: Partial<F1040Input> = {};
   if (totalGross > 0) fields.line4a_ira_gross = totalGross;
   fields.line4b_ira_taxable = totalTaxable;
@@ -173,13 +198,31 @@ function ficaOutputs(items: F4852Items): NodeOutput[] {
       item.medicare_wages !== undefined || item.medicare_withheld !== undefined,
   );
   if (w2s.length === 0) return [];
-  const totalMedicareWages = w2s.reduce((sum, item) => sum + (item.medicare_wages ?? 0), 0);
-  const totalMedicareWithheld = w2s.reduce((sum, item) => sum + (item.medicare_withheld ?? 0), 0);
+  const totalMedicareWages = w2s.reduce(
+    (sum, item) => sum + (item.medicare_wages ?? 0),
+    0,
+  );
+  const totalMedicareWithheld = w2s.reduce(
+    (sum, item) => sum + (item.medicare_withheld ?? 0),
+    0,
+  );
   const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
-  if (totalMedicareWages > 0) fields.medicare_wages = totalMedicareWages;
-  if (totalMedicareWithheld > 0) fields.medicare_withheld = totalMedicareWithheld;
+  if (totalMedicareWages > 0) {
+    fields.f4852_medicare_wages = totalMedicareWages;
+  }
+  if (totalMedicareWithheld > 0) {
+    fields.f4852_medicare_withheld = totalMedicareWithheld;
+  }
+  if (w2s.some((item) => (item.medicare_wages ?? 0) > 200_000)) {
+    fields.f4852_single_over_withholding_threshold = true;
+  }
   if (Object.keys(fields).length === 0) return [];
-  return [output(form8959, fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>)];
+  return [
+    output(
+      form8959,
+      fields as AtLeastOne<z.infer<typeof form8959["inputSchema"]>>,
+    ),
+  ];
 }
 
 // Route W-2 substitute excess SS withholding to Schedule 3 line 11.
@@ -192,7 +235,10 @@ function ficaOutputs(items: F4852Items): NodeOutput[] {
 function excessSsOutputs(items: F4852Items): NodeOutput[] {
   const w2s = w2Items(items);
   if (w2s.length < 2) return [];
-  const totalSsWithheld = w2s.reduce((sum, item) => sum + (item.social_security_withheld ?? 0), 0);
+  const totalSsWithheld = w2s.reduce(
+    (sum, item) => sum + (item.social_security_withheld ?? 0),
+    0,
+  );
   if (totalSsWithheld <= 0) return [];
   // We cannot compute the wage-base cap without config, so emit social_security_withheld
   // as a signal; schedule3 accumulates and the excess is computed downstream.
@@ -216,7 +262,12 @@ function earlyDistOutputs(items: F4852Items): NodeOutput[] {
 class F4852Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "f4852";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, form8959, form5329, schedule3]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    form8959,
+    form5329,
+    schedule3,
+  ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
     const parsed = inputSchema.parse(input);

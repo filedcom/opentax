@@ -227,6 +227,12 @@ function validateItem(
       "W-2 RRTA compensation cannot share FICA social security or Medicare boxes",
     );
   }
+  if (
+    (item.box6_medicare_withheld ?? 0) > 0 &&
+    (item.box5_medicare_wages ?? 0) === 0
+  ) {
+    throw new Error("W-2 box 6 Medicare withholding needs box 5 wages");
+  }
   if (ssWages > ssWageBase) {
     throw new Error(
       `W-2 validation error: SS taxable wages (${ssWages}) exceed the wage base limit (${ssWageBase})`,
@@ -333,7 +339,7 @@ function statutoryOutput(w2s: W2Items): NodeOutput[] {
 }
 
 function medicareOutput(w2s: W2Items): NodeOutput[] {
-  const ficaItems = regularItems(w2s).filter(
+  const ficaItems = w2s.filter(
     (item) =>
       item.box5_medicare_wages !== undefined ||
       item.box6_medicare_withheld !== undefined,
@@ -346,16 +352,14 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
     (sum, item) => sum + (box14Amount(item, "Additional Medicare Tax") ?? 0),
     0,
   );
+  const singleW2OverThreshold = w2s.some((item) =>
+    (item.box5_medicare_wages ?? 0) > 200_000 ||
+    (box14Amount(item, "RRTA compensation") ?? 0) > 200_000
+  );
   if (ficaItems.length === 0 && rrtaWages === 0 && rrtaWithheld === 0) {
     return [];
   }
-  // Use box1_wages for medicare_wages (the amount subject to Additional Medicare Tax
-  // threshold per benchmark reference calculator behavior).
-  const totalBox1Wages = ficaItems.reduce(
-    (sum, item) => sum + item.box1_wages,
-    0,
-  );
-  // Use box5_medicare_wages for line20 (regular Medicare isolation from total withheld).
+  // Form 8959 lines 1 and 20 both use W-2 box 5, including statutory employees.
   const totalBox5Wages = ficaItems.reduce(
     (sum, item) => sum + (item.box5_medicare_wages ?? 0),
     0,
@@ -365,14 +369,13 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
     0,
   );
   const fields: Partial<z.infer<typeof form8959["inputSchema"]>> = {};
-  if (totalBox1Wages > 0) fields.medicare_wages = totalBox1Wages;
-  // Only send box5 separately when it differs from box1 (avoids no-op field)
-  if (totalBox5Wages > 0 && totalBox5Wages !== totalBox1Wages) {
-    fields.medicare_wages_box5 = totalBox5Wages;
+  if (totalBox5Wages > 0) fields.w2_medicare_wages = totalBox5Wages;
+  if (totalWithheld > 0) fields.w2_medicare_withheld = totalWithheld;
+  if (rrtaWages > 0) fields.w2_rrta_wages = rrtaWages;
+  if (rrtaWithheld > 0) fields.w2_rrta_medicare_withheld = rrtaWithheld;
+  if (singleW2OverThreshold) {
+    fields.w2_single_over_withholding_threshold = true;
   }
-  if (totalWithheld > 0) fields.medicare_withheld = totalWithheld;
-  if (rrtaWages > 0) fields.rrta_wages = rrtaWages;
-  if (rrtaWithheld > 0) fields.rrta_medicare_withheld = rrtaWithheld;
   if (Object.keys(fields).length === 0) return [];
   return [
     output(

@@ -128,9 +128,19 @@ Deno.test("W-2 box 14 RRTA compensation reaches Form 4137 and Form 8959 separate
   const source = fieldsOf(result.outputs, form4137)?.w2_tip_sources?.[0];
   assertEquals(source?.rrta_compensation, 220_000);
   assertEquals(source?.ss_wages_and_tips, 0);
-  assertEquals(fieldsOf(result.outputs, form8959)?.rrta_wages, 220_000);
-  assertEquals(fieldsOf(result.outputs, form8959)?.rrta_medicare_withheld, 180);
-  assertEquals(fieldsOf(result.outputs, form8959)?.medicare_wages, undefined);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_rrta_wages, 220_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8959)?.w2_rrta_medicare_withheld,
+    180,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form8959)?.w2_medicare_wages,
+    undefined,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, form8959)?.w2_single_over_withholding_threshold,
+    true,
+  );
 });
 
 Deno.test("RRTA W-2 box 14 facts cannot duplicate FICA boxes or labels", () => {
@@ -637,8 +647,56 @@ Deno.test("two_w2s_medicare_wages_aggregate_to_form8959: $60k + $60k = $120,000"
       box6_medicare_withheld: 870,
     }),
   ]);
-  assertEquals(fieldsOf(result.outputs, form8959)!.medicare_wages, 120000);
-  assertEquals(fieldsOf(result.outputs, form8959)!.medicare_withheld, 1740);
+  assertEquals(fieldsOf(result.outputs, form8959)!.w2_medicare_wages, 120000);
+  assertEquals(fieldsOf(result.outputs, form8959)!.w2_medicare_withheld, 1740);
+});
+
+Deno.test("Form 8959 gets W-2 box 5, not box 1, when the boxes differ", () => {
+  const result = compute([minimalItem({
+    box1_wages: 190_000,
+    box5_medicare_wages: 198_000,
+    box6_medicare_withheld: 2_871,
+  })]);
+  assertEquals(fieldsOf(result.outputs, f1040)?.line1a_wages, 190_000);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_wages, 198_000);
+  assertEquals(
+    fieldsOf(result.outputs, form8959)?.w2_single_over_withholding_threshold,
+    undefined,
+  );
+  assertEquals(
+    "medicare_wages_box5" in (fieldsOf(result.outputs, form8959) ?? {}),
+    false,
+  );
+});
+
+Deno.test("statutory employee W-2 box 5 enters Form 8959", () => {
+  const result = compute([minimalItem({
+    box13_statutory_employee: true,
+    box1_wages: 220_000,
+    box5_medicare_wages: 220_000,
+    box6_medicare_withheld: 3_370,
+  })]);
+  assertEquals(fieldsOf(result.outputs, scheduleC)?.statutory_wages, 220_000);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_wages, 220_000);
+  assertEquals(fieldsOf(result.outputs, form8959)?.w2_medicare_withheld, 3_370);
+  assertEquals(
+    fieldsOf(result.outputs, form8959)?.w2_single_over_withholding_threshold,
+    true,
+  );
+});
+
+Deno.test("W-2 box 6 Medicare withholding needs box 5 wages", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box1_wages: 100_000,
+        box6_medicare_withheld: 1_450,
+      })]),
+    Error,
+    "box 6 Medicare withholding needs box 5 wages",
+  );
+  const result = compute([minimalItem({ box1_wages: 100_000 })]);
+  assertEquals(fieldsOf(result.outputs, form8959), undefined);
 });
 
 Deno.test("two_w2s_state_withheld_aggregate_to_schedule_a: $2k + $3k = $5,000 line_5a", () => {
@@ -988,7 +1046,7 @@ Deno.test("comprehensive_w2_full_workflow: two W-2s with all major boxes populat
   // f1040 withholding: 8000 + 2500
   assertEquals(fieldsOf(result.outputs, f1040)!.line25a_w2_withheld, 10500);
   // form8959 medicare wages aggregated
-  assertEquals(fieldsOf(result.outputs, form8959)!.medicare_wages, 100000);
+  assertEquals(fieldsOf(result.outputs, form8959)!.w2_medicare_wages, 100000);
   // form4137 allocated tips
   assertEquals(
     fieldsOf(result.outputs, form4137)!.w2_tip_sources?.reduce(

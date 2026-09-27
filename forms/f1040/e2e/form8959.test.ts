@@ -1,0 +1,121 @@
+import { assertEquals } from "@std/assert";
+import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
+import { execute } from "../../../core/runtime/executor.ts";
+import { registry } from "../2025/registry.ts";
+import { FilingStatus } from "../nodes/types.ts";
+
+const plan = buildExecutionPlan(registry);
+const ctx = { taxYear: 2025, formType: "f1040" };
+
+Deno.test("W-2 box 5 drives Form 8959 when it exceeds box 1", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Worker",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      box1_wages: 190_000,
+      box2_fed_withheld: 20_000,
+      box5_medicare_wages: 220_000,
+      box6_medicare_withheld: 3_370,
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line1a_wages, 190_000);
+  assertEquals(result.pending.form8959?.line1_medicare_wages, 220_000);
+  assertEquals(result.pending.form8959?.line20_medicare_wages, 220_000);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 180);
+  assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 180);
+});
+
+Deno.test("qualifying surviving spouse uses the $200,000 Medicare threshold", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.QSS,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Worker",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      box1_wages: 205_000,
+      box2_fed_withheld: 20_000,
+      box5_medicare_wages: 205_000,
+      box6_medicare_withheld: 3_017.50,
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line5_threshold, 200_000);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 45);
+  assertEquals(result.pending.f1040?.line25c_additional_medicare_withheld, 45);
+});
+
+Deno.test("a single W-2 above $200,000 keeps Form 8959 on a joint return with zero tax", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.MFJ,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Worker",
+      taxpayer_ssn: "123-45-6789",
+      spouse_first_name: "Sam",
+      spouse_last_name: "Worker",
+      spouse_ssn: "987-65-4321",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      box1_wages: 220_000,
+      box2_fed_withheld: 20_000,
+      box5_medicare_wages: 220_000,
+      box6_medicare_withheld: 3_190,
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.form8959?.single_w2_over_withholding_threshold,
+    true,
+  );
+  assertEquals(result.pending.form8959?.line18_total_tax, 0);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, undefined);
+});
+
+Deno.test("a single RRTA W-2 above $200,000 keeps Form 8959 on a joint return", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.MFJ,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Worker",
+      taxpayer_ssn: "123-45-6789",
+      spouse_first_name: "Sam",
+      spouse_last_name: "Worker",
+      spouse_ssn: "987-65-4321",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "RAIL",
+      employer_ein: "123456789",
+      box1_wages: 220_000,
+      box2_fed_withheld: 20_000,
+      box14_entries: [{
+        description: "RRTA compensation",
+        amount: 220_000,
+        is_state_sdi_pfml: false,
+      }],
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.form8959?.single_w2_over_withholding_threshold,
+    true,
+  );
+  assertEquals(result.pending.form8959?.line14_rrta_wages, 220_000);
+  assertEquals(result.pending.form8959?.line18_total_tax, 0);
+});
