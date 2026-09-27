@@ -14,7 +14,7 @@ function fieldPath(p: number, n: number): string {
   let column = "";
   if (
     p === 1 && n <= 8 || p === 2 && n === 41 ||
-    p === 4 && (n === 39 || n === 40)
+    p === 4 && (n === 17 || n === 39 || n === 40)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
   }
@@ -72,6 +72,10 @@ function fieldPath(p: number, n: number): string {
       : n >= 6 && n <= 7 || n >= 14 && n <= 15
       ? "ColE"
       : "";
+  } else if (p === 4 && n >= 18 && n <= 24) {
+    table = "Line15Table";
+    line = "Line15a";
+    column = n >= 20 && n <= 21 ? "ColD" : n >= 22 && n <= 23 ? "ColE" : "";
   } else if (p === 4 && n >= 25 && n <= 38) {
     table = "Line16Table";
     line = n <= 31 ? "Line16a" : "Line16b";
@@ -162,6 +166,10 @@ const fields: PdfFieldEntry[] = [
   text("line14b_quantity", 4, 11),
   ...money("line14b_cost", 4, 12),
   ...money("line14b_credit", 4, 14),
+  text("line15_registration_number", 4, 17),
+  text("line15a_quantity", 4, 19),
+  ...money("line15a_cost", 4, 20),
+  ...money("line15a_credit", 4, 22),
   text("line16a_quantity", 4, 26),
   ...money("line16a_cost", 4, 27),
   ...money("line16a_credit", 4, 29),

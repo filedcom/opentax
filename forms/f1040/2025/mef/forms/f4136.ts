@@ -174,6 +174,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     const l6a = onLine(input, "6a");
     const l14a = onLine(input, "14a");
     const l14b = onLine(input, "14b");
+    const l15a = onLine(input, "15a");
     const l16a = onLine(input, "16a");
     const l16b = onLine(input, "16b");
     const business = input.claimant_context === "business"
@@ -204,6 +205,16 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
     ) {
       throw new Error(
         "Form 4136 cannot export multiple activities without Schedule A attachments",
+      );
+    }
+    const blendingStatementIds =
+      context.documentIdsByPendingKey?.f4136_emulsion_blending_statement ?? [];
+    if (
+      context.documentIdsByPendingKey &&
+      blendingStatementIds.length !== l15a.length
+    ) {
+      throw new Error(
+        "Form 4136 line 15 needs a blending statement for each claim",
       );
     }
 
@@ -428,6 +439,30 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
           l14b.length ? element("ActualFuelCostAmt", cost(l14b)) : "",
           l14b.length
             ? credit("ExpNontxUseDslWtrEmulsionCrAmt", lineAmount(l14b), "306")
+            : "",
+        ]),
+        element(
+          "DieselWtrBlndgRegistrationNum",
+          l15a[0]?.blender_registration_number,
+        ),
+        elements("EmulsionBlndCreditGrp", [
+          element("BlndrCrUseDslWtrEmulsionQty", qty(l15a)),
+          l15a.length ? element("ActualFuelCostAmt", cost(l15a)) : "",
+          l15a.length
+            ? element(
+              "BlndrCrUseDslWtrEmulsionCrAmt",
+              lineAmount(l15a),
+              {
+                creditReferenceNum: "310",
+                ...(blendingStatementIds.length
+                  ? {
+                    referenceDocumentId: blendingStatementIds.join(" "),
+                    referenceDocumentName:
+                      "DieselWaterFuelEmulsionBlendingStatement",
+                  }
+                  : {}),
+              },
+            )
             : "",
         ]),
         elements("ExpDyedDieselGasTxdAt001Grp", [

@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   allForm4136Claims,
   calculateForm4136,
+  form4136BlenderCertification,
   form4136ClaimCreditCents,
   type Form4136Input,
   inputSchema,
@@ -71,6 +72,7 @@ const creditReferenceNumber: Record<Line, string> = {
   "11h": "435",
   "14a": "309",
   "14b": "306",
+  "15a": "310",
   "16a": "415",
   "16b": "416",
 };
@@ -78,7 +80,7 @@ const page = (number: number) => `topmostSubform[0].Page${number}[0]`;
 function fieldPath(p: number, n: number): string {
   if (
     p === 1 && n <= 9 || p === 2 && n === 84 ||
-    p === 4 && (n === 124 || n === 125)
+    p === 4 && (n === 102 || n === 124 || n === 125)
   ) {
     return `${page(p)}.f${p}_${n}[0]`;
   }
@@ -201,6 +203,10 @@ function fieldPath(p: number, n: number): string {
       : n >= 91 && n <= 92 || n >= 99 && n <= 100
       ? "ColE"
       : "";
+  } else if (p === 4 && n >= 103 && n <= 109) {
+    table = "Table_Line15";
+    line = "Line15a";
+    column = n >= 105 && n <= 106 ? "ColD" : n >= 107 && n <= 108 ? "ColE" : "";
   } else if (p === 4 && n >= 110 && n <= 123) {
     table = "Table_Line16";
     line = n <= 116 ? "Line16a" : "Line16b";
@@ -339,6 +345,10 @@ const fields: PdfFieldEntry[] = [
   text("line14b_quantity", 4, 96),
   ...moneyFields("line14b_cost", 4, 97),
   ...moneyFields("line14b_credit", 4, 99),
+  text("line15_registration_number", 4, 102),
+  text("line15a_quantity", 4, 104),
+  ...moneyFields("line15a_cost", 4, 105),
+  ...moneyFields("line15a_credit", 4, 107),
   text("line16a_quantity", 4, 111),
   ...moneyFields("line16a_cost", 4, 112),
   ...moneyFields("line16a_credit", 4, 114),
@@ -539,25 +549,56 @@ async function appendClaimStatement(
   const governmentSales = allForm4136Claims(input)
     .filter((claim) => claim.line === "6a")
     .flatMap((claim) => claim.government_sales ?? []);
-  if (!governmentSales.length) return;
-  const buyers = new Map<string, {
-    name: string;
-    ein: string;
-    gallons: number;
-  }>();
-  for (const sale of governmentSales) {
-    const key = `${sale.buyer_ein}:${sale.buyer_name}`;
-    const prior = buyers.get(key);
-    buyers.set(key, {
-      name: sale.buyer_name,
-      ein: sale.buyer_ein,
-      gallons: (prior?.gallons ?? 0) + sale.gallons,
-    });
+  if (governmentSales.length) {
+    const buyers = new Map<string, {
+      name: string;
+      ein: string;
+      gallons: number;
+    }>();
+    for (const sale of governmentSales) {
+      const key = `${sale.buyer_ein}:${sale.buyer_name}`;
+      const prior = buyers.get(key);
+      buyers.set(key, {
+        name: sale.buyer_name,
+        ein: sale.buyer_ein,
+        gallons: (prior?.gallons ?? 0) + sale.gallons,
+      });
+    }
+    const buyerRows = [...buyers.values()];
+    for (let offset = 0; offset < buyerRows.length; offset += 32) {
+      const page = document.addPage([612, 792]);
+      page.drawText("2025 Form 4136 line 6a - Government diesel buyers", {
+        x: 36,
+        y: 750,
+        size: 12,
+        font: bold,
+      });
+      page.drawText(
+        `Name: ${filer?.nameLine1 ?? ""}    SSN: ${filer?.primarySSN ?? ""}`,
+        { x: 36, y: 730, size: 9, font },
+      );
+      page.drawText("Government unit name", {
+        x: 36,
+        y: 699,
+        size: 9,
+        font: bold,
+      });
+      page.drawText("EIN", { x: 430, y: 699, size: 9, font: bold });
+      page.drawText("Gallons", { x: 510, y: 699, size: 9, font: bold });
+      buyerRows.slice(offset, offset + 32).forEach((buyer, index) => {
+        const y = 680 - index * 18;
+        page.drawText(buyer.name, { x: 36, y, size: 8, font });
+        page.drawText(buyer.ein, { x: 430, y, size: 8, font });
+        page.drawText(String(buyer.gallons), { x: 510, y, size: 8, font });
+      });
+    }
   }
-  const buyerRows = [...buyers.values()];
-  for (let offset = 0; offset < buyerRows.length; offset += 32) {
+  const blenderClaims = allForm4136Claims(input).filter((claim) =>
+    claim.line === "15a"
+  );
+  for (const claim of blenderClaims) {
     const page = document.addPage([612, 792]);
-    page.drawText("2025 Form 4136 line 6a - Government diesel buyers", {
+    page.drawText("2025 Form 4136 line 15a - Blender certification", {
       x: 36,
       y: 750,
       size: 12,
@@ -567,19 +608,34 @@ async function appendClaimStatement(
       `Name: ${filer?.nameLine1 ?? ""}    SSN: ${filer?.primarySSN ?? ""}`,
       { x: 36, y: 730, size: 9, font },
     );
-    page.drawText("Government unit name", {
-      x: 36,
-      y: 699,
-      size: 9,
-      font: bold,
-    });
-    page.drawText("EIN", { x: 430, y: 699, size: 9, font: bold });
-    page.drawText("Gallons", { x: 510, y: 699, size: 9, font: bold });
-    buyerRows.slice(offset, offset + 32).forEach((buyer, index) => {
-      const y = 680 - index * 18;
-      page.drawText(buyer.name, { x: 36, y, size: 8, font });
-      page.drawText(buyer.ein, { x: 430, y, size: 8, font });
-      page.drawText(String(buyer.gallons), { x: 510, y, size: 8, font });
+    const explanation = form4136BlenderCertification(claim);
+    const maxWidth = 540;
+    const lines: string[] = [];
+    let line = "";
+    for (const word of explanation.split(/\s+/)) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (font.widthOfTextAtSize(candidate, 9) <= maxWidth) {
+        line = candidate;
+        continue;
+      }
+      if (line) lines.push(line);
+      line = "";
+      for (const character of word) {
+        if (font.widthOfTextAtSize(line + character, 9) > maxWidth) {
+          lines.push(line);
+          line = "";
+        }
+        line += character;
+      }
+    }
+    if (line) lines.push(line);
+    lines.forEach((value, index) => {
+      page.drawText(value, {
+        x: 36,
+        y: 690 - index * 16,
+        size: 9,
+        font,
+      });
     });
   }
 }
@@ -625,6 +681,7 @@ export function projectForm4136Fields(
       "6a",
       "14a",
       "14b",
+      "15a",
       "16a",
       "16b",
       ...alternativeFuelLines,
@@ -660,11 +717,15 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["6a"], "line6a");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
+  putClaimGroup(out, input, ["15a"], "line15a");
   putClaimGroup(out, input, ["16a"], "line16a");
   putClaimGroup(out, input, ["16b"], "line16b");
   out.line6_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "6a"
   )?.vendor_registration_number;
+  out.line15_registration_number = allForm4136Claims(input).find((claim) =>
+    claim.line === "15a"
+  )?.blender_registration_number;
   putMoney(out, "line17_total", total);
   return out;
 }

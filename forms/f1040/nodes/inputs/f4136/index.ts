@@ -43,6 +43,7 @@ export const FORM4136_RATES = {
   "11h": 0.183,
   "14a": 0.197,
   "14b": 0.198,
+  "15a": 0.046,
   "16a": 0.001,
   "16b": 0.001,
 } as const;
@@ -95,6 +96,7 @@ const fuelLine = z.enum([
   "11h",
   "14a",
   "14b",
+  "15a",
   "16a",
   "16b",
 ]);
@@ -181,12 +183,20 @@ export const fuelClaimSchema = z.object({
     exclusive_government_use_confirmed: z.literal(true),
   })).min(1).optional(),
   emulsion_water_percentage: z.number().finite().min(14).max(100).optional(),
-  emulsion_epa_additive_record_reference: z.string().trim().min(1).optional(),
+  emulsion_epa_additive_record_reference: z.string().trim().min(1).max(100)
+    .optional(),
   exporter_of_record_confirmed: z.literal(true).optional(),
   exported_fuel_kind: z.enum([
     "dyed_diesel",
     "gasoline_blendstock",
     "dyed_kerosene",
+  ]).optional(),
+  blender_registration_number: z.string().regex(/^M[A-Z0-9]{1,19}$/).optional(),
+  blender_produced_confirmed: z.literal(true).optional(),
+  blender_input_diesel_gallons: z.number().int().positive().optional(),
+  blender_trade_or_business_disposition: z.enum([
+    "used_in_business",
+    "sold_for_business_use",
   ]).optional(),
 });
 
@@ -202,6 +212,7 @@ const businessSchema = z.object({
   purchase_records_confirmed: z.literal(true).optional(),
   sales_records_confirmed: z.literal(true).optional(),
   export_records_confirmed: z.literal(true).optional(),
+  production_records_confirmed: z.literal(true).optional(),
   no_duplicate_excise_claim: z.literal(true),
 });
 
@@ -244,6 +255,24 @@ const activitySchema = z.object({
           code: "custom",
           message: "Form 4136 line 6a needs confirmed sales records",
           path: ["business", "sales_records_confirmed"],
+        });
+      }
+    } else if (claim.line === "15a") {
+      if (
+        !claim.blender_registration_number ||
+        claim.blender_produced_confirmed !== true ||
+        input.business.production_records_confirmed !== true ||
+        !claim.blender_trade_or_business_disposition ||
+        claim.blender_input_diesel_gallons !== claim.qualified_quantity ||
+        claim.emulsion_water_percentage === undefined ||
+        !claim.emulsion_epa_additive_record_reference ||
+        claim.excise_tax_rate_per_gallon !== 0.244
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message:
+            "Form 4136 line 15a needs registered blender, production, taxed diesel, emulsion, and business-use records",
+          path: ["claims", index],
         });
       }
     } else if (claim.line === "16a" || claim.line === "16b") {
@@ -361,6 +390,7 @@ const activitySchema = z.object({
           "4e",
           "4f",
           "6a",
+          "15a",
         ]
           .includes(claim.line)
         ? ["undyed_fuel_confirmed"] as const
@@ -552,6 +582,18 @@ export const inputSchema = z.discriminatedUnion("claimant_context", [
       path: ["claims"],
     });
   }
+  const line15aRegistrations = new Set(
+    activities.flatMap((activity) => activity.claims)
+      .filter((claim) => claim.line === "15a")
+      .map((claim) => claim.blender_registration_number),
+  );
+  if (line15aRegistrations.size > 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4136 line 15 has one registration-number field",
+      path: ["claims"],
+    });
+  }
 });
 
 export type Form4136Input = z.infer<typeof inputSchema>;
@@ -561,6 +603,24 @@ export function allForm4136Claims(input: Form4136Input) {
     ...input.claims,
     ...input.additional_activities.flatMap((activity) => activity.claims),
   ];
+}
+
+export function form4136BlenderCertification(
+  claim: Form4136Input["claims"][number],
+): string {
+  if (
+    claim.line !== "15a" || claim.emulsion_water_percentage === undefined ||
+    !claim.emulsion_epa_additive_record_reference ||
+    !claim.blender_input_diesel_gallons ||
+    !claim.blender_trade_or_business_disposition
+  ) {
+    throw new Error("Form 4136 line 15a blending certification is incomplete");
+  }
+  const disposition =
+    claim.blender_trade_or_business_disposition === "used_in_business"
+      ? "used in the blender's trade or business"
+      : "sold for use in the blender's trade or business";
+  return `The blender produced a diesel-water fuel emulsion containing at least ${claim.emulsion_water_percentage}% water. The emulsion additive was registered by a U.S. manufacturer with the EPA under Clean Air Act section 211 (record ${claim.emulsion_epa_additive_record_reference}). Undyed diesel fuel taxed at $0.244 per gallon was used to produce the emulsion. The emulsion was ${disposition}. Input diesel gallons: ${claim.blender_input_diesel_gallons}.`;
 }
 
 export function rateForForm4136Claim(

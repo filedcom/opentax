@@ -13,6 +13,7 @@ import { form3800 } from "./f3800.ts";
 import { form4137 } from "./f4137.ts";
 import { form4136 } from "./f4136.ts";
 import { form4136DieselGovernmentSalesStatement } from "./f4136_diesel_government_sales_statement.ts";
+import { form4136EmulsionBlendingStatement } from "./f4136_emulsion_blending_statement.ts";
 import { form4562 } from "./f4562.ts";
 import { form461 } from "./f461.ts";
 import { form4684 } from "./f4684.ts";
@@ -233,6 +234,7 @@ export const ALL_MEF_FORMS = [
   cropInsuranceDeferralStatement,
   // Form 1116 Part I line 2 statement precedes joint occupancy in ReturnData.
   form1116DirectExpenseStatement,
+  form4136EmulsionBlendingStatement,
   form4136DieselGovernmentSalesStatement,
   // Form 5695 supporting document follows W-2 in ReturnData1040.xsd.
   jointOccupancyStatement,
