@@ -77,6 +77,11 @@ The [Schedule J contract](../../../docs/ty2026/SCHEDULEJ-GRAPH.md) maps the
 2026 farming/fishing election through three base-year returns and rate
 worksheets into Form 1040 line 16. The shared node instead accepts the
 answer as input and names the wrong base years.
+The [Form 1099-K intake contract](../../../docs/ty2026/FORM1099K-GRAPH.md)
+reconciles gross platform payments to one income activity or personal-sale
+route, the 2026 Schedule 1 header, box 1c cash tips/1d occupation code for
+Schedule 1-A and box 4 withholding. The shared node uses a filing threshold
+as a taxability gate and cannot prevent duplicate business income.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

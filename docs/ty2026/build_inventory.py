@@ -19,6 +19,7 @@ NODE_PROGRESS = {
     "start": "Use 2026 registry entry and per-return year guard; reconcile all input registration and absent output targets before enabling a complete return; see GRAPH-ROUTES.md and PARITY-QUEUE.md",
     "ext": "Route 2026 Form 4868 extension payment to Schedule 3 line 10 and 1040 settlement; keep extension application/ATS scenario 7 distinct from the final return; see PDF-SCHEDULE3-MAP.md and ATS.md",
     "f1099c": "Classify each debt cancellation as taxable Schedule 1 line 8c, Form 982 exclusion, or property-basis/capital event; preserve creditor/debt/source evidence and attachment route; see FORM982-GRAPH.md",
+    "f1099k": "Final Dec 2026 form/instructions pinned; distinguish issuer $20k-and-200 threshold from taxable income, reconcile gross with transaction ledger, 1c cash tips/1d TTOC to Schedule 1-A, Schedule 1 header/8949/C/E/F and box4 withholding; see FORM1099K-GRAPH.md",
     "f1099int": "Reconcile payer-level box amounts, withholding, Schedule B, AGI and foreign/AMT branches against 2026 sources; see INTEREST-GRAPH.md",
     "f1095a": "Route each policy's monthly 1095-A premiums/SLCSP/APTC and shared-policy facts to Form 8962; node is absent from 2026 registry; see FORM8962-GRAPH.md",
     "f8863": "Use 2026 education eligibility and 1098-T source with Form 8863 refundable/nonrefundable split, Schedule 3 and 1040; see FORM8862-8863-EIC-GRAPH.md",

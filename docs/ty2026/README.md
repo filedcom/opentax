@@ -78,6 +78,9 @@ for the implementation contract.
 - [`SCHEDULEJ-GRAPH.md`](SCHEDULEJ-GRAPH.md) and
   `pdf-fields-f1040sj.csv`: elected farm/fishing income across the
   2023–2025 base years, prior Schedule J state, 1040 line 16 and 27 widgets.
+- [`FORM1099K-GRAPH.md`](FORM1099K-GRAPH.md): final 2026 recipient source,
+  transaction-level income reconciliation, Schedule 1 header, cash-tip
+  fields and withholding route.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

@@ -54,6 +54,10 @@ The [Schedule J contract](SCHEDULEJ-GRAPH.md) pins the 2026 draft and a
 marked 2025 instruction comparator, maps three base-year return/tax
 branches and inventories 27 PDF widgets. The shared node takes line 23
 as an input instead of computing or comparing the election's result.
+The [Form 1099-K contract](FORM1099K-GRAPH.md) pins the final 2026 source
+form/instructions and maps each payment to one income or personal-sale
+route, Schedule 1's header, new cash-tip/TTOC fields and withholding.
+The shared $5,000 cutoff incorrectly suppresses taxable receipts.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.
