@@ -32,6 +32,8 @@ for the implementation contract.
 - [`FORM-DELTA.md`](FORM-DELTA.md): concrete changes visible in IRS draft forms.
 - [`DEDUCTION-GRAPH.md`](DEDUCTION-GRAPH.md): source-backed Schedule A,
   Schedule 1-A, and QBI dependency contract and implementation sequence.
+- [`SCHEDULE2-8812.md`](SCHEDULE2-8812.md): filed 2026 Schedule 2 line
+  crosswalk and the Schedule 8812 Part II-B source dependency.
 - [`ATS.md`](ATS.md): scenario inventory and fixture extraction rules.
 - [`CONSTANTS.md`](CONSTANTS.md): authority-to-config mapping.
 - [`IMPLEMENTATION.md`](IMPLEMENTATION.md): ordered code and verification plan.

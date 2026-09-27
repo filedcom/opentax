@@ -97,6 +97,12 @@ carries the resulting deduction, unreported tip income, and Schedule 2 tip
 tax to 1040. Puerto Rico/Form 4563 MAGI addbacks remain. The TY2026 1040 node
 rejects a nonzero Schedule 2 credit-limit amount until the 2026 credit
 finalization path exists; it does not silently discard that upstream field.
+The draft 2026 Schedule 2 reorders additional tax lines. The pure
+`forms/f1040/2026/schedule2.ts` now computes its filed subtotals, and the
+[Schedule 2/8812 map](SCHEDULE2-8812.md) records each upstream source split.
+The shared Schedule 2 node still drives the focused tip-tax graph; replace
+it with a 2026 node before MeF/PDF work. Schedule 8812 Part II-B needs the
+new Schedule 2 lines 16c and 17c, rather than its 2025 source fields.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable
