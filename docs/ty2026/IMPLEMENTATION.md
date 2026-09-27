@@ -158,6 +158,13 @@ before adding it to the dedicated graph.
 Form 8960 is now in the 2026 registry and emits NIIT on the draft Schedule 2
 line 6, while TY2025 keeps its line 12 route. The route to 2026 Form 1040 tax
 passes a focused test; the rest of the investment-income graph is still open.
+The August 2026 [Schedule B instructions](corpus/draft/i1040sb.pdf) are now
+hash-pinned. The [interest graph contract](INTEREST-GRAPH.md) records every
+1099-INT branch, filing trigger, disclosure, and outstanding attachment path.
+The shared 1099-INT node now sends box 2 early-withdrawal penalties to AGI as
+well as printed Schedule 1; its focused TY2025 and TY2026-related tests pass.
+Full 1099-INT input registration awaits the Schedule B disclosure and
+dependent-node work in that contract.
 
 ## 0. Freeze source versions and establish the baseline
 

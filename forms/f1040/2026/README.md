@@ -105,6 +105,10 @@ the wages-only run deposits values in 12 absent target slots. It gives the
 dependency order for expanding beyond the current calculation slice.
 Form 8960 is registered and sends TY2026 NIIT to the draft Schedule 2 line 6;
 the shared node retains its TY2025 line 12 route.
+The [interest graph contract](../../../docs/ty2026/INTEREST-GRAPH.md) uses
+the pinned 2026 Schedule B instructions to map every 1099-INT branch and the
+filing decision before that source is exposed as a TY2026 input. Box 2 now
+reaches AGI as well as Schedule 1 in the shared source node.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

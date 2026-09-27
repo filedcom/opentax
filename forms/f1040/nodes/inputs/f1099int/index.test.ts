@@ -212,6 +212,10 @@ Deno.test("box2 routes to schedule1 line18_early_withdrawal", () => {
     fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal,
     50,
   );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line18_early_withdrawal,
+    50,
+  );
 });
 
 Deno.test("box2 = 0 produces no schedule1 output", () => {
@@ -383,6 +387,10 @@ Deno.test("multiple payers — box2 summed to single schedule1 output", () => {
   ]);
   assertEquals(
     fieldsOf(result.outputs, schedule1)?.line18_early_withdrawal,
+    75,
+  );
+  assertEquals(
+    fieldsOf(result.outputs, agi_aggregator)?.line18_early_withdrawal,
     75,
   );
 });

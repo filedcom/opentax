@@ -177,6 +177,11 @@ class F1099intNode extends TaxNode<typeof inputSchema> {
           line18_early_withdrawal: totalBox2,
         }),
       );
+      outputs.push(
+        this.outputNodes.output(agi_aggregator, {
+          line18_early_withdrawal: totalBox2,
+        }),
+      );
     }
 
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};

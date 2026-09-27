@@ -16,10 +16,12 @@ for the implementation contract.
   cannot describe the September draft form, and the exact refresh/diff gate.
 - [`GRAPH-ROUTES.md`](GRAPH-ROUTES.md) and `graph-route-gaps.csv`: generated
   inventory of declared 2026 edges whose downstream target is not registered.
+- [`INTEREST-GRAPH.md`](INTEREST-GRAPH.md): source-backed 1099-INT, Schedule B,
+  AGI, NIIT, PDF, and MeF wiring and attachment contract.
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
-  Schedule 8812 instructions**, **five draft URLs that
+  Schedule 8812 and Schedule B instructions**, **five draft URLs that
   still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB

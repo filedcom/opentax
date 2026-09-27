@@ -78,6 +78,16 @@
       "year_check": "2026-present"
     },
     {
+      "path": "draft/i1040sb.pdf",
+      "url": "https://www.irs.gov/pub/irs-dft/i1040sb--dft.pdf",
+      "kind": "draft-instructions",
+      "status": "downloaded",
+      "bytes": 225967,
+      "sha256": "94d34f2eae6ff134bb31b8ba9d5f52961b44e029b1dec2b39db6b62ca5a6a57b",
+      "year_check": "2026-present",
+      "retrieved_utc": "2026-09-27T05:51:44.680205+00:00"
+    },
+    {
       "path": "draft/f1040sc.pdf",
       "url": "https://www.irs.gov/pub/irs-dft/f1040sc--dft.pdf",
       "kind": "draft-form",

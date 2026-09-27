@@ -74,7 +74,8 @@ sources = []
 for slug in FORM_SLUGS:
     sources.append(("draft/" + slug + ".pdf", IRS + "/pub/irs-dft/" + slug + "--dft.pdf", "draft-form"))
 
-sources.append(("draft/i1040s8.pdf", IRS + "/pub/irs-dft/i1040s8--dft.pdf", "draft-instructions"))
+for slug in ("i1040sb", "i1040s8"):
+    sources.append(("draft/" + slug + ".pdf", IRS + "/pub/irs-dft/" + slug + "--dft.pdf", "draft-instructions"))
 
 for label, url in page_links(ATS_PAGE):
     match = re.search(r"scenario\s+(\d+)", label, re.I)
