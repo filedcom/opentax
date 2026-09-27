@@ -1576,6 +1576,24 @@
       "bytes": 1412141,
       "sha256": "2bca1db38d6d34e814bfd7e11bde7530be34d481f23a6583fc2d7ee26ebfce88",
       "retrieved_utc": "2026-09-27T14:20:41Z"
+    },
+    {
+      "path": "authorities/i8824--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8824--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 197788,
+      "sha256": "a7a45184306e15249a415f24b0fe16f678c92491e0923fc0d7b4b4931ae6e562",
+      "retrieved_utc": "2026-09-27T14:24:24Z"
+    },
+    {
+      "path": "authorities/p544--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/p544--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 1732834,
+      "sha256": "b8282a22f637e147b6435787bf9e20db6c24d08d8124386cce75eaab05de0cfd",
+      "retrieved_utc": "2026-09-27T14:24:25Z"
     }
   ]
 }

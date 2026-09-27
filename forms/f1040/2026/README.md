@@ -126,6 +126,10 @@ The [Form 6252 contract](../../../docs/ty2026/FORM6252-GRAPH.md) maps
 installment sales across years, related-party deemed receipts and recapture
 into Form 4797/Schedule D. Its 49 PDF widgets and current MeF route remain
 to implement; embedded draft instructions have stale Form 4797 references.
+The [Form 8824 contract](../../../docs/ty2026/FORM8824-GRAPH.md) maps
+§1031 multi-property exchanges and deferred replacement basis, two-year
+related-party reporting, recapture and §1043 sales. Its 68 PDF widgets and
+current MeF/validation routes remain to implement.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit

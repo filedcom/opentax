@@ -86,6 +86,9 @@ for the implementation contract.
 - [`FORM6252-GRAPH.md`](FORM6252-GRAPH.md) and `pdf-fields-f6252.csv`:
   persistent installment-sale obligation, related-party disposition and
   recapture routes, draft cross-reference conflict, and all 49 PDF widgets.
+- [`FORM8824-GRAPH.md`](FORM8824-GRAPH.md) and `pdf-fields-f8824.csv`:
+  multi-property §1031 exchange, two-year related-party state, deferred
+  basis and §1043 sale, plus all 68 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

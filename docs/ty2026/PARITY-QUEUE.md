@@ -52,6 +52,9 @@ The [Form 6252 installment contract](FORM6252-GRAPH.md) supplies the
 cross-year sale/obligation ledger, related-party and deemed-payment branches,
 recapture and Form 4797/Schedule D destinations. Its draft embedded
 instructions cite stale Form 4797 lines that need final-source resolution.
+The [Form 8824 exchange contract](FORM8824-GRAPH.md) supplies multi-property
+§1031 and §1043 facts, deferred replacement basis and two-year related-party
+history. Its 2026 draft also has Form 4797 cross-reference conflicts.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

@@ -86,6 +86,10 @@ The [Form 6252 contract](FORM6252-GRAPH.md) maps the continuing installment
 obligation, sale-year and future payments, related-party/deemed receipts,
 recapture and 49 PDF widgets. The 2026 form embeds its instructions, which
 still cite obsolete Form 4797 line numbers; final reconciliation is a gate.
+The [Form 8824 contract](FORM8824-GRAPH.md) maps multi-property §1031,
+deferred basis, related-party disposition, recapture and the separate §1043
+sale. Its 68 PDF widgets are inventoried; the draft also names old Form 4797
+destinations that require final-source correction.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
