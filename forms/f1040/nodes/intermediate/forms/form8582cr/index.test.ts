@@ -85,6 +85,10 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
     assertEquals(
       creditSourceSchema.safeParse({
         ...other(100),
+        ...(kind === PassiveCreditSourceOrigin.Estate ||
+            kind === PassiveCreditSourceOrigin.Trust
+          ? { source_statement_reference: "2025 code ZZ statement" }
+          : {}),
         source_origin: {
           kind,
           entity_reference: "Clinical pass-through",
@@ -94,6 +98,17 @@ Deno.test("Form 8582-CR source origin requires pass-through EIN or missing-EIN r
       true,
     );
   }
+  assertEquals(
+    creditSourceSchema.safeParse({
+      ...other(100),
+      source_origin: {
+        kind: PassiveCreditSourceOrigin.Trust,
+        entity_reference: "Clinical trust",
+        ein: "123456789",
+      },
+    }).success,
+    false,
+  );
   assertEquals(
     creditSourceSchema.safeParse({
       ...other(100),

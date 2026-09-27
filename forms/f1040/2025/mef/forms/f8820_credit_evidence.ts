@@ -67,10 +67,12 @@ export function reconcileOrphanDrugK1Credits(
       const matches = estatesAndTrusts.filter((k1) =>
         k1.entity_type === credit.source_type &&
         k1.estate_trust_ein === credit.entity_ein &&
-        k1.source_document_reference === credit.source_document_reference
+        k1.source_document_reference === credit.source_document_reference &&
+        k1.box13_code_zz_orphan_drug_statement_reference ===
+          credit.source_statement_reference
       );
       if (
-        matches.length !== 1 ||
+        !credit.source_statement_reference || matches.length !== 1 ||
         matches[0].box13_code_zz_orphan_drug_credit !== credit.credit_amount ||
         matches[0].orphan_drug_credit_subject_to_passive_activity_limit !==
           credit.subject_to_passive_activity_limit

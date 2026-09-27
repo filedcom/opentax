@@ -341,6 +341,7 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
     source_type: type as "estate" | "trust",
     entity_ein: String(123_456_789 + index),
     source_document_reference: `2025 ${type} K-1`,
+    source_statement_reference: `${type} orphan-drug allocation statement`,
     credit_amount: 500 + index,
     subject_to_passive_activity_limit: false,
   }));
@@ -358,7 +359,7 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
     source_document_reference: credit.source_document_reference,
     box13_code_zz_orphan_drug_credit: credit.credit_amount,
     box13_code_zz_orphan_drug_statement_reference:
-      `${credit.source_type} orphan-drug allocation statement`,
+      credit.source_statement_reference,
     orphan_drug_credit_subject_to_passive_activity_limit: false,
   }));
   assertEquals(
@@ -377,6 +378,23 @@ Deno.test("Form 8820 estate and trust pass-through credits reconcile to K-1 code
               { ...k1_trusts[0], entity_type: "trust" },
               k1_trusts[1],
             ],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code ZZ",
+  );
+  assertThrows(
+    () =>
+      form8820.build(passThroughOnly, {
+        pending: {
+          f8820: passThroughOnly,
+          k1_trust: {
+            k1_trusts: [{
+              ...k1_trusts[0],
+              box13_code_zz_orphan_drug_statement_reference:
+                "Different statement",
+            }, k1_trusts[1]],
           },
         },
       }),

@@ -178,6 +178,66 @@ Deno.test("Form 8582-CR passive orphan-drug credit matches the current K-1", () 
   );
 });
 
+Deno.test("Form 8582-CR estate orphan-drug credit matches its code ZZ statement", () => {
+  const source = {
+    ...otherCredit,
+    source_origin: {
+      kind: PassiveCreditSourceOrigin.Estate,
+      entity_reference: "Clinical estate",
+      ein: "123456789",
+    },
+    source_document_reference: "2025 Estate K-1",
+    source_statement_reference: "2025 orphan-drug statement",
+  };
+  const input = {
+    credit_sources: [source],
+    regular_tax_all_income: 10_000,
+    regular_tax_without_passive: 9_000,
+  };
+  const allocation = calculateForm8582CR(inputSchema.parse(input))
+    .sourceAllocations[0];
+  const context = {
+    documentIdsByPendingKey: { f3800: ["IRS3800_1"] },
+    pending: {
+      f3800: { passive_source_allocations: [allocation] },
+      k1_trust: {
+        k1_trusts: [{
+          estate_trust_name: "Clinical estate",
+          entity_type: "estate",
+          estate_trust_ein: "123456789",
+          source_document_reference: "2025 Estate K-1",
+          box13_code_zz_orphan_drug_credit: 1_500,
+          box13_code_zz_orphan_drug_statement_reference:
+            "2025 orphan-drug statement",
+          orphan_drug_credit_subject_to_passive_activity_limit: true,
+        }],
+      },
+    },
+  };
+  assertStringIncludes(
+    form8582cr.build(input, context),
+    "<AllowedCreditsAmt>1000</AllowedCreditsAmt>",
+  );
+  assertThrows(
+    () =>
+      form8582cr.build(input, {
+        ...context,
+        pending: {
+          ...context.pending,
+          k1_trust: {
+            k1_trusts: [{
+              ...context.pending.k1_trust.k1_trusts[0],
+              box13_code_zz_orphan_drug_statement_reference:
+                "Unclaimed statement",
+            }],
+          },
+        },
+      }),
+    Error,
+    "does not reconcile to K-1 box 13 code ZZ",
+  );
+});
+
 Deno.test("Form 8582-CR passive disabled-access credit matches K-1 source evidence", () => {
   for (
     const entry of [

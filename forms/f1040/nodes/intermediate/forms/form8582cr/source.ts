@@ -66,6 +66,7 @@ const creditSourceBaseSchema = z.object({
   activity_reference: z.string().trim().min(1),
   source_form: z.string().trim().min(1),
   source_document_reference: z.string().trim().min(1),
+  source_statement_reference: z.string().trim().min(1).optional(),
   source_origin: passiveCreditSourceOriginSchema,
   category: z.nativeEnum(PassiveCreditCategory),
   current_year_credit: z.number().int().nonnegative(),
@@ -111,6 +112,20 @@ export const creditSourceSchema = z.discriminatedUnion("reporting_route", [
       path: ["form3800_credit_line"],
       message:
         "Form 3800 carryover-only line cannot contain current-year credit",
+    });
+  }
+  if (
+    source.current_year_credit > 0 &&
+    source.form3800_credit_line === "1h" &&
+    (source.source_origin.kind === PassiveCreditSourceOrigin.Estate ||
+      source.source_origin.kind === PassiveCreditSourceOrigin.Trust) &&
+    !source.source_statement_reference
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_statement_reference"],
+      message:
+        "Estate/trust passive orphan-drug credit needs its code ZZ statement reference",
     });
   }
 });

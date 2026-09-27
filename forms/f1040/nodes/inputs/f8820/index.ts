@@ -19,8 +19,21 @@ const passThroughCreditSchema = z.object({
   source_type: z.enum(["partnership", "s_corporation", "estate", "trust"]),
   entity_ein: z.string().regex(/^\d{9}$/),
   source_document_reference: z.string().trim().min(1),
+  source_statement_reference: z.string().trim().min(1).optional(),
   credit_amount: z.number().int().positive(),
   subject_to_passive_activity_limit: z.boolean(),
+}).superRefine((source, ctx) => {
+  const needsStatement = source.source_type === "estate" ||
+    source.source_type === "trust";
+  if (needsStatement !== (source.source_statement_reference !== undefined)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["source_statement_reference"],
+      message: needsStatement
+        ? "Estate/trust orphan-drug credit needs its code ZZ statement reference"
+        : "Partnership/S-corporation orphan-drug credit uses its K-1 reference",
+    });
+  }
 });
 
 const controlledGroupSchema = z.object({
