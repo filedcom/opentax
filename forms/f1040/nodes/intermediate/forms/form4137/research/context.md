@@ -62,14 +62,18 @@ but unrun.
 The former `records_support_lower_tips` boolean is removed. When a Form 4137
 employer's unreported tips are less than its W-2 box 8 allocation, the source
 now needs dated `allocated_tip_records` with cash-and-charge tips received, tips
-reported to the employer, evidence type, and a nonempty evidence reference.
-Dates must be valid TY2025 dates and unique per employer. The records must sum
-to that employer's line 1 totals. Missing, duplicate, or disagreeing records
-fail calculation. This is a mathematical/source-reference check, not a finding
-that the underlying diary or receipts are genuine or complete. Source review and
-the Form 4137 timing rule for December tips reported the next January remain
-open. The full test batch, filled-PDF visual check, IRS business rules, and ATS
-acceptance are still required. These cases are written but unrun.
+reported to the employer, a report date for reported amounts, evidence type, and
+a nonempty evidence reference. Receipt dates can be in December 2024 or 2025 and
+must be unique per employer. The 2025 form-year total includes timely reports of
+December 2024 tips made by January 10, 2025, excludes timely reports of December
+2025 tips made by January 12, 2026, and includes late reports in the receipt
+year. Included records must sum to that employer's line 1 totals. Missing,
+duplicate, or disagreeing records fail calculation. This is a
+mathematical/source-reference check, not a finding that the underlying diary or
+receipts are genuine or complete. Employer rows without a lower box 8 claim
+still rely on entered annual totals rather than dated records. Source review,
+the full test batch, filled-PDF visual check, IRS business rules, and ATS
+acceptance remain open. These cases are written but unrun.
 
 An "Applied For" employer EIN can be represented on Form 4137, but the local
 TY2025 v5.4 `IRSW2` schema requires `EmployerEIN`. A full MeF return with an

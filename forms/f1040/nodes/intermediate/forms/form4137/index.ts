@@ -43,29 +43,73 @@ const below20TipMonthSchema = z.object({
 
 const allocatedTipDailyRecordSchema = z.object({
   date: z.string().refine((value) => {
-    if (!/^2025-\d{2}-\d{2}$/.test(value)) return false;
+    if (!/^(2024-12|2025-\d{2})-\d{2}$/.test(value)) return false;
     const date = new Date(`${value}T00:00:00Z`);
     return !Number.isNaN(date.getTime()) &&
       date.toISOString().slice(0, 10) === value;
-  }, "Form 4137 tip record date must be a valid 2025 date"),
+  }, "Form 4137 tip record date must be in December 2024 or 2025"),
   cash_charge_tips_received: z.number().nonnegative(),
   tips_reported_to_employer: z.number().nonnegative(),
+  report_date: z.string().refine((value) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00Z`);
+    return !Number.isNaN(date.getTime()) &&
+      date.toISOString().slice(0, 10) === value;
+  }, "Form 4137 report date must be valid").optional(),
   evidence_type: z.enum([
     "daily_tip_diary",
     "receipt_or_charge_slip",
     "employer_electronic_record",
   ]),
   evidence_reference: z.string().trim().min(1),
-}).strict().refine(
-  (record) =>
-    record.tips_reported_to_employer <= record.cash_charge_tips_received,
-  "Form 4137 daily reported tips exceed received tips",
-);
+}).strict().superRefine((record, ctx) => {
+  if (record.tips_reported_to_employer > record.cash_charge_tips_received) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4137 daily reported tips exceed received tips",
+    });
+  }
+  if (
+    (record.tips_reported_to_employer > 0) !==
+      (record.report_date !== undefined)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4137 reported tips need a report date",
+    });
+  }
+  if (record.report_date !== undefined && record.report_date < record.date) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Form 4137 report date precedes tip receipt",
+    });
+  }
+});
 
 const allocatedTipRecordSchema = z.object({
   employer_index: z.number().int().min(1),
   daily_records: z.array(allocatedTipDailyRecordSchema).min(1),
 }).strict();
+
+function included2025TipAmounts(
+  record: z.infer<typeof allocatedTipDailyRecordSchema>,
+): { received: number; reported: number } {
+  const unreported = record.cash_charge_tips_received -
+    record.tips_reported_to_employer;
+  const receiptYear = Number(record.date.slice(0, 4));
+  const reportedIn2025 = record.report_date !== undefined &&
+    (record.date.startsWith("2024-12-")
+      ? record.report_date > "2024-12-31" &&
+        record.report_date <= "2025-01-10"
+      : !(record.date.startsWith("2025-12-") &&
+        record.report_date > "2025-12-31" &&
+        record.report_date <= "2026-01-12"));
+  const reported = reportedIn2025 ? record.tips_reported_to_employer : 0;
+  return {
+    received: (receiptYear === 2025 ? unreported : 0) + reported,
+    reported,
+  };
+}
 
 const formSchema = z.object({
   recipient: recipientSchema,
@@ -248,8 +292,9 @@ export function calculateForm4137(
           throw new Error("Form 4137 duplicate daily tip record date");
         }
         dates.add(record.date);
-        received += record.cash_charge_tips_received;
-        reported += record.tips_reported_to_employer;
+        const included = included2025TipAmounts(record);
+        received += included.received;
+        reported += included.reported;
       }
       const employer = form.employers[index];
       if (

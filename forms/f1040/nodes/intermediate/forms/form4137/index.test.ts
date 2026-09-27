@@ -376,6 +376,7 @@ Deno.test("Form 4137 lower allocated tips require reconciled daily records", () 
         date: "2025-01-03",
         cash_charge_tips_received: 1_500,
         tips_reported_to_employer: 1_200,
+        report_date: "2025-02-10",
         evidence_type: "daily_tip_diary",
         evidence_reference: "diary-jan-page-1",
       },
@@ -383,6 +384,7 @@ Deno.test("Form 4137 lower allocated tips require reconciled daily records", () 
         date: "2025-01-04",
         cash_charge_tips_received: 1_000,
         tips_reported_to_employer: 800,
+        report_date: "2025-02-10",
         evidence_type: "receipt_or_charge_slip",
         evidence_reference: "receipt-set-jan-4",
       },
@@ -509,6 +511,87 @@ Deno.test("Form 4137 lower allocated tips require reconciled daily records", () 
     inputSchema.safeParse({
       ...raw,
       forms: [{ ...raw.forms[0], records_support_lower_tips: true }],
+    }).success,
+    false,
+  );
+});
+
+Deno.test("Form 4137 attributes December tips by timely or late January report", () => {
+  const daily = (
+    date: string,
+    cash_charge_tips_received: number,
+    tips_reported_to_employer: number,
+    report_date: string,
+  ) => ({
+    date,
+    cash_charge_tips_received,
+    tips_reported_to_employer,
+    report_date,
+    evidence_type: "daily_tip_diary" as const,
+    evidence_reference: `diary-${date}`,
+  });
+  const [calculated] = calculateForm4137(
+    inputSchema.parse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          ...employer,
+          tips_received: 300,
+          tips_reported: 200,
+        }],
+        allocated_tip_records: [{
+          employer_index: 1,
+          daily_records: [
+            daily("2024-12-30", 100, 100, "2025-01-10"),
+            daily("2024-12-31", 50, 50, "2025-01-11"),
+            daily("2025-12-01", 200, 100, "2026-01-12"),
+            daily("2025-12-02", 100, 100, "2026-01-13"),
+          ],
+        }],
+      }],
+      w2_tip_sources: [{
+        employer_name: "CAFE",
+        employer_ein: "12-3456789",
+        allocated_tips: 200,
+        ss_wages_and_tips: 0,
+      }],
+    }),
+    176_100,
+  );
+  assertEquals(calculated.totalTipsReceived, 300);
+  assertEquals(calculated.totalTipsReported, 200);
+  assertEquals(calculated.unreportedTips, 100);
+  assertEquals(calculated.totalTax, 7);
+
+  assertEquals(
+    inputSchema.safeParse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [employer],
+        allocated_tip_records: [{
+          employer_index: 1,
+          daily_records: [{
+            ...daily("2025-12-01", 200, 100, "2026-01-12"),
+            report_date: undefined,
+          }],
+        }],
+      }],
+    }).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [employer],
+        allocated_tip_records: [{
+          employer_index: 1,
+          daily_records: [{
+            ...daily("2025-12-01", 200, 100, "2026-01-12"),
+            report_date: "2025-11-30",
+          }],
+        }],
+      }],
     }).success,
     false,
   );
