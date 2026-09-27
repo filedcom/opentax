@@ -13,6 +13,35 @@ import {
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 import { form3800PartIAndIIXml } from "./f3800_part_i_ii.ts";
+import {
+  buildForm3800CurrentCreditRowXml,
+  combineForm3800CurrentCreditAmounts,
+  type Form3800CurrentCreditRowMetadata,
+} from "./f3800_current_rows.ts";
+
+function nontransferableCurrentRowXml(
+  line: "1h" | "1y" | "1aa" | "4b",
+  credit: number,
+  appliedCredit: number,
+  metadata: Form3800CurrentCreditRowMetadata,
+): string {
+  const [row] = combineForm3800CurrentCreditAmounts([{
+    line,
+    grossCredit: credit,
+    transferOutCredit: 0,
+    appliedCredit,
+  }], []);
+  return buildForm3800CurrentCreditRowXml(row, metadata);
+}
+
+function largestPassThroughEntity(
+  sources: readonly { readonly credit: number; readonly ein?: string }[],
+): Form3800CurrentCreditRowMetadata["entity"] {
+  const ein = [...sources].filter((source) => source.ein).sort((a, b) =>
+    b.credit - a.credit
+  )[0]?.ein;
+  return ein ? { ein } : undefined;
+}
 
 /** Source-backed nonpassive Form 8826, 8835, 5884, and 8936 rows. */
 export type Form3800NonpassiveXmlInput = {
@@ -675,64 +704,39 @@ export function buildIRS3800Nonpassive(
       : "",
     ordinaryGroup?.xml ?? "",
     input.form8820
-      ? elements(
-        "Form8820CYCreditsGrp",
-        [
-          form8820 && form8820.sources.length > 1
-            ? element("CYGeneralBusinessCrItemCnt", form8820.sources.length)
-            : "",
-          form8820PassThroughSources.length > 0
-            ? element(
-              "PassThroughEntityEIN",
-              [...form8820PassThroughSources].sort((a, b) =>
-                b.credit - a.credit
-              )[0].ein,
-            )
-            : "",
-          element("GeneralBusCrFromNnPssvActyAmt", form8820Credit),
-          element("TotalGeneralBusCreditsAmt", form8820Credit),
-          element(
-            "TotalGeneralBusCreditsAppTxAmt",
-            input.form8820.appliedCredit,
-          ),
-        ],
-        input.form8820.documentId
-          ? {
-            referenceDocumentId: input.form8820.documentId,
-            referenceDocumentName: "IRS8820",
-          }
-          : undefined,
+      ? nontransferableCurrentRowXml(
+        "1h",
+        form8820Credit,
+        input.form8820.appliedCredit,
+        {
+          sourceCount: input.form8820.sources.length,
+          entity: largestPassThroughEntity(form8820PassThroughSources),
+          referenceDocumentId: input.form8820.documentId,
+          referenceDocumentName: input.form8820.documentId
+            ? "IRS8820"
+            : undefined,
+        },
       )
       : "",
     input.form8936
-      ? elements(
-        "Form8936PartIICYCreditsGrp",
-        [
-          element("GeneralBusCrFromNnPssvActyAmt", form8936Credit),
-          element("TotalGeneralBusCreditsAmt", form8936Credit),
-          element(
-            "TotalGeneralBusCreditsAppTxAmt",
-            input.form8936.appliedCredit,
-          ),
-        ],
+      ? nontransferableCurrentRowXml(
+        "1y",
+        form8936Credit,
+        input.form8936.appliedCredit,
         {
+          sourceCount: 1,
           referenceDocumentId: input.form8936.documentId,
           referenceDocumentName: "IRS8936",
         },
       )
       : "",
     input.form8936Commercial
-      ? elements(
-        "Form8936PartVCYCreditsGrp",
-        [
-          element("GeneralBusCrFromNnPssvActyAmt", form8936CommercialCredit),
-          element("TotalGeneralBusCreditsAmt", form8936CommercialCredit),
-          element(
-            "TotalGeneralBusCreditsAppTxAmt",
-            input.form8936Commercial.appliedCredit,
-          ),
-        ],
+      ? nontransferableCurrentRowXml(
+        "1aa",
+        form8936CommercialCredit,
+        input.form8936Commercial.appliedCredit,
         {
+          sourceCount: 1,
           referenceDocumentId: input.form8936Commercial.documentId,
           referenceDocumentName: "IRS8936",
         },
@@ -753,33 +757,16 @@ export function buildIRS3800Nonpassive(
       )
       : "",
     form5884
-      ? elements(
-        "Form5884CYCreditsGrp",
-        [
-          form5884.sources.length > 1
-            ? element("CYGeneralBusinessCrItemCnt", form5884.sources.length)
-            : "",
-          form5884PassThroughSources.length > 0
-            ? element(
-              "PassThroughEntityEIN",
-              [...form5884PassThroughSources].sort((a, b) =>
-                b.credit - a.credit
-              )[0].ein,
-            )
-            : "",
-          element("GeneralBusCrFromNnPssvActyAmt", form5884Credit),
-          element("TotalGeneralBusCreditsAmt", form5884Credit),
-          element(
-            "TotalGeneralBusCreditsAppTxAmt",
-            form5884.appliedCredit,
-          ),
-        ],
-        form5884.documentId
-          ? {
-            referenceDocumentId: form5884.documentId,
-            referenceDocumentName: "IRS5884",
-          }
-          : undefined,
+      ? nontransferableCurrentRowXml(
+        "4b",
+        form5884Credit,
+        form5884.appliedCredit,
+        {
+          sourceCount: form5884.sources.length,
+          entity: largestPassThroughEntity(form5884PassThroughSources),
+          referenceDocumentId: form5884.documentId,
+          referenceDocumentName: form5884.documentId ? "IRS5884" : undefined,
+        },
       )
       : "",
     specifiedGroup?.xml ?? "",

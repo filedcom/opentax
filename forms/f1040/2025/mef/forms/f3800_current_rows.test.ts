@@ -1,12 +1,25 @@
-import { assertEquals, assertThrows } from "@std/assert";
-import { combineForm3800CurrentCreditAmounts } from "./f3800_current_rows.ts";
+import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
+import {
+  buildForm3800CurrentCreditRowXml,
+  combineForm3800CurrentCreditAmounts,
+} from "./f3800_current_rows.ts";
 
 Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on one line", () => {
   assertEquals(
     combineForm3800CurrentCreditAmounts(
       [
-        { line: "1h", availableCredit: 900, appliedCredit: 500 },
-        { line: "4b", availableCredit: 200, appliedCredit: 200 },
+        {
+          line: "1h",
+          grossCredit: 900,
+          transferOutCredit: 0,
+          appliedCredit: 500,
+        },
+        {
+          line: "4b",
+          grossCredit: 200,
+          transferOutCredit: 0,
+          appliedCredit: 200,
+        },
       ],
       [
         {
@@ -27,6 +40,7 @@ Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on 
       {
         line: "1e",
         nonpassiveCredit: 0,
+        transferOutCredit: 0,
         passiveBeforeLimit: 150,
         passiveAfterLimit: 120,
         totalCredit: 120,
@@ -35,6 +49,7 @@ Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on 
       {
         line: "1h",
         nonpassiveCredit: 900,
+        transferOutCredit: 0,
         passiveBeforeLimit: 400,
         passiveAfterLimit: 300,
         totalCredit: 1_200,
@@ -43,6 +58,7 @@ Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on 
       {
         line: "4b",
         nonpassiveCredit: 200,
+        transferOutCredit: 0,
         passiveBeforeLimit: 0,
         passiveAfterLimit: 0,
         totalCredit: 200,
@@ -56,8 +72,18 @@ Deno.test("Form 3800 current-year rows reject duplicate and unreconciled source 
   assertThrows(
     () =>
       combineForm3800CurrentCreditAmounts([
-        { line: "1h", availableCredit: 100, appliedCredit: 50 },
-        { line: "1h", availableCredit: 100, appliedCredit: 50 },
+        {
+          line: "1h",
+          grossCredit: 100,
+          transferOutCredit: 0,
+          appliedCredit: 50,
+        },
+        {
+          line: "1h",
+          grossCredit: 100,
+          transferOutCredit: 0,
+          appliedCredit: 50,
+        },
       ], []),
     Error,
     "nonpassive row is invalid",
@@ -76,9 +102,157 @@ Deno.test("Form 3800 current-year rows reject duplicate and unreconciled source 
   assertThrows(
     () =>
       combineForm3800CurrentCreditAmounts([
-        { line: "1h", availableCredit: 100, appliedCredit: 101 },
+        {
+          line: "1h",
+          grossCredit: 100,
+          transferOutCredit: 0,
+          appliedCredit: 101,
+        },
       ], []),
     Error,
     "nonpassive row is invalid",
   );
+});
+
+Deno.test("Form 3800 current-year rows keep gross credit separate from a transfer-out", () => {
+  assertEquals(
+    combineForm3800CurrentCreditAmounts(
+      [{
+        line: "1f",
+        grossCredit: 1_000,
+        transferOutCredit: 300,
+        appliedCredit: 600,
+      }],
+      [{
+        line: "1f",
+        beforePassiveLimit: 250,
+        afterPassiveLimit: 200,
+        appliedCredit: 100,
+      }],
+    ),
+    [{
+      line: "1f",
+      nonpassiveCredit: 1_000,
+      transferOutCredit: 300,
+      passiveBeforeLimit: 250,
+      passiveAfterLimit: 200,
+      totalCredit: 900,
+      appliedCredit: 700,
+    }],
+  );
+  assertThrows(
+    () =>
+      combineForm3800CurrentCreditAmounts([{
+        line: "1f",
+        grossCredit: 1_000,
+        transferOutCredit: 300,
+        appliedCredit: 701,
+      }], []),
+    Error,
+    "nonpassive row is invalid",
+  );
+});
+
+Deno.test("Form 3800 current-year XML keeps shared passive, nonpassive, and transfer columns on one row", () => {
+  const [row] = combineForm3800CurrentCreditAmounts(
+    [{
+      line: "1f",
+      grossCredit: 1_000,
+      transferOutCredit: 300,
+      appliedCredit: 600,
+    }],
+    [{
+      line: "1f",
+      beforePassiveLimit: 250,
+      afterPassiveLimit: 200,
+      appliedCredit: 100,
+    }],
+  );
+  const xml = buildForm3800CurrentCreditRowXml(row, {
+    sourceCount: 2,
+    transferRegistrationNumber: "CAABC12ABCDE",
+    entity: { ein: "123456789" },
+    referenceDocumentId: "IRS8835_1",
+    referenceDocumentName: "IRS8835",
+  });
+  assertStringIncludes(
+    xml,
+    "<CYGeneralBusinessCrItemCnt>2</CYGeneralBusinessCrItemCnt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CrSubjToPassiveActyLmtAmt>250</CrSubjToPassiveActyLmtAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<GeneralBusCrFromNnPssvActyAmt>1000</GeneralBusCrFromNnPssvActyAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<CreditTransferElectionAmt>-300</CreditTransferElectionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>900</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAppTxAmt>700</TotalGeneralBusCreditsAppTxAmt>",
+  );
+  assertThrows(
+    () =>
+      buildForm3800CurrentCreditRowXml(row, {
+        sourceCount: 2,
+      }),
+    Error,
+    "does not reconcile",
+  );
+});
+
+Deno.test("Form 3800 mixed current-year row follows TY2025v5.4 IRS3800 XSD", async () => {
+  const xsd = new URL(
+    "../../../../../.state/research/docs/IMF_Series_2025v5.4/1040x_Schema_2025v5.4/2025v5.4/CorporateIncomeTax/Corp1120/IRS3800/IRS3800.xsd",
+    import.meta.url,
+  ).pathname;
+  try {
+    await Deno.stat(xsd);
+  } catch {
+    return;
+  }
+  const [row] = combineForm3800CurrentCreditAmounts(
+    [{
+      line: "1f",
+      grossCredit: 1_000,
+      transferOutCredit: 300,
+      appliedCredit: 600,
+    }],
+    [{
+      line: "1f",
+      beforePassiveLimit: 250,
+      afterPassiveLimit: 200,
+      appliedCredit: 100,
+    }],
+  );
+  const body = buildForm3800CurrentCreditRowXml(row, {
+    sourceCount: 2,
+    transferRegistrationNumber: "CAABC12ABCDE",
+    entity: { ein: "123456789" },
+    referenceDocumentId: "IRS8835_1",
+    referenceDocumentName: "IRS8835",
+  });
+  const path = await Deno.makeTempFile({ suffix: ".xml" });
+  try {
+    await Deno.writeTextFile(
+      path,
+      `<IRS3800 xmlns="http://www.irs.gov/efile">${body}</IRS3800>`,
+    );
+    const checked = await new Deno.Command("xmllint", {
+      args: ["--noout", "--schema", xsd, path],
+      stdout: "piped",
+      stderr: "piped",
+    }).output();
+    assertEquals(checked.code, 0, new TextDecoder().decode(checked.stderr));
+  } finally {
+    await Deno.remove(path);
+  }
 });

@@ -6,7 +6,11 @@ import {
   passiveCreditSourceOriginSchema,
 } from "../../../nodes/intermediate/forms/form8582cr/source.ts";
 import { planForm3800PassiveXmlRows } from "./f3800_passive_tags.ts";
-import { combineForm3800CurrentCreditAmounts } from "./f3800_current_rows.ts";
+import {
+  buildForm3800CurrentCreditRowXml,
+  combineForm3800CurrentCreditAmounts,
+  type Form3800CurrentCreditRowMetadata,
+} from "./f3800_current_rows.ts";
 
 export type Form3800PassiveRowXml = {
   readonly partIII: readonly string[];
@@ -15,9 +19,9 @@ export type Form3800PassiveRowXml = {
   readonly partVI: readonly string[];
 };
 
-function sourceEin(
+function sourceEntity(
   sources: readonly Form3800PassiveTaxUseVintage[],
-): string {
+): Form3800CurrentCreditRowMetadata["entity"] {
   const allocations = sources.flatMap((source) =>
     source.sourceOrigin.kind === PassiveCreditSourceOrigin.Self
       ? []
@@ -50,10 +54,22 @@ function sourceEin(
       : [...groups, allocation];
   }, []);
   const origin = [...entities].sort((a, b) => b.amount - a.amount)[0]?.origin;
-  if (!origin) return "";
-  return origin.ein
-    ? element("PassThroughEntityEIN", origin.ein)
-    : element("MissingEINReasonCd", origin.missing_ein_reason);
+  if (!origin) return undefined;
+  if (origin.ein) return { ein: origin.ein };
+  if (!origin.missing_ein_reason) {
+    throw new Error("Form 3800 passive entity needs EIN information");
+  }
+  return { missingEinReason: origin.missing_ein_reason };
+}
+
+function sourceEin(
+  sources: readonly Form3800PassiveTaxUseVintage[],
+): string {
+  const entity = sourceEntity(sources);
+  if (!entity) return "";
+  return "ein" in entity
+    ? element("PassThroughEntityEIN", entity.ein)
+    : element("MissingEINReasonCd", entity.missingEinReason);
 }
 
 /** Serialize passive Part III-VI source rows after Form 3800 tax-use allocation. */
@@ -102,15 +118,10 @@ export function buildForm3800PassiveRowXml(
     if (!amount) {
       throw new Error("Form 3800 current-year passive row was not combined");
     }
-    return elements(row.tag, [
-      row.requiresSourceBreakdown
-        ? element("CYGeneralBusinessCrItemCnt", row.sources.length)
-        : "",
-      sourceEin(row.sources),
-      element("CrSubjToPassiveActyLmtAmt", amount.passiveBeforeLimit),
-      element("TotalGeneralBusCreditsAmt", amount.totalCredit),
-      element("TotalGeneralBusCreditsAppTxAmt", amount.appliedCredit),
-    ]);
+    return buildForm3800CurrentCreditRowXml(amount, {
+      sourceCount: row.sources.length,
+      entity: sourceEntity(row.sources),
+    });
   });
   const partIV = carryover.map((row) => {
     const applied = row.sources.reduce(

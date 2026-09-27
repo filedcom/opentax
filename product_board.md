@@ -136,7 +136,11 @@ passive case is written but unrun. The filed descriptor still stops on passive
 sources until source rows, tax use, and mixed-credit XML are joined. A current-year
 row combiner now totals passive and nonpassive amounts once per credit line,
 including when both belong to the same line; its cases are written but unrun,
-and the filed builder does not yet consume the combined rows. Direct builder
+and a shared Part III serializer now keeps gross nonpassive credit, transfer-out,
+passive before-limit credit, available credit, and tax use in separate columns.
+The passive rows and nontransferable Form 8820, 5884, and 8936 rows consume it;
+the mixed same-line case and local XSD case are written but unrun. The filed
+builder does not yet combine passive and nonpassive rows. Direct builder
 cases are written but unrun. The draft now indexes Part V facility allocations
 and linked source documents by entry position, so equal-valued or reused
 facility objects do not silently reuse the first allocation; that case is
