@@ -127,6 +127,7 @@ function input(overrides: Record<string, unknown> = {}) {
   return {
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
+    tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
     part_i: {
       mailing_address: {
         kind: "US",
@@ -1675,5 +1676,20 @@ Deno.test("Form 8854 noncovered initial input reaches the registered XML path", 
       inputSchema.parse(input()),
     ).outputs,
     [],
+  );
+  assertEquals(
+    inputSchema.safeParse(input({ tax_status_2025: undefined })).success,
+    false,
+  );
+  assertThrows(
+    () =>
+      f8854.compute(
+        { taxYear: 2025, formType: "f1040" },
+        inputSchema.parse(input({
+          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+        })),
+      ),
+    Error,
+    "nonresident or dual-status returns cannot use this Form 1040 MeF path",
   );
 });

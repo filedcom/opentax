@@ -13,6 +13,10 @@ source documents, and supporting statements. Separate 1040-NR, 1040-SS, and Form
 source-fact inventory remains in `docs/ats/ty2025.md` as reference material, not
 as an unfinished gate on this board. This decision does not waive any required
 Form 1040 attachment or business rule.
+The 2025 dual-status Form 1040 route is also outside the e-file gate because
+[IRS Publication 519](https://www.irs.gov/publications/p519) says dual-status
+taxpayers cannot e-file their 2025 returns; the product must not serialize one
+as an ordinary Form 1040 MeF return.
 
 ## Current status
 
@@ -1100,7 +1104,13 @@ support.
 **Build pass, untested; whole-form gap remains.** The old node used 2024
 thresholds and treated deemed asset gain as a dollar-for-dollar Schedule 2 tax.
 That route has been removed. The 2025 covered-expatriate average-tax threshold
-is $206,000 and the mark-to-market exclusion is $890,000. A source-identified
+is $206,000 and the mark-to-market exclusion is $890,000. Both initial and
+annual Form 8854 sources now record 2025 income-tax status.
+Their registered Form 1040 MeF paths require an asserted full-year U.S.
+citizen/resident tax period; nonresident and dual-status sources stop at those
+filing gates. The assertion is not independent residency evidence. An initial
+expatriation in 2025 does not by itself establish Form 1040 e-file eligibility.
+The source-identified
 asset calculation now allocates the exclusion proportionally to gain assets,
 without using losses to dilute it, and balances cents deterministically. The
 covered-expatriate test now recognizes qualifying dual-citizen and minor
@@ -1157,8 +1167,16 @@ reportable amount and withholding must match its linked distributions; the
 Part III builder groups payments from one source into one MeF detail row.
 Source, mismatch, and grouping cases are written but unrun. This does not
 authenticate the payor statement or open the registered distribution filing
-gate; zero-reportable distributions and separate 1040 income treatment still
-need review. Annual eligible-compensation and nongrantor-trust items now require
+gate. Annual input now records whether 2025 was a full-year U.S. citizen or
+resident period or a nonresident/dual-status year. The registered Form 1040
+MeF path admits only the full-year status; code 38/39 distributions are limited
+to the nonresident/dual-status source path. [Notice 2009-85](https://www.irs.gov/irb/2009-45_IRB)
+says the special
+withholding does not apply during a later citizen/resident period, and
+[2025 Publication 519](https://www.irs.gov/publications/p519) says dual-status
+returns cannot be e-filed. The status is an assertion, not verified residency
+evidence. Zero-reportable distributions and other return families remain open.
+Annual eligible-compensation and nongrantor-trust items now require
 descriptions and explicit treaty-waiver confirmations, and the registered
 no-activity and capital-disposition bundles emit their item-level native waiver
 statements in ReturnData1040 order. Statement, missing-confirmation, and
@@ -1167,7 +1185,8 @@ authenticate the earlier Form W-8CE, trustee notice, or mailed original.
 Prior Form 8854 amounts, disposition
 reporting, and payment evidence remain entered source assertions. A registered
 annual node and MeF descriptor now file the no-disposition, no-distribution
-certification. The annual input also requires explicit confirmations that the
+certification only with confirmed full-year Form 1040 tax status. The annual
+input also requires explicit confirmations that the
 original Form 8854 was mailed separately and the return-attached copy was
 marked “Copy,” as the 2025 instructions require. Those assertions do not prove
 mailing or the contents of the filed copy. Missing-confirmation cases are

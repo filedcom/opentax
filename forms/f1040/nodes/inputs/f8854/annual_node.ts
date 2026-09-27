@@ -9,20 +9,19 @@ export function validateAnnualForm8854Filing(
   raw: F8854AnnualInput,
 ): F8854AnnualInput {
   const input = annualInputSchema.parse(raw);
+  if (input.tax_status_2025 !== "FULL_YEAR_US_CITIZEN_OR_RESIDENT") {
+    throw new Error(
+      "Annual Form 8854 nonresident or dual-status returns cannot use this Form 1040 MeF path",
+    );
+  }
   if (
     input.deferred_properties.some((property) =>
       property.disposition.disposed_in_2025 &&
       property.disposition.reported_form_code !== ReportedFormCode.Form8949
-    ) ||
-    input.eligible_deferred_compensation_items.some((item) =>
-      item.distributions.length > 0
-    ) ||
-    input.nongrantor_trust_interests.some((item) =>
-      item.distributions.length > 0
     )
   ) {
     throw new Error(
-      "Annual Form 8854 non-Form 8949 dispositions and distributions need reconciled 2025 reporting and payment evidence",
+      "Annual Form 8854 non-Form 8949 dispositions need reconciled 2025 income reporting and payment evidence",
     );
   }
   return input;

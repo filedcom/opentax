@@ -65,6 +65,7 @@ const filer: FilerIdentity = {
 const noncoveredInput = initialSchema.parse({
   expatriation_date: "2025-06-15",
   expatriate_type: ExpatriateType.CITIZEN,
+  tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   part_i: partI,
   prior_year_us_income_tax_less_foreign_tax_credit: {
     year_2024: 0,
@@ -206,6 +207,7 @@ const annualNoActivityInput = annualInputSchema.parse({
       date: "2020-06-15",
     },
   },
+  tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
   prior_form8854_obligations_confirmed_complete: true,
   original_form8854_mailed_confirmed: true,
   attached_form8854_copy_marked_copy_confirmed: true,
@@ -535,6 +537,33 @@ Deno.test("annual Form 8854 no-activity certification is attached to Form 1040",
   assertStringIncludes(xml, "<NongrantorTrustStatement documentId=");
 });
 
+Deno.test("Form 8854 MeF rejects initial and annual nonresident or dual-status filings", () => {
+  for (
+    const pending of [
+      {
+        f1040: { filing_status: "single" },
+        f8854: {
+          ...noncoveredInput,
+          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+        },
+      },
+      {
+        f1040: { filing_status: "single" },
+        f8854_annual: {
+          ...annualNoActivityInput,
+          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+        },
+      },
+    ]
+  ) {
+    assertThrows(
+      () => buildMefXml(pending, filer),
+      Error,
+      "nonresident or dual-status returns cannot use this Form 1040 MeF path",
+    );
+  }
+});
+
 Deno.test("annual Form 8854 source reaches the filed return through the graph", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: {
@@ -697,6 +726,7 @@ Deno.test({
   const input = initialSchema.parse({
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
+    tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
     part_i: partI,
     prior_year_us_income_tax_less_foreign_tax_credit: {
       year_2024: 0,

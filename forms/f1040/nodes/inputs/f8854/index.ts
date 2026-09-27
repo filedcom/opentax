@@ -30,6 +30,11 @@ export const dateSchema = z.string().refine(
   "Date must be valid ISO YYYY-MM-DD",
 );
 
+export const taxStatus2025Schema = z.enum([
+  "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+  "NONRESIDENT_OR_DUAL_STATUS",
+]);
+
 const usAddressSchema = z.object({
   kind: z.literal("US"),
   line1: z.string().trim().min(1),
@@ -114,6 +119,7 @@ export const inputSchema = z.object({
     "This Form 8854 input covers initial expatriation in 2025 only",
   ),
   expatriate_type: z.nativeEnum(ExpatriateType),
+  tax_status_2025: taxStatus2025Schema,
   part_i: partISchema,
   prior_year_us_income_tax_less_foreign_tax_credit: priorYearTaxSchema,
   balance_sheet: balanceSheetSchema,
@@ -332,6 +338,11 @@ export function isCoveredExpatriate(rawInput: F8854Input): boolean {
 /** Scope the registered initial filing path before its MeF source reconciliation. */
 export function assertForm8854FilingScope(rawInput: F8854Input): void {
   const input = inputSchema.parse(rawInput);
+  if (input.tax_status_2025 !== "FULL_YEAR_US_CITIZEN_OR_RESIDENT") {
+    throw new Error(
+      "Initial Form 8854 nonresident or dual-status returns cannot use this Form 1040 MeF path",
+    );
+  }
   const covered = isCoveredExpatriate(input);
   if (input.section_d.elect_deferral && !covered) {
     throw new Error("Only covered expatriates can elect Section D deferral");

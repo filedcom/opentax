@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { dateSchema, ExpatriateType, partISchema } from "./index.ts";
+import {
+  dateSchema,
+  ExpatriateType,
+  partISchema,
+  taxStatus2025Schema,
+} from "./index.ts";
 import { ReportedFormCode } from "./section-c.ts";
 
 const documentId = z.string().regex(/^[A-Za-z0-9:.\-]{1,30}$/);
@@ -143,6 +148,7 @@ export const annualInputSchema = z.object({
   ),
   expatriate_type: z.nativeEnum(ExpatriateType),
   part_i: partISchema,
+  tax_status_2025: taxStatus2025Schema,
   prior_form8854_obligations_confirmed_complete: z.literal(true),
   original_form8854_mailed_confirmed: z.literal(true),
   attached_form8854_copy_marked_copy_confirmed: z.literal(true),
@@ -253,6 +259,17 @@ export const annualInputSchema = z.object({
       }))
     ),
   ];
+  if (
+    input.tax_status_2025 === "FULL_YEAR_US_CITIZEN_OR_RESIDENT" &&
+    reportedDistributions.length > 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        "Form 1042-S code 38/39 payments cannot use the covered-expatriate withholding route during a full-year U.S. citizen or resident period",
+      path: ["tax_status_2025"],
+    });
+  }
   for (
     const [incomeCode, key] of [
       ["38", "eligible_deferred_compensation_items"],

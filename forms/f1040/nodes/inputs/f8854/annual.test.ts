@@ -30,6 +30,7 @@ function annualInput(overrides: Record<string, unknown> = {}) {
       citizenships: [{ country_code: "US", acquired_date: "1980-01-01" }],
       us_citizenship_acquisition: "BIRTH",
     },
+    tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
     prior_form8854_obligations_confirmed_complete: true,
     original_form8854_mailed_confirmed: true,
     attached_form8854_copy_marked_copy_confirmed: true,
@@ -149,6 +150,18 @@ Deno.test("annual Form 8854 no-activity certification reaches the filing graph",
       f8854Annual.compute(
         { taxYear: 2025, formType: "f1040" },
         annualInputSchema.parse(annualInput({
+          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
+        })),
+      ),
+    Error,
+    "nonresident or dual-status returns cannot use this Form 1040 MeF path",
+  );
+  assertThrows(
+    () =>
+      f8854Annual.compute(
+        { taxYear: 2025, formType: "f1040" },
+        annualInputSchema.parse(annualInput({
+          tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
           source_1042s: [source1042s()],
           eligible_deferred_compensation_items: [{
             item_id: "plan",
@@ -160,12 +173,13 @@ Deno.test("annual Form 8854 no-activity certification reaches the filing graph",
         })),
       ),
     Error,
-    "reconciled 2025 reporting and payment evidence",
+    "nonresident or dual-status returns cannot use this Form 1040 MeF path",
   );
 });
 
 Deno.test("annual Form 8854 lists prior deferred property and 2025 distributions", () => {
   const parsed = annualInputSchema.parse(annualInput({
+    tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
     source_1042s: [
       source1042s(),
       source1042s("DOC-TRUST-PAYMENT", "39"),
@@ -294,7 +308,7 @@ Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and pay
         }),
       ),
     Error,
-    "non-Form 8949 dispositions and distributions",
+    "non-Form 8949 dispositions",
   );
   for (
     const bad of [
@@ -334,6 +348,7 @@ Deno.test("annual Form 8854 disposition matches one filed Form 8949 sale and pay
 Deno.test("annual Form 8854 rejects missing obligations and unsupported years", () => {
   for (
     const missingConfirmation of [
+      "tax_status_2025",
       "original_form8854_mailed_confirmed",
       "attached_form8854_copy_marked_copy_confirmed",
     ]
@@ -380,6 +395,7 @@ Deno.test("annual Form 8854 rejects missing obligations and unsupported years", 
 
 Deno.test("annual Form 8854 enforces source and three-row distribution limits", () => {
   const centsInput = annualInputSchema.parse(annualInput({
+    tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
     source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 801, 240)],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
@@ -399,6 +415,7 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
     "<EligDeferredCompItemsDistriDtl><DistributionAmt>801</DistributionAmt><TotalTaxWithheldAmt>240</TotalTaxWithheldAmt></EligDeferredCompItemsDistriDtl>",
   );
   const groupedInput = annualInputSchema.parse(annualInput({
+    tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
     source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 3_200, 960)],
     eligible_deferred_compensation_items: [{
       item_id: "plan",
@@ -421,6 +438,7 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
   );
   assertEquals(
     annualInputSchema.safeParse(annualInput({
+      tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
       source_1042s: ["DOC-1", "DOC-2", "DOC-3", "DOC-4"].map((id) =>
         source1042s(id)
       ),
@@ -439,6 +457,7 @@ Deno.test("annual Form 8854 enforces source and three-row distribution limits", 
   );
   assertEquals(
     annualInputSchema.safeParse(annualInput({
+      tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
       source_1042s: [source1042s("DOC-DISTRIBUTION", "38", 1_001, 240)],
       eligible_deferred_compensation_items: [{
         item_id: "plan",
@@ -495,6 +514,7 @@ Deno.test("annual Form 8854 reconciles code 38 and 39 Form 1042-S sources", () =
     tax_withheld_amount: 119.75,
   };
   const input = annualInput({
+    tax_status_2025: "NONRESIDENT_OR_DUAL_STATUS",
     source_1042s: [
       source1042s(),
       source1042s("DOC-TRUST-PAYMENT", "39"),
@@ -519,6 +539,13 @@ Deno.test("annual Form 8854 reconciles code 38 and 39 Form 1042-S sources", () =
     }],
   });
   assertEquals(annualInputSchema.safeParse(input).success, true);
+  assertEquals(
+    annualInputSchema.safeParse({
+      ...input,
+      tax_status_2025: "FULL_YEAR_US_CITIZEN_OR_RESIDENT",
+    }).success,
+    false,
+  );
   const xml = buildForm8854PartIII(annualInputSchema.parse(input));
   assertEquals(
     (xml.match(/<EligDeferredCompItemsDistriDtl>/g) ?? []).length,
