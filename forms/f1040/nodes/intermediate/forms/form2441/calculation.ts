@@ -45,14 +45,12 @@ export const qualifyingPersonSchema = z.object({
   credit_expenses_paid: money,
 }).strict();
 
-export const filingDetailsSchema = z.object({
+export const benefitDetailsSchema = z.object({
   filing_status: filingStatusSchema,
   care_providers: z.array(careProviderSchema).min(1).max(25),
   qualifying_people: z.array(qualifyingPersonSchema).min(1).max(25),
   taxpayer_earned_income: money,
   spouse_earned_income: money.optional(),
-  // This is the result of the Form 2441 Credit Limit Worksheet, not total tax.
-  tax_liability_limit: money,
   student_or_disabled_deemed_income_used: z.boolean().optional(),
   mfs_eligibility_met: z.boolean().optional(),
   mfs_line19_income: money.optional(),
@@ -63,7 +61,13 @@ export const filingDetailsSchema = z.object({
   total_qualified_expenses_incurred: money.optional(),
 }).strict();
 
+export const filingDetailsSchema = benefitDetailsSchema.extend({
+  // Result of the Form 2441 Credit Limit Worksheet, not total tax.
+  tax_liability_limit: money,
+}).strict();
+
 export type Form2441FilingDetails = z.infer<typeof filingDetailsSchema>;
+export type Form2441BenefitDetails = z.infer<typeof benefitDetailsSchema>;
 
 export interface Form2441Lines {
   readonly line3: number;
@@ -119,12 +123,12 @@ export type Form2441BenefitLines = Pick<
 
 /** Part III is AGI-independent and must run before the AGI aggregator. */
 export function calculateForm2441Benefits(
-  rawDetails: Form2441FilingDetails,
+  rawDetails: Form2441BenefitDetails,
   benefits: number,
   taxYear: number,
 ): Form2441BenefitLines {
   const rules = form2441Rules(taxYear);
-  const details = filingDetailsSchema.parse(rawDetails);
+  const details = benefitDetailsSchema.parse(rawDetails);
   if (!Number.isInteger(benefits) || benefits < 0) {
     throw new Error("Form 2441 needs nonnegative whole-dollar benefits");
   }
@@ -232,7 +236,12 @@ export function calculateForm2441(
   if (!Number.isInteger(agi)) {
     throw new Error("Form 2441 needs calculated whole-dollar AGI");
   }
-  const benefitLines = calculateForm2441Benefits(details, benefits, taxYear);
+  const { tax_liability_limit, ...benefitDetails } = details;
+  const benefitLines = calculateForm2441Benefits(
+    benefitDetails,
+    benefits,
+    taxYear,
+  );
   const line3 = benefitLines.line15 > 0
     ? benefitLines.line31
     : Math.min(benefitLines.line30, benefitLines.line27);
@@ -244,7 +253,7 @@ export function calculateForm2441(
   const line7 = agi;
   const line8 = form2441CreditRate(taxYear, agi, details.filing_status);
   const line9a = Math.round(line6 * line8);
-  const line10 = details.tax_liability_limit;
+  const line10 = tax_liability_limit;
   const line11 = details.filing_status === FilingStatus.MFS &&
       !details.mfs_eligibility_met
     ? 0

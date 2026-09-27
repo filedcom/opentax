@@ -3,6 +3,8 @@ import { FilingStatus } from "../../../types.ts";
 import { form2441CreditRate, form2441Rules } from "./year-rules.ts";
 import {
   calculateForm2441,
+  calculateForm2441Benefits,
+  type Form2441BenefitDetails,
   type Form2441FilingDetails,
 } from "./calculation.ts";
 import { form2441 } from "./index.ts";
@@ -152,4 +154,37 @@ Deno.test("2026 detailed Form 2441 uses line 21 and line 8 rules", () => {
   );
   assertEquals(eligibleMfs.line21, 7_500);
   assertEquals(eligibleMfs.line26, 500);
+});
+
+Deno.test("2026 Form 2441 taxable benefits can be finalized before tax", () => {
+  const details: Form2441BenefitDetails = {
+    filing_status: FilingStatus.Single,
+    care_providers: [{
+      kind: "business",
+      name: "Care Center",
+      name_control: "CARE",
+      ein: "123456789",
+      us_address: {
+        line1: "100 Main St",
+        city: "Austin",
+        state: "TX",
+        zip: "78701",
+      },
+      household_employee: false,
+      amount_paid: 8_000,
+    }],
+    qualifying_people: [{
+      first_name: "Child",
+      last_name: "Smith",
+      name_control: "SMIT",
+      ssn: "123456789",
+      credit_expenses_paid: 0,
+    }],
+    taxpayer_earned_income: 50_000,
+    total_qualified_expenses_incurred: 8_000,
+    dependent_care_plan_limit: 8_000,
+  };
+  const lines = calculateForm2441Benefits(details, 8_000, 2026);
+  assertEquals(lines.line25, 7_500);
+  assertEquals(lines.line26, 500);
 });
