@@ -312,9 +312,12 @@ gross payer interest separate from nominee, accrued-interest, OID, and
 amortizable-bond-premium deductions; Schedule B now reconciles those categories
 to taxable line 2 and emits the corresponding MeF adjustment elements. Source,
 aggregation, direct XML, and full-return cases are written but unrun.
-Seller-financed mortgage interest now requires structured buyer identity and an
-explicit U.S. or foreign address, appears first on Schedule B MeF line 1, and
-carries a printed supplemental buyer-detail statement. A printed adjustment
+Seller-financed mortgage interest now requires an explicit answer about whether
+the buyer used the property as a personal residence. A Yes answer requires
+structured buyer identity and an explicit U.S. or foreign address, appears first
+on Schedule B MeF line 1, and carries a printed supplemental buyer-detail
+statement. A No answer keeps the interest taxable but does not by itself force
+Schedule B. These source-to-return cases are written but unrun. A printed adjustment
 statement lists the gross-to-net calculation; the payer continuation now
 reconciles to gross line 1 rather than net line 2. These PDF and source-to-XML
 cases are written but unrun, and no filled PDF has been rendered. The unrun
@@ -333,7 +336,8 @@ lines 5/6. MeF uses the dedicated nominee-dividend element; a supplemental PDF
 statement reconciles the printed gross rows to net line 6. Source, XML, XSD, and
 PDF cases are written but unrun. The current build pass shares one Schedule B
 filing rule across the node, MeF, and PDF paths: taxable interest and ordinary
-dividends each have a strict $1,500 threshold, while seller-financed interest,
+dividends each have a strict $1,500 threshold, while personal-residence
+seller-financed interest,
 adjustments, savings-bond exclusion, nominee amounts, and foreign-account/trust
 facts can require the form below that threshold. Below-threshold income still
 routes to Form 1040 without producing Schedule B. Reconciliation now runs before

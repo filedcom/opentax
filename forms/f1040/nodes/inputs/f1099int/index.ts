@@ -28,6 +28,7 @@ export const itemSchema = z.object({
   payer_name: z.string().min(1),
   payer_tin: z.string().optional(),
   seller_financed: z.boolean().optional(),
+  buyer_used_as_personal_residence: z.boolean().optional(),
   seller_financed_buyer: sellerFinancedBuyerSchema.optional(),
   box1: z.number().nonnegative().optional(),
   // Affirm that this payer's taxable interest is from property held for
@@ -81,9 +82,16 @@ function validateIntItem(item: INTItem): void {
     );
   }
   if (item.seller_financed) {
-    if (!item.seller_financed_buyer) {
+    if (item.buyer_used_as_personal_residence === undefined) {
       throw new Error(
-        "INT validation error: seller-financed interest needs structured buyer name, SSN, and address",
+        "INT validation error: seller-financed interest needs the buyer's personal-residence answer",
+      );
+    }
+    if (
+      item.buyer_used_as_personal_residence && !item.seller_financed_buyer
+    ) {
+      throw new Error(
+        "INT validation error: personal-residence seller financing needs structured buyer name, SSN, and address",
       );
     }
     if (
@@ -93,9 +101,12 @@ function validateIntItem(item: INTItem): void {
         "INT validation error: seller-financed interest must be a positive box 1 amount",
       );
     }
-  } else if (item.seller_financed_buyer) {
+  } else if (
+    item.seller_financed_buyer ||
+    item.buyer_used_as_personal_residence !== undefined
+  ) {
     throw new Error(
-      "INT validation error: seller-financed buyer requires the seller-financed flag",
+      "INT validation error: seller-financed buyer facts require the seller-financed flag",
     );
   }
   if (computeTaxableInterestNet(item) < 0) {
@@ -135,7 +146,7 @@ function scheduleBOutput(item: INTItem): NodeOutput {
       accrued: item.accrued_interest_paid ?? 0,
       oid_adjustment: item.non_taxable_oid_adjustment ?? 0,
       bond_premium: bondPremium,
-      ...(item.seller_financed_buyer
+      ...(item.buyer_used_as_personal_residence && item.seller_financed_buyer
         ? { seller_financed_buyer: item.seller_financed_buyer }
         : {}),
     },

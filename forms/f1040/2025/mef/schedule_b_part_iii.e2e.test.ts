@@ -153,6 +153,7 @@ Deno.test("seller-financed buyer identity reaches Schedule B MeF", () => {
       f1099int: [{
         payer_name: "Buyer mortgage",
         seller_financed: true,
+        buyer_used_as_personal_residence: true,
         seller_financed_buyer: {
           address_type: "us",
           name: "Jane Buyer",
@@ -194,6 +195,7 @@ Deno.test("foreign seller-financed buyer reaches Schedule B MeF", () => {
       f1099int: [{
         payer_name: "Buyer mortgage",
         seller_financed: true,
+        buyer_used_as_personal_residence: true,
         seller_financed_buyer: {
           address_type: "foreign",
           name: "Jane Buyer",
@@ -221,6 +223,63 @@ Deno.test("foreign seller-financed buyer reaches Schedule B MeF", () => {
   assertStringIncludes(xml, "<SellerFinancedAddressForeign>");
   assertStringIncludes(xml, "<CountryCd>CA</CountryCd>");
   assertStringIncludes(xml, "<ForeignPostalCd>M5H2N2</ForeignPostalCd>");
+});
+
+Deno.test("nonresidence seller financing below $1,500 does not force Schedule B", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099int: [{
+        payer_name: "Buyer mortgage",
+        seller_financed: true,
+        buyer_used_as_personal_residence: false,
+        box1: 900,
+      }],
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.f1040?.line2b_taxable_interest, 900);
+  assertEquals(result.pending.schedule_b?.seller_financed_rows, undefined);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertEquals(xml.includes("<IRS1040ScheduleB"), false);
+});
+
+Deno.test("nonresidence seller financing above $1,500 files an ordinary interest row", () => {
+  const result = execute(
+    buildExecutionPlan(registry),
+    registry,
+    {
+      general,
+      f1099int: [{
+        payer_name: "Buyer mortgage",
+        seller_financed: true,
+        buyer_used_as_personal_residence: false,
+        box1: 1_600,
+      }],
+      schedule_b_part_iii: {
+        foreign_accounts_question: false,
+        foreign_trust_question: false,
+      },
+    },
+    { taxYear: 2025, formType: "f1040" },
+  );
+  assertEquals(result.diagnostics, []);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS1040ScheduleB");
+  assertStringIncludes(
+    xml,
+    "<BusinessNameLine1Txt>Buyer mortgage</BusinessNameLine1Txt>",
+  );
+  assertEquals(xml.includes("<SellerFinancedNm>"), false);
 });
 
 Deno.test("1099-OID premiums and nominee amount reach Schedule B adjustments", () => {

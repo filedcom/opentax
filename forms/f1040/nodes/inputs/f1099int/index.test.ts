@@ -17,6 +17,7 @@ type ItemOverrides = Partial<{
   payer_name: string;
   payer_tin: string;
   seller_financed: boolean;
+  buyer_used_as_personal_residence: boolean;
   seller_financed_buyer: SellerFinancedBuyer;
   box1: number;
   investment_property_for_form4952: boolean;
@@ -165,10 +166,29 @@ Deno.test("schema: box13 exceeding box8 throws", () => {
   assertThrows(() => compute([minimalItem({ box8: 100, box13: 150 })]), Error);
 });
 
-Deno.test("schema: seller_financed requires structured buyer details", () => {
+Deno.test("schema: seller financing requires the buyer-use answer", () => {
   assertThrows(
     () => compute([minimalItem({ seller_financed: true, box1: 100 })]),
     Error,
+  );
+});
+
+Deno.test("schema: personal-residence seller financing requires buyer details", () => {
+  assertThrows(() =>
+    compute([minimalItem({
+      seller_financed: true,
+      buyer_used_as_personal_residence: true,
+      box1: 100,
+    })])
+  );
+});
+
+Deno.test("schema: buyer-use answer requires seller financing", () => {
+  assertThrows(() =>
+    compute([minimalItem({
+      buyer_used_as_personal_residence: false,
+      box1: 100,
+    })])
   );
 });
 
@@ -178,6 +198,7 @@ Deno.test("schema: seller_financed with 8-digit SSN throws", () => {
       compute([
         minimalItem({
           seller_financed: true,
+          buyer_used_as_personal_residence: true,
           box1: 100,
           seller_financed_buyer: { ...buyer, ssn: "12345678" },
         }),
@@ -192,6 +213,7 @@ Deno.test("schema: seller_financed requires a structured address", () => {
       compute([
         minimalItem({
           seller_financed: true,
+          buyer_used_as_personal_residence: true,
           box1: 100,
           seller_financed_buyer: { ...buyer, address_line1: "" },
         }),
@@ -204,6 +226,7 @@ Deno.test("schema: seller_financed with all required fields is valid", () => {
   const result = compute([
     minimalItem({
       seller_financed: true,
+      buyer_used_as_personal_residence: true,
       box1: 100,
       seller_financed_buyer: buyer,
     }),
@@ -230,6 +253,7 @@ Deno.test("schema: seller-financed foreign buyer uses a complete foreign address
   };
   const result = compute([minimalItem({
     seller_financed: true,
+    buyer_used_as_personal_residence: true,
     seller_financed_buyer: foreignBuyer,
     box1: 900,
   })]);
@@ -242,6 +266,7 @@ Deno.test("schema: seller-financed foreign buyer uses a complete foreign address
   assertThrows(() =>
     compute([minimalItem({
       seller_financed: true,
+      buyer_used_as_personal_residence: true,
       box1: 900,
       seller_financed_buyer: { ...foreignBuyer, country_code: "" },
     })])
@@ -251,6 +276,7 @@ Deno.test("schema: seller-financed foreign buyer uses a complete foreign address
       f1099ints: [{
         payer_name: "Buyer mortgage",
         seller_financed: true,
+        buyer_used_as_personal_residence: true,
         box1: 900,
         seller_financed_buyer: { ...foreignBuyer, state: "TX" },
       }],
@@ -631,6 +657,7 @@ Deno.test("hard block: seller_financed + missing SSN throws", () => {
       compute([
         minimalItem({
           seller_financed: true,
+          buyer_used_as_personal_residence: true,
           box1: 100,
           seller_financed_buyer: { ...buyer, ssn: "" },
         }),
@@ -645,6 +672,7 @@ Deno.test("hard block: seller_financed + missing buyer address throws", () => {
       compute([
         minimalItem({
           seller_financed: true,
+          buyer_used_as_personal_residence: true,
           box1: 100,
           seller_financed_buyer: { ...buyer, city: "" },
         }),
