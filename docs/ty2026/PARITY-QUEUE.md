@@ -77,7 +77,7 @@ and MeF components where present; use the inventories for exact filenames.
 | Income and adjustment miscellany | Forms 1099-G/K/MISC/NEC, 1099-C, W-2G, 1098/1098-E, Schedule R, Forms 2106, 3903, 982 and 4852; NOL carryforward. | Classify each source by ownership, taxability and activity before Schedule 1/AGI; do not send gross information-return amounts to 1040 blindly. [Schedule 1](SCHEDULE1-GRAPH.md), [interest](INTEREST-GRAPH.md), [SSA benefits](SSA-BENEFITS-GRAPH.md), [Form 982](FORM982-GRAPH.md), and [ATS 2/6](ATS.md) pin several branches. Verify 2026 moving-expense eligibility, 1099-K thresholds, cancellation exclusions, NOL limits and Schedule R credit source before coding. |
 | Additional taxes and withholding | Forms 4137, 8919, 8959, 8960, 5329, 6251, 4972, 8814; W-2 and 1099 withholding, excess Social Security and other-tax statement. | Compute each 2026 Schedule 2 line independently, then total into 1040 line 23 without importing TY2025 line numbers. [Schedule 2/6251](PDF-SCHEDULE2-6251-MAP.md) covers the changed attachment, and [Form 8959](FORM8959-GRAPH.md) pins its split tax and withholding routes. Reconcile NIIT against the same investment sources used by income tax. |
 | Nonbusiness and business credits | Forms 2441, 5695, 8396, 8834, 8839, 8859, 8862/8863, 8880, 8912, 8936 with Schedule A, 8962, 3800 and its source forms/statement; Form 8283 supports deduction rather than credit. | Decide eligibility/phaseout and refundable versus nonrefundable treatment, apply worksheet credit order, then Schedule 3/8812/1040. [Credit graph](FORM8862-8863-EIC-GRAPH.md), [5695](FORM5695-CREDIT-GRAPH.md), [8962](FORM8962-GRAPH.md), [8834](FORM8834-GRAPH.md), [8912](FORM8912-GRAPH.md), [clean vehicles](FORM8936-GRAPH.md), [business credit](GENERAL-BUSINESS-CREDIT-GRAPH.md), and [QBI](QBI-COOPERATIVE-GRAPH.md) cover active paths. Audit older vehicle/energy credit sunsets by acquisition, construction and service dates, and preserve any valid carryforward. |
-| Payment and filing statements | Form 8888 refund split; Forms 9465, 8379, 8958, 8978 with Schedule A; Schedule 3-A, Form 1062, W-2 and 1099 attachments; farm CCC/insurance, joint occupancy and other tax statements. | Run payment allocation only after 1040 tax/refund is final. Determine attachment eligibility and exact binary versus XML statement representation in current MeF. [ATS 5](ATS-SCENARIO-05.md), [1040 map](PDF-F1040-MAP.md), and [MeF drift](MEF-V1-DRIFT.md) anchor the changed filing path. |
+| Payment and filing statements | Form 4136 with per-business Schedule A; Form 8888 refund split; Forms 9465, 8379, 8958, 8978 with Schedule A; Schedule 3-A, Form 1062, W-2 and 1099 attachments; farm CCC/insurance, joint occupancy and other tax statements. | Run payment allocation only after 1040 tax/refund is final. Determine attachment eligibility and exact binary versus XML statement representation in current MeF. [Form 4136](FORM4136-GRAPH.md), [ATS 5](ATS-SCENARIO-05.md), [1040 map](PDF-F1040-MAP.md), and [MeF drift](MEF-V1-DRIFT.md) anchor the changed filing path. |
 
 ## New 2026 inventory items and explicit gaps
 
@@ -95,11 +95,10 @@ The 2025 serializer and PDF inventories cannot reveal these by themselves:
 - Current Form 8995-A Schedules A–D and any 2026 QBI minimum/ordering changes
   in the [QBI contract](QBI-COOPERATIVE-GRAPH.md).
 - The remaining older-year draft URL in [PDF coverage](pdf-coverage.csv) is
-  `f4136sa`. Forms 6198 and 8912 have pinned continuous-use authorities;
-  Forms 982 and 8834 have pinned current older revisions. Search the IRS
-  product publication and MeF accepted-forms list before declaring the
-  remaining branch unsupported. A missing draft URL is a source question,
-  not a product-scope decision.
+  `f4136sa`. The 2026 main Form 4136 is pinned; the current Schedule A URL
+  still serves 2025. Its 2025 form and combined instructions are pinned as
+  comparators in the [Form 4136 contract](FORM4136-GRAPH.md). Recheck the
+  2026 Schedule A publication and current MeF attachment rules before filing.
 
 ## Close each row with the same evidence
 

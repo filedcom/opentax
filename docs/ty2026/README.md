@@ -31,6 +31,9 @@ for the implementation contract.
   acceptance order.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
+- [`FORM4136-GRAPH.md`](FORM4136-GRAPH.md): fuel-tax claim and per-business
+  Schedule A route, with the missing 2026 Schedule A release gate and
+  485/482-widget main-form/prior-year comparator inventories.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and

@@ -154,6 +154,11 @@ whose embedded instructions apply from 2024 onward, and its 11 widgets.
 Only Form 8582-CR-released legacy passive credits enter line 1; the
 2026 Schedule 3 line 6i route persists, with current MeF and credit-order
 reconciliation to verify.
+The [Form 4136 contract](FORM4136-GRAPH.md) pins the 2026 main form plus
+2025 Schedule A and combined instructions as comparators. It requires one
+Schedule A per qualifying business activity for multi-activity claims,
+reconciles line 17 to Schedule 3 line 12, and holds PDF/MeF acceptance for
+the current Schedule A and XSD/rules.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

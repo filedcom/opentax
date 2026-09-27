@@ -1740,6 +1740,22 @@
       "bytes": 254797,
       "sha256": "f16061fd6ddd952a39f986bab7e7c561d25de61d2ed40938e5e560b9baba477b",
       "retrieved_utc": "2026-09-27T14:46:43Z"
+    },
+    {
+      "path": "authorities/f4136sa--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f4136sa.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 236839,
+      "sha256": "86ce549a7f1e44ef9dd7a800ee12063bb2755a262a4c5cb5b2a8b322c93eb411"
+    },
+    {
+      "path": "authorities/i4136--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i4136.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 194213,
+      "sha256": "d3d63fc3e5af24a8d4c8466b415c3d9269233af67f24d29640a5b4581e10c9f1"
     }
   ]
 }
