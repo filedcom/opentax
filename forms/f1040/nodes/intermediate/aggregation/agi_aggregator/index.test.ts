@@ -38,6 +38,22 @@ Deno.test("agi_aggregator: TY2026 routes total income and adjustments to deducti
   );
 });
 
+Deno.test("agi_aggregator: TY2026 Schedule 1-A MAGI adds Form 2555 exclusions", () => {
+  const result = agi_aggregator.compute({ taxYear: 2026, formType: "f1040" }, {
+    line1a_wages: 160_000,
+    line8d_foreign_earned_income_exclusion: 10_000,
+    line8d_foreign_housing_deduction: 2_000,
+  });
+  const schedule = result.outputs.find((item) =>
+    item.nodeType === "schedule1a"
+  );
+  assertEquals(schedule?.fields.magi, 160_000);
+  const deduction = result.outputs.find((item) =>
+    item.nodeType === "standard_deduction"
+  );
+  assertEquals(deduction?.fields.line9_total_income, 148_000);
+});
+
 Deno.test("agi_aggregator: Form 8962 modified AGI adds Worksheet 1-1 amounts", () => {
   const result = compute({
     line1a_wages: 30_000,

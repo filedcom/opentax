@@ -559,7 +559,15 @@ class AgiAggregatorNode extends TaxNode<typeof inputSchema> {
           (input.line8d_foreign_housing_deduction ?? 0) +
           Math.max(0, ssaGross - ssaTaxable),
       }),
-      this.outputNodes.output(schedule1a, { magi: agi }),
+      this.outputNodes.output(schedule1a, {
+        // Draft 2026 Schedule 1-A Part I adds Form 2555 lines 45 and 50
+        // back to Form 1040 AGI before its phaseouts. Puerto Rico and Form
+        // 4563 addbacks still need their own upstream source fields.
+        magi: ctx.taxYear === 2026
+          ? agi + (input.line8d_foreign_earned_income_exclusion ?? 0) +
+            (input.line8d_foreign_housing_deduction ?? 0)
+          : agi,
+      }),
       // Pass AGI and filing_status to form8880 for Saver's Credit rate determination (IRC §25B)
       this.outputNodes.output(form8880, {
         agi,

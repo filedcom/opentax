@@ -32,6 +32,29 @@ Deno.test("schedule1a: deducts qualified employee tips", () => {
   );
 });
 
+Deno.test("schedule1a: TY2026 routes lines 43 and 44 to deduction resolution", () => {
+  const result = schedule1a.compute({ taxYear: 2026, formType: "f1040" }, {
+    filing_status: FilingStatus.Single,
+    magi: 70_000,
+    taxpayer_ssn: TAXPAYER_SSN,
+    taxpayer_has_valid_ssn: true,
+    taxpayer_age_65_or_older: true,
+    qualified_employee_tips: tips(5_000),
+  });
+  const standard = result.outputs.find((item) =>
+    item.nodeType === "standard_deduction"
+  );
+  const schedule = result.outputs.find((item) =>
+    item.nodeType === "schedule1a"
+  );
+  assertEquals(standard?.fields.schedule1a_line43, 6_000);
+  assertEquals(standard?.fields.schedule1a_line44, 11_000);
+  assertEquals(schedule?.fields.line15_qualified_tips, 5_000);
+  assertEquals(schedule?.fields.line43_enhanced_senior, 6_000);
+  assertEquals(schedule?.fields.line44_total_additional_deductions, 11_000);
+  assertEquals(result.outputs.some((item) => item.nodeType === "f1040"), false);
+});
+
 Deno.test("schedule1a: caps qualified tips at $25,000", () => {
   assertEquals(
     deduction({

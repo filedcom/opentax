@@ -186,11 +186,35 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Schedule1AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
     const enhancedSeniorDeduction = seniorDeduction(ctx, input);
-    const deduction = qualifiedTipsDeduction(input) +
-      qualifiedOvertimeDeduction(input) +
-      vehicleLoanInterestDeduction(input) +
+    const qualifiedTips = qualifiedTipsDeduction(input);
+    const qualifiedOvertime = qualifiedOvertimeDeduction(input);
+    const vehicleLoanInterest = vehicleLoanInterestDeduction(input);
+    const deduction = qualifiedTips + qualifiedOvertime + vehicleLoanInterest +
       enhancedSeniorDeduction;
     if (deduction === 0) return { outputs: [] };
+    if (ctx.taxYear === 2026) {
+      return {
+        outputs: [
+          {
+            nodeType: standard_deduction.nodeType,
+            fields: {
+              schedule1a_line44: deduction,
+              schedule1a_line43: enhancedSeniorDeduction,
+            },
+          },
+          {
+            nodeType: this.nodeType,
+            fields: {
+              line15_qualified_tips: qualifiedTips,
+              line27_qualified_overtime: qualifiedOvertime,
+              line36_vehicle_loan_interest: vehicleLoanInterest,
+              line43_enhanced_senior: enhancedSeniorDeduction,
+              line44_total_additional_deductions: deduction,
+            },
+          },
+        ],
+      };
+    }
     return {
       outputs: [
         this.outputNodes.output(f1040, {

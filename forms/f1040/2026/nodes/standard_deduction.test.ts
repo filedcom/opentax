@@ -4,6 +4,7 @@ import { buildExecutionPlan } from "../../../../core/runtime/planner.ts";
 import type { NodeRegistry } from "../../../../core/types/node-registry.ts";
 import { buildStartNode } from "../../2025/start.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
+import { schedule1a } from "../../nodes/intermediate/forms/schedule1a/index.ts";
 import { w2, w2ItemSchema } from "../../nodes/inputs/w2/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -217,4 +218,46 @@ Deno.test("2026 W-2 inputs reach wages, withholding, AGI, tax, and refund", () =
   assertEquals(result.pending.f1040.line16_income_tax, 8_770);
   assertEquals(result.pending.f1040.line25a_w2_withheld, 10_000);
   assertEquals(result.pending.f1040.line35a_refund, 1_230);
+});
+
+Deno.test("2026 Schedule 1-A line 44 reduces taxable income in graph", () => {
+  const start = buildStartNode([
+    {
+      node: agi_aggregator,
+      inputSchema: agi_aggregator.inputSchema,
+      isArray: false,
+    },
+    { node: schedule1a, inputSchema: schedule1a.inputSchema, isArray: false },
+  ]);
+  const registry: NodeRegistry = {
+    start,
+    agi_aggregator,
+    schedule1a,
+    standard_deduction: standard_deduction_2026,
+    income_tax_calculation,
+    f1040: f1040_2026_node,
+    schedule3a,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    agi_aggregator: {
+      filing_status: FilingStatus.Single,
+      line1a_wages: 70_000,
+    },
+    schedule1a: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: "111223333",
+      taxpayer_has_valid_ssn: true,
+      taxpayer_age_65_or_older: true,
+      qualified_employee_tips: [{ employee_ssn: "111223333", amount: 5_000 }],
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line43_enhanced_senior, 6_000);
+  assertEquals(
+    result.pending.schedule1a.line44_total_additional_deductions,
+    11_000,
+  );
+  assertEquals(result.pending.f1040.line13a_schedule1a, 11_000);
+  assertEquals(result.pending.f1040.line15_taxable_income, 42_900);
+  assertEquals(result.pending.f1040.line16_income_tax, 4_900);
 });

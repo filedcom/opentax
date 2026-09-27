@@ -81,6 +81,10 @@ The focused graph now accepts multiple actual W-2 input records and reaches
 1040 wages, tax, withholding, and refund. The shared W-2 node's 2026 config
 tests also cover retirement limits. The general identity input and the rest of
 the W-2 downstream form branches are still outside this calculation slice.
+The shared Schedule 1-A node now emits its 2026 line 15/27/36/43/44 results
+and sends lines 43/44 to the 2026 deduction node. AGI adds Form 2555 amounts
+back for Schedule 1-A MAGI in 2026. The new W-2 TP/TT fields, Form 4137
+larger-of reconciliation, and Puerto Rico/Form 4563 MAGI addbacks remain open.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable

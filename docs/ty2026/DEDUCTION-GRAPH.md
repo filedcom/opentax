@@ -29,8 +29,9 @@ Form 8995 or 8995-A can depend on taxable income *before* QBI, which depends
 on the selected standard or itemized deduction. The current TY2025 Form 8995
 node estimates its income limit with a standard deduction when explicit
 pre-QBI taxable income is missing; that is not a valid TY2026 itemizer path.
-The current shared Schedule 1-A node also emits the TY2025 `line13b` field,
-while TY2026 uses 13a. Registering these nodes as-is would give wrong results.
+The shared Schedule 1-A node now sends TY2026 line 44 to the dedicated
+deduction node instead of its TY2025 `line13b` field. The 2025 Form 8995 and
+Schedule A nodes remain unsuitable for the complete TY2026 itemizer path.
 
 ```mermaid
 flowchart LR
@@ -58,7 +59,7 @@ for review, then emit a single finalized set of form lines.
 | Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI graph exists; SALT MAGI source path pending. |
 | Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | `schedule-a.ts` assembles lines from already allowed values. Input nodes and each separate eligibility limit pending. |
 | Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Pure 0.5% floor exists; category-limit and carryforward accounting pending. Do not treat raw 11/12/14 amounts as all deductible. |
-| Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | 2026 1040 and Form 6251 arithmetic exist; shared node output still uses 2025 field names. |
+| Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node now routes 2026 line 43/44 separately; Form 2555 MAGI addbacks exist. Puerto Rico/Form 4563 addbacks and W-2 TP/TT facts remain. |
 | QBI | All Form 8995/8995-A business, wage, UBIA, loss, gain, and carryforward facts | Existing shared nodes need a 2026 output contract and pre-QBI income from the joint resolver. |
 
 ## Implementation order and gates
@@ -66,8 +67,10 @@ for review, then emit a single finalized set of form lines.
 1. Build TY2026 Schedule A input and form-line node from the pure calculator.
    Wire upstream allowed amounts without guessing percentage limits,
    mortgage-insurance eligibility, Form 4952, or contribution carryovers.
-2. Update Schedule 1-A's 2026 form-line calculation and route its line 44 and
-   line 43 distinctly. Preserve TY2025 output names under TY2025.
+2. Finish Schedule 1-A's 2026 source inputs: Puerto Rico/Form 4563 MAGI
+   addbacks and W-2 box 12 TP/TT fields. Reconcile W-2 tips with Form 4137 by
+   employer using the draft's larger-of rule. The shared node now routes line
+   44 and line 43 distinctly while retaining TY2025 output names.
 3. Extract QBI form calculations as pure functions parameterized by actual
    pre-QBI taxable income. Audit Form 8995-A thresholds and every 2025 literal.
 4. Implement and test the joint resolver. It must decide standard plus 12f
