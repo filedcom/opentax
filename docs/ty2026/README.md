@@ -7,7 +7,8 @@ for the implementation contract.
 ## What is in this snapshot
 
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
-  and retrieval date for **25 IRS draft forms**, **13 IRS ATS PDFs**, **two MeF
+  and retrieval date for **57 TY2026 IRS draft forms**, **five draft URLs that
+  still serve an older year**, **13 IRS ATS PDFs**, **two MeF
   inventory spreadsheets**, and six final IRS authorities (Rev. Procs.
   2025-19, 2025-25, 2025-32; Notice 2025-67; Notice 2026-10; and IRB
   2026-29). All PDFs
@@ -16,6 +17,8 @@ for the implementation contract.
   changes before using new values or layouts.
 - [`pdf-coverage.csv`](pdf-coverage.csv): each current TY2025 PDF descriptor,
   its IRS source URL, and whether a matching TY2026 draft is in the snapshot.
+  Current result: 51 of 56 descriptors have a 2026 draft; five IRS draft
+  URLs still serve older years and are recorded as `wrong-year` in the manifest.
 - [`mef-coverage.csv`](mef-coverage.csv): each TY2025 MeF serializer module.
 - [`year-literals.csv`](year-literals.csv): all `2025` occurrences in non-test
   calculation node source, including comments. These are review leads, not

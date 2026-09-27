@@ -9,11 +9,10 @@
  */
 
 import { FilingStatus } from "../types.ts";
+import type { Bracket } from "./types.ts";
 
 // ─── Tax Brackets ─────────────────────────────────────────────────────────────
 // Rev. Proc. 2024-40, §3.01; IRC §1(a)–(d)
-
-export type Bracket = { over: number; upTo: number; rate: number; base: number };
 
 /** IRC §1(a) — Married Filing Jointly / Qualifying Surviving Spouse */
 export const BRACKETS_MFJ_2025: ReadonlyArray<Bracket> = [

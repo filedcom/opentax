@@ -14,10 +14,15 @@ import { buildEngineInputs, loadReturn } from "../store/store.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
-import { formatDiagnosticsJson, formatDiagnosticsText } from "../../core/validation/report.ts";
-import type { DiagnosticEntry, DiagnosticsReport, ErrorCategory } from "../../core/validation/types.ts";
-import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
-import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
+import {
+  formatDiagnosticsJson,
+  formatDiagnosticsText,
+} from "../../core/validation/report.ts";
+import type {
+  DiagnosticEntry,
+  DiagnosticsReport,
+  ErrorCategory,
+} from "../../core/validation/types.ts";
 
 function getCatalogEntry(formType: string, year: number) {
   const key = `${formType}:${year}`;
@@ -52,7 +57,10 @@ export async function validateReturnCommand(
     def.inputNodes.filter((e) => !e.isArray).map((e) => e.node.nodeType),
   );
   const engineInputs = buildEngineInputs(inputs, singletonNodeTypes);
-  const result = execute(executionPlan, def.registry, engineInputs, { taxYear: meta.year, formType: meta.formType ?? "f1040" });
+  const result = execute(executionPlan, def.registry, engineInputs, {
+    taxYear: meta.year,
+    formType: meta.formType ?? "f1040",
+  });
 
   // Extract filer identity for header field access
   const f1040 = (result.pending["f1040"] ?? {}) as Record<string, unknown>;
@@ -68,10 +76,14 @@ export async function validateReturnCommand(
     ...filerIdentity,
   };
 
-  const ctx = createReturnContext(result.pending, filerInfo, FIELD_REGISTRY);
+  const ctx = createReturnContext(
+    result.pending,
+    filerInfo,
+    def.validation.fieldRegistry,
+  );
 
   // Run all rules
-  const report = evaluateRules(ALL_RULES, ctx);
+  const report = evaluateRules(def.validation.rules, ctx);
 
   // Merge executor diagnostics into report entries
   const executorEntries: DiagnosticEntry[] = result.diagnostics.map(

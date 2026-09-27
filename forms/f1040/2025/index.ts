@@ -7,21 +7,25 @@ import { registry } from "./registry.ts";
 import { buildMefXml } from "./mef/builder.ts";
 import { buildPending } from "./mef/pending.ts";
 import { buildPdfBytes } from "./pdf/builder.ts";
+import { FIELD_REGISTRY } from "../validation/field-registry.ts";
+import { ALL_RULES } from "../validation/rules/index.ts";
 
 export const f1040_2025: FormDefinition = {
   ...F1040_2025_CONFIG,
   inputNodes,
   registry,
+  validation: { fieldRegistry: FIELD_REGISTRY, rules: ALL_RULES },
   buildMefXml: (pending, filer) =>
     buildMefXml(
       pending as MefFormsPending,
       filer as FilerIdentity | undefined,
       F1040_2025_CONFIG.mefSchemaVersion,
       F1040_2025_CONFIG.taxYear,
-      F1040_2025_CONFIG.formType === "f1040" ? "1040" : F1040_2025_CONFIG.formType,
+      F1040_2025_CONFIG.formType === "f1040"
+        ? "1040"
+        : F1040_2025_CONFIG.formType,
     ),
-  buildPdfBytes: (pending, filer) =>
-    buildPdfBytes(pending, filer),
+  buildPdfBytes: (pending, filer) => buildPdfBytes(pending, filer),
   buildPending: (pending: Record<string, unknown>) =>
     buildPending(pending) as Record<string, unknown>,
 };

@@ -204,7 +204,6 @@ forms/f1040/nodes/intermediate/forms/form8582/index.ts,17,// IRC §469(i)(2): ma
 forms/f1040/nodes/intermediate/forms/form8582/index.ts,20,// IRC §469(i)(3)(A): MAGI thresholds for phase-out (TY2025)
 forms/f1040/nodes/intermediate/forms/form8582/index.ts,24,// IRC §469(i)(5)(B): MFS (lived apart all year) reduced thresholds (TY2025)
 forms/f1040/nodes/intermediate/forms/form8606/index.ts,22,"// Line 6: FMV of all traditional IRAs as of December 31, 2025"
-forms/f1040/nodes/intermediate/forms/form8615/calculation.ts,2,"import type { Bracket } from ""../../../../config/2025.ts"";"
 forms/f1040/nodes/intermediate/forms/form8615/calculation.ts,101,// The 2025 form stops before the family-tax worksheets when line 5 is zero.
 forms/f1040/nodes/intermediate/forms/form8815/index.ts,16,// IRC §135; TY2025 instructions.
 forms/f1040/nodes/intermediate/forms/form8824/calculation.ts,12,"// Form 8824 (2025), Part III. Net liabilities must be compared before adding"
@@ -232,11 +231,9 @@ forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,34,"cash_wages_over_202
 forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,125,"unemployment && ""state_rows"" in unemployment && taxYear !== 2025"
 forms/f1040/nodes/intermediate/forms/schedule_se/index.ts,16,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/worksheets/form8978_negative_adjustment.ts,2,* TY2025 Form 8978 negative line 14 worksheets from the Schedule 3 line 6l
-forms/f1040/nodes/intermediate/worksheets/income_tax_calculation/index.ts,19,"import type { Bracket } from ""../../../config/2025.ts"";"
 forms/f1040/nodes/intermediate/worksheets/income_tax_calculation/index.ts,102,"// 2025 Schedule D Tax Worksheet, lines 1–47, for positive Schedule D lines"
 forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,71,"// Each factor is $1,600 (MFJ/MFS/QSS) or $2,000 (Single/HOH) for TY2025 per OBBBA."
 forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,158,// 2025 Form 6251 line 1a = Form 1040 line 14 minus Schedule 1-A line 37;
 forms/f1040/nodes/intermediate/worksheets/standard_deduction/index.ts,162,"// 2025 Form 6251 line 2a: Schedule A line 7 if itemizing, otherwise"
-forms/f1040/nodes/intermediate/worksheets/tax_brackets.ts,2,"import type { Bracket } from ""../../../config/2025.ts"";"
 forms/f1040/nodes/outputs/f1040/index.ts,38,// Lines reference: Form 1040 (2025)
 forms/f1040/nodes/outputs/f1040/index.ts,194,// Line 26 — 2025 estimated tax payments

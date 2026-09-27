@@ -6,6 +6,13 @@ the complete Form 1040 family supported by the TY2025 implementation. This
 plan is based on the 2026-09-27 corpus snapshot. It does not claim current
 TY2025 ATS approval or that the May 2026 MeF v1 package is the final target.
 
+Progress after this snapshot: `FormDefinition.validation` now owns a field
+registry and rule set; `tax validate` and both export paths select that bundle
+from the return definition. TY2025 supplies its existing artifacts. The
+TY2026 bundle, node graph, MeF/PDF builders, and catalog entry remain to build.
+`forms/f1040/2026/settlement.ts` implements and tests the changed payment and
+Schedule 3-A arithmetic but is not wired into a return yet.
+
 ## 0. Freeze source versions and establish the baseline
 
 1. Record the current branch commit, TY2025 benchmark/test results, and
@@ -18,8 +25,9 @@ TY2025 ATS approval or that the May 2026 MeF v1 package is the final target.
    Diff 2026v1→current and TY2025v5.4→current by XSD element, form namespace,
    document order, required attachment, and active rule ID. Keep raw packages
    in ignored `.state/research/docs/` because this repository is public.
-3. Build a coverage ledger from `pdf-coverage.csv` (56 descriptors),
-   `mef-coverage.csv` (84 serializers), `year-literals.csv` (241 non-test
+3. Build a coverage ledger from `pdf-coverage.csv` (56 descriptors: 51 current
+   drafts, five older-year URLs),
+   `mef-coverage.csv` (84 serializers), `year-literals.csv` (238 non-test
    occurrences), and the current MeF accepted-form XLSX. Give each existing
    component one disposition: **2026 updated**, **2026 verified unchanged**,
    **replaced**, or **unsupported with explicit diagnostic**. Add Schedule 3-A

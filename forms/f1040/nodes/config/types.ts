@@ -1,6 +1,12 @@
 // forms/f1040/nodes/config/types.ts
 import type { FilingStatus } from "../types.ts";
-import type { Bracket } from "./2025.ts";
+
+export type Bracket = {
+  over: number;
+  upTo: number;
+  rate: number;
+  base: number;
+};
 
 export interface F1040Config {
   // ── Tax brackets ──────────────────────────────────────────────────────────
@@ -84,8 +90,8 @@ export interface F1040Config {
   // ── Saver's Credit ────────────────────────────────────────────────────────
   saversCreditContributionCap: number;
   saversCreditAgiSingle: { rate50: number; rate20: number; rate10: number };
-  saversCreditAgiHoh:    { rate50: number; rate20: number; rate10: number };
-  saversCreditAgiMfj:    { rate50: number; rate20: number; rate10: number };
+  saversCreditAgiHoh: { rate50: number; rate20: number; rate10: number };
+  saversCreditAgiMfj: { rate50: number; rate20: number; rate10: number };
 
   // ── Savings Bonds (8815) ──────────────────────────────────────────────────
   savingsBondPhaseoutStartMfj: number;
@@ -175,7 +181,9 @@ export interface F1040Config {
   f2106PerformingArtistAgiLimit: number;
 
   // ── LTC Premium Limits (ltc_premium, 7206) ────────────────────────────────
-  ltcPremiumLimits: ReadonlyArray<{ readonly maxAge: number; readonly limit: number }>;
+  ltcPremiumLimits: ReadonlyArray<
+    { readonly maxAge: number; readonly limit: number }
+  >;
 
   // ── Mortgage Interest Credit (8396) ──────────────────────────────────────
   mccMaxCreditHighRate: number;

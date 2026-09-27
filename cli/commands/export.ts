@@ -7,8 +7,7 @@ import { buildEngineInputs, loadReturn } from "../store/store.ts";
 import { extractFilerIdentity } from "../../forms/f1040/mef/filer.ts";
 import { createReturnContext } from "../../core/validation/context.ts";
 import { evaluateRules } from "../../core/validation/engine.ts";
-import { FIELD_REGISTRY } from "../../forms/f1040/validation/field-registry.ts";
-import { ALL_RULES } from "../../forms/f1040/validation/rules/index.ts";
+import type { FormDefinition } from "../../core/types/form-definition.ts";
 import type { DiagnosticEntry } from "../../core/validation/types.ts";
 import type { ExecutorDiagnosticEntry } from "../../core/runtime/executor.ts";
 
@@ -121,6 +120,7 @@ function emittedValidationScope(xml: string): EmittedValidationScope {
 function validateBusinessRules(
   pending: Readonly<Record<string, Record<string, unknown>>>,
   filer: PipelineResult["filer"],
+  validation: FormDefinition["validation"],
   force: boolean | undefined,
   emittedScope?: EmittedValidationScope,
 ): void {
@@ -136,11 +136,11 @@ function validateBusinessRules(
   const ctx = createReturnContext(
     pending,
     filerInfo,
-    FIELD_REGISTRY,
+    validation.fieldRegistry,
     emittedScope?.formCounts,
   );
   const report = evaluateRules(
-    ALL_RULES,
+    validation.rules,
     ctx,
     emittedScope?.rulePrefixes,
   );
@@ -252,6 +252,7 @@ export async function exportMefCommand(
   validateBusinessRules(
     pending,
     filer,
+    def.validation,
     args.force,
     emittedValidationScope(xml),
   );
@@ -269,7 +270,7 @@ export async function exportPdfCommand(
   const { pending, def, filer } = await runReturnPipeline(
     args,
   );
-  validateBusinessRules(pending, filer, args.force);
+  validateBusinessRules(pending, filer, def.validation, args.force);
   const pdfBytes = await def.buildPdfBytes(pending, filer);
   const outputBytes = args.draft ? await addDraftWatermark(pdfBytes) : pdfBytes;
   const outPath = args.outputPath ??

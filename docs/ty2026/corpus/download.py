@@ -24,6 +24,13 @@ FORM_SLUGS = [
     "f1040sei", "f1040sse", "f1040sh", "f1040sf", "f1040s8",
     "f2441", "f4562", "f6251", "f8839", "f8889", "f8962", "f8995",
     "f8995a", "f1062",
+    # Remaining IRS slugs represented by the TY2025 PDF descriptors.
+    "f1116", "f2555", "f4136", "f4136sa", "f4137", "f461", "f4684",
+    "f4797", "f4952", "f4972", "f5329", "f5695", "f6198", "f6252",
+    "f6781", "f7206", "f8396", "f8582", "f8606", "f8615", "f8814",
+    "f8815", "f8824", "f8829", "f8834", "f8853", "f8859", "f8880",
+    "f8912", "f8919", "f8936", "f8936sa", "f8949", "f8959", "f8960",
+    "f8990", "f982",
 ]
 
 
@@ -108,10 +115,13 @@ for relative, url, kind in sources:
             text = subprocess.run(["pdftotext", "-f", "1", "-l", "2", str(target), "-"],
                                   capture_output=True, text=True).stdout
             year_check = "2026-present" if "2026" in text else "2026-not-found"
-        records.append({"path": relative, "url": url, "kind": kind, "status": "downloaded",
+            if year_check != "2026-present":
+                target.unlink()
+        status = "downloaded" if year_check != "2026-not-found" else "wrong-year"
+        records.append({"path": relative, "url": url, "kind": kind, "status": status,
                         "bytes": len(data), "sha256": hashlib.sha256(data).hexdigest(),
                         **({"year_check": year_check} if year_check else {})})
-        print("OK", relative, len(data), year_check or "")
+        print("OK" if status == "downloaded" else "WRONG YEAR", relative, len(data), year_check or "")
     except Exception as exc:
         records.append({"path": relative, "url": url, "kind": kind, "status": "unavailable", "error": str(exc)})
         print("MISSING", relative, str(exc))

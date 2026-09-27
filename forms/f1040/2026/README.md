@@ -6,6 +6,12 @@ calculation → validation → MeF XML → PDF → ATS/XSD workflow as TY2025, a
 the supported 1040 form surface.** Do not call registration alone TY2026
 support.
 
+The first executable 2026 calculation is `settlement.ts`: it assembles 1040
+lines 24a–c and 32a–c, Schedule 3-A Part I/II, payments, refund, and amount
+owed from upstream figures. Its source-backed tests cover the Form 1062 amount,
+Schedule 2 offset, and Schedule 3-A election/eligibility decisions. It still
+needs to be connected to the TY2026 node graph and serializers.
+
 The source corpus and provenance are in [`docs/ty2026`](../../../docs/ty2026/README.md).
 Its raw IRS draft forms, ATS scenarios, and authorities are committed; the
 e-Services IMF package remains under ignored `.state/research/docs` because the

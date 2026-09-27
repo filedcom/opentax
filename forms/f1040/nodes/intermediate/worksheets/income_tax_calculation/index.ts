@@ -16,7 +16,7 @@ import { calculateForm8615 } from "../../forms/form8615/calculation.ts";
 import { inputSchema as form8615SourceSchema } from "../../../inputs/f8615/schema.ts";
 import { f8812 } from "../../../inputs/f8812/index.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
-import type { Bracket } from "../../../config/2025.ts";
+import type { Bracket } from "../../../config/types.ts";
 import { bracketsForStatus, taxFromBrackets } from "../tax_brackets.ts";
 
 // ─── Accumulable helper ───────────────────────────────────────────────────────
