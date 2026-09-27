@@ -2280,6 +2280,24 @@
       "bytes": 3034288,
       "sha256": "83bc40482e7bd7c8ef7b7f34e5e37586402143ef007ec42bc7e5cd79f65df651",
       "year_check": "2025-present"
+    },
+    {
+      "path": "authorities/f172--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/f172.pdf",
+      "kind": "current-revision",
+      "status": "downloaded",
+      "bytes": 116608,
+      "sha256": "5e11c7acd788ce5681cd921a4bc75b5368b4e2385f79eaf62f7be278db13e749",
+      "retrieved_utc": "2026-09-27T17:04:40.997867+00:00"
+    },
+    {
+      "path": "authorities/i172--2024.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i172.pdf",
+      "kind": "current-revision-instructions",
+      "status": "downloaded",
+      "bytes": 205786,
+      "sha256": "15977bb641b55d9ca8acb81b1da10e04371f10acf15ec9fb09bce829bd1a5c77",
+      "retrieved_utc": "2026-09-27T17:04:40.997867+00:00"
     }
   ]
 }

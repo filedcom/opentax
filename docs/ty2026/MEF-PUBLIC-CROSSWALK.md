@@ -33,7 +33,9 @@ It cannot show TY2026 additions. The same accepted workbook separately lists
 Form 1040 Schedule 1A (row 4), Schedule 3A (row 7), Form 1062 (row 30), and
 Form 4562-B (row 62), none of which has a TY2025 serializer in the CSV.
 Form 3903 (row 56) and Form 8938 (row 199) are also listed but have no
-TY2025 serializer in this inventory. Their graph/PDF/MeF work is tracked in
+TY2025 serializer in this inventory. Form 172 (row 43) is likewise listed
+without a TY2025 serializer; it has a distinct [NOL contract](FORM172-NOL-GRAPH.md)
+and a public `IRS172` attachment row. Their graph/PDF/MeF work is tracked in
 the [parity queue](PARITY-QUEUE.md) and their own contracts. Form 4852 and
 U.S. RRB-1099/RRB-1099-R statements have no matching public rows; their
 submission path still needs the current schema and filing guidance.

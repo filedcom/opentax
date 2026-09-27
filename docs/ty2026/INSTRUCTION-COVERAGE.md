@@ -1,7 +1,7 @@
 # TY2026 instruction availability
 
 Snapshot: September 27, 2026. The [coverage ledger](instruction-coverage.csv)
-maps the instruction **owner and actual IRS slug** for 95 form/source rows.
+maps the instruction **owner and actual IRS slug** for 96 form/source rows.
 It distinguishes a missing 2026 publication from a nonexistent per-schedule
 instruction URL. There are **28 pinned 2026 instruction drafts**, **21 draft
 URLs still serving 2025**, **5 schedules whose 2025 instructions are in the
@@ -25,6 +25,9 @@ are a method comparator while the correct 2026 draft URL still serves 2025.
 The [IRS draft listing](https://www.irs.gov/draft-tax-forms) and
 [Form 1040 product page](https://www.irs.gov/forms-pubs/about-form-1040)
 were checked for these instruction owners on 2026-09-27.
+The current [Form 172 and instructions](FORM172-NOL-GRAPH.md) remain
+December 2024 revisions; the published form's blank year header supports
+the NOL ledger while 2026 law and filing rules still need current review.
 Forms 4137, 4952, 4972, 6252, 6781, 8396, 8859, 8880, and 8919 embed their 2026 instructions
 in the pinned draft forms.
 The 2026 Form 8915-F draft is pinned; its expected draft instruction URL

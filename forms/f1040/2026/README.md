@@ -175,6 +175,10 @@ The [Form 982 contract](../../../docs/ty2026/FORM982-GRAPH.md) pins the
 current cancellation-of-debt exclusion form, its 27 PDF widgets and the
 2026 QPRI written-arrangement gate. Per-debt exclusions, required
 attachment, Part II attribute reductions and corrected PDF/MeF remain.
+The [Form 172/NOL contract](../../../docs/ty2026/FORM172-NOL-GRAPH.md)
+pins the current form/instructions and 109 widgets. It replaces the shared
+aggregate NOL shortcut with per-origin-year use and carryforward, required
+Form 172 and line-8a statement routes, and the 2026 law/MeF gate.
 The [Form 8834 contract](../../../docs/ty2026/FORM8834-GRAPH.md) pins the
 current 2024+ legacy passive vehicle-credit form and 11 PDF widgets.
 Form 8582-CR must release its source credit before the 2026 Schedule 3

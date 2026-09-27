@@ -72,6 +72,7 @@ auto expense, asset/debt records, MeF attachments, and carryforwards.
   regression to detect year leakage.
 
 The [node coverage ledger](node-coverage.csv) remains `audit-required` until
-those gates pass. The source inventory identifies Form 172 as a 2026 source
-gate; the draft URL serves the hash-recorded December 2024 form. Form 4562-B is pinned, but
-its 2026 instruction and filing contract remain open.
+those gates pass. The [Form 172/NOL contract](FORM172-NOL-GRAPH.md) pins its
+current December 2024 form/instructions and maps the farm carryback and
+2027 carryforward gates. Form 4562-B is pinned, but its 2026 instruction
+and filing contract remain open.

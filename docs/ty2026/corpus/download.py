@@ -149,6 +149,8 @@ sources += [
     ("authorities/i8995a--2025.pdf", IRS + "/pub/irs-pdf/i8995a.pdf", "prior-year-comparator"),
     ("authorities/i1040gi--2025.pdf", IRS + "/pub/irs-prior/i1040gi--2025.pdf", "prior-year-comparator"),
     ("authorities/i1040sca--2025.pdf", IRS + "/pub/irs-prior/i1040sca--2025.pdf", "prior-year-comparator"),
+    ("authorities/f172--2024.pdf", IRS + "/pub/irs-pdf/f172.pdf", "current-revision"),
+    ("authorities/i172--2024.pdf", IRS + "/pub/irs-pdf/i172.pdf", "current-revision-instructions"),
     ("authorities/f1099b--2026.pdf", IRS + "/pub/irs-prior/f1099b--2026.pdf", "final-authority"),
     ("authorities/i1099b--2026.pdf", IRS + "/pub/irs-prior/i1099b--2026.pdf", "final-authority"),
     ("authorities/f1099da--2026.pdf", IRS + "/pub/irs-prior/f1099da--2026.pdf", "final-authority"),

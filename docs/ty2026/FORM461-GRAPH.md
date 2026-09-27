@@ -23,8 +23,8 @@ deductions, §172 NOL deductions and §199A QBI deductions are excluded from the
 business-loss comparison; do not infer business character merely from a
 Schedule E or 1040 line. Previous at-risk/passive suspended losses enter when
 they become allowable in the current year. Coordinate farm and nonfarm
-loss allocation with the current Form 172/NOL instructions, preserving the
-origin year and any farming carryback treatment.
+loss allocation with the pinned [Form 172/NOL contract](FORM172-NOL-GRAPH.md),
+preserving the origin year and any farming carryback treatment.
 
 | Draft line | Required derivation and filed handoff |
 | --- | --- |

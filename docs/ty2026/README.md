@@ -146,6 +146,9 @@ for the implementation contract.
 - [`FORM461-GRAPH.md`](FORM461-GRAPH.md) and `pdf-fields-f461.csv`:
   return-wide business-loss limit, source classification, Schedule 1 line 8p,
   NOL carryover, and all 18 draft PDF widgets.
+- [`FORM172-NOL-GRAPH.md`](FORM172-NOL-GRAPH.md) and `pdf-fields-f172.csv`:
+  current Form 172 and instructions, per-origin NOL ledger, Schedule 1 line
+  8a/statement, MeF attachment, and 109 current-form PDF widgets.
 - [`FORM8582-GRAPH.md`](FORM8582-GRAPH.md) and `pdf-fields-f8582.csv`:
   active-rental and other passive activities, modified AGI, Parts IV–IX
   allocation, activity carryforwards, and all 205 draft PDF widgets.
