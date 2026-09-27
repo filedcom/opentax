@@ -61,6 +61,11 @@ The pure 2026 itemized-deduction module applies P.L. 119-21's charitable
 floor and the Publication 505 overall limit. The 2026 Schedule A node still
 needs to feed these rules, including carryforward attribution and its new
 form lines.
+`forms/f1040/2026/schedule-a.ts` now assembles the changed Schedule A totals
+from already allowed amounts, with 2026 SALT limits and line 18 reduction.
+The [deduction graph contract](DEDUCTION-GRAPH.md) identifies the Schedule A ↔
+QBI dependency and the joint resolver required before registering itemizers;
+the source and carryforward nodes are still to implement.
 The dedicated 2026 standard-deduction node now selects standard or itemized,
 applies the dependent and age/blindness amounts, computes the nonitemizer
 charitable deduction, and feeds taxable income and draft 2026 Form 6251 values

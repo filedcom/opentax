@@ -31,6 +31,11 @@ EIC checkboxes 27b/27c, refund 35a, applied estimates 36, and penalty 38.
 `itemized-deductions.ts` computes the 2026 charitable floor and overall
 itemized limitation from already allowable contribution and deduction amounts.
 The Schedule A node and carryforward accounting remain to implement.
+`schedule-a.ts` now assembles the revised Schedule A totals from those already
+allowed source amounts, including SALT phaseout and both new limits. It is not
+graph-wired. [`DEDUCTION-GRAPH.md`](../../../docs/ty2026/DEDUCTION-GRAPH.md)
+specifies the joint Schedule A/QBI resolution required before full itemizer
+support; the two calculations can depend on each other.
 `nodes/standard_deduction.ts` is the dedicated 2026 deduction-choice node. It
 uses 2026 standard-deduction amounts, sends the same total income and adjustments
 to the 1040 node, and routes taxable income plus draft 2026 Form 6251 lines 1b
