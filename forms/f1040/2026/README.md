@@ -66,9 +66,11 @@ dependents. `identity.ts` defines the 2026 Form 1040 filer fields from that
 input. The final 2026 node rejects dependents until its child-credit path is
 finalized; a complete dependent return is not yet supported.
 `schedule2.ts` now calculates the draft 2026 Schedule 2 subtotals with filed
-line numbers. The [Schedule 2 and 8812 map](../../../docs/ty2026/SCHEDULE2-8812.md)
-lists the upstream source splits and Part II-B dependency needed before that
-calculator can replace the shared 2025-shaped Schedule 2 graph node.
+line numbers, and `nodes/schedule2.ts` routes its totals into the focused 1040
+graph. The [Schedule 2 and 8812 map](../../../docs/ty2026/SCHEDULE2-8812.md)
+lists the remaining source splits and Part II-B dependency. Form 4137 tip tax
+and W-2 box 12 A/B/M/N and K are routed; code Z requires its separate 409A
+tax and interest calculation.
 The shared Form 8839 node now applies TY2026 adoption limits, emits the
 refundable per-child credit to 1040 line 30, and tracks nonrefundable
 carryforwards by origin year. Its full credit-limit worksheet and TY2026

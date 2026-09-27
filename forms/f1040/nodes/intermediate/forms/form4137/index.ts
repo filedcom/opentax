@@ -8,6 +8,7 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
 import { schedule1a } from "../schedule1a/index.ts";
+import { schedule2_2026 } from "../../../../2026/nodes/schedule2.ts";
 
 const employerSchema = z.object({
   name: z.string().min(1),
@@ -186,6 +187,7 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
   readonly outputNodes = new OutputNodes([
     f1040,
     schedule2,
+    schedule2_2026,
     agi_aggregator,
     schedule1a,
   ]);
@@ -206,7 +208,11 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
           ? [output(agi_aggregator, { line1c_unreported_tips: tipIncome })]
           : []),
         ...(tipTax > 0
-          ? [output(schedule2, { line5_unreported_tip_tax: tipTax })]
+          ? [
+            ctx.taxYear === 2026
+              ? output(schedule2_2026, { line16a_form4137_tip_tax: tipTax })
+              : output(schedule2, { line5_unreported_tip_tax: tipTax }),
+          ]
           : []),
         ...(ctx.taxYear === 2026
           ? [output(schedule1a, {

@@ -19,6 +19,7 @@ import { form8959 } from "../../intermediate/forms/form8959/index.ts";
 import { form8962 } from "../../intermediate/forms/form8962/index.ts";
 import { ira_deduction_worksheet } from "../../intermediate/worksheets/ira_deduction_worksheet/index.ts";
 import { schedule2 } from "../../intermediate/aggregation/schedule2/index.ts";
+import { schedule2_2026 } from "../../../2026/nodes/schedule2.ts";
 import { schedule3 } from "../../intermediate/aggregation/schedule3/index.ts";
 import { schedule_se } from "../../intermediate/forms/schedule_se/index.ts";
 import { scheduleA as schedule_a } from "../schedule_a/index.ts";
@@ -500,7 +501,7 @@ function qualifiedOvertimeOutput(w2s: W2Items, taxYear: number): NodeOutput[] {
     : [];
 }
 
-function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
+function box12NodeOutputs(w2s: W2Items, taxYear: number): NodeOutput[] {
   const entries = regularItems(w2s).flatMap((item) => item.box12_entries ?? []);
   const sum = (...codes: Box12Code[]) =>
     entries.filter((e) => codes.includes(e.code)).reduce(
@@ -527,14 +528,32 @@ function box12NodeOutputs(w2s: W2Items): NodeOutput[] {
 
   const schedule2Input: Partial<z.infer<typeof schedule2["inputSchema"]>> = {};
   const ab = sum(Box12Code.A, Box12Code.B);
-  if (ab > 0) schedule2Input.uncollected_fica = ab;
   const mn = sum(Box12Code.M, Box12Code.N);
-  if (mn > 0) schedule2Input.uncollected_fica_gtl = mn;
   const k = sum(Box12Code.K);
-  if (k > 0) schedule2Input.golden_parachute_excise = k;
   const zCode = sum(Box12Code.Z);
-  if (zCode > 0) schedule2Input.section409a_excise = zCode;
-  if (Object.keys(schedule2Input).length > 0) {
+  if (taxYear === 2026) {
+    if (zCode > 0) {
+      throw new Error(
+        "TY2026 W-2 code Z needs a section 409A tax and interest calculation",
+      );
+    }
+    if (ab + mn > 0) {
+      outputs.push(output(schedule2_2026, {
+        line17c_w2_uncollected_fica: ab + mn,
+      }));
+    }
+    if (k > 0) {
+      outputs.push(output(schedule2_2026, {
+        line13k_golden_parachute_tax: k,
+      }));
+    }
+  } else {
+    if (ab > 0) schedule2Input.uncollected_fica = ab;
+    if (mn > 0) schedule2Input.uncollected_fica_gtl = mn;
+    if (k > 0) schedule2Input.golden_parachute_excise = k;
+    if (zCode > 0) schedule2Input.section409a_excise = zCode;
+  }
+  if (taxYear !== 2026 && Object.keys(schedule2Input).length > 0) {
     outputs.push(
       output(
         schedule2,
@@ -561,6 +580,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
     eitc,
     schedule1,
     schedule2,
+    schedule2_2026,
     schedule3,
     schedule_a,
     schedule_c,
@@ -628,7 +648,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...scheduleSEOutput(input.w2s),
       ...qualifiedTipsOutput(input.w2s, ctx.taxYear),
       ...qualifiedOvertimeOutput(input.w2s, ctx.taxYear),
-      ...box12NodeOutputs(input.w2s),
+      ...box12NodeOutputs(input.w2s, ctx.taxYear),
       this.outputNodes.output(f1040, f1040Fields as AtLeastOne<F1040Input>),
     ];
 

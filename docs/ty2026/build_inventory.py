@@ -17,7 +17,7 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
     "general": "2026 ages, relative limit, and no-dependent identity graph updated; audit credits",
-    "w2": "2026 SIMPLE/deferral limits and TP/TT routing updated; audit remaining outputs",
+    "w2": "2026 SIMPLE, TP/TT, and Schedule 2 box12 routing updated; audit other outputs",
     "auto_expense": "2026 business mileage periods updated; audit remaining rules",
     "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",
     "f8621": "2026 event-year allocation updated; audit remaining rules",
@@ -29,7 +29,7 @@ NODE_PROGRESS = {
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",
-    "schedule2": "2026 Form 4137 tip tax reaches 1040 in focused graph; audit other lines",
+    "schedule2": "dedicated 2026 line calculator/node routes tip and W-2 taxes; split other sources",
 }
 
 P0_NODES = {

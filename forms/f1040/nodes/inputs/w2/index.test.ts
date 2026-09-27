@@ -153,6 +153,31 @@ Deno.test("TY2026 W-2 codes TP and TT route reported tips and overtime", () => {
   assertEquals(overtime, [{ employee_ssn: "111223333", amount: 2_000 }]);
 });
 
+Deno.test("TY2026 W-2 employment and parachute tax use Schedule 2 filed lines", () => {
+  const result = compute2026([minimalItem({
+    box12_entries: [
+      { code: Box12Code.A, amount: 100 },
+      { code: Box12Code.M, amount: 50 },
+      { code: Box12Code.K, amount: 200 },
+    ],
+  })]);
+  const schedule2Fields = result.outputs.filter((item) =>
+    item.nodeType === "schedule2"
+  ).map((item) => item.fields);
+  assertEquals(schedule2Fields, [
+    { line17c_w2_uncollected_fica: 150 },
+    { line13k_golden_parachute_tax: 200 },
+  ]);
+  assertThrows(
+    () =>
+      compute2026([minimalItem({
+        box12_entries: [{ code: Box12Code.Z, amount: 1_000 }],
+      })]),
+    Error,
+    "section 409A tax and interest calculation",
+  );
+});
+
 Deno.test("TY2026 W-2 code TP needs a qualifying occupation and employee SSN", () => {
   assertThrows(
     () =>

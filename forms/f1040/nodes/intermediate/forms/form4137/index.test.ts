@@ -58,6 +58,24 @@ Deno.test("Form 4137 calculates unreported income, SS tax and Medicare tax from 
   );
 });
 
+Deno.test("TY2026 Form 4137 routes tax to Schedule 2 line 16a", () => {
+  const result = form4137.compute(
+    { taxYear: 2026, formType: "f1040" },
+    inputSchema.parse({
+      forms: [{
+        recipient: "taxpayer",
+        employers: [employer],
+        ss_wages_from_w2: 30_000,
+      }],
+    }),
+  );
+  const schedule2 = result.outputs.find((item) =>
+    item.nodeType === "schedule2"
+  );
+  assertEquals(schedule2?.fields.line16a_form4137_tip_tax, 230);
+  assertEquals("line5_unreported_tip_tax" in (schedule2?.fields ?? {}), false);
+});
+
 Deno.test("Form 4137 line 5 tips remain income but are excluded from FICA", () => {
   const result = compute({
     forms: [{
