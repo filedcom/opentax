@@ -74,6 +74,10 @@ The [Form 6198 contract](FORM6198-GRAPH.md) pins the current continuous-use
 form/instructions and maps the at-risk stage ahead of Forms 8582 and 461.
 Its 34-widget PDF has no tooltips; the current TY2025 descriptor puts income
 in the activity-description field and the shared node loses per-item losses.
+The [Form 4684 contract](FORM4684-GRAPH.md) maps casualty events and property,
+the draft state-declaration and qualified-disaster split, Section B's
+Schedule A/Form 4797 routes, Ponzi and §165(i) branches, and all 162 PDF
+widgets. The 2026 instructions and current MeF remain acceptance gates.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

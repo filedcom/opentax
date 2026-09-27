@@ -114,6 +114,10 @@ The [Form 6198 contract](../../../docs/ty2026/FORM6198-GRAPH.md) uses the
 current November 2025 continuous-use form and instructions to map basis,
 financing, recapture and per-item allowed losses before Form 8582 and 461.
 Its 34 PDF widgets and activity-linked MeF instances remain to implement.
+The [Form 4684 contract](../../../docs/ty2026/FORM4684-GRAPH.md) maps
+2026 disaster and casualty events through the personal and business sections,
+then into Schedule A/Form 4797 and activity limits. The 162-widget PDF,
+current instructions and 2026 MeF instances remain to implement.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit

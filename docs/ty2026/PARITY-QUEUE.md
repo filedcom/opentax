@@ -41,6 +41,9 @@ can enter Form 461 without losing their source or prior-year character.
 The [Form 6198 at-risk contract](FORM6198-GRAPH.md) supplies the first
 activity-level loss limit, with a current continuous-use form and instructions
 and explicit per-item handoffs to Form 8582.
+The [Form 4684 casualty contract](FORM4684-GRAPH.md) supplies per-event and
+property loss/gain records ahead of those limits, with the draft's new
+state-declaration language and the correct Schedule A/Form 4797 destinations.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

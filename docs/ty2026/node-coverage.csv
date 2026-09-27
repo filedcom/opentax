@@ -137,7 +137,7 @@ form2555,forms/f1040/nodes/intermediate/forms/form2555/index.ts,intermediate,1,y
 form4137,forms/f1040/nodes/intermediate/forms/form4137/index.ts,intermediate,0,yes,yes,yes,yes,P2,audit-required,"2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases"
 form4562,forms/f1040/nodes/intermediate/forms/form4562/index.ts,intermediate,8,yes,yes,yes,yes,P0,audit-required,"Asset/activity ledger, 2026 Part I-V, Schedule C/E/F/4835/8829 routes, 271 PDF widgets and current MeF remain; shared node sends depreciation to obsolete Schedule 1 line 13"
 form461,forms/f1040/nodes/intermediate/forms/form461/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"Return-wide 2026 business-loss worksheet, source classification, NOL carryover, 18 PDF widgets and current MeF remain; shared node sums precomputed per-source excesses"
-form4684,forms/f1040/nodes/intermediate/forms/form4684/index.ts,intermediate,3,no,yes,yes,yes,P1,audit-required,"verify 2026 law, node outputs, and graph route"
+form4684,forms/f1040/nodes/intermediate/forms/form4684/index.ts,intermediate,3,no,yes,yes,yes,P1,audit-required,"2026 draft and 2025 instruction comparator pinned; per-event casualty, state/qualified disaster, Schedule A/4797, Ponzi, election, 162 PDF widgets and current MeF remain"
 form4952,forms/f1040/nodes/intermediate/forms/form4952/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form4797,forms/f1040/nodes/intermediate/forms/form4797/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"
 form8824,forms/f1040/nodes/intermediate/forms/form8824/index.ts,intermediate,0,no,yes,yes,yes,P2,audit-required,"verify 2026 law, node outputs, and graph route"

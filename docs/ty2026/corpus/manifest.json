@@ -1531,6 +1531,33 @@
       "bytes": 202650,
       "sha256": "444d8002c734359b0f75235bd5461c9019cf4e871742243de1021ec14ceb0e1d",
       "retrieved_utc": "2026-09-27T14:08:40Z"
+    },
+    {
+      "path": "authorities/i4684--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i4684--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 251000,
+      "sha256": "830b752edd1e945dc98ccb0ea91992643106840091c42ce0fcc0bf319ba5271a",
+      "retrieved_utc": "2026-09-27T14:13:22Z"
+    },
+    {
+      "path": "authorities/rp-09-20.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-09-20.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 48861,
+      "sha256": "6b09bc48e08b03b3e87c26dc816548385fb52c6e4aa1ee2adbfc149c9756a50e",
+      "retrieved_utc": "2026-09-27T14:13:31Z"
+    },
+    {
+      "path": "authorities/rp-11-58.pdf",
+      "url": "https://www.irs.gov/pub/irs-drop/rp-11-58.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 17631,
+      "sha256": "b0319b591235e21569018972244d6527a3be55a965e3b01ae9e53abaf89fcd10",
+      "retrieved_utc": "2026-09-27T14:13:31Z"
     }
   ]
 }
