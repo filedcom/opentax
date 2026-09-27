@@ -5,6 +5,7 @@ Evidence here is from the IRS draft PDFs in `corpus/draft/`, captured
 
 | Draft form/line | TY2026 requirement | Existing TY2025 code to inspect |
 | --- | --- | --- |
+| 1040 11a–11b, 25a–25d, 27b–27c, 34–38 | AGI is printed on 11a and carried to 11b; withholding sources occupy 25a–25c and sum on 25d; EIC has clergy/decline checkboxes; overpayment can be divided between refund 35a and 2027 estimates 36, while penalty is line 38. | The 2026 core node now emits 11a/11b and withholding source lines, checks the EIC decline contradiction, and supports line 36. Input nodes, filer flags, summary, PDF and MeF mappings still need to supply and export them. |
 | 1040 12e–15 | 12e is standard/itemized; new 12f is nonitemizer charitable deduction; 13a is Schedule 1-A line 44; 13b is QBI; line 14 sums all four. | `nodes/outputs/f1040/index.ts` computes line 14 from old keys; `2025/mef/forms/f1040.ts` and `2025/pdf/forms/f1040.ts` map old lines. |
 | 1040 24a–24c | 24a is total tax before Form 1062 payment; 24b is Form 1062 line 15; 24c is their sum. Refund and amount due compare payments with **24c**. | Current output and CLI summary use `line24_total_tax`; extend 2026 domain keys and summary deliberately. |
 | 1040 27–33 | 30 is refundable adoption credit; 32a sums refundable credits, 32b is Schedule 3-A, 32c subtracts 32b, and 33 sums 25d + 26 + 32c. | Current output computes one `line32_refundable_credits_total`; add Schedule 3-A result and route to line 33. |

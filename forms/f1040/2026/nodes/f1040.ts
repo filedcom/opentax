@@ -30,13 +30,19 @@ export const inputSchema = z.object({
   line20_nonrefundable_credits: amount.default(0),
   line23_other_taxes: amount.default(0),
   form1062_line15: amount.default(0),
-  line25d_total_withholding: amount.default(0),
+  line25a_w2_withheld: amount.default(0),
+  line25b_withheld_1099: amount.default(0),
+  line25c_other_withheld: amount.default(0),
   line26_estimated_payments: amount.default(0),
   line27a_eic: amount.default(0),
+  line27b_clergy_schedule_se: z.boolean().optional(),
+  line27c_declines_eic: z.boolean().optional(),
   line28_actc: amount.default(0),
   line29_refundable_aotc: amount.default(0),
   line30_refundable_adoption: amount.default(0),
   line31_other_payments: amount.default(0),
+  line36_apply_to_2027: amount.default(0),
+  line38_underpayment_penalty: amount.default(0),
   schedule2_line20: amount.default(0),
   wants_federal_public_benefit: z.boolean().optional(),
   eligible_for_federal_public_benefit: z.boolean().optional(),
@@ -52,7 +58,12 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       throw new Error("TY2026 Form 1040 node requires f1040:2026 context");
     }
     const input = inputSchema.parse(rawInput);
+    if (input.line27c_declines_eic && input.line27a_eic > 0) {
+      throw new Error("Form 1040 line 27c cannot decline a claimed EIC");
+    }
     const line11Agi = input.line9_total_income - input.line10_adjustments;
+    const line25dWithholding = input.line25a_w2_withheld +
+      input.line25b_withheld_1099 + input.line25c_other_withheld;
     const deductions = calculateDeductions2026({
       filingStatus: input.filing_status,
       adjustedGrossIncome: line11Agi,
@@ -75,13 +86,14 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       line22TaxAfterCredits,
       line23OtherTaxes: input.line23_other_taxes,
       form1062Line15: input.form1062_line15,
-      line25dWithholding: input.line25d_total_withholding,
+      line25dWithholding,
       line26EstimatedPayments: input.line26_estimated_payments,
       line27aEic: input.line27a_eic,
       line28Actc: input.line28_actc,
       line29RefundableAotc: input.line29_refundable_aotc,
       line30RefundableAdoption: input.line30_refundable_adoption,
       line31OtherPayments: input.line31_other_payments,
+      line36ApplyTo2027: input.line36_apply_to_2027,
       schedule2Line20: input.schedule2_line20,
       wantsFederalPublicBenefit: input.wants_federal_public_benefit,
       eligibleForFederalPublicBenefit:
@@ -92,7 +104,8 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       fields: {
         line9_total_income: input.line9_total_income,
         line10_adjustments: input.line10_adjustments,
-        line11_agi: line11Agi,
+        line11a_agi: line11Agi,
+        line11b_agi: line11Agi,
         line12e_standard_or_itemized: deductions.line12eStandardOrItemized,
         line12f_nonitemizer_charity: deductions.line12fNonitemizerCharity,
         line13a_schedule1a: deductions.line13aSchedule1a,
@@ -110,9 +123,14 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line24a_total_tax: settlement.line24aTotalTax,
         line24b_form1062: settlement.line24bForm1062,
         line24c_total_tax: settlement.line24cTaxIncludingForm1062,
-        line25d_total_withholding: input.line25d_total_withholding,
+        line25a_w2_withheld: input.line25a_w2_withheld,
+        line25b_withheld_1099: input.line25b_withheld_1099,
+        line25c_other_withheld: input.line25c_other_withheld,
+        line25d_total_withholding: line25dWithholding,
         line26_estimated_payments: input.line26_estimated_payments,
         line27a_eic: input.line27a_eic,
+        line27b_clergy_schedule_se: input.line27b_clergy_schedule_se,
+        line27c_declines_eic: input.line27c_declines_eic,
         line28_actc: input.line28_actc,
         line29_refundable_aotc: input.line29_refundable_aotc,
         line30_refundable_adoption: input.line30_refundable_adoption,
@@ -123,8 +141,10 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
         line32c_net_refundable_credits: settlement.line32cNetRefundableCredits,
         line33_total_payments: settlement.line33TotalPayments,
         line34_overpayment: settlement.line34Overpayment,
-        line35a_refund: settlement.line34Overpayment,
+        line35a_refund: settlement.line35aRefund,
+        line36_apply_to_2027: settlement.line36ApplyTo2027,
         line37_amount_owed: settlement.line37AmountOwed,
+        line38_underpayment_penalty: input.line38_underpayment_penalty,
       },
     }];
     if (settlement.schedule3a) {

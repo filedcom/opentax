@@ -26,6 +26,8 @@ registration.
 deduction, tax, payment, and balance lines and emits Schedule 3-A data. It is
 not in a registered graph yet. Expand its upstream input surface and preserve
 the 2025 credit-finalization behavior where 2026 law and forms still require it.
+Its output now distinguishes AGI 11a/11b, withholding sources 25a–25d,
+EIC checkboxes 27b/27c, refund 35a, applied estimates 36, and penalty 38.
 CLI node inspection and graph commands accept `--year` and will select the
 TY2026 registry once this product is registered.
 The shared `auto_expense` and Form 2106 paths now apply the two 2026 business

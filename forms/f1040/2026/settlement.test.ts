@@ -15,6 +15,7 @@ const base: Settlement2026Input = {
   line29RefundableAotc: 0,
   line30RefundableAdoption: 0,
   line31OtherPayments: 0,
+  line36ApplyTo2027: 0,
   schedule2Line20: 0,
 };
 
@@ -101,4 +102,20 @@ Deno.test("2026 balance uses rounded filed line 24c and 33 amounts", () => {
   assertEquals(result.line24cTaxIncludingForm1062, 607.62);
   assertEquals(result.line33TotalPayments, 1.28);
   assertEquals(result.line37AmountOwed, 607);
+});
+
+Deno.test("2026 overpayment can be split between refund and 2027 estimates", () => {
+  const result = calculateSettlement2026({
+    ...base,
+    line25dWithholding: 6_000,
+    line36ApplyTo2027: 750,
+  });
+  assertEquals(result.line34Overpayment, 1_250);
+  assertEquals(result.line35aRefund, 500);
+  assertEquals(result.line36ApplyTo2027, 750);
+  assertThrows(() => calculateSettlement2026({
+    ...base,
+    line25dWithholding: 6_000,
+    line36ApplyTo2027: 1_251,
+  }), RangeError, "cannot exceed");
 });

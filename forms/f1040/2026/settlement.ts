@@ -16,6 +16,8 @@ export interface Settlement2026Input {
   readonly line29RefundableAotc: number;
   readonly line30RefundableAdoption: number;
   readonly line31OtherPayments: number;
+  /** Amount of the overpayment applied to TY2027 estimated tax (1040 line 36). */
+  readonly line36ApplyTo2027: number;
   /** Schedule 2 line 20 is excluded from the Schedule 3-A tax offset. */
   readonly schedule2Line20: number;
   /** Answer to Schedule 3-A line 7, required only when line 6 is positive. */
@@ -43,6 +45,8 @@ export interface Settlement2026 {
   readonly line32cNetRefundableCredits: number;
   readonly line33TotalPayments: number;
   readonly line34Overpayment: number;
+  readonly line35aRefund: number;
+  readonly line36ApplyTo2027: number;
   readonly line37AmountOwed: number;
 }
 
@@ -68,6 +72,7 @@ export function calculateSettlement2026(
       "line29RefundableAotc",
       "line30RefundableAdoption",
       "line31OtherPayments",
+      "line36ApplyTo2027",
       "schedule2Line20",
     ] as const
   ) {
@@ -132,6 +137,10 @@ export function calculateSettlement2026(
   // operands. Rounding a cents-level difference can be off by one dollar.
   const filedBalance = Math.round(line33TotalPayments) -
     Math.round(line24cTaxIncludingForm1062);
+  const line34Overpayment = Math.max(0, filedBalance);
+  if (input.line36ApplyTo2027 > line34Overpayment) {
+    throw new RangeError("Form 1040 line 36 cannot exceed line 34 overpayment");
+  }
 
   return {
     line24aTotalTax,
@@ -142,7 +151,9 @@ export function calculateSettlement2026(
     line32bFederalPublicBenefitReduction,
     line32cNetRefundableCredits,
     line33TotalPayments,
-    line34Overpayment: Math.max(0, filedBalance),
+    line34Overpayment,
+    line35aRefund: line34Overpayment - input.line36ApplyTo2027,
+    line36ApplyTo2027: input.line36ApplyTo2027,
     line37AmountOwed: Math.max(0, -filedBalance),
   };
 }
