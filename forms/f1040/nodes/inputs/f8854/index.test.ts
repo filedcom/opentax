@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  averageAnnualNetIncomeTax,
   AVG_ANNUAL_TAX_THRESHOLD_2025,
   ExpatriateType,
   f8854,
@@ -27,10 +28,20 @@ function input(overrides: Record<string, unknown> = {}) {
   return {
     expatriation_date: "2025-06-15",
     expatriate_type: ExpatriateType.CITIZEN,
-    average_annual_tax_prior_5_years: 0,
+    prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(0),
     net_worth_at_expatriation: 0,
     certified_tax_compliance: true,
     ...overrides,
+  };
+}
+
+function priorYearTax(amount: number) {
+  return {
+    year_2024: amount,
+    year_2023: amount,
+    year_2022: amount,
+    year_2021: amount,
+    year_2020: amount,
   };
 }
 
@@ -40,15 +51,30 @@ Deno.test("Form 8854 uses TY2025 covered-expatriate thresholds", () => {
   assertEquals(MARK_TO_MARKET_EXCLUSION_2025, 890_000);
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
-      average_annual_tax_prior_5_years: 206_000,
+      prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(206_000),
     }))),
     false,
   );
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
-      average_annual_tax_prior_5_years: 206_001,
+      prior_year_us_income_tax_less_foreign_tax_credit: {
+        ...priorYearTax(206_000),
+        year_2024: 206_005,
+      },
     }))),
     true,
+  );
+  assertEquals(
+    averageAnnualNetIncomeTax(inputSchema.parse(input({
+      prior_year_us_income_tax_less_foreign_tax_credit: {
+        year_2024: 100_000,
+        year_2023: 200_000,
+        year_2022: 300_000,
+        year_2021: 400_000,
+        year_2020: 500_000,
+      },
+    }))),
+    300_000,
   );
   assertEquals(
     isCoveredExpatriate(inputSchema.parse(input({
@@ -80,7 +106,7 @@ Deno.test("Form 8854 dual-citizen exception waives only tax and net-worth tests"
     us_resident_tax_years_in_last_15: 10,
   };
   const covered = {
-    average_annual_tax_prior_5_years: 300_000,
+    prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(300_000),
     net_worth_at_expatriation: 4_000_000,
     covered_expatriate_exception: dual,
   };
@@ -121,7 +147,7 @@ Deno.test("Form 8854 minor exception uses the strict age and residence boundarie
     us_resident_tax_years_before_expatriation: 10,
   };
   const covered = {
-    average_annual_tax_prior_5_years: 300_000,
+    prior_year_us_income_tax_less_foreign_tax_credit: priorYearTax(300_000),
     covered_expatriate_exception: minor,
   };
   assertEquals(isCoveredExpatriate(inputSchema.parse(input(covered))), false);
@@ -215,6 +241,23 @@ Deno.test("Form 8854 validates its source date and asset amounts", () => {
   assertEquals(
     inputSchema.safeParse(input({
       assets: [asset("A", 1, 0), asset("A", 2, 0)],
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      prior_year_us_income_tax_less_foreign_tax_credit: {
+        ...priorYearTax(0),
+        year_2024: -1,
+      },
+    })).success,
+    false,
+  );
+  assertEquals(
+    inputSchema.safeParse(input({
+      prior_year_us_income_tax_less_foreign_tax_credit: {
+        year_2024: 1,
+      },
     })).success,
     false,
   );

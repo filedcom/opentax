@@ -20,6 +20,11 @@ covered-expatriate criterion. The 2025 mark-to-market exclusion is **$890,000**.
 These amounts are from the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
+The input now records the U.S. income tax less foreign tax credit for each of
+2020-2024, as Part II Section A line 1 requires, and derives the five-year
+average. The supplied amounts still need reconciliation to those prior-year
+returns and credits.
+
 The current build pass allocates the $890,000 exclusion across identified gain
 properties in proportion to their positive built-in gains, with a stable
 cent-balancing rule. Loss properties receive no exclusion. This is only the

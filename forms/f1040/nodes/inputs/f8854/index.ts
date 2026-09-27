@@ -47,8 +47,16 @@ const moneySchema = z.number().finite().nonnegative().refine(
   (amount) =>
     Number.isSafeInteger(Math.round(amount * 100)) &&
     Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
-  "Form 8854 asset amounts must have safe cent precision",
+  "Form 8854 amounts must have safe cent precision",
 );
+
+export const priorYearTaxSchema = z.object({
+  year_2024: moneySchema,
+  year_2023: moneySchema,
+  year_2022: moneySchema,
+  year_2021: moneySchema,
+  year_2020: moneySchema,
+});
 
 export const assetSchema = z.object({
   asset_id: z.string().trim().min(1),
@@ -63,7 +71,7 @@ export const inputSchema = z.object({
     "This Form 8854 input covers initial expatriation in 2025 only",
   ),
   expatriate_type: z.nativeEnum(ExpatriateType),
-  average_annual_tax_prior_5_years: z.number().nonnegative(),
+  prior_year_us_income_tax_less_foreign_tax_credit: priorYearTaxSchema,
   net_worth_at_expatriation: z.number().nonnegative(),
   certified_tax_compliance: z.boolean(),
   covered_expatriate_exception: exceptionSchema.optional(),
@@ -104,6 +112,14 @@ export const inputSchema = z.object({
 
 export type F8854Input = z.infer<typeof inputSchema>;
 
+export function averageAnnualNetIncomeTax(input: F8854Input): number {
+  const taxes = input.prior_year_us_income_tax_less_foreign_tax_credit;
+  return (
+    taxes.year_2024 + taxes.year_2023 + taxes.year_2022 +
+    taxes.year_2021 + taxes.year_2020
+  ) / 5;
+}
+
 function underEighteenAndHalf(
   dateOfBirth: string,
   expatriationDate: string,
@@ -141,7 +157,7 @@ export function isCoveredExpatriate(rawInput: F8854Input): boolean {
       exception.us_resident_tax_years_before_expatriation <= 10
     ) return false;
   }
-  return input.average_annual_tax_prior_5_years >
+  return averageAnnualNetIncomeTax(input) >
       AVG_ANNUAL_TAX_THRESHOLD_2025 ||
     input.net_worth_at_expatriation >= NET_WORTH_THRESHOLD;
 }
