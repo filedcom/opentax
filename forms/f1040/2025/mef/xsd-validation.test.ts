@@ -318,6 +318,19 @@ Deno.test({
       beginning_deferred_liability: 1_000,
       triggered_liability: 1_000,
       transferred_liability: 0,
+    }, {
+      election_or_transfer_year: 2025,
+      source_document_reference: "2025 S corporation transfer in",
+      corporation_name: "Acquired S Corp",
+      corporation_ein: "789456123",
+      beginning_deferred_liability: 0,
+      triggered_liability: 0,
+      transferred_liability: 500,
+      counterparty_tax_id: { kind: "ein", value: "987654321" },
+      transfer_agreement_links: [{
+        counterparty_tax_id: { kind: "ein", value: "987654321" },
+        file_name: "Form965DIn.pdf",
+      }],
     }],
     transfer_agreements: [{
       agreement_type: "965-C",
@@ -339,6 +352,12 @@ Deno.test({
       file_name: "Form965E.pdf",
       signed_pdf_base64: syntheticPdfBase64,
       source_document_reference: "Synthetic Form 965-E test fixture",
+    }, {
+      agreement_type: "965-D",
+      file_name: "Form965DIn.pdf",
+      signed_pdf_base64: syntheticPdfBase64,
+      source_document_reference:
+        "Synthetic transfer-in Form 965-D test fixture",
     }],
   };
   const bundle = await buildMefBundle({
@@ -350,11 +369,15 @@ Deno.test({
     attachments: [],
   });
   const { xml } = bundle;
-  assertEquals(bundle.attachments.length, 4);
+  assertEquals(bundle.attachments.length, 5);
   assertEquals(bundle.attachments[0].bytes, pdfBytes);
   assertStringIncludes(xml, "<NetAdjustmentTransferStmt ");
   assertStringIncludes(xml, "<MultipleTransfereeStmt ");
   assertStringIncludes(xml, "<BinaryAttachment ");
+  assertStringIncludes(
+    xml,
+    "<SCorporationEIN>789456123</SCorporationEIN><DeferredNetTaxLiabTrnsfrAmt>500</DeferredNetTaxLiabTrnsfrAmt>",
+  );
   assertStringIncludes(
     xml,
     'referenceDocumentName="BinaryAttachment NetAdjustmentTransferStatement MultipleTransfereeStatement"',

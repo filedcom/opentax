@@ -52,7 +52,13 @@ $5,000 line 1e cap. Source, cap, and XML cases are written but unrun. The $5,000
 cap is not yet allocated across a return that mixes passive and nonpassive
 disabled-access sources. The IRS requires the overall limited credit to be
 allocated pro rata, so that mixed-source path remains an open correctness gap
-rather than a supported filing claim.
+rather than a supported filing claim. This needs an upstream source-allocation
+step: the current K-1/Form 8826 nonpassive path reaches Form 3800 directly,
+while passive source amounts reach Form 8582-CR first. The allocation must
+retain gross K-1 source amounts for reconciliation, cap current-year source
+amounts before Form 8582-CR applies its passive tax limit, and pass the same
+capped nonpassive amounts into Form 3800 and its Part V source rows. No such
+upstream step is implemented yet.
 
 The latest completed full test run is **6,596 passed, 0 failed, 48 ignored**
 (`deno task test`, 2026-09-26, before the later multi-policy line 10 and
