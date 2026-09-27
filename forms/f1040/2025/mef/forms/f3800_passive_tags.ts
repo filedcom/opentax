@@ -165,7 +165,8 @@ export type PlannedForm3800PassiveXmlRow = {
   readonly form3800CreditLine: Form3800CreditLine;
   readonly part: "current" | "carryover";
   readonly tag: string;
-  readonly latestOriginatingTaxYear: number;
+  /** A summary year exists only when every source has the same origin year. */
+  readonly summaryOriginatingTaxYear: number | undefined;
   readonly beforePassiveLimit: number;
   readonly afterPassiveLimit: number;
   readonly sources: readonly Form3800PassiveCreditVintage[];
@@ -216,10 +217,10 @@ export function planForm3800PassiveXmlRows(
       const sources = [...prior.sources, ...row.sources];
       return [...planned.slice(0, -1), {
         ...prior,
-        latestOriginatingTaxYear: Math.max(
-          prior.latestOriginatingTaxYear,
-          row.originatingTaxYear,
-        ),
+        summaryOriginatingTaxYear:
+          prior.summaryOriginatingTaxYear === row.originatingTaxYear
+            ? row.originatingTaxYear
+            : undefined,
         beforePassiveLimit,
         afterPassiveLimit,
         sources,
@@ -230,7 +231,7 @@ export function planForm3800PassiveXmlRows(
       form3800CreditLine: row.form3800CreditLine,
       part: rowPart,
       tag,
-      latestOriginatingTaxYear: row.originatingTaxYear,
+      summaryOriginatingTaxYear: row.originatingTaxYear,
       beforePassiveLimit: row.beforePassiveLimit,
       afterPassiveLimit: row.afterPassiveLimit,
       sources: row.sources,

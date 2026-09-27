@@ -58,7 +58,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
     planned.map((row) => ({
       part: row.part,
       tag: row.tag,
-      year: row.latestOriginatingTaxYear,
+      year: row.summaryOriginatingTaxYear,
       before: row.beforePassiveLimit,
       after: row.afterPassiveLimit,
       sourceYears: row.sources.map((entry) => entry.originatingTaxYear),
@@ -77,7 +77,7 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
       {
         part: "carryover",
         tag: "Frm8820CYCyovCrGrp",
-        year: 2024,
+        year: undefined,
         before: 300,
         after: 250,
         sourceYears: [2022, 2024],
@@ -85,4 +85,35 @@ Deno.test("Form 3800 passive XML plan keeps one carryover group with source deta
       },
     ],
   );
+});
+
+Deno.test("Form 3800 passive XML summary year survives same-year sources", () => {
+  const planned = planForm3800PassiveXmlRows(
+    groupForm3800PassiveCreditVintages([
+      {
+        activityReference: "Rental A",
+        sourceForm: "Form 8820",
+        sourceDocumentReference: "2023 A statement",
+        form3800CreditLine: "1h",
+        reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+        originatingTaxYear: 2023,
+        beforePassiveLimit: 100,
+        afterPassiveLimit: 60,
+      },
+      {
+        activityReference: "Rental B",
+        sourceForm: "Form 8820",
+        sourceDocumentReference: "2023 B statement",
+        form3800CreditLine: "1h",
+        reportingRoute: PassiveCreditReportingRoute.Form3800Line3,
+        originatingTaxYear: 2023,
+        beforePassiveLimit: 200,
+        afterPassiveLimit: 140,
+      },
+    ]),
+  );
+  assertEquals(planned.length, 1);
+  assertEquals(planned[0].summaryOriginatingTaxYear, 2023);
+  assertEquals(planned[0].requiresSourceBreakdown, true);
+  assertEquals(planned[0].sources.length, 2);
 });
