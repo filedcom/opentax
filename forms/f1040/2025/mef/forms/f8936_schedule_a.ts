@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import {
+  computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   type F8936Input,
   type F8936Item,
@@ -59,7 +60,7 @@ function newVehicleGroup(
 ): string {
   const tentative = Math.min(item.credit_amount ?? 0, 7_500);
   const businessUsePct = item.business_use_pct ?? 0;
-  const businessPart = Math.round(tentative * businessUsePct);
+  const businessPart = computeNewVehicleCreditParts(item, input).business;
   const { currentOver, priorOver } = incomeAnswers(input, false);
   const stopsAtIncome = currentOver && priorOver;
   const passesQuestions = !item.resold_within_30_days && !stopsAtIncome;
@@ -144,7 +145,13 @@ function previouslyOwnedGroup(
 
 function buildScheduleA(item: F8936Item, input: F8936Input): string {
   const personalCredit = computeVehiclePersonalCredit(item, input);
-  if (personalCredit === 0 && item.transferred_to_dealer !== true) return "";
+  const businessCredit = item.is_new_vehicle === true
+    ? computeNewVehicleCreditParts(item, input).business
+    : 0;
+  if (
+    personalCredit === 0 && businessCredit === 0 &&
+    item.transferred_to_dealer !== true
+  ) return "";
   const vehicle = requiredVehicleDetails(item);
   if (item.transferred_to_dealer === undefined) {
     throw new Error("Form 8936 Schedule A needs a dealer-transfer answer");

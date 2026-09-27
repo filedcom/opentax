@@ -203,4 +203,13 @@ Deno.test("Form 8936: business-use amount is held for Form 3800 routing", () => 
     Error,
     "Form 3800 routing",
   );
+  assertThrows(
+    () =>
+      form8936.build({
+        ...source,
+        f8936s: [{ ...vehicle, business_use_pct: 1 }],
+      }, context(10_000, 0)),
+    Error,
+    "Form 3800 routing",
+  );
 });

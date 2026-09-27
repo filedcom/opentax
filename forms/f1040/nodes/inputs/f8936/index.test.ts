@@ -1,5 +1,6 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  computeNewVehicleCreditParts,
   f8936,
   type F8936Input,
   type F8936Item,
@@ -295,6 +296,25 @@ for (
     );
   });
 }
+
+Deno.test("Form 8936: new vehicle business and personal shares reconcile after rounding", () => {
+  const vehicle = {
+    ...newVehicle,
+    credit_amount: 1_001,
+    business_use_pct: 0.5,
+  };
+  assertEquals(computeNewVehicleCreditParts(vehicle, source([vehicle])), {
+    personal: 500,
+    business: 501,
+  });
+  assertEquals(
+    amount(source([vehicle]), "line6f_clean_vehicle_credit"),
+    500,
+  );
+  assertThrows(() =>
+    computeNewVehicleCreditParts(usedVehicle, source([usedVehicle]))
+  );
+});
 
 for (
   const [status, limit] of [

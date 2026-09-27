@@ -444,7 +444,12 @@ form and one Schedule A per personal-use or dealer-transferred vehicle, sharing
 the liability calculation with XML. These PDF mappings and source-to-XSD cases
 are written but unrun, and no filled PDF has been rendered for visual
 verification. Business-use Form 3800 routing and other recapture paths remain
-open.
+open. A shared new-vehicle calculation now splits the eligible whole-dollar
+credit into business and personal shares without rounding the two shares above
+the total. Schedule A is written for a fully business-use vehicle and carries
+its business amount. These cases are written but unrun; the parent Part II and
+Form 3800 line 1y route are still missing, as are source mileage and
+conversion-period substantiation.
 
 ## Status definitions
 

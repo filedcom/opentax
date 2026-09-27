@@ -55,6 +55,48 @@ Deno.test("Form 8936 Schedule A: one new-vehicle document carries VIN, service d
   );
 });
 
+Deno.test("Form 8936 Schedule A: fully business-use vehicle still has its own document", () => {
+  const xml = form8936ScheduleA.build({
+    ...taxpayer,
+    f8936s: [{
+      ...vehicle,
+      is_new_vehicle: true,
+      credit_amount: 7_500,
+      msrp: 45_000,
+      vehicle_type: "other",
+      business_use_pct: 1,
+    }],
+  });
+  assertEquals(xml.length, 1);
+  assertStringIncludes(
+    xml[0],
+    "<BusinessInvestmentUseAmt>7500</BusinessInvestmentUseAmt>",
+  );
+  assertEquals(xml[0].includes("<PrsnlUseNewCleanVehicleCrAmt>"), false);
+});
+
+Deno.test("Form 8936 Schedule A: odd-dollar business split stays additive", () => {
+  const xml = form8936ScheduleA.build({
+    ...taxpayer,
+    f8936s: [{
+      ...vehicle,
+      is_new_vehicle: true,
+      credit_amount: 1_001,
+      msrp: 45_000,
+      vehicle_type: "other",
+      business_use_pct: 0.5,
+    }],
+  });
+  assertStringIncludes(
+    xml[0],
+    "<BusinessInvestmentUseAmt>501</BusinessInvestmentUseAmt>",
+  );
+  assertStringIncludes(
+    xml[0],
+    "<PrsnlUseNewCleanVehicleCrAmt>500</PrsnlUseNewCleanVehicleCrAmt>",
+  );
+});
+
 Deno.test("Form 8936 Schedule A: previously owned vehicle uses Part IV group", () => {
   const xml = form8936ScheduleA.build({
     ...taxpayer,

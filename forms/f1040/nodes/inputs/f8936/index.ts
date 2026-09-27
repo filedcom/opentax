@@ -167,7 +167,7 @@ function newVehicleExceedsMsrpCap(item: F8936Item): boolean {
   return item.msrp > msrpCap(item.vehicle_type);
 }
 
-function computeNewVehicleCredit(item: F8936Item, input: F8936Input): number {
+function eligibleNewVehicleCredit(item: F8936Item, input: F8936Input): number {
   if (acquiredAfterCreditCutoff(item)) return 0;
   requireVehicleFacts(item);
   if (item.resold_within_30_days || !item.acquired_for_use_not_resale) return 0;
@@ -176,9 +176,19 @@ function computeNewVehicleCredit(item: F8936Item, input: F8936Input): number {
     throw new Error("f8936: new vehicle MSRP and vehicle type are required");
   }
   if (newVehicleExceedsMsrpCap(item)) return 0;
-  const credit = Math.min(item.credit_amount ?? 0, NEW_VEHICLE_MAX_CREDIT);
-  const personalPct = 1 - (item.business_use_pct ?? 0);
-  return Math.round(credit * personalPct);
+  return Math.round(Math.min(item.credit_amount ?? 0, NEW_VEHICLE_MAX_CREDIT));
+}
+
+export function computeNewVehicleCreditParts(
+  item: F8936Item,
+  input: F8936Input,
+): { readonly personal: number; readonly business: number } {
+  if (item.is_new_vehicle !== true) {
+    throw new Error("f8936: business-use split requires a new clean vehicle");
+  }
+  const total = eligibleNewVehicleCredit(item, input);
+  const business = Math.round(total * (item.business_use_pct ?? 0));
+  return { personal: total - business, business };
 }
 
 function computeUsedVehicleCredit(item: F8936Item, input: F8936Input): number {
@@ -231,7 +241,7 @@ export function computeVehiclePersonalCredit(
   const used = item.is_new_vehicle === false;
   return used
     ? computeUsedVehicleCredit(item, input)
-    : computeNewVehicleCredit(item, input);
+    : computeNewVehicleCreditParts(item, input).personal;
 }
 
 function vehicleOutput(item: F8936Item, input: F8936Input): NodeOutput[] {

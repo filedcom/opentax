@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  computeNewVehicleCreditParts,
   computeVehiclePersonalCredit,
   type F8936Input,
 } from "../nodes/inputs/f8936/index.ts";
@@ -44,14 +45,19 @@ export function form8936Lines(
   input: F8936Input,
   pending: unknown,
 ): Form8936Lines | undefined {
+  if (
+    input.f8936s.some((item) =>
+      item.is_new_vehicle === true &&
+      computeNewVehicleCreditParts(item, input).business > 0
+    )
+  ) {
+    throw new Error("Form 8936 business-use credit needs Form 3800 routing");
+  }
   const active = input.f8936s.filter((item) =>
     item.transferred_to_dealer === true ||
     computeVehiclePersonalCredit(item, input) > 0
   );
   if (active.length === 0) return undefined;
-  if (active.some((item) => (item.business_use_pct ?? 0) > 0)) {
-    throw new Error("Form 8936 business-use credit needs Form 3800 routing");
-  }
   const transferred = active.filter((item) =>
     item.transferred_to_dealer === true
   );
