@@ -100,9 +100,6 @@ export const inputSchema = z.object({
   line17z_other_additional_taxes: z.number().nonnegative().optional(),
   // Form 8621 Part V line 16f interest on prior PFIC-year tax.
   line17p_form8621_interest: z.number().nonnegative().optional(),
-  // Line 17 — Mark-to-market exit tax on covered expatriation (Form 8854 Part IV)
-  // IRC §877A(a); taxable gain above $866k exclusion → Schedule 2 line 17
-  line17_exit_tax: z.number().nonnegative().optional(),
   // Line 20 — Section 965 installment (Form 965-A Part II column (k)).
   // Schedule 2 line 21 expressly excludes line 20.
   line20_965_tax_installment: z.number().nonnegative().optional(),
@@ -162,8 +159,7 @@ function part2Total(input: Schedule2Input): number {
     (input.line17b_mortgage_subsidy_recapture ?? 0) +
     (input.line16_lihtc_recapture ?? 0) +
     (input.line17z_other_additional_taxes ?? 0) +
-    (input.line17p_form8621_interest ?? 0) +
-    (input.line17_exit_tax ?? 0);
+    (input.line17p_form8621_interest ?? 0);
 }
 
 function part2Chapter1Tax(input: Schedule2Input): number {
@@ -182,8 +178,7 @@ function part2Chapter1Tax(input: Schedule2Input): number {
     (input.line17a_investment_credit_recapture ?? 0) +
     (input.line17a_new_markets_credit_recapture ?? 0) +
     (input.line17b_mortgage_subsidy_recapture ?? 0) +
-    (input.line16_lihtc_recapture ?? 0) +
-    (input.line17_exit_tax ?? 0);
+    (input.line16_lihtc_recapture ?? 0);
 }
 
 function part2UnclassifiedTax(input: Schedule2Input): number {
