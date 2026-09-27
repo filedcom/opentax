@@ -24,6 +24,13 @@ The [ATS scenario 6 plan](../../../docs/ty2026/ATS-SCENARIO-06.md) adds the
 partnership Part II acceptance case. It also exposes a stale shared W-2G box
 contract and missing 2026 Schedule 1 gambling line 8b route, while W-2 code
 TT and the dependent standard deduction need source-backed reconciliation.
+The [ATS scenario 2 plan](../../../docs/ty2026/ATS-SCENARIO-02.md) adds a
+statutory employee W-2 → Schedule C route without double counting W-2 box 1
+on Form 1040, and a deduction-choice/attachment conflict for Schedule A and
+Form 8283. It also exercises 2026 pre-July mileage and the EIC opt-out.
+The [Schedule C implementation contract](../../../docs/ty2026/SCHEDULEC-GRAPH.md)
+pins the 109-widget draft PDF map and describes the new 16b/16c interest
+split, 44a–44c vehicle labels, and per-activity statutory income ownership.
 The [Schedule F contract](../../../docs/ty2026/SCHEDULEF-GRAPH.md) maps the
 cash/accrual farm route and its attached forms. Its shared TY2025 input names
 other interest as line 21b; the 2026 form uses that line for vehicle-loan

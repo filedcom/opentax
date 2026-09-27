@@ -1229,6 +1229,33 @@
       "bytes": 179936,
       "sha256": "79246b47e0e8a1224d56eb55cb85c15ee590c787f3551117550c83827e138115",
       "retrieved_utc": "2026-09-27T12:25:40.400685+00:00"
+    },
+    {
+      "path": "authorities/f8283--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/f8283--2025.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 124569,
+      "sha256": "389ab1b7c01b542724092f82a55dd43ab00792770b5254a87c4cd4082d8d4c69",
+      "retrieved_utc": "2026-09-27T12:30:42.575237+00:00"
+    },
+    {
+      "path": "authorities/i8283--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/i8283.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 214214,
+      "sha256": "2de015f75bcf2fa9222f8ce6f5ab394d1845ec64ec6cb53ce4e60a4c88150073",
+      "retrieved_utc": "2026-09-27T12:30:42.575500+00:00"
+    },
+    {
+      "path": "authorities/p15a--2026.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/p15a.pdf",
+      "kind": "final-authority",
+      "status": "downloaded",
+      "bytes": 1364431,
+      "sha256": "3486cf0ad83401494aa57c688ffb411346ef399bd8202317c1eb3e6d41575c2e",
+      "retrieved_utc": "2026-09-27T12:31:50.702043+00:00"
     }
   ]
 }

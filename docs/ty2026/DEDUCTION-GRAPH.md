@@ -21,6 +21,13 @@ contract for the TY2026 `f1040` entry point, not a registered calculation path.
   nonitemizer cash charity on 12f, Schedule 1-A on 13a, and QBI on 13b.
   Draft Form 6251 line 1a removes only Schedule 1-A line 43 from 1040 line
   14; line 2a uses Schedule A line 7 or 1040 line 12e.
+- The pinned [December 2025 Form 8283 and instructions](SOURCES.md) govern
+  noncash donation source detail and filing when the claimed deduction exceeds
+  $500. The [ATS scenario 2 fixture](ATS-SCENARIO-02.md) has a $730 FMV gift
+  on Form 8283 but a blank Schedule A noncash amount. Its known Schedule A
+  upper bound is below the $32,200 joint standard deduction; resolve the
+  deduction choice and Form 8283 attachment together. A noncash gift cannot
+  be counted on 1040 line 12f.
 
 ## Why these cannot be independent graph branches
 

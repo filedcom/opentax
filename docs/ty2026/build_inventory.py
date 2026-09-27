@@ -17,7 +17,7 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
     "general": "2026 ages, relative limit, and no-dependent identity graph updated; audit credits",
-    "w2": "2026 SIMPLE, TP/TT, and Schedule 2 box12 routing updated; audit other outputs",
+    "w2": "2026 SIMPLE, TP/TT, and Schedule 2 box12 updated; ATS 2 statutory box13 must route to Schedule C once, not 1040 wages; see ATS-SCENARIO-02.md",
     "auto_expense": "2026 business mileage periods updated; audit remaining rules",
     "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",
     "f8621": "2026 event-year allocation updated; audit remaining rules",
@@ -50,6 +50,8 @@ NODE_PROGRESS = {
     "qbi_aggregation": "Schedule B 8995-A pinned; shared input captures groups but emits no filing/calculation route; see QBI-COOPERATIVE-GRAPH.md",
     "w2g": "final Jan 2026 form/instructions pinned; shared box 2/3/7 labels stale and winnings route to 8z, not 2026 Schedule 1 line 8b; see ATS-SCENARIO-06.md",
     "k1_partnership": "ATS 6 Part II row needs activity, allowed-loss evidence, Schedule E line 41 route, PDF and MeF; packet lacks K-1; see ATS-SCENARIO-06.md",
+    "schedule_c": "ATS 2 statutory W-2 output is unused by shared node; line 16b/16c, 44a-c, 109-widget PDF and current MeF needed; see SCHEDULEC-GRAPH.md",
+    "f8283": "Dec 2025 continuous-use form/instructions pinned; ATS 2 source record and Schedule A deduction/attachment choice need 2026 routing; see ATS-SCENARIO-02.md",
 }
 
 P0_NODES = {

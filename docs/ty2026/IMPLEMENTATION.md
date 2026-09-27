@@ -28,6 +28,14 @@ The [ATS scenario 6 contract](ATS-SCENARIO-06.md) identifies the W-2G box
 contract and Schedule 1 line 8b route, the partnership Part II income/loss
 columns, dependent earned-income and overtime decisions, and missing K-1
 evidence. Its provisional total-income bridge is $5,700.
+The [ATS scenario 2 contract](ATS-SCENARIO-02.md) makes statutory W-2 income
+ownership a concrete graph gate: James's W-2 box 1 belongs on Schedule C,
+while June's belongs on Form 1040 line 1a. It also isolates the Schedule A/
+Form 8283 versus standard-deduction inconsistency and the checked EIC opt-out.
+The [Schedule C contract](SCHEDULEC-GRAPH.md) maps all 109 draft PDF widgets,
+the 2026 line 16b/16c and vehicle-mileage labels, source ownership, and the
+unused statutory-W-2 output in the shared node. It sets the PDF/MeF/ATS 2
+acceptance order.
 The [Schedule F contract](SCHEDULEF-GRAPH.md) isolates the 2026 line 21b
 vehicle-interest change from the shared TY2025 21b other-interest input and
 maps the farm calculation, PDF, MeF, and ATS scenario 3 gates.

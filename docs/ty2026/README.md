@@ -25,6 +25,10 @@ for the implementation contract.
 - [`SCHEDULE1-GRAPH.md`](SCHEDULE1-GRAPH.md) and
   `pdf-fields-f1040s1.csv`: the 2026 Schedule 1 source/AGI contract, changed
   line meanings, and 73 draft PDF widgets.
+- [`SCHEDULEC-GRAPH.md`](SCHEDULEC-GRAPH.md) and
+  `pdf-fields-f1040sc.csv`: the statutory W-2/activity route, new interest
+  and vehicle-mileage labels, all 109 draft Schedule C widgets, and PDF/MeF
+  acceptance order.
 - [`MEF-V1-DRIFT.md`](MEF-V1-DRIFT.md): why the downloaded May v1 1040 XSD
   cannot describe the September draft form, and the exact refresh/diff gate.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
@@ -84,6 +88,9 @@ for the implementation contract.
 - [`ATS-SCENARIO-03.md`](ATS-SCENARIO-03.md): page-level retirement, capital
   gain, farm, farm-rent, and optional self-employment method facts with
   independently derived intermediate amounts and filing gates.
+- [`ATS-SCENARIO-02.md`](ATS-SCENARIO-02.md): statutory employee Schedule C,
+  two W-2s, pre-July vehicle mileage, Schedule A/Form 8283, cooperative
+  patron, dependent-credit, and EIC election facts and source conflicts.
 - [`ATS-SCENARIO-06.md`](ATS-SCENARIO-06.md): page-level W-2, W-2G, partnership,
   dependent, and overtime facts with the Schedule 1/1040 income bridge and
   unresolved source gates.
@@ -98,7 +105,8 @@ for the implementation contract.
   its instructions, continuous-use Form 1099-PATR and Form 8995-A Schedules
   B/C/D, final 2026 Forms 1099-B/1099-DA/1099-R with instructions, the
   2025 Form 1040 and Form 8949 instructions as marked comparators, final
-  January 2026 Form W-2G and its instructions,
+  January 2026 Form W-2G and its instructions, December 2025 continuous-use
+  Form 8283 and instructions, 2026 Publication 15-A,
   Publication 505 (2026), and the final 2025 HHS poverty guidelines. All PDFs
   are source artifacts, not filing-ready forms. Run `python3
   docs/ty2026/corpus/download.py` to refresh the snapshot; review all hash

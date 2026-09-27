@@ -128,6 +128,12 @@ references and active rules, then validate the **same** result used by PDF and
    missing and request/mark explicit ATS-only assumptions before asserting a
    numeric QBI deduction. Schedule F profit $4,207 is not a substitute for
    Schedule D line 2; the farm's half-SE deduction may reduce QBI.
+6. For [ATS scenario 2](ATS-SCENARIO-02.md), the cover says the taxpayers are
+   specified-cooperative patrons and concludes they do not qualify for QBI.
+   Patron status by itself calls for the Form 8995-A/Schedule D analysis; the
+   packet supplies no 1099-PATR, qualified-payment statement, or cooperative
+   allocation. Reconcile that conclusion with the statutory-employee Schedule
+   C activity and its actual QBI facts before emitting zero or a deduction.
 
 Release requires a current 2026 Form 8995-A instruction set and MeF
 schema/rules, complete activity-level calculation, and matching 1040/PDF/XML
