@@ -45,7 +45,8 @@ Each is validated separately; claim credits round to cents before totals are
 combined. When more than one activity is present, the MeF bundle builds one
 official four-page Schedule A (Form 4136) PDF per activity as a binary
 attachment, and Form 4136 references each attachment. The primary activity
-must be affirmed as having the most qualifying fuel usage. The local schema
+must be affirmed as generating the most credit, and the input compares
+calculated per-activity credit to enforce that ordering. The local schema
 contains no Schedule A XML root, so the binary route needs IRS business-rule
 and ATS verification. Exact source-PDF widget names have been mapped for both
 forms, but neither filled PDF has been rendered and checked yet. The

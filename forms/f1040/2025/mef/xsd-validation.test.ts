@@ -173,7 +173,7 @@ Deno.test({
     f4136: {
       claimant_context: "business",
       additional_activities: [],
-      primary_activity_has_most_qualified_fuel_usage: true,
+      primary_activity_has_most_credit: true,
       business: {
         qualifying_business_activity: true,
         claimant_is_ultimate_purchaser: true,
@@ -233,7 +233,7 @@ Deno.test({
     f4136: {
       claimant_context: "business",
       additional_activities: [],
-      primary_activity_has_most_qualified_fuel_usage: true,
+      primary_activity_has_most_credit: true,
       business: {
         qualifying_business_activity: true,
         claimant_is_ultimate_purchaser: true,
@@ -311,7 +311,7 @@ Deno.test({
     f4136: {
       claimant_context: "business",
       additional_activities: [],
-      primary_activity_has_most_qualified_fuel_usage: true,
+      primary_activity_has_most_credit: true,
       business: {
         qualifying_business_activity: true,
         claimant_is_ultimate_purchaser: true,
@@ -376,7 +376,7 @@ Deno.test({
         },
         claims: [{ ...claim, qualified_quantity: 50 }],
       }],
-      primary_activity_has_most_qualified_fuel_usage: true,
+      primary_activity_has_most_credit: true,
     },
   }, { filer: extractFilerIdentity(singleGeneral()), attachments: [] });
   assertEquals(bundle.attachments.length, 2);

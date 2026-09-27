@@ -29,7 +29,7 @@ function compute(
     ...input,
     claimant_context: "business",
     additional_activities: [],
-    primary_activity_has_most_qualified_fuel_usage: true,
+    primary_activity_has_most_credit: true,
   });
 }
 
@@ -37,7 +37,7 @@ function parseInput(input: Record<string, unknown>) {
   return inputSchema.safeParse({
     claimant_context: "business",
     additional_activities: [],
-    primary_activity_has_most_qualified_fuel_usage: true,
+    primary_activity_has_most_credit: true,
     ...input,
   });
 }
@@ -148,7 +148,7 @@ Deno.test("Form 4136: eligibility, costs, use codes, and duplicate claims are re
     parseInput({
       business,
       claims: [claim],
-      primary_activity_has_most_qualified_fuel_usage: false,
+      primary_activity_has_most_credit: false,
     }).success,
     false,
   );
@@ -331,7 +331,7 @@ Deno.test("Form 4136: separate business activities combine credit without mergin
       },
       claims: [{ ...claim, qualified_quantity: 50 }],
     }],
-    primary_activity_has_most_qualified_fuel_usage: true as const,
+    primary_activity_has_most_credit: true as const,
   };
   assertEquals(inputSchema.safeParse(input).success, true);
   assertEquals(
@@ -367,12 +367,51 @@ Deno.test("Form 4136: claim cents on separate Schedules A add to the parent cred
       business: { ...business, business_name: "Second Activity" },
       claims: [claim],
     }],
-    primary_activity_has_most_qualified_fuel_usage: true as const,
+    primary_activity_has_most_credit: true as const,
   };
   assertEquals(
     f4136.compute({ taxYear: 2025, formType: "f1040" }, input).outputs[0]
       .fields.line12_fuel_tax_credit,
     0.36,
+  );
+});
+
+Deno.test("Form 4136: primary activity is selected by credit, not gallons", () => {
+  const gasoline = {
+    ...certifications,
+    line: "1a" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+  };
+  const diesel = {
+    ...certifications,
+    line: "3b" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 80,
+    actual_fuel_cost: 300,
+  };
+  const input = {
+    claimant_context: "business" as const,
+    business,
+    claims: [gasoline],
+    additional_activities: [{
+      business: { ...business, business_name: "Diesel Activity" },
+      claims: [diesel],
+    }],
+    primary_activity_has_most_credit: true as const,
+  };
+  assertEquals(inputSchema.safeParse(input).success, false);
+  assertEquals(
+    inputSchema.safeParse({
+      ...input,
+      claims: [diesel],
+      additional_activities: [{
+        business: { ...business, business_name: "Gasoline Activity" },
+        claims: [gasoline],
+      }],
+    }).success,
+    true,
   );
 });
 
@@ -394,7 +433,7 @@ Deno.test("Form 4136: a combined fuel line rejects mixed units without conversio
         business: { ...business, business_name: "Second Activity" },
         claims: [{ ...claim, unit: "gallons" }],
       }],
-      primary_activity_has_most_qualified_fuel_usage: true,
+      primary_activity_has_most_credit: true,
     }).success,
     false,
   );

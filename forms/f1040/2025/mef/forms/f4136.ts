@@ -311,7 +311,7 @@ export const form4136: MefFormDescriptor<"f4136", PendingForm4136> = {
         ...activity,
         claimant_context: "business",
         additional_activities: [],
-        primary_activity_has_most_qualified_fuel_usage: true,
+        primary_activity_has_most_credit: true,
       });
       const base = await fillFormPdf(
         form4136ScheduleAPdf,

@@ -271,9 +271,10 @@ line 11 rates for bus use and adds "Bus" beside the use code, but this still
 needs filled-render inspection. Mixed-rate rows refer to an attached detail
 statement. Multiple businesses now produce one official four-page Schedule A
 (Form 4136) PDF binary attachment per activity, and the Form 4136 XML references
-each attachment. The input affirms that the primary activity has the most
-qualifying fuel usage, and credits round by claim before the activity totals
-are combined. Both PDF descriptors now use the actual nested AcroForm paths;
+each attachment. Credits round by claim before the activity totals are
+combined. The primary activity is affirmed and checked as generating the most
+calculated credit, matching the form's Part I instruction; that case is written
+but unrun. Both PDF descriptors now use the actual nested AcroForm paths;
 all mapped widget names were found in the IRS PDFs. Filled rendering and the
 binary-attachment IRS business rule are unverified. Mixed units on one fuel
 line stop until conversion rules are verified. A tagged home-kerosene variant

@@ -56,7 +56,7 @@ Deno.test("Schedule A (Form 4136) expands one PDF per business activity", () => 
       },
       claims: [{ ...claim, qualified_quantity: 50 }],
     }],
-    primary_activity_has_most_qualified_fuel_usage: true,
+    primary_activity_has_most_credit: true,
   }, {});
   const instances = form4136ScheduleAPdf.instances?.(projected ?? {}) ?? [];
   assertEquals(instances.length, 2);
