@@ -65,6 +65,11 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
     sourceCount: 2,
     entity: { ein: "123456789" },
   });
+  assertEquals(xml.partIII[0].entityCredits, [{
+    entity: { ein: "123456789" },
+    entityReference: "Clinical partnership",
+    credit: 200,
+  }]);
   assertEquals(xml.currentAmounts, [{
     line: "1h",
     nonpassiveCredit: 0,
@@ -97,6 +102,16 @@ Deno.test("Form 3800 passive current-year XML keeps Part III and V source amount
   assertStringIncludes(
     xml.partV[1].xml,
     "<CrTrnsfrElectCrAllwAftrLmtAmt>150</CrTrnsfrElectCrAllwAftrLmtAmt>",
+  );
+});
+
+Deno.test("Form 3800 retains single passive current-year source detail for a mixed line", () => {
+  const xml = buildForm3800PassiveRowXml([currentOwn]);
+  assertEquals(xml.partIII[0].metadata.sourceCount, 1);
+  assertEquals(xml.partV.length, 1);
+  assertStringIncludes(
+    xml.partV[0].xml,
+    "<TotalGeneralBusCreditsAmt>80</TotalGeneralBusCreditsAmt>",
   );
 });
 

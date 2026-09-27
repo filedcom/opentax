@@ -14,6 +14,7 @@ import {
   combineForm3800CurrentCreditAmounts,
   type Form3800CurrentCreditAmount,
   type Form3800CurrentCreditRowMetadata,
+  type Form3800CurrentEntityCredit,
   type Form3800CurrentXmlRow,
 } from "./f3800_current_rows.ts";
 
@@ -97,6 +98,30 @@ function sourceEin(
     : element("MissingEINReasonCd", entity.missingEinReason);
 }
 
+function sourceEntityCredits(
+  sources: readonly Form3800PassiveTaxUseVintage[],
+): Form3800CurrentEntityCredit[] {
+  return sources.flatMap((source) => {
+    const origin = source.sourceOrigin;
+    if (origin.kind === PassiveCreditSourceOrigin.Self) return [];
+    if (origin.ein) {
+      return [{
+        entity: { ein: origin.ein },
+        entityReference: origin.entity_reference,
+        credit: source.beforePassiveLimit,
+      }];
+    }
+    if (!origin.missing_ein_reason) {
+      throw new Error("Form 3800 passive entity needs EIN information");
+    }
+    return [{
+      entity: { missingEinReason: origin.missing_ein_reason },
+      entityReference: origin.entity_reference,
+      credit: source.beforePassiveLimit,
+    }];
+  });
+}
+
 /** Serialize passive Part III-VI source rows after Form 3800 tax-use allocation. */
 export function buildForm3800PassiveRowXml(
   vintages: readonly Form3800PassiveTaxUseVintage[],
@@ -149,6 +174,7 @@ export function buildForm3800PassiveRowXml(
     return {
       line: row.form3800CreditLine,
       metadata,
+      entityCredits: sourceEntityCredits(row.sources),
       xml: buildForm3800CurrentCreditRowXml(amount, metadata),
     };
   });
@@ -186,9 +212,9 @@ export function buildForm3800PassiveRowXml(
     };
   });
   const currentDetail = current.flatMap((row) => {
-    if (!row.requiresSourceBreakdown) return [];
     const tag = row.currentDetailTag;
     if (!tag) {
+      if (!row.requiresSourceBreakdown) return [];
       throw new Error(
         `Form 3800 Part III line ${row.form3800CreditLine} has no Part V detail row`,
       );

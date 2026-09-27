@@ -39,6 +39,7 @@ const metadata = {
 const currentRows = [{
   line: "1h" as const,
   metadata,
+  entityCredits: [],
   xml: buildForm3800CurrentCreditRowXml(currentAmounts[0], metadata),
 }];
 
@@ -98,6 +99,70 @@ Deno.test("Form 3800 document accepts a passive carryover without a current-year
     "<CurrentYearCreditAllowedAmt>30</CurrentYearCreditAllowedAmt>",
   );
   assertStringIncludes(xml, "<Tot8844OthSpcfdGBCOrESBCAmtGrp>");
+});
+
+Deno.test("Form 3800 document emits all Part V sources only for an aggregate line", () => {
+  const detail = [
+    {
+      line: "1h" as const,
+      xml:
+        "<Frm8820CYAggrgtAmtGrp><TotalGeneralBusCreditsAmt>60</TotalGeneralBusCreditsAmt></Frm8820CYAggrgtAmtGrp>",
+    },
+    {
+      line: "1h" as const,
+      xml:
+        "<Frm8820CYAggrgtAmtGrp><TotalGeneralBusCreditsAmt>40</TotalGeneralBusCreditsAmt></Frm8820CYAggrgtAmtGrp>",
+    },
+  ];
+  const aggregateMetadata = { ...metadata, sourceCount: 2 };
+  const xml = buildIRS3800Document({
+    lines,
+    transferStatementIds: [],
+    currentRows: [{
+      line: "1h",
+      metadata: aggregateMetadata,
+      entityCredits: [],
+      xml: buildForm3800CurrentCreditRowXml(
+        currentAmounts[0],
+        aggregateMetadata,
+      ),
+    }],
+    currentAmounts,
+    carryoverRows: [],
+    currentDetails: detail,
+    carryoverDetails: [],
+  });
+  assertStringIncludes(xml, "<GBCBreakdownCYAggrgtAmtGrp>");
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>60</TotalGeneralBusCreditsAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalGeneralBusCreditsAmt>40</TotalGeneralBusCreditsAmt>",
+  );
+  assertThrows(
+    () =>
+      buildIRS3800Document({
+        lines,
+        transferStatementIds: [],
+        currentRows: [{
+          line: "1h",
+          metadata: aggregateMetadata,
+          entityCredits: [],
+          xml: buildForm3800CurrentCreditRowXml(
+            currentAmounts[0],
+            aggregateMetadata,
+          ),
+        }],
+        currentAmounts,
+        carryoverRows: [],
+        currentDetails: detail.slice(0, 1),
+        carryoverDetails: [],
+      }),
+    Error,
+    "source count does not reconcile",
+  );
 });
 
 Deno.test("Form 3800 document rejects missing source rows or unreconciled tax use", () => {

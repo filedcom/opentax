@@ -13,11 +13,14 @@ import {
   isEligible as isEligibleForForm8826,
 } from "../../../nodes/inputs/f8826/index.ts";
 import type { Form3800DocumentParts } from "./f3800_document.ts";
+import type { Form3800PassiveXmlRow } from "./f3800_passive_rows.ts";
 import {
   buildForm3800CurrentCreditRowXml,
   combineForm3800CurrentCreditAmounts,
   type Form3800CurrentCreditRowMetadata,
+  type Form3800CurrentEntityCredit,
   type Form3800CurrentXmlRow,
+  largestForm3800CurrentEntity,
 } from "./f3800_current_rows.ts";
 
 function nontransferableCurrentRow(
@@ -25,6 +28,7 @@ function nontransferableCurrentRow(
   credit: number,
   appliedCredit: number,
   metadata: Form3800CurrentCreditRowMetadata,
+  entityCredits: readonly Form3800CurrentEntityCredit[],
 ): Form3800CurrentXmlRow {
   const [row] = combineForm3800CurrentCreditAmounts([{
     line,
@@ -35,17 +39,44 @@ function nontransferableCurrentRow(
   return {
     line,
     metadata,
+    entityCredits,
     xml: buildForm3800CurrentCreditRowXml(row, metadata),
   };
 }
 
-function largestPassThroughEntity(
+function form8936CurrentDetail(
+  line: "1y" | "1aa",
+  credit: number,
+  applied: number,
+  documentId: string,
+): Form3800PassiveXmlRow {
+  const specified = line === "1aa";
+  return {
+    line,
+    xml: elements(
+      specified ? "Frm8936PartVCYAggrgtAmtGrp" : "Frm8936PartIICYAggrgtAmtGrp",
+      [
+        element("OthThnCrTrnsfrElectCrNoLmtAmt", credit),
+        element("TotalGeneralBusCreditsAmt", credit),
+        specified ? element("TotalGBCLessGrossEPEAmt", credit) : "",
+        element("TotalGBCLessGrossEPEAppTxAmt", applied),
+        element("CarryforwardGeneralBusCrAmt", credit - applied),
+      ],
+      {
+        referenceDocumentId: documentId,
+        referenceDocumentName: "IRS8936",
+        lineNumberTxt: `Part III Line ${line}`,
+      },
+    ),
+  };
+}
+
+function passThroughEntityCredits(
   sources: readonly { readonly credit: number; readonly ein?: string }[],
-): Form3800CurrentCreditRowMetadata["entity"] {
-  const ein = [...sources].filter((source) => source.ein).sort((a, b) =>
-    b.credit - a.credit
-  )[0]?.ein;
-  return ein ? { ein } : undefined;
+): Form3800CurrentEntityCredit[] {
+  return sources.flatMap((source) =>
+    source.ein ? [{ entity: { ein: source.ein }, credit: source.credit }] : []
+  );
 }
 
 /** Source-backed nonpassive Form 8826, 8835, 5884, and 8936 rows. */
@@ -431,8 +462,13 @@ export function buildForm3800NonpassiveParts(
       );
     }
   }
-  const filedForm8826PartV = form8826NeedsPartV
-    ? filedForm8826Sources(form8826Sources, form8826AppliedSources)
+  const filedForm8826PartV = input.form8826
+    ? filedForm8826Sources(
+      form8826Sources,
+      form8826NeedsPartV
+        ? form8826AppliedSources
+        : [input.form8826.appliedCredit],
+    )
     : [];
   const appliedAt = (index: number): number => {
     const amount = input.appliedCreditsByFacility[index];
@@ -478,35 +514,35 @@ export function buildForm3800NonpassiveParts(
     );
   }
   const form8826DocumentId = input.form8826?.documentId;
-  const form8826PartVGroups = form8826NeedsPartV
-    ? filedForm8826PartV.map((source) =>
-      elements("Frm8826CYAggrgtAmtGrp", [
-        source.ein ? element("PassThroughEntityEIN", source.ein) : "",
-        element("OthThnCrTrnsfrElectCrNoLmtAmt", source.filedCredit),
-        element("TotalGeneralBusCreditsAmt", source.filedCredit),
-        element(
-          "TotalGBCLessGrossEPEAppTxAmt",
-          source.filedApplied,
-        ),
-        element(
-          "CarryforwardGeneralBusCrAmt",
-          source.filedCredit - source.filedApplied,
-        ),
-      ], {
-        ...(source.ein || !form8826DocumentId ? {} : {
-          referenceDocumentId: form8826DocumentId,
-          referenceDocumentName: "IRS8826",
-        }),
-        lineNumberTxt: "Part III Line 1e",
-      })
-    )
-    : [];
+  const form8826PartVGroups = filedForm8826PartV.map((source) =>
+    elements("Frm8826CYAggrgtAmtGrp", [
+      source.ein ? element("PassThroughEntityEIN", source.ein) : "",
+      element("OthThnCrTrnsfrElectCrNoLmtAmt", source.filedCredit),
+      element("TotalGeneralBusCreditsAmt", source.filedCredit),
+      element(
+        "TotalGBCLessGrossEPEAppTxAmt",
+        source.filedApplied,
+      ),
+      element(
+        "CarryforwardGeneralBusCrAmt",
+        source.filedCredit - source.filedApplied,
+      ),
+    ], {
+      ...(source.ein || !form8826DocumentId ? {} : {
+        referenceDocumentId: form8826DocumentId,
+        referenceDocumentName: "IRS8826",
+      }),
+      lineNumberTxt: "Part III Line 1e",
+    })
+  );
   const form8820 = input.form8820;
   const form8820PassThroughSources =
     form8820?.sources.filter((source) => source.ein !== undefined) ?? [];
-  const form8820PartVGroups = form8820 && form8820.sources.length > 1
+  const form8820PartVGroups = form8820
     ? form8820.sources.map((source, index) => {
-      const applied = form8820.appliedCreditsBySource![index];
+      const applied = form8820.sources.length > 1
+        ? form8820.appliedCreditsBySource![index]
+        : form8820.appliedCredit;
       return elements("Frm8820CYAggrgtAmtGrp", [
         source.ein ? element("PassThroughEntityEIN", source.ein) : "",
         element("OthThnCrTrnsfrElectCrNoLmtAmt", source.credit),
@@ -523,9 +559,11 @@ export function buildForm3800NonpassiveParts(
     })
     : [];
   const form5884 = input.form5884;
-  const form5884PartVGroups = form5884 && form5884.sources.length > 1
+  const form5884PartVGroups = form5884
     ? form5884.sources.map((source, index) => {
-      const applied = form5884.appliedCreditsBySource?.[index];
+      const applied = form5884.sources.length > 1
+        ? form5884.appliedCreditsBySource?.[index]
+        : form5884.appliedCredit;
       if (applied === undefined) {
         throw new Error(
           `Form 3800 Form 5884 source ${index + 1} has no allocation`,
@@ -558,55 +596,51 @@ export function buildForm3800NonpassiveParts(
     const firstTransferred = row.facilities.find((facility) =>
       facility.transfer_out_amount > 0
     );
-    if (row.facilityCount > 1) {
-      for (const index of facilityIndexes) {
-        const facility = input.facilities[index];
-        if (!facility) {
-          throw new Error(`Form 3800 facility ${index + 1} is missing`);
-        }
-        const available = facility.credit_amount - facility.transfer_out_amount;
-        const facilityApplied = appliedAt(index);
-        const specified = row.line === "4e";
-        partVGroups.push({
-          line: row.line,
-          xml: elements(
-            specified
-              ? "Frm8835PartIICYSpcfdAmtGrp"
-              : "Frm8835PartIICYAggrgtAmtGrp",
-            [
-              facility.transfer_out_amount > 0
-                ? element(
-                  "TransferRegistrationNum",
-                  facility.registration_number,
-                )
-                : "",
-              element("OthThnCrTrnsfrElectCrNoLmtAmt", facility.credit_amount),
-              facility.transfer_out_amount > 0
-                ? element(
-                  "TrnsfrElectCrSoldNoLmtAmt",
-                  -facility.transfer_out_amount,
-                )
-                : "",
-              element("TotalGeneralBusCreditsAmt", available),
-              specified ? element("TotalGBCLessGrossEPEAmt", available) : "",
-              element("TotalGBCLessGrossEPEAppTxAmt", facilityApplied),
-              element(
-                "CarryforwardGeneralBusCrAmt",
-                available - facilityApplied,
-              ),
-            ],
-            {
-              referenceDocumentId: documentIdAt(index),
-              referenceDocumentName: specified
-                ? "IRS8835 BinaryAttachment"
-                : "IRS8835",
-              lineNumberTxt: specified
-                ? "Part III Line 4e"
-                : "Part III Line 1f",
-            },
-          ),
-        });
+    for (const index of facilityIndexes) {
+      const facility = input.facilities[index];
+      if (!facility) {
+        throw new Error(`Form 3800 facility ${index + 1} is missing`);
       }
+      const available = facility.credit_amount - facility.transfer_out_amount;
+      const facilityApplied = appliedAt(index);
+      const specified = row.line === "4e";
+      partVGroups.push({
+        line: row.line,
+        xml: elements(
+          specified
+            ? "Frm8835PartIICYSpcfdAmtGrp"
+            : "Frm8835PartIICYAggrgtAmtGrp",
+          [
+            facility.transfer_out_amount > 0
+              ? element(
+                "TransferRegistrationNum",
+                facility.registration_number,
+              )
+              : "",
+            element("OthThnCrTrnsfrElectCrNoLmtAmt", facility.credit_amount),
+            facility.transfer_out_amount > 0
+              ? element(
+                "TrnsfrElectCrSoldNoLmtAmt",
+                -facility.transfer_out_amount,
+              )
+              : "",
+            element("TotalGeneralBusCreditsAmt", available),
+            specified ? element("TotalGBCLessGrossEPEAmt", available) : "",
+            element("TotalGBCLessGrossEPEAppTxAmt", facilityApplied),
+            element(
+              "CarryforwardGeneralBusCrAmt",
+              available - facilityApplied,
+            ),
+          ],
+          {
+            referenceDocumentId: documentIdAt(index),
+            referenceDocumentName: specified
+              ? "IRS8835 BinaryAttachment"
+              : "IRS8835",
+            lineNumberTxt: specified ? "Part III Line 4e" : "Part III Line 1f",
+          },
+        ),
+      });
     }
     const firstFacilityIndex = facilityIndexes[0];
     if (firstFacilityIndex === undefined) {
@@ -623,6 +657,7 @@ export function buildForm3800NonpassiveParts(
     return {
       line: row.line,
       metadata,
+      entityCredits: [],
       xml: elements(
         row.line === "1f"
           ? "Form8835PartIICYCreditsGrp"
@@ -655,6 +690,15 @@ export function buildForm3800NonpassiveParts(
   const specifiedGroup = partIIIGroups.find((group) => group.line === "4e");
   const form5884PassThroughSources =
     form5884?.sources.filter((source) => source.ein !== undefined) ?? [];
+  const form8826EntityCredits = passThroughEntityCredits(
+    form8826PassThroughSources,
+  );
+  const form8820EntityCredits = passThroughEntityCredits(
+    form8820PassThroughSources,
+  );
+  const form5884EntityCredits = passThroughEntityCredits(
+    form5884PassThroughSources,
+  );
   const currentRows: Form3800CurrentXmlRow[] = [
     ...(input.form8826
       ? [
@@ -664,12 +708,13 @@ export function buildForm3800NonpassiveParts(
           form8826Applied,
           {
             sourceCount: form8826Sources.length,
-            entity: largestPassThroughEntity(form8826PassThroughSources),
+            entity: largestForm3800CurrentEntity(form8826EntityCredits),
             referenceDocumentId: input.form8826.documentId,
             referenceDocumentName: input.form8826.documentId
               ? "IRS8826"
               : undefined,
           },
+          form8826EntityCredits,
         ),
       ]
       : []),
@@ -682,12 +727,13 @@ export function buildForm3800NonpassiveParts(
           input.form8820.appliedCredit,
           {
             sourceCount: input.form8820.sources.length,
-            entity: largestPassThroughEntity(form8820PassThroughSources),
+            entity: largestForm3800CurrentEntity(form8820EntityCredits),
             referenceDocumentId: input.form8820.documentId,
             referenceDocumentName: input.form8820.documentId
               ? "IRS8820"
               : undefined,
           },
+          form8820EntityCredits,
         ),
       ]
       : []),
@@ -702,6 +748,7 @@ export function buildForm3800NonpassiveParts(
             referenceDocumentId: input.form8936.documentId,
             referenceDocumentName: "IRS8936",
           },
+          [],
         ),
       ]
       : []),
@@ -716,6 +763,7 @@ export function buildForm3800NonpassiveParts(
             referenceDocumentId: input.form8936Commercial.documentId,
             referenceDocumentName: "IRS8936",
           },
+          [],
         ),
       ]
       : []),
@@ -727,10 +775,11 @@ export function buildForm3800NonpassiveParts(
           form5884.appliedCredit,
           {
             sourceCount: form5884.sources.length,
-            entity: largestPassThroughEntity(form5884PassThroughSources),
+            entity: largestForm3800CurrentEntity(form5884EntityCredits),
             referenceDocumentId: form5884.documentId,
             referenceDocumentName: form5884.documentId ? "IRS5884" : undefined,
           },
+          form5884EntityCredits,
         ),
       ]
       : []),
@@ -799,6 +848,22 @@ export function buildForm3800NonpassiveParts(
       ...partVGroups,
       ...form8820PartVGroups.map((xml) => ({ line: "1h" as const, xml })),
       ...form5884PartVGroups.map((xml) => ({ line: "4b" as const, xml })),
+      ...(input.form8936
+        ? [form8936CurrentDetail(
+          "1y",
+          form8936Credit,
+          input.form8936.appliedCredit,
+          input.form8936.documentId,
+        )]
+        : []),
+      ...(input.form8936Commercial
+        ? [form8936CurrentDetail(
+          "1aa",
+          form8936CommercialCredit,
+          input.form8936Commercial.appliedCredit,
+          input.form8936Commercial.documentId,
+        )]
+        : []),
     ],
     carryoverDetails: [],
   };

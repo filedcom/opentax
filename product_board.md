@@ -540,7 +540,17 @@ metadata. The nonpassive builder now retains the same metadata alongside every
 current-year row, including source counts, first transfer registration number,
 entity, and document reference. Their source cases are written but unrun. The
 same-line aggregate and Part V source join are not yet connected. Complete
-passive source-document and Part II reconciliation remains open.
+passive source-document and Part II reconciliation remains open. Current-year
+source details are now retained even when a standalone row has only one source,
+including Form 8936 lines 1y/1aa. The filed assembler emits Part V details
+only when the aggregate row has multiple sources and checks the detail count;
+source, ordering, and mismatch cases are written but unrun. This makes both
+sides' single-source evidence available for the same-line join. A pure join now
+combines nonpassive and passive current-year amounts on one credit line,
+retains all Part V source rows, and selects column (c) by the largest combined
+pass-through entity credit, including when the same EIN occurs on both sides.
+Mixed and passive-only source cases are written but unrun; the descriptor does
+not yet feed the join with finalized tax-use allocations.
 A pure tax-use allocator now reconciles the source totals with the three Part II
 caps and applies older credit years first. It stops a partially used year with
 multiple source rows unless their named credit types have an explicit IRS

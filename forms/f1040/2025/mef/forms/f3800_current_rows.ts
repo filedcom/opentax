@@ -36,10 +36,17 @@ export type Form3800CurrentCreditRowMetadata = {
   readonly referenceDocumentName?: string;
 };
 
+export type Form3800CurrentEntityCredit = {
+  readonly entity: NonNullable<Form3800CurrentCreditRowMetadata["entity"]>;
+  readonly entityReference?: string;
+  readonly credit: number;
+};
+
 export type Form3800CurrentXmlRow = {
   readonly line: Form3800CreditLine;
   readonly xml: string;
   readonly metadata: Form3800CurrentCreditRowMetadata;
+  readonly entityCredits: readonly Form3800CurrentEntityCredit[];
 };
 
 function isCentMoney(amount: number): boolean {
@@ -54,6 +61,41 @@ function cents(amount: number): number {
 
 function dollars(amountInCents: number): number {
   return amountInCents / 100;
+}
+
+/** Column (c) identifies the entity allocating the largest same-line credit. */
+export function largestForm3800CurrentEntity(
+  sources: readonly Form3800CurrentEntityCredit[],
+): Form3800CurrentCreditRowMetadata["entity"] {
+  const byEntity = new Map<
+    string,
+    { amount: number; entity: Form3800CurrentEntityCredit["entity"] }
+  >();
+  for (const source of sources) {
+    if (
+      !isCentMoney(source.credit) || source.credit < 0 ||
+      ("ein" in source.entity && !/^\d{9}$/.test(source.entity.ein)) ||
+      (!("ein" in source.entity) && !source.entityReference)
+    ) {
+      throw new Error("Form 3800 current-year pass-through source is invalid");
+    }
+    const key = "ein" in source.entity
+      ? `ein:${source.entity.ein}`
+      : `missing:${source.entityReference}`;
+    const prior = byEntity.get(key);
+    const amount = (prior?.amount ?? 0) + cents(source.credit);
+    if (!Number.isSafeInteger(amount)) {
+      throw new Error(
+        "Form 3800 current-year entity credit exceeds cent precision",
+      );
+    }
+    byEntity.set(key, {
+      entity: source.entity,
+      amount,
+    });
+  }
+  const largest = [...byEntity.values()].sort((a, b) => b.amount - a.amount)[0];
+  return largest?.entity;
 }
 
 /** Combine Part III columns (d), (e), (g), and (i) once per IRS credit line. */

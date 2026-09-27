@@ -79,6 +79,25 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
     amounts: parts.currentAmounts,
   });
   const partIV = buildForm3800PartIVXml(parts.carryoverRows);
+  const detailCountByLine = new Map(
+    parts.currentRows.map((row) => [row.line, row.metadata.sourceCount]),
+  );
+  if (parts.currentDetails.some((row) => !detailCountByLine.has(row.line))) {
+    throw new Error("Form 3800 Part V detail has no Part III source row");
+  }
+  const currentDetails = parts.currentDetails.filter((row) =>
+    (detailCountByLine.get(row.line) ?? 0) > 1
+  );
+  for (const [line, count] of detailCountByLine) {
+    if (
+      count > 1 &&
+      currentDetails.filter((row) => row.line === line).length !== count
+    ) {
+      throw new Error(
+        `Form 3800 Part V line ${line} source count does not reconcile`,
+      );
+    }
+  }
   return elements("IRS3800", [
     element("CAMTAndBEATInd", "false"),
     element(
@@ -98,7 +117,7 @@ export function buildIRS3800Document(parts: Form3800DocumentParts): string {
     ...form3800PartIAndIIXml(parts.lines),
     ...partIII,
     ...partIV,
-    buildForm3800PartVXml(parts.currentDetails),
+    buildForm3800PartVXml(currentDetails),
     ...buildForm3800PartVIXml(parts.carryoverDetails),
   ]);
 }

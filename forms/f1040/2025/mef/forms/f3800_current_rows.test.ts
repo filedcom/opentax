@@ -2,7 +2,28 @@ import { assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import {
   buildForm3800CurrentCreditRowXml,
   combineForm3800CurrentCreditAmounts,
+  largestForm3800CurrentEntity,
 } from "./f3800_current_rows.ts";
+
+Deno.test("Form 3800 column c combines the same entity across source sets", () => {
+  assertEquals(
+    largestForm3800CurrentEntity([
+      { entity: { ein: "123456789" }, credit: 60 },
+      { entity: { ein: "987654321" }, credit: 100 },
+      { entity: { ein: "123456789" }, credit: 60 },
+    ]),
+    { ein: "123456789" },
+  );
+  assertThrows(
+    () =>
+      largestForm3800CurrentEntity([{
+        entity: { missingEinReason: "APPLD FOR" },
+        credit: 10,
+      }]),
+    Error,
+    "pass-through source is invalid",
+  );
+});
 
 Deno.test("Form 3800 current-year rows combine passive and nonpassive credit on one line", () => {
   assertEquals(

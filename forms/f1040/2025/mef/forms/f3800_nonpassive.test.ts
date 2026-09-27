@@ -59,6 +59,7 @@ Deno.test("Form 3800 nonpassive source builder exposes structured document parts
   });
   assertEquals(parts.currentAmounts.map((row) => row.line), ["1e"]);
   assertEquals(parts.currentRows.map((row) => row.line), ["1e"]);
+  assertEquals(parts.currentDetails.map((row) => row.line), ["1e"]);
   assertEquals(parts.carryoverRows, []);
   assertEquals(parts.lines.line38, 5_000);
 });
@@ -79,6 +80,31 @@ Deno.test("Form 3800 source parts retain facility metadata for a mixed row", () 
     referenceDocumentId: "IRS8835_2",
     referenceDocumentName: "IRS8835",
   });
+  assertEquals(parts.currentDetails.map((row) => row.line), ["1f", "4e"]);
+});
+
+Deno.test("Form 3800 retains one Form 8936 source detail for a later mixed line", () => {
+  const parts = buildForm3800NonpassiveParts({
+    tax: { ...tax, standardCredit: 1_875, specifiedCredit: 0 },
+    form8936: {
+      credit: 1_875,
+      documentId: "IRS8936_1",
+      appliedCredit: 1_875,
+    },
+    facilities: [],
+    form8835DocumentIds: [],
+    appliedCreditsByFacility: [],
+    transferStatementIdsByFileName: {},
+  });
+  assertEquals(parts.currentDetails.length, 1);
+  assertStringIncludes(
+    parts.currentDetails[0].xml,
+    "Frm8936PartIICYAggrgtAmtGrp",
+  );
+  assertEquals(
+    buildIRS3800Document(parts).includes("Frm8936PartIICYAggrgtAmtGrp"),
+    false,
+  );
 });
 
 Deno.test("Form 3800 XML: nonpassive Form 8835 credit and transfer reconcile to Part II", () => {
