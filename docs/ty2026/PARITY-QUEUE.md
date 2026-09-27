@@ -35,6 +35,9 @@ depreciation side of the business/property group, including the old Schedule
 The [Form 461 return-wide loss contract](FORM461-GRAPH.md) follows the
 activity limits and replaces the per-source excess-loss shortcut with the
 printed 2026 worksheet and Schedule 1 line 8p/NOL handoff.
+The [Form 8582 passive-loss contract](FORM8582-GRAPH.md) supplies the
+preceding per-activity allowance and allocation, so allowed business losses
+can enter Form 461 without losing their source or prior-year character.
 
 These are **work assignments**, not blanket approvals to reuse TY2025 code.
 The pinned draft/authority files and `instruction-coverage.csv` are the

@@ -1504,6 +1504,15 @@
       "bytes": 146892,
       "sha256": "b809a8aafd955b9e4ba81c6fc9b81d2dc975c3896add21410b590f8a91d3a31e",
       "retrieved_utc": "2026-09-27T14:00:45Z"
+    },
+    {
+      "path": "authorities/i8582--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-prior/i8582--2025.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 253960,
+      "sha256": "76787e11a385d1205faf70a07924cdec4efd5e66628e6f47e5316d29e6035f71",
+      "retrieved_utc": "2026-09-27T14:05:10Z"
     }
   ]
 }

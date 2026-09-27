@@ -66,6 +66,10 @@ The [Form 461 contract](FORM461-GRAPH.md) pins the 2026 return-wide excess-
 business-loss worksheet, its Schedule 1 line 8p addback and future NOL record.
 The current per-source threshold shortcut can miss or overstate losses; the
 2025 PDF descriptor targets the 2026 name field instead of line 16.
+The [Form 8582 contract](FORM8582-GRAPH.md) maps the active-rental and
+other-passive partitions, modified-AGI allowance, Parts IV–IX loss allocation,
+source-schedule destinations and 205 draft PDF widgets. The current node
+collapses carryforwards and excludes every MFS filer from Part II.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800

@@ -71,6 +71,9 @@ for the implementation contract.
 - [`FORM461-GRAPH.md`](FORM461-GRAPH.md) and `pdf-fields-f461.csv`:
   return-wide business-loss limit, source classification, Schedule 1 line 8p,
   NOL carryover, and all 18 draft PDF widgets.
+- [`FORM8582-GRAPH.md`](FORM8582-GRAPH.md) and `pdf-fields-f8582.csv`:
+  active-rental and other passive activities, modified AGI, Parts IV–IX
+  allocation, activity carryforwards, and all 205 draft PDF widgets.
 - [`FORM8962-GRAPH.md`](FORM8962-GRAPH.md) and `pdf-fields-f8962.csv`:
   2026 premium tax credit line 27, 400% FPL boundary, Form 1095-A/allocations,
   143 PDF widgets, and MeF/graph acceptance order.

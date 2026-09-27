@@ -14,7 +14,8 @@ intervening legislation before filing.
 ## Inputs and calculation order
 
 Form 461 is a **return-wide** limit for noncorporate taxpayers, after each
-source activity's basis, at-risk, passive and other applicable limits.
+source activity's basis, at-risk, [passive](FORM8582-GRAPH.md) and other
+applicable limits.
 Preserve owner, activity, source form/line, amount, tax year, business
 classification and any previously limited-loss origin. A joint return uses
 both spouses' eligible activities on one form. Employee-service income and

@@ -105,6 +105,11 @@ The [Form 461 contract](../../../docs/ty2026/FORM461-GRAPH.md) maps all
 loss aggregation, Schedule 1 line 8p and origin-year NOL carryover. Its shared
 node accepts precomputed per-source excesses, so it cannot yet file the
 18-widget form or correctly net multiple businesses.
+The [Form 8582 contract](../../../docs/ty2026/FORM8582-GRAPH.md) maps the
+2026 passive-loss worksheet, special rental allowance, activity and
+reporting-form allocations, and 205 PDF widgets. The shared aggregate
+carryforward and all-MFS exclusion cannot cover its full filed surface;
+current instructions and MeF are still needed.
 The [Form 4835 contract](../../../docs/ty2026/FORM4835-GRAPH.md) and
 [ATS scenario 3 plan](../../../docs/ty2026/ATS-SCENARIO-03.md) connect
 production-based farm rent to Schedule E while keeping Schedule F farm profit
