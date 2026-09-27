@@ -38,6 +38,7 @@ export const capitalActivityInput2026Schema = z.object({
   qof_disposition: z.boolean(),
   qof_deferral_or_inclusion: z.boolean(),
   other_capital_activity: z.boolean(),
+  form4952_filing: z.boolean(),
 }).strict();
 
 export const inputNodes: readonly InputNodeEntry[] = [

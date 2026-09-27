@@ -93,6 +93,7 @@ export const inputSchema = z.object({
   qof_disposition: z.boolean().optional(),
   qof_deferral_or_inclusion: z.boolean().optional(),
   other_capital_activity: z.boolean().optional(),
+  form4952_filing: z.boolean().optional(),
   // Capital gain distributions from d_screen (Line 13 of Schedule D — same line as line13_cap_gain_distrib)
   line_12_cap_gain_dist: z.number().nonnegative().optional(),
   // Undistributed LT gains (Form 2439, Form 4797 Part I, etc.) — Line 11
@@ -158,6 +159,7 @@ function hasCapitalActivity(input: ScheduleDInput): boolean {
     input.qof_disposition === true ||
     input.qof_deferral_or_inclusion === true ||
     input.other_capital_activity === true ||
+    input.form4952_filing === true ||
     codGain !== 0 ||
     dScreenTxs.length > 0 ||
     hasAggregateLines
@@ -321,7 +323,8 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
         input.line_14_carryover === undefined ||
         input.qof_disposition === undefined ||
         input.qof_deferral_or_inclusion === undefined ||
-        input.other_capital_activity === undefined
+        input.other_capital_activity === undefined ||
+        input.form4952_filing === undefined
       ) {
         throw new Error(
           "TY2026 Schedule D needs carryover amounts and capital-activity declarations",
@@ -329,10 +332,10 @@ class ScheduleDIntermediateNode extends TaxNode<typeof inputSchema> {
       }
       if (
         input.qof_disposition || input.qof_deferral_or_inclusion ||
-        input.other_capital_activity
+        input.other_capital_activity || input.form4952_filing
       ) {
         throw new Error(
-          "TY2026 Schedule D needs the QOF or other capital-activity source route",
+          "TY2026 Schedule D needs the QOF, Form 4952, or other capital-activity source route",
         );
       }
     }

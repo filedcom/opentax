@@ -27,13 +27,14 @@ and worksheet behavior remains `audit-required` in `node-coverage.csv`.
 Registering it exposed a shared line 14 sign error: a positive long-term loss
 carryover must reduce the long-term net gain. The existing Schedule D tests
 cover this correction, and the TY2025 Schedule D MeF and PDF tests pass.
-The current PDF boundary rejects nonzero 1040 line 7a when the direct-case
-line 7b checkbox is false: the 2026 Schedule D attachment is not built yet.
-The [draft PDF field map](PDF-SCHEDULED-MAP.md) inventories all 55 widgets and
-the print/detail reconciliation needed before enabling that attachment.
+The 2026 Schedule D PDF now supports the carryover and plain-distribution
+case, reconciles the filed lines with Form 1040, and appends the two printed
+draft pages. It rejects Form 8949 transactions and other capital sources until
+their details and attachments exist. The [draft PDF field map](PDF-SCHEDULED-MAP.md)
+inventories all 55 widgets and the remaining print/detail reconciliation.
 The 2026 public `schedule_d` facts are `line_6_carryover`,
 `line_14_carryover`, `qof_disposition`, `qof_deferral_or_inclusion`, and
-`other_capital_activity`. All five must be supplied when the return contains
+`other_capital_activity`, and `form4952_filing`. All six must be supplied when the return contains
 capital activity. QOF or other activity is rejected until its source route is
 implemented; the shared Schedule D print record uses the explicit 2026 QOF
 answer. TY2025 retains its prior `false` print default. Existing Form 8997
@@ -52,9 +53,9 @@ and Form 1099-B QOF nodes remain outside the dedicated 2026 registry.
    28% and unrecaptured §1250 gain worksheets, and AMT preferential rates.
    Register sources only with their corresponding calculation and print
    detail. Check interactions with QBI Form 8995/8995-A and Form 8960.
-3. Build the TY2026 Schedule D and Form 8949 PDFs from their pinned drafts.
-   Reconcile line 16/21 with 1040 line 7a, choose attachments from actual
-   filing conditions, render the completed pages, and test continuation rows.
+3. Extend the TY2026 Schedule D PDF beyond carryovers and distributions, and
+   build Form 8949 from its pinned draft. Reconcile row columns and attachment
+   conditions, render the completed pages, and test continuation rows.
 4. Map the same filed forms to the selected current TY2026 MeF schema and
    active rules, including document order, required attachments, and the
    direct line 7b election. The downloaded May v1 schema is research input,

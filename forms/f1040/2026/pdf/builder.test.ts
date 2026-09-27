@@ -35,6 +35,47 @@ Deno.test("TY2026 PDF boundary selects filed attachments from graph pending", as
   assertEquals(pdf.getPageCount(), 5);
 });
 
+Deno.test("TY2026 PDF boundary selects Schedule D only for a filed carryover case", async () => {
+  const facts = {
+    general: filer,
+    w2: [{ box1_wages: 70_000, box2_fed_withheld: 8_000 }],
+    f1099div: [{
+      payerName: "North Bank",
+      isNominee: false,
+      box11: false,
+      box1a: 0,
+      box2a: 5_000,
+    }],
+    schedule_d: {
+      line_6_carryover: 0,
+      line_14_carryover: 0,
+      qof_disposition: false,
+      qof_deferral_or_inclusion: false,
+      other_capital_activity: false,
+      form4952_filing: false,
+    },
+  };
+  const plan = buildExecutionPlan(registry);
+  const context = { taxYear: 2026, formType: "f1040" };
+  const direct = execute(plan, registry, facts, context);
+  assertEquals(direct.diagnostics, []);
+  assertEquals(
+    (await PDFDocument.load(await buildPdfBytes2026(direct.pending)))
+      .getPageCount(),
+    2,
+  );
+  const filed = execute(plan, registry, {
+    ...facts,
+    schedule_d: { ...facts.schedule_d, line_14_carryover: 1_000 },
+  }, context);
+  assertEquals(filed.diagnostics, []);
+  assertEquals(
+    (await PDFDocument.load(await buildPdfBytes2026(filed.pending)))
+      .getPageCount(),
+    4,
+  );
+});
+
 Deno.test("TY2026 PDF boundary includes Form 8960 for investment income tax", async () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     general: filer,

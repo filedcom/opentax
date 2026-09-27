@@ -22,15 +22,23 @@ not the completeness of the older mapping or final 2026 form stability.
 
 ## Builder work order
 
+The current TY2026 builder maps all 55 widgets and fills the two printed
+pages for a capital loss carryover, with or without plain Form 1099-DIV box 2a
+distributions. It checks the draft hash, Schedule D lines 7/15/16/21, Form
+1040 line 7a/7b, QOF and Form 4952 answers, and the required line 17/20/22
+branches. Other source forms and Form 8949 transactions fail explicitly until
+their attachments can be printed. A four-page Form 1040/Schedule D sample
+passed visual review; reopening it found zero form fields and widget
+annotations.
+
 1. Reconcile the shared Schedule D calculation and print fields with this
-   table. Add explicit column totals for each Form 8949 row, QOF disposition,
-   and line 22; never infer a negative QOF answer from an absent node.
-2. Fill only the two printed pages of the pinned draft. Check its SHA-256,
-   field names and types, all attachment triggers, and Form 1040 line 7a/7b.
-   Reject a Schedule D record with missing Form 8949 detail or a conflicting
-   direct-reporting checkbox.
-3. Render a positive-gain case, a loss-with-carryover case, and a multi-row
-   Form 8949 case. Inspect both pages of each PDF. Reopen the flattened
-   outputs and check for stray widgets and a remaining AcroForm tree.
+   table for every remaining source. Add explicit column totals for each
+   Form 8949 row and attach its transaction detail.
+2. Implement QOF and Form 4952 branches and their tax worksheets. The
+   current public input requires both answers, but a Yes answer fails until
+   its calculation and attachment route exists.
+3. Render a loss-with-carryover case and a multi-row Form 8949 case. Inspect
+   both pages of each PDF and reopen the flattened output to check for stray
+   widgets and a remaining AcroForm tree.
 4. Replace the draft with the final 2026 Schedule D only after checking its
    hash, fields, instructions, and the current MeF/ATS attachment rules.

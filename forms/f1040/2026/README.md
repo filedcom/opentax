@@ -144,8 +144,10 @@ to implement; nonzero inputs on those routes fail before calculation.
 The shared Schedule D node now decides when box 2a can print directly on
 1040 line 7a with line 7b checked. The public `schedule_d` input requires
 carryover amounts and QOF/other-capital-activity answers for this decision.
-The 2026 PDF boundary rejects capital gains
-that require a Schedule D attachment until its PDF is built.
+It also asks whether Form 4952 will be filed. The 2026 PDF bundle appends two
+Schedule D pages for the carryover-plus-distribution case and reconciles their
+totals with 1040 line 7a. Other source forms and Form 8949 transactions remain
+explicit PDF blockers until their details are built.
 The dedicated `nodes/schedule_b.ts` is registered and now consumes gross
 interest with labeled adjustments, reconciles its lines, determines the
 modeled filing and Part III triggers, and sends taxable interest through AGI

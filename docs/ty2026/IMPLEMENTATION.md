@@ -218,10 +218,11 @@ identifies each remaining 1099-DIV box and its required downstream form;
 the plain box 2a distribution now passes through the shared Schedule D
 filing decision to 1040 line 7a and its line 7b checkbox. The rendered
 two-page draft PDF shows both. TY2026 now requires explicit public short- and
-long-term carryover amounts and QOF/other-capital-activity answers before that
-filing decision. A nonzero carryover takes the filed Schedule D route; QOF or
-unmodeled activity produces a diagnostic. The PDF boundary rejects capital gains that
-require Schedule D until its 2026 attachment is implemented. Special-rate
+long-term carryover amounts, QOF/other-capital-activity answers, and a Form 4952
+filing answer before that filing decision. A nonzero carryover takes the filed
+Schedule D route; its two-page draft PDF now reconciles the carryover,
+distribution, and Form 1040 line 7a in a four-page bundle that passed visual
+QA. QOF and unmodeled activity still produce diagnostics. Special-rate
 capital gains, QBI, foreign tax, state withholding, nominee,
 and basis routes currently fail with named diagnostics. MeF remains open.
 Progress update: 1099-INT and Schedule B Part III answers are now registered
