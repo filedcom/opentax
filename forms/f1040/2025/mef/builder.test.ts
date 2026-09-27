@@ -133,16 +133,16 @@ function assertNotIncludes(actual: string, expected: string) {
   );
 }
 
-Deno.test("MeF export rejects a Form 3800 credit until its required documents are registered", () => {
+Deno.test("MeF export rejects Form 3800 credit without finalized source facts", () => {
   assertThrows(
     () => buildMefXml({ f3800: { allowed_credit: 0 } }),
     Error,
-    "Form 3800 credit cannot be exported",
+    "finalized Part II tax context",
   );
   assertThrows(
     () => buildMefXml({ f3800: { f3800s: [{ research_credit: 100 }] } }),
     Error,
-    "Form 3800 credit cannot be exported",
+    "legacy credit cannot be exported",
   );
 });
 

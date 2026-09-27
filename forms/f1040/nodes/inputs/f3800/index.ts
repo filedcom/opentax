@@ -81,10 +81,23 @@ const f8826CreditEntrySchema = z.object({
   }
 });
 
+const appliedSourceCreditSchema = z.number().finite().nonnegative().refine(
+  (amount) =>
+    Number.isSafeInteger(Math.round(amount * 100)) &&
+    Math.abs(amount * 100 - Math.round(amount * 100)) < 0.000001,
+  { message: "Form 3800 applied source credit must have cent precision" },
+);
+
 export const inputSchema = z.object({
   f3800s: z.array(itemSchema).min(1).optional(),
   f8835_credit_entries: z.array(f8835CreditEntrySchema).min(1).optional(),
   f8826_credit_entries: z.array(f8826CreditEntrySchema).min(1).optional(),
+  // Optional Part V allocation choices. Required only when a tax limit cuts
+  // across multiple sources on the same Form 3800 credit line.
+  form8826_applied_credits_by_source: z.array(appliedSourceCreditSchema)
+    .optional(),
+  form8835_applied_credits_by_facility: z.array(appliedSourceCreditSchema)
+    .optional(),
 }).refine(
   (input) =>
     input.f3800s !== undefined || input.f8835_credit_entries !== undefined ||
