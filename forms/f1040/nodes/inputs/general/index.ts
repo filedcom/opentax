@@ -708,6 +708,10 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
     schedule1a,
   ]);
 
+  override get outputNodeTypes(): readonly string[] {
+    return [...super.outputNodeTypes, "form4137"];
+  }
+
   compute(ctx: NodeContext, input: GeneralInput): NodeResult {
     const parsed = inputSchema.parse(input);
     if (
@@ -836,6 +840,15 @@ class GeneralNode extends TaxNode<typeof inputSchema> {
       this.outputNodes.output(form8960, {
         filing_status: parsed.filing_status,
       }),
+      ...(ctx.taxYear === 2026 && parsed.taxpayer_ssn
+        ? [{
+          nodeType: "form4137",
+          fields: {
+            taxpayer_ssn: parsed.taxpayer_ssn,
+            ...(parsed.spouse_ssn && { spouse_ssn: parsed.spouse_ssn }),
+          },
+        }]
+        : []),
       this.outputNodes.output(form8962, {
         filing_status: parsed.filing_status,
         below_100_fpl_status: parsed.ptc_below_100_fpl_status,

@@ -98,8 +98,13 @@ the official 2026 W-2 instructions pinned in the corpus. W-2 TP and Form 4137
 line 1(c) now reconcile by filer and employer with the larger-of rule. Mixed
 occupations require an explicit qualified amount, and a focused graph test
 carries the resulting deduction, unreported tip income, and Schedule 2 tip
-tax to 1040. Puerto Rico/Form 4563 MAGI addbacks remain. The TY2026 1040 node
-rejects a nonzero Schedule 2 credit-limit amount until the 2026 credit
+tax to 1040. Puerto Rico/Form 4563 MAGI addbacks remain. The graph now
+matches W-2 allocated tips to the Form 4137 recipient by employee SSN. The
+shared 2025 W-2 source shape retains its recipient field; TY2026 carries the
+employee SSN and general identity to Form 4137 so a taxpayer W-2 is not
+mistaken for a spouse W-2. The graph rejects allocated tips with an unmatched
+SSN. The TY2026 1040 node rejects a nonzero Schedule 2 credit-limit amount
+until the 2026 credit
 finalization path exists; it does not silently discard that upstream field.
 The draft 2026 Schedule 2 reorders additional tax lines. The pure
 `forms/f1040/2026/schedule2.ts` now computes its filed subtotals, and the

@@ -296,6 +296,7 @@ Deno.test("TY2026 registry routes W-2 and Form 4137 tips through Schedule 2", ()
       employer_name: "CAFE",
       box1_wages: 70_000,
       box3_ss_wages: 70_000,
+      box8_allocated_tips: 1_000,
       box2_fed_withheld: 0,
       box12_entries: [{ code: "TP", amount: 3_000 }],
       box14b_tipped_codes: ["102"],
@@ -315,6 +316,11 @@ Deno.test("TY2026 registry routes W-2 and Form 4137 tips through Schedule 2", ()
   }, context);
   assertEquals(result.diagnostics, []);
   assertEquals(result.pending.schedule1a.line15_qualified_tips, 5_000);
+  assertEquals(
+    (result.pending.form4137.w2_tip_sources as Record<string, unknown>[])[0]
+      .employee_ssn,
+    "111223333",
+  );
   assertEquals(result.pending.schedule2.line16c_additional_fica, 153);
   assertEquals(result.pending.f1040.line1c_unreported_tips, 2_000);
   assertEquals(result.pending.f1040.line23_other_taxes, 153);

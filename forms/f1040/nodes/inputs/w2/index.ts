@@ -355,11 +355,13 @@ function medicareOutput(w2s: W2Items): NodeOutput[] {
   ];
 }
 
-function allocatedTipsOutput(w2s: W2Items): NodeOutput[] {
+function allocatedTipsOutput(w2s: W2Items, taxYear: number): NodeOutput[] {
   const sources = w2s.map((item) => ({
-    recipient: item.employee_ssn === undefined
-      ? "taxpayer" as const
-      : "spouse" as const,
+    ...(taxYear === 2026 ? { employee_ssn: item.employee_ssn } : {
+      recipient: item.employee_ssn === undefined
+        ? "taxpayer" as const
+        : "spouse" as const,
+    }),
     allocated_tips: item.box8_allocated_tips ?? 0,
     ss_wages_and_tips: item.box3_ss_wages === undefined
       ? undefined
@@ -641,7 +643,7 @@ class W2Node extends TaxNode<typeof inputSchema> {
       ...excessSsOutput(input.w2s, cfg.ssTaxPerEmployer),
       ...statutoryOutput(input.w2s),
       ...medicareOutput(input.w2s),
-      ...allocatedTipsOutput(input.w2s),
+      ...allocatedTipsOutput(input.w2s, ctx.taxYear),
       ...depCareOutput(input.w2s),
       ...retirementPlanOutput(input.w2s),
       ...scheduleAOutput(input.w2s),

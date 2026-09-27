@@ -54,15 +54,25 @@ const formSchema = z.object({
   records_support_lower_tips: z.boolean().optional(),
 }).strict();
 
-const w2TipSourceSchema = z.object({
-  recipient: recipientSchema,
+const w2TipSourceAmountsSchema = z.object({
   allocated_tips: z.number().nonnegative(),
   ss_wages_and_tips: z.number().nonnegative().optional(),
 }).strict();
+const legacyW2TipSourceSchema = w2TipSourceAmountsSchema.extend({
+  recipient: recipientSchema,
+});
+const w2TipSource2026Schema = w2TipSourceAmountsSchema.extend({
+  employee_ssn: z.string().optional(),
+});
 
 export const inputSchema = z.object({
   forms: z.array(formSchema).optional(),
-  w2_tip_sources: z.array(w2TipSourceSchema).optional(),
+  w2_tip_sources: z.array(z.union([
+    legacyW2TipSourceSchema,
+    w2TipSource2026Schema,
+  ])).optional(),
+  taxpayer_ssn: z.string().optional(),
+  spouse_ssn: z.string().optional(),
 }).strict();
 
 export type Form4137Input = z.infer<typeof inputSchema>;
@@ -88,7 +98,25 @@ export function calculateForm4137(
   ssWageBase: number,
 ): Form4137Calculation[] {
   const forms = input.forms ?? [];
-  const sources = input.w2_tip_sources ?? [];
+  const normalize = (value: string | undefined) => value?.replaceAll("-", "");
+  const sources = (input.w2_tip_sources ?? []).flatMap((source) => {
+    if ("recipient" in source) return [source];
+    const ssn = normalize(source.employee_ssn);
+    const recipient = ssn && ssn === normalize(input.taxpayer_ssn)
+      ? "taxpayer" as const
+      : ssn && ssn === normalize(input.spouse_ssn)
+      ? "spouse" as const
+      : undefined;
+    if (!recipient) {
+      if (source.allocated_tips > 0) {
+        throw new Error(
+          "Form 4137 W-2 allocated tips need a matching filer SSN",
+        );
+      }
+      return [];
+    }
+    return [{ ...source, recipient }];
+  });
   const recipients = new Set(forms.map((form) => form.recipient));
   if (recipients.size !== forms.length) {
     throw new Error("Form 4137 needs one form per tip recipient");

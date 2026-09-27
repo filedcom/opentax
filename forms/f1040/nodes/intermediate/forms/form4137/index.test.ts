@@ -229,3 +229,34 @@ Deno.test("Form 4137 with no tip activity has no outputs", () => {
     [],
   );
 });
+
+Deno.test("TY2026 Form 4137 matches W-2 allocated tips by employee SSN", () => {
+  const input = inputSchema.parse({
+    taxpayer_ssn: "111223333",
+    spouse_ssn: "444556666",
+    forms: [{
+      recipient: "taxpayer",
+      employers: [employer],
+      ss_wages_from_w2: 30_000,
+    }],
+    w2_tip_sources: [{
+      employee_ssn: "111-22-3333",
+      allocated_tips: 2_500,
+      ss_wages_and_tips: 30_000,
+    }],
+  });
+  assertEquals(calculateForm4137(input, 184_500)[0].unreportedTips, 3_000);
+  assertThrows(
+    () =>
+      calculateForm4137({
+        ...input,
+        w2_tip_sources: [{
+          employee_ssn: "999887777",
+          allocated_tips: 2_500,
+          ss_wages_and_tips: 30_000,
+        }],
+      }, 184_500),
+    Error,
+    "matching filer SSN",
+  );
+});
