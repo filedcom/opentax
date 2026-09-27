@@ -950,7 +950,9 @@ calculation, XML, PDF inclusion, and full-return cases are written but unrun. A
 mixed W-2, substitute W-2, and household-wage return case is also written.
 Substitute and household Medicare withholding without corresponding Medicare
 wages now fails source validation instead of creating an unsupported credit. The
-full-batch gate and IRS business-rule review remain open.
+local XSD batch now includes zero-tax MFJ FICA and RRTA filing triggers and the
+QSS $200,000 threshold, all unrun. The full-batch gate and IRS business-rule
+review remain open.
 
 ## Workstreams
 

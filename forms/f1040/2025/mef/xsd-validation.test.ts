@@ -4174,6 +4174,140 @@ Deno.test({
 });
 
 Deno.test({
+  name:
+    "XSD: joint return retains Form 8959 for one W-2 over $200,000 with zero tax",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFJ,
+    spouse_first_name: "Sam",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "444-55-6666",
+  };
+  const result = runReturn({
+    general,
+    w2: [{
+      employee_ssn: "111-22-3333",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 220_000,
+      box2_fed_withheld: 30_000,
+      box5_medicare_wages: 220_000,
+      box6_medicare_withheld: 3_190,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line18_total_tax, 0);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(xml, "<IRS8959>");
+  assertStringIncludes(
+    xml,
+    "<TotalW2MedicareWagesAndTipsAmt>220000</TotalW2MedicareWagesAndTipsAmt>",
+  );
+  assertStringIncludes(xml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
+  await validateXsd(xml, "joint Form 8959 with zero additional tax");
+});
+
+Deno.test({
+  name: "XSD: qualifying surviving spouse uses Form 8959 $200,000 threshold",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.QSS,
+  };
+  const result = runReturn({
+    general,
+    w2: [{
+      employee_ssn: "111-22-3333",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 205_000,
+      box2_fed_withheld: 30_000,
+      box5_medicare_wages: 205_000,
+      box6_medicare_withheld: 3_017.50,
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 45);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<FilingStatusThresholdCd>200000</FilingStatusThresholdCd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<AdditionalMedicareTaxAmt>45</AdditionalMedicareTaxAmt>",
+  );
+  await validateXsd(xml, "qualifying surviving spouse Form 8959");
+});
+
+Deno.test({
+  name: "XSD: joint return retains Form 8959 for one RRTA W-2 over $200,000",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const general = {
+    ...singleGeneral(),
+    filing_status: FilingStatus.MFJ,
+    spouse_first_name: "Sam",
+    spouse_last_name: "Taxpayer",
+    spouse_ssn: "444-55-6666",
+  };
+  const result = runReturn({
+    general,
+    w2: [{
+      employee_ssn: "111-22-3333",
+      employer_name: "RAIL",
+      employer_ein: "123456789",
+      employer_address_line1: "100 Main St",
+      employer_address_city: "Austin",
+      employer_address_state: "TX",
+      employer_address_zip: "78701",
+      box1_wages: 220_000,
+      box2_fed_withheld: 30_000,
+      box14_entries: [{
+        description: "RRTA compensation",
+        amount: 220_000,
+        is_state_sdi_pfml: false,
+      }],
+    }],
+  });
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line18_total_tax, 0);
+  const xml = buildMefXml(
+    result.pending as MefFormsPending,
+    extractFilerIdentity(general),
+  );
+  assertStringIncludes(
+    xml,
+    "<TotalRailroadRetirementCompAmt>220000</TotalRailroadRetirementCompAmt>",
+  );
+  assertStringIncludes(xml, "<TotalAMRRTTaxAmt>0</TotalAMRRTTaxAmt>");
+  await validateXsd(xml, "joint RRTA Form 8959 with zero additional tax");
+});
+
+Deno.test({
   name: "XSD: RRTA W-2 box 14 feeds Form 4137 line 8 and Form 8959 Part III",
   sanitizeOps: false,
   sanitizeResources: false,
