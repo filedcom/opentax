@@ -44,8 +44,32 @@ carrybacks; recapture and sale events; leap-day anniversary rules; filled PDF
 output; IRS business rules and ATS acceptance. The current route is not
 filing-ready.
 
+Recapture must be a separate source-backed path, including when no current-year
+Form 8874 is filed. Form 8874-B identifies the CDE, investment, event date and
+reason, and year-by-year decreases, but its notice amount alone is not the
+taxpayer's Schedule 2 line 17a tax. Section 45D(g)(2) requires the decrease in
+prior-year Section 38 credits actually allowed if this QEI's credit had been
+zero, plus interest at the Section 6621 underpayment rate for each affected
+year. Unused carryovers and carrybacks must be adjusted rather than treated as
+tax used. The IRS audit guide describes daily-compounded interest from each
+prior return's original due date through the recapture-year return due date.
+For TY2025, Schedule 2 line 17a identifies this as `NMCR`; the MeF schema has a
+separate `RecaptureOtherCreditsGrp` for that code. A standalone input needs the
+notice identity, prior return and recomputation evidence, prior due dates,
+applicable interest-rate periods, and carryover adjustments. It must not take a
+single unexplained recapture-tax amount.
+
+A sale or other disposition alone does not trigger recapture, although the
+seller cannot claim an allowance date after disposition. This is distinct from
+a CDE redemption or other statutory recapture event. Sale gain/loss and basis
+adjustments need their own source reconciliation.
+
 Sources:
 
 - [Form 8874](https://www.irs.gov/pub/irs-pdf/f8874.pdf)
 - [Form 8874 instructions](https://www.irs.gov/instructions/i8874)
 - [Form 3800 instructions](https://www.irs.gov/instructions/i3800)
+- [Form 8874-B](https://www.irs.gov/pub/irs-pdf/f8874b.pdf)
+- [Section 45D](https://uscodeweb1.house.gov/view.xhtml?edition=prelim&num=0&req=granuleid%3AUSC-prelim-title26-section45D)
+- [IRS New Markets Credit audit guide](https://www.irs.gov/pub/irs-utl/atgnmtc.pdf)
+- [IRS underpayment interest rates](https://www.irs.gov/payments/quarterly-interest-rates)
