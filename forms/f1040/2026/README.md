@@ -163,6 +163,11 @@ route the full 10% early-distribution tax to Schedule 2 line 5 when the
 taxpayer supplies the full-tax and SIMPLE-period facts; see the
 [1099-R contract](../../../docs/ty2026/FORM1099R-GRAPH.md). Form 1040 line
 25b sums withholding from multiple 1099 sources in the active graph.
+An early SIMPLE IRA distribution in its first two years uses a dedicated
+Form 5329 Part I node at 25%, with its three printed draft pages attached
+to the return PDF. The [Form 5329 contract](../../../docs/ty2026/FORM5329-GRAPH.md)
+records the implemented branch and the remaining parts, spouse handling,
+and MeF work.
 The dedicated TY2026 Form 1099-DIV input now routes ordinary, qualified,
 and exempt-interest dividends, federal withholding, private-activity-bond
 AMT interest, plain box 2a capital gain distributions, and NIIT income. Its

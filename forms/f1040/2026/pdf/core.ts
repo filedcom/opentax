@@ -2,6 +2,7 @@ import { PDFDocument } from "pdf-lib";
 import { buildF1040PdfBytes2026 } from "./f1040.ts";
 import { buildForm6251PdfBytes2026 } from "./f6251.ts";
 import { buildForm5695PdfBytes2026 } from "./form5695.ts";
+import { buildForm5329PdfBytes2026 } from "./form5329.ts";
 import { buildForm4137PdfBytes2026 } from "./f4137.ts";
 import { buildForm8960PdfBytes2026 } from "./f8960.ts";
 import { buildSchedule1PdfBytes2026 } from "./schedule1.ts";
@@ -40,6 +41,7 @@ interface CorePdfInput2026 {
   readonly form8949?: Record<string, unknown>;
   readonly form6251?: Record<string, unknown>;
   readonly form5695?: Record<string, unknown>;
+  readonly form5329?: Record<string, unknown>;
   readonly form4137?: Record<string, unknown>;
   readonly form8960?: Record<string, unknown>;
   readonly scheduleH?: Record<string, unknown>;
@@ -59,6 +61,7 @@ export async function buildCorePdfBytes2026({
   form8949,
   form6251,
   form5695,
+  form5329,
   form4137,
   form8960,
   scheduleH,
@@ -246,6 +249,9 @@ export async function buildCorePdfBytes2026({
   ) {
     throw new Error("TY2026 core PDF Form 8960 disagrees with Schedule 2");
   }
+  if (form5329 && !schedule2) {
+    throw new Error("TY2026 core PDF Form 5329 needs Schedule 2");
+  }
   if (
     optionalAmount(schedule2 ?? {}, "line17a_household_employment_tax") > 0 &&
     !scheduleH
@@ -317,6 +323,9 @@ export async function buildCorePdfBytes2026({
     parts.push(
       await buildForm5695PdfBytes2026(form5695, schedule3, { name, ssn }),
     );
+  }
+  if (form5329) {
+    parts.push(await buildForm5329PdfBytes2026(form5329, schedule2!, f1040));
   }
   if (form8960) {
     parts.push(await buildForm8960PdfBytes2026(form8960, { name, ssn }));

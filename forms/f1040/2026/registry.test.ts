@@ -883,7 +883,7 @@ Deno.test("TY2026 1099-R code 1 reaches Schedule 2 line 5 without Form 5329", as
       box7a_codes: ["1"],
       box7b_ira_sep_simple: true,
       early_distribution_tax_facts: {
-        full_amount_subject_to_ten_percent: true,
+        full_amount_subject_to_additional_tax: true,
         simple_ira_in_first_two_years: false,
       },
     }],
@@ -896,6 +896,35 @@ Deno.test("TY2026 1099-R code 1 reaches Schedule 2 line 5 without Form 5329", as
   assertEquals(result.pending.form5329, undefined);
   const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
   assertEquals(pdf.getPageCount(), 4);
+  assertEquals(pdf.getForm().getFields().length, 0);
+});
+
+Deno.test("TY2026 early SIMPLE IRA files Form 5329 with 25% tax", async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: filer,
+    w2: [{ box1_wages: 30_000, box2_fed_withheld: 1_500 }],
+    f1099r: [{
+      payer_name: "SIMPLE Custodian",
+      payer_ein: "123456789",
+      recipient: "taxpayer",
+      box1_gross_distribution: 5_000,
+      box2a_taxable_amount: 5_000,
+      box4_federal_withheld: 500,
+      box7a_codes: ["1"],
+      box7b_ira_sep_simple: true,
+      early_distribution_tax_facts: {
+        full_amount_subject_to_additional_tax: true,
+        simple_ira_in_first_two_years: true,
+      },
+    }],
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form5329.line1_early_distributions, 5_000);
+  assertEquals(result.pending.form5329.line4_early_distribution_tax, 1_250);
+  assertEquals(result.pending.schedule2.line5_form5329_early_tax, 1_250);
+  assertEquals(result.pending.f1040.line23_other_taxes, 1_250);
+  const pdf = await PDFDocument.load(await buildPdfBytes2026(result.pending));
+  assertEquals(pdf.getPageCount(), 7);
   assertEquals(pdf.getForm().getFields().length, 0);
 });
 

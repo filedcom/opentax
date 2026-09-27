@@ -9,6 +9,7 @@ import { TaxNode } from "../../../../core/types/tax-node.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { f1040_2026_node } from "./f1040.ts";
 import { schedule2_2026 } from "./schedule2.ts";
+import { form5329_2026 } from "./form5329.ts";
 
 const amount = z.number().finite().nonnegative();
 
@@ -30,7 +31,7 @@ export const f1099rItem2026Schema = z.object({
   box8a_other: amount.optional(),
   box8b_pct_annuity_contract: z.number().finite().min(0).max(100).optional(),
   early_distribution_tax_facts: z.object({
-    full_amount_subject_to_ten_percent: z.literal(true),
+    full_amount_subject_to_additional_tax: z.literal(true),
     simple_ira_in_first_two_years: z.boolean(),
   }).strict().optional(),
 }).strict();
@@ -46,6 +47,7 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
     f1040_2026_node,
     agi_aggregator,
     schedule2_2026,
+    form5329_2026,
   ]);
 
   compute(
@@ -60,11 +62,18 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
     let pensionGross = 0;
     let withheld = 0;
     let earlyTaxable = 0;
+    let earlySimpleTaxable = 0;
+    const earlyRecipients = new Set<"taxpayer" | "spouse">();
     const hasEarlyDistribution = statements.some((statement) =>
       statement.box7a_codes.length === 1 && statement.box7a_codes[0] === "1"
     );
+    const hasEarlySimpleDistribution = statements.some((statement) =>
+      statement.box7a_codes.length === 1 && statement.box7a_codes[0] === "1" &&
+      statement.early_distribution_tax_facts?.simple_ira_in_first_two_years ===
+        true
+    );
     if (
-      hasEarlyDistribution &&
+      hasEarlyDistribution && !hasEarlySimpleDistribution &&
       statements.some((statement) =>
         statement.box7a_codes.length !== 1 ||
         statement.box7a_codes[0] !== "1"
@@ -97,10 +106,12 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
           );
         }
         if (
-          statement.early_distribution_tax_facts.simple_ira_in_first_two_years
+          statement.early_distribution_tax_facts
+            .simple_ira_in_first_two_years &&
+          !statement.box7b_ira_sep_simple
         ) {
           throw new Error(
-            "TY2026 early SIMPLE IRA distribution needs the 25% Form 5329 route",
+            "TY2026 early SIMPLE facts disagree with box 7b",
           );
         }
       } else if (statement.early_distribution_tax_facts) {
@@ -115,8 +126,20 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
       }
       withheld += statement.box4_federal_withheld ?? 0;
       if (statement.box7a_codes[0] === "1") {
-        earlyTaxable += statement.box2a_taxable_amount;
+        earlyRecipients.add(statement.recipient);
+        if (
+          statement.early_distribution_tax_facts!.simple_ira_in_first_two_years
+        ) {
+          earlySimpleTaxable += statement.box2a_taxable_amount;
+        } else {
+          earlyTaxable += statement.box2a_taxable_amount;
+        }
       }
+    }
+    if (earlySimpleTaxable > 0 && earlyRecipients.size !== 1) {
+      throw new Error(
+        "TY2026 early distributions need separate taxpayer and spouse Form 5329 paths",
+      );
     }
     const outputs: NodeOutput[] = [];
     if (iraGross > 0) {
@@ -129,7 +152,13 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         line5b_pension_taxable: pensionGross,
       }));
     }
-    if (earlyTaxable > 0) {
+    if (earlySimpleTaxable > 0) {
+      outputs.push(this.outputNodes.output(form5329_2026, {
+        recipient: [...earlyRecipients][0],
+        regular_early_distribution: earlyTaxable,
+        early_simple_ira_distribution: earlySimpleTaxable,
+      }));
+    } else if (earlyTaxable > 0) {
       outputs.push(this.outputNodes.output(schedule2_2026, {
         line5_form5329_early_tax: Math.round(earlyTaxable * 0.1),
       }));
@@ -163,6 +192,7 @@ class F1099rNode2026 extends TaxNode<typeof f1099rInput2026Schema> {
         pension_gross: pensionGross,
         withholding: withheld,
         early_taxable: earlyTaxable,
+        early_simple_taxable: earlySimpleTaxable,
       },
     });
     return { outputs };

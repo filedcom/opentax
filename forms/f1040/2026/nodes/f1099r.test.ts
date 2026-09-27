@@ -59,7 +59,7 @@ Deno.test("TY2026 code 1 reports full early-distribution tax on Schedule 2", () 
       ...base,
       box7a_codes: ["1"],
       early_distribution_tax_facts: {
-        full_amount_subject_to_ten_percent: true,
+        full_amount_subject_to_additional_tax: true,
         simple_ira_in_first_two_years: false,
       },
     }],
@@ -82,7 +82,7 @@ Deno.test("TY2026 code 1 reports full early-distribution tax on Schedule 2", () 
             ...base,
             box7a_codes: ["1"],
             early_distribution_tax_facts: {
-              full_amount_subject_to_ten_percent: true,
+              full_amount_subject_to_additional_tax: true,
               simple_ira_in_first_two_years: false,
             },
           },
@@ -103,19 +103,71 @@ Deno.test("TY2026 code 1 reports full early-distribution tax on Schedule 2", () 
     Error,
     "needs full-tax and SIMPLE-period facts",
   );
+  const simple = f1099r_2026.compute(context, {
+    statements: [{
+      ...base,
+      box7a_codes: ["1"],
+      early_distribution_tax_facts: {
+        full_amount_subject_to_additional_tax: true,
+        simple_ira_in_first_two_years: true,
+      },
+    }],
+  });
+  assertEquals(
+    simple.outputs.find((output) => output.nodeType === "form5329")?.fields,
+    {
+      recipient: "taxpayer",
+      regular_early_distribution: 0,
+      early_simple_ira_distribution: 5_000,
+    },
+  );
+  const mixed = f1099r_2026.compute(context, {
+    statements: [
+      base,
+      {
+        ...base,
+        box7a_codes: ["1"],
+        early_distribution_tax_facts: {
+          full_amount_subject_to_additional_tax: true,
+          simple_ira_in_first_two_years: true,
+        },
+      },
+    ],
+  });
+  assertEquals(
+    mixed.outputs.find((output) => output.nodeType === "form5329")?.fields
+      .early_simple_ira_distribution,
+    5_000,
+  );
+  assertEquals(
+    mixed.outputs.find((output) => output.nodeType === "agi_aggregator")
+      ?.fields.line4b_ira_taxable,
+    10_000,
+  );
   assertThrows(
     () =>
       f1099r_2026.compute(context, {
-        statements: [{
-          ...base,
-          box7a_codes: ["1"],
-          early_distribution_tax_facts: {
-            full_amount_subject_to_ten_percent: true,
-            simple_ira_in_first_two_years: true,
+        statements: [
+          {
+            ...base,
+            box7a_codes: ["1"],
+            early_distribution_tax_facts: {
+              full_amount_subject_to_additional_tax: true,
+              simple_ira_in_first_two_years: true,
+            },
           },
-        }],
+          {
+            ...base,
+            recipient: "spouse",
+            box7a_codes: ["1"],
+            early_distribution_tax_facts: {
+              full_amount_subject_to_additional_tax: true,
+              simple_ira_in_first_two_years: false,
+            },
+          },
+        ],
       }),
     Error,
-    "25% Form 5329 route",
+    "separate taxpayer and spouse Form 5329 paths",
   );
 });

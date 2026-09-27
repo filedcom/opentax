@@ -55,9 +55,13 @@ IRA and pension distributions; the remaining cases below are still required.
 - Code 1 with the full amount subject to 10% now routes directly to 2026
   Schedule 2 line 5, then Form 1040 line 23 and the PDF, as allowed by the
   pinned [2026 draft Form 5329 instructions](corpus/draft/i5329.pdf). The
-  source requires explicit full-tax and SIMPLE IRA first-two-years facts;
-  early SIMPLE and mixed-code cases require the still-open Form 5329 path.
-- Taxable code-G Roth rollover, early distribution with Form 5329, IRA
+  source requires explicit full-tax and SIMPLE IRA first-two-years facts.
+  An early SIMPLE IRA distribution within its first two years now takes the
+  25% Part I route through Form 5329, Schedule 2 line 5, and a three-page
+  draft Form 5329 attachment. A normal code 7 statement can coexist with
+  this Form 5329 route. The direct 10% route still requires all 1099-R
+  statements to carry code 1. See the [Form 5329 contract](FORM5329-GRAPH.md).
+- Taxable code-G Roth rollover, early-distribution exceptions, IRA
   basis with Form 8606, and QCD with and without optional code Y need
   independent calculation fixtures.
 - A box 7c or 7d Trump-account statement must take its own verified path or
