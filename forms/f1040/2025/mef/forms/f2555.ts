@@ -118,7 +118,27 @@ function buildIRS2555(fields: Input, context?: MefBuildContext): string {
     element("TotalForeignEarnedIncomeAmt", lines.line24),
     element("TotalForeignEarnedIncmExclAmt", lines.line25),
     element("ForeignEarnedIncomeAmt", lines.line26),
-    element("ClaimingHousingExclOrDedInd", "false"),
+    element(
+      "ClaimingHousingExclOrDedInd",
+      filing.claiming_housing_exclusion_or_deduction ? "true" : "false",
+    ),
+    ...(filing.employee_housing
+      ? [
+        element("HousingQualifiedExpenseAmt", lines.line28),
+        element("HousingExpenseLimitAmt", lines.line29b),
+        element("SmallerQualifiedOrLimitAmt", lines.line30),
+        element("HousingQualifiedDaysCnt", lines.line31),
+        element("HousingMaximumAllowedAmt", lines.line32),
+        element("HousingExpensesOverMaxAmt", lines.line33),
+        ...(lines.line33 > 0
+          ? [
+            element("EmployerProvidedHousingAmt", lines.line34),
+            element("EmployerProvHousingExclPct", lines.line35.toFixed(5)),
+            element("HousingExclusionAmt", lines.line36),
+          ]
+          : []),
+      ]
+      : []),
     element("ForeignEarnIncmExclQlfyDaysCnt", lines.line38),
     element("ForeignEarnedIncExclusionPct", lines.line39.toFixed(5)),
     element("TentForeignEarnedIncomeExclAmt", lines.line40),

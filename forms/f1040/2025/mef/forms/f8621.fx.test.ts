@@ -20,7 +20,7 @@ const foreignBlock = {
     amount_foreign: 10_000,
     spot_usd_per_unit: 1.2,
     spot_rate_source: "Test spot quote, 2025-12-31",
-    year_charges: [{ tax_year: 2024, interest_charge: 50 }],
+    year_charges: [],
   }],
   taxable_nonexcess_dividend_usd: 6_000,
 };
@@ -36,8 +36,9 @@ const item = itemSchema.parse({
 });
 
 Deno.test("Form 8621 MeF keeps lines 15a to 15e(1) in EUR and line 15e(2) in USD", () => {
+  const calculated = calculateExcessEvents(foreignBlock);
   const [xml] = form8621.build({
-    items: [{ item, excessEvents: calculateExcessEvents(foreignBlock) }],
+    items: [{ item, excessEvents: calculated }],
   });
   assertStringIncludes(xml, "<FunctionalCurrencyCd>EUR</FunctionalCurrencyCd>");
   assertStringIncludes(
@@ -59,6 +60,10 @@ Deno.test("Form 8621 MeF keeps lines 15a to 15e(1) in EUR and line 15e(2) in USD
   assertStringIncludes(
     xml,
     "<TotalExcessDistributionUSAmt>6000</TotalExcessDistributionUSAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    `<InterestOnEachNetIncrInTaxAmt>${calculated[0].line16f_interest}</InterestOnEachNetIncrInTaxAmt>`,
   );
 });
 
@@ -117,7 +122,7 @@ Deno.test("Form 8621 MeF reports translated disposition gain on line 15f", () =>
     holding_period_start: "2024-01-01",
     event_date: "2025-12-31",
     first_pfic_tax_year: 2024,
-    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+    year_charges: [],
   };
   const dispositionItem = itemSchema.parse({
     ...item,

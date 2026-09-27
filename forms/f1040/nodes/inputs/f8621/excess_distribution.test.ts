@@ -1,6 +1,7 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
   calculateExcessEvents,
+  calculateSection1291Interest,
   ExcessEventKind,
 } from "./excess_distribution.ts";
 
@@ -16,11 +17,51 @@ const distribution = {
     year_charges: [{
       tax_year: 2024,
       foreign_tax_credit: 100,
-      interest_charge: 150,
     }],
   }],
   taxable_nonexcess_dividend_usd: 0,
 };
+
+Deno.test("Form 8621 compounds published section 6621 rates over dated periods", () => {
+  const netTax = 1_000;
+  // 2024 return due 2025-04-15; 2025 return due 2026-04-15.
+  // 351 days at 7% and 14 days at 6%, each with a 365-day divisor.
+  const expected2024 = Math.round(
+    (netTax * Math.pow(1 + 0.07 / 365, 351) *
+        Math.pow(1 + 0.06 / 365, 14) - netTax) * 100,
+  ) / 100;
+  assertEquals(calculateSection1291Interest(2024, netTax), expected2024);
+
+  // 2023 return due 2024-04-15; 2024 is leap, so its 261 interest
+  // days use 366. The remaining periods are 365-day years.
+  const expected2023 = Math.round(
+    (netTax * Math.pow(1 + 0.08 / 366, 261) *
+        Math.pow(1 + 0.07 / 365, 365 + 90) *
+        Math.pow(1 + 0.06 / 365, 14) - netTax) * 100,
+  ) / 100;
+  assertEquals(calculateSection1291Interest(2023, netTax), expected2023);
+});
+
+Deno.test("Form 8621 rejects supplied interest and unverified prior-year periods", () => {
+  assertThrows(
+    () =>
+      calculateExcessEvents({
+        ...distribution,
+        current_year_distributions: [{
+          date: "2025-12-31",
+          amount_usd: 10_000,
+          year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+        }],
+      } as never),
+    Error,
+    "Unrecognized key",
+  );
+  assertThrows(
+    () => calculateSection1291Interest(2022, 1_000),
+    Error,
+    "lacks verified due date",
+  );
+});
 
 Deno.test("Form 8621 derives excess and allocates it by actual days including leap day", () => {
   const [result] = calculateExcessEvents(distribution);
@@ -40,7 +81,44 @@ Deno.test("Form 8621 derives excess and allocates it by actual days including le
   assertEquals(result.line16c_prior_year_tax_before_credit, 1_853);
   assertEquals(result.line16d_prior_year_foreign_tax_credit, 100);
   assertEquals(result.line16e_additional_tax, 1_753);
-  assertEquals(result.line16f_interest, 150);
+  assertEquals(
+    result.allocations[0].interest_charge,
+    calculateSection1291Interest(2024, 5_006.84 * 0.37 - 100),
+  );
+  assertEquals(
+    result.line16f_interest,
+    Math.round(result.allocations[0].interest_charge),
+  );
+});
+
+Deno.test("Form 8621 calculates each prior PFIC year's interest separately", () => {
+  const [result] = calculateExcessEvents({
+    ...distribution,
+    holding_period_start: "2023-01-01",
+    first_pfic_tax_year: 2023,
+    prior_year_distributions: [
+      { tax_year: 2024, amount_usd: 0 },
+      { tax_year: 2023, amount_usd: 0 },
+    ],
+    current_year_distributions: [{
+      date: "2025-12-31",
+      amount_usd: 10_000,
+      year_charges: [],
+    }],
+  });
+  const [year2023, year2024] = result.allocations;
+  assertEquals(
+    year2023.interest_charge,
+    calculateSection1291Interest(2023, year2023.allocated_amount * 0.37),
+  );
+  assertEquals(
+    year2024.interest_charge,
+    calculateSection1291Interest(2024, year2024.allocated_amount * 0.37),
+  );
+  assertEquals(
+    result.line16f_interest,
+    Math.round(year2023.interest_charge + year2024.interest_charge),
+  );
 });
 
 Deno.test("Form 8621 applies 125% of prior average per share", () => {
@@ -50,7 +128,7 @@ Deno.test("Form 8621 applies 125% of prior average per share", () => {
     current_year_distributions: [{
       date: "2025-12-31",
       amount_usd: 10_000,
-      year_charges: [{ tax_year: 2024, interest_charge: 100 }],
+      year_charges: [],
     }],
     taxable_nonexcess_dividend_usd: 5_000,
   });
@@ -70,12 +148,12 @@ Deno.test("Form 8621 apportions annual excess among actual distribution dates", 
       {
         date: "2025-06-30",
         amount_usd: 2_000,
-        year_charges: [{ tax_year: 2024, interest_charge: 10 }],
+        year_charges: [],
       },
       {
         date: "2025-12-31",
         amount_usd: 8_000,
-        year_charges: [{ tax_year: 2024, interest_charge: 40 }],
+        year_charges: [],
       },
     ],
     taxable_nonexcess_dividend_usd: 5_000,
@@ -105,14 +183,14 @@ Deno.test("Form 8621 determines same-currency excess before converting each dist
         amount_foreign: 2_000,
         spot_usd_per_unit: 1.1,
         spot_rate_source: "Test spot quote, 2025-06-30",
-        year_charges: [{ tax_year: 2024, interest_charge: 10 }],
+        year_charges: [],
       },
       {
         date: "2025-12-31",
         amount_foreign: 8_000,
         spot_usd_per_unit: 1.25,
         spot_rate_source: "Test spot quote, 2025-12-31",
-        year_charges: [{ tax_year: 2024, interest_charge: 40 }],
+        year_charges: [],
       },
     ],
     taxable_nonexcess_dividend_usd: 6_100,
@@ -152,7 +230,7 @@ Deno.test("Form 8621 rejects a foreign taxable dividend above the translated non
           amount_foreign: 10_000,
           spot_usd_per_unit: 1.2,
           spot_rate_source: "Test spot quote, 2025-12-31",
-          year_charges: [{ tax_year: 2024, interest_charge: 50 }],
+          year_charges: [],
         }],
         taxable_nonexcess_dividend_usd: 6_001,
       }),
@@ -219,17 +297,9 @@ Deno.test("Form 8621 rejects incomplete history and excess section 301 dividends
     "invalid holding-period date",
   );
   assertThrows(
-    () =>
-      calculateExcessEvents({
-        ...distribution,
-        current_year_distributions: [{
-          date: "2025-12-31",
-          amount_usd: 10_000,
-          year_charges: [],
-        }],
-      }),
+    () => calculateSection1291Interest(2022, 100),
     Error,
-    "interest charge",
+    "lacks verified due date",
   );
 });
 
@@ -245,7 +315,6 @@ Deno.test("Form 8621 disposition needs section 1248 attribution for foreign tax 
         year_charges: [{
           tax_year: 2024,
           foreign_tax_credit: 100,
-          interest_charge: 150,
         }],
       }),
     Error,
@@ -264,7 +333,7 @@ Deno.test("Form 8621 translates foreign net proceeds before subtracting USD adju
     holding_period_start: "2024-01-01",
     event_date: "2025-12-31",
     first_pfic_tax_year: 2024,
-    year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+    year_charges: [],
   });
   assertEquals(result.amount_usd, 10_000);
   assertEquals(result.currency_code, "USD");

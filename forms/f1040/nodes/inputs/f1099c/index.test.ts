@@ -49,6 +49,32 @@ Deno.test("routing=taxable routes box2 to schedule1 line8c", () => {
   assertEquals(input.line8c_cod_income, 5000);
 });
 
+Deno.test("taxable 1099-C removes documented cash-method deductible box 3 interest", () => {
+  const result = compute([minimalItem({
+    box2_cod_amount: 10_000,
+    box3_interest: 1_500,
+    box3_interest_treatment: "cash_basis_deductible_if_paid",
+    box3_interest_treatment_source: "Cash-method loan ledger",
+  })]);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8c_cod_income, 8_500);
+});
+
+Deno.test("non-QPRI excluded 1099-C interest remains closed pending separate allocation", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 10_000,
+        box3_interest: 1_500,
+        box3_interest_treatment: "taxable",
+        box3_interest_treatment_source: "Loan ledger",
+        routing: "excluded",
+        exclusion_type: ExclusionType.Insolvency,
+      })]),
+    Error,
+    "Non-QPRI Form 1099-C interest",
+  );
+});
+
 Deno.test("routing=taxable: box2_cod_amount=0 does not route to schedule1", () => {
   const result = compute([
     minimalItem({ box2_cod_amount: 0, routing: "taxable" }),
@@ -103,13 +129,76 @@ Deno.test("QPRI 1099-C rejects undivided discharged interest", () => {
       compute([minimalItem({
         box2_cod_amount: 30_000,
         box3_interest: 2_000,
+        box3_interest_treatment: "taxable",
+        box3_interest_treatment_source: "Loan payoff ledger",
         routing: "excluded",
         exclusion_type: ExclusionType.Qpri,
         qpri_discharged_principal_amount: 30_000,
         qpri_actual_discharge_date: "2025-06-15",
       })]),
     Error,
-    "principal and interest reconciliation",
+    "box 2 reconciled to discharged principal",
+  );
+});
+
+Deno.test("1099-C rejects box 3 interest greater than box 2", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 1_000,
+        box3_interest: 1_001,
+        box3_interest_treatment: "taxable",
+        box3_interest_treatment_source: "Loan payoff ledger",
+      })]),
+    Error,
+    "box 3 interest exceeds box 2",
+  );
+});
+
+Deno.test("QPRI 1099-C keeps taxable box 3 interest outside Form 982 principal", () => {
+  const result = compute([minimalItem({
+    box2_cod_amount: 30_000,
+    box3_interest: 2_000,
+    box3_interest_treatment: "taxable",
+    box3_interest_treatment_source: "Loan payoff ledger",
+    routing: "excluded",
+    exclusion_type: ExclusionType.Qpri,
+    qpri_discharged_principal_amount: 28_000,
+    qpri_actual_discharge_date: "2025-06-15",
+  })]);
+  assertEquals(fieldsOf(result.outputs, form982)?.line2_excluded_cod, 28_000);
+  assertEquals(fieldsOf(result.outputs, schedule1)?.line8c_cod_income, 2_000);
+});
+
+Deno.test("QPRI 1099-C cash-basis deductible interest is not Form 982 principal or COD income", () => {
+  const result = compute([minimalItem({
+    box2_cod_amount: 30_000,
+    box3_interest: 2_000,
+    box3_interest_treatment: "cash_basis_deductible_if_paid",
+    box3_interest_treatment_source:
+      "Cash-method and deductible-interest records",
+    routing: "excluded",
+    exclusion_type: ExclusionType.Qpri,
+    qpri_discharged_principal_amount: 28_000,
+    qpri_actual_discharge_date: "2025-06-15",
+  })]);
+  assertEquals(fieldsOf(result.outputs, form982)?.line2_excluded_cod, 28_000);
+  assertEquals(fieldsOf(result.outputs, schedule1), undefined);
+});
+
+Deno.test("QPRI 1099-C requires documented tax treatment for reconciled box 3 interest", () => {
+  assertThrows(
+    () =>
+      compute([minimalItem({
+        box2_cod_amount: 30_000,
+        box3_interest: 2_000,
+        routing: "excluded",
+        exclusion_type: ExclusionType.Qpri,
+        qpri_discharged_principal_amount: 28_000,
+        qpri_actual_discharge_date: "2025-06-15",
+      })]),
+    Error,
+    "documented taxable or cash-basis deductible-debt treatment",
   );
 });
 

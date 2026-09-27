@@ -1200,18 +1200,21 @@ security confirmation, and an explicit filing-status cap answer. A mixed-use
 loan's nonqualified balance is discharged first for the exclusion calculation;
 the remainder feeds Schedule 1 and Form 1040 AGI, while the excluded portion
 feeds native Form 982 line 2. MeF export checks the MFS cap choice against the
-return. A Form 1099-C with undivided discharged interest stops pending a
-principal/interest split. QPRI also requires a sourced home-value-decline or
-financial-condition discharge reason, an actual discharge date separate from the
-1099-C identifiable-event date, and confirmation that discharged principal
-equals box 2; other box 2 components need separate classification. Box 7 FMV no
-longer invents a Schedule D gain: retained property does not route there, and a
-transfer stops until recourse, debt balance, basis, and holding facts support a
-disposition calculation. The legacy Schedule D COD fields now reject direct
-input. Source, calculation, XML, and local XSD cases are written but unrun.
-Interest, recourse/nonrecourse property disposition, multiple debts, evidence
-authentication, and non-QPRI Part II tax-attribute reductions remain open. See
-the [Form 982 instructions](https://www.irs.gov/instructions/i982) and
+return. A Form 1099-C with box 3 interest now reconciles box 2 to discharged
+principal plus interest and requires documented taxable or cash-method
+deductible-debt treatment; interest never enters Form 982 line 2. QPRI also
+requires a sourced home-value-decline or financial-condition discharge reason,
+an actual discharge date separate from the 1099-C identifiable-event date, and
+confirmation that discharged principal plus box 3 interest equals box 2; fees
+and penalties need separate classification. Box 7 FMV no longer invents a
+Schedule D gain: retained property does not route there, and a transfer stops
+until recourse, debt balance, basis, and holding facts support a disposition
+calculation. The legacy Schedule D COD fields now reject direct input. Source,
+calculation, XML, and local XSD cases are written but unrun. Mixed
+deductible/nondeductible interest, recourse/nonrecourse property disposition,
+multiple debts, evidence authentication, and non-QPRI Part II tax-attribute
+reductions remain open. See the
+[Form 982 instructions](https://www.irs.gov/instructions/i982) and
 [2025 Publication 4681](https://www.irs.gov/publications/p4681).
 
 ### ATS-01: Form 1040 Scenario 13 source reconciliation
@@ -1277,8 +1280,12 @@ dates. Each event's holding-period allocation is derived from actual days,
 including leap years and cent balancing. Prior PFIC-year tax uses each year's
 [IRS-published highest rate](https://www.irs.gov/instructions/i8621), apply
 per-year foreign-tax-credit limits, and send Form 8621 line 16e to Form 1040
-line 16 with `1291TAX`. Supplied section 6621 interest goes to Schedule 2 line
-17p; current/pre-PFIC income goes to Schedule 1. QEF net capital gain now routes
+line 16 with `1291TAX`. For calendar-year 2023 and 2024 prior PFIC allocations,
+section 1291 interest is now computed per year from the net tax, published
+quarterly section 6621 rates, and daily compounding through the 2025 return's
+unextended due date. Caller-entered interest is rejected; earlier prior years
+with net tax stop until verified rate history is added. Calculated interest goes
+to Schedule 2 line 17p; current/pre-PFIC income goes to Schedule 1. QEF net capital gain now routes
 to Schedule D, and mark-to-market loss is limited by unreversed prior
 inclusions. QEF section 951/1293(g) reductions are separate source facts. The
 section 301 taxable part of nonexcess distributions routes to Schedule B and
@@ -1286,7 +1293,7 @@ Form 8960 as a separate sourced fact. Native `IRS8621` and a holding-period
 statement builder are registered; calculation and source-to-XSD cases are
 written but unrun. The engine still needs mixed-currency distribution
 conversion, mixed lots and historical disposition basis reconciliation,
-historical interest computation, complete QEF/MTM elections and supporting
+older historical interest periods and special due dates, complete QEF/MTM elections and supporting
 facts, PDF verification, XSD/business-rule evidence, and ATS acceptance.
 
 The current build pass adds same-currency section 1291 distributions in a
@@ -1493,6 +1500,18 @@ written but unrun. See the
 
 ## Registered Form 1040 MeF documents to audit
 
+Build-pass addendum for Form 2555 housing (unrun): the physical-presence,
+foreign-employer wage filing now takes sourced qualified housing expenses and
+calculates 2025 Parts VI, VII, and VIII through line 45, including the housing
+cap, base amount, employer-provided wage fraction, and residual FEIE. The
+native MeF fields and focused positive/rejection cases are written but unrun.
+The old aggregate housing amounts now reject instead of bypassing Part VI.
+This slice is limited to a single Sweden standard-limit residence; Notice
+2025-16 high-cost and other-location limits, multiple households, self-employed
+housing deduction, non-wage employer amounts, and later-limit elections remain
+open and fail closed. See the [2025 Form 2555 instructions](https://www.irs.gov/instructions/i2555)
+and [Notice 2025-16](https://www.irs.gov/irb/2025-13_IRB#NOT-2025-16).
+
 Build-pass addendum for GAP-6251 (unrun): line 10 now receives the Form 4972
 subtraction, Form 8962's Schedule 2 line 1a amount as part of line 1z, Schedule
 3 line 1 foreign tax credit, and the negative Form 8978 adjustment. Schedule J
@@ -1505,12 +1524,11 @@ Foreign Earned Income Tax Worksheet's qualified-dividend route with its
 regular-tax capital-gain-excess adjustment, and Form 6251 Part III's separate
 AMT capital-gain-excess adjustment. Both retain the independently refigured
 regular-tax amounts for Form 6251 lines 20 and 27. These cases are written but
-unrun. Form 2555 combined with Schedule D special-rate gain now uses the
-stacked Schedule D and AMT Part III worksheets when neither regular nor AMT
-capital-gain excess exists. A special-rate return with capital-gain excess,
-or an AMT Form 4952 election, still stops pending the distinct Schedule D
-refigure; broader AMT-basis gain differences and IRS business-rule verification
-also remain open.
+unrun. Form 2555 combined with Schedule D special-rate gain now uses the stacked
+Schedule D and AMT Part III worksheets when neither regular nor AMT capital-gain
+excess exists. A special-rate return with capital-gain excess, or an AMT Form
+4952 election, still stops pending the distinct Schedule D refigure; broader
+AMT-basis gain differences and IRS business-rule verification also remain open.
 
 Build-pass addendum for GAP-1116 (unrun): unsupported section 951A, foreign
 branch, treaty-resourced, and section 901(j) categories now stop before any
@@ -1527,9 +1545,9 @@ documented beginning/end tax-book asset inventory to allocate its line 4b
 foreign share by category and country; the same amount reduces line 7 and
 appears in native MeF line 4b. Missing inventory, mixed-source asset
 characterization, and the separate small-foreign-income election remain open.
-Preferential-gain line 18 adjustments, AMT Form 1116 sourcing,
-category-specific calculations, visual PDF review, full-batch validation, and
-IRS business rules remain open.
+Preferential-gain line 18 adjustments, AMT Form 1116 sourcing, category-specific
+calculations, visual PDF review, full-batch validation, and IRS business rules
+remain open.
 
 Build-pass addendum for GAP-8814 (unrun): the 2025 parent Form 1040 PDF now
 marks the child dividend and direct child capital-gain boxes, while Schedule D

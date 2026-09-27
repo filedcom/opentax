@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assertEquals, assertThrows } from "@std/assert";
 import { form2555 } from "./index.ts";
 
 function compute(input: Record<string, unknown>) {
@@ -17,25 +17,37 @@ Deno.test("smoke — empty input returns no outputs", () => {
 });
 
 Deno.test("no qualification — zero days and no bona fide → no output", () => {
-  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 100 });
+  const result = compute({
+    foreign_wages: 50_000,
+    days_in_foreign_country: 100,
+  });
   assertEquals(result.outputs.length, 0);
 });
 
 // ─── Physical Presence Test ───────────────────────────────────────────────────
 
 Deno.test("physical presence — exactly 330 days qualifies", () => {
-  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 330 });
+  const result = compute({
+    foreign_wages: 50_000,
+    days_in_foreign_country: 330,
+  });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 50_000);
 });
 
 Deno.test("physical presence — 329 days does not qualify", () => {
-  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 329 });
+  const result = compute({
+    foreign_wages: 50_000,
+    days_in_foreign_country: 329,
+  });
   assertEquals(result.outputs.length, 0);
 });
 
 Deno.test("physical presence — 365 days qualifies", () => {
-  const result = compute({ foreign_wages: 80_000, days_in_foreign_country: 365 });
+  const result = compute({
+    foreign_wages: 80_000,
+    days_in_foreign_country: 365,
+  });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 80_000);
 });
@@ -106,80 +118,25 @@ Deno.test("SE income only — no wages", () => {
 
 // ─── Housing Exclusion ────────────────────────────────────────────────────────
 
-Deno.test("housing — employer exclusion routes to housing deduction field", () => {
-  const result = compute({
-    foreign_wages: 50_000,
-    days_in_foreign_country: 365,
-    employer_housing_exclusion: 15_000,
-  });
-  const outputs = result.outputs.filter((o) => o.nodeType === "schedule1");
-  const feieOut = outputs.find((o) => "line8d_foreign_earned_income_exclusion" in o.fields);
-  const housingOut = outputs.find((o) => "line8d_foreign_housing_deduction" in o.fields);
-  assertEquals(feieOut?.fields.line8d_foreign_earned_income_exclusion, 50_000);
-  assertEquals(housingOut?.fields.line8d_foreign_housing_deduction, 15_000);
-});
-
-Deno.test("housing only — no foreign earned income, employer housing present", () => {
-  const result = compute({
-    days_in_foreign_country: 365,
-    employer_housing_exclusion: 20_000,
-  });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8d_foreign_housing_deduction, 20_000);
-});
-
-Deno.test("housing — taxpayer expenses above base: housing_costs=$30k, base=$20,800 → exclusion=$9,200", () => {
-  const result = compute({
-    days_in_foreign_country: 365,
-    foreign_housing_expenses: 30_000,
-  });
-  const s1 = findOutput(result, "schedule1");
-  assertEquals(s1?.fields.line8d_foreign_housing_deduction, 9_200);
-});
-
-Deno.test("housing — taxpayer expenses exactly at base: no exclusion", () => {
-  const result = compute({
-    days_in_foreign_country: 365,
-    foreign_housing_expenses: 20_800,
-  });
-  const housingOutputs = result.outputs.filter(
-    (o) => o.nodeType === "schedule1" && "line8d_foreign_housing_deduction" in o.fields,
-  );
-  assertEquals(housingOutputs.length, 0);
-});
-
-Deno.test("housing — taxpayer expenses below base: no exclusion", () => {
-  const result = compute({
-    days_in_foreign_country: 365,
-    foreign_housing_expenses: 10_000,
-  });
-  const housingOutputs = result.outputs.filter(
-    (o) => o.nodeType === "schedule1" && "line8d_foreign_housing_deduction" in o.fields,
-  );
-  assertEquals(housingOutputs.length, 0);
-});
-
-Deno.test("housing — taxpayer expenses combined with employer exclusion", () => {
-  // taxpayer excess: 35,000 − 20,800 = 14,200; employer: 5,000; total: 19,200
-  const result = compute({
-    days_in_foreign_country: 365,
-    foreign_housing_expenses: 35_000,
-    employer_housing_exclusion: 5_000,
-  });
-  const outputs = result.outputs.filter((o) => o.nodeType === "schedule1");
-  const housingOut = outputs.find((o) => "line8d_foreign_housing_deduction" in o.fields);
-  assertEquals(housingOut?.fields.line8d_foreign_housing_deduction, 19_200);
-});
-
-Deno.test("housing — zero employer exclusion produces no housing output", () => {
-  const result = compute({
-    foreign_wages: 40_000,
-    days_in_foreign_country: 365,
-    employer_housing_exclusion: 0,
-  });
-  const outputs = result.outputs.filter((o) => o.nodeType === "schedule1");
-  const housingOut = outputs.find((o) => "line8d_foreign_housing_deduction" in o.fields);
-  assertEquals(housingOut, undefined);
+Deno.test("legacy aggregate housing amounts fail closed instead of being added to FEIE", () => {
+  for (
+    const source of [
+      { foreign_housing_expenses: 30_000 },
+      { employer_housing_exclusion: 15_000 },
+      { employer_housing_exclusion: 0 },
+    ]
+  ) {
+    assertThrows(
+      () =>
+        compute({
+          foreign_wages: 50_000,
+          days_in_foreign_country: 365,
+          ...source,
+        }),
+      Error,
+      "aggregate housing inputs are unsupported",
+    );
+  }
 });
 
 // ─── Partial-year FEIE proration (IRC §911(b)(2)(A)) ─────────────────────────
@@ -196,7 +153,10 @@ Deno.test("proration — 182 qualifying days: limit = $130,000 × 182/365 ≈ $6
 });
 
 Deno.test("proration — 365 qualifying days: full $130,000 limit applies", () => {
-  const result = compute({ foreign_wages: 200_000, days_in_foreign_country: 365 });
+  const result = compute({
+    foreign_wages: 200_000,
+    days_in_foreign_country: 365,
+  });
   const s1 = findOutput(result, "schedule1");
   assertEquals(s1?.fields.line8d_foreign_earned_income_exclusion, 130_000);
 });
@@ -238,7 +198,10 @@ Deno.test("SE income excluded from income tax but still triggers SE tax", () => 
 });
 
 Deno.test("no SE income → no schedule_se output", () => {
-  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 365 });
+  const result = compute({
+    foreign_wages: 50_000,
+    days_in_foreign_country: 365,
+  });
   const se = findOutput(result, "schedule_se");
   assertEquals(se, undefined);
 });
@@ -246,26 +209,34 @@ Deno.test("no SE income → no schedule_se output", () => {
 // ─── §911(f) stacking rule — routes exclusion to income_tax_calculation ───────
 
 Deno.test("stacking rule: exclusion emitted to income_tax_calculation", () => {
-  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 365 });
+  const result = compute({
+    foreign_wages: 50_000,
+    days_in_foreign_country: 365,
+  });
   const itc = findOutput(result, "income_tax_calculation");
   assertEquals(itc?.fields.foreign_earned_income_exclusion, 50_000);
 });
 
-Deno.test("stacking rule: housing exclusion included in income_tax_calculation amount", () => {
-  // FEIE $50k + housing $9,200 = $59,200 total exclusion
-  const result = compute({
-    foreign_wages: 50_000,
-    foreign_housing_expenses: 30_000,
-    days_in_foreign_country: 365,
-  });
-  const itc = findOutput(result, "income_tax_calculation");
-  assertEquals(itc?.fields.foreign_earned_income_exclusion, 59_200);
+Deno.test("stacking rule: aggregate housing cannot enter income tax calculation", () => {
+  assertThrows(
+    () =>
+      compute({
+        foreign_wages: 50_000,
+        foreign_housing_expenses: 30_000,
+        days_in_foreign_country: 365,
+      }),
+    Error,
+    "aggregate housing inputs are unsupported",
+  );
 });
 
 // ─── Output Routing ───────────────────────────────────────────────────────────
 
 Deno.test("output routes to schedule1 and agi_aggregator", () => {
-  const result = compute({ foreign_wages: 50_000, days_in_foreign_country: 365 });
+  const result = compute({
+    foreign_wages: 50_000,
+    days_in_foreign_country: 365,
+  });
   const nodeTypes = new Set(result.outputs.map((o) => o.nodeType));
   assertEquals(nodeTypes.has("schedule1"), true);
   assertEquals(nodeTypes.has("agi_aggregator"), true);

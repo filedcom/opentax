@@ -18,6 +18,8 @@
 | qpri_discharge_reason | enum | lender/workout records | Home-value decline or taxpayer financial condition, not payment for services | Form 982 line 1e | https://www.irs.gov/instructions/i982 |
 | qpri_discharge_reason_source | string | lender/workout records | Identifies supporting evidence for the qualifying discharge reason | Form 982 line 1e | https://www.irs.gov/instructions/i982 |
 | discharge_date | date | lender discharge record | Actual 2025 discharge date, not merely Form 1099-C box 1 identifiable-event date | Form 982 line 1e | https://www.irs.gov/instructions/i982 |
+| box3_interest_treatment | taxable or cash_basis_deductible_if_paid | interest deduction and accounting-method records | Classifies the entire box 3 amount separately from QPRI principal | Form 1099-C boxes 2/3; deductible-debt exception | https://www.irs.gov/publications/p4681 |
+| box3_interest_treatment_source | string | source document reference | Documents the interest classification | Form 1099-C boxes 2/3 | https://www.irs.gov/publications/p4681 |
 ---
 
 ## Calculation Logic
@@ -31,11 +33,12 @@
 - real_property_business: no explicit dollar cap (limited by adjusted basis)
 - qpri: first subtract the nonqualified pre-discharge balance from discharged
   principal, then cap the qualifying remainder at $750,000 ($375,000 if MFS);
-  2025 discharges only in this exporter. Missing balance tracing and a
-  Form 1099-C with discharged interest stop rather than treating the whole box 2
-  as qualified principal. MeF export reconciles the MFS cap choice with the
-  return filing status. The 1099-C route requires a separate actual discharge
-  date, reconciles discharged principal to box 2, and stops if fees or penalties
+  2025 discharges only in this exporter. Missing balance tracing and a Form
+  1099-C with box 3 interest requires box 2 = sourced discharged principal plus
+  box 3. The interest is either taxable COD or excluded under the documented
+  cash-method deductible-debt exception, never Form 982 line 2 principal. MeF
+  export reconciles the MFS cap choice with the return filing status. The 1099-C
+  route requires a separate actual discharge date and stops if fees or penalties
   need another classification. Form 1099-C box 7 FMV alone never creates a
   Schedule D gain; a transferred property needs a separate sourced disposition
   calculation.

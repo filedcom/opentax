@@ -3,7 +3,10 @@ import { buildExecutionPlan } from "../../../core/runtime/planner.ts";
 import { execute } from "../../../core/runtime/executor.ts";
 import { registry } from "../2025/registry.ts";
 import { PficRegime } from "../nodes/inputs/f8621/index.ts";
-import { ExcessEventKind } from "../nodes/inputs/f8621/excess_distribution.ts";
+import {
+  calculateSection1291Interest,
+  ExcessEventKind,
+} from "../nodes/inputs/f8621/excess_distribution.ts";
 import { FilingStatus } from "../nodes/types.ts";
 
 const plan = buildExecutionPlan(registry);
@@ -34,7 +37,7 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
           current_year_distributions: [{
             date: "2025-12-31",
             amount_usd: 10_000,
-            year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+            year_charges: [],
           }],
           taxable_nonexcess_dividend_usd: 0,
         }],
@@ -45,9 +48,12 @@ Deno.test("E2E: Form 8621 sends prior PFIC-year tax to 1040 line 16 and interest
   assertEquals(result.pending.schedule1?.line8z_other, 4_993);
   assertEquals(result.pending.f1040?.line16_income_tax, 1_853);
   assertEquals(result.pending.f1040?.form8621_tax, 1_853);
-  assertEquals(result.pending.schedule2?.line17p_form8621_interest, 150);
-  assertEquals(result.pending.f1040?.line23_other_taxes, 150);
-  assertEquals(result.pending.f1040?.line24_total_tax, 2_003);
+  const interest = Math.round(
+    calculateSection1291Interest(2024, 5_006.84 * 0.37),
+  );
+  assertEquals(result.pending.schedule2?.line17p_form8621_interest, interest);
+  assertEquals(result.pending.f1040?.line23_other_taxes, interest);
+  assertEquals(result.pending.f1040?.line24_total_tax, 1_853 + interest);
   assertEquals((result.pending.form8621?.items ?? []).length, 1);
 });
 
@@ -77,7 +83,7 @@ Deno.test("E2E: Form 8621 separates excess income from section 301 nonexcess div
           current_year_distributions: [{
             date: "2025-12-31",
             amount_usd: 10_000,
-            year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+            year_charges: [],
           }],
           taxable_nonexcess_dividend_usd: 5_000,
         }],

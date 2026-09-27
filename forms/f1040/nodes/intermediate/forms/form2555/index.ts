@@ -54,12 +54,8 @@ export const inputSchema = z.object({
   // Defaults to 365 when not provided.
   qualifying_days: z.number().int().min(1).max(365).optional(),
 
-  // Foreign housing expenses paid by the taxpayer (Form 2555 Part VIII line 30).
-  // IRC §911(c)(2).
+  // Retained only to reject the retired aggregate housing API explicitly.
   foreign_housing_expenses: z.number().nonnegative().optional(),
-
-  // Foreign housing exclusion provided by employer (W-2 or equivalent).
-  // Reported on Form 2555 line 44.
   employer_housing_exclusion: z.number().nonnegative().optional(),
 });
 
@@ -96,14 +92,6 @@ function earnedIncomeExclusion(income: number, limit: number): number {
   return Math.min(income, limit);
 }
 
-// Housing exclusion / deduction (IRC §911(c)).
-function housingAmount(input: Form2555Input, housingBase: number): number {
-  const employer = input.employer_housing_exclusion ?? 0;
-  const taxpayerExpenses = input.foreign_housing_expenses ?? 0;
-  const taxpayerExclusion = Math.max(0, taxpayerExpenses - housingBase);
-  return employer + taxpayerExclusion;
-}
-
 // ─── Node class ───────────────────────────────────────────────────────────────
 
 class Form2555Node extends TaxNode<typeof inputSchema> {
@@ -121,6 +109,14 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
     if (!cfg) throw new Error(`No f1040 config for year ${ctx.taxYear}`);
     const input = inputSchema.parse(rawInput);
+    if (
+      input.foreign_housing_expenses !== undefined ||
+      input.employer_housing_exclusion !== undefined
+    ) {
+      throw new Error(
+        "Form 2555 aggregate housing inputs are unsupported; provide structured employee housing filing facts",
+      );
+    }
 
     if (input.filing_details) {
       if (
@@ -128,9 +124,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
         input.foreign_self_employment_income !== undefined ||
         input.days_in_foreign_country !== undefined ||
         input.bona_fide_resident !== undefined ||
-        input.qualifying_days !== undefined ||
-        input.foreign_housing_expenses !== undefined ||
-        input.employer_housing_exclusion !== undefined
+        input.qualifying_days !== undefined
       ) {
         throw new Error(
           "Form 2555 filing details cannot be mixed with aggregate inputs",
@@ -167,10 +161,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     }
 
     const income = totalForeignEarnedIncome(input);
-    const hasHousingActivity = (input.employer_housing_exclusion ?? 0) > 0 ||
-      (input.foreign_housing_expenses ?? 0) > 0;
-
-    if (income === 0 && !hasHousingActivity) {
+    if (income === 0) {
       return { outputs: [] };
     }
 
@@ -196,17 +187,6 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
       );
     }
 
-    // Housing deduction — IRC §911(a)(2), (c)
-    const housing = housingAmount(input, cfg.feieHousingBase);
-    if (housing > 0) {
-      outputs.push(
-        output(schedule1, { line8d_foreign_housing_deduction: housing }),
-      );
-      outputs.push(
-        output(agi_aggregator, { line8d_foreign_housing_deduction: housing }),
-      );
-    }
-
     // SE tax preservation — IRC §1401 applies to foreign SE income regardless of FEIE.
     // Excluded foreign SE income must still trigger Schedule SE (row 17 fix).
     const seIncome = input.foreign_self_employment_income ?? 0;
@@ -218,7 +198,7 @@ class Form2555Node extends TaxNode<typeof inputSchema> {
     // pushing non-excluded income into higher brackets.
     // Emit total exclusion to income_tax_calculation so it can apply the floor.
     // IRC §911(f); Form 2555 Instructions "Tax on Income Not Excluded".
-    const totalExclusion = exclusion + housing;
+    const totalExclusion = exclusion;
     if (totalExclusion > 0) {
       outputs.push(output(income_tax_calculation, {
         foreign_earned_income_exclusion: totalExclusion,

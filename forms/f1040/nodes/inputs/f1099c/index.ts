@@ -15,6 +15,11 @@ export const itemSchema = z.object({
   box1_date: z.string().optional(),
   box2_cod_amount: z.number().nonnegative(),
   box3_interest: z.number().nonnegative().optional(),
+  // Box 3 is part of box 2, but not QPRI principal. The cash-method
+  // deductible-debt exception applies before the QPRI exclusion.
+  box3_interest_treatment: z.enum(["cash_basis_deductible_if_paid", "taxable"])
+    .optional(),
+  box3_interest_treatment_source: z.string().trim().min(1).optional(),
   box4_debt_description: z.string().optional(),
   // Official box 5 asks whether the debtor was personally liable. It does
   // not classify the property's personal or business use.
@@ -73,6 +78,29 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     }
 
     for (const item of c99s) {
+      const interest = item.box3_interest ?? 0;
+      if (interest > item.box2_cod_amount) {
+        throw new Error(
+          "Form 1099-C box 3 interest exceeds box 2 discharged debt",
+        );
+      }
+      if (
+        interest > 0 &&
+        (!item.box3_interest_treatment ||
+          !item.box3_interest_treatment_source)
+      ) {
+        throw new Error(
+          "Form 1099-C box 3 interest needs documented taxable or cash-basis deductible-debt treatment",
+        );
+      }
+      if (
+        interest > 0 && item.routing === "excluded" &&
+        item.exclusion_type !== ExclusionType.Qpri
+      ) {
+        throw new Error(
+          "Non-QPRI Form 1099-C interest needs separate exception and exclusion allocation",
+        );
+      }
       if (item.property_disposition_status === "transferred") {
         throw new Error(
           "Form 1099-C property transfer needs recourse, debt balance, adjusted basis, and holding facts before disposition reporting",
@@ -92,10 +120,12 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
       ) {
         if (
           item.qpri_discharged_principal_amount === undefined ||
-          item.qpri_discharged_principal_amount !== item.box2_cod_amount
+          interest > item.box2_cod_amount ||
+          item.qpri_discharged_principal_amount !==
+            item.box2_cod_amount - interest
         ) {
           throw new Error(
-            "Form 1099-C QPRI needs box 2 reconciled to discharged principal, with fees and penalties classified separately",
+            "Form 1099-C QPRI needs box 2 reconciled to discharged principal and box 3 interest, with fees and penalties classified separately",
           );
         }
         if (!item.qpri_actual_discharge_date) {
@@ -109,10 +139,22 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
     const outputs = [];
 
     // Aggregate taxable COD income → Schedule 1 line 8c
-    const totalTaxable = taxableItems(c99s).reduce(
-      (sum, item) => sum + item.box2_cod_amount,
+    const taxableQpriInterest = excludedItems(c99s).reduce(
+      (sum, item) =>
+        sum + (item.exclusion_type === ExclusionType.Qpri &&
+            item.box3_interest_treatment === "taxable"
+          ? item.box3_interest ?? 0
+          : 0),
       0,
     );
+    const totalTaxable = taxableItems(c99s).reduce(
+      (sum, item) =>
+        sum + item.box2_cod_amount -
+        (item.box3_interest_treatment === "cash_basis_deductible_if_paid"
+          ? item.box3_interest ?? 0
+          : 0),
+      0,
+    ) + taxableQpriInterest;
     if (totalTaxable > 0) {
       outputs.push(
         this.outputNodes.output(schedule1, { line8c_cod_income: totalTaxable }),
@@ -126,18 +168,12 @@ class F1099cNode extends TaxNode<typeof inputSchema> {
 
     // Aggregate excluded COD income → Form 982 line 2
     const excluded = excludedItems(c99s);
-    if (
-      excluded.some((item) =>
-        item.exclusion_type === ExclusionType.Qpri &&
-        (item.box3_interest ?? 0) > 0
-      )
-    ) {
-      throw new Error(
-        "Form 1099-C QPRI with discharged interest needs a separate principal and interest reconciliation",
-      );
-    }
     const totalExcluded = excluded.reduce(
-      (sum, item) => sum + item.box2_cod_amount,
+      (sum, item) =>
+        sum + item.box2_cod_amount -
+        (item.exclusion_type === ExclusionType.Qpri
+          ? item.box3_interest ?? 0
+          : 0),
       0,
     );
     if (totalExcluded > 0) {

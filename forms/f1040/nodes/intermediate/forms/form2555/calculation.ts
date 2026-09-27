@@ -12,6 +12,36 @@ const foreignAddressSchema = z.object({
   postal_code: z.string().optional(),
 }).strict();
 
+const housingExpenseSchema = z.object({
+  kind: z.enum([
+    "rent",
+    "utilities_excluding_telephone",
+    "property_insurance",
+    "nonrefundable_lease_fee",
+    "furniture_rental",
+    "residential_parking",
+    "household_repairs",
+  ]),
+  amount: z.number().int().positive(),
+  incurred_date: dateSchema,
+  housing_period_begin: dateSchema,
+  housing_period_end: dateSchema,
+  source_document_reference: z.string().trim().min(1),
+  paid_by_taxpayer_from_reported_wages: z.literal(true),
+  reasonable_expense_verified: z.literal(true),
+}).strict();
+
+const employeeHousingSchema = z.object({
+  city: z.string().trim().min(1),
+  country_code: z.string().length(2),
+  standard_limit_not_high_cost_location_verified: z.literal(true),
+  no_second_household: z.literal(true),
+  no_other_housing_claimant: z.literal(true),
+  no_section119_lodging_excluded: z.literal(true),
+  no_nontaxable_us_government_housing_allowance: z.literal(true),
+  expenses: z.array(housingExpenseSchema).min(1),
+}).strict();
+
 /** Facts for a foreign-employer wage claim with uninterrupted physical presence. */
 export const physicalPresenceFilingSchema = z.object({
   foreign_address: foreignAddressSchema,
@@ -37,7 +67,8 @@ export const physicalPresenceFilingSchema = z.object({
   separate_foreign_residence: z.literal(false),
   foreign_wages: z.number().int().positive(),
   no_other_foreign_earned_income: z.literal(true),
-  claiming_housing_exclusion_or_deduction: z.literal(false),
+  claiming_housing_exclusion_or_deduction: z.boolean(),
+  employee_housing: employeeHousingSchema.optional(),
   deductions_allocable_to_excluded_income: z.literal(0),
   // Distinct Form 6251 Foreign Earned Income Tax Worksheet line 2b total:
   // itemized deductions or exclusions not claimable because they relate to
@@ -57,6 +88,15 @@ export interface PhysicalPresenceLines {
   readonly line24: number;
   readonly line25: 0;
   readonly line26: number;
+  readonly line28: number;
+  readonly line29b: number;
+  readonly line30: number;
+  readonly line31: number;
+  readonly line32: number;
+  readonly line33: number;
+  readonly line34: number;
+  readonly line35: number;
+  readonly line36: number;
   readonly line38: number;
   readonly line39: number;
   readonly line40: number;
@@ -115,10 +155,76 @@ export function calculatePhysicalPresence2555(
   const line24 = line19;
   const line25 = 0;
   const line26 = line24;
+  const claimingHousing = filing.claiming_housing_exclusion_or_deduction;
+  if (claimingHousing !== (filing.employee_housing !== undefined)) {
+    throw new Error(
+      "Form 2555 housing claim requires structured employee housing facts",
+    );
+  }
+  const housing = filing.employee_housing;
+  let line28 = 0;
+  let line29b = 0;
+  let line30 = 0;
+  let line31 = 0;
+  let line32 = 0;
+  let line33 = 0;
+  let line34 = 0;
+  let line35 = 0;
+  let line36 = 0;
+  if (housing) {
+    // Sweden has no adjusted location in Notice 2025-16. Other countries
+    // need the notice table and any later-limit election before filing.
+    if (housing.country_code !== "SE") {
+      throw new Error(
+        "Form 2555 structured housing currently supports only Sweden standard-limit locations",
+      );
+    }
+    if (
+      housing.country_code !== filing.foreign_address.country_code ||
+      housing.city.toLowerCase() !==
+        filing.foreign_address.city.toLowerCase()
+    ) {
+      throw new Error(
+        "Form 2555 employee housing location must match the single foreign residence",
+      );
+    }
+    for (const expense of housing.expenses) {
+      const incurred = utcDay(expense.incurred_date);
+      const housingBegin = utcDay(expense.housing_period_begin);
+      const housingEnd = utcDay(expense.housing_period_end);
+      if (
+        incurred < yearBegin || incurred > yearEnd ||
+        housingBegin < overlapBegin || housingEnd > overlapEnd ||
+        housingBegin > housingEnd
+      ) {
+        throw new Error(
+          "Form 2555 housing expense must be incurred in TY2025 for housing entirely within qualifying days",
+        );
+      }
+      line28 += expense.amount;
+    }
+    line31 = qualifyingDays;
+    // 2025 i2555 line 29b: standard-location cap, not a high-cost city.
+    line29b = qualifyingDays === 365
+      ? 39_000
+      : Math.round(106.85 * qualifyingDays);
+    line30 = Math.min(line28, line29b);
+    line32 = qualifyingDays === 365
+      ? 20_800
+      : Math.round(56.99 * qualifyingDays);
+    line33 = Math.max(0, line30 - line32);
+    if (line33 > 0) {
+      // This narrow filing has one foreign employer and wages as its only
+      // foreign earned income; the wages are employer-provided amounts.
+      line34 = line26;
+      line35 = Math.min(1, Math.round(line34 / line26 * 100_000) / 100_000);
+      line36 = Math.min(line34, Math.round(line33 * line35));
+    }
+  }
   const line38 = qualifyingDays;
-  const line41 = line26;
+  const line41 = line26 - line36;
   const line42 = Math.min(line40, line41);
-  const line43 = line42;
+  const line43 = line36 + line42;
   const line44 = 0;
   const line45 = line43;
   return {
@@ -127,6 +233,15 @@ export function calculatePhysicalPresence2555(
     line24,
     line25,
     line26,
+    line28,
+    line29b,
+    line30,
+    line31,
+    line32,
+    line33,
+    line34,
+    line35,
+    line36,
     line38,
     line39,
     line40,

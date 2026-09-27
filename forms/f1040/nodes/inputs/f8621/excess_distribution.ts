@@ -7,9 +7,6 @@ const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const yearChargeSchema = z.object({
   tax_year: z.number().int().min(1987).max(2024),
   foreign_tax_credit: z.number().nonnegative().optional(),
-  // Interest under section 6621 is sourced for each prior PFIC year until
-  // historical interest-rate periods and payment dates are modeled here.
-  interest_charge: z.number().nonnegative().optional(),
 }).strict();
 
 export enum ExcessEventKind {
@@ -144,6 +141,74 @@ function parseDate(value: string): number {
 
 const millisecondsPerDay = 86_400_000;
 
+// IRS 2025 Form 8621 instructions, line 16f: each prior PFIC year's net tax
+// bears interest from that return's unextended due date through the 2025
+// return's unextended due date. Section 1291(c)(3) uses the section 6621
+// underpayment rate; 26 CFR 301.6622-1 compounds daily with a 365/366 divisor.
+// Only calendar-year individual returns with published, verified due dates and
+// rate periods are modeled here. Other years fail closed.
+// https://www.irs.gov/instructions/i8621 (Part V, line 16f)
+// https://www.irs.gov/payments/quarterly-interest-rates
+// https://www.ecfr.gov/current/title-26/section-301.6622-1
+// https://www.irs.gov/newsroom/things-to-remember-when-filing-a-2023-tax-return
+// https://www.irs.gov/e-file-providers/tax-year-2024-processing-year-2025-form-1040-mef-due-dates
+// https://www.irs.gov/filing/individuals/how-to-file
+const section1291ReturnDueDates: Record<number, string> = {
+  2023: "2024-04-15",
+  2024: "2025-04-15",
+  2025: "2026-04-15",
+};
+
+const section6621UnderpaymentPeriods = [
+  { start: "2024-01-01", end: "2024-04-01", annualRate: 0.08 },
+  { start: "2024-04-01", end: "2024-07-01", annualRate: 0.08 },
+  { start: "2024-07-01", end: "2024-10-01", annualRate: 0.08 },
+  { start: "2024-10-01", end: "2025-01-01", annualRate: 0.08 },
+  { start: "2025-01-01", end: "2025-04-01", annualRate: 0.07 },
+  { start: "2025-04-01", end: "2025-07-01", annualRate: 0.07 },
+  { start: "2025-07-01", end: "2025-10-01", annualRate: 0.07 },
+  { start: "2025-10-01", end: "2026-01-01", annualRate: 0.07 },
+  { start: "2026-01-01", end: "2026-04-01", annualRate: 0.07 },
+  { start: "2026-04-01", end: "2026-07-01", annualRate: 0.06 },
+] as const;
+
+export function calculateSection1291Interest(
+  priorTaxYear: number,
+  netIncreaseInTax: number,
+): number {
+  if (!Number.isFinite(netIncreaseInTax) || netIncreaseInTax < 0) {
+    throw new Error("Form 8621 section 1291 net increase in tax is invalid");
+  }
+  if (netIncreaseInTax === 0) return 0;
+  const startDate = section1291ReturnDueDates[priorTaxYear];
+  const endDate = section1291ReturnDueDates[2025];
+  if (!startDate || !endDate) {
+    throw new Error(
+      `Form 8621 section 1291 lacks verified due date or section 6621 rates for ${priorTaxYear}`,
+    );
+  }
+  const end = parseDate(endDate);
+  let day = parseDate(startDate);
+  let balance = netIncreaseInTax;
+  while (day < end) {
+    const period = section6621UnderpaymentPeriods.find((period) =>
+      day >= parseDate(period.start) && day < parseDate(period.end)
+    );
+    if (!period) {
+      throw new Error(
+        `Form 8621 section 1291 lacks verified section 6621 rate for ${
+          new Date(day).toISOString().slice(0, 10)
+        }`,
+      );
+    }
+    const year = new Date(day).getUTCFullYear();
+    const leapYear = new Date(Date.UTC(year, 1, 29)).getUTCMonth() === 1;
+    balance *= 1 + period.annualRate / (leapYear ? 366 : 365);
+    day += millisecondsPerDay;
+  }
+  return Math.round((balance - netIncreaseInTax) * 100) / 100;
+}
+
 function holdingDays(start: number, end: number): number {
   return Math.round((end - start) / millisecondsPerDay) + 1;
 }
@@ -258,13 +323,11 @@ function calculateTaxableExcess(event: TaxableExcess): ExcessEventResult {
         "Form 8621 foreign tax credit exceeds this prior PFIC year's increase in tax",
       );
     }
-    if (tax > credit && charge?.interest_charge === undefined) {
-      throw new Error(
-        "Form 8621 prior PFIC year needs a supported section 6621 interest charge",
-      );
-    }
     year.foreign_tax_credit = credit;
-    year.interest_charge = charge?.interest_charge ?? 0;
+    year.interest_charge = calculateSection1291Interest(
+      year.tax_year,
+      Math.max(0, tax - credit),
+    );
     priorYearTax += tax;
     priorYearCredit += credit;
     interest += year.interest_charge;

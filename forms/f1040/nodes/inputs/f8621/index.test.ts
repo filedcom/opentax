@@ -8,7 +8,10 @@ import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { income_tax_calculation } from "../../intermediate/worksheets/income_tax_calculation/index.ts";
 import { f8621, itemSchema, PficRegime } from "./index.ts";
 import type { F8621Item, Form8621Lines } from "./index.ts";
-import { ExcessEventKind } from "./excess_distribution.ts";
+import {
+  calculateSection1291Interest,
+  ExcessEventKind,
+} from "./excess_distribution.ts";
 import type { ExcessEvent } from "./excess_distribution.ts";
 
 function minimalItem(overrides: Partial<F8621Item> = {}): F8621Item {
@@ -33,7 +36,7 @@ function excessEvent(amount = 10_000): ExcessEvent {
     current_year_distributions: [{
       date: "2025-12-31",
       amount_usd: amount,
-      year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+      year_charges: [],
     }],
     taxable_nonexcess_dividend_usd: 0,
   };
@@ -85,7 +88,7 @@ Deno.test("Form 8621 Part V puts prior-year tax on line 16 and interest on Sched
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
-    150,
+    Math.round(calculateSection1291Interest(2024, 5_006.84 * 0.37)),
   );
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 4_993);
   assertEquals(
@@ -137,7 +140,8 @@ Deno.test("Form 8621 combines separate holdings without losing their filed docum
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
-    300,
+    Math.round(calculateSection1291Interest(2024, 5_006.84 * 0.37)) +
+      Math.round(calculateSection1291Interest(2024, 2_503.42 * 0.37)),
   );
   assertEquals(fieldsOf(result.outputs, schedule1)?.line8z_other, 7_490);
   const filed = result.outputs.find((item) => item.nodeType === "form8621");
@@ -186,7 +190,7 @@ Deno.test("Form 8621 keeps section 1291, QEF, and MTM amounts on their respectiv
   );
   assertEquals(
     fieldsOf(result.outputs, schedule2)?.line17p_form8621_interest,
-    150,
+    Math.round(calculateSection1291Interest(2024, 5_006.84 * 0.37)),
   );
   const filed = result.outputs.find((item) => item.nodeType === "form8621");
   assertEquals((filed?.fields as { items: Form8621Lines[] }).items.length, 3);

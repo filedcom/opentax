@@ -58,6 +58,46 @@ const filingDetails: PhysicalPresenceFiling = {
   deductions_allocable_to_excluded_income: 0,
 };
 
+const employeeHousingDetails: PhysicalPresenceFiling = {
+  ...filingDetails,
+  foreign_address: {
+    ...address,
+    city: "Gothenburg",
+    country_code: "SE",
+    postal_code: "411 03",
+  },
+  employer_foreign_address: {
+    ...address,
+    city: "Gothenburg",
+    country_code: "SE",
+    postal_code: "411 03",
+    line1: "10 King Street",
+  },
+  tax_home_description: "Gothenburg, Sweden",
+  principal_employment_country: "Sweden",
+  foreign_wages: 200_000,
+  claiming_housing_exclusion_or_deduction: true,
+  employee_housing: {
+    city: "Gothenburg",
+    country_code: "SE",
+    standard_limit_not_high_cost_location_verified: true,
+    no_second_household: true,
+    no_other_housing_claimant: true,
+    no_section119_lodging_excluded: true,
+    no_nontaxable_us_government_housing_allowance: true,
+    expenses: [{
+      kind: "rent",
+      amount: 30_000,
+      incurred_date: "2025-06-01",
+      housing_period_begin: "2025-01-01",
+      housing_period_end: "2025-12-31",
+      source_document_reference: "2025 Gothenburg lease and rent ledger",
+      paid_by_taxpayer_from_reported_wages: true,
+      reasonable_expense_verified: true,
+    }],
+  },
+};
+
 const filer: FilerIdentity = {
   primarySSN: "123456789",
   nameLine1: "TAXPAYER TEST",
@@ -103,6 +143,70 @@ Deno.test("Form 2555 derives qualifying days from the 12-month period", () => {
       }, 2025),
     Error,
     "must be 12 months",
+  );
+});
+
+Deno.test("Form 2555 employee housing follows Parts VI, VII, and VIII in order", () => {
+  const lines = calculatePhysicalPresence2555(employeeHousingDetails, 2025);
+  assertEquals(lines.line28, 30_000);
+  assertEquals(lines.line29b, 39_000);
+  assertEquals(lines.line30, 30_000);
+  assertEquals(lines.line31, 365);
+  assertEquals(lines.line32, 20_800);
+  assertEquals(lines.line33, 9_200);
+  assertEquals(lines.line34, 200_000);
+  assertEquals(lines.line35, 1);
+  assertEquals(lines.line36, 9_200);
+  assertEquals(lines.line41, 190_800);
+  assertEquals(lines.line42, 130_000);
+  assertEquals(lines.line43, 139_200);
+  assertEquals(lines.line45, 139_200);
+});
+
+Deno.test("Form 2555 housing refuses an expense outside qualifying days", () => {
+  assertThrows(
+    () =>
+      calculatePhysicalPresence2555({
+        ...employeeHousingDetails,
+        employee_housing: {
+          ...employeeHousingDetails.employee_housing!,
+          expenses: [{
+            ...employeeHousingDetails.employee_housing!.expenses[0],
+            incurred_date: "2024-12-01",
+          }],
+        },
+      }, 2025),
+    Error,
+    "entirely within qualifying days",
+  );
+});
+
+Deno.test("Form 2555 housing requires its structured expense source", () => {
+  assertThrows(
+    () =>
+      calculatePhysicalPresence2555({
+        ...filingDetails,
+        claiming_housing_exclusion_or_deduction: true,
+      }, 2025),
+    Error,
+    "structured employee housing facts",
+  );
+});
+
+Deno.test("Form 2555 rejects Toronto's high-cost location under the standard-limit route", () => {
+  assertThrows(
+    () =>
+      calculatePhysicalPresence2555({
+        ...employeeHousingDetails,
+        foreign_address: { ...address, city: "Toronto" },
+        employee_housing: {
+          ...employeeHousingDetails.employee_housing!,
+          city: "Toronto",
+          country_code: "CA",
+        },
+      }, 2025),
+    Error,
+    "only Sweden standard-limit locations",
   );
 });
 
@@ -166,11 +270,14 @@ Deno.test({
   const xml = buildMefXml(result.pending, filer);
   assertStringIncludes(
     xml,
-    "<OtherEarnedIncomeAmt referenceDocumentId=\"WagesNotShownSchedule",
+    '<OtherEarnedIncomeAmt referenceDocumentId="WagesNotShownSchedule',
   );
   assertStringIncludes(xml, "<FECRecord documentId=");
   assertStringIncludes(xml, "<WagesLiteralCd>FEC</WagesLiteralCd>");
-  assertStringIncludes(xml, "<TotalIncomeExclusionAmt referenceDocumentId=\"IRS2555");
+  assertStringIncludes(
+    xml,
+    '<TotalIncomeExclusionAmt referenceDocumentId="IRS2555',
+  );
   assertStringIncludes(
     xml,
     "<ForeignEarnedIncExclusionAmt>100000</ForeignEarnedIncExclusionAmt>",
@@ -218,6 +325,70 @@ Deno.test({
   assertStringIncludes(
     xml,
     `<ForeignEarnedIncExclusionAmt>${lines.line42}</ForeignEarnedIncExclusionAmt>`,
+  );
+  await validateXsd(xml);
+});
+
+Deno.test({
+  name:
+    "XSD: Form 2555 employee housing excludes the housing amount before FEIE and reconciles to Schedule 1",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const result = execute(buildExecutionPlan(registry), registry, {
+    general: {
+      filing_status: "single",
+      taxpayer_first_name: "Test",
+      taxpayer_last_name: "Taxpayer",
+      taxpayer_ssn: "123-45-6789",
+      taxpayer_dob: "1985-06-15",
+      address_line1: "1 Main St",
+      address_city: "Austin",
+      address_state: "TX",
+      address_zip: "78701",
+    },
+    form2555: { filing_details: employeeHousingDetails },
+  }, { taxYear: 2025, formType: "f1040" });
+  assertEquals(result.diagnostics, []);
+  assertEquals(
+    result.pending.schedule1?.line8d_foreign_earned_income_exclusion,
+    139_200,
+  );
+  assertEquals(result.pending.f1040?.line11_agi, 60_800);
+  const xml = buildMefXml(result.pending, filer);
+  assertStringIncludes(
+    xml,
+    "<ClaimingHousingExclOrDedInd>true</ClaimingHousingExclOrDedInd>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HousingQualifiedExpenseAmt>30000</HousingQualifiedExpenseAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HousingExpenseLimitAmt>39000</HousingExpenseLimitAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<HousingExpensesOverMaxAmt>9200</HousingExpensesOverMaxAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<EmployerProvidedHousingAmt>200000</EmployerProvidedHousingAmt>",
+  );
+  assertStringIncludes(xml, "<HousingExclusionAmt>9200</HousingExclusionAmt>");
+  assertStringIncludes(
+    xml,
+    "<ForeignIncLessHousingExclAmt>190800</ForeignIncLessHousingExclAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    "<ForeignEarnedIncExclusionAmt>130000</ForeignEarnedIncExclusionAmt>",
+  );
+  assertStringIncludes(
+    xml,
+    '<TotalIncomeExclusionAmt referenceDocumentId="IRS2555',
   );
   await validateXsd(xml);
 });

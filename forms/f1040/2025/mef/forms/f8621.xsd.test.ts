@@ -1,8 +1,11 @@
 import { assertEquals, assertStringIncludes } from "@std/assert";
 import { buildMefXml } from "../builder.ts";
 import { FilingStatus } from "../../../nodes/types.ts";
-import { calculateExcessEvents } from "../../../nodes/inputs/f8621/excess_distribution.ts";
-import { ExcessEventKind } from "../../../nodes/inputs/f8621/excess_distribution.ts";
+import {
+  calculateExcessEvents,
+  calculateSection1291Interest,
+  ExcessEventKind,
+} from "../../../nodes/inputs/f8621/excess_distribution.ts";
 import { itemSchema, PficRegime } from "../../../nodes/inputs/f8621/index.ts";
 import type { FilerIdentity } from "../types.ts";
 
@@ -46,7 +49,7 @@ Deno.test({
     current_year_distributions: [{
       date: "2025-12-31",
       amount_usd: 10_000,
-      year_charges: [{ tax_year: 2024, interest_charge: 150 }],
+      year_charges: [],
     }],
     taxable_nonexcess_dividend_usd: 0,
   };
@@ -59,6 +62,9 @@ Deno.test({
     fmv_at_year_end: 10_000,
     excess_events: [event],
   });
+  const interest = Math.round(
+    calculateSection1291Interest(2024, 5_006.84 * 0.37),
+  );
   const xml = buildMefXml({
     f1040: {
       filing_status: "single",
@@ -68,10 +74,10 @@ Deno.test({
       line16_income_tax: 1_853,
       form8621_tax: 1_853,
       line18_total_tax_before_credits: 1_853,
-      line23_other_taxes: 150,
-      line24_total_tax: 2_003,
+      line23_other_taxes: interest,
+      line24_total_tax: 1_853 + interest,
     },
-    schedule2: { line17p_form8621_interest: 150 },
+    schedule2: { line17p_form8621_interest: interest },
     form8621: {
       items: [{ item, excessEvents: calculateExcessEvents(event) }],
     },
