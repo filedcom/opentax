@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type {
+  AtLeastOne,
   NodeOutput,
   NodeResult,
 } from "../../../../../core/types/tax-node.ts";
@@ -52,6 +53,7 @@ export const creditLimitWorksheetSchema = z.object({
   schedule3_line6l: z.number().nonnegative(),
   schedule3_line6m: z.number().nonnegative(),
   worksheet_b_applies: z.boolean(),
+  worksheet_b_line14: z.number().nonnegative().optional(),
   worksheet_b_line15: z.number().nonnegative().optional(),
 }).superRefine((value, ctx) => {
   if (value.worksheet_b_applies && value.worksheet_b_line15 === undefined) {
@@ -64,6 +66,12 @@ export const creditLimitWorksheetSchema = z.object({
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Schedule 8812 Worksheet B line 15 requires Worksheet B",
+    });
+  }
+  if (!value.worksheet_b_applies && value.worksheet_b_line14 !== undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Schedule 8812 Worksheet B line 14 requires Worksheet B",
     });
   }
 });
@@ -516,6 +524,8 @@ export function calculateSchedule8812Lines(
     partIIBLines,
     needsPartIIB,
     line27,
+    worksheetBApplies: creditWorksheet.worksheet_b_applies,
+    worksheetBLine14: creditWorksheet.worksheet_b_line14,
   };
 }
 
@@ -527,13 +537,23 @@ class F8812Node extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, input: F8812Input): NodeResult {
     const lines = calculateSchedule8812Lines(ctx.taxYear, input);
     if (!lines) return { outputs: [] };
-    const outputs: NodeOutput[] = lines.line14 > 0
-      ? [this.outputNodes.output(f1040, {
-        line19_child_tax_credit: lines.line14,
-        ...(lines.line27 > 0 ? { line28_actc: lines.line27 } : {}),
-      })]
-      : lines.line27 > 0
-      ? [this.outputNodes.output(f1040, { line28_actc: lines.line27 })]
+    const fields: Partial<z.infer<typeof f1040.inputSchema>> = {
+      ...(lines.line14 > 0 ? { line19_child_tax_credit: lines.line14 } : {}),
+      ...(lines.line27 > 0 ? { line28_actc: lines.line27 } : {}),
+      ...(lines.worksheetBApplies
+        ? {
+          form8859_worksheet_b_applies: true,
+          ...(lines.worksheetBLine14 !== undefined
+            ? { form8859_worksheet_b_line14: lines.worksheetBLine14 }
+            : {}),
+        }
+        : {}),
+    };
+    const outputs: NodeOutput[] = Object.keys(fields).length > 0
+      ? [this.outputNodes.output(
+        f1040,
+        fields as AtLeastOne<z.infer<typeof f1040["inputSchema"]>>,
+      )]
       : [];
     return { outputs };
   }

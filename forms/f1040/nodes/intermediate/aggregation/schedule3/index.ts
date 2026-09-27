@@ -32,6 +32,7 @@ export const inputSchema = z.object({
   // all credits ahead of it are known. This signal does not deposit gross credit.
   form3800_source_credit_pending: z.boolean().optional(),
   form8912_source_credit_pending: z.boolean().optional(),
+  form8859_source_credit_pending: z.boolean().optional(),
   // ── Part I — Nonrefundable Credits ─────────────────────────────────────────
 
   // Line 1 — Foreign tax credit (from Form 1116 line 35)
@@ -197,15 +198,21 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
     if (
       credits === 0 && payments === 0 &&
       input.form3800_source_credit_pending !== true &&
-      input.form8912_source_credit_pending !== true
+      input.form8912_source_credit_pending !== true &&
+      input.form8859_source_credit_pending !== true
     ) return { outputs: [] };
 
     const f1040Input: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
     if (credits > 0) f1040Input.line20_nonrefundable_credits = credits;
     if (payments > 0) f1040Input.line31_additional_payments = payments;
+    const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
+    const cleanUsed = sumAccumulable(
+      input.line6m_prev_owned_clean_vehicle_credit,
+    );
     if (
       input.form3800_source_credit_pending === true ||
-      input.form8912_source_credit_pending === true
+      input.form8912_source_credit_pending === true ||
+      input.form8859_source_credit_pending === true
     ) {
       f1040Input.credit_limit_schedule3_lines = {
         line1: line1(input),
@@ -216,14 +223,17 @@ class Schedule3Node extends TaxNode<typeof inputSchema> {
         line5b: input.line5b_energy_efficient_home ?? 0,
         line6aGbc: line6a(input),
         line6bPriorMinimumTax: input.line6b_prior_year_min_tax_credit ?? 0,
+        line6cAdoption: input.line6c_adoption_credit ?? 0,
+        line6dElderlyDisabled: input.line6d_elderly_disabled_credit ?? 0,
+        line6fCleanVehicle: cleanNew,
+        line6gMortgage: input.line6g_mortgage_interest_credit ?? 0,
+        line6hHomebuyer: input.line6h_dc_homebuyer_credit ?? 0,
         line6kBondCredit: input.line6k_tax_credit_bonds ?? 0,
+        line6lForm8978: input.line6l_form8978_credit ?? 0,
+        line6mUsedCleanVehicle: cleanUsed,
         line7: line7(input),
       };
     }
-    const cleanNew = sumAccumulable(input.line6f_clean_vehicle_credit);
-    const cleanUsed = sumAccumulable(
-      input.line6m_prev_owned_clean_vehicle_credit,
-    );
     if (cleanNew > 0 || cleanUsed > 0) {
       f1040Input.form8936_tentative_new_credit = cleanNew;
       f1040Input.form8936_tentative_used_credit = cleanUsed;

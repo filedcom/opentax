@@ -98,6 +98,32 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 8859 allowed carryforward links to Schedule 3 line 6h",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line16_income_tax: 1_000, line20_nonrefundable_credits: 830 },
+    schedule3: {
+      line6h_dc_homebuyer_credit: 830,
+      line7_total: 830,
+      line8_total: 830,
+    },
+    f8859: {
+      f8859s: [{ carryforward_amount: 1_200 }],
+      line1_carryforward: 1_200,
+      line2_limit: 830,
+      line3_allowed_credit: 830,
+      line4_carryforward: 370,
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<IRS8859 ");
+  assertStringIncludes(xml, 'referenceDocumentName="IRS8859"');
+  await validateXsd(xml, "Form 8859 Schedule 3 line 6h");
+});
+
+Deno.test({
   name:
     "XSD: linked specified Form 8835 credit reaches Form 3800 and Schedule 3",
   sanitizeOps: false,

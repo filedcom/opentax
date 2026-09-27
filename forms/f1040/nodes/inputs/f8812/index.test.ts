@@ -94,20 +94,22 @@ Deno.test("schema: zero children and zero dependents produces no outputs", () =>
 
 Deno.test("explicit Schedule 8812 counts must match Form 1040 dependent counts", () => {
   assertThrows(
-    () => calculateSchedule8812Lines(2025, {
-      f8812s: [minimalItem({ qualifying_children_count: 1 })],
-      auto_qualifying_children: 0,
-      auto_other_dependents: 0,
-    }),
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s: [minimalItem({ qualifying_children_count: 1 })],
+        auto_qualifying_children: 0,
+        auto_other_dependents: 0,
+      }),
     Error,
     "must match the Form 1040 dependent rows",
   );
   assertThrows(
-    () => calculateSchedule8812Lines(2025, {
-      f8812s: [minimalItem({ other_dependents_count: 1 })],
-      auto_qualifying_children: 0,
-      auto_other_dependents: 0,
-    }),
+    () =>
+      calculateSchedule8812Lines(2025, {
+        f8812s: [minimalItem({ other_dependents_count: 1 })],
+        auto_qualifying_children: 0,
+        auto_other_dependents: 0,
+      }),
     Error,
     "must match the Form 1040 dependent rows",
   );
@@ -1171,6 +1173,22 @@ Deno.test("Schedule 8812 Worksheet A uses exactly the IRS-listed prior credits",
     Error,
     "Worksheet B needs its line 15",
   );
+});
+
+Deno.test("Schedule 8812 makes Worksheet B line 14 available to Form 8859", () => {
+  const result = f8812.compute({ taxYear: 2025, formType: "f1040" }, {
+    f8812s: [minimalItem({ qualifying_children_count: 1 })],
+    line18a_earned_income: 0,
+    credit_limit_worksheet: {
+      ...zeroCreditWorksheet,
+      worksheet_b_applies: true,
+      worksheet_b_line14: 900,
+      worksheet_b_line15: 100,
+    },
+  });
+  const fields = fieldsOf(result.outputs, f1040);
+  assertEquals(fields?.form8859_worksheet_b_applies, true);
+  assertEquals(fields?.form8859_worksheet_b_line14, 900);
 });
 
 Deno.test("Schedule 8812 rejects missing or duplicated credit-limit worksheets", () => {
