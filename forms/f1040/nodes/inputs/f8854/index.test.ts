@@ -35,7 +35,10 @@ import {
   buildForm8854SectionD,
 } from "../../../2025/mef/forms/f8854_section_d.ts";
 import { calculateSectionDDeferral } from "./section-d.ts";
-import { buildForm8854InitialBundle } from "../../../2025/mef/forms/f8854_initial.ts";
+import {
+  buildForm8854InitialBundle,
+  buildForm8854NativeStatementContents,
+} from "../../../2025/mef/forms/f8854_initial.ts";
 import { reconcileForm8854Form8949Properties } from "./reconcile-capital.ts";
 
 function asset(
@@ -1200,6 +1203,39 @@ Deno.test("Form 8854 initial bundle assembles Parts I and II without pretending 
   assertEquals(covered.nativeStatements.map((row) => row.documentName), [
     "Form8854ComputationStatement",
   ]);
+});
+
+Deno.test("Form 8854 native statement set is stable before document IDs are assigned", () => {
+  const parsed = inputSchema.parse(input({
+    balance_sheet: balanceSheetWithNetWorth(2_000_000),
+    section_c: sectionC([asset("stock", 1_000_000, 100_000)]),
+  }));
+  const contents = buildForm8854NativeStatementContents(parsed);
+  assertEquals(contents.map((statement) => statement.key), ["computation"]);
+  assertEquals(contents[0].documentName, "Form8854ComputationStatement");
+  assertEquals(
+    buildForm8854NativeStatementContents(inputSchema.parse(input())),
+    [],
+  );
+  const multiple = inputSchema.parse(input({
+    significant_asset_liability_changes_prior_5_years: true,
+    significant_change_explanation: "Sold a partnership interest.",
+    balance_sheet: {
+      ...balanceSheetWithNetWorth(0),
+      partnership_interests: [{
+        partnership_name: "Example Partnership",
+        fair_market_value: 100,
+        us_adjusted_basis: 50,
+      }],
+      other_liabilities: [{ description: "Loan", amount: 20 }],
+    },
+  }));
+  assertEquals(
+    buildForm8854NativeStatementContents(multiple).map((statement) =>
+      statement.key
+    ),
+    ["changeStatement", "partnership", "otherLiabilities"],
+  );
 });
 
 Deno.test("Form 8854 initial bundle requires actual IDs for election PDFs", () => {

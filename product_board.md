@@ -1164,7 +1164,9 @@ written but unrun. Both root builders now leave `documentId` to the return
 assembler, and the initial builder accepts only IDs for linked native and
 binary documents. Registration still requires generating those IDs from the
 actual document set and proving its native statements and binary attachments
-are emitted. The calculation and rejection cases are
+are emitted. The initial builder now exposes an ID-independent, stable native
+statement set for the assembler's first document-discovery pass, with its
+written case unrun. The calculation and rejection cases are
 written but unrun. See the
 [2025 Form 8854 instructions](https://www.irs.gov/instructions/i8854).
 
