@@ -40,6 +40,7 @@ const LINE_KEYS = new Set([
 const RAW_HSA_KEYS = [
   "taxpayer_hsa_contributions",
   "employer_hsa_contributions",
+  "employer_contribution_years",
   "employer_excess_treatment",
   "hsa_december_31_value",
   "post_year_personal_excess_withdrawal",

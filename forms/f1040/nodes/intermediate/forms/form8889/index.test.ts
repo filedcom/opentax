@@ -9,6 +9,10 @@ const uniformSelfOnly = {
   eligible_hdhp_coverage_by_month: Array(12).fill(CoverageType.SelfOnly),
   age_55_or_older: false,
   last_month_rule_elected: false,
+  employer_contribution_years: {
+    made_in_2025_for_2024_in_w2: 0,
+    made_in_2026_for_2025: 0,
+  },
 };
 const uniformFamily = {
   ...uniformSelfOnly,
@@ -210,12 +214,72 @@ Deno.test("part1: employer funding above the contribution limit needs income tre
   );
 });
 
+Deno.test("part1: employer contribution worksheet removes prior-year W-2 amounts and adds next-year deposits", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 3000,
+    employer_contribution_years: {
+      made_in_2025_for_2024_in_w2: 500,
+      made_in_2026_for_2025: 1000,
+    },
+    taxpayer_hsa_contributions: 500,
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line9_employer, 3500);
+  assertEquals(printed?.print_line12, 800);
+  assertEquals(printed?.print_line13_deduction, 500);
+});
+
+Deno.test("part1: a 2026 deposit designated for 2025 reaches Form 8889 line 9 without 2025 W-2 code W", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_contribution_years: {
+      made_in_2025_for_2024_in_w2: 0,
+      made_in_2026_for_2025: 1000,
+    },
+  });
+  assertEquals(
+    findOutput(result, "form8889")?.fields.print_line9_employer,
+    1000,
+  );
+  assertEquals(findOutput(result, "form8889")?.fields.print_line12, 3300);
+});
+
+Deno.test("part1: employer year worksheet cannot subtract more prior-year deposits than W-2 code W", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        employer_hsa_contributions: 500,
+        employer_contribution_years: {
+          made_in_2025_for_2024_in_w2: 501,
+          made_in_2026_for_2025: 0,
+        },
+      }),
+    Error,
+    "exceed W-2 box 12 code W",
+  );
+});
+
+Deno.test("part1: W-2 code W requires year-allocation facts", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        employer_hsa_contributions: 1000,
+        employer_contribution_years: undefined,
+      }),
+    Error,
+    "Employer Contribution Worksheet year facts",
+  );
+});
+
 Deno.test("part1: retained employer excess omitted from W-2 box 1 reaches other income and Form 5329", () => {
   const result = compute({
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
-      included_in_w2_box1: false,
+      amount_included_in_w2_box1: 0,
       timely_withdrawal: null,
     },
     hsa_december_31_value: 300,
@@ -241,7 +305,7 @@ Deno.test("part1: retained employer excess already in W-2 box 1 is not other inc
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
-      included_in_w2_box1: true,
+      amount_included_in_w2_box1: 700,
       timely_withdrawal: null,
     },
     hsa_december_31_value: 700,
@@ -250,13 +314,47 @@ Deno.test("part1: retained employer excess already in W-2 box 1 is not other inc
   assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
 });
 
+Deno.test("part1: employer excess only partly included in W-2 box 1 reports the remainder", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    employer_hsa_contributions: 5000,
+    employer_excess_treatment: {
+      amount_included_in_w2_box1: 300,
+      timely_withdrawal: null,
+    },
+    hsa_december_31_value: 700,
+  });
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
+    400,
+  );
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
+});
+
+Deno.test("part1: W-2 box 1 inclusion cannot exceed employer excess", () => {
+  assertThrows(
+    () =>
+      compute({
+        ...uniformSelfOnly,
+        employer_hsa_contributions: 5000,
+        employer_excess_treatment: {
+          amount_included_in_w2_box1: 701,
+          timely_withdrawal: null,
+        },
+        hsa_december_31_value: 700,
+      }),
+    Error,
+    "inclusion cannot exceed employer excess",
+  );
+});
+
 Deno.test("part1: no eligible HDHP month leaves a zero limit and routes employer excess", () => {
   const result = compute({
     ...uniformSelfOnly,
     eligible_hdhp_coverage_by_month: Array(12).fill(null),
     employer_hsa_contributions: 1000,
     employer_excess_treatment: {
-      included_in_w2_box1: false,
+      amount_included_in_w2_box1: 0,
       timely_withdrawal: null,
     },
     hsa_december_31_value: 600,
@@ -286,7 +384,7 @@ Deno.test("part1: timely 2025 employer-excess withdrawal excludes principal from
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
-      included_in_w2_box1: false,
+      amount_included_in_w2_box1: 0,
       timely_withdrawal: {
         principal: 700,
         earnings: 50,
@@ -317,7 +415,7 @@ Deno.test("part1: timely 2026 employer-excess withdrawal stays off 2025 distribu
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
-      included_in_w2_box1: false,
+      amount_included_in_w2_box1: 0,
       timely_withdrawal: {
         principal: 700,
         earnings: 50,
@@ -346,7 +444,7 @@ Deno.test("part1: partial timely employer withdrawal leaves only the retained ex
     ...uniformSelfOnly,
     employer_hsa_contributions: 5000,
     employer_excess_treatment: {
-      included_in_w2_box1: true,
+      amount_included_in_w2_box1: 700,
       timely_withdrawal: {
         principal: 300,
         earnings: 10,
@@ -376,7 +474,7 @@ Deno.test("part1: timely employer withdrawal cannot exceed employer excess", () 
         ...uniformSelfOnly,
         employer_hsa_contributions: 5000,
         employer_excess_treatment: {
-          included_in_w2_box1: false,
+          amount_included_in_w2_box1: 0,
           timely_withdrawal: {
             principal: 701,
             earnings: 0,
@@ -902,7 +1000,14 @@ Deno.test("part1: last-month rule requires December eligibility", () => {
 
 Deno.test("validation: a W-2 HSA contribution does not imply self-only coverage", () => {
   assertThrows(
-    () => compute({ employer_hsa_contributions: 1000 }),
+    () =>
+      compute({
+        employer_hsa_contributions: 1000,
+        employer_contribution_years: {
+          made_in_2025_for_2024_in_w2: 0,
+          made_in_2026_for_2025: 0,
+        },
+      }),
     Error,
     "twelve monthly HDHP eligibility/coverage facts",
   );

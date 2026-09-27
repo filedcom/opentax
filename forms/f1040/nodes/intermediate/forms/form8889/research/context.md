@@ -22,20 +22,25 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   to the extent of line 8 less employer contributions. Remaining personal and
   employer excess contributions route to Form 5329 with the December 31 HSA
   value needed for its 6% tax base. Employer excess above line 8 less qualified
-  funding distributions requires explicit W-2 box 1 inclusion and timely
-  withdrawal facts. If omitted from W-2 income, the excess reaches Schedule 1
-  other income; if already included, it is not counted as income twice. A timely
-  employer withdrawal reduces the Form 5329 excess base. A 2025 withdrawal
-  reaches Form 8889 line 14b and its earnings reach Schedule 1; a 2026
-  withdrawal and its earnings stay off the 2025 distribution and earnings lines.
-  Twelve explicit ineligible months produce a zero contribution limit and still
-  route sourced employer excess to income and Form 5329.
+  funding distributions requires the exact portion already included in W-2 box 1
+  and timely withdrawal facts. Only the excess not already included in wages
+  reaches Schedule 1 other income. A timely employer withdrawal reduces the Form
+  5329 excess base. A 2025 withdrawal reaches Form 8889 line 14b and its
+  earnings reach Schedule 1; a 2026 withdrawal and its earnings stay off the
+  2025 distribution and earnings lines. Twelve explicit ineligible months
+  produce a zero contribution limit and still route sourced employer excess to
+  income and Form 5329.
 - A single traditional/Roth IRA-to-HSA direct trustee transfer can populate line
   10 when the transfer month is eligible, the source is identified, and the
   taxpayer affirms no prior qualified funding distribution. It reduces line 12
   and available personal contribution room. The permitted second
   self-only-to-family transfer, external IRA reconciliation, and later testing
   period remain open.
+- Employer line 9 follows the 2025 Employer Contribution Worksheet: W-2 box 12
+  code W less deposits made in 2025 for 2024, plus deposits made in 2026 for
+  2025. Both year-allocation amounts are explicit source facts when code W is
+  positive; a 2026-only 2025 deposit is also accepted. Missing W-2 year facts
+  stop rather than silently treating code W as tax-year contributions.
 - Part II separately identifies line 14b rollovers and timely excess withdrawals
   before applying line 15 medical expenses. A timely withdrawal explicitly
   sourced to a current-year personal excess reduces the Form 5329 excess base;
@@ -64,8 +69,9 @@ The later-year last-month-rule testing-period ledger, evidence for monthly
 eligibility (including Medicare and other disqualifying coverage), source
 verification of the spouse allocation, separate spouse forms, source
 classification of taxable distributions by exception, second qualified funding
-distributions, employer contribution year adjustments, withdrawals of prior-year
-excess, 2026 reporting of a post-year timely employer withdrawal, related income
-outside the current-year personal 2025 route, source authentication, PDF visual
-verification, IRS business rules, and ATS acceptance remain unverified. All
-newly written cases await the one full test batch requested by the user.
+distributions, source authentication of employer contribution-year adjustments,
+withdrawals of prior-year excess, 2026 reporting of a post-year timely employer
+withdrawal, related income outside the current-year personal 2025 route, source
+authentication, PDF visual verification, IRS business rules, and ATS acceptance
+remain unverified. All newly written cases await the one full test batch
+requested by the user.

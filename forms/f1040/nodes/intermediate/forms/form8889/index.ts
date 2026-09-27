@@ -43,11 +43,15 @@ export const inputSchema = z.object({
   // ── Part I: Contributions ────────────────────────────────────────────────
   // Line 2: Taxpayer's own HSA contributions (not through payroll)
   taxpayer_hsa_contributions: z.number().nonnegative().optional(),
-  // Line 9: Employer contributions to HSA (from W-2 Box 12 Code W)
-  // IRC §106(d); routed here from the w2 node
+  // 2025 W-2 box 12 code W amount. Form 8889 line 9 may differ after the
+  // Employer Contribution Worksheet's prior/next-year adjustments.
   employer_hsa_contributions: z.number().nonnegative().optional(),
+  employer_contribution_years: z.object({
+    made_in_2025_for_2024_in_w2: z.number().nonnegative(),
+    made_in_2026_for_2025: z.number().nonnegative(),
+  }).optional(),
   employer_excess_treatment: z.object({
-    included_in_w2_box1: z.boolean(),
+    amount_included_in_w2_box1: z.number().nonnegative(),
     // Null is an explicit retained-excess answer. A later-year timely
     // withdrawal reduces the 2025 excess base but is not a 2025 distribution.
     timely_withdrawal: z.union([
@@ -285,9 +289,28 @@ function deductibleContributions(
 }
 
 // Part I: Detect whether regular personal or employer contributions exist.
-function totalContributions(input: Form8889Input): number {
-  return (input.taxpayer_hsa_contributions ?? 0) +
-    (input.employer_hsa_contributions ?? 0);
+function employerContributionsForTaxYear(input: Form8889Input): number {
+  const codeW = input.employer_hsa_contributions ?? 0;
+  const years = input.employer_contribution_years;
+  if (codeW > 0 && !years) {
+    throw new Error(
+      "Form 8889 employer contributions need the 2025 Employer Contribution Worksheet year facts",
+    );
+  }
+  const priorYear = years?.made_in_2025_for_2024_in_w2 ?? 0;
+  if (priorYear > codeW) {
+    throw new Error(
+      "Form 8889 prior-year employer contributions exceed W-2 box 12 code W",
+    );
+  }
+  return codeW - priorYear + (years?.made_in_2026_for_2025 ?? 0);
+}
+
+function totalContributions(
+  input: Form8889Input,
+  employerForTaxYear: number,
+): number {
+  return (input.taxpayer_hsa_contributions ?? 0) + employerForTaxYear;
 }
 
 // Part I: Personal excess contributions equal line 2 less line 13, reduced by
@@ -449,7 +472,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const input = inputSchema.parse(rawInput);
     const funding = input.qualified_hsa_funding_distribution;
     const fundingAmount = funding?.amount ?? 0;
-    const hasContributions = totalContributions(input) + fundingAmount > 0;
+    const employer = employerContributionsForTaxYear(input);
+    const hasContributions = totalContributions(input, employer) +
+        fundingAmount > 0;
     const limitLines = hasContributions
       ? contributionLimitLines(
         input,
@@ -479,7 +504,6 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
         );
       }
     }
-    const employer = input.employer_hsa_contributions ?? 0;
     const employerExcess = limitLines
       ? Math.max(0, employer - Math.max(0, limitLines.line8 - fundingAmount))
       : 0;
@@ -492,6 +516,14 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     if (employerExcess === 0 && employerTreatment) {
       throw new Error(
         "Form 8889 employer excess treatment requires excess employer contributions",
+      );
+    }
+    if (
+      employerTreatment &&
+      employerTreatment.amount_included_in_w2_box1 > employerExcess
+    ) {
+      throw new Error(
+        "Form 8889 W-2 box 1 inclusion cannot exceed employer excess",
       );
     }
     const employerWithdrawal = employerTreatment?.timely_withdrawal;
@@ -507,8 +539,8 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     const deductible = deductibleContributions(input, line12);
     const excess = excessContributions(input, deductible) + employerExcess -
       (employerWithdrawal?.principal ?? 0);
-    const employerExcessIncome =
-      employerTreatment?.included_in_w2_box1 === false ? employerExcess : 0;
+    const employerExcessIncome = employerExcess -
+      (employerTreatment?.amount_included_in_w2_box1 ?? 0);
     const line14b = excludedDistributions(input);
     const taxable = taxableDistributions(input, line14b.excluded);
     const penalty = nonQualifiedPenalty(input, taxable);
