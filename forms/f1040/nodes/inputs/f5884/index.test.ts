@@ -20,6 +20,7 @@ function minimalItem(overrides: Partial<F5884Item> = {}): F5884Item {
       swa_certification_reference: "SWA-001",
       certification_received_on: "2025-01-15",
       certification_received_before_claim_confirmed: true,
+      revocation: { status: "no_notice_received" },
     },
     qualified_wages_confirmed: true,
     not_prior_employee_confirmed: true,
@@ -88,6 +89,7 @@ Deno.test("certification by the first workday requires actual receipt by hire", 
         swa_certification_reference: "SWA-001",
         certification_received_on: "2025-01-16",
         certification_received_before_claim_confirmed: true,
+        revocation: { status: "no_notice_received" },
       },
     })).success,
     false,
@@ -100,6 +102,7 @@ Deno.test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline
     swa_certification_reference: "SWA-002",
     certification_received_on: "2025-03-01",
     certification_received_before_claim_confirmed: true as const,
+    revocation: { status: "no_notice_received" as const },
     job_offer_on: "2025-01-10",
     prescreen_completed_on: "2025-01-10",
     form8850_signed_by_applicant_on: "2025-01-10",
@@ -118,6 +121,96 @@ Deno.test("Form 8850 prescreen path enforces offer, signatures, and SWA deadline
   assertEquals(parse({ form8850_signed_by_employer_on: "2025-02-13" }), false);
   assertEquals(parse({ form8850_submitted_to_swa_on: "2025-02-13" }), false);
   assertEquals(parse({ certification_received_on: "2025-02-11" }), false);
+});
+
+Deno.test("revoked certification excludes wages after notice", () => {
+  const valid = minimalItem({
+    first_year_wages: 6_000,
+    hours_worked: 400,
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-001",
+      certification_received_on: "2025-01-15",
+      certification_received_before_claim_confirmed: true,
+      revocation: {
+        status: "revoked_for_false_employee_information",
+        notice_received_on: "2025-03-01",
+        first_year_claimed_wages_last_paid_or_incurred_on: "2025-03-01",
+        post_notice_wages_excluded_confirmed: true,
+      },
+    },
+  });
+  assertEquals(itemSchema.safeParse(valid).success, true);
+  const revocation = valid.certification.revocation;
+  if (revocation.status !== "revoked_for_false_employee_information") {
+    throw new Error("Expected revoked certification test fixture");
+  }
+  const parse = (changes: Partial<typeof revocation>) =>
+    itemSchema.safeParse({
+      ...valid,
+      certification: {
+        ...valid.certification,
+        revocation: { ...revocation, ...changes },
+      },
+    }).success;
+  assertEquals(
+    parse({
+      first_year_claimed_wages_last_paid_or_incurred_on: "2025-03-02",
+    }),
+    false,
+  );
+  assertEquals(
+    parse({
+      first_year_claimed_wages_last_paid_or_incurred_on: undefined,
+    }),
+    false,
+  );
+  assertEquals(parse({ notice_received_on: "2025-01-14" }), false);
+  assertEquals(
+    parse({
+      first_year_claimed_wages_last_paid_or_incurred_on: "2026-01-01",
+    }),
+    false,
+  );
+  assertEquals(
+    parse({
+      post_notice_wages_excluded_confirmed: undefined,
+    }),
+    false,
+  );
+  const secondYear = minimalItem({
+    target_group: TargetGroup.LongTermFamilyAssistance,
+    hired_on: "2024-01-15",
+    first_year_wages: 0,
+    second_year_wages: 1_000,
+    hours_worked: 400,
+    certification: {
+      path: "certified_by_start",
+      swa_certification_reference: "SWA-002",
+      certification_received_on: "2024-01-15",
+      certification_received_before_claim_confirmed: true,
+      revocation: {
+        status: "revoked_for_false_employee_information",
+        notice_received_on: "2025-04-01",
+        second_year_claimed_wages_last_paid_or_incurred_on: "2025-03-31",
+        post_notice_wages_excluded_confirmed: true,
+      },
+    },
+  });
+  assertEquals(itemSchema.safeParse(secondYear).success, true);
+  assertEquals(
+    itemSchema.safeParse({
+      ...secondYear,
+      certification: {
+        ...secondYear.certification,
+        revocation: {
+          ...secondYear.certification.revocation,
+          second_year_claimed_wages_last_paid_or_incurred_on: "2025-04-02",
+        },
+      },
+    }).success,
+    false,
+  );
 });
 
 Deno.test("successor credit keeps predecessor wage cap and combined hours", () => {
@@ -139,6 +232,7 @@ Deno.test("successor credit keeps predecessor wage cap and combined hours", () =
       swa_certification_reference: "SWA-001",
       certification_received_on: "2025-01-01",
       certification_received_before_claim_confirmed: true,
+      revocation: { status: "no_notice_received" },
     },
     successor_employer: successor,
     first_year_wages: 6_000,
@@ -207,6 +301,7 @@ Deno.test("successor credit keeps predecessor wage cap and combined hours", () =
     swa_certification_reference: "SWA-001",
     certification_received_on: "2025-02-01",
     certification_received_before_claim_confirmed: true,
+    revocation: { status: "no_notice_received" },
     job_offer_on: "2024-12-20",
     prescreen_completed_on: "2024-12-20",
     form8850_signed_by_applicant_on: "2024-12-20",
@@ -240,6 +335,7 @@ Deno.test("successor long-term family assistance shares the second-year cap", ()
       swa_certification_reference: "SWA-002",
       certification_received_on: "2024-01-15",
       certification_received_before_claim_confirmed: true,
+      revocation: { status: "no_notice_received" },
     },
     successor_employer: {
       predecessor_ein: "123456789",

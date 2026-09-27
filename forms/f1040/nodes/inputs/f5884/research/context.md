@@ -25,6 +25,11 @@ qualifying work location.
 
 The certification is now a dated record of either SWA certification received by
 the first workday or timely Form 8850 prescreening, signatures, and submission.
+Each certification records whether a revocation notice was received. If it was
+revoked for false employee information, the source requires the notice date,
+the last paid-or-incurred date of each claimed wage year, and an affirmation
+that later wages were excluded. Claimed wages dated after notice are rejected.
+These source dates are not yet reconciled to payroll transactions.
 For successor employment, the first workday and Form 8850 deadline are measured
 from the predecessor's start, not the acquisition date. The successor record
 also requires the predecessor EIN, acquisition and continued-employment facts,

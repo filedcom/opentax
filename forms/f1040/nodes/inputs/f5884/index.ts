@@ -52,18 +52,33 @@ const WAGE_CAP_VETERAN_DISABLED_1YR = 12000; // disabled veteran 1-year
 const WAGE_CAP_VETERAN_LONG_TERM_UNEMPLOYED = 14000;
 const WAGE_CAP_VETERAN_DISABLED_LONG_TERM = 24000;
 
+const revocationSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("no_notice_received") }),
+  z.object({
+    status: z.literal("revoked_for_false_employee_information"),
+    notice_received_on: z.string().date(),
+    first_year_claimed_wages_last_paid_or_incurred_on: z.string().date()
+      .optional(),
+    second_year_claimed_wages_last_paid_or_incurred_on: z.string().date()
+      .optional(),
+    post_notice_wages_excluded_confirmed: z.literal(true),
+  }),
+]);
+
 const certificationSchema = z.discriminatedUnion("path", [
   z.object({
     path: z.literal("certified_by_start"),
     swa_certification_reference: z.string().trim().min(1),
     certification_received_on: z.string().date(),
     certification_received_before_claim_confirmed: z.literal(true),
+    revocation: revocationSchema,
   }),
   z.object({
     path: z.literal("form8850_prescreen"),
     swa_certification_reference: z.string().trim().min(1),
     certification_received_on: z.string().date(),
     certification_received_before_claim_confirmed: z.literal(true),
+    revocation: revocationSchema,
     job_offer_on: z.string().date(),
     prescreen_completed_on: z.string().date(),
     form8850_signed_by_applicant_on: z.string().date(),
@@ -112,6 +127,60 @@ export const itemSchema = z.object({
   designated_community_resident_location_confirmed: z.literal(true).optional(),
 }).superRefine((item, ctx) => {
   const certification = item.certification;
+  const revocation = certification.revocation;
+  if (revocation.status === "revoked_for_false_employee_information") {
+    if (
+      revocation.notice_received_on < certification.certification_received_on
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["certification", "revocation", "notice_received_on"],
+        message: "Revocation notice cannot precede certification receipt",
+      });
+    }
+    for (
+      const [wages, field] of [
+        [
+          item.first_year_wages,
+          "first_year_claimed_wages_last_paid_or_incurred_on",
+        ],
+        [
+          item.second_year_wages ?? 0,
+          "second_year_claimed_wages_last_paid_or_incurred_on",
+        ],
+      ] as const
+    ) {
+      const lastWageOn = revocation[field];
+      if (
+        wages > 0 && (!lastWageOn || lastWageOn > revocation.notice_received_on)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["certification", "revocation", field],
+          message:
+            "Claimed wages must be paid or incurred on or before revocation notice",
+        });
+      }
+      if (
+        lastWageOn &&
+        (lastWageOn < item.hired_on || !lastWageOn.startsWith("2025-"))
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["certification", "revocation", field],
+          message:
+            "Claimed wages must be dated in 2025 on or after this employer's hire",
+        });
+      }
+      if (wages === 0 && lastWageOn) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["certification", "revocation", field],
+          message: "Do not date wages that are not claimed",
+        });
+      }
+    }
+  }
   const firstWorkday = item.successor_employer?.predecessor_first_workday_on ??
     item.hired_on;
   if (

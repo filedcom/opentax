@@ -168,7 +168,11 @@ now requires dated evidence for either certification received by the first workd
 Form 8850 prescreening completed by the offer date, signed before submission,
 submitted to the state workforce agency within 28 calendar days of hire, and
 followed by certification before claiming. These timing cases are written but
-unrun; certification revocation and disaster postponement handling remain open.
+unrun; disaster postponement handling remains open. The build pass now also
+records certification-revocation notice status, requires claimed-wage dates
+and exclusion of post-notice wages for false-information revocations, and
+rejects dates after the notice. Source cases are written but unrun; payroll
+transactions and other revocation reasons remain unreconciled.
 The successor-employer build pass now anchors certification timing to the
 predecessor's first workday, combines prior and current hours, and reduces the
 first- and second-year wage caps by predecessor qualified wages. It requires

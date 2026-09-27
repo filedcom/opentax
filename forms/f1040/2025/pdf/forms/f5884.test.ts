@@ -13,6 +13,7 @@ const source = {
       swa_certification_reference: "SWA-001",
       certification_received_on: "2025-01-15",
       certification_received_before_claim_confirmed: true,
+      revocation: { status: "no_notice_received" },
     },
     qualified_wages_confirmed: true,
     not_prior_employee_confirmed: true,
