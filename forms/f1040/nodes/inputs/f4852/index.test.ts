@@ -60,6 +60,13 @@ Deno.test("f4852: one substitute W-2 above $200k triggers Form 8959 filing", () 
   );
 });
 
+Deno.test("f4852: Medicare withholding needs substitute W-2 Medicare wages", () => {
+  assertEquals(
+    itemSchema.safeParse(w2Item({ medicare_withheld: 1_450 })).success,
+    false,
+  );
+});
+
 // ---------------------------------------------------------------------------
 // 1. Schema validation
 // ---------------------------------------------------------------------------

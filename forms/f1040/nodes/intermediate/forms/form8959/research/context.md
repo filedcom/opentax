@@ -29,8 +29,9 @@ The source-specific wage deposits are summed once into normalized
 `medicare_wages_box5` override is removed. Box 1 remains the Form 1040
 wage source, not a Form 8959 wage source. Statutory-employee W-2 box 5 amounts
 are included even though their box 1 wages route to Schedule C. The node and
-MeF builder reject the removed second wage field. The source and return cases
-are written but unrun.
+MeF builder reject the removed second wage field. Substitute W-2 and household
+inputs reject Medicare withholding without corresponding Medicare wages. The
+mixed-source return case and source checks are written but unrun.
 
 The W-2 node also carries a filing-required fact when any one employer reports
 more than $200,000 in box 5 or RRTA compensation in box 14. A Form 4852 W-2

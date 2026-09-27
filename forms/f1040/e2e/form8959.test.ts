@@ -7,6 +7,42 @@ import { FilingStatus } from "../nodes/types.ts";
 const plan = buildExecutionPlan(registry);
 const ctx = { taxYear: 2025, formType: "f1040" };
 
+Deno.test("W-2, substitute W-2, and household Medicare wages reach one Form 8959", () => {
+  const result = execute(plan, registry, {
+    general: {
+      filing_status: FilingStatus.Single,
+      taxpayer_first_name: "Alex",
+      taxpayer_last_name: "Worker",
+      taxpayer_ssn: "123-45-6789",
+    },
+    w2: [{
+      employee_ssn: "123-45-6789",
+      employer_name: "ACME",
+      employer_ein: "123456789",
+      box1_wages: 100_000,
+      box5_medicare_wages: 100_000,
+      box6_medicare_withheld: 1_450,
+    }],
+    f4852: [{
+      form_type: "W2",
+      payer_name: "Other Employer",
+      wages: 70_000,
+      medicare_wages: 70_000,
+      medicare_withheld: 1_015,
+    }],
+    household_wages: [{
+      wages_received: 40_000,
+      medicare_wages: 40_000,
+      medicare_tax_withheld: 580,
+    }],
+  }, ctx);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.form8959?.line1_medicare_wages, 210_000);
+  assertEquals(result.pending.form8959?.line19_medicare_withheld, 3_045);
+  assertEquals(result.pending.schedule2?.line11_additional_medicare, 90);
+  assertEquals(result.pending.form8959?.line24_total_withheld, 0);
+});
+
 Deno.test("W-2 box 5 drives Form 8959 when it exceeds box 1", () => {
   const result = execute(plan, registry, {
     general: {

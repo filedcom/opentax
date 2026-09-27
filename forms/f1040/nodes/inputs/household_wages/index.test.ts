@@ -159,12 +159,23 @@ Deno.test("household_wages.compute: ss_tax_withheld does not create separate out
 
 Deno.test("household_wages.compute: medicare_tax_withheld routes to form8959", () => {
   const result = compute([
-    minimalItem({ wages_received: 20000, medicare_tax_withheld: 290 }),
+    minimalItem({
+      wages_received: 20000,
+      medicare_wages: 20000,
+      medicare_tax_withheld: 290,
+    }),
   ]);
   // f1040 output for wages + form8959 output for Medicare withholding
   assertEquals(result.outputs.length, 2);
   const f8959 = findOutput(result, "form8959");
   assertEquals(f8959?.fields?.household_medicare_withheld, 290);
+});
+
+Deno.test("household wages reject Medicare withholding without Medicare wages", () => {
+  const parsed = household_wages.inputSchema.safeParse({
+    household_wages: [{ wages_received: 20_000, medicare_tax_withheld: 290 }],
+  });
+  assertEquals(parsed.success, false);
 });
 
 // =============================================================================

@@ -81,6 +81,13 @@ export const itemSchema = z.object({
           "W2 form_type requires at least wages or federal_withheld to be nonzero",
       });
     }
+    if ((val.medicare_withheld ?? 0) > 0 && (val.medicare_wages ?? 0) === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Substitute W-2 Medicare withholding needs Medicare wages",
+        path: ["medicare_wages"],
+      });
+    }
   }
   if (val.form_type === FormType.R_1099) {
     if (val.gross_distribution === undefined) {

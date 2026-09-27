@@ -37,6 +37,17 @@ export const itemSchema = z.object({
   employer_name: z.string().optional(),
   // Employer EIN (informational)
   employer_ein: z.string().optional(),
+}).superRefine((item, ctx) => {
+  if (
+    (item.medicare_tax_withheld ?? 0) > 0 &&
+    (item.medicare_wages ?? 0) === 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Household Medicare withholding needs Medicare wages",
+      path: ["medicare_wages"],
+    });
+  }
 });
 
 export const inputSchema = z.object({
