@@ -25,6 +25,10 @@ Keep separate statement type, payee/claim, calendar-year, original/corrected/
 duplicate and source IDs. The RRB says a corrected statement replaces the
 corresponding original, a duplicate adds nothing, and other distinct
 originals in the same year remain valid.
+The [public TY2026 MeF inventory](MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
+lists `IRSRRB1042S` for nonresident recipients, but no U.S. RRB-1099 or
+RRB-1099-R source entry. Do not map U.S. statements to that nonresident
+document; confirm the selected 1040 release's source-document rule.
 
 | Issuer form/box | Correct source meaning and 2026 handoff |
 | --- | --- |

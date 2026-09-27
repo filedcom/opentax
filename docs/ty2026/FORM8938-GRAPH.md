@@ -10,6 +10,9 @@ The expected draft instruction URL still serves a 2021 document. Reconcile
 the final form and instructions before filing. The [PDF field
 inventory](pdf-fields-f8938.csv) has **131 widgets**, all in the field tree;
 the draft cover sheet is PDF page 1 and form pages are PDF pages 2–3.
+The [public TY2026 MeF inventory](MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
+lists one `IRS8938` at form level for 1040; asset/continuation cardinality
+still requires the current XSD and rules.
 
 ## Filing decision before PDF or MeF
 

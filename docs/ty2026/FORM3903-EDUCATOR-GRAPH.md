@@ -38,6 +38,10 @@ widgets, all in the field tree: name, SSN, certification `c1_1`, lines 1–4,
 the two line-5 choice buttons `c1_2[0/1]`, and line 5 amount. They are on
 PDF page 2 because page 1 is the draft cover sheet. Multi-move attachment
 rules and the current XSD/attachment decision remain open.
+The [public TY2026 MeF inventory](MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
+lists `IRS3903` under Schedule 1 line 14 and a maximum of **two** Forms 3903
+for a 1040. The printed instructions require one form per qualifying move;
+the XSD/rules must resolve any return with more than two moves.
 
 ## Educator expenses split across Schedule 1 and Schedule A
 

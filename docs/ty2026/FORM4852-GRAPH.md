@@ -8,6 +8,10 @@ The expected draft URL still serves that 2020 revision. The [PDF field
 inventory](pdf-fields-f4852.csv) has **34 widgets**, all on the form's first
 page and in its field tree; the second page contains printed instructions.
 Check for a superseding form and the selected MeF release before filing.
+The [public TY2026 accepted-forms and attachments inventories](MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
+have no Form 4852 entry. That does not establish whether the selected
+release permits another documented attachment method; do not name or build
+one until the XSD, active rules and IRS filing guidance are checked.
 
 ## When a substitute is appropriate
 

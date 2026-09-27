@@ -43,3 +43,27 @@ Observed in the v1 `IRS1040.xsd` versus the pinned September draft
 Until step 1, MeF XML can be prototyped as unverified code but cannot satisfy
 the TY2026 end-to-end release gate. The calculation and draft-PDF work can
 continue independently.
+
+## What the public September 24 inventory already establishes
+
+The pinned [accepted-forms workbook](corpus/mef/accepted-forms.xlsx) has a
+stale worksheet tab name (`taxyear2025 processingyear2026`), but its rows
+include the 2026-only Form 1062, Form 4562-B and Schedule 3-A, and its URL is
+the IRS TY2026 accepted-forms resource. Treat its **rows** as the published
+September 24 planning inventory; the tab label does not make it a 2025
+schema. The companion [forms/attachments workbook](corpus/mef/forms-attachments.xlsx)
+is dated September 24, 2026. These are form/attachment availability and
+dependency references, **not** a substitute for XSD, business rules, or an
+ATS acceptance test.
+
+| Source plan | Accepted-forms workbook, 1040 column | Forms/attachments workbook | Current conclusion |
+| --- | --- | --- | --- |
+| [Form 3903](FORM3903-EDUCATOR-GRAPH.md) | `Form 3903`, maximum **2** (row 56) | `IRS3903` under Schedule 1 line 14 (row 383) | A structured form is listed for 1040, but its two-form count needs reconciliation with the IRS instruction to use a separate form for each qualifying move. Check actual XSD repeat cardinality and rejection rule. |
+| [Form 8938](FORM8938-GRAPH.md) | `Form 8938`, maximum **1** (row 199) | `IRS8938` at form level (row 293) | A structured attachment is listed. The one-form count does not describe how repeated Part V/VI asset records or supplemental page-2 data are represented. |
+| [Form 4852](FORM4852-GRAPH.md) | No `Form 4852` row found | No `4852` entry found | Do not assume `IRS4852`, a binary attachment, or paper-only filing. Obtain the active 1040 XSD/rules and IRS filing guidance to decide the supported submission path. |
+| [RRB source statements](RRB-1099-GRAPH.md) | `Form RRB1042S`, a nonresident-recipient statement, appears even in the 1040 column (row 228); no U.S. `RRB-1099`/`RRB-1099-R` row found | `IRSRRB1042S` appears; no U.S. statement entry found | Calculate U.S. source statements into the 1040 lines; verify whether the selected release requires a source document or only reconciled return amounts. Do not use the nonresident statement schema for U.S. statements. |
+
+For every additional form in the [parity queue](PARITY-QUEUE.md), perform the
+same accepted-count, dependency, XSD and business-rule reconciliation before
+claiming MeF coverage. A zero/blank workbook cell or missing row is a
+research finding, not a complete filing prohibition by itself.

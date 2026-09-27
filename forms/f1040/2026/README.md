@@ -12,6 +12,10 @@ remaining route has an explicit source check before coding.
 The [parity queue](../../../docs/ty2026/PARITY-QUEUE.md) orders the remaining
 graph, PDF and MeF work against all TY2025 inventories and names the new
 2026-only forms that those inventories cannot reveal.
+The [public MeF inventory reconciliation](../../../docs/ty2026/MEF-V1-DRIFT.md#what-the-public-september-24-inventory-already-establishes)
+records published accepted counts and dependency names for Forms 3903/8938,
+and the absence of Form 4852 and U.S. RRB source statements from those
+workbooks. Current XSD and business rules remain the filing gate.
 The [Form 8962 contract](../../../docs/ty2026/FORM8962-GRAPH.md) maps the
 2026 full-repayment line 27, 400% FPL boundary and Form 1095-A source to
 Schedule 2/3, with a 143-widget PDF inventory and current-MeF gate.
