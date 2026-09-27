@@ -58,7 +58,8 @@ for the implementation contract.
   source-linked TY2025 MeF serializers.
 - [`NODE-BOUNDARY-AUDIT.md`](NODE-BOUNDARY-AUDIT.md): route owners and
   implementation decisions for the 85 TY2025 registry nodes not named
-  individually in the specialist plans.
+  individually in the specialist plans; every generated node-ledger row
+  now has a concrete next action, while remaining audit-required.
 - [`FORM5884-6765-8994-GRAPH.md`](FORM5884-6765-8994-GRAPH.md) and three
   PDF field inventories: work opportunity hire cutoff, required research
   Section G, and expanded paid-leave credit/Notice 2026-28.

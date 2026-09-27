@@ -17,6 +17,9 @@ have no 2025 counterpart. Recompute these observations after implementation
 changes; they are a snapshot, not a completion score.
 The [boundary audit](NODE-BOUNDARY-AUDIT.md) maps the other 85 TY2025
 registry nodes to route owners; it does not certify those routes for 2026.
+Every row in the generated [node ledger](node-coverage.csv) now has a
+concrete next action or linked specialist plan. All rows remain
+`audit-required` until their source, graph, PDF, MeF and return tests pass.
 The [Forms 5884/6765/8994 plan](FORM5884-6765-8994-GRAPH.md) gives the
 first source-level business-credit decisions behind Form 3800.
 The [Form 3468 plan](FORM3468-GRAPH.md) covers the multi-facility investment
