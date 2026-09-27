@@ -204,10 +204,8 @@ export const itemSchema = z.object({
   box20_aggregation_group: z.string().optional(),
 
   // Box 13 — Other deductions (various codes A-Z+)
-  // Net total of deductible partnership items from Box 13 that reduce the
-  // partner's income. Positive = deduction amount. Most common codes (e.g.,
-  // charitable contributions code A, investment interest code H) are collapsed
-  // to a single net figure for routing to Schedule A / AGI reduction.
+  // Legacy aggregate of box 13 deductions. Code H investment interest must
+  // instead use its separately stated field above and Form 4952 limitation.
   box13_deductions: z.number().nonnegative().optional(),
 
   // Box 17 — Alternative Minimum Tax (AMT) items (codes A-G)
