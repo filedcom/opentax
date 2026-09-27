@@ -125,6 +125,8 @@ Deno.test("box7 tips without a tipped occupation code do not route to Schedule 1
 Deno.test("TY2026 W-2 codes TP and TT route reported tips and overtime", () => {
   const result = compute2026([minimalItem({
     employee_ssn: "111223333",
+    employer_ein: "12-3456789",
+    employer_name: "CAFE",
     box1_wages: 70_000,
     box7_ss_tips: 3_000,
     box14b_tipped_codes: ["102"],
@@ -134,9 +136,13 @@ Deno.test("TY2026 W-2 codes TP and TT route reported tips and overtime", () => {
     ],
   })]);
   const schedule = findOutput(result, "schedule1a")?.fields;
-  assertEquals(schedule?.qualified_employee_tips, [{
+  assertEquals(schedule?.qualified_employee_tip_sources_2026, [{
+    source: "w2",
+    employer_ein: "12-3456789",
+    employer_name: "CAFE",
     employee_ssn: "111223333",
     amount: 5_000,
+    occupation_codes: ["102"],
   }]);
   const overtime = result.outputs.filter((item) =>
     item.nodeType === "schedule1a"
@@ -152,6 +158,8 @@ Deno.test("TY2026 W-2 code TP needs a qualifying occupation and employee SSN", (
     () =>
       compute2026([minimalItem({
         employee_ssn: "111223333",
+        employer_ein: "12-3456789",
+        employer_name: "CAFE",
         box12_entries: [{ code: Box12Code.TP, amount: 100 }],
       })]),
     Error,
@@ -161,6 +169,8 @@ Deno.test("TY2026 W-2 code TP needs a qualifying occupation and employee SSN", (
     () =>
       compute2026([minimalItem({
         employee_ssn: "111223333",
+        employer_ein: "12-3456789",
+        employer_name: "CAFE",
         box14b_tipped_codes: ["000"],
         box12_entries: [{ code: Box12Code.TP, amount: 100 }],
       })]),
@@ -170,6 +180,8 @@ Deno.test("TY2026 W-2 code TP needs a qualifying occupation and employee SSN", (
   assertThrows(
     () =>
       compute2026([minimalItem({
+        employer_ein: "12-3456789",
+        employer_name: "CAFE",
         box14b_tipped_codes: ["102"],
         box12_entries: [{ code: Box12Code.TP, amount: 100 }],
       })]),

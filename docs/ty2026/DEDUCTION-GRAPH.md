@@ -59,7 +59,7 @@ for review, then emit a single finalized set of form lines.
 | Income | AGI, filing status, SALT modified AGI including foreign/Puerto Rico adjustments | AGI graph exists; SALT MAGI source path pending. |
 | Schedule A | Medical, elected income/sales tax and property taxes, mortgage interest and insurance, investment interest, disaster losses, line 17 components | `schedule-a.ts` assembles lines from already allowed values. Input nodes and each separate eligibility limit pending. |
 | Charity | Cash/noncash category and percentage limits, contribution dates/recipients, origin-year carryforwards, floor attribution | Pure 0.5% floor exists; category-limit and carryforward accounting pending. Do not treat raw 11/12/14 amounts as all deductible. |
-| Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node routes 2026 line 43/44 separately; Form 2555 MAGI addbacks and W-2 TP/TT facts exist. Puerto Rico/Form 4563 addbacks and Form 4137 employer reconciliation remain. |
+| Schedule 1-A | Form line 44 total and line 43 enhanced senior deduction, plus eligibility facts | The shared node routes 2026 line 43/44 separately; Form 2555 MAGI addbacks, W-2 TP/TT, and employer-level Form 4137 reconciliation exist. Puerto Rico/Form 4563 addbacks remain. |
 | QBI | All Form 8995/8995-A business, wage, UBIA, loss, gain, and carryforward facts | Existing shared nodes need a 2026 output contract and pre-QBI income from the joint resolver. |
 
 ## Implementation order and gates
@@ -68,10 +68,12 @@ for review, then emit a single finalized set of form lines.
    Wire upstream allowed amounts without guessing percentage limits,
    mortgage-insurance eligibility, Form 4952, or contribution carryovers.
 2. Finish Schedule 1-A's 2026 source inputs: Puerto Rico/Form 4563 MAGI
-   addbacks and Form 4137 employer-level tip facts. Reconcile W-2 TP with
-   Form 4137 by employer using the draft's larger-of rule, including mixed
-   occupation cases. W-2 TP/TT and the line 43/44 output route now exist;
-   TY2025 output names remain pinned.
+   addbacks. W-2 TP and Form 4137 line 1(c) now reconcile by filer and
+   employer using the draft's larger-of rule. Mixed or unverified occupations
+   require an explicit qualified-tip amount; they are not inferred. W-2 TT
+   and the line 43/44 output route also exist; TY2025 output names remain
+   pinned. The focused graph covers tip income and the deduction, but its
+   Schedule 2 tax branch is not yet part of a registered TY2026 return.
 3. Extract QBI form calculations as pure functions parameterized by actual
    pre-QBI taxable income. Audit Form 8995-A thresholds and every 2025 literal.
 4. Implement and test the joint resolver. It must decide standard plus 12f

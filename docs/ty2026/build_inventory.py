@@ -17,7 +17,7 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
     "general": "dependent ages and qualifying-relative income updated; audit other fields",
-    "w2": "2026 SIMPLE and elective deferral limits updated; audit remaining outputs",
+    "w2": "2026 SIMPLE/deferral limits and TP/TT routing updated; audit remaining outputs",
     "auto_expense": "2026 business mileage periods updated; audit remaining rules",
     "f2106": "2026 business mileage and AGI limit updated; audit remaining rules",
     "f8621": "2026 event-year allocation updated; audit remaining rules",
@@ -27,7 +27,8 @@ NODE_PROGRESS = {
     "form8839": "2025/2026 refundable split, indexed caps, and origin-year carryforward updated; add full credit-limit worksheet",
     "form4562": "2026 caps configured; choose passenger-auto cap by placed-in-service year",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
-    "schedule1a": "2026 config updated; reconcile 1040 line 13a and source form",
+    "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
+    "form4137": "2026 employer tip sources route to Schedule 1-A; audit complete tax path",
 }
 
 P0_NODES = {

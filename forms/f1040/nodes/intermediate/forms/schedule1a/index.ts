@@ -7,6 +7,10 @@ import { f1040 } from "../../../outputs/f1040/index.ts";
 import { standard_deduction } from "../../worksheets/standard_deduction/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import {
+  employeeTipSource2026Schema,
+  reconcileEmployeeTips2026,
+} from "../../../../2026/employee-tips.ts";
 
 const vehicleLoanSchema = z.object({
   vin: z.string().trim().regex(
@@ -41,6 +45,8 @@ export const inputSchema = claimInputSchema.extend({
     employee_ssn: z.string(),
     amount: z.number().nonnegative(),
   })).optional(),
+  qualified_employee_tip_sources_2026: z.array(employeeTipSource2026Schema)
+    .optional(),
   qualified_employee_overtime: z.array(z.object({
     employee_ssn: z.string(),
     amount: z.number().nonnegative(),
@@ -76,25 +82,56 @@ function tipsOvertimePhaseout(input: Schedule1AInput): number | undefined {
   return Math.floor(Math.max(0, input.magi - threshold) / 1_000) * 100;
 }
 
-export function qualifiedTipsDeduction(input: Schedule1AInput): number {
-  const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
-  const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
-  const eligibleTips = (input.qualified_employee_tips ?? []).reduce(
-    (sum, entry) => {
-      const employeeSsn = entry.employee_ssn.replaceAll("-", "");
-      if (
-        employeeSsn === taxpayerSsn &&
-        input.taxpayer_has_valid_ssn === true
-      ) return sum + entry.amount;
-      if (
-        input.filing_status === FilingStatus.MFJ &&
-        employeeSsn === spouseSsn &&
-        input.spouse_has_valid_ssn === true
-      ) return sum + entry.amount;
-      return sum;
-    },
-    0,
-  );
+export function qualifiedTipsDeduction(
+  input: Schedule1AInput,
+  taxYear = 2025,
+): number {
+  let eligibleTips: number;
+  if (taxYear === 2026) {
+    if (input.qualified_employee_tips !== undefined) {
+      throw new Error("TY2026 tips need employer-level W-2/4137 sources");
+    }
+    const sources = input.qualified_employee_tip_sources_2026 ?? [];
+    if (sources.length > 0 && input.filing_status === undefined) {
+      throw new Error("TY2026 employer tips need filing status");
+    }
+    const reconciled = sources.length > 0
+      ? reconcileEmployeeTips2026({
+        filingStatus: input.filing_status!,
+        taxpayerSsn: input.taxpayer_ssn,
+        spouseSsn: input.spouse_ssn,
+        sources,
+      })
+      : { rows: [], totalBeforeCap: 0 };
+    eligibleTips = reconciled.rows.reduce((sum, row) => {
+      const validSsn = row.recipient === "taxpayer"
+        ? input.taxpayer_has_valid_ssn === true
+        : input.spouse_has_valid_ssn === true;
+      return sum + (validSsn ? row.amountUsed : 0);
+    }, 0);
+  } else {
+    if (input.qualified_employee_tip_sources_2026 !== undefined) {
+      throw new Error("Employer-level TP/4137 tip sources require TY2026");
+    }
+    const taxpayerSsn = input.taxpayer_ssn?.replaceAll("-", "");
+    const spouseSsn = input.spouse_ssn?.replaceAll("-", "");
+    eligibleTips = (input.qualified_employee_tips ?? []).reduce(
+      (sum, entry) => {
+        const employeeSsn = entry.employee_ssn.replaceAll("-", "");
+        if (
+          employeeSsn === taxpayerSsn &&
+          input.taxpayer_has_valid_ssn === true
+        ) return sum + entry.amount;
+        if (
+          input.filing_status === FilingStatus.MFJ &&
+          employeeSsn === spouseSsn &&
+          input.spouse_has_valid_ssn === true
+        ) return sum + entry.amount;
+        return sum;
+      },
+      0,
+    );
+  }
   const tips = Math.min(eligibleTips, QUALIFIED_TIPS_CAP);
   const phaseout = tipsOvertimePhaseout(input);
   if (
@@ -240,7 +277,7 @@ class Schedule1ANode extends TaxNode<typeof inputSchema> {
   compute(ctx: NodeContext, rawInput: Schedule1AInput): NodeResult {
     const input = inputSchema.parse(rawInput);
     const enhancedSeniorDeduction = seniorDeduction(ctx, input);
-    const qualifiedTips = qualifiedTipsDeduction(input);
+    const qualifiedTips = qualifiedTipsDeduction(input, ctx.taxYear);
     const qualifiedOvertime = qualifiedOvertimeDeduction(input, ctx.taxYear);
     const vehicleLoanInterest = vehicleLoanInterestDeduction(input);
     const deduction = qualifiedTips + qualifiedOvertime + vehicleLoanInterest +

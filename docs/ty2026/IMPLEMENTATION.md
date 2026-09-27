@@ -85,9 +85,11 @@ The shared Schedule 1-A node now emits its 2026 line 15/27/36/43/44 results
 and sends lines 43/44 to the 2026 deduction node. AGI adds Form 2555 amounts
 back for Schedule 1-A MAGI in 2026. W-2 code TP/TT records now feed employee
 tips/overtime into Schedule 1-A and through the 1040 calculation graph, with
-the official 2026 W-2 instructions pinned in the corpus. Form 4137 employer
-larger-of reconciliation, mixed occupation tips, and Puerto Rico/Form 4563
-MAGI addbacks remain open.
+the official 2026 W-2 instructions pinned in the corpus. W-2 TP and Form 4137
+line 1(c) now reconcile by filer and employer with the larger-of rule. Mixed
+occupations require an explicit qualified amount, and a focused graph test
+carries the resulting deduction and unreported tip income to 1040. Puerto
+Rico/Form 4563 MAGI addbacks and the complete Schedule 2 tip-tax path remain.
 The shared Form 8839 node now splits the credit into refundable 1040 line 30
 and nonrefundable Schedule 3 amounts for both TY2025 and TY2026, using each
 year’s per-child cap and MAGI phaseout. It now consumes and emits nonrefundable

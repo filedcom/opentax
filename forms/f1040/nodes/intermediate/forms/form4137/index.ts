@@ -7,6 +7,7 @@ import { CONFIG_BY_YEAR } from "../../../config/index.ts";
 import { f1040 } from "../../../outputs/f1040/index.ts";
 import { agi_aggregator } from "../../aggregation/agi_aggregator/index.ts";
 import { schedule2 } from "../../aggregation/schedule2/index.ts";
+import { schedule1a } from "../schedule1a/index.ts";
 
 const employerSchema = z.object({
   name: z.string().min(1),
@@ -14,6 +15,9 @@ const employerSchema = z.object({
   applied_for_ein: z.literal(true).optional(),
   tips_received: z.number().nonnegative(),
   tips_reported: z.number().nonnegative(),
+  tipped_occupation_codes: z.array(z.string().regex(/^\d{3}$/)).max(2)
+    .optional(),
+  qualified_tip_amount: z.number().nonnegative().optional(),
 }).strict().superRefine((employer, ctx) => {
   if ((employer.ein === undefined) === (employer.applied_for_ein !== true)) {
     ctx.addIssue({
@@ -25,6 +29,15 @@ const employerSchema = z.object({
     ctx.addIssue({
       code: "custom",
       message: "Form 4137 reported tips exceed received tips",
+    });
+  }
+  if (
+    employer.qualified_tip_amount !== undefined &&
+    employer.qualified_tip_amount > employer.tips_received
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Qualified tips exceed Form 4137 line 1(c)",
     });
   }
 });
@@ -170,7 +183,12 @@ export function calculateForm4137(
 class Form4137Node extends TaxNode<typeof inputSchema> {
   readonly nodeType = "form4137";
   readonly inputSchema = inputSchema;
-  readonly outputNodes = new OutputNodes([f1040, schedule2, agi_aggregator]);
+  readonly outputNodes = new OutputNodes([
+    f1040,
+    schedule2,
+    agi_aggregator,
+    schedule1a,
+  ]);
 
   compute(ctx: NodeContext, rawInput: Form4137Input): NodeResult {
     const cfg = CONFIG_BY_YEAR[ctx.taxYear];
@@ -189,6 +207,23 @@ class Form4137Node extends TaxNode<typeof inputSchema> {
           : []),
         ...(tipTax > 0
           ? [output(schedule2, { line5_unreported_tip_tax: tipTax })]
+          : []),
+        ...(ctx.taxYear === 2026
+          ? [output(schedule1a, {
+            qualified_employee_tip_sources_2026: forms.flatMap((form) =>
+              form.employers.map((employer) => ({
+                source: "form4137" as const,
+                employer_name: employer.name,
+                ...(employer.ein && { employer_ein: employer.ein }),
+                recipient: form.recipient,
+                amount: employer.tips_received,
+                ...(employer.tipped_occupation_codes &&
+                  { occupation_codes: employer.tipped_occupation_codes }),
+                ...(employer.qualified_tip_amount !== undefined &&
+                  { qualified_amount: employer.qualified_tip_amount }),
+              }))
+            ),
+          })]
           : []),
       ],
     };

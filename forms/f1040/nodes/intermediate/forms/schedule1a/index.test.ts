@@ -39,7 +39,14 @@ Deno.test("schedule1a: TY2026 routes lines 43 and 44 to deduction resolution", (
     taxpayer_ssn: TAXPAYER_SSN,
     taxpayer_has_valid_ssn: true,
     taxpayer_age_65_or_older: true,
-    qualified_employee_tips: tips(5_000),
+    qualified_employee_tip_sources_2026: [{
+      source: "w2",
+      employer_ein: "12-3456789",
+      employer_name: "CAFE",
+      employee_ssn: TAXPAYER_SSN,
+      amount: 5_000,
+      occupation_codes: ["102"],
+    }],
   });
   const standard = result.outputs.find((item) =>
     item.nodeType === "standard_deduction"

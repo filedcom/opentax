@@ -17,6 +17,7 @@ const amount = z.number().finite().nonnegative();
 export const inputSchema = z.object({
   filing_status: filingStatusSchema,
   line1a_wages: amount.optional(),
+  line1c_unreported_tips: amount.optional(),
   line1i_combat_pay: amount.optional(),
   line6b_ss_taxable: amount.optional(),
   line8_additional_income: z.number().finite().optional(),
@@ -107,6 +108,7 @@ class F10402026Node extends TaxNode<typeof inputSchema> {
       nodeType: this.nodeType,
       fields: {
         line1a_wages: input.line1a_wages,
+        line1c_unreported_tips: input.line1c_unreported_tips,
         line1i_combat_pay: input.line1i_combat_pay,
         line6b_ss_taxable: input.line6b_ss_taxable,
         line8_additional_income: input.line8_additional_income,

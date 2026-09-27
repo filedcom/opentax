@@ -135,6 +135,7 @@ forms/f1040/nodes/inputs/ssa1099/index.ts,17,// Box 3 — Total social security 
 forms/f1040/nodes/inputs/ssa1099/index.ts,20,// Box 4 — Total benefits repaid to SSA/RRB in 2025
 forms/f1040/nodes/inputs/ssa1099/index.ts,23,"// Box 5 — Net benefits for 2025 (Box 3 minus Box 4, as precomputed by SSA)"
 forms/f1040/nodes/inputs/ssa1099/index.ts,26,"box5_net_benefits: z.number().nonnegative().optional().describe(""Net benefits for 2025 (Box 3 minus Box 4)""),"
+forms/f1040/nodes/intermediate/aggregation/agi_aggregator/index.ts,508,// and the final 1040 derive AGI from identical numbers. TY2025 retains its
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,28,// IRC §55; 2025 Schedule 2 moved AMT below the line 1 additions.
 forms/f1040/nodes/intermediate/aggregation/schedule2/index.ts,75,// IRC §36B(f); 2025 Schedule 2 line 1a.
 forms/f1040/nodes/intermediate/forms/farm_elections.ts,10,const cropInsuranceDate = z.string().regex(/^2025-\d{2}-\d{2}$/).refine(
@@ -193,7 +194,7 @@ forms/f1040/nodes/intermediate/forms/form8824/calculation.ts,12,"// Form 8824 (2
 forms/f1040/nodes/intermediate/forms/form8839/index.ts,53,"const ADOPTION_RULES: Record<2025 | 2026, {"
 forms/f1040/nodes/intermediate/forms/form8839/index.ts,59,"// 2025 Form 8839, lines 2, 8, and 11b."
 forms/f1040/nodes/intermediate/forms/form8839/index.ts,60,"2025: { maxCreditPerChild: 17_280, refundablePerChild: 5_000, phaseOutStart: 259_190, phaseOutRange: 40_000 },"
-forms/f1040/nodes/intermediate/forms/form8839/index.ts,248,if (ctx.taxYear !== 2025 && ctx.taxYear !== 2026) {
+forms/f1040/nodes/intermediate/forms/form8839/index.ts,251,if (ctx.taxYear !== 2025 && ctx.taxYear !== 2026) {
 forms/f1040/nodes/intermediate/forms/form8853/index.ts,28,// Line 2: Taxpayer contributions to Archer MSA in 2025
 forms/f1040/nodes/intermediate/forms/form8959/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8960/index.ts,14,// ─── TY2025 Constants ──────────────────────────────────────────────────────────
@@ -217,6 +218,8 @@ forms/f1040/nodes/intermediate/forms/form_8829/index.ts,14,const DEPRECIATION_RA
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,29,// Rate for homes where business use began before 2025 (full-year mid-month convention)
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,57,"// Month home first used for business: 1–12 for TY2025 first use, 0 for prior-year use"
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,83,rate = DEPRECIATION_RATES_TY2025[month - 1];
+forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,87,"taxYear = 2025,"
+forms/f1040/nodes/intermediate/forms/schedule1a/index.ts,149,"taxYear = 2025,"
 forms/f1040/nodes/intermediate/forms/schedule_f/index.ts,29,// ── TY2025 Constants ──────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,12,// ─── TY2025 Constants (Rev Proc 2024-40; IRS Publication 926) ────────────────
 forms/f1040/nodes/intermediate/forms/schedule_h/index.ts,34,"cash_wages_over_2025_limit: z.boolean().optional(),"

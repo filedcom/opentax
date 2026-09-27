@@ -151,6 +151,9 @@ export const w2ItemSchema = z.object({
   ),
   box14b_tipped_codes: z.array(z.string().regex(/^\d{3}$/)).min(1).max(2)
     .optional().describe("TY2026 Treasury Tipped Occupation Codes"),
+  box14b_qualified_tp_amount: z.number().nonnegative().optional().describe(
+    "Qualified part of TP tips when box 14b includes a nonqualifying occupation",
+  ),
   box15_state: z.string().optional().describe("State abbreviation"),
   box16_state_wages: z.number().nonnegative().optional().describe(
     "State wages, tips, etc.",
@@ -420,29 +423,55 @@ function scheduleSEOutput(w2s: W2Items): NodeOutput[] {
 }
 
 function qualifiedTipsOutput(w2s: W2Items, taxYear: number): NodeOutput[] {
-  const tips = regularItems(w2s).flatMap((item) => {
-    const amount = taxYear === 2026
-      ? (item.box12_entries ?? [])
+  if (taxYear === 2026) {
+    const sources = regularItems(w2s).flatMap((item) => {
+      const amount = (item.box12_entries ?? [])
         .filter((entry) => entry.code === Box12Code.TP)
-        .reduce((sum, entry) => sum + entry.amount, 0)
-      : item.box7_ss_tips ?? 0;
-    if (amount <= 0) return [];
-    const codes = taxYear === 2026
-      ? item.box14b_tipped_codes ??
-        (item.box14b_tipped_code ? [item.box14b_tipped_code] : [])
-      : item.box14b_tipped_code
-      ? [item.box14b_tipped_code]
-      : [];
-    if (codes.length === 0) {
-      if (taxYear === 2026) {
+        .reduce((sum, entry) => sum + entry.amount, 0);
+      if (amount <= 0) return [];
+      if (!item.employee_ssn || !item.employer_ein || !item.employer_name) {
+        throw new Error(
+          "W-2 code TP needs employee SSN, employer EIN and name",
+        );
+      }
+      const occupationCodes = item.box14b_tipped_codes ??
+        (item.box14b_tipped_code ? [item.box14b_tipped_code] : []);
+      if (occupationCodes.length === 0) {
         throw new Error("W-2 code TP needs box 14b occupation code");
       }
+      if (
+        item.box14b_qualified_tp_amount !== undefined &&
+        item.box14b_qualified_tp_amount > amount
+      ) {
+        throw new Error("Qualified TP tips exceed W-2 code TP amount");
+      }
+      if (
+        occupationCodes.includes("000") &&
+        item.box14b_qualified_tp_amount === undefined
+      ) {
+        throw new Error("Mixed W-2 occupations need qualified-tip breakdown");
+      }
+      return [{
+        source: "w2" as const,
+        employer_ein: item.employer_ein,
+        employer_name: item.employer_name,
+        employee_ssn: item.employee_ssn,
+        amount,
+        occupation_codes: occupationCodes,
+        ...(item.box14b_qualified_tp_amount !== undefined &&
+          { qualified_amount: item.box14b_qualified_tp_amount }),
+      }];
+    });
+    return sources.length > 0
+      ? [output(schedule1a, { qualified_employee_tip_sources_2026: sources })]
+      : [];
+  }
+  const tips = regularItems(w2s).flatMap((item) => {
+    const amount = item.box7_ss_tips ?? 0;
+    if (amount <= 0) return [];
+    const codes = item.box14b_tipped_code ? [item.box14b_tipped_code] : [];
+    if (codes.length === 0) {
       return [];
-    }
-    if (taxYear === 2026 && codes.includes("000")) {
-      throw new Error(
-        "W-2 code TP with nonqualifying occupation needs a qualified-tip breakdown",
-      );
     }
     if (!item.employee_ssn) {
       throw new Error("Qualified W-2 tips need employee SSN");
@@ -560,6 +589,13 @@ class W2Node extends TaxNode<typeof inputSchema> {
         )
       ) {
         throw new Error("W-2 codes TP and TT require tax year 2026");
+      }
+      if (
+        ctx.taxYear !== 2026 &&
+        (item.box14b_tipped_codes ||
+          item.box14b_qualified_tp_amount !== undefined)
+      ) {
+        throw new Error("W-2 box 14b 2026 fields require tax year 2026");
       }
       if (
         ctx.taxYear === 2026 && item.box14b_tipped_code &&

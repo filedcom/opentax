@@ -5,6 +5,7 @@ import type { NodeRegistry } from "../../../../core/types/node-registry.ts";
 import { buildStartNode } from "../../2025/start.ts";
 import { agi_aggregator } from "../../nodes/intermediate/aggregation/agi_aggregator/index.ts";
 import { schedule1a } from "../../nodes/intermediate/forms/schedule1a/index.ts";
+import { form4137 } from "../../nodes/intermediate/forms/form4137/index.ts";
 import { w2, w2ItemSchema } from "../../nodes/inputs/w2/index.ts";
 import { income_tax_calculation } from "../../nodes/intermediate/worksheets/income_tax_calculation/index.ts";
 import { FilingStatus } from "../../nodes/types.ts";
@@ -248,7 +249,14 @@ Deno.test("2026 Schedule 1-A line 44 reduces taxable income in graph", () => {
       taxpayer_ssn: "111223333",
       taxpayer_has_valid_ssn: true,
       taxpayer_age_65_or_older: true,
-      qualified_employee_tips: [{ employee_ssn: "111223333", amount: 5_000 }],
+      qualified_employee_tip_sources_2026: [{
+        source: "w2",
+        employer_ein: "12-3456789",
+        employer_name: "CAFE",
+        employee_ssn: "111223333",
+        amount: 5_000,
+        occupation_codes: ["102"],
+      }],
     },
   }, context);
   assertEquals(result.diagnostics, []);
@@ -285,6 +293,8 @@ Deno.test("2026 W-2 TP and TT amounts reach Schedule 1-A and Form 1040", () => {
   const result = execute(buildExecutionPlan(registry), registry, {
     w2: [{
       employee_ssn: "111223333",
+      employer_ein: "12-3456789",
+      employer_name: "CAFE",
       box1_wages: 70_000,
       box2_fed_withheld: 5_000,
       box14b_tipped_codes: ["102"],
@@ -306,4 +316,63 @@ Deno.test("2026 W-2 TP and TT amounts reach Schedule 1-A and Form 1040", () => {
   assertEquals(result.pending.f1040.line13a_schedule1a, 7_000);
   assertEquals(result.pending.f1040.line15_taxable_income, 46_900);
   assertEquals(result.pending.f1040.line16_income_tax, 5_380);
+});
+
+Deno.test("2026 W-2 TP and Form 4137 use larger employer tips once", () => {
+  const start = buildStartNode([
+    { node: w2, itemSchema: w2ItemSchema, isArray: true },
+    { node: form4137, inputSchema: form4137.inputSchema, isArray: false },
+    {
+      node: agi_aggregator,
+      inputSchema: agi_aggregator.inputSchema,
+      isArray: false,
+    },
+    { node: schedule1a, inputSchema: schedule1a.inputSchema, isArray: false },
+  ]);
+  const registry: NodeRegistry = {
+    start,
+    w2,
+    form4137,
+    agi_aggregator,
+    schedule1a,
+    standard_deduction: standard_deduction_2026,
+    income_tax_calculation,
+    f1040: f1040_2026_node,
+    schedule3a,
+  };
+  const result = execute(buildExecutionPlan(registry), registry, {
+    w2: [{
+      employee_ssn: "111223333",
+      employer_ein: "12-3456789",
+      employer_name: "CAFE",
+      box1_wages: 70_000,
+      box3_ss_wages: 70_000,
+      box2_fed_withheld: 0,
+      box12_entries: [{ code: "TP", amount: 3_000 }],
+      box14b_tipped_codes: ["102"],
+    }],
+    form4137: {
+      forms: [{
+        recipient: "taxpayer",
+        employers: [{
+          name: "CAFE",
+          ein: "12-3456789",
+          tips_received: 5_000,
+          tips_reported: 3_000,
+        }],
+        ss_wages_from_w2: 70_000,
+      }],
+    },
+    agi_aggregator: { filing_status: FilingStatus.Single },
+    schedule1a: {
+      filing_status: FilingStatus.Single,
+      taxpayer_ssn: "111223333",
+      taxpayer_has_valid_ssn: true,
+    },
+  }, context);
+  assertEquals(result.diagnostics, []);
+  assertEquals(result.pending.schedule1a.line15_qualified_tips, 5_000);
+  assertEquals(result.pending.f1040.line1c_unreported_tips, 2_000);
+  assertEquals(result.pending.f1040.line11a_agi, 72_000);
+  assertEquals(result.pending.f1040.line13a_schedule1a, 5_000);
 });
