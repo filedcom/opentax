@@ -250,6 +250,29 @@ Deno.test("part1: retained employer excess already in W-2 box 1 is not other inc
   assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 700);
 });
 
+Deno.test("part1: no eligible HDHP month leaves a zero limit and routes employer excess", () => {
+  const result = compute({
+    ...uniformSelfOnly,
+    eligible_hdhp_coverage_by_month: Array(12).fill(null),
+    employer_hsa_contributions: 1000,
+    employer_excess_treatment: {
+      included_in_w2_box1: false,
+      timely_withdrawal: null,
+    },
+    hsa_december_31_value: 600,
+  });
+  const printed = findOutput(result, "form8889")?.fields;
+  assertEquals(printed?.print_line1_coverage, undefined);
+  assertEquals(printed?.print_line3_limit, 0);
+  assertEquals(printed?.print_line8, 0);
+  assertEquals(printed?.print_line9_employer, 1000);
+  assertEquals(
+    fieldsOf(result.outputs, schedule1)?.line8z_hsa_excess_employer,
+    1000,
+  );
+  assertEquals(fieldsOf(result.outputs, form5329)?.excess_hsa, 1000);
+});
+
 Deno.test("part1: an excess HSA needs its December 31 value", () => {
   assertThrows(
     () => compute({ ...uniformSelfOnly, taxpayer_hsa_contributions: 5000 }),

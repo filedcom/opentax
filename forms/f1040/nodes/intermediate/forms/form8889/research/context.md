@@ -28,6 +28,8 @@ is `IRS8889.xsd` in the TY2025 v5.4 schema bundle.
   employer withdrawal reduces the Form 5329 excess base. A 2025 withdrawal
   reaches Form 8889 line 14b and its earnings reach Schedule 1; a 2026
   withdrawal and its earnings stay off the 2025 distribution and earnings lines.
+  Twelve explicit ineligible months produce a zero contribution limit and still
+  route sourced employer excess to income and Form 5329.
 - A single traditional/Roth IRA-to-HSA direct trustee transfer can populate line
   10 when the transfer month is eligible, the source is identified, and the
   taxpayer affirms no prior qualified funding distribution. It reduces line 12

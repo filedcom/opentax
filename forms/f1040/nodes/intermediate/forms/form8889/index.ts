@@ -137,7 +137,7 @@ function contributionLimitLines(
   familyLimit: number,
   catchupLimit: number,
 ): {
-  line1: CoverageType;
+  line1?: CoverageType;
   line3: number;
   line5: number;
   line6: number;
@@ -154,12 +154,15 @@ function contributionLimitLines(
     );
   }
   const eligible = coverage.filter((month) => month !== null);
-  if (eligible.length === 0) {
-    throw new Error(
-      "Form 8889 contributions with no eligible HDHP month need excess-employer and excise-tax source treatment",
-    );
-  }
   const december = coverage[11];
+  if (eligible.length === 0) {
+    if (input.last_month_rule_elected) {
+      throw new Error(
+        "Form 8889 last-month rule requires December 1 HDHP eligibility",
+      );
+    }
+    return { line3: 0, line5: 0, line6: 0, line7: 0, line8: 0 };
+  }
   if (input.last_month_rule_elected && december === null) {
     throw new Error(
       "Form 8889 last-month rule requires December 1 HDHP eligibility",
@@ -537,7 +540,9 @@ class Form8889Node extends TaxNode<typeof inputSchema> {
     }
     const printFields: Record<string, number | string | boolean> = {};
     if (limitLines) {
-      printFields.print_line1_coverage = limitLines.line1;
+      if (limitLines.line1) {
+        printFields.print_line1_coverage = limitLines.line1;
+      }
       printFields.print_line2_taxpayer_contributions =
         input.taxpayer_hsa_contributions ?? 0;
       printFields.print_line3_limit = limitLines.line3;
