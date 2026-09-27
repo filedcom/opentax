@@ -78,6 +78,10 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
     "topmostSubform[0].Page2[0].Line8Table[0].Line8b[0].ColE[0].f2_87[0]",
   );
   assertEquals(
+    names.line8c_credit_dollars,
+    "topmostSubform[0].Page2[0].Line8Table[0].Line8c[0].ColE[0].f2_95[0]",
+  );
+  assertEquals(
     names.line11h_quantity,
     "topmostSubform[0].Page3[0].Line11Table[0].Line11h[0].f3_87[0]",
   );
@@ -112,7 +116,7 @@ Deno.test("Schedule A (Form 4136) has exact 2025 page and widget paths", () => {
   assertEquals(names.line17_total_cents, "topmostSubform[0].Page4[0].f4_40[0]");
 });
 
-Deno.test("Schedule A (Form 4136) keeps aviation vendor line 8a on its activity", () => {
+Deno.test("Schedule A (Form 4136) keeps aviation vendor lines 8a and 8c on their activity", () => {
   const projected = form4136ScheduleAPdf.projectFields?.({
     claimant_context: "business",
     business: {
@@ -149,6 +153,30 @@ Deno.test("Schedule A (Form 4136) keeps aviation vendor line 8a on its activity"
           held_unexpired_when_claimed_confirmed: true,
         },
       }],
+    }, {
+      line: "8c",
+      unit: "gallons",
+      qualified_quantity: 1_000,
+      actual_fuel_cost: 3_000,
+      excise_tax_rate_per_gallon: 0.244,
+      vendor_registration_number: "UA123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      nonexempt_noncommercial_aviation_sales: [{
+        sale_record_reference: "AV-Q-001",
+        sale_date: "2025-06-12",
+        buyer_name: "Example Aircraft Owner",
+        buyer_address: "10 Airport Road, Wilmington, DE 19801",
+        gallons: 1_000,
+        nonexempt_noncommercial_aviation_confirmed: true,
+        certificate_q: {
+          kind: "single_purchase",
+          record_reference: "Certificate Q-001",
+          invoice_or_delivery_ticket_number: "AV-Q-001",
+          certified_gallons: 1_000,
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+        },
+      }],
     }],
     additional_activities: [{
       business,
@@ -168,7 +196,10 @@ Deno.test("Schedule A (Form 4136) keeps aviation vendor line 8a on its activity"
   assertEquals(instances[0].line8_registration_number, "UA123456789");
   assertEquals(instances[0].line8a_quantity, 1_000);
   assertEquals(instances[0].line8a_credit_dollars, "175");
+  assertEquals(instances[0].line8c_quantity, 1_000);
+  assertEquals(instances[0].line8c_credit_dollars, "25");
   assertEquals(instances[1].line8a_quantity, undefined);
+  assertEquals(instances[1].line8c_quantity, undefined);
 });
 
 Deno.test("Schedule A (Form 4136) keeps blocked-pump line 7b on its activity", () => {

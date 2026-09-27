@@ -311,10 +311,13 @@ and native XML and PDF mappings. Government-sale records now also require an
 unexpired Certificate P and an affirmation that a state-issued credit card was
 not used. Source, XML, PDF, and local XSD cases are written but unrun.
 Commercial-aviation vendor lines 8a/8b now require UA registration, reconciled
-and distinctly identified sale records, the correct $.219/$.244 tax source, and invoice-specific or
-account-period Model Waiver L facts. Their native MeF and parent/Schedule A
-PDF rows have unrun source, XML, PDF, and local XSD cases. Noncommercial lines
-8c-8f, filled rendering, and IRS business rules remain open.
+and distinctly identified sale records, the correct $.219/$.244 tax source,
+and invoice-specific or account-period Model Waiver L facts. Line 8c now
+separately requires nonexempt noncommercial aviation sales, UA registration,
+the $.244 source tax, and a signed Model Certificate Q tied to an invoice or
+account period. Their native MeF and parent/Schedule A PDF rows have unrun
+source, XML, PDF, and local XSD cases. Lines 8d-8f, filled rendering, and IRS
+business rules remain open.
 Diesel-water emulsion lines 14a and 14b now have ultimate-purchaser source
 facts, the standard and reduced bus-use rates, export-proof validation, MeF
 groups, and parent/Schedule A PDF fields. Source, XML, PDF, and XSD cases are

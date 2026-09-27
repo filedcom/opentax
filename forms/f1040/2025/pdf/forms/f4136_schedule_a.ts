@@ -190,6 +190,9 @@ const fields: PdfFieldEntry[] = [
   text("line8b_quantity", 2, 84),
   ...money("line8b_cost", 2, 85),
   ...money("line8b_credit", 2, 87),
+  text("line8c_quantity", 2, 92),
+  ...money("line8c_cost", 2, 93),
+  ...money("line8c_credit", 2, 95),
   ...line11.flatMap((line, index) => {
     const base = 29 + index * 8;
     return [

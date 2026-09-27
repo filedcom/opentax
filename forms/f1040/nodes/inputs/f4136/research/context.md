@@ -59,8 +59,13 @@ aviation, kerosene taxed at $.219/$.244 respectively, tax settlement, and a
 retained, signed, unexpired Model Waiver L. The waiver source distinguishes a
 single invoice from an account period of no more than one year. Their native
 MeF groups and parent/Schedule A PDF widgets are mapped, with source, XML,
-local XSD, and PDF cases written but unrun. Noncommercial aviation lines
-8c-8f and IRS business-rule review remain open.
+local XSD, and PDF cases written but unrun. Line 8c now separately requires a
+UA registration, kerosene taxed at $.244, reconciled sale records for nonexempt
+noncommercial aviation, tax settlement, and a signed, unexpired Model
+Certificate Q for the sale or a covering account period. It maps to the native
+MeF group and parent/Schedule A PDF row, with source, XML, XSD, and PDF cases
+written but unrun. Noncommercial aviation lines 8d-8f and IRS business-rule
+review remain open.
 Line 14a accepts the 2025 use codes for diesel-water emulsion and applies
 the reduced $.124 rate only to bus use (type 05); line 14b uses the export
 rate and requires retained proof. Both require the emulsion's water percentage

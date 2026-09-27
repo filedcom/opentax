@@ -606,6 +606,59 @@ Deno.test("Form 4136 XML separates commercial aviation vendor tax rates on lines
   );
 });
 
+Deno.test("Form 4136 XML emits nonexempt noncommercial aviation line 8c", () => {
+  const xml = form4136.build({
+    ...activityContext,
+    business: {
+      qualifying_business_activity: true,
+      business_name: "Example Aviation Vendor",
+      principal_activity_code: "424720",
+      equipment_make: "Example",
+      equipment_model: "Fuel Truck",
+      equipment_type: "aviation refueler",
+      sales_records_confirmed: true,
+      no_duplicate_excise_claim: true,
+    },
+    claims: [{
+      line: "8c",
+      unit: "gallons",
+      qualified_quantity: 100,
+      actual_fuel_cost: 300,
+      excise_tax_rate_per_gallon: 0.244,
+      vendor_registration_number: "UA123456789",
+      vendor_tax_settlement: "tax_excluded_price",
+      nonexempt_noncommercial_aviation_sales: [{
+        sale_record_reference: "AV-Q-001",
+        sale_date: "2025-06-12",
+        buyer_name: "Example Aircraft Owner",
+        buyer_address: "10 Airport Road, Wilmington, DE 19801",
+        gallons: 100,
+        nonexempt_noncommercial_aviation_confirmed: true,
+        certificate_q: {
+          kind: "single_purchase",
+          record_reference: "Certificate Q-001",
+          invoice_or_delivery_ticket_number: "AV-Q-001",
+          certified_gallons: 100,
+          signed_by_buyer_confirmed: true,
+          held_unexpired_when_claimed_confirmed: true,
+        },
+      }],
+    }],
+  }, { pending: { schedule3: { line12_fuel_tax_credit: 2.5 } } });
+  assertStringIncludes(
+    xml,
+    "<KeroseneForAvnRegistrationNum>UA123456789</KeroseneForAvnRegistrationNum>",
+  );
+  assertStringIncludes(
+    xml,
+    "<SlsKrsnNnxmptUseInAvnGalsQty>100</SlsKrsnNnxmptUseInAvnGalsQty>",
+  );
+  assertStringIncludes(
+    xml,
+    '<SlsKrsnNnxmptUseInAvnCrAmt creditReferenceNum="418">3</SlsKrsnNnxmptUseInAvnCrAmt>',
+  );
+});
+
 Deno.test("Form 4136 XML separates other-use and exported gasoline", () => {
   const xml = form4136.build({
     ...activityContext,

@@ -638,6 +638,126 @@ Deno.test("Form 4136: commercial aviation vendor lines 8a and 8b require Model W
   }
 });
 
+Deno.test("Form 4136: nonexempt noncommercial aviation line 8c requires Certificate Q", () => {
+  const vendorBusiness = {
+    qualifying_business_activity: true,
+    business_name: "Example Aviation Vendor",
+    principal_activity_code: "424720",
+    equipment_make: "Example",
+    equipment_model: "Fuel Truck",
+    equipment_type: "aviation refueler",
+    sales_records_confirmed: true,
+    no_duplicate_excise_claim: true,
+  } as const;
+  const sale = {
+    sale_record_reference: "AV-Q-001",
+    sale_date: "2025-06-12",
+    buyer_name: "Example Aircraft Owner",
+    buyer_address: "10 Airport Road, Wilmington, DE 19801",
+    gallons: 100,
+    nonexempt_noncommercial_aviation_confirmed: true as const,
+    certificate_q: {
+      kind: "single_purchase" as const,
+      record_reference: "Certificate Q-001",
+      invoice_or_delivery_ticket_number: "AV-Q-001",
+      certified_gallons: 100,
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+    },
+  };
+  const claim = {
+    line: "8c" as const,
+    unit: "gallons" as const,
+    qualified_quantity: 100,
+    actual_fuel_cost: 300,
+    excise_tax_rate_per_gallon: 0.244,
+    vendor_registration_number: "UA123456789",
+    vendor_tax_settlement: "tax_excluded_price" as const,
+    nonexempt_noncommercial_aviation_sales: [sale],
+  };
+  assertEquals(
+    parseInput({ business: vendorBusiness, claims: [claim] }).success,
+    true,
+  );
+  assertEquals(
+    compute({ business: vendorBusiness, claims: [claim] }).outputs[0].fields
+      .line12_fuel_tax_credit,
+    2.5,
+  );
+  const accountSale = {
+    ...sale,
+    sale_record_reference: "AV-Q-002",
+    certificate_q: {
+      kind: "account_period" as const,
+      record_reference: "Certificate Q-002",
+      account_or_order_number: "ACCT-1",
+      effective_date: "2025-01-01",
+      expiration_date: "2025-12-31",
+      signed_by_buyer_confirmed: true as const,
+      held_unexpired_when_claimed_confirmed: true as const,
+    },
+  };
+  assertEquals(
+    parseInput({
+      business: vendorBusiness,
+      claims: [{
+        ...claim,
+        nonexempt_noncommercial_aviation_sales: [accountSale],
+      }],
+    }).success,
+    true,
+  );
+  for (
+    const invalid of [
+      { ...claim, vendor_registration_number: "UV123456789" },
+      { ...claim, vendor_tax_settlement: undefined },
+      { ...claim, excise_tax_rate_per_gallon: 0.219 },
+      { ...claim, nonexempt_noncommercial_aviation_sales: [] },
+      {
+        ...claim,
+        nonexempt_noncommercial_aviation_sales: [{ ...sale, gallons: 99 }],
+      },
+      {
+        ...claim,
+        nonexempt_noncommercial_aviation_sales: [{
+          ...sale,
+          certificate_q: { ...sale.certificate_q, certified_gallons: 99 },
+        }],
+      },
+      {
+        ...claim,
+        nonexempt_noncommercial_aviation_sales: [{
+          ...sale,
+          certificate_q: {
+            ...sale.certificate_q,
+            held_unexpired_when_claimed_confirmed: undefined,
+          },
+        }],
+      },
+      {
+        ...claim,
+        nonexempt_noncommercial_aviation_sales: [{
+          ...sale,
+          certificate_q: {
+            kind: "account_period",
+            record_reference: "Certificate Q-002",
+            account_or_order_number: "ACCT-1",
+            effective_date: "2025-07-01",
+            expiration_date: "2026-06-30",
+            signed_by_buyer_confirmed: true,
+            held_unexpired_when_claimed_confirmed: true,
+          },
+        }],
+      },
+    ]
+  ) {
+    assertEquals(
+      parseInput({ business: vendorBusiness, claims: [invalid] }).success,
+      false,
+    );
+  }
+});
+
 Deno.test("Form 4136: represented 2025 Part II rates are line-specific", () => {
   const cases = [
     ["1a", undefined, 18.3],

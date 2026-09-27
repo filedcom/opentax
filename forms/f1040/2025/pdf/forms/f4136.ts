@@ -68,6 +68,7 @@ const creditReferenceNumber: Record<Line, string> = {
   "7c": "347",
   "8a": "355",
   "8b": "417",
+  "8c": "418",
   "11a": "419",
   "11b": "420",
   "11c": "421",
@@ -376,6 +377,9 @@ const fields: PdfFieldEntry[] = [
   text("line8b_quantity", 3, 12),
   ...moneyFields("line8b_cost", 3, 13),
   ...moneyFields("line8b_credit", 3, 15),
+  text("line8c_quantity", 3, 20),
+  ...moneyFields("line8c_cost", 3, 21),
+  ...moneyFields("line8c_credit", 3, 23),
   ...alternativeFuelLines.flatMap((line, index) => {
     const base = 79 + index * 8;
     return [
@@ -733,6 +737,7 @@ export function projectForm4136Fields(
       "7c",
       "8a",
       "8b",
+      "8c",
       "14a",
       "14b",
       "15a",
@@ -774,6 +779,7 @@ export function projectForm4136Fields(
   putClaimGroup(out, input, ["7c"], "line7c");
   putClaimGroup(out, input, ["8a"], "line8a");
   putClaimGroup(out, input, ["8b"], "line8b");
+  putClaimGroup(out, input, ["8c"], "line8c");
   putClaimGroup(out, input, ["14a"], "line14a");
   putClaimGroup(out, input, ["14b"], "line14b");
   putClaimGroup(out, input, ["15a"], "line15a");
@@ -786,7 +792,7 @@ export function projectForm4136Fields(
     claim.line === "7a" || claim.line === "7b" || claim.line === "7c"
   )?.vendor_registration_number;
   out.line8_registration_number = allForm4136Claims(input).find((claim) =>
-    claim.line === "8a" || claim.line === "8b"
+    claim.line === "8a" || claim.line === "8b" || claim.line === "8c"
   )?.vendor_registration_number;
   out.line15_registration_number = allForm4136Claims(input).find((claim) =>
     claim.line === "15a"

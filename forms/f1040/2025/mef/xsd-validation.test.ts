@@ -536,6 +536,60 @@ Deno.test({
 });
 
 Deno.test({
+  name: "XSD: Form 4136 nonexempt noncommercial aviation line 8c validates",
+  sanitizeOps: false,
+  sanitizeResources: false,
+  ignore: !xsdAvailable,
+}, async () => {
+  const xml = buildMefXml({
+    f1040: { line31_additional_payments: 3 },
+    schedule3: { line12_fuel_tax_credit: 2.5, line15_total: 2.5 },
+    f4136: {
+      claimant_context: "business",
+      additional_activities: [],
+      primary_activity_has_most_credit: true,
+      business: {
+        qualifying_business_activity: true,
+        business_name: "Example Aviation Vendor",
+        principal_activity_code: "424720",
+        equipment_make: "Example",
+        equipment_model: "Fuel Truck",
+        equipment_type: "aviation refueler",
+        sales_records_confirmed: true,
+        no_duplicate_excise_claim: true,
+      },
+      claims: [{
+        line: "8c",
+        unit: "gallons",
+        qualified_quantity: 100,
+        actual_fuel_cost: 300,
+        excise_tax_rate_per_gallon: 0.244,
+        vendor_registration_number: "UA123456789",
+        vendor_tax_settlement: "tax_excluded_price",
+        nonexempt_noncommercial_aviation_sales: [{
+          sale_record_reference: "AV-Q-001",
+          sale_date: "2025-06-12",
+          buyer_name: "Example Aircraft Owner",
+          buyer_address: "10 Airport Road, Wilmington, DE 19801",
+          gallons: 100,
+          nonexempt_noncommercial_aviation_confirmed: true,
+          certificate_q: {
+            kind: "single_purchase",
+            record_reference: "Certificate Q-001",
+            invoice_or_delivery_ticket_number: "AV-Q-001",
+            certified_gallons: 100,
+            signed_by_buyer_confirmed: true,
+            held_unexpired_when_claimed_confirmed: true,
+          },
+        }],
+      }],
+    },
+  }, extractFilerIdentity(singleGeneral()));
+  assertStringIncludes(xml, "<KrsnNnxmptUseNonCmrclAvnGrp>");
+  await validateXsd(xml, "Form 4136 aviation vendor line 8c");
+});
+
+Deno.test({
   name:
     "XSD: Form 4136 exported dyed fuel and gasoline blendstock groups validate",
   sanitizeOps: false,
