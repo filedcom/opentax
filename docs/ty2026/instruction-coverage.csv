@@ -44,7 +44,7 @@ f6781,i6781,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs
 f8997,i8997,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8997--dft.pdf,2026 form draft pinned; 2025 form embeds instructions as prior-year comparator; obtain current instructions before coding recognition rules.
 f8621,i8621,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i8621.pdf,Current December 2025 revision form/instructions pinned; instructions cite 2025 lines; verify any 2026 revision and MeF before filing.
 f7206,i7206,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i7206--dft.pdf,Use pinned PDF; recheck final instructions.
-f8396,i8396,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8396--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8396,i8396,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8396--dft.pdf,2026 draft pages 2 onward embed MCC eligibility credit-limit and three-year carryforward instructions.
 f8582,i8582,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8582--dft.pdf,Use only as comparator; obtain 2026 instructions when posted.
 f8606,i8606,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8606--dft.pdf,Use pinned PDF; recheck final instructions.
 f8615,i8615,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8615--dft.pdf,Use pinned PDF; recheck final instructions.
@@ -54,8 +54,8 @@ f8824,i8824,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8824--dft.pdf,Use o
 f8829,i8829,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8829--dft.pdf,Use pinned PDF; recheck final instructions.
 f8834,i8834,current final with embedded instructions,https://www.irs.gov/pub/irs-pdf/f8834.pdf,October 2024 form explicitly applies to tax years 2024 or later until superseded; embedded instructions cover TY2026 source pending final MeF check.
 f8853,i8853,2026 draft pinned,https://www.irs.gov/pub/irs-dft/i8853--dft.pdf,Use pinned PDF; recheck final instructions.
-f8859,i8859,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8859--dft.pdf,Recheck IRS draft directory or another instruction slug.
-f8880,i8880,no draft at expected URL,https://www.irs.gov/pub/irs-dft/i8880--dft.pdf,Recheck IRS draft directory or another instruction slug.
+f8859,i8859,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8859--dft.pdf,2026 draft embeds carryforward-only and tax-liability worksheet instructions.
+f8880,i8880,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8880--dft.pdf,2026 draft page 2 embeds saver-credit contribution distribution and student instructions.
 f8912,i8912,continuous-use final pinned,https://www.irs.gov/pub/irs-pdf/i8912.pdf,December 2024 final instructions are continuous-use; current form pinned and Schedule 3 line 6k checked; verify MeF and final return lines.
 f8915f,i8915f,URL serves 2025,https://www.irs.gov/pub/irs-dft/i8915f--dft.pdf,2026 form draft pinned; use pinned December 2025 instructions only as comparator and obtain 2026 revision before filing.
 f8919,i8919,2026 instructions embedded in form draft,https://www.irs.gov/pub/irs-dft/f8919--dft.pdf,2026 draft pages 1-2 embed reason-code and line instructions; line 13 routes to Schedule 2 line 16b.

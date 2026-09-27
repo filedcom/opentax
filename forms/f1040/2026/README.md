@@ -29,6 +29,11 @@ per-child adoption credit and employer-benefit exclusion, the 1040 line 30
 refundable amount, Schedule 3 line 6c and Schedule 3-A interaction. Its
 shared calculator is not in the 2026 registry and lacks a full printable
 record, 2026 PDF and MeF routes.
+The [Forms 8396/8859/8880 contract](../../../docs/ty2026/FORM8396-8859-8880-GRAPH.md)
+maps the mortgage credit's Schedule A reduction and three-year ledger,
+the DC credit's carryforward-only route, and 2026 saver-credit eligibility
+and contribution/distribution windows. Their draft forms embed instructions;
+current graph/PDF/MeF finalization remains to build.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

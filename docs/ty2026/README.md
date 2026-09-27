@@ -44,6 +44,9 @@ for the implementation contract.
 - [`FORM8839-GRAPH.md`](FORM8839-GRAPH.md) and `pdf-fields-f8839.csv`:
   per-child refundable/nonrefundable adoption credit, employer-benefit
   exclusion, 2027 carryforward and all 101 draft widgets.
+- [`FORM8396-8859-8880-GRAPH.md`](FORM8396-8859-8880-GRAPH.md) and the
+  three matching PDF field inventories: mortgage-interest credit and
+  deduction, DC carryforward, 2026 saver-credit limits, and 26/9/23 widgets.
 - [`PARITY-QUEUE.md`](PARITY-QUEUE.md): dependency-ordered full 1040 coding
   queue across the 2025 graph/PDF/MeF inventories and 2026-only attachments.
 - [`INSTRUCTION-COVERAGE.md`](INSTRUCTION-COVERAGE.md) and
