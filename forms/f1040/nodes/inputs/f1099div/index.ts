@@ -28,7 +28,8 @@ import { form8960 } from "../../intermediate/forms/form8960/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
 import { f1040 } from "../../outputs/f1040/index.ts";
 import type { NodeContext } from "../../../../../core/types/node-context.ts";
-import { CONFIG_BY_YEAR } from "../../config/index.ts";
+import { CONFIG_BY_YEAR, type F1040Config } from "../../config/index.ts";
+import { qbiThresholdForStatus } from "../../config/qbi.ts";
 
 export const itemSchema = z.object({
   payerName: z.string().optional(),
@@ -174,14 +175,10 @@ function dividendScheduleBOutput(item: DIVItem): NodeOutput[] {
 function isAbove199AThreshold(
   taxableIncome: number | undefined,
   filingStatus: string | undefined,
-  sec199aSingleThreshold: number,
-  sec199aMfjThreshold: number,
+  cfg: F1040Config,
 ): boolean {
   if (taxableIncome === undefined) return false;
-  const threshold = filingStatus === "mfj"
-    ? sec199aMfjThreshold
-    : sec199aSingleThreshold;
-  return taxableIncome > threshold;
+  return taxableIncome > qbiThresholdForStatus(filingStatus, cfg);
 }
 
 class F1099divNode extends TaxNode<typeof inputSchema> {
@@ -389,8 +386,7 @@ class F1099divNode extends TaxNode<typeof inputSchema> {
       const useForm8995a = isAbove199AThreshold(
         taxableIncome,
         filingStatus,
-        cfg.sec199aSingleThreshold,
-        cfg.sec199aMfjThreshold,
+        cfg,
       );
       if (useForm8995a) {
         outputs.push({

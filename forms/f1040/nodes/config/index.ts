@@ -3,9 +3,9 @@
 // CONFIG_BY_YEAR — year-keyed config for all config-injected f1040 nodes.
 //
 // To add a new tax year:
-//   1. Create forms/f1040/{year}/config.ts with the new constants
-//   2. Export `config{year}: F1040Config` from that file
-//   3. Add an entry here: `{year}: config{year}`
+//   1. Create ./<year>.ts with every F1040Config member sourced for that year
+//   2. Export `config<year>: F1040Config` from that file
+//   3. Add an entry here: `<year>: config<year>`
 
 // config2025 lives in ./2025.ts (forms/f1040/nodes/config/2025.ts).
 // For future forms (f1120), their barrel would import from ../../2025/config.ts

@@ -11,6 +11,7 @@ import { form8995a } from "../form8995a/index.ts";
 import { FilingStatus } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR, type F1040Config } from "../../../config/index.ts";
+import { qbiThresholdForStatus } from "../../../config/qbi.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -226,9 +227,7 @@ function qbiThreshold(
   filingStatus: FilingStatus,
   cfg: F1040Config,
 ): number {
-  return filingStatus === FilingStatus.MFJ
-    ? cfg.qbiThresholdMfj
-    : cfg.qbiThresholdSingle;
+  return qbiThresholdForStatus(filingStatus, cfg);
 }
 
 function advancedFormOutput(

@@ -10,6 +10,7 @@ import { standard_deduction } from "../../worksheets/standard_deduction/index.ts
 import { FilingStatus, filingStatusSchema } from "../../../types.ts";
 import type { NodeContext } from "../../../../../../core/types/node-context.ts";
 import { CONFIG_BY_YEAR } from "../../../config/index.ts";
+import { qbiThresholdForStatus } from "../../../config/qbi.ts";
 
 // ── TY2025 Constants ─────────────────────────────────────────────────────────
 
@@ -76,7 +77,7 @@ function threshold(
   filingStatus: FilingStatus,
   cfg: import("../../../config/index.ts").F1040Config,
 ): number {
-  return filingStatus === FilingStatus.MFJ ? cfg.qbiThresholdMfj : cfg.qbiThresholdSingle;
+  return qbiThresholdForStatus(filingStatus, cfg);
 }
 
 /**
@@ -108,7 +109,10 @@ type SstbAmounts = {
   readonly unadjustedBasis: number;
 };
 
-function adjustedSstbAmounts(input: Form8995AInput, ratio: number): SstbAmounts {
+function adjustedSstbAmounts(
+  input: Form8995AInput,
+  ratio: number,
+): SstbAmounts {
   const scale = 1 - ratio;
   return {
     qbi: (input.sstb_qbi ?? 0) * scale,
@@ -125,7 +129,10 @@ type CombinedTotals = {
   readonly unadjustedBasis: number;
 };
 
-function combinedTotals(input: Form8995AInput, sstb: SstbAmounts): CombinedTotals {
+function combinedTotals(
+  input: Form8995AInput,
+  sstb: SstbAmounts,
+): CombinedTotals {
   const grossQbi = (input.qbi ?? 0) + sstb.qbi;
   const netQbi = grossQbi + (input.qbi_loss_carryforward ?? 0);
   const w2Wages = (input.w2_wages ?? 0) + sstb.w2Wages;
@@ -168,7 +175,8 @@ function qbiComponent(totals: CombinedTotals, ratio: number): number {
 // ── REIT/PTP component ────────────────────────────────────────────────────────
 
 function reitComponent(input: Form8995AInput): number {
-  const netReit = (input.line6_sec199a_dividends ?? 0) + (input.reit_loss_carryforward ?? 0);
+  const netReit = (input.line6_sec199a_dividends ?? 0) +
+    (input.reit_loss_carryforward ?? 0);
   if (netReit <= 0) return 0;
   return netReit * QBI_RATE;
 }
@@ -209,7 +217,11 @@ class Form8995ANode extends TaxNode<typeof inputSchema> {
       return { outputs: [] };
     }
 
-    const ratio = reductionRatio(input.taxable_income, input.filing_status, cfg);
+    const ratio = reductionRatio(
+      input.taxable_income,
+      input.filing_status,
+      cfg,
+    );
     const sstb = adjustedSstbAmounts(input, ratio);
     const totals = combinedTotals(input, sstb);
 

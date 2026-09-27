@@ -253,8 +253,11 @@ export const IRA_PHASEOUT_MFS_UPPER_2025 = 10_000;
 // ─── QBI Deduction Thresholds (Form 8995A) ────────────────────────────────────
 // Rev. Proc. 2024-40, §3.27; IRC §199A(b)(3)(B)(ii)
 
-/** QBI wage limitation phase-in threshold — Single/MFS/HOH/QSS (TY2025). */
+/** QBI wage limitation phase-in threshold — Single/HOH/QSS (TY2025). */
 export const QBI_THRESHOLD_SINGLE_2025 = 197_300;
+
+/** QBI wage limitation phase-in threshold — MFS (TY2025). */
+export const QBI_THRESHOLD_MFS_2025 = 197_300;
 
 /** QBI wage limitation phase-in threshold — MFJ (TY2025). */
 export const QBI_THRESHOLD_MFJ_2025 = 394_600;
@@ -535,12 +538,6 @@ export const FOREIGN_TAX_SINGLE_THRESHOLD = 300;
 /** Foreign tax credit simplified computation threshold — MFJ. */
 export const FOREIGN_TAX_MFJ_THRESHOLD = 600;
 
-/** §199A dividend threshold (routes to 8995A) — Single/MFS/HOH/QSS (TY2025). */
-export const SEC199A_SINGLE_THRESHOLD_2025 = 197_300;
-
-/** §199A dividend threshold (routes to 8995A) — MFJ (TY2025). */
-export const SEC199A_MFJ_THRESHOLD_2025 = 394_600;
-
 // ─── Form 8396 — Mortgage Interest Credit ─────────────────────────────────────
 // IRC §25(a)(1); Rev. Proc. 2024-40 / Form 8396 instructions
 
@@ -640,6 +637,7 @@ export const config2025: F1040Config = {
   iraPhaseoutMfsLower:          IRA_PHASEOUT_MFS_LOWER_2025,
   iraPhaseoutMfsUpper:          IRA_PHASEOUT_MFS_UPPER_2025,
   qbiThresholdSingle:           QBI_THRESHOLD_SINGLE_2025,
+  qbiThresholdMfs:              QBI_THRESHOLD_MFS_2025,
   qbiThresholdMfj:              QBI_THRESHOLD_MFJ_2025,
   qbiPhaseInRange:              QBI_PHASE_IN_RANGE_2025,
   eitcMaxCredit:                EITC_MAX_CREDIT_2025,
@@ -700,8 +698,6 @@ export const config2025: F1040Config = {
   qpriCapStandard:              QPRI_CAP_STANDARD_2025,
   qpriCapMfs:                   QPRI_CAP_MFS_2025,
   scheduleBDividendThreshold:   SCHEDULE_B_DIVIDEND_THRESHOLD,
-  sec199aSingleThreshold:       SEC199A_SINGLE_THRESHOLD_2025,
-  sec199aMfjThreshold:          SEC199A_MFJ_THRESHOLD_2025,
   sliPhaseOutStartSingle:       SLI_PHASE_OUT_START_SINGLE_2025,
   sliPhaseOutEndSingle:         SLI_PHASE_OUT_END_SINGLE_2025,
   sliPhaseOutStartMfj:          SLI_PHASE_OUT_START_MFJ_2025,

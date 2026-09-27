@@ -223,8 +223,8 @@ forms/f1040/nodes/intermediate/forms/form8962/year-rules.ts,51,/** Null means fu
 forms/f1040/nodes/intermediate/forms/form8990/index.ts,10,// ─── TY2025 Constants ─────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form8990/index.ts,42,// TY2025: reinstated by P.L. 119-21 (OBBBA) for tax years beginning after 2024
 forms/f1040/nodes/intermediate/forms/form8990/index.ts,91,//   + depreciation/amortization/depletion (line 11 — TY2025 reinstated)
-forms/f1040/nodes/intermediate/forms/form8995/index.ts,15,// ── TY2025 Constants ─────────────────────────────────────────────────────────
-forms/f1040/nodes/intermediate/forms/form8995a/index.ts,14,// ── TY2025 Constants ─────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8995/index.ts,16,// ── TY2025 Constants ─────────────────────────────────────────────────────────
+forms/f1040/nodes/intermediate/forms/form8995a/index.ts,15,// ── TY2025 Constants ─────────────────────────────────────────────────────────
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,11,"// ─── TY2025 Depreciation Rate Table (MACRS 39-year, mid-month convention) ─────"
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,13,"// Index 0 = January, Index 11 = December (first year of business use in TY2025)"
 forms/f1040/nodes/intermediate/forms/form_8829/index.ts,14,const DEPRECIATION_RATES_TY2025 = [

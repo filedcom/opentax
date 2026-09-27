@@ -68,6 +68,7 @@ export interface F1040Config {
 
   // ── QBI ───────────────────────────────────────────────────────────────────
   qbiThresholdSingle: number;
+  qbiThresholdMfs: number;
   qbiThresholdMfj: number;
   /** Section 199A phase-in range for joint returns; other statuses use half. */
   qbiPhaseInRange: number;
@@ -164,8 +165,6 @@ export interface F1040Config {
 
   // ── 1099-DIV / Schedule B routing ─────────────────────────────────────────
   scheduleBDividendThreshold: number;
-  sec199aSingleThreshold: number;
-  sec199aMfjThreshold: number;
 
   // ── Student Loan Interest Phase-Out ───────────────────────────────────────
   sliPhaseOutStartSingle: number;
