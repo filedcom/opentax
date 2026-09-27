@@ -4,6 +4,7 @@ import { appendScheduleBDividendStatement } from "./schedule_b_dividend_statemen
 import { appendScheduleBSellerFinancedStatement } from "./schedule_b_seller_financed_statement.ts";
 import { appendScheduleBInterestAdjustmentsStatement } from "./schedule_b_interest_adjustments_statement.ts";
 import { appendScheduleBNomineeDividendStatement } from "./schedule_b_nominee_dividend_statement.ts";
+import { scheduleBFilingRequired } from "../../../schedule_b_filing.ts";
 import {
   appendScheduleBForeignCountriesStatement,
   foreignCountryPrintFields,
@@ -51,6 +52,10 @@ function dividendRow(i: number): PdfFieldEntry[] {
       pdfField: `topmostSubform[0].Page1[0].f1_${33 + 2 * i}[0]`,
     },
   ];
+}
+
+function numericAmount(value: unknown): number {
+  return typeof value === "number" ? value : 0;
 }
 
 const fields: ReadonlyArray<PdfFieldEntry> = [
@@ -151,23 +156,24 @@ export const scheduleBPdf: PdfFormDescriptor = {
     },
   ],
   includeWhen: (fields) =>
-    ((fields["print_line4_total"] as number | undefined) ?? 0) > 1500 ||
-    ((fields["print_line6_total"] as number | undefined) ?? 0) > 1500 ||
-    ((fields["dividend_nominee"] as number | undefined) ?? 0) > 0 ||
-    fields["ordinaryDividends"] !== undefined ||
-    [
-      "interest_nominee",
-      "interest_accrued",
-      "interest_oid_adjustment",
-      "interest_bond_premium",
-      "ee_bond_exclusion",
-    ].some(
-      (key) => typeof fields[key] === "number" && (fields[key] as number) > 0,
-    ) ||
-    ((fields["seller_financed_rows"] as unknown[] | undefined)?.length ?? 0) >
-      0 ||
-    fields["foreign_accounts_question"] === true ||
-    fields["foreign_trust_question"] === true,
+    scheduleBFilingRequired({
+      taxableInterest: numericAmount(fields["print_line4_total"]),
+      ordinaryDividends: numericAmount(fields["print_line6_total"]),
+      sellerFinancedInterest:
+        ((fields["seller_financed_rows"] as unknown[] | undefined)?.length ??
+          0) >
+          0,
+      nomineeInterest: numericAmount(fields["interest_nominee"]),
+      accruedInterest: numericAmount(fields["interest_accrued"]),
+      oidAdjustment: numericAmount(fields["interest_oid_adjustment"]),
+      bondPremiumAdjustment: numericAmount(fields["interest_bond_premium"]),
+      savingsBondExclusion: numericAmount(fields["ee_bond_exclusion"]),
+      nomineeDividends: numericAmount(fields["dividend_nominee"]),
+      foreignAccount: fields["foreign_accounts_question"] === true ||
+        fields["form8814_foreign_account"] === true,
+      foreignTrust: fields["foreign_trust_question"] === true ||
+        fields["form8814_foreign_trust"] === true,
+    }),
   async appendSupplementalPages(document, fields, filer) {
     await appendScheduleBSellerFinancedStatement(document, fields, filer);
     await appendScheduleBInterestStatement(document, fields, filer);

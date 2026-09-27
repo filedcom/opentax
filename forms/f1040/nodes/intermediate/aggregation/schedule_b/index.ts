@@ -14,6 +14,7 @@ import { agi_aggregator } from "../agi_aggregator/index.ts";
 import { form8960 } from "../../forms/form8960/index.ts";
 import { scheduleA } from "../../../inputs/schedule_a/index.ts";
 import { normalizeArray } from "../../../utils.ts";
+import { scheduleBFilingRequired } from "../../../../schedule_b_filing.ts";
 
 // ─── Schemas ─────────────────────────────────────────────────────────────────
 
@@ -146,26 +147,38 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
     const foreignTrust = input.foreign_trust_question === true ||
       input.form8814_foreign_trust === true;
     const details = normalizeArray(input.interest_detail);
-    const hasInterestAdjustment = details.some((row) =>
-      row.nominee > 0 || row.accrued > 0 || row.oid_adjustment > 0 ||
-      row.bond_premium > 0
-    );
     const hasSellerFinancedInterest = details.some((row) =>
       row.seller_financed_buyer !== undefined
     );
     const dividendDetails = normalizeArray(input.dividend_detail);
-    const hasNomineeDividends = dividendDetails.some((row) => row.nominee > 0);
-    const partIIIRequired = line4 > 1_500 || line6 > 1_500 ||
-      foreignAccount || foreignTrust || hasInterestAdjustment ||
-      hasSellerFinancedInterest || hasNomineeDividends;
+    const totalInterestAdjustment = (
+      field: "nominee" | "accrued" | "oid_adjustment" | "bond_premium",
+    ) => details.reduce((sum, row) => sum + row[field], 0);
+    const totalNomineeDividends = dividendDetails.reduce(
+      (sum, row) => sum + row.nominee,
+      0,
+    );
+    const filingRequired = scheduleBFilingRequired({
+      taxableInterest: line4,
+      ordinaryDividends: line6,
+      sellerFinancedInterest: hasSellerFinancedInterest,
+      nomineeInterest: totalInterestAdjustment("nominee"),
+      accruedInterest: totalInterestAdjustment("accrued"),
+      oidAdjustment: totalInterestAdjustment("oid_adjustment"),
+      bondPremiumAdjustment: totalInterestAdjustment("bond_premium"),
+      savingsBondExclusion: input.ee_bond_exclusion ?? 0,
+      nomineeDividends: totalNomineeDividends,
+      foreignAccount,
+      foreignTrust,
+    });
     if (
-      partIIIRequired && input.foreign_accounts_question === undefined &&
+      filingRequired && input.foreign_accounts_question === undefined &&
       input.form8814_foreign_account !== true
     ) {
       throw new Error("Schedule B needs an explicit foreign-account answer");
     }
     if (
-      partIIIRequired && input.foreign_trust_question === undefined &&
+      filingRequired && input.foreign_trust_question === undefined &&
       input.form8814_foreign_trust !== true
     ) {
       throw new Error("Schedule B needs an explicit foreign-trust answer");
@@ -189,14 +202,6 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       input.fincen_form114_required !== true
     ) {
       throw new Error("Schedule B foreign country codes require FBAR filing");
-    }
-
-    if (
-      line4 === 0 && line6 === 0 && !foreignAccount && !foreignTrust &&
-      !hasInterestAdjustment && !hasSellerFinancedInterest &&
-      !hasNomineeDividends
-    ) {
-      return { outputs: [] };
     }
 
     const f1040Fields: Partial<z.infer<typeof f1040["inputSchema"]>> = {};
@@ -234,6 +239,8 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
         this.outputNodes.output(form8960, { line1_taxable_interest: line4 }),
       );
     }
+
+    if (!filingRequired) return { outputs };
 
     // ── Self-emit print-layer values for the PDF builder ─────────────────────
     // Preserve all payer rows for MeF and PDF continuation pages, then fill
@@ -289,13 +296,12 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
       printFields[`print_int_payer_${i + 1}`] = allInterestRows[i].payerName;
       printFields[`print_int_amount_${i + 1}`] = allInterestRows[i].amount;
     }
-    const totalAdjustments = (
-      field: "nominee" | "accrued" | "oid_adjustment" | "bond_premium",
-    ) => details.reduce((sum, row) => sum + row[field], 0);
-    printFields.interest_nominee = totalAdjustments("nominee");
-    printFields.interest_accrued = totalAdjustments("accrued");
-    printFields.interest_oid_adjustment = totalAdjustments("oid_adjustment");
-    printFields.interest_bond_premium = totalAdjustments("bond_premium");
+    printFields.interest_nominee = totalInterestAdjustment("nominee");
+    printFields.interest_accrued = totalInterestAdjustment("accrued");
+    printFields.interest_oid_adjustment = totalInterestAdjustment(
+      "oid_adjustment",
+    );
+    printFields.interest_bond_premium = totalInterestAdjustment("bond_premium");
     if (allInterestRows.length > 0) {
       printFields.interest_line1_subtotal = allInterestRows.reduce(
         (sum, row) => sum + row.amount,
@@ -338,10 +344,7 @@ class ScheduleBNode extends TaxNode<typeof inputSchema> {
         0,
       );
     }
-    printFields.dividend_nominee = dividendDetails.reduce(
-      (sum, row) => sum + row.nominee,
-      0,
-    );
+    printFields.dividend_nominee = totalNomineeDividends;
     for (let i = 0; i < Math.min(dividendRows.length, 15); i++) {
       printFields[`print_div_payer_${i + 1}`] = dividendRows[i].payerName;
       printFields[`print_div_amount_${i + 1}`] = dividendRows[i].amount;

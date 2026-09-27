@@ -1,5 +1,6 @@
 import { element, elements } from "../../../mef/xml.ts";
 import type { MefFormDescriptor } from "../form-descriptor.ts";
+import { scheduleBFilingRequired } from "../../../schedule_b_filing.ts";
 
 export interface Fields {
   interest_rows?: readonly { payerName: string; amount: number }[] | null;
@@ -174,19 +175,25 @@ function buildIRS1040ScheduleB(fields: Input): string {
     : interest === undefined
     ? undefined
     : Math.max(0, interest - (fields.ee_bond_exclusion ?? 0));
-  const partIIIRequired = (taxableInterest ?? 0) > 1_500 ||
-    (dividends ?? 0) > 1_500 ||
-    (fields.dividend_nominee ?? 0) > 0 ||
-    sellerRows.length > 0 ||
-    adjustments > 0 ||
-    fields.foreign_accounts_question === true ||
-    fields.foreign_trust_question === true ||
-    fields.form8814_foreign_account === true ||
-    fields.form8814_foreign_trust === true;
+  const filingRequired = scheduleBFilingRequired({
+    taxableInterest: taxableInterest ?? 0,
+    ordinaryDividends: dividends ?? 0,
+    sellerFinancedInterest: sellerRows.length > 0,
+    nomineeInterest: fields.interest_nominee ?? 0,
+    accruedInterest: fields.interest_accrued ?? 0,
+    oidAdjustment: fields.interest_oid_adjustment ?? 0,
+    bondPremiumAdjustment: fields.interest_bond_premium ?? 0,
+    savingsBondExclusion: fields.ee_bond_exclusion ?? 0,
+    nomineeDividends: fields.dividend_nominee ?? 0,
+    foreignAccount: fields.foreign_accounts_question === true ||
+      fields.form8814_foreign_account === true,
+    foreignTrust: fields.foreign_trust_question === true ||
+      fields.form8814_foreign_trust === true,
+  });
+  if (!filingRequired) return "";
   if (
-    partIIIRequired &&
-    (fields.foreign_accounts_question === undefined ||
-      fields.foreign_trust_question === undefined)
+    fields.foreign_accounts_question === undefined ||
+    fields.foreign_trust_question === undefined
   ) {
     throw new Error("Schedule B MeF needs both Part III Yes/No answers");
   }
@@ -210,32 +217,6 @@ function buildIRS1040ScheduleB(fields: Input): string {
   ) {
     throw new Error("Schedule B MeF foreign country codes are invalid");
   }
-  if (
-    fields.taxable_interest_net === undefined &&
-    fields.interest_rows === undefined &&
-    fields.seller_financed_rows === undefined &&
-    fields.ordinaryDividends === undefined &&
-    fields.dividend_rows === undefined &&
-    fields.dividend_nominee === undefined &&
-    fields.dividend_info === undefined &&
-    fields.form8814_dividends === undefined &&
-    fields.ee_bond_exclusion === undefined &&
-    fields.foreign_accounts_question !== true &&
-    fields.foreign_trust_question !== true
-  ) return "";
-  // Information-only deposits from below-threshold 1099-DIV and Form 8814
-  // must not force Schedule B onto an otherwise below-threshold return.
-  if (
-    (fields["dividend_info"] !== undefined ||
-      fields["form8814_dividends"] !== undefined) &&
-    fields.ordinaryDividends === undefined &&
-    fields.taxable_interest_net === undefined &&
-    fields.interest_rows === undefined &&
-    fields.foreign_accounts_question !== true &&
-    fields.foreign_trust_question !== true &&
-    (fields.dividend_nominee ?? 0) === 0 &&
-    (dividends ?? 0) <= 1500
-  ) return "";
   const dividendRows = fields.dividend_rows ?? [];
   if (
     (fields.dividend_nominee ?? 0) > 0 &&
