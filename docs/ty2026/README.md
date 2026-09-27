@@ -6,6 +6,10 @@ for the implementation contract.
 
 ## What is in this snapshot
 
+- [`PDF-F1040-MAP.md`](PDF-F1040-MAP.md) and `pdf-fields-f1040.csv`: the
+  draft 2026 Form 1040 AcroForm inventory and changed-line mapping for the
+  future year-specific PDF builder.
+
 - [`corpus/manifest.json`](corpus/manifest.json): URL, SHA-256, byte length,
   and retrieval date for **57 TY2026 IRS draft forms**, the **2026 draft
   Schedule 8812 instructions**, **five draft URLs that
