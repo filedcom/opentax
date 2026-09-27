@@ -113,6 +113,9 @@ for the implementation contract.
   current TY2026 income/withholding route, and dependent-form worklist.
 - [`SSA-BENEFITS-GRAPH.md`](SSA-BENEFITS-GRAPH.md): SSA-1099 and RRB-1099 box
   distinctions, taxable-benefit route, and remaining repayment/election work.
+- [`RRB-1099-GRAPH.md`](RRB-1099-GRAPH.md): pinned RRB issuer explanations
+  and IRS pension/benefit publications, separate SSEB and pension statements,
+  signed repayments, corrected sources and their 1040/MeF handoffs.
 - [`FORM1099R-GRAPH.md`](FORM1099R-GRAPH.md): final 2026 Form 1099-R box changes,
   IRA/pension downstream routes, and filing gates.
 - [`FORM5329-GRAPH.md`](FORM5329-GRAPH.md): early SIMPLE IRA Part I tax and

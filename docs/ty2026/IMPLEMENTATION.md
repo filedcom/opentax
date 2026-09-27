@@ -84,6 +84,11 @@ The [Form 4852 contract](FORM4852-GRAPH.md) pins its continuous-use form,
 correct line 7e/8f withholding labels and 34 PDF widgets. The shared node
 needs original/substitute deduplication, printed explanation fields and
 reconciliation with the 2026 wage/1099-R/Medicare and withholding owners.
+The [RRB statement contract](RRB-1099-GRAPH.md) pins issuer explanations
+and IRS 575/915/939 comparators. The shared node mixes RRB-1099 SSEB
+with RRB-1099-R pension boxes; the 2026 benefit owner already accepts
+RRB-1099, while pension basis, prior-year repayments and separate
+withholding require their own source route.
 The [Form 8962 contract](FORM8962-GRAPH.md) identifies the 2026 line 27
 repayment and reserved lines 28/29, Form 1095-A and Schedule 2/3 graph
 handoff, full PDF field map, and the current-instruction/MeF gates.

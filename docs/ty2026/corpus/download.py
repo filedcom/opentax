@@ -99,6 +99,11 @@ for label, url in page_links(MEF_PAGE):
         sources.append(("mef/" + name, url, "mef-inventory"))
 
 sources += [
+    ("authorities/rrb-txl-1099--2012.pdf", "https://www.rrb.gov/sites/default/files/2017-03/txl-1099_0.pdf", "issuer-guidance"),
+    ("authorities/rrb-txl-1099r--2019.pdf", "https://rrb.gov/sites/default/files/2019-02/TXL-1099R%2001-19.pdf", "issuer-guidance"),
+    ("authorities/p575--2025.pdf", IRS + "/pub/irs-pdf/p575.pdf", "prior-year-comparator"),
+    ("authorities/p915--2025.pdf", IRS + "/pub/irs-pdf/p915.pdf", "prior-year-comparator"),
+    ("authorities/p939--2025.pdf", IRS + "/pub/irs-pdf/p939.pdf", "current-revision"),
     ("authorities/f4852--2020.pdf", IRS + "/pub/irs-pdf/f4852.pdf", "current-revision"),
     ("authorities/i8938--2021.pdf", IRS + "/pub/irs-pdf/i8938.pdf", "current-revision-instructions"),
     ("authorities/p1436--2026.pdf", IRS + "/pub/irs-pdf/p1436.pdf", "final-authority"),

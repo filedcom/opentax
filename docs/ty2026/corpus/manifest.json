@@ -1,5 +1,5 @@
 {
-  "snapshot_utc": "2026-09-27T16:47:55.214835+00:00",
+  "snapshot_utc": "2026-09-27T16:51:43.457192+00:00",
   "source_pages": [
     "https://www.irs.gov/e-file-providers/tax-year-2026-form-1040-series-and-extensions-modernized-e-file-mef-assurance-testing-system-ats-information",
     "https://www.irs.gov/tax-professionals/tax-year-2026-modernized-e-file-schema-and-business-rules-for-individual-tax-returns-and-extensions"
@@ -2226,6 +2226,51 @@
       "bytes": 81366,
       "sha256": "810e5e4df3022cf5421094b1d19dcf47eee020c751c47585b72d3249309cd066",
       "year_check": "2020-continuous-use"
+    },
+    {
+      "path": "authorities/rrb-txl-1099--2012.pdf",
+      "url": "https://www.rrb.gov/sites/default/files/2017-03/txl-1099_0.pdf",
+      "kind": "issuer-guidance",
+      "status": "downloaded",
+      "bytes": 37937,
+      "sha256": "bb3769d1577800d0320b1f0ce1b5241390e49e119432887d799fe7478f5cfd21",
+      "year_check": "issuer-current"
+    },
+    {
+      "path": "authorities/rrb-txl-1099r--2019.pdf",
+      "url": "https://rrb.gov/sites/default/files/2019-02/TXL-1099R%2001-19.pdf",
+      "kind": "issuer-guidance",
+      "status": "downloaded",
+      "bytes": 103424,
+      "sha256": "0e643a1c7696bedc5869e7e151236a5009c806df6eb5fc96fc60b1469d3c9e5f",
+      "year_check": "issuer-current"
+    },
+    {
+      "path": "authorities/p575--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/p575.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 1616319,
+      "sha256": "30bd37ccfcb1fe2e191abadbb38ce7cf7fcbb638e3065335436dd6025a35caa5",
+      "year_check": "2025-present"
+    },
+    {
+      "path": "authorities/p915--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/p915.pdf",
+      "kind": "prior-year-comparator",
+      "status": "downloaded",
+      "bytes": 1570254,
+      "sha256": "44c4053dab046c737e4eadff7cf8a8d23fe55d6147bde995c6055b55af6db22b",
+      "year_check": "2025-present"
+    },
+    {
+      "path": "authorities/p939--2025.pdf",
+      "url": "https://www.irs.gov/pub/irs-pdf/p939.pdf",
+      "kind": "current-revision",
+      "status": "downloaded",
+      "bytes": 3034288,
+      "sha256": "83bc40482e7bd7c8ef7b7f34e5e37586402143ef007ec42bc7e5cd79f65df651",
+      "year_check": "2025-present"
     }
   ]
 }

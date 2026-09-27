@@ -111,6 +111,10 @@ The [Form 4852 contract](../../../docs/ty2026/FORM4852-GRAPH.md) pins the
 current substitute W-2/1099-R form and maps its line 7/8 values through
 the 2026 wage, retirement, FICA and withholding owners, with printable
 explanations and the current MeF filing gate.
+The [railroad statement contract](../../../docs/ty2026/RRB-1099-GRAPH.md)
+pins the separate RRB-1099 SSEB and RRB-1099-R pension box maps. The shared
+`rrb1099r` node conflates them; signed SSEB benefits and pension basis/
+repayments need separate source routes into 1040 lines 6 and 5.
 The [Form 1116 contract](../../../docs/ty2026/FORM1116-GRAPH.md) maps
 foreign-tax categories, carryovers, redeterminations and the revised line
 18/20 bases from 1040, Schedule 1-A and Schedule 2; its full attachment

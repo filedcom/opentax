@@ -48,6 +48,8 @@ The [Form 8938 plan](FORM8938-GRAPH.md) adds the foreign asset disclosure
 threshold, Part III income links and repeatable filed attachment.
 The [Form 4852 plan](FORM4852-GRAPH.md) reconciles a substitute W-2 or
 1099-R with its original/correction, income, withholding and printed form.
+The [railroad statement plan](RRB-1099-GRAPH.md) separates RRB-1099 SSEB
+from RRB-1099-R pensions before their combined 1040/withholding handoffs.
 
 ## Coding sequence
 

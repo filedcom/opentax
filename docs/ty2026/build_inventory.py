@@ -16,6 +16,7 @@ REGISTRY = ROOT / "forms/f1040/2025/registry.ts"
 # A node stays unverified until its 2026 behavior, outputs, and form route are
 # checked. These notes identify work already started without marking it done.
 NODE_PROGRESS = {
+    "rrb1099r": "RRB issuer explanations and IRS Pubs 575/915/939 pinned; shared node combines SSEB RRB-1099 boxes with pension RRB-1099-R boxes and mislabels 6-10; use separate owner-keyed source records and 1040 6a/b versus 5a/b, withholding/PDF/current MeF; see RRB-1099-GRAPH.md",
     "f4852": "Current Sep 2020 continuous-use form/printed instructions pinned; reconcile real/corrected/substitute payer records, line7e/8f withholding, taxable 1099-R basis, FICA/8959/5329, 34 PDF widgets/current MeF; see FORM4852-GRAPH.md",
     "f8938": "December 2026 draft and November 2021 continuous-use instructions pinned; calculate filer/abroad threshold and asset/exception ledger, Parts I-VI and continuation, 131 PDF widgets/current MeF; see FORM8938-GRAPH.md",
     "f3903": "2026 form/instructions pinned; add intelligence-community/certification, per-move expense and W-2 code P ledger, storage-only/2555, Schedule 1 line14 and 1040 line1h, PDF/current MeF; see FORM3903-EDUCATOR-GRAPH.md",
