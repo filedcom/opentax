@@ -67,8 +67,16 @@ const f8835CreditEntrySchema = z.object({
 });
 
 const f8826CreditEntrySchema = z.object({
-  source_type: z.enum(["self", "partnership", "s_corporation"]),
+  source_type: z.enum([
+    "self",
+    "partnership",
+    "s_corporation",
+    "estate",
+    "trust",
+  ]),
   source_ein: z.string().regex(/^\d{9}$/).optional(),
+  source_document_reference: z.string().trim().min(1).optional(),
+  source_statement_reference: z.string().trim().min(1).optional(),
   credit_amount: z.number().finite().nonnegative().refine(
     (amount) =>
       Number.isSafeInteger(Math.round(amount * 100)) &&
@@ -83,6 +91,22 @@ const f8826CreditEntrySchema = z.object({
       message:
         "Form 8826 source EIN is required only for a pass-through source",
     });
+  }
+  if (entry.source_type === "estate" || entry.source_type === "trust") {
+    for (
+      const key of [
+        "source_document_reference",
+        "source_statement_reference",
+      ] as const
+    ) {
+      if (!entry[key]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `Form 3800 estate/trust disabled-access source needs ${key}`,
+        });
+      }
+    }
   }
 });
 

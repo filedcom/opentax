@@ -339,6 +339,43 @@ Deno.test("f3800: direct Form 8826 entries reject duplicate sources and sub-cent
   );
 });
 
+Deno.test("f3800: estate and trust disabled-access entries retain K-1 and statement identity", () => {
+  const entry = {
+    source_type: "trust" as const,
+    source_ein: "123456789",
+    source_document_reference: "2025 Trust K-1",
+    source_statement_reference: "2025 code ZZ access statement",
+    credit_amount: 1_250.25,
+    subject_to_passive_activity_limit: false,
+  };
+  assertEquals(
+    f3800.inputSchema.safeParse({ f8826_credit_entries: [entry] }).success,
+    true,
+  );
+  for (
+    const key of [
+      "source_document_reference",
+      "source_statement_reference",
+    ] as const
+  ) {
+    const { [key]: _missing, ...withoutReference } = entry;
+    assertEquals(
+      f3800.inputSchema.safeParse({
+        f8826_credit_entries: [withoutReference],
+      }).success,
+      false,
+    );
+  }
+  assertThrows(
+    () =>
+      f3800.compute({ taxYear: 2025, formType: "f1040" }, {
+        f8826_credit_entries: [{ ...entry, credit_amount: 5_000.01 }],
+      }),
+    Error,
+    "exceed the $5,000 cap",
+  );
+});
+
 Deno.test("f3800.inputSchema: valid minimal item (empty object) passes", () => {
   const parsed = f3800.inputSchema.safeParse({ f3800s: [{}] });
   assertEquals(parsed.success, true);

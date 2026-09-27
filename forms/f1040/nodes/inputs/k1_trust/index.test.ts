@@ -89,6 +89,40 @@ Deno.test("estate or trust K-1 disabled-access code ZZ needs its named statement
   );
 });
 
+Deno.test("estate and trust K-1 nonpassive disabled-access credits enter Form 3800 with both references", () => {
+  for (const entity_type of ["estate", "trust"] as const) {
+    const item = minimalItem({
+      entity_type,
+      estate_trust_ein: "123456789",
+      source_document_reference: `2025 ${entity_type} K-1`,
+      box13_code_zz_disabled_access_credit: 500.25,
+      box13_code_zz_disabled_access_statement_reference:
+        `${entity_type} disabled-access statement`,
+      disabled_access_credit_subject_to_passive_activity_limit: false,
+    });
+    assertEquals(findOutput(compute([item]), "f3800")?.fields, {
+      f8826_credit_entries: [{
+        source_type: entity_type,
+        source_ein: "123456789",
+        source_document_reference: `2025 ${entity_type} K-1`,
+        source_statement_reference: `${entity_type} disabled-access statement`,
+        credit_amount: 500.25,
+        subject_to_passive_activity_limit: false,
+      }],
+    });
+    assertEquals(
+      findOutput(
+        compute([{
+          ...item,
+          disabled_access_credit_subject_to_passive_activity_limit: true,
+        }]),
+        "f3800",
+      ),
+      undefined,
+    );
+  }
+});
+
 // ── 1. Input schema validation ────────────────────────────────────────────────
 
 Deno.test("empty array throws", () => {

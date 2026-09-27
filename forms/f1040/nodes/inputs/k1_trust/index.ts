@@ -15,6 +15,7 @@ import { schedule_b } from "../../intermediate/aggregation/schedule_b/index.ts";
 import { scheduleA } from "../schedule_a/index.ts";
 import { schedule_d } from "../../intermediate/aggregation/schedule_d/index.ts";
 import { form4952 } from "../../intermediate/forms/form4952/index.ts";
+import { f3800 } from "../f3800/index.ts";
 import {
   ForeignTaxCreditMethod,
   ForeignTaxKind,
@@ -399,6 +400,34 @@ function apportionedDeductionOutputs(items: K1TrustItems): NodeOutput[] {
   return [output(schedule1, { line8z_other_income: -total })];
 }
 
+function disabledAccessCreditOutputs(items: K1TrustItems): NodeOutput[] {
+  return items.flatMap((item) => {
+    const credit = item.box13_code_zz_disabled_access_credit;
+    if (credit === undefined) return [];
+    if (item.disabled_access_credit_subject_to_passive_activity_limit) {
+      return [];
+    }
+    if (
+      !item.entity_type || !item.estate_trust_ein ||
+      !item.source_document_reference ||
+      !item.box13_code_zz_disabled_access_statement_reference
+    ) {
+      throw new Error("Estate/trust disabled-access K-1 source is incomplete");
+    }
+    return [output(f3800, {
+      f8826_credit_entries: [{
+        source_type: item.entity_type,
+        source_ein: item.estate_trust_ein,
+        source_document_reference: item.source_document_reference,
+        source_statement_reference:
+          item.box13_code_zz_disabled_access_statement_reference,
+        credit_amount: credit,
+        subject_to_passive_activity_limit: false,
+      }],
+    })];
+  });
+}
+
 class K1TrustNode extends TaxNode<typeof inputSchema> {
   readonly nodeType = "k1_trust";
   readonly inputSchema = inputSchema;
@@ -409,6 +438,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
     schedule1,
     form_1116,
     form4952,
+    f3800,
   ]);
 
   compute(_ctx: NodeContext, input: z.infer<typeof inputSchema>): NodeResult {
@@ -427,6 +457,7 @@ class K1TrustNode extends TaxNode<typeof inputSchema> {
       ...schedule1Output(limitedItems),
       ...form1116Outputs(limitedItems),
       ...apportionedDeductionOutputs(limitedItems),
+      ...disabledAccessCreditOutputs(limitedItems),
     ];
 
     for (const item of limitedItems) {

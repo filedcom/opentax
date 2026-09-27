@@ -197,6 +197,11 @@ applied-credit split, and remaining amount. Its Part III applied credit
 reconciles with Form 8835's line 1f and 4e groups and the shared Part II limit.
 The combined passive and nonpassive line 1e now rejects a current-year total
 above the IRS $5,000 limit; its case is written but unrun.
+Estate/trust K-1 code ZZ disabled-access amounts now enter the Form 3800
+source graph when marked nonpassive, retaining separate K-1 and statement
+references. The input and graph cases are written but unrun. The filed Form
+3800 XML path still expects a Form 8826 source and does not yet emit this
+direct pass-through route; it must remain blocked until that bridge is built.
 The Part V draft now apportions whole-dollar source and applied amounts so the
 printed rows add back to the rounded Part III and Part II totals; its rounding
 case is written but unrun. Solo, combined, and negative cases are written but
