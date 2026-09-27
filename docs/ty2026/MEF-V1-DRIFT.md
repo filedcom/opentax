@@ -67,3 +67,5 @@ For every additional form in the [parity queue](PARITY-QUEUE.md), perform the
 same accepted-count, dependency, XSD and business-rule reconciliation before
 claiming MeF coverage. A zero/blank workbook cell or missing row is a
 research finding, not a complete filing prohibition by itself.
+The [public serializer crosswalk](MEF-PUBLIC-CROSSWALK.md) records the
+published rows and attachment-name occurrences for every TY2025 MeF module.
