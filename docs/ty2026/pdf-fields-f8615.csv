@@ -1,0 +1,33 @@
+field,type,tooltip,pdf_page,rect,in_field_tree
+topmostSubform[0].Page1[0].f1_1[0],/Tx,Page 1. Child's name shown on return. ,2,36 684.468 438.2 697.969,yes
+topmostSubform[0].Page1[0].f1_2[0],/Tx,Child's social security number. ,2,440.2 684.468 576 697.969,yes
+topmostSubform[0].Page1[0].f1_3[0],/Tx,"A. Parent's name (first, initial, and last). Caution: See instructions before completing. ",2,36 660.467 438.2 671.969,yes
+topmostSubform[0].Page1[0].f1_4[0],/Tx,B. Parent's social security number. ,2,440.2 660.467 576 671.969,yes
+topmostSubform[0].Page1[0].c1_1[0],/Btn,C. Parent's filing status (check one): Single. ,2,50.4 638.469 58.4 646.469,yes
+topmostSubform[0].Page1[0].c1_1[1],/Btn,C. Married filing jointly. ,2,108 638.469 116 646.469,yes
+topmostSubform[0].Page1[0].c1_1[2],/Btn,C. Married filing separately. ,2,216 638.469 224 646.469,yes
+topmostSubform[0].Page1[0].c1_1[3],/Btn,C. Head of household. ,2,345.6 638.469 353.6 646.469,yes
+topmostSubform[0].Page1[0].c1_1[4],/Btn,C. Qualifying surviving spouse. ,2,453.6 638.469 461.6 646.469,yes
+topmostSubform[0].Page1[0].f1_5[0],/Tx,Part I. Child’s Net Unearned Income. 1. Enter the child’s unearned income. See instructions. ,2,505 600.469 576 611.968,yes
+topmostSubform[0].Page1[0].f1_6[0],/Tx,"2. If the child did not itemize deductions on Schedule A (Form 1040) or Schedule A (Form 1040-N R), enter $2,700. Otherwise, see instructions. ",2,505 576.468 576 587.967,yes
+topmostSubform[0].Page1[0].f1_7[0],/Tx,"3. Subtract line 2 from line 1. If zero or less, stop; do not complete the rest of this form but do attach it to the child’s return. ",2,505 552.47 576 563.969,yes
+topmostSubform[0].Page1[0].f1_8[0],/Tx,"4. Enter the child’s taxable income from Form 1040 or 1040-N R, line 15. If the child files Form 2555, see the instructions.",2,505 528.469 576 539.968,yes
+topmostSubform[0].Page1[0].f1_9[0],/Tx,"5. Enter the smaller of line 3 or line 4. If zero, stop; do not complete the rest of this form but do attach it to the child’s return.",2,505 504.468 576 515.967,yes
+topmostSubform[0].Page1[0].f1_10[0],/Tx,"Part I I. Tentative Tax Based on the Tax Rate of the Parent. 6. Enter the parent’s taxable income from Form 1040 or 1040-N R, line 15. If zero or less, enter 0. If the parent files Form 2555, see the instructions. ",2,505 468.468 576 479.967,yes
+topmostSubform[0].Page1[0].f1_11[0],/Tx,"7. Enter the total, if any, from Forms 8615, line 5, of all other children of the parent named above. Do not include the amount from line 5 above.",2,505 444.47 576 455.969,yes
+topmostSubform[0].Page1[0].f1_12[0],/Tx,"8. Add lines 5, 6, and 7. See instructions. ",2,505 432.468 576 443.467,yes
+topmostSubform[0].Page1[0].Line9_ReadOrder[0].c1_2[0],/Btn,"9. Enter the tax on the amount on line 8 based on the parent’s filing status above. See instructions. If the Qualified Dividends and Capital Gain Tax Worksheet, Schedule D Tax Worksheet, or Schedule J (Form 1040) is used to figure the tax, check here. ",2,467.2 399.568 475.2 407.568,yes
+topmostSubform[0].Page1[0].f1_13[0],/Tx,9. Amount.,2,505 396.468 576 407.967,yes
+topmostSubform[0].Page1[0].Line10_ReadOrder[0].c1_3[0],/Btn,"10. Enter the parent’s tax from Form 1040 or 1040-N R, line 16, minus any alternative minimum tax. Do not include any tax from Form 4972 or Form 8814, or any tax from the recapture of an education credit. If the parent files Form 2555, see the instructions. If the Qualified Dividends and Capital Gain Tax Worksheet, Schedule D Tax Worksheet, or Schedule J (Form 1040) was used to figure the tax, check here.",2,467.2 343.968 475.2 351.968,yes
+topmostSubform[0].Page1[0].f1_14[0],/Tx,10. Amount.,2,505 342.468 576 353.967,yes
+topmostSubform[0].Page1[0].f1_15[0],/Tx,"11. Subtract line 10 from line 9 and enter the result. If line 7 is blank, also enter this amount on line 13 and go to Part I I I.",2,505 318.47 576 329.969,yes
+topmostSubform[0].Page1[0].f1_16[0],/Tx,12a. Add lines 5 and 7.,2,411.4 306.468 481.4 317.967,yes
+topmostSubform[0].Page1[0].f1_17[0],/Tx,12b. Divide line 5 by line 12a. Enter the result as a decimal (rounded to at least three places). ,2,556.498 294.469 576 305.968,yes
+topmostSubform[0].Page1[0].f1_18[0],/Tx,13. Multiply line 11 by line 12b. ,2,505 282.47 576 293.469,yes
+topmostSubform[0].Page1[0].f1_19[0],/Tx,"Part I I I. Child’s Tax. If lines 4 and 5 above are the same, enter 0 on line 15 and go to line 16. 14. Subtract line 5 from line 4.",2,411.4 246.47 481.4 257.969,yes
+topmostSubform[0].Page1[0].Line15_ReadOrder[0].c1_4[0],/Btn,"15. Enter the tax on the amount on line 14 based on the child’s filing status. See instructions. If the Qualified Dividends and Capital Gain Tax Worksheet, Schedule D Tax Worksheet, or Schedule J (Form 1040) is used to figure the tax, check here. ",2,467.2 212.47 475.2 220.47,yes
+topmostSubform[0].Page1[0].f1_20[0],/Tx,15. Amount.,2,505 210.47 576 221.969,yes
+topmostSubform[0].Page1[0].f1_21[0],/Tx,16. Add lines 13 and 15. ,2,505 198.468 576 209.467,yes
+topmostSubform[0].Page1[0].Line17_ReadOrder[0].c1_5[0],/Btn,"17. Enter the tax on the amount on line 4 based on the child’s filing status. See instructions. If the Qualified Dividends and Capital Gain Tax Worksheet, Schedule D Tax Worksheet, or Schedule J (Form 1040) is used to figure the tax, check here. ",2,467.2 164.468 475.2 172.468,yes
+topmostSubform[0].Page1[0].f1_22[0],/Tx,17. Amount.,2,505 162.468 576 173.967,yes
+topmostSubform[0].Page1[0].f1_23[0],/Tx,"18. Enter the larger of line 16 or line 17 here and on the child’s Form 1040 or 1040-N R, line 16. If the child files Form 2555, see the instructions. ",2,505 138.47 576 149.969,yes

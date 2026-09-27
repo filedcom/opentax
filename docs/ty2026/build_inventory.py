@@ -39,6 +39,7 @@ NODE_PROGRESS = {
     "form8990": "2026 draft and 2025-revision instructions pinned; $32M threshold, source-level BIE/capitalization, ATI, partnership/S-corp/CFC branches, 138 PDF widgets and current MeF remain",
     "form4952": "2026 form embeds instructions; investment-interest election, Schedule A/6198/E, AMT carryforward, 17 PDF widgets and current MeF remain; shared node requires AMT facts unconditionally",
     "form6781": "2026 form embeds instructions; 1256 carryback and straddle Parts II/III, elections, QOF routing, 71 PDF widgets and current MeF remain; shared node handles only simple 60/40 accounts",
+    "form8615": "2026 form/instructions pinned; child eligibility and source-derived unearned income, parent/sibling preferential worksheets, 2555/Schedule J, 32 PDF widgets and current MeF remain; shared calculator handles ordinary tax only",
     "f1040": "dedicated 2026 node begun; expand upstream surface and finalizations",
     "schedule1a": "2026 line 13a, TP/4137 employer reconciliation, TT updated; audit remaining sources",
     "form4137": "2026 tips reach Schedule 1-A, income, Schedule 2 tax; audit other cases",

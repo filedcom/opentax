@@ -102,6 +102,10 @@ The [Form 6781 contract](FORM6781-GRAPH.md) maps section 1256 accounts,
 straddle positions, election boxes, current-year loss carryback and
 Schedule D/Form 8949 destinations. Its 2026 form embeds instructions and
 has 71 PDF widgets; the shared node covers only simple 60/40 totals.
+The [Form 8615 contract](FORM8615-GRAPH.md) maps child eligibility and
+unearned-income sources, parent and sibling return facts, preferential-rate
+tax worksheets, Form 2555 and the child's Form 1040 line 16. Its 32 draft
+PDF widgets are inventoried; the shared calculator covers ordinary tax only.
 The [scenario 12 contract](ATS-SCENARIO-12.md) and
 [business credit graph](GENERAL-BUSINESS-CREDIT-GRAPH.md) cover the remaining
 broad 1040 ATS packet. Form 7207 must feed a source-backed 2026 Form 3800
